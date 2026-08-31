@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-COMPOSE_OVERRIDE_FILE="$ROOT_DIR/apps/builder/docker-compose.e2e.yaml"
+COMPOSE_OVERRIDE_FILE="${E2E_COMPOSE_OVERRIDE_FILE:-$ROOT_DIR/apps/builder/docker-compose.e2e.yaml}"
 PLAYWRIGHT_ARGS=("$@")
 if [ "${PLAYWRIGHT_ARGS[0]:-}" = "--" ]; then
   PLAYWRIGHT_ARGS=("${PLAYWRIGHT_ARGS[@]:1}")
@@ -29,6 +29,7 @@ source "$ROOT_DIR/apps/builder/e2e/run-step.sh"
 builder_backend_init
 
 export E2E_DB_BOOTSTRAP="${E2E_DB_BOOTSTRAP:-auto}"
+export E2E_BUILD_DATABASE_IMAGE="${E2E_BUILD_DATABASE_IMAGE:-true}"
 export E2E_GENERATE_PRISMA="${E2E_GENERATE_PRISMA:-auto}"
 export E2E_DOCKER_PULL_TIMEOUT_SECONDS="${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}"
 export E2E_DOCKER_TIMEOUT_SECONDS="${E2E_DOCKER_TIMEOUT_SECONDS:-60}"
@@ -39,6 +40,7 @@ export E2E_RUN_TESTS="${E2E_RUN_TESTS:-true}"
 export E2E_START_POSTGREST="${E2E_START_POSTGREST:-$E2E_RUN_TESTS}"
 export E2E_BUILDER_BUILD_TIMEOUT_SECONDS="${E2E_BUILDER_BUILD_TIMEOUT_SECONDS:-600}"
 export E2E_TEST_COMMAND_TIMEOUT_SECONDS="${E2E_TEST_COMMAND_TIMEOUT_SECONDS:-900}"
+export E2E_TEST_SELECTION_TIMEOUT_SECONDS="${E2E_TEST_SELECTION_TIMEOUT_SECONDS:-60}"
 export E2E_WRITE_SCHEMA_SNAPSHOT="${E2E_WRITE_SCHEMA_SNAPSHOT:-false}"
 
 cleanup() {
@@ -118,8 +120,30 @@ run_builder_e2e_tests() {
   )
 }
 
-run_step "pull e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
+validate_builder_e2e_selection() {
+  (
+    cd "$ROOT_DIR/apps/builder"
+    E2E_BUILDER_URL="${E2E_BUILDER_URL:-https://127.0.0.1:3000}" \
+      pnpm e2e:ci --list "${PLAYWRIGHT_ARGS[@]}"
+  )
+}
+
+prepare_e2e_database_image() {
+  if [ "$E2E_BUILD_DATABASE_IMAGE" = "true" ]; then
+    builder_compose build --pull db
+    return
+  fi
+
   builder_backend_pull_db
+}
+
+if [ "$E2E_RUN_TESTS" = "true" ]; then
+  run_step "validate builder e2e test selection" \
+    "$E2E_TEST_SELECTION_TIMEOUT_SECONDS" validate_builder_e2e_selection
+fi
+
+run_step "prepare e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
+  prepare_e2e_database_image
 
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db

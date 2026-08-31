@@ -1,10 +1,9 @@
 import { defineConfig } from "vitest/config";
+import {
+  browserTestPorts,
+  createBrowserTestConfig,
+} from "../../scripts/vitest-browser-workspace";
 
-export default defineConfig({
-  resolve: {
-    conditions: ["webstudio", "browser", "development|production"],
-  },
-  test: {
-    setupFiles: ["@webstudio-is/design-system/test-setup"],
-  },
-});
+export default defineConfig(
+  createBrowserTestConfig(browserTestPorts.queryBuilderReact)
+);

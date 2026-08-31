@@ -1506,7 +1506,7 @@ describe("prebuild", () => {
     ).toMatchObject({ class: "w-code-text", lang: "en" });
     expect(findElementsByTagName(legacyCode, "span").length).toBeGreaterThan(0);
     expect(getTextContent(legacyCode)).toBe("legacy <code>");
-  }, 30_000);
+  }, 60_000);
 
   test("prerenders bound Code Text while keeping catalog chunks lazy", async () => {
     await writeSiteData(

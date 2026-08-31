@@ -20,15 +20,26 @@ explicitly with:
 pnpm e2e:builder:refresh-schema-cache
 ```
 
+The regular E2E suite uses lightweight PostgreSQL containers. Verify that the
+complete migration chain also applies to the pinned Supabase PostgreSQL image
+with:
+
+```sh
+pnpm e2e:builder:check-supabase-migrations
+```
+
 Pass normal Playwright Test arguments after `--`. For example:
 
 ```sh
 pnpm e2e:builder -- --grep "Builder can copy, duplicate, and delete a page"
-pnpm e2e:builder -- apps/builder/e2e/tests/pages-actions.e2e.ts
+pnpm e2e:builder -- 'apps/builder/e2e/tests/pages-actions.[shard-5].e2e.ts'
 pnpm e2e:builder -- --debug --grep "Builder can copy"
 ```
 
-A filter that matches no tests fails before the test environment runs.
+A lightweight Playwright discovery pass validates the selection before Docker,
+database migrations, browser installation, or the Builder build starts. A
+filter that matches no tests therefore fails without starting the test
+environment.
 
 ## Fast local reruns
 
@@ -65,30 +76,38 @@ each invocation.
 ## Test organization
 
 - Put workflows in `e2e/tests/*.e2e.ts` and import `test` from `e2e/test.ts`.
-- Use Playwright's built-in `browser`, `page`, and hook APIs.
-- Use the built-in `context` fixture for test-local authenticated state.
-- Use `withBrowserContext(browser, callback)` for setup that must run in
-  `beforeAll`. If cookies must survive from `beforeAll` into the tests, create
-  an explicit context with `newBrowserContext(browser)` and close it in
+- Use Playwright's `page` fixture for the workflow under test. Playwright gives
+  each test an isolated context and closes it automatically.
+- Use Playwright's `context` fixture when setup should share authentication with
+  the workflow page.
+- Use `withBrowserContext(browser, callback)` for isolated setup or setup that
+  runs in `beforeAll`. If cookies must survive from `beforeAll` into the tests,
+  create an explicit context with `newBrowserContext(browser)` and close it in
   `afterAll`.
 - Use `newIsolatedPage(browser)` for identities that must not share cookies.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI uses Playwright's standard six-way file sharding:
+CI discovers isolated Playwright shards from filename tags. Each shard uses two
+workers, and files are assigned by measured CI duration to keep jobs near three
+to four minutes:
 
-```sh
-pnpm e2e:builder -- --shard=1/6
+```txt
+pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts
 ```
 
-Test filenames do not encode shard ownership. Playwright balances files across
-the configured shards.
+Every E2E filename must contain at least one unique shard tag. CI derives its
+matrix from those tags, so adding or removing a shard does not require editing
+the workflow. Files with multiple tags are partitioned across those shards. All
+files selected by a shard must use the same set of tags. Each shard uses four
+workers. Rebalance by changing filename tags when measured job durations drift.
+Suites may opt into parallel mode only when every worker creates uniquely named
+setup data and the tests do not depend on each other's mutations.
 
 ## Failures
 
-CI retries a failed shard once against a clean disposable database. Failed
-shard jobs upload the Playwright HTML report, traces, screenshots, and videos,
-along with the backend service logs.
+Failed shard jobs upload the Playwright HTML report, traces, screenshots,
+videos, and backend service logs.
 
 When you need a completely clean backend locally:
 

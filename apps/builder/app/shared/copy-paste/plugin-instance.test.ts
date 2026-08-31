@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
+import { afterAll, afterEach, describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import type {
@@ -46,9 +46,11 @@ import {
   expectSlotsShareFragment,
 } from "../slot-test-utils";
 import { pasteHandled } from "./copy-paste";
-import { initBuilderApi } from "../builder-api";
+import { __testing__ as builderApiTesting } from "../builder-api";
 import { $externalContentRoots } from "../external-content-mutations";
 
+afterAll(builderApiTesting.useLocalApi());
+afterEach(() => vi.restoreAllMocks());
 const expectString = expect.any(String) as unknown as string;
 
 enableMapSet();
@@ -292,9 +294,8 @@ describe("copy and cut guards", () => {
     expect(fragment.instances).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: "mdx-heading" })])
     );
-    initBuilderApi();
     const importAssets = vi
-      .spyOn(window.__webstudio__$__builderApi, "importAssets")
+      .spyOn(builderApiTesting.api, "importAssets")
       .mockResolvedValue(new Map([["post", $assets.get().get("post")!]]));
     $instances.set(
       toMap([createInstance("target-body", "Body", [])] satisfies Instance[])
@@ -389,9 +390,8 @@ describe("copy and cut guards", () => {
       id: "imported-asset",
       projectId: "my-project",
     } satisfies Asset;
-    initBuilderApi();
     const importAssets = vi
-      .spyOn(window.__webstudio__$__builderApi, "importAssets")
+      .spyOn(builderApiTesting.api, "importAssets")
       .mockRejectedValueOnce(new Error("Source is unavailable"))
       .mockImplementation(
         async () => new Map([[sourceAsset.id, importedAsset]])
@@ -464,17 +464,15 @@ describe("copy and cut guards", () => {
     selectInstance(["legacy-button", "body0"]);
     const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["body0"]);
-    initBuilderApi();
-    const previousWarn = window.__webstudio__$__builderApi.toast.warn;
-    const warn = vi.fn();
-    window.__webstudio__$__builderApi.toast.warn = warn;
+    const warn = vi
+      .spyOn(builderApiTesting.api.toast, "warn")
+      .mockImplementation(() => {});
 
     expect(await instanceText.onPaste?.(clipboardData)).toEqual(pasteHandled);
     expect($instances.get().get("body0")?.children).toHaveLength(2);
     expect(warn).toHaveBeenCalledWith(
       "Pasted with warning: Placing <h3> element inside a <button> violates HTML spec."
     );
-    window.__webstudio__$__builderApi.toast.warn = previousWarn;
   });
 
   test("sanitizes multi-root clipboard root ids before paste", async () => {

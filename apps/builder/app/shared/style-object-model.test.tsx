@@ -1170,7 +1170,7 @@ test("work with unknown or invalid properties", () => {
       instanceSelector,
       property: "unknownProperty" as CssProperty,
     }).usedValue
-  ).toEqual({ type: "unparsed", value: "[object Object]" });
+  ).toEqual({ type: "invalid", value: "[object Object]" });
   expect(
     getComputedStyleDecl({
       model,

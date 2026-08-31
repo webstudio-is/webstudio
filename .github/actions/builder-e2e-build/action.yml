@@ -1,0 +1,48 @@
+name: Build Builder E2E prerequisites
+
+description: Build the Builder and package its E2E schema and dependencies.
+
+inputs:
+  submodules-ssh-key:
+    description: SSH key for private E2E dependencies.
+    required: false
+
+outputs:
+  shards:
+    description: Filename-derived E2E shard matrix.
+    value: ${{ steps.shards.outputs.value }}
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/submodules-checkout
+      with:
+        submodules-ssh-key: ${{ inputs.submodules-ssh-key }}
+
+    - uses: ./.github/actions/ci-setup
+      with:
+        run-scripts: "true"
+
+    - name: Discover shards
+      id: shards
+      shell: bash
+      run: echo "value=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)" >> "$GITHUB_OUTPUT"
+
+    - name: Build Builder
+      shell: bash
+      run: pnpm e2e:builder:build
+
+    - name: Generate schema snapshot
+      shell: bash
+      run: pnpm e2e:builder:refresh-schema-cache
+
+    - name: Upload prerequisites
+      uses: actions/upload-artifact@v6
+      with:
+        name: builder-e2e-build
+        retention-days: 7
+        path: |
+          apps/builder/build/server
+          apps/builder/build/client/assets
+          packages/*/lib
+          .cache/builder-e2e/schema-*.sql

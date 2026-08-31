@@ -69,7 +69,7 @@ test("loads the external query schema declared by OpenAPI", async () => {
 
   expect(fetchDescription).toHaveBeenCalledTimes(2);
   expect(fetchDescription.mock.calls[1][0]).toBe(
-    "http://localhost:3000/rest/assets/query-schema.json"
+    `${window.location.origin}/rest/assets/query-schema.json`
   );
   expect(definition.fields).toContainEqual(
     expect.objectContaining({ path: ["properties", "title"] })

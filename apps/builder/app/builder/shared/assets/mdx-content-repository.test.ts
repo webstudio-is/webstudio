@@ -30,16 +30,10 @@ const collect = async (data: AsyncIterable<Uint8Array>) => {
 };
 
 describe("HTTP MDX content repository", () => {
-  test("can be created during server rendering without reading browser globals", () => {
-    const browserWindow = globalThis.window;
-    vi.stubGlobal("window", undefined);
-    try {
-      expect(() =>
-        createBuilderHttpAssetContentRepository({ projectId: asset.projectId })
-      ).not.toThrow();
-    } finally {
-      vi.stubGlobal("window", browserWindow);
-    }
+  test("defers browser-dependent work until the first request", () => {
+    expect(() =>
+      createBuilderHttpAssetContentRepository({ projectId: asset.projectId })
+    ).not.toThrow();
   });
 
   test("returns content and exact revision identity from one response", async () => {

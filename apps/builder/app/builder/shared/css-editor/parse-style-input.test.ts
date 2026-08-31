@@ -194,7 +194,7 @@ describe("parseStyleInput", () => {
     expect(result).toEqual(
       new Map([
         ["color", { type: "keyword", value: "red" }],
-        ["--somethinginvalid", { type: "unparsed", value: "block" }],
+        ["--somethinginvalid", { type: "invalid", value: "block" }],
       ])
     );
   });

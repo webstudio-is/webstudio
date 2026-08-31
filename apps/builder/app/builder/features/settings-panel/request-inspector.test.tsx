@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
@@ -64,8 +61,8 @@ test("places an available query editor in the first selected tab", () => {
     "Diagnostics",
   ]);
   expect(tabs[0].getAttribute("data-state")).toBe("active");
-  expect(queryContainer.current?.style.minHeight).toBe("0");
-  expect(queryContainer.current?.style.minWidth).toBe("0");
+  expect(queryContainer.current?.style.minHeight).toBe("0px");
+  expect(queryContainer.current?.style.minWidth).toBe("0px");
   expect(queryContainer.current?.style.overflow).toBe("hidden");
 });
 

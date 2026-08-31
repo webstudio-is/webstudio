@@ -103,6 +103,7 @@
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@types/sanitize-html": "2.16.1",
+    "@vitest/browser": "3.1.1",
     "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:*",
@@ -110,8 +111,9 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "micromark-util-types": "2.0.2",
     "nanostores": "^0.11.3",
+    "playwright": "1.50.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "vitest": "^3.1.2"
+    "vitest": "3.1.1"
   }
 }

@@ -1,0 +1,65 @@
+name: Test suite
+
+description: Run one package, CLI, or Builder test suite.
+
+inputs:
+  submodules-ssh-key:
+    description: SSH key for private test dependencies.
+    required: false
+  scope:
+    description: Test suite scope.
+    required: true
+  project:
+    description: Builder Vitest project pattern.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/submodules-checkout
+      with:
+        submodules-ssh-key: ${{ inputs.submodules-ssh-key }}
+
+    - uses: ./.github/actions/ci-setup
+
+    - name: Cache Playwright Chromium
+      if: inputs.scope != 'cli'
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cache/ms-playwright/chromium-*
+          ~/.cache/ms-playwright/chromium_headless_shell-*
+          ~/.cache/ms-playwright/ffmpeg-*
+        key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Cache Playwright Firefox
+      if: inputs.scope == 'packages'
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/ms-playwright/firefox-*
+        key: playwright-firefox-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Install package test browsers
+      if: inputs.scope == 'packages'
+      shell: bash
+      run: pnpm --filter @webstudio-is/sdk-components-animation exec playwright install chromium firefox
+
+    - name: Install Builder test browser
+      if: startsWith(inputs.scope, 'builder-')
+      shell: bash
+      run: pnpm --filter @webstudio-is/builder exec playwright install chromium
+
+    - name: Test packages
+      if: inputs.scope == 'packages'
+      shell: bash
+      run: pnpm -r --filter "!@webstudio-is/builder" --filter "!webstudio" test
+
+    - name: Test CLI
+      if: inputs.scope == 'cli'
+      shell: bash
+      run: pnpm --filter webstudio test
+
+    - name: Test Builder
+      if: startsWith(inputs.scope, 'builder-')
+      shell: bash
+      run: pnpm --filter @webstudio-is/builder exec vitest run --project "${{ inputs.project }}"

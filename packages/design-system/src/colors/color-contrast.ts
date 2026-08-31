@@ -37,6 +37,13 @@ const contrastContracts = [
   number,
 ])[];
 
+const contrastColorNames = new Set<CssVariableName>(
+  contrastContracts.flatMap(([foreground, background]) => [
+    foreground,
+    background,
+  ])
+);
+
 export const colorContrastContractCount = contrastContracts.length;
 
 const toLinearChannel = (channel: number) => {
@@ -50,21 +57,31 @@ const getLuminance = (color: Uint8ClampedArray) =>
   0.0722 * toLinearChannel(color[2]);
 
 const createColorReader = () => {
-  const sample = document.createElement("span");
-  sample.hidden = true;
-  document.body.append(sample);
+  const samples = new Map<CssVariableName, HTMLElement>();
+  const container = document.createElement("div");
+  container.hidden = true;
+  for (const name of contrastColorNames) {
+    const sample = document.createElement("span");
+    sample.style.color = cssVar(name);
+    container.append(sample);
+    samples.set(name, sample);
+  }
+  document.body.append(container);
 
   const canvas = document.createElement("canvas");
   canvas.width = 1;
   canvas.height = 1;
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (context === null) {
-    sample.remove();
+    container.remove();
     throw new Error("Canvas color evaluation is unavailable");
   }
 
   const read = (name: CssVariableName) => {
-    sample.style.color = cssVar(name);
+    const sample = samples.get(name);
+    if (sample === undefined) {
+      throw new Error(`Unknown contrast color: ${name}`);
+    }
     context.clearRect(0, 0, 1, 1);
     context.fillStyle = getComputedStyle(sample).color;
     context.fillRect(0, 0, 1, 1);
@@ -75,26 +92,27 @@ const createColorReader = () => {
     return color;
   };
 
-  return { read, dispose: () => sample.remove() };
+  return { read, dispose: () => container.remove() };
 };
 
-export const getColorContrast = (mode: ColorMode): ColorContrastResult[] => {
+const createColorContrastReader = () => {
   const root = document.documentElement;
   const previousMode = root.getAttribute("data-color-scheme");
-  root.setAttribute("data-color-scheme", mode);
   const reader = createColorReader();
-  const luminances = new Map<CssVariableName, number>();
-  const readLuminance = (name: CssVariableName) => {
-    const cached = luminances.get(name);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const value = getLuminance(reader.read(name));
-    luminances.set(name, value);
-    return value;
-  };
 
-  try {
+  const read = (mode: ColorMode): ColorContrastResult[] => {
+    root.setAttribute("data-color-scheme", mode);
+    const luminances = new Map<CssVariableName, number>();
+    const readLuminance = (name: CssVariableName) => {
+      const cached = luminances.get(name);
+      if (cached !== undefined) {
+        return cached;
+      }
+      const value = getLuminance(reader.read(name));
+      luminances.set(name, value);
+      return value;
+    };
+
     return contrastContracts.map(([foreground, background, minimum]) => {
       const foregroundLuminance = readLuminance(foreground);
       const backgroundLuminance = readLuminance(background);
@@ -107,12 +125,27 @@ export const getColorContrast = (mode: ColorMode): ColorContrastResult[] => {
         ratio: (lighter + 0.05) / (darker + 0.05),
       };
     });
-  } finally {
+  };
+
+  const dispose = () => {
     reader.dispose();
     if (previousMode === null) {
       root.removeAttribute("data-color-scheme");
     } else {
       root.setAttribute("data-color-scheme", previousMode);
     }
+  };
+
+  return { read, dispose };
+};
+
+export const getColorContrast = (mode: ColorMode): ColorContrastResult[] => {
+  const reader = createColorContrastReader();
+  try {
+    return reader.read(mode);
+  } finally {
+    reader.dispose();
   }
 };
+
+export const __testing__ = { createColorContrastReader };

@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import "./colors.css";
-import { getColorContrast } from "./color-contrast";
+import { __testing__, getColorContrast } from "./color-contrast";
 import type { ColorMode } from "./color-source-utils";
+
+const { createColorContrastReader } = __testing__;
 
 const readColor = (name: string) => {
   const sample = document.createElement("span");
@@ -443,6 +445,7 @@ describe("Craft color contrast", () => {
 
   test("supported theme parameter range preserves every contrast contract", () => {
     const root = document.documentElement;
+    const contrastReader = createColorContrastReader();
     const chromaticColors = [
       "accent",
       "positive",
@@ -454,9 +457,9 @@ describe("Craft color contrast", () => {
     const violations = new Map<string, { ratio: number; message: string }>();
 
     const recordFailures = (scenario: string, mode: ColorMode) => {
-      const failures = getColorContrast(mode).filter(
-        ({ ratio, minimum }) => ratio < minimum
-      );
+      const failures = contrastReader
+        .read(mode)
+        .filter(({ ratio, minimum }) => ratio < minimum);
       for (const failure of failures) {
         const relationship = `${failure.foreground} on ${failure.background}`;
         const previous = violations.get(relationship);
@@ -513,6 +516,7 @@ describe("Craft color contrast", () => {
         }
       }
     } finally {
+      contrastReader.dispose();
       for (const color of chromaticColors) {
         root.style.removeProperty(`--theme-color-${color}`);
       }

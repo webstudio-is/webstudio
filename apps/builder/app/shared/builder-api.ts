@@ -370,4 +370,16 @@ export const initBuilderApi = () => {
   return () => {};
 };
 
-export const __testing__ = { canAccessAssetContent };
+export const __testing__ = {
+  api: _builderApi,
+  canAccessAssetContent,
+  useLocalApi: () => {
+    const owner = isInTop() ? window : window.top;
+    invariant(owner);
+    const previousApi = owner[apiWindowNamespace];
+    owner[apiWindowNamespace] = _builderApi;
+    return () => {
+      owner[apiWindowNamespace] = previousApi;
+    };
+  },
+};

@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { createPollingManager } from "./polling-manager";
 import type { SubscriptionResponse, TopicName } from "./types";

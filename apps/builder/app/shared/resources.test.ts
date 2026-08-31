@@ -42,6 +42,7 @@ test("removes obsolete queued requests but keeps cached results", () => {
 
   const resourceCacheListener = vi.fn();
   const unlisten = $resourcesCache.listen(resourceCacheListener);
+  resourceCacheListener.mockClear();
   queueResources([]);
 
   expect($resourcesCache.get().has(key)).toBe(true);
@@ -457,9 +458,6 @@ test("loads detailed Assets diagnostics and performance only on demand", async (
       ],
     ])
   );
-  const resourceCacheListener = vi.fn();
-  const unlisten = $resourcesCache.listen(resourceCacheListener);
-
   const first = loadResourceDiagnostics(request, fetch);
   const second = loadResourceDiagnostics(request, fetch);
   expect(first).toBe(second);
@@ -478,8 +476,7 @@ test("loads detailed Assets diagnostics and performance only on demand", async (
       phases: { diagnosticsPreparation: 50 },
     },
   });
-  expect(resourceCacheListener).not.toHaveBeenCalled();
-  unlisten();
+  expect($resourcesCache.get().has(key)).toBe(false);
 });
 
 test("caches performance metrics separately from resource values", async () => {

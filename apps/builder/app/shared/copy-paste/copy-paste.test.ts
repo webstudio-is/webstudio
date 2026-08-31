@@ -1,11 +1,11 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { afterAll, afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
 import { coreMetas, ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Project } from "@webstudio-is/project";
-import { initBuilderApi } from "../builder-api";
+import { __testing__ as builderApiTesting } from "../builder-api";
 import { registerContainers } from "../sync/sync-stores";
 import {
   $assets,
@@ -40,6 +40,7 @@ import { insertFragmentWithBreakpointWarning } from "./fragment-utils";
 
 enableMapSet();
 registerContainers();
+afterAll(builderApiTesting.useLocalApi());
 $registeredComponentMetas.set(
   new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
 );
@@ -154,24 +155,21 @@ class TestClipboardEvent extends Event {
 }
 
 const setupToastInfo = () => {
-  initBuilderApi();
-  const toastInfo = vi.fn();
-  window.__webstudio__$__builderApi.toast.info = toastInfo;
-  return toastInfo;
+  return vi
+    .spyOn(builderApiTesting.api.toast, "info")
+    .mockImplementation(() => {});
 };
 
 const setupToastError = () => {
-  initBuilderApi();
-  const toastError = vi.fn();
-  window.__webstudio__$__builderApi.toast.error = toastError;
-  return toastError;
+  return vi
+    .spyOn(builderApiTesting.api.toast, "error")
+    .mockImplementation(() => {});
 };
 
 const setupToastSuccess = () => {
-  initBuilderApi();
-  const toastSuccess = vi.fn();
-  window.__webstudio__$__builderApi.toast.success = toastSuccess;
-  return toastSuccess;
+  return vi
+    .spyOn(builderApiTesting.api.toast, "success")
+    .mockImplementation(() => {});
 };
 
 const waitForClipboardEvent = () =>
@@ -181,9 +179,8 @@ const pastePlainText = async (
   value: unknown,
   target: "design-token" | "css-variable" | "cancel" = "css-variable"
 ) => {
-  initBuilderApi();
   vi.spyOn(
-    window.__webstudio__$__builderApi,
+    builderApiTesting.api,
     "showDesignTokenImportDialog"
   ).mockResolvedValue(target);
   const abortController = new AbortController();
@@ -747,7 +744,7 @@ test("resolves token conflicts for fragments through the shared paste helper", a
     value: { type: "unparsed", value: "blue" },
   });
   const conflictDialog = vi
-    .spyOn(window.__webstudio__$__builderApi, "showTokenConflictDialog")
+    .spyOn(builderApiTesting.api, "showTokenConflictDialog")
     .mockResolvedValue("ours");
 
   await insertFragmentWithBreakpointWarning(fragment);
@@ -792,10 +789,9 @@ test("does not insert a fragment when token conflict resolution is cancelled", a
     property: "color",
     value: { type: "unparsed", value: "blue" },
   });
-  vi.spyOn(
-    window.__webstudio__$__builderApi,
-    "showTokenConflictDialog"
-  ).mockResolvedValue("cancel");
+  vi.spyOn(builderApiTesting.api, "showTokenConflictDialog").mockResolvedValue(
+    "cancel"
+  );
 
   const inserted = await insertFragmentWithBreakpointWarning(fragment);
 
@@ -818,7 +814,7 @@ test.each([
     setupToastError();
     setupToastSuccess();
     const conflictDialog = vi
-      .spyOn(window.__webstudio__$__builderApi, "showTokenConflictDialog")
+      .spyOn(builderApiTesting.api, "showTokenConflictDialog")
       .mockResolvedValue(resolution);
     await pastePlainText({
       color: { $type: "color", $value: "#123456" },
@@ -848,7 +844,7 @@ test("silently reuses an identical pasted design value", async () => {
   setupToastError();
   const toastSuccess = setupToastSuccess();
   const conflictDialog = vi.spyOn(
-    window.__webstudio__$__builderApi,
+    builderApiTesting.api,
     "showTokenConflictDialog"
   );
   await pastePlainText({

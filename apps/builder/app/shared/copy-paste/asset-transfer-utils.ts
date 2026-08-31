@@ -5,7 +5,7 @@ import {
 } from "@webstudio-is/sdk";
 import { produce } from "immer";
 import { replaceAssetMutable } from "@webstudio-is/project-build/runtime";
-import { builderApi } from "../builder-api";
+import type { builderApi } from "../builder-api";
 
 const assetTransferError =
   "Could not transfer assets from the source Webstudio deployment. Make sure it is reachable and try again.";
@@ -14,12 +14,12 @@ export const transferFragmentAssets = async ({
   sourceOrigin,
   projectId,
   fragments,
-  importAssets = builderApi.importAssets,
+  importAssets,
 }: {
   sourceOrigin: string | undefined;
   projectId: string;
   fragments: WebstudioFragment[];
-  importAssets?: typeof builderApi.importAssets;
+  importAssets: typeof builderApi.importAssets;
 }) => {
   if (fragments.every((fragment) => fragment.assets.length === 0)) {
     return {

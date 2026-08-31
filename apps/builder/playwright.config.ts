@@ -1,5 +1,10 @@
 import { defineConfig } from "@playwright/test";
-import { builderUrl, getBrowserLaunchOptions } from "./e2e/test";
+import {
+  browserContextOptions,
+  builderUrl,
+  getBrowserLaunchOptions,
+} from "./e2e/test";
+import { getE2eTestMatch } from "./e2e/test-shards";
 
 const testTimeout =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
@@ -14,8 +19,9 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "line",
   use: {
-    ignoreHTTPSErrors: true,
-    permissions: ["clipboard-read", "clipboard-write"],
+    ...browserContextOptions,
+    actionTimeout: 20_000,
+    navigationTimeout: 45_000,
     launchOptions: getBrowserLaunchOptions(),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -28,7 +34,7 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      testMatch: /tests\/.*\.e2e\.ts/,
+      testMatch: getE2eTestMatch(process.env.E2E_TEST_SHARD),
       dependencies: ["setup"],
       use: { browserName: "chromium" },
     },
