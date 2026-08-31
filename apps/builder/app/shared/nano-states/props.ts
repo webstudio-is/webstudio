@@ -6,6 +6,7 @@ import {
   collectionComponent,
   blockComponent,
   contentBlockDocumentProp,
+  getPageResourceRootIds,
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
@@ -222,16 +223,19 @@ const $resourceRequestPlan = computed(
       props,
       rootInstanceId: page.rootInstanceId,
     });
-    instanceIds.add(ROOT_INSTANCE_ID);
-    const rootResourceIds: string[] = [];
-    for (const dataSource of dataSources.values()) {
-      if (
-        dataSource.type === "resource" &&
-        instanceIds.has(dataSource.scopeInstanceId ?? "")
-      ) {
-        rootResourceIds.push(dataSource.resourceId);
+    const visibleInstances = new Map<Instance["id"], Instance>();
+    for (const instanceId of instanceIds) {
+      const instance = instances.get(instanceId);
+      if (instance !== undefined) {
+        visibleInstances.set(instanceId, instance);
       }
     }
+    const rootResourceIds = getPageResourceRootIds({
+      page,
+      instances: visibleInstances,
+      props,
+      dataSources,
+    });
     return computeResourceRequestPlan({
       rootResourceIds,
       resources,
