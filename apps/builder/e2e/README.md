@@ -80,7 +80,7 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI discovers seven isolated Playwright shards from filename tags. Each shard uses
+CI discovers eight isolated Playwright shards from filename tags. Each shard uses
 two workers, and files are assigned by measured CI duration to keep jobs near
 three to four minutes:
 
