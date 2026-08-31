@@ -9,7 +9,7 @@ icon: robot
 
 # Webstudio MCP
 
-**Webstudio MCP v0.294.0**
+**Webstudio MCP v0.295.0**
 
 {% hint style="info" %}
 This reference is generated from the Webstudio CLI source in the same Builder
