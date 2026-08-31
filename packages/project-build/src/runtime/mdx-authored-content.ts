@@ -40,6 +40,7 @@ import {
   normalizeMdxComponentProps,
   serializeMdxComponent,
   serializeMdxComponentFallback,
+  usesMdxComponentAuthoredChildren,
 } from "./mdx-component-adapters";
 import {
   parseMdxStaticProp,
@@ -805,7 +806,10 @@ export const materializeMdxAuthoredContent = ({
           type: "instance",
           id: instanceId,
           component: materializedComponent.component,
-          children: materializedComponent.children,
+          children:
+            materializedComponent.children === "authored"
+              ? visit(node.children, path)
+              : materializedComponent.children,
         });
         const assetProps: AuthoredElementProvenance["assetProps"][number][] =
           [];
@@ -1639,6 +1643,27 @@ export const reconcileMdxAuthoredContent = ({
                 : undefined,
             assetReferenceValues: root.assetReferenceValues,
           });
+    const originalComponentNode =
+      provenance?.type === "component"
+        ? originalNodeByPath.get(pathKey(provenance.path))
+        : undefined;
+    let authoredComponentChildren: readonly MdxAuthoredNode[] | undefined;
+    if (
+      usesMdxComponentAuthoredChildren(instance.component) &&
+      originalComponentNode !== undefined &&
+      originalComponentNode.type !== "text" &&
+      originalComponentNode.type !== "comment" &&
+      originalComponentNode.type !== "opaque"
+    ) {
+      active.add(instanceId);
+      authoredComponentChildren = reconcileChildren({
+        original: originalComponentNode.children,
+        children: instance.children,
+        mode: "flow",
+        active,
+      });
+      active.delete(instanceId);
+    }
     const componentNode =
       instance.component === elementComponent
         ? undefined
@@ -1646,10 +1671,8 @@ export const reconcileMdxAuthoredContent = ({
             instance,
             props: authoredComponentProps,
             instanceProps,
-            original:
-              provenance?.type === "component"
-                ? originalNodeByPath.get(pathKey(provenance.path))
-                : undefined,
+            original: originalComponentNode,
+            authoredChildren: authoredComponentChildren,
           });
     const serializedComponent =
       componentNode ??

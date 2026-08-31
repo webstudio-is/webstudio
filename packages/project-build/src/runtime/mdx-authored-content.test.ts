@@ -84,26 +84,18 @@ describe("MDX authored content", () => {
       document,
       templateMaterialization: emptyTemplates,
     });
-    const alert = root.fragment.instances.find(({ tag }) => tag === "div");
+    const alert = root.fragment.instances.find(
+      ({ component }) => component === "Alert"
+    );
     if (alert === undefined) {
       throw new Error("Expected alert element");
     }
     const alertProps = root.fragment.props
       .filter(({ instanceId }) => instanceId === alert.id)
       .map(({ name, value }) => [name, value]);
-    const title = root.fragment.instances.find(
-      ({ id }) =>
-        alert.children[0]?.type === "id" && id === alert.children[0].value
-    );
 
-    expect(Object.fromEntries(alertProps)).toEqual({
-      class: "markdown-alert markdown-alert-note",
-      role: "note",
-    });
-    expect(title).toMatchObject({
-      tag: "p",
-      children: [{ type: "text", value: "Note" }],
-    });
+    expect(Object.fromEntries(alertProps)).toEqual({ variant: "note" });
+    expect(alert.children).toHaveLength(1);
 
     const edited = structuredClone(root.fragment);
     const context = edited.instances.find(({ tag }) => tag === "strong");
@@ -111,9 +103,16 @@ describe("MDX authored content", () => {
       throw new Error("Expected alert strong text");
     }
     context.children = [{ type: "text", value: "details" }];
+    const variant = edited.props.find(
+      ({ instanceId, name }) => instanceId === alert.id && name === "variant"
+    );
+    if (variant?.type !== "string") {
+      throw new Error("Expected alert variant");
+    }
+    variant.value = "warning";
 
     expect(await serializeMdxAuthoredContent({ root, fragment: edited })).toBe(
-      "> [!NOTE]\n> Helpful **details**.\n"
+      "> [!WARNING]\n> Helpful **details**.\n"
     );
   });
 

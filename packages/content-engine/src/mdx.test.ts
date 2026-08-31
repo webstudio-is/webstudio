@@ -143,59 +143,43 @@ const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
 };
 
 describe("parseMdxDocument", () => {
-  test.each([
-    ["NOTE", "Note"],
-    ["TIP", "Tip"],
-    ["IMPORTANT", "Important"],
-    ["WARNING", "Warning"],
-    ["CAUTION", "Caution"],
-  ])("maps GitHub %s alerts to semantic elements", async (type, title) => {
-    const document = await parseMdxDocument({
-      source: `> [!${type}]\n> Alert with **strong** text.\n`,
-    });
+  test.each(["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"] as const)(
+    "maps GitHub %s alerts to semantic elements",
+    async (type) => {
+      const document = await parseMdxDocument({
+        source: `> [!${type}]\n> Alert with **strong** text.\n`,
+      });
 
-    expect(omitSourceRanges(document.children)).toEqual([
-      {
-        type: "element",
-        syntax: "markdown",
-        tag: "div",
-        props: [
-          {
-            name: "class",
-            value: `markdown-alert markdown-alert-${type.toLowerCase()}`,
-          },
-          { name: "role", value: "note" },
-        ],
-        markdownAlert: type,
-        children: [
-          {
-            type: "element",
-            syntax: "markdown",
-            tag: "p",
-            props: [{ name: "class", value: "markdown-alert-title" }],
-            children: [{ type: "text", value: title }],
-          },
-          {
-            type: "element",
-            syntax: "markdown",
-            tag: "p",
-            props: [],
-            children: [
-              { type: "text", value: "Alert with " },
-              {
-                type: "element",
-                syntax: "markdown",
-                tag: "strong",
-                props: [],
-                children: [{ type: "text", value: "strong" }],
-              },
-              { type: "text", value: " text." },
-            ],
-          },
-        ],
-      },
-    ]);
-  });
+      expect(omitSourceRanges(document.children)).toEqual([
+        {
+          type: "element",
+          syntax: "markdown",
+          tag: "blockquote",
+          props: [],
+          markdownAlert: type,
+          children: [
+            {
+              type: "element",
+              syntax: "markdown",
+              tag: "p",
+              props: [],
+              children: [
+                { type: "text", value: "Alert with " },
+                {
+                  type: "element",
+                  syntax: "markdown",
+                  tag: "strong",
+                  props: [],
+                  children: [{ type: "text", value: "strong" }],
+                },
+                { type: "text", value: " text." },
+              ],
+            },
+          ],
+        },
+      ]);
+    }
+  );
 
   test("preserves GitHub alert syntax through MDX serialization", async () => {
     const source = `> [!WARNING]\n> First paragraph.\n>\n> - One\n> - Two\n`;

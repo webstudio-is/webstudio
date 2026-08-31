@@ -125,16 +125,7 @@ const toSerializationNode = (
   }
 
   if (node.markdownAlert !== undefined) {
-    const body = node.children.filter(
-      (child) =>
-        child.type !== "element" ||
-        child.tag !== "p" ||
-        child.props.some(
-          ({ name, value }) =>
-            name === "class" && value === "markdown-alert-title"
-        ) === false
-    );
-    const children = body.map((child) => toSerializationNode(child));
+    const children = node.children.map((child) => toSerializationNode(child));
     const marker = `[!${node.markdownAlert}]`;
     const first = children[0];
     const markerNode: SerializationNode = {

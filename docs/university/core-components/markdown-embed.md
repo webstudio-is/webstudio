@@ -46,7 +46,7 @@ Use GitHub-style alerts to call attention to notes, tips, important information,
 
 Write the alert type in uppercase at the start of a blockquote. Markdown Embed supports `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`. You can use links, lists, code, and other Markdown inside an alert.
 
-Select **Alert** to style every alert, **Alert title** to style the visible type label, or a type-specific descendant such as **Warning alert** to style one alert type.
+Select **Alert** to style every alert, **Alert title** to style the visible type label, or a type-specific descendant such as **Warning alert** to style one alert type. Markdown Embed renders the same markup and variants as the standalone [Alert component](alert.md).
 
 ## Image handling
 
@@ -67,5 +67,6 @@ Data URL images are served as-is without optimization.
 ## Related
 
 - [Content Embed](content-embed.md) – Render rich text/HTML
+- [Alert](alert.md) – Add and style standalone callouts
 - [HTML Embed](html-embed.md) – Custom HTML code
 - [Collection](collection.md) – Loop through CMS data

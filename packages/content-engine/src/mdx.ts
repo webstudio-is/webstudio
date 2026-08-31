@@ -33,7 +33,6 @@ import { findMarkdownFrontmatter } from "./markdown-scanner";
 import { serializeMdxDocument } from "./mdx-serialization";
 import {
   getMarkdownAlertMarker,
-  markdownAlertTypes,
   type MarkdownAlertType,
 } from "./markdown-alerts";
 
@@ -1184,28 +1183,10 @@ const transformMarkdownAlerts = (
         : [{ ...paragraph, children: remainingParagraphChildren }]),
       ...children.slice(1),
     ];
-    const title = markdownAlertTypes[marker.type];
     return {
       ...node,
-      tag: "div",
-      props: [
-        {
-          name: "class",
-          value: `markdown-alert markdown-alert-${marker.type.toLowerCase()}`,
-        },
-        { name: "role", value: "note" },
-      ],
       markdownAlert: marker.type,
-      children: [
-        {
-          type: "element",
-          syntax: "markdown",
-          tag: "p",
-          props: [{ name: "class", value: "markdown-alert-title" }],
-          children: [{ type: "text", value: title }],
-        },
-        ...bodyChildren,
-      ],
+      children: bodyChildren,
     };
   });
 
