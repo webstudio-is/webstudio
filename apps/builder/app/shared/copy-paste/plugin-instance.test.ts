@@ -1,6 +1,6 @@
 import { afterAll, describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
-import { toast } from "@webstudio-is/design-system/toast";
+import { toast } from "@webstudio-is/design-system";
 import type {
   Asset,
   Instance,

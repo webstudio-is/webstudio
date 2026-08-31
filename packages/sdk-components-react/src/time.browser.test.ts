@@ -9,6 +9,15 @@ const { parseDate, formatDate, timeZoneOrDefault } = __testing__;
 
 let root: Root | undefined;
 
+const mockVisitorTimeZone = (timeZone: string) => {
+  vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+    locale: "de-DE",
+    calendar: "gregory",
+    numberingSystem: "latn",
+    timeZone,
+  });
+};
+
 afterEach(() => {
   root?.unmount();
   root = undefined;
@@ -148,12 +157,7 @@ test("hydrates visitor timezone without mismatch and updates after hydration", a
 
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-  vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
-    locale: "de-DE",
-    calendar: "gregory",
-    numberingSystem: "latn",
-    timeZone: "Europe/Berlin",
-  });
+  mockVisitorTimeZone("Europe/Berlin");
   await act(async () => {
     root = hydrateRoot(container, ui);
     await Promise.resolve();
@@ -190,12 +194,7 @@ test("trims visitor timezone mode before hydration update", async () => {
 
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-  vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
-    locale: "de-DE",
-    calendar: "gregory",
-    numberingSystem: "latn",
-    timeZone: "Europe/Berlin",
-  });
+  mockVisitorTimeZone("Europe/Berlin");
   await act(async () => {
     root = hydrateRoot(container, ui);
     await Promise.resolve();

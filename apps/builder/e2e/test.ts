@@ -54,13 +54,7 @@ export const withBrowserContext = async <Result>(
   }
 };
 
-export const test = base.extend({
-  page: async ({ browser }, use) => {
-    await withBrowserContext(browser, async (context) => {
-      await use(await context.newPage());
-    });
-  },
-});
+export const test = base;
 
 export const newIsolatedPage = async (browser: Browser) => {
   const context = await newBrowserContext(browser);

@@ -68,13 +68,13 @@ each invocation.
 ## Test organization
 
 - Put workflows in `e2e/tests/*.e2e.ts` and import `test` from `e2e/test.ts`.
-- Use the `page` fixture for the workflow under test. `e2e/test.ts` gives it an
-  isolated context and closes that context automatically.
-- Use Playwright's `context` fixture for setup state that must not leak into the
-  workflow page, such as creating a project as its owner.
-- Use `withBrowserContext(browser, callback)` for setup that must run in
-  `beforeAll`. If cookies must survive from `beforeAll` into the tests, create
-  an explicit context with `newBrowserContext(browser)` and close it in
+- Use Playwright's `page` fixture for the workflow under test. Playwright gives
+  each test an isolated context and closes it automatically.
+- Use Playwright's `context` fixture when setup should share authentication with
+  the workflow page.
+- Use `withBrowserContext(browser, callback)` for isolated setup or setup that
+  runs in `beforeAll`. If cookies must survive from `beforeAll` into the tests,
+  create an explicit context with `newBrowserContext(browser)` and close it in
   `afterAll`.
 - Use `newIsolatedPage(browser)` for identities that must not share cookies.
 - Keep tests in a file independent even though Playwright runs them in
@@ -94,10 +94,8 @@ other's mutations.
 
 ## Failures
 
-CI retries a failed shard once against a clean disposable database. It preserves
-the first attempt's Playwright HTML report, traces, screenshots, and videos in a
-separate artifact even when the retry passes. If the retry also fails, CI
-uploads its artifacts and the backend service logs as well.
+Failed shard jobs upload the Playwright HTML report, traces, screenshots,
+videos, and backend service logs.
 
 When you need a completely clean backend locally:
 

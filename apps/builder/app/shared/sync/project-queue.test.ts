@@ -49,7 +49,7 @@ import {
   $syncStatus,
   type Transaction,
 } from "@webstudio-is/sync-client";
-import { toast } from "@webstudio-is/design-system/toast";
+import { toast } from "@webstudio-is/design-system";
 import type { ServerSyncState } from "./sync-stores";
 import {
   $lastTransactionId,
@@ -443,47 +443,38 @@ describe("project-queue", () => {
       expect(commands).toHaveLength(0);
     });
 
-    test("enqueues setDetails for 'edit' permit", () => {
-      const enqueueSpy = vi.spyOn(commandQueue, "enqueue");
-
-      enqueueProjectDetails({
-        projectId: "p1",
-        buildId: "b1",
-        version: 1,
-        authPermit: "edit",
-        authToken: "tok",
-      });
-
-      expect(enqueueSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "setDetails",
+    test.each([
+      { authPermit: "edit", authToken: "tok" },
+      { authPermit: "own", authToken: undefined },
+    ] as const)(
+      "enqueues project details for '$authPermit' permit",
+      async ({ authPermit, authToken }) => {
+        enqueueProjectDetails({
           projectId: "p1",
-          version: 1,
           buildId: "b1",
-          authToken: "tok",
-        })
-      );
+          version: 1,
+          authPermit,
+          authToken,
+        });
+        commandQueue.enqueue({
+          type: "transactions",
+          projectId: "p1",
+          transactions: [makeTx(`tx-${authPermit}`)],
+        });
 
-      enqueueSpy.mockRestore();
-    });
+        await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
+        await flush();
 
-    test("enqueues setDetails for 'own' permit", () => {
-      const enqueueSpy = vi.spyOn(commandQueue, "enqueue");
-
-      enqueueProjectDetails({
-        projectId: "p1",
-        buildId: "b1",
-        version: 1,
-        authPermit: "own",
-        authToken: undefined,
-      });
-
-      expect(enqueueSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "setDetails" })
-      );
-
-      enqueueSpy.mockRestore();
-    });
+        expect(mockBuildPatch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            projectId: "p1",
+            buildId: "b1",
+            version: 1,
+            authToken,
+          })
+        );
+      }
+    );
   });
 
   //  ServerSyncStorage
