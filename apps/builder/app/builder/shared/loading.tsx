@@ -5,10 +5,10 @@ import {
   Flex,
   Progress,
   theme,
+  webstudioBrand,
 } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { useInterval } from "~/shared/hook-utils/use-interval";
-import { brandColors } from "~/shared/brand-colors";
 
 export const LoadingBackground = ({
   show,
@@ -118,9 +118,9 @@ export const Loading = ({ state }: { state: LoadingState }) => {
               left: "50%",
               transform: "translate(-50%, -50%)",
               background: cssVar("--background-primary"),
-              boxShadow: brandColors.progressGlow,
+              boxShadow: webstudioBrand.progressShadow,
             }}
-            indicatorCss={{ background: brandColors.progress }}
+            indicatorCss={{ background: webstudioBrand.progressGradient }}
           />
         </Box>
       )}

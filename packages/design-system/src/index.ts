@@ -2,6 +2,7 @@ export * from "./stitches.config";
 export { cssVar, declareCssVar } from "./css-var";
 export type { ThemeVariableName } from "./colors/__generated__/css-variable-names";
 export { rotateBoundedBackgroundHue } from "./color-utils";
+export { webstudioBrand } from "./brand";
 export { selectionBackground } from "./components/selection-color";
 export { chromeControlStyle } from "./components/chrome-control-style";
 export * from "./components/storybook";

@@ -155,6 +155,13 @@ rejects duplicate declarations and conflicts with every variable in
 `colors.css`. An unregistered string is rejected by `cssVar()` without requiring
 component variable constants to be exported or imported.
 
+## Fixed brand artwork
+
+`webstudioBrand` exports fixed Webstudio identity gradients and effects that do
+not follow the user-selectable theme. It contains only brand-specific artwork.
+Generic surfaces, content, borders, and overlays must use semantic colors or
+derive a local composition from them instead of being added to the brand API.
+
 ## Validation and type generation
 
 Type generation parses CSS structurally and rejects:

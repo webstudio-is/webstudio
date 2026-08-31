@@ -1,23 +1,27 @@
 import {
   AccessibleIcon,
   css,
+  cssVar,
   Grid,
   LinkButton,
   Text,
   theme,
+  webstudioBrand,
 } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
-import { brandColors } from "~/shared/brand-colors";
 
 const pageStyle = css({
   position: "fixed",
   justifyItems: "center",
   alignContent: "start",
   inset: 0,
-  background: brandColors.dashboard,
+  background: webstudioBrand.backgroundGradient,
   paddingTop: "10vh",
   // prevent global root styles override error color
-  color: brandColors.foreground,
+  color: `light-dark(
+    ${cssVar("--foreground-primary")},
+    ${cssVar("--foreground-on-inverse")}
+  )`,
 });
 
 export const ErrorMessage = ({
@@ -57,7 +61,10 @@ export const ErrorMessage = ({
       >
         <Grid
           css={{
-            background: brandColors.panel,
+            background: `light-dark(
+              ${cssVar("--background-primary")},
+              ${cssVar("--background-inverse")}
+            )`,
             padding: theme.spacing[7],
             borderRadius: theme.spacing[5],
             minWidth: theme.spacing[34],

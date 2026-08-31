@@ -25,7 +25,6 @@ import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
-import { brandColors } from "~/shared/brand-colors";
 
 const infoIconStyle = css({ flexShrink: 0, opacity: 0.8 });
 const prefetchImageBackground = declareCssVar(
@@ -159,7 +158,9 @@ export const ProjectCard = ({
                   color="contrast"
                   key={tag.id}
                   css={{
-                    background: brandColors.scrim,
+                    background: `oklch(from ${cssVar(
+                      "--overlay-scrim"
+                    )} l c h / 30%)`,
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}
