@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-COMPOSE_OVERRIDE_FILE="$ROOT_DIR/apps/builder/docker-compose.e2e.yaml"
+COMPOSE_OVERRIDE_FILE="${E2E_COMPOSE_OVERRIDE_FILE:-$ROOT_DIR/apps/builder/docker-compose.e2e.yaml}"
 PLAYWRIGHT_ARGS=("$@")
 if [ "${PLAYWRIGHT_ARGS[0]:-}" = "--" ]; then
   PLAYWRIGHT_ARGS=("${PLAYWRIGHT_ARGS[@]:1}")

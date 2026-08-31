@@ -324,7 +324,8 @@ jobs:
       name: development
 
     env:
-      BUILDER_E2E_COMPOSE_ARGS: "--env-file apps/builder/.env -f apps/builder/docker-compose.yaml -f apps/builder/docker-compose.e2e.yaml"
+      BUILDER_E2E_COMPOSE_ARGS: "--env-file apps/builder/.env -f apps/builder/docker-compose.yaml -f apps/builder/docker-compose.e2e-shard.yaml"
+      E2E_COMPOSE_OVERRIDE_FILE: ${{ github.workspace }}/apps/builder/docker-compose.e2e-shard.yaml
 
     steps:
       - uses: actions/checkout@v5
