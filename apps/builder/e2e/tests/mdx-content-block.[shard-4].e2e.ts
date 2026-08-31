@@ -26,7 +26,10 @@ import {
 } from "../flows/content-block-source";
 import { replaceCanvasText } from "../flows/content-editing";
 import { waitForContentEditMode } from "../flows/content-editing";
-import { waitForSyncStatus } from "../flows/sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncStatus,
+} from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { openNavigatorPanel } from "../flows/navigator";
 import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
@@ -50,9 +53,13 @@ const isAssetContentResponse = (response: Response, method = "PUT") =>
   response.url().includes("/rest/assets/") &&
   response.url().includes("/content");
 
-const waitForAssetWrite = (page: Page) =>
+const waitForAssetWrite = (page: Page, sourceIncludes?: string) =>
   page.waitForResponse(
-    (response) => isAssetContentResponse(response) && response.status() === 200,
+    (response) =>
+      isAssetContentResponse(response) &&
+      response.status() === 200 &&
+      (sourceIncludes === undefined ||
+        response.request().postData()?.includes(sourceIncludes) === true),
     { timeout: 30_000 }
   );
 
@@ -458,6 +465,8 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     .last()
     .waitFor({ state: "visible" });
   await page.keyboard.press("Escape");
+  const paragraphWrite = waitForAssetWrite(page, "Focused paragraph");
+  const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
   await page.keyboard.type("Focused paragraph");
   const paragraphId = await paragraphEditor.getAttribute("data-ws-id");
   if (paragraphId === null) {
@@ -468,6 +477,8 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     `p[contenteditable]:not([data-ws-id="${paragraphId}"])`
   );
   await emptyParagraphEditor.waitFor({ state: "visible" });
+  await paragraphWrite;
+  await paragraphMetadataWrite;
   const emptyParagraphId =
     await emptyParagraphEditor.getAttribute("data-ws-id");
   if (emptyParagraphId === null) {
