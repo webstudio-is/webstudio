@@ -5,7 +5,8 @@
 - `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
 - Session previews download missing project assets into `.webstudio/assets`. If `PREVIEW_ASSET_DOWNLOAD_FAILED` occurs, restore network and project asset access, then retry `preview.start`.
 - When launcher metadata is available, dependency installation reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.
-- When npm is selected, dependency installation honors `npm_config_cache`, including a caller-provided writable cache on Windows.
+- When npm is selected, dependency installation honors `npm_config_cache`. If it is unset, preview uses the writable `.webstudio/preview/.npm-cache` directory instead of the user's default npm cache.
+- For npm cache permission errors, unset `npm_config_cache` to use the preview-local cache, then retry. No cache deletion is required.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If dependency installation fails, the error includes the selected package-manager path and sanitized diagnostics. Check that path and the network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 
