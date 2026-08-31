@@ -81,6 +81,13 @@ const renderSplitButton = ({
   };
 };
 
+const getSegmentBackgrounds = (buttons: HTMLButtonElement[]) =>
+  buttons.map(
+    (segment, index) =>
+      getComputedStyle(segment, index === 0 ? undefined : "::before")
+        .backgroundColor
+  );
+
 test("split button segments share hover in the real menu composition", async () => {
   for (const pressed of [false, true]) {
     const { buttons, container } = renderSplitButton({ pressed });
@@ -92,11 +99,7 @@ test("split button segments share hover in the real menu composition", async () 
     for (const button of buttons) {
       await page.elementLocator(button).hover();
 
-      const backgrounds = buttons.map(
-        (segment, index) =>
-          getComputedStyle(segment, index === 0 ? undefined : "::before")
-            .backgroundColor
-      );
+      const backgrounds = getSegmentBackgrounds(buttons);
       expect(backgrounds[0]).toBe(backgrounds[1]);
       expect(backgrounds[0]).not.toBe("rgba(0, 0, 0, 0)");
     }
@@ -107,11 +110,7 @@ test("split button segments share hover in the real menu composition", async () 
         y: buttons[0].getBoundingClientRect().height / 2,
       },
     });
-    const gapHoverBackgrounds = buttons.map(
-      (segment, index) =>
-        getComputedStyle(segment, index === 0 ? undefined : "::before")
-          .backgroundColor
-    );
+    const gapHoverBackgrounds = getSegmentBackgrounds(buttons);
     expect(gapHoverBackgrounds[0]).toBe(gapHoverBackgrounds[1]);
     expect(gapHoverBackgrounds[0]).not.toBe("rgba(0, 0, 0, 0)");
 
@@ -144,6 +143,14 @@ test("split button segments share hover in the real menu composition", async () 
     act(() => root?.unmount());
     root = undefined;
   }
+});
+
+test("split button segments share the active state", () => {
+  const { buttons } = renderSplitButton({ pressed: true });
+  const backgrounds = getSegmentBackgrounds(buttons);
+
+  expect(backgrounds[0]).toBe(backgrounds[1]);
+  expect(backgrounds[0]).not.toBe("rgba(0, 0, 0, 0)");
 });
 
 test("split button segments remain independently actionable", async () => {
