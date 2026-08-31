@@ -39,6 +39,7 @@ import { getPageActionTarget } from "../page-action-target";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 import { transferFragmentAssets } from "./asset-transfer-utils";
+import { builderApi } from "../builder-api";
 import { rewriteTransferredDocumentAssetReferences } from "./mdx-asset-transfer";
 import {
   createClipboardAssetPaths,
@@ -495,6 +496,7 @@ export const handlePastePage = async (
         item.rootFragment,
         item.bodyFragment,
       ]),
+      importAssets: builderApi.importAssets,
     });
     if (transferred.success === false) {
       return transferred;

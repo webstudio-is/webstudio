@@ -188,18 +188,24 @@ describe("high-impact fixture API", () => {
         assetsDir: ".webstudio/assets",
       });
       expect(upload.ok).toBe(true);
-      expect(fixtureApi.getProject()).toMatchObject({
+      const project = fixtureApi.getProject();
+      expect(project).toMatchObject({
         assetFolders: [expect.objectContaining({ id: folderId, name: "Blog" })],
-        assets: markdownBlogFixtureDocuments.map(({ name, format }) =>
-          expect.objectContaining({
-            name,
-            filename: name.slice(0, name.lastIndexOf(".")),
-            type: "file",
-            format,
-            folderId,
-          })
-        ),
       });
+      expect(project.assets).toHaveLength(markdownBlogFixtureDocuments.length);
+      expect(project.assets).toEqual(
+        expect.arrayContaining(
+          markdownBlogFixtureDocuments.map(({ name, format }) =>
+            expect.objectContaining({
+              name,
+              filename: name.slice(0, name.lastIndexOf(".")),
+              type: "file",
+              format,
+              folderId,
+            })
+          )
+        )
+      );
       await expect(
         readFile(
           join(projectDirectory, ".webstudio/assets/aurora-trails.md"),

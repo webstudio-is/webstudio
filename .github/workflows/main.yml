@@ -61,7 +61,11 @@ jobs:
           - environment: development
             scope: cli
           - environment: development
-            scope: builder
+            scope: builder-core
+            projects: server browser-builder-settings browser-builder-features
+          - environment: development
+            scope: builder-app
+            projects: browser-builder-shared browser-shared-heavy browser-shared browser-canvas-dashboard
     environment:
       name: ${{ matrix.environment }}
     env:
@@ -94,7 +98,7 @@ jobs:
         run: pnpm --filter @webstudio-is/sdk-components-animation exec playwright install chromium firefox
 
       - name: Chromium init
-        if: matrix.scope == 'builder'
+        if: startsWith(matrix.scope, 'builder-')
         run: pnpm --filter @webstudio-is/builder exec playwright install chromium
 
       - name: Test packages
@@ -106,8 +110,11 @@ jobs:
         run: pnpm --filter webstudio test
 
       - name: Test Builder
-        if: matrix.scope == 'builder'
-        run: pnpm --filter @webstudio-is/builder test
+        if: startsWith(matrix.scope, 'builder-')
+        run: |
+          for project in ${{ matrix.projects }}; do
+            pnpm --filter @webstudio-is/builder exec vitest run --project "$project"
+          done
 
   checks:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
@@ -311,7 +318,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
     environment:
       name: development
@@ -348,7 +355,7 @@ jobs:
       - name: Run builder e2e
         env:
           E2E_SKIP_BUILDER_BUILD: true
-        run: pnpm e2e:builder -- --workers=2 --shard=${{ matrix.shard }}/10
+        run: pnpm e2e:builder -- --workers=2 --shard=${{ matrix.shard }}/12
 
       - name: Upload Builder e2e report
         if: failure()

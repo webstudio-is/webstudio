@@ -19,7 +19,6 @@ const browserProject = (
       enabled: true,
       headless: true,
       screenshotFailures: false,
-      fileParallelism: false,
       api: { port: browserTestPorts.builder },
       instances: [{ browser: "chromium" as const }],
     },
@@ -55,6 +54,7 @@ export default defineConfig({
     },
   },
   test: {
+    silent: "passed-only",
     workspace: [
       browserProject("builder-settings", [
         "app/builder/features/{settings-panel,style-panel}/**/*.{test,spec}.{ts,tsx}",

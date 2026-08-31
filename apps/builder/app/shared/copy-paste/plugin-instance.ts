@@ -363,6 +363,7 @@ const insertPastedFragment = async ({
       sourceOrigin,
       projectId,
       fragments: [fragment],
+      importAssets: builderApi.importAssets,
     });
     if (transferred.success === false) {
       return transferred;
