@@ -214,8 +214,17 @@ export const generateJsxElement = ({
   let collectionItemValue: undefined | string;
   let collectionItemKeyValue: undefined | string;
   let classNameValue: undefined | string;
-  const instanceProps = Array.from(props.values()).filter(
-    (prop) => prop.instanceId === instance.id
+  // Older projects can contain duplicate props after an asset-derived prop was
+  // persisted alongside the authored prop. Keep the last value for a prop
+  // name so malformed data cannot produce duplicate JSX attributes.
+  const instanceProps = Array.from(
+    Array.from(props.values())
+      .filter((prop) => prop.instanceId === instance.id)
+      .reduce((uniqueProps, prop) => {
+        uniqueProps.set(prop.name, prop);
+        return uniqueProps;
+      }, new Map<string, Prop>())
+      .values()
   );
   const instancePropNames = new Set(instanceProps.map((prop) => prop.name));
   const projectedResourceProps = new Map<string, unknown>();
