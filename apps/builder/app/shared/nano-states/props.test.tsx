@@ -4,6 +4,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
 import {
   type DataSource,
+  encodeDataSourceVariable,
   type Instance,
   ROOT_INSTANCE_ID,
   type Resource,
@@ -226,25 +227,46 @@ test("does not preload resources in statically hidden subtrees", () => {
         id: "hidden",
         type: "instance",
         component: "Box",
-        children: [{ type: "id", value: "hidden-child" }],
+        children: [
+          { type: "id", value: "hidden-child" },
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("hidden-data-source"),
+          },
+        ],
       },
       {
         id: "hidden-child",
         type: "instance",
         component: "Box",
-        children: [],
+        children: [
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("hidden-child-data-source"),
+          },
+        ],
       },
       {
         id: "visible",
         type: "instance",
         component: "Box",
-        children: [],
+        children: [
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("visible-data-source"),
+          },
+        ],
       },
       {
         id: "dynamic",
         type: "instance",
         component: "Box",
-        children: [],
+        children: [
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("dynamic-data-source"),
+          },
+        ],
       },
     ])
   );
@@ -293,6 +315,52 @@ test("does not preload resources in statically hidden subtrees", () => {
   expect(
     $computedResourceRequests.get().map((request) => request.name)
   ).toEqual(["visible", "dynamic"]);
+});
+
+test("preloads resources consumed by copied expressions", () => {
+  const dataSourceId = "copied-resource-data-source";
+  $instances.set(
+    toMap([
+      {
+        id: "root",
+        type: "instance",
+        component: "Body",
+        children: [
+          {
+            type: "expression",
+            value: `${encodeDataSourceVariable(dataSourceId)}.data.year`,
+          },
+        ],
+      },
+    ])
+  );
+  selectPageRoot("root");
+  $dataSources.set(
+    toMap([
+      {
+        id: dataSourceId,
+        scopeInstanceId: "template-source",
+        type: "resource",
+        name: "Current date",
+        resourceId: "current-date-resource",
+      },
+    ])
+  );
+  $resources.set(
+    toMap([
+      {
+        id: "current-date-resource",
+        name: "Current date",
+        url: '"/$resources/current-date"',
+        method: "get",
+        headers: [],
+      },
+    ])
+  );
+
+  expect(
+    $computedResourceRequests.get().map((request) => request.name)
+  ).toEqual(["Current date"]);
 });
 
 test("collect prop values", () => {
