@@ -44,10 +44,7 @@ export const Login = ({
       css={{
         height: "100vh",
         color: cssVar("--foreground-primary"),
-        background: `linear-gradient(
-          light-dark(transparent, ${cssVar("--overlay-scrim")}),
-          light-dark(transparent, ${cssVar("--overlay-scrim")})
-        ), ${brandColors.dashboard}`,
+        background: brandColors.dashboard,
       }}
     >
       <Flex
