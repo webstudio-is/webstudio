@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { bundleVersion } from "@webstudio-is/protocol";
+import { getBundleVersion } from "@webstudio-is/protocol";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import { resolveRegistryTarget } from "./release-smoke-registry";
 import { startRuntimeFixtureApi } from "./runtime-fixture-api";
@@ -26,16 +26,6 @@ export const assertPublishedCliContract = ({
   throw new Error(
     `Published CLI contract mismatch for webstudio@${cliVersion}. Expected bundle version ${expectedVersion}, received ${receivedVersion ?? "missing"}. Publish a matching CLI before deploying Builder.`
   );
-};
-
-const readBundleVersion = (input: unknown) => {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    return;
-  }
-  const value = (input as { bundleVersion?: unknown }).bundleVersion;
-  return typeof value === "string" || typeof value === "number"
-    ? value
-    : undefined;
 };
 
 const readNpmJson = async (args: string[]) =>
@@ -72,7 +62,7 @@ export const loadBuilderBundleVersion = async (
         );
       }
       const data = (await response.json()) as unknown;
-      const receivedVersion = readBundleVersion(data);
+      const receivedVersion = getBundleVersion(data);
       if (receivedVersion === undefined) {
         throw new Error(
           "Builder CLI compatibility response has no bundle version."
@@ -94,21 +84,13 @@ export const loadBuilderBundleVersion = async (
   );
 };
 
-export const checkPublishedCliContract = async ({
+const checkPublishedCliContract = async ({
   builderOrigin,
-  expectedVersion,
-  registrySpec = "webstudio@latest",
 }: {
-  builderOrigin?: string;
-  expectedVersion?: string | number;
-  registrySpec?: string;
-} = {}) => {
-  const resolvedExpectedVersion =
-    expectedVersion ??
-    (builderOrigin === undefined
-      ? bundleVersion
-      : await loadBuilderBundleVersion(builderOrigin));
-  const target = await resolveRegistryTarget(registrySpec, {
+  builderOrigin: string;
+}) => {
+  const expectedVersion = await loadBuilderBundleVersion(builderOrigin);
+  const target = await resolveRegistryTarget("webstudio@latest", {
     attempts: 3,
     readNpmJson,
   });
@@ -121,7 +103,7 @@ export const checkPublishedCliContract = async ({
         if (operationPath !== "build.loadProjectBundleByBuildId") {
           throw new Error(`Unexpected CLI probe operation ${operationPath}.`);
         }
-        receivedVersion = readBundleVersion(await readInput());
+        receivedVersion = getBundleVersion(await readInput());
         return createPublishedProjectBundleFixture({ origin: fixtureOrigin });
       }
     );
@@ -159,7 +141,7 @@ export const checkPublishedCliContract = async ({
 
       assertPublishedCliContract({
         cliVersion: target.version,
-        expectedVersion: resolvedExpectedVersion,
+        expectedVersion,
         receivedVersion,
       });
       if (probeError !== undefined) {
@@ -171,12 +153,12 @@ export const checkPublishedCliContract = async ({
             ? probeError.stderr.trim()
             : "";
         throw new Error(
-          `Published CLI webstudio@${target.version} sent the expected bundle version ${resolvedExpectedVersion} but could not complete the read-only sync probe: ${stderr || (probeError instanceof Error ? probeError.message : String(probeError))}`,
+          `Published CLI webstudio@${target.version} sent the expected bundle version ${expectedVersion} but could not complete the read-only sync probe: ${stderr || (probeError instanceof Error ? probeError.message : String(probeError))}`,
           { cause: probeError }
         );
       }
       console.info(
-        `Published CLI webstudio@${target.version} matches Builder bundle version ${resolvedExpectedVersion}.`
+        `Published CLI webstudio@${target.version} matches Builder bundle version ${expectedVersion}.`
       );
     } finally {
       await fixtureApi.close();
@@ -191,7 +173,13 @@ if (
   entrypoint !== undefined &&
   import.meta.url === pathToFileURL(resolve(entrypoint)).href
 ) {
+  const builderOrigin = process.env.WEBSTUDIO_CLI_CONTRACT_BUILDER_ORIGIN;
+  if (builderOrigin === undefined || builderOrigin === "") {
+    throw new Error(
+      "WEBSTUDIO_CLI_CONTRACT_BUILDER_ORIGIN must identify the staged Builder deployment."
+    );
+  }
   await checkPublishedCliContract({
-    builderOrigin: process.env.WEBSTUDIO_CLI_CONTRACT_BUILDER_ORIGIN,
+    builderOrigin,
   });
 }
