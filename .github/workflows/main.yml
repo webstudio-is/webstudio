@@ -8,8 +8,7 @@ on:
   pull_request_target:
     types: [labeled]
 
-# Cancel in-progress runs for the same event and PR. Keep pull_request_target
-# label events from canceling the regular pull_request checks.
+# Keep pull_request_target label events from canceling pull_request checks.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
@@ -44,58 +43,25 @@ jobs:
       - name: Build packaged SSG fixture
         run: pnpm --filter webstudio test:ssg-package
 
-  static-checks:
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 3
-    environment:
-      name: development
-    runs-on: ubuntu-24.04
-
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
-
-      - uses: ./.github/actions/submodules-checkout
-        with:
-          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
-
-      - uses: ./.github/actions/ci-setup
-
-      - name: Format
-        run: pnpm oxfmt --check
-
-      - name: Lint and package boundaries
-        run: pnpm lint && pnpm check:package-boundaries
-
-      - name: Generated contracts and documentation
-        run: pnpm check:generated-api && pnpm check:generated-docs
-
   tests:
     if: |
       github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 3
+    timeout-minutes: 5
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         include:
           - environment: empty
-            scope: core-packages
-          - environment: empty
-            scope: browser-packages
+            scope: packages
           - environment: development
-            scope: core-packages
-          - environment: development
-            scope: browser-packages
+            scope: packages
           - environment: development
             scope: cli
+          - environment: development
+            scope: builder
     environment:
       name: ${{ matrix.environment }}
     env:
@@ -115,102 +81,57 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Cache Playwright browsers
-        if: matrix.scope == 'browser-packages'
+        if: matrix.scope != 'cli'
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: test-playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: test-playwright-${{ matrix.scope }}-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            test-playwright-${{ runner.os }}-
+            test-playwright-${{ matrix.scope }}-${{ runner.os }}-
 
       - name: Playwright init
-        if: matrix.scope == 'browser-packages'
+        if: matrix.scope == 'packages'
         run: pnpm --filter @webstudio-is/sdk-components-animation exec playwright install chromium firefox
 
-      - name: Test core packages
-        if: matrix.scope == 'core-packages'
-        run: pnpm -r --filter "!@webstudio-is/builder" --filter "!webstudio" --filter "!@webstudio-is/design-system" --filter "!@webstudio-is/query-builder-react" --filter "!@webstudio-is/sdk-components-*" test
+      - name: Chromium init
+        if: matrix.scope == 'builder'
+        run: pnpm --filter @webstudio-is/builder exec playwright install chromium
 
-      - name: Test browser packages
-        if: matrix.scope == 'browser-packages'
-        run: pnpm -r --filter "@webstudio-is/design-system" --filter "@webstudio-is/query-builder-react" --filter "@webstudio-is/sdk-components-*" test
+      - name: Test packages
+        if: matrix.scope == 'packages'
+        run: pnpm -r --filter "!@webstudio-is/builder" --filter "!webstudio" test
 
       - name: Test CLI
         if: matrix.scope == 'cli'
         run: pnpm --filter webstudio test
 
-  builder-tests:
+      - name: Test Builder
+        if: matrix.scope == 'builder'
+        run: pnpm --filter @webstudio-is/builder test
+
+  checks:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
     if: |
       github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 3
-    runs-on: ubuntu-24.04
+
+    timeout-minutes: 5
+
     strategy:
-      fail-fast: false
       matrix:
-        include:
-          - project: server
-            browser: false
-          - project: browser-builder-settings
-            browser: true
-          - project: browser-builder-features
-            browser: true
-          - project: browser-builder-shared
-            browser: true
-          - project: browser-shared-heavy
-            browser: true
-          - project: browser-shared
-            browser: true
-          - project: browser-canvas-dashboard
-            browser: true
+        environment:
+          - empty
+          - development
+
     environment:
-      name: development
+      name: ${{ matrix.environment }}
+
     env:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
 
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
-
-      - uses: ./.github/actions/submodules-checkout
-        with:
-          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
-
-      - uses: ./.github/actions/ci-setup
-
-      - name: Cache Chromium
-        if: matrix.browser
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: builder-test-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            builder-test-chromium-${{ runner.os }}-
-
-      - name: Playwright init
-        if: matrix.browser
-        run: pnpm --filter @webstudio-is/builder exec playwright install chromium
-
-      - name: Test Builder project
-        run: pnpm --filter @webstudio-is/builder exec vitest run --project ${{ matrix.project }}
-
-  typecheck:
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 3
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: [empty, development]
-    environment:
-      name: ${{ matrix.environment }}
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v5
@@ -218,38 +139,46 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy' }}
 
+      # Will not checkout submodules on empty environment, and will on development
       - uses: ./.github/actions/submodules-checkout
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
-      - uses: ./.github/actions/ci-setup
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Pnpm install
+        run: |
+          pnpm install
+
+      - run: echo ===SHA USED=== ${{ github.event.pull_request.head.sha || github.sha }} # todo: remove after check whats happening on main
+
+      - run: |
+          pnpm oxfmt --check
+
+      - name: Lint
+        run: |
+          pnpm lint
+
+      - name: Package boundaries
+        run: |
+          pnpm check:package-boundaries
+
+      - name: Generated API contracts
+        run: |
+          pnpm check:generated-api
+
+      - name: Generated CLI docs
+        run: |
+          pnpm check:generated-docs
 
       - name: Typecheck
-        run: pnpm -r typecheck
-
-  checks:
-    if: |
-      always() &&
-      (github.event_name == 'push' ||
-       github.event_name == 'pull_request' ||
-       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy'))
-    needs: [static-checks, tests, builder-tests, typecheck]
-    timeout-minutes: 1
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        environment: [empty, development]
-    environment:
-      name: ${{ matrix.environment }}
-
-    steps:
-      - name: Verify checks
-        if: |
-          needs.static-checks.result != 'success' ||
-          needs.tests.result != 'success' ||
-          needs.builder-tests.result != 'success' ||
-          needs.typecheck.result != 'success'
-        run: exit 1
+        run: |
+          pnpm -r typecheck
 
   check-size:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
@@ -257,6 +186,8 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+
+    timeout-minutes: 5
 
     runs-on: ubuntu-24.04-arm
 
@@ -417,37 +348,7 @@ jobs:
       - name: Run builder e2e
         env:
           E2E_SKIP_BUILDER_BUILD: true
-          E2E_TEST_COMMAND_TIMEOUT_SECONDS: 900
-        run: |
-          run_builder_e2e() {
-            pnpm e2e:builder -- --workers=2 --shard=${{ matrix.shard }}/10
-          }
-
-          run_builder_e2e_keep_logs() {
-            E2E_SKIP_CLEANUP=true pnpm e2e:builder -- --workers=2 --shard=${{ matrix.shard }}/10
-          }
-
-          run_builder_e2e || {
-            echo "::warning::Builder e2e shard ${{ matrix.shard }} failed; retrying once with a clean backend"
-            if [ -d apps/builder/playwright-report ]; then
-              mv apps/builder/playwright-report apps/builder/playwright-report-attempt-1
-            fi
-            if [ -d apps/builder/test-results/e2e ]; then
-              mv apps/builder/test-results/e2e apps/builder/test-results/e2e-attempt-1
-            fi
-            run_builder_e2e_keep_logs
-          }
-
-      - name: Upload initial Builder e2e failure
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: builder-e2e-report-${{ matrix.shard }}-attempt-1
-          if-no-files-found: ignore
-          retention-days: 7
-          path: |
-            apps/builder/playwright-report-attempt-1
-            apps/builder/test-results/e2e-attempt-1
+        run: pnpm e2e:builder -- --workers=2 --shard=${{ matrix.shard }}/10
 
       - name: Upload Builder e2e report
         if: failure()
