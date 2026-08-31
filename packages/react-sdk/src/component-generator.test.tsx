@@ -205,6 +205,39 @@ test("generate jsx element with literal props", () => {
   );
 });
 
+test("deduplicates duplicate instance props when generating jsx", () => {
+  const data = renderData(<$.Image ws:id="image" width={100}></$.Image>);
+  const widthProp = Array.from(data.props.values()).find(
+    (prop) => prop.instanceId === "image" && prop.name === "width"
+  );
+  if (widthProp?.type !== "number") {
+    throw new Error("Expected Image width prop");
+  }
+  data.props.set("duplicate-width", {
+    ...widthProp!,
+    id: "duplicate-width",
+    value: 200,
+  });
+
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      usedDataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      metas: new Map(),
+      children: [{ type: "id", value: "image" }],
+      ...data,
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      <Image
+      width={200} />
+    `)
+    )
+  );
+});
+
 test("ignore asset and page props", () => {
   expect(
     generateJsxChildren({
