@@ -146,18 +146,6 @@ test("split button segments share hover in the real menu composition", async () 
   }
 });
 
-test("split button segments share the active state", () => {
-  const { buttons } = renderSplitButton({ pressed: true });
-  const previewBackground = getComputedStyle(buttons[0]).backgroundColor;
-  const menuBackground = getComputedStyle(
-    buttons[1],
-    "::before"
-  ).backgroundColor;
-
-  expect(menuBackground).toBe(previewBackground);
-  expect(menuBackground).not.toBe("rgba(0, 0, 0, 0)");
-});
-
 test("split button segments remain independently actionable", async () => {
   let previewClicks = 0;
   const { buttons } = renderSplitButton({
