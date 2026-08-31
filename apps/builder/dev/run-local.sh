@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-COMPOSE_OVERRIDE_FILE="$ROOT_DIR/apps/builder/docker-compose.local.yaml"
-source "$ROOT_DIR/apps/builder/dev/backend.sh"
-builder_backend_init
+source "$ROOT_DIR/apps/builder/backend/lib.sh"
+builder_backend_init development
+builder_backend_init_schema_snapshot
 
 cleanup() {
   if [ "${LOCAL_DEV_CLEANUP:-${LOCAL_DEV_START_BUILDER:-true}}" != "true" ]; then

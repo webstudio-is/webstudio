@@ -42,8 +42,6 @@ runs:
     - name: Run Builder E2E
       shell: bash
       env:
-        E2E_SKIP_BUILDER_BUILD: "true"
-        E2E_SKIP_CLEANUP: "true"
         E2E_TEST_SHARD: ${{ inputs.shard }}
         E2E_TEST_PARTITION: ${{ inputs.partition }}
       run: |
@@ -51,7 +49,7 @@ runs:
         if [ -n "$E2E_TEST_PARTITION" ]; then
           args+=(--shard="$E2E_TEST_PARTITION")
         fi
-        pnpm e2e:builder -- "${args[@]}"
+        pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
 
     - name: Upload report
       if: failure()
@@ -66,9 +64,9 @@ runs:
     - name: Print service logs
       if: failure()
       shell: bash
-      run: docker compose $BUILDER_E2E_COMPOSE_ARGS logs
+      run: pnpm --filter @webstudio-is/builder backend snapshot logs
 
     - name: Stop services
       if: always()
       shell: bash
-      run: docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans
+      run: pnpm --filter @webstudio-is/builder backend snapshot down --volumes --remove-orphans

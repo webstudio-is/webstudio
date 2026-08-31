@@ -2,16 +2,55 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-COMPOSE_OVERRIDE_FILE="${E2E_COMPOSE_OVERRIDE_FILE:-$ROOT_DIR/apps/builder/docker-compose.e2e.yaml}"
+mode="${1:-run}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+
+case "$mode" in
+  run)
+    ;;
+  dev-backend)
+    export E2E_SKIP_CLEANUP=true
+    export E2E_RUN_TESTS=false
+    export E2E_START_POSTGREST=true
+    export E2E_DB_BOOTSTRAP=if-empty
+    export E2E_INSTALL_PLAYWRIGHT=false
+    ;;
+  dev)
+    export E2E_SKIP_CLEANUP=true
+    export E2E_DB_BOOTSTRAP=if-empty
+    export E2E_INSTALL_PLAYWRIGHT=false
+    export E2E_BUILDER_URL="${E2E_BUILDER_URL:-https://127.0.0.1:3000}"
+    ;;
+  schema-cache)
+    export E2E_DB_BOOTSTRAP=migrations
+    export E2E_WRITE_SCHEMA_SNAPSHOT=true
+    export E2E_RUN_TESTS=false
+    ;;
+  supabase-migrations)
+    export E2E_BACKEND_MODE=supabase
+    export E2E_BUILD_DATABASE_IMAGE=false
+    export E2E_DB_BOOTSTRAP=migrations
+    export E2E_RUN_TESTS=false
+    ;;
+  ci-shard)
+    export E2E_BACKEND_MODE=snapshot
+    export E2E_BUILD_DATABASE_IMAGE=false
+    export E2E_SKIP_BUILDER_BUILD=true
+    export E2E_SKIP_CLEANUP=true
+    ;;
+  *)
+    echo "Unknown Builder E2E mode: $mode" >&2
+    exit 1
+    ;;
+esac
+
 PLAYWRIGHT_ARGS=("$@")
 if [ "${PLAYWRIGHT_ARGS[0]:-}" = "--" ]; then
   PLAYWRIGHT_ARGS=("${PLAYWRIGHT_ARGS[@]:1}")
 fi
 
-# Keep the disposable E2E backend independent from the persistent local
-# development backend. In particular, E2E cleanup must never remove the local
-# database volume.
-export COMPOSE_PROJECT_NAME="${E2E_COMPOSE_PROJECT_NAME:-builder-e2e}"
 export PGPORT="${E2E_PGPORT:-55434}"
 export POSTGREST_PORT="${E2E_POSTGREST_PORT:-55435}"
 export POSTGRES_DB="${E2E_POSTGRES_DB:-webstudio}"
@@ -23,10 +62,12 @@ export POSTGRES_PASSWORD="${E2E_POSTGRES_PASSWORD:-pass}"
 export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}?pgbouncer=true}"
 export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}}"
 export POSTGREST_URL="${E2E_POSTGREST_URL:-http://localhost:${POSTGREST_PORT}}"
+export E2E_BACKEND_MODE="${E2E_BACKEND_MODE:-test}"
 
-source "$ROOT_DIR/apps/builder/dev/backend.sh"
+source "$ROOT_DIR/apps/builder/backend/lib.sh"
 source "$ROOT_DIR/apps/builder/e2e/run-step.sh"
-builder_backend_init
+builder_backend_init "$E2E_BACKEND_MODE"
+builder_backend_init_schema_snapshot
 
 export E2E_DB_BOOTSTRAP="${E2E_DB_BOOTSTRAP:-auto}"
 export E2E_BUILD_DATABASE_IMAGE="${E2E_BUILD_DATABASE_IMAGE:-true}"

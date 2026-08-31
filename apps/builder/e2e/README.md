@@ -88,9 +88,9 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI discovers isolated Playwright shards from filename tags. Each shard uses two
-workers, and files are assigned by measured CI duration to keep jobs near three
-to four minutes:
+CI discovers isolated Playwright shards from filename tags. Each shard uses
+four workers, and files are assigned by measured CI duration to keep jobs near
+three to four minutes:
 
 ```txt
 pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts
@@ -99,10 +99,23 @@ pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts
 Every E2E filename must contain at least one unique shard tag. CI derives its
 matrix from those tags, so adding or removing a shard does not require editing
 the workflow. Files with multiple tags are partitioned across those shards. All
-files selected by a shard must use the same set of tags. Each shard uses four
-workers. Rebalance by changing filename tags when measured job durations drift.
+files selected by a shard must use the same set of tags. Rebalance by changing
+filename tags when measured job durations drift.
 Suites may opt into parallel mode only when every worker creates uniquely named
 setup data and the tests do not depend on each other's mutations.
+
+## Backend organization
+
+Development, E2E, schema-cache, and Supabase compatibility commands share the
+backend definition in `apps/builder/backend`. `compose.yaml` defines the common
+services, and `compose.<mode>.yaml` defines only the differences for a named
+mode. Backend commands resolve these files by convention; callers do not pass
+Compose filenames.
+
+The schema-cache fingerprint discovers migration sources and non-test backend
+files automatically. Adding a database image, initialization script, Compose
+override, or migration therefore invalidates the cache without updating a
+filename registry.
 
 ## Failures
 

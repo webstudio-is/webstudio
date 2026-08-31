@@ -28,3 +28,6 @@ export const Auth: StoryFn<typeof LoginComponent> = () => {
     </StorySection>
   );
 };
+
+export const Dark = Auth.bind({});
+Dark.globals = { colorScheme: "dark" };
