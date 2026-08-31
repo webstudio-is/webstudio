@@ -27,6 +27,7 @@ const browserProject = (
 
 export default defineConfig({
   optimizeDeps: {
+    entries: ["app/**/*.{test,spec}.{ts,tsx}"],
     include: [
       "react/jsx-dev-runtime",
       "react-router-dom",

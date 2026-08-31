@@ -1,4 +1,12 @@
 services:
   db:
+    # Migrations are validated against Supabase while generating the schema
+    # snapshot. Test shards only need PostgreSQL plus the extension referenced
+    # by that snapshot, avoiding a repeated 1.9 GB Supabase image download.
+    image: postgres:15.19-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?}
     tmpfs:
       - /var/lib/postgresql/data
+    volumes:
+      - ./e2e/postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql:ro
