@@ -1,0 +1,6 @@
+services:
+  db:
+    # Keep the compatibility check disposable while retaining the exact
+    # Supabase image and initialization from docker-compose.yaml.
+    tmpfs:
+      - /var/lib/postgresql/data

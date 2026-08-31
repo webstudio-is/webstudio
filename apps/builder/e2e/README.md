@@ -20,6 +20,14 @@ explicitly with:
 pnpm e2e:builder:refresh-schema-cache
 ```
 
+The regular E2E suite uses lightweight PostgreSQL containers. Verify that the
+complete migration chain also applies to the pinned Supabase PostgreSQL image
+with:
+
+```sh
+pnpm e2e:builder:check-supabase-migrations
+```
+
 Pass normal Playwright Test arguments after `--`. For example:
 
 ```sh

@@ -25,7 +25,10 @@ builder_backend_migrations_fingerprint() {
         -type f \( -name migration.sql -o -name migration.ts \) -print
       printf '%s\n' \
         apps/builder/dev/backend.sh \
-        apps/builder/docker-compose.yaml
+        apps/builder/docker-compose.yaml \
+        apps/builder/docker-compose.e2e.yaml \
+        apps/builder/e2e/postgres.Dockerfile \
+        apps/builder/e2e/postgres-init.sql
     } | LC_ALL=C sort | while IFS= read -r path; do
       if [ -f "$path" ]; then
         printf '%s ' "$path"
@@ -155,9 +158,8 @@ builder_backend_bootstrap_if_empty() {
 builder_backend_write_schema_snapshot() {
   mkdir -p "$(dirname "$SCHEMA_SNAPSHOT")"
   local temporary_snapshot="${SCHEMA_SNAPSHOT}.tmp.$$"
-  # Supabase initializes auth, storage, extensions, and other service schemas.
   # Dump only the application-owned public schema so the snapshot can be
-  # restored into a fresh Supabase database without replacing its internals.
+  # restored without replacing database-owned schemas.
   if builder_compose exec -T db \
     sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema=public --schema-only --clean --if-exists --no-owner --no-privileges' \
     >"$temporary_snapshot"; then
