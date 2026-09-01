@@ -89,7 +89,7 @@ describe("Craft color CSS source", () => {
     expect(Object.keys(colors.scheme.light)).toEqual(
       Object.keys(colors.scheme.dark)
     );
-    expect(Object.keys(colors.derived)).toHaveLength(28);
+    expect(Object.keys(colors.derived)).toHaveLength(31);
     expect(colors.derived).toHaveProperty("focus");
     expect(Object.keys(colors.semantic)).toEqual([
       "background",
@@ -102,8 +102,11 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(33);
+    ).toBe(36);
     expect(colors.semantic.background).toHaveProperty("positive-subtle");
+    expect(colors.semantic.background).toHaveProperty("accent-secondary");
+    expect(colors.semantic.foreground).toHaveProperty("accent-secondary");
+    expect(colors.semantic.foreground).toHaveProperty("on-accent-secondary");
     expect(colors.semantic.background).not.toHaveProperty("accent-hover");
     expect(colors.semantic.overlay).toHaveProperty("interaction-hover");
   });
