@@ -20,7 +20,7 @@ test.each(["light", "dark"] as const)(
     root.dataset.colorScheme = mode;
     const reference = document.createElement("span");
     reference.style.backgroundColor = selectionBackground;
-    reference.style.color = "var(--foreground-primary)";
+    reference.style.color = "var(--foreground-on-selection)";
     document.body.append(reference);
     const expectedBackground = getComputedStyle(reference).backgroundColor;
     const expectedForeground = getComputedStyle(reference).color;

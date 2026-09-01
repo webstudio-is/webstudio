@@ -33,6 +33,7 @@ export type CssVariableName =
   | "--foreground-on-accent-secondary"
   | "--foreground-on-positive"
   | "--foreground-on-negative"
+  | "--foreground-on-selection"
   | "--foreground-accent"
   | "--foreground-accent-secondary"
   | "--foreground-positive"

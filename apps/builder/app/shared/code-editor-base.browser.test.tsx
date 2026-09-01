@@ -95,7 +95,7 @@ test.each(["light", "dark"] as const)(
     }
     const reference = document.createElement("span");
     reference.style.background = selectionBackground;
-    reference.style.color = "var(--foreground-primary)";
+    reference.style.color = "var(--foreground-on-selection)";
     document.body.appendChild(reference);
 
     const selectionColor = getComputedStyle(selection).backgroundColor;

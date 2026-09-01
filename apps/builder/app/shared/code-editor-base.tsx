@@ -143,7 +143,7 @@ const editorContentStyle = css({
     backgroundColor: `${selectionBackground} !important`,
   },
   "& .cm-selectedText": {
-    color: `${cssVar("--foreground-primary")} !important`,
+    color: `${cssVar("--foreground-on-selection")} !important`,
   },
   // fix scrolls appear on mount
   "& .cm-scroller": {
