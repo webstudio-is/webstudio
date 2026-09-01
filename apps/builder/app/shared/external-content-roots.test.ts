@@ -134,6 +134,107 @@ test("places unresolved-template placeholders at their authored nesting point", 
   ).toEqual([{ type: "id", value: section.id }]);
 });
 
+test("re-resolves existing Markdown when a matching template is added", async () => {
+  const source = "# Existing heading\n";
+  const sourceAsset = {
+    ...asset,
+    size: new TextEncoder().encode(source).byteLength,
+  };
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: sourceAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(source);
+        })(),
+      }),
+      updateContent: async () => sourceAsset,
+    },
+    authorize: () => true,
+  });
+  sessions.push(session);
+  assetContentBridgeTesting.initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
+    })
+  );
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+    ])
+  );
+  $props.set(new Map());
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+
+  releases.push(
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: sourceAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  );
+
+  const insertion = executeRuntimeMutation({
+    id: "instances.insertComponent",
+    input: {
+      parentInstanceId: "templates",
+      component: "ws:element",
+      tag: "h1",
+    },
+  });
+  const templateId = insertion?.result.rootInstanceIds[0];
+  if (templateId === undefined) {
+    throw new Error("Expected an inserted heading template");
+  }
+  executeRuntimeMutation({
+    id: "instances.updateProps",
+    input: {
+      updates: [
+        {
+          instanceId: templateId,
+          name: "title",
+          type: "string",
+          value: "Template applied",
+        },
+      ],
+    },
+  });
+
+  await vi.waitFor(() => {
+    const heading = getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })?.[0];
+    if (heading?.type !== "id") {
+      throw new Error("Expected the materialized heading");
+    }
+    expect(
+      Array.from($props.get().values()).find(
+        (prop) => prop.instanceId === heading.value && prop.name === "title"
+      )
+    ).toMatchObject({ type: "string", value: "Template applied" });
+  });
+});
+
 const asset: Asset = {
   id: "asset",
   projectId: "project",

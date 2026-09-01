@@ -37,6 +37,7 @@ type SerializationNode = {
     mode?: MdxMode;
     props?: readonly MdxAuthoredProp[];
     propsUseJsxNames?: boolean;
+    jsxName?: string;
     rawText?: string;
     rawSource?: string;
   };
@@ -73,21 +74,25 @@ const toTextNode = (
     : { type: "text", value };
 
 const toWebstudioElement = ({
+  tagName = "ws.element",
+  jsxName,
   mode,
   props,
   children,
   propsUseJsxNames,
 }: {
+  tagName?: string;
+  jsxName?: string;
   mode: MdxMode;
   props: readonly MdxAuthoredProp[];
   children: readonly MdxAuthoredNode[];
   propsUseJsxNames: boolean;
 }): SerializationNode => ({
   type: "element",
-  tagName: "ws.element",
+  tagName,
   properties: {},
   children: children.map((child) => toSerializationNode(child)),
-  data: { mode, props, propsUseJsxNames },
+  data: { mode, props, propsUseJsxNames, jsxName },
 });
 
 const toSerializationNode = (
@@ -108,6 +113,16 @@ const toSerializationNode = (
     };
   }
   if (node.type === "template") {
+    if (node.syntax === "jsx") {
+      return toWebstudioElement({
+        tagName: "ws.template",
+        jsxName: node.name,
+        mode: node.mdxMode,
+        props: node.props,
+        children: node.children,
+        propsUseJsxNames: true,
+      });
+    }
     return toWebstudioElement({
       mode: node.mdxMode,
       props: [{ name: "ws:name", value: node.name }, ...node.props],
@@ -172,14 +187,14 @@ const mapWebstudioElement: Handle = (state, node) => {
   if (data?.mode === "text") {
     return {
       type: "mdxJsxTextElement",
-      name: "ws.element",
+      name: data?.jsxName ?? "ws.element",
       attributes,
       children,
     } as MdxJsxTextElement;
   }
   return {
     type: "mdxJsxFlowElement",
-    name: "ws.element",
+    name: data?.jsxName ?? "ws.element",
     attributes,
     children: state.toFlow(children),
   } as MdxJsxFlowElement;
@@ -240,7 +255,11 @@ export const serializeMdxDocument = (document: MdxDocument) => {
   } as Parameters<typeof toMdast>[0];
   const mdast = toMdast(hast, {
     document: true,
-    handlers: { li: mapListItem, "ws.element": mapWebstudioElement },
+    handlers: {
+      li: mapListItem,
+      "ws.element": mapWebstudioElement,
+      "ws.template": mapWebstudioElement,
+    },
     nodeHandlers: { comment: mapComment, opaque: mapOpaque, text: mapText },
   });
   const body = toMarkdown(mdast, {

@@ -8,6 +8,7 @@ import type {
   MdxMode,
 } from "@webstudio-is/content-engine/mdx";
 import {
+  isMdxTemplateComponentName,
   preferMarkdownSyntax,
   serializeMdxDocument,
 } from "@webstudio-is/content-engine/mdx";
@@ -69,6 +70,7 @@ type AuthoredComponentProvenance = Readonly<{
 
 type TemplateProvenance = Readonly<{
   type: "template";
+  authoredNodeType: "element" | "template";
   path: readonly number[];
   instanceId: Instance["id"];
   editableTextChildren: boolean;
@@ -691,11 +693,8 @@ export const materializeMdxAuthoredContent = ({
       if (node.type === "opaque") {
         continue;
       }
-      if (node.type === "template") {
-        const template = templatesByPath.get(pathKey(path));
-        if (template === undefined) {
-          continue;
-        }
+      const template = templatesByPath.get(pathKey(path));
+      if (template !== undefined) {
         if (template.type === "unresolved-template") {
           const placeholder = createUnresolvedTemplateInstance?.({
             markerId: template.markerId,
@@ -708,22 +707,42 @@ export const materializeMdxAuthoredContent = ({
           continue;
         }
         const rootId = getSingleTemplateRootId(template);
-        mergeTemplateFragment(fragment, template.fragment);
-        const rootInstance = fragment.instances.find(({ id }) => id === rootId);
+        const rootInstance = template.fragment.instances.find(
+          ({ id }) => id === rootId
+        );
         if (rootInstance === undefined) {
           throw new Error("Resolved MDX template root is missing");
         }
         const editableTextChildren = rootInstance.children.every(
           (child) => child.type === "text"
         );
+        let resolvedFragment = template.fragment;
         if (
+          node.type === "element" &&
+          template.reference.standardKey?.startsWith("component:") !== true
+        ) {
+          rootInstance.children = visit(node.children, path);
+          resolvedFragment = extractWebstudioFragment(
+            createWebstudioDataFromFragment(template.fragment),
+            rootId
+          );
+        }
+        mergeTemplateFragment(fragment, resolvedFragment);
+        const mergedRootInstance = fragment.instances.find(
+          ({ id }) => id === rootId
+        );
+        if (mergedRootInstance === undefined) {
+          throw new Error("Resolved MDX template root is missing");
+        }
+        if (
+          node.type !== "element" &&
           editableTextChildren &&
           node.children.length > 0 &&
           node.children.every(
             (child) => child.type === "text" || child.type === "comment"
           )
         ) {
-          rootInstance.children = visit(node.children, path);
+          mergedRootInstance.children = visit(node.children, path);
         }
         const ignored = new Set(template.ignoredJsxPropNames);
         const instancePropNameByJsxName = new Map(
@@ -770,6 +789,7 @@ export const materializeMdxAuthoredContent = ({
         });
         nodes.push({
           type: "template",
+          authoredNodeType: node.type,
           path,
           instanceId: rootId,
           editableTextChildren,
@@ -784,16 +804,19 @@ export const materializeMdxAuthoredContent = ({
           propNameMappings: template.propNameMappings,
           preservedJsxPropNames: template.preservedJsxPropNames,
           ignoredJsxPropNames: template.ignoredJsxPropNames,
-          expandedInstanceIds: template.fragment.instances.map(({ id }) => id),
+          expandedInstanceIds: resolvedFragment.instances.map(({ id }) => id),
           assetProps,
           namespaceKeys: unsupportedNamespaces.flatMap((namespace) =>
-            template.fragment[namespace].map((record) => ({
+            resolvedFragment[namespace].map((record) => ({
               namespace,
               key: getNamespaceRecordKey(namespace, record),
             }))
           ),
         });
         children.push({ type: "id", value: rootId });
+        continue;
+      }
+      if (node.type === "template") {
         continue;
       }
 
@@ -1486,7 +1509,11 @@ export const reconcileMdxAuthoredContent = ({
         serializedInstanceIds.add(expandedId);
       }
       const original = originalNodeByPath.get(pathKey(provenance.path));
-      if (original?.type !== "template") {
+      if (
+        original === undefined ||
+        (original.type !== "template" && original.type !== "element") ||
+        original.type !== provenance.authoredNodeType
+      ) {
         throw new Error("Authored MDX template provenance is invalid");
       }
       const editableProps = (propsByInstanceId.get(instanceId) ?? []).filter(
@@ -1586,18 +1613,22 @@ export const reconcileMdxAuthoredContent = ({
       let children = original.children;
       const originalInstance = originalInstanceById.get(instanceId);
       if (
-        provenance.editableTextChildren &&
-        originalInstance !== undefined &&
-        (original.children.length > 0 ||
-          equal(instance.children, originalInstance.children) === false)
+        provenance.authoredNodeType === "element" ||
+        (provenance.editableTextChildren &&
+          originalInstance !== undefined &&
+          (original.children.length > 0 ||
+            equal(instance.children, originalInstance.children) === false))
       ) {
         children = reconcileChildren({
           original: original.children,
           children: instance.children,
-          mode: original.mdxMode,
+          mode:
+            original.type === "element"
+              ? getChildrenMode({ original, tag: original.tag })
+              : original.mdxMode,
           active,
         });
-        if (children.length === 0) {
+        if (original.type === "template" && children.length === 0) {
           throw new Error(
             "Empty template text cannot be represented losslessly in MDX"
           );
@@ -1614,12 +1645,15 @@ export const reconcileMdxAuthoredContent = ({
         const componentNode = serializeMdxComponent({
           instance,
           props: nextEditable,
-          instanceProps: editableProps,
+          instanceProps: propsByInstanceId.get(instanceId) ?? [],
           original,
         });
         if (componentNode !== undefined) {
           return componentNode;
         }
+      }
+      if (original.type === "element") {
+        return { ...original, props: normalizedProps, children };
       }
       return mode === "text" ||
         (provenance.editableTextChildren && children.length > 0)
@@ -2067,6 +2101,9 @@ export const serializeMdxTemplateInsertion = async ({
       children: [
         {
           type: "template" as const,
+          syntax: isMdxTemplateComponentName(templateName)
+            ? ("jsx" as const)
+            : ("ws-element" as const),
           name: templateName,
           props,
           children,

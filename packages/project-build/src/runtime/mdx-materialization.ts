@@ -476,8 +476,11 @@ export const materializeMdxTemplates = async ({
       const existingProp = canonicalExistingProp ?? aliasedExistingProp;
       const assetReference = assetReferenceByPath.get(
         getMdxPropValuePathKey({
-          nodePath: reference.path,
-          propIndex: index,
+          nodePath:
+            reference.propSources?.[index] === undefined
+              ? reference.path
+              : [...reference.path, ...reference.propSources[index]!.nodePath],
+          propIndex: reference.propSources?.[index]?.propIndex ?? index,
         })
       );
       const rawBinding =

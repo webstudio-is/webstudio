@@ -72,10 +72,11 @@ Connect a `.mdx` file when the Content Block's body should live in Assets instea
 
 1. Add the Content Block and design its shell in Design mode.
 2. Place the **Body** outlet where the article body should render.
-3. Add any reusable custom content to **Templates**.
-4. Give every top-level template a unique instance name. MDX uses that name to find the template.
+3. Style the standard document elements already provided in **Templates**.
+4. Add any reusable custom content to **Templates**.
+5. Give every custom top-level template a unique JSX-compatible instance name, such as `PromotionCard`.
 
-New Content Blocks already include a Body outlet. When you connect an older Content Block without one, Webstudio adds it automatically.
+New Content Blocks already include a Body outlet and direct templates for every supported Markdown element, including headings, paragraphs, marks, links, images, quotes, lists, task controls, code, separators, and tables. When you connect an older Content Block without a Body outlet, Webstudio adds it automatically.
 
 #### Create and connect the file
 
@@ -113,19 +114,35 @@ If the file changes after a canvas edit starts but before it is saved, reload th
 
 #### Write Markdown and MDX
 
-Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Webstudio writes a standard element as `<ws.element ws:tag="tag">` only when its authored properties cannot be represented by Markdown. It uses `ws:name` only to insert a uniquely named top-level template:
+An `.mdx` file supports standard Markdown and constrained JSX in one document.
+
+Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Each node uses the uniquely matching semantic template from the Content Block when one exists. Matching uses the element tag or adapted component type, not the template's editable label. If no standard template exists, Webstudio renders the normal semantic fallback. If more than one standard template matches, Webstudio reports a warning and uses the fallback.
+
+Use a capitalized JSX name for a uniquely named custom template:
 
 ```mdx
 # Product update
 
-Regular document content stays Markdown.
+Regular document content stays Markdown and uses the matching standard templates.
 
+<PromotionCard tone="featured">
+  ## Launch offer
+</PromotionCard>
+```
+
+The JSX name must exactly match a unique top-level instance name in the Content Block's Templates list. JSX attributes must be static values. Imports, exports, expressions, spreads, functions, lowercase HTML-looking JSX, and executable JavaScript are not supported.
+
+Template resolution is live. If the file already contains `<PromotionCard />` or a Markdown element that has no matching template, adding the template later updates the rendered content without rewriting the MDX file. Renaming or removing a template re-resolves the same source.
+
+Missing or duplicate custom templates show a source-ranged warning and a selectable placeholder in Builder. Published pages omit only the unresolved custom subtree. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
+
+Existing files can continue using the legacy form when a template name contains spaces or is not a valid JSX component name:
+
+```mdx
 <ws.element ws:name="Promotion Card" />
 ```
 
-The `ws:name` value must exactly match a unique top-level instance name in the Content Block's Templates list. Missing templates show a warning in Builder and are omitted from the published site. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
-
-Keep template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files.
+Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX or `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files.
 
 #### Use frontmatter in the designed shell
 

@@ -13,6 +13,10 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { findBlockTemplates } from "./block";
+import {
+  getMdxStandardTemplateKeyForInstance,
+  getMdxStandardTemplateBinding,
+} from "./mdx-component-adapters";
 
 export type MdxTemplateReference = Readonly<{
   path: readonly number[];
@@ -24,6 +28,11 @@ export type MdxTemplateReference = Readonly<{
         type: "resolved-template";
         templateInstanceId: Instance["id"];
         props: readonly MdxAuthoredProp[];
+        propSources?: readonly (
+          | Readonly<{ nodePath: readonly number[]; propIndex: number }>
+          | undefined
+        )[];
+        standardKey?: string;
       }>
     | Readonly<{
         type: "unresolved-template";
@@ -48,6 +57,8 @@ export const resolveMdxTemplates = ({
   metas: ReadonlyMap<Instance["component"], WsComponentMeta>;
 }): MdxTemplateResolution => {
   const templateIdsByName = new Map<string, Instance["id"][]>();
+  const templateIdsByStandardKey = new Map<string, Instance["id"][]>();
+  const templateNameById = new Map<Instance["id"], string>();
   const templateNames: string[] = [];
   for (const [template] of findBlockTemplates({
     anchor: [identity.blockInstanceId],
@@ -55,9 +66,16 @@ export const resolveMdxTemplates = ({
   }) ?? []) {
     const name = getInstanceName({ instance: template, metas });
     templateNames.push(name);
+    templateNameById.set(template.id, name);
     const templateIds = templateIdsByName.get(name) ?? [];
     templateIds.push(template.id);
     templateIdsByName.set(name, templateIds);
+    const standardKey = getMdxStandardTemplateKeyForInstance(template);
+    if (standardKey !== undefined) {
+      const standardIds = templateIdsByStandardKey.get(standardKey) ?? [];
+      standardIds.push(template.id);
+      templateIdsByStandardKey.set(standardKey, standardIds);
+    }
   }
 
   const references: MdxTemplateReference[] = [];
@@ -100,6 +118,43 @@ export const resolveMdxTemplates = ({
           // The unresolved marker replaces the complete subtree in the Builder,
           // and publication omits it, so descendant references are not actionable.
           continue;
+        }
+      } else {
+        const standard = getMdxStandardTemplateBinding(node);
+        const templateIds =
+          standard === undefined
+            ? undefined
+            : templateIdsByStandardKey.get(standard.key);
+        if (standard !== undefined && templateIds?.length === 1) {
+          const templateInstanceId = templateIds[0];
+          references.push({
+            type: "resolved-template",
+            path,
+            templateName:
+              templateNameById.get(templateInstanceId) ?? standard.key,
+            props: standard.props,
+            propSources: standard.propSources,
+            standardKey: standard.key,
+            templateInstanceId,
+            sourceRange: node.sourceRange,
+          });
+          if (standard.key.startsWith("component:")) {
+            continue;
+          }
+        } else if (standard !== undefined && (templateIds?.length ?? 0) > 1) {
+          diagnostics.push({
+            code: "ambiguous-template",
+            severity: "warning",
+            blockInstanceId: identity.blockInstanceId,
+            assetId: identity.assetId,
+            contentRef: identity.contentRef,
+            renderScope: identity.renderScope,
+            semanticKey: standard.key,
+            templateNames: templateIds!.map(
+              (templateId) => templateNameById.get(templateId) ?? standard.key
+            ),
+            sourceRange: node.sourceRange,
+          });
         }
       }
 

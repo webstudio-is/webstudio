@@ -605,7 +605,7 @@ describe("MDX authored content", () => {
           templateName: "Image",
         })
       )
-    ).toBe('<ws.element ws:name="Image" src="/hero.png" width="640" />\n');
+    ).toBe('<Image src="/hero.png" width="640" />\n');
   });
 
   test("uses canonical JSX names in a generic template insertion", async () => {
@@ -645,7 +645,7 @@ describe("MDX authored content", () => {
           templateName: "Widget",
         })
       )
-    ).toBe('<ws.element ws:name="Widget" className="featured" />\n');
+    ).toBe('<Widget className="featured" />\n');
   });
 
   test("preserves unknown component props in a generic template insertion", async () => {
@@ -685,7 +685,7 @@ describe("MDX authored content", () => {
           templateName: "Widget",
         })
       )
-    ).toBe('<ws.element ws:name="Widget" for="custom-target" />\n');
+    ).toBe('<Widget for="custom-target" />\n');
   });
 
   test("rebases a styled template insertion as a template reference", async () => {
@@ -756,7 +756,7 @@ describe("MDX authored content", () => {
     });
 
     expect(serializeMdxDocument(document)).toBe(
-      '<ws.element ws:name="CodeText" language="javascript" theme="github-light">const ready = true;</ws.element>\n'
+      '<CodeText language="javascript" theme="github-light">const ready = true;</CodeText>\n'
     );
   });
 
@@ -925,7 +925,7 @@ describe("MDX authored content", () => {
     });
 
     expect(serializeMdxDocument(document)).toBe(
-      '<ws.element ws:name="CodeText" tabIndex="2" hidden="false">const ready = true;</ws.element>\n'
+      '<CodeText tabIndex="2" hidden="false">const ready = true;</CodeText>\n'
     );
   });
 
@@ -965,7 +965,7 @@ describe("MDX authored content", () => {
     });
 
     expect(await serializeMdxAuthoredContent({ root, fragment })).toContain(
-      '<ws.element ws:name="CodeText" language="javascript" theme="nord">const ready = true;</ws.element>'
+      '<CodeText language="javascript" theme="nord">const ready = true;</CodeText>'
     );
   });
 
@@ -991,7 +991,7 @@ describe("MDX authored content", () => {
       fragment: withClass,
     });
     expect(jsxSource).toBe(
-      '<ws.element ws:name="CodeText" className="example">const ready = true;</ws.element>\n'
+      '<CodeText className="example">const ready = true;</CodeText>\n'
     );
 
     const jsx = await parseMdxDocument({ source: jsxSource });

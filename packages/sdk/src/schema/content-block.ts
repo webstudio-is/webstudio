@@ -80,6 +80,13 @@ export const contentBlockDiagnostic = z.discriminatedUnion("code", [
   }),
   z.strictObject({
     ...diagnosticContext,
+    code: z.literal("ambiguous-template"),
+    severity: z.literal("warning"),
+    semanticKey: z.string().min(1),
+    templateNames: z.array(z.string().min(1)).min(2),
+  }),
+  z.strictObject({
+    ...diagnosticContext,
     code: z.literal("ignored-template-prop"),
     severity: z.literal("warning"),
     templateName: z.string().min(1),

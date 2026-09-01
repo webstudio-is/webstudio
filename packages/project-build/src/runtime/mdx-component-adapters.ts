@@ -1,11 +1,12 @@
 import {
   createMdxCodeBlock,
+  isMdxTemplateComponentName,
   readMdxCodeBlock,
   type MdxAuthoredNode,
   type MdxAuthoredProp,
 } from "@webstudio-is/content-engine/mdx";
 import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
-import type { Instance, Prop } from "@webstudio-is/sdk";
+import { elementComponent, type Instance, type Prop } from "@webstudio-is/sdk";
 
 type MaterializedComponentProp = Readonly<{
   prop: MdxAuthoredProp;
@@ -275,6 +276,37 @@ const componentAdapters = new Map<Instance["component"], MdxComponentAdapter>([
   [imageAdapter.component, imageAdapter],
 ]);
 
+export const getMdxStandardTemplateKeyForNode = (node: MdxAuthoredNode) => {
+  return getMdxStandardTemplateBinding(node)?.key;
+};
+
+export const getMdxStandardTemplateBinding = (node: MdxAuthoredNode) => {
+  const adapted = materializeMdxComponent(node);
+  if (adapted !== undefined) {
+    return {
+      key: `component:${adapted.component}`,
+      props: adapted.props.map(({ prop }) => prop),
+      propSources: adapted.props.map(({ source }) => source),
+    };
+  }
+  if (node.type === "element") {
+    return {
+      key: `element:${node.tag}`,
+      props: node.props,
+      propSources: undefined,
+    };
+  }
+};
+
+export const getMdxStandardTemplateKeyForInstance = (instance: Instance) => {
+  if (instance.component === elementComponent && instance.tag !== undefined) {
+    return `element:${instance.tag}`;
+  }
+  if (componentAdapters.has(instance.component)) {
+    return `component:${instance.component}`;
+  }
+};
+
 export const serializeMdxComponent = ({
   instance,
   props,
@@ -338,6 +370,9 @@ export const serializeMdxComponentFallback = ({
   }
   return {
     type: "template",
+    syntax: isMdxTemplateComponentName(templateName ?? adapter.component)
+      ? "jsx"
+      : "ws-element",
     name: templateName ?? adapter.component,
     props: mapAttributeNames({
       attributes: authoredProps,

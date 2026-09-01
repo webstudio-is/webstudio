@@ -26,8 +26,10 @@ import { $project, readBuilderStateStores } from "../sync/data-stores";
 import { externalContentSyncStore } from "../sync/sync-stores";
 import {
   getAffectedExternalContentRootKeys,
+  getAffectedExternalContentTemplateRootKeys,
   getExternalContentRoots,
   publishExternalContentMutation,
+  publishExternalContentTemplateMutation,
 } from "../external-content-mutations";
 import {
   createExternalContentPersistencePlan,
@@ -167,8 +169,14 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
   const affectedRootKeys = new Set(
     getAffectedExternalContentRootKeys({ state: data, roots, payload })
   );
+  const affectedTemplateRootKeys = getAffectedExternalContentTemplateRootKeys({
+    state: data,
+    roots,
+    payload,
+  });
   if (affectedRootKeys.size === 0) {
     createTransactionFromBuilderPatchPayload({ data, payload });
+    publishExternalContentTemplateMutation(affectedTemplateRootKeys);
     return result;
   }
   const beforeOwnership = getExternalContentOwnership(roots);
@@ -217,6 +225,7 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
     );
   }
   publishExternalContentMutation(Array.from(affectedRootKeys));
+  publishExternalContentTemplateMutation(affectedTemplateRootKeys);
   return result;
 };
 

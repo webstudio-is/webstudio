@@ -53,6 +53,7 @@ import {
   getExternalContentRoots,
   registerExternalContentRoot,
   subscribeExternalContentMutations,
+  subscribeExternalContentTemplateMutations,
 } from "./external-content-mutations";
 import {
   getExternalContentFragmentOwnership,
@@ -280,6 +281,23 @@ const getMutationRootChildren = (
   return [...templateChildren, ...authoredChildren];
 };
 
+const getTemplateOwnership = (entry: RootEntry) => {
+  const data = getWebstudioData();
+  const sourceBlock = data.instances.get(entry.sourceBlockInstanceId);
+  const templateContainers =
+    sourceBlock === undefined
+      ? []
+      : findContentBlockTemplateContainers({
+          blockInstance: sourceBlock,
+          instances: data.instances,
+        });
+  const templateFragment = mergeWebstudioFragments(
+    templateContainers.map(({ id }) => id),
+    templateContainers.map(({ id }) => extractWebstudioFragment(data, id))
+  );
+  return getExternalContentFragmentOwnership(templateFragment);
+};
+
 const registerMutationRoot = (
   entry: RootEntry,
   fragment: WebstudioFragment
@@ -300,6 +318,7 @@ const registerMutationRoot = (
     instanceIds: owned.instances,
     propIds: owned.props,
     ownership: owned,
+    templateOwnership: getTemplateOwnership(entry),
     mutationRevision: 0,
     projectId: entry.projectId,
     identity: entry.root.identity,
@@ -1115,6 +1134,31 @@ subscribeExternalContentMutations((rootKeys) => {
         return { source, document };
       },
     }).catch(() => {});
+  }
+});
+
+subscribeExternalContentTemplateMutations((rootKeys) => {
+  for (const key of rootKeys) {
+    const entry = roots.get(key);
+    if (entry === undefined) {
+      continue;
+    }
+    const registeredRoot = getExternalContentRoots().get(key);
+    if (registeredRoot !== undefined) {
+      registeredRoot.templateOwnership = getTemplateOwnership(entry);
+    }
+    const sourceState = getSession(entry.projectId).get(entry.assetId);
+    if (sourceState === undefined) {
+      continue;
+    }
+    const version = ++entry.openVersion;
+    void materialize({ entry, sourceState })
+      .then((result) => {
+        if (roots.get(key) === entry && entry.openVersion === version) {
+          installRoot({ entry, ...result });
+        }
+      })
+      .catch(() => {});
   }
 });
 

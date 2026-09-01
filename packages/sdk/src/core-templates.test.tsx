@@ -1,6 +1,11 @@
 import { expect, test } from "vitest";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
-import { blockComponent } from "./core-metas";
+import { standardMdxTemplateKeys } from "@webstudio-is/content-engine/mdx";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  elementComponent,
+} from "./core-metas";
 import { coreTemplates } from "./core-templates";
 
 const expectCodeTextDefaultsToStayImplicit = (
@@ -49,4 +54,39 @@ test("keeps the Content Block Image template representable as Markdown", () => {
       ({ instanceId }) => instanceId === image.id
     )
   ).toEqual([]);
+});
+
+test("provides one direct template for every standard MDX semantic key", () => {
+  const template = coreTemplates[blockComponent];
+  if (template === undefined) {
+    throw new Error("Expected Content Block template");
+  }
+  const fragment = renderTemplate(template.template);
+  const instances = new Map(
+    fragment.instances.map((instance) => [instance.id, instance])
+  );
+  const templates = fragment.instances.find(
+    ({ component }) => component === blockTemplateComponent
+  );
+  if (templates === undefined) {
+    throw new Error("Expected Templates container");
+  }
+  const keys = templates.children.flatMap((child) => {
+    if (child.type !== "id") {
+      return [];
+    }
+    const instance = instances.get(child.value);
+    if (
+      instance?.component === elementComponent &&
+      instance.tag !== undefined
+    ) {
+      return [`element:${instance.tag}`];
+    }
+    return instance?.component === "Image" || instance?.component === "CodeText"
+      ? [`component:${instance.component}`]
+      : [];
+  });
+
+  expect(new Set(keys).size).toBe(keys.length);
+  expect(keys.toSorted()).toEqual(standardMdxTemplateKeys.toSorted());
 });

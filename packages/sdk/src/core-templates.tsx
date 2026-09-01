@@ -91,12 +91,27 @@ const blockMeta: TemplateMeta = {
         <ws.element ws:label="Ordered List" ws:tag="ol">
           <ws.element ws:label="List Item" ws:tag="li"></ws.element>
         </ws.element>
+        <ws.element ws:label="List Item" ws:tag="li"></ws.element>
         <ws.element ws:label="Link" ws:tag="a"></ws.element>
-        <$.Image />
+        <$.Image ws:label="Image" />
         <ws.element ws:label="Separator" ws:tag="hr" />
+        <ws.element ws:label="Line Break" ws:tag="br" />
         <ws.element ws:label="Blockquote" ws:tag="blockquote"></ws.element>
+        <ws.element ws:label="Emphasis" ws:tag="em"></ws.element>
+        <ws.element ws:label="Strong" ws:tag="strong"></ws.element>
+        <ws.element ws:label="Strikethrough" ws:tag="del"></ws.element>
+        <ws.element ws:label="Inline Code" ws:tag="code"></ws.element>
+        <ws.element ws:label="Task Checkbox" ws:tag="input" />
+        <ws.element ws:label="Table" ws:tag="table"></ws.element>
+        <ws.element ws:label="Table Head" ws:tag="thead"></ws.element>
+        <ws.element ws:label="Table Body" ws:tag="tbody"></ws.element>
+        <ws.element ws:label="Table Row" ws:tag="tr"></ws.element>
+        <ws.element ws:label="Table Header" ws:tag="th"></ws.element>
+        <ws.element ws:label="Table Cell" ws:tag="td"></ws.element>
         <$.HtmlEmbed />
-        <$.CodeText>{'const status = "ready";'}</$.CodeText>
+        <$.CodeText ws:label="Code Block">
+          {'const status = "ready";'}
+        </$.CodeText>
       </BlockTemplate>
       <BlockBody>
         <ws.element ws:label="Paragraph" ws:tag="p">

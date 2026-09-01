@@ -61,6 +61,36 @@ export type MdxMarkdownListItem = Readonly<{
   spread: boolean;
 }>;
 
+export const standardMdxTemplateKeys = [
+  "element:p",
+  "element:h1",
+  "element:h2",
+  "element:h3",
+  "element:h4",
+  "element:h5",
+  "element:h6",
+  "element:blockquote",
+  "element:ul",
+  "element:ol",
+  "element:li",
+  "element:a",
+  "element:hr",
+  "element:br",
+  "element:em",
+  "element:strong",
+  "element:del",
+  "element:code",
+  "element:input",
+  "element:table",
+  "element:thead",
+  "element:tbody",
+  "element:tr",
+  "element:th",
+  "element:td",
+  "component:Image",
+  "component:CodeText",
+] as const;
+
 export type MdxAuthoredNode =
   | Readonly<{
       type: "text";
@@ -100,6 +130,7 @@ export type MdxAuthoredNode =
     }>
   | Readonly<{
       type: "template";
+      syntax?: "jsx" | "ws-element";
       name: string;
       props: readonly MdxAuthoredProp[];
       children: readonly MdxAuthoredNode[];
@@ -577,6 +608,9 @@ const setHastData = (node: SyntaxTreeNode, data: Record<string, unknown>) => {
   node.data = { ...(isRecord(node.data) ? node.data : {}), ...data };
 };
 
+export const isMdxTemplateComponentName = (name: unknown): name is string =>
+  typeof name === "string" && /^[A-Z][A-Za-z0-9_$]*$/.test(name);
+
 const isCommentExpression = (node: SyntaxTreeNode) => {
   if (isRecord(node.data) === false || isRecord(node.data.estree) === false) {
     return false;
@@ -682,20 +716,25 @@ const createMdxJsxElementHandler =
   (options: MapHastOptions = {}): Handler =>
   (state, value) => {
     const node = value as SyntaxTreeNode;
-    if (node.name !== "ws.element") {
+    if (
+      node.name !== "ws.element" &&
+      isMdxTemplateComponentName(node.name) === false
+    ) {
       return throwUnsafeNode(
         node,
-        "Only the ws.element component is supported in authored MDX"
+        "Only ws.element and named template components are supported in authored MDX"
       );
     }
     const staticProps = mapStaticProps(node, options);
     const properties = Object.fromEntries(
       staticProps.map((prop) => [prop.name, prop.value])
     );
-    const result = state(value, "ws.element", properties, state.all(value));
+    const tagName = node.name;
+    const result = state(value, tagName, properties, state.all(value));
     if (isSyntaxTreeNode(result)) {
       setHastData(result, {
         mdxMode: getMdxMode(node),
+        ...(tagName === "ws.element" ? {} : { mdxTemplateName: tagName }),
         mdxPropSourceRanges: Object.fromEntries(
           staticProps.flatMap((prop) =>
             prop.sourceRange === undefined
@@ -864,6 +903,11 @@ const findHastMdxMode = (node: SyntaxTreeNode): MdxMode | undefined => {
   }
 };
 
+const findHastTemplateName = (node: SyntaxTreeNode) =>
+  isRecord(node.data) && typeof node.data.mdxTemplateName === "string"
+    ? node.data.mdxTemplateName
+    : undefined;
+
 const mapHastProperties = (
   node: SyntaxTreeNode,
   options: MapHastOptions,
@@ -1016,6 +1060,7 @@ const mapWebstudioElement = (
     }
     return {
       type: "template",
+      syntax: "ws-element",
       name: nameProp.value,
       props: props.filter((prop) => prop.name !== "ws:name"),
       children: mapHastChildren(node, options),
@@ -1100,6 +1145,7 @@ const mapHastNode = (
     );
   }
   const authoredMdxMode = findHastMdxMode(node);
+  const templateName = findHastTemplateName(node);
   if (
     node.tagName !== "ws.element" &&
     authoredMdxMode !== undefined &&
@@ -1113,13 +1159,24 @@ const mapHastNode = (
   const { props, requiresMdxFallback } = mapHastProperties(
     node,
     options,
-    node.tagName === "ws.element",
+    node.tagName === "ws.element" || templateName !== undefined,
     node.tagName === "ws.element" &&
       isRecord(node.properties) &&
       Object.hasOwn(node.properties, "ws:name")
   );
   if (node.tagName === "ws.element") {
     return mapWebstudioElement(node, props, options);
+  }
+  if (templateName !== undefined) {
+    return {
+      type: "template",
+      syntax: "jsx",
+      name: templateName,
+      props,
+      children: mapHastChildren(node, options),
+      mdxMode: getHastMdxMode(node),
+      sourceRange: toSourceRange(node.position),
+    };
   }
   let mdxMode = authoredMdxMode ?? (requiresMdxFallback ? "text" : undefined);
   const children = mapHastChildren(node, options);

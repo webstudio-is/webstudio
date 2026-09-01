@@ -147,6 +147,48 @@ const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
 };
 
 describe("parseMdxDocument", () => {
+  test("parses and preserves safe named JSX template references", async () => {
+    const source = `<Card tone="quiet">\n  ## Nested heading\n</Card>\n`;
+    const document = await parseMdxDocument({ source });
+
+    expect(omitSourceRanges(document.children)).toEqual([
+      {
+        type: "template",
+        syntax: "jsx",
+        name: "Card",
+        props: [{ name: "tone", value: "quiet" }],
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "h2",
+            props: [],
+            children: [{ type: "text", value: "Nested heading" }],
+          },
+        ],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test("preserves legacy ws.element template reference syntax", async () => {
+    const source = '<ws.element ws:name="Hero Card" />\n';
+    const document = await parseMdxDocument({ source });
+
+    expect(omitSourceRanges(document.children)).toEqual([
+      {
+        type: "template",
+        syntax: "ws-element",
+        name: "Hero Card",
+        props: [],
+        children: [],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
   test("parses Markdown-only input identically through Markdown and MDX", () => {
     const source = `---
 title: Shared grammar
@@ -935,6 +977,7 @@ next</ws.element>
       children: [
         {
           type: "template",
+          syntax: "ws-element",
           name: "Card",
           props: [
             { name: "className", value: "featured" },
@@ -1066,7 +1109,7 @@ next</ws.element>
       '<ws.element ws:tag="div" {...props} />',
       "mdxJsxExpressionAttribute",
     ],
-    ["arbitrary components", "<Card />", "mdxJsxFlowElement"],
+    ["lowercase JSX", "<card />", "mdxJsxFlowElement"],
     ["HTML-looking JSX", "<div>Unsafe</div>", "mdxJsxTextElement"],
   ])("rejects %s", async (_name, source, nodeType) => {
     await expect(parseMdxDocument({ source })).rejects.toMatchObject({

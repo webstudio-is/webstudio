@@ -37,3 +37,17 @@ test("formats and deduplicates diagnostics by revision without losing detail", (
     diagnostic,
   ]);
 });
+
+test("formats ambiguous semantic template diagnostics", () => {
+  expect(
+    formatContentBlockDiagnostic({
+      code: "ambiguous-template",
+      severity: "warning",
+      blockInstanceId: "block",
+      semanticKey: "element:h1",
+      templateNames: ["Primary Heading", "Alternate Heading"],
+    })
+  ).toBe(
+    "Multiple templates match element:h1: Primary Heading, Alternate Heading. The unstyled fallback was used."
+  );
+});

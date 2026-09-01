@@ -3,6 +3,7 @@ import {
   type Asset,
   blockComponent,
   blockTemplateComponent,
+  elementComponent,
   type ContentBlockExternalContentIdentity,
   type WebstudioData,
 } from "@webstudio-is/sdk";
@@ -51,6 +52,111 @@ const data: Omit<WebstudioData, "pages"> = {
 };
 
 describe("materializeMdxSource", () => {
+  test("materializes and preserves component-style JSX template syntax", async () => {
+    const sourceData: Omit<WebstudioData, "pages"> = {
+      ...data,
+      instances: new Map(data.instances),
+    };
+    sourceData.instances.set("card", {
+      type: "instance",
+      id: "card",
+      component: elementComponent,
+      tag: "section",
+      label: "Card",
+      children: [],
+    });
+    sourceData.instances.get("templates")?.children.push({
+      type: "id",
+      value: "card",
+    });
+
+    const result = await materializeMdxSource({
+      source: "<Card>Content</Card>\n",
+      identity,
+      data: sourceData,
+      metas: componentMetas,
+      projectId: "project",
+    });
+    expect(result.root.fragment.instances).toEqual([
+      expect.objectContaining({
+        tag: "section",
+        children: [{ type: "text", value: "Content" }],
+      }),
+    ]);
+    await expect(
+      serializeMdxAuthoredContent({
+        root: result.root,
+        fragment: result.root.fragment,
+      })
+    ).resolves.toBe("<Card>Content</Card>\n");
+  });
+
+  test("materializes Markdown through a matching template and serializes it as Markdown", async () => {
+    const sourceData: Omit<WebstudioData, "pages"> = {
+      ...data,
+      instances: new Map(data.instances),
+      styleSources: new Map([
+        ["heading-style", { type: "local", id: "heading-style" }],
+      ]),
+      styleSourceSelections: new Map([
+        ["heading", { instanceId: "heading", values: ["heading-style"] }],
+      ]),
+      styles: new Map([
+        [
+          "heading-style:base:color",
+          {
+            breakpointId: "base",
+            styleSourceId: "heading-style",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      ]),
+    };
+    sourceData.instances.set("heading", {
+      type: "instance",
+      id: "heading",
+      component: elementComponent,
+      tag: "h1",
+      label: "Heading 1",
+      children: [{ type: "id", value: "template-mark" }],
+    });
+    sourceData.instances.set("template-mark", {
+      type: "instance",
+      id: "template-mark",
+      component: elementComponent,
+      tag: "span",
+      children: [{ type: "text", value: "Template text" }],
+    });
+    sourceData.instances.get("templates")?.children.push({
+      type: "id",
+      value: "heading",
+    });
+
+    const result = await materializeMdxSource({
+      source: "# Existing heading\n",
+      identity,
+      data: sourceData,
+      metas: componentMetas,
+      projectId: "project",
+    });
+
+    expect(result.root.fragment.instances).toEqual([
+      expect.objectContaining({
+        component: elementComponent,
+        tag: "h1",
+        children: [{ type: "text", value: "Existing heading" }],
+      }),
+    ]);
+    expect(result.root.fragment.styleSourceSelections).toHaveLength(1);
+    await expect(
+      serializeMdxAuthoredContent({
+        root: result.root,
+        fragment: result.root.fragment,
+      })
+    ).resolves.toBe("# Existing heading\n");
+  });
+
   test("uses the shared recovery result and materializes valid siblings", async () => {
     const result = await materializeMdxSource({
       source: "# Hello\n\n{dangerous()}\n\nAfter",
@@ -301,6 +407,8 @@ featureImage:
       metas: componentMetas,
       projectId: "project",
     });
-    expect(resetReloaded.root.fragment.props).toEqual([]);
+    expect(resetReloaded.root.fragment.props).toEqual([
+      expect.objectContaining({ name: "alt", type: "string", value: "" }),
+    ]);
   });
 });

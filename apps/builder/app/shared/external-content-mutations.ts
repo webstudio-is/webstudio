@@ -24,6 +24,7 @@ export type ExternalContentRoot = {
   instanceIds: ReadonlySet<Instance["id"]>;
   propIds?: ReadonlySet<Prop["id"]>;
   ownership?: ExternalContentOwnership;
+  templateOwnership?: ExternalContentOwnership;
   mutationRevision: number;
   projectId?: string;
   identity?: ContentBlockExternalContentIdentity;
@@ -145,6 +146,9 @@ export const $externalContentRoots = atom(
   new Map<string, ExternalContentRoot>()
 );
 const mutationListeners = new Set<(rootKeys: readonly string[]) => void>();
+const templateMutationListeners = new Set<
+  (rootKeys: readonly string[]) => void
+>();
 const observedMutationRevisions = new Map<string, number>();
 
 $externalContentRoots.listen((roots) => {
@@ -215,6 +219,24 @@ export const subscribeExternalContentMutations = (
   return () => mutationListeners.delete(listener);
 };
 
+export const subscribeExternalContentTemplateMutations = (
+  listener: (rootKeys: readonly string[]) => void
+) => {
+  templateMutationListeners.add(listener);
+  return () => templateMutationListeners.delete(listener);
+};
+
+export const publishExternalContentTemplateMutation = (
+  rootKeys: readonly string[]
+) => {
+  if (rootKeys.length === 0) {
+    return;
+  }
+  for (const listener of templateMutationListeners) {
+    listener(rootKeys);
+  }
+};
+
 export const publishExternalContentMutation = (rootKeys: readonly string[]) => {
   if (rootKeys.length === 0) {
     return;
@@ -245,6 +267,34 @@ export const getAffectedExternalContentRootKeys = ({
 }) =>
   Array.from(roots)
     .filter(([, root]) => doesMutationAffectRoot({ state, root, payload }))
+    .map(([key]) => key);
+
+export const getAffectedExternalContentTemplateRootKeys = ({
+  state,
+  roots,
+  payload,
+}: {
+  state: ExternalContentMutationState;
+  roots: ReadonlyMap<string, ExternalContentRoot>;
+  payload: readonly BuilderPatchChange[];
+}) =>
+  Array.from(roots)
+    .filter(([, root]) => {
+      const ownership = root.templateOwnership;
+      if (ownership === undefined) {
+        return false;
+      }
+      return doesMutationAffectRoot({
+        state,
+        root: {
+          ...root,
+          instanceIds: ownership.instances ?? new Set(),
+          propIds: ownership.props,
+          ownership,
+        },
+        payload,
+      });
+    })
     .map(([key]) => key);
 
 type ExternalContentMutationState = {

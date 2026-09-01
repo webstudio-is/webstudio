@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import { elementComponent, type Instance, type Prop } from "@webstudio-is/sdk";
 import {
+  getAffectedExternalContentTemplateRootKeys,
   isExternalContentInstance,
   isExternalContentMutation,
 } from "./external-content-mutations";
@@ -148,6 +149,41 @@ describe("external content mutation detection", () => {
           ]),
         ],
       })
+    ).toBe(false);
+  });
+
+  test("identifies template changes separately from authored content", () => {
+    const templateRoots = new Map([
+      [
+        "scope",
+        {
+          ...roots.get("scope")!,
+          templateOwnership: {
+            instances: new Set(["templates", "heading-template"]),
+            styles: new Set(["heading-template:base:color"]),
+          },
+        },
+      ],
+    ]);
+    const payload = [
+      change("instances", [
+        {
+          op: "replace" as const,
+          path: ["templates", "children"],
+          value: [{ type: "id", value: "heading-template" }],
+        },
+      ]),
+    ];
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state,
+        roots: templateRoots,
+        payload,
+      })
+    ).toEqual(["scope"]);
+    expect(
+      isExternalContentMutation({ state, roots: templateRoots, payload })
     ).toBe(false);
   });
 });
