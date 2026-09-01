@@ -417,10 +417,9 @@
     var(--color-accent) var(--scheme-chromatic-foreground-mix),
     var(--color-foreground)
   );
-  --color-accent-secondary-foreground: color-mix(
-    in oklab,
-    var(--color-accent-secondary) var(--scheme-chromatic-foreground-mix),
-    var(--color-foreground)
+  --color-accent-secondary-foreground: light-dark(
+    var(--color-accent-secondary),
+    oklch(from var(--color-accent-secondary) max(l, 0.72) c h)
   );
   --color-positive-foreground: color-mix(
     in oklab,

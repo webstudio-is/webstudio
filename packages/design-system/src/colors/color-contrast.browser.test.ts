@@ -366,6 +366,28 @@ describe("Craft color contrast", () => {
     }
   });
 
+  test("default dark secondary accent foreground remains distinctly purple", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    root.dataset.colorScheme = "dark";
+
+    try {
+      const secondaryAccent = readColor("--foreground-accent-secondary");
+      expect(secondaryAccent[0] - secondaryAccent[1]).toBeGreaterThanOrEqual(
+        70
+      );
+      expect(secondaryAccent[2] - secondaryAccent[1]).toBeGreaterThanOrEqual(
+        100
+      );
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
   test("default dark informative surface remains distinct from the panel", () => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");

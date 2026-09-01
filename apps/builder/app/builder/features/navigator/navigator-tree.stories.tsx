@@ -92,3 +92,8 @@ export const ReusableInstance: StoryObj = {
     </StorySection>
   ),
 };
+
+export const ReusableInstanceDark: StoryObj = {
+  ...ReusableInstance,
+  globals: { colorScheme: "dark" },
+};
