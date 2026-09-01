@@ -124,6 +124,39 @@ const toSerializationNode = (
     });
   }
 
+  if (node.markdownAlert !== undefined) {
+    const children = node.children.map((child) => toSerializationNode(child));
+    const marker = `[!${node.markdownAlert}]`;
+    const first = children[0];
+    const markerNode: SerializationNode = {
+      type: "opaque",
+      value: `${marker}\n`,
+      data: { rawSource: `${marker}\n`, mode: "text" },
+    };
+    if (first?.type === "element" && first.tagName === "p") {
+      first.children = [markerNode, ...(first.children ?? [])];
+    } else {
+      children.unshift({
+        type: "element",
+        tagName: "p",
+        properties: {},
+        children: [
+          {
+            type: "opaque",
+            value: marker,
+            data: { rawSource: marker, mode: "text" },
+          },
+        ],
+      });
+    }
+    return {
+      type: "element",
+      tagName: "blockquote",
+      properties: {},
+      children,
+    };
+  }
+
   let children = node.children.map((child) =>
     toSerializationNode(
       child,

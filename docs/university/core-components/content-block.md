@@ -123,6 +123,18 @@ Regular document content stays Markdown.
 <ws.element ws:name="Promotion Card" />
 ```
 
+Use GitHub-style alert syntax for notes, tips, important information, warnings, and cautions:
+
+```mdx
+> [!NOTE]
+> Add helpful context here.
+
+> [!WARNING]
+> Explain what readers should be careful about.
+```
+
+Write `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, or `CAUTION` in uppercase at the start of a blockquote. Each alert becomes an [Alert component](alert.md) in the Content Block. Change its **Variant** property to switch the alert type; Webstudio writes the corresponding uppercase marker when canvas edits save back to the `.mdx` file.
+
 The `ws:name` value must exactly match a unique top-level instance name in the Content Block's Templates list. Missing templates show a warning in Builder and are omitted from the published site. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
 
 Keep template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files.
@@ -201,5 +213,6 @@ Beyond adding new content, you can edit the existing content inside the Content 
 ## Related
 
 - [Slot](slot.md) – Reusable component slots
+- [Alert](alert.md) – Highlight notes, warnings, and other callouts
 - [Modes](../foundations/modes.md) – Builder modes including Content mode
 - [Collection](collection.md) – Iterate over dynamic data

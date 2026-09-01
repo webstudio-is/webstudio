@@ -76,6 +76,46 @@ const createCodeTextFragment = (theme = "github-light"): WebstudioFragment => ({
 });
 
 describe("MDX authored content", () => {
+  test("materializes and edits GitHub alerts without replacing their syntax", async () => {
+    const source = "> [!NOTE]\n> Helpful **context**.\n";
+    const document = await parseMdxDocument({ source });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+    });
+    const alert = root.fragment.instances.find(
+      ({ component }) => component === "Alert"
+    );
+    if (alert === undefined) {
+      throw new Error("Expected alert element");
+    }
+    const alertProps = root.fragment.props
+      .filter(({ instanceId }) => instanceId === alert.id)
+      .map(({ name, value }) => [name, value]);
+
+    expect(Object.fromEntries(alertProps)).toEqual({ variant: "note" });
+    expect(alert.children).toHaveLength(1);
+
+    const edited = structuredClone(root.fragment);
+    const context = edited.instances.find(({ tag }) => tag === "strong");
+    if (context === undefined) {
+      throw new Error("Expected alert strong text");
+    }
+    context.children = [{ type: "text", value: "details" }];
+    const variant = edited.props.find(
+      ({ instanceId, name }) => instanceId === alert.id && name === "variant"
+    );
+    if (variant?.type !== "string") {
+      throw new Error("Expected alert variant");
+    }
+    variant.value = "warning";
+
+    expect(await serializeMdxAuthoredContent({ root, fragment: edited })).toBe(
+      "> [!WARNING]\n> Helpful **details**.\n"
+    );
+  });
+
   test("rejects a canvas edit prepared from a stale Asset document", async () => {
     const document = await parseMdxDocument({ source: "Original\n" });
     const root = materializeMdxAuthoredContent({

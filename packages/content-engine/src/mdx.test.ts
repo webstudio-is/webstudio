@@ -143,6 +143,77 @@ const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
 };
 
 describe("parseMdxDocument", () => {
+  test.each(["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"] as const)(
+    "maps GitHub %s alerts to semantic elements",
+    async (type) => {
+      const document = await parseMdxDocument({
+        source: `> [!${type}]\n> Alert with **strong** text.\n`,
+      });
+
+      expect(omitSourceRanges(document.children)).toEqual([
+        {
+          type: "element",
+          syntax: "markdown",
+          tag: "blockquote",
+          props: [],
+          markdownAlert: type,
+          children: [
+            {
+              type: "element",
+              syntax: "markdown",
+              tag: "p",
+              props: [],
+              children: [
+                { type: "text", value: "Alert with " },
+                {
+                  type: "element",
+                  syntax: "markdown",
+                  tag: "strong",
+                  props: [],
+                  children: [{ type: "text", value: "strong" }],
+                },
+                { type: "text", value: " text." },
+              ],
+            },
+          ],
+        },
+      ]);
+    }
+  );
+
+  test("preserves GitHub alert syntax through MDX serialization", async () => {
+    const source = `> [!WARNING]\n> First paragraph.\n>\n> - One\n> - Two\n`;
+    const document = await parseMdxDocument({ source });
+    const serialized = serializeMdxDocument(document);
+
+    expect(serialized).toBe(
+      "> [!WARNING]\n> First paragraph.\n>\n> -   One\n> -   Two\n"
+    );
+    expect(
+      omitSourceRanges(await parseMdxDocument({ source: serialized }))
+    ).toEqual(omitSourceRanges(document));
+  });
+
+  test("keeps unsupported and late alert markers as blockquotes", async () => {
+    const document = await parseMdxDocument({
+      source: [
+        "> [!INFO] Unsupported",
+        "",
+        "> Prefix [!NOTE]",
+        "",
+        "> Content first",
+        "> [!NOTE] Too late",
+      ].join("\n"),
+    });
+
+    expect(document.children).toHaveLength(3);
+    expect(
+      document.children.every(
+        (node) => node.type === "element" && node.tag === "blockquote"
+      )
+    ).toBe(true);
+  });
+
   test("parses Markdown-only input identically through Markdown and MDX", () => {
     const source = `---
 title: Shared grammar

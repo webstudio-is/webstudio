@@ -108,6 +108,43 @@ Hello, world!
     expect(html).toContain("<table>");
   });
 
+  test.each(["note", "tip", "important", "warning", "caution"])(
+    "renders a GitHub-style %s alert",
+    (type) => {
+      const title = `${type[0].toUpperCase()}${type.slice(1)}`;
+      const html = renderToStaticMarkup(
+        <MarkdownEmbed
+          code={`> [!${type.toUpperCase()}]\n> **Highlighted** content with a [link](https://example.com).\n>\n> - First item\n> - Second item\n>\n> [Unsafe](javascript:alert("unsafe"))`}
+        />
+      );
+
+      expect(html).toContain(
+        `<div class="markdown-alert markdown-alert-${type}" role="note" data-variant="${type}">`
+      );
+      expect(html).toContain(`<p class="markdown-alert-title">${title}</p>`);
+      expect(html).toContain(
+        '<p><strong>Highlighted</strong> content with a <a href="https://example.com">link</a>.</p>'
+      );
+      expect(html).toContain("<ul>");
+      expect(html).not.toContain(`[!${type.toUpperCase()}]`);
+      expect(html).not.toContain("javascript:");
+    }
+  );
+
+  test("preserves ordinary blockquotes for malformed and unsupported alerts", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownEmbed
+        code={`> [!INFO]\n> Unsupported\n\n> Prefix [!NOTE]\n> Not at the start\n\n> [!note]\n> Wrong case\n\n> - Content before the marker\n>\n> [!NOTE]\n> Too late`}
+      />
+    );
+
+    expect(html.match(/<blockquote>/g)).toHaveLength(4);
+    expect(html).not.toContain("markdown-alert");
+    expect(html).toContain("[!INFO]");
+    expect(html).toContain("Prefix [!NOTE]");
+    expect(html).toContain("[!note]");
+  });
+
   test("does not render YAML frontmatter or treat it as a heading", () => {
     const html = renderToStaticMarkup(
       <MarkdownEmbed code={`---\ntitle: Hidden\n---\n# Visible`} />

@@ -2737,6 +2737,9 @@ importers:
       '@shikijs/themes':
         specifier: 4.4.1
         version: 4.4.1
+      '@webstudio-is/content-engine':
+        specifier: workspace:*
+        version: link:../content-engine
       '@webstudio-is/icons':
         specifier: workspace:*
         version: link:../icons
@@ -2779,6 +2782,9 @@ importers:
       micromark-extension-gfm:
         specifier: ^3.0.0
         version: 3.0.0
+      parse5:
+        specifier: 7.3.0
+        version: 7.3.0
       sanitize-html:
         specifier: 2.17.5
         version: 2.17.5

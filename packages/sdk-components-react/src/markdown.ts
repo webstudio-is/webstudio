@@ -6,8 +6,20 @@ import { frontmatterFromMarkdown } from "mdast-util-frontmatter";
 import { toString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
 import type { HtmlExtension } from "micromark-util-types";
+import {
+  defaultTreeAdapter,
+  html as parse5Html,
+  parseFragment,
+  serialize,
+  type DefaultTreeAdapterMap,
+} from "parse5";
 import sanitizeHtml from "sanitize-html";
 import type { ImageLoader } from "@webstudio-is/image";
+import {
+  getMarkdownAlertMarker,
+  markdownAlertTypes,
+  type MarkdownAlertType,
+} from "@webstudio-is/content-engine/markdown-alerts";
 import { getSdkImageProps, type SdkImageProps } from "./image-utils";
 
 const getHeadingIds = (markdown: string) => {
@@ -204,6 +216,96 @@ const createGfmHtmlExtension = () => {
   return extension;
 };
 
+const setAttribute = (
+  element: DefaultTreeAdapterMap["element"],
+  name: string,
+  value: string
+) => {
+  const attribute = element.attrs.find((item) => item.name === name);
+  if (attribute === undefined) {
+    element.attrs.push({ name, value });
+    return;
+  }
+  attribute.value = value;
+};
+
+const transformMarkdownAlerts = (html: string) => {
+  const hasAlertMarker = (
+    Object.keys(markdownAlertTypes) as MarkdownAlertType[]
+  ).some((type) => html.includes(`[!${type}]`));
+  if (hasAlertMarker === false) {
+    return html;
+  }
+
+  const fragment = parseFragment(html);
+  let transformed = false;
+
+  const visit = (node: DefaultTreeAdapterMap["node"]) => {
+    if (
+      defaultTreeAdapter.isElementNode(node) &&
+      node.tagName === "blockquote"
+    ) {
+      const firstElement = node.childNodes.find((child) =>
+        defaultTreeAdapter.isElementNode(child)
+      );
+      const paragraph =
+        firstElement?.tagName === "p" ? firstElement : undefined;
+      const markerNode = paragraph?.childNodes[0];
+      if (
+        paragraph !== undefined &&
+        markerNode !== undefined &&
+        defaultTreeAdapter.isTextNode(markerNode)
+      ) {
+        const marker = getMarkdownAlertMarker(markerNode.value);
+        if (marker !== undefined) {
+          const title = markdownAlertTypes[marker.type];
+          const type = marker.type.toLowerCase();
+          const existingClass = node.attrs.find(
+            (attribute) => attribute.name === "class"
+          )?.value;
+          node.tagName = "div";
+          node.nodeName = "div";
+          setAttribute(
+            node,
+            "class",
+            [existingClass, "markdown-alert", `markdown-alert-${type}`]
+              .filter(Boolean)
+              .join(" ")
+          );
+          setAttribute(node, "role", "note");
+          setAttribute(node, "data-variant", type);
+
+          const titleParagraph = defaultTreeAdapter.createElement(
+            "p",
+            parse5Html.NS.HTML,
+            [{ name: "class", value: "markdown-alert-title" }]
+          );
+          defaultTreeAdapter.appendChild(
+            titleParagraph,
+            defaultTreeAdapter.createTextNode(title)
+          );
+          defaultTreeAdapter.insertBefore(node, titleParagraph, paragraph);
+
+          markerNode.value = markerNode.value.slice(marker.length);
+          if (markerNode.value === "" && paragraph.childNodes.length === 1) {
+            defaultTreeAdapter.detachNode(paragraph);
+          }
+          transformed = true;
+        }
+      }
+    }
+
+    if ("childNodes" in node) {
+      for (const child of node.childNodes) {
+        visit(child);
+      }
+    }
+  };
+
+  visit(fragment);
+  return transformed ? serialize(fragment) : html;
+};
+
 /** Shared safe renderer used by both the authoring preview and published component. */
 export const renderMarkdownHtml = (
   markdown: string,
@@ -218,15 +320,17 @@ export const renderMarkdownHtml = (
   } = {}
 ) => {
   const html = sanitizeMarkdownHtml(
-    micromark(markdown, {
-      allowDangerousHtml: true,
-      allowDangerousProtocol: true,
-      extensions: [frontmatter(["yaml"]), gfm()],
-      htmlExtensions: [
-        createGfmHtmlExtension(),
-        createHeadingIdsHtmlExtension(getHeadingIds(markdown)),
-      ],
-    }),
+    transformMarkdownAlerts(
+      micromark(markdown, {
+        allowDangerousHtml: true,
+        allowDangerousProtocol: true,
+        extensions: [frontmatter(["yaml"]), gfm()],
+        htmlExtensions: [
+          createGfmHtmlExtension(),
+          createHeadingIdsHtmlExtension(getHeadingIds(markdown)),
+        ],
+      })
+    ),
     { allowBlobImages }
   );
 

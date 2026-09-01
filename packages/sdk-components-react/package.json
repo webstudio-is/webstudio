@@ -80,6 +80,7 @@
     "@react-aria/utils": "^3.27.0",
     "@shikijs/langs": "4.4.1",
     "@shikijs/themes": "4.4.1",
+    "@webstudio-is/content-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -94,6 +95,7 @@
     "micromark": "^4.0.2",
     "micromark-extension-frontmatter": "2.0.0",
     "micromark-extension-gfm": "^3.0.0",
+    "parse5": "7.3.0",
     "sanitize-html": "2.17.5",
     "shiki": "4.4.1"
   },
