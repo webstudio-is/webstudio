@@ -31,6 +31,7 @@ const expectedLightColors = {
   "--background-disabled": "#f8f8f8",
   "--background-inverse": "#11181c",
   "--background-accent": "#096cff",
+  "--background-accent-secondary": "#ab38d4",
   "--background-positive": "#00894a",
   "--background-positive-subtle": "#e9f9ee",
   "--background-negative": "#dc2929",
@@ -42,9 +43,11 @@ const expectedLightColors = {
   "--foreground-disabled": "#898d90",
   "--foreground-on-inverse": "#ffffff",
   "--foreground-on-accent": "#ffffff",
+  "--foreground-on-accent-secondary": "#ffffff",
   "--foreground-on-positive": "#ffffff",
   "--foreground-on-negative": "#ffffff",
   "--foreground-accent": "#096cff",
+  "--foreground-accent-secondary": "#ab38d4",
   // Darkened from the legacy green so positive text remains accessible on its subtle background.
   "--foreground-positive": "#0b7b45",
   "--foreground-negative": "#d13a3a",
@@ -352,6 +355,28 @@ describe("Craft color contrast", () => {
     try {
       const negative = readColor("--foreground-negative");
       expect(negative[0] - Math.max(negative[1], negative[2])).toBeGreaterThan(
+        100
+      );
+    } finally {
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
+
+  test("default dark secondary accent foreground remains distinctly purple", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    root.dataset.colorScheme = "dark";
+
+    try {
+      const secondaryAccent = readColor("--foreground-accent-secondary");
+      expect(secondaryAccent[0] - secondaryAccent[1]).toBeGreaterThanOrEqual(
+        70
+      );
+      expect(secondaryAccent[2] - secondaryAccent[1]).toBeGreaterThanOrEqual(
         100
       );
     } finally {
