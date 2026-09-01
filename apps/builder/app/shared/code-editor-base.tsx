@@ -41,6 +41,7 @@ import {
   Kbd,
   Text,
   FloatingPanel,
+  selectionBackground,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons/svg";
@@ -136,6 +137,9 @@ const editorContentStyle = css({
   },
   "& .cm-activeLine": {
     backgroundColor: cssVar("--overlay-interaction-hover"),
+  },
+  "& .cm-selectionBackground, & .cm-content ::selection": {
+    backgroundColor: `${selectionBackground} !important`,
   },
   // fix scrolls appear on mount
   "& .cm-scroller": {

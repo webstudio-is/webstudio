@@ -158,9 +158,7 @@ export const ProjectCard = ({
                   color="contrast"
                   key={tag.id}
                   css={{
-                    background: `oklch(from ${cssVar(
-                      "--overlay-scrim"
-                    )} l c h / 30%)`,
+                    background: cssVar("--background-inverse"),
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}
