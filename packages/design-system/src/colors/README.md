@@ -56,9 +56,9 @@ parameter is commented at its declaration in [`colors.css`](colors.css).
 
 Theme colors accept any CSS color. The recipe converts chromatic inputs into
 the display gamut, limits their OKLCH source to `0.2–0.8` lightness and `0.3`
-chroma, then bounds luminance for the active scheme by mixing toward black or
-white. Neutral chroma is limited to `0.02`. These bounds preserve the selected
-color family while keeping required text and focus relationships safe.
+chroma, then caps relative luminance by scaling XYZ toward black. Neutral chroma
+is limited to `0.02`. These bounds preserve the selected color family while
+keeping required text and focus relationships safe.
 
 The default parameters reproduce the design system's established light palette
 within small per-channel tolerances. Decorative subtle backgrounds and borders
