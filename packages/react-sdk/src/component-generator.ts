@@ -25,10 +25,7 @@ import {
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
-import {
-  getJsxPropName,
-  mapAttributeNames,
-} from "@webstudio-is/content-engine/jsx-attributes";
+import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import { isAttributeNameSafe, showAttribute } from "./props";
 import { generateCollectionIterationCode } from "./collection-utils";
 
@@ -214,19 +211,6 @@ export const generateJsxElement = ({
   let collectionItemValue: undefined | string;
   let collectionItemKeyValue: undefined | string;
   const classNameValues: string[] = [];
-  // Older projects can contain duplicate props after an asset-derived prop was
-  // persisted alongside the authored prop. Keep the last value for a prop
-  // name so malformed data cannot produce duplicate JSX attributes.
-  const instanceProps = Array.from(
-    Array.from(props.values())
-      .filter((prop) => prop.instanceId === instance.id)
-      .reduce((uniqueProps, prop) => {
-        uniqueProps.set(prop.name, prop);
-        return uniqueProps;
-      }, new Map<string, Prop>())
-      .values()
-  );
-  const instancePropNames = new Set(instanceProps.map((prop) => prop.name));
   const projectedResourceProps = new Map<string, unknown>();
   const componentPropNames = new Set(Object.keys(meta?.props ?? {}));
   const acceptsHtmlAttributes =
@@ -239,29 +223,34 @@ export const generateJsxElement = ({
       componentPropNames,
       acceptsHtmlAttributes,
     });
-  const safeInstanceProps = instanceProps.filter(({ name }) =>
-    isAttributeNameSafe(name)
-  );
-  // Class aliases can coexist because their values are merged into the single
-  // className attribute below. Keep rejecting every other mapped collision.
-  const classPropIds = new Set(
-    safeInstanceProps
-      .filter(({ name }) => getGeneratedPropName(name) === "className")
-      .map(({ id }) => id)
-  );
-  const generatedPropNames = new Map([
-    ...mapAttributeNames({
-      attributes: safeInstanceProps.filter(
-        ({ id }) => classPropIds.has(id) === false
-      ),
-      direction: "instance-to-jsx",
-      componentPropNames,
-      acceptsHtmlAttributes,
-    }).map(({ id, name }) => [id, name] as const),
-    ...Array.from(classPropIds, (id) => [id, "className"] as const),
+  // Older projects can contain duplicate props or both standard and React
+  // aliases. Keep the last prop for each generated JSX name. Class aliases are
+  // composable, so keep the last value for each alias and merge them below.
+  const propsByGeneratedName = new Map<string, Prop>();
+  const classProps = new Map<string, Prop>();
+  for (const prop of props.values()) {
+    if (
+      prop.instanceId !== instance.id ||
+      isAttributeNameSafe(prop.name) === false
+    ) {
+      continue;
+    }
+    const name = getGeneratedPropName(prop.name);
+    if (name === "className") {
+      classProps.set(prop.name, prop);
+      continue;
+    }
+    propsByGeneratedName.set(name, prop);
+  }
+  const generatedPropNames = new Set([
+    ...propsByGeneratedName.keys(),
+    ...(classProps.size > 0 ? ["className"] : []),
   ]);
 
-  for (const prop of instanceProps) {
+  for (const [name, prop] of [
+    ...propsByGeneratedName,
+    ...Array.from(classProps.values(), (prop) => ["className", prop] as const),
+  ]) {
     const propValue = generatePropValue({
       scope,
       prop,
@@ -269,26 +258,21 @@ export const generateJsxElement = ({
       usedDataSources,
     });
 
-    if (isAttributeNameSafe(prop.name) === false) {
-      continue;
-    }
-
     if (prop.type === "resource") {
       const propMeta = meta?.props?.[prop.name];
       const resource = resources?.get(prop.value);
       if (propMeta?.type === "resource" && resource !== undefined) {
-        for (const name of propMeta.generatedProps ?? []) {
+        for (const propName of propMeta.generatedProps ?? []) {
+          const generatedPropName = getGeneratedPropName(propName);
           if (
-            instancePropNames.has(name) === false &&
-            isAttributeNameSafe(name)
+            generatedPropNames.has(generatedPropName) === false &&
+            isAttributeNameSafe(propName)
           ) {
-            projectedResourceProps.set(name, resource[name]);
+            projectedResourceProps.set(generatedPropName, resource[propName]);
           }
         }
       }
     }
-
-    const name = generatedPropNames.get(prop.id) ?? prop.name;
 
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
@@ -327,8 +311,7 @@ export const generateJsxElement = ({
     }
   }
 
-  for (const [propName, value] of projectedResourceProps) {
-    const name = getGeneratedPropName(propName);
+  for (const [name, value] of projectedResourceProps) {
     generatedProps += `\n${name}={${JSON.stringify(value)}}`;
   }
 

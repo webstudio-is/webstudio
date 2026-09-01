@@ -1,6 +1,7 @@
 import { API, type Snapshot } from "typescript/unstable/sync";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import stripIndent from "strip-indent";
+import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   createScope,
   elementComponent,
@@ -728,6 +729,13 @@ test("add classes", () => {
 
 test("merges class aliases when generating jsx", () => {
   const data = renderData(<$.Body ws:id="body" className="standard"></$.Body>);
+  data.props.set("duplicate-class", {
+    id: "duplicate-class",
+    instanceId: "body",
+    name: "class",
+    type: "string",
+    value: "replacement",
+  });
   data.props.set("legacy-class-name", {
     id: "legacy-class-name",
     instanceId: "body",
@@ -751,12 +759,67 @@ test("merges class aliases when generating jsx", () => {
       clear(`
         const Page = () => {
         return <Body
-        className={\`atomic \${"standard"} \${"legacy"}\`} />
+        className={\`atomic \${"replacement"} \${"legacy"}\`} />
         }
     `)
     )
   );
 });
+
+test.each(
+  Object.entries(standardAttributesToReactProps).filter(
+    ([standardName, jsxName]) =>
+      standardName !== "class" && standardName !== jsxName
+  )
+)(
+  "keeps the last value when %s and %s map to the same JSX prop",
+  (standardName, jsxName) => {
+    const generate = (attributes: [name: string, value: string][]) => {
+      const data = renderData(<$.Body ws:id="body"></$.Body>);
+      const instance = data.instances.get("body");
+      if (instance === undefined) {
+        throw new Error("Expected Body instance");
+      }
+      data.instances.set("body", { ...instance, tag: "div" });
+      for (const [index, [name, value]] of attributes.entries()) {
+        data.props.set(`${index}-${name}`, {
+          id: `${index}-${name}`,
+          instanceId: "body",
+          name,
+          type: "string",
+          value,
+        });
+      }
+      return generateJsxChildren({
+        scope: createScope(),
+        usedDataSources: new Map(),
+        indexesWithinAncestors: new Map(),
+        metas: new Map(),
+        children: [{ type: "id", value: "body" }],
+        ...data,
+      });
+    };
+    const expected = (value: string) =>
+      clear(`
+        <Body
+        data-ws-tag="div"
+        ${jsxName}={"${value}"} />
+      `);
+
+    expect(
+      generate([
+        [standardName, "standard"],
+        [jsxName, "jsx"],
+      ])
+    ).toBe(expected("jsx"));
+    expect(
+      generate([
+        [jsxName, "jsx"],
+        [standardName, "standard"],
+      ])
+    ).toBe(expected("standard"));
+  }
+);
 
 test("add bind classes and merge classes", () => {
   const hasClass2 = new Variable("variableName", false);
