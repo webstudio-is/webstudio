@@ -1,17 +1,12 @@
 import { computed } from "nanostores";
-import type {
-  DataSource,
-  Instance,
-  Prop,
-  ResourceRequest,
-  ImageAsset,
-} from "@webstudio-is/sdk";
+import type { DataSource, Instance, Prop, ImageAsset } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   collectionComponent,
   blockComponent,
   contentBlockDocumentProp,
+  getPageResourceRootIds,
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
@@ -37,8 +32,7 @@ import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { $currentSystem } from "../system";
 import {
   $resourcesCache,
-  computeResourceRequest,
-  getResourceKey,
+  computeResourceRequestPlan,
   preloadResources,
 } from "../resources";
 import {
@@ -204,6 +198,54 @@ const $resourceVariableValues = computed(
   }
 );
 
+const $resourceRequestPlan = computed(
+  [
+    $selectedPage,
+    $instances,
+    $props,
+    $dataSources,
+    $resources,
+    $resourceVariableValues,
+    $resourcesCache,
+  ],
+  (page, instances, props, dataSources, resources, values, resourceCache) => {
+    if (page === undefined) {
+      return computeResourceRequestPlan({
+        rootResourceIds: [],
+        resources,
+        dataSources,
+        values,
+        resourceCache,
+      });
+    }
+    const instanceIds = findTreeInstanceIdsExcludingStaticHidden({
+      instances,
+      props,
+      rootInstanceId: page.rootInstanceId,
+    });
+    const visibleInstances = new Map<Instance["id"], Instance>();
+    for (const instanceId of instanceIds) {
+      const instance = instances.get(instanceId);
+      if (instance !== undefined) {
+        visibleInstances.set(instanceId, instance);
+      }
+    }
+    const rootResourceIds = getPageResourceRootIds({
+      page,
+      instances: visibleInstances,
+      props,
+      dataSources,
+    });
+    return computeResourceRequestPlan({
+      rootResourceIds,
+      resources,
+      dataSources,
+      values,
+      resourceCache,
+    });
+  }
+);
+
 /**
  * values of all variables without computing scope specifics like collections
  * simplified version of variable values by instance selector
@@ -212,21 +254,11 @@ const $unscopedVariableValues = computed(
   [
     $dataSources,
     $dataSourceVariables,
-    $resources,
-    $resourceVariableValues,
-    $resourcesCache,
+    $resourceRequestPlan,
     $selectedPage,
     $currentSystem,
   ],
-  (
-    dataSources,
-    dataSourceVariables,
-    resources,
-    resourceVariableValues,
-    resourcesCache,
-    page,
-    system
-  ) => {
+  (dataSources, dataSourceVariables, resourceRequestPlan, page, system) => {
     const values = new Map<string, unknown>();
     // support global system
     values.set(SYSTEM_VARIABLE_ID, system);
@@ -246,17 +278,10 @@ const $unscopedVariableValues = computed(
         values.set(dataSourceId, value);
       }
       if (dataSource.type === "resource") {
-        const resource = resources.get(dataSource.resourceId);
-        if (resource) {
-          const resourceRequest = computeResourceRequest(
-            resource,
-            resourceVariableValues
-          );
-          values.set(
-            dataSourceId,
-            resourcesCache.get(getResourceKey(resourceRequest))
-          );
-        }
+        values.set(
+          dataSourceId,
+          resourceRequestPlan.documents.get(dataSource.resourceId)
+        );
       }
     }
     return values;
@@ -450,9 +475,7 @@ export const $variableValuesByInstanceSelector = computed(
     $selectedPage,
     $dataSources,
     $dataSourceVariables,
-    $resources,
-    $resourceVariableValues,
-    $resourcesCache,
+    $resourceRequestPlan,
     $currentSystem,
     $externalContentRoots,
   ],
@@ -462,9 +485,7 @@ export const $variableValuesByInstanceSelector = computed(
     page,
     dataSources,
     dataSourceVariables,
-    resources,
-    resourceVariableValues,
-    resourcesCache,
+    resourceRequestPlan,
     system,
     externalContentRoots
   ) => {
@@ -524,17 +545,10 @@ export const $variableValuesByInstanceSelector = computed(
             }
           }
           if (variable.type === "resource") {
-            const resource = resources.get(variable.resourceId);
-            if (resource) {
-              const resourceRequest = computeResourceRequest(
-                resource,
-                resourceVariableValues
-              );
-              variableValues.set(
-                variable.id,
-                resourcesCache.get(getResourceKey(resourceRequest))
-              );
-            }
+            variableValues.set(
+              variable.id,
+              resourceRequestPlan.documents.get(variable.resourceId)
+            );
           }
         }
       }
@@ -657,42 +671,8 @@ export const $variableValuesByInstanceSelector = computed(
 );
 
 const $computedResourceRequests = computed(
-  [
-    $selectedPage,
-    $instances,
-    $props,
-    $dataSources,
-    $resources,
-    $resourceVariableValues,
-  ],
-  (page, instances, props, dataSources, resources, values) => {
-    const computedResourceRequests: ResourceRequest[] = [];
-    if (page === undefined) {
-      return computedResourceRequests;
-    }
-    const instanceIds = findTreeInstanceIdsExcludingStaticHidden({
-      instances,
-      props,
-      rootInstanceId: page.rootInstanceId,
-    });
-    instanceIds.add(ROOT_INSTANCE_ID);
-    // load only resources bound to variables on current page
-    // action resources should not be loaded automatically
-    for (const dataSource of dataSources.values()) {
-      if (
-        instanceIds.has(dataSource.scopeInstanceId ?? "") &&
-        dataSource.type === "resource"
-      ) {
-        const resource = resources.get(dataSource.resourceId);
-        if (resource) {
-          computedResourceRequests.push(
-            computeResourceRequest(resource, values)
-          );
-        }
-      }
-    }
-    return computedResourceRequests;
-  }
+  $resourceRequestPlan,
+  (resourceRequestPlan) => resourceRequestPlan.requests
 );
 
 /**

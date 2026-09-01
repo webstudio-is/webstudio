@@ -4,19 +4,27 @@
 
       import type { PageMeta } from "@webstudio-is/sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
+import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
 export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
-  const list_1: ResourceRequest = {
-    name: "list",
-    url: "https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json",
-    searchParams: [
+  const list_1 = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {
+    return {
+      name: "list",
+      url: "https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json",
+      searchParams: [
+      ],
+      method: "get",
+      headers: [
+      ],
+    }
+  }
+  const _data: ResourceRequestGraph = {
+    resources: [
+      { id: "1vX6SQdaCjJN6MvJlG_cQ", outputName: "list_1", dependencies: [], createRequest: list_1 },
     ],
-    method: "get",
-    headers: [
+    rootIds: [
+      "1vX6SQdaCjJN6MvJlG_cQ",
     ],
   }
-  const _data = new Map<string, ResourceRequest>([
-    ["list_1", list_1],
-  ])
   const _contentData = new Map<string, ResourceRequest>()
   const _action = new Map<string, ResourceRequest>([
   ])

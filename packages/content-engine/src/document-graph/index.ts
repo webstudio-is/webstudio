@@ -15,3 +15,4 @@ export * from "./resolver";
 export * from "./document-resolution";
 export * from "./query-references";
 export * from "./observability";
+export * from "./resource-resolver";

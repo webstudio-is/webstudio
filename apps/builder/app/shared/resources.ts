@@ -1,6 +1,16 @@
 import { atom, computed } from "nanostores";
-import type { DataSource, Resource, ResourceRequest } from "@webstudio-is/sdk";
-import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
+import {
+  getResourceDataSourceIds,
+  type DataSource,
+  type DataSources,
+  type Resource,
+  type ResourceRequest,
+  type Resources,
+} from "@webstudio-is/sdk";
+import {
+  isAssetsResourceRequest,
+  resourceLoadConcurrency,
+} from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
@@ -8,8 +18,6 @@ import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import { separateResourceDiagnostics } from "./resource-diagnostics";
 import type { ResourcePerformance } from "./resource-diagnostics";
-
-const MAX_PENDING_RESOURCES = 5;
 
 type InFlightResourceBatch = {
   controller: AbortController;
@@ -82,8 +90,16 @@ export const $hasPendingResources = computed(
   () => queue.size > 0 || pending.size > 0
 );
 
+const getInFlightResourceCount = () => {
+  let count = 0;
+  for (const batch of inFlightBatches) {
+    count += batch.versions.size;
+  }
+  return count;
+};
+
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
-  const availableSlots = MAX_PENDING_RESOURCES - pending.size;
+  const availableSlots = resourceLoadConcurrency - getInFlightResourceCount();
   if (availableSlots <= 0) {
     return;
   }
@@ -158,7 +174,10 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 };
 
 const startLoading = (requestFetch: typeof fetch = fetch) => {
-  if (pending.size >= MAX_PENDING_RESOURCES || queue.size === 0) {
+  if (
+    getInFlightResourceCount() >= resourceLoadConcurrency ||
+    queue.size === 0
+  ) {
     return;
   }
   void loadResources(requestFetch);
@@ -350,6 +369,82 @@ export const computeResourceRequest = (
     request.body = computeExpression(resource.body, values);
   }
   return request;
+};
+
+export const computeResourceRequestPlan = ({
+  rootResourceIds,
+  resources,
+  dataSources,
+  values,
+  resourceCache,
+}: {
+  rootResourceIds: Iterable<Resource["id"]>;
+  resources: Resources;
+  dataSources: DataSources;
+  values: Map<DataSource["id"], unknown>;
+  resourceCache: ReadonlyMap<string, unknown>;
+}) => {
+  const resolvedValues = new Map(values);
+  const documents = new Map<Resource["id"], unknown>();
+  const requests = new Map<Resource["id"], ResourceRequest>();
+  const state = new Map<Resource["id"], "visiting" | "resolved" | "waiting">();
+  const dataSourcesByResourceId = new Map<Resource["id"], DataSource[]>();
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type !== "resource") {
+      continue;
+    }
+    const entries = dataSourcesByResourceId.get(dataSource.resourceId) ?? [];
+    entries.push(dataSource);
+    dataSourcesByResourceId.set(dataSource.resourceId, entries);
+  }
+
+  const visit = (resourceId: Resource["id"]): boolean => {
+    const resourceState = state.get(resourceId);
+    if (resourceState === "resolved") {
+      return true;
+    }
+    if (resourceState === "visiting" || resourceState === "waiting") {
+      return false;
+    }
+    const resource = resources.get(resourceId);
+    if (resource === undefined) {
+      state.set(resourceId, "waiting");
+      return false;
+    }
+    state.set(resourceId, "visiting");
+    for (const dataSourceId of getResourceDataSourceIds(resource)) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource?.type !== "resource") {
+        continue;
+      }
+      if (visit(dataSource.resourceId) === false) {
+        state.set(resourceId, "waiting");
+        return false;
+      }
+    }
+    const request = computeResourceRequest(resource, resolvedValues);
+    requests.set(resourceId, request);
+    const key = getResourceKey(request);
+    if (resourceCache.has(key) === false) {
+      state.set(resourceId, "waiting");
+      return false;
+    }
+    const document = resourceCache.get(key);
+    documents.set(resourceId, document);
+    for (const dataSource of dataSourcesByResourceId.get(resourceId) ?? []) {
+      resolvedValues.set(dataSource.id, document);
+    }
+    state.set(resourceId, "resolved");
+    return true;
+  };
+
+  for (const resourceId of rootResourceIds) {
+    visit(resourceId);
+  }
+  return {
+    requests: Array.from(requests.values()),
+    documents,
+  };
 };
 
 const reset = () => {

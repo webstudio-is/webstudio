@@ -4,18 +4,20 @@
 
       import type { PageMeta } from "@webstudio-is/sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
+import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
 export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
-  const assets_1: ResourceRequest = {
-    name: "assets",
-    control: "system",
-    url: "/$resources/assets",
-    searchParams: [
-    ],
-    method: "post",
-    headers: [
-      { name: "Content-Type", value: "application/json" },
-    ],
-    body: {
+  const assets_1 = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {
+    return {
+      name: "assets",
+      control: "system",
+      url: "/$resources/assets",
+      searchParams: [
+      ],
+      method: "post",
+      headers: [
+        { name: "Content-Type", value: "application/json" },
+      ],
+      body: {
   query: ({
     output: {
         mode: "fields",
@@ -34,10 +36,16 @@ export const getResources = (_props: { system: System; resources?: Record<string
     offset: 0,
   }),
 },
+    }
   }
-  const _data = new Map<string, ResourceRequest>([
-    ["assets_1", assets_1],
-  ])
+  const _data: ResourceRequestGraph = {
+    resources: [
+      { id: "oIYuHoIwG7GM5J9cCSsai", outputName: "assets_1", dependencies: [], createRequest: assets_1 },
+    ],
+    rootIds: [
+      "oIYuHoIwG7GM5J9cCSsai",
+    ],
+  }
   const _contentData = new Map<string, ResourceRequest>()
   const _action = new Map<string, ResourceRequest>([
   ])

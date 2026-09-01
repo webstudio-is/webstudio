@@ -1,8 +1,14 @@
 import hash from "@emotion/hash";
+import {
+  awaitWithSignal,
+  resolveResources as resolveResourceGraph,
+  type Resource,
+} from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
 import { serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
+export const resourceLoadConcurrency = 20;
 
 /**
  * Prevents fetch cycles by prefixing local resources.
@@ -53,6 +59,18 @@ export type ResourceLoadOptions = {
   signal?: AbortSignal;
   timeoutMs?: number;
 };
+
+export type ResourceRequestResource = Readonly<{
+  id: string;
+  outputName: string;
+  dependencies: readonly string[];
+  createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
+}>;
+
+export type ResourceRequestGraph = Readonly<{
+  resources: readonly ResourceRequestResource[];
+  rootIds: readonly string[];
+}>;
 
 export const createResourceFetchBatchProvider = ({
   baseUrl,
@@ -239,6 +257,9 @@ export const loadResource = async (
     options.timeoutMs === undefined
       ? undefined
       : setTimeout(() => {
+          if (controller.signal.aborted) {
+            return;
+          }
           didTimeout = true;
           controller.abort();
         }, options.timeoutMs);
@@ -276,15 +297,20 @@ export const loadResource = async (
       method,
       headers: requestHeaders,
     };
+    let signal: AbortSignal | undefined;
     if (options.signal !== undefined || options.timeoutMs !== undefined) {
-      requestInit.signal = controller.signal;
+      signal = controller.signal;
+      requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
       requestInit.body = serializeValue(body);
     }
-    const response = await customFetch(href, requestInit);
+    const response = await awaitWithSignal(
+      customFetch(href, requestInit),
+      signal
+    );
 
-    let data = await response.text();
+    let data = await awaitWithSignal(response.text(), signal);
 
     try {
       // If it looks like JSON and quacks like JSON, then it probably is JSON.
@@ -344,22 +370,50 @@ export const loadResource = async (
 
 export const loadResources = async (
   customFetch: typeof fetch,
-  requests: Map<string, ResourceRequest>,
+  requests: Map<string, ResourceRequest> | ResourceRequestGraph,
   baseUrl?: string | URL,
   options?: ResourceLoadOptions
 ) => {
-  return Object.fromEntries(
-    await Promise.all(
-      Array.from(
-        requests,
-        async ([name, request]) =>
-          [
-            name,
-            await loadResource(customFetch, request, baseUrl, options),
-          ] as const
-      )
-    )
+  const isLegacyMap = requests instanceof Map;
+  const graph: ResourceRequestGraph = isLegacyMap
+    ? {
+        resources: Array.from(requests, ([name, request]) => ({
+          id: name,
+          outputName: name,
+          dependencies: [],
+          createRequest: () => request,
+        })),
+        rootIds: Array.from(requests.keys()),
+      }
+    : requests;
+  const resources: Resource<unknown>[] = graph.resources.map((resource) => ({
+    id: resource.id,
+    dependencies: resource.dependencies,
+    resolve: ({ documents, signal }) =>
+      loadResource(customFetch, resource.createRequest(documents), baseUrl, {
+        ...options,
+        signal: signal ?? options?.signal,
+      }),
+  }));
+  const resolved = await resolveResourceGraph({
+    resources,
+    rootIds: graph.rootIds,
+    concurrency: resourceLoadConcurrency,
+    // Legacy maps expose cancellation as a structured transport document.
+    // Graph callers use resolver-level cancellation instead.
+    signal: isLegacyMap ? undefined : options?.signal,
+  });
+  const resourcesById = new Map(
+    graph.resources.map((resource) => [resource.id, resource])
   );
+  const output = new Map<string, unknown>();
+  for (const resourceId of graph.rootIds) {
+    const resource = resourcesById.get(resourceId);
+    if (resource !== undefined && resolved.documents.has(resourceId)) {
+      output.set(resource.outputName, resolved.documents.get(resourceId));
+    }
+  }
+  return Object.fromEntries(output);
 };
 
 /**
