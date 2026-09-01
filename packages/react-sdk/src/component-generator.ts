@@ -213,7 +213,7 @@ export const generateJsxElement = ({
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
   let collectionItemKeyValue: undefined | string;
-  let classNameValue: undefined | string;
+  const classNameValues: string[] = [];
   // Older projects can contain duplicate props after an asset-derived prop was
   // persisted alongside the authored prop. Keep the last value for a prop
   // name so malformed data cannot produce duplicate JSX attributes.
@@ -239,14 +239,27 @@ export const generateJsxElement = ({
       componentPropNames,
       acceptsHtmlAttributes,
     });
-  const generatedPropNames = new Map(
-    mapAttributeNames({
-      attributes: instanceProps.filter(({ name }) => isAttributeNameSafe(name)),
+  const safeInstanceProps = instanceProps.filter(({ name }) =>
+    isAttributeNameSafe(name)
+  );
+  // Class aliases can coexist because their values are merged into the single
+  // className attribute below. Keep rejecting every other mapped collision.
+  const classPropIds = new Set(
+    safeInstanceProps
+      .filter(({ name }) => getGeneratedPropName(name) === "className")
+      .map(({ id }) => id)
+  );
+  const generatedPropNames = new Map([
+    ...mapAttributeNames({
+      attributes: safeInstanceProps.filter(
+        ({ id }) => classPropIds.has(id) === false
+      ),
       direction: "instance-to-jsx",
       componentPropNames,
       acceptsHtmlAttributes,
-    }).map(({ id, name }) => [id, name])
-  );
+    }).map(({ id, name }) => [id, name] as const),
+    ...Array.from(classPropIds, (id) => [id, "className"] as const),
+  ]);
 
   for (const prop of instanceProps) {
     const propValue = generatePropValue({
@@ -306,7 +319,7 @@ export const generateJsxElement = ({
     // Merge atomic classes with the JSX className produced by the shared
     // instance-to-JSX property adapter.
     if (name === "className" && propValue !== undefined) {
-      classNameValue = propValue;
+      classNameValues.push(propValue);
       continue;
     }
     if (propValue !== undefined) {
@@ -320,9 +333,9 @@ export const generateJsxElement = ({
   }
 
   const classMapArray = classesMap?.get(instance.id);
-  if (classMapArray || classNameValue) {
+  if (classMapArray || classNameValues.length > 0) {
     let classNameTemplate = classMapArray ? classMapArray.join(" ") : "";
-    if (classNameValue) {
+    for (const classNameValue of classNameValues) {
       if (classNameTemplate) {
         classNameTemplate += " ";
       }

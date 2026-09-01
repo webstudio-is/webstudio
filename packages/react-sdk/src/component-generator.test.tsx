@@ -726,6 +726,38 @@ test("add classes", () => {
   );
 });
 
+test("merges class aliases when generating jsx", () => {
+  const data = renderData(<$.Body ws:id="body" className="standard"></$.Body>);
+  data.props.set("legacy-class-name", {
+    id: "legacy-class-name",
+    instanceId: "body",
+    name: "className",
+    type: "string",
+    value: "legacy",
+  });
+
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map([["body", ["atomic"]]]),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      metas: new Map(),
+      ...data,
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+        const Page = () => {
+        return <Body
+        className={\`atomic \${"standard"} \${"legacy"}\`} />
+        }
+    `)
+    )
+  );
+});
+
 test("add bind classes and merge classes", () => {
   const hasClass2 = new Variable("variableName", false);
   expect(
