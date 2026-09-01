@@ -218,7 +218,7 @@
   );
   --background-inverse: var(--color-foreground);
   --background-accent: var(--color-accent);
-  --background-selection: light-dark(
+  --background-text-selection: light-dark(
     var(--color-accent),
     oklch(from var(--color-accent) max(l, 0.72) c h)
   );
@@ -269,7 +269,7 @@
   --foreground-on-accent-secondary: var(--color-on-chromatic);
   --foreground-on-positive: var(--color-on-chromatic);
   --foreground-on-negative: var(--color-on-chromatic);
-  --foreground-on-selection: var(--color-background);
+  --foreground-on-text-selection: var(--color-background);
   --foreground-accent: var(--color-accent-foreground);
   --foreground-accent-secondary: var(--color-accent-secondary-foreground);
   --foreground-positive: var(--color-positive-foreground);
@@ -325,6 +325,6 @@
 }
 
 ::selection {
-  background-color: var(--background-selection);
-  color: var(--foreground-on-selection);
+  background-color: var(--background-text-selection);
+  color: var(--foreground-on-text-selection);
 }

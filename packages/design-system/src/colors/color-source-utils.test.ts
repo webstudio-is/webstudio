@@ -103,8 +103,8 @@ describe("Craft color CSS source", () => {
         0
       )
     ).toBe(38);
-    expect(colors.semantic.background).toHaveProperty("selection");
-    expect(colors.semantic.foreground).toHaveProperty("on-selection");
+    expect(colors.semantic.background).toHaveProperty("text-selection");
+    expect(colors.semantic.foreground).toHaveProperty("on-text-selection");
     expect(colors.semantic.background).toHaveProperty("positive-subtle");
     expect(colors.semantic.background).toHaveProperty("accent-secondary");
     expect(colors.semantic.foreground).toHaveProperty("accent-secondary");

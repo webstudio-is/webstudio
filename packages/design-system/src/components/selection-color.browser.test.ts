@@ -1,6 +1,9 @@
 import { afterEach, expect, test } from "vitest";
 import "../colors/colors.css";
-import { selectionBackground } from "./selection-color";
+import {
+  selectionBackground,
+  textSelectionBackground,
+} from "./selection-color";
 
 const root = document.documentElement;
 const previousMode = root.getAttribute("data-color-scheme");
@@ -19,8 +22,8 @@ test.each(["light", "dark"] as const)(
   (mode) => {
     root.dataset.colorScheme = mode;
     const reference = document.createElement("span");
-    reference.style.backgroundColor = selectionBackground;
-    reference.style.color = "var(--foreground-on-selection)";
+    reference.style.backgroundColor = textSelectionBackground;
+    reference.style.color = "var(--foreground-on-text-selection)";
     document.body.append(reference);
     const expectedBackground = getComputedStyle(reference).backgroundColor;
     const expectedForeground = getComputedStyle(reference).color;
@@ -42,5 +45,21 @@ test.each(["light", "dark"] as const)(
         editor.tagName.toLowerCase()
       ).toBe(expectedForeground);
     }
+  }
+);
+
+test.each(["light", "dark"] as const)(
+  "keeps control selection separate from text selection in %s mode",
+  (mode) => {
+    root.dataset.colorScheme = mode;
+    const control = document.createElement("span");
+    control.style.background = selectionBackground;
+    const text = document.createElement("span");
+    text.style.background = textSelectionBackground;
+    document.body.append(control, text);
+
+    expect(getComputedStyle(control).backgroundColor).not.toBe(
+      getComputedStyle(text).backgroundColor
+    );
   }
 );

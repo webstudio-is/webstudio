@@ -115,18 +115,18 @@ styled("button", {
 
 The package extends Craft's core registry only for reusable component needs:
 
-| Family             | Meaning and required pairing                                                                                                           |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `inverse`          | A surface with reversed polarity; pair `--background-inverse` with `--foreground-on-inverse`.                                          |
-| `accent`           | Interactive emphasis; pair a strong accent background with `--foreground-on-accent`.                                                   |
-| `selection`        | Strong text selection shared by native fields and code editors; pair `--background-selection` with `--foreground-on-selection`.        |
-| `accent-secondary` | Secondary interactive emphasis; use the foreground on surfaces and pair the strong background with `--foreground-on-accent-secondary`. |
-| `positive`         | Successful outcomes; pair strong or subtle backgrounds with their registered foreground.                                               |
-| `negative`         | Errors and destructive actions; pair strong or subtle backgrounds with their registered foreground.                                    |
-| `warning`          | Caution; pair the subtle background with the warning foreground and border.                                                            |
-| `informative`      | Neutral information; pair the subtle background with the informative foreground and border.                                            |
-| `interaction`      | Translucent hover and pressed feedback composed over regular surfaces.                                                                 |
-| `on-inverse`       | Translucent hover and pressed feedback composed over inverse surfaces.                                                                 |
+| Family             | Meaning and required pairing                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `inverse`          | A surface with reversed polarity; pair `--background-inverse` with `--foreground-on-inverse`.                                             |
+| `accent`           | Interactive emphasis; pair a strong accent background with `--foreground-on-accent`.                                                      |
+| `text-selection`   | Strong text selection shared by native fields and code editors; pair `--background-text-selection` with `--foreground-on-text-selection`. |
+| `accent-secondary` | Secondary interactive emphasis; use the foreground on surfaces and pair the strong background with `--foreground-on-accent-secondary`.    |
+| `positive`         | Successful outcomes; pair strong or subtle backgrounds with their registered foreground.                                                  |
+| `negative`         | Errors and destructive actions; pair strong or subtle backgrounds with their registered foreground.                                       |
+| `warning`          | Caution; pair the subtle background with the warning foreground and border.                                                               |
+| `informative`      | Neutral information; pair the subtle background with the informative foreground and border.                                               |
+| `interaction`      | Translucent hover and pressed feedback composed over regular surfaces.                                                                    |
+| `on-inverse`       | Translucent hover and pressed feedback composed over inverse surfaces.                                                                    |
 
 `--overlay-scrim` always derives from a dark version of the neutral theme
 color, so it dims content in both schemes rather than following foreground
