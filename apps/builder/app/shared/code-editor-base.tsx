@@ -37,7 +37,6 @@ import {
   Grid,
   Flex,
   rawTheme,
-  globalCss,
   Kbd,
   Text,
   FloatingPanel,
@@ -88,12 +87,6 @@ export const getCodeEditorCssVars = ({
   [maxHeightVar]: maxHeight,
 });
 
-const globalStyles = globalCss({
-  "fieldset[disabled] .cm-editor": {
-    opacity: 0.3,
-  },
-});
-
 const editorContentStyle = css({
   ...textVariants.mono,
   // fit editor into parent if stretched
@@ -137,6 +130,12 @@ const editorContentStyle = css({
   "& .cm-activeLine": {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
+  "& .cm-selectionBackground, & .cm-content ::selection": {
+    backgroundColor: `${cssVar("--background-text-selection")} !important`,
+  },
+  "& .cm-content ::selection": {
+    color: `${cssVar("--foreground-on-text-selection")} !important`,
+  },
   // fix scrolls appear on mount
   "& .cm-scroller": {
     overflowX: "hidden",
@@ -155,6 +154,9 @@ const editorContentStyle = css({
     // because it breaks scroll events and makes scrolling laggy
     minHeight: cssVar(minHeightVar, "auto"),
     maxHeight: cssVar(maxHeightVar, "none"),
+  },
+  "fieldset[disabled] & .cm-editor": {
+    opacity: 0.3,
   },
   ".cm-lintRange-error": {
     textDecoration: `underline wavy ${cssVar("--foreground-negative")}`,
@@ -329,8 +331,6 @@ export const EditorContent = ({
   onChange,
   onChangeComplete,
 }: EditorContentProps) => {
-  globalStyles();
-
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>(undefined);
 

@@ -21,7 +21,7 @@
   /* Sets the color family used to communicate neutral information. */
   --theme-color-informative: #0175dc;
 
-  /* Sets content contrast: 0% is softest accessible; 100% is strongest. */
+  /* Sets content contrast: 0% is softest; 100% is strongest. */
   --theme-contrast-content: 0%;
   /* Sets surface separation: 0% is subtle; 100% is strongest. */
   --theme-contrast-surface: 0%;
@@ -34,7 +34,6 @@
   --scheme-foreground-soft-lightness: 0.203788;
   --scheme-foreground-strong-lightness: 0.1;
   --scheme-foreground-chroma-scale: 1;
-  --scheme-chromatic-luminance-min: 0;
   --scheme-chromatic-luminance-max: 0.18;
   --scheme-chromatic-foreground-mix: 100%;
 
@@ -82,59 +81,12 @@
       )
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
+  /* Cap relative luminance by scaling XYZ toward black without changing hue. */
   --color-accent: color(
     from var(--color-accent-source) xyz-d65
-      calc(
-        x *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (0.95047 - x) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
-      clamp(
-        var(--scheme-chromatic-luminance-min),
-        y,
-        var(--scheme-chromatic-luminance-max)
-      )
-      calc(
-        z *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (1.08883 - z) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
+      calc(x * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
+      min(y, var(--scheme-chromatic-luminance-max))
+      calc(z * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
   );
   --color-accent-secondary-source: color(
     from oklch(from var(--color-accent) l c calc(h + 55)) srgb clamp(0, r, 1)
@@ -148,219 +100,27 @@
   );
   --color-positive: color(
     from var(--color-positive-source) xyz-d65
-      calc(
-        x *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (0.95047 - x) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
-      clamp(
-        var(--scheme-chromatic-luminance-min),
-        y,
-        var(--scheme-chromatic-luminance-max)
-      )
-      calc(
-        z *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (1.08883 - z) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
+      calc(x * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
+      min(y, var(--scheme-chromatic-luminance-max))
+      calc(z * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
   );
   --color-negative: color(
     from var(--color-negative-source) xyz-d65
-      calc(
-        x *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (0.95047 - x) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
-      clamp(
-        var(--scheme-chromatic-luminance-min),
-        y,
-        var(--scheme-chromatic-luminance-max)
-      )
-      calc(
-        z *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (1.08883 - z) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
+      calc(x * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
+      min(y, var(--scheme-chromatic-luminance-max))
+      calc(z * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
   );
   --color-warning: color(
     from var(--color-warning-source) xyz-d65
-      calc(
-        x *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (0.95047 - x) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
-      clamp(
-        var(--scheme-chromatic-luminance-min),
-        y,
-        var(--scheme-chromatic-luminance-max)
-      )
-      calc(
-        z *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (1.08883 - z) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
+      calc(x * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
+      min(y, var(--scheme-chromatic-luminance-max))
+      calc(z * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
   );
   --color-informative: color(
     from var(--color-informative-source) xyz-d65
-      calc(
-        x *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (0.95047 - x) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
-      clamp(
-        var(--scheme-chromatic-luminance-min),
-        y,
-        var(--scheme-chromatic-luminance-max)
-      )
-      calc(
-        z *
-          min(
-            1,
-            clamp(
-                var(--scheme-chromatic-luminance-min),
-                y,
-                var(--scheme-chromatic-luminance-max)
-              ) /
-              max(y, 0.000001)
-          ) +
-          (1.08883 - z) *
-          max(
-            0,
-            (clamp(
-                  var(--scheme-chromatic-luminance-min),
-                  y,
-                  var(--scheme-chromatic-luminance-max)
-                ) -
-                y) /
-              max(1 - y, 0.000001)
-          )
-      )
+      calc(x * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
+      min(y, var(--scheme-chromatic-luminance-max))
+      calc(z * min(1, var(--scheme-chromatic-luminance-max) / max(y, 0.000001)))
   );
   --color-shadow: oklch(
     from var(--theme-color-neutral) 0.203788 min(c, 0.02) h
@@ -458,6 +218,10 @@
   );
   --background-inverse: var(--color-foreground);
   --background-accent: var(--color-accent);
+  --background-text-selection: light-dark(
+    var(--color-accent),
+    oklch(from var(--color-accent) max(l, 0.72) c h)
+  );
   --background-accent-secondary: var(--color-accent-secondary);
   --background-positive: var(--color-positive);
   --background-positive-subtle: color-mix(
@@ -505,6 +269,7 @@
   --foreground-on-accent-secondary: var(--color-on-chromatic);
   --foreground-on-positive: var(--color-on-chromatic);
   --foreground-on-negative: var(--color-on-chromatic);
+  --foreground-on-text-selection: var(--color-background);
   --foreground-accent: var(--color-accent-foreground);
   --foreground-accent-secondary: var(--color-accent-secondary-foreground);
   --foreground-positive: var(--color-positive-foreground);
@@ -551,7 +316,6 @@
   --scheme-foreground-soft-lightness: 0.93;
   --scheme-foreground-strong-lightness: 1;
   --scheme-foreground-chroma-scale: 0.2;
-  --scheme-chromatic-luminance-min: 0;
   --scheme-chromatic-luminance-max: 0.18;
   --scheme-chromatic-foreground-mix: 35%;
 }

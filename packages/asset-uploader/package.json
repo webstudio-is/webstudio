@@ -24,6 +24,7 @@
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
+    "@fontsource-variable/inter": "^5.0.20",
     "@types/fontkit": "^2.0.8",
     "@webstudio-is/tsconfig": "workspace:*",
     "msw": "^2.13.2",

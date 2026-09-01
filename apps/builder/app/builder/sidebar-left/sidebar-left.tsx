@@ -1,10 +1,10 @@
 import { useRef, type ReactNode } from "react";
 import {
   cssVar,
-  declareCssVar,
   Kbd,
   rawTheme,
   Text,
+  treeActionBoundary,
 } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
@@ -54,7 +54,6 @@ import { MarketplacePanel } from "~/builder/features/marketplace";
 import type { SidebarPanelName } from "./types";
 
 const none = { Panel: () => null };
-const sidebarLeftPanelWidth = declareCssVar("--sidebar-left-panel-width");
 
 const HelpTabTrigger = () => {
   return (
@@ -305,8 +304,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         }}
         resizable
         css={{
-          [sidebarLeftPanelWidth]: `${getSidebarPanelWidth(activePanel)}`,
-          width: cssVar(sidebarLeftPanelWidth),
+          [treeActionBoundary]: `${getSidebarPanelWidth(activePanel)}`,
+          width: cssVar(treeActionBoundary),
           minWidth: theme.sizes.sidebarWidth,
           maxWidth: theme.spacing[35],
           // We need the node to be rendered but hidden

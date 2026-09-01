@@ -14,7 +14,7 @@ import { css, styled, theme, type CSS } from "../stitches.config";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 import { cssVar } from "../css-var";
-import { withInteractionOverlay } from "./control-state-color";
+import { withInteractionOverlay } from "./component-state-color";
 
 const colors = [
   "primary",

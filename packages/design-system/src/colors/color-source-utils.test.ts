@@ -102,7 +102,9 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(36);
+    ).toBe(38);
+    expect(colors.semantic.background).toHaveProperty("text-selection");
+    expect(colors.semantic.foreground).toHaveProperty("on-text-selection");
     expect(colors.semantic.background).toHaveProperty("positive-subtle");
     expect(colors.semantic.background).toHaveProperty("accent-secondary");
     expect(colors.semantic.foreground).toHaveProperty("accent-secondary");
@@ -124,6 +126,31 @@ describe("Craft color CSS source", () => {
     expect(colors.theme.color.custom).toBe("oklch(50% 0.1 300)");
     expect(colors.derived.custom).toContain("var(--theme-color-custom)");
     expect(colors.semantic.foreground.custom).toContain("var(--color-custom)");
+  });
+
+  test("rejects color variables outside the owned root selectors", () => {
+    const invalidSource = `${source}
+      .feature {
+        --foreground-unvalidated: var(--color-foreground);
+      }
+    `;
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      "Color variables may not be declared in .feature"
+    );
+  });
+
+  test("rejects owned root selectors nested in conditional rules", () => {
+    const invalidSource = source
+      .replace(":root {", "@media (prefers-contrast: more) { :root {")
+      .replace(
+        ':root[data-color-scheme="dark"] {',
+        '} :root[data-color-scheme="dark"] {'
+      );
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      "Color variables may be declared only in top-level root selectors"
+    );
   });
 
   test("rejects standalone semantic color literals", () => {

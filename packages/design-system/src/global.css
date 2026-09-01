@@ -1,0 +1,35 @@
+/*
+ * Single public stylesheet for document-wide design-system prerequisites.
+ *
+ * Include a style here only when every full design-system UI requires it and
+ * it cannot be scoped to a component: font faces, root theme tokens, base
+ * document defaults, and shared browser-native treatments. Add small rules
+ * directly; import a separate source only when it owns a substantial global
+ * subsystem such as colors.
+ *
+ * Keep component styles with their component. Route layout, scroll locking,
+ * feature presets, and third-party overrides remain with the application.
+ * This file is intentionally not loaded in the Builder canvas because it
+ * hosts authored user documents. Keep every @import before the style rules.
+ */
+
+/* Font faces required by the design-system typography variants. */
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/manrope/index.css";
+@import "@fontsource/roboto-mono/index.css";
+
+/* Root theme inputs, derivations, and semantic color tokens. */
+@import "./colors/colors.css";
+
+/* Base document defaults shared by Builder, dashboard, auth, and Storybook. */
+body {
+  margin: 0;
+  color: var(--foreground-primary);
+  font-family: var(--fonts-sans);
+}
+
+/* Native text selection across inputs, textareas, and editable content. */
+::selection {
+  background-color: var(--background-text-selection);
+  color: var(--foreground-on-text-selection);
+}

@@ -35,7 +35,7 @@ import { Flex } from "./flex";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { cssVar, declareCssVar } from "../css-var";
-import { selectionBackground } from "./selection-color";
+import { selectedItemBackground } from "./component-state-color";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
@@ -529,7 +529,7 @@ const CommandItemStyled = styled(CommandPrimitive.Item, {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-selected=true]": {
-    backgroundColor: selectionBackground,
+    backgroundColor: selectedItemBackground,
   },
 });
 

@@ -13,7 +13,7 @@ import {
   Text,
   rawTheme,
   cssVar,
-  selectionBackground,
+  selectedItemBackground,
 } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
 import {
@@ -112,7 +112,7 @@ export const ProjectSettingsDialog = ({
                             background: cssVar("--overlay-interaction-hover"),
                           },
                           "&[aria-current=true]": {
-                            background: selectionBackground,
+                            background: selectedItemBackground,
                             color: cssVar("--foreground-primary"),
                           },
                         }}
