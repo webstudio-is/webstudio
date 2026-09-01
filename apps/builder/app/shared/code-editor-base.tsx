@@ -41,7 +41,6 @@ import {
   Kbd,
   Text,
   FloatingPanel,
-  textSelectionBackground,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons/svg";
@@ -139,7 +138,7 @@ const editorContentStyle = css({
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "& .cm-selectionBackground, & .cm-content ::selection": {
-    backgroundColor: `${textSelectionBackground} !important`,
+    backgroundColor: `${cssVar("--background-text-selection")} !important`,
   },
   "& .cm-content ::selection": {
     color: `${cssVar("--foreground-on-text-selection")} !important`,

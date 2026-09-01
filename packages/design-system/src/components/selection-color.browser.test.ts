@@ -1,10 +1,8 @@
 import { afterEach, expect, test } from "vitest";
+import { cssVar } from "../css-var";
 import "../colors/colors.css";
 import "./text-selection.css";
-import {
-  selectionBackground,
-  textSelectionBackground,
-} from "./selection-color";
+import { selectionBackground } from "./selection-color";
 
 const root = document.documentElement;
 const previousMode = root.getAttribute("data-color-scheme");
@@ -23,7 +21,7 @@ test.each(["light", "dark"] as const)(
   (mode) => {
     root.dataset.colorScheme = mode;
     const reference = document.createElement("span");
-    reference.style.backgroundColor = textSelectionBackground;
+    reference.style.backgroundColor = cssVar("--background-text-selection");
     reference.style.color = "var(--foreground-on-text-selection)";
     document.body.append(reference);
     const expectedBackground = getComputedStyle(reference).backgroundColor;
@@ -56,7 +54,7 @@ test.each(["light", "dark"] as const)(
     const control = document.createElement("span");
     control.style.background = selectionBackground;
     const text = document.createElement("span");
-    text.style.background = textSelectionBackground;
+    text.style.background = cssVar("--background-text-selection");
     document.body.append(control, text);
 
     expect(getComputedStyle(control).backgroundColor).not.toBe(

@@ -8,5 +8,3 @@ export const selectionBackground = `light-dark(
     "--background-primary"
   )})
 )`;
-
-export const textSelectionBackground = cssVar("--background-text-selection");

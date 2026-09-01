@@ -3,8 +3,9 @@ import { createRoot, type Root } from "react-dom/client";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { textSelectionBackground } from "@webstudio-is/design-system";
+import { cssVar } from "@webstudio-is/design-system";
 import "@webstudio-is/design-system/colors.css";
+import "@webstudio-is/design-system/text-selection.css";
 import { EditorContent } from "./code-editor-base";
 
 (
@@ -94,7 +95,7 @@ test.each(["light", "dark"] as const)(
       throw new Error("Expected a rendered selection");
     }
     const reference = document.createElement("span");
-    reference.style.background = textSelectionBackground;
+    reference.style.background = cssVar("--background-text-selection");
     reference.style.color = "var(--foreground-on-text-selection)";
     document.body.appendChild(reference);
 

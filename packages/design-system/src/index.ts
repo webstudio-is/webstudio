@@ -3,10 +3,7 @@ export { cssVar, declareCssVar } from "./css-var";
 export type { ThemeVariableName } from "./colors/__generated__/css-variable-names";
 export { rotateBoundedBackgroundHue } from "./color-utils";
 export { webstudioBrand } from "./brand";
-export {
-  selectionBackground,
-  textSelectionBackground,
-} from "./components/selection-color";
+export { selectionBackground } from "./components/selection-color";
 export { chromeControlStyle } from "./components/chrome-control-style";
 export * from "./components/storybook";
 export * from "./utilities";
