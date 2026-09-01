@@ -100,12 +100,11 @@ test.each(["light", "dark"] as const)(
 
     const selectionColor = getComputedStyle(selection).backgroundColor;
     const referenceColor = getComputedStyle(reference).backgroundColor;
-    const selectedText =
-      container.querySelector<HTMLElement>(".cm-selectedText");
-    if (selectedText === null) {
-      throw new Error("Expected selected text styling");
+    const content = container.querySelector<HTMLElement>(".cm-content");
+    if (content === null) {
+      throw new Error("Expected editor content");
     }
-    const selectedTextColor = getComputedStyle(selectedText).color;
+    const selectedTextColor = getComputedStyle(content, "::selection").color;
     const referenceTextColor = getComputedStyle(reference).color;
     reference.remove();
     expect(selectionColor).toBe(referenceColor);
