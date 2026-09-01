@@ -95,11 +95,20 @@ test.each(["light", "dark"] as const)(
     }
     const reference = document.createElement("span");
     reference.style.background = selectionBackground;
+    reference.style.color = "var(--foreground-primary)";
     document.body.appendChild(reference);
 
     const selectionColor = getComputedStyle(selection).backgroundColor;
     const referenceColor = getComputedStyle(reference).backgroundColor;
+    const selectedText =
+      container.querySelector<HTMLElement>(".cm-selectedText");
+    if (selectedText === null) {
+      throw new Error("Expected selected text styling");
+    }
+    const selectedTextColor = getComputedStyle(selectedText).color;
+    const referenceTextColor = getComputedStyle(reference).color;
     reference.remove();
     expect(selectionColor).toBe(referenceColor);
+    expect(selectedTextColor).toBe(referenceTextColor);
   }
 );

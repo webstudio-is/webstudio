@@ -20,6 +20,7 @@ const contrastContracts = [
   ["--foreground-negative", "--background-primary", 4.5],
   ["--foreground-warning", "--background-primary", 4.5],
   ["--foreground-informative", "--background-primary", 4.5],
+  ["--foreground-primary", "--background-selection", 4.5],
   ["--foreground-on-inverse", "--background-inverse", 4.5],
   ["--foreground-on-accent", "--background-accent", 4.5],
   ["--foreground-on-accent-secondary", "--background-accent-secondary", 4.5],

@@ -119,6 +119,7 @@ The package extends Craft's core registry only for reusable component needs:
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `inverse`          | A surface with reversed polarity; pair `--background-inverse` with `--foreground-on-inverse`.                                          |
 | `accent`           | Interactive emphasis; pair a strong accent background with `--foreground-on-accent`.                                                   |
+| `selection`        | Text selection shared by native fields and code editors; selected text uses the primary foreground.                                    |
 | `accent-secondary` | Secondary interactive emphasis; use the foreground on surfaces and pair the strong background with `--foreground-on-accent-secondary`. |
 | `positive`         | Successful outcomes; pair strong or subtle backgrounds with their registered foreground.                                               |
 | `negative`         | Errors and destructive actions; pair strong or subtle backgrounds with their registered foreground.                                    |

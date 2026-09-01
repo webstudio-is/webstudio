@@ -458,6 +458,14 @@
   );
   --background-inverse: var(--color-foreground);
   --background-accent: var(--color-accent);
+  --background-selection: light-dark(
+    color-mix(
+      in oklab,
+      var(--background-accent) 12%,
+      var(--background-primary)
+    ),
+    color-mix(in oklab, var(--background-accent) 20%, var(--background-primary))
+  );
   --background-accent-secondary: var(--color-accent-secondary);
   --background-positive: var(--color-positive);
   --background-positive-subtle: color-mix(
@@ -558,4 +566,9 @@
 
 :root[data-color-scheme="light"] {
   color-scheme: light;
+}
+
+::selection {
+  background-color: var(--background-selection);
+  color: var(--foreground-primary);
 }

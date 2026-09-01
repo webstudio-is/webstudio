@@ -15,6 +15,7 @@ import {
   type Extension,
 } from "@codemirror/state";
 import {
+  Decoration,
   EditorView,
   drawSelection,
   dropCursor,
@@ -141,6 +142,9 @@ const editorContentStyle = css({
   "& .cm-selectionBackground, & .cm-content ::selection": {
     backgroundColor: `${selectionBackground} !important`,
   },
+  "& .cm-selectedText": {
+    color: `${cssVar("--foreground-primary")} !important`,
+  },
   // fix scrolls appear on mount
   "& .cm-scroller": {
     overflowX: "hidden",
@@ -173,6 +177,23 @@ const editorContentStyle = css({
     border: 0,
   },
 });
+
+const selectedTextColor = EditorView.decorations.compute(
+  ["selection"],
+  (state) =>
+    Decoration.set(
+      state.selection.ranges.flatMap((range) =>
+        range.empty
+          ? []
+          : [
+              Decoration.mark({ class: "cm-selectedText" }).range(
+                range.from,
+                range.to
+              ),
+            ]
+      )
+    )
+);
 
 const shortcutStyle = css({
   position: "absolute",
@@ -407,6 +428,7 @@ export const EditorContent = ({
         autocompletionTooltipTheme,
         history(),
         drawSelection(),
+        selectedTextColor,
         dropCursor(),
         syntaxHighlighting(codeHighlightStyle, { fallback: true }),
         keymap.of([
