@@ -5,17 +5,10 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { setEnv } from "../packages/feature-flags/src/index";
 import {
   cssVar,
-  globalCss,
-  theme,
   type ThemeVariableName,
 } from "../packages/design-system/src/index";
 
-// this adds <style> tags to the <head> of the document
-import "@fontsource-variable/inter";
-import "@fontsource-variable/manrope";
-import "@fontsource/roboto-mono";
-import "../packages/design-system/src/colors/colors.css";
-import "../packages/design-system/src/components/text-selection.css";
+import "../packages/design-system/src/global.css";
 
 const themeTestCases = {
   default: {},
@@ -79,7 +72,6 @@ const ThemeGlobals = ({
     const previousBodyBackground = document.body.style.backgroundColor;
     const previousBodyBackgroundPriority =
       document.body.style.getPropertyPriority("background-color");
-    const previousBodyColor = document.body.style.color;
     const previousTheme = new Map(
       Array.from(themeVariableNames, (name) => [
         name,
@@ -101,7 +93,6 @@ const ThemeGlobals = ({
         "var(--background-primary)",
         "important"
       );
-      document.body.style.color = "var(--foreground-primary)";
     }
 
     return () => {
@@ -122,7 +113,6 @@ const ThemeGlobals = ({
         previousBodyBackground,
         previousBodyBackgroundPriority
       );
-      document.body.style.color = previousBodyColor;
     };
   }, [colorScheme, themeTestCase]);
 
@@ -156,16 +146,8 @@ const WaitForFonts = ({ children }) => {
   );
 };
 
-const globalStyles = globalCss({
-  body: {
-    color: cssVar("--foreground-primary"),
-    fontFamily: theme.fonts.sans,
-  },
-});
-
 const decorators: Preview["decorators"] = [
   (Story, { globals }) => {
-    globalStyles();
     setEnv("*");
     const themeTestCase = isThemeTestCase(globals.themeTestCase)
       ? globals.themeTestCase

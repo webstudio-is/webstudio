@@ -21,7 +21,7 @@
   /* Sets the color family used to communicate neutral information. */
   --theme-color-informative: #0175dc;
 
-  /* Sets content contrast: 0% is softest accessible; 100% is strongest. */
+  /* Sets content contrast: 0% is softest; 100% is strongest. */
   --theme-contrast-content: 0%;
   /* Sets surface separation: 0% is subtle; 100% is strongest. */
   --theme-contrast-surface: 0%;

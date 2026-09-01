@@ -3,14 +3,18 @@ import { cssVar, declareCssVar } from "./css-var";
 
 const verifyPublicVariableType = () => {
   cssVar("--foreground-primary");
-  declareCssVar("--select-button-chevron-color");
-  cssVar("--select-button-chevron-color");
+  const componentState = declareCssVar("--component-state");
+  cssVar(componentState);
   // @ts-expect-error Authoring inputs are not public component variables.
   cssVar("--theme-color-accent");
-  // @ts-expect-error Component variables must be explicitly declared.
+  // @ts-expect-error Private variables must be passed through declareCssVar().
   cssVar("--component-state");
+  // @ts-expect-error Private variables are local, not generator-registered globals.
+  cssVar("--select-button-chevron-color");
   // @ts-expect-error CSS variable declarations must use custom property syntax.
   declareCssVar("component-state");
+  // @ts-expect-error Color-system namespaces are reserved for colors.css.
+  declareCssVar("--foreground-component-state");
 };
 void verifyPublicVariableType;
 
@@ -25,12 +29,10 @@ describe("cssVar", () => {
     ).toBe("var(--foreground-primary, var(--foreground-secondary))");
   });
 
-  test("accepts globally declared component variables", () => {
-    expect(cssVar("--select-button-chevron-color")).toBe(
-      "var(--select-button-chevron-color)"
-    );
-    expect(cssVar("--select-button-chevron-color", "none")).toBe(
-      "var(--select-button-chevron-color, none)"
-    );
+  test("accepts locally declared private variables", () => {
+    const componentState = declareCssVar("--component-state");
+
+    expect(cssVar(componentState)).toBe("var(--component-state)");
+    expect(cssVar(componentState, "none")).toBe("var(--component-state, none)");
   });
 });

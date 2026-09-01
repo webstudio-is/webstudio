@@ -2,7 +2,6 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   Button,
   Flex,
-  globalCss,
   rawTheme,
   Text,
   theme,
@@ -13,13 +12,6 @@ import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
-
-const globalStyles = globalCss({
-  body: {
-    margin: 0,
-    overflow: "hidden",
-  },
-});
 
 export type LoginProps = {
   errorMessage?: string;
@@ -36,7 +28,6 @@ export const Login = ({
   isSecretLoginEnabled,
   devPlanNames,
 }: LoginProps) => {
-  globalStyles();
   return (
     <Flex
       align="center"

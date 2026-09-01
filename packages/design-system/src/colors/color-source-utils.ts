@@ -7,6 +7,10 @@ const colorCategories = [
   "overlay",
 ] as const;
 
+const rootSelector = ":root";
+const darkRootSelector = ':root[data-color-scheme="dark"]';
+const colorVariableSelectors = new Set([rootSelector, darkRootSelector]);
+
 type ColorCategory = (typeof colorCategories)[number];
 
 export type ColorSource = {
@@ -44,22 +48,19 @@ const getDeclarations = (rule: csstree.Rule) => {
   return declarations;
 };
 
-const selectDeclarations = (stylesheet: csstree.CssNode, selector: string) => {
+const selectDeclarations = (
+  stylesheet: csstree.StyleSheet,
+  selector: string
+) => {
   let declarations: Record<string, string> | undefined;
-  csstree.walk(stylesheet, {
-    visit: "Rule",
-    enter(node) {
-      if (node.type !== "Rule") {
-        return;
-      }
-      if (csstree.generate(node.prelude) !== selector) {
-        return;
-      }
-      if (declarations !== undefined) {
-        throw new Error(`Duplicate color selector: ${selector}`);
-      }
-      declarations = getDeclarations(node);
-    },
+  stylesheet.children.forEach((node) => {
+    if (node.type !== "Rule" || csstree.generate(node.prelude) !== selector) {
+      return;
+    }
+    if (declarations !== undefined) {
+      throw new Error(`Duplicate color selector: ${selector}`);
+    }
+    declarations = getDeclarations(node);
   });
   if (declarations === undefined) {
     throw new Error(`Missing color selector: ${selector}`);
@@ -67,11 +68,58 @@ const selectDeclarations = (stylesheet: csstree.CssNode, selector: string) => {
   return declarations;
 };
 
+const validateDeclarationSelectors = (stylesheet: csstree.StyleSheet) => {
+  const topLevelRules = new Set<csstree.Rule>();
+  stylesheet.children.forEach((node) => {
+    if (node.type === "Rule") {
+      topLevelRules.add(node);
+    }
+  });
+
+  csstree.walk(stylesheet, {
+    visit: "Rule",
+    enter(node) {
+      if (node.type !== "Rule") {
+        return;
+      }
+      let hasColorVariables = false;
+      node.block.children.forEach((child) => {
+        if (child.type === "Declaration" && child.property.startsWith("--")) {
+          hasColorVariables = true;
+        }
+      });
+      if (hasColorVariables === false) {
+        return;
+      }
+      if (topLevelRules.has(node) === false) {
+        throw new Error(
+          "Color variables may be declared only in top-level root selectors"
+        );
+      }
+      const selector = csstree.generate(node.prelude);
+      if (colorVariableSelectors.has(selector) === false) {
+        throw new Error(`Color variables may not be declared in ${selector}`);
+      }
+    },
+  });
+};
+
 const getGroup = (declarations: Record<string, string>, prefix: string) =>
   Object.fromEntries(
     Object.entries(declarations)
       .filter(([name]) => name.startsWith(prefix))
       .map(([name, value]) => [name.slice(prefix.length), value])
+  );
+
+const prefixDeclarations = (
+  prefix: string,
+  declarations: Record<string, string>
+) =>
+  Object.fromEntries(
+    Object.entries(declarations).map(([name, value]) => [
+      `${prefix}${name}`,
+      value,
+    ])
   );
 
 const expectValues = (label: string, values: Record<string, string>) => {
@@ -207,12 +255,13 @@ const validateSemanticName = (name: string) => {
 };
 
 export const parseColorSource = (css: string): ColorSource => {
-  const stylesheet = csstree.parse(css, { positions: true });
-  const lightDeclarations = selectDeclarations(stylesheet, ":root");
-  const darkDeclarations = selectDeclarations(
-    stylesheet,
-    ':root[data-color-scheme="dark"]'
-  );
+  const stylesheet = csstree.parse(css);
+  if (stylesheet.type !== "StyleSheet") {
+    throw new Error("Color source must be a stylesheet");
+  }
+  validateDeclarationSelectors(stylesheet);
+  const lightDeclarations = selectDeclarations(stylesheet, rootSelector);
+  const darkDeclarations = selectDeclarations(stylesheet, darkRootSelector);
 
   const themeColor = getGroup(lightDeclarations, "--theme-color-");
   const themeContrast = getGroup(lightDeclarations, "--theme-contrast-");
@@ -226,6 +275,26 @@ export const parseColorSource = (css: string): ColorSource => {
     ])
   ) as ColorSource["semantic"];
 
+  const themeDeclarations = {
+    ...prefixDeclarations("--theme-color-", themeColor),
+    ...prefixDeclarations("--theme-contrast-", themeContrast),
+  };
+  const schemeDeclarations = prefixDeclarations("--scheme-", lightScheme);
+  const darkSchemeDeclarations = prefixDeclarations("--scheme-", darkScheme);
+  const derivedDeclarations = prefixDeclarations("--color-", derived);
+  const semanticDeclarations = Object.assign(
+    {},
+    ...Object.entries(semantic).map(([category, values]) =>
+      prefixDeclarations(`--${category}-`, values)
+    )
+  );
+  const allDeclarations = {
+    ...themeDeclarations,
+    ...schemeDeclarations,
+    ...derivedDeclarations,
+    ...semanticDeclarations,
+  };
+
   expectValues("Theme color parameters", themeColor);
   expectValues("Theme contrast parameters", themeContrast);
   expectValues("Light scheme bounds", lightScheme);
@@ -236,37 +305,6 @@ export const parseColorSource = (css: string): ColorSource => {
   }
   expectSameNames("Light and dark scheme bounds", lightScheme, darkScheme);
 
-  const allDeclarations = {
-    ...Object.fromEntries(
-      Object.entries(themeColor).map(([name, value]) => [
-        `--theme-color-${name}`,
-        value,
-      ])
-    ),
-    ...Object.fromEntries(
-      Object.entries(themeContrast).map(([name, value]) => [
-        `--theme-contrast-${name}`,
-        value,
-      ])
-    ),
-    ...Object.fromEntries(
-      Object.entries(lightScheme).map(([name, value]) => [
-        `--scheme-${name}`,
-        value,
-      ])
-    ),
-    ...Object.fromEntries(
-      Object.entries(derived).map(([name, value]) => [`--color-${name}`, value])
-    ),
-    ...Object.fromEntries(
-      Object.entries(semantic).flatMap(([category, values]) =>
-        Object.entries(values).map(([name, value]) => [
-          `--${category}-${name}`,
-          value,
-        ])
-      )
-    ),
-  };
   const names = new Set(Object.keys(allDeclarations));
   const uncategorized = Object.keys(lightDeclarations).filter(
     (name) => names.has(name) === false
@@ -284,32 +322,6 @@ export const parseColorSource = (css: string): ColorSource => {
       `Dark mode may override only scheme bounds: ${darkNonScheme.join(", ")}`
     );
   }
-
-  const themeDeclarations = Object.fromEntries(
-    Object.entries(themeColor)
-      .map(([name, value]) => [`--theme-color-${name}`, value])
-      .concat(
-        Object.entries(themeContrast).map(([name, value]) => [
-          `--theme-contrast-${name}`,
-          value,
-        ])
-      )
-  );
-  const schemeDeclarations = Object.fromEntries(
-    Object.entries(lightScheme).map(([name, value]) => [
-      `--scheme-${name}`,
-      value,
-    ])
-  );
-  const darkSchemeDeclarations = Object.fromEntries(
-    Object.entries(darkScheme).map(([name, value]) => [
-      `--scheme-${name}`,
-      value,
-    ])
-  );
-  const derivedDeclarations = Object.fromEntries(
-    Object.entries(derived).map(([name, value]) => [`--color-${name}`, value])
-  );
 
   for (const declarations of [schemeDeclarations, darkSchemeDeclarations]) {
     validateReferences({
@@ -331,14 +343,6 @@ export const parseColorSource = (css: string): ColorSource => {
     requireReference: true,
   });
 
-  const semanticDeclarations = Object.fromEntries(
-    Object.entries(semantic).flatMap(([category, values]) =>
-      Object.entries(values).map(([name, value]) => [
-        `--${category}-${name}`,
-        value,
-      ])
-    )
-  );
   for (const name of Object.keys(semanticDeclarations)) {
     validateSemanticName(name.slice(2));
   }

@@ -19,10 +19,33 @@ const pageStyle = css({
   paddingTop: "10vh",
   // prevent global root styles override error color
   color: `light-dark(
-    ${cssVar("--foreground-primary")},
-    ${cssVar("--foreground-on-inverse")}
+    ${cssVar("--foreground-primary", "#11181c")},
+    ${cssVar("--foreground-on-inverse", "#fff")}
   )`,
 });
+
+const standaloneButtonBackground = cssVar("--background-accent", "#096cff");
+const standaloneButtonForeground = cssVar("--foreground-on-accent", "#fff");
+const standaloneButtonHoverOverlay = `oklch(from ${standaloneButtonForeground} 0 0 h / 6.2745%)`;
+const standaloneButtonPressedOverlay = `oklch(from ${standaloneButtonForeground} 0 0 h / 10.9804%)`;
+
+const standaloneButtonStyle = {
+  background: standaloneButtonBackground,
+  color: standaloneButtonForeground,
+  "&&[data-state=auto]:hover, &&[data-state=hover]": {
+    background: `linear-gradient(${standaloneButtonHoverOverlay}, ${standaloneButtonHoverOverlay}), ${standaloneButtonBackground}`,
+    color: standaloneButtonForeground,
+  },
+  "&&[data-state=auto]:focus-visible, &&[data-state=focus]": {
+    color: standaloneButtonForeground,
+    outline: `1px solid ${cssVar("--border-focus", "#297aff")}`,
+    outlineOffset: "1px",
+  },
+  "&&[data-state=auto]:active, &&[data-state=pressed]": {
+    background: `linear-gradient(${standaloneButtonPressedOverlay}, ${standaloneButtonPressedOverlay}), ${standaloneButtonBackground}`,
+    color: standaloneButtonForeground,
+  },
+};
 
 export const ErrorMessage = ({
   error,
@@ -62,8 +85,8 @@ export const ErrorMessage = ({
         <Grid
           css={{
             background: `light-dark(
-              ${cssVar("--background-primary")},
-              ${cssVar("--background-inverse")}
+              ${cssVar("--background-primary", "#fff")},
+              ${cssVar("--background-inverse", "#11181c")}
             )`,
             padding: theme.spacing[7],
             borderRadius: theme.spacing[5],
@@ -96,7 +119,7 @@ export const ErrorMessage = ({
             </Text>
           )}
         </Grid>
-        <LinkButton color="primary" href="/">
+        <LinkButton color="primary" href="/" css={standaloneButtonStyle}>
           Go home
         </LinkButton>
       </Grid>

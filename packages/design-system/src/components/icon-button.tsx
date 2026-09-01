@@ -13,7 +13,7 @@ import {
   selectedControlHoverBackground,
   selectedControlPressedBackground,
   withInteractionOverlay,
-} from "./control-state-color";
+} from "./component-state-color";
 
 const openOrHoverStateStyle = {
   backgroundColor: cssVar("--overlay-interaction-hover"),

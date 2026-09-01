@@ -4,8 +4,7 @@ import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { cssVar } from "@webstudio-is/design-system";
-import "@webstudio-is/design-system/colors.css";
-import "@webstudio-is/design-system/text-selection.css";
+import "@webstudio-is/design-system/global.css";
 import { EditorContent } from "./code-editor-base";
 
 (
@@ -112,3 +111,29 @@ test.each(["light", "dark"] as const)(
     expect(selectedTextColor).toBe(referenceTextColor);
   }
 );
+
+test("scopes disabled styles to the Webstudio code editor", () => {
+  act(() => {
+    root.render(
+      <fieldset disabled>
+        <EditorContent
+          value="disabled editor"
+          onChange={() => {}}
+          onChangeComplete={() => {}}
+        />
+        <div className="cm-editor" data-foreign-editor />
+      </fieldset>
+    );
+  });
+
+  const editors = container.querySelectorAll<HTMLElement>(".cm-editor");
+  const foreignEditor = container.querySelector<HTMLElement>(
+    "[data-foreign-editor]"
+  );
+  if (editors[0] === undefined || foreignEditor === null) {
+    throw new Error("Expected both code editors");
+  }
+
+  expect(getComputedStyle(editors[0]).opacity).toBe("0.3");
+  expect(getComputedStyle(foreignEditor).opacity).toBe("1");
+});

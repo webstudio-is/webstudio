@@ -81,7 +81,9 @@ export const editablePlaceholderAttribute = "data-ws-editable-placeholder";
 // @todo replace with modern typed attr() when supported in all browsers
 // see the second edge case
 // https://developer.mozilla.org/en-US/docs/Web/CSS/attr#backwards_compatibility
-const editingPlaceholderVariable = declareCssVar("--editing-placeholder");
+export const editingPlaceholderVariable = declareCssVar(
+  "--editing-placeholder"
+);
 
 const helperStylesShared = [
   // Display a placeholder text for elements that are editable but currently empty

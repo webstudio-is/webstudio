@@ -37,7 +37,6 @@ import {
   Grid,
   Flex,
   rawTheme,
-  globalCss,
   Kbd,
   Text,
   FloatingPanel,
@@ -86,12 +85,6 @@ export const getCodeEditorCssVars = ({
 }) => ({
   [minHeightVar]: minHeight,
   [maxHeightVar]: maxHeight,
-});
-
-const globalStyles = globalCss({
-  "fieldset[disabled] .cm-editor": {
-    opacity: 0.3,
-  },
 });
 
 const editorContentStyle = css({
@@ -161,6 +154,9 @@ const editorContentStyle = css({
     // because it breaks scroll events and makes scrolling laggy
     minHeight: cssVar(minHeightVar, "auto"),
     maxHeight: cssVar(maxHeightVar, "none"),
+  },
+  "fieldset[disabled] & .cm-editor": {
+    opacity: 0.3,
   },
   ".cm-lintRange-error": {
     textDecoration: `underline wavy ${cssVar("--foreground-negative")}`,
@@ -335,8 +331,6 @@ export const EditorContent = ({
   onChange,
   onChangeComplete,
 }: EditorContentProps) => {
-  globalStyles();
-
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>(undefined);
 

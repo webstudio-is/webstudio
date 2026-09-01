@@ -41,7 +41,7 @@ import {
   standardAttributesToReactProps,
   getCollectionEntries,
 } from "@webstudio-is/react-sdk";
-import { cssVar, rawTheme, toast } from "@webstudio-is/design-system";
+import { rawTheme, toast } from "@webstudio-is/design-system";
 import {
   Input,
   Link,
@@ -80,7 +80,10 @@ import {
 import { Block } from "../build-mode/block";
 import { BlockBody } from "../build-mode/block-body";
 import { BlockTemplate } from "../build-mode/block-template";
-import { editablePlaceholderAttribute } from "~/canvas/shared/styles";
+import {
+  editablePlaceholderAttribute,
+  editingPlaceholderVariable,
+} from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
 import {
   acquireExternalContentRoot,
@@ -235,7 +238,7 @@ const ContentEditable = ({
 
     if (placeholder !== undefined) {
       rootElement.style.setProperty(
-        "--editing-placeholder",
+        editingPlaceholderVariable,
         `'${placeholder.replaceAll("'", "\\'")}'`
       );
     }
@@ -247,6 +250,9 @@ const ContentEditable = ({
 
   return renderComponentWithRef(ref);
 };
+
+// Canvas documents intentionally do not inherit Builder theme variables.
+const canvasErrorColor = "#d13a3a";
 
 const ErrorStub = forwardRef<
   HTMLDivElement,
@@ -260,8 +266,8 @@ const ErrorStub = forwardRef<
       ref={ref}
       style={{
         padding: rawTheme.spacing[5],
-        border: `1px solid ${cssVar("--border-negative")}`,
-        color: cssVar("--foreground-negative"),
+        border: `1px solid ${canvasErrorColor}`,
+        color: canvasErrorColor,
       }}
     />
   );

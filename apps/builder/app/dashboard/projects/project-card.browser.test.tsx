@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, test } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import "@webstudio-is/design-system/colors.css";
+import "@webstudio-is/design-system/global.css";
 import { ProjectCard } from "./project-card";
 
 (

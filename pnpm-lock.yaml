@@ -28,15 +28,6 @@ importers:
 
   .:
     devDependencies:
-      '@fontsource-variable/inter':
-        specifier: ^5.0.20
-        version: 5.0.20
-      '@fontsource-variable/manrope':
-        specifier: ^5.0.20
-        version: 5.0.20
-      '@fontsource/roboto-mono':
-        specifier: ^5.0.18
-        version: 5.0.18
       '@modelcontextprotocol/sdk':
         specifier: ^1.10.0
         version: 1.29.0(zod@4.4.3)
@@ -166,15 +157,6 @@ importers:
       '@floating-ui/dom':
         specifier: ^1.6.13
         version: 1.6.13
-      '@fontsource-variable/inter':
-        specifier: ^5.0.20
-        version: 5.0.20
-      '@fontsource-variable/manrope':
-        specifier: ^5.0.20
-        version: 5.0.20
-      '@fontsource/roboto-mono':
-        specifier: ^5.0.18
-        version: 5.0.18
       '@lexical/headless':
         specifier: ^0.21.0
         version: 0.21.0
@@ -1217,6 +1199,9 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
     devDependencies:
+      '@fontsource-variable/inter':
+        specifier: ^5.0.20
+        version: 5.0.20
       '@types/fontkit':
         specifier: ^2.0.8
         version: 2.0.8
@@ -1739,6 +1724,15 @@ importers:
       '@floating-ui/dom':
         specifier: ^1.6.13
         version: 1.6.13
+      '@fontsource-variable/inter':
+        specifier: ^5.0.20
+        version: 5.0.20
+      '@fontsource-variable/manrope':
+        specifier: ^5.0.20
+        version: 5.0.20
+      '@fontsource/roboto-mono':
+        specifier: ^5.0.18
+        version: 5.0.18
       '@radix-ui/colors':
         specifier: ^3.0.0
         version: 3.0.0
@@ -1866,9 +1860,6 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
     devDependencies:
-      '@babel/parser':
-        specifier: ^7.29.7
-        version: 7.29.7
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79

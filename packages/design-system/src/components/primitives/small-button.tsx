@@ -9,7 +9,7 @@ import { cssVar } from "../../css-var";
 import {
   selectedControlBackground,
   withInteractionOverlay,
-} from "../control-state-color";
+} from "../component-state-color";
 
 export const smallButtonVariants = [
   "normal",

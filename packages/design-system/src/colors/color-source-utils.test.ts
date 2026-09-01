@@ -128,6 +128,31 @@ describe("Craft color CSS source", () => {
     expect(colors.semantic.foreground.custom).toContain("var(--color-custom)");
   });
 
+  test("rejects color variables outside the owned root selectors", () => {
+    const invalidSource = `${source}
+      .feature {
+        --foreground-unvalidated: var(--color-foreground);
+      }
+    `;
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      "Color variables may not be declared in .feature"
+    );
+  });
+
+  test("rejects owned root selectors nested in conditional rules", () => {
+    const invalidSource = source
+      .replace(":root {", "@media (prefers-contrast: more) { :root {")
+      .replace(
+        ':root[data-color-scheme="dark"] {',
+        '} :root[data-color-scheme="dark"] {'
+      );
+
+    expect(() => parseColorSource(invalidSource)).toThrow(
+      "Color variables may be declared only in top-level root selectors"
+    );
+  });
+
   test("rejects standalone semantic color literals", () => {
     const invalidSource = replaceDeclaration({
       css: source,

@@ -11,7 +11,6 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@babel/parser": "^7.29.7",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@vitest/browser": "3.1.1",
@@ -33,6 +32,9 @@
     "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.1.0",
     "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.0.3",
     "@floating-ui/dom": "^1.6.13",
+    "@fontsource-variable/inter": "^5.0.20",
+    "@fontsource-variable/manrope": "^5.0.20",
+    "@fontsource/roboto-mono": "^5.0.18",
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-accessible-icon": "^1.1.4",
     "@radix-ui/react-avatar": "^1.1.7",
@@ -80,11 +82,7 @@
     ".": {
       "webstudio": "./src/index.ts"
     },
-    "./colors": {
-      "webstudio": "./src/colors.ts"
-    },
-    "./colors.css": "./src/colors/colors.css",
-    "./text-selection.css": "./src/components/text-selection.css"
+    "./global.css": "./src/global.css"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,

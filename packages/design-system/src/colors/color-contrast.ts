@@ -1,10 +1,10 @@
-import type { CssVariableName } from "./__generated__/css-variable-names";
+import type { SemanticColorName } from "./__generated__/css-variable-names";
 import type { ColorMode } from "./color-source-utils";
 import { cssVar } from "../css-var";
 
 export type ColorContrastResult = {
-  foreground: CssVariableName;
-  background: CssVariableName;
+  foreground: SemanticColorName;
+  background: SemanticColorName;
   minimum: number;
   ratio: number;
 };
@@ -38,12 +38,12 @@ const contrastContracts = [
   ["--foreground-negative", "--background-informative-subtle", 4.5],
   ["--border-focus", "--background-secondary", 3],
 ] as const satisfies readonly (readonly [
-  CssVariableName,
-  CssVariableName,
+  SemanticColorName,
+  SemanticColorName,
   number,
 ])[];
 
-const contrastColorNames = new Set<CssVariableName>(
+const contrastColorNames = new Set<SemanticColorName>(
   contrastContracts.flatMap(([foreground, background]) => [
     foreground,
     background,
@@ -63,7 +63,7 @@ const getLuminance = (color: Uint8ClampedArray) =>
   0.0722 * toLinearChannel(color[2]);
 
 const createColorReader = () => {
-  const samples = new Map<CssVariableName, HTMLElement>();
+  const samples = new Map<SemanticColorName, HTMLElement>();
   const container = document.createElement("div");
   container.hidden = true;
   for (const name of contrastColorNames) {
@@ -83,7 +83,7 @@ const createColorReader = () => {
     throw new Error("Canvas color evaluation is unavailable");
   }
 
-  const read = (name: CssVariableName) => {
+  const read = (name: SemanticColorName) => {
     const sample = samples.get(name);
     if (sample === undefined) {
       throw new Error(`Unknown contrast color: ${name}`);
@@ -108,8 +108,8 @@ const createColorContrastReader = () => {
 
   const read = (mode: ColorMode): ColorContrastResult[] => {
     root.setAttribute("data-color-scheme", mode);
-    const luminances = new Map<CssVariableName, number>();
-    const readLuminance = (name: CssVariableName) => {
+    const luminances = new Map<SemanticColorName, number>();
+    const readLuminance = (name: SemanticColorName) => {
       const cached = luminances.get(name);
       if (cached !== undefined) {
         return cached;

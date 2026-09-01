@@ -8,12 +8,7 @@ import {
   type ClientLoaderFunctionArgs,
   type ShouldRevalidateFunction,
 } from "@remix-run/react";
-import interFont from "@fontsource-variable/inter/index.css?url";
-import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
-import robotoMonoFont from "@fontsource/roboto-mono/index.css?url";
-import designSystemColors from "@webstudio-is/design-system/colors.css?url";
-import textSelectionCss from "@webstudio-is/design-system/text-selection.css?url";
-import appCss from "../shared/app.css?url";
+import designSystemGlobalCss from "@webstudio-is/design-system/global.css?url";
 import {
   json,
   type LinksFunction,
@@ -40,14 +35,7 @@ import {
 export const links: LinksFunction = () => {
   // `links` returns an array of objects whose
   // properties map to the `<link />` component props
-  return [
-    { rel: "stylesheet", href: interFont },
-    { rel: "stylesheet", href: manropeVariableFont },
-    { rel: "stylesheet", href: robotoMonoFont },
-    { rel: "stylesheet", href: designSystemColors },
-    { rel: "stylesheet", href: textSelectionCss },
-    { rel: "stylesheet", href: appCss },
-  ];
+  return [{ rel: "stylesheet", href: designSystemGlobalCss }];
 };
 
 const Document = (props: {
