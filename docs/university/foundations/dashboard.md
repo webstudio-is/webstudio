@@ -10,6 +10,21 @@ description: >-
 
 The Dashboard is the first screen you see after logging into Webstudio. It provides an overview of your workspaces and projects, with powerful features for organization and quick access.
 
+## Interface theme
+
+Open the profile menu and choose **Theme**, then select **System**, **Light**, or
+**Dark**. **System** follows your operating system setting and updates when that
+setting changes. The preference applies to both the Dashboard and the Builder.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/dashboard-theme-dark.png">
+  <img src="../../.gitbook/assets/dashboard-theme-light.png" alt="Dashboard profile menu with the Theme submenu open and System, Light, and Dark options visible">
+</picture>
+
+In the Builder, the same preference is available from **Menu > View > Theme**.
+It changes the Webstudio interface, not the site on the canvas. To design and
+preview a site color scheme, use a [color-scheme breakpoint](breakpoints.md#example-dark-mode).
+
 ---
 
 ## Workspaces

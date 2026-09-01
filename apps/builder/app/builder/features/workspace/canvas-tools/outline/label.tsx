@@ -50,6 +50,7 @@ const LabelContainer = styled(
           backgroundColor: canvasToolColors.selection,
         },
         slot: {
+          color: canvasToolColors.onSlot,
           backgroundColor: canvasToolColors.slot,
         },
       },
