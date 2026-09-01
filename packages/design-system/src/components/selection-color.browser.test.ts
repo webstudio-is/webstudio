@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from "vitest";
 import "../colors/colors.css";
+import "./text-selection.css";
 import {
   selectionBackground,
   textSelectionBackground,

@@ -83,7 +83,8 @@
     "./colors": {
       "webstudio": "./src/colors.ts"
     },
-    "./colors.css": "./src/colors/colors.css"
+    "./colors.css": "./src/colors/colors.css",
+    "./text-selection.css": "./src/components/text-selection.css"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,

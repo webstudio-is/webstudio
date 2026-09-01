@@ -21,6 +21,7 @@ const contrastContracts = [
   ["--foreground-warning", "--background-primary", 4.5],
   ["--foreground-informative", "--background-primary", 4.5],
   ["--foreground-on-text-selection", "--background-text-selection", 4.5],
+  // Text selection appears on both regular surfaces and secondary editor fields.
   ["--background-text-selection", "--background-primary", 3],
   ["--background-text-selection", "--background-secondary", 3],
   ["--foreground-on-inverse", "--background-inverse", 4.5],

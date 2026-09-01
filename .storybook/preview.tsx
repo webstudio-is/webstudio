@@ -15,6 +15,7 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/manrope";
 import "@fontsource/roboto-mono";
 import "../packages/design-system/src/colors/colors.css";
+import "../packages/design-system/src/components/text-selection.css";
 
 const themeTestCases = {
   default: {},

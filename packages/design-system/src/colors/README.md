@@ -5,7 +5,9 @@ colors. Do not edit files in `__generated__/` directly; generated files contain
 types only.
 
 Each application must load `@webstudio-is/design-system/colors.css` once at its
-UI root. Design-system component imports do not inject global styles.
+UI root. Applications that use the shared text-selection treatment also load
+`@webstudio-is/design-system/text-selection.css`. Design-system component
+imports do not inject global styles.
 
 The implementation follows the public
 [Craft specification](https://docs.webstudio.is/university/craft): bounded theme

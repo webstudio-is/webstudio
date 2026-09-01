@@ -323,8 +323,3 @@
 :root[data-color-scheme="light"] {
   color-scheme: light;
 }
-
-::selection {
-  background-color: var(--background-text-selection);
-  color: var(--foreground-on-text-selection);
-}
