@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 test.each(["light", "dark"] as const)(
-  "uses a stable inverse surface for project tags in %s mode",
+  "uses the original fixed scrim treatment for project tags in %s mode",
   (mode) => {
     document.documentElement.dataset.colorScheme = mode;
     const project = {
@@ -79,8 +79,8 @@ test.each(["light", "dark"] as const)(
       throw new Error("Expected the project tag");
     }
     const reference = document.createElement("span");
-    reference.style.background = "var(--background-inverse)";
-    reference.style.color = "var(--foreground-on-inverse)";
+    reference.style.background = "oklch(0 0 0 / 0.3)";
+    reference.style.color = "#fff";
     document.body.appendChild(reference);
 
     const tagStyle = getComputedStyle(tag);

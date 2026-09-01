@@ -155,10 +155,10 @@ export const ProjectCard = ({
             if (isApplied) {
               return (
                 <Text
-                  color="contrast"
                   key={tag.id}
                   css={{
-                    background: cssVar("--background-inverse"),
+                    background: "oklch(0 0 0 / 0.3)",
+                    color: "#fff",
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}
