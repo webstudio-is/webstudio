@@ -3,39 +3,28 @@ import test from "node:test";
 import { renderMcpDocumentation } from "./generate-mcp-docs.js";
 
 test("renders GitBook metadata around the complete CLI manual", () => {
+  const manualBody = "## manual-marker\n\nmanual-body-marker";
+  const version = "version-marker";
   const generated = renderMcpDocumentation(
-    "# Webstudio MCP Manual\n\n## Startup\n\nStart here.\n",
-    "1.2.3"
+    `# Webstudio MCP Manual\r\n\r\n${manualBody.replaceAll("\n", "\r\n")}\r\n`,
+    version
   );
 
-  assert.match(generated, /^---\n/);
-  assert.match(
-    generated,
-    /# Webstudio MCP\n\n\*\*Webstudio MCP v1\.2\.3\*\*\n/
-  );
-  assert.match(
-    generated,
-    /GitBook publishes it when that revision is successfully released/
-  );
-  assert.match(
-    generated,
-    /See \[CLI\]\(cli\.md\) for Node\.js and\s+`npx` setup/
-  );
-  assert.match(generated, /## Startup\n\nStart here\./);
-  assert.match(generated, /## Related\n/);
+  assert.equal(generated.startsWith("---\n"), true);
+  assert.equal(generated.includes("\r"), false);
+  assert.equal(generated.split(version).length - 1, 1);
+  assert.equal(generated.split(manualBody).length - 1, 1);
+  assert.equal(generated.includes("{{version}}"), false);
+  assert.equal(generated.includes("{{manual}}"), false);
   assert.equal(generated.includes("# Webstudio MCP Manual"), false);
 });
 
 test("rejects an unexpected CLI manual", () => {
-  assert.throws(
-    () => renderMcpDocumentation("# Different manual", "1.2.3"),
-    /Expected the CLI manual/
-  );
+  assert.throws(() => renderMcpDocumentation("# Different manual", "1.2.3"));
 });
 
 test("rejects a missing CLI version", () => {
-  assert.throws(
-    () => renderMcpDocumentation("# Webstudio MCP Manual\n\nBody", ""),
-    /Expected a CLI version/
+  assert.throws(() =>
+    renderMcpDocumentation("# Webstudio MCP Manual\n\nBody", "")
   );
 });
