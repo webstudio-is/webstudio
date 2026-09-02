@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { ChevronRightIcon, FolderIcon, ListIcon } from "@webstudio-is/icons";
+import {
+  AlertCircleIcon,
+  ChevronRightIcon,
+  FolderIcon,
+  ListIcon,
+} from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
@@ -29,6 +34,9 @@ import {
 import type { ContentCollection } from "../assets/content-collections";
 import { CollectionSettingsDialog } from "./collection-settings-dialog";
 import { $isContentMode } from "~/shared/nano-states";
+
+const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
+  items.every((item) => item.type === "folder");
 
 export const FolderThumbnail = ({
   folder,
@@ -92,10 +100,18 @@ export const FolderThumbnail = ({
             : {}),
           ...createAssetManagerClipboardActions(item),
           move: onMove,
-          paste:
-            collection === undefined && canPasteAssetManagerClipboard(folder.id)
-              ? () => pasteAssetManagerClipboard(folder.id)
-              : undefined,
+          paste: canPasteAssetManagerClipboard(
+            folder.id,
+            collection === undefined ? undefined : acceptFolderClipboardItems
+          )
+            ? () =>
+                pasteAssetManagerClipboard(
+                  folder.id,
+                  collection === undefined
+                    ? undefined
+                    : acceptFolderClipboardItems
+                )
+            : undefined,
           delete: () => openSettings(true),
         }
       : {}),
@@ -163,12 +179,18 @@ export const FolderThumbnail = ({
         preview={
           <div style={{ position: "relative" }}>
             <FolderIcon size={40} />
-            {collection !== undefined && (
-              <ListIcon
-                size={16}
-                style={{ position: "absolute", right: -4, bottom: -2 }}
-              />
-            )}
+            {collection !== undefined &&
+              (collection.status === "invalid" ? (
+                <AlertCircleIcon
+                  size={16}
+                  style={{ position: "absolute", right: -4, bottom: -2 }}
+                />
+              ) : (
+                <ListIcon
+                  size={16}
+                  style={{ position: "absolute", right: -4, bottom: -2 }}
+                />
+              ))}
           </div>
         }
         aria-label={`Folder ${folder.name}`}

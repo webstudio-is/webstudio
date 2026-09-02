@@ -303,6 +303,91 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.updateAssetContent).not.toHaveBeenCalled();
   });
 
+  test("keeps existing entry content editable when collection.json is broken", async () => {
+    const dependencies = createDependencies();
+    const configAsset = {
+      id: "config",
+      projectId: "project-1",
+      name: "collection.json",
+      folderId: "posts",
+      type: "file" as const,
+      format: "json",
+      size: 8,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const entryAsset = {
+      ...configAsset,
+      id: "entry",
+      name: "hello-world.mdx",
+      format: "mdx",
+    };
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      configAsset,
+      entryAsset,
+    ]);
+    dependencies.updateAssetContent.mockResolvedValue(entryAsset);
+    const readFile = vi.fn(async () => ({
+      data: new Blob([
+        "not json",
+      ]).stream() as unknown as AsyncIterable<Uint8Array>,
+      contentLength: 8,
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { ...assetClient, readFile },
+      dependencies,
+    });
+
+    await expect(
+      repository.updateContent({
+        assetId: entryAsset.id,
+        expectedName: entryAsset.name,
+        data: new Blob(["---\ntitle: Updated\n---\n\nBody.\n"]).stream(),
+      })
+    ).resolves.toBe(entryAsset);
+    expect(dependencies.updateAssetContent).toHaveBeenCalledOnce();
+  });
+
+  test("rejects metadata moves into a collection folder", async () => {
+    const dependencies = createDependencies();
+    const sourceAsset = {
+      id: "source",
+      projectId: "project-1",
+      name: "source.mdx",
+      type: "file" as const,
+      format: "mdx",
+      size: 10,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const configAsset = {
+      ...sourceAsset,
+      id: "config",
+      name: "collection.json",
+      folderId: "posts",
+      format: "json",
+    };
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      sourceAsset,
+      configAsset,
+    ]);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+
+    await expect(
+      repository.updateMetadata(sourceAsset.id, { folderId: "posts" })
+    ).rejects.toThrow("Use New entry");
+    expect(dependencies.updateAssetMetadataWithClient).not.toHaveBeenCalled();
+  });
+
   test("lists, gets, and range-reads assets through the authorized object store", async () => {
     const dependencies = createDependencies();
     const asset = {

@@ -89,4 +89,18 @@ describe("content collections", () => {
       "Template must be an MDX file in the collection folder"
     );
   });
+
+  test("rejects invalid slug and slug-source field types", () => {
+    const slugSchema = JSON.parse(createDefaultCollectionConfig());
+    slugSchema.properties.slug.type = "boolean";
+    expect(() => parseCollectionConfig(JSON.stringify(slugSchema))).toThrow(
+      "Slug field must be a string"
+    );
+
+    const sourceSchema = JSON.parse(createDefaultCollectionConfig());
+    sourceSchema.properties.title.type = "number";
+    expect(() => parseCollectionConfig(JSON.stringify(sourceSchema))).toThrow(
+      "Slug source field must be a string"
+    );
+  });
 });

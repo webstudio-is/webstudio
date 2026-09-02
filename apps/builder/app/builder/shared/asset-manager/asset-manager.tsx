@@ -97,6 +97,9 @@ import { $authPermit } from "~/shared/nano-states";
 import { MoveAssetManagerItemsDialog } from "./asset-folder-dialogs";
 import type { ContentCollection } from "../assets/content-collections";
 
+const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
+  items.every((item) => item.type === "folder");
+
 type FolderNavigationProps =
   | { folderId?: never; onFolderChange?: never }
   | {
@@ -205,6 +208,26 @@ export const AssetManager = ({
     onFolderChange === undefined ? internalFolderId : folderId;
   const currentFolderIsCollection =
     currentFolderId !== undefined && collectionFolderIds.has(currentFolderId);
+  const canPasteClipboardToFolder = useCallback(
+    (targetFolderId: string | undefined) =>
+      canPasteAssetManagerClipboard(
+        targetFolderId,
+        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
+          ? acceptFolderClipboardItems
+          : undefined
+      ),
+    [collectionFolderIds]
+  );
+  const pasteClipboardToFolder = useCallback(
+    (targetFolderId: string | undefined) =>
+      pasteAssetManagerClipboard(
+        targetFolderId,
+        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
+          ? acceptFolderClipboardItems
+          : undefined
+      ),
+    [collectionFolderIds]
+  );
   const setCurrentFolderId = useCallback(
     (nextFolderId: string | undefined) => {
       if (onFolderChange === undefined) {
@@ -748,14 +771,12 @@ export const AssetManager = ({
 
   const panelContextMenuActions: AssetManagerItemActions = {
     ...panelActions,
-    ...(canManageFolders && currentFolderIsCollection === false
-      ? { paste: () => pasteAssetManagerClipboard(currentFolderId) }
+    ...(canManageFolders
+      ? { paste: () => pasteClipboardToFolder(currentFolderId) }
       : {}),
   };
   const canPaste =
-    canManageFolders &&
-    currentFolderIsCollection === false &&
-    canPasteAssetManagerClipboard(currentFolderId);
+    canManageFolders && canPasteClipboardToFolder(currentFolderId);
   const disabledPanelActions = new Set<keyof AssetManagerItemActions>();
   if (canPaste === false) {
     disabledPanelActions.add("paste");
@@ -822,7 +843,7 @@ export const AssetManager = ({
       duplicateItems(shortcutItems);
     } else if (key === "v" && canPaste) {
       const pastedItemCount = clipboard?.items.length ?? 0;
-      pasteAssetManagerClipboard(currentFolderId);
+      pasteClipboardToFolder(currentFolderId);
       setAnnouncement(
         `${getItemCountLabel(pastedItemCount)} pasted into ${getFolderName(
           currentFolderId
@@ -1020,16 +1041,8 @@ export const AssetManager = ({
             folderId={currentFolderId}
             selectedItem={selectedBreadcrumbItem}
             onChange={setCurrentFolderId}
-            canPaste={
-              canManageFolders && currentFolderIsCollection === false
-                ? canPasteAssetManagerClipboard
-                : undefined
-            }
-            onPaste={
-              canManageFolders && currentFolderIsCollection === false
-                ? pasteAssetManagerClipboard
-                : undefined
-            }
+            canPaste={canManageFolders ? canPasteClipboardToFolder : undefined}
+            onPaste={canManageFolders ? pasteClipboardToFolder : undefined}
           />
         }
       >
