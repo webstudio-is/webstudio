@@ -5,6 +5,8 @@ import {
   DocumentResolutionLimitError,
 } from "./document-graph";
 import { MdxDocumentError } from "./mdx";
+import { MarkdownMetadataError } from "./markdown";
+import { MarkdownDocumentError } from "./document-graph/markdown-document";
 import { getAssetResourceQueryError } from "./query-error";
 import { AssetQueryMultipleResultsError } from "./structured-query";
 
@@ -79,6 +81,39 @@ describe("asset resource graph query errors", () => {
         line: 7,
         column: 4,
         reason: "Unexpected closing tag",
+      },
+    });
+  });
+
+  test("preserves nested Markdown frontmatter errors and file context", () => {
+    const error = new DocumentSourceCompilationError({
+      code: "DOCUMENT_ANALYSIS_FAILED",
+      message: "Document could not be analyzed",
+      documentId: "post",
+      documentPath: "posts/broken.md",
+      cause: new MarkdownDocumentError({
+        code: "INVALID_DOCUMENT",
+        message: "Markdown document is invalid",
+        cause: new MarkdownMetadataError(
+          "FRONTMATTER_INVALID",
+          "Map keys must be unique",
+          { line: 4, column: 1 }
+        ),
+      }),
+    });
+
+    expect(
+      getAssetResourceQueryError(error, { includeSourceDetails: true })
+    ).toEqual({
+      code: "INVALID_REQUEST",
+      message: "Map keys must be unique",
+      retryable: false,
+      status: 400,
+      details: {
+        assetId: "post",
+        path: "posts/broken.md",
+        line: 4,
+        column: 1,
       },
     });
   });

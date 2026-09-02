@@ -10,6 +10,27 @@ import { CachedDocumentLoaderError } from "./document-graph/cached-document-load
 import { DocumentSourceCompilationError } from "./document-graph/source-compiler";
 import { MdxDocumentError } from "./mdx";
 import { MarkdownMetadataError } from "./markdown-errors";
+import { MarkdownDocumentError } from "./document-graph/markdown-document";
+
+const findNestedSourceError = (error: unknown) => {
+  const visited = new Set<unknown>();
+  let current = error;
+  let documentError: Error | undefined;
+  while (current !== undefined && visited.has(current) === false) {
+    if (current instanceof MdxDocumentError) {
+      return current;
+    }
+    if (current instanceof MarkdownMetadataError) {
+      return current;
+    }
+    if (current instanceof MarkdownDocumentError) {
+      documentError ??= current;
+    }
+    visited.add(current);
+    current = current instanceof Error ? current.cause : undefined;
+  }
+  return documentError;
+};
 
 export type AssetResourceQueryError = Omit<
   AssetResourceQueryFailure["error"],
@@ -84,7 +105,7 @@ export const getAssetResourceQueryError = (
       cause instanceof DocumentSourceCompilationError &&
       cause.code === "DOCUMENT_ANALYSIS_FAILED"
     ) {
-      const sourceError = cause.cause;
+      const sourceError = findNestedSourceError(cause.cause);
       const details: Record<string, string | number> = {};
       if (cause.documentId !== undefined) {
         details.assetId = cause.documentId;
@@ -116,6 +137,15 @@ export const getAssetResourceQueryError = (
         if (sourceError.column !== undefined) {
           details.column = sourceError.column;
         }
+        return {
+          code: "INVALID_REQUEST",
+          message: sourceError.message,
+          retryable: false,
+          details,
+          status: 400,
+        };
+      }
+      if (sourceError instanceof Error) {
         return {
           code: "INVALID_REQUEST",
           message: sourceError.message,
