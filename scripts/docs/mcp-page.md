@@ -11,7 +11,7 @@ icon: robot
 
 **Webstudio MCP v{{version}}**
 
-## For users
+## Introduction
 
 This documentation is written primarily for LLMs. To get started, install the
 Codex desktop app or Claude Desktop and tell it:
