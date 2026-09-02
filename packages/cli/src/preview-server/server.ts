@@ -1,14 +1,31 @@
 import type { ChildProcess, StdioOptions } from "node:child_process";
+import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import detectPort from "detect-port";
-import getPort from "get-port";
 import { previewProcessOwnerFile } from "./constants";
 import { defaultPreviewServerDependencies } from "./dependencies";
 import { getPreviewEnv, processEnv } from "./environment";
 import { getPackageManagerInvocation } from "./package-manager";
 import type { PreviewServerOptions, PreviewServerResult } from "./types";
 
-export const findAvailablePort = (host = "127.0.0.1") => getPort({ host });
+export const findAvailablePort = async (host = "127.0.0.1") => {
+  const server = createServer();
+  const port = await new Promise<number>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen({ host, port: 0, exclusive: true }, () => {
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        reject(new Error("Could not allocate a TCP preview port."));
+        return;
+      }
+      resolve(address.port);
+    });
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => (error === undefined ? resolve() : reject(error)));
+  });
+  return port;
+};
 
 export const isPreviewPortAvailable = async (host: string, port: number) => {
   const availablePort = await detectPort({ hostname: host, port });
