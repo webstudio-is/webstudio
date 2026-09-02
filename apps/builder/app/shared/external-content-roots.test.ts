@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
   blockBodyComponent,
   blockComponent,
@@ -26,7 +27,10 @@ import {
   updateExternalContentAssetSource,
   updateExternalContentFrontmatter,
 } from "./external-content-roots";
-import { executeRuntimeMutation } from "./instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "./instance-utils/data";
 import { selectInstance } from "./nano-states";
 import {
   findExternalContentRoot,
@@ -52,6 +56,7 @@ import {
   registerContainers,
   serverSyncStore,
 } from "./sync/sync-stores";
+import { createSyncChangesFromBuilderPatchPayload } from "./sync/builder-patch";
 
 registerContainers();
 
@@ -253,6 +258,74 @@ test("re-resolves existing Markdown when a matching template is added", async ()
         (prop) => prop.instanceId === heading.value && prop.name === "title"
       )
     ).toMatchObject({ type: "string", value: "Template applied" });
+  });
+
+  serverSyncStore.addTransaction(
+    "remote-template-style",
+    createSyncChangesFromBuilderPatchPayload({
+      data: getWebstudioData(),
+      payload: [
+        {
+          namespace: "styleSources",
+          patches: [
+            {
+              op: "add",
+              path: ["remote-template-style"],
+              value: { type: "local", id: "remote-template-style" },
+            },
+          ],
+        },
+        {
+          namespace: "styleSourceSelections",
+          patches: [
+            {
+              op: "add",
+              path: [templateId],
+              value: {
+                instanceId: templateId,
+                values: ["remote-template-style"],
+              },
+            },
+          ],
+        },
+        {
+          namespace: "styles",
+          patches: [
+            {
+              op: "add",
+              path: ["remote-template-style:base:color"],
+              value: {
+                breakpointId: "base",
+                styleSourceId: "remote-template-style",
+                property: "color",
+                value: { type: "keyword", value: "red" },
+              },
+            },
+          ],
+        },
+      ] satisfies BuilderPatchChange[],
+    }),
+    "remote"
+  );
+
+  await vi.waitFor(() => {
+    const heading = getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })?.[0];
+    if (heading?.type !== "id") {
+      throw new Error("Expected the remotely restyled heading");
+    }
+    const selection = $styleSourceSelections.get().get(heading.value);
+    expect(selection?.values).toHaveLength(1);
+    expect(
+      Array.from($styles.get().values()).find(
+        (style) =>
+          style.styleSourceId === selection?.values[0] &&
+          style.property === "color"
+      )
+    ).toMatchObject({ value: { type: "keyword", value: "red" } });
   });
 });
 

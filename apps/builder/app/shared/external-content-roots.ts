@@ -50,7 +50,9 @@ import type {
 } from "@webstudio-is/content-engine/asset-content-session";
 import { getAssetContentBridge } from "./asset-content-bridge.client";
 import {
+  getAffectedExternalContentTemplateRootKeys,
   getExternalContentRoots,
+  publishExternalContentTemplateMutation,
   registerExternalContentRoot,
   subscribeExternalContentMutations,
   subscribeExternalContentTemplateMutations,
@@ -61,7 +63,7 @@ import {
 } from "./external-content-persistence";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import { getWebstudioData } from "./instance-utils/data";
-import { externalContentSyncStore } from "./sync/sync-stores";
+import { externalContentSyncStore, serverSyncStore } from "./sync/sync-stores";
 import { createSyncChangesFromBuilderPatchPayload } from "./sync/builder-patch";
 import { $project } from "./sync/data-stores";
 import {
@@ -1184,6 +1186,23 @@ subscribeExternalContentTemplateMutations((rootKeys) => {
     };
     void rematerialize().catch(() => {});
   }
+});
+
+serverSyncStore.subscribe((_transactionId, payload, source) => {
+  if (source !== "remote") {
+    return;
+  }
+  const roots = getExternalContentRoots();
+  if (roots.size === 0) {
+    return;
+  }
+  publishExternalContentTemplateMutation(
+    getAffectedExternalContentTemplateRootKeys({
+      state: getWebstudioData(),
+      roots,
+      payload: payload as BuilderPatchChange[],
+    })
+  );
 });
 
 export const updateExternalContentAssetSource = ({

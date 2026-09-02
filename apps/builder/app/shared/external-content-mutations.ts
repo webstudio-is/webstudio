@@ -402,7 +402,34 @@ const doesMutationAffectRoot = ({
       root.ownership?.[change.namespace as keyof ExternalContentOwnership];
     return change.patches.some((patch) => {
       const id = getPatchId(patch);
-      return id !== undefined && ownedIds?.has(id) === true;
+      if (id !== undefined && ownedIds?.has(id) === true) {
+        return true;
+      }
+      if (includeContentContainer || id === undefined) {
+        return false;
+      }
+      if (
+        change.namespace === "styleSourceSelections" &&
+        root.instanceIds.has(id)
+      ) {
+        return true;
+      }
+      if (
+        patch.op === "remove" ||
+        patch.path.length !== 1 ||
+        typeof patch.value !== "object" ||
+        patch.value === null
+      ) {
+        return false;
+      }
+      if (change.namespace === "styles" && "styleSourceId" in patch.value) {
+        return (
+          root.ownership?.styleSources?.has(
+            String(patch.value.styleSourceId)
+          ) === true
+        );
+      }
+      return false;
     });
   });
 

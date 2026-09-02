@@ -160,6 +160,7 @@ describe("external content mutation detection", () => {
           ...roots.get("scope")!,
           templateOwnership: {
             instances: new Set(["templates", "heading-template"]),
+            styleSources: new Set(["heading-template-style"]),
             styles: new Set(["heading-template:base:color"]),
           },
         },
@@ -201,6 +202,45 @@ describe("external content mutation detection", () => {
         ],
       })
     ).toEqual([]);
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state,
+        roots: templateRoots,
+        payload: [
+          change("styleSourceSelections", [
+            {
+              op: "add",
+              path: ["heading-template"],
+              value: {
+                instanceId: "heading-template",
+                values: ["heading-template-style"],
+              },
+            },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state,
+        roots: templateRoots,
+        payload: [
+          change("styles", [
+            {
+              op: "add",
+              path: ["heading-template-style:base:background-color"],
+              value: {
+                breakpointId: "base",
+                styleSourceId: "heading-template-style",
+                property: "background-color",
+                value: { type: "keyword", value: "red" },
+              },
+            },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
   });
 });
 
