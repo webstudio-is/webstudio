@@ -186,6 +186,7 @@ export const CommandBackIcon = styled(ChevronLeftIcon, {
 const CommandInputField = styled(InputField, {
   "--sizes-controlHeight": theme.spacing[15],
   border: "none",
+  backgroundColor: cssVar("--background-primary"),
   paddingInline: theme.spacing[4],
 });
 

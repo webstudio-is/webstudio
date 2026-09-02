@@ -14,7 +14,10 @@ import { css, styled, theme, type CSS } from "../stitches.config";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 import { cssVar } from "../css-var";
-import { withInteractionOverlay } from "./component-state-color";
+import {
+  neutralControlBackground,
+  withInteractionOverlay,
+} from "./component-state-color";
 
 const colors = [
   "primary",
@@ -28,9 +31,6 @@ export type ButtonColor = (typeof colors)[number];
 
 export type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 
-const neutralBackground = `color-mix(in oklab, ${cssVar(
-  "--background-primary"
-)} 86%, ${cssVar("--foreground-primary")})`;
 const disabledBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
 )} 92%, ${cssVar("--foreground-primary")})`;
@@ -43,8 +43,8 @@ const chromaticPressedOverlay = `oklch(from ${cssVar(
 
 const backgrounds: Record<ButtonColor, string> = {
   primary: cssVar("--background-accent"),
-  neutral: neutralBackground,
-  "neutral-destructive": neutralBackground,
+  neutral: neutralControlBackground,
+  "neutral-destructive": neutralControlBackground,
   destructive: cssVar("--background-negative"),
   ghost: "transparent",
 };

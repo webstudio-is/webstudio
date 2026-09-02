@@ -1,5 +1,9 @@
 import { cssVar } from "../css-var";
 
+export const neutralControlBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 86%, ${cssVar("--foreground-primary")})`;
+
 export const selectedItemBackground = `light-dark(
   color-mix(in oklab, ${cssVar("--background-accent")} 12%, ${cssVar(
     "--background-primary"
