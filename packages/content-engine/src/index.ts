@@ -10,6 +10,7 @@ export * from "./content-database";
 export * from "./request";
 export * from "./query-source";
 export * from "./query-error";
+export * from "./query-error-details";
 export * from "./document-graph";
 export * from "./asset-value-references";
 export * from "./json-assets";

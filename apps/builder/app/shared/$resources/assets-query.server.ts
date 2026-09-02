@@ -1,6 +1,6 @@
 import { json } from "@remix-run/server-runtime";
 import {
-  getAssetResourceQueryError,
+  getDetailedAssetResourceQueryError,
   readAssetQueryRequest,
   type DocumentGraphRuntimeObserver,
 } from "@webstudio-is/content-engine";
@@ -139,9 +139,7 @@ const createFailureResponse = (error: unknown, request: Request) => {
   if (authorizationFailure !== undefined) {
     return createAssetResourceFailureResponse(authorizationFailure);
   }
-  const queryError = getAssetResourceQueryError(error, {
-    includeSourceDetails: true,
-  });
+  const queryError = getDetailedAssetResourceQueryError(error);
   if (queryError !== undefined) {
     return createAssetResourceFailureResponse(queryError);
   }
@@ -213,12 +211,8 @@ export const executeAssetQueries = async (
           index,
           request: await readAssetQueryRequest(resourceRequest),
         });
-      } catch {
-        responses[index] = createAssetResourceFailureResponse({
-          code: "INVALID_REQUEST",
-          message: "Asset query preview requires a JSON request body",
-          status: 400,
-        });
+      } catch (error) {
+        responses[index] = createFailureResponse(error, request);
       }
     })
   );

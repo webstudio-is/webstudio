@@ -132,7 +132,11 @@ describe("configured Assets system resource", () => {
     });
     await expect(responses[1].json()).resolves.toMatchObject({
       ok: false,
-      error: { code: "INVALID_REQUEST" },
+      error: {
+        code: "INVALID_REQUEST",
+        message:
+          "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+      },
     });
     await expect(responses[2].json()).resolves.toMatchObject({
       ok: false,

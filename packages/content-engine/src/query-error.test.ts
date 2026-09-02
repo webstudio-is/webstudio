@@ -8,6 +8,8 @@ import { MdxDocumentError } from "./mdx";
 import { MarkdownMetadataError } from "./markdown";
 import { MarkdownDocumentError } from "./document-graph/markdown-document";
 import { getAssetResourceQueryError } from "./query-error";
+import { getDetailedAssetResourceQueryError } from "./query-error-details";
+import { AssetQueryRequestError } from "./request";
 import { AssetQueryMultipleResultsError } from "./structured-query";
 
 describe("asset resource graph query errors", () => {
@@ -20,6 +22,22 @@ describe("asset resource graph query errors", () => {
       retryable: false,
       details: { matchedCount: 2 },
       status: 409,
+    });
+  });
+
+  test("includes query parser details only for authenticated diagnostics", () => {
+    const error = new AssetQueryRequestError("Asset query request is invalid", {
+      cause: new SyntaxError(
+        "Expected property name or '}' in JSON at position 1"
+      ),
+    });
+
+    expect(getAssetResourceQueryError(error)).toBeUndefined();
+    expect(getDetailedAssetResourceQueryError(error)).toEqual({
+      code: "INVALID_REQUEST",
+      message: "Expected property name or '}' in JSON at position 1",
+      retryable: false,
+      status: 400,
     });
   });
 
@@ -68,9 +86,7 @@ describe("asset resource graph query errors", () => {
     });
 
     expect(getAssetResourceQueryError(error)).toBeUndefined();
-    expect(
-      getAssetResourceQueryError(error, { includeSourceDetails: true })
-    ).toEqual({
+    expect(getDetailedAssetResourceQueryError(error)).toEqual({
       code: "INVALID_REQUEST",
       message: "Unexpected closing tag",
       retryable: false,
@@ -102,9 +118,7 @@ describe("asset resource graph query errors", () => {
       }),
     });
 
-    expect(
-      getAssetResourceQueryError(error, { includeSourceDetails: true })
-    ).toEqual({
+    expect(getDetailedAssetResourceQueryError(error)).toEqual({
       code: "INVALID_REQUEST",
       message: "Map keys must be unique",
       retryable: false,
