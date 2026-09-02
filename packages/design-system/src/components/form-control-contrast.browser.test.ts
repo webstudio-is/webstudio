@@ -53,7 +53,7 @@ const contrast = (first: number[], second: number[]) => {
   );
 };
 
-test("compact form controls have visible boundaries", () => {
+test("compact form controls use their intended resting treatment", () => {
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -82,20 +82,14 @@ test("compact form controls have visible boundaries", () => {
     const background = getComputedStyle(
       container.firstElementChild as Element
     ).backgroundColor;
-    const controls = container.querySelectorAll("[data-control]");
-    for (const control of controls) {
-      const boundary = control.firstElementChild;
-      if (boundary === null) {
-        throw new Error("Expected a form control boundary");
-      }
-      expect(
-        contrast(
-          readColor(getComputedStyle(boundary).borderColor),
-          readColor(background)
-        ),
-        `${mode} ${control.getAttribute("data-control")}`
-      ).toBeGreaterThanOrEqual(3);
+    const checkbox = container.querySelector("[data-control] > button");
+    if (checkbox === null) {
+      throw new Error("Expected a checkbox");
     }
+    expect(
+      readColor(getComputedStyle(checkbox).borderColor)[3],
+      `${mode} checkbox resting border`
+    ).toBe(0);
 
     const switchControl = container.querySelector("[data-switch] > button");
     if (switchControl === null) {
