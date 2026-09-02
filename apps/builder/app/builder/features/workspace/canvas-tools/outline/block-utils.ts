@@ -121,7 +121,13 @@ export const insertListItemAt = async (listItemSelector: InstanceSelector) => {
 export const insertTemplateAt = async (
   templateSelector: InstanceSelector,
   anchor: InstanceSelector,
-  insertBefore: boolean
+  {
+    insertBefore,
+    onBeforeInsert,
+  }: {
+    insertBefore: boolean;
+    onBeforeInsert?: () => void | Promise<void>;
+  }
 ) => {
   const instances = $instances.get();
 
@@ -166,6 +172,10 @@ export const insertTemplateAt = async (
       return false;
     }
 
+    const beforeInsert = onBeforeInsert?.();
+    if (beforeInsert !== undefined) {
+      await beforeInsert;
+    }
     const didInsert = insertWebstudioFragmentAt(
       fragment,
       target,

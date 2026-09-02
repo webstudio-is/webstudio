@@ -191,7 +191,7 @@ describe("insertTemplateAt", () => {
     const insertion = insertTemplateAt(
       ["template", "templates", "block", "body"],
       ["current", "block", "body"],
-      false
+      { insertBefore: false }
     );
 
     const insertedSelector = $selectedInstanceSelector.get();

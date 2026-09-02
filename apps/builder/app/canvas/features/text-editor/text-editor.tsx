@@ -1038,6 +1038,7 @@ type RichTextContentPluginProps = {
     params: undefined | ContextMenuParams
   ) => void;
   onNext: (editorState: EditorState, params: HandleNextParams) => void;
+  onCommit: (editorState: EditorState) => void;
 };
 
 const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
@@ -1076,6 +1077,7 @@ const RichTextContentPluginInternal = ({
   onOpen,
   templates,
   onNext,
+  onCommit,
 }: RichTextContentPluginProps & {
   templates: [instance: Instance, instanceSelector: InstanceSelector][];
 }) => {
@@ -1083,6 +1085,7 @@ const RichTextContentPluginInternal = ({
   const [preservedSelection] = useState(rootInstanceSelector);
 
   const handleOpen = useEffectEvent(onOpen);
+  const handleCommit = useEffectEvent(onCommit);
 
   useEffect(() => {
     if (!editor.isEditable()) {
@@ -1154,6 +1157,33 @@ const RichTextContentPluginInternal = ({
       (command) => {
         if (command?.type === "templateInsertionStarted") {
           removeSlashWhenSelectionChanges = true;
+        }
+        if (command?.type === "templateInsertionConfirmed") {
+          editor.update(
+            () => {
+              const node =
+                slashNodeKey === undefined
+                  ? undefined
+                  : $getNodeByKey(slashNodeKey);
+              node?.remove();
+              slashNodeKey = undefined;
+              removeSlashWhenSelectionChanges = false;
+              if (menuState !== "closed") {
+                menuState = "closed";
+                handleOpen(editor.getEditorState(), undefined);
+              }
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.setStyle("");
+              }
+            },
+            { discrete: true }
+          );
+          handleCommit(editor.getEditorState());
+          execTextEditorContextMenuCommand({
+            type: "templateInsertionPrepared",
+            requestId: command.requestId,
+          });
         }
         if (command?.type === "templateInsertionCancelled") {
           removeSlashWhenSelectionChanges = false;
@@ -1285,7 +1315,9 @@ const RichTextContentPluginInternal = ({
 
               */
 
-              insertTemplateAt(templateSelector, rootInstanceSelector, false);
+              insertTemplateAt(templateSelector, rootInstanceSelector, {
+                insertBefore: false,
+              });
 
               if (tag === "li" && $getRoot().getTextContentSize() === 0) {
                 const parentInstanceSelector = rootInstanceSelector.slice(1);
@@ -1735,6 +1767,10 @@ export const TextEditor = ({
     }
   );
 
+  const handleCommandCommit = useEffectEvent((state: EditorState) => {
+    handleChange(state, "next");
+  });
+
   const handleAnyKeydown = useCallback((event: KeyboardEvent) => {
     // Skip alt as Block outline depends on Alt key press
     if (event.key === "Alt") {
@@ -1801,6 +1837,8 @@ export const TextEditor = ({
           rootInstanceSelector={rootInstanceSelector}
           // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
           onNext={handleNext}
+          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+          onCommit={handleCommandCommit}
         />
       )}
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
