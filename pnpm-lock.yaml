@@ -1192,9 +1192,6 @@ importers:
       immer:
         specifier: ^10.1.1
         version: 10.1.1
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
@@ -1226,6 +1223,9 @@ importers:
       '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
@@ -1911,9 +1911,6 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
       type-fest:
         specifier: ^4.37.0
         version: 4.37.0
@@ -2332,9 +2329,6 @@ importers:
       immer:
         specifier: ^10.1.1
         version: 10.1.1
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3

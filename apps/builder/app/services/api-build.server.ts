@@ -1,5 +1,5 @@
-import { nanoid } from "nanoid";
 import { z } from "zod";
+import { createId } from "@webstudio-is/sdk";
 import { loadById, patchBuild } from "@webstudio-is/project/index.server";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
@@ -193,6 +193,6 @@ export const commitBuildPatch = async ({
     projectId,
     buildId: build.id,
     clientVersion: build.version,
-    transactions: [{ id: nanoid(), payload }],
+    transactions: [{ id: createId("nano"), payload }],
   });
 };

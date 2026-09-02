@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createId } from "@webstudio-is/sdk";
 import { useRevalidator } from "@remix-run/react";
 import {
   Button,
@@ -491,7 +492,7 @@ export const ManageMembersDialog = ({
     }
     if (succeeded.length > 0) {
       const optimistic: OptimisticPendingInvite[] = succeeded.map((email) => ({
-        notificationId: crypto.randomUUID(),
+        notificationId: createId(),
         email,
         relation,
       }));

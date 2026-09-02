@@ -41,6 +41,7 @@ import {
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
 import {
+  createId,
   toAssetReferenceRuntimeData,
   type Asset,
   type AssetFolder,
@@ -62,7 +63,6 @@ import type {
   AssetObjectStore,
   AssetObjectWriter,
 } from "./client";
-import { nanoid } from "nanoid";
 import {
   createUploadTicket,
   uploadFile,
@@ -155,7 +155,7 @@ const defaultDependencies = {
   loadAssetFoldersByProjectWithClient,
   upsertAssetFolderWithClient,
   deleteAssetFoldersWithClient,
-  createId: (): string => nanoid(),
+  createId: (): string => createId("nano"),
   now: () => new Date(),
   loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,

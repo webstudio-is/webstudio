@@ -1,5 +1,4 @@
-import { randomUUID } from "node:crypto";
-import type { WebstudioFragment } from "@webstudio-is/sdk";
+import { createId, type WebstudioFragment } from "@webstudio-is/sdk";
 import { renderTemplate } from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
@@ -27,7 +26,7 @@ const isTemplateValidationMessage = (message: string) =>
   );
 
 const createWebstudioJsxFragmentIdFactory = () => {
-  const salt = randomUUID();
+  const salt = createId();
   let index = 0;
   return () => `__webstudio_jsx_fragment_${salt}_${index++}`;
 };

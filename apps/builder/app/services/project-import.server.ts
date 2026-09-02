@@ -31,6 +31,7 @@ import {
   type ProjectBundle,
 } from "@webstudio-is/protocol";
 import {
+  createId,
   getHomePage,
   normalizeAssetFolderData,
   assetFolders as assetFoldersSchema,
@@ -340,7 +341,7 @@ export const importPublishedProjectBundle = async (
 
   const buildUpdate = createBuildImportUpdate({
     data,
-    lastTransactionId: crypto.randomUUID(),
+    lastTransactionId: createId(),
     updatedAt: new Date().toISOString(),
     version: nextVersion,
   });

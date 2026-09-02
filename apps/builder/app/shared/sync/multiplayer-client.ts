@@ -1,4 +1,5 @@
 import type { Project } from "@webstudio-is/project";
+import { createId } from "@webstudio-is/sdk";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { toast } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
@@ -64,7 +65,7 @@ export const createMultiplayerSyncClient = ({
 }): MultiplayerSyncClient => {
   let buildId: string | undefined;
   let unsubscribePresence: (() => void) | undefined;
-  const clientId = crypto.randomUUID();
+  const clientId = createId();
   const emitter = createMultiplayerSyncEmitter({
     getAuthToken: createCollabAuthTokenLoader({
       authPermit,

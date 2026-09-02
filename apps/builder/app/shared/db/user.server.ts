@@ -1,4 +1,5 @@
 import type { Database } from "@webstudio-is/postgrest/index.server";
+import { createId } from "@webstudio-is/sdk";
 import {
   AuthorizationError,
   type AppContext,
@@ -86,7 +87,7 @@ const genericCreateAccount = async (
     throw new Error("User not found");
   }
 
-  const userId = crypto.randomUUID();
+  const userId = createId();
 
   const newUser = await context.postgrest.client
     .from("User")
