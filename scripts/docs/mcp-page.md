@@ -13,8 +13,7 @@ icon: robot
 
 ## Introduction
 
-This documentation is written primarily for LLMs. To get started as a human,
-all you need to do is install the Codex desktop app or Claude Desktop and tell
+All you need to do is install the Codex desktop app or Claude Desktop and tell
 it:
 
 > Install Webstudio CLI and use MCP.
