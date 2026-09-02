@@ -169,6 +169,14 @@ describe("parseMdxDocument", () => {
         mdxMode: "flow",
       },
     ]);
+    expect(
+      document.children[0]?.type === "template"
+        ? document.children[0].props[0]?.sourceRange
+        : undefined
+    ).toEqual({
+      start: { line: 1, column: 7, offset: 6 },
+      end: { line: 1, column: 19, offset: 18 },
+    });
     expect(serializeMdxDocument(document)).toBe(source);
   });
 

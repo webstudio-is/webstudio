@@ -163,6 +163,34 @@ describe("resolveMdxTemplates", () => {
     ]);
   });
 
+  test("does not resolve adapted component internals through semantic templates", async () => {
+    const instances = createInstances();
+    instances.set(
+      "inline-code",
+      createInstance("inline-code", elementComponent, {
+        label: "Inline Code",
+        tag: "code",
+      })
+    );
+    instances.get("templates")?.children.push({
+      type: "id",
+      value: "inline-code",
+    });
+    const document = await parseMdxDocument({
+      source: "```ts\nconst ready = true;\n```\n",
+    });
+
+    const result = resolveMdxTemplates({
+      document,
+      identity,
+      instances,
+      metas,
+    });
+
+    expect(result.references).toEqual([]);
+    expect(result.diagnostics).toEqual([]);
+  });
+
   test("resolves exact displayed names from the direct flat Templates list", async () => {
     const document = await parseMdxDocument({
       source: `<ws.element ws:name="Hero Card" tone="quiet" />

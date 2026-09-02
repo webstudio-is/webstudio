@@ -1516,8 +1516,32 @@ export const reconcileMdxAuthoredContent = ({
       ) {
         throw new Error("Authored MDX template provenance is invalid");
       }
+      const ignoredJsxPropNames = new Set(provenance.ignoredJsxPropNames);
+      const instancePropNameByJsxName = new Map(
+        provenance.propNameMappings.map((mapping) => [
+          mapping.jsxPropName,
+          mapping.instancePropName,
+        ])
+      );
+      const toInstancePropName = (jsxPropName: string) =>
+        instancePropNameByJsxName.get(jsxPropName) ?? jsxPropName;
+      const authoredPropNames = new Set(
+        original.props.flatMap((prop) =>
+          ignoredJsxPropNames.has(prop.name)
+            ? []
+            : [toInstancePropName(prop.name)]
+        )
+      );
+      const originalEditablePropsByName = new Map(
+        (originalPropsByInstanceId.get(instanceId) ?? [])
+          .filter((prop) => isEditableTemplateProp({ provenance, prop }))
+          .map((prop) => [prop.name, prop])
+      );
       const editableProps = (propsByInstanceId.get(instanceId) ?? []).filter(
-        (prop) => isEditableTemplateProp({ provenance, prop })
+        (prop) =>
+          isEditableTemplateProp({ provenance, prop }) &&
+          (authoredPropNames.has(prop.name) ||
+            equal(originalEditablePropsByName.get(prop.name), prop) === false)
       );
       if (
         new Set(editableProps.map(({ name }) => name)).size !==
@@ -1529,15 +1553,6 @@ export const reconcileMdxAuthoredContent = ({
         ...provenance.editablePropNames,
         ...editableProps.map(({ name }) => name),
       ]);
-      const instancePropNameByJsxName = new Map(
-        provenance.propNameMappings.map((mapping) => [
-          mapping.jsxPropName,
-          mapping.instancePropName,
-        ])
-      );
-      const toInstancePropName = (jsxPropName: string) =>
-        instancePropNameByJsxName.get(jsxPropName) ?? jsxPropName;
-      const ignoredJsxPropNames = new Set(provenance.ignoredJsxPropNames);
       const componentPropNames = new Set(
         provenance.jsxPropContext.componentPropNames
       );

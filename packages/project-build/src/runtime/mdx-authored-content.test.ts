@@ -1044,7 +1044,7 @@ describe("MDX authored content", () => {
     ).toBe("```\nconst ready = true;\n```\n");
   });
 
-  test("persists a newly authored prop on an existing template reference", async () => {
+  test("persists a newly authored prop without copying inherited defaults", async () => {
     const document = await parseMdxDocument({
       source: '<ws.element ws:name="CodeText">const ready = true;</ws.element>',
     });
@@ -1089,7 +1089,7 @@ describe("MDX authored content", () => {
         reconcileMdxAuthoredContent({ root, fragment: next })
       )
     ).toBe(
-      '<ws.element ws:name="CodeText" language="javascript" theme="nord">const ready = true;</ws.element>\n'
+      '<ws.element ws:name="CodeText" theme="nord">const ready = true;</ws.element>\n'
     );
   });
 

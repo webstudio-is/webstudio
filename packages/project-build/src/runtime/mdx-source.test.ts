@@ -112,6 +112,18 @@ describe("materializeMdxSource", () => {
           },
         ],
       ]),
+      props: new Map([
+        [
+          "heading-title",
+          {
+            id: "heading-title",
+            instanceId: "heading",
+            name: "title",
+            type: "string",
+            value: "Inherited template title",
+          },
+        ],
+      ]),
     };
     sourceData.instances.set("heading", {
       type: "instance",

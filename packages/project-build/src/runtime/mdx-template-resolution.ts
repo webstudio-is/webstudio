@@ -138,9 +138,6 @@ export const resolveMdxTemplates = ({
             templateInstanceId,
             sourceRange: node.sourceRange,
           });
-          if (standard.key.startsWith("component:")) {
-            continue;
-          }
         } else if (standard !== undefined && (templateIds?.length ?? 0) > 1) {
           diagnostics.push({
             code: "ambiguous-template",
@@ -155,6 +152,9 @@ export const resolveMdxTemplates = ({
             ),
             sourceRange: node.sourceRange,
           });
+        }
+        if (standard?.key.startsWith("component:")) {
+          continue;
         }
       }
 

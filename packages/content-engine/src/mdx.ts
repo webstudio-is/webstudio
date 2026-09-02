@@ -346,7 +346,7 @@ const toSourceRange = (position: unknown): MdxSourceRange | undefined => {
 };
 
 const addMdxJsxAttributePositions = (root: SyntaxTreeNode, source: string) => {
-  if (source.includes("<ws.element") === false) {
+  if (source.includes("<") === false) {
     return;
   }
   let ranges: Array<{ start: unknown; end: unknown }>;
