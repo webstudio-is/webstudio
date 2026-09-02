@@ -20,6 +20,7 @@ export type AssetManagerItemActions = Partial<
   Record<
     | "open"
     | "settings"
+    | "collectionSettings"
     | "cut"
     | "copy"
     | "paste"
@@ -28,6 +29,7 @@ export type AssetManagerItemActions = Partial<
     | "download"
     | "replace"
     | "createFolder"
+    | "createEntry"
     | "createFile"
     | "upload"
     | "deleteUnusedAssets"
@@ -46,11 +48,13 @@ type ItemDefinition = {
 };
 
 const itemDefinitions: readonly ItemDefinition[] = [
+  { name: "createEntry", label: "New entry" },
   { name: "createFolder", label: "Create folder" },
   { name: "createFile", label: "Create text file" },
   { name: "upload", label: "Upload asset" },
   { name: "open", label: "Open" },
   { name: "settings", label: "Settings" },
+  { name: "collectionSettings", label: "Collection settings" },
   {
     name: "cut",
     label: "Cut",

@@ -68,6 +68,7 @@ type AssetsShellProps = {
   onElementChange?: (element: HTMLDivElement | null) => void;
   autoScrollOnElementDrag?: boolean;
   allowFolderDrop?: boolean;
+  allowExternalDrop?: boolean;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -123,6 +124,7 @@ export const AssetsShell = ({
   onElementChange,
   autoScrollOnElementDrag = false,
   allowFolderDrop = false,
+  allowExternalDrop = true,
   type,
   accept,
 }: AssetsShellProps) => {
@@ -197,7 +199,10 @@ export const AssetsShell = ({
     return combine(
       dropTargetForExternal({
         element: element,
-        canDrop: isBlockedByBackdropCallback(() => false, containsByType),
+        canDrop: isBlockedByBackdropCallback(
+          () => false,
+          allowExternalDrop ? containsByType : () => false
+        ),
         onDragEnter: () => setDropTargetState(OVER),
         onDragLeave: () => setDropTargetState(IDLE),
         onDrop: async ({ source }) => {
@@ -285,7 +290,14 @@ export const AssetsShell = ({
         },
       })
     );
-  }, [accept, allowFolderDrop, containsByType, folderId, type]);
+  }, [
+    accept,
+    allowExternalDrop,
+    allowFolderDrop,
+    containsByType,
+    folderId,
+    type,
+  ]);
 
   const dragState = Math.max(monitorState, dropTargetState);
 
