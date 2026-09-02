@@ -601,6 +601,26 @@ const assertAssetFolderExists = (
   }
 };
 
+const assertFolderAcceptsGenericAssets = (
+  assets: BuilderState["assets"],
+  folderId: string | undefined
+) => {
+  if (
+    folderId !== undefined &&
+    assets !== undefined &&
+    Array.from(assets.values()).some(
+      (asset) =>
+        asset.folderId === folderId &&
+        formatAssetName(asset) === "collection.json"
+    )
+  ) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Use New entry to add files to a collection folder"
+    );
+  }
+};
+
 export const addAsset = (
   state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetAddInput>,
@@ -645,6 +665,7 @@ export const duplicateAsset = (
       ? asset.folderId
       : (input.folderId ?? undefined);
   assertAssetFolderExists(state.assetFolders, folderId);
+  assertFolderAcceptsGenericAssets(assets, folderId);
 
   const displayFilenames = new Set(
     Array.from(assets.values(), getAssetDisplayFilename)
@@ -731,6 +752,9 @@ export const updateAsset = (
   if (input.values.folderId !== undefined) {
     const folderId = input.values.folderId ?? undefined;
     assertAssetFolderExists(state.assetFolders, folderId);
+    if (folderId !== asset.folderId) {
+      assertFolderAcceptsGenericAssets(assets, folderId);
+    }
     appendOptionalPropertyPatch(patches, {
       path: [asset.id, "folderId"],
       previous: asset.folderId,

@@ -83,7 +83,40 @@ next to the articles or in a nested folder.
 Open the settings for the `posts` folder and copy its ID. Both Assets resources
 in this guide use that ID to query only files in this folder.
 
+### Make the folder a content collection
+
+Turn on **Use as content collection** when you create the `posts` folder if
+editors should be able to add articles without writing MDX frontmatter. This
+creates two files in the folder:
+
+- `collection.json` defines the entry fields and their rules with JSON Schema.
+- `template.mdx` supplies the starting frontmatter and body for each entry.
+
+The folder remains a normal Assets folder. The direct `collection.json` file is
+what makes Webstudio treat it as a collection and show the collection badge.
+Open **Collection settings** to add fields, choose their types, mark them as
+required, and set text-length or number limits. The configurator writes the
+schema; designers do not need to edit JSON.
+
+Editors choose **New entry**, complete the generated form, and select **Create
+entry**. Webstudio creates a lowercase, dash-separated slug from the title.
+Editors can change the slug before creating the entry. The schema is checked
+when an entry is created and whenever its frontmatter changes.
+
+A collection folder accepts entries and subfolders. Uploading, creating a
+generic text file, pasting, moving, or duplicating another file directly into
+the collection is disabled. Put images and other supporting files in a
+subfolder. The collection configuration and template do not appear in Content
+Engine query results.
+
+Removing the collection in **Collection settings** deletes only
+`collection.json`. The folder becomes a normal folder again, while its entries
+and template remain.
+
 ## 2. Create an article
+
+If `posts` is a content collection, choose **New entry** and fill in its form.
+Otherwise, create the file and frontmatter manually:
 
 1. Open `blog/posts` in the Assets panel.
 2. Open the add menu and choose **Create text file**.

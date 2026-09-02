@@ -1,5 +1,6 @@
 import { json } from "@remix-run/server-runtime";
 import {
+  ContentCollectionError,
   readBoundedRequestBytes,
   RequestByteLimitError,
 } from "@webstudio-is/content-engine";
@@ -185,6 +186,7 @@ const getAssetRestErrorStatus = (error: unknown) => {
   }
   if (
     error instanceof AssetRepositoryConflictError ||
+    error instanceof ContentCollectionError ||
     error instanceof AssetRevisionConflictError ||
     error instanceof AssetUploadCountLimitError
   ) {
