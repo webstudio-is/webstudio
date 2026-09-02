@@ -185,6 +185,22 @@ describe("external content mutation detection", () => {
     expect(
       isExternalContentMutation({ state, roots: templateRoots, payload })
     ).toBe(false);
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state,
+        roots: templateRoots,
+        payload: [
+          change("instances", [
+            {
+              op: "replace",
+              path: ["block", "children"],
+              value: [{ type: "id", value: "inserted" }],
+            },
+          ]),
+        ],
+      })
+    ).toEqual([]);
   });
 });
 

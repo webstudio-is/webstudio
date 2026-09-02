@@ -192,6 +192,24 @@ test("re-resolves existing Markdown when a matching template is added", async ()
     })
   );
 
+  const initialHeading = getExternalContentRootChildren({
+    projectId: "project",
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  })?.[0];
+  if (initialHeading?.type !== "id") {
+    throw new Error("Expected the initial materialized heading");
+  }
+  executeRuntimeMutation({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId: initialHeading.value,
+      mode: "text",
+      text: "Edited heading",
+    },
+  });
+
   const insertion = executeRuntimeMutation({
     id: "instances.insertComponent",
     input: {
@@ -227,6 +245,9 @@ test("re-resolves existing Markdown when a matching template is added", async ()
     if (heading?.type !== "id") {
       throw new Error("Expected the materialized heading");
     }
+    expect($instances.get().get(heading.value)?.children).toEqual([
+      { type: "text", value: "Edited heading" },
+    ]);
     expect(
       Array.from($props.get().values()).find(
         (prop) => prop.instanceId === heading.value && prop.name === "title"

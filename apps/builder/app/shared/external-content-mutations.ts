@@ -293,6 +293,7 @@ export const getAffectedExternalContentTemplateRootKeys = ({
           ownership,
         },
         payload,
+        includeContentContainer: false,
       });
     })
     .map(([key]) => key);
@@ -310,9 +311,11 @@ const getPatchId = (patch: BuilderPatchChange["patches"][number]) => {
 const affectsRootInstances = ({
   root,
   change,
+  includeContentContainer,
 }: {
   root: ExternalContentRoot;
   change: BuilderPatchChange;
+  includeContentContainer: boolean;
 }) => {
   for (const patch of change.patches) {
     const id = getPatchId(patch);
@@ -323,6 +326,7 @@ const affectsRootInstances = ({
       return true;
     }
     if (
+      includeContentContainer &&
       id === (root.contentInstanceId ?? root.blockInstanceId) &&
       patch.path[1] === "children"
     ) {
@@ -380,14 +384,16 @@ const doesMutationAffectRoot = ({
   state,
   root,
   payload,
+  includeContentContainer = true,
 }: {
   state: ExternalContentMutationState;
   root: ExternalContentRoot;
   payload: readonly BuilderPatchChange[];
+  includeContentContainer?: boolean;
 }) =>
   payload.some((change) => {
     if (change.namespace === "instances") {
-      return affectsRootInstances({ root, change });
+      return affectsRootInstances({ root, change, includeContentContainer });
     }
     if (change.namespace === "props") {
       return affectsRootProps({ state, root, change });

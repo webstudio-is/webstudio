@@ -87,6 +87,7 @@ type RootEntry = {
   unregisterMutationRoot: () => void;
   references: number;
   openVersion: number;
+  templateVersion: number;
   saveRevision: number;
   dependencyAssetIds: ReadonlySet<string>;
 };
@@ -1147,18 +1148,41 @@ subscribeExternalContentTemplateMutations((rootKeys) => {
     if (registeredRoot !== undefined) {
       registeredRoot.templateOwnership = getTemplateOwnership(entry);
     }
-    const sourceState = getSession(entry.projectId).get(entry.assetId);
-    if (sourceState === undefined) {
-      continue;
-    }
-    const version = ++entry.openVersion;
-    void materialize({ entry, sourceState })
-      .then((result) => {
-        if (roots.get(key) === entry && entry.openVersion === version) {
-          installRoot({ entry, ...result });
+    const templateVersion = ++entry.templateVersion;
+    const rematerialize = async () => {
+      const queue = getAssetQueue(entry.projectId, entry.assetId);
+      while (
+        roots.get(key) === entry &&
+        entry.templateVersion === templateVersion
+      ) {
+        const serialization = queue.serialization;
+        await serialization;
+        if (queue.serialization !== serialization) {
+          continue;
         }
-      })
-      .catch(() => {});
+        if (queue.error !== undefined) {
+          return;
+        }
+        const sourceState = getSession(entry.projectId).get(entry.assetId);
+        if (sourceState === undefined) {
+          return;
+        }
+        const openVersion = ++entry.openVersion;
+        const result = await materialize({ entry, sourceState });
+        if (
+          roots.get(key) !== entry ||
+          entry.templateVersion !== templateVersion
+        ) {
+          return;
+        }
+        if (entry.openVersion !== openVersion) {
+          continue;
+        }
+        installRoot({ entry, ...result });
+        return;
+      }
+    };
+    void rematerialize().catch(() => {});
   }
 });
 
@@ -1388,6 +1412,7 @@ export const acquireExternalContentRoot = async ({
     unregisterMutationRoot: () => {},
     references: 1,
     openVersion: 0,
+    templateVersion: 0,
     saveRevision: 0,
     dependencyAssetIds: new Set([assetId]),
   };
