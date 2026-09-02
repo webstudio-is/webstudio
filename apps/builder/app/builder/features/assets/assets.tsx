@@ -52,7 +52,9 @@ export const AssetsPanel = ({
   const collections = useContentCollections();
   const currentCollection =
     folderId === undefined ? undefined : collections.get(folderId);
-  const reservedAssetIds = getCollectionReservedAssetIds(collections);
+  const reservedAssetIds = getCollectionReservedAssetIds(collections, {
+    includeInvalid: isContentMode,
+  });
   const addActions = {
     upload: () => uploadRef.current?.open(),
     createFile: () => setCreateTextFileOpen(true),

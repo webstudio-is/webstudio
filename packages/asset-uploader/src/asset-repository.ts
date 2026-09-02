@@ -15,6 +15,7 @@ import {
   requiresRuntimeDocumentData,
   requiresStructuredProperties,
   collectionConfigFilename,
+  ContentCollectionError,
   parseCollectionConfig,
   type AssetQueryRequestInput,
   type AssetQueryPreviewResult,
@@ -593,36 +594,44 @@ export class PostgresAssetRepository implements AssetRepository {
             assetId: configAsset.id,
             asset: configAsset,
           });
-          const config = parseCollectionConfig(
-            decodeUtf8(
-              await readBoundedBytes(
-                configContent.data,
-                contentEngineLimits.hydratedFileBytes
+          let config;
+          try {
+            config = parseCollectionConfig(
+              decodeUtf8(
+                await readBoundedBytes(
+                  configContent.data,
+                  contentEngineLimits.hydratedFileBytes
+                )
               )
-            )
-          );
-          if (formatAssetName(currentAsset) === config.template) {
-            await extractMarkdownFrontmatter(bytes);
-          } else if (isMdxFileAsset(currentAsset)) {
-            const nextFrontmatter = await extractMarkdownFrontmatter(bytes);
-            const validation = config.validate(nextFrontmatter.properties);
-            if (validation.success === false) {
-              const currentContent = await this.readContent({
-                assetId: currentAsset.id,
-                asset: currentAsset,
-              });
-              const currentFrontmatter = await extractMarkdownFrontmatter(
-                currentContent.data
-              );
-              if (
-                serializeJsonDeterministically(
-                  currentFrontmatter.properties
-                ) !== serializeJsonDeterministically(nextFrontmatter.properties)
-              ) {
-                throw new AssetRepositoryConflictError(
-                  validation.error.issues[0]?.message ??
-                    "Collection entry does not match its schema"
+            );
+          } catch (error) {
+            if (error instanceof ContentCollectionError === false) {
+              throw error;
+            }
+          }
+          if (config !== undefined) {
+            if (formatAssetName(currentAsset) === config.template) {
+              await extractMarkdownFrontmatter(bytes);
+            } else if (isMdxFileAsset(currentAsset)) {
+              const nextFrontmatter = await extractMarkdownFrontmatter(bytes);
+              const validation = config.validate(nextFrontmatter.properties);
+              if (validation.success === false) {
+                const currentContent = await this.readContent({
+                  assetId: currentAsset.id,
+                  asset: currentAsset,
+                });
+                const currentFrontmatter = await extractMarkdownFrontmatter(
+                  currentContent.data
                 );
+                if (
+                  serializeJsonDeterministically(nextFrontmatter.properties) !==
+                  serializeJsonDeterministically(currentFrontmatter.properties)
+                ) {
+                  throw new AssetRepositoryConflictError(
+                    validation.error.issues[0]?.message ??
+                      "Collection entry does not match its schema"
+                  );
+                }
               }
             }
           }
@@ -645,6 +654,25 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async updateMetadata(assetId: Asset["id"], values: AssetMetadataUpdate) {
     await this.assertCanEdit();
+    if (typeof values.folderId === "string") {
+      const assets = await this.dependencies.loadAssetsByProjectWithClient(
+        this.projectId,
+        this.context.postgrest.client
+      );
+      const currentAsset = assets.find((asset) => asset.id === assetId);
+      if (
+        currentAsset?.folderId !== values.folderId &&
+        assets.some(
+          (asset) =>
+            asset.folderId === values.folderId &&
+            formatAssetName(asset) === collectionConfigFilename
+        )
+      ) {
+        throw new AssetRepositoryConflictError(
+          "Use New entry to add files to a collection folder"
+        );
+      }
+    }
     const asset = await this.dependencies.updateAssetMetadataWithClient(
       { projectId: this.projectId, assetId, values },
       this.context.postgrest.client

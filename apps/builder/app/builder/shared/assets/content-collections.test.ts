@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
-import { discoverContentCollections } from "./content-collections";
+import {
+  discoverContentCollections,
+  getCollectionReservedAssetIds,
+} from "./content-collections";
 
 const asset = ({
   id,
@@ -64,6 +67,9 @@ describe("discoverContentCollections", () => {
       status: "invalid",
       message: "collection.json contains invalid JSON",
     });
+    expect(
+      getCollectionReservedAssetIds(collections, { includeInvalid: true })
+    ).toEqual(new Set([config.id]));
   });
 
   test("reports a direct non-entry file as an invalid collection", async () => {

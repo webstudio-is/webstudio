@@ -181,12 +181,15 @@ export const useContentCollections = () => {
 };
 
 export const getCollectionReservedAssetIds = (
-  collections: ReadonlyMap<string, ContentCollection>
+  collections: ReadonlyMap<string, ContentCollection>,
+  { includeInvalid = false }: { includeInvalid?: boolean } = {}
 ) =>
   new Set(
     Array.from(collections.values()).flatMap((collection) =>
       collection.status === "invalid"
-        ? []
+        ? includeInvalid
+          ? [collection.configAsset.id]
+          : []
         : [
             collection.configAsset.id,
             ...(collection.status === "ready"

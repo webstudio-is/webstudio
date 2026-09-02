@@ -111,10 +111,13 @@ const openConfiguredPreview = ({
   if (page === undefined) {
     return false;
   }
-  const parameter = tokenizePathnamePattern(getPagePath(page.id, pages)).find(
-    (token) => token.type === "param"
-  );
-  if (parameter === undefined || parameter.type !== "param") {
+  const parameters = tokenizePathnamePattern(
+    getPagePath(page.id, pages)
+  ).flatMap((token) => (token.type === "param" ? [token] : []));
+  const parameter =
+    parameters.find(({ name }) => name === collection.config.slugField) ??
+    parameters[0];
+  if (parameter === undefined) {
     return false;
   }
   selectPage(page.id);
@@ -272,6 +275,7 @@ export const CreateCollectionEntryDialog = ({
                   }
                   min={field.minimum}
                   max={field.maximum}
+                  step={field.type === "integer" ? 1 : undefined}
                   minLength={field.minLength}
                   maxLength={field.maxLength}
                   value={

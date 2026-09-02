@@ -157,13 +157,23 @@ export const parseCollectionConfig = (
     const parsed = getField({ key, value: field, required: required.has(key) });
     return parsed === undefined ? [] : [parsed];
   });
-  if (fields.some(({ key }) => key === settings.slugField) === false) {
+  const slugField = fields.find(({ key }) => key === settings.slugField);
+  if (slugField === undefined) {
     throw new ContentCollectionError("Slug field is not defined in properties");
   }
-  if (fields.some(({ key }) => key === settings.generateSlugFrom) === false) {
+  if (slugField.type !== "string") {
+    throw new ContentCollectionError("Slug field must be a string");
+  }
+  const slugSourceField = fields.find(
+    ({ key }) => key === settings.generateSlugFrom
+  );
+  if (slugSourceField === undefined) {
     throw new ContentCollectionError(
       "Slug source field is not defined in properties"
     );
+  }
+  if (slugSourceField.type !== "string") {
+    throw new ContentCollectionError("Slug source field must be a string");
   }
   let parser: z.ZodType;
   try {
