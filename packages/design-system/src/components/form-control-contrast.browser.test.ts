@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test } from "vitest";
 import "../colors/colors.css";
+import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import { Switch } from "./switch";
 
@@ -32,27 +33,6 @@ const readColor = (color: string) => {
   return Array.from(context.getImageData(0, 0, 1, 1).data);
 };
 
-const luminance = (color: number[]) => {
-  const linearize = (channel: number) => {
-    const value = channel / 255;
-    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  };
-  return (
-    0.2126 * linearize(color[0]) +
-    0.7152 * linearize(color[1]) +
-    0.0722 * linearize(color[2])
-  );
-};
-
-const contrast = (first: number[], second: number[]) => {
-  const firstLuminance = luminance(first);
-  const secondLuminance = luminance(second);
-  return (
-    (Math.max(firstLuminance, secondLuminance) + 0.05) /
-    (Math.min(firstLuminance, secondLuminance) + 0.05)
-  );
-};
-
 test("compact form controls use their intended resting treatment", () => {
   const container = document.createElement("div");
   document.body.append(container);
@@ -74,14 +54,16 @@ test("compact form controls use their intended resting treatment", () => {
             "div",
             { "data-switch": true },
             createElement(Switch, { "aria-label": "Switch" })
+          ),
+          createElement(
+            "div",
+            { "data-neutral-control": true },
+            createElement(Button, { color: "neutral" }, "Neutral")
           )
         )
       );
     });
 
-    const background = getComputedStyle(
-      container.firstElementChild as Element
-    ).backgroundColor;
     const checkbox = container.querySelector("[data-control] > button");
     if (checkbox === null) {
       throw new Error("Expected a checkbox");
@@ -95,12 +77,15 @@ test("compact form controls use their intended resting treatment", () => {
     if (switchControl === null) {
       throw new Error("Expected a switch");
     }
+    const neutralControl = container.querySelector(
+      "[data-neutral-control] > button"
+    );
+    if (neutralControl === null) {
+      throw new Error("Expected a neutral control");
+    }
     expect(
-      contrast(
-        readColor(getComputedStyle(switchControl, "::before").backgroundColor),
-        readColor(background)
-      ),
-      `${mode} switch`
-    ).toBeGreaterThanOrEqual(3);
+      readColor(getComputedStyle(switchControl, "::before").backgroundColor),
+      `${mode} switch resting track`
+    ).toEqual(readColor(getComputedStyle(neutralControl).backgroundColor));
   }
 });
