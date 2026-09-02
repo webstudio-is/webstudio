@@ -166,6 +166,24 @@ test("split button segments remain independently actionable", async () => {
   await expect.element(page.getByText("Design")).toBeVisible();
 });
 
+test("open menu highlights only the menu segment", async () => {
+  const { buttons } = renderSplitButton();
+  const hoverBackground = document.createElement("div");
+  hoverBackground.style.backgroundColor = "var(--overlay-interaction-hover)";
+  document.body.append(hoverBackground);
+
+  await act(async () => {
+    await page.elementLocator(buttons[1]).click();
+    await page.getByText("Design").hover();
+  });
+
+  expect(buttons[1].getAttribute("aria-expanded")).toBe("true");
+  expect(getComputedStyle(buttons[0]).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+  expect(getComputedStyle(buttons[1], "::before").backgroundColor).toBe(
+    getComputedStyle(hoverBackground).backgroundColor
+  );
+});
+
 test("hovering a disabled segment does not highlight its sibling", async () => {
   for (const disabled of ["preview", "menu"] as const) {
     const { buttons } = renderSplitButton({
