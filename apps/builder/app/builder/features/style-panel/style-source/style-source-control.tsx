@@ -274,7 +274,7 @@ export const StyleSourceControl = ({
         role="button"
         hasError={error !== undefined}
       >
-        <Flex grow css={{ padding: theme.spacing[2] }}>
+        <Flex grow css={{ padding: theme.spacing[1] }}>
           <StyleSourceButton
             disabled={disabled || isEditing}
             isEditing={isEditing}
