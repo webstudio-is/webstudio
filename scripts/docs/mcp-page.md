@@ -11,6 +11,17 @@ icon: robot
 
 **Webstudio MCP v{{version}}**
 
+## For users
+
+This documentation is written primarily for LLMs. To get started, install the
+Codex desktop app or Claude Desktop and tell it:
+
+> Install Webstudio CLI and use MCP.
+
+That’s all you need to do.
+
+---
+
 {% hint style="info" %}
 This reference is generated from the Webstudio CLI source in the same Builder
 revision. GitBook publishes it when that revision is successfully released.
