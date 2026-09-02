@@ -320,7 +320,16 @@ export const loadResourceDiagnostics = (
         result,
         loaderDurationMs,
       });
-      if (
+      if (result === undefined) {
+        diagnosticsErrorCache.set(key, {
+          ok: false,
+          data: {
+            error: {
+              message: "Resource diagnostics response is missing",
+            },
+          },
+        });
+      } else if (
         typeof result === "object" &&
         result !== null &&
         ((result as { ok?: unknown }).ok === false ||

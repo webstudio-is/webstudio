@@ -689,7 +689,9 @@ export const assetQueryDiagnosticIssue = strictObject({
   code: string().min(1),
   message: string().min(1),
   assetId: string().min(1),
-  path: relativeAssetPath,
+  // Diagnostics must preserve even legacy or storage-derived paths that do
+  // not satisfy the canonical asset path grammar.
+  path: string().min(1),
   line: number().int().positive().optional(),
   column: number().int().positive().optional(),
   reference: string().min(1).optional(),

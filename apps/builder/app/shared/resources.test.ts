@@ -513,6 +513,30 @@ test("keeps a diagnostics-only failure separate from the resource value", async 
   expect($resourceDiagnosticsErrorCache.get().get(key)).toEqual(failure);
 });
 
+test("reports a diagnostics response that omits the requested resource", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+
+  await loadResourceDiagnostics(
+    request,
+    vi.fn<typeof globalThis.fetch>(async () => Response.json([]))
+  );
+
+  expect($resourceDiagnosticsErrorCache.get().get(key)).toEqual({
+    ok: false,
+    data: {
+      error: { message: "Resource diagnostics response is missing" },
+    },
+  });
+});
+
 test("caches performance metrics separately from resource values", async () => {
   const request: ResourceRequest = {
     name: "Posts",

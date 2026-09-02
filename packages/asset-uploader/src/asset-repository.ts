@@ -842,6 +842,8 @@ export class PostgresAssetRepository implements AssetRepository {
         const cached = this.compilationCache.getOrCreateWithStatus(
           key,
           async () => {
+            // Do not retain warnings collected by an abandoned snapshot retry.
+            preparationIssues.length = 0;
             const {
               entries,
               assetReferences,
