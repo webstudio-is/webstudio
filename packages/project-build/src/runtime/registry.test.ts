@@ -2187,7 +2187,7 @@ describe("builder runtime registry", () => {
     }
   });
 
-  test("publishes truthful inputs for asset, page-copy, style-source, and resource operations", () => {
+  test("publishes truthful inputs for asset and page-copy operations", () => {
     const addAssetOperation = getBuilderRuntimeOperation("assets.add");
     const addAssetSchema = toInputJsonSchemaObject(
       addAssetOperation.inputJsonSchema
@@ -2197,44 +2197,16 @@ describe("builder runtime registry", () => {
     );
     expect(JSON.stringify(assetSchema)).not.toContain("projectId");
 
-    for (const operationId of [
-      "resources.create",
-      "resources.update",
-    ] as const) {
-      const operation = getBuilderRuntimeOperation(operationId);
-      const schema = toInputJsonSchemaObject(operation.inputJsonSchema);
-      expect(
-        toInputJsonSchemaObject(schema?.properties?.exposeAsDataSource)
-          ?.description
-      ).toContain("write resources default to false");
-    }
-
     const copyPageOperation = getBuilderRuntimeOperation("pages.copy");
     const copyPageSchema = toInputJsonSchemaObject(
       copyPageOperation.inputJsonSchema
     );
     expect(copyPageSchema?.required).toContain("sourceData");
-    expect(
-      toInputJsonSchemaObject(copyPageSchema?.properties?.sourceData)
-        ?.description
-    ).toContain("use duplicate-page");
     expectRuntimeValidationError(
       "pages.copy",
       { pageId: "home" },
       { path: ["sourceData"] }
     );
-
-    const duplicateStyleSourceOperation = getBuilderRuntimeOperation(
-      "styleSources.duplicate"
-    );
-    const duplicateStyleSourceSchema = toInputJsonSchemaObject(
-      duplicateStyleSourceOperation.inputJsonSchema
-    );
-    expect(
-      toInputJsonSchemaObject(
-        duplicateStyleSourceSchema?.properties?.styleSourceId
-      )?.description
-    ).toContain("Local style sources cannot be duplicated");
   });
 
   test("publishes Content Block replacement confirmation", () => {

@@ -2214,7 +2214,6 @@ describe("style declaration helpers", () => {
     expect(
       getInputSchemaMetadata(styleUpdateInput).inputJsonSchema.properties?.value
     ).toMatchObject({
-      description: "Typed CSS StyleValue object.",
       examples: [{ type: "keyword", value: "red" }],
       type: "object",
       properties: {

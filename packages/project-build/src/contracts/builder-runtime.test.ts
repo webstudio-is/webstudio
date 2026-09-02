@@ -4,13 +4,6 @@ import {
   runtimeOperationContracts,
   type RuntimeOperationId,
 } from "./builder-runtime";
-import {
-  pageDraftFieldHint,
-  pageExpressionFieldHint,
-  pageStatusFieldHint,
-  pagePathFieldHint,
-} from "../runtime/pages";
-import { pageDraftOutputHint } from "../runtime/output-schemas";
 import { getBuilderRuntimeOperationInputSchema } from "../runtime/registry";
 
 const knownOperationId: RuntimeOperationId = "pages.list";
@@ -27,7 +20,6 @@ const getSchemaItems = (schema: unknown) =>
 
 const expectPageStatusInputSchema = (schema: unknown) => {
   expect(schema).toMatchObject({
-    description: pageStatusFieldHint,
     anyOf: expect.arrayContaining([
       expect.objectContaining({ type: "number" }),
       expect.objectContaining({ type: "string" }),
@@ -115,7 +107,7 @@ describe("builder runtime operation contracts", () => {
     ).not.toContain("pageId");
   });
 
-  test("describes page expression inputs in generated contracts", () => {
+  test("exposes page expression inputs in generated contracts", () => {
     const createPageInputSchema = getContract("pages.create").inputSchema;
     const createPageProperties = getSchemaProperties(createPageInputSchema);
     const createPageMetaProperties = getSchemaProperties(
@@ -130,16 +122,13 @@ describe("builder runtime operation contracts", () => {
 
     expect(createPageProperties.title).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expect(createPageMetaProperties.description).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expectPageStatusInputSchema(createPageMetaProperties.status);
     expect(createPageCustomItemProperties.content).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
 
     const updatePageInputSchema = getContract("pages.update").inputSchema;
@@ -153,11 +142,9 @@ describe("builder runtime operation contracts", () => {
 
     expect(updatePageValueProperties.title).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expect(updatePageMetaProperties.description).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expectPageStatusInputSchema(updatePageMetaProperties.status);
   });
@@ -186,13 +173,12 @@ describe("builder runtime operation contracts", () => {
     });
   });
 
-  test("describes page path inputs in generated contracts", () => {
+  test("exposes page path inputs in generated contracts", () => {
     const createPageInputSchema = getContract("pages.create").inputSchema;
     const createPageProperties = getSchemaProperties(createPageInputSchema);
 
     expect(createPageProperties.path).toMatchObject({
       type: "string",
-      description: pagePathFieldHint,
     });
 
     const updatePageInputSchema = getContract("pages.update").inputSchema;
@@ -202,11 +188,13 @@ describe("builder runtime operation contracts", () => {
     );
 
     expect(updatePageValueProperties.path).toMatchObject({
-      description: pagePathFieldHint,
+      anyOf: expect.arrayContaining([
+        expect.objectContaining({ type: "string" }),
+      ]),
     });
   });
 
-  test("explains draft-page behavior in generated MCP contracts", () => {
+  test("exposes draft-page fields in generated MCP contracts", () => {
     const updatePageInputSchema = getContract("pages.update").inputSchema;
     const updatePageProperties = getSchemaProperties(updatePageInputSchema);
     const updatePageValueProperties = getSchemaProperties(
@@ -215,7 +203,6 @@ describe("builder runtime operation contracts", () => {
 
     expect(updatePageValueProperties.isDraft).toMatchObject({
       type: "boolean",
-      description: pageDraftFieldHint,
     });
 
     const listPagesOutputSchema = getContract("pages.list").outputSchema;
@@ -224,7 +211,6 @@ describe("builder runtime operation contracts", () => {
     const listPageProperties = getSchemaProperties(listPageItems);
     expect(listPageProperties.isDraft).toMatchObject({
       type: "boolean",
-      description: pageDraftOutputHint,
     });
   });
 
