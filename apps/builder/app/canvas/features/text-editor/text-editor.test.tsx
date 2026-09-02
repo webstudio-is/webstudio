@@ -10,8 +10,6 @@ import {
 } from "@webstudio-is/sdk";
 import {
   $textEditingInstanceSelector,
-  $textEditorContextMenuCommand,
-  execTextEditorContextMenuCommand,
   selectInstance,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -31,7 +29,6 @@ afterEach(() => {
   document.body.innerHTML = "";
   $textEditingInstanceSelector.set(undefined);
   selectInstance(undefined);
-  $textEditorContextMenuCommand.set(undefined);
   $instances.set(new Map());
 });
 
@@ -75,7 +72,7 @@ describe("TextEditor", () => {
     );
   });
 
-  test("removes and saves the slash trigger before inserting a template", async () => {
+  test("does not save the active slash-menu trigger on blur", async () => {
     const instances = new Map<Instance["id"], Instance>([
       [
         "block",
@@ -153,14 +150,10 @@ describe("TextEditor", () => {
     });
     expect(editable?.textContent).toBe("Before/");
 
-    act(() => {
-      execTextEditorContextMenuCommand({
-        type: "templateInsertionConfirmed",
-        requestId: "insertion",
-      });
+    await act(async () => {
+      editable?.dispatchEvent(new FocusEvent("blur"));
     });
 
-    expect(editable?.textContent).toBe("Before");
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0]?.[0]).toContainEqual(
       expect.objectContaining({
@@ -168,9 +161,5 @@ describe("TextEditor", () => {
         children: [{ type: "text", value: "Before" }],
       })
     );
-    expect($textEditorContextMenuCommand.get()).toEqual({
-      type: "templateInsertionPrepared",
-      requestId: "insertion",
-    });
   });
 });

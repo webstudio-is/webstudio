@@ -42,7 +42,8 @@ const $writeUpdates = (
   instancesList: Instance[],
   refs: Refs,
   newLinkKeyToInstanceId: Refs,
-  createId: CreateId
+  createId: CreateId,
+  transientTextNodeKeys: ReadonlySet<string>
 ) => {
   const children = node.getChildren();
   for (const child of children) {
@@ -53,7 +54,8 @@ const $writeUpdates = (
         instancesList,
         refs,
         newLinkKeyToInstanceId,
-        createId
+        createId,
+        transientTextNodeKeys
       );
     }
     if ($isLineBreakNode(child)) {
@@ -74,7 +76,8 @@ const $writeUpdates = (
         instancesList,
         refs,
         newLinkKeyToInstanceId,
-        createId
+        createId,
+        transientTextNodeKeys
       );
       instancesList.push({
         type: "instance",
@@ -85,6 +88,9 @@ const $writeUpdates = (
       });
     }
     if ($isTextNode(child)) {
+      if (transientTextNodeKeys.has(child.getKey())) {
+        continue;
+      }
       // support nesting bold into italic and vice versa
       // considering lexical represents both as single node
       // and add ref suffix to distinct styling on one node key
@@ -133,7 +139,8 @@ export const $convertToUpdates = (
   treeRootInstance: Instance,
   refs: Refs,
   newLinkKeyToInstanceId: Refs,
-  createId: CreateId
+  createId: CreateId,
+  transientTextNodeKeys: ReadonlySet<string> = new Set()
 ) => {
   const treeRootInstanceChildren: Instance["children"] = [];
   const instancesList: Instance[] = [
@@ -149,7 +156,8 @@ export const $convertToUpdates = (
     instancesList,
     refs,
     newLinkKeyToInstanceId,
-    createId
+    createId,
+    transientTextNodeKeys
   );
   return instancesList;
 };

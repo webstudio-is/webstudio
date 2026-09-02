@@ -19,7 +19,6 @@ import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { findBlockTemplates } from "@webstudio-is/project-build/runtime";
 import type { Instance } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
-import { nanoid } from "nanoid";
 
 const TriggerButton = styled("button", {
   position: "absolute",
@@ -58,32 +57,6 @@ const mod = (n: number, m: number): number => {
 
 const triggerTooltipContent = <>"Templates"</>;
 
-const prepareTemplateInsertion = () => {
-  const requestId = nanoid();
-  return new Promise<void>((resolve, reject) => {
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = $textEditorContextMenuCommand.listen((command) => {
-      if (
-        command?.type !== "templateInsertionPrepared" ||
-        command.requestId !== requestId
-      ) {
-        return;
-      }
-      clearTimeout(timeout);
-      unsubscribe();
-      resolve();
-    });
-    timeout = setTimeout(() => {
-      unsubscribe();
-      reject(new Error("Timed out preparing template insertion"));
-    }, 5000);
-    execTextEditorContextMenuCommand({
-      type: "templateInsertionConfirmed",
-      requestId,
-    });
-  });
-};
-
 const Menu = ({
   cursorRect,
   anchor,
@@ -111,10 +84,7 @@ const Menu = ({
     (templateSelector: InstanceSelector) => {
       const insertBefore = modifierKeys.altKey;
       execTextEditorContextMenuCommand({ type: "templateInsertionStarted" });
-      void insertTemplateAt(templateSelector, anchor, {
-        insertBefore,
-        onBeforeInsert: prepareTemplateInsertion,
-      }).then(
+      void insertTemplateAt(templateSelector, anchor, insertBefore).then(
         (didInsert) => {
           if (didInsert === false) {
             execTextEditorContextMenuCommand({
@@ -188,8 +158,6 @@ const Menu = ({
         }
 
         case "templateInsertionStarted":
-        case "templateInsertionConfirmed":
-        case "templateInsertionPrepared":
         case "templateInsertionCancelled": {
           break;
         }

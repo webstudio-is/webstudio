@@ -1033,12 +1033,12 @@ type ContextMenuParams = {
 
 type RichTextContentPluginProps = {
   rootInstanceSelector: InstanceSelector;
+  transientTextNodeKeys: Set<NodeKey>;
   onOpen: (
     editorState: EditorState,
     params: undefined | ContextMenuParams
   ) => void;
   onNext: (editorState: EditorState, params: HandleNextParams) => void;
-  onCommit: (editorState: EditorState) => void;
 };
 
 const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
@@ -1074,10 +1074,10 @@ const getTag = (instanceId: Instance["id"]) => {
 
 const RichTextContentPluginInternal = ({
   rootInstanceSelector,
+  transientTextNodeKeys,
   onOpen,
   templates,
   onNext,
-  onCommit,
 }: RichTextContentPluginProps & {
   templates: [instance: Instance, instanceSelector: InstanceSelector][];
 }) => {
@@ -1085,7 +1085,6 @@ const RichTextContentPluginInternal = ({
   const [preservedSelection] = useState(rootInstanceSelector);
 
   const handleOpen = useEffectEvent(onOpen);
-  const handleCommit = useEffectEvent(onCommit);
 
   useEffect(() => {
     if (!editor.isEditable()) {
@@ -1097,7 +1096,11 @@ const RichTextContentPluginInternal = ({
     let slashNodeKey: NodeKey | undefined = undefined;
     let removeSlashWhenSelectionChanges = false;
 
-    const closeMenu = () => {
+    const closeMenu = ({
+      deferSlashNormalization = false,
+    }: {
+      deferSlashNormalization?: boolean;
+    } = {}) => {
       if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
@@ -1113,10 +1116,7 @@ const RichTextContentPluginInternal = ({
       }
 
       const node = $getNodeByKey(slashNodeKey);
-
-      if ($isTextNode(node)) {
-        node.setStyle("");
-      }
+      const currentSlashNodeKey = slashNodeKey;
 
       const selectedInstanceSelector = $selectedInstanceSelector.get();
 
@@ -1126,6 +1126,7 @@ const RichTextContentPluginInternal = ({
 
       if (!isSelectionInSameComponent) {
         node?.remove();
+        transientTextNodeKeys.delete(currentSlashNodeKey);
         slashNodeKey = undefined;
         removeSlashWhenSelectionChanges = false;
 
@@ -1140,6 +1141,27 @@ const RichTextContentPluginInternal = ({
             deleteInstanceBySelector(rootInstanceSelector);
           }
         }
+      } else if (deferSlashNormalization) {
+        queueMicrotask(() => {
+          editor.update(() => {
+            const currentNode = $getNodeByKey(currentSlashNodeKey);
+            if ($isTextNode(currentNode)) {
+              currentNode.setStyle("");
+            }
+            transientTextNodeKeys.delete(currentSlashNodeKey);
+            const currentSelection = $getSelection();
+            if ($isRangeSelection(currentSelection)) {
+              currentSelection.setStyle("");
+            }
+          });
+        });
+        return;
+      } else {
+        transientTextNodeKeys.delete(currentSlashNodeKey);
+      }
+
+      if ($isTextNode(node)) {
+        node.setStyle("");
       }
 
       // if selection changed, remove the slash node
@@ -1157,33 +1179,6 @@ const RichTextContentPluginInternal = ({
       (command) => {
         if (command?.type === "templateInsertionStarted") {
           removeSlashWhenSelectionChanges = true;
-        }
-        if (command?.type === "templateInsertionConfirmed") {
-          editor.update(
-            () => {
-              const node =
-                slashNodeKey === undefined
-                  ? undefined
-                  : $getNodeByKey(slashNodeKey);
-              node?.remove();
-              slashNodeKey = undefined;
-              removeSlashWhenSelectionChanges = false;
-              if (menuState !== "closed") {
-                menuState = "closed";
-                handleOpen(editor.getEditorState(), undefined);
-              }
-              const selection = $getSelection();
-              if ($isRangeSelection(selection)) {
-                selection.setStyle("");
-              }
-            },
-            { discrete: true }
-          );
-          handleCommit(editor.getEditorState());
-          execTextEditorContextMenuCommand({
-            type: "templateInsertionPrepared",
-            requestId: command.requestId,
-          });
         }
         if (command?.type === "templateInsertionCancelled") {
           removeSlashWhenSelectionChanges = false;
@@ -1315,9 +1310,7 @@ const RichTextContentPluginInternal = ({
 
               */
 
-              insertTemplateAt(templateSelector, rootInstanceSelector, {
-                insertBefore: false,
-              });
+              insertTemplateAt(templateSelector, rootInstanceSelector, false);
 
               if (tag === "li" && $getRoot().getTextContentSize() === 0) {
                 const parentInstanceSelector = rootInstanceSelector.slice(1);
@@ -1389,6 +1382,7 @@ const RichTextContentPluginInternal = ({
 
           const slashNode = $createTextNode("/");
           slashNodeKey = slashNode.getKey();
+          transientTextNodeKeys.add(slashNodeKey);
           menuState = "opening";
 
           slashNode.setStyle(
@@ -1408,13 +1402,13 @@ const RichTextContentPluginInternal = ({
       COMMAND_PRIORITY_EDITOR
     );
 
-    const closeMenuWithUpdate = () => {
+    const closeMenuWithUpdate = (deferSlashNormalization = false) => {
       if (menuState === "closed" && removeSlashWhenSelectionChanges === false) {
         return;
       }
 
       editor.update(() => {
-        closeMenu();
+        closeMenu({ deferSlashNormalization });
       });
     };
 
@@ -1469,10 +1463,11 @@ const RichTextContentPluginInternal = ({
       }
     );
 
+    const handleBlur = () => closeMenuWithUpdate(true);
     const unsubscribeBlurListener = editor.registerRootListener(
       (rootElement, prevRootElement) => {
-        rootElement?.addEventListener("blur", closeMenuWithUpdate);
-        prevRootElement?.removeEventListener("blur", closeMenuWithUpdate);
+        rootElement?.addEventListener("blur", handleBlur);
+        prevRootElement?.removeEventListener("blur", handleBlur);
       }
     );
 
@@ -1483,9 +1478,16 @@ const RichTextContentPluginInternal = ({
       unsubscribeBlurListener();
       unsubscribeContextMenuCommand();
       // Safari and FF support as no blur event is triggered in some cases
-      closeMenuWithUpdate();
+      closeMenuWithUpdate(true);
     };
-  }, [editor, onNext, preservedSelection, rootInstanceSelector, templates]);
+  }, [
+    editor,
+    onNext,
+    preservedSelection,
+    rootInstanceSelector,
+    templates,
+    transientTextNodeKeys,
+  ]);
 
   return null;
 };
@@ -1610,7 +1612,8 @@ export const TextEditor = ({
                 treeRootInstance,
                 refs,
                 newLinkKeyToInstanceId,
-                builderRuntimeContext.createId
+                builderRuntimeContext.createId,
+                transientTextNodeKeys
               );
           const idMap = onChange(updates);
           if (idMap !== undefined) {
@@ -1665,6 +1668,7 @@ export const TextEditor = ({
   // cannot store custom data
   // Map<nodeKey, Instance>
   const [refs] = useState<Refs>(() => new Map());
+  const [transientTextNodeKeys] = useState(() => new Set<NodeKey>());
   const initialConfig = {
     namespace: "WsTextEditor",
     theme: {
@@ -1767,10 +1771,6 @@ export const TextEditor = ({
     }
   );
 
-  const handleCommandCommit = useEffectEvent((state: EditorState) => {
-    handleChange(state, "next");
-  });
-
   const handleAnyKeydown = useCallback((event: KeyboardEvent) => {
     // Skip alt as Block outline depends on Alt key press
     if (event.key === "Alt") {
@@ -1835,10 +1835,9 @@ export const TextEditor = ({
         <RichTextContentPlugin
           onOpen={handleContextMenuOpen}
           rootInstanceSelector={rootInstanceSelector}
+          transientTextNodeKeys={transientTextNodeKeys}
           // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
           onNext={handleNext}
-          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-          onCommit={handleCommandCommit}
         />
       )}
       {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}

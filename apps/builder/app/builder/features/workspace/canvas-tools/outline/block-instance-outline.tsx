@@ -384,9 +384,7 @@ export const BlockChildHoveredInstanceOutline = () => {
           templates={templates}
           onValueChangeComplete={(templateSelector) => {
             const insertBefore = modifierKeys.altKey;
-            insertTemplateAt(templateSelector, outline.selector, {
-              insertBefore,
-            });
+            insertTemplateAt(templateSelector, outline.selector, insertBefore);
           }}
           value={undefined}
           modal={true}
