@@ -42,6 +42,32 @@ test("allocates a preview port without discovering network interfaces", async ()
   }
 });
 
+test("reports when the runtime blocks local preview ports", async () => {
+  const server = createServer();
+  vi.spyOn(server, "listen").mockImplementation(() => {
+    queueMicrotask(() => {
+      server.emit(
+        "error",
+        Object.assign(new Error("bind not permitted"), { code: "EPERM" })
+      );
+    });
+    return server;
+  });
+
+  await expect(
+    findAvailablePort("127.0.0.1", () => server)
+  ).rejects.toMatchObject({
+    code: "PREVIEW_NETWORK_RESTRICTED",
+    issues: [
+      {
+        code: "network_permission_denied",
+        path: [],
+        constraint: "runtime_allows_local_tcp_bind",
+      },
+    ],
+  });
+});
+
 test("repeatedly reports an unoccupied explicit preview port as available", async () => {
   const server = createServer();
   await new Promise<void>((resolve, reject) => {

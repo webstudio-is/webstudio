@@ -772,7 +772,13 @@ test.each(["capture", "capturePage"] as const)(
 
 test("does not start a fallback browser for an explicit browser path", async () => {
   const createBrowserScreenshotSession = vi.fn(async () => {
-    throw new BrowserStartupError("Chromium exited with signal SIGABRT.");
+    throw new BrowserStartupError("Chromium exited with signal SIGABRT.", {
+      diagnostic: {
+        stage: "browser-startup",
+        reason: "browser_ipc_permission_denied",
+        message: "The operating system denied browser IPC or socket access.",
+      },
+    });
   });
   const dependencies = createDependencies({
     which: vi.fn(async (command) =>
@@ -793,6 +799,16 @@ test("does not start a fallback browser for an explicit browser path", async () 
   ).rejects.toMatchObject({
     code: "BROWSER_STARTUP_FAILED",
     message: expect.stringContaining("/usr/bin/chromium"),
+    diagnostic: {
+      stage: "browser-startup",
+      reason: "browser_ipc_permission_denied",
+    },
+    issues: [
+      {
+        code: "browser_ipc_permission_denied",
+        constraint: "stage:browser-startup",
+      },
+    ],
   });
   expect(createBrowserScreenshotSession).toHaveBeenCalledTimes(1);
   await session.close();

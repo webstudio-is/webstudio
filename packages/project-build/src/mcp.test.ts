@@ -8536,7 +8536,17 @@ describe("project session mcp adapter", () => {
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
       captureScreenshot: vi.fn(async () => {
-        throw new Error("Chromium executable was not found");
+        throw Object.assign(new Error("Chromium executable was not found"), {
+          issues: [
+            {
+              code: "browser_ipc_permission_denied",
+              path: [],
+              message:
+                "The operating system denied browser IPC or socket access.",
+              constraint: "stage:browser-startup",
+            },
+          ],
+        });
       }),
     });
     const { client, close } = await createConnectedClient(server);
@@ -8553,6 +8563,13 @@ describe("project session mcp adapter", () => {
           error: {
             code: "SCREENSHOT_CAPTURE_FAILED",
             message: expect.stringContaining("preview.status"),
+            issues: [
+              {
+                code: "browser_ipc_permission_denied",
+                path: [],
+                constraint: "stage:browser-startup",
+              },
+            ],
           },
         },
       });

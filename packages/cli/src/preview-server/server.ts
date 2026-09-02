@@ -8,19 +8,50 @@ import { getPreviewEnv, processEnv } from "./environment";
 import { getPackageManagerInvocation } from "./package-manager";
 import type { PreviewServerOptions, PreviewServerResult } from "./types";
 
-export const findAvailablePort = async (host = "127.0.0.1") => {
-  const server = createServer();
-  const port = await new Promise<number>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen({ host, port: 0, exclusive: true }, () => {
-      const address = server.address();
-      if (address === null || typeof address === "string") {
-        reject(new Error("Could not allocate a TCP preview port."));
-        return;
-      }
-      resolve(address.port);
+export const findAvailablePort = async (
+  host = "127.0.0.1",
+  createTcpServer: typeof createServer = createServer
+) => {
+  const server = createTcpServer();
+  let port: number;
+  try {
+    port = await new Promise<number>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen({ host, port: 0, exclusive: true }, () => {
+        const address = server.address();
+        if (address === null || typeof address === "string") {
+          reject(new Error("Could not allocate a TCP preview port."));
+          return;
+        }
+        resolve(address.port);
+      });
     });
-  });
+  } catch (cause) {
+    const code =
+      typeof cause === "object" && cause !== null && "code" in cause
+        ? cause.code
+        : undefined;
+    if (code === "EPERM" || code === "EACCES") {
+      throw Object.assign(
+        new Error(
+          "Preview cannot allocate a local TCP port because the operating system denied network access.",
+          { cause }
+        ),
+        {
+          code: "PREVIEW_NETWORK_RESTRICTED",
+          issues: [
+            {
+              code: "network_permission_denied",
+              path: [],
+              message: "Operating system denied local TCP port allocation.",
+              constraint: "runtime_allows_local_tcp_bind",
+            },
+          ],
+        }
+      );
+    }
+    throw cause;
+  }
   await new Promise<void>((resolve, reject) => {
     server.close((error) => (error === undefined ? resolve() : reject(error)));
   });
