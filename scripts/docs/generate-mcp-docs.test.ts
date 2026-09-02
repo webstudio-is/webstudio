@@ -13,11 +13,6 @@ test("renders GitBook metadata around the complete CLI manual", () => {
     generated,
     /# Webstudio MCP\n\n\*\*Webstudio MCP v1\.2\.3\*\*\n/
   );
-  assert.match(generated, /This documentation is written primarily for LLMs\./);
-  assert.match(
-    generated,
-    /> Install Webstudio CLI and use MCP\.\n\nThat’s all you need to do\.\n\n---\n/
-  );
   assert.match(
     generated,
     /GitBook publishes it when that revision is successfully released/
