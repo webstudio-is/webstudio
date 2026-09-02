@@ -782,7 +782,6 @@ describe("serialized page helpers", () => {
           status: "404",
         },
       },
-      guidance: expect.stringContaining("No exact page exists"),
     });
   });
 

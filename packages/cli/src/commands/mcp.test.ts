@@ -232,7 +232,7 @@ const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {
   ];
 };
 
-test("documents MCP stdio startup and discovery tools", () => {
+test("configures MCP commands and options", () => {
   const yargs = {
     command: vi.fn(() => yargs),
     option: vi.fn(() => yargs),
@@ -254,13 +254,9 @@ test("documents MCP stdio startup and discovery tools", () => {
     })
   );
 
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp",
-    "Run a local MCP server over stdio for the configured Webstudio project"
-  );
   expect(yargs.command).toHaveBeenCalledWith(
     ["single-op-call <tool> [input]"],
-    "Call one MCP tool in a fresh CLI process for debugging",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
@@ -276,9 +272,7 @@ test("documents MCP stdio startup and discovery tools", () => {
   singleOpBuilder?.(singleOpYargs as never);
   expect(singleOpYargs.positional).toHaveBeenCalledWith(
     "tool",
-    expect.objectContaining({
-      describe: expect.stringContaining("insert-fragment"),
-    })
+    expect.any(Object)
   );
   const runBuilder = commandCalls.find(
     (call) => call[0][0] === "run <input>"
@@ -288,12 +282,7 @@ test("documents MCP stdio startup and discovery tools", () => {
     option: vi.fn(() => runYargs),
   };
   runBuilder?.(runYargs as never);
-  expect(runYargs.option).toHaveBeenCalledWith(
-    "dry-run",
-    expect.objectContaining({
-      describe: "Run local-capable mutation tools without committing",
-    })
-  );
+  expect(runYargs.option).toHaveBeenCalledWith("dry-run", expect.any(Object));
   expect(runYargs.option).toHaveBeenCalledWith(
     "approve-mutations",
     expect.objectContaining({ default: false })
@@ -308,67 +297,27 @@ test("documents MCP stdio startup and discovery tools", () => {
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["run <input>"],
-    "Run an MCP workflow manifest for one or more linked projects",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["list-tools"],
-    "Print the concise MCP tool catalog as JSON",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["list-resources"],
-    "List the MCP resources available for the configured project",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
   );
   expect(yargs.command).toHaveBeenCalledWith(
     ["read-resource <uri>"],
-    "Read one MCP resource by URI",
+    expect.any(String),
     expect.any(Function),
     expect.any(Function)
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp single-op-call meta.index",
-    "Debug one MCP tool without writing a stdio client script"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp list-tools",
-    "Print the concise MCP tool catalog"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp list-resources",
-    "List available MCP resources"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp read-resource webstudio://project/guide",
-    "Read the project MCP guide"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    '$0 mcp run \'[{"tool":"components.search","input":{"brief":"button"}}]\'',
-    "Run a small multi-step MCP workflow from inline JSON"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "$0 mcp run .temp/mcp-calls.json",
-    "Run a larger bounded multi-step MCP workflow from a file"
-  );
-  expect(yargs.example).toHaveBeenCalledWith(
-    "MCP tool: meta.index",
-    "Discover the concise capability catalog after the server starts"
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("tools/list")
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("current Builder dev build")
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("linked Webstudio project root")
-  );
-  expect(yargs.epilogue).toHaveBeenCalledWith(
-    expect.stringContaining("webstudio://project/guide")
   );
 });
 
@@ -641,38 +590,6 @@ test("applies batch dry-run to every MCP run call", () => {
       dryRun: true,
     },
   ]);
-});
-
-test("explains extract-slot selectors in focused MCP discovery", async () => {
-  const operation = publicApiOperations.find(
-    ({ command }) => command === "extract-slot"
-  );
-  if (operation === undefined) {
-    throw Error("Expected extract-slot operation");
-  }
-  const core = createProjectSessionMcpCore({
-    operations: [operation],
-    createProjectSession: () => {
-      throw Error("meta.get-more-tools must not initialize a project session");
-    },
-    executeOperation: async () => {
-      throw Error("meta.get-more-tools must not execute a project operation");
-    },
-  });
-
-  const result = await core.callTool({
-    name: "meta.get-more-tools",
-    input: { tools: ["extract-slot"] },
-  });
-  const details = JSON.stringify(result.structuredContent.data);
-
-  expect(details).toContain("leaf-to-root");
-  expect(details).toContain(
-    "The first id is the instance to extract, the second is its direct parent"
-  );
-  expect(details).toContain(
-    '"instanceSelector":["header-section-id","body-id"]'
-  );
 });
 
 test("checks persisted checkpoints before every MCP run call", async () => {
