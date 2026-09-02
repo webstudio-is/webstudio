@@ -783,6 +783,28 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test.each(["defaults", "react-router", "ssg"])(
+    "does not scaffold a default root favicon with the %s template",
+    async (template) => {
+      await writeSiteData(
+        createSiteData({ pageMeta: { faviconAssetId: "asset-image" } })
+      );
+      await prebuild({ assets: false, template: [template] });
+
+      await expect(stat("public/favicon.ico")).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+      await expect(
+        readFile("app/__generated__/_index.tsx", "utf8")
+      ).resolves.toContain('"image.png"');
+      const headPath =
+        template === "ssg" ? "pages/index/+Head.tsx" : "app/routes/_index.tsx";
+      await expect(readFile(headPath, "utf8")).resolves.toContain(
+        template === "ssg" ? 'rel="icon"' : 'rel: "icon"'
+      );
+    }
+  );
+
   test("materializes direct MDX Content Blocks into generated page code", async () => {
     const source = "# Published from MDX";
     const article: AssetFileDocument = {
