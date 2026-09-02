@@ -146,48 +146,66 @@ export const TemplatesMenu = ({
               // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
               onValueChange={handleValueChangeComplete}
             >
-              {menuItems?.map((item) => (
-                <DropdownMenuRadioItem
-                  aria-selected={
-                    JSON.stringify(item.value) === JSON.stringify(value)
-                  }
-                  onPointerEnter={() => {
-                    // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-                    handleValueChange(value);
-                  }}
-                  onPointerMove={
-                    preventFocusOnHover
-                      ? (e) => {
-                          e.preventDefault();
-                        }
-                      : undefined
-                  }
-                  onPointerLeave={
-                    preventFocusOnHover
-                      ? (e) => {
-                          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-                          handleValueChange(undefined);
-                          e.preventDefault();
-                        }
-                      : undefined
-                  }
-                  onPointerDown={
-                    preventFocusOnHover
-                      ? (event) => {
-                          event.preventDefault();
-                        }
-                      : undefined
-                  }
-                  key={item.id}
-                  value={JSON.stringify(item.value)}
-                  {...{ [skipInertHandlersAttribute]: true }}
-                >
-                  <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
-                    {item.icon}
-                    <Box css={{ textTransform: "none" }}>{item.title}</Box>
-                  </Flex>
-                </DropdownMenuRadioItem>
-              ))}
+              {menuItems?.map((item) => {
+                const isSelected = shallowEqual(item.value, value);
+                return (
+                  <DropdownMenuRadioItem
+                    aria-selected={isSelected}
+                    {...(preventFocusOnHover && isSelected
+                      ? { "data-highlighted": "" }
+                      : {})}
+                    onPointerEnter={() => {
+                      // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+                      handleValueChange(item.value);
+                    }}
+                    onPointerMove={
+                      preventFocusOnHover
+                        ? (e) => {
+                            e.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onPointerLeave={
+                      preventFocusOnHover
+                        ? (e) => {
+                            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+                            handleValueChange(undefined);
+                            e.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onPointerDown={
+                      preventFocusOnHover
+                        ? (event) => {
+                            event.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onPointerUp={
+                      preventFocusOnHover
+                        ? (event) => {
+                            if (event.button !== 0) {
+                              return;
+                            }
+                            event.preventDefault();
+                            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+                            handleValueChangeComplete(
+                              JSON.stringify(item.value)
+                            );
+                          }
+                        : undefined
+                    }
+                    key={item.id}
+                    value={JSON.stringify(item.value)}
+                    {...{ [skipInertHandlersAttribute]: true }}
+                  >
+                    <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
+                      {item.icon}
+                      <Box css={{ textTransform: "none" }}>{item.title}</Box>
+                    </Flex>
+                  </DropdownMenuRadioItem>
+                );
+              })}
             </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
             <div className={menuItemCss({ hint: true })}>
