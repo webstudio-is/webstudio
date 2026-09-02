@@ -403,6 +403,38 @@ featureImage:
     expect(result.roots).toHaveLength(21);
   });
 
+  test("publishes named JSX with its authored children", async () => {
+    const data = createData({ withTemplate: true });
+    const hero = data.instances.get("hero");
+    if (hero === undefined) {
+      throw new Error("Expected Hero template instance");
+    }
+    hero.children = [{ type: "id", value: "template-default" }];
+    data.instances.set("template-default", {
+      type: "instance",
+      id: "template-default",
+      component: "ws:element",
+      tag: "p",
+      children: [{ type: "text", value: "Template body" }],
+    });
+    const result = await materializePublishedMdx({
+      route: "/",
+      data,
+      artifact: createArtifact([
+        { id: "article", source: "<Hero>Published body</Hero>" },
+      ]),
+      metas: new Map(),
+      projectId: "project",
+    });
+
+    expect(getFragmentText(result.roots[0].fragment)).toContain(
+      "Published body"
+    );
+    expect(getFragmentText(result.roots[0].fragment)).not.toContain(
+      "Template body"
+    );
+  });
+
   test("omits an unresolved template subtree and keeps valid siblings", async () => {
     const result = await materializePublishedMdx({
       route: "/",

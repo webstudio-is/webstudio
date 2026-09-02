@@ -276,10 +276,6 @@ const componentAdapters = new Map<Instance["component"], MdxComponentAdapter>([
   [imageAdapter.component, imageAdapter],
 ]);
 
-export const getMdxStandardTemplateKeyForNode = (node: MdxAuthoredNode) => {
-  return getMdxStandardTemplateBinding(node)?.key;
-};
-
 export const getMdxStandardTemplateBinding = (node: MdxAuthoredNode) => {
   const adapted = materializeMdxComponent(node);
   if (adapted !== undefined) {
@@ -287,6 +283,7 @@ export const getMdxStandardTemplateBinding = (node: MdxAuthoredNode) => {
       key: `component:${adapted.component}`,
       props: adapted.props.map(({ prop }) => prop),
       propSources: adapted.props.map(({ source }) => source),
+      componentChildren: adapted.children,
     };
   }
   if (node.type === "element") {
@@ -294,6 +291,7 @@ export const getMdxStandardTemplateBinding = (node: MdxAuthoredNode) => {
       key: `element:${node.tag}`,
       props: node.props,
       propSources: undefined,
+      componentChildren: undefined,
     };
   }
 };

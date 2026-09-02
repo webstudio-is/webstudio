@@ -51,12 +51,33 @@ const data: Omit<WebstudioData, "pages"> = {
   assets: new Map(),
 };
 
+const createSourceData = () => structuredClone(data);
+
+const addCardTemplate = (sourceData: Omit<WebstudioData, "pages">) => {
+  sourceData.instances.set("card", {
+    type: "instance",
+    id: "card",
+    component: elementComponent,
+    tag: "section",
+    label: "Card",
+    children: [{ type: "id", value: "default-content" }],
+  });
+  sourceData.instances.set("default-content", {
+    type: "instance",
+    id: "default-content",
+    component: elementComponent,
+    tag: "p",
+    children: [{ type: "text", value: "Template default" }],
+  });
+  sourceData.instances.get("templates")?.children.push({
+    type: "id",
+    value: "card",
+  });
+};
+
 describe("materializeMdxSource", () => {
   test("materializes and preserves component-style JSX template syntax", async () => {
-    const sourceData: Omit<WebstudioData, "pages"> = {
-      ...data,
-      instances: new Map(data.instances),
-    };
+    const sourceData = createSourceData();
     sourceData.instances.set("card", {
       type: "instance",
       id: "card",
@@ -91,10 +112,120 @@ describe("materializeMdxSource", () => {
     ).resolves.toBe("<Card>Content</Card>\n");
   });
 
+  test("replaces custom template defaults with explicit JSX children", async () => {
+    const sourceData = createSourceData();
+    addCardTemplate(sourceData);
+    const source = `<Card>
+  ## Launch offer
+</Card>
+`;
+
+    const result = await materializeMdxSource({
+      source,
+      identity,
+      data: sourceData,
+      metas: componentMetas,
+      projectId: "project",
+    });
+    const card = result.root.fragment.instances.find(
+      (instance) => instance.tag === "section"
+    );
+    const heading = result.root.fragment.instances.find(
+      (instance) => instance.tag === "h2"
+    );
+    if (card === undefined || heading === undefined) {
+      throw new Error("Expected Card and authored heading instances");
+    }
+
+    expect(card.children).toEqual([{ type: "id", value: heading.id }]);
+    expect(heading.children).toEqual([{ type: "text", value: "Launch offer" }]);
+    expect(
+      result.root.fragment.instances.some(
+        (instance) => instance.id === "default-content"
+      )
+    ).toBe(false);
+    await expect(
+      serializeMdxAuthoredContent({
+        root: result.root,
+        fragment: result.root.fragment,
+      })
+    ).resolves.toBe(source);
+  });
+
+  test("keeps custom template defaults for self-closing JSX", async () => {
+    const sourceData = createSourceData();
+    addCardTemplate(sourceData);
+
+    const result = await materializeMdxSource({
+      source: "<Card />\n",
+      identity,
+      data: sourceData,
+      metas: componentMetas,
+      projectId: "project",
+    });
+    const card = result.root.fragment.instances.find(
+      (instance) => instance.tag === "section"
+    );
+    const defaultContent = result.root.fragment.instances.find(
+      (instance) => instance.tag === "p"
+    );
+    if (card === undefined || defaultContent === undefined) {
+      throw new Error("Expected Card template default instances");
+    }
+
+    expect(card.children).toEqual([{ type: "id", value: defaultContent.id }]);
+    expect(defaultContent.children).toEqual([
+      { type: "text", value: "Template default" },
+    ]);
+    await expect(
+      serializeMdxAuthoredContent({
+        root: result.root,
+        fragment: result.root.fragment,
+      })
+    ).resolves.toBe("<Card />\n");
+  });
+
+  test("replaces CodeText template defaults with fenced code", async () => {
+    const sourceData = createSourceData();
+    sourceData.instances.set("code", {
+      type: "instance",
+      id: "code",
+      component: "CodeText",
+      label: "Code Block",
+      children: [{ type: "text", value: "templateDefault()" }],
+    });
+    sourceData.instances.get("templates")?.children.push({
+      type: "id",
+      value: "code",
+    });
+    const source = "```js\nauthoredCode()\n```\n";
+
+    const result = await materializeMdxSource({
+      source,
+      identity,
+      data: sourceData,
+      metas: componentMetas,
+      projectId: "project",
+    });
+    const code = result.root.fragment.instances.find(
+      (instance) => instance.component === "CodeText"
+    );
+    if (code === undefined) {
+      throw new Error("Expected CodeText template instance");
+    }
+
+    expect(code.children).toEqual([{ type: "text", value: "authoredCode()" }]);
+    await expect(
+      serializeMdxAuthoredContent({
+        root: result.root,
+        fragment: result.root.fragment,
+      })
+    ).resolves.toBe(source);
+  });
+
   test("materializes Markdown through a matching template and serializes it as Markdown", async () => {
     const sourceData: Omit<WebstudioData, "pages"> = {
-      ...data,
-      instances: new Map(data.instances),
+      ...createSourceData(),
       styleSources: new Map([
         ["heading-style", { type: "local", id: "heading-style" }],
       ]),
@@ -283,8 +414,7 @@ featureImage:
 
   test("serializes an Asset selected on an inserted Image template", async () => {
     const sourceData: Omit<WebstudioData, "pages"> = {
-      ...data,
-      instances: new Map(data.instances),
+      ...createSourceData(),
       assetFolders: new Map(),
       assets: new Map<string, Asset>([
         [

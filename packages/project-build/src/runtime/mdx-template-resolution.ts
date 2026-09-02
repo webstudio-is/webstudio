@@ -32,7 +32,7 @@ export type MdxTemplateReference = Readonly<{
           | Readonly<{ nodePath: readonly number[]; propIndex: number }>
           | undefined
         )[];
-        standardKey?: string;
+        componentChildren?: Instance["children"];
       }>
     | Readonly<{
         type: "unresolved-template";
@@ -134,7 +134,7 @@ export const resolveMdxTemplates = ({
               templateNameById.get(templateInstanceId) ?? standard.key,
             props: standard.props,
             propSources: standard.propSources,
-            standardKey: standard.key,
+            componentChildren: standard.componentChildren,
             templateInstanceId,
             sourceRange: node.sourceRange,
           });

@@ -132,6 +132,8 @@ Regular document content stays Markdown and uses the matching standard templates
 
 The JSX name must exactly match a unique top-level instance name in the Content Block's Templates list. JSX attributes must be static values. Imports, exports, expressions, spreads, functions, lowercase HTML-looking JSX, and executable JavaScript are not supported.
 
+Explicit JSX children replace the template root's default children. Use a self-closing reference such as `<PromotionCard />` to keep the template's designed default subtree.
+
 Template resolution is live. If the file already contains `<PromotionCard />` or a Markdown element that has no matching template, adding the template later updates the rendered content without rewriting the MDX file. Renaming or removing a template re-resolves the same source.
 
 Missing or duplicate custom templates show a source-ranged warning and a selectable placeholder in Builder. Published pages omit only the unresolved custom subtree. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.

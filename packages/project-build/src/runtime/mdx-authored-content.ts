@@ -71,10 +71,12 @@ type AuthoredComponentProvenance = Readonly<{
 type TemplateProvenance = Readonly<{
   type: "template";
   authoredNodeType: "element" | "template";
+  overridesTemplateChildren: boolean;
   path: readonly number[];
   instanceId: Instance["id"];
   editableTextChildren: boolean;
   editablePropNames: readonly string[];
+  authoredPropNames: readonly string[];
   jsxPropContext: MdxJsxPropContext;
   propNameMappings: readonly Readonly<{
     jsxPropName: string;
@@ -716,12 +718,13 @@ export const materializeMdxAuthoredContent = ({
         const editableTextChildren = rootInstance.children.every(
           (child) => child.type === "text"
         );
+        const overridesTemplateChildren =
+          node.type === "element" ||
+          (node.type === "template" && node.children.length > 0);
         let resolvedFragment = template.fragment;
-        if (
-          node.type === "element" &&
-          template.reference.standardKey?.startsWith("component:") !== true
-        ) {
-          rootInstance.children = visit(node.children, path);
+        if (overridesTemplateChildren) {
+          rootInstance.children =
+            template.reference.componentChildren ?? visit(node.children, path);
           resolvedFragment = extractWebstudioFragment(
             createWebstudioDataFromFragment(template.fragment),
             rootId
@@ -736,6 +739,7 @@ export const materializeMdxAuthoredContent = ({
         }
         if (
           node.type !== "element" &&
+          overridesTemplateChildren === false &&
           editableTextChildren &&
           node.children.length > 0 &&
           node.children.every(
@@ -790,9 +794,15 @@ export const materializeMdxAuthoredContent = ({
         nodes.push({
           type: "template",
           authoredNodeType: node.type,
+          overridesTemplateChildren,
           path,
           instanceId: rootId,
           editableTextChildren,
+          authoredPropNames: template.reference.props.flatMap(({ name }) => {
+            const instancePropName =
+              instancePropNameByJsxName.get(name) ?? name;
+            return ignored.has(name) ? [] : [instancePropName];
+          }),
           editablePropNames: Array.from(editablePropNames).filter(
             (name) =>
               Array.from(instancePropNameByJsxName).some(
@@ -1525,13 +1535,7 @@ export const reconcileMdxAuthoredContent = ({
       );
       const toInstancePropName = (jsxPropName: string) =>
         instancePropNameByJsxName.get(jsxPropName) ?? jsxPropName;
-      const authoredPropNames = new Set(
-        original.props.flatMap((prop) =>
-          ignoredJsxPropNames.has(prop.name)
-            ? []
-            : [toInstancePropName(prop.name)]
-        )
-      );
+      const authoredPropNames = new Set(provenance.authoredPropNames);
       const originalEditablePropsByName = new Map(
         (originalPropsByInstanceId.get(instanceId) ?? [])
           .filter((prop) => isEditableTemplateProp({ provenance, prop }))
@@ -1628,7 +1632,7 @@ export const reconcileMdxAuthoredContent = ({
       let children = original.children;
       const originalInstance = originalInstanceById.get(instanceId);
       if (
-        provenance.authoredNodeType === "element" ||
+        provenance.overridesTemplateChildren ||
         (provenance.editableTextChildren &&
           originalInstance !== undefined &&
           (original.children.length > 0 ||
