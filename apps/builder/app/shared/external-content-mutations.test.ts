@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
-import { elementComponent, type Instance, type Prop } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  blockTemplateComponent,
+  elementComponent,
+  type Instance,
+  type Prop,
+} from "@webstudio-is/sdk";
 import {
   getAffectedExternalContentTemplateRootKeys,
   isExternalContentInstance,
@@ -153,6 +159,22 @@ describe("external content mutation detection", () => {
   });
 
   test("identifies template changes separately from authored content", () => {
+    const templateState = {
+      ...state,
+      instances: new Map([
+        ...state.instances,
+        [
+          "templates",
+          {
+            type: "instance" as const,
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ] as const,
+        ["heading-template", instance("heading-template")] as const,
+      ]),
+    };
     const templateRoots = new Map([
       [
         "scope",
@@ -178,7 +200,7 @@ describe("external content mutation detection", () => {
 
     expect(
       getAffectedExternalContentTemplateRootKeys({
-        state,
+        state: templateState,
         roots: templateRoots,
         payload,
       })
@@ -189,7 +211,7 @@ describe("external content mutation detection", () => {
 
     expect(
       getAffectedExternalContentTemplateRootKeys({
-        state,
+        state: templateState,
         roots: templateRoots,
         payload: [
           change("instances", [
@@ -205,7 +227,7 @@ describe("external content mutation detection", () => {
 
     expect(
       getAffectedExternalContentTemplateRootKeys({
-        state,
+        state: templateState,
         roots: templateRoots,
         payload: [
           change("styleSourceSelections", [
@@ -223,7 +245,7 @@ describe("external content mutation detection", () => {
     ).toEqual(["scope"]);
     expect(
       getAffectedExternalContentTemplateRootKeys({
-        state,
+        state: templateState,
         roots: templateRoots,
         payload: [
           change("styles", [
@@ -236,6 +258,76 @@ describe("external content mutation detection", () => {
                 property: "background-color",
                 value: { type: "keyword", value: "red" },
               },
+            },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+  });
+
+  test("detects adding and removing the Templates container", () => {
+    const block = {
+      type: "instance" as const,
+      id: "block",
+      component: blockComponent,
+      children: [{ type: "id" as const, value: "templates" }],
+    };
+    const templates = {
+      type: "instance" as const,
+      id: "templates",
+      component: blockTemplateComponent,
+      children: [],
+    };
+    const roots = new Map([
+      [
+        "scope",
+        {
+          sourceBlockInstanceId: "block",
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateOwnership: { instances: new Set(["templates"]) },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: {
+          instances: new Map([
+            [block.id, block],
+            [templates.id, templates],
+          ]),
+        },
+        roots,
+        payload: [
+          change("instances", [
+            { op: "replace", path: ["block", "children"], value: [] },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+
+    const rootsWithoutTemplates = new Map([
+      [
+        "scope",
+        {
+          ...roots.get("scope")!,
+          templateOwnership: { instances: new Set<string>() },
+        },
+      ],
+    ]);
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: { instances: new Map([[block.id, { ...block, children: [] }]]) },
+        roots: rootsWithoutTemplates,
+        payload: [
+          change("instances", [
+            { op: "add", path: ["templates"], value: templates },
+            {
+              op: "replace",
+              path: ["block", "children"],
+              value: [{ type: "id", value: "templates" }],
             },
           ]),
         ],

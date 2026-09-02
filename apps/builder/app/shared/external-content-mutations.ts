@@ -1,5 +1,8 @@
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
-import type { BuilderState } from "@webstudio-is/project-build/state";
+import {
+  applyBuilderNamespacePatches,
+  type BuilderState,
+} from "@webstudio-is/project-build/state";
 import type {
   ContentBlockExternalContentIdentity,
   ContentBlockDiagnostic,
@@ -7,7 +10,11 @@ import type {
   Instances,
   Prop,
 } from "@webstudio-is/sdk";
-import { blockBodyComponent, blockComponent } from "@webstudio-is/sdk";
+import {
+  blockBodyComponent,
+  blockComponent,
+  findContentBlockTemplateContainers,
+} from "@webstudio-is/sdk";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import type { MdxDocument } from "@webstudio-is/content-engine/mdx";
 import { atom } from "nanostores";
@@ -269,6 +276,19 @@ export const getAffectedExternalContentRootKeys = ({
     .filter(([, root]) => doesMutationAffectRoot({ state, root, payload }))
     .map(([key]) => key);
 
+const getTemplateContainerIds = (
+  instances: Instances,
+  blockInstanceId: Instance["id"]
+) => {
+  const block = instances.get(blockInstanceId);
+  return block === undefined
+    ? []
+    : findContentBlockTemplateContainers({
+        blockInstance: block,
+        instances,
+      }).map(({ id }) => id);
+};
+
 export const getAffectedExternalContentTemplateRootKeys = ({
   state,
   roots,
@@ -277,9 +297,78 @@ export const getAffectedExternalContentTemplateRootKeys = ({
   state: ExternalContentMutationState;
   roots: ReadonlyMap<string, ExternalContentRoot>;
   payload: readonly BuilderPatchChange[];
-}) =>
-  Array.from(roots)
+}) => {
+  const instancePatches = payload.flatMap((change) =>
+    change.namespace === "instances" ? change.patches : []
+  );
+  let nextInstances: Instances | undefined;
+  if (instancePatches.length > 0) {
+    const relevantInstanceIds = new Set<string>();
+    for (const root of roots.values()) {
+      const sourceBlockInstanceId =
+        root.sourceBlockInstanceId ?? root.blockInstanceId;
+      relevantInstanceIds.add(sourceBlockInstanceId);
+      for (const child of state.instances.get(sourceBlockInstanceId)
+        ?.children ?? []) {
+        if (child.type === "id") {
+          relevantInstanceIds.add(child.value);
+        }
+      }
+    }
+    for (const patch of instancePatches) {
+      const id = getPatchId(patch);
+      if (id !== undefined) {
+        relevantInstanceIds.add(id);
+      }
+    }
+    const relevantInstances = new Map(
+      Array.from(relevantInstanceIds).flatMap((id) => {
+        const instance = state.instances.get(id);
+        return instance === undefined ? [] : ([[id, instance]] as const);
+      })
+    );
+    nextInstances = applyBuilderNamespacePatches(
+      relevantInstances,
+      instancePatches
+    );
+    for (const root of roots.values()) {
+      const sourceBlockInstanceId =
+        root.sourceBlockInstanceId ?? root.blockInstanceId;
+      for (const child of nextInstances.get(sourceBlockInstanceId)?.children ??
+        []) {
+        if (child.type !== "id" || nextInstances.has(child.value)) {
+          continue;
+        }
+        const instance = state.instances.get(child.value);
+        if (instance !== undefined) {
+          nextInstances.set(child.value, instance);
+        }
+      }
+    }
+  }
+  return Array.from(roots)
     .filter(([, root]) => {
+      const sourceBlockInstanceId =
+        root.sourceBlockInstanceId ?? root.blockInstanceId;
+      if (nextInstances !== undefined) {
+        const currentTemplateContainerIds = getTemplateContainerIds(
+          state.instances,
+          sourceBlockInstanceId
+        );
+        const nextTemplateContainerIds = getTemplateContainerIds(
+          nextInstances,
+          sourceBlockInstanceId
+        );
+        if (
+          currentTemplateContainerIds.length !==
+            nextTemplateContainerIds.length ||
+          currentTemplateContainerIds.some(
+            (id, index) => id !== nextTemplateContainerIds[index]
+          )
+        ) {
+          return true;
+        }
+      }
       const ownership = root.templateOwnership;
       if (ownership === undefined) {
         return false;
@@ -297,6 +386,7 @@ export const getAffectedExternalContentTemplateRootKeys = ({
       });
     })
     .map(([key]) => key);
+};
 
 type ExternalContentMutationState = {
   instances: NonNullable<BuilderState["instances"]>;
