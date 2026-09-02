@@ -30,7 +30,7 @@ import { Box } from "./box";
 import { Text } from "./text";
 import { TreePositionIndicator } from "./list-position-indicator";
 import { cssVar, declareCssVar } from "../css-var";
-import { selectionBackground } from "./selection-color";
+import { selectedItemBackground } from "./component-state-color";
 
 const treeNodeLevel = declareCssVar("--tree-node-level");
 const treeNodeOutline = declareCssVar("--tree-node-outline");
@@ -40,6 +40,7 @@ const treeNodeSelectionBackgroundColor = declareCssVar(
 const treeNodeBackgroundColor = declareCssVar("--tree-node-background-color");
 const treeActionOpacity = declareCssVar("--tree-action-opacity");
 const treeActionWidth = declareCssVar("--tree-action-width");
+export const treeActionBoundary = declareCssVar("--tree-action-boundary");
 
 const TreeFocusRestoreContext = createContext<
   | undefined
@@ -148,12 +149,12 @@ const NodeContainer = styled("div", {
     [treeActionOpacity]: 1,
   },
   '&[data-selection-state="selected-descendant"]': {
-    [treeNodeSelectionBackgroundColor]: `color-mix(in oklab, ${selectionBackground} 50%, ${cssVar(
+    [treeNodeSelectionBackgroundColor]: `color-mix(in oklab, ${selectedItemBackground} 50%, ${cssVar(
       "--background-primary"
     )})`,
   },
   '&[data-selection-state="selected"]': {
-    [treeNodeSelectionBackgroundColor]: selectionBackground,
+    [treeNodeSelectionBackgroundColor]: selectedItemBackground,
   },
 });
 
@@ -196,9 +197,7 @@ const ActionContainer = styled("div", {
   opacity: cssVar(treeActionOpacity, "0"),
   position: "sticky",
   translate: `-100% -100%`,
-  left: `calc(${cssVar(
-    "--sidebar-left-panel-width"
-  )} - ${ITEM_PADDING_RIGHT}px)`,
+  left: `calc(${cssVar(treeActionBoundary)} - ${ITEM_PADDING_RIGHT}px)`,
   height: "inherit",
   display: "inline-flex",
   justifyContent: "center",

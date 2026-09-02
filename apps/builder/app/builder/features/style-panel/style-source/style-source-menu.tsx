@@ -22,6 +22,9 @@ import {
   validateSelector,
 } from "@webstudio-is/css-data";
 import {
+  menuTriggerGradientVar,
+  menuTriggerVisibilityOverrideVar,
+  menuTriggerVisibilityVar,
   menuCssVars,
   type ItemSource,
   type ItemSelector,
@@ -46,8 +49,8 @@ type IntermediateItem = {
 };
 
 const visibility = cssVar(
-  "--style-source-menu-trigger-visibility-override",
-  cssVar("--style-source-menu-trigger-visibility")
+  menuTriggerVisibilityOverrideVar,
+  cssVar(menuTriggerVisibilityVar)
 );
 
 const MenuTrigger = styled("button", {
@@ -91,7 +94,7 @@ const MenuTriggerGradient = styled(Box, {
   width: theme.sizes.controlHeight,
   height: "100%",
   visibility,
-  background: cssVar("--style-source-menu-trigger-gradient"),
+  background: cssVar(menuTriggerGradientVar),
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",

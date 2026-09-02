@@ -18,7 +18,6 @@ import {
   Flex,
   styled,
   ColorThumb,
-  declareCssVar,
 } from "@webstudio-is/design-system";
 import type {
   CssProperty,
@@ -53,13 +52,13 @@ import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
-import { isComplexValue, ValueEditorDialog } from "./value-editor-dialog";
+import {
+  cssValueInputMaximizeButtonDisplay,
+  isComplexValue,
+  ValueEditorDialog,
+} from "./value-editor-dialog";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { scrollByPointer } from "../scroll-by-pointer";
-
-const cssButtonDisplay = declareCssVar(
-  "--css-value-input-maximize-button-display"
-);
 
 // Subjective adjust ment based on how it feels on macbook/trackpad.
 // It won't be ideal for everyone with different input devices and preferences.
@@ -958,7 +957,7 @@ export const CssValueInput = ({
               cursor: "default",
               minWidth,
               "&:hover": {
-                [cssButtonDisplay]: "block",
+                [cssValueInputMaximizeButtonDisplay]: "block",
               },
             }}
             text={text}

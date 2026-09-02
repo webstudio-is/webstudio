@@ -3,7 +3,7 @@ import warnOnce from "warn-once";
 import type { CSS } from "./stitches.config";
 import { declareCssVar } from "./css-var";
 
-const canvasPointerEventsPropertyName = declareCssVar(
+export const canvasPointerEventsPropertyName = declareCssVar(
   "--canvas-pointer-events"
 );
 

@@ -14,13 +14,13 @@ import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 import { styleSourceColors } from "./color-recipes";
 
-const menuTriggerVisibilityVar = declareCssVar(
+export const menuTriggerVisibilityVar = declareCssVar(
   "--style-source-menu-trigger-visibility"
 );
-const menuTriggerVisibilityOverrideVar = declareCssVar(
+export const menuTriggerVisibilityOverrideVar = declareCssVar(
   "--style-source-menu-trigger-visibility-override"
 );
-const menuTriggerGradientVar = declareCssVar(
+export const menuTriggerGradientVar = declareCssVar(
   "--style-source-menu-trigger-gradient"
 );
 
@@ -274,7 +274,7 @@ export const StyleSourceControl = ({
         role="button"
         hasError={error !== undefined}
       >
-        <Flex grow css={{ padding: theme.spacing[2] }}>
+        <Flex grow css={{ padding: theme.spacing[1] }}>
           <StyleSourceButton
             disabled={disabled || isEditing}
             isEditing={isEditing}

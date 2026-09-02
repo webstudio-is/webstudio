@@ -18,6 +18,7 @@ import {
 import { returnToCookie } from "~/services/cookie.server";
 import { ClientOnly } from "~/shared/client-only";
 import { lazy } from "react";
+import loginStyles from "~/auth/login.css?url";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { allowedDestinations } from "~/services/destinations.server";
@@ -26,6 +27,10 @@ export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const links: LinksFunction = () => {
   return [
+    {
+      rel: "stylesheet",
+      href: loginStyles,
+    },
     {
       rel: "canonical",
       href: "https://apps.webstudio.is/login",

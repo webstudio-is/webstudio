@@ -35,7 +35,7 @@ import { Flex } from "./flex";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { cssVar, declareCssVar } from "../css-var";
-import { selectionBackground } from "./selection-color";
+import { selectedItemBackground } from "./component-state-color";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
@@ -186,6 +186,7 @@ export const CommandBackIcon = styled(ChevronLeftIcon, {
 const CommandInputField = styled(InputField, {
   "--sizes-controlHeight": theme.spacing[15],
   border: "none",
+  backgroundColor: cssVar("--background-primary"),
   paddingInline: theme.spacing[4],
 });
 
@@ -529,7 +530,7 @@ const CommandItemStyled = styled(CommandPrimitive.Item, {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-selected=true]": {
-    backgroundColor: selectionBackground,
+    backgroundColor: selectedItemBackground,
   },
 });
 

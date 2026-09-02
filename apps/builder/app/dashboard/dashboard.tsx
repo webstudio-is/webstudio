@@ -8,7 +8,6 @@ import {
   TooltipProvider,
   Toaster,
   css,
-  globalCss,
   theme,
   PanelBanner,
   Link,
@@ -17,7 +16,7 @@ import {
   Grid,
   IconButton,
   cssVar,
-  selectionBackground,
+  selectedItemBackground,
 } from "@webstudio-is/design-system";
 import { BodyIcon } from "@webstudio-is/icons";
 import {
@@ -51,12 +50,6 @@ import {
   $shouldRevalidateProjects,
 } from "~/shared/notifications/subscription";
 import { requestNotificationPermission } from "~/shared/notifications/browser-notification";
-
-const globalStyles = globalCss({
-  body: {
-    margin: 0,
-  },
-});
 
 const CloneProject = ({
   projectToClone,
@@ -110,7 +103,7 @@ const sidebarLinkStyle = css({
     background: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-current=page]": {
-    background: selectionBackground,
+    background: selectedItemBackground,
     color: cssVar("--foreground-primary"),
   },
 });
@@ -192,7 +185,6 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
     startSubscription();
     return stopSubscription;
   }, []);
-  globalStyles();
   return null;
 };
 

@@ -7,6 +7,7 @@ import {
   Command,
   CommandGroup,
   CommandGroupHeading,
+  CommandInput,
   CommandItem,
   CommandList,
 } from "./command";
@@ -73,6 +74,7 @@ test("command panels use the panel surface and readable group headings", () => {
           createElement(
             Command,
             null,
+            createElement(CommandInput),
             createElement(
               CommandList,
               null,
@@ -96,9 +98,18 @@ test("command panels use the panel surface and readable group headings", () => {
     });
 
     const panel = container.querySelector("[cmdk-root]");
+    const inputContainer = container.querySelector(
+      "[data-input-field-input]"
+    )?.parentElement;
     const heading = container.querySelector("[cmdk-group-heading]");
     const panelReference = container.firstElementChild;
-    if (panel === null || heading === null || panelReference === null) {
+    if (
+      panel === null ||
+      inputContainer === null ||
+      inputContainer === undefined ||
+      heading === null ||
+      panelReference === null
+    ) {
       throw new Error("Expected a rendered command group");
     }
 
@@ -106,6 +117,10 @@ test("command panels use the panel surface and readable group headings", () => {
     expect(panelBackground, `${mode} panel surface`).toEqual(
       readColor(getComputedStyle(panelReference).backgroundColor)
     );
+    expect(
+      readColor(getComputedStyle(inputContainer).backgroundColor),
+      `${mode} command input surface`
+    ).toEqual(panelBackground);
     expect(
       contrast(readColor(getComputedStyle(heading).color), panelBackground),
       `${mode} heading contrast`

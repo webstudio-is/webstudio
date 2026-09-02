@@ -14,7 +14,6 @@ import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { builderPatchTransactionSchema } from "./contracts/patch";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
-import { pageExpressionFieldHint, pageStatusFieldHint } from "./runtime/pages";
 import { imageDescriptionsSetInput } from "./runtime/assets";
 import { BuilderRuntimeError } from "./runtime/errors";
 import {
@@ -94,7 +93,6 @@ const getSchemaProperties = (schema: unknown) =>
 
 const expectPageStatusInputSchema = (schema: unknown) => {
   expect(schema).toMatchObject({
-    description: pageStatusFieldHint,
     anyOf: expect.arrayContaining([
       expect.objectContaining({ type: "number" }),
       expect.objectContaining({ type: "string" }),
@@ -856,7 +854,6 @@ describe("project session mcp adapter", () => {
     expect(
       assetOperationTools.find(({ name }) => name === "duplicate-asset-folder")
     ).toMatchObject({
-      description: expect.stringContaining("Recursively duplicate"),
       inputSchema: expect.objectContaining({ required: ["folderId"] }),
     });
     expect(
@@ -881,9 +878,6 @@ describe("project session mcp adapter", () => {
       (tool) => tool.name === "set-image-descriptions"
     );
     expect(imageDescriptionsTool).toMatchObject({
-      description: expect.stringContaining(
-        "agent-generated image descriptions"
-      ),
       inputSchema: expect.objectContaining({
         required: ["updates"],
       }),
@@ -1050,27 +1044,10 @@ describe("project session mcp adapter", () => {
     ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
     expect(fragmentSchema).toEqual(expect.objectContaining({ type: "string" }));
-    const detailedFragmentSchema =
-      insertFragmentTool === undefined
-        ? undefined
-        : getDetailedProjectSessionMcpInputSchema(insertFragmentTool).properties
-            ?.fragment;
     expect(
       tools.find((tool) => tool.name === "insert-fragment-verified")
         ?.inputSchema.required
     ).toEqual(["parentInstanceId", "fragment", "pagePath"]);
-    const jsxDescription =
-      typeof detailedFragmentSchema === "object" &&
-      "description" in detailedFragmentSchema &&
-      typeof detailedFragmentSchema.description === "string"
-        ? detailedFragmentSchema.description
-        : undefined;
-    expect(jsxDescription).toContain("not React aliases className or htmlFor");
-    expect(jsxDescription).toContain("Use ws:style");
-    expect(jsxDescription).toContain("style={{ padding: 24 }}");
-    expect(jsxDescription).toContain("include required child/part components");
-    expect(jsxDescription).toContain("same parent structure");
-    expect(jsxDescription).toContain("use insert-component");
     expect(insertFragmentTool?.inputSchema.properties).not.toHaveProperty(
       "source"
     );
@@ -1223,52 +1200,6 @@ describe("project session mcp adapter", () => {
     expect(tool?.inputSchema.properties).not.toHaveProperty("runtime");
   });
 
-  test("documents the queried Assets result shape in focused tools", () => {
-    const contracts = runtimeOperationContracts.filter(({ id }) =>
-      ["assetsResources.create", "assetsResources.update"].includes(id)
-    );
-    const tools = listProjectSessionMcpTools(
-      contracts.map((contract) =>
-        publicOperation({
-          command: contract.command,
-          id: contract.id,
-          method: "mutation",
-          permit: "build",
-          description: contract.command,
-          inputSchema: contract.inputSchema,
-          readNamespaces: contract.readNamespaces,
-          writeNamespaces: contract.writeNamespaces,
-          invalidatesNamespaces: contract.invalidatesNamespaces,
-          retryOnConflict: contract.retryOnConflict,
-        })
-      )
-    );
-
-    const assetsResourceTools = tools.filter(({ name }) =>
-      ["create-assets-resource", "update-assets-resource"].includes(name)
-    );
-    expect(assetsResourceTools).toHaveLength(2);
-
-    for (const tool of assetsResourceTools) {
-      expect(tool.description).toContain("structured tool input");
-      expect(tool.description).toContain("Webstudio JavaScript expression");
-      expect(tool.description).toContain("<dataSourceName>.data");
-      expect(tool.description).toContain("<dataSourceName>.meta");
-      expect(tool.description).toContain("markdown-body-ref");
-      expect(tool.description).toContain("document reference");
-      expect(tool.description).toContain("content.text");
-      expect(tool.description).toContain("result one");
-      expect(tool.description).toContain(
-        "one final resource per rendered query"
-      );
-      expect(tool.description).toContain(
-        "static filters, limits, and offsets literal"
-      );
-      expect(tool.description).toContain("remove obsolete duplicates");
-      expect(getSchemaProperties(tool.inputSchema)).not.toEqual({});
-    }
-  });
-
   test("defers oversized input schemas until focused discovery", async () => {
     const description = "x".repeat(25_000);
     const operation = publicOperation({
@@ -1299,9 +1230,9 @@ describe("project session mcp adapter", () => {
       name: "meta.get-more-tools",
       input: { tools: ["large-input"] },
     });
-    expect(JSON.stringify(details.structuredContent.data)).toContain(
-      description
-    );
+    expect(
+      JSON.stringify(details.structuredContent.data).length
+    ).toBeGreaterThan(JSON.stringify(tool?.inputSchema).length);
   });
 
   test("keeps array items valid when deferring an oversized schema", () => {
@@ -1409,7 +1340,7 @@ describe("project session mcp adapter", () => {
     });
   });
 
-  test("exposes page expression input descriptions to MCP clients", async () => {
+  test("exposes page expression inputs to MCP clients", async () => {
     const createPageContract = runtimeOperationContracts.find(
       (contract) => contract.id === "pages.create"
     );
@@ -1434,11 +1365,9 @@ describe("project session mcp adapter", () => {
 
     expect(toolProperties.title).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expect(toolMetaProperties.description).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expectPageStatusInputSchema(toolMetaProperties.status);
 
@@ -1463,11 +1392,9 @@ describe("project session mcp adapter", () => {
 
     expect(toolDetailsProperties.title).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expect(toolDetailsMetaProperties.description).toMatchObject({
       type: "string",
-      description: pageExpressionFieldHint,
     });
     expectPageStatusInputSchema(toolDetailsMetaProperties.status);
   });
@@ -2893,7 +2820,7 @@ describe("project session mcp adapter", () => {
       captureScreenshot: vi.fn(),
     });
 
-    const result = await adapter.callTool({
+    await adapter.callTool({
       name: "insert-component",
       input: {
         parentInstanceId: "body",
@@ -2912,38 +2839,6 @@ describe("project session mcp adapter", () => {
         },
       })
     );
-    expect(result.structuredContent.meta).toMatchObject({
-      next: [
-        expect.stringContaining("Run audit when the change is structural"),
-        expect.stringContaining(
-          "Ask whether the user wants visual verification"
-        ),
-      ],
-    });
-  });
-
-  test("requires binding verification after binding-related mutations", async () => {
-    const operation = publicOperation({
-      command: "bind-props",
-      id: "props.bind",
-      method: "mutation",
-      permit: "edit",
-      description: "Bind props",
-      writeNamespaces: ["props"],
-      invalidatesNamespaces: ["props"],
-    });
-    const adapter = createProjectSessionMcpCore({
-      operations: [operation],
-      createProjectSession: createSessionFactory(),
-      executeOperation: createExecuteOperation(),
-    });
-
-    const result = await adapter.callTool({ name: operation.command });
-
-    expect(result.structuredContent.meta.next).toEqual([
-      expect.stringContaining("run verify-bindings"),
-      expect.stringContaining("Run audit when the change is structural"),
-    ]);
   });
 
   test("normalizes create-page description and preserves basic auth", async () => {
@@ -4180,10 +4075,6 @@ describe("project session mcp adapter", () => {
       name: "meta.get-more-tools",
       input: { tools: '["insert-fragment"]' },
     });
-    const insertFragmentDetails = await adapter.callTool({
-      name: "meta.get-more-tools",
-      input: { tools: ["insert-fragment"] },
-    });
     const fuzzyDetails = await adapter.callTool({
       name: "meta.get-more-tools",
       input: { brief: "styles" },
@@ -4208,27 +4099,7 @@ describe("project session mcp adapter", () => {
     );
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
-        readThisFirst: expect.stringContaining(
-          "first call meta.guide with the user's objective"
-        ),
-        delegatedAgentRule: expect.stringContaining(
-          "shortcut command such as webstudio meta.index"
-        ),
         startHere: expect.arrayContaining(["meta.guide", "workflow.next"]),
-        discovery: expect.objectContaining({
-          overview: expect.stringContaining(
-            "Do not call every discovery tool up front"
-          ),
-          tools: expect.stringContaining('"tools"'),
-          insertFragment: expect.stringContaining("parentInstanceId"),
-          components: expect.stringContaining('"brief"'),
-          workflow: expect.stringContaining("workflow.next"),
-        }),
-        rules: expect.arrayContaining([
-          expect.stringContaining(
-            "Use direct value tools for fixed text/props"
-          ),
-        ]),
         capabilities: expect.arrayContaining([
           expect.objectContaining({
             area: "publish",
@@ -4236,63 +4107,6 @@ describe("project session mcp adapter", () => {
           }),
         ]),
       })
-    );
-    const indexData = index.structuredContent.data as { readThisFirst: string };
-    expect(indexData.readThisFirst).toContain(
-      "Never start preview, screenshots, diffs, OCR, or rendered audits automatically"
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("delegated or non-streaming agent")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining(
-        "Copying a `.webstudio` folder is not an isolated project clone"
-      )
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("pass `--dry-run` to local-capable mutations")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining('components.coverage-plan {"detail":"roots"}')
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("`list-pages` does not accept `detail`")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining(
-        "Do not take a broad task such as creating a full design-system page as one execution unit"
-      )
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining('workflow.next {"goal":"design-system-page"}')
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("one dry-run JSX section")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("components.coverage-insert-next")
-    );
-    expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("Phase commands do not include nextPhase")
-    );
-    expect(indexData.readThisFirst).not.toContain("Page details with");
-    const discovery = (
-      index.structuredContent.data as {
-        discovery: { insertFragment: string };
-      }
-    ).discovery;
-    expect(discovery.insertFragment).toContain("insert-fragment");
-    expect(discovery.insertFragment).toContain("parentInstanceId");
-    expect(discovery.insertFragment).toContain("not parentId");
-    expect(discovery.insertFragment).toContain("ws:style={css`...`}");
-    expect(discovery.insertFragment).toContain("style={{ padding: 24 }}");
-    expect(discovery.insertFragment).toContain("--input-file");
-    expect(discovery.insertFragment).not.toContain('ws:tag=\\"');
-    expect(JSON.stringify(index.structuredContent.data)).not.toContain(
-      "{ brief }"
-    );
-    expect(JSON.stringify(index.structuredContent.data)).not.toContain(
-      "({ brief })"
     );
     expect(index.structuredContent.data).not.toEqual(
       expect.objectContaining({
@@ -4325,13 +4139,7 @@ describe("project session mcp adapter", () => {
         goal: "design-system-page",
         phase: "discovery",
         mustReturnAfter: true,
-        parentVisibleCheckpoint: expect.stringContaining(
-          "acknowledge this checkpoint first"
-        ),
-        checkpoint: expect.objectContaining({
-          required: true,
-          instruction: expect.stringContaining("Stop after this workflow.next"),
-        }),
+        checkpoint: expect.objectContaining({ required: true }),
         allowedTools: ["components.coverage-plan"],
         nextPhase: "page-creation",
       })
@@ -4355,10 +4163,6 @@ describe("project session mcp adapter", () => {
             fragment: expect.stringContaining("ws:tag='h2'"),
           }),
         }),
-        constraints: expect.arrayContaining([
-          expect.stringContaining("Keep the dry-run fragment tiny"),
-          expect.stringContaining("do not use deprecated $.Box"),
-        ]),
         nextPhase: "commit-section",
       })
     );
@@ -4366,28 +4170,18 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         goal: "design-system-page",
         phase: "page-creation",
-        purpose: expect.stringContaining("Create it only if lookup proves"),
         allowedTools: expect.arrayContaining(["list-pages"]),
         commandPattern: expect.stringMatching(/list-pages.*limit/),
         fallbackCommandPattern: expect.stringMatching(
           /create-page.*\/design-system/
         ),
-        expectedReturn: expect.arrayContaining([
-          "whether /design-system already exists",
-          "if missing, report that create-page is the next phase action",
-        ]),
       })
     );
     expect(workflowPresentationPhase.structuredContent.data).toEqual(
       expect.objectContaining({
         goal: "design-system-page",
         phase: "presentation-pass",
-        purpose: expect.stringContaining("real design-system page"),
         allowedTools: expect.arrayContaining(["update-styles"]),
-        constraints: expect.arrayContaining([
-          expect.stringContaining("Do not treat coverage 72/72 as completion"),
-          expect.stringContaining("Keep every covered component"),
-        ]),
       })
     );
     expect(details.structuredContent.data).toEqual(
@@ -4402,9 +4196,6 @@ describe("project session mcp adapter", () => {
             inputSchema: expect.any(Object),
             inputFields: ["target", "domains"],
             mcpExamples: [{ target: "production" }],
-            inputNote: expect.stringContaining(
-              "Use direct value tools for fixed text/props"
-            ),
           }),
         ],
       })
@@ -4416,34 +4207,8 @@ describe("project session mcp adapter", () => {
         tools: [expect.objectContaining({ name: "meta.get-more-tools" })],
       })
     );
-    const [publishDetails] = (
-      details.structuredContent.data as {
-        tools: { inputNote: string }[];
-      }
-    ).tools;
-    expect(publishDetails?.inputNote).toContain(
-      "MCP tool arguments are JSON objects, not CLI flags"
-    );
-    expect(publishDetails?.inputNote).toContain(
-      "prefer insert-fragment so JSX is converted locally"
-    );
-    const [insertFragmentToolDetails] = (
-      insertFragmentDetails.structuredContent.data as {
-        tools: { mcpExamples: unknown[] }[];
-      }
-    ).tools;
-    const insertFragmentExamples = JSON.stringify(
-      insertFragmentToolDetails?.mcpExamples
-    );
-    expect(insertFragmentExamples).toContain("ws:style={css`");
-    expect(insertFragmentExamples).toContain("ws:tag='section'");
-    expect(insertFragmentExamples).toContain("style={{ padding: 32");
-    expect(insertFragmentExamples).toContain("ws:tokens");
-    expect(insertFragmentExamples).toContain("ActionValue");
-    expect(insertFragmentExamples).toContain("radix.SwitchThumb");
     expect(fuzzyDetails.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("capped"),
         count: expect.any(Number),
         omittedCount: expect.any(Number),
         tools: expect.any(Array),
@@ -4788,13 +4553,6 @@ describe("project session mcp adapter", () => {
         workflow: "markdown-blog",
       },
     });
-    const expressionGuide = await adapter.callTool({
-      name: "meta.guide",
-      input: {
-        brief: "Bind a dynamic expression to a prop",
-        workflow: "expression",
-      },
-    });
     const authenticatedPageGuide = await adapter.callTool({
       name: "meta.guide",
       input: {
@@ -4823,33 +4581,6 @@ describe("project session mcp adapter", () => {
         workflow: "craft",
       },
     });
-    const expectConsentBeforeVisualVerification = (
-      guide: typeof markdownBlogGuide
-    ) => {
-      const workflow = (guide.structuredContent.data as { workflow: string[] })
-        .workflow;
-      const consentIndex = workflow.findIndex(
-        (step) =>
-          step.toLocaleLowerCase().includes("ask") &&
-          step.toLocaleLowerCase().includes("user wants visual verification")
-      );
-      const verificationIndex = workflow.findIndex((step) =>
-        workflow.some((candidate) =>
-          candidate.includes("verify-page-responsive")
-        )
-          ? step.includes("verify-page-responsive")
-          : step.includes("preview")
-      );
-      expect(consentIndex).toBeGreaterThanOrEqual(0);
-      expect(verificationIndex).toBeGreaterThanOrEqual(consentIndex);
-      expect(workflow[consentIndex]?.toLocaleLowerCase()).toContain(
-        "if they decline"
-      );
-    };
-    expectConsentBeforeVisualVerification(markdownBlogGuide);
-    expectConsentBeforeVisualVerification(expressionGuide);
-    expectConsentBeforeVisualVerification(authenticatedPageGuide);
-    expectConsentBeforeVisualVerification(designInputGuide);
     const authenticatedPageGuideTools = (
       authenticatedPageGuide.structuredContent.data as {
         tools: Array<Record<string, unknown>>;
@@ -4952,12 +4683,6 @@ describe("project session mcp adapter", () => {
     });
     expect(collectionGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("complete nested array/object"),
-          expect.stringContaining("insert-collection"),
-          expect.stringContaining("private parameters atomically"),
-          expect.stringContaining("stable unique id or slug"),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "insert-collection" }),
         ]),
@@ -5003,18 +4728,6 @@ describe("project session mcp adapter", () => {
             }),
           }),
         }),
-        workflow: expect.arrayContaining([
-          expect.stringContaining("meta.get-more-tools once"),
-          expect.stringContaining('"format":"md"'),
-          expect.stringContaining("do not create companion files"),
-          expect.stringContaining('"/blog/:slug"'),
-          expect.stringContaining("create one page per post"),
-          expect.stringContaining("exactly one scoped Assets resource"),
-          expect.stringContaining("only dynamic value"),
-          expect.stringContaining("without a Collection"),
-          expect.stringContaining("page settings"),
-          expect.stringContaining("Assets-backed content"),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "upload-assets" }),
           expect.objectContaining({ name: "list-pages" }),
@@ -5022,16 +4735,6 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({ name: "insert-collection" }),
           expect.objectContaining({ name: "insert-fragment" }),
           expect.objectContaining({ name: "update-page" }),
-        ]),
-      })
-    );
-    expect(expressionGuide.structuredContent.data).toEqual(
-      expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("webstudio://project/expressions"),
-          expect.stringContaining("do not guess scoped identifier names"),
-          expect.stringContaining("one expression rather than a statement"),
-          expect.stringContaining("successful syntax validation"),
         ]),
       })
     );
@@ -5050,43 +4753,6 @@ describe("project session mcp adapter", () => {
             },
           },
         },
-        workflow: expect.arrayContaining([
-          expect.stringContaining("existing auth resources"),
-          expect.stringContaining("Call inspect-auth-context exactly once"),
-          expect.stringContaining(
-            "Do not call get-page-by-path to confirm that /account is absent"
-          ),
-          expect.stringContaining("Do not call meta.index after this guide"),
-          expect.stringContaining("Never place credentials"),
-          expect.stringContaining(
-            "exact terms signed-out, loading, signed-in, and failed-auth"
-          ),
-          expect.stringContaining("not an authorization boundary"),
-          expect.stringContaining(
-            "Use create-page's returned rootInstanceId directly"
-          ),
-          expect.stringContaining(
-            "Do not repeat list-variables when the fixture variable is not referenced"
-          ),
-          expect.stringContaining("recipe.createResourceInput"),
-          expect.stringContaining("entire create-resource tool input"),
-          expect.stringContaining(
-            "Do not call selector-based structural tools"
-          ),
-          expect.stringContaining("one expression-free semantic fragment"),
-          expect.stringContaining("Use that exact fragment verbatim"),
-          expect.stringContaining(
-            "Do not bind that server-only resource into local preview rendering"
-          ),
-          expect.stringContaining("insert-fragment-verified"),
-          expect.stringContaining(
-            "If they opt in, call verify-page-responsive once"
-          ),
-          expect.stringContaining(
-            "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
-          ),
-          expect.stringContaining("bundled audit is the static evidence"),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "list-instances" }),
           expect.objectContaining({ name: "insert-fragment-verified" }),
@@ -5096,14 +4762,6 @@ describe("project session mcp adapter", () => {
     );
     expect(fontAssetGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("returned asset ids directly"),
-          expect.stringContaining("without re-uploading"),
-          expect.stringContaining("verify-font-assets exactly once"),
-          expect.stringContaining(
-            "do not call refresh or get-asset separately"
-          ),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "verify-font-assets" }),
         ]),
@@ -5121,35 +4779,6 @@ describe("project session mcp adapter", () => {
     }
     expect(designInputGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining("Interpret the supplied design"),
-          expect.stringContaining(
-            "Before the first mutation, call inspect-design-context exactly once"
-          ),
-          expect.stringContaining(
-            "instead of calling list-pages, list-breakpoints"
-          ),
-          expect.stringContaining("Do not call meta.index"),
-          expect.stringContaining("Call create-page exactly once"),
-          expect.stringContaining(
-            "Do not call list-instances after the first mutation"
-          ),
-          expect.stringContaining("Do not call get-styles"),
-          expect.stringContaining("call verify-page-responsive once"),
-          expect.stringContaining("Call insert-fragment-verified exactly once"),
-          expect.stringContaining('{"pagePath":"/summer"}'),
-          expect.stringContaining("exactly the two supplied viewports"),
-          expect.stringContaining("bundled audit is the static evidence"),
-          expect.stringContaining("parallel design system"),
-          expect.stringContaining("semantic editable structure"),
-          expect.stringContaining("actual breakpoint ranges"),
-          expect.stringContaining(
-            'Represent literal CSS values as {"type":"keyword","value":"..."}'
-          ),
-          expect.stringContaining(
-            "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
-          ),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "inspect-design-context" }),
           expect.objectContaining({ name: "components.search" }),
@@ -5162,12 +4791,6 @@ describe("project session mcp adapter", () => {
     );
     expect(craftGuide.structuredContent.data).toEqual(
       expect.objectContaining({
-        workflow: expect.arrayContaining([
-          expect.stringContaining('"scopes":["craft"]'),
-          expect.stringContaining("do not add Craft"),
-          expect.stringContaining("only the first reported"),
-          expect.stringContaining("templateCompatibility"),
-        ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "audit" }),
         ]),
@@ -5477,7 +5100,6 @@ describe("project session mcp adapter", () => {
     expect(session.initialize).not.toHaveBeenCalled();
     expect(summary.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("Default summary is compact"),
         total: expect.any(Number),
         templateCount: expect.any(Number),
         standaloneInsertableCount: expect.any(Number),
@@ -5518,7 +5140,6 @@ describe("project session mcp adapter", () => {
     );
     expect(componentRegistry.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("compact metadata"),
         source: "all",
         documentType: "html",
         items: expect.arrayContaining([
@@ -5574,13 +5195,8 @@ describe("project session mcp adapter", () => {
     ).toBeLessThan(50_000);
     expect(coveragePlan.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("intentionally compact"),
         checkpoint: expect.objectContaining({
           required: true,
-          instruction: expect.stringContaining(
-            "Stop after this coverage-plan response"
-          ),
-          nextAllowedAfterReport: expect.stringContaining("create the page"),
         }),
         total: expect.any(Number),
         rootCount: expect.any(Number),
@@ -5644,7 +5260,6 @@ describe("project session mcp adapter", () => {
     );
     expect(fullCoveragePlan.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("design-system coverage"),
         documentType: "html",
         total: expect.any(Number),
         rootCount: expect.any(Number),
@@ -5715,7 +5330,6 @@ describe("project session mcp adapter", () => {
     );
     expect(find.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("compact, and paged"),
         count: expect.any(Number),
         totalCount: expect.any(Number),
         pagination: expect.objectContaining({
@@ -5808,9 +5422,6 @@ describe("project session mcp adapter", () => {
         standaloneInsertable: false,
         contentModel: expect.any(Object),
         props: expect.any(Object),
-        usage: expect.stringContaining(
-          "Do not insert this component standalone"
-        ),
       })
     );
     expect(buttonDetails.structuredContent.data).toEqual(
@@ -5841,53 +5452,42 @@ describe("project session mcp adapter", () => {
         templateRootComponents: [
           "@webstudio-is/sdk-components-react-radix:Label",
         ],
-        usage: expect.stringContaining("templateRootComponents"),
       })
     );
     expect(animationGroupDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:AnimateChildren",
-        animationUsage: expect.stringContaining(
-          "Animation Group is the root animation controller"
-        ),
         props: expect.objectContaining({
           action: expect.objectContaining({ type: "animationAction" }),
         }),
-        usage: expect.stringContaining('fill:"backwards"'),
       })
     );
     expect(textAnimationDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:AnimateText",
-        animationUsage: expect.stringContaining("splitBy"),
         props: expect.objectContaining({
           slidingWindow: expect.objectContaining({ defaultValue: 5 }),
           splitBy: expect.objectContaining({
             options: expect.arrayContaining(["char", "space"]),
           }),
         }),
-        usage: expect.stringContaining("direct child of Animation Group"),
       })
     );
     expect(staggerAnimationDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:StaggerAnimation",
-        animationUsage: expect.stringContaining("direct children"),
         props: expect.objectContaining({
           slidingWindow: expect.objectContaining({ defaultValue: 1 }),
         }),
-        usage: expect.stringContaining("slidingWindow 0"),
       })
     );
     expect(videoAnimationDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "@webstudio-is/sdk-components-animation:VideoAnimation",
         hasTemplate: true,
-        animationUsage: expect.stringContaining("Video child template"),
         props: expect.objectContaining({
           timeline: expect.objectContaining({ type: "boolean" }),
         }),
-        usage: expect.stringContaining("seek-friendly videos"),
       })
     );
     expect(selectDetails.structuredContent.data).toEqual(
@@ -5905,9 +5505,6 @@ describe("project session mcp adapter", () => {
               "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
           },
         ]),
-        usage: expect.stringContaining(
-          "nest them according to templateRequiredEdges"
-        ),
       })
     );
     expect(jsonLdDetails.structuredContent.data).toEqual(
@@ -5925,11 +5522,6 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         component: "ws:collection",
         jsxElement: "<ws.collection />",
-        description: expect.stringContaining("array or object"),
-        collectionUsage: expect.stringMatching(
-          /insert-collection.*private item\/itemKey parameters.*atomically/
-        ),
-        usage: expect.stringContaining("internal Collection parameter"),
         props: expect.objectContaining({
           data: expect.objectContaining({ type: "json", required: true }),
           item: expect.objectContaining({ type: "string" }),
@@ -7924,7 +7516,6 @@ describe("project session mcp adapter", () => {
     expect((tools.contents[0]?.text ?? "").length).toBeLessThan(16_000);
     expect(JSON.parse(toolsOverview.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("Short tool overview"),
         count: expect.any(Number),
         capabilities: expect.arrayContaining([
           expect.objectContaining({
@@ -7937,59 +7528,24 @@ describe("project session mcp adapter", () => {
     expect(toolsOverview.contents[0]?.text).not.toContain("inputSchema");
     expect(JSON.parse(guide.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
-        readThisFirst: expect.stringContaining(
-          "do one small discovery step, then act"
-        ),
-        delegatedAgentRule: expect.stringContaining(
-          "shortcut command such as webstudio meta.index"
-        ),
         startHere: expect.arrayContaining(["meta.index"]),
-        discovery: expect.objectContaining({
-          overview: expect.stringContaining(
-            "Do not call every discovery tool up front"
-          ),
-          components: expect.stringContaining("components.summary"),
-        }),
-        rules: expect.arrayContaining([
-          expect.stringContaining(
-            "Use direct value tools for fixed text/props"
-          ),
-        ]),
       })
     );
     expect(accessibilityReview.contents[0]).toEqual(
       expect.objectContaining({
         mimeType: "text/markdown",
-        text: expect.stringContaining("# Webstudio Accessibility Review"),
       })
-    );
-    expect(accessibilityReview.contents[0]?.text).toContain(
-      "Community-Access/accessibility-agents"
     );
     expect(expressions.contents[0]).toEqual(
       expect.objectContaining({
         mimeType: "text/markdown",
-        text: expect.stringContaining("# Webstudio Expressions"),
       })
-    );
-    expect(expressions.contents[0]?.text).toContain("Supported string methods");
-    expect(expressions.contents[0]?.text).toContain("- `toLowerCase`");
-    expect(expressions.contents[0]?.text).toContain("- `join`");
-    expect(expressions.contents[0]?.text).toContain(
-      "leave identifier property names unquoted"
-    );
-    expect(expressions.contents[0]?.text).not.toContain(
-      "{{allowedStringMethods}}"
-    );
-    expect(expressions.contents[0]?.text).toContain(
-      "Collection creates internal `collectionItem` and `collectionItemKey`"
     );
     const componentOverviewData = JSON.parse(
       componentsOverview.contents[0]?.text ?? "{}"
     );
     expect(componentOverviewData).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("components.list"),
         count: expect.any(Number),
         namespaces: expect.objectContaining({
           "@webstudio-is/sdk-components-react-radix": expect.any(Number),

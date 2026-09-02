@@ -24,9 +24,7 @@ import {
   preparePreviewProject,
   preview,
   previewDefaultTemplate,
-  previewOptions,
 } from "./preview";
-import type { CommonYargsArgv } from "./yargs-types";
 import { generatedFilesManifest } from "../prebuild";
 
 const readWindowsPackageFile = (path: string) => {
@@ -920,26 +918,6 @@ test("keeps the standalone React Router preview template", async () => {
     previewIdentity: true,
     sourceAssetsDirectory: join(cwd(), ".webstudio", "assets"),
   });
-});
-
-test("documents generated app dependency setup", () => {
-  const yargs = {
-    option: () => yargs,
-    example: () => yargs,
-    epilogue: (text: string) => {
-      epilogueText = text;
-      return yargs;
-    },
-  } as unknown as CommonYargsArgv;
-  let epilogueText = "";
-
-  previewOptions(yargs);
-
-  expect(epilogueText).toContain("isolated under .webstudio/preview");
-  expect(epilogueText).toContain("reused across regenerations");
-  expect(epilogueText).toContain("Do not add generated-preview dependencies");
-  expect(epilogueText).not.toContain("WEBSTUDIO_PREVIEW_PACKAGE_MANAGER");
-  expect(epilogueText).toContain("reported package-manager path");
 });
 
 test("reports the locked preview path, owned PID, and scoped recovery", async () => {

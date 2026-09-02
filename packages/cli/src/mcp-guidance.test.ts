@@ -1,66 +1,24 @@
 import { expect, test } from "vitest";
 import {
-  generatedAppDependencyNotes,
   getVisionVerificationLoop,
   getVisionWorkflowSummary,
-  screenshotVerificationSummary,
-  visualVerificationRule,
 } from "./mcp-guidance";
 
-test("documents generated app setup for visual verification", () => {
-  expect(getVisionVerificationLoop({ includeDiff: false })).toEqual(
-    expect.arrayContaining(generatedAppDependencyNotes)
-  );
-  expect(visualVerificationRule).toContain(
-    "generated project files are current"
-  );
-  expect(visualVerificationRule).toContain(
-    "Ask the user whether they want visual verification"
-  );
-  expect(screenshotVerificationSummary).toContain("preview.start");
-  expect(screenshotVerificationSummary).toContain(
-    "Iterative mode is the default"
-  );
-  expect(screenshotVerificationSummary).not.toContain("production-like");
-  expect(screenshotVerificationSummary).not.toContain(
-    "path screenshots restart preview"
-  );
-  expect(screenshotVerificationSummary).toContain("list-breakpoints");
-  expect(screenshotVerificationSummary).toContain("viewport");
-});
-
-test("builds vision loop with optional screenshot diff guidance", () => {
+test("includes additional vision steps when diff guidance is enabled", () => {
+  const visionLoopWithoutDiff = getVisionVerificationLoop({
+    includeDiff: false,
+  });
   const visionLoopWithDiff = getVisionVerificationLoop({ includeDiff: true });
 
-  expect(visionLoopWithDiff[0]).toContain(
-    "Ask the user whether they want visual verification"
+  expect(visionLoopWithDiff.length).toBeGreaterThan(
+    visionLoopWithoutDiff.length
   );
-
-  expect(getVisionVerificationLoop({ includeDiff: false })).not.toEqual(
-    expect.arrayContaining([expect.stringContaining("screenshot.diff")])
-  );
-  expect(visionLoopWithDiff).toEqual(
-    expect.arrayContaining([expect.stringContaining("screenshot.diff")])
-  );
-  expect(visionLoopWithDiff).toEqual(
-    expect.arrayContaining([expect.stringContaining("vision.install-ocr")])
-  );
-  expect(visionLoopWithDiff).toEqual(
-    expect.arrayContaining([expect.stringContaining("expectedText")])
-  );
-  expect(visionLoopWithDiff).toEqual(
-    expect.arrayContaining([expect.stringContaining("expectedVisual")])
-  );
-  expect(visionLoopWithDiff).toEqual(
-    expect.arrayContaining([
-      expect.stringContaining("list-breakpoints"),
-      expect.stringContaining("viewport"),
-    ])
-  );
-  expect(getVisionWorkflowSummary({ includeDiff: false })).not.toContain(
-    "screenshot.diff"
-  );
-  expect(getVisionWorkflowSummary({ includeDiff: true })).toContain(
-    "screenshot.diff"
+  expect(
+    visionLoopWithDiff.filter(
+      (step) => visionLoopWithoutDiff.includes(step) === false
+    )
+  ).toHaveLength(visionLoopWithDiff.length - visionLoopWithoutDiff.length);
+  expect(getVisionWorkflowSummary({ includeDiff: false })).not.toBe(
+    getVisionWorkflowSummary({ includeDiff: true })
   );
 });

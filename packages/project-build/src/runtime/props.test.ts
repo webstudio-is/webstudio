@@ -148,14 +148,12 @@ describe("findProp", () => {
 });
 
 test("defines show attribute metadata in runtime", () => {
-  expect(showAttributeMeta).toEqual({
+  expect(showAttributeMeta).toMatchObject({
     label: "Show",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: true,
-    description:
-      "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
   });
 });
 

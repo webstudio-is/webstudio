@@ -1,7 +1,25 @@
-import type { CssVariableName } from "./colors/__generated__/css-variable-names";
+import type { SemanticColorName } from "./colors/__generated__/css-variable-names";
 
-export const declareCssVar = <const Name extends `--${string}`>(name: Name) =>
-  name;
+declare const declaredCssVariableNameBrand: unique symbol;
 
-export const cssVar = (name: CssVariableName, fallback?: string) =>
-  fallback === undefined ? `var(${name})` : `var(${name}, ${fallback})`;
+export type DeclaredCssVariableName = `--${string}` & {
+  readonly [declaredCssVariableNameBrand]: true;
+};
+
+type ColorVariableName =
+  | `--theme-${string}`
+  | `--scheme-${string}`
+  | `--color-${string}`
+  | `--background-${string}`
+  | `--foreground-${string}`
+  | `--border-${string}`
+  | `--overlay-${string}`;
+
+export const declareCssVar = <const Name extends `--${string}`>(
+  name: Name & (Name extends ColorVariableName ? never : unknown)
+) => name as unknown as Name & DeclaredCssVariableName;
+
+export const cssVar = (
+  name: SemanticColorName | DeclaredCssVariableName,
+  fallback?: string
+) => (fallback === undefined ? `var(${name})` : `var(${name}, ${fallback})`);
