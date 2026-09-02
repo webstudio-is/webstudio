@@ -1311,9 +1311,6 @@ importers:
       immer:
         specifier: ^10.1.1
         version: 10.1.1
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
       p-limit:
         specifier: ^6.2.0
         version: 6.2.0
@@ -2508,9 +2505,6 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
@@ -3051,9 +3045,6 @@ importers:
       immerhin:
         specifier: '*'
         version: 0.10.0
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
       nanostores:
         specifier: ^0.11.3
         version: 0.11.3
