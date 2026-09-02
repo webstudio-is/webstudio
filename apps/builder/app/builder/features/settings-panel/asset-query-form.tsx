@@ -173,8 +173,10 @@ export const AssetQueryForm = ({
         StructuredAssetQueryFilterBinding["operator"],
         StructuredAssetQueryResourceConfiguration
       >(definition).format(configuration);
-    } catch {
-      return "Complete every Assets query field.";
+    } catch (error) {
+      return error instanceof Error
+        ? error.message
+        : "The Assets query configuration is invalid.";
     }
   }, [configuration, definition]);
 

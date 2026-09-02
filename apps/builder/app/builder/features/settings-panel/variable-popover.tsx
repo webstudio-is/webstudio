@@ -90,6 +90,7 @@ import { generateCurl } from "./curl";
 import {
   $hasPendingResources,
   $resourceDiagnosticsCache,
+  $resourceDiagnosticsErrorCache,
   $resourcePerformanceCache,
   $resourcesCache,
   computeResourceRequest,
@@ -705,11 +706,15 @@ const VariablePreview = ({
   const variableValues = useStore($instanceVariableValues);
   const resourcesCache = useStore($resourcesCache);
   const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
+  const resourceDiagnosticsErrorCache = useStore(
+    $resourceDiagnosticsErrorCache
+  );
   const resourcePerformanceCache = useStore($resourcePerformanceCache);
   const resourceScope = useResourceScope({ variable });
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
   let resourcePerformance: ResourcePerformance | undefined;
+  let resourceDiagnosticsError: unknown;
   let computedResourceRequest: ResourceRequest | undefined;
   let computedResourceKey: string | undefined;
   if (variableType === "string" || variableType === "boolean") {
@@ -741,6 +746,7 @@ const VariablePreview = ({
       computedResourceKey = resourceKey;
       computedValue = resourcesCache.get(resourceKey);
       resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
+      resourceDiagnosticsError = resourceDiagnosticsErrorCache.get(resourceKey);
       resourcePerformance = resourcePerformanceCache.get(resourceKey);
     }
   }
@@ -756,7 +762,7 @@ const VariablePreview = ({
     onChange: () => {},
     onChangeComplete: () => {},
   };
-  const preview = (
+  const previewContent = (
     <Grid
       align="stretch"
       css={{
@@ -786,9 +792,18 @@ const VariablePreview = ({
     </Grid>
   );
   if (isResource === false) {
-    return preview;
+    return previewContent;
   }
   const requestErrorDiagnostics = getRequestErrorDiagnostics(computedValue);
+  const diagnosticsRequestError = getRequestErrorDiagnostics(
+    resourceDiagnosticsError
+  );
+  const preview =
+    requestErrorDiagnostics === undefined ? (
+      previewContent
+    ) : (
+      <RequestErrorDiagnostics value={requestErrorDiagnostics} />
+    );
   return (
     <RequestInspector
       queryContainerRef={queryActive ? queryContainerRef : undefined}
@@ -816,6 +831,8 @@ const VariablePreview = ({
       diagnostics={
         requestErrorDiagnostics !== undefined ? (
           <RequestErrorDiagnostics value={requestErrorDiagnostics} />
+        ) : diagnosticsRequestError !== undefined ? (
+          <RequestErrorDiagnostics value={diagnosticsRequestError} />
         ) : resourceDiagnostics !== undefined ? (
           <ContentDatabaseDiagnostics
             value={resourceDiagnostics}

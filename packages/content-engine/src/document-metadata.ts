@@ -137,7 +137,12 @@ export const prepareCanonicalContentMetadata = async ({
         if (error instanceof MarkdownMetadataError === false) {
           throw error;
         }
-        metadataError = { code: error.code, message: error.message };
+        metadataError = {
+          code: error.code,
+          message: error.message,
+          ...(error.line === undefined ? {} : { line: error.line }),
+          ...(error.column === undefined ? {} : { column: error.column }),
+        };
       }
     }
     if (isMarkdown(base) && needsExcerpt) {
@@ -147,7 +152,12 @@ export const prepareCanonicalContentMetadata = async ({
         if (error instanceof MarkdownMetadataError === false) {
           throw error;
         }
-        metadataError ??= { code: error.code, message: error.message };
+        metadataError ??= {
+          code: error.code,
+          message: error.message,
+          ...(error.line === undefined ? {} : { line: error.line }),
+          ...(error.column === undefined ? {} : { column: error.column }),
+        };
       }
     }
   } else if (isJson(base) && needsProperties) {

@@ -387,6 +387,31 @@ export const ContentDatabaseDiagnostics = ({
   };
   return (
     <RequestDiagnosticsContent padded={false}>
+      {value.issues !== undefined && value.issues.length > 0 && (
+        <DiagnosticsSection label="Warnings" data={value.issues} isOpen>
+          <PanelBanner variant="warning">
+            <Text>
+              {value.issueCount ?? value.issues.length} content
+              {(value.issueCount ?? value.issues.length) === 1
+                ? " warning"
+                : " warnings"}
+              {value.issuesTruncated
+                ? `; showing the first ${value.issues.length}.`
+                : "."}
+            </Text>
+          </PanelBanner>
+          <RequestDiagnosticsTable>
+            {value.issues.map((issue, index) => (
+              <RequestDiagnosticsRow
+                key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
+                label={`${issue.path}${issue.line === undefined ? "" : `:${issue.line}${issue.column === undefined ? "" : `:${issue.column}`}`}`}
+                value={issue.message}
+                description={`${issue.scope === "query" ? "Current query" : "Published database"} · ${issue.code}`}
+              />
+            ))}
+          </RequestDiagnosticsTable>
+        </DiagnosticsSection>
+      )}
       <DiagnosticsSection
         label="Database and sizes"
         data={databaseAndSizes}

@@ -4,6 +4,7 @@ import {
   __testing__,
   $hasPendingResources,
   $resourceDiagnosticsCache,
+  $resourceDiagnosticsErrorCache,
   $resourcePerformanceCache,
   $resourcesCache,
   getResourceKey,
@@ -477,6 +478,39 @@ test("loads detailed Assets diagnostics and performance only on demand", async (
     },
   });
   expect($resourcesCache.get().has(key)).toBe(false);
+});
+
+test("keeps a diagnostics-only failure separate from the resource value", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+  $resourcesCache.get().set(key, { data: { items: [] } });
+  const failure = {
+    ok: false,
+    status: 400,
+    data: {
+      error: {
+        code: "INVALID_REQUEST",
+        message: "Unexpected closing tag",
+        details: { path: "posts/broken.mdx", line: 7, column: 4 },
+      },
+    },
+  };
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([[key, failure]])
+  );
+
+  await loadResourceDiagnostics(request, fetch);
+
+  expect($resourcesCache.get().get(key)).toEqual({ data: { items: [] } });
+  expect($resourceDiagnosticsCache.get().has(key)).toBe(false);
+  expect($resourceDiagnosticsErrorCache.get().get(key)).toEqual(failure);
 });
 
 test("caches performance metrics separately from resource values", async () => {

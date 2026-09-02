@@ -27,6 +27,7 @@ const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, InFlightResourceBatch>();
 const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
+const diagnosticsErrorCache = new Map<string, unknown>();
 const performanceCache = new Map<string, ResourcePerformance>();
 const pendingDiagnostics = new Map<string, InFlightResourceDiagnostics>();
 const knownRequests = new Map<string, ResourceRequest>();
@@ -35,10 +36,12 @@ const inFlightBatches = new Set<InFlightResourceBatch>();
 
 export const $resourcesCache = atom(cache);
 export const $resourceDiagnosticsCache = atom(diagnosticsCache);
+export const $resourceDiagnosticsErrorCache = atom(diagnosticsErrorCache);
 export const $resourcePerformanceCache = atom(performanceCache);
 
 const updateMetadataCache = () => {
   $resourceDiagnosticsCache.set(new Map(diagnosticsCache));
+  $resourceDiagnosticsErrorCache.set(new Map(diagnosticsErrorCache));
   $resourcePerformanceCache.set(new Map(performanceCache));
 };
 
@@ -193,6 +196,7 @@ const preloadResource = (resource: ResourceRequest) => {
 
 const invalidateRequestState = (key: string) => {
   diagnosticsCache.delete(key);
+  diagnosticsErrorCache.delete(key);
   performanceCache.delete(key);
   pendingDiagnostics.get(key)?.controller.abort();
   pendingDiagnostics.delete(key);
@@ -280,6 +284,25 @@ export const loadResourceDiagnostics = (
         }
       );
       if (response.ok === false) {
+        let data: unknown;
+        try {
+          data = await response.json();
+        } catch {
+          data = undefined;
+        }
+        if (
+          controller.signal.aborted === false &&
+          pendingDiagnostics.get(key)?.controller === controller &&
+          (resourceVersions.get(key) ?? 0) === version
+        ) {
+          diagnosticsErrorCache.set(key, {
+            ok: false,
+            status: response.status,
+            statusText: response.statusText,
+            data,
+          });
+          updateMetadataCache();
+        }
         return;
       }
       const result = new Map<string, unknown>(await response.json()).get(key);
@@ -297,10 +320,38 @@ export const loadResourceDiagnostics = (
         result,
         loaderDurationMs,
       });
+      if (
+        typeof result === "object" &&
+        result !== null &&
+        ((result as { ok?: unknown }).ok === false ||
+          (typeof (result as { status?: unknown }).status === "number" &&
+            ((result as { status: number }).status ?? 0) >= 400))
+      ) {
+        diagnosticsErrorCache.set(key, result);
+      } else {
+        diagnosticsErrorCache.delete(key);
+      }
       updateMetadataCache();
-    } catch {
+    } catch (error) {
       if (controller.signal.aborted === false) {
         console.error("Resource diagnostics request failed");
+        if (
+          pendingDiagnostics.get(key)?.controller === controller &&
+          (resourceVersions.get(key) ?? 0) === version
+        ) {
+          diagnosticsErrorCache.set(key, {
+            ok: false,
+            data: {
+              error: {
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Resource diagnostics request failed",
+              },
+            },
+          });
+          updateMetadataCache();
+        }
       }
     } finally {
       if (pendingDiagnostics.get(key)?.controller === controller) {
@@ -361,6 +412,7 @@ const reset = () => {
   pending.clear();
   cache.clear();
   diagnosticsCache.clear();
+  diagnosticsErrorCache.clear();
   performanceCache.clear();
   for (const { controller } of pendingDiagnostics.values()) {
     controller.abort();

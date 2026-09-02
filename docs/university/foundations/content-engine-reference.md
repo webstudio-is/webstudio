@@ -165,6 +165,9 @@ Only `database.usedBytes` counts toward `database.maxBytes`. Do not add the quer
 | `omittedDocumentCount` | Documents omitted from the compiled database. |
 | `omissionReason` | Why documents were omitted: `size` or `unavailable`. |
 | `truncated` | Whether the compiled database omitted content. |
+| `issues` | Up to 100 non-fatal content warnings. Each warning identifies its query or published-database scope, phase, code, message, asset, path, and source location when available. |
+| `issueCount` | Total warnings found before the diagnostic payload limit is applied. |
+| `issuesTruncated` | Whether additional warnings were omitted from `issues`. |
 | `artifacts` | Optional query and merged compiled artifacts used by detailed Builder diagnostics. |
 | `unresolved` | Optional query result before document references are resolved. It helps inspect the authored `$ref` values behind resolved output. |
 

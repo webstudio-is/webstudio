@@ -84,6 +84,8 @@ tags: [web, studio]
       extractMarkdownFrontmatter("---\ntitle: [broken\n---\n")
     ).rejects.toMatchObject({
       code: "FRONTMATTER_INVALID",
+      line: 3,
+      column: 1,
     } satisfies Partial<MarkdownMetadataError>);
   });
 

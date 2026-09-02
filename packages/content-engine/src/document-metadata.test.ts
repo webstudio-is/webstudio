@@ -133,6 +133,8 @@ describe("content metadata cache", () => {
     expect(prepared.document).not.toHaveProperty("excerpt");
     expect(prepared.document.metadataError).toMatchObject({
       code: "FRONTMATTER_INVALID",
+      line: 3,
+      column: 1,
     });
   });
 

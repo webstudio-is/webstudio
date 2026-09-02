@@ -2018,7 +2018,26 @@ describe("PostgresAssetRepository", () => {
         },
       ],
     });
-    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([]);
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      {
+        projectId: "project-1",
+        assetId: "broken",
+        revision: "revision-broken",
+        document: {
+          _id: "broken",
+          _type: "asset.file",
+          name: "broken.md",
+          path: "broken.md",
+          key: "broken",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: 4,
+          revision: "revision-broken",
+          contentRef: "broken.md",
+          properties: {},
+        },
+      },
+    ]);
     dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([]);
     dependencies.createAssetIndex.mockImplementation(createAssetIndex);
     const repository = new PostgresAssetRepository({
@@ -2028,14 +2047,47 @@ describe("PostgresAssetRepository", () => {
       dependencies,
     });
 
-    await expect(
-      repository.query({
-        query: {
-          where: { all: [] },
-          output: { mode: "base", includeMetadata: true },
+    const request = {
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "title"],
+              operator: "eq",
+              value: "Healthy",
+            },
+          ],
         },
-      })
-    ).resolves.toMatchObject({ data: { items: [] } });
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    } satisfies Parameters<typeof repository.query>[0];
+    const result = await repository.query(request);
+    const cachedResult = await repository.query(request);
+
+    expect(result).toMatchObject({
+      data: { items: [] },
+      __diagnostics__: {
+        issues: [
+          {
+            severity: "warning",
+            scope: "query",
+            phase: "metadata",
+            code: "METADATA_PREPARATION_FAILED",
+            message: "Object is missing",
+            assetId: "broken",
+            path: "broken.md",
+          },
+        ],
+      },
+    });
+    expect(cachedResult.__diagnostics__.issues).toEqual(
+      result.__diagnostics__.issues
+    );
+    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
   });
 
   test("updates metadata without eagerly maintaining query fields", async () => {
@@ -2168,6 +2220,10 @@ describe("PostgresAssetRepository", () => {
         revision,
         contentRef: "post.md",
         properties: { title: "New post" },
+        metadataError: {
+          code: "FRONTMATTER_INVALID",
+          message: "Invalid YAML in post.md",
+        },
       },
     };
     const otherEntry = {
@@ -2183,6 +2239,7 @@ describe("PostgresAssetRepository", () => {
         revision: "revision-2",
         contentRef: "other.md",
         properties: { title: "Other post" },
+        metadataError: undefined,
       },
     };
     dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
@@ -2263,6 +2320,19 @@ describe("PostgresAssetRepository", () => {
         omittedDocumentCount: 0,
         truncated: false,
       },
+      issues: [
+        {
+          severity: "warning",
+          scope: "query",
+          phase: "metadata",
+          code: "FRONTMATTER_INVALID",
+          message: "Invalid YAML in post.md",
+          assetId: "asset-1",
+          path: "post.md",
+        },
+      ],
+      issueCount: 1,
+      issuesTruncated: false,
     });
     expect(result.__diagnostics__.database.usedBytes).toBeGreaterThan(
       result.__diagnostics__.query.usedBytes

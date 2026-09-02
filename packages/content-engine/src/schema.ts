@@ -65,6 +65,8 @@ export const assetFileDocument = strictObject({
   metadataError: strictObject({
     code: string().min(1),
     message: string().min(1),
+    line: number().int().positive().optional(),
+    column: number().int().positive().optional(),
   }).optional(),
 });
 
@@ -680,6 +682,21 @@ export type AssetQueryExecutionResult = Infer<typeof assetQueryResult>;
 /** Backward-compatible collection result type for existing many-result APIs. */
 export type AssetQueryResult = AssetQueryCollectionResult;
 
+export const assetQueryDiagnosticIssue = strictObject({
+  severity: literal("warning"),
+  scope: zEnum(["query", "database"]),
+  phase: zEnum(["metadata", "reference"]),
+  code: string().min(1),
+  message: string().min(1),
+  assetId: string().min(1),
+  path: relativeAssetPath,
+  line: number().int().positive().optional(),
+  column: number().int().positive().optional(),
+  reference: string().min(1).optional(),
+});
+
+export type AssetQueryDiagnosticIssue = Infer<typeof assetQueryDiagnosticIssue>;
+
 export const assetQueryPreviewDiagnostics = strictObject({
   scope: literal("query-preview"),
   query: contentDatabaseCapacityStats,
@@ -689,6 +706,9 @@ export const assetQueryPreviewDiagnostics = strictObject({
     database: contentArtifactV1,
   }).optional(),
   unresolved: assetQueryResult.optional(),
+  issues: array(assetQueryDiagnosticIssue).max(100).optional(),
+  issueCount: number().int().nonnegative().optional(),
+  issuesTruncated: boolean().optional(),
 });
 
 export type AssetQueryPreviewDiagnostics = Infer<

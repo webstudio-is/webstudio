@@ -7,6 +7,9 @@ import {
 } from "./structured-query";
 import { DocumentResolutionLimitError } from "./document-graph/document-resolution";
 import { CachedDocumentLoaderError } from "./document-graph/cached-document-loader";
+import { DocumentSourceCompilationError } from "./document-graph/source-compiler";
+import { MdxDocumentError } from "./mdx";
+import { MarkdownMetadataError } from "./markdown-errors";
 
 export type AssetResourceQueryError = Omit<
   AssetResourceQueryFailure["error"],
@@ -18,7 +21,8 @@ export type AssetResourceQueryError = Omit<
 
 /** Classifies content-query failures independently of an HTTP or RPC transport. */
 export const getAssetResourceQueryError = (
-  error: unknown
+  error: unknown,
+  { includeSourceDetails = false }: { includeSourceDetails?: boolean } = {}
 ): AssetResourceQueryError | undefined => {
   if (error instanceof AssetIndexRevisionError) {
     return {
@@ -57,6 +61,70 @@ export const getAssetResourceQueryError = (
   const visited = new Set<unknown>();
   let cause = error;
   while (cause !== undefined && visited.has(cause) === false) {
+    if (includeSourceDetails && cause instanceof MdxDocumentError) {
+      const details: Record<string, string | number> = {};
+      const position = cause.sourceRange?.start;
+      if (position !== undefined) {
+        details.line = position.line;
+        details.column = position.column;
+      }
+      if (cause.reason !== undefined) {
+        details.reason = cause.reason;
+      }
+      return {
+        code: "INVALID_REQUEST",
+        message: cause.message,
+        retryable: false,
+        details,
+        status: 400,
+      };
+    }
+    if (
+      includeSourceDetails &&
+      cause instanceof DocumentSourceCompilationError &&
+      cause.code === "DOCUMENT_ANALYSIS_FAILED"
+    ) {
+      const sourceError = cause.cause;
+      const details: Record<string, string | number> = {};
+      if (cause.documentId !== undefined) {
+        details.assetId = cause.documentId;
+      }
+      if (cause.documentPath !== undefined) {
+        details.path = cause.documentPath;
+      }
+      if (sourceError instanceof MdxDocumentError) {
+        const position = sourceError.sourceRange?.start;
+        if (position !== undefined) {
+          details.line = position.line;
+          details.column = position.column;
+        }
+        if (sourceError.reason !== undefined) {
+          details.reason = sourceError.reason;
+        }
+        return {
+          code: "INVALID_REQUEST",
+          message: sourceError.message,
+          retryable: false,
+          details,
+          status: 400,
+        };
+      }
+      if (sourceError instanceof MarkdownMetadataError) {
+        if (sourceError.line !== undefined) {
+          details.line = sourceError.line;
+        }
+        if (sourceError.column !== undefined) {
+          details.column = sourceError.column;
+        }
+        return {
+          code: "INVALID_REQUEST",
+          message: sourceError.message,
+          retryable: false,
+          details,
+          status: 400,
+        };
+      }
+    }
     if (cause instanceof DocumentResolutionLimitError) {
       const details: Record<string, string | number> = {};
       for (const [key, value] of Object.entries({

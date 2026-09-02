@@ -90,6 +90,21 @@ test("orders collapsible sections and opens only database sizes by default", () 
           }}
           value={{
             scope: "query-preview",
+            issues: [
+              {
+                severity: "warning",
+                scope: "query",
+                phase: "metadata",
+                code: "FRONTMATTER_INVALID",
+                message: "Invalid YAML at line 3, column 1",
+                assetId: "post",
+                path: "posts/broken.md",
+                line: 3,
+                column: 1,
+              },
+            ],
+            issueCount: 1,
+            issuesTruncated: false,
             unresolved: {
               items: [
                 {
@@ -127,6 +142,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
   });
 
   const sectionLabels = [
+    "Warnings",
     "Database and sizes",
     "Timing",
     "Assets batch work",
@@ -143,12 +159,15 @@ test("orders collapsible sections and opens only database sizes by default", () 
   );
   expect(triggers.map((trigger) => trigger.dataset.state)).toEqual([
     "open",
+    "open",
     "closed",
     "closed",
     "closed",
     "closed",
     "closed",
   ]);
+  expect(container.textContent).toContain("posts/broken.md:3:1");
+  expect(container.textContent).toContain("Invalid YAML at line 3, column 1");
   const copyButtons = Array.from(
     container.querySelectorAll<HTMLButtonElement>('button[aria-label^="Copy "]')
   );
@@ -165,7 +184,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
     )
     .at(-1);
   act(() => timingCopyButton?.click());
-  expect(triggers[1]?.dataset.state).toBe("closed");
+  expect(triggers[2]?.dataset.state).toBe("closed");
   expect(writeText).toHaveBeenCalledOnce();
   expect(JSON.parse(writeText.mock.calls[0]?.[0] ?? "")).toEqual({
     builderRoundTripMs: 150.25,
@@ -184,9 +203,9 @@ test("orders collapsible sections and opens only database sizes by default", () 
   });
 
   act(() => {
-    triggers[1]?.click();
     triggers[2]?.click();
-    triggers[5]?.click();
+    triggers[3]?.click();
+    triggers[6]?.click();
   });
 
   const editor = container.querySelector(".cm-content");
@@ -208,5 +227,5 @@ test("orders collapsible sections and opens only database sizes by default", () 
   expect(container.textContent).toContain("Timing");
   expect(container.textContent).toContain("Assets batch work");
   expect(container.textContent).toContain("Database and sizes");
-  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(26);
+  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(27);
 });

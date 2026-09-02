@@ -1,5 +1,5 @@
 import { contentEngineLimits } from "./limits";
-import { parseDocument, stringify as stringifyYaml } from "yaml";
+import { LineCounter, parseDocument, stringify as stringifyYaml } from "yaml";
 import {
   decodeUtf8 as decodeUtf8Bytes,
   toByteChunks,
@@ -53,14 +53,21 @@ const parseYamlProperties = (
   source: string,
   limits: FrontmatterLimits
 ): Record<string, unknown> => {
+  const lineCounter = new LineCounter();
   const document = parseDocument(source, {
     schema: "core",
     uniqueKeys: true,
+    lineCounter,
   });
   if (document.errors.length > 0) {
+    const error = document.errors[0];
+    const location = lineCounter.linePos(error.pos[0]);
     throw new MarkdownMetadataError(
       "FRONTMATTER_INVALID",
-      "Markdown frontmatter contains invalid YAML"
+      `Markdown frontmatter contains invalid YAML: ${error.message}`,
+      // YAML starts after the opening frontmatter delimiter.
+      { line: location.line + 1, column: location.col },
+      error
     );
   }
 

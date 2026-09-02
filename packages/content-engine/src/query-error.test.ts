@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
+  DocumentSourceCompilationError,
   DocumentGraphResolutionError,
   DocumentResolutionLimitError,
 } from "./document-graph";
+import { MdxDocumentError } from "./mdx";
 import { getAssetResourceQueryError } from "./query-error";
 import { AssetQueryMultipleResultsError } from "./structured-query";
 
@@ -42,6 +44,41 @@ describe("asset resource graph query errors", () => {
         assetId: "post",
         totalBytes: 100,
         totalByteLimit: 50,
+      },
+    });
+  });
+
+  test("includes source details only for authenticated diagnostics", () => {
+    const error = new DocumentSourceCompilationError({
+      code: "DOCUMENT_ANALYSIS_FAILED",
+      message: "Document could not be analyzed",
+      documentId: "post",
+      documentPath: "posts/broken.mdx",
+      cause: new MdxDocumentError({
+        code: "invalid-mdx",
+        message: "Unexpected closing tag",
+        reason: "Unexpected closing tag",
+        sourceRange: {
+          start: { line: 7, column: 4, offset: 42 },
+          end: { line: 7, column: 8, offset: 46 },
+        },
+      }),
+    });
+
+    expect(getAssetResourceQueryError(error)).toBeUndefined();
+    expect(
+      getAssetResourceQueryError(error, { includeSourceDetails: true })
+    ).toEqual({
+      code: "INVALID_REQUEST",
+      message: "Unexpected closing tag",
+      retryable: false,
+      status: 400,
+      details: {
+        assetId: "post",
+        path: "posts/broken.mdx",
+        line: 7,
+        column: 4,
+        reason: "Unexpected closing tag",
       },
     });
   });

@@ -31,22 +31,26 @@ export type DocumentSourceCompilationErrorCode =
 export class DocumentSourceCompilationError extends Error {
   readonly code: DocumentSourceCompilationErrorCode;
   readonly documentId?: string;
+  readonly documentPath?: string;
 
   constructor({
     code,
     message,
     documentId,
+    documentPath,
     cause,
   }: {
     code: DocumentSourceCompilationErrorCode;
     message: string;
     documentId?: string;
+    documentPath?: string;
     cause?: unknown;
   }) {
     super(message, { cause });
     this.name = "DocumentSourceCompilationError";
     this.code = code;
     this.documentId = documentId;
+    this.documentPath = documentPath;
   }
 }
 
@@ -130,6 +134,9 @@ export const compileDocumentSourceGraph = async ({
             code: "DOCUMENT_ANALYSIS_FAILED",
             message: `Document ${document.id} could not be analyzed`,
             documentId: document.id,
+            documentPath: decodeURIComponent(
+              new URL(document.documentUrl).pathname.slice(1)
+            ),
             cause,
           });
         }

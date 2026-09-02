@@ -33,6 +33,7 @@ import {
   getDocumentFormatByContentType,
   type SourceReferenceOccurrence,
   type DocumentGraph,
+  DocumentSourceCompilationError,
 } from "./document-graph";
 
 export type ContentSourceFile = {
@@ -267,7 +268,18 @@ const discoverSnapshotAssetValueReferences = async ({
       entry.content !== undefined &&
       getDocumentFormatByContentType(entry.document.mimeType) === "mdx"
     ) {
-      const document = await parseMdxDocument({ source: entry.content });
+      let document;
+      try {
+        document = await parseMdxDocument({ source: entry.content });
+      } catch (cause) {
+        throw new DocumentSourceCompilationError({
+          code: "DOCUMENT_ANALYSIS_FAILED",
+          message: `Document ${entry.document.path} could not be analyzed`,
+          documentId: entry.assetId,
+          documentPath: entry.document.path,
+          cause,
+        });
+      }
       discovered.push(
         ...discoverMdxBodyAssetReferences({
           document,

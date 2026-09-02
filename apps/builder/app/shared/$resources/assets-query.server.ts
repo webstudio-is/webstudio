@@ -139,7 +139,9 @@ const createFailureResponse = (error: unknown, request: Request) => {
   if (authorizationFailure !== undefined) {
     return createAssetResourceFailureResponse(authorizationFailure);
   }
-  const queryError = getAssetResourceQueryError(error);
+  const queryError = getAssetResourceQueryError(error, {
+    includeSourceDetails: true,
+  });
   if (queryError !== undefined) {
     return createAssetResourceFailureResponse(queryError);
   }

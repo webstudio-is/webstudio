@@ -17,6 +17,7 @@ import {
   type AssetQueryExecutionPreviewResult,
   type AssetQuery,
   type AssetQueryExecutionResult,
+  type AssetQueryDiagnosticIssue,
   type AssetRuntimeData,
   type BuilderAssetFieldCatalog,
   type ContentArtifactV1,
@@ -113,6 +114,74 @@ type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
 type ContentBytesReference = {
   contentRef: string;
   revision: string;
+};
+
+type PreparedDiagnosticIssue = Omit<AssetQueryDiagnosticIssue, "scope">;
+
+const diagnosticIssuesByArtifact = new WeakMap<
+  ContentArtifactV1,
+  readonly PreparedDiagnosticIssue[]
+>();
+
+const getPreparedDiagnosticIssues = ({
+  entries,
+  assetReferenceIssues,
+  preparationIssues,
+}: {
+  entries: Parameters<typeof createAssetIndex>[0]["entries"];
+  assetReferenceIssues: Awaited<
+    ReturnType<typeof materializeContentSource>
+  >["assetReferenceIssues"];
+  preparationIssues: readonly PreparedDiagnosticIssue[];
+}): PreparedDiagnosticIssue[] => {
+  const pathsById = new Map(
+    entries.map(({ assetId, document }) => [assetId, document.path])
+  );
+  const metadataIssues = entries.flatMap(({ assetId, document }) =>
+    document.metadataError === undefined
+      ? []
+      : [
+          {
+            severity: "warning" as const,
+            phase: "metadata" as const,
+            code: document.metadataError.code,
+            message: document.metadataError.message,
+            assetId,
+            path: document.path,
+            ...(document.metadataError.line === undefined
+              ? {}
+              : { line: document.metadataError.line }),
+            ...(document.metadataError.column === undefined
+              ? {}
+              : { column: document.metadataError.column }),
+          },
+        ]
+  );
+  const referenceIssues = assetReferenceIssues.flatMap((issue) => {
+    const path = pathsById.get(issue.sourceDocumentId);
+    return path === undefined
+      ? []
+      : [
+          {
+            severity: "warning" as const,
+            phase: "reference" as const,
+            code: issue.code,
+            message: `Referenced asset was not found: ${issue.assetUrl}`,
+            assetId: issue.sourceDocumentId,
+            path,
+            reference: issue.assetUrl,
+          },
+        ];
+  });
+  const issues = [...metadataIssues, ...referenceIssues, ...preparationIssues];
+  return [
+    ...new Map(
+      issues.map((issue) => [
+        JSON.stringify([issue.code, issue.assetId, issue.path, issue.message]),
+        issue,
+      ])
+    ).values(),
+  ];
 };
 
 class RequestContentBytesCache {
@@ -686,7 +755,12 @@ export class PostgresAssetRepository implements AssetRepository {
     strict: boolean,
     contentBytesCache = new RequestContentBytesCache()
   ) {
-    const source = this.createContentSource(strict, contentBytesCache);
+    const preparationIssues: PreparedDiagnosticIssue[] = [];
+    const source = this.createContentSource(
+      strict,
+      contentBytesCache,
+      preparationIssues
+    );
     const compile = async (
       entries: Parameters<typeof createAssetIndex>[0]["entries"],
       assetReferences: Parameters<
@@ -695,9 +769,12 @@ export class PostgresAssetRepository implements AssetRepository {
       assetValueReferences: Parameters<
         typeof createAssetIndex
       >[0]["assetValueReferences"],
-      documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"]
-    ) =>
-      await this.measurePerformance(
+      documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"],
+      assetReferenceIssues: Awaited<
+        ReturnType<typeof materializeContentSource>
+      >["assetReferenceIssues"]
+    ) => {
+      const artifact = await this.measurePerformance(
         "artifact-compilation",
         async () =>
           await this.dependencies.createAssetIndex({
@@ -713,24 +790,40 @@ export class PostgresAssetRepository implements AssetRepository {
             ...(requirements === undefined ? {} : { plan: requirements }),
           })
       );
+      diagnosticIssuesByArtifact.set(
+        artifact,
+        getPreparedDiagnosticIssues({
+          entries,
+          assetReferenceIssues,
+          preparationIssues,
+        })
+      );
+      return artifact;
+    };
     if (this.compilationCache === undefined) {
       emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
         type: "compilation-cache",
         status: "disabled",
       });
-      const { entries, assetReferences, assetValueReferences, documentGraph } =
-        await materializeContentSource({
-          source,
-          plan: requirements,
-          maximumContentBytes: this.contentDatabaseMaxBytes,
-          onPerformanceEvent: this.onPerformanceEvent,
-          performanceNow: this.dependencies.performanceNow,
-        });
+      const {
+        entries,
+        assetReferences,
+        assetValueReferences,
+        documentGraph,
+        assetReferenceIssues,
+      } = await materializeContentSource({
+        source,
+        plan: requirements,
+        maximumContentBytes: this.contentDatabaseMaxBytes,
+        onPerformanceEvent: this.onPerformanceEvent,
+        performanceNow: this.dependencies.performanceNow,
+      });
       return await compile(
         entries,
         assetReferences,
         assetValueReferences,
-        documentGraph
+        documentGraph,
+        assetReferenceIssues
       );
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -754,6 +847,7 @@ export class PostgresAssetRepository implements AssetRepository {
               assetReferences,
               assetValueReferences,
               documentGraph,
+              assetReferenceIssues,
             } = await materializeContentSnapshot({
               snapshot,
               plan: requirements,
@@ -765,7 +859,8 @@ export class PostgresAssetRepository implements AssetRepository {
               entries,
               assetReferences,
               assetValueReferences,
-              documentGraph
+              documentGraph,
+              assetReferenceIssues
             );
           }
         );
@@ -785,7 +880,8 @@ export class PostgresAssetRepository implements AssetRepository {
 
   private createContentSource(
     strict: boolean,
-    contentBytesCache = new RequestContentBytesCache()
+    contentBytesCache = new RequestContentBytesCache(),
+    preparationIssues: PreparedDiagnosticIssue[] = []
   ): ContentSource {
     const readFile = this.assetStore.readFile;
     const onPerformanceEvent = this.onPerformanceEvent;
@@ -863,6 +959,7 @@ export class PostgresAssetRepository implements AssetRepository {
               strict,
               maximumContentBytes: options?.maximumContentBytes,
               contentBytesCache,
+              preparationIssues,
             }),
           isCurrent: async () =>
             (await computeCanonicalAssetRevision(await loadBaseEntries())) ===
@@ -878,12 +975,14 @@ export class PostgresAssetRepository implements AssetRepository {
     strict,
     maximumContentBytes,
     contentBytesCache,
+    preparationIssues,
   }: {
     baseEntries: Awaited<ReturnType<typeof loadCanonicalAssetBaseEntries>>;
     requirements?: ContentCompilationPlan;
     strict: boolean;
     maximumContentBytes?: number;
     contentBytesCache: RequestContentBytesCache;
+    preparationIssues: PreparedDiagnosticIssue[];
   }) {
     const candidateBaseEntries =
       requirements === undefined
@@ -938,6 +1037,19 @@ export class PostgresAssetRepository implements AssetRepository {
           );
           if (strict && result.issues.length > 0) {
             throw new AssetIndexPreparationError(result.issues);
+          }
+          const pathsById = new Map(
+            baseEntries.map(({ assetId, document }) => [assetId, document.path])
+          );
+          for (const issue of result.issues) {
+            preparationIssues.push({
+              severity: "warning",
+              phase: "metadata",
+              code: "METADATA_PREPARATION_FAILED",
+              message: issue.message,
+              assetId: issue.assetId,
+              path: pathsById.get(issue.assetId) ?? issue.storageName,
+            });
           }
           return await this.dependencies.loadCanonicalAssetFileEntries({
             client: this.context.postgrest.client,
@@ -996,6 +1108,14 @@ export class PostgresAssetRepository implements AssetRepository {
                   },
                 ]);
               }
+              preparationIssues.push({
+                severity: "warning",
+                phase: "metadata",
+                code: "CONTENT_DECODING_FAILED",
+                message: "Selected asset content is not valid UTF-8",
+                assetId: entry.assetId,
+                path: entry.document.path,
+              });
               return;
             }
             return content;
@@ -1370,6 +1490,36 @@ export class PostgresAssetRepository implements AssetRepository {
     }
     const queryDatabase = getContentDatabaseForArtifact(queryIndex);
     const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
+    const queryIssues = (diagnosticIssuesByArtifact.get(queryIndex) ?? []).map(
+      (issue) => ({ ...issue, scope: "query" as const })
+    );
+    const queryIssueKeys = new Set(
+      queryIssues.map((issue) =>
+        JSON.stringify([issue.code, issue.assetId, issue.path, issue.message])
+      )
+    );
+    const databaseIssues = (
+      diagnosticIssuesByArtifact.get(publishedIndex) ?? []
+    )
+      .filter(
+        (issue) =>
+          queryIssueKeys.has(
+            JSON.stringify([
+              issue.code,
+              issue.assetId,
+              issue.path,
+              issue.message,
+            ])
+          ) === false
+      )
+      .map((issue) => ({ ...issue, scope: "database" as const }));
+    const allIssues = [...queryIssues, ...databaseIssues].sort(
+      (left, right) =>
+        left.path.localeCompare(right.path) ||
+        left.code.localeCompare(right.code) ||
+        left.message.localeCompare(right.message)
+    );
+    const issues = allIssues.slice(0, 100);
     return {
       data,
       __diagnostics__: {
@@ -1380,6 +1530,13 @@ export class PostgresAssetRepository implements AssetRepository {
           ? { artifacts: { query: queryIndex, database: publishedIndex } }
           : {}),
         ...(unresolved === undefined ? {} : { unresolved }),
+        ...(issues.length === 0
+          ? {}
+          : {
+              issues,
+              issueCount: allIssues.length,
+              issuesTruncated: issues.length < allIssues.length,
+            }),
       },
     };
   }
