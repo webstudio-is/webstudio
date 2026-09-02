@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
+import {
+  parseMdxDocument,
+  standardMdxTemplateKeys,
+} from "@webstudio-is/content-engine/mdx";
 import {
   blockComponent,
   blockTemplateComponent,
@@ -65,6 +68,80 @@ const createInstances = (): Instances =>
   ]);
 
 describe("resolveMdxTemplates", () => {
+  test("reaches every standard template through authored Markdown", async () => {
+    const instances = createInstances();
+    const templates = instances.get("templates");
+    if (templates === undefined) {
+      throw new Error("Expected Templates container");
+    }
+    templates.children = [];
+    for (const key of standardMdxTemplateKeys) {
+      const [type, name] = key.split(":");
+      const id = `template-${key}`;
+      templates.children.push({ type: "id", value: id });
+      instances.set(
+        id,
+        createInstance(
+          id,
+          type === "element" ? elementComponent : name,
+          type === "element" ? { tag: name } : {}
+        )
+      );
+    }
+    const document = await parseMdxDocument({
+      source: `# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+##### Heading 5
+###### Heading 6
+
+Paragraph with *emphasis*, **strong**, ~~strikethrough~~, \`inline code\`, and [a link](https://example.com).${"  "}
+Next line.
+
+> Blockquote
+
+- [x] Task item
+- List item
+
+1. Ordered item
+
+---
+
+| Header | Value |
+| --- | --- |
+| Cell | Value |
+
+![Alternative text](./image.png)
+
+\`\`\`js
+code()
+\`\`\`
+`,
+    });
+
+    const result = resolveMdxTemplates({
+      document,
+      identity,
+      instances,
+      metas,
+    });
+    const resolvedTemplateIds = new Set(
+      result.references.flatMap((reference) =>
+        reference.type === "resolved-template"
+          ? [reference.templateInstanceId]
+          : []
+      )
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(
+      standardMdxTemplateKeys.filter(
+        (key) => resolvedTemplateIds.has(`template-${key}`) === false
+      )
+    ).toEqual([]);
+  });
+
   test("resolves component-style JSX by its direct template name", async () => {
     const document = await parseMdxDocument({
       source: '<Card tone="quiet">Content</Card>',
