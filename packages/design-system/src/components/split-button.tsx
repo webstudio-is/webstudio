@@ -52,9 +52,10 @@ export const SplitButtonMenuButton = styled(IconButton, {
     borderTopRightRadius: theme.borderRadius[3],
     borderBottomRightRadius: theme.borderRadius[3],
   },
-  "&:hover::before, &[data-hovered=true]::before, &[data-state=open]::before": {
-    background: cssVar("--overlay-interaction-hover"),
-  },
+  "&:hover::before, &[data-hovered=true]::before, &[aria-expanded=true]::before":
+    {
+      background: cssVar("--overlay-interaction-hover"),
+    },
   "&:active::before": {
     background: cssVar("--overlay-interaction-pressed"),
   },

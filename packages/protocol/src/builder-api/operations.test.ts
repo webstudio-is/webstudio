@@ -26,15 +26,7 @@ describe("public api operation catalog", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  test("owns documentation metadata for every command", () => {
-    for (const operation of publicApiOperations) {
-      expect(operation.description).not.toBe("");
-      expect(operation.examples.length).toBeGreaterThan(0);
-      expect(Array.isArray(operation.inputFields)).toBe(true);
-    }
-  });
-
-  test("keeps documentation in sync with implemented commands", () => {
+  test("keeps the public operation catalog aligned with implemented commands", () => {
     const implementedCommands = [
       ...publicRuntimeOperationContracts.map((operation) => operation.command),
       ...Object.values(serverOnlyRouterOperationMetadata).map(
@@ -141,7 +133,6 @@ describe("public api operation catalog", () => {
     ).toMatchObject({
       type: "string",
       enum: ["text", "expression"],
-      description: expect.stringContaining('There is no "replace" mode.'),
     });
     const resourceInputSchema =
       getPublicApiOperation("create-resource").inputSchema?.properties

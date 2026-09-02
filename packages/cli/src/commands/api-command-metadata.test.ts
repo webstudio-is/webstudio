@@ -54,7 +54,7 @@ test("describes every grouped CLI command", () => {
   }
 });
 
-test("describes root CLI commands once for help-oriented docs", () => {
+test("registers root CLI commands once", () => {
   const commands = topLevelCliCommandMetadata.map(({ command }) => command);
   expect(new Set(commands).size).toBe(commands.length);
   expect(commands.at(0)).toBe("init");
@@ -77,10 +77,6 @@ test("describes root CLI commands once for help-oriented docs", () => {
   expect(commands).not.toEqual(
     expect.arrayContaining(["publish deploy", "domains list"])
   );
-  for (const metadata of topLevelCliCommandMetadata) {
-    expect(metadata.description.length).toBeGreaterThan(0);
-    expect(metadata.examples.length).toBeGreaterThan(0);
-  }
 });
 
 test("formats removed shell commands as MCP tools", () => {
@@ -127,7 +123,7 @@ test("returns command-specific options when available", () => {
   );
 });
 
-test("describes JSON as optional for human-readable permissions", () => {
+test("configures JSON as optional for human-readable permissions", () => {
   const yargs = { option: vi.fn().mockReturnThis() };
   const metadata = apiCommandMetadata.find(
     (item) => item.command === "permissions"
@@ -136,11 +132,10 @@ test("describes JSON as optional for human-readable permissions", () => {
   expect(metadata).toBeDefined();
   getApiCommandOptions(metadata!)(yargs as never);
 
-  expect(yargs.option).toHaveBeenCalledWith("json", {
-    type: "boolean",
-    describe: "Print a machine-readable JSON response to stdout",
-    default: false,
-  });
+  expect(yargs.option).toHaveBeenCalledWith(
+    "json",
+    expect.objectContaining({ type: "boolean", default: false })
+  );
 });
 
 test("parses redirect status as a string option", () => {

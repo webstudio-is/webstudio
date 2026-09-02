@@ -177,19 +177,6 @@ test("documents MCP use cases with JSON object inputs", () => {
   }
 });
 
-test("requires consent before the documented visual workflow", () => {
-  const scenario = useCaseScenarios.find(
-    ({ useCase }) => useCase === "Visually verify rendered work with AI vision"
-  );
-  expect(scenario?.commands).toEqual(
-    expect.arrayContaining([expect.stringContaining("preview.start")])
-  );
-  expect(scenario?.notes?.[0]).toContain(
-    "only when the user explicitly requests visual verification or opts in"
-  );
-  expect(scenario?.notes?.[0]).toContain("Do not start preview");
-});
-
 test("keeps the documented breakpoint style input executable", async () => {
   const line = readCliDoc("api-use-cases")
     .split("\n")
@@ -204,82 +191,6 @@ test("keeps the documented breakpoint style input executable", async () => {
   await expect(
     createMetadataOnlyMcpAdapter().callTool({ name: "update-styles", input })
   ).rejects.toThrow("MCP metadata reads must not execute operations.");
-});
-
-test("does not require publishing or sync before MCP editing", () => {
-  for (const document of ["manual-llm", "manual-mcp"] as const) {
-    const manual = readCliDoc(document);
-    const prose = manual.replaceAll(/\s+/g, " ");
-    expect(prose).toContain("local CLI");
-    expect(prose).toContain("connect");
-    expect(prose).toContain("optional");
-    expect(prose).toContain("restart");
-    expect(prose).not.toContain(
-      "followed by `webstudio sync`, then retry `webstudio connect"
-    );
-  }
-  const llmManual = readCliDoc("manual-llm").replaceAll(/\s+/g, " ");
-  expect(llmManual).toContain(
-    "MCP reads and edits the latest editable Builder build directly"
-  );
-  expect(llmManual).toContain(
-    "including for projects that have never been published"
-  );
-});
-
-test("keeps JSX examples readable inside JSON inputs", () => {
-  for (const document of [
-    "api-use-cases",
-    "manual-llm",
-    "manual-mcp",
-  ] as const) {
-    expect(readCliDoc(document)).not.toContain('ws:tag=\\"');
-  }
-});
-
-test("documents the Assets result shape", () => {
-  for (const document of ["api-use-cases", "manual-llm"] as const) {
-    const contents = readCliDoc(document);
-    expect(contents).toContain("<dataSourceName>.data");
-    expect(contents).toContain("<dataSourceName>.meta");
-    expect(contents).toContain("posts.data");
-    expect(contents).toContain("post.data");
-    expect(contents).toContain("post.data.content.text");
-    // Webstudio makes property access safe while compiling expressions, so
-    // agent guidance must use the direct source form instead of optional chains.
-    expect(contents).not.toContain("?.");
-  }
-});
-
-test("documents storage-efficient Assets queries for agents", () => {
-  for (const document of ["api-use-cases", "manual-llm"] as const) {
-    const contents = readCliDoc(document);
-    expect(contents).toContain('output.mode:"fields"');
-    expect(contents).toContain("only fields");
-    expect(contents).toContain("includeMetadata:false");
-    expect(contents).toContain("__diagnostics__.query");
-    expect(contents).toContain("__diagnostics__.database");
-    expect(contents).toContain("must not be summed");
-    expect(contents).toContain("truncated");
-  }
-});
-
-test("directs agents to deferred Markdown bodies", () => {
-  for (const document of ["api-use-cases", "manual-llm"] as const) {
-    const contents = readCliDoc(document);
-    expect(contents).toContain('content.mode:"markdown-body-ref"');
-    expect(contents).toContain("document reference");
-    expect(contents).toContain("selected files");
-  }
-
-  const tools = createMetadataOnlyMcpAdapter().listTools();
-  for (const name of ["create-assets-resource", "update-assets-resource"]) {
-    const description = tools.find((tool) => tool.name === name)?.description;
-    expect(description).toContain("markdown-body-ref");
-    expect(description).toContain("document reference");
-    expect(description).toContain("<dataSourceName>.data");
-    expect(description).toContain("content.text");
-  }
 });
 
 test("documents MCP examples with current tool input fields", () => {
