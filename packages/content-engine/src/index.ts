@@ -14,5 +14,7 @@ export * from "./query-error-details";
 export * from "./document-graph";
 export * from "./asset-value-references";
 export * from "./json-assets";
+export * from "./content-collection";
+export { extractMarkdownFrontmatter } from "./frontmatter";
 export { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 export { appendAssetFieldPath } from "./canonical";

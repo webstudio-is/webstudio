@@ -9,6 +9,8 @@ import { useStore } from "@nanostores/react";
 import {
   Box,
   Button,
+  Checkbox,
+  CheckboxAndLabel,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -18,6 +20,7 @@ import {
   Label,
   SmallIconButton,
   Text,
+  toast,
   theme,
 } from "@webstudio-is/design-system";
 import {
@@ -25,14 +28,22 @@ import {
   type AssetFolder,
 } from "@webstudio-is/sdk";
 import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  createDefaultCollectionConfig,
+  createDefaultCollectionTemplate,
+  defaultCollectionTemplateFilename,
+} from "@webstudio-is/content-engine";
 import { $assetFolders } from "~/shared/sync/data-stores";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { AssetFolderSelector } from "./asset-folder-selector";
+import { uploadSingleAsset } from "../assets/upload-assets";
+import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 
 type AssetFolderFormValues = {
   name: string;
   parentId: string | undefined;
+  useAsContentCollection?: boolean;
 };
 
 const closeOnSuccess = (
@@ -60,6 +71,7 @@ const AssetFolderForm = ({
   autoFocusSubmit = false,
   submitLabel,
   secondaryAction,
+  showCollectionOption = false,
   onSubmit,
 }: {
   id: string;
@@ -71,6 +83,7 @@ const AssetFolderForm = ({
   autoFocusSubmit?: boolean;
   submitLabel: string;
   secondaryAction?: ReactNode;
+  showCollectionOption?: boolean;
   onSubmit: (values: AssetFolderFormValues) => void;
 }) => {
   const folders = useStore($assetFolders);
@@ -85,11 +98,13 @@ const AssetFolderForm = ({
   );
   const [name, setName] = useState(initialName);
   const [parentId, setParentId] = useState(initialParentId);
+  const [useAsContentCollection, setUseAsContentCollection] = useState(false);
 
   useLayoutEffect(() => {
     if (open) {
       setName(initialName);
       setParentId(initialParentId);
+      setUseAsContentCollection(false);
     }
   }, [initialName, initialParentId, open]);
 
@@ -103,7 +118,11 @@ const AssetFolderForm = ({
   const canSubmit = normalizedName.length > 0 && duplicate === false;
   const submit = () => {
     if (canSubmit) {
-      onSubmit({ name: normalizedName, parentId });
+      onSubmit({
+        name: normalizedName,
+        parentId,
+        ...(showCollectionOption ? { useAsContentCollection } : {}),
+      });
     }
   };
 
@@ -135,6 +154,20 @@ const AssetFolderForm = ({
         excludedFolderIds={excludedFolderIds}
         rootLabel="Parent folder"
       />
+      {showCollectionOption && (
+        <CheckboxAndLabel>
+          <Checkbox
+            id="asset-folder-content-collection"
+            checked={useAsContentCollection}
+            onCheckedChange={(checked) =>
+              setUseAsContentCollection(checked === true)
+            }
+          />
+          <Label htmlFor="asset-folder-content-collection">
+            Use as content collection
+          </Label>
+        </CheckboxAndLabel>
+      )}
       {folderId !== undefined && (
         <Grid gap={1}>
           <Label htmlFor={`asset-folder-id-${folderId}`}>ID</Label>
@@ -179,14 +212,51 @@ export const CreateAssetFolderDialog = ({
   onOpenChange: (open: boolean) => void;
   currentFolderId: string | undefined;
 }) => {
-  const create = (values: AssetFolderFormValues) =>
-    closeOnSuccess(
-      executeRuntimeMutation({
-        id: "assetFolders.create",
-        input: values,
-      }),
-      onOpenChange
-    );
+  const create = (values: AssetFolderFormValues) => {
+    const result = executeRuntimeMutation({
+      id: "assetFolders.create",
+      input: { name: values.name, parentId: values.parentId },
+    });
+    if (result === undefined) {
+      return;
+    }
+    onOpenChange(false);
+    if (values.useAsContentCollection !== true) {
+      return;
+    }
+    onNextTransactionComplete(() => {
+      void (async () => {
+        const template = await uploadSingleAsset(
+          "file",
+          new File(
+            [createDefaultCollectionTemplate()],
+            defaultCollectionTemplateFilename,
+            { type: "text/mdx" }
+          ),
+          { folderId: result.result.folderId, deduplicate: false }
+        );
+        if (template === undefined) {
+          throw new Error("The collection template could not be created.");
+        }
+        const config = await uploadSingleAsset(
+          "file",
+          new File([createDefaultCollectionConfig()], "collection.json", {
+            type: "application/json",
+          }),
+          { folderId: result.result.folderId, deduplicate: false }
+        );
+        if (config === undefined) {
+          throw new Error("The collection configuration could not be created.");
+        }
+      })().catch((error) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "The collection could not be created."
+        );
+      });
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -202,6 +272,7 @@ export const CreateAssetFolderDialog = ({
           initialName=""
           initialParentId={currentFolderId}
           submitLabel="Create folder"
+          showCollectionOption
           onSubmit={create}
         />
       </DialogContent>

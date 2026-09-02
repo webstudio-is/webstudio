@@ -152,6 +152,7 @@ type AssetThumbnailProps = {
   onElementChange?: (element: HTMLElement | null) => void;
   selectionActions?: AssetManagerItemActions;
   onMove?: () => void;
+  isCollectionEntry?: boolean;
 };
 
 export const AssetThumbnail = ({
@@ -166,6 +167,7 @@ export const AssetThumbnail = ({
   onElementChange,
   selectionActions,
   onMove,
+  isCollectionEntry = false,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -206,6 +208,7 @@ export const AssetThumbnail = ({
             ? {}
             : {
                 ...createAssetManagerClipboardActions(item),
+                ...(isCollectionEntry ? { duplicate: undefined } : {}),
                 move: onMove,
                 delete: () => setDeleteOpen(true),
                 ...(asset.type === "image"

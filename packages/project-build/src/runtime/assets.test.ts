@@ -251,6 +251,45 @@ describe("asset runtime operations", () => {
     ]);
   });
 
+  test("rejects duplicating an asset into a collection folder", () => {
+    const source = imageAsset("source", "hero.png");
+    const collectionConfig: Asset = {
+      id: "collection-config",
+      projectId: "project",
+      name: "collection.json",
+      type: "file",
+      folderId: "target",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "json",
+      meta: {},
+    };
+
+    expect(() =>
+      duplicateAsset(
+        {
+          assets: new Map([
+            [source.id, source],
+            [collectionConfig.id, collectionConfig],
+          ]),
+          assetFolders: new Map([
+            [
+              "target",
+              {
+                id: "target",
+                projectId: "project",
+                name: "Target",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { assetId: source.id, folderId: "target" },
+        { createId: () => "copy", projectId: "project" }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
+  });
+
   test("lists assets with usage counts", () => {
     expect(listAssets(state, { sort: "usage" })).toMatchObject({
       items: [
@@ -1101,6 +1140,44 @@ test("creates asset delete payload", () => {
 });
 
 describe("updateAsset", () => {
+  test("rejects moving an asset into a collection folder", () => {
+    const source = imageAsset("source", "hero.png");
+    const collectionConfig: Asset = {
+      id: "collection-config",
+      projectId: "project",
+      name: "collection.json",
+      type: "file",
+      folderId: "target",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "json",
+      meta: {},
+    };
+
+    expect(() =>
+      updateAsset(
+        {
+          assets: new Map([
+            [source.id, source],
+            [collectionConfig.id, collectionConfig],
+          ]),
+          assetFolders: new Map([
+            [
+              "target",
+              {
+                id: "target",
+                projectId: "project",
+                name: "Target",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { assetId: source.id, values: { folderId: "target" } }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
+  });
+
   test("updates font metadata without discarding the other fields", () => {
     const result = updateAsset(
       { assets: new Map([["font-1", fontAsset("font-1")]]) },
