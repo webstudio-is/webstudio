@@ -7,6 +7,17 @@ import {
 } from "./query-error";
 import { AssetQueryRequestError } from "./request";
 
+const createInvalidRequestError = (
+  message: string,
+  details?: Record<string, string | number>
+): AssetResourceQueryError => ({
+  code: "INVALID_REQUEST",
+  message,
+  retryable: false,
+  ...(details === undefined ? {} : { details }),
+  status: 400,
+});
+
 const findNestedSourceError = (error: unknown) => {
   const visited = new Set<unknown>();
   let current = error;
@@ -38,12 +49,7 @@ const getRequestError = (
     visited.add(cause);
     cause = cause.cause;
   }
-  return {
-    code: "INVALID_REQUEST",
-    message,
-    retryable: false,
-    status: 400,
-  };
+  return createInvalidRequestError(message);
 };
 
 export const getDetailedAssetResourceQueryError = (
@@ -65,19 +71,12 @@ export const getDetailedAssetResourceQueryError = (
       if (cause.reason !== undefined) {
         details.reason = cause.reason;
       }
-      return {
-        code: "INVALID_REQUEST",
-        message: cause.message,
-        retryable: false,
-        details,
-        status: 400,
-      };
+      return createInvalidRequestError(cause.message, details);
     }
     if (
       cause instanceof DocumentSourceCompilationError &&
-      cause.code === "DOCUMENT_ANALYSIS_FAILED"
+      cause.code !== "REQUEST_CANCELLED"
     ) {
-      const sourceError = findNestedSourceError(cause.cause);
       const details: Record<string, string | number> = {};
       if (cause.documentId !== undefined) {
         details.assetId = cause.documentId;
@@ -85,6 +84,10 @@ export const getDetailedAssetResourceQueryError = (
       if (cause.documentPath !== undefined) {
         details.path = cause.documentPath;
       }
+      if (cause.code !== "DOCUMENT_ANALYSIS_FAILED") {
+        return createInvalidRequestError(cause.message, details);
+      }
+      const sourceError = findNestedSourceError(cause.cause);
       if (sourceError instanceof MdxDocumentError) {
         const position = sourceError.sourceRange?.start;
         if (position !== undefined) {
@@ -104,14 +107,9 @@ export const getDetailedAssetResourceQueryError = (
         }
       }
       if (sourceError instanceof Error) {
-        return {
-          code: "INVALID_REQUEST",
-          message: sourceError.message,
-          retryable: false,
-          details,
-          status: 400,
-        };
+        return createInvalidRequestError(sourceError.message, details);
       }
+      return createInvalidRequestError(cause.message, details);
     }
     visited.add(cause);
     cause = cause instanceof Error ? cause.cause : undefined;

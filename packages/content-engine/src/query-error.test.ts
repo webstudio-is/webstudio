@@ -131,4 +131,22 @@ describe("asset resource graph query errors", () => {
       },
     });
   });
+
+  test("preserves document source failures that have no nested parser error", () => {
+    expect(
+      getDetailedAssetResourceQueryError(
+        new DocumentSourceCompilationError({
+          code: "ROOT_NOT_FOUND",
+          message: "Document source graph root missing does not exist",
+          documentId: "missing",
+        })
+      )
+    ).toEqual({
+      code: "INVALID_REQUEST",
+      message: "Document source graph root missing does not exist",
+      retryable: false,
+      details: { assetId: "missing" },
+      status: 400,
+    });
+  });
 });
