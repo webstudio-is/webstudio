@@ -71,7 +71,7 @@ afterEach(() => {
   $project.set(undefined);
 });
 
-test("keeps the slug source field type fixed to text", async () => {
+test("keeps the slug source field type fixed but lets designers make it optional", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -104,6 +104,11 @@ test("keeps the slug source field type fixed to text", async () => {
   );
   expect(typeControl).not.toBeNull();
   expect(typeControl?.disabled).toBe(true);
+  const requiredControl = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Title required"]'
+  );
+  expect(requiredControl).not.toBeNull();
+  expect(requiredControl?.disabled).toBe(false);
 });
 
 test("orders schema and template writes without creating an invalid collection", () => {

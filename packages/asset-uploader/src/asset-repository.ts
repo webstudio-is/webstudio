@@ -1170,11 +1170,22 @@ export class PostgresAssetRepository implements AssetRepository {
         `An entry named "${entry.filename}" already exists`
       );
     }
-    const reservations =
-      await this.dependencies.loadAssetUploadReservationsByProjectWithClient(
-        this.projectId,
+    let reservations: Awaited<
+      ReturnType<typeof loadAssetUploadReservationsByProjectWithClient>
+    >;
+    try {
+      reservations =
+        await this.dependencies.loadAssetUploadReservationsByProjectWithClient(
+          this.projectId,
+          this.context.postgrest.client
+        );
+    } catch (error) {
+      await this.dependencies.deleteAssetsWithClient(
+        { projectId: this.projectId, ids: [ticket.assetId] },
         this.context.postgrest.client
       );
+      throw error;
+    }
     const duplicateReservation = reservations.some(
       (candidate) =>
         candidate.id !== ticket.assetId &&
@@ -1508,11 +1519,11 @@ export class PostgresAssetRepository implements AssetRepository {
         if (entry.document.name !== collectionConfigFilename) {
           continue;
         }
-        reservedAssetIds.add(entry.assetId);
         const folderId = entry.document.folderId;
         if (folderId === undefined) {
           continue;
         }
+        reservedAssetIds.add(entry.assetId);
         if (
           entries.filter(
             (candidate) =>
@@ -1555,7 +1566,93 @@ export class PostgresAssetRepository implements AssetRepository {
               `Collection template "${config.template}" is ambiguous`
             );
           }
+          if (template.document.size > contentEngineLimits.hydratedFileBytes) {
+            throw new ContentCollectionError(
+              `Collection template "${config.template}" exceeds the content size limit`
+            );
+          }
+          const templateResponse = await readFile(
+            template.document.contentRef,
+            template.document.size === 0
+              ? undefined
+              : { offset: 0, length: template.document.size }
+          );
+          const templateBytes = await readBoundedBytes(
+            templateResponse.data,
+            contentEngineLimits.hydratedFileBytes
+          );
+          let templateDocument;
+          try {
+            templateDocument = await parseMdxDocument({
+              source: decodeUtf8(templateBytes),
+            });
+          } catch (error) {
+            const details = error instanceof Error ? `: ${error.message}` : "";
+            throw new ContentCollectionError(
+              `Collection template is invalid${details}`,
+              { cause: error }
+            );
+          }
+          const templateValidationError =
+            getCollectionTemplateValidationError(
+              config,
+              templateDocument.frontmatter.properties
+            );
+          if (templateValidationError !== undefined) {
+            throw new ContentCollectionError(
+              `Collection template "${config.template}": ${templateValidationError}`
+            );
+          }
           reservedAssetIds.add(template.assetId);
+          for (const candidate of entries) {
+            if (
+              candidate.document.folderId !== folderId ||
+              candidate.assetId === entry.assetId ||
+              candidate.assetId === template.assetId
+            ) {
+              continue;
+            }
+            if (candidate.document.extension.toLowerCase() !== "mdx") {
+              throw new ContentCollectionError(
+                "Move non-entry files into a subfolder"
+              );
+            }
+            let properties: Record<string, unknown>;
+            try {
+              const response = await readFile(
+                candidate.document.contentRef,
+                candidate.document.size === 0
+                  ? undefined
+                  : { offset: 0, length: candidate.document.size }
+              );
+              properties = (
+                await extractMarkdownFrontmatter(response.data)
+              ).properties;
+            } catch (error) {
+              const details =
+                error instanceof Error ? `: ${error.message}` : "";
+              throw new ContentCollectionError(
+                `Collection entry "${candidate.document.name}" is invalid${details}`,
+                { cause: error }
+              );
+            }
+            const validationError = getCollectionValidationError(
+              config,
+              properties
+            );
+            if (validationError !== undefined) {
+              throw new ContentCollectionError(
+                `Collection entry "${candidate.document.name}": ${validationError}`
+              );
+            }
+            if (
+              properties[config.slugField] !== candidate.document.key
+            ) {
+              throw new ContentCollectionError(
+                `Collection entry "${candidate.document.name}": The slug must match the entry filename`
+              );
+            }
+          }
         } catch (error) {
           if (error instanceof ContentCollectionError) {
             throw error;
