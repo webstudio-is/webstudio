@@ -171,8 +171,6 @@ export type ProjectSessionScreenshotInput = ScreenshotCaptureOptions & {
   url?: string;
   baseUrl?: string;
   path?: string;
-  host?: string;
-  port?: number;
   imageDomains?: string[];
   source?: ProjectSessionPreviewSource;
   mode?: ProjectSessionPreviewMode;
@@ -249,8 +247,6 @@ export type ProjectSessionInstallOcrResult = {
 type InstallOcr = () => Promise<ProjectSessionInstallOcrResult>;
 
 export type ProjectSessionPreviewInput = {
-  host?: string;
-  port?: number;
   source?: ProjectSessionPreviewSource;
   imageDomains?: string[];
   mode?: ProjectSessionPreviewMode;
@@ -1331,18 +1327,6 @@ const screenshotInputSchema = {
       description:
         "Iterative keeps one development server and browser alive while reloading after MCP edits. Production performs a full generated build and is intended for audits and release-like verification.",
     },
-    host: {
-      type: "string",
-      default: "127.0.0.1",
-      description:
-        "Host used when screenshot starts or restarts the generated-site preview for a path.",
-    },
-    port: {
-      type: "number",
-      default: 5173,
-      description:
-        "Port used when screenshot starts or restarts the generated-site preview for a path.",
-    },
     imageDomains: {
       type: "array",
       description:
@@ -1607,17 +1591,6 @@ const previewInputSchema = {
   description:
     "Start or refresh the generated-site preview. Iterative mode is the default for repeated MCP edit and screenshot cycles: it keeps one server alive, regenerates the current session, and uses normal page reloads without HMR. Use production mode for release-like audits.",
   properties: {
-    host: {
-      type: "string",
-      default: "127.0.0.1",
-    },
-    port: {
-      type: "number",
-      default: 0,
-      minimum: 0,
-      maximum: 65535,
-      description: "Use 0 to select an available local port automatically.",
-    },
     source: {
       type: "string",
       enum: projectSessionPreviewSources,
@@ -7184,6 +7157,11 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
   if (isRecord(input) === false) {
     throw new Error("screenshot input must be an object.");
   }
+  if ("host" in input || "port" in input) {
+    throw new Error(
+      "screenshot does not accept host or port. The MCP runner selects an available local address and returns its URL."
+    );
+  }
   const url =
     typeof input.url === "string" && input.url.length > 0
       ? input.url
@@ -7263,17 +7241,6 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
   if (mode !== undefined && isProjectSessionPreviewMode(mode) === false) {
     throw new Error("screenshot mode must be iterative or production.");
   }
-  const host = typeof input.host === "string" ? input.host : undefined;
-  if (host !== undefined && host.length === 0) {
-    throw new Error("screenshot host must not be empty.");
-  }
-  const port = typeof input.port === "number" ? input.port : undefined;
-  if (
-    port !== undefined &&
-    (Number.isInteger(port) === false || port <= 0 || port > 65535)
-  ) {
-    throw new Error("screenshot port must be an integer between 1 and 65535.");
-  }
   const imageDomains = input.imageDomains;
   if (
     imageDomains !== undefined &&
@@ -7295,14 +7262,12 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       throw new Error("screenshot baseUrl must be an absolute URL.");
     }
     if (
-      host !== undefined ||
-      port !== undefined ||
       source !== undefined ||
       mode !== undefined ||
       imageDomains !== undefined
     ) {
       throw new Error(
-        "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, mode, or imageDomains."
+        "screenshot baseUrl uses an existing preview/site and cannot be combined with source, mode, or imageDomains."
       );
     }
   }
@@ -7311,8 +7276,6 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     baseUrl,
     path,
     output: typeof input.output === "string" ? input.output : undefined,
-    host,
-    port,
     imageDomains,
     source,
     mode,
@@ -7454,16 +7417,10 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   if (isRecord(input) === false) {
     return {};
   }
-  const host = typeof input.host === "string" ? input.host : undefined;
-  if (host !== undefined && host.length === 0) {
-    throw new Error("preview host must not be empty.");
-  }
-  const port = typeof input.port === "number" ? input.port : undefined;
-  if (
-    port !== undefined &&
-    (Number.isInteger(port) === false || port < 0 || port > 65535)
-  ) {
-    throw new Error("preview port must be an integer between 0 and 65535.");
+  if ("host" in input || "port" in input) {
+    throw new Error(
+      "preview.start does not accept host or port. The MCP runner selects an available local address and returns its URL."
+    );
   }
   const source = input.source === undefined ? undefined : input.source;
   if (source !== undefined && isProjectSessionPreviewSource(source) === false) {
@@ -7488,8 +7445,6 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
     );
   }
   return {
-    host,
-    port,
     source,
     mode,
     imageDomains,

@@ -2,7 +2,6 @@ import {
   arePreviewImageDomainsEqual,
   createPreviewController,
   findAvailablePort,
-  isPreviewPortAvailable,
   type PreviewMode,
 } from "../preview-server";
 import {
@@ -134,26 +133,21 @@ export const resolveMcpPreviewInput = async (
   input: McpPreviewInput,
   getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
 ) => {
-  if (input.port !== undefined && input.port !== 0) {
-    return input;
-  }
+  const host = "127.0.0.1";
   return {
     ...input,
-    port: await getAvailablePort(input.host ?? "127.0.0.1"),
+    host,
+    port: await getAvailablePort(host),
   };
 };
 
-const getRunningPreviewPort = (
-  previewStatus: { running: boolean; url?: string },
-  host: string | undefined
+const getRunningPreviewTarget = (
+  previewStatus: { running: boolean; url?: string }
 ) => {
   if (previewStatus.running === false || previewStatus.url === undefined) {
     return;
   }
   const previewUrl = new URL(previewStatus.url);
-  if (host !== undefined && previewUrl.hostname !== host) {
-    return;
-  }
   const defaultPort =
     previewUrl.protocol === "http:"
       ? 80
@@ -161,9 +155,10 @@ const getRunningPreviewPort = (
         ? 443
         : undefined;
   const port = previewUrl.port === "" ? defaultPort : Number(previewUrl.port);
-  return port !== undefined && Number.isInteger(port) && port > 0
-    ? port
-    : undefined;
+  if (port === undefined || Number.isInteger(port) === false || port <= 0) {
+    return;
+  }
+  return { host: previewUrl.hostname, port };
 };
 
 export const resolveMcpScreenshotInput = async (
@@ -171,36 +166,19 @@ export const resolveMcpScreenshotInput = async (
   previewStatus: { running: boolean; url?: string },
   {
     getAvailablePort = findAvailablePort,
-    isPortAvailable = isPreviewPortAvailable,
   }: {
     getAvailablePort?: (host?: string) => Promise<number>;
-    isPortAvailable?: (host: string, port: number) => Promise<boolean>;
   } = {}
 ) => {
   if (input.url !== undefined || input.baseUrl !== undefined) {
     return input;
   }
-  const runningPreviewPort = getRunningPreviewPort(previewStatus, input.host);
-  if (input.port !== undefined && input.port !== 0) {
-    const host = input.host ?? "127.0.0.1";
-    if (runningPreviewPort === input.port) {
-      return input;
-    }
-    if ((await isPortAvailable(host, input.port)) === false) {
-      throw Object.assign(
-        new Error(
-          `Preview port ${input.port} is already in use on ${host}. Pass baseUrl with path to capture that existing site, or choose another port.`
-        ),
-        { code: "PREVIEW_PORT_IN_USE" }
-      );
-    }
-    return input;
+  const runningPreviewTarget = getRunningPreviewTarget(previewStatus);
+  if (runningPreviewTarget !== undefined) {
+    return { ...input, ...runningPreviewTarget };
   }
-  const host = input.host ?? "127.0.0.1";
-  if (runningPreviewPort !== undefined) {
-    return { ...input, port: runningPreviewPort };
-  }
-  return { ...input, port: await getAvailablePort(host) };
+  const host = "127.0.0.1";
+  return { ...input, host, port: await getAvailablePort(host) };
 };
 
 export const startMcpPreview = async <Result>({
@@ -214,7 +192,7 @@ export const startMcpPreview = async <Result>({
   getAvailablePort?: (host?: string) => Promise<number>;
   sleep?: (durationMs: number) => Promise<void>;
 }) => {
-  const attempts = input.port === undefined || input.port === 0 ? 5 : 1;
+  const attempts = 5;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const resolvedInput = await resolveMcpPreviewInput(input, getAvailablePort);
     try {

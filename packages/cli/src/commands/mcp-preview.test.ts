@@ -16,21 +16,18 @@ import {
   startMcpPreview,
 } from "./mcp-preview";
 
-test("allocates an available port only when MCP preview omits one", async () => {
+test("always allocates the MCP preview host and port", async () => {
   const getAvailablePort = vi.fn(async () => 53124);
 
   await expect(
     resolveMcpPreviewInput({ source: "session" }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 53124 });
-  await expect(
-    resolveMcpPreviewInput({ source: "session", port: 0 }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 53124 });
-  await expect(
-    resolveMcpPreviewInput({ source: "session", port: 4173 }, getAvailablePort)
-  ).resolves.toEqual({ source: "session", port: 4173 });
-  expect(getAvailablePort).toHaveBeenCalledTimes(2);
-  expect(getAvailablePort).toHaveBeenNthCalledWith(1, "127.0.0.1");
-  expect(getAvailablePort).toHaveBeenNthCalledWith(2, "127.0.0.1");
+  ).resolves.toEqual({
+    source: "session",
+    host: "127.0.0.1",
+    port: 53124,
+  });
+  expect(getAvailablePort).toHaveBeenCalledOnce();
+  expect(getAvailablePort).toHaveBeenCalledWith("127.0.0.1");
 });
 
 test("allocates and reuses a collision-free port for automatic screenshots", async () => {
@@ -58,18 +55,6 @@ test("allocates and reuses a collision-free port for automatic screenshots", asy
       { getAvailablePort }
     )
   ).resolves.toMatchObject({ port: 53125 });
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        browser: "auto",
-        port: 4173,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: false, url: "http://127.0.0.1:5173/" },
-      { getAvailablePort }
-    )
-  ).resolves.toMatchObject({ port: 4173 });
   expect(getAvailablePort).toHaveBeenCalledOnce();
 });
 
@@ -88,71 +73,6 @@ test("allocates an available port for a local-source screenshot", async () => {
     )
   ).resolves.toMatchObject({ source: "local", port: 53124 });
   expect(getAvailablePort).toHaveBeenCalledWith("127.0.0.1");
-});
-
-test("rejects an occupied explicit screenshot port before preview preparation", async () => {
-  const isPortAvailable = vi.fn(async () => false);
-
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        port: 5199,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: false },
-      {
-        getAvailablePort: vi.fn(async () => 53124),
-        isPortAvailable,
-      }
-    )
-  ).rejects.toMatchObject({
-    code: "PREVIEW_PORT_IN_USE",
-    message: expect.stringContaining(
-      "Pass baseUrl with path to capture that existing site"
-    ),
-  });
-  expect(isPortAvailable).toHaveBeenCalledWith("127.0.0.1", 5199);
-});
-
-test("reuses an owned explicit screenshot port when host is omitted", async () => {
-  const isPortAvailable = vi.fn(async () => false);
-
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        port: 5199,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: true, url: "http://localhost:5199/" },
-      {
-        getAvailablePort: vi.fn(async () => 53124),
-        isPortAvailable,
-      }
-    )
-  ).resolves.toMatchObject({ port: 5199 });
-  expect(isPortAvailable).not.toHaveBeenCalled();
-});
-
-test("reuses an owned preview on the default HTTP port", async () => {
-  const isPortAvailable = vi.fn(async () => false);
-
-  await expect(
-    resolveMcpScreenshotInput(
-      {
-        path: "/account",
-        port: 80,
-        viewport: { width: 1440, height: 900 },
-      },
-      { running: true, url: "http://localhost/" },
-      {
-        getAvailablePort: vi.fn(async () => 53124),
-        isPortAvailable,
-      }
-    )
-  ).resolves.toMatchObject({ port: 80 });
-  expect(isPortAvailable).not.toHaveBeenCalled();
 });
 
 test("retries automatic MCP preview ports after a startup race", async () => {
@@ -180,10 +100,12 @@ test("retries automatic MCP preview ports after a startup race", async () => {
   ).resolves.toEqual({ url: "http://127.0.0.1:53125/" });
   expect(startPreview).toHaveBeenNthCalledWith(1, {
     source: "session",
+    host: "127.0.0.1",
     port: 53124,
   });
   expect(startPreview).toHaveBeenNthCalledWith(2, {
     source: "session",
+    host: "127.0.0.1",
     port: 53125,
   });
   expect(sleep).toHaveBeenCalledWith(500);
