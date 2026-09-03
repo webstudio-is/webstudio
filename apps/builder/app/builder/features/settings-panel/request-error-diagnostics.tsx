@@ -5,7 +5,7 @@ import {
   RequestDiagnosticsTable,
 } from "./request-inspector";
 
-type RequestErrorDiagnosticsValue = {
+export type RequestErrorDiagnosticsValue = {
   status?: number;
   statusText?: string;
   code?: string;

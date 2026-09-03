@@ -105,14 +105,11 @@ import {
   RequestInspector,
 } from "./request-inspector";
 import {
-  ContentDatabaseDiagnostics,
-  ResourcePerformanceDiagnostics,
-} from "./content-database-diagnostics";
-import {
   getRequestErrorDiagnostics,
   RequestErrorDiagnostics,
 } from "./request-error-diagnostics";
 import type { ResourcePerformance } from "~/shared/resource-diagnostics";
+import { ResourceDiagnosticsView } from "./resource-diagnostics-view";
 
 const NameField = ({
   variable,
@@ -829,18 +826,12 @@ const VariablePreview = ({
         resourceDiagnostics === undefined
       }
       diagnostics={
-        requestErrorDiagnostics !== undefined ? (
-          <RequestErrorDiagnostics value={requestErrorDiagnostics} />
-        ) : diagnosticsRequestError !== undefined ? (
-          <RequestErrorDiagnostics value={diagnosticsRequestError} />
-        ) : resourceDiagnostics !== undefined ? (
-          <ContentDatabaseDiagnostics
-            value={resourceDiagnostics}
-            performance={resourcePerformance}
-          />
-        ) : resourcePerformance !== undefined ? (
-          <ResourcePerformanceDiagnostics value={resourcePerformance} />
-        ) : undefined
+        <ResourceDiagnosticsView
+          requestError={requestErrorDiagnostics}
+          diagnosticsRequestError={diagnosticsRequestError}
+          diagnostics={resourceDiagnostics}
+          performance={resourcePerformance}
+        />
       }
     />
   );
