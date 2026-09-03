@@ -82,6 +82,7 @@ test("validates entry fields before sending a create request", async () => {
         configAsset,
         templateAsset,
         config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: {},
       }}
       open
       onOpenChange={onOpenChange}
@@ -123,6 +124,7 @@ test("regenerates a cleared slug before validating the entry", async () => {
         configAsset,
         templateAsset,
         config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: false },
       }}
       open
       onOpenChange={vi.fn()}
@@ -150,6 +152,64 @@ test("regenerates a cleared slug before validating the entry", async () => {
 
   expect(createEntry).toHaveBeenCalledWith({
     folderId: "posts",
-    values: { draft: true, slug: "hello-world", title: "Hello world" },
+    projectId: "project",
+    values: { draft: false, slug: "hello-world", title: "Hello world" },
   });
+});
+
+test("does not commit an entry after the active project changes", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const createdAsset = createAsset({
+    id: "created",
+    filename: "hello-world",
+    format: "mdx",
+  });
+  const createEntry = vi.fn(async () => {
+    $project.set({ id: "another-project" } as never);
+    return createdAsset;
+  });
+  const onOpenChange = vi.fn();
+  renderer.render(
+    <CreateCollectionEntryDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: {},
+      }}
+      open
+      onOpenChange={onOpenChange}
+      createEntry={createEntry}
+    />
+  );
+
+  const title = document.querySelector<HTMLInputElement>(
+    "#collection-entry-title"
+  );
+  if (title === null) {
+    throw new Error("Expected collection entry title field");
+  }
+  input(title, "Hello world");
+  const create = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Create entry");
+  await act(async () => {
+    create?.click();
+  });
+
+  expect(document.body.textContent).toContain(
+    "The entry was created in the previous project. Return to that project to view it."
+  );
+  expect(onOpenChange).not.toHaveBeenCalled();
 });

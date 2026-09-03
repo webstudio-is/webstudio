@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   getCollectionTemplateValidationError,
   parseCollectionConfig,
   serializeCollectionConfig,
   type CollectionField,
+  type ContentCollectionConfig,
 } from "@webstudio-is/content-engine";
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
@@ -114,6 +115,35 @@ const getUniqueFieldKey = (fields: readonly CollectionField[]) => {
   }
 };
 
+export const getCollectionSettingsSaveOrder = ({
+  currentConfig,
+  currentTemplateProperties,
+  nextConfig,
+  nextTemplateProperties,
+}: {
+  currentConfig: ContentCollectionConfig;
+  currentTemplateProperties: Readonly<Record<string, unknown>>;
+  nextConfig: ContentCollectionConfig;
+  nextTemplateProperties: Readonly<Record<string, unknown>>;
+}) => {
+  if (
+    getCollectionTemplateValidationError(
+      nextConfig,
+      currentTemplateProperties
+    ) === undefined
+  ) {
+    return "config-first" as const;
+  }
+  if (
+    getCollectionTemplateValidationError(
+      currentConfig,
+      nextTemplateProperties
+    ) === undefined
+  ) {
+    return "template-first" as const;
+  }
+};
+
 export const CollectionSettingsDialog = ({
   collection,
   open,
@@ -127,12 +157,15 @@ export const CollectionSettingsDialog = ({
     ...collection.config.fields,
   ]);
   const [template, setTemplate] = useState("");
+  const [loadedTemplateKey, setLoadedTemplateKey] = useState<string>();
   const [previewPage, setPreviewPage] = useState(collection.config.previewPage);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [confirmRemove, setConfirmRemove] = useState(false);
   const pages = useStore($pages);
+  const templateKey = `${collection.templateAsset.id}:${collection.templateAsset.name}`;
+  const templateReady = loadedTemplateKey === templateKey;
   const previewPages = useMemo(
     () =>
       pages === undefined
@@ -146,7 +179,7 @@ export const CollectionSettingsDialog = ({
     [pages]
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (open === false) {
       return;
     }
@@ -154,8 +187,11 @@ export const CollectionSettingsDialog = ({
     setPreviewPage(collection.config.previewPage);
     setError(undefined);
     setConfirmRemove(false);
+    setTemplate("");
+    setLoadedTemplateKey(undefined);
     const projectId = $project.get()?.id;
     if (projectId === undefined) {
+      setLoading(false);
       setError("Project not found");
       return;
     }
@@ -168,6 +204,7 @@ export const CollectionSettingsDialog = ({
       .then((source) => {
         if (cancelled === false) {
           setTemplate(source);
+          setLoadedTemplateKey(templateKey);
         }
       })
       .catch((error) => {
@@ -187,7 +224,7 @@ export const CollectionSettingsDialog = ({
     return () => {
       cancelled = true;
     };
-  }, [collection, open]);
+  }, [collection, open, templateKey]);
 
   const updateField = (index: number, field: CollectionField) =>
     setFields((current) =>
@@ -197,7 +234,7 @@ export const CollectionSettingsDialog = ({
     );
 
   const save = async () => {
-    if (saving || loading) {
+    if (saving || loading || templateReady === false) {
       return;
     }
     const keys = fields.map(({ key }) => key.trim());
@@ -225,14 +262,30 @@ export const CollectionSettingsDialog = ({
       if (templateValidationError !== undefined) {
         throw new Error(`Entry template: ${templateValidationError}`);
       }
-      await updateAssetContent({
-        asset: collection.templateAsset,
-        content: template,
+      const saveOrder = getCollectionSettingsSaveOrder({
+        currentConfig: collection.config,
+        currentTemplateProperties: collection.templateProperties,
+        nextConfig,
+        nextTemplateProperties: templateDocument.frontmatter.properties,
       });
-      await updateAssetContent({
-        asset: collection.configAsset,
-        content: configSource,
-      });
+      if (saveOrder === undefined) {
+        throw new Error(
+          "This field type and its template default cannot change together. Remove the template default, save, then change the field type."
+        );
+      }
+      const updates =
+        saveOrder === "config-first"
+          ? [
+              { asset: collection.configAsset, content: configSource },
+              { asset: collection.templateAsset, content: template },
+            ]
+          : [
+              { asset: collection.templateAsset, content: template },
+              { asset: collection.configAsset, content: configSource },
+            ];
+      for (const update of updates) {
+        await updateAssetContent(update);
+      }
       onOpenChange(false);
     } catch (error) {
       setError(
@@ -312,7 +365,7 @@ export const CollectionSettingsDialog = ({
                           field.control === "slug" ? ["Slug"] : fieldTypes
                         }
                         value={getEditableType(field)}
-                        disabled={field.control === "slug"}
+                        disabled={protectedField}
                         onChange={(type) =>
                           updateField(
                             index,
@@ -466,7 +519,7 @@ export const CollectionSettingsDialog = ({
               variant="mono"
               rows={10}
               value={template}
-              disabled={loading}
+              disabled={templateReady === false}
               onChange={setTemplate}
             />
           </Grid>
@@ -498,7 +551,7 @@ export const CollectionSettingsDialog = ({
             </Button>
             <Button
               color="primary"
-              disabled={loading || saving}
+              disabled={loading || saving || templateReady === false}
               onClick={() => void save()}
             >
               {saving ? "Saving…" : "Save"}

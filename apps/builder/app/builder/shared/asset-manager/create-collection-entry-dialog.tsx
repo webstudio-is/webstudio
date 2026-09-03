@@ -36,7 +36,13 @@ import type { ContentCollection } from "../assets/content-collections";
 import { selectPage } from "~/shared/nano-states";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 
-const getInitialValue = (field: CollectionField): unknown => {
+const getInitialValue = (
+  field: CollectionField,
+  templateProperties: Readonly<Record<string, unknown>>
+): unknown => {
+  if (Object.hasOwn(templateProperties, field.key)) {
+    return templateProperties[field.key];
+  }
   if (field.defaultValue !== undefined) {
     return field.defaultValue;
   }
@@ -49,9 +55,15 @@ const getInitialValue = (field: CollectionField): unknown => {
   return "";
 };
 
-const createInitialValues = (fields: readonly CollectionField[]) =>
+const createInitialValues = (
+  fields: readonly CollectionField[],
+  templateProperties: Readonly<Record<string, unknown>>
+) =>
   Object.fromEntries(
-    fields.map((field) => [field.key, getInitialValue(field)])
+    fields.map((field) => [
+      field.key,
+      getInitialValue(field, templateProperties),
+    ])
   );
 
 const parseResponse = async (response: Response): Promise<Asset> => {
@@ -69,16 +81,14 @@ const parseResponse = async (response: Response): Promise<Asset> => {
 };
 
 export const createCollectionEntryRequest = async ({
+  projectId,
   folderId,
   values,
 }: {
+  projectId: string;
   folderId: string;
   values: Readonly<Record<string, unknown>>;
 }) => {
-  const projectId = $project.get()?.id;
-  if (projectId === undefined) {
-    throw new Error("Project not found");
-  }
   const response = await fetch(
     `/rest/assets/folders/${encodeURIComponent(folderId)}/entries?projectId=${encodeURIComponent(projectId)}`,
     {
@@ -144,7 +154,7 @@ export const CreateCollectionEntryDialog = ({
 }) => {
   const { config } = collection;
   const [values, setValues] = useState<Record<string, unknown>>(() =>
-    createInitialValues(config.fields)
+    createInitialValues(config.fields, collection.templateProperties)
   );
   const [slugEdited, setSlugEdited] = useState(false);
   const [error, setError] = useState<string>();
@@ -152,12 +162,14 @@ export const CreateCollectionEntryDialog = ({
 
   useLayoutEffect(() => {
     if (open) {
-      setValues(createInitialValues(config.fields));
+      setValues(
+        createInitialValues(config.fields, collection.templateProperties)
+      );
       setSlugEdited(false);
       setError(undefined);
       setCreating(false);
     }
-  }, [config.fields, open]);
+  }, [collection.templateProperties, config.fields, open]);
 
   const setValue = (field: CollectionField, value: unknown) => {
     setValues((current) => {
@@ -181,6 +193,10 @@ export const CreateCollectionEntryDialog = ({
     setCreating(true);
     setError(undefined);
     try {
+      const projectId = $project.get()?.id;
+      if (projectId === undefined) {
+        throw new Error("Project not found");
+      }
       const submittedValues = Object.fromEntries(
         config.fields.flatMap((field) => {
           const value = values[field.key];
@@ -215,9 +231,15 @@ export const CreateCollectionEntryDialog = ({
         throw new Error(validationError);
       }
       const asset = await createEntry({
+        projectId,
         folderId: collection.folderId,
         values: submittedValues,
       });
+      if ($project.get()?.id !== projectId) {
+        throw new Error(
+          "The entry was created in the previous project. Return to that project to view it."
+        );
+      }
       executeRuntimeMutation({ id: "assets.add", input: { asset } });
       onNextTransactionComplete(invalidateAssets);
       onOpenChange(false);
