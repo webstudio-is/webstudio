@@ -11,8 +11,50 @@ import { getAssetResourceQueryError } from "./query-error";
 import { getDetailedAssetResourceQueryError } from "./query-error-details";
 import { AssetQueryRequestError } from "./request";
 import { AssetQueryMultipleResultsError } from "./structured-query";
+import { DocumentSourceDiagnosticsError } from "./content-source";
 
 describe("asset resource graph query errors", () => {
+  test("preserves every document source diagnostic", () => {
+    const diagnostics = [
+      {
+        severity: "error" as const,
+        code: "invalid-mdx",
+        message: "Broken first file",
+        assetId: "one",
+        path: "posts/one.mdx",
+        line: 2,
+        column: 1,
+      },
+      {
+        severity: "error" as const,
+        code: "invalid-mdx",
+        message: "Broken second file",
+        assetId: "two",
+        path: "posts/two.mdx",
+        line: 4,
+        column: 3,
+      },
+    ];
+
+    expect(
+      getDetailedAssetResourceQueryError(
+        new DocumentSourceDiagnosticsError(diagnostics)
+      )
+    ).toEqual({
+      code: "INVALID_REQUEST",
+      message: "2 document source errors found",
+      retryable: false,
+      status: 400,
+      details: {
+        diagnostics: diagnostics.map((diagnostic) => ({
+          ...diagnostic,
+          scope: "query",
+          phase: "source",
+        })),
+      },
+    });
+  });
+
   test("maps ambiguous exactly-one queries to a structured error", () => {
     expect(
       getAssetResourceQueryError(new AssetQueryMultipleResultsError(2))

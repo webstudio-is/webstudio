@@ -19,9 +19,12 @@ import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import { getInstancePropName } from "./jsx-attributes";
 import { getUtf8ByteLength } from "./byte-stream";
 import {
+  createMarkdownFrontmatterDiagnostics,
   extractMarkdownFrontmatter,
   replaceMarkdownFrontmatter,
 } from "./frontmatter";
+
+export { createMarkdownFrontmatterDiagnostics } from "./frontmatter";
 import { contentEngineLimits } from "./limits";
 import {
   getSyntaxTreeChildren,
@@ -31,6 +34,7 @@ import {
 } from "./markdown-ast";
 import { findMarkdownFrontmatter } from "./markdown-scanner";
 import { serializeMdxDocument } from "./mdx-serialization";
+import { MarkdownMetadataError } from "./markdown-errors";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -251,6 +255,19 @@ export const createMdxSourceDiagnostics = (
           sourceRange: error.sourceRange,
         }
   );
+
+const hasMarkdownMetadataCause = (error: MdxDocumentError) => {
+  const visited = new Set<unknown>();
+  let cause = error.cause;
+  while (cause !== undefined && visited.has(cause) === false) {
+    if (cause instanceof MarkdownMetadataError) {
+      return true;
+    }
+    visited.add(cause);
+    cause = cause instanceof Error ? cause.cause : undefined;
+  }
+  return false;
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -1434,6 +1451,36 @@ export const parseMdxDocumentRecovering = async ({
           });
     return { status: "unrecoverable", diagnostics: [error] };
   }
+};
+
+export type MdxDocumentSourceDiagnostic =
+  | MdxSourceDiagnostic
+  | Awaited<ReturnType<typeof createMarkdownFrontmatterDiagnostics>>[number];
+
+/** Validates MDX once and returns every diagnostic with its fatality. */
+export const validateMdxDocumentSource = async ({
+  source,
+}: {
+  source: string;
+}) => {
+  const recovery = await parseMdxDocumentRecovering({ source });
+  const frontmatterDiagnostics = await createMarkdownFrontmatterDiagnostics(
+    source
+  );
+  const mdxDiagnostics = createMdxSourceDiagnostics(
+    recovery.diagnostics
+  ).filter(
+    (_diagnostic, index) =>
+      frontmatterDiagnostics.length === 0 ||
+      hasMarkdownMetadataCause(recovery.diagnostics[index]) === false
+  );
+  return {
+    recovery,
+    diagnostics: [
+      ...frontmatterDiagnostics,
+      ...mdxDiagnostics,
+    ] satisfies readonly MdxDocumentSourceDiagnostic[],
+  };
 };
 
 const withMarkdownSyntax = (node: MdxAuthoredNode): MdxAuthoredNode => {

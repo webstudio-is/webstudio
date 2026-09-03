@@ -14,6 +14,15 @@ type RequestErrorDiagnosticsValue = {
   details?: Record<string, unknown>;
 };
 
+type SourceDiagnostic = {
+  severity: "error" | "warning";
+  code: string;
+  message: string;
+  path: string;
+  line?: number;
+  column?: number;
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | undefined =>
   typeof value === "object" && value !== null && Array.isArray(value) === false
     ? (value as Record<string, unknown>)
@@ -66,39 +75,96 @@ export const getRequestErrorDiagnostics = (
 const formatDetail = (value: unknown) =>
   typeof value === "string" ? value : JSON.stringify(value);
 
+export const getRequestSourceDiagnostics = (
+  details: Record<string, unknown> | undefined
+): SourceDiagnostic[] =>
+  Array.isArray(details?.diagnostics)
+    ? details.diagnostics.flatMap((value) => {
+        const diagnostic = asRecord(value);
+        if (
+          (diagnostic?.severity !== "error" &&
+            diagnostic?.severity !== "warning") ||
+          typeof diagnostic.code !== "string" ||
+          typeof diagnostic.message !== "string" ||
+          typeof diagnostic.path !== "string"
+        ) {
+          return [];
+        }
+        return [
+          {
+            severity: diagnostic.severity,
+            code: diagnostic.code,
+            message: diagnostic.message,
+            path: diagnostic.path,
+            ...(typeof diagnostic.line === "number"
+              ? { line: diagnostic.line }
+              : {}),
+            ...(typeof diagnostic.column === "number"
+              ? { column: diagnostic.column }
+              : {}),
+          },
+        ];
+      })
+    : [];
+
 export const RequestErrorDiagnostics = ({
   value,
 }: {
   value: RequestErrorDiagnosticsValue;
-}) => (
-  <RequestDiagnosticsContent>
-    <PanelBanner variant="error">
-      <Text>{value.message}</Text>
-    </PanelBanner>
-    <RequestDiagnosticsTable>
-      {value.status !== undefined && (
-        <RequestDiagnosticsRow
-          label="HTTP status"
-          value={`${value.status}${value.statusText === undefined ? "" : ` ${value.statusText}`}`}
-        />
-      )}
-      {value.code !== undefined && (
-        <RequestDiagnosticsRow label="Error code" value={value.code} />
-      )}
-      <RequestDiagnosticsRow label="Message" value={value.message} />
-      {value.retryable !== undefined && (
-        <RequestDiagnosticsRow
-          label="Retryable"
-          value={value.retryable ? "Yes" : "No"}
-        />
-      )}
-      {Object.entries(value.details ?? {}).map(([key, detail]) => (
-        <RequestDiagnosticsRow
-          key={key}
-          label={`Details · ${key}`}
-          value={formatDetail(detail)}
-        />
-      ))}
-    </RequestDiagnosticsTable>
-  </RequestDiagnosticsContent>
-);
+}) => {
+  const sourceDiagnostics = getRequestSourceDiagnostics(value.details);
+  return (
+    <RequestDiagnosticsContent>
+      <PanelBanner variant="error">
+        <Text>{value.message}</Text>
+      </PanelBanner>
+      <RequestDiagnosticsTable>
+        {value.status !== undefined && (
+          <RequestDiagnosticsRow
+            label="HTTP status"
+            value={`${value.status}${
+              value.statusText === undefined ? "" : ` ${value.statusText}`
+            }`}
+          />
+        )}
+        {value.code !== undefined && (
+          <RequestDiagnosticsRow label="Error code" value={value.code} />
+        )}
+        <RequestDiagnosticsRow label="Message" value={value.message} />
+        {sourceDiagnostics.map((diagnostic, index) => (
+          <RequestDiagnosticsRow
+            key={`${diagnostic.path}:${diagnostic.code}:${index}`}
+            label={`${
+              diagnostic.severity === "error" ? "Error" : "Warning"
+            } · ${diagnostic.path}${
+              diagnostic.line === undefined
+                ? ""
+                : `:${diagnostic.line}${
+                    diagnostic.column === undefined
+                      ? ""
+                      : `:${diagnostic.column}`
+                  }`
+            }`}
+            value={diagnostic.message}
+            description={diagnostic.code}
+          />
+        ))}
+        {value.retryable !== undefined && (
+          <RequestDiagnosticsRow
+            label="Retryable"
+            value={value.retryable ? "Yes" : "No"}
+          />
+        )}
+        {Object.entries(value.details ?? {})
+          .filter(([key]) => key !== "diagnostics")
+          .map(([key, detail]) => (
+            <RequestDiagnosticsRow
+              key={key}
+              label={`Details · ${key}`}
+              value={formatDetail(detail)}
+            />
+          ))}
+      </RequestDiagnosticsTable>
+    </RequestDiagnosticsContent>
+  );
+};

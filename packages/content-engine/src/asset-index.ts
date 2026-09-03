@@ -61,6 +61,15 @@ export type ContentCompilerDiagnostics = {
     referenceId: string;
     assetUrl: string;
   }[];
+  sourceIssues?: readonly {
+    severity: "error" | "warning";
+    code: string;
+    message: string;
+    assetId: string;
+    path: string;
+    line?: number;
+    column?: number;
+  }[];
 };
 
 const getDocumentBytes = (

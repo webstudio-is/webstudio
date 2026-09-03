@@ -142,7 +142,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
   });
 
   const sectionLabels = [
-    "Warnings",
+    "Errors and warnings",
     "Database and sizes",
     "Timing",
     "Assets batch work",

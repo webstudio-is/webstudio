@@ -120,6 +120,86 @@ const parseYamlProperties = (
   }
 };
 
+export type MarkdownFrontmatterDiagnostic = Readonly<{
+  code: MarkdownMetadataError["code"];
+  severity: "warning";
+  message: string;
+  line?: number;
+  column?: number;
+}>;
+
+const toFrontmatterDiagnostic = (
+  error: MarkdownMetadataError
+): MarkdownFrontmatterDiagnostic => ({
+  code: error.code,
+  severity: "warning",
+  message: error.message,
+  ...(error.line === undefined ? {} : { line: error.line }),
+  ...(error.column === undefined ? {} : { column: error.column }),
+});
+
+/** Validates authored Markdown frontmatter with the production YAML parser. */
+export const createMarkdownFrontmatterDiagnostics = async (
+  source: string
+): Promise<MarkdownFrontmatterDiagnostic[]> => {
+  const bytes = new TextEncoder().encode(source);
+  const located = findMarkdownFrontmatter(bytes, true);
+  if (located === null) {
+    return [];
+  }
+  if (located === undefined) {
+    return [
+      toFrontmatterDiagnostic(
+        new MarkdownMetadataError(
+          "FRONTMATTER_BYTES_EXCEEDED",
+          "Markdown frontmatter is not closed within the byte limit"
+        )
+      ),
+    ];
+  }
+  if (located.yamlEnd - located.yamlStart > defaultFrontmatterLimits.bytes) {
+    return [
+      toFrontmatterDiagnostic(
+        new MarkdownMetadataError(
+          "FRONTMATTER_BYTES_EXCEEDED",
+          "Markdown frontmatter exceeds the byte limit"
+        )
+      ),
+    ];
+  }
+  const yaml = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+    bytes.subarray(located.yamlStart, located.yamlEnd)
+  );
+  const lineCounter = new LineCounter();
+  const document = parseDocument(yaml, {
+    schema: "core",
+    uniqueKeys: true,
+    lineCounter,
+  });
+  if (document.errors.length > 0) {
+    return document.errors.map((error) => {
+      const location = lineCounter.linePos(error.pos[0]);
+      return toFrontmatterDiagnostic(
+        new MarkdownMetadataError(
+          "FRONTMATTER_INVALID",
+          `Markdown frontmatter contains invalid YAML: ${error.message}`,
+          { line: location.line + 1, column: location.col },
+          error
+        )
+      );
+    });
+  }
+  try {
+    parseYamlProperties(yaml, defaultFrontmatterLimits);
+    return [];
+  } catch (error) {
+    if (error instanceof MarkdownMetadataError) {
+      return [toFrontmatterDiagnostic(error)];
+    }
+    throw error;
+  }
+};
+
 /**
  * Reads only the bounded opening frontmatter block from a Markdown byte stream.
  * Iteration stops as soon as the closing delimiter is found, so the body is

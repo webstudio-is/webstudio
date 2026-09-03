@@ -683,9 +683,9 @@ export type AssetQueryExecutionResult = Infer<typeof assetQueryResult>;
 export type AssetQueryResult = AssetQueryCollectionResult;
 
 export const assetQueryDiagnosticIssue = strictObject({
-  severity: literal("warning"),
+  severity: zEnum(["error", "warning"]),
   scope: zEnum(["query", "database"]),
-  phase: zEnum(["metadata", "reference"]),
+  phase: zEnum(["metadata", "reference", "source"]),
   code: string().min(1),
   message: string().min(1),
   assetId: string().min(1),
@@ -708,7 +708,7 @@ export const assetQueryPreviewDiagnostics = strictObject({
     database: contentArtifactV1,
   }).optional(),
   unresolved: assetQueryResult.optional(),
-  issues: array(assetQueryDiagnosticIssue).max(100).optional(),
+  issues: array(assetQueryDiagnosticIssue).optional(),
   issueCount: number().int().nonnegative().optional(),
   issuesTruncated: boolean().optional(),
 });

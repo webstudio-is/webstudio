@@ -12,7 +12,7 @@ export type AssetResourceQueryError = Omit<
   AssetResourceQueryFailure["error"],
   "details"
 > & {
-  details?: Record<string, string | number>;
+  details?: NonNullable<AssetResourceQueryFailure["error"]["details"]>;
   status: 400 | 409;
 };
 

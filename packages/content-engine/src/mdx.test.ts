@@ -8,6 +8,7 @@ import {
   MdxDocumentError,
   parseMdxDocument,
   parseMdxDocumentRecovering,
+  validateMdxDocumentSource,
   preferMarkdownSyntax,
   readMdxCodeBlock,
   replaceMdxFrontmatter,
@@ -1127,6 +1128,25 @@ describe("replaceMdxFrontmatter", () => {
 });
 
 describe("parseMdxDocumentRecovering", () => {
+  test("reports every recoverable problem as a warning", async () => {
+    const result = await validateMdxDocumentSource({
+      source: "---\na: 1\na: 2\nb: 1\nb: 2\n---\n\n{first()}\n\n{second()}\n",
+    });
+
+    expect(result.diagnostics).toMatchObject([
+      { severity: "warning", code: "FRONTMATTER_INVALID", line: 3 },
+      { severity: "warning", code: "FRONTMATTER_INVALID", line: 5 },
+      {
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+      },
+      {
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+      },
+    ]);
+  });
+
   test("ignores invalid JSX properties without dropping the element", async () => {
     const source =
       '<ws.element ws:tag="a" href="/safe" onclick="alert(1)">Kept</ws.element>\n';

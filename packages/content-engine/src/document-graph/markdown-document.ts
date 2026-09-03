@@ -8,6 +8,7 @@ import {
 } from "../byte-stream";
 import { normalizeJsonValue, type JsonValue } from "../canonical-json";
 import { extractMarkdownFrontmatter } from "../frontmatter";
+import { MarkdownMetadataError } from "../markdown-errors";
 import { contentEngineLimits } from "../limits";
 import { extractMarkdownBody } from "../markdown-body";
 import type { DocumentRepresentation } from "./reference";
@@ -158,7 +159,12 @@ export const parseMarkdownDocumentSource = async ({
   }
   const [body, frontmatter] = await Promise.all([
     extractMarkdownBody(bytes, maximumBytes),
-    extractMarkdownFrontmatter(bytes),
+    extractMarkdownFrontmatter(bytes).catch((error) => {
+      if (error instanceof MarkdownMetadataError) {
+        return { properties: {}, frontmatterBytes: 0, consumedBytes: 0 };
+      }
+      throw error;
+    }),
   ]);
   return normalizeMarkdownDocument({
     source: sourceText,

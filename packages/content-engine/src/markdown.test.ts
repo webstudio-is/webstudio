@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import {
+  createMarkdownFrontmatterDiagnostics,
   extractMarkdownBody,
   extractMarkdownBodyAndExcerpt,
   extractMarkdownExcerpt,
@@ -87,6 +88,17 @@ tags: [web, studio]
       line: 3,
       column: 1,
     } satisfies Partial<MarkdownMetadataError>);
+  });
+
+  test("reports every YAML parser error", async () => {
+    await expect(
+      createMarkdownFrontmatterDiagnostics(
+        "---\na: 1\na: 2\nb: 1\nb: 2\n---\n"
+      )
+    ).resolves.toMatchObject([
+      { code: "FRONTMATTER_INVALID", line: 3, column: 1 },
+      { code: "FRONTMATTER_INVALID", line: 5, column: 1 },
+    ]);
   });
 
   test("rejects an unclosed block at the byte boundary", async () => {

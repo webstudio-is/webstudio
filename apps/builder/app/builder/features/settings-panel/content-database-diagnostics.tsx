@@ -379,6 +379,10 @@ export const ContentDatabaseDiagnostics = ({
     value.database.omittedDocumentCount === 1 ? "file" : "files"
   }`;
   const rows = getContentDatabaseDiagnosticRows(value);
+  const errorCount =
+    value.issues?.filter(({ severity }) => severity === "error").length ?? 0;
+  const warningCount =
+    value.issues?.filter(({ severity }) => severity === "warning").length ?? 0;
   const databaseAndSizes = {
     ...getPerformanceSizes(performance),
     scope: value.scope,
@@ -388,13 +392,21 @@ export const ContentDatabaseDiagnostics = ({
   return (
     <RequestDiagnosticsContent padded={false}>
       {value.issues !== undefined && value.issues.length > 0 && (
-        <DiagnosticsSection label="Warnings" data={value.issues} isOpen>
-          <PanelBanner variant="warning">
+        <DiagnosticsSection
+          label="Errors and warnings"
+          data={value.issues}
+          isOpen
+        >
+          <PanelBanner
+            variant={
+              value.issues.some(({ severity }) => severity === "error")
+                ? "error"
+                : "warning"
+            }
+          >
             <Text>
-              {value.issueCount ?? value.issues.length} content
-              {(value.issueCount ?? value.issues.length) === 1
-                ? " warning"
-                : " warnings"}
+              {errorCount} {errorCount === 1 ? "error" : "errors"} and{" "}
+              {warningCount} {warningCount === 1 ? "warning" : "warnings"}
               {value.issuesTruncated
                 ? `; showing the first ${value.issues.length}.`
                 : "."}
@@ -404,9 +416,21 @@ export const ContentDatabaseDiagnostics = ({
             {value.issues.map((issue, index) => (
               <RequestDiagnosticsRow
                 key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
-                label={`${issue.path}${issue.line === undefined ? "" : `:${issue.line}${issue.column === undefined ? "" : `:${issue.column}`}`}`}
+                label={`${issue.severity === "error" ? "Error" : "Warning"} · ${
+                  issue.path
+                }${
+                  issue.line === undefined
+                    ? ""
+                    : `:${issue.line}${
+                        issue.column === undefined ? "" : `:${issue.column}`
+                      }`
+                }`}
                 value={issue.message}
-                description={`${issue.scope === "query" ? "Current query" : "Published database"} · ${issue.code}`}
+                description={`${
+                  issue.scope === "query"
+                    ? "Current query"
+                    : "Published database"
+                } · ${issue.code}`}
               />
             ))}
           </RequestDiagnosticsTable>
@@ -422,8 +446,8 @@ export const ContentDatabaseDiagnostics = ({
             {value.database.truncated
               ? `${value.database.includedDocumentCount} of ${candidateFilesLabel} fit in the merged published content database. ${omittedFilesLabel} may be omitted from published query results.`
               : totalDocumentCount === 1
-                ? "The candidate file fits in the merged published content database."
-                : `All ${candidateFilesLabel} fit in the merged published content database.`}
+              ? "The candidate file fits in the merged published content database."
+              : `All ${candidateFilesLabel} fit in the merged published content database.`}
           </Text>
         </PanelBanner>
         <RequestDiagnosticsTable>

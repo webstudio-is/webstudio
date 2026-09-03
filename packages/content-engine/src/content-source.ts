@@ -26,14 +26,17 @@ import {
 } from "./byte-stream";
 import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
-import { discoverMdxBodyAssetReferences, parseMdxDocument } from "./mdx";
+import {
+  discoverMdxBodyAssetReferences,
+  validateMdxDocumentSource,
+} from "./mdx";
+import { createMarkdownFrontmatterDiagnostics } from "./frontmatter";
 import {
   compileDocumentSourceGraph,
   createDocumentSourceUrl,
   getDocumentFormatByContentType,
   type SourceReferenceOccurrence,
   type DocumentGraph,
-  DocumentSourceCompilationError,
 } from "./document-graph";
 
 export type ContentSourceFile = {
@@ -125,6 +128,27 @@ export class ContentSourceChangedError extends Error {
   constructor() {
     super("Content source changed while the database was being compiled");
     this.name = "ContentSourceChangedError";
+  }
+}
+
+type SourceIssue = NonNullable<
+  ContentCompilerDiagnostics["sourceIssues"]
+>[number];
+
+export class DocumentSourceDiagnosticsError extends Error {
+  readonly diagnostics: readonly SourceIssue[];
+
+  constructor(diagnostics: readonly SourceIssue[]) {
+    const errorCount = diagnostics.filter(
+      ({ severity }) => severity === "error"
+    ).length;
+    super(
+      `${errorCount} document source ${
+        errorCount === 1 ? "error" : "errors"
+      } found`
+    );
+    this.name = "DocumentSourceDiagnosticsError";
+    this.diagnostics = diagnostics;
   }
 }
 
@@ -235,7 +259,10 @@ const discoverSnapshotAssetValueReferences = async ({
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
   analyzedProperties: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
-}): Promise<AssetValueReferences> => {
+}): Promise<{
+  references: AssetValueReferences;
+  sourceIssues: readonly SourceIssue[];
+}> => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
   const structuredAssetIds = new Set(
     snapshot.files
@@ -243,6 +270,7 @@ const discoverSnapshotAssetValueReferences = async ({
       .map(({ id }) => id)
   );
   const references: AssetValueReferences = {};
+  const sourceIssues: SourceIssue[] = [];
   const discoverProperties = ({
     path,
     properties,
@@ -264,29 +292,72 @@ const discoverSnapshotAssetValueReferences = async ({
       path: entry.document.path,
       properties: entry.document.properties ?? {},
     });
+    const format = getDocumentFormatByContentType(entry.document.mimeType);
+    if (
+      entry.contentRequired &&
+      entry.content === undefined &&
+      (format === "markdown" || format === "mdx")
+    ) {
+      sourceIssues.push({
+        severity: "warning",
+        code: "SOURCE_VALIDATION_UNAVAILABLE",
+        message: "File content could not be validated within the query limits",
+        assetId: entry.assetId,
+        path: entry.document.path,
+      });
+    }
     if (
       entry.content !== undefined &&
-      getDocumentFormatByContentType(entry.document.mimeType) === "mdx"
+      (format === "markdown" || format === "mdx")
     ) {
-      let document;
-      try {
-        document = await parseMdxDocument({ source: entry.content });
-      } catch (cause) {
-        throw new DocumentSourceCompilationError({
-          code: "DOCUMENT_ANALYSIS_FAILED",
-          message: `Document ${entry.document.path} could not be analyzed`,
-          documentId: entry.assetId,
-          documentPath: entry.document.path,
-          cause,
+      if (format === "markdown") {
+        const diagnostics = await createMarkdownFrontmatterDiagnostics(
+          entry.content
+        );
+        sourceIssues.push(
+          ...diagnostics.map((diagnostic) => ({
+            ...diagnostic,
+            assetId: entry.assetId,
+            path: entry.document.path,
+          }))
+        );
+      } else {
+        const validation = await validateMdxDocumentSource({
+          source: entry.content,
         });
+        sourceIssues.push(
+          ...validation.diagnostics.map((diagnostic) => ({
+            severity: diagnostic.severity,
+            code: diagnostic.code,
+            message: diagnostic.message,
+            assetId: entry.assetId,
+            path: entry.document.path,
+            ...("sourceRange" in diagnostic &&
+            diagnostic.sourceRange !== undefined
+              ? {
+                  line: diagnostic.sourceRange.start.line,
+                  column: diagnostic.sourceRange.start.column,
+                }
+              : "line" in diagnostic && diagnostic.line !== undefined
+              ? {
+                  line: diagnostic.line,
+                  ...(diagnostic.column === undefined
+                    ? {}
+                    : { column: diagnostic.column }),
+                }
+              : {}),
+          }))
+        );
+        if (validation.recovery.status === "parsed") {
+          discovered.push(
+            ...discoverMdxBodyAssetReferences({
+              document: validation.recovery.document,
+              sourcePath: entry.document.path,
+              assetIdsByPath,
+            })
+          );
+        }
       }
-      discovered.push(
-        ...discoverMdxBodyAssetReferences({
-          document,
-          sourcePath: entry.document.path,
-          assetIdsByPath,
-        })
-      );
     }
     if (discovered.length > 0) {
       references[entry.assetId] = discovered;
@@ -309,7 +380,10 @@ const discoverSnapshotAssetValueReferences = async ({
       }
     }
   }
-  return references;
+  if (sourceIssues.some(({ severity }) => severity === "error")) {
+    throw new DocumentSourceDiagnosticsError(sourceIssues);
+  }
+  return { references, sourceIssues };
 };
 
 const queryNeedsDocumentGraph = (
@@ -530,11 +604,12 @@ export const materializeContentSnapshot = async ({
       operation: () =>
         discoverSnapshotAssetReferences({ snapshot, entries, plan }),
     });
-    const assetValueReferences = await discoverSnapshotAssetValueReferences({
-      snapshot,
-      entries,
-      analyzedProperties,
-    });
+    const assetValueReferenceResult =
+      await discoverSnapshotAssetValueReferences({
+        snapshot,
+        entries,
+        analyzedProperties,
+      });
     if (
       await measureContentSourcePerformance({
         phase: "source-validation",
@@ -547,7 +622,8 @@ export const materializeContentSnapshot = async ({
         sourceRevision: snapshot.revision,
         entries,
         assetReferences,
-        assetValueReferences,
+        assetValueReferences: assetValueReferenceResult.references,
+        sourceIssues: assetValueReferenceResult.sourceIssues,
         documentGraph,
         documentContents: documentGraphResult?.contents,
         assetReferenceIssues: documentGraphResult?.assetReferenceIssues ?? [],
@@ -593,6 +669,7 @@ export const compileContentSource = async ({
     entries,
     assetReferences,
     assetValueReferences,
+    sourceIssues,
     documentGraph,
     documentContents,
     assetReferenceIssues,
@@ -620,6 +697,7 @@ export const compileContentSource = async ({
     diagnostics: {
       ...compiled.diagnostics,
       ...(assetReferenceIssues.length === 0 ? {} : { assetReferenceIssues }),
+      ...(sourceIssues.length === 0 ? {} : { sourceIssues }),
     },
   };
 };
@@ -644,6 +722,7 @@ export const materializeContentSource = async ({
   documentGraph?: DocumentGraph;
   documentContents?: Readonly<Record<string, string>>;
   assetReferenceIssues: readonly AssetReferenceIssue[];
+  sourceIssues: readonly SourceIssue[];
 }> => {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const snapshot = await source.openSnapshot();

@@ -123,15 +123,33 @@ const diagnosticIssuesByArtifact = new WeakMap<
   readonly PreparedDiagnosticIssue[]
 >();
 
+const getDiagnosticIssueKey = (
+  issue: Omit<AssetQueryDiagnosticIssue, "scope">
+) =>
+  JSON.stringify([
+    issue.severity,
+    issue.code,
+    issue.assetId,
+    issue.path,
+    issue.line,
+    issue.column,
+    issue.reference,
+    issue.message,
+  ]);
+
 const getPreparedDiagnosticIssues = ({
   entries,
   assetReferenceIssues,
+  sourceIssues,
   preparationIssues,
 }: {
   entries: Parameters<typeof createAssetIndex>[0]["entries"];
   assetReferenceIssues: Awaited<
     ReturnType<typeof materializeContentSource>
   >["assetReferenceIssues"];
+  sourceIssues: Awaited<
+    ReturnType<typeof materializeContentSource>
+  >["sourceIssues"];
   preparationIssues: readonly PreparedDiagnosticIssue[];
 }): PreparedDiagnosticIssue[] => {
   const pathsById = new Map(
@@ -174,12 +192,12 @@ const getPreparedDiagnosticIssues = ({
         ];
   });
   const issues = [...metadataIssues, ...referenceIssues, ...preparationIssues];
+  issues.push(
+    ...sourceIssues.map((issue) => ({ ...issue, phase: "source" as const }))
+  );
   return [
     ...new Map(
-      issues.map((issue) => [
-        JSON.stringify([issue.code, issue.assetId, issue.path, issue.message]),
-        issue,
-      ])
+      issues.map((issue) => [getDiagnosticIssueKey(issue), issue])
     ).values(),
   ];
 };
@@ -772,7 +790,10 @@ export class PostgresAssetRepository implements AssetRepository {
       documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"],
       assetReferenceIssues: Awaited<
         ReturnType<typeof materializeContentSource>
-      >["assetReferenceIssues"]
+      >["assetReferenceIssues"],
+      sourceIssues: Awaited<
+        ReturnType<typeof materializeContentSource>
+      >["sourceIssues"]
     ) => {
       const artifact = await this.measurePerformance(
         "artifact-compilation",
@@ -795,6 +816,7 @@ export class PostgresAssetRepository implements AssetRepository {
         getPreparedDiagnosticIssues({
           entries,
           assetReferenceIssues,
+          sourceIssues,
           preparationIssues,
         })
       );
@@ -811,6 +833,7 @@ export class PostgresAssetRepository implements AssetRepository {
         assetValueReferences,
         documentGraph,
         assetReferenceIssues,
+        sourceIssues,
       } = await materializeContentSource({
         source,
         plan: requirements,
@@ -823,7 +846,8 @@ export class PostgresAssetRepository implements AssetRepository {
         assetReferences,
         assetValueReferences,
         documentGraph,
-        assetReferenceIssues
+        assetReferenceIssues,
+        sourceIssues
       );
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -850,6 +874,7 @@ export class PostgresAssetRepository implements AssetRepository {
               assetValueReferences,
               documentGraph,
               assetReferenceIssues,
+              sourceIssues,
             } = await materializeContentSnapshot({
               snapshot,
               plan: requirements,
@@ -862,7 +887,8 @@ export class PostgresAssetRepository implements AssetRepository {
               assetReferences,
               assetValueReferences,
               documentGraph,
-              assetReferenceIssues
+              assetReferenceIssues,
+              sourceIssues
             );
           }
         );
@@ -1069,18 +1095,45 @@ export class PostgresAssetRepository implements AssetRepository {
           plan: requirements,
           loadContent: async (entry) => {
             const startedAt = this.dependencies.performanceNow();
-            const response = await this.assetStore.readFile(
-              entry.document.contentRef,
-              { offset: 0, length: entry.document.size }
-            );
-            const bytes = await readBoundedBytes(
-              response.data,
-              entry.document.size
-            );
-            if (bytes.byteLength !== entry.document.size) {
-              throw new Error(
-                "Asset content does not match its canonical size"
+            let bytes: Uint8Array;
+            try {
+              const response = await this.assetStore.readFile(
+                entry.document.contentRef,
+                { offset: 0, length: entry.document.size }
               );
+              bytes = await readBoundedBytes(
+                response.data,
+                entry.document.size
+              );
+              if (bytes.byteLength !== entry.document.size) {
+                throw new Error(
+                  "Asset content does not match its canonical size"
+                );
+              }
+            } catch (error) {
+              const message =
+                error instanceof Error && error.message !== ""
+                  ? error.message
+                  : "Selected asset content could not be read";
+              if (strict) {
+                throw new AssetIndexPreparationError([
+                  {
+                    assetId: entry.assetId,
+                    storageName: entry.document.contentRef,
+                    revision: entry.revision,
+                    message,
+                  },
+                ]);
+              }
+              preparationIssues.push({
+                severity: "warning",
+                phase: "source",
+                code: "CONTENT_READ_FAILED",
+                message,
+                assetId: entry.assetId,
+                path: entry.document.path,
+              });
+              return;
             }
             contentBytesCache.set({
               contentRef: entry.document.contentRef,
@@ -1443,6 +1496,45 @@ export class PostgresAssetRepository implements AssetRepository {
       })
     );
     signal?.throwIfAborted();
+    let sourceDiagnosticsIndex = queryIndex;
+    if (includeDiagnostics && query.content.mode === "none") {
+      const resultIds = data.items.map(({ id }) => id);
+      if (resultIds.length > 0) {
+        const sourceDiagnosticsPlan = createContentCompilationPlan([
+          createLiteralContentCompilationQuery({
+            id: "preview-source-diagnostics",
+            query: {
+              result: "many",
+              where: {
+                all: [
+                  { field: ["id"], operator: "in", value: resultIds },
+                  {
+                    field: ["extension"],
+                    operator: "in",
+                    value: ["md", "markdown", "mdx"],
+                  },
+                ],
+              },
+              sort: [],
+              limit: resultIds.length,
+              offset: 0,
+              output: {
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["id"]],
+              },
+              content: { mode: "full" },
+            },
+          }),
+        ]);
+        sourceDiagnosticsIndex = await this.prepareIndexAfterAuthorization(
+          sourceDiagnosticsPlan,
+          false,
+          contentBytesCache
+        );
+      }
+    }
+    signal?.throwIfAborted();
     let publishedIndex: typeof index | undefined;
     if (includeDiagnostics) {
       const publishedPlan = diagnosticsPlan ?? databasePlan;
@@ -1492,27 +1584,22 @@ export class PostgresAssetRepository implements AssetRepository {
     }
     const queryDatabase = getContentDatabaseForArtifact(queryIndex);
     const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
-    const queryIssues = (diagnosticIssuesByArtifact.get(queryIndex) ?? []).map(
-      (issue) => ({ ...issue, scope: "query" as const })
-    );
-    const queryIssueKeys = new Set(
-      queryIssues.map((issue) =>
-        JSON.stringify([issue.code, issue.assetId, issue.path, issue.message])
-      )
-    );
+    const queryIssues = [
+      ...new Map(
+        [
+          ...(diagnosticIssuesByArtifact.get(queryIndex) ?? []),
+          ...(sourceDiagnosticsIndex === queryIndex
+            ? []
+            : diagnosticIssuesByArtifact.get(sourceDiagnosticsIndex) ?? []),
+        ].map((issue) => [getDiagnosticIssueKey(issue), issue])
+      ).values(),
+    ].map((issue) => ({ ...issue, scope: "query" as const }));
+    const queryIssueKeys = new Set(queryIssues.map(getDiagnosticIssueKey));
     const databaseIssues = (
       diagnosticIssuesByArtifact.get(publishedIndex) ?? []
     )
       .filter(
-        (issue) =>
-          queryIssueKeys.has(
-            JSON.stringify([
-              issue.code,
-              issue.assetId,
-              issue.path,
-              issue.message,
-            ])
-          ) === false
+        (issue) => queryIssueKeys.has(getDiagnosticIssueKey(issue)) === false
       )
       .map((issue) => ({ ...issue, scope: "database" as const }));
     const allIssues = [...queryIssues, ...databaseIssues].sort(
@@ -1521,7 +1608,7 @@ export class PostgresAssetRepository implements AssetRepository {
         left.code.localeCompare(right.code) ||
         left.message.localeCompare(right.message)
     );
-    const issues = allIssues.slice(0, 100);
+    const issues = allIssues;
     return {
       data,
       __diagnostics__: {
@@ -1537,7 +1624,7 @@ export class PostgresAssetRepository implements AssetRepository {
           : {
               issues,
               issueCount: allIssues.length,
-              issuesTruncated: issues.length < allIssues.length,
+              issuesTruncated: false,
             }),
       },
     };

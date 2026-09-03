@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   getTextFileEditorExtensions,
-  getMdxEditorDiagnostics,
+  getTextFileEditorDiagnostics,
   getMdxPersistenceFeedback,
   isMarkdownAsset,
   normalizeTextFileContent,
@@ -23,7 +23,7 @@ describe("text file assets", () => {
     expect(isTextFileAsset({ format: "pdf" })).toBe(false);
   });
 
-  test.each(["md", "js", "css", "json", "html", "xml", "svg"])(
+  test.each(["js", "css", "json", "html", "xml", "svg"])(
     "uses the available CodeMirror language for %s",
     (format) => {
       expect(getTextFileEditorExtensions({ format })).toHaveLength(1);
@@ -42,7 +42,7 @@ describe("text file assets", () => {
       expect(getTextFileEditorExtensions({ format })).toHaveLength(
         language === undefined || language === "plain"
           ? 0
-          : format === "mdx"
+          : format === "md" || format === "mdx"
             ? 4
             : 1
       );
@@ -86,7 +86,10 @@ describe("text file assets", () => {
 
   test("reports MDX diagnostics at parser source ranges", async () => {
     await expect(
-      getMdxEditorDiagnostics("# Kept\n\n{danger()}\n")
+      getTextFileEditorDiagnostics({
+        source: "# Kept\n\n{danger()}\n",
+        format: "mdx",
+      })
     ).resolves.toEqual([
       {
         from: 8,
@@ -97,9 +100,24 @@ describe("text file assets", () => {
     ]);
   });
 
+  test("reports every Markdown frontmatter error inline", async () => {
+    await expect(
+      getTextFileEditorDiagnostics({
+        source: "---\na: 1\na: 2\nb: 1\nb: 2\n---\n",
+        format: "md",
+      })
+    ).resolves.toMatchObject([
+      { from: 9, to: 10, severity: "warning" },
+      { from: 19, to: 20, severity: "warning" },
+    ]);
+  });
+
   test("reports unrecoverable MDX without blocking the source", async () => {
     const source = "# Kept\n\n<ws.element";
-    const diagnostics = await getMdxEditorDiagnostics(source);
+    const diagnostics = await getTextFileEditorDiagnostics({
+      source,
+      format: "mdx",
+    });
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]).toMatchObject({
       severity: "error",
@@ -111,21 +129,25 @@ describe("text file assets", () => {
   test("reports connected Content Block warnings at property ranges", async () => {
     const source = '<ws.element ws:name="Card" class="legacy" />';
     await expect(
-      getMdxEditorDiagnostics(source, [
-        {
-          code: "ignored-template-prop",
-          severity: "warning",
-          blockInstanceId: "block",
-          assetId: "asset",
-          templateName: "Card",
-          propName: "class",
-          reason: "incompatible",
-          sourceRange: {
-            start: { line: 1, column: 28, offset: 27 },
-            end: { line: 1, column: 42, offset: 41 },
+      getTextFileEditorDiagnostics({
+        source,
+        format: "mdx",
+        semanticDiagnostics: [
+          {
+            code: "ignored-template-prop",
+            severity: "warning",
+            blockInstanceId: "block",
+            assetId: "asset",
+            templateName: "Card",
+            propName: "class",
+            reason: "incompatible",
+            sourceRange: {
+              start: { line: 1, column: 28, offset: 27 },
+              end: { line: 1, column: 42, offset: 41 },
+            },
           },
-        },
-      ])
+        ],
+      })
     ).resolves.toEqual([
       {
         from: 27,
@@ -140,19 +162,27 @@ describe("text file assets", () => {
   test("reports connected Content Block content-model errors", async () => {
     const source = '<ws.element ws:tag="li">nested item</ws.element>';
     await expect(
-      getMdxEditorDiagnostics(source, [
-        {
-          code: "invalid-mdx",
-          severity: "error",
-          blockInstanceId: "block",
-          assetId: "asset",
-          message: "Placing <li> element inside a <li> violates HTML spec.",
-          sourceRange: {
-            start: { line: 1, column: 1, offset: 0 },
-            end: { line: 1, column: source.length + 1, offset: source.length },
+      getTextFileEditorDiagnostics({
+        source,
+        format: "mdx",
+        semanticDiagnostics: [
+          {
+            code: "invalid-mdx",
+            severity: "error",
+            blockInstanceId: "block",
+            assetId: "asset",
+            message: "Placing <li> element inside a <li> violates HTML spec.",
+            sourceRange: {
+              start: { line: 1, column: 1, offset: 0 },
+              end: {
+                line: 1,
+                column: source.length + 1,
+                offset: source.length,
+              },
+            },
           },
-        },
-      ])
+        ],
+      })
     ).resolves.toEqual([
       {
         from: 0,

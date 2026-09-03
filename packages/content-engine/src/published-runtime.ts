@@ -35,7 +35,7 @@ const failure = ({
   message: string;
   status: number;
   retryable?: boolean;
-  details?: Record<string, string | number>;
+  details?: AssetResourceQueryFailure["error"]["details"];
 }) =>
   jsonResponse(
     createAssetResourceQueryFailure({ code, message, retryable, details }),

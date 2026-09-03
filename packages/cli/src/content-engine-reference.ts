@@ -72,15 +72,21 @@ const contentRows = [
   },
   {
     value: "full",
-    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected file is larger.`,
+    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected file is larger.`,
   },
   {
     value: "range",
-    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(contentEngineLimits.hydratedRangeBytes)}.`,
+    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(
+      contentEngineLimits.hydratedRangeBytes
+    )}.`,
   },
   {
     value: "markdown-body-ref",
-    description: `Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected source file is larger.`,
+    description: `Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected source file is larger.`,
   },
 ] as const satisfies readonly ReferenceRow[];
 
@@ -97,16 +103,10 @@ const diagnosticRows = [
 const optionalDiagnosticRows = [
   [
     "`issues`",
-    "Up to 100 non-fatal content warnings. Each warning identifies its query or published-database scope, phase, code, message, asset, path, and source location when available.",
+    "All content errors and warnings found for the query. Each diagnostic identifies its query or published-database scope, phase, code, message, asset, path, and source location when available.",
   ],
-  [
-    "`issueCount`",
-    "Total warnings found before the diagnostic payload limit is applied.",
-  ],
-  [
-    "`issuesTruncated`",
-    "Whether additional warnings were omitted from `issues`.",
-  ],
+  ["`issueCount`", "Total errors and warnings in `issues`."],
+  ["`issuesTruncated`", "Always `false`; retained for response compatibility."],
   [
     "`artifacts`",
     "Optional query and merged compiled artifacts used by detailed Builder diagnostics.",
@@ -168,7 +168,9 @@ const assertSameValues = ({
   const implementedValues = [...implemented].sort();
   if (JSON.stringify(documentedValues) !== JSON.stringify(implementedValues)) {
     throw new Error(
-      `${label} documentation is out of sync: documented ${documentedValues.join(", ")}; implemented ${implementedValues.join(", ")}`
+      `${label} documentation is out of sync: documented ${documentedValues.join(
+        ", "
+      )}; implemented ${implementedValues.join(", ")}`
     );
   }
 };

@@ -6,10 +6,11 @@ import {
   type AssetResourceQueryError,
 } from "./query-error";
 import { AssetQueryRequestError } from "./request";
+import { DocumentSourceDiagnosticsError } from "./content-source";
 
 const createInvalidRequestError = (
   message: string,
-  details?: Record<string, string | number>
+  details?: AssetResourceQueryError["details"]
 ): AssetResourceQueryError => ({
   code: "INVALID_REQUEST",
   message,
@@ -57,6 +58,15 @@ export const getDetailedAssetResourceQueryError = (
 ): AssetResourceQueryError | undefined => {
   if (error instanceof AssetQueryRequestError) {
     return getRequestError(error);
+  }
+  if (error instanceof DocumentSourceDiagnosticsError) {
+    return createInvalidRequestError(error.message, {
+      diagnostics: error.diagnostics.map((diagnostic) => ({
+        ...diagnostic,
+        scope: "query",
+        phase: "source",
+      })),
+    });
   }
   const visited = new Set<unknown>();
   let cause = error;
