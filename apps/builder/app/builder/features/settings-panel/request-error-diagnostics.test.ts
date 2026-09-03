@@ -1,31 +1,58 @@
 import { describe, expect, test } from "vitest";
 import {
   getRequestErrorDiagnostics,
+  getRequestSourceDiagnosticDescription,
   getRequestSourceDiagnostics,
 } from "./request-error-diagnostics";
 
 describe("request error diagnostics", () => {
   test("keeps every structured source diagnostic", () => {
-    expect(
-      getRequestSourceDiagnostics({
-        diagnostics: [
-          {
-            severity: "error",
-            code: "invalid-mdx",
-            message: "First error",
-            path: "one.mdx",
-            line: 2,
-            column: 1,
-          },
-          {
-            severity: "warning",
-            code: "unsafe-mdx",
-            message: "Second warning",
-            path: "two.mdx",
-          },
-        ],
-      })
-    ).toHaveLength(2);
+    const diagnostics = getRequestSourceDiagnostics({
+      diagnostics: [
+        {
+          severity: "error",
+          scope: "query",
+          phase: "source",
+          code: "invalid-mdx",
+          message: "First error",
+          path: "one.mdx",
+          line: 2,
+          column: 1,
+        },
+        {
+          severity: "warning",
+          scope: "database",
+          phase: "source",
+          code: "unsafe-mdx",
+          message: "Second warning",
+          path: "two.mdx",
+        },
+      ],
+    });
+    expect(diagnostics).toEqual([
+      {
+        severity: "error",
+        scope: "query",
+        phase: "source",
+        code: "invalid-mdx",
+        message: "First error",
+        path: "one.mdx",
+        line: 2,
+        column: 1,
+      },
+      {
+        severity: "warning",
+        scope: "database",
+        phase: "source",
+        code: "unsafe-mdx",
+        message: "Second warning",
+        path: "two.mdx",
+      },
+    ]);
+    expect(diagnostics.map(getRequestSourceDiagnosticDescription)).toEqual([
+      "Current query · invalid-mdx",
+      "Published database · unsafe-mdx",
+    ]);
   });
 
   test("extracts HTTP and structured API error information", () => {

@@ -63,8 +63,8 @@ export const getDetailedAssetResourceQueryError = (
     return createInvalidRequestError(error.message, {
       diagnostics: error.diagnostics.map((diagnostic) => ({
         ...diagnostic,
-        scope: "query",
-        phase: "source",
+        scope: diagnostic.scope ?? error.scope,
+        phase: diagnostic.phase ?? "source",
       })),
     });
   }

@@ -2521,6 +2521,10 @@ describe("PostgresAssetRepository", () => {
           revision: "image-r1",
           contentRef: "storage:image",
           properties: {},
+          metadataError: {
+            code: "FRONTMATTER_INVALID",
+            message: "Image metadata could not be indexed",
+          },
         },
       },
       {
@@ -2577,9 +2581,93 @@ describe("PostgresAssetRepository", () => {
     expect(readFile).not.toHaveBeenCalled();
 
     await expect(
+      repository.query(
+        { query },
+        {
+          diagnosticsPlan: createCompilationPlan({
+            where: { field: ["id"], operator: "eq", value: "broken" },
+            content: { mode: "full" },
+          }),
+        }
+      )
+    ).rejects.toMatchObject({
+      scope: "database",
+      diagnostics: [
+        {
+          severity: "warning",
+          scope: "query",
+          path: "content/a.png",
+        },
+        {
+          severity: "error",
+          scope: "database",
+          path: "content/b.mdx",
+        },
+      ],
+    });
+
+    await expect(
       repository.query({ query: { ...query, offset: 1 } })
     ).rejects.toMatchObject({
       diagnostics: [{ severity: "error", path: "content/b.mdx" }],
+    });
+  });
+
+  test("validates the file returned by a single-result query", async () => {
+    const dependencies = createDependencies();
+    const brokenSource = "<ws.element";
+    const entry: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "broken",
+      revision: "broken-r1",
+      document: {
+        _id: "broken",
+        _type: "asset.file",
+        name: "broken.mdx",
+        path: "content/broken.mdx",
+        key: "broken",
+        extension: "mdx",
+        mimeType: "text/mdx",
+        size: brokenSource.length,
+        revision: "broken-r1",
+        contentRef: "storage:broken",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries: [entry],
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async () => ({
+          data: new Blob([brokenSource]).stream(),
+          contentLength: brokenSource.length,
+        }),
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.query({
+        query: {
+          result: "one",
+          where: { field: ["id"], operator: "eq", value: "broken" },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: [{ severity: "error", path: "content/broken.mdx" }],
     });
   });
 

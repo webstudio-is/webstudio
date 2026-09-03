@@ -36,6 +36,7 @@ import {
   materializeContentSource,
   materializeContentSnapshot,
   ContentSourceChangedError,
+  DocumentSourceDiagnosticsError,
   readBoundedBytes,
   serializeJsonDeterministically,
   toBuilderAssetFieldCatalog,
@@ -290,6 +291,14 @@ type AssetQueryPreviewOptions = {
 };
 
 type AssetQueryResultOnly = { data: AssetQueryExecutionResult };
+
+const getAssetQueryResultIds = (result: AssetQueryExecutionResult) =>
+  "items" in result
+    ? result.items.map(({ id }) => id)
+    : result.item === null
+      ? []
+      : [result.item.id];
+
 type AssetQueryOptionsWithoutDiagnostics = AssetQueryPreviewOptions & {
   includeDiagnostics: false;
 };
@@ -1498,7 +1507,7 @@ export class PostgresAssetRepository implements AssetRepository {
     signal?.throwIfAborted();
     let sourceDiagnosticsIndex = queryIndex;
     if (includeDiagnostics && query.content.mode === "none") {
-      const resultIds = data.items.map(({ id }) => id);
+      const resultIds = getAssetQueryResultIds(data);
       if (resultIds.length > 0) {
         const sourceDiagnosticsPlan = createContentCompilationPlan([
           createLiteralContentCompilationQuery({
@@ -1535,6 +1544,16 @@ export class PostgresAssetRepository implements AssetRepository {
       }
     }
     signal?.throwIfAborted();
+    const queryIssues = [
+      ...new Map(
+        [
+          ...(diagnosticIssuesByArtifact.get(queryIndex) ?? []),
+          ...(sourceDiagnosticsIndex === queryIndex
+            ? []
+            : (diagnosticIssuesByArtifact.get(sourceDiagnosticsIndex) ?? [])),
+        ].map((issue) => [getDiagnosticIssueKey(issue), issue])
+      ).values(),
+    ].map((issue) => ({ ...issue, scope: "query" as const }));
     let publishedIndex: typeof index | undefined;
     if (includeDiagnostics) {
       const publishedPlan = diagnosticsPlan ?? databasePlan;
@@ -1548,14 +1567,31 @@ export class PostgresAssetRepository implements AssetRepository {
           dependencies: this.dependencies,
           contentDatabaseMaxBytes: this.contentDatabaseMaxBytes,
         });
-        publishedIndex = await this.measurePerformance(
-          "diagnostics-preparation",
-          () =>
-            diagnosticsRepository.prepareIndexAfterAuthorization(
-              publishedPlan,
-              false
-            )
-        );
+        try {
+          publishedIndex = await this.measurePerformance(
+            "diagnostics-preparation",
+            () =>
+              diagnosticsRepository.prepareIndexAfterAuthorization(
+                publishedPlan,
+                false
+              )
+          );
+        } catch (error) {
+          if (error instanceof DocumentSourceDiagnosticsError) {
+            throw new DocumentSourceDiagnosticsError(
+              [
+                ...queryIssues,
+                ...error.diagnostics.map((diagnostic) => ({
+                  ...diagnostic,
+                  scope: "database" as const,
+                  phase: diagnostic.phase ?? ("source" as const),
+                })),
+              ],
+              "database"
+            );
+          }
+          throw error;
+        }
       }
     }
     signal?.throwIfAborted();
@@ -1584,16 +1620,6 @@ export class PostgresAssetRepository implements AssetRepository {
     }
     const queryDatabase = getContentDatabaseForArtifact(queryIndex);
     const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
-    const queryIssues = [
-      ...new Map(
-        [
-          ...(diagnosticIssuesByArtifact.get(queryIndex) ?? []),
-          ...(sourceDiagnosticsIndex === queryIndex
-            ? []
-            : diagnosticIssuesByArtifact.get(sourceDiagnosticsIndex) ?? []),
-        ].map((issue) => [getDiagnosticIssueKey(issue), issue])
-      ).values(),
-    ].map((issue) => ({ ...issue, scope: "query" as const }));
     const queryIssueKeys = new Set(queryIssues.map(getDiagnosticIssueKey));
     const databaseIssues = (
       diagnosticIssuesByArtifact.get(publishedIndex) ?? []

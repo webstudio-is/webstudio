@@ -16,6 +16,8 @@ type RequestErrorDiagnosticsValue = {
 
 type SourceDiagnostic = {
   severity: "error" | "warning";
+  scope?: "query" | "database";
+  phase?: "metadata" | "reference" | "source";
   code: string;
   message: string;
   path: string;
@@ -93,6 +95,14 @@ export const getRequestSourceDiagnostics = (
         return [
           {
             severity: diagnostic.severity,
+            ...(diagnostic.scope === "query" || diagnostic.scope === "database"
+              ? { scope: diagnostic.scope }
+              : {}),
+            ...(diagnostic.phase === "metadata" ||
+            diagnostic.phase === "reference" ||
+            diagnostic.phase === "source"
+              ? { phase: diagnostic.phase }
+              : {}),
             code: diagnostic.code,
             message: diagnostic.message,
             path: diagnostic.path,
@@ -106,6 +116,15 @@ export const getRequestSourceDiagnostics = (
         ];
       })
     : [];
+
+export const getRequestSourceDiagnosticDescription = (
+  diagnostic: SourceDiagnostic
+) =>
+  diagnostic.scope === undefined
+    ? diagnostic.code
+    : `${
+        diagnostic.scope === "query" ? "Current query" : "Published database"
+      } · ${diagnostic.code}`;
 
 export const RequestErrorDiagnostics = ({
   value,
@@ -146,7 +165,7 @@ export const RequestErrorDiagnostics = ({
                   }`
             }`}
             value={diagnostic.message}
-            description={diagnostic.code}
+            description={getRequestSourceDiagnosticDescription(diagnostic)}
           />
         ))}
         {value.retryable !== undefined && (

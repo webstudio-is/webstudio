@@ -55,6 +55,48 @@ describe("asset resource graph query errors", () => {
     });
   });
 
+  test("preserves the published database scope for source diagnostics", () => {
+    const diagnostics = [
+      {
+        severity: "warning" as const,
+        scope: "query" as const,
+        phase: "metadata" as const,
+        code: "FRONTMATTER_INVALID",
+        message: "Current query warning",
+        assetId: "current",
+        path: "posts/current.md",
+      },
+      {
+        severity: "error" as const,
+        code: "invalid-mdx",
+        message: "Broken published file",
+        assetId: "published",
+        path: "posts/published.mdx",
+      },
+    ];
+
+    expect(
+      getDetailedAssetResourceQueryError(
+        new DocumentSourceDiagnosticsError(diagnostics, "database")
+      )
+    ).toMatchObject({
+      details: {
+        diagnostics: [
+          {
+            scope: "query",
+            phase: "metadata",
+            path: "posts/current.md",
+          },
+          {
+            scope: "database",
+            phase: "source",
+            path: "posts/published.mdx",
+          },
+        ],
+      },
+    });
+  });
+
   test("maps ambiguous exactly-one queries to a structured error", () => {
     expect(
       getAssetResourceQueryError(new AssetQueryMultipleResultsError(2))

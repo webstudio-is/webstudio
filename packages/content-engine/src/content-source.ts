@@ -9,7 +9,7 @@ import {
   type ContentCompilerDiagnostics,
   type ContentCompilerInput,
 } from "./asset-index";
-import type { ContentArtifactV1 } from "./schema";
+import type { AssetQueryDiagnosticIssue, ContentArtifactV1 } from "./schema";
 import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
 import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import type { MarkdownAssetReferences } from "./markdown-references";
@@ -134,11 +134,17 @@ export class ContentSourceChangedError extends Error {
 type SourceIssue = NonNullable<
   ContentCompilerDiagnostics["sourceIssues"]
 >[number];
+type DocumentSourceDiagnostic = SourceIssue &
+  Partial<Pick<AssetQueryDiagnosticIssue, "scope" | "phase">>;
 
 export class DocumentSourceDiagnosticsError extends Error {
-  readonly diagnostics: readonly SourceIssue[];
+  readonly diagnostics: readonly DocumentSourceDiagnostic[];
+  readonly scope: "query" | "database";
 
-  constructor(diagnostics: readonly SourceIssue[]) {
+  constructor(
+    diagnostics: readonly DocumentSourceDiagnostic[],
+    scope: "query" | "database" = "query"
+  ) {
     const errorCount = diagnostics.filter(
       ({ severity }) => severity === "error"
     ).length;
@@ -149,6 +155,7 @@ export class DocumentSourceDiagnosticsError extends Error {
     );
     this.name = "DocumentSourceDiagnosticsError";
     this.diagnostics = diagnostics;
+    this.scope = scope;
   }
 }
 
