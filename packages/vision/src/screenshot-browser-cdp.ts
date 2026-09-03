@@ -23,7 +23,9 @@ const withTimeout = async <Result>(
   }
 };
 
-type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
+type BrowserProcess = Pick<ChildProcess, "kill" | "once"> & {
+  stderr?: Pick<NodeJS.ReadableStream, "on"> | null;
+};
 
 export type BrowserScreenshotPageMetadata = {
   rootMarkerPresent: boolean;
@@ -113,7 +115,7 @@ export type BrowserScreenshotDependencies = {
 export const defaultBrowserScreenshotDependencies: BrowserScreenshotDependencies =
   {
     spawnBrowser(file, args) {
-      return spawn(file, [...args], { stdio: "ignore" });
+      return spawn(file, [...args], { stdio: ["ignore", "ignore", "pipe"] });
     },
     readFile,
     writeFile,
@@ -163,8 +165,20 @@ type CdpMessage = {
   error?: { message?: string };
 };
 
+export type BrowserStartupDiagnostic = {
+  stage: "browser-startup";
+  reason: "browser_ipc_permission_denied";
+  message: string;
+};
+
 export class BrowserSessionClosedError extends Error {
   readonly code = "BROWSER_SESSION_CLOSED";
+  readonly diagnostic?: BrowserStartupDiagnostic;
+
+  constructor(message: string, diagnostic?: BrowserStartupDiagnostic) {
+    super(message);
+    this.diagnostic = diagnostic;
+  }
 }
 
 export const isBrowserSessionClosedError = (
@@ -1255,15 +1269,59 @@ const getScreenshotCaptureParams = async ({
 
 export class BrowserStartupError extends Error {
   readonly code = "BROWSER_STARTUP_FAILED";
+  readonly diagnostic?: BrowserStartupDiagnostic;
+  readonly issues?: Array<{
+    code: string;
+    path: string[];
+    message: string;
+    constraint: string;
+  }>;
 
-  constructor(message: string, options?: { cause?: unknown }) {
+  constructor(
+    message: string,
+    options?: { cause?: unknown; diagnostic?: BrowserStartupDiagnostic }
+  ) {
     super(message, options);
     this.name = "BrowserStartupError";
+    this.diagnostic = options?.diagnostic;
+    this.issues =
+      options?.diagnostic === undefined
+        ? undefined
+        : [
+            {
+              code: options.diagnostic.reason,
+              path: [],
+              message: options.diagnostic.message,
+              constraint: `stage:${options.diagnostic.stage}`,
+            },
+          ];
   }
 }
 
-const getBrowserExitMessage = (message: string, reason?: string) =>
-  `${message}${reason === undefined ? "" : ` (${reason})`}. Check the browser installation or provide a supported Chromium executable.`;
+const getBrowserStartupDiagnostic = (
+  output: string
+): BrowserStartupDiagnostic | undefined => {
+  if (
+    /(?:socket\(\)|ipc|mach port|bootstrap_check_in).*?(?:operation not permitted|permission denied)|(?:operation not permitted|permission denied).*?(?:socket|ipc|mach port)/i.test(
+      output
+    )
+  ) {
+    return {
+      stage: "browser-startup",
+      reason: "browser_ipc_permission_denied",
+      message: "The operating system denied browser IPC or socket access.",
+    };
+  }
+};
+
+const getBrowserExitMessage = (
+  message: string,
+  reason?: string,
+  diagnostic?: BrowserStartupDiagnostic
+) =>
+  `${message}${reason === undefined ? "" : ` (${reason})`}.${
+    diagnostic === undefined ? "" : ` ${diagnostic.message}`
+  } Check the browser installation or provide a supported Chromium executable.`;
 
 type BrowserRuntime = {
   userDataDir: string;
@@ -1332,6 +1390,13 @@ const startBrowserRuntimeOnce = async (
       .catch(() => undefined);
     throw error;
   }
+  let startupOutput = "";
+  let collectStartupOutput = true;
+  browserProcess.stderr?.on("data", (chunk) => {
+    if (collectStartupOutput) {
+      startupOutput = `${startupOutput}${String(chunk)}`.slice(-4000);
+    }
+  });
   let running = true;
   const browserClosed = new Promise<string | undefined>((resolveClosed) => {
     const close = (reason?: string) => {
@@ -1356,14 +1421,19 @@ const startBrowserRuntimeOnce = async (
     const { port } = await Promise.race([
       waitForDevToolsPort(userDataDir, dependencies, startupTimeout),
       browserClosed.then((reason) => {
+        const diagnostic = getBrowserStartupDiagnostic(startupOutput);
         throw new BrowserSessionClosedError(
           getBrowserExitMessage(
             "Browser exited before its DevTools endpoint became ready",
-            reason
-          )
+            reason,
+            diagnostic
+          ),
+          diagnostic
         );
       }),
     ]);
+    collectStartupOutput = false;
+    startupOutput = "";
     let closePromise: Promise<void> | undefined;
     const runtime: BrowserRuntime = {
       userDataDir,
@@ -1423,7 +1493,13 @@ const startBrowserRuntime = async (
   } catch (error) {
     throw new BrowserStartupError(
       error instanceof Error ? error.message : String(error),
-      { cause: error }
+      {
+        cause: error,
+        diagnostic:
+          error instanceof BrowserSessionClosedError
+            ? error.diagnostic
+            : undefined,
+      }
     );
   }
 };

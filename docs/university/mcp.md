@@ -11,6 +11,15 @@ icon: robot
 
 **Webstudio MCP v0.0.0-webstudio-version**
 
+## Introduction
+
+All you need to do is install the Codex desktop app or Claude Desktop and tell
+it:
+
+> Install Webstudio CLI and use MCP.
+
+---
+
 {% hint style="info" %}
 This reference is generated from the Webstudio CLI source in the same Builder
 revision. GitBook publishes it when that revision is successfully released.
@@ -463,7 +472,7 @@ Vision-capable AI can use MCP to see what it is building:
 13. For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
 14. For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
 15. Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
-16. An explicit occupied `port` fails immediately with `PREVIEW_PORT_IN_USE`. To capture a generated site already running in another process, pass its `baseUrl` with `path`; otherwise choose another port.
+16. The MCP runner selects an available loopback port and returns the preview URL. Do not pass `host` or `port` to MCP preview or screenshot tools. To capture a generated site already running in another process, pass its `baseUrl` with `path`.
 17. Automatic browser discovery checks system installations, configured browser paths, and Chromium installations in the Playwright browser cache.
 18. The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
 19. When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair. Add expectedText when a specific visible phrase must be present; its assertions report pass/fail plus found and missing text. Add expectedVisual to set pass/fail limits for mismatch percentage, the number of changed regions, or an overall dominant color/brightness direction.

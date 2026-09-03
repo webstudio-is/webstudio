@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
 import { atom } from "nanostores";
@@ -9,6 +8,7 @@ import type {
   InstanceData,
 } from "@webstudio-is/react-sdk";
 import {
+  createId,
   getIndexesWithinAncestors,
   type Instance,
   type WsComponentMeta,
@@ -60,7 +60,7 @@ const createHookContext = (): HookContext => {
       const newProps = props.get(instanceKey) ?? new Map();
 
       const propBase = {
-        id: nanoid(),
+        id: createId("nano"),
         instanceId: instanceData.id,
         name: propName,
       };

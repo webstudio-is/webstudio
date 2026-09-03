@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { test, expect, describe, beforeEach } from "vitest";
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import {
   type NestingRule,
   createRegularStyleSheet,
@@ -109,7 +109,7 @@ beforeEach(() => {
   $breakpoints.set(
     new Map(
       initialBreakpoints.map((breakpoint) => {
-        const id = nanoid();
+        const id = createId("nano");
         return [id, { ...breakpoint, id }];
       })
     )

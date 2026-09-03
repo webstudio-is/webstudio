@@ -2,7 +2,7 @@ import { Store } from "immerhin";
 import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
 import { batched } from "nanostores";
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import { $project } from "./data-stores";
 import {
   $selectedPageHash,
@@ -243,7 +243,11 @@ class SelectedPageAndInstanceSyncObject {
         ) {
           return;
         }
-        sendTransaction({ id: nanoid(), object: this.name, payload: state });
+        sendTransaction({
+          id: createId("nano"),
+          object: this.name,
+          payload: state,
+        });
       }
     );
     signal.addEventListener("abort", unsubscribe);

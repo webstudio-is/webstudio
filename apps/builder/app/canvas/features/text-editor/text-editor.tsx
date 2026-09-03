@@ -50,9 +50,13 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 
-import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
-import type { Instance, Instances, Props } from "@webstudio-is/sdk";
+import {
+  createId,
+  type Instance,
+  type Instances,
+  type Props,
+} from "@webstudio-is/sdk";
 import {
   inflatedAttribute,
   idAttribute,
@@ -149,7 +153,7 @@ const BindInstanceToNodePlugin = ({
  */
 const CaretColorPlugin = () => {
   const [editor] = useLexicalComposerContext();
-  const caretClassName = useState(() => `a${nanoid()}`)[0];
+  const caretClassName = useState(() => `a${createId("nano")}`)[0];
 
   useEffect(() => {
     const rootElement = editor.getRootElement();
@@ -1552,8 +1556,8 @@ export const TextEditor = ({
 }: TextEditorProps) => {
   const [rootInstanceSelector] = useState(() => rootInstanceSelectorUnstable);
   // class names must be started with letter so we add a prefix
-  const [paragraphClassName] = useState(() => `a${nanoid()}`);
-  const [italicClassName] = useState(() => `a${nanoid()}`);
+  const [paragraphClassName] = useState(() => `a${createId("nano")}`);
+  const [italicClassName] = useState(() => `a${createId("nano")}`);
   const lastSavedStateJsonRef = useRef<SerializedEditorState | null>(null);
   const [newLinkKeyToInstanceId] = useState(() => new Map());
 

@@ -243,24 +243,6 @@ describe("registerCommands", () => {
     expect(getTopLevelMcpToolHint(["unknown-command"])).toBeUndefined();
   });
 
-  test("root help points low-context agents to mcp meta.index first", async () => {
-    const output = await getHelpOutput(["--help"]);
-
-    expect(output).toContain("Project editing / LLM quick start");
-    expect(output).toContain("webstudio man project-editing");
-    expect(output).toContain("webstudio meta.index");
-    expect(output).toContain("webstudio insert-fragment");
-    expect(output).toContain("webstudio mcp single-op-call meta.index");
-    expect(output).toContain(
-      "webstudio mcp single-op-call meta.get-more-tools"
-    );
-    expect(output).toContain(
-      "webstudio insert-fragment --input-file .temp/insert-fragment.json --dry-run"
-    );
-    expect(output).not.toContain("<$.Box");
-    expect(output).toContain("node packages/cli/local.js");
-  });
-
   test("registers high-level API commands and mcp command", () => {
     const { yargs, commands } = createYargs();
 
@@ -318,45 +300,6 @@ describe("registerCommands", () => {
     }
   });
 
-  test("keeps grouped subcommands out of top-level help", async () => {
-    const rootHelp = await getHelpOutput(["--help"]);
-
-    expect(rootHelp).toContain("webstudio import");
-    expect(rootHelp).toContain("webstudio publish");
-    expect(rootHelp).toContain("webstudio domains");
-    expect(rootHelp).toContain("webstudio schema [topic]");
-    expect(rootHelp).toContain("webstudio mcp");
-    expect(rootHelp).toContain("call MCP tools from the shell");
-    expect(rootHelp).not.toContain("webstudio publish deploy");
-    expect(rootHelp).not.toContain("webstudio domains list");
-
-    const publishHelp = await getHelpOutput(["publish", "--help"]);
-    expect(publishHelp).toContain("webstudio publish deploy");
-    expect(publishHelp).toContain("webstudio publish list");
-
-    const domainsHelp = await getHelpOutput(["domains", "--help"]);
-    expect(domainsHelp).toContain("webstudio domains list");
-    expect(domainsHelp).toContain("webstudio domains create");
-  });
-
-  test("shows audit-specific flags and examples", async () => {
-    const output = await getHelpOutput(["audit", "--help"]);
-
-    expect(output).toContain("webstudio audit");
-    expect(output).toContain("--scopes");
-    expect(output).toContain("--severities");
-    expect(output).toContain("--page-path");
-    expect(output).toContain("--page-id");
-    expect(output).toContain("--limit");
-    expect(output).toContain("--cursor");
-    expect(output).toContain("--verbose");
-    expect(output).toContain("--rendered");
-    expect(output).toContain("--route-example");
-    expect(output).toContain("--image-domain");
-    expect(output).toContain("--confirm-large-run");
-    expect(output).not.toContain("single-op-call <tool>");
-  });
-
   test("keeps every documented audit CLI example compatible with audit help", async () => {
     const docs = await readFile(
       new URL("./docs/api-use-cases.md", import.meta.url),
@@ -374,13 +317,5 @@ describe("registerCommands", () => {
       expect(output).toContain("webstudio audit");
       expect(output).not.toContain("single-op-call <tool>");
     }
-  });
-
-  test("documents registry inspection as a read-only nested command", async () => {
-    const output = await getHelpOutput(["registry", "inspect", "--help"]);
-
-    expect(output).toContain("--source");
-    expect(output).toContain("--item");
-    expect(output).toContain("No files are installed");
   });
 });

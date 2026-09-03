@@ -4,7 +4,6 @@ import {
   $workspaceRole,
   $workspaces,
 } from "~/dashboard/workspace/workspace-stores";
-import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import {
   defaultPlanFeatures,
@@ -14,13 +13,14 @@ import {
 import type { Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
-import type {
-  Instance,
-  Prop,
-  Props,
-  StyleDecl,
-  StyleSource,
-  AssetType,
+import {
+  createId,
+  type AssetType,
+  type Instance,
+  type Prop,
+  type Props,
+  type StyleDecl,
+  type StyleSource,
 } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
@@ -233,7 +233,7 @@ export const $selectedInstanceStyleSources = computed(
       // always put local style source last
       selectedInstanceStyleSources.push({
         type: "local",
-        id: nanoid(),
+        id: createId("nano"),
       });
     }
     return selectedInstanceStyleSources;

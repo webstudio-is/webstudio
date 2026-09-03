@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import deepEqual from "fast-deep-equal";
 import {
   camelCaseProperty,
@@ -15,6 +14,7 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import {
+  createId,
   getStyleDeclKey,
   ROOT_INSTANCE_ID,
   styleDecl as styleDeclSchema,
@@ -29,6 +29,7 @@ import {
   type StyleSources,
   type Styles,
 } from "@webstudio-is/sdk";
+
 import type { BuilderPatch, BuilderPatchChange } from "../contracts/patch";
 import {
   paginateOutput,
@@ -45,6 +46,8 @@ import { serializeStyleDeclarations } from "./style-utils";
 import { createPropValue } from "./props";
 import { getStyleSourceStylesSignature } from "./style-copy";
 import { isBaseWidthBreakpoint } from "./breakpoints";
+
+const createNanoId = () => createId("nano");
 
 export const serializeDesignTokens = ({
   styleSources,
@@ -1706,7 +1709,7 @@ export const createLocalStyleSourcePlan = ({
   styleSourceSelection,
   styleSources,
   instanceId,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   styleSourceSelection: StyleSourceSelection | undefined;
   styleSources: Pick<StyleSources, "get">;
@@ -1762,7 +1765,7 @@ export const createLocalStyleSourcePatchPlan = ({
   styleSources,
   styleSourceSelection,
   shouldCreate,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   createdLocalSourceIds: Map<Instance["id"], StyleSource["id"]>;
   instanceId: Instance["id"];
@@ -1831,7 +1834,7 @@ export const getOrCreateLocalStyleSourceIdMutable = ({
   styleSourceSelections,
   styleSources,
   instanceId,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   styleSourceSelections: StyleSourceSelections;
   styleSources: StyleSources;
