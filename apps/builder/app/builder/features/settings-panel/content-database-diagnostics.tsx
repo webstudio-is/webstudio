@@ -446,8 +446,8 @@ export const ContentDatabaseDiagnostics = ({
             {value.database.truncated
               ? `${value.database.includedDocumentCount} of ${candidateFilesLabel} fit in the merged published content database. ${omittedFilesLabel} may be omitted from published query results.`
               : totalDocumentCount === 1
-              ? "The candidate file fits in the merged published content database."
-              : `All ${candidateFilesLabel} fit in the merged published content database.`}
+                ? "The candidate file fits in the merged published content database."
+                : `All ${candidateFilesLabel} fit in the merged published content database.`}
           </Text>
         </PanelBanner>
         <RequestDiagnosticsTable>

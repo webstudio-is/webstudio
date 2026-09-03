@@ -346,13 +346,13 @@ const discoverSnapshotAssetValueReferences = async ({
                   column: diagnostic.sourceRange.start.column,
                 }
               : "line" in diagnostic && diagnostic.line !== undefined
-              ? {
-                  line: diagnostic.line,
-                  ...(diagnostic.column === undefined
-                    ? {}
-                    : { column: diagnostic.column }),
-                }
-              : {}),
+                ? {
+                    line: diagnostic.line,
+                    ...(diagnostic.column === undefined
+                      ? {}
+                      : { column: diagnostic.column }),
+                  }
+                : {}),
           }))
         );
         if (validation.recovery.status === "parsed") {

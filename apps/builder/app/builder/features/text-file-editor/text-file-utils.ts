@@ -102,21 +102,21 @@ export const getTextFileEditorDiagnostics = async ({
         diagnostic.code === "invalid-mdx"
           ? diagnostic.message
           : diagnostic.code === "unsafe-mdx"
-          ? diagnostic.reason
-          : formatContentBlockDiagnostic(diagnostic),
+            ? diagnostic.reason
+            : formatContentBlockDiagnostic(diagnostic),
     })),
   ].map((diagnostic) => {
     const from =
       "sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
         ? getPointOffset(source, diagnostic.sourceRange.start)
         : "line" in diagnostic &&
-          diagnostic.line !== undefined &&
-          diagnostic.column !== undefined
-        ? getPointOffset(source, {
-            line: diagnostic.line,
-            column: diagnostic.column,
-          })
-        : 0;
+            diagnostic.line !== undefined &&
+            diagnostic.column !== undefined
+          ? getPointOffset(source, {
+              line: diagnostic.line,
+              column: diagnostic.column,
+            })
+          : 0;
     const to =
       "sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
         ? Math.max(from, getPointOffset(source, diagnostic.sourceRange.end))

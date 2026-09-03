@@ -1464,9 +1464,8 @@ export const validateMdxDocumentSource = async ({
   source: string;
 }) => {
   const recovery = await parseMdxDocumentRecovering({ source });
-  const frontmatterDiagnostics = await createMarkdownFrontmatterDiagnostics(
-    source
-  );
+  const frontmatterDiagnostics =
+    await createMarkdownFrontmatterDiagnostics(source);
   const mdxDiagnostics = createMdxSourceDiagnostics(
     recovery.diagnostics
   ).filter(

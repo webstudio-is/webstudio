@@ -92,9 +92,7 @@ tags: [web, studio]
 
   test("reports every YAML parser error", async () => {
     await expect(
-      createMarkdownFrontmatterDiagnostics(
-        "---\na: 1\na: 2\nb: 1\nb: 2\n---\n"
-      )
+      createMarkdownFrontmatterDiagnostics("---\na: 1\na: 2\nb: 1\nb: 2\n---\n")
     ).resolves.toMatchObject([
       { code: "FRONTMATTER_INVALID", line: 3, column: 1 },
       { code: "FRONTMATTER_INVALID", line: 5, column: 1 },

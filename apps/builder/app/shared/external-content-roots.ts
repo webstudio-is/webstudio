@@ -1,5 +1,6 @@
 import {
   createCanonicalAssetPath,
+  createMarkdownFrontmatterDiagnostics,
   parseMdxDocumentRecovering,
   replaceMdxFrontmatter,
   serializeMdxDocument,
@@ -519,11 +520,16 @@ const resolveExternalContentFrontmatter = async (
         format,
         source: {
           async *[Symbol.asyncIterator]() {
-            yield encoder.encode(
+            const source =
               asset.id === entry.assetId
                 ? sourceState.source
-                : (await session.open(asset.id)).source
-            );
+                : (await session.open(asset.id)).source;
+            const diagnostics =
+              await createMarkdownFrontmatterDiagnostics(source);
+            if (diagnostics.length > 0) {
+              throw new Error(diagnostics[0].message);
+            }
+            yield encoder.encode(source);
           },
         },
       })),
