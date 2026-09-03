@@ -2455,6 +2455,36 @@ describe("PostgresAssetRepository", () => {
     );
     expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
 
+    const unobservedFieldResult = await repository.query({
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "subtitle"],
+              operator: "exists",
+              value: false,
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    });
+    expect(unobservedFieldResult.__diagnostics__.queryWarnings).toEqual([
+      "Asset field properties.subtitle is not currently observed",
+    ]);
+    expect(unobservedFieldResult.__diagnostics__.queryIssues).toEqual([
+      {
+        severity: "warning",
+        code: "UNOBSERVED_FIELD",
+        path: ["query", "where", "all", "0", "field"],
+        message: "Asset field properties.subtitle is not currently observed",
+      },
+    ]);
+
     vi.mocked(assetClient.readFile).mockImplementation(async () => ({
       data: new Blob(["# New post"]).stream(),
       contentLength: 10,
@@ -2651,37 +2681,30 @@ describe("PostgresAssetRepository", () => {
     expect(firstPage).toMatchObject({
       data: { items: [{ id: "image" }] },
     });
-    expect(firstPage.__diagnostics__.issues).toMatchObject([
-      { scope: "query", path: "content/a.png" },
-      { scope: "database", path: "content/b.mdx" },
+    expect(firstPage.__diagnostics__.issues).toEqual([
+      expect.objectContaining({ scope: "query", path: "content/a.png" }),
     ]);
     expect(readFile).not.toHaveBeenCalled();
 
-    await expect(
-      repository.query(
-        { query },
-        {
-          diagnosticsPlan: createCompilationPlan({
-            where: { field: ["id"], operator: "eq", value: "broken" },
-            content: { mode: "full" },
-          }),
-        }
-      )
-    ).rejects.toMatchObject({
-      scope: "database",
-      diagnostics: [
-        {
-          severity: "warning",
-          scope: "query",
-          path: "content/a.png",
-        },
-        {
-          severity: "error",
-          scope: "database",
-          path: "content/b.mdx",
-        },
-      ],
+    const detailedFirstPage = await repository.query(
+      { query },
+      {
+        diagnosticsPlan: createCompilationPlan({
+          where: { field: ["id"], operator: "eq", value: "broken" },
+          content: { mode: "full" },
+        }),
+      }
+    );
+    expect(detailedFirstPage).toMatchObject({
+      data: { items: [{ id: "image" }] },
     });
+    expect(detailedFirstPage.__diagnostics__.issues).toEqual([
+      expect.objectContaining({
+        severity: "warning",
+        scope: "query",
+        path: "content/a.png",
+      }),
+    ]);
 
     await expect(
       repository.query({ query: { ...query, offset: 1 } })

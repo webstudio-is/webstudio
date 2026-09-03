@@ -1,7 +1,6 @@
 import {
-  createMdxSourceDiagnostics,
-  parseMdxDocumentRecovering,
   replaceMdxFrontmatter,
+  validateTextAssetSource,
 } from "@webstudio-is/content-engine/mdx";
 import type { AssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import {
@@ -55,18 +54,23 @@ export const inspectMdxAssetSource = async ({
   metas: Map<string, WsComponentMeta>;
   projectId: string;
 }) => {
-  const parsed = await parseMdxDocumentRecovering({ source });
-  const sourceDiagnostics = createMdxSourceDiagnostics(parsed.diagnostics);
+  const validation = await validateTextAssetSource({ source, format: "mdx" });
+  if (validation.format !== "mdx") {
+    throw new Error("MDX source validation returned the wrong format");
+  }
+  const parsed = validation.recovery;
+  const sourceDiagnostics = validation.diagnostics;
   const diagnostics: Array<
-    | ReturnType<typeof createMdxSourceDiagnostics>[number]
-    | ContentBlockDiagnostic
+    (typeof sourceDiagnostics)[number] | ContentBlockDiagnostic
   > = [...sourceDiagnostics];
   const sourceDiagnosticKeys = new Set(
     sourceDiagnostics.map((diagnostic) =>
       JSON.stringify([
         diagnostic.code,
         diagnostic.message,
-        diagnostic.sourceRange,
+        "sourceRange" in diagnostic ? diagnostic.sourceRange : undefined,
+        "line" in diagnostic ? diagnostic.line : undefined,
+        "column" in diagnostic ? diagnostic.column : undefined,
       ])
     )
   );
@@ -118,7 +122,13 @@ export const inspectMdxAssetSource = async ({
             : diagnostic.reason;
         return (
           sourceDiagnosticKeys.has(
-            JSON.stringify([diagnostic.code, message, diagnostic.sourceRange])
+            JSON.stringify([
+              diagnostic.code,
+              message,
+              diagnostic.sourceRange,
+              undefined,
+              undefined,
+            ])
           ) === false
         );
       })

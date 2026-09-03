@@ -3,6 +3,7 @@ import type { ResourceRequest } from "@webstudio-is/sdk";
 import {
   __testing__,
   $hasPendingResources,
+  $pendingResourceKeys,
   $resourceDiagnosticsCache,
   $resourceDiagnosticsErrorCache,
   $resourcePerformanceCache,
@@ -40,6 +41,7 @@ test("removes obsolete queued requests but keeps cached results", () => {
   queueResources([request]);
   $resourcesCache.get().set(key, { stale: true });
   expect($hasPendingResources.get()).toBe(true);
+  expect($pendingResourceKeys.get()).toEqual(new Set([key]));
 
   const resourceCacheListener = vi.fn();
   const unlisten = $resourcesCache.listen(resourceCacheListener);
@@ -48,6 +50,7 @@ test("removes obsolete queued requests but keeps cached results", () => {
 
   expect($resourcesCache.get().has(key)).toBe(true);
   expect($hasPendingResources.get()).toBe(false);
+  expect($pendingResourceKeys.get()).toEqual(new Set());
   expect(resourceCacheListener).not.toHaveBeenCalled();
   unlisten();
 });

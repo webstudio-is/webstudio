@@ -91,6 +91,7 @@ test("shows when diagnostics are loading", () => {
     root?.render(
       <RequestInspector
         preview={<div>Preview content</div>}
+        diagnostics={<div>Partial diagnostics</div>}
         diagnosticsPending
       />
     );
@@ -106,8 +107,55 @@ test("shows when diagnostics are loading", () => {
     diagnostics?.click();
   });
 
-  expect(container.textContent).toContain("Loading diagnostics...");
+  expect(
+    container.querySelector('[role="status"]')?.getAttribute("aria-label")
+  ).toBe("Loading diagnostics…");
+  expect(container.textContent).toContain("Partial diagnostics");
   expect(container.textContent).not.toContain("No diagnostics available");
+  expect(
+    container.querySelector('[data-state="active"][aria-busy="true"]')
+  ).not.toBeNull();
+});
+
+test("shows when query content is loading", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <RequestInspector
+        queryContainerRef={() => {}}
+        queryPending
+        preview={<div>Preview content</div>}
+      />
+    );
+  });
+
+  expect(
+    container.querySelector('[role="status"]')?.getAttribute("aria-label")
+  ).toBe("Loading query…");
+  expect(
+    container.querySelector('[data-state="active"][aria-busy="true"]')
+  ).not.toBeNull();
+});
+
+test("shows when preview content is loading", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <RequestInspector preview={<div>Previous preview</div>} previewPending />
+    );
+  });
+
+  expect(
+    container.querySelector('[role="status"]')?.getAttribute("aria-label")
+  ).toBe("Loading preview…");
+  expect(container.textContent).toContain("Previous preview");
+  expect(
+    container.querySelector('[data-state="active"][aria-busy="true"]')
+  ).not.toBeNull();
 });
 
 test("keeps preview first when no query editor is available", () => {

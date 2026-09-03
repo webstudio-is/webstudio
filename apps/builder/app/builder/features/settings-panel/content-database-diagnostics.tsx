@@ -382,7 +382,8 @@ export const ContentDatabaseDiagnostics = ({
   const errorCount =
     value.issues?.filter(({ severity }) => severity === "error").length ?? 0;
   const warningCount =
-    value.issues?.filter(({ severity }) => severity === "warning").length ?? 0;
+    (value.issues?.filter(({ severity }) => severity === "warning").length ??
+      0) + (value.queryIssues?.length ?? value.queryWarnings?.length ?? 0);
   const databaseAndSizes = {
     ...getPerformanceSizes(performance),
     scope: value.scope,
@@ -391,15 +392,22 @@ export const ContentDatabaseDiagnostics = ({
   };
   return (
     <RequestDiagnosticsContent padded={false}>
-      {value.issues !== undefined && value.issues.length > 0 && (
+      {(value.issues !== undefined && value.issues.length > 0) ||
+      (value.queryIssues !== undefined && value.queryIssues.length > 0) ||
+      (value.queryWarnings !== undefined && value.queryWarnings.length > 0) ? (
         <DiagnosticsSection
           label="Errors and warnings"
-          data={value.issues}
+          data={{
+            queryIssues: value.queryIssues,
+            queryWarnings: value.queryWarnings,
+            issues: value.issues,
+          }}
           isOpen
         >
           <PanelBanner
             variant={
-              value.issues.some(({ severity }) => severity === "error")
+              value.issues?.some(({ severity }) => severity === "error") ===
+              true
                 ? "error"
                 : "warning"
             }
@@ -408,12 +416,29 @@ export const ContentDatabaseDiagnostics = ({
               {errorCount} {errorCount === 1 ? "error" : "errors"} and{" "}
               {warningCount} {warningCount === 1 ? "warning" : "warnings"}
               {value.issuesTruncated
-                ? `; showing the first ${value.issues.length}.`
+                ? `; showing the first ${value.issues?.length ?? 0}.`
                 : "."}
             </Text>
           </PanelBanner>
           <RequestDiagnosticsTable>
-            {value.issues.map((issue, index) => (
+            {value.queryIssues !== undefined
+              ? value.queryIssues.map((issue, index) => (
+                  <RequestDiagnosticsRow
+                    key={`${issue.path.join(".")}:${issue.code}:${index}`}
+                    label={`Warning · Query · ${issue.path.join(".")}`}
+                    value={issue.message}
+                    description={issue.code}
+                  />
+                ))
+              : value.queryWarnings?.map((warning, index) => (
+                  <RequestDiagnosticsRow
+                    key={`query-warning:${index}`}
+                    label="Warning · Query setup"
+                    value={warning}
+                    description="Current query"
+                  />
+                ))}
+            {value.issues?.map((issue, index) => (
               <RequestDiagnosticsRow
                 key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
                 label={`${issue.severity === "error" ? "Error" : "Warning"} · ${
@@ -435,7 +460,7 @@ export const ContentDatabaseDiagnostics = ({
             ))}
           </RequestDiagnosticsTable>
         </DiagnosticsSection>
-      )}
+      ) : undefined}
       <DiagnosticsSection
         label="Database and sizes"
         data={databaseAndSizes}

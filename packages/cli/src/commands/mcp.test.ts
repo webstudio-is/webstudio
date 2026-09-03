@@ -31,7 +31,7 @@ const {
   createMcpStatusReporter,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
-  withMdxAssetWriteFeedback,
+  withTextAssetWriteFeedback,
   reportMcpSingleOpCallTermination,
   reportMcpRunTermination,
   createMcpRunTerminationController,
@@ -1181,7 +1181,7 @@ test("returns diagnostics without rejecting an invalid MDX Asset write", async (
   });
 
   await expect(
-    withMdxAssetWriteFeedback({
+    withTextAssetWriteFeedback({
       command: "update-asset-content",
       input: {
         assetId: "asset-id",
@@ -1202,6 +1202,284 @@ test("returns diagnostics without rejecting an invalid MDX Asset write", async (
         }),
       ],
     },
+  });
+});
+
+test("returns every Markdown frontmatter diagnostic after an Asset write", async () => {
+  const source = "---\na: 1\na: 2\nb: 1\nb: 2\n---\n\n# Kept\n";
+  const operationInput = getMcpOperationInput("update-asset-content", {
+    assetId: "asset-id",
+    expectedName: "article_hash.md",
+    content: source,
+  });
+
+  const response = await withTextAssetWriteFeedback({
+    command: "update-asset-content",
+    input: {
+      assetId: "asset-id",
+      expectedName: "article_hash.md",
+      content: source,
+    },
+    operationInput,
+    result: { result: { assetId: "asset-id" } },
+  });
+
+  expect(response.result).toMatchObject({
+    assetId: "asset-id",
+    source,
+    diagnostics: [
+      { code: "FRONTMATTER_INVALID", severity: "warning", line: 3 },
+      { code: "FRONTMATTER_INVALID", severity: "warning", line: 5 },
+    ],
+  });
+});
+
+test("returns source diagnostics for every Markdown and MDX upload", async () => {
+  const markdown = "---\na: 1\na: 2\n---\n";
+  const mdx = "{first()}\n\n{second()}\n";
+  const assets = [
+    { name: "article.md", type: "file", format: "md", meta: {} },
+    { name: "page.mdx", type: "file", format: "mdx", meta: {} },
+  ];
+  const operationInput = {
+    assets,
+    readAssetData: async (asset: { name: string }) =>
+      asset.name === "article.md" ? markdown : mdx,
+  };
+
+  const response = await withTextAssetWriteFeedback({
+    command: "upload-assets",
+    input: { assets },
+    operationInput,
+    result: { result: { uploaded: [] } },
+  });
+
+  expect(response.result).toMatchObject({
+    sourceDiagnostics: [
+      {
+        index: 0,
+        name: "article.md",
+        diagnostics: [
+          { code: "FRONTMATTER_INVALID", severity: "warning", line: 3 },
+        ],
+      },
+      {
+        index: 1,
+        name: "page.mdx",
+        diagnostics: [
+          { code: "unsafe-mdx", severity: "warning" },
+          { code: "unsafe-mdx", severity: "warning" },
+        ],
+      },
+    ],
+  });
+});
+
+test("validates query setup with the same schema before calling MCP", () => {
+  const filter = { field: ["id"], operator: "eq", value: "asset" };
+  let nestedWhere: unknown = filter;
+  for (let depth = 0; depth < 9; depth += 1) {
+    nestedWhere = { all: [nestedWhere] };
+  }
+  const invalidQueries: Array<[string, unknown]> = [
+    ["missing query", {}],
+    ["unknown query key", { query: { unknown: true } }],
+    ["result mode", { query: { result: "middle" } }],
+    ["where shape", { query: { where: {} } }],
+    [
+      "filter count",
+      { query: { where: { all: Array.from({ length: 33 }, () => filter) } } },
+    ],
+    ["filter depth", { query: { where: nestedWhere } }],
+    [
+      "empty field path",
+      { query: { where: { all: [{ ...filter, field: [] }] } } },
+    ],
+    [
+      "deep field path",
+      {
+        query: {
+          where: {
+            all: [{ ...filter, field: Array.from({ length: 10 }, () => "x") }],
+          },
+        },
+      },
+    ],
+    [
+      "bare properties field",
+      { query: { where: { all: [{ ...filter, field: ["properties"] }] } } },
+    ],
+    [
+      "unsupported standard field",
+      { query: { where: { all: [{ ...filter, field: ["bogus"] }] } } },
+    ],
+    [
+      "operator",
+      { query: { where: { all: [{ ...filter, operator: "matches" }] } } },
+    ],
+    [
+      "in value",
+      {
+        query: {
+          where: { all: [{ field: ["id"], operator: "in", value: "asset" }] },
+        },
+      },
+    ],
+    [
+      "in value count",
+      {
+        query: {
+          where: {
+            all: [
+              {
+                field: ["id"],
+                operator: "in",
+                value: Array.from({ length: 1_001 }, () => "asset"),
+              },
+            ],
+          },
+        },
+      },
+    ],
+    [
+      "boolean operator value",
+      {
+        query: {
+          where: {
+            all: [{ field: ["id"], operator: "exists", value: "yes" }],
+          },
+        },
+      },
+    ],
+    [
+      "sort count",
+      {
+        query: {
+          sort: Array.from({ length: 9 }, () => ({
+            field: ["id"],
+            direction: "asc",
+          })),
+        },
+      },
+    ],
+    [
+      "sort direction",
+      { query: { sort: [{ field: ["id"], direction: "up" }] } },
+    ],
+    ["first without sort", { query: { result: "first" } }],
+    [
+      "empty output",
+      {
+        query: {
+          output: { mode: "fields", includeMetadata: false, fields: [] },
+          content: { mode: "none" },
+        },
+      },
+    ],
+    [
+      "duplicate output fields",
+      {
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"], ["id"]],
+          },
+        },
+      },
+    ],
+    [
+      "output field count",
+      {
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: Array.from({ length: 257 }, (_, index) => [
+              "properties",
+              String(index),
+            ]),
+          },
+        },
+      },
+    ],
+    ["negative limit", { query: { limit: -1 } }],
+    ["fractional limit", { query: { limit: 1.5 } }],
+    ["large limit", { query: { limit: 1_001 } }],
+    ["negative offset", { query: { offset: -1 } }],
+    ["fractional offset", { query: { offset: 1.5 } }],
+    ["large offset", { query: { offset: 1_001 } }],
+    ["content mode", { query: { content: { mode: "body" } } }],
+    [
+      "full content bytes",
+      { query: { content: { mode: "full", maxBytes: 0 } } },
+    ],
+    [
+      "large full content",
+      { query: { content: { mode: "full", maxBytes: 1_048_577 } } },
+    ],
+    [
+      "range offset",
+      { query: { content: { mode: "range", offset: -1, length: 1 } } },
+    ],
+    [
+      "range length",
+      { query: { content: { mode: "range", offset: 0, length: 0 } } },
+    ],
+    [
+      "large range",
+      { query: { content: { mode: "range", offset: 0, length: 262_145 } } },
+    ],
+    ["empty index revision", { query: {}, indexRevision: "" }],
+    ["large index revision", { query: {}, indexRevision: "x".repeat(256) }],
+  ];
+
+  for (const [label, input] of invalidQueries) {
+    if (label.includes("index revision")) {
+      expect(
+        () => getMcpOperationInput("preview-asset-query", input),
+        label
+      ).toThrow();
+      continue;
+    }
+    expect(
+      () => getMcpOperationInput("validate-asset-query", input),
+      label
+    ).toThrow();
+    expect(
+      () => getMcpOperationInput("preview-asset-query", input),
+      label
+    ).toThrow();
+  }
+});
+
+test("formats local query schema failures as structured MCP input errors", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("validate-asset-query", {
+      query: {
+        result: "first",
+        limit: -1,
+        output: { mode: "fields", includeMetadata: false, fields: [] },
+        content: { mode: "none" },
+      },
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("query.limit"),
+      issues: [
+        expect.objectContaining({ path: ["query", "limit"] }),
+        expect.objectContaining({ path: ["query"] }),
+        expect.objectContaining({ path: ["query", "sort"] }),
+      ],
+    },
+    meta: { elapsedMs: 1 },
   });
 });
 

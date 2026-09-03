@@ -7,6 +7,7 @@ import {
 } from "./query-error";
 import { AssetQueryRequestError } from "./request";
 import { DocumentSourceDiagnosticsError } from "./content-source";
+import { ZodError } from "zod";
 
 const createInvalidRequestError = (
   message: string,
@@ -46,6 +47,15 @@ const getRequestError = (
   const visited = new Set<unknown>();
   let cause = error.cause;
   while (cause instanceof Error && visited.has(cause) === false) {
+    if (cause instanceof ZodError) {
+      return createInvalidRequestError(error.message, {
+        issues: cause.issues.map((issue) => ({
+          code: issue.code,
+          path: issue.path.map(String),
+          message: issue.message,
+        })),
+      });
+    }
     message = cause.message;
     visited.add(cause);
     cause = cause.cause;

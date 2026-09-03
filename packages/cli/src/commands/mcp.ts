@@ -20,17 +20,18 @@ import {
 import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
-import type { SemanticValidationIssue } from "@webstudio-is/project-build/runtime";
+import {
+  formatValidationErrorMessage,
+  type SemanticValidationIssue,
+} from "@webstudio-is/project-build/runtime";
 import {
   inspectMdxAssetSource,
   mdxAssetInspectionNamespaces,
 } from "@webstudio-is/project-build/runtime";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import {
-  createMdxSourceDiagnostics,
-  parseMdxDocumentRecovering,
-} from "@webstudio-is/content-engine/mdx";
-import { getFileExtension, isMdxFileAsset } from "@webstudio-is/sdk";
+import { validateTextAssetSource } from "@webstudio-is/content-engine/mdx";
+import { assetQueryRequest } from "@webstudio-is/content-engine";
+import { getFileExtension } from "@webstudio-is/sdk";
 import { resolveApiConnection } from "../api-connection";
 import {
   getCliErrorIssues,
@@ -238,22 +239,24 @@ const getMcpUpdateAssetContentInput = (input: unknown) => {
   };
 };
 
-const inspectMdxSource = async (source: string) => {
-  const parsed = await parseMdxDocumentRecovering({ source });
-  return createMdxSourceDiagnostics(parsed.diagnostics);
-};
-
-const decodeMdxSource = (value: unknown) => {
+const decodeTextAssetSource = (value: unknown) => {
   if (typeof value === "string") {
     return value;
   }
   if (value instanceof Uint8Array) {
     return new TextDecoder("utf-8", { fatal: true }).decode(value);
   }
-  throw new Error("MDX Asset content must be UTF-8 text.");
+  throw new Error("Markdown or MDX Asset content must be UTF-8 text.");
 };
 
-const withMdxAssetWriteFeedback = async <Envelope extends { result: unknown }>({
+const getTextAssetFormat = (name: string): "md" | "mdx" | undefined => {
+  const extension = (getFileExtension(name) ?? name).toLowerCase();
+  return extension === "md" || extension === "mdx" ? extension : undefined;
+};
+
+const withTextAssetWriteFeedback = async <
+  Envelope extends { result: unknown },
+>({
   command,
   input,
   operationInput,
@@ -267,20 +270,79 @@ const withMdxAssetWriteFeedback = async <Envelope extends { result: unknown }>({
   session?: Pick<CliProjectSession, "ensureNamespaces">;
 }): Promise<Envelope> => {
   if (
+    (command === "upload-asset" || command === "upload-assets") &&
+    isPlainRecord(input) &&
+    isPlainRecord(operationInput) &&
+    typeof operationInput.readAssetData === "function"
+  ) {
+    const assets =
+      command === "upload-asset"
+        ? isPlainRecord(input.asset)
+          ? [input.asset]
+          : []
+        : Array.isArray(input.assets)
+          ? input.assets.filter(isPlainRecord)
+          : [];
+    const sourceDiagnostics = [];
+    for (const [index, asset] of assets.entries()) {
+      if (typeof asset.name !== "string") {
+        continue;
+      }
+      const format = getTextAssetFormat(
+        typeof asset.format === "string" ? asset.format : asset.name
+      );
+      if (format === undefined) {
+        continue;
+      }
+      const source = decodeTextAssetSource(
+        await operationInput.readAssetData(asset)
+      );
+      sourceDiagnostics.push({
+        index,
+        name: asset.name,
+        diagnostics: (await validateTextAssetSource({ source, format }))
+          .diagnostics,
+      });
+    }
+    if (sourceDiagnostics.length === 0) {
+      return result;
+    }
+    return {
+      ...result,
+      result: {
+        ...(isPlainRecord(result.result)
+          ? result.result
+          : { result: result.result }),
+        sourceDiagnostics,
+      },
+    };
+  }
+  if (
     command !== "update-asset-content" ||
     isPlainRecord(input) === false ||
     isPlainRecord(operationInput) === false ||
     typeof operationInput.readAssetData !== "function" ||
-    (typeof input.extension === "string"
-      ? input.extension
-      : typeof input.expectedName === "string"
-        ? getFileExtension(input.expectedName)
-        : undefined
-    )?.toLowerCase() !== "mdx"
+    getTextAssetFormat(
+      typeof input.extension === "string"
+        ? input.extension
+        : typeof input.expectedName === "string"
+          ? input.expectedName
+          : ""
+    ) === undefined
   ) {
     return result;
   }
-  const source = decodeMdxSource(await operationInput.readAssetData());
+  const format = getTextAssetFormat(
+    typeof input.extension === "string"
+      ? input.extension
+      : typeof input.expectedName === "string"
+        ? input.expectedName
+        : ""
+  );
+  if (format === undefined) {
+    return result;
+  }
+  const source = decodeTextAssetSource(await operationInput.readAssetData());
   const assetId =
     typeof input.assetId === "string"
       ? input.assetId
@@ -300,15 +362,15 @@ const withMdxAssetWriteFeedback = async <Envelope extends { result: unknown }>({
         : { result: result.result }),
       source,
       diagnostics:
-        assetId === undefined || snapshot === undefined
-          ? await inspectMdxSource(source)
-          : await inspectMdxAssetSource({
+        format === "mdx" && assetId !== undefined && snapshot !== undefined
+          ? await inspectMdxAssetSource({
               source,
               assetId,
               state: snapshot.state,
               metas: componentMetas,
               projectId: snapshot.projectId,
-            }),
+            })
+          : (await validateTextAssetSource({ source, format })).diagnostics,
     },
   };
 };
@@ -322,6 +384,12 @@ const getMcpOperationInput = (command: string, input: unknown) => {
   }
   if (command === "update-asset-content") {
     return getMcpUpdateAssetContentInput(input);
+  }
+  if (command === "validate-asset-query") {
+    return assetQueryRequest.pick({ query: true }).parse(input);
+  }
+  if (command === "preview-asset-query") {
+    return assetQueryRequest.parse(input);
   }
   return input;
 };
@@ -694,6 +762,15 @@ const createMcpRunCheckpointStopPayload = ({
 
 const getMcpRunError = (error: unknown) => {
   const issues = getCliErrorIssues(error);
+  const isValidationError =
+    error instanceof Error && error.name === "ZodError" && issues !== undefined;
+  if (isValidationError) {
+    return {
+      code: "INVALID_INPUT",
+      message: formatValidationErrorMessage("Tool input is invalid.", issues),
+      issues,
+    };
+  }
   if (
     isPlainRecord(error) &&
     typeof error.message === "string" &&
@@ -1163,7 +1240,7 @@ const createCliMcpHost = async ({
       if (dryRun !== true && shouldInvalidatePreview(command)) {
         previewFreshness.markStale();
       }
-      return withMdxAssetWriteFeedback({
+      return withTextAssetWriteFeedback({
         command,
         input,
         operationInput,
@@ -1242,22 +1319,27 @@ const createCliMcpHost = async ({
         origin: connection.origin,
       });
       const localPath = getLocalAssetPath(asset.name, input.assetsDir);
-      if (isMdxFileAsset(asset)) {
+      const format = getTextAssetFormat(asset.name);
+      if (format !== undefined) {
         const source = await readFile(localPath, "utf8");
-        const inspectionSnapshot = await session.ensureNamespaces(
-          mdxAssetInspectionNamespaces
-        );
+        const inspectionSnapshot =
+          format === "mdx"
+            ? await session.ensureNamespaces(mdxAssetInspectionNamespaces)
+            : undefined;
         return {
           assetId: asset.id,
           path: localPath,
           source,
-          diagnostics: await inspectMdxAssetSource({
-            source,
-            assetId: asset.id,
-            state: inspectionSnapshot.state,
-            metas: componentMetas,
-            projectId: inspectionSnapshot.projectId,
-          }),
+          diagnostics:
+            format === "mdx" && inspectionSnapshot !== undefined
+              ? await inspectMdxAssetSource({
+                  source,
+                  assetId: asset.id,
+                  state: inspectionSnapshot.state,
+                  metas: componentMetas,
+                  projectId: inspectionSnapshot.projectId,
+                })
+              : (await validateTextAssetSource({ source, format })).diagnostics,
         };
       }
       return {
@@ -1985,7 +2067,7 @@ export const __testing__ = {
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
-  withMdxAssetWriteFeedback,
+  withTextAssetWriteFeedback,
   parseMcpSingleOpCallInput,
   validateSingleOpCallInput,
   isMcpToolCallFailure,

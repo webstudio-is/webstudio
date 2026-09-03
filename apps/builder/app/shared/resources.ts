@@ -74,15 +74,15 @@ const cacheResourceMetadata = ({
   return separated.result;
 };
 
-const $pendingUpdater = atom({});
+export const $pendingResourceKeys = atom<ReadonlySet<string>>(new Set());
 
 const updatePending = () => {
-  $pendingUpdater.set({});
+  $pendingResourceKeys.set(new Set([...queue.keys(), ...pending.keys()]));
 };
 
 export const $hasPendingResources = computed(
-  $pendingUpdater,
-  () => queue.size > 0 || pending.size > 0
+  $pendingResourceKeys,
+  (pendingResourceKeys) => pendingResourceKeys.size > 0
 );
 
 const loadResources = async (requestFetch: typeof fetch = fetch) => {

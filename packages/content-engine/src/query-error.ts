@@ -42,6 +42,16 @@ export const getAssetResourceQueryError = (
       code: "INVALID_REQUEST",
       message: error.message,
       retryable: false,
+      ...(error.issues === undefined
+        ? {}
+        : {
+            details: {
+              issues: error.issues.map((issue) => ({
+                ...issue,
+                path: [...issue.path],
+              })),
+            },
+          }),
       status: 400,
     };
   }

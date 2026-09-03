@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   getRequestErrorDiagnostics,
+  getRequestQueryDiagnostics,
   getRequestSourceDiagnosticDescription,
   getRequestSourceDiagnostics,
 } from "./request-error-diagnostics";
@@ -52,6 +53,39 @@ describe("request error diagnostics", () => {
     expect(diagnostics.map(getRequestSourceDiagnosticDescription)).toEqual([
       "Current query · invalid-mdx",
       "Published database · unsafe-mdx",
+    ]);
+  });
+
+  test("keeps every structured query setup error", () => {
+    expect(
+      getRequestQueryDiagnostics({
+        issues: [
+          {
+            code: "too_small",
+            path: ["query", "limit"],
+            message: "Too small",
+          },
+          {
+            severity: "warning",
+            code: "custom",
+            path: ["query", "sort"],
+            message: "Sorting is required",
+          },
+        ],
+      })
+    ).toEqual([
+      {
+        severity: "error",
+        code: "too_small",
+        path: ["query", "limit"],
+        message: "Too small",
+      },
+      {
+        severity: "warning",
+        code: "custom",
+        path: ["query", "sort"],
+        message: "Sorting is required",
+      },
     ]);
   });
 

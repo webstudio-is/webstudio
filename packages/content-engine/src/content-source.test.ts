@@ -137,6 +137,9 @@ describe("content source snapshots", () => {
               content: "<ws.element",
             }));
           },
+          async loadDocumentSources() {
+            return files.map(({ id }) => ({ id, source: "<ws.element" }));
+          },
           async isCurrent() {
             return true;
           },

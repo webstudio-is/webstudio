@@ -5,6 +5,7 @@ import {
   type DocumentGraphRuntimeObserver,
 } from "@webstudio-is/content-engine";
 import type { AssetQueryPerformanceObserver } from "@webstudio-is/asset-uploader/server";
+import { sanitizeValidationDetail } from "@webstudio-is/project-build/runtime";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
   authorizeApiProject,
@@ -127,7 +128,11 @@ const createPerformanceCollector = () => {
   };
 };
 
-const createFailureResponse = (error: unknown, request: Request) => {
+const createFailureResponse = (
+  error: unknown,
+  request: Request,
+  exposeInternalError = false
+) => {
   if (request.signal.aborted) {
     return createAssetResourceFailureResponse({
       code: "REQUEST_CANCELLED",
@@ -143,9 +148,13 @@ const createFailureResponse = (error: unknown, request: Request) => {
   if (queryError !== undefined) {
     return createAssetResourceFailureResponse(queryError);
   }
+  const message =
+    exposeInternalError && error instanceof Error && error.message.trim() !== ""
+      ? sanitizeValidationDetail(error.message)
+      : "Asset query preview failed";
   return createAssetResourceFailureResponse({
     code: "INTERNAL_ERROR",
-    message: "Asset query preview failed",
+    message,
     status: 500,
     retryable: true,
   });
@@ -153,14 +162,16 @@ const createFailureResponse = (error: unknown, request: Request) => {
 
 const finalizeResponses = (
   responses: readonly (Response | undefined)[],
-  request: Request
+  request: Request,
+  exposeInternalError: boolean
 ) =>
   responses.map(
     (response) =>
       response ??
       createFailureResponse(
         new Error("Asset query batch response is missing"),
-        request
+        request,
+        exposeInternalError
       )
   );
 
@@ -218,7 +229,7 @@ export const executeAssetQueries = async (
   );
   parsedRequests.sort((left, right) => left.index - right.index);
   if (parsedRequests.length === 0) {
-    return finalizeResponses(responses, request);
+    return finalizeResponses(responses, request, false);
   }
 
   let context: Awaited<ReturnType<typeof authorizeApiProject>>;
@@ -240,7 +251,7 @@ export const executeAssetQueries = async (
     for (const { index } of parsedRequests) {
       responses[index] = createFailureResponse(error, request);
     }
-    return finalizeResponses(responses, request);
+    return finalizeResponses(responses, request, false);
   }
 
   let results: PromiseSettledResult<unknown>[];
@@ -278,7 +289,8 @@ export const executeAssetQueries = async (
     if (result === undefined) {
       responses[index] = createFailureResponse(
         new Error("Asset query batch result is missing"),
-        request
+        request,
+        includeDiagnostics
       );
     } else if (result.status === "fulfilled") {
       const value =
@@ -294,10 +306,14 @@ export const executeAssetQueries = async (
         headers: privateNoStoreResponseHeaders,
       });
     } else {
-      responses[index] = createFailureResponse(result.reason, request);
+      responses[index] = createFailureResponse(
+        result.reason,
+        request,
+        includeDiagnostics
+      );
     }
   }
-  return finalizeResponses(responses, request);
+  return finalizeResponses(responses, request, includeDiagnostics);
 };
 
 export const executeAssetQuery = async (

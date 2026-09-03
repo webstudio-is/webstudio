@@ -14,8 +14,10 @@ import {
   replaceMdxFrontmatter,
   rewriteMdxAssetReferences,
   serializeMdxDocument,
+  validateTextAssetSource,
   type MdxAuthoredNode,
 } from "./mdx";
+import { contentEngineLimits } from "./limits";
 
 test("creates and reads canonical fenced code blocks", async () => {
   const node = createMdxCodeBlock({
@@ -1128,6 +1130,22 @@ describe("replaceMdxFrontmatter", () => {
 });
 
 describe("parseMdxDocumentRecovering", () => {
+  test("uses the shared text validator for Markdown file size errors", async () => {
+    await expect(
+      validateTextAssetSource({
+        format: "md",
+        source: "x".repeat(contentEngineLimits.hydratedFileBytes + 1),
+      })
+    ).resolves.toMatchObject({
+      diagnostics: [
+        {
+          code: "MARKDOWN_BODY_BYTES_EXCEEDED",
+          severity: "error",
+        },
+      ],
+    });
+  });
+
   test("reports every recoverable problem as a warning", async () => {
     const result = await validateMdxDocumentSource({
       source: "---\na: 1\na: 2\nb: 1\nb: 2\n---\n\n{first()}\n\n{second()}\n",

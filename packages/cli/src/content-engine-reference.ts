@@ -102,8 +102,16 @@ const diagnosticRows = [
 
 const optionalDiagnosticRows = [
   [
+    "`queryIssues`",
+    "Structured nonfatal query warnings with a stable code and exact query path.",
+  ],
+  [
+    "`queryWarnings`",
+    "Deprecated plain-text query warnings retained for compatibility.",
+  ],
+  [
     "`issues`",
-    "All content errors and warnings found for the query. Each diagnostic identifies its query or published-database scope, phase, code, message, asset, path, and source location when available.",
+    "All content errors and warnings found in files matched by the current query. Each diagnostic identifies its phase, code, message, asset, path, and source location when available.",
   ],
   ["`issueCount`", "Total errors and warnings in `issues`."],
   ["`issuesTruncated`", "Always `false`; retained for response compatibility."],

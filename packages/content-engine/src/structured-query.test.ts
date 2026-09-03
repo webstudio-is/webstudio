@@ -830,6 +830,48 @@ describe("structured asset query", () => {
     expect(result.totalCount).toBe(0);
   });
 
+  test("reports every fatal query operation together with nonfatal warnings", () => {
+    expect(() =>
+      validateAssetQueryAgainstCatalog({
+        catalog,
+        query: {
+          where: {
+            all: [
+              { field: ["width"], operator: "contains", value: 1 },
+              { field: ["height"], operator: "startsWith", value: "1" },
+              {
+                field: ["properties", "missing"],
+                operator: "eq",
+                value: true,
+              },
+            ],
+          },
+        },
+      })
+    ).toThrowError(
+      expect.objectContaining({
+        message: "2 invalid query operations found",
+        issues: [
+          expect.objectContaining({
+            severity: "error",
+            path: ["query", "where", "all", "0", "operator"],
+            message: "Operator contains is incompatible with width",
+          }),
+          expect.objectContaining({
+            severity: "error",
+            path: ["query", "where", "all", "1", "operator"],
+            message: "Operator startsWith is incompatible with height",
+          }),
+          expect.objectContaining({
+            severity: "warning",
+            path: ["query", "where", "all", "2", "field"],
+            message: "Asset field properties.missing is not currently observed",
+          }),
+        ],
+      })
+    );
+  });
+
   test("keeps sorting deterministic when a dynamic field becomes mixed", async () => {
     const mixedDocuments = [
       ...documents,

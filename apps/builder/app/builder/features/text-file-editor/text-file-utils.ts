@@ -12,9 +12,8 @@ import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { parseJsonExpression } from "@webstudio-is/expression";
 import {
-  createMarkdownFrontmatterDiagnostics,
   type MdxSourcePoint,
-  validateMdxDocumentSource,
+  validateTextAssetSource,
 } from "@webstudio-is/content-engine/mdx";
 import {
   getAssetTextEditorLanguage,
@@ -70,29 +69,18 @@ export const getTextFileEditorDiagnostics = async ({
   format: "md" | "mdx";
   semanticDiagnostics?: readonly ContentBlockDiagnostic[];
 }): Promise<Diagnostic[]> => {
-  const sourceDiagnostics =
-    format === "mdx"
-      ? (await validateMdxDocumentSource({ source })).diagnostics.map(
-          (diagnostic) => ({
-            ...("sourceRange" in diagnostic &&
-            diagnostic.sourceRange !== undefined
-              ? { sourceRange: diagnostic.sourceRange }
-              : {}),
-            ...("line" in diagnostic
-              ? { line: diagnostic.line, column: diagnostic.column }
-              : {}),
-            severity: diagnostic.severity,
-            message: diagnostic.message,
-          })
-        )
-      : (await createMarkdownFrontmatterDiagnostics(source)).map(
-          (diagnostic) => ({
-            line: diagnostic.line,
-            column: diagnostic.column,
-            severity: diagnostic.severity,
-            message: diagnostic.message,
-          })
-        );
+  const sourceDiagnostics = (
+    await validateTextAssetSource({ source, format })
+  ).diagnostics.map((diagnostic) => ({
+    ...("sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+      ? { sourceRange: diagnostic.sourceRange }
+      : {}),
+    ...("line" in diagnostic
+      ? { line: diagnostic.line, column: diagnostic.column }
+      : {}),
+    severity: diagnostic.severity,
+    message: diagnostic.message,
+  }));
   const diagnostics = [
     ...sourceDiagnostics,
     ...semanticDiagnostics.map((diagnostic) => ({

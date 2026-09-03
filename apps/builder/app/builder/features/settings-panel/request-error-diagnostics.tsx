@@ -25,6 +25,13 @@ type SourceDiagnostic = {
   column?: number;
 };
 
+type QueryDiagnostic = {
+  severity: "error" | "warning";
+  code: string;
+  path: string[];
+  message: string;
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | undefined =>
   typeof value === "object" && value !== null && Array.isArray(value) === false
     ? (value as Record<string, unknown>)
@@ -117,6 +124,34 @@ export const getRequestSourceDiagnostics = (
       })
     : [];
 
+export const getRequestQueryDiagnostics = (
+  details: Record<string, unknown> | undefined
+): QueryDiagnostic[] =>
+  Array.isArray(details?.issues)
+    ? details.issues.flatMap((value) => {
+        const issue = asRecord(value);
+        if (
+          typeof issue?.code !== "string" ||
+          typeof issue.message !== "string" ||
+          (issue.severity !== undefined &&
+            issue.severity !== "error" &&
+            issue.severity !== "warning") ||
+          Array.isArray(issue.path) === false ||
+          issue.path.some((part) => typeof part !== "string")
+        ) {
+          return [];
+        }
+        return [
+          {
+            severity: issue.severity === "warning" ? "warning" : "error",
+            code: issue.code,
+            path: issue.path as string[],
+            message: issue.message,
+          },
+        ];
+      })
+    : [];
+
 export const getRequestSourceDiagnosticDescription = (
   diagnostic: SourceDiagnostic
 ) =>
@@ -132,6 +167,7 @@ export const RequestErrorDiagnostics = ({
   value: RequestErrorDiagnosticsValue;
 }) => {
   const sourceDiagnostics = getRequestSourceDiagnostics(value.details);
+  const queryDiagnostics = getRequestQueryDiagnostics(value.details);
   return (
     <RequestDiagnosticsContent>
       <PanelBanner variant="error">
@@ -168,6 +204,18 @@ export const RequestErrorDiagnostics = ({
             description={getRequestSourceDiagnosticDescription(diagnostic)}
           />
         ))}
+        {queryDiagnostics.map((diagnostic, index) => (
+          <RequestDiagnosticsRow
+            key={`${diagnostic.path.join(".")}:${diagnostic.code}:${index}`}
+            label={`${diagnostic.severity === "warning" ? "Warning" : "Error"} · Query${
+              diagnostic.path.length === 0
+                ? ""
+                : ` · ${diagnostic.path.join(".")}`
+            }`}
+            value={diagnostic.message}
+            description={diagnostic.code}
+          />
+        ))}
         {value.retryable !== undefined && (
           <RequestDiagnosticsRow
             label="Retryable"
@@ -175,7 +223,7 @@ export const RequestErrorDiagnostics = ({
           />
         )}
         {Object.entries(value.details ?? {})
-          .filter(([key]) => key !== "diagnostics")
+          .filter(([key]) => key !== "diagnostics" && key !== "issues")
           .map(([key, detail]) => (
             <RequestDiagnosticsRow
               key={key}

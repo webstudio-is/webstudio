@@ -22,6 +22,7 @@ import {
   type AssetResourceContentOptions,
   type AssetResourceOutputSelection,
   type BuilderAssetFieldCatalog,
+  type AssetQuerySetupIssue,
 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import {
@@ -48,9 +49,15 @@ import {
 export type { AssetRuntimeData } from "./asset-value-references";
 
 export class AssetQueryExecutionError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
+  readonly issues?: readonly AssetQuerySetupIssue[];
+
+  constructor(
+    message: string,
+    options?: ErrorOptions & { issues?: readonly AssetQuerySetupIssue[] }
+  ) {
     super(message, options);
     this.name = "AssetQueryExecutionError";
+    this.issues = options?.issues;
   }
 }
 
@@ -100,6 +107,23 @@ const getCatalogField = (
     ? catalog.fields[path]
     : undefined;
 
+const getQueryConditionsWithPaths = (
+  where: AssetQueryWhere,
+  path: string[] = ["query", "where"]
+): Array<{ filter: AssetQueryFilter; path: string[] }> => {
+  if ("field" in where) {
+    return [{ filter: where, path }];
+  }
+  if ("all" in where) {
+    return where.all.flatMap((child, index) =>
+      getQueryConditionsWithPaths(child, [...path, "all", String(index)])
+    );
+  }
+  return where.any.flatMap((child, index) =>
+    getQueryConditionsWithPaths(child, [...path, "any", String(index)])
+  );
+};
+
 export const validateAssetQueryAgainstCatalog = ({
   query: input,
   catalog,
@@ -110,7 +134,19 @@ export const validateAssetQueryAgainstCatalog = ({
   const query = assetQuery.parse(input);
   const referencedFieldPaths = new Map<string, AssetQueryFieldPath>();
   const warnings: string[] = [];
-  for (const filter of getQueryConditions(query.where)) {
+  const issues: AssetQuerySetupIssue[] = [];
+  const addWarning = (
+    code:
+      | "UNOBSERVED_FIELD"
+      | "INCOMPATIBLE_OBSERVED_TYPES"
+      | "STRUCTURED_SORT_ORDER",
+    path: string[],
+    message: string
+  ) => {
+    warnings.push(message);
+    issues.push({ severity: "warning", code, path, message });
+  };
+  for (const { filter, path } of getQueryConditionsWithPaths(query.where)) {
     const catalogPath = getCatalogPath(filter.field);
     referencedFieldPaths.set(catalogPath, filter.field);
     if (filter.field[0] === "properties") {
@@ -119,13 +155,19 @@ export const validateAssetQueryAgainstCatalog = ({
       // observed documents for authoring assistance, but deleting the last
       // matching file must not invalidate an otherwise valid saved query.
       if (catalog !== undefined && field === undefined) {
-        warnings.push(`Asset field ${catalogPath} is not currently observed`);
+        addWarning(
+          "UNOBSERVED_FIELD",
+          [...path, "field"],
+          `Asset field ${catalogPath} is not currently observed`
+        );
       } else if (
         field !== undefined &&
         isFilterOperatorCompatible({ filter, fieldTypes: field.types }) ===
           false
       ) {
-        warnings.push(
+        addWarning(
+          "INCOMPATIBLE_OBSERVED_TYPES",
+          [...path, "operator"],
           `Operator ${filter.operator} is not compatible with the currently observed types of ${catalogPath}`
         );
       }
@@ -139,13 +181,16 @@ export const validateAssetQueryAgainstCatalog = ({
             ],
         }) === false
       ) {
-        throw new AssetQueryExecutionError(
-          `Operator ${filter.operator} is incompatible with ${catalogPath}`
-        );
+        issues.push({
+          severity: "error",
+          code: "INCOMPATIBLE_OPERATOR",
+          path: [...path, "operator"],
+          message: `Operator ${filter.operator} is incompatible with ${catalogPath}`,
+        });
       }
     }
   }
-  for (const order of query.sort) {
+  for (const [index, order] of query.sort.entries()) {
     const catalogPath = getCatalogPath(order.field);
     referencedFieldPaths.set(catalogPath, order.field);
     // Sorting is defined for every JSON value by compareSortValues below.
@@ -154,21 +199,51 @@ export const validateAssetQueryAgainstCatalog = ({
     if (order.field[0] === "properties") {
       const field = getCatalogField(catalog, catalogPath);
       if (catalog !== undefined && field === undefined) {
-        warnings.push(`Asset field ${catalogPath} is not currently observed`);
+        addWarning(
+          "UNOBSERVED_FIELD",
+          ["query", "sort", String(index), "field"],
+          `Asset field ${catalogPath} is not currently observed`
+        );
       } else if (
         field !== undefined &&
         field.types.some((type) => type === "object" || type === "array")
       ) {
-        warnings.push(
+        addWarning(
+          "STRUCTURED_SORT_ORDER",
+          ["query", "sort", String(index), "field"],
           `Asset field ${catalogPath} currently includes structured values that use deterministic JSON sort order`
         );
       }
     }
   }
+  const errors = issues.filter(({ severity }) => severity === "error");
+  if (errors.length > 0) {
+    throw new AssetQueryExecutionError(
+      `${errors.length} invalid query ${errors.length === 1 ? "operation" : "operations"} found`,
+      {
+        issues: [
+          ...new Map(
+            issues.map((issue) => [
+              JSON.stringify([issue.code, issue.path, issue.message]),
+              issue,
+            ])
+          ).values(),
+        ],
+      }
+    );
+  }
   return {
     query,
     referencedFieldPaths: [...referencedFieldPaths.values()],
     warnings: [...new Set(warnings)],
+    warningIssues: [
+      ...new Map(
+        issues.map((issue) => [
+          JSON.stringify([issue.code, issue.path, issue.message]),
+          issue,
+        ])
+      ).values(),
+    ],
   };
 };
 

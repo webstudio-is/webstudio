@@ -112,12 +112,14 @@ export const AssetQueryForm = ({
   aliases,
   sourceContainer,
   fetchDescription = builderFetch,
+  onPendingChange,
 }: {
   resource?: Resource;
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
   sourceContainer?: Element | null;
   fetchDescription?: typeof globalThis.fetch;
+  onPendingChange?: (pending: boolean) => void;
 }) => {
   const assets = useStore($assets);
   const initial = useMemo(
@@ -208,6 +210,13 @@ export const AssetQueryForm = ({
       ignore = true;
     };
   }, [assets, fetchDescription]);
+
+  useEffect(() => {
+    onPendingChange?.(
+      definition === undefined && descriptionError === undefined
+    );
+    return () => onPendingChange?.(false);
+  }, [definition, descriptionError, onPendingChange]);
 
   return (
     <>

@@ -90,6 +90,18 @@ test("orders collapsible sections and opens only database sizes by default", () 
           }}
           value={{
             scope: "query-preview",
+            queryIssues: [
+              {
+                severity: "warning",
+                code: "UNOBSERVED_FIELD",
+                path: ["query", "where", "all", "0", "field"],
+                message:
+                  "Asset field properties.subtitle is not currently observed",
+              },
+            ],
+            queryWarnings: [
+              "Asset field properties.subtitle is not currently observed",
+            ],
             issues: [
               {
                 severity: "warning",
@@ -168,6 +180,13 @@ test("orders collapsible sections and opens only database sizes by default", () 
   ]);
   expect(container.textContent).toContain("posts/broken.md:3:1");
   expect(container.textContent).toContain("Invalid YAML at line 3, column 1");
+  expect(container.textContent).toContain(
+    "Warning · Query · query.where.all.0.field"
+  );
+  expect(container.textContent).toContain(
+    "Asset field properties.subtitle is not currently observed"
+  );
+  expect(container.textContent).toContain("0 errors and 2 warnings.");
   const copyButtons = Array.from(
     container.querySelectorAll<HTMLButtonElement>('button[aria-label^="Copy "]')
   );
@@ -227,5 +246,5 @@ test("orders collapsible sections and opens only database sizes by default", () 
   expect(container.textContent).toContain("Timing");
   expect(container.textContent).toContain("Assets batch work");
   expect(container.textContent).toContain("Database and sizes");
-  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(27);
+  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(28);
 });

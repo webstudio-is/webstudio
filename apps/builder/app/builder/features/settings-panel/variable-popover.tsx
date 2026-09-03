@@ -89,6 +89,7 @@ import {
 import { generateCurl } from "./curl";
 import {
   $hasPendingResources,
+  $pendingResourceKeys,
   $resourceDiagnosticsCache,
   $resourceDiagnosticsErrorCache,
   $resourcePerformanceCache,
@@ -550,6 +551,7 @@ const VariablePanelForm = forwardRef<
     onValueChange: (value: unknown) => void;
     querySourceContainer: Element | null;
     onQueryActiveChange: (active: boolean) => void;
+    onQueryPendingChange: (pending: boolean) => void;
   }
 >(
   (
@@ -561,6 +563,7 @@ const VariablePanelForm = forwardRef<
       onValueChange,
       querySourceContainer,
       onQueryActiveChange,
+      onQueryPendingChange,
     },
     ref
   ) => {
@@ -662,6 +665,7 @@ const VariablePanelForm = forwardRef<
               variable={variable}
               querySourceContainer={querySourceContainer}
               onQueryActiveChange={onQueryActiveChange}
+              onQueryPendingChange={onQueryPendingChange}
             />
           )}
         </Flex>
@@ -684,6 +688,7 @@ const VariablePreview = ({
   variableValue,
   onLoadData,
   queryActive,
+  queryPending,
   queryContainerRef,
 }: {
   variable?: DataSource;
@@ -691,6 +696,7 @@ const VariablePreview = ({
   variableValue: unknown;
   onLoadData: () => void;
   queryActive: boolean;
+  queryPending: boolean;
   queryContainerRef: (element: HTMLDivElement | null) => void;
 }) => {
   const [pendingDiagnosticsKey, setPendingDiagnosticsKey] = useState<string>();
@@ -699,6 +705,7 @@ const VariablePreview = ({
     variableType === "graphql-resource" ||
     variableType === "system-resource";
   const hasPendingResources = useStore($hasPendingResources);
+  const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
   const variableValues = useStore($instanceVariableValues);
   const resourcesCache = useStore($resourcesCache);
@@ -805,6 +812,11 @@ const VariablePreview = ({
     <RequestInspector
       queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={preview}
+      queryPending={queryPending}
+      previewPending={
+        computedResourceKey !== undefined &&
+        pendingResourceKeys.has(computedResourceKey)
+      }
       onDiagnosticsOpen={
         computedResourceRequest !== undefined &&
         isAssetsResourceRequest(computedResourceRequest) &&
@@ -821,10 +833,7 @@ const VariablePreview = ({
             }
           : undefined
       }
-      diagnosticsPending={
-        pendingDiagnosticsKey === computedResourceKey &&
-        resourceDiagnostics === undefined
-      }
+      diagnosticsPending={pendingDiagnosticsKey === computedResourceKey}
       diagnostics={
         <ResourceDiagnosticsView
           requestError={requestErrorDiagnostics}
@@ -849,6 +858,7 @@ const VariablePopoverContent = ({
   const hasPendingResources = useStore($hasPendingResources);
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const [queryActive, setQueryActive] = useState(false);
+  const [queryPending, setQueryPending] = useState(false);
   const [querySourceContainer, setQuerySourceContainer] =
     useState<HTMLDivElement | null>(null);
   const queryContainerRef = useCallback(
@@ -995,6 +1005,7 @@ const VariablePopoverContent = ({
                   onValueChange={setValue}
                   querySourceContainer={querySourceContainer}
                   onQueryActiveChange={setQueryActive}
+                  onQueryPendingChange={setQueryPending}
                 />
               </fieldset>
             </form>
@@ -1007,6 +1018,7 @@ const VariablePopoverContent = ({
             variableValue={value}
             onLoadData={reloadData}
             queryActive={queryActive}
+            queryPending={queryPending}
             queryContainerRef={queryContainerRef}
           />
         }

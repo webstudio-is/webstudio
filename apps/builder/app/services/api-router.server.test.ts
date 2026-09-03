@@ -19,6 +19,7 @@ import {
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { blockComponent } from "@webstudio-is/sdk";
 import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
+import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/compiler";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import * as assetQueryPreview from "./asset-query-preview.server";
@@ -211,6 +212,14 @@ describe("api router build operation adapters", () => {
     ).resolves.toMatchObject({
       valid: true,
       warnings: ["Asset field properties.missing is not currently observed"],
+      issues: [
+        {
+          severity: "warning",
+          code: "UNOBSERVED_FIELD",
+          path: ["query", "where", "all", "0", "field"],
+          message: "Asset field properties.missing is not currently observed",
+        },
+      ],
     });
     await expect(
       caller.assetQueries.preview({
@@ -247,6 +256,97 @@ describe("api router build operation adapters", () => {
     ).rejects.toMatchObject({
       code: "CONFLICT",
       cause: { webstudioCode: "STALE_INDEX" },
+    });
+    vi.mocked(assetQueryPreview.previewProjectAssetQuery).mockRejectedValueOnce(
+      new DocumentSourceDiagnosticsError([
+        {
+          severity: "warning",
+          code: "FRONTMATTER_INVALID",
+          message: "Markdown frontmatter contains invalid YAML",
+          assetId: "markdown",
+          path: "content/broken.md",
+          line: 4,
+          column: 1,
+        },
+        {
+          severity: "error",
+          code: "invalid-mdx",
+          message: "Unexpected closing tag",
+          assetId: "mdx",
+          path: "content/broken.mdx",
+          line: 8,
+          column: 3,
+        },
+      ])
+    );
+    await expect(
+      caller.assetQueries.preview({
+        projectId: "project-1",
+        query: { limit: 10 },
+      })
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      cause: {
+        webstudioCode: "INVALID_REQUEST",
+        issues: [
+          {
+            code: "FRONTMATTER_INVALID",
+            path: ["content/broken.md"],
+            message: "Markdown frontmatter contains invalid YAML",
+            constraint: "FRONTMATTER_INVALID",
+            detail:
+              "Line 4, column 1. Scope: query. Severity: warning. Asset: markdown",
+          },
+          {
+            code: "invalid-mdx",
+            path: ["content/broken.mdx"],
+            message: "Unexpected closing tag",
+            constraint: "invalid-mdx",
+            detail:
+              "Line 8, column 3. Scope: query. Severity: error. Asset: mdx",
+          },
+        ],
+      },
+    });
+    await expect(
+      caller.assetQueries.validate({
+        projectId: "project-1",
+        query: {
+          where: {
+            all: [
+              { field: ["width"], operator: "contains", value: 1 },
+              { field: ["height"], operator: "startsWith", value: "1" },
+              {
+                field: ["properties", "missing"],
+                operator: "eq",
+                value: true,
+              },
+            ],
+          },
+        },
+      })
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      cause: {
+        webstudioCode: "INVALID_REQUEST",
+        issues: [
+          expect.objectContaining({
+            code: "INCOMPATIBLE_OPERATOR",
+            path: ["query", "where", "all", "0", "operator"],
+            message: "Operator contains is incompatible with width",
+          }),
+          expect.objectContaining({
+            code: "INCOMPATIBLE_OPERATOR",
+            path: ["query", "where", "all", "1", "operator"],
+            message: "Operator startsWith is incompatible with height",
+          }),
+          expect.objectContaining({
+            code: "UNOBSERVED_FIELD",
+            path: ["query", "where", "all", "2", "field"],
+            message: "Asset field properties.missing is not currently observed",
+          }),
+        ],
+      },
     });
     await expect(
       caller.assetQueries.fieldCatalog({ projectId: "project-1" })

@@ -7,13 +7,14 @@ import {
   PanelTabsContent,
   PanelTabsList,
   PanelTabsTrigger,
+  rawTheme,
   ScrollAreaNative,
   styled,
   Text,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, SpinnerIcon } from "@webstudio-is/icons";
 
 export const clearSettledDiagnosticsKey = (
   pendingKey: string | undefined,
@@ -101,16 +102,41 @@ export const RequestDiagnosticsRow = ({
   </Grid>
 );
 
+const RequestInspectorLoading = ({ label }: { label: string }) => (
+  <Flex
+    role="status"
+    aria-label={label}
+    aria-live="polite"
+    direction="column"
+    align="center"
+    justify="center"
+    gap={2}
+    css={{
+      position: "absolute",
+      inset: 0,
+      zIndex: 1,
+      backgroundColor: cssVar("--background-primary"),
+    }}
+  >
+    <SpinnerIcon size={rawTheme.spacing[15]} />
+    <Text color="moreSubtle">{label}</Text>
+  </Flex>
+);
+
 export const RequestInspector = ({
   queryContainerRef,
   preview,
   diagnostics,
+  queryPending = false,
+  previewPending = false,
   diagnosticsPending = false,
   onDiagnosticsOpen,
 }: {
   queryContainerRef?: Ref<HTMLDivElement>;
   preview: ReactNode;
   diagnostics?: ReactNode;
+  queryPending?: boolean;
+  previewPending?: boolean;
   diagnosticsPending?: boolean;
   onDiagnosticsOpen?: () => void;
 }) => (
@@ -137,6 +163,7 @@ export const RequestInspector = ({
     {queryContainerRef !== undefined && (
       <PanelTabsContent
         value="query"
+        aria-busy={queryPending}
         css={{ flex: 1, position: "relative", overflow: "hidden" }}
       >
         <div
@@ -149,26 +176,29 @@ export const RequestInspector = ({
             position: "relative",
           }}
         />
+        {queryPending && <RequestInspectorLoading label="Loading query…" />}
       </PanelTabsContent>
     )}
     <PanelTabsContent
       value="preview"
+      aria-busy={previewPending}
       css={{ flex: 1, position: "relative", overflow: "hidden" }}
     >
       {preview}
+      {previewPending && <RequestInspectorLoading label="Loading preview…" />}
     </PanelTabsContent>
     <PanelTabsContent
       value="diagnostics"
+      aria-busy={diagnosticsPending}
       css={{ flex: 1, position: "relative", overflow: "hidden" }}
     >
       {diagnostics ?? (
         <Flex align="center" justify="center" css={{ height: "100%" }}>
-          <Text color="moreSubtle">
-            {diagnosticsPending
-              ? "Loading diagnostics..."
-              : "No diagnostics available"}
-          </Text>
+          <Text color="moreSubtle">No diagnostics available</Text>
         </Flex>
+      )}
+      {diagnosticsPending && (
+        <RequestInspectorLoading label="Loading diagnostics…" />
       )}
     </PanelTabsContent>
   </PanelTabs>

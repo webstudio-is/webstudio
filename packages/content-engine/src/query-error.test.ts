@@ -10,8 +10,12 @@ import { MarkdownDocumentError } from "./document-graph/markdown-document";
 import { getAssetResourceQueryError } from "./query-error";
 import { getDetailedAssetResourceQueryError } from "./query-error-details";
 import { AssetQueryRequestError } from "./request";
-import { AssetQueryMultipleResultsError } from "./structured-query";
+import {
+  AssetQueryExecutionError,
+  AssetQueryMultipleResultsError,
+} from "./structured-query";
 import { DocumentSourceDiagnosticsError } from "./content-source";
+import { assetQueryRequest } from "./schema";
 
 describe("asset resource graph query errors", () => {
   test("preserves every document source diagnostic", () => {
@@ -109,6 +113,37 @@ describe("asset resource graph query errors", () => {
     });
   });
 
+  test("preserves every semantic query setup issue", () => {
+    expect(
+      getAssetResourceQueryError(
+        new AssetQueryExecutionError("2 invalid query operations found", {
+          issues: [
+            {
+              severity: "error",
+              code: "INCOMPATIBLE_OPERATOR",
+              path: ["query", "where"],
+              message: "First incompatible operator",
+            },
+            {
+              severity: "warning",
+              code: "UNOBSERVED_FIELD",
+              path: ["query", "where"],
+              message: "Unobserved field",
+            },
+          ],
+        })
+      )
+    ).toMatchObject({
+      code: "INVALID_REQUEST",
+      details: {
+        issues: [
+          { severity: "error", message: "First incompatible operator" },
+          { severity: "warning", message: "Unobserved field" },
+        ],
+      },
+    });
+  });
+
   test("includes query parser details only for authenticated diagnostics", () => {
     const error = new AssetQueryRequestError("Asset query request is invalid", {
       cause: new SyntaxError(
@@ -122,6 +157,40 @@ describe("asset resource graph query errors", () => {
       message: "Expected property name or '}' in JSON at position 1",
       retryable: false,
       status: 400,
+    });
+  });
+
+  test("preserves every query schema error for authenticated diagnostics", () => {
+    const parsed = assetQueryRequest.safeParse({
+      query: {
+        result: "first",
+        limit: -1,
+        output: { mode: "fields", includeMetadata: false, fields: [] },
+        content: { mode: "none" },
+      },
+    });
+    if (parsed.success) {
+      throw new Error("Expected an invalid Asset query request");
+    }
+
+    expect(
+      getDetailedAssetResourceQueryError(
+        new AssetQueryRequestError("Asset query request is invalid", {
+          cause: parsed.error,
+        })
+      )
+    ).toMatchObject({
+      code: "INVALID_REQUEST",
+      message: "Asset query request is invalid",
+      retryable: false,
+      status: 400,
+      details: {
+        issues: [
+          { path: ["query", "limit"] },
+          { path: ["query"] },
+          { path: ["query", "sort"] },
+        ],
+      },
     });
   });
 

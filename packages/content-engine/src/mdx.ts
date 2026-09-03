@@ -33,6 +33,7 @@ import {
   type SyntaxTreeNode,
 } from "./markdown-ast";
 import { findMarkdownFrontmatter } from "./markdown-scanner";
+import { extractMarkdownBody } from "./markdown-body";
 import { serializeMdxDocument } from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
 
@@ -1480,6 +1481,71 @@ export const validateMdxDocumentSource = async ({
       ...mdxDiagnostics,
     ] satisfies readonly MdxDocumentSourceDiagnostic[],
   };
+};
+
+type MarkdownTextAssetSourceDiagnostic =
+  | Awaited<ReturnType<typeof createMarkdownFrontmatterDiagnostics>>[number]
+  | Readonly<{
+      code: "MARKDOWN_BODY_BYTES_EXCEEDED";
+      severity: "error";
+      message: string;
+    }>;
+
+export type TextAssetSourceDiagnostic =
+  | MarkdownTextAssetSourceDiagnostic
+  | MdxDocumentSourceDiagnostic;
+
+export type TextAssetSourceValidation =
+  | Readonly<{
+      format: "md";
+      diagnostics: readonly MarkdownTextAssetSourceDiagnostic[];
+    }>
+  | Readonly<{
+      format: "mdx";
+      diagnostics: readonly MdxDocumentSourceDiagnostic[];
+      recovery: Awaited<ReturnType<typeof parseMdxDocumentRecovering>>;
+    }>;
+
+/** Shared source validation contract for the editor, query engine, and MCP. */
+export const validateTextAssetSource = async ({
+  source,
+  format,
+}: {
+  source: string;
+  format: "md" | "mdx";
+}): Promise<TextAssetSourceValidation> => {
+  if (format === "md") {
+    const diagnostics: MarkdownTextAssetSourceDiagnostic[] = [
+      ...(await createMarkdownFrontmatterDiagnostics(source)),
+    ];
+    try {
+      await extractMarkdownBody(source);
+    } catch (error) {
+      if (
+        error instanceof MarkdownMetadataError &&
+        error.code === "MARKDOWN_BODY_BYTES_EXCEEDED"
+      ) {
+        return {
+          format,
+          diagnostics: [
+            ...diagnostics,
+            {
+              code: error.code,
+              severity: "error",
+              message: error.message,
+            },
+          ],
+        };
+      }
+      throw error;
+    }
+    return {
+      format,
+      diagnostics,
+    };
+  }
+  const validation = await validateMdxDocumentSource({ source });
+  return { format, ...validation };
 };
 
 const withMarkdownSyntax = (node: MdxAuthoredNode): MdxAuthoredNode => {

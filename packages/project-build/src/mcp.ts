@@ -17,6 +17,7 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
+import type { TextAssetSourceDiagnostic } from "@webstudio-is/content-engine/mdx";
 import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
@@ -301,20 +302,7 @@ export type ProjectSessionDownloadAssetResult = {
   assetId: string;
   path: string;
   source?: string;
-  diagnostics?: readonly (
-    | ContentBlockDiagnostic
-    | Readonly<{
-        code: "invalid-mdx" | "unsafe-mdx";
-        severity: "error" | "warning";
-        message: string;
-        nodeType?: string;
-        reason?: string;
-        sourceRange?: Readonly<{
-          start: Readonly<{ line: number; column: number; offset?: number }>;
-          end: Readonly<{ line: number; column: number; offset?: number }>;
-        }>;
-      }>
-  )[];
+  diagnostics?: readonly (ContentBlockDiagnostic | TextAssetSourceDiagnostic)[];
 };
 
 type DownloadAsset = (
@@ -1686,7 +1674,7 @@ const importInputSchema = {
 const downloadAssetInputSchema = {
   ...emptyInputSchema,
   description:
-    "Download one project Asset. MDX results also include source and diagnostics.",
+    "Download one project Asset. Markdown and MDX results also include source and diagnostics.",
   properties: {
     assetId: {
       type: "string",
@@ -3362,7 +3350,7 @@ const importTool = createProjectSessionMcpTool({
 const downloadAssetTool = createProjectSessionMcpTool({
   name: "download-asset",
   description:
-    "Download one project Asset. MDX includes source and diagnostics.",
+    "Download one project Asset. Markdown and MDX include source and diagnostics.",
   inputSchema: downloadAssetInputSchema,
   outputSchema: getMcpOutputSchema({
     type: "object",
@@ -3375,11 +3363,13 @@ const downloadAssetTool = createProjectSessionMcpTool({
         items: {
           type: "object",
           properties: {
-            code: { type: "string", enum: ["invalid-mdx", "unsafe-mdx"] },
+            code: { type: "string" },
             severity: { type: "string", enum: ["error", "warning"] },
             message: { type: "string" },
             nodeType: { type: "string" },
             reason: { type: "string" },
+            line: { type: "number" },
+            column: { type: "number" },
             sourceRange: {
               type: "object",
               properties: {

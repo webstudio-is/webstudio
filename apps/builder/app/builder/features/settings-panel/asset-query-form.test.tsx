@@ -39,6 +39,37 @@ test("renders a centered message while the OpenAPI description is loading", () =
   expect(container.textContent).toContain("Loading query editor…");
 });
 
+test("reports while the query editor is loading", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onPendingChange = vi.fn();
+  let resolveFetch: (response: Response) => void = () => {};
+
+  act(() => {
+    root?.render(
+      <AssetQueryForm
+        scope={{}}
+        aliases={new Map()}
+        fetchDescription={() =>
+          new Promise((resolve) => {
+            resolveFetch = resolve;
+          })
+        }
+        onPendingChange={onPendingChange}
+      />
+    );
+  });
+
+  expect(onPendingChange).toHaveBeenLastCalledWith(true);
+
+  await act(async () => {
+    resolveFetch(new Response(undefined, { status: 500 }));
+  });
+
+  expect(onPendingChange).toHaveBeenLastCalledWith(false);
+});
+
 test("loads the external query schema declared by OpenAPI", async () => {
   const openApi = createAssetResourceOpenApi({
     builderSessionCookieName: "session",

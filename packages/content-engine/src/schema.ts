@@ -699,8 +699,20 @@ export const assetQueryDiagnosticIssue = strictObject({
 
 export type AssetQueryDiagnosticIssue = Infer<typeof assetQueryDiagnosticIssue>;
 
+export const assetQuerySetupIssue = strictObject({
+  severity: zEnum(["error", "warning"]),
+  code: string().min(1),
+  path: array(string()),
+  message: string().min(1),
+});
+
+export type AssetQuerySetupIssue = Infer<typeof assetQuerySetupIssue>;
+
 export const assetQueryPreviewDiagnostics = strictObject({
   scope: literal("query-preview"),
+  queryIssues: array(assetQuerySetupIssue).optional(),
+  /** @deprecated Use queryIssues for codes and exact query paths. */
+  queryWarnings: array(string().min(1)).optional(),
   query: contentDatabaseCapacityStats,
   database: contentDatabaseCapacityStats,
   artifacts: strictObject({

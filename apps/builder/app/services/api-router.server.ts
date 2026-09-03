@@ -31,10 +31,11 @@ import {
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
 import {
-  getAssetResourceQueryError,
+  getDetailedAssetResourceQueryError,
   assetQueryRequest,
   getAssetQueryWhereMetrics,
   validateAssetQueryAgainstCatalog,
+  type AssetResourceQueryError,
 } from "@webstudio-is/content-engine";
 import {
   loadBuilderAssetFieldCatalog,
@@ -125,14 +126,101 @@ const assetQueryInput = projectIdInput.extend(assetQueryRequest.shape);
 const assetQueryValidationInput = projectIdInput.extend({
   query: assetQueryRequest.shape.query,
 });
+
+const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  typeof value === "object" && value !== null && Array.isArray(value) === false
+    ? (value as Record<string, unknown>)
+    : undefined;
+
+const getAssetQueryApiIssues = (error: AssetResourceQueryError) => {
+  const details = asRecord(error.details);
+  const sourceDiagnostics = Array.isArray(details?.diagnostics)
+    ? details.diagnostics
+    : details?.path === undefined
+      ? []
+      : [details];
+  const sourceIssues = sourceDiagnostics.flatMap((value) => {
+    const diagnostic = asRecord(value);
+    if (diagnostic === undefined || typeof diagnostic.path !== "string") {
+      return [];
+    }
+    const code =
+      typeof diagnostic.code === "string" ? diagnostic.code : error.code;
+    const message =
+      typeof diagnostic.message === "string"
+        ? diagnostic.message
+        : error.message;
+    const detail = [
+      typeof diagnostic.line === "number"
+        ? `Line ${diagnostic.line}${
+            typeof diagnostic.column === "number"
+              ? `, column ${diagnostic.column}`
+              : ""
+          }`
+        : undefined,
+      typeof diagnostic.scope === "string"
+        ? `Scope: ${diagnostic.scope}`
+        : undefined,
+      typeof diagnostic.severity === "string"
+        ? `Severity: ${diagnostic.severity}`
+        : undefined,
+      typeof diagnostic.assetId === "string"
+        ? `Asset: ${diagnostic.assetId}`
+        : undefined,
+    ]
+      .filter((item) => item !== undefined)
+      .join(". ");
+    return [
+      {
+        code,
+        path: [diagnostic.path],
+        message,
+        constraint: code,
+        ...(detail === "" ? {} : { detail }),
+      },
+    ];
+  });
+  const queryIssues = Array.isArray(details?.issues)
+    ? details.issues.flatMap((value) => {
+        const issue = asRecord(value);
+        const path = Array.isArray(issue?.path)
+          ? issue.path.filter(
+              (part): part is string => typeof part === "string"
+            )
+          : [];
+        if (
+          issue === undefined ||
+          typeof issue.code !== "string" ||
+          typeof issue.message !== "string"
+        ) {
+          return [];
+        }
+        return [
+          {
+            code: issue.code,
+            path,
+            message: issue.message,
+            constraint: issue.code,
+            ...(issue.severity === "warning"
+              ? { detail: "Severity: warning" }
+              : {}),
+          },
+        ];
+      })
+    : [];
+  return [...sourceIssues, ...queryIssues];
+};
+
 const throwAssetQueryApiError = (error: unknown): never => {
-  const queryError = getAssetResourceQueryError(error);
+  const queryError = getDetailedAssetResourceQueryError(error);
   if (queryError !== undefined) {
+    const issues = getAssetQueryApiIssues(queryError);
     return throwApiError(
       queryError.status === 409 ? "CONFLICT" : "BAD_REQUEST",
       queryError.message,
       {
         webstudioCode: queryError.code,
+        ...(issues.length === 0 ? {} : { issues }),
       }
     );
   }
@@ -888,6 +976,7 @@ export const apiRouter = router({
               .filters,
             sortCount: validated.query.sort.length,
             warnings: validated.warnings,
+            issues: validated.warningIssues,
           };
         } catch (error) {
           return throwAssetQueryApiError(error);

@@ -28,9 +28,9 @@ import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
 import {
   discoverMdxBodyAssetReferences,
-  validateMdxDocumentSource,
+  validateTextAssetSource,
+  type MdxDocument,
 } from "./mdx";
-import { createMarkdownFrontmatterDiagnostics } from "./frontmatter";
 import {
   compileDocumentSourceGraph,
   createDocumentSourceUrl,
@@ -258,14 +258,84 @@ const discoverSnapshotAssetReferences = async ({
   return references;
 };
 
+const validateSnapshotDocumentSources = async (
+  entries: readonly ContentCompilerInput[]
+): Promise<{
+  sourceIssues: readonly SourceIssue[];
+  mdxDocuments: ReadonlyMap<string, MdxDocument>;
+}> => {
+  const sourceIssues: SourceIssue[] = [];
+  const mdxDocuments = new Map<string, MdxDocument>();
+  for (const entry of entries) {
+    const format = getDocumentFormatByContentType(entry.document.mimeType);
+    if (
+      entry.contentRequired &&
+      entry.content === undefined &&
+      (format === "markdown" || format === "mdx")
+    ) {
+      sourceIssues.push({
+        severity: "warning",
+        code: "SOURCE_VALIDATION_UNAVAILABLE",
+        message: "File content could not be validated within the query limits",
+        assetId: entry.assetId,
+        path: entry.document.path,
+      });
+    }
+    if (
+      entry.content === undefined ||
+      (format !== "markdown" && format !== "mdx")
+    ) {
+      continue;
+    }
+    const validation = await validateTextAssetSource({
+      source: entry.content,
+      format: format === "markdown" ? "md" : "mdx",
+    });
+    sourceIssues.push(
+      ...validation.diagnostics.map((diagnostic) => ({
+        severity: diagnostic.severity,
+        code: diagnostic.code,
+        message: diagnostic.message,
+        assetId: entry.assetId,
+        path: entry.document.path,
+        ...("sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+          ? {
+              line: diagnostic.sourceRange.start.line,
+              column: diagnostic.sourceRange.start.column,
+            }
+          : "line" in diagnostic && diagnostic.line !== undefined
+            ? {
+                line: diagnostic.line,
+                ...(diagnostic.column === undefined
+                  ? {}
+                  : { column: diagnostic.column }),
+              }
+            : {}),
+      }))
+    );
+    if (
+      validation.format === "mdx" &&
+      validation.recovery.status === "parsed"
+    ) {
+      mdxDocuments.set(entry.assetId, validation.recovery.document);
+    }
+  }
+  if (sourceIssues.some(({ severity }) => severity === "error")) {
+    throw new DocumentSourceDiagnosticsError(sourceIssues);
+  }
+  return { sourceIssues, mdxDocuments };
+};
+
 const discoverSnapshotAssetValueReferences = async ({
   snapshot,
   entries,
   analyzedProperties,
+  validation,
 }: {
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
   analyzedProperties: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
+  validation: Awaited<ReturnType<typeof validateSnapshotDocumentSources>>;
 }): Promise<{
   references: AssetValueReferences;
   sourceIssues: readonly SourceIssue[];
@@ -277,7 +347,6 @@ const discoverSnapshotAssetValueReferences = async ({
       .map(({ id }) => id)
   );
   const references: AssetValueReferences = {};
-  const sourceIssues: SourceIssue[] = [];
   const discoverProperties = ({
     path,
     properties,
@@ -299,72 +368,15 @@ const discoverSnapshotAssetValueReferences = async ({
       path: entry.document.path,
       properties: entry.document.properties ?? {},
     });
-    const format = getDocumentFormatByContentType(entry.document.mimeType);
-    if (
-      entry.contentRequired &&
-      entry.content === undefined &&
-      (format === "markdown" || format === "mdx")
-    ) {
-      sourceIssues.push({
-        severity: "warning",
-        code: "SOURCE_VALIDATION_UNAVAILABLE",
-        message: "File content could not be validated within the query limits",
-        assetId: entry.assetId,
-        path: entry.document.path,
-      });
-    }
-    if (
-      entry.content !== undefined &&
-      (format === "markdown" || format === "mdx")
-    ) {
-      if (format === "markdown") {
-        const diagnostics = await createMarkdownFrontmatterDiagnostics(
-          entry.content
-        );
-        sourceIssues.push(
-          ...diagnostics.map((diagnostic) => ({
-            ...diagnostic,
-            assetId: entry.assetId,
-            path: entry.document.path,
-          }))
-        );
-      } else {
-        const validation = await validateMdxDocumentSource({
-          source: entry.content,
-        });
-        sourceIssues.push(
-          ...validation.diagnostics.map((diagnostic) => ({
-            severity: diagnostic.severity,
-            code: diagnostic.code,
-            message: diagnostic.message,
-            assetId: entry.assetId,
-            path: entry.document.path,
-            ...("sourceRange" in diagnostic &&
-            diagnostic.sourceRange !== undefined
-              ? {
-                  line: diagnostic.sourceRange.start.line,
-                  column: diagnostic.sourceRange.start.column,
-                }
-              : "line" in diagnostic && diagnostic.line !== undefined
-                ? {
-                    line: diagnostic.line,
-                    ...(diagnostic.column === undefined
-                      ? {}
-                      : { column: diagnostic.column }),
-                  }
-                : {}),
-          }))
-        );
-        if (validation.recovery.status === "parsed") {
-          discovered.push(
-            ...discoverMdxBodyAssetReferences({
-              document: validation.recovery.document,
-              sourcePath: entry.document.path,
-              assetIdsByPath,
-            })
-          );
-        }
-      }
+    const mdxDocument = validation.mdxDocuments.get(entry.assetId);
+    if (mdxDocument !== undefined) {
+      discovered.push(
+        ...discoverMdxBodyAssetReferences({
+          document: mdxDocument,
+          sourcePath: entry.document.path,
+          assetIdsByPath,
+        })
+      );
     }
     if (discovered.length > 0) {
       references[entry.assetId] = discovered;
@@ -387,10 +399,7 @@ const discoverSnapshotAssetValueReferences = async ({
       }
     }
   }
-  if (sourceIssues.some(({ severity }) => severity === "error")) {
-    throw new DocumentSourceDiagnosticsError(sourceIssues);
-  }
-  return { references, sourceIssues };
+  return { references, sourceIssues: validation.sourceIssues };
 };
 
 const queryNeedsDocumentGraph = (
@@ -591,6 +600,7 @@ export const materializeContentSnapshot = async ({
       string,
       Readonly<Record<string, unknown>>
     >();
+    const validation = await validateSnapshotDocumentSources(entries);
     const documentGraphResult = await measureContentSourcePerformance({
       phase: "document-graph",
       observer: onPerformanceEvent,
@@ -616,6 +626,7 @@ export const materializeContentSnapshot = async ({
         snapshot,
         entries,
         analyzedProperties,
+        validation,
       });
     if (
       await measureContentSourcePerformance({
