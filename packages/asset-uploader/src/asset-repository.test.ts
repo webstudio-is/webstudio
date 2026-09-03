@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import type { Asset } from "@webstudio-is/sdk";
 import type { AssetObjectStore } from "./client";
 import { createUploadTicket, uploadFile } from "./upload";
 import {
@@ -127,6 +128,15 @@ const createDependencies = () => {
   };
 };
 
+const prepareAssetContentUpdate = (
+  dependencies: ReturnType<typeof createDependencies>,
+  asset: Asset
+) =>
+  dependencies.updateAssetContent.mockImplementation(async (input) => {
+    await input.prepareData?.({ asset, data: input.data });
+    return asset;
+  });
+
 describe("PostgresAssetRepository", () => {
   test("blocks generic uploads into collection folders", async () => {
     const dependencies = createDependencies();
@@ -160,6 +170,102 @@ describe("PostgresAssetRepository", () => {
       })
     ).rejects.toThrow("Use New entry");
     expect(dependencies.createUploadTicket).not.toHaveBeenCalled();
+  });
+
+  test("rejects an upload completed after its folder becomes a collection", async () => {
+    const dependencies = createDependencies();
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project-1",
+      name: "collection.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file",
+      format: "json",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const uploadedAsset: Asset = {
+      ...configAsset,
+      id: "notes",
+      name: "notes.txt",
+      filename: "notes",
+      format: "txt",
+    };
+    dependencies.uploadFile.mockResolvedValue(uploadedAsset);
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      configAsset,
+      uploadedAsset,
+    ]);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+
+    await expect(
+      repository.completeUpload({
+        name: uploadedAsset.name,
+        data: new Blob(["notes"]).stream(),
+        assetInfoFallback: undefined,
+        assetId: uploadedAsset.id,
+      })
+    ).rejects.toThrow("Use New entry");
+    expect(dependencies.deleteAssetsWithClient).toHaveBeenCalledWith(
+      { projectId: "project-1", ids: [uploadedAsset.id] },
+      context.postgrest.client
+    );
+  });
+
+  test("rejects collection creation completed after a generic upload", async () => {
+    const dependencies = createDependencies();
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project-1",
+      name: "collection.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file",
+      format: "json",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const uploadedAsset: Asset = {
+      ...configAsset,
+      id: "notes",
+      name: "notes.txt",
+      filename: "notes",
+      format: "txt",
+    };
+    dependencies.uploadFile.mockResolvedValue(configAsset);
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      uploadedAsset,
+      configAsset,
+    ]);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+
+    await expect(
+      repository.completeUpload({
+        name: configAsset.name,
+        data: new Blob([createDefaultCollectionConfig()]).stream(),
+        assetInfoFallback: undefined,
+        assetId: configAsset.id,
+      })
+    ).rejects.toThrow("Move non-entry files into a subfolder");
+    expect(dependencies.deleteAssetsWithClient).toHaveBeenCalledWith(
+      { projectId: "project-1", ids: [configAsset.id] },
+      context.postgrest.client
+    );
   });
 
   test("creates a validated collection entry from the configured template", async () => {
@@ -272,6 +378,7 @@ describe("PostgresAssetRepository", () => {
       configAsset,
       entryAsset,
     ]);
+    prepareAssetContentUpdate(dependencies, entryAsset);
     const readFile = vi.fn(async (name: string) => {
       const source =
         name === configAsset.name
@@ -300,7 +407,148 @@ describe("PostgresAssetRepository", () => {
         ]).stream(),
       })
     ).rejects.toThrow();
-    expect(dependencies.updateAssetContent).not.toHaveBeenCalled();
+    await expect(
+      repository.updateContent({
+        assetId: entryAsset.id,
+        expectedName: entryAsset.name,
+        data: new Blob([
+          "---\ntitle: Updated\nslug: another-slug\ndraft: true\n---\n\nBody.\n",
+        ]).stream(),
+      })
+    ).rejects.toThrow("slug must match the entry filename");
+    await expect(
+      repository.updateContent({
+        assetId: entryAsset.id,
+        expectedName: entryAsset.name,
+        extension: "txt",
+        data: new Blob([
+          "---\ntitle: Hello world\nslug: hello-world\ndraft: true\n---\n\nBody.\n",
+        ]).stream(),
+      })
+    ).rejects.toThrow("must remain MDX files");
+    expect(dependencies.updateAssetContent).toHaveBeenCalledTimes(3);
+  });
+
+  test("rejects collection schema changes that invalidate existing entries", async () => {
+    const dependencies = createDependencies();
+    const configAsset = {
+      id: "config",
+      projectId: "project-1",
+      name: "config-storage.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file" as const,
+      format: "json",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset = {
+      ...configAsset,
+      id: "template",
+      name: "template-storage.mdx",
+      filename: "template",
+      format: "mdx",
+    };
+    const entryAsset = {
+      ...templateAsset,
+      id: "entry",
+      name: "entry-storage.mdx",
+      filename: "hello-world",
+    };
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      configAsset,
+      templateAsset,
+      entryAsset,
+    ]);
+    prepareAssetContentUpdate(dependencies, configAsset);
+    const entrySource =
+      "---\ntitle: Hello world\nslug: hello-world\ndraft: true\n---\n\nBody.\n";
+    const readFile = vi.fn(async (name: string) => {
+      const source =
+        name === templateAsset.name
+          ? "---\ndraft: true\n---\n\nStart writing.\n"
+          : entrySource;
+      return {
+        data: new Blob([
+          source,
+        ]).stream() as unknown as AsyncIterable<Uint8Array>,
+        contentLength: source.length,
+      };
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { ...assetClient, readFile },
+      dependencies,
+    });
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.title.minLength = 20;
+
+    await expect(
+      repository.updateContent({
+        assetId: configAsset.id,
+        expectedName: configAsset.name,
+        data: new Blob([JSON.stringify(schema)]).stream(),
+      })
+    ).rejects.toThrow(
+      'Collection entry "hello-world.mdx": Title must contain at least 20 characters'
+    );
+  });
+
+  test("rejects collection template defaults that violate the schema", async () => {
+    const dependencies = createDependencies();
+    const configAsset = {
+      id: "config",
+      projectId: "project-1",
+      name: "config-storage.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file" as const,
+      format: "json",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset = {
+      ...configAsset,
+      id: "template",
+      name: "template-storage.mdx",
+      filename: "template",
+      format: "mdx",
+    };
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      configAsset,
+      templateAsset,
+    ]);
+    prepareAssetContentUpdate(dependencies, templateAsset);
+    const configSource = createDefaultCollectionConfig();
+    const readFile = vi.fn(async () => ({
+      data: new Blob([
+        configSource,
+      ]).stream() as unknown as AsyncIterable<Uint8Array>,
+      contentLength: configSource.length,
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { ...assetClient, readFile },
+      dependencies,
+    });
+
+    await expect(
+      repository.updateContent({
+        assetId: templateAsset.id,
+        expectedName: templateAsset.name,
+        data: new Blob([
+          "---\ndraft: not-a-boolean\n---\n\nStart writing.\n",
+        ]).stream(),
+      })
+    ).rejects.toThrow(
+      "Collection template: Draft: Invalid input: expected boolean, received string"
+    );
   });
 
   test("keeps existing entry content editable when collection.json is broken", async () => {
@@ -327,7 +575,7 @@ describe("PostgresAssetRepository", () => {
       configAsset,
       entryAsset,
     ]);
-    dependencies.updateAssetContent.mockResolvedValue(entryAsset);
+    prepareAssetContentUpdate(dependencies, entryAsset);
     const readFile = vi.fn(async () => ({
       data: new Blob([
         "not json",
@@ -371,9 +619,16 @@ describe("PostgresAssetRepository", () => {
       folderId: "posts",
       format: "json",
     };
+    const entryAsset = {
+      ...sourceAsset,
+      id: "entry",
+      name: "entry.mdx",
+      folderId: "posts",
+    };
     dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
       sourceAsset,
       configAsset,
+      entryAsset,
     ]);
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
@@ -385,7 +640,16 @@ describe("PostgresAssetRepository", () => {
     await expect(
       repository.updateMetadata(sourceAsset.id, { folderId: "posts" })
     ).rejects.toThrow("Use New entry");
-    expect(dependencies.updateAssetMetadataWithClient).not.toHaveBeenCalled();
+    await expect(
+      repository.updateMetadata(entryAsset.id, {
+        filename: "entry",
+        description: "Updated",
+      })
+    ).resolves.toBeUndefined();
+    await expect(
+      repository.updateMetadata(entryAsset.id, { filename: "renamed" })
+    ).rejects.toThrow("Collection MDX filenames cannot be changed");
+    expect(dependencies.updateAssetMetadataWithClient).toHaveBeenCalledOnce();
   });
 
   test("lists, gets, and range-reads assets through the authorized object store", async () => {
@@ -1082,6 +1346,51 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.createAssetIndex).toHaveBeenCalledWith(
       expect.objectContaining({ entries: [post] })
     );
+  });
+
+  test("rejects content snapshots when a collection config is broken", async () => {
+    const dependencies = createDependencies();
+    const config = {
+      projectId: "project-1",
+      assetId: "config",
+      revision: "revision-config",
+      document: {
+        _id: "config",
+        _type: "asset.file" as const,
+        name: "collection.json",
+        path: "posts/collection.json",
+        key: "collection",
+        extension: "json",
+        folderId: "posts",
+        mimeType: "application/json",
+        size: 8,
+        revision: "revision-config",
+        contentRef: "collection.json",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([config]);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: vi.fn(async () => ({
+          data: new Blob(["not json"]).stream(),
+          contentLength: 8,
+        })),
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.prepareIndex(
+        createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "base", includeMetadata: true },
+        })
+      )
+    ).rejects.toThrow("collection.json contains invalid JSON");
+    expect(dependencies.createAssetIndex).not.toHaveBeenCalled();
   });
 
   test("compiles concrete databases across dynamic query values", async () => {

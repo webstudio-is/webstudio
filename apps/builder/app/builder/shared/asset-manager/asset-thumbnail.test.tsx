@@ -122,6 +122,24 @@ afterEach(() => {
 });
 
 describe("AssetThumbnail", () => {
+  test("keeps collection entry filenames read-only", () => {
+    const container = renderer.render(
+      <TooltipProvider>
+        {createUploadedAssetThumbnail({ isCollectionEntry: true })}
+      </TooltipProvider>
+    );
+    openSettingsFromActionsMenu({
+      container,
+      triggerLabel: "Actions for document.pdf",
+      settingsTitle: "Asset settings",
+    });
+
+    expect(
+      document.querySelector<HTMLInputElement>("#asset-manager-filename")
+        ?.readOnly
+    ).toBe(true);
+  });
+
   test.each([
     {
       triggerLabel: "Actions for Documents",

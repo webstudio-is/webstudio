@@ -323,6 +323,7 @@ export const AssetThumbnail = ({
               }}
               onDelete={actions.delete}
               onReplace={actions.replace}
+              canRename={isCollectionEntry === false}
             >
               <AssetManagerThumbnailMenu
                 actions={displayedActions}

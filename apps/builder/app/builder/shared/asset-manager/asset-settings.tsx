@@ -312,12 +312,14 @@ const AssetSettingsContent = ({
   onDelete,
   onReplace,
   focusName,
+  canRename,
 }: {
   asset: Asset;
   usages: AssetUsage[];
   onDelete?: () => void;
   onReplace?: () => void;
   focusName: boolean;
+  canRename: boolean;
 }) => {
   const { canDownloadAssets } = useStore($permissions);
   const { size, meta, id } = asset;
@@ -510,7 +512,7 @@ const AssetSettingsContent = ({
           <InputField
             id="asset-manager-filename"
             autoFocus={focusName}
-            readOnly={authPermit === "view"}
+            readOnly={authPermit === "view" || canRename === false}
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -678,6 +680,7 @@ export const AssetSettings = ({
   onDelete,
   onReplace,
   focusName = false,
+  canRename = true,
   children,
 }: {
   asset: Asset;
@@ -686,6 +689,7 @@ export const AssetSettings = ({
   onDelete?: () => void;
   onReplace?: () => void;
   focusName?: boolean;
+  canRename?: boolean;
   children: ReactNode;
 }) => {
   const usagesByAssetId = useStore($usagesByAssetId);
@@ -722,6 +726,7 @@ export const AssetSettings = ({
           onDelete={deleteAsset}
           onReplace={replaceAsset}
           focusName={focusName}
+          canRename={canRename}
         />
       </PopoverContent>
     </Popover>
