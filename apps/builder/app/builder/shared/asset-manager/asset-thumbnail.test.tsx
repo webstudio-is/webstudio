@@ -4,12 +4,17 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
+import type { Asset } from "@webstudio-is/sdk";
 import { createAssetFolderFixture } from "@webstudio-is/sdk/testing";
 import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import { createAssetManagerTestRenderer } from "./test-utils";
 import { $authPermit } from "~/shared/nano-states";
 import type { AssetManagerThumbnailInteractions } from "./asset-manager-thumbnail";
 import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
+import {
+  createDefaultCollectionConfig,
+  parseCollectionConfig,
+} from "@webstudio-is/content-engine";
 
 const folder = createAssetFolderFixture({ id: "folder", name: "Documents" });
 const uploadedAssetContainer: ComponentProps<
@@ -122,6 +127,54 @@ afterEach(() => {
 });
 
 describe("AssetThumbnail", () => {
+  test("describes collection folders without advertising blocked file drops", () => {
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project",
+      name: "collection.json",
+      filename: "collection",
+      format: "json",
+      folderId: folder.id,
+      type: "file",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset: Asset = {
+      id: "template",
+      projectId: "project",
+      name: "template.mdx",
+      filename: "template",
+      format: "mdx",
+      folderId: folder.id,
+      type: "file",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const container = renderer.render(
+      createFolderThumbnail({
+        collection: {
+          status: "ready",
+          folderId: folder.id,
+          configAsset,
+          templateAsset,
+          config: parseCollectionConfig(createDefaultCollectionConfig()),
+          templateProperties: { draft: true },
+        },
+      })
+    );
+
+    const thumbnail = container.querySelector(
+      '[aria-label="Folder Documents"]'
+    );
+    expect(thumbnail?.getAttribute("aria-description")).toBe(
+      "Content collection. Double-click to open. Only folders can be moved here."
+    );
+  });
+
   test("keeps collection entry filenames read-only", () => {
     const container = renderer.render(
       <TooltipProvider>

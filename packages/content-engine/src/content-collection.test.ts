@@ -88,6 +88,102 @@ describe("content collections", () => {
     );
   });
 
+  test("lets a new field take ownership of a previously unresolved required key", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.required.push("future");
+    const config = parseCollectionConfig(JSON.stringify(schema));
+
+    const serialized = JSON.parse(
+      serializeCollectionConfig({
+        config,
+        fields: [
+          ...config.fields,
+          {
+            key: "future",
+            label: "Future",
+            type: "string",
+            control: "text",
+            required: false,
+          },
+        ],
+      })
+    );
+
+    expect(serialized.required).not.toContain("future");
+  });
+
+  test("rejects empty and duplicate editable field keys", () => {
+    const config = parseCollectionConfig(createDefaultCollectionConfig());
+    expect(() =>
+      serializeCollectionConfig({
+        config,
+        fields: config.fields.map((field, index) =>
+          index === 0 ? { ...field, key: "" } : field
+        ),
+      })
+    ).toThrow("Every field needs a non-empty, unique key");
+    expect(() =>
+      serializeCollectionConfig({
+        config,
+        fields: config.fields.map((field) => ({ ...field, key: "same" })),
+      })
+    ).toThrow("Every field needs a non-empty, unique key");
+    expect(() =>
+      serializeCollectionConfig({
+        config,
+        fields: config.fields.map((field, index) =>
+          index === 0 ? { ...field, label: " " } : field
+        ),
+      })
+    ).toThrow("Every field needs a label");
+  });
+
+  test("uses the field key when a schema title is empty", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.title.title = "";
+
+    const config = parseCollectionConfig(JSON.stringify(schema));
+
+    expect(config.fields.find(({ key }) => key === "title")?.label).toBe(
+      "title"
+    );
+  });
+
+  test("rejects invalid field limits before serializing the schema", () => {
+    const config = parseCollectionConfig(createDefaultCollectionConfig());
+    const titleIndex = config.fields.findIndex(({ key }) => key === "title");
+    const withTitle = (values: Partial<(typeof config.fields)[number]>) =>
+      config.fields.map((field, index) =>
+        index === titleIndex ? { ...field, ...values } : field
+      );
+
+    expect(() =>
+      serializeCollectionConfig({
+        config,
+        fields: withTitle({ minLength: -1 }),
+      })
+    ).toThrow(
+      "Title: Minimum length must be a whole number of zero or greater"
+    );
+    expect(() =>
+      serializeCollectionConfig({
+        config,
+        fields: withTitle({ minLength: 5, maxLength: 4 }),
+      })
+    ).toThrow("Title: Minimum length cannot exceed maximum length");
+
+    const numericFields = withTitle({
+      type: "number",
+      control: "number",
+      minLength: undefined,
+      maximum: 4,
+      minimum: 5,
+    });
+    expect(() =>
+      serializeCollectionConfig({ config, fields: numericFields })
+    ).toThrow("Title: Minimum cannot exceed maximum");
+  });
+
   test("removes the generated slug pattern when changing its control", () => {
     const config = parseCollectionConfig(createDefaultCollectionConfig());
     const fields = config.fields.map((field) =>
@@ -118,6 +214,19 @@ describe("content collections", () => {
       title: "Designing With Constraints",
     });
     expect(entry.source).toContain("Start writing.");
+  });
+
+  test("rejects a template with an invalid MDX body", async () => {
+    const config = parseCollectionConfig(createDefaultCollectionConfig());
+
+    await expect(
+      createCollectionEntry({
+        config,
+        templateSource: "---\ndraft: true\n---\n\n<Broken",
+        values: { title: "Broken template" },
+        existingFilenames: [],
+      })
+    ).rejects.toThrow("Collection template is invalid");
   });
 
   test("reports schema failures and duplicate generated filenames", async () => {

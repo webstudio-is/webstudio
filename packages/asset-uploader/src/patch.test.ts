@@ -10,6 +10,7 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   deleteAssetsWithClient,
+  loadAssetUploadReservationsByProjectWithClient,
   loadAssetsByProjectWithClient,
   patchAssetsWithClient,
   updateAssetMetadataWithClient,
@@ -536,6 +537,55 @@ describe("asset patch persistence", () => {
       loadAssetsByProjectWithClient(projectId, testContext.postgrest.client, [])
     ).resolves.toEqual([]);
     expect(requestCount).toBe(0);
+  });
+
+  test("loads incomplete upload reservations for conflict checks", async () => {
+    const projectId = uid();
+    server.use(
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("projectId")).toBe(`eq.${projectId}`);
+        expect(url.searchParams.has("file.status")).toBe(false);
+        return json([
+          {
+            id: "uploading-entry",
+            projectId,
+            filename: "hello-world",
+            folderId: "posts",
+            file: {
+              status: "UPLOADING",
+              isDeleted: false,
+              updatedAt: "2026-09-03T12:00:00.000Z",
+            },
+          },
+          {
+            id: "stale-entry",
+            projectId,
+            filename: "hello-world",
+            folderId: "posts",
+            file: {
+              status: "UPLOADING",
+              isDeleted: false,
+              updatedAt: "2026-09-03T10:00:00.000Z",
+            },
+          },
+        ]);
+      })
+    );
+
+    await expect(
+      loadAssetUploadReservationsByProjectWithClient(
+        projectId,
+        testContext.postgrest.client,
+        new Date("2026-09-03T12:15:00.000Z")
+      )
+    ).resolves.toEqual([
+      {
+        id: "uploading-entry",
+        filename: "hello-world",
+        folderId: "posts",
+      },
+    ]);
   });
 
   test("chunks large requested asset id filters", async () => {

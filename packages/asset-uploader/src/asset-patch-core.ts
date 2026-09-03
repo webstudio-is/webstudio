@@ -40,6 +40,46 @@ export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
     folderId: asset.folderId ?? null,
   }));
 
+export type AssetUploadReservation = Pick<
+  Asset,
+  "id" | "filename" | "folderId"
+>;
+
+const uploadReservationFreshnessMs = 30 * 60 * 1000;
+
+export const loadAssetUploadReservationsByProjectWithClient = async (
+  projectId: string,
+  client: Client,
+  now = new Date()
+): Promise<AssetUploadReservation[]> => {
+  const response = await client
+    .from("Asset")
+    .select(
+      "id, filename, folderId, file:File!inner(status, isDeleted, updatedAt)"
+    )
+    .eq("projectId", projectId)
+    .order("id");
+  assertPostgrestSuccess(response);
+  const activeAfter = now.getTime() - uploadReservationFreshnessMs;
+  return (response.data ?? []).flatMap(({ id, filename, folderId, file }) => {
+    if (
+      file.status !== "UPLOADED" &&
+      (file.status !== "UPLOADING" ||
+        file.isDeleted ||
+        new Date(file.updatedAt).getTime() <= activeAfter)
+    ) {
+      return [];
+    }
+    return [
+      {
+        id,
+        filename: filename ?? undefined,
+        folderId: folderId ?? undefined,
+      },
+    ];
+  });
+};
+
 export const loadAssetsByProjectWithClient = async (
   projectId: string,
   client: Client,

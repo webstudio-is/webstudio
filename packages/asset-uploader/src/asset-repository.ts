@@ -32,6 +32,7 @@ import {
   type DocumentSourceLoader,
   observeDocumentSourceLoader,
 } from "@webstudio-is/content-engine";
+import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   createAssetIndex,
   createAssetFieldCatalog,
@@ -55,6 +56,7 @@ import {
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import type {
   AssetFolderUpdate,
   AssetMetadataUpdate,
@@ -81,6 +83,7 @@ import {
 import { updateAssetContent } from "./revision";
 import {
   deleteAssetsWithClient,
+  loadAssetUploadReservationsByProjectWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
 } from "./asset-patch-core";
@@ -125,6 +128,18 @@ type ContentBytesReference = {
   revision: string;
 };
 
+const parseCollectionTemplate = async (source: string) => {
+  try {
+    return await parseMdxDocument({ source });
+  } catch (error) {
+    const details = error instanceof Error ? `: ${error.message}` : "";
+    throw new AssetRepositoryConflictError(
+      `Collection template is invalid${details}`,
+      { cause: error }
+    );
+  }
+};
+
 class RequestContentBytesCache {
   private values = new Map<string, Uint8Array>();
   private byteLength = 0;
@@ -160,6 +175,7 @@ const defaultDependencies = {
   uploadFile,
   updateAssetContent,
   deleteAssetsWithClient,
+  loadAssetUploadReservationsByProjectWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
   loadAssetFoldersByProjectWithClient,
@@ -656,12 +672,16 @@ export class PostgresAssetRepository implements AssetRepository {
         assetId: templateAsset.id,
         asset: templateAsset,
       });
-      const templateFrontmatter = await extractMarkdownFrontmatter(
-        templateContent.data
+      const templateBytes = await readBoundedBytes(
+        templateContent.data,
+        contentEngineLimits.hydratedFileBytes
+      );
+      const templateDocument = await parseCollectionTemplate(
+        decodeUtf8(templateBytes)
       );
       const templateValidationError = getCollectionTemplateValidationError(
         nextConfig,
-        templateFrontmatter.properties
+        templateDocument.frontmatter.properties
       );
       if (templateValidationError !== undefined) {
         throw new AssetRepositoryConflictError(
@@ -731,10 +751,10 @@ export class PostgresAssetRepository implements AssetRepository {
       return nextData;
     }
     if (formatAssetName(currentAsset) === config.template) {
-      const { properties } = await extractMarkdownFrontmatter(bytes);
+      const { frontmatter } = await parseCollectionTemplate(decodeUtf8(bytes));
       const validationError = getCollectionTemplateValidationError(
         config,
-        properties
+        frontmatter.properties
       );
       if (validationError !== undefined) {
         throw new AssetRepositoryConflictError(
@@ -918,12 +938,18 @@ export class PostgresAssetRepository implements AssetRepository {
       throw new AssetRepositoryNotFoundError("Asset folder not found");
     }
     const siblings = assets.filter((asset) => asset.folderId === folderId);
-    const configAsset = siblings.find(
+    const configAssets = siblings.filter(
       (asset) => formatAssetName(asset) === collectionConfigFilename
     );
+    const configAsset = configAssets[0];
     if (configAsset === undefined) {
       throw new AssetRepositoryNotFoundError(
         "Collection configuration not found"
+      );
+    }
+    if (configAssets.length !== 1) {
+      throw new AssetRepositoryConflictError(
+        "A collection folder must contain exactly one collection.json"
       );
     }
     const configContent = await this.readContent({
@@ -938,13 +964,19 @@ export class PostgresAssetRepository implements AssetRepository {
         )
       )
     );
-    const templateAsset = siblings.find(
+    const templateAssets = siblings.filter(
       (asset) =>
         formatAssetName(asset) === config.template && isMdxFileAsset(asset)
     );
+    const templateAsset = templateAssets[0];
     if (templateAsset === undefined) {
       throw new AssetRepositoryNotFoundError(
         `Collection template "${config.template}" not found`
+      );
+    }
+    if (templateAssets.length !== 1) {
+      throw new AssetRepositoryConflictError(
+        `Collection template "${config.template}" is ambiguous`
       );
     }
     if (
@@ -974,6 +1006,11 @@ export class PostgresAssetRepository implements AssetRepository {
       values,
       existingFilenames: siblings.map(formatAssetName),
     });
+    if (entry.filename.length > assetResourceLimits.assetFilenameCharacters) {
+      throw new AssetRepositoryConflictError(
+        "The generated entry filename is too long"
+      );
+    }
     const ticket = await this.dependencies.createUploadTicket(
       {
         projectId: this.projectId,
@@ -985,6 +1022,27 @@ export class PostgresAssetRepository implements AssetRepository {
       this.context
     );
     if (ticket.deduplicated) {
+      throw new AssetRepositoryConflictError(
+        `An entry named "${entry.filename}" already exists`
+      );
+    }
+    const reservations =
+      await this.dependencies.loadAssetUploadReservationsByProjectWithClient(
+        this.projectId,
+        this.context.postgrest.client
+      );
+    const duplicateReservation = reservations.some(
+      (candidate) =>
+        candidate.id !== ticket.assetId &&
+        candidate.folderId === folderId &&
+        candidate.filename?.toLocaleLowerCase() ===
+          entry.filename.slice(0, -".mdx".length).toLocaleLowerCase()
+    );
+    if (duplicateReservation) {
+      await this.dependencies.deleteAssetsWithClient(
+        { projectId: this.projectId, ids: [ticket.assetId] },
+        this.context.postgrest.client
+      );
       throw new AssetRepositoryConflictError(
         `An entry named "${entry.filename}" already exists`
       );
@@ -1218,6 +1276,17 @@ export class PostgresAssetRepository implements AssetRepository {
         if (folderId === undefined) {
           continue;
         }
+        if (
+          entries.filter(
+            (candidate) =>
+              candidate.document.folderId === folderId &&
+              candidate.document.name === collectionConfigFilename
+          ).length !== 1
+        ) {
+          throw new ContentCollectionError(
+            "A collection folder must contain exactly one collection.json"
+          );
+        }
         if (entry.document.size > contentEngineLimits.hydratedFileBytes) {
           throw new ContentCollectionError(
             "collection.json exceeds the content size limit"
@@ -1233,14 +1302,23 @@ export class PostgresAssetRepository implements AssetRepository {
             contentEngineLimits.hydratedFileBytes
           );
           const config = parseCollectionConfig(decodeUtf8(bytes));
-          const template = entries.find(
+          const templates = entries.filter(
             (candidate) =>
               candidate.document.folderId === folderId &&
               candidate.document.name === config.template
           );
-          if (template !== undefined) {
-            reservedAssetIds.add(template.assetId);
+          const template = templates[0];
+          if (template === undefined) {
+            throw new ContentCollectionError(
+              `Collection template "${config.template}" not found`
+            );
           }
+          if (templates.length !== 1) {
+            throw new ContentCollectionError(
+              `Collection template "${config.template}" is ambiguous`
+            );
+          }
+          reservedAssetIds.add(template.assetId);
         } catch (error) {
           if (error instanceof ContentCollectionError) {
             throw error;

@@ -4,9 +4,11 @@ import {
   collectionConfigFilename,
   ContentCollectionError,
   contentEngineLimits,
+  getCollectionTemplateValidationError,
   parseCollectionConfig,
   type ContentCollectionConfig,
 } from "@webstudio-is/content-engine";
+import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import { readAssetContentBytes } from "@webstudio-is/content-engine/asset-content-repository";
 import { formatAssetName, isMdxFileAsset, type Asset } from "@webstudio-is/sdk";
 import { $assets, $project } from "~/shared/sync/data-stores";
@@ -19,6 +21,7 @@ export type ContentCollection =
       configAsset: Asset;
       templateAsset: Asset;
       config: ContentCollectionConfig;
+      templateProperties: Readonly<Record<string, unknown>>;
     }>
   | Readonly<{
       status: "loading";
@@ -29,6 +32,9 @@ export type ContentCollection =
       status: "invalid";
       folderId: string;
       configAsset: Asset;
+      templateAsset?: Asset;
+      reservedAssets: readonly Asset[];
+      repairAsset: Asset;
       message: string;
     }>;
 
@@ -55,28 +61,45 @@ export const discoverContentCollections = async ({
   }
   const collections = new Map<string, ContentCollection>();
   for (const [folderId, siblings] of assetsByFolder) {
-    const configAsset = siblings.find(
+    const configAssets = siblings.filter(
       (asset) => formatAssetName(asset) === collectionConfigFilename
     );
+    const configAsset = configAssets[0];
     if (configAsset === undefined) {
       continue;
     }
+    let templateAsset: Asset | undefined;
+    const reservedAssets = [...configAssets];
+    let repairAsset = configAsset;
     try {
+      if (configAssets.length !== 1) {
+        throw new ContentCollectionError(
+          "A collection folder must contain exactly one collection.json"
+        );
+      }
       const config = parseCollectionConfig(await readSource(configAsset));
-      const templateAsset = siblings.find(
+      const configuredTemplateAssets = siblings.filter(
         (asset) =>
           formatAssetName(asset) === config.template && isMdxFileAsset(asset)
       );
-      if (templateAsset === undefined) {
+      reservedAssets.push(...configuredTemplateAssets);
+      const configuredTemplateAsset = configuredTemplateAssets[0];
+      if (configuredTemplateAsset === undefined) {
         throw new ContentCollectionError(
           `Collection template "${config.template}" was not found`
         );
       }
+      if (configuredTemplateAssets.length !== 1) {
+        throw new ContentCollectionError(
+          `Collection template "${config.template}" is ambiguous`
+        );
+      }
+      templateAsset = configuredTemplateAsset;
       if (
         siblings.some(
           (asset) =>
             asset.id !== configAsset.id &&
-            asset.id !== templateAsset.id &&
+            asset.id !== configuredTemplateAsset.id &&
             isMdxFileAsset(asset) === false
         )
       ) {
@@ -84,18 +107,35 @@ export const discoverContentCollections = async ({
           "Move non-entry files into a subfolder"
         );
       }
+      repairAsset = configuredTemplateAsset;
+      const templateDocument = await parseMdxDocument({
+        source: await readSource(configuredTemplateAsset),
+      });
+      const templateValidationError = getCollectionTemplateValidationError(
+        config,
+        templateDocument.frontmatter.properties
+      );
+      if (templateValidationError !== undefined) {
+        throw new ContentCollectionError(
+          `Entry template: ${templateValidationError}`
+        );
+      }
       collections.set(folderId, {
         status: "ready",
         folderId,
         configAsset,
-        templateAsset,
+        templateAsset: configuredTemplateAsset,
         config,
+        templateProperties: templateDocument.frontmatter.properties,
       });
     } catch (error) {
       collections.set(folderId, {
         status: "invalid",
         folderId,
         configAsset,
+        templateAsset,
+        reservedAssets,
+        repairAsset,
         message: getErrorMessage(error),
       });
     }
@@ -188,7 +228,7 @@ export const getCollectionReservedAssetIds = (
     Array.from(collections.values()).flatMap((collection) =>
       collection.status === "invalid"
         ? includeInvalid
-          ? [collection.configAsset.id]
+          ? [...collection.reservedAssets.map(({ id }) => id)]
           : []
         : [
             collection.configAsset.id,

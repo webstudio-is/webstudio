@@ -194,7 +194,11 @@ export const FolderThumbnail = ({
           </div>
         }
         aria-label={`Folder ${folder.name}`}
-        aria-description="Double-click to open. Drag assets or folders here to move them."
+        aria-description={
+          collection === undefined
+            ? "Double-click to open. Drag assets or folders here to move them."
+            : "Content collection. Double-click to open. Only folders can be moved here."
+        }
         data-is-drop-over={isDropTarget ? "true" : undefined}
         clickable
         dropTarget={isDropTarget}

@@ -16,7 +16,11 @@ import {
 } from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { getAssetUrl, isTextFileAsset } from "@webstudio-is/sdk";
+import {
+  formatAssetName,
+  getAssetUrl,
+  isTextFileAsset,
+} from "@webstudio-is/sdk";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { AssetUpload, type AssetUploadHandle } from "~/builder/shared/assets";
 import {
@@ -103,13 +107,13 @@ export const AssetsPanel = ({
             {currentCollection?.status === "invalid" &&
               isContentMode === false && (
                 <Tooltip
-                  content={`${currentCollection.message}. Open collection.json to repair it.`}
+                  content={`${currentCollection.message}. Open ${formatAssetName(currentCollection.repairAsset)} to repair it.`}
                 >
                   <IconButton
                     disabled={authPermit === "view"}
-                    aria-label="Repair invalid collection configuration"
+                    aria-label="Repair invalid collection"
                     onClick={() =>
-                      setOpenedTextAssetId(currentCollection.configAsset.id)
+                      setOpenedTextAssetId(currentCollection.repairAsset.id)
                     }
                   >
                     <AlertCircleIcon />

@@ -1,8 +1,6 @@
 import { z } from "zod";
-import {
-  extractMarkdownFrontmatter,
-  replaceMarkdownFrontmatter,
-} from "./frontmatter";
+import { replaceMarkdownFrontmatter } from "./frontmatter";
+import { parseMdxDocument } from "./mdx";
 
 export const collectionConfigFilename = "collection.json";
 const collectionSlugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
@@ -63,7 +61,10 @@ const getField = ({
   if (isObject(value) === false) {
     return;
   }
-  const label = typeof value.title === "string" ? value.title : key;
+  const label =
+    typeof value.title === "string" && value.title.trim() !== ""
+      ? value.title
+      : key;
   const extension = isObject(value["x-webstudio"])
     ? value["x-webstudio"]
     : undefined;
@@ -268,6 +269,18 @@ export const getCollectionTemplateValidationError = (
   return issue === undefined ? undefined : getValidationError(config, issue);
 };
 
+const parseCollectionTemplate = async (source: string) => {
+  try {
+    return await parseMdxDocument({ source });
+  } catch (error) {
+    const details = error instanceof Error ? `: ${error.message}` : "";
+    throw new ContentCollectionError(
+      `Collection template is invalid${details}`,
+      { cause: error }
+    );
+  }
+};
+
 export const createCollectionEntry = async ({
   config,
   templateSource,
@@ -279,10 +292,8 @@ export const createCollectionEntry = async ({
   values: Readonly<Record<string, unknown>>;
   existingFilenames: readonly string[];
 }) => {
-  const template = await extractMarkdownFrontmatter(
-    new TextEncoder().encode(templateSource)
-  );
-  const frontmatter = { ...template.properties, ...values };
+  const template = await parseCollectionTemplate(templateSource);
+  const frontmatter = { ...template.frontmatter.properties, ...values };
   const currentSlug = frontmatter[config.slugField];
   if (typeof currentSlug !== "string" || currentSlug.trim() === "") {
     const source = frontmatter[config.generateSlugFrom];
@@ -415,6 +426,56 @@ const serializeCollectionField = (
   return result;
 };
 
+const validateCollectionFieldLimits = (field: CollectionField) => {
+  if (field.type === "string") {
+    for (const [name, value] of [
+      ["Minimum length", field.minLength],
+      ["Maximum length", field.maxLength],
+    ] as const) {
+      if (
+        value !== undefined &&
+        (Number.isInteger(value) === false || value < 0)
+      ) {
+        throw new ContentCollectionError(
+          `${field.label}: ${name} must be a whole number of zero or greater`
+        );
+      }
+    }
+    if (
+      field.minLength !== undefined &&
+      field.maxLength !== undefined &&
+      field.minLength > field.maxLength
+    ) {
+      throw new ContentCollectionError(
+        `${field.label}: Minimum length cannot exceed maximum length`
+      );
+    }
+    return;
+  }
+  if (field.type !== "number" && field.type !== "integer") {
+    return;
+  }
+  for (const [name, value] of [
+    ["Minimum", field.minimum],
+    ["Maximum", field.maximum],
+  ] as const) {
+    if (value !== undefined && Number.isFinite(value) === false) {
+      throw new ContentCollectionError(
+        `${field.label}: ${name} must be a finite number`
+      );
+    }
+  }
+  if (
+    field.minimum !== undefined &&
+    field.maximum !== undefined &&
+    field.minimum > field.maximum
+  ) {
+    throw new ContentCollectionError(
+      `${field.label}: Minimum cannot exceed maximum`
+    );
+  }
+};
+
 export const serializeCollectionConfig = ({
   config,
   fields,
@@ -424,6 +485,21 @@ export const serializeCollectionConfig = ({
   fields: readonly CollectionField[];
   settings?: { previewPage?: string };
 }) => {
+  const fieldKeys = fields.map(({ key }) => key);
+  if (
+    fieldKeys.some((key) => key.trim() === "") ||
+    new Set(fieldKeys).size !== fieldKeys.length
+  ) {
+    throw new ContentCollectionError(
+      "Every field needs a non-empty, unique key"
+    );
+  }
+  if (fields.some(({ label }) => label.trim() === "")) {
+    throw new ContentCollectionError("Every field needs a label");
+  }
+  for (const field of fields) {
+    validateCollectionFieldLimits(field);
+  }
   const originalProperties = isObject(config.schema.properties)
     ? config.schema.properties
     : {};
@@ -440,10 +516,13 @@ export const serializeCollectionConfig = ({
       );
     }
   }
+  const nextFieldKeys = new Set(fields.map(({ key }) => key));
   const preservedRequired = Array.isArray(config.schema.required)
     ? config.schema.required.filter(
         (key): key is string =>
-          typeof key === "string" && editableKeys.has(key) === false
+          typeof key === "string" &&
+          editableKeys.has(key) === false &&
+          nextFieldKeys.has(key) === false
       )
     : [];
   const previewPage =
