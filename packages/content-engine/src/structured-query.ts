@@ -849,6 +849,7 @@ const scanAndSortAssetQueryDocuments = ({
         if (
           query.content.mode === "none" &&
           Object.keys(projected).length === 0 &&
+          query.output.mode !== "all" &&
           includesOutputField(query.output, "id") === false
         ) {
           continue;

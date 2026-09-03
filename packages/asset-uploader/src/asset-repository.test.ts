@@ -3207,16 +3207,20 @@ describe("PostgresAssetRepository", () => {
 
     const result = await repository.query({
       query: {
-        where: { field: ["id"], operator: "eq", value: "unsafe-mdx" },
+        where: {
+          field: ["extension"],
+          operator: "contains",
+          value: "mdx",
+        },
         output: {
-          mode: "fields",
+          mode: "all",
           includeMetadata: false,
-          fields: [["id"]],
         },
         content: { mode: "none" },
       },
     });
 
+    expect(result.data.items).toEqual([{ id: "unsafe-mdx" }]);
     expect(result.__diagnostics__.issues).toEqual([
       expect.objectContaining({
         severity: "warning",

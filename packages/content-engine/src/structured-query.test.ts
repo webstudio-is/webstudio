@@ -1202,7 +1202,7 @@ describe("structured asset query", () => {
     });
   });
 
-  test("omits empty properties from query results", async () => {
+  test("returns IDs for all-fields results without properties", async () => {
     const empty = document({ id: "empty", properties: {} });
     const withExcerpt = document({
       id: "excerpt",
@@ -1219,7 +1219,7 @@ describe("structured asset query", () => {
       query: {
         where: { all: [] },
         sort: [],
-        limit: 1,
+        limit: 2,
         offset: 0,
         output: { mode: "all", includeMetadata: false },
         content: { mode: "none" },
@@ -1227,8 +1227,8 @@ describe("structured asset query", () => {
     });
 
     expect(result).toMatchObject({
-      items: [{ id: "excerpt", excerpt: "Excerpt" }],
-      totalCount: 1,
+      items: [{ id: "empty" }, { id: "excerpt", excerpt: "Excerpt" }],
+      totalCount: 2,
       hasMore: false,
     });
   });
