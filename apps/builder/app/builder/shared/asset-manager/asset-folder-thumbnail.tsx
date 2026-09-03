@@ -31,9 +31,12 @@ import {
   AssetManagerThumbnailMenu,
   type AssetManagerThumbnailInteractions,
 } from "./asset-manager-thumbnail";
-import type { ContentCollection } from "../assets/content-collections";
+import {
+  canConfigureContentCollections,
+  type ContentCollection,
+} from "../assets/content-collections";
 import { CollectionSettingsDialog } from "./collection-settings-dialog";
-import { $isContentMode } from "~/shared/nano-states";
+import { $authPermit, $isContentMode } from "~/shared/nano-states";
 
 const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
   items.every((item) => item.type === "folder");
@@ -44,6 +47,9 @@ export const FolderThumbnail = ({
   interactions,
   onOpen,
   canManage,
+  canCopyOrDelete = true,
+  canPasteClipboard,
+  onPasteClipboard,
   canMoveItems,
   onMoveItems,
   onMove,
@@ -58,6 +64,9 @@ export const FolderThumbnail = ({
   interactions: AssetManagerThumbnailInteractions;
   onOpen: () => void;
   canManage: boolean;
+  canCopyOrDelete?: boolean;
+  canPasteClipboard?: boolean;
+  onPasteClipboard?: () => void;
   canMoveItems: (
     items: readonly AssetManagerSelection[],
     folderId: string
@@ -78,6 +87,8 @@ export const FolderThumbnail = ({
   const [isDropTarget, setIsDropTarget] = useState(false);
   const [collectionSettingsOpen, setCollectionSettingsOpen] = useState(false);
   const isContentMode = useStore($isContentMode);
+  const authPermit = useStore($authPermit);
+  const canConfigureCollections = canConfigureContentCollections(authPermit);
   const elementRef = useRef<HTMLElement | null>(null);
   const getDragItems = interactions.getDragItems;
 
@@ -90,29 +101,41 @@ export const FolderThumbnail = ({
     id: folder.id,
     projectId: folder.projectId,
   };
+  const clipboardActions = createAssetManagerClipboardActions(item);
   const actions: AssetManagerItemActions = {
     open: onOpen,
     ...(canManage
       ? {
           settings: () => openSettings(),
-          ...(collection?.status === "ready" && isContentMode === false
+          ...(collection?.status === "ready" &&
+          isContentMode === false &&
+          canConfigureCollections
             ? { collectionSettings: () => setCollectionSettingsOpen(true) }
             : {}),
-          ...createAssetManagerClipboardActions(item),
+          cut: clipboardActions.cut,
+          ...(canCopyOrDelete
+            ? {
+                copy: clipboardActions.copy,
+                duplicate: clipboardActions.duplicate,
+              }
+            : {}),
           move: onMove,
-          paste: canPasteAssetManagerClipboard(
-            folder.id,
-            collection === undefined ? undefined : acceptFolderClipboardItems
-          )
-            ? () =>
-                pasteAssetManagerClipboard(
-                  folder.id,
-                  collection === undefined
-                    ? undefined
-                    : acceptFolderClipboardItems
-                )
-            : undefined,
-          delete: () => openSettings(true),
+          paste:
+            (canPasteClipboard ??
+            canPasteAssetManagerClipboard(
+              folder.id,
+              collection === undefined ? undefined : acceptFolderClipboardItems
+            ))
+              ? (onPasteClipboard ??
+                (() =>
+                  pasteAssetManagerClipboard(
+                    folder.id,
+                    collection === undefined
+                      ? undefined
+                      : acceptFolderClipboardItems
+                  )))
+              : undefined,
+          ...(canCopyOrDelete ? { delete: () => openSettings(true) } : {}),
         }
       : {}),
   };
@@ -225,11 +248,13 @@ export const FolderThumbnail = ({
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
           initialDeleteConfirmation={deleteConfirmationOpen}
+          canDelete={canCopyOrDelete}
         />
       )}
       {canManage &&
         collection?.status === "ready" &&
-        isContentMode === false && (
+        isContentMode === false &&
+        canConfigureCollections && (
           <CollectionSettingsDialog
             collection={collection}
             open={collectionSettingsOpen}

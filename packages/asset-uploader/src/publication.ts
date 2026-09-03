@@ -17,6 +17,47 @@ const defaultDependencies = {
   loadAssetDataByProject,
 };
 
+export const validatePublishedAssetCollections = async (
+  {
+    projectId,
+    context,
+    assetStore,
+  }: {
+    projectId: string;
+    context: AppContext;
+    assetStore: AssetObjectStore;
+  },
+  dependencies = defaultDependencies
+) => {
+  const repository = dependencies.createRepository({
+    projectId,
+    context,
+    assetStore,
+  });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const assetDataBefore = await dependencies.loadAssetDataByProject(
+      projectId,
+      context
+    );
+    await repository.validateCollections(assetDataBefore.assets);
+    const assetDataAfter = await dependencies.loadAssetDataByProject(
+      projectId,
+      context
+    );
+    if (
+      serializeJsonDeterministically(assetDataBefore) ===
+      serializeJsonDeterministically(assetDataAfter)
+    ) {
+      return assetDataAfter;
+    }
+    if (attempt === 0) {
+      continue;
+    }
+    throw new Error("Assets changed while preparing publication; retry");
+  }
+  throw new Error("Asset data was not validated");
+};
+
 export const preparePublishedAssetData = async (
   {
     projectId,

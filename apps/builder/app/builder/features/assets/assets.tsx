@@ -1,12 +1,17 @@
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  Flex,
   IconButton,
   PanelTitle,
   Separator,
   Tooltip,
+  Text,
+  theme,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   AlertCircleIcon,
@@ -23,9 +28,12 @@ import {
 } from "@webstudio-is/sdk";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { AssetUpload, type AssetUploadHandle } from "~/builder/shared/assets";
+import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
 import {
+  canConfigureContentCollections,
   getCollectionReservedAssetIds,
   useContentCollections,
+  type ContentCollection,
 } from "~/builder/shared/assets";
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { CreateAssetFolderDialog } from "~/builder/shared/asset-manager/asset-folder-dialogs";
@@ -49,21 +57,102 @@ export const AssetsPanel = ({
   const [createTextFileOpen, setCreateTextFileOpen] = useState(false);
   const [createEntryOpen, setCreateEntryOpen] = useState(false);
   const [collectionSettingsOpen, setCollectionSettingsOpen] = useState(false);
+  const [collectionRefreshKey, setCollectionRefreshKey] = useState(0);
+  const [repairingCollection, setRepairingCollection] = useState(false);
+  const [entryCollection, setEntryCollection] =
+    useState<Extract<ContentCollection, { status: "ready" }>>();
+  const [settingsCollection, setSettingsCollection] =
+    useState<Extract<ContentCollection, { status: "ready" }>>();
   const [openedTextAssetId, setOpenedTextAssetId] = useState<string>();
   const uploadRef = useRef<AssetUploadHandle>(null);
   const authPermit = useStore($authPermit);
   const isContentMode = useStore($isContentMode);
-  const collections = useContentCollections();
+  const canManageFolders = authPermit !== "view";
+  const canConfigureCollections = canConfigureContentCollections(authPermit);
+  const collections = useContentCollections(collectionRefreshKey);
   const currentCollection =
     folderId === undefined ? undefined : collections.get(folderId);
+  const builderRepair =
+    currentCollection?.status === "invalid" &&
+    isContentMode === false &&
+    canConfigureCollections
+      ? currentCollection
+      : undefined;
+  const editorRepair =
+    currentCollection?.status === "invalid" && authPermit !== "view"
+      ? currentCollection.editorRepair
+      : undefined;
+  const repairAssetToOpen =
+    editorRepair?.action === "edit"
+      ? editorRepair.asset
+      : editorRepair === undefined &&
+          builderRepair !== undefined &&
+          builderRepair.missingTemplateFilename === undefined &&
+          builderRepair.forbiddenAsset === undefined &&
+          isTextFileAsset(builderRepair.repairAsset)
+        ? builderRepair.repairAsset
+        : undefined;
+  const invalidCollectionMessage =
+    currentCollection?.status !== "invalid"
+      ? undefined
+      : currentCollection.editorRepair !== undefined
+        ? authPermit === "view"
+          ? `${currentCollection.message} Ask an editor or builder to repair this collection.`
+          : currentCollection.message
+        : isContentMode
+          ? "New entries are unavailable until a builder repairs this collection."
+          : canConfigureCollections
+            ? currentCollection.message
+            : `${currentCollection.message} A builder must repair this collection.`;
   const reservedAssetIds = getCollectionReservedAssetIds(collections, {
-    includeInvalid: isContentMode,
+    includeInvalid: isContentMode || canConfigureCollections === false,
   });
   const addActions = {
     upload: () => uploadRef.current?.open(),
     createFile: () => setCreateTextFileOpen(true),
     createFolder: () => setCreateFolderOpen(true),
-    createEntry: () => setCreateEntryOpen(true),
+    createEntry: () => {
+      if (currentCollection?.status === "ready") {
+        setEntryCollection(currentCollection);
+        setCreateEntryOpen(true);
+      }
+    },
+  };
+  const createMissingTemplate = async () => {
+    if (
+      currentCollection?.status !== "invalid" ||
+      currentCollection.missingTemplateFilename === undefined ||
+      repairingCollection
+    ) {
+      return;
+    }
+    setRepairingCollection(true);
+    try {
+      const template = await uploadSingleAsset(
+        "file",
+        new File(
+          ["---\n---\n\nStart writing.\n"],
+          currentCollection.missingTemplateFilename,
+          { type: "text/mdx" }
+        ),
+        { folderId: currentCollection.folderId, deduplicate: true }
+      );
+      if (template === undefined) {
+        throw new Error(
+          "The missing collection template could not be created."
+        );
+      }
+      setCollectionRefreshKey((key) => key + 1);
+      toast.success("Collection template created.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "The missing collection template could not be created."
+      );
+    } finally {
+      setRepairingCollection(false);
+    }
   };
   const openAsset = (assetId: string) => {
     const asset = $assets.get().get(assetId);
@@ -93,28 +182,37 @@ export const AssetsPanel = ({
         suffix={
           <>
             {currentCollection?.status === "ready" &&
-              isContentMode === false && (
+              isContentMode === false &&
+              canConfigureCollections && (
                 <Tooltip content="Collection settings">
                   <IconButton
-                    disabled={authPermit === "view"}
                     aria-label="Collection settings"
-                    onClick={() => setCollectionSettingsOpen(true)}
+                    onClick={() => {
+                      setSettingsCollection(currentCollection);
+                      setCollectionSettingsOpen(true);
+                    }}
                   >
                     <SettingsIcon />
                   </IconButton>
                 </Tooltip>
               )}
             {currentCollection?.status === "invalid" &&
-              isContentMode === false && (
-                <Tooltip
-                  content={`${currentCollection.message}. Open ${formatAssetName(currentCollection.repairAsset)} to repair it.`}
-                >
+              (builderRepair?.missingTemplateFilename !== undefined ||
+                repairAssetToOpen !== undefined) && (
+                <Tooltip content={currentCollection.message}>
                   <IconButton
-                    disabled={authPermit === "view"}
                     aria-label="Repair invalid collection"
-                    onClick={() =>
-                      setOpenedTextAssetId(currentCollection.repairAsset.id)
-                    }
+                    onClick={() => {
+                      if (
+                        builderRepair?.missingTemplateFilename !== undefined
+                      ) {
+                        void createMissingTemplate();
+                        return;
+                      }
+                      if (repairAssetToOpen !== undefined) {
+                        setOpenedTextAssetId(repairAssetToOpen.id);
+                      }
+                    }}
                   >
                     <AlertCircleIcon />
                   </IconButton>
@@ -155,9 +253,11 @@ export const AssetsPanel = ({
                     New entry
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onSelect={addActions.createFolder}>
-                  Create folder
-                </DropdownMenuItem>
+                {canManageFolders && (
+                  <DropdownMenuItem onSelect={addActions.createFolder}>
+                    Create folder
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </>
@@ -166,18 +266,71 @@ export const AssetsPanel = ({
         Assets
       </PanelTitle>
       <Separator />
+      {currentCollection?.status === "loading" && (
+        <Flex
+          role="status"
+          align="center"
+          css={{ padding: theme.panel.padding }}
+        >
+          <Text variant="tiny">Loading collection settings…</Text>
+        </Flex>
+      )}
+      {currentCollection?.status === "invalid" && (
+        <Flex
+          role="alert"
+          direction="column"
+          gap={2}
+          css={{ padding: theme.panel.padding }}
+        >
+          <Text color="destructive" variant="tiny">
+            {invalidCollectionMessage}
+          </Text>
+          {(builderRepair !== undefined || editorRepair !== undefined) && (
+            <Flex gap={2} wrap="wrap">
+              {builderRepair?.missingTemplateFilename !== undefined && (
+                <Button
+                  disabled={repairingCollection}
+                  onClick={() => void createMissingTemplate()}
+                >
+                  {repairingCollection
+                    ? "Creating…"
+                    : "Create missing template"}
+                </Button>
+              )}
+              {repairAssetToOpen !== undefined && (
+                <Button
+                  onClick={() => setOpenedTextAssetId(repairAssetToOpen.id)}
+                >
+                  Open {formatAssetName(repairAssetToOpen)}
+                </Button>
+              )}
+              <Button onClick={() => setCollectionRefreshKey((key) => key + 1)}>
+                Check again
+              </Button>
+            </Flex>
+          )}
+        </Flex>
+      )}
       <AssetManager
         folderId={folderId}
         onFolderChange={setFolderId}
         onOpen={openAsset}
-        canManageFolders={authPermit !== "view"}
+        canManageFolders={canManageFolders}
         panelActions={{
           ...(authPermit === "view"
             ? {}
             : currentCollection === undefined
-              ? addActions
+              ? {
+                  upload: addActions.upload,
+                  createFile: addActions.createFile,
+                  ...(canManageFolders
+                    ? { createFolder: addActions.createFolder }
+                    : {}),
+                }
               : {
-                  createFolder: addActions.createFolder,
+                  ...(canManageFolders
+                    ? { createFolder: addActions.createFolder }
+                    : {}),
                   ...(currentCollection.status === "ready"
                     ? { createEntry: addActions.createEntry }
                     : {}),
@@ -186,15 +339,26 @@ export const AssetsPanel = ({
         }}
         collections={collections}
         hiddenAssetIds={reservedAssetIds}
+        emptyMessage={
+          currentCollection === undefined
+            ? undefined
+            : currentCollection.status === "ready"
+              ? "No entries yet. Use New entry to create one."
+              : "No collection entries are available."
+        }
       />
       <CreateAssetFolderDialog
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
         currentFolderId={folderId}
+        canCreateContentCollection={
+          isContentMode === false && canConfigureCollections
+        }
       />
       <CreateTextFileDialog
         open={createTextFileOpen}
         folderId={folderId}
+        canCreateCollectionConfig={canConfigureCollections}
         onOpenChange={setCreateTextFileOpen}
         onCreated={setOpenedTextAssetId}
       />
@@ -209,22 +373,32 @@ export const AssetsPanel = ({
           }}
         />
       )}
-      {currentCollection?.status === "ready" && (
-        <>
-          <CreateCollectionEntryDialog
-            collection={currentCollection}
-            open={createEntryOpen}
-            onOpenChange={setCreateEntryOpen}
-          />
-          {isContentMode === false && (
-            <CollectionSettingsDialog
-              collection={currentCollection}
-              open={collectionSettingsOpen}
-              onOpenChange={setCollectionSettingsOpen}
-            />
-          )}
-        </>
+      {entryCollection !== undefined && (
+        <CreateCollectionEntryDialog
+          collection={entryCollection}
+          open={createEntryOpen}
+          onOpenChange={(nextOpen) => {
+            setCreateEntryOpen(nextOpen);
+            if (nextOpen === false) {
+              setEntryCollection(undefined);
+            }
+          }}
+        />
       )}
+      {settingsCollection !== undefined &&
+        isContentMode === false &&
+        canConfigureCollections && (
+          <CollectionSettingsDialog
+            collection={settingsCollection}
+            open={collectionSettingsOpen}
+            onOpenChange={(nextOpen) => {
+              setCollectionSettingsOpen(nextOpen);
+              if (nextOpen === false) {
+                setSettingsCollection(undefined);
+              }
+            }}
+          />
+        )}
     </>
   );
 };

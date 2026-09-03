@@ -8,7 +8,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import { createAssetFolderFixture } from "@webstudio-is/sdk/testing";
 import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import { createAssetManagerTestRenderer } from "./test-utils";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $builderMode } from "~/shared/nano-states";
 import type { AssetManagerThumbnailInteractions } from "./asset-manager-thumbnail";
 import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
 import {
@@ -110,6 +110,7 @@ vi.stubGlobal(
 );
 beforeEach(() => {
   $authPermit.set("build");
+  $builderMode.set("design");
   $project.set({ id: "project" } as never);
   $assetFolders.set(new Map([[folder.id, folder]]));
   if (uploadedAssetContainer.status === "uploaded") {
@@ -127,6 +128,64 @@ afterEach(() => {
 });
 
 describe("AssetThumbnail", () => {
+  test("hides collection settings from edit-only users", () => {
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project",
+      name: "collection.json",
+      filename: "collection",
+      format: "json",
+      folderId: folder.id,
+      type: "file",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset: Asset = {
+      id: "template",
+      projectId: "project",
+      name: "template.mdx",
+      filename: "template",
+      format: "mdx",
+      folderId: folder.id,
+      type: "file",
+      size: 1,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    $authPermit.set("edit");
+    const container = renderer.render(
+      createFolderThumbnail({
+        canManage: true,
+        collection: {
+          status: "ready",
+          folderId: folder.id,
+          configAsset,
+          templateAsset,
+          config: parseCollectionConfig(createDefaultCollectionConfig()),
+          templateProperties: { draft: true },
+        },
+      })
+    );
+    const actions = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Actions for Documents"]'
+    );
+
+    act(() => {
+      actions?.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+      );
+    });
+
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels).toContain("Settings");
+    expect(labels).not.toContain("Collection settings");
+  });
+
   test("describes collection folders without advertising blocked file drops", () => {
     const configAsset: Asset = {
       id: "config",

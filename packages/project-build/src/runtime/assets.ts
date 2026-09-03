@@ -682,14 +682,16 @@ export const duplicateAsset = (
   assertAssetFolderExists(state.assetFolders, folderId);
   assertFolderAcceptsGenericAssets(assets, folderId);
 
-  const displayFilenames = new Set(
-    Array.from(assets.values(), getAssetDisplayFilename)
+  const logicalFilenames = new Set(
+    Array.from(assets.values())
+      .filter((candidate) => candidate.folderId === folderId)
+      .map(formatAssetName)
   );
   const duplicatedAsset: Asset = {
     ...asset,
     id: context.createId(),
     filename: createCopyName(getAssetDisplayFilename(asset), (candidate) =>
-      displayFilenames.has(candidate)
+      logicalFilenames.has(formatAssetName({ ...asset, filename: candidate }))
     ),
     folderId,
   };
@@ -748,14 +750,6 @@ export const updateAsset = (
     if (isValidFilename(input.values.filename) === false) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Invalid filename");
     }
-    for (const currentAsset of assets.values()) {
-      if (
-        currentAsset.id !== asset.id &&
-        getAssetDisplayFilename(currentAsset) === input.values.filename
-      ) {
-        return throwBuilderRuntimeError("CONFLICT", "Filename already used");
-      }
-    }
     if (asset.filename !== input.values.filename) {
       appendOptionalPropertyPatch(patches, {
         path: [asset.id, "filename"],
@@ -785,6 +779,27 @@ export const updateAsset = (
       previous: asset.folderId,
       next: folderId,
     });
+  }
+
+  const nextFolderId =
+    input.values.folderId === null
+      ? undefined
+      : (input.values.folderId ?? asset.folderId);
+  const nextLogicalFilename = formatAssetName({
+    ...asset,
+    filename: input.values.filename ?? asset.filename,
+  });
+  if (
+    (nextFolderId !== asset.folderId ||
+      nextLogicalFilename !== formatAssetName(asset)) &&
+    Array.from(assets.values()).some(
+      (candidate) =>
+        candidate.id !== asset.id &&
+        candidate.folderId === nextFolderId &&
+        formatAssetName(candidate) === nextLogicalFilename
+    )
+  ) {
+    return throwBuilderRuntimeError("CONFLICT", "Filename already used");
   }
 
   return createRuntimeMutation({

@@ -15,21 +15,27 @@ import {
 } from "@webstudio-is/sdk";
 import { $assetFolders } from "~/shared/sync/data-stores";
 
-type Option = { label: string; folderId: string | undefined };
+type Option = {
+  label: string;
+  folderId: string | undefined;
+  canUseAsDestination: boolean;
+};
 const defaultRootLabel = "Top level folder";
 
-export const getAssetFolderSelectValue = (option: Option) =>
+export const getAssetFolderSelectValue = (option: Pick<Option, "folderId">) =>
   option.folderId === undefined ? "no-folder" : `folder:${option.folderId}`;
 
 export const createAssetFolderSelectorLevels = ({
   folders,
   value,
   excludedFolderIds,
+  unavailableDestinationFolderIds,
   rootLabel = defaultRootLabel,
 }: {
   folders: AssetFolders;
   value: string | undefined;
   excludedFolderIds?: ReadonlySet<string>;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
   rootLabel?: string;
 }) => {
   const hierarchy = createAssetFolderHierarchy(folders);
@@ -48,10 +54,12 @@ export const createAssetFolderSelectorLevels = ({
     .getPath(value)
     .filter(({ id }) => excludedIds.has(id) === false);
   const topOptions: Option[] = [
-    { label: "Root", folderId: undefined },
+    { label: "Root", folderId: undefined, canUseAsDestination: true },
     ...getChildren(undefined).map((folder) => ({
       label: folder.name,
       folderId: folder.id,
+      canUseAsDestination:
+        unavailableDestinationFolderIds?.has(folder.id) !== true,
     })),
   ];
   const levels = [
@@ -73,10 +81,14 @@ export const createAssetFolderSelectorLevels = ({
       {
         label: "This folder",
         folderId: folder.id,
+        canUseAsDestination:
+          unavailableDestinationFolderIds?.has(folder.id) !== true,
       },
       ...children.map((child) => ({
         label: child.name,
         folderId: child.id,
+        canUseAsDestination:
+          unavailableDestinationFolderIds?.has(child.id) !== true,
       })),
     ];
     const nextId = path[index + 1]?.id;
@@ -94,6 +106,7 @@ export const AssetFolderSelector = ({
   value,
   onChange,
   excludedFolderIds,
+  unavailableDestinationFolderIds,
   rootLabel = defaultRootLabel,
   disabled,
   deferChangesUntilBlur = false,
@@ -101,6 +114,7 @@ export const AssetFolderSelector = ({
   value: string | undefined;
   onChange: (folderId: string | undefined) => void;
   excludedFolderIds?: ReadonlySet<string>;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
   rootLabel?: string;
   disabled?: boolean;
   deferChangesUntilBlur?: boolean;
@@ -143,9 +157,16 @@ export const AssetFolderSelector = ({
         folders,
         value: draftValue,
         excludedFolderIds,
+        unavailableDestinationFolderIds,
         rootLabel,
       }),
-    [draftValue, excludedFolderIds, folders, rootLabel]
+    [
+      draftValue,
+      excludedFolderIds,
+      folders,
+      rootLabel,
+      unavailableDestinationFolderIds,
+    ]
   );
 
   return (
@@ -189,6 +210,10 @@ export const AssetFolderSelector = ({
               }}
               onChange={(option: Option) => {
                 setDraftValue(option.folderId);
+                if (option.canUseAsDestination === false) {
+                  pendingValue.current = undefined;
+                  return;
+                }
                 if (deferChangesUntilBlur) {
                   pendingValue.current = { folderId: option.folderId };
                 } else {

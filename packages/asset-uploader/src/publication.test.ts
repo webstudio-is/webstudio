@@ -1,7 +1,54 @@
 import { describe, expect, test, vi } from "vitest";
-import { preparePublishedAssetData } from "./publication";
+import {
+  preparePublishedAssetData,
+  validatePublishedAssetCollections,
+} from "./publication";
 
 describe("published asset data", () => {
+  test("validates collections without compiling a content index", async () => {
+    const validateCollections = vi.fn();
+    const createRepository = vi.fn(() => ({ validateCollections }));
+    const staleAssetData = {
+      assets: [{ id: "stale-config", type: "file" }],
+      assetFolders: [{ id: "stale-folder" }],
+    };
+    const currentAssetData = {
+      assets: [{ id: "current-config", type: "file" }],
+      assetFolders: [{ id: "current-folder" }],
+    };
+    const loadAssetDataByProject = vi
+      .fn()
+      .mockResolvedValueOnce(staleAssetData)
+      .mockResolvedValueOnce(currentAssetData)
+      .mockResolvedValueOnce(currentAssetData)
+      .mockResolvedValueOnce(currentAssetData);
+
+    await expect(
+      validatePublishedAssetCollections(
+        {
+          projectId: "project-1",
+          context: {} as never,
+          assetStore: {} as never,
+        },
+        {
+          createRepository,
+          loadAssetDataByProject,
+        } as never
+      )
+    ).resolves.toEqual(currentAssetData);
+
+    expect(createRepository).toHaveBeenCalledWith({
+      projectId: "project-1",
+      context: {},
+      assetStore: {},
+    });
+    expect(validateCollections.mock.calls).toEqual([
+      [staleAssetData.assets],
+      [currentAssetData.assets],
+    ]);
+    expect(loadAssetDataByProject).toHaveBeenCalledTimes(4);
+  });
+
   test("keeps authored fonts and content database runtime assets", async () => {
     const artifact = {
       documents: [{ _id: "post-document" }],

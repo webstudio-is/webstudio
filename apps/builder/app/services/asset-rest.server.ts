@@ -1,10 +1,14 @@
 import { json } from "@remix-run/server-runtime";
 import {
   ContentCollectionError,
+  MarkdownMetadataError,
   readBoundedRequestBytes,
   RequestByteLimitError,
 } from "@webstudio-is/content-engine";
-import { decodeUtf8 } from "@webstudio-is/content-engine/compiler";
+import {
+  ByteLimitExceededError,
+  decodeUtf8,
+} from "@webstudio-is/content-engine/compiler";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
@@ -187,6 +191,7 @@ const getAssetRestErrorStatus = (error: unknown) => {
   if (
     error instanceof AssetRepositoryConflictError ||
     error instanceof ContentCollectionError ||
+    error instanceof MarkdownMetadataError ||
     error instanceof AssetRevisionConflictError ||
     error instanceof AssetUploadCountLimitError
   ) {
@@ -205,6 +210,7 @@ const getAssetRestErrorStatus = (error: unknown) => {
   }
   if (
     error instanceof AssetRestPayloadTooLargeError ||
+    error instanceof ByteLimitExceededError ||
     error instanceof AssetUploadSizeLimitError
   ) {
     return 413;

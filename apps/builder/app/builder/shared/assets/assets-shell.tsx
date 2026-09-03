@@ -134,12 +134,16 @@ export const AssetsShell = ({
     useState<ExternalMonitorDragState>(IDLE);
 
   const [dropTargetState, setDropTargetState] = useState<DropTargetState>(IDLE);
-  const dropMessage = allowFolderDrop
-    ? "Drop files or folders here"
-    : "Drop files here";
-  const dropDescription = allowFolderDrop
-    ? "Drop files or folders from your computer into this panel."
-    : "Drop files from anywhere into this panel.";
+  const dropMessage = allowExternalDrop
+    ? allowFolderDrop
+      ? "Drop files or folders here"
+      : "Drop files here"
+    : "Uploads are unavailable here";
+  const dropDescription = allowExternalDrop
+    ? allowFolderDrop
+      ? "Drop files or folders from your computer into this panel."
+      : "Drop files from anywhere into this panel."
+    : undefined;
   const resolvedEmptyMessage = emptyMessage ?? dropMessage;
 
   useEffect(() => {
@@ -156,7 +160,8 @@ export const AssetsShell = ({
   useExternalDragStateEffect((state) => {
     const element = ref.current;
 
-    if (element == null) {
+    if (element == null || allowExternalDrop === false) {
+      setMonitorState(IDLE);
       return;
     }
 

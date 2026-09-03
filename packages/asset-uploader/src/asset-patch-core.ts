@@ -42,8 +42,10 @@ export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
 
 export type AssetUploadReservation = Pick<
   Asset,
-  "id" | "filename" | "folderId"
->;
+  "id" | "name" | "filename" | "folderId" | "createdAt"
+> & {
+  status?: "UPLOADING" | "UPLOADED";
+};
 
 const uploadReservationFreshnessMs = 30 * 60 * 1000;
 
@@ -55,7 +57,7 @@ export const loadAssetUploadReservationsByProjectWithClient = async (
   const response = await client
     .from("Asset")
     .select(
-      "id, filename, folderId, file:File!inner(status, isDeleted, updatedAt)"
+      "id, filename, folderId, file:File!inner(name, status, isDeleted, createdAt, updatedAt)"
     )
     .eq("projectId", projectId)
     .order("id");
@@ -73,11 +75,43 @@ export const loadAssetUploadReservationsByProjectWithClient = async (
     return [
       {
         id,
+        name: file.name,
         filename: filename ?? undefined,
         folderId: folderId ?? undefined,
+        createdAt: file.createdAt,
+        status: file.status,
       },
     ];
   });
+};
+
+export const deleteAssetUploadReservationWithClient = async (
+  {
+    projectId,
+    assetId,
+    name,
+  }: { projectId: string; assetId: string; name: string },
+  client: Client
+) => {
+  const deletedAsset = await client
+    .from("Asset")
+    .delete()
+    .eq("id", assetId)
+    .eq("projectId", projectId)
+    .eq("name", name)
+    .select("id")
+    .maybeSingle();
+  assertPostgrestSuccess(deletedAsset);
+  if (deletedAsset.data?.id !== assetId) {
+    return;
+  }
+  const deletedFile = await client
+    .from("File")
+    .delete()
+    .eq("name", name)
+    .eq("uploaderProjectId", projectId)
+    .eq("status", "UPLOADING");
+  assertPostgrestSuccess(deletedFile);
 };
 
 export const loadAssetsByProjectWithClient = async (
@@ -295,7 +329,15 @@ export const patchAssetsWithClient = async (
     projectId: string;
     client: Client;
   },
-  patches: Array<Patch>
+  patches: Array<Patch>,
+  {
+    validate,
+  }: {
+    validate?: (input: {
+      current: ReadonlyMap<Asset["id"], Asset>;
+      next: ReadonlyMap<Asset["id"], Asset>;
+    }) => Promise<void>;
+  } = {}
 ): Promise<void> => {
   const assetsList = await loadAssetsByProjectWithClient(projectId, client);
   const assetsMap = new Map<Asset["id"], Asset>();
@@ -310,6 +352,7 @@ export const patchAssetsWithClient = async (
       throw new Error(`Asset ${asset.id} belongs to another project`);
     }
   }
+  await validate?.({ current: assetsMap, next: patchedAssets });
   const {
     added,
     updated,
