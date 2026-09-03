@@ -14,12 +14,11 @@ import {
   MarkdownDocumentError,
 } from "./document-graph";
 import {
+  getAssetQueryRequestError,
   getAssetResourceQueryError,
   type AssetResourceQueryError,
 } from "./query-error";
-import { AssetQueryRequestError } from "./request";
 import { DocumentSourceDiagnosticsError } from "./content-source";
-import { ZodError } from "zod";
 import type { AssetQueryDiagnosticIssue } from "./schema";
 
 const createInvalidRequestError = (
@@ -238,34 +237,12 @@ export const getAssetQueryErrorDiagnosticIssue = ({
   };
 };
 
-const getRequestError = (
-  error: AssetQueryRequestError
-): AssetResourceQueryError => {
-  let message = error.message;
-  const visited = new Set<unknown>();
-  let cause = error.cause;
-  while (cause instanceof Error && visited.has(cause) === false) {
-    if (cause instanceof ZodError) {
-      return createInvalidRequestError(error.message, {
-        issues: cause.issues.map((issue) => ({
-          code: issue.code,
-          path: issue.path.map(String),
-          message: issue.message,
-        })),
-      });
-    }
-    message = cause.message;
-    visited.add(cause);
-    cause = cause.cause;
-  }
-  return createInvalidRequestError(message);
-};
-
 export const getDetailedAssetResourceQueryError = (
   error: unknown
 ): AssetResourceQueryError | undefined => {
-  if (error instanceof AssetQueryRequestError) {
-    return getRequestError(error);
+  const requestError = getAssetQueryRequestError(error);
+  if (requestError !== undefined) {
+    return requestError;
   }
   if (error instanceof DocumentSourceDiagnosticsError) {
     return createInvalidRequestError(error.message, {

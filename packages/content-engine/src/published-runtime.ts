@@ -6,8 +6,10 @@ import { sha256Hex } from "./canonical-json";
 import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
-import { getAssetResourceQueryError } from "./query-error";
-import { getDetailedAssetResourceQueryError } from "./query-error-details";
+import {
+  getAssetQueryRequestError,
+  getAssetResourceQueryError,
+} from "./query-error";
 import {
   createCachedDocumentSourceLoader,
   createHttpDocumentSourceLoader,
@@ -221,7 +223,7 @@ const createPublishedAssetResourceHandler = ({
     try {
       parsedRequest = await readAssetQueryRequest(request.clone());
     } catch (error) {
-      const queryError = getDetailedAssetResourceQueryError(error);
+      const queryError = getAssetQueryRequestError(error);
       if (queryError !== undefined) {
         return failure(queryError);
       }

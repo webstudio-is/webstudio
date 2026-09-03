@@ -7,6 +7,8 @@ import {
 } from "./structured-query";
 import { DocumentResolutionLimitError } from "./document-graph/document-resolution";
 import { CachedDocumentLoaderError } from "./document-graph/cached-document-loader";
+import { AssetQueryRequestError } from "./request";
+import { ZodError } from "zod";
 
 export type AssetResourceQueryError = Omit<
   AssetResourceQueryFailure["error"],
@@ -14,6 +16,43 @@ export type AssetResourceQueryError = Omit<
 > & {
   details?: NonNullable<AssetResourceQueryFailure["error"]["details"]>;
   status: 400 | 409;
+};
+
+export const getAssetQueryRequestError = (
+  error: unknown
+): AssetResourceQueryError | undefined => {
+  if (error instanceof AssetQueryRequestError === false) {
+    return;
+  }
+  let message = error.message;
+  const visited = new Set<unknown>();
+  let cause = error.cause;
+  while (cause instanceof Error && visited.has(cause) === false) {
+    if (cause instanceof ZodError) {
+      return {
+        code: "INVALID_REQUEST",
+        message: error.message,
+        retryable: false,
+        status: 400,
+        details: {
+          issues: cause.issues.map((issue) => ({
+            code: issue.code,
+            path: issue.path.map(String),
+            message: issue.message,
+          })),
+        },
+      };
+    }
+    message = cause.message;
+    visited.add(cause);
+    cause = cause.cause;
+  }
+  return {
+    code: "INVALID_REQUEST",
+    message,
+    retryable: false,
+    status: 400,
+  };
 };
 
 /** Classifies content-query failures independently of an HTTP or RPC transport. */
