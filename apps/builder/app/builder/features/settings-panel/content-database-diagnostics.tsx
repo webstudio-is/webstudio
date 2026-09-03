@@ -19,6 +19,7 @@ import {
 import {
   RequestDiagnosticsRow,
   RequestDiagnosticsContent,
+  RequestDiagnosticDisclosure,
   RequestDiagnosticsTable,
 } from "./request-inspector";
 import {
@@ -429,31 +430,31 @@ export const ContentDatabaseDiagnostics = ({
           <RequestDiagnosticsTable>
             {value.queryIssues !== undefined
               ? value.queryIssues.map((issue, index) => (
-                  <RequestDiagnosticsRow
+                  <RequestDiagnosticDisclosure
                     key={`${issue.path.join(".")}:${issue.code}:${index}`}
-                    label={`${issue.severity === "error" ? "Error" : "Warning"} · Query${
+                    title={`${issue.severity === "error" ? "Error" : "Warning"} · ${issue.message}`}
+                    label={`Query${
                       issue.path.length === 0
                         ? ""
                         : ` · ${issue.path.join(".")}`
                     }`}
-                    value={issue.message}
-                    description={issue.code}
+                    details={issue.code}
                   />
                 ))
               : value.queryWarnings?.map((warning, index) => (
-                  <RequestDiagnosticsRow
+                  <RequestDiagnosticDisclosure
                     key={`query-warning:${index}`}
-                    label="Warning · Query setup"
-                    value={warning}
-                    description="Current query"
+                    title={`Warning · ${warning}`}
+                    label="Query setup"
+                    details="Current query"
                   />
                 ))}
             {value.issues?.map((issue, index) => (
-              <RequestDiagnosticsRow
+              <RequestDiagnosticDisclosure
                 key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
+                title={`${issue.severity === "error" ? "Error" : "Warning"} · ${issue.message}`}
                 label={getRequestSourceDiagnosticLabel(issue)}
-                value={issue.message}
-                description={getRequestSourceDiagnosticDescription(issue)}
+                details={getRequestSourceDiagnosticDescription(issue)}
               />
             ))}
           </RequestDiagnosticsTable>

@@ -68,14 +68,27 @@ test("shows every diagnostics response schema issue at its exact path", () => {
     );
   });
 
-  expect(container.textContent).toContain(
-    "Error · Diagnostics response · __diagnostics__.scope"
-  );
   expect(container.textContent).toContain('Expected "query-preview"');
-  expect(container.textContent).toContain(
-    "Error · Diagnostics response · __diagnostics__.query.usedBytes"
-  );
   expect(container.textContent).toContain("Expected a number");
+  expect(container.textContent).not.toContain("__diagnostics__.scope");
+  const diagnosticTriggers = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('button[data-state="closed"]')
+  );
+  expect(diagnosticTriggers).toHaveLength(2);
+  for (const trigger of diagnosticTriggers) {
+    expect(
+      trigger.parentElement?.parentElement?.querySelector(
+        "[data-diagnostics-info]"
+      )
+    ).toBeNull();
+  }
+  act(() => diagnosticTriggers.forEach((trigger) => trigger.click()));
+  expect(container.textContent).toContain(
+    "Diagnostics response · __diagnostics__.scope"
+  );
+  expect(container.textContent).toContain(
+    "Diagnostics response · __diagnostics__.query.usedBytes"
+  );
 });
 
 test("shows every detailed diagnostic instead of the ordinary preview error", () => {
@@ -140,11 +153,24 @@ test("shows every detailed diagnostic instead of the ordinary preview error", ()
     );
   });
 
-  expect(container.textContent).toContain("content/broken.md:4:1");
   expect(container.textContent).toContain(
-    "Markdown frontmatter contains invalid YAML"
+    "Warning · Markdown frontmatter contains invalid YAML"
   );
+  expect(container.textContent).toContain("Error · Unexpected closing tag");
+  expect(container.textContent).not.toContain("content/broken.md:4:1");
+  const diagnosticTriggers = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('button[data-state="closed"]')
+  );
+  expect(diagnosticTriggers).toHaveLength(2);
+  for (const trigger of diagnosticTriggers) {
+    expect(
+      trigger.parentElement?.parentElement?.querySelector(
+        "[data-diagnostics-info]"
+      )
+    ).toBeNull();
+  }
+  act(() => diagnosticTriggers.forEach((trigger) => trigger.click()));
+  expect(container.textContent).toContain("content/broken.md:4:1");
   expect(container.textContent).toContain("content/broken.mdx:8:3");
-  expect(container.textContent).toContain("Unexpected closing tag");
   expect(container.textContent).not.toContain("Asset query preview failed");
 });

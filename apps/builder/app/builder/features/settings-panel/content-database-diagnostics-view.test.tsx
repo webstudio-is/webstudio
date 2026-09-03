@@ -170,11 +170,14 @@ test("orders collapsible sections and opens only database sizes by default", () 
   const triggers = Array.from(
     container.querySelectorAll<HTMLButtonElement>("button[aria-controls]")
   );
-  expect(triggers).toHaveLength(sectionLabels.length);
-  expect(triggers.map((trigger) => trigger.parentElement?.textContent)).toEqual(
-    sectionLabels
+  const sectionTriggers = triggers.filter((trigger) =>
+    sectionLabels.includes(trigger.parentElement?.textContent ?? "")
   );
-  expect(triggers.map((trigger) => trigger.dataset.state)).toEqual([
+  expect(sectionTriggers).toHaveLength(sectionLabels.length);
+  expect(
+    sectionTriggers.map((trigger) => trigger.parentElement?.textContent)
+  ).toEqual(sectionLabels);
+  expect(sectionTriggers.map((trigger) => trigger.dataset.state)).toEqual([
     "open",
     "open",
     "closed",
@@ -183,15 +186,22 @@ test("orders collapsible sections and opens only database sizes by default", () 
     "closed",
     "closed",
   ]);
-  expect(container.textContent).toContain("posts/broken.md:3:1");
-  expect(container.textContent).toContain("Warning · posts/broken.md:3:1–3:12");
-  expect(container.textContent).toContain("Invalid YAML at line 3, column 1");
+  const diagnosticTriggers = triggers.filter((trigger) =>
+    trigger.parentElement?.textContent?.startsWith("Warning · ")
+  );
+  expect(diagnosticTriggers).toHaveLength(2);
+  expect(diagnosticTriggers.map((trigger) => trigger.dataset.state)).toEqual([
+    "closed",
+    "closed",
+  ]);
   expect(container.textContent).toContain(
-    "Warning · Query · query.where.all.0.field"
+    "Warning · Invalid YAML at line 3, column 1"
   );
   expect(container.textContent).toContain(
-    "Asset field properties.subtitle is not currently observed"
+    "Warning · Asset field properties.subtitle is not currently observed"
   );
+  expect(container.textContent).not.toContain("posts/broken.md:3:1");
+  expect(container.textContent).not.toContain("query.where.all.0.field");
   expect(container.textContent).toContain("0 errors and 2 warnings.");
   const copyButtons = Array.from(
     container.querySelectorAll<HTMLButtonElement>('button[aria-label^="Copy "]')
@@ -209,7 +219,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
     )
     .at(-1);
   act(() => timingCopyButton?.click());
-  expect(triggers[2]?.dataset.state).toBe("closed");
+  expect(sectionTriggers[2]?.dataset.state).toBe("closed");
   expect(writeText).toHaveBeenCalledOnce();
   expect(JSON.parse(writeText.mock.calls[0]?.[0] ?? "")).toEqual({
     builderRoundTripMs: 150.25,
@@ -228,11 +238,17 @@ test("orders collapsible sections and opens only database sizes by default", () 
   });
 
   act(() => {
-    triggers[2]?.click();
-    triggers[3]?.click();
-    triggers[6]?.click();
+    diagnosticTriggers[0]?.click();
+    diagnosticTriggers[1]?.click();
+    sectionTriggers[2]?.click();
+    sectionTriggers[3]?.click();
+    sectionTriggers[6]?.click();
   });
 
+  expect(container.textContent).toContain("posts/broken.md:3:1");
+  expect(container.textContent).toContain("Warning · posts/broken.md:3:1–3:12");
+  expect(container.textContent).toContain("query.where.all.0.field");
+  expect(container.textContent).toContain("UNOBSERVED_FIELD");
   const editor = container.querySelector(".cm-content");
   expect(editor).not.toBeNull();
   expect(editor?.getAttribute("aria-readonly")).toBe("true");
@@ -252,7 +268,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
   expect(container.textContent).toContain("Timing");
   expect(container.textContent).toContain("Assets batch work");
   expect(container.textContent).toContain("Database and sizes");
-  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(28);
+  expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(26);
 });
 
 test("counts and labels query setup errors by their severity", () => {
@@ -302,8 +318,19 @@ test("counts and labels query setup errors by their severity", () => {
   });
 
   expect(container.textContent).toContain("1 error and 1 warning.");
-  expect(container.textContent).toContain("Error · Query · query.limit");
   expect(container.textContent).toContain(
-    "Warning · Query · query.sort.0.field"
+    "Error · Limit must be a positive integer"
   );
+  expect(container.textContent).toContain(
+    "Warning · The sort field is not currently observed"
+  );
+  expect(container.textContent).not.toContain("query.limit");
+  const diagnosticTriggers = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('button[data-state="closed"]')
+  ).filter((trigger) =>
+    trigger.parentElement?.textContent?.match(/^(Error|Warning) · /)
+  );
+  act(() => diagnosticTriggers.forEach((trigger) => trigger.click()));
+  expect(container.textContent).toContain("Query · query.limit");
+  expect(container.textContent).toContain("Query · query.sort.0.field");
 });

@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode, Ref } from "react";
+import { useState, type ComponentProps, type ReactNode, type Ref } from "react";
 import {
   cssVar,
   Flex,
@@ -15,6 +15,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 
 export const clearSettledDiagnosticsKey = (
   pendingKey: string | undefined,
@@ -101,6 +102,43 @@ export const RequestDiagnosticsRow = ({
     </Text>
   </Grid>
 );
+
+export const RequestDiagnosticDisclosure = ({
+  title,
+  label,
+  details,
+}: {
+  title: string;
+  label: string;
+  details: ReactNode;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Grid
+      css={{
+        borderBottom: `1px solid ${cssVar("--border-default")}`,
+        "&:last-child": { borderBottom: 0 },
+      }}
+    >
+      <CollapsibleSectionRoot
+        label={title}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        fullWidth
+        showSeparator={false}
+      >
+        <Flex
+          direction="column"
+          gap={1}
+          css={{ paddingInline: theme.panel.paddingInline }}
+        >
+          <Text color="moreSubtle">{label}</Text>
+          <Text userSelect="text">{details}</Text>
+        </Flex>
+      </CollapsibleSectionRoot>
+    </Grid>
+  );
+};
 
 const RequestInspectorLoading = ({ label }: { label: string }) => (
   <Flex

@@ -1,6 +1,7 @@
 import { PanelBanner, Text } from "@webstudio-is/design-system";
 import {
   RequestDiagnosticsContent,
+  RequestDiagnosticDisclosure,
   RequestDiagnosticsRow,
   RequestDiagnosticsTable,
 } from "./request-inspector";
@@ -360,17 +361,18 @@ export const RequestErrorDiagnostics = ({
         )}
         <RequestDiagnosticsRow label="Message" value={value.message} />
         {sourceDiagnostics.map((diagnostic, index) => (
-          <RequestDiagnosticsRow
+          <RequestDiagnosticDisclosure
             key={`${diagnostic.path}:${diagnostic.code}:${index}`}
+            title={`${diagnostic.severity === "error" ? "Error" : "Warning"} · ${diagnostic.message}`}
             label={getRequestSourceDiagnosticLabel(diagnostic)}
-            value={diagnostic.message}
-            description={getRequestSourceDiagnosticDescription(diagnostic)}
+            details={getRequestSourceDiagnosticDescription(diagnostic)}
           />
         ))}
         {queryDiagnostics.map((diagnostic, index) => (
-          <RequestDiagnosticsRow
+          <RequestDiagnosticDisclosure
             key={`${diagnostic.path.join(".")}:${diagnostic.code}:${index}`}
-            label={`${diagnostic.severity === "warning" ? "Warning" : "Error"} · ${
+            title={`${diagnostic.severity === "warning" ? "Warning" : "Error"} · ${diagnostic.message}`}
+            label={`${
               diagnostic.context === "diagnostics"
                 ? "Diagnostics response"
                 : "Query"
@@ -379,8 +381,7 @@ export const RequestErrorDiagnostics = ({
                 ? ""
                 : ` · ${diagnostic.path.join(".")}`
             }`}
-            value={diagnostic.message}
-            description={diagnostic.code}
+            details={diagnostic.code}
           />
         ))}
         {value.retryable !== undefined && (
