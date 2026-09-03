@@ -35,6 +35,7 @@ describe("upload-assets", () => {
       createUploadTicket({
         authToken: "token",
         projectId: "project-id",
+        folderId: "folder-id",
         fileOrUrl: new File(["content"], "image.png", { type: "image/png" }),
         assetType: "image",
         request,
@@ -52,6 +53,7 @@ describe("upload-assets", () => {
     ];
     expect(init.body.has("assetId")).toBe(false);
     expect(init.body.get("projectId")).toBe("project-id");
+    expect(init.body.get("folderId")).toBe("folder-id");
     expect(init.body.get("type")).toBe("image");
     expect(init.body.get("filename")).toBe("image.png");
     expect(init.body.get("displayFilename")).toBe("image");
@@ -107,6 +109,48 @@ describe("upload-assets", () => {
     const [, init] = request.mock.calls[0] as [string, { body: FormData }];
     expect(init.body.get("filename")).toBe("Campaign_photo.png");
     expect(init.body.get("displayFilename")).toBe("Campaign photo");
+  });
+
+  test("keeps collection filenames independent across folders", async () => {
+    $assets.set(
+      new Map([
+        [
+          "other-template",
+          {
+            id: "other-template",
+            projectId: "project-id",
+            name: "template-storage.mdx",
+            filename: "template",
+            folderId: "other-folder",
+            type: "file",
+            format: "mdx",
+            size: 1,
+            description: null,
+            createdAt: "2026-09-03T00:00:00.000Z",
+            meta: {},
+          } satisfies Asset,
+        ],
+      ])
+    );
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "new-template",
+        name: "upload-name",
+        deduplicated: false,
+      })
+    );
+
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "project-id",
+      folderId: "new-folder",
+      fileOrUrl: new File([], "template.mdx", { type: "text/mdx" }),
+      assetType: "file",
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("filename")).toBe("template.mdx");
   });
 
   test("imports every asset type through the production upload queue", async () => {

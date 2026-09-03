@@ -38,6 +38,7 @@ import {
   observeDocumentSourceLoader,
 } from "@webstudio-is/content-engine";
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
+import { createHash } from "node:crypto";
 import {
   createAssetIndex,
   createAssetFieldCatalog,
@@ -89,6 +90,7 @@ import {
 import { updateAssetContent } from "./revision";
 import {
   deleteAssetsWithClient,
+  deleteAssetUploadReservationWithClient,
   loadAssetUploadReservationsByProjectWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
@@ -127,6 +129,13 @@ import {
 import type { AssetContentRead as SharedAssetContentRead } from "@webstudio-is/content-engine/asset-content-repository";
 import { validateTextAssetSourceBytes } from "@webstudio-is/content-engine/mdx";
 import { removeMetadataIssuesDuplicatedBySource } from "./diagnostic-utils";
+import {
+  assertUniqueCollectionFilenames,
+  getCollectionFolderIds,
+  getCollectionReservedAssetIds,
+  validateCollectionFolder,
+  type CollectionFolderDefinition,
+} from "./collection-persistence";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
@@ -296,6 +305,7 @@ const defaultDependencies = {
   uploadFile,
   updateAssetContent,
   deleteAssetsWithClient,
+  deleteAssetUploadReservationWithClient,
   loadAssetUploadReservationsByProjectWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
@@ -447,6 +457,7 @@ export interface AssetRepository {
     values: AssetFolderUpdate
   ): Promise<AssetFolder>;
   deleteFolder(folderId: string): Promise<void>;
+  validateCollections(assets: readonly Asset[]): Promise<void>;
   readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
   query(
     request: AssetQueryRequestInput,
@@ -568,6 +579,10 @@ export class PostgresAssetRepository implements AssetRepository {
     await this.assertPermit("edit", "edit this project assets");
   }
 
+  private async assertCanConfigureCollections() {
+    await this.assertPermit("build", "configure this project collections");
+  }
+
   private async assertCanView() {
     await this.assertPermit("view", "view this project assets");
   }
@@ -600,20 +615,15 @@ export class PostgresAssetRepository implements AssetRepository {
       return;
     }
     return async (name: string) => {
-      const deletedAsset = await this.context.postgrest.client
-        .from("Asset")
-        .delete()
-        .eq("id", assetId)
-        .eq("projectId", this.projectId);
-      if (deletedAsset.error) {
-        throw deletedAsset.error;
-      }
-      const deletedFile = await this.context.postgrest.client
-        .from("File")
-        .delete()
-        .eq("name", name);
-      if (deletedFile.error) {
-        throw deletedFile.error;
+      try {
+        await this.dependencies.deleteAssetUploadReservationWithClient(
+          { projectId: this.projectId, assetId, name },
+          this.context.postgrest.client
+        );
+      } catch {
+        // Cleanup is best effort. Keep the original upload/validation error so
+        // callers can repair the actual problem; stale reservations expire.
+        console.error("Failed to clean up an asset upload reservation");
       }
     };
   }
@@ -655,26 +665,87 @@ export class PostgresAssetRepository implements AssetRepository {
     return { asset, ...content };
   }
 
+  private async readCollectionAssetBytes(asset: Asset) {
+    if (asset.size > contentEngineLimits.hydratedFileBytes) {
+      throw new ContentCollectionError(
+        `Collection file "${formatAssetName(asset)}" exceeds the content size limit`
+      );
+    }
+    const content = await this.readContent({ assetId: asset.id, asset });
+    const bytes = await readBoundedBytes(
+      content.data,
+      contentEngineLimits.hydratedFileBytes
+    );
+    if (bytes.byteLength !== asset.size) {
+      throw new ContentCollectionError(
+        `Collection file "${formatAssetName(asset)}" content length does not match its metadata`
+      );
+    }
+    return bytes;
+  }
+
   async createUploadTicket(
     input: Omit<CreateUploadTicketInput, "projectId">,
     createId?: CreateId
   ) {
     await this.assertCanEdit();
+    let existingReservedAsset: Asset | undefined;
+    let isExistingTemplateRetry = false;
+    const displayName = formatAssetName({
+      name: input.filename,
+      filename: input.displayFilename,
+    });
+    if (
+      input.folderId !== undefined &&
+      displayName === collectionConfigFilename
+    ) {
+      await this.assertCanConfigureCollections();
+    }
     if (input.folderId !== undefined) {
       const assets = await this.dependencies.loadAssetsByProjectWithClient(
         this.projectId,
         this.context.postgrest.client
       );
-      if (
-        assets.some(
-          (asset) =>
-            asset.folderId === input.folderId &&
-            formatAssetName(asset) === collectionConfigFilename
-        )
-      ) {
-        throw new AssetRepositoryConflictError(
-          "Use New entry to add files to a collection folder"
-        );
+      const configAsset = assets.find(
+        (asset) =>
+          asset.folderId === input.folderId &&
+          formatAssetName(asset) === collectionConfigFilename
+      );
+      if (configAsset !== undefined) {
+        if (
+          displayName === collectionConfigFilename &&
+          input.contentHash !== undefined
+        ) {
+          existingReservedAsset = configAsset;
+        } else if (displayName.endsWith(".mdx") === false) {
+          throw new AssetRepositoryConflictError(
+            "Use New entry to add files to a collection folder"
+          );
+        } else {
+          const config = parseCollectionConfig(
+            decodeUtf8(await this.readCollectionAssetBytes(configAsset))
+          );
+          const templateAsset = assets.find(
+            (asset) =>
+              asset.folderId === input.folderId &&
+              formatAssetName(asset) === config.template
+          );
+          if (displayName === config.template && templateAsset === undefined) {
+            await this.assertCanConfigureCollections();
+          } else if (
+            displayName === config.template &&
+            templateAsset !== undefined &&
+            input.contentHash !== undefined
+          ) {
+            await this.assertCanConfigureCollections();
+            existingReservedAsset = templateAsset;
+            isExistingTemplateRetry = true;
+          } else {
+            throw new AssetRepositoryConflictError(
+              "Use New entry to add files to a collection folder"
+            );
+          }
+        }
       }
     }
     const ticket = await this.dependencies.createUploadTicket(
@@ -682,7 +753,101 @@ export class PostgresAssetRepository implements AssetRepository {
       this.context,
       createId
     );
+    if (existingReservedAsset !== undefined && ticket.deduplicated === false) {
+      await this.getUploadErrorCleanup(ticket.assetId)?.(ticket.name);
+      throw new AssetRepositoryConflictError(
+        `Collection file "${displayName}" already exists with different content`
+      );
+    }
+    if (ticket.deduplicated) {
+      await this.validateCompletedCollectionUpload({
+        asset: ticket.asset,
+        allowCollectionFolder: false,
+        allowInvalidTemplateRepair:
+          existingReservedAsset === undefined || isExistingTemplateRetry,
+        cleanupOnError: ticket.asset.id !== existingReservedAsset?.id,
+      });
+    }
     return ticket;
+  }
+
+  private async validateCompletedCollectionUpload({
+    asset,
+    assets,
+    allowCollectionFolder,
+    allowInvalidTemplateRepair = true,
+    cleanupOnError = true,
+  }: {
+    asset: Asset;
+    assets?: readonly Asset[];
+    allowCollectionFolder: boolean;
+    allowInvalidTemplateRepair?: boolean;
+    cleanupOnError?: boolean;
+  }): Promise<CollectionFolderDefinition | undefined> {
+    if (asset.folderId === undefined) {
+      return;
+    }
+    const projectAssets =
+      assets ??
+      (await this.dependencies.loadAssetsByProjectWithClient(
+        this.projectId,
+        this.context.postgrest.client
+      ));
+    const currentAssets = projectAssets.some(
+      (candidate) => candidate.id === asset.id
+    )
+      ? projectAssets
+      : [...projectAssets, asset];
+    try {
+      const isMissingTemplateRepair = await this.assertUploadAllowed({
+        asset,
+        assets: currentAssets,
+        allowCollectionFolder,
+      });
+      if (isMissingTemplateRepair && isMdxFileAsset(asset) === false) {
+        throw new ContentCollectionError(
+          "Collection templates must be MDX files"
+        );
+      }
+      if (formatAssetName(asset) === collectionConfigFilename) {
+        parseCollectionConfig(
+          decodeUtf8(await this.readCollectionAssetBytes(asset))
+        );
+      }
+      const isCollectionFolder = currentAssets.some(
+        (candidate) =>
+          candidate.folderId === asset.folderId &&
+          formatAssetName(candidate) === collectionConfigFilename
+      );
+      if (allowCollectionFolder && isCollectionFolder === false) {
+        throw new ContentCollectionError(
+          "Collection configuration not found after entry upload"
+        );
+      }
+      if (
+        isCollectionFolder &&
+        (isMissingTemplateRepair === false ||
+          allowInvalidTemplateRepair === false)
+      ) {
+        return await validateCollectionFolder({
+          assets: currentAssets,
+          folderId: asset.folderId,
+          assetStore: this.assetStore,
+        });
+      }
+    } catch (error) {
+      if (cleanupOnError) {
+        try {
+          await this.dependencies.deleteAssetsWithClient(
+            { projectId: this.projectId, ids: [asset.id] },
+            this.context.postgrest.client
+          );
+        } catch {
+          console.error("Failed to clean up an invalid uploaded asset");
+        }
+      }
+      throw error;
+    }
   }
 
   private async completeReservedUpload({
@@ -698,6 +863,32 @@ export class PostgresAssetRepository implements AssetRepository {
     // Reserved upload names are not authorization credentials. Recheck the
     // derived owning project when the second upload step writes file content.
     await this.assertCanEdit();
+    const reservations =
+      await this.dependencies.loadAssetUploadReservationsByProjectWithClient(
+        this.projectId,
+        this.context.postgrest.client
+      );
+    const reservation = reservations.find(
+      (candidate) =>
+        (assetId === undefined && candidate.name === name) ||
+        (assetId !== undefined &&
+          candidate.id === assetId &&
+          candidate.name === name)
+    );
+    if (reservation !== undefined) {
+      try {
+        await this.assertUploadAllowed({
+          asset: reservation,
+          allowCollectionFolder,
+        });
+      } catch (error) {
+        if (reservation.status !== "UPLOADED") {
+          const cleanup = this.getUploadErrorCleanup(reservation.id);
+          await cleanup?.(reservation.name);
+        }
+        throw error;
+      }
+    }
     const asset = await this.dependencies.uploadFile(
       name,
       data,
@@ -707,39 +898,76 @@ export class PostgresAssetRepository implements AssetRepository {
       assetDataOverride,
       this.getUploadErrorCleanup(assetId)
     );
-    if (allowCollectionFolder || asset.folderId === undefined) {
+    if (asset.folderId === undefined) {
       return asset;
     }
     const assets = await this.dependencies.loadAssetsByProjectWithClient(
       this.projectId,
       this.context.postgrest.client
     );
-    const isCollectionConfig =
-      formatAssetName(asset) === collectionConfigFilename;
-    const conflict = isCollectionConfig
-      ? assets.some(
-          (candidate) =>
-            candidate.id !== asset.id &&
-            candidate.folderId === asset.folderId &&
-            isMdxFileAsset(candidate) === false
-        )
-      : assets.some(
-          (candidate) =>
-            candidate.folderId === asset.folderId &&
-            formatAssetName(candidate) === collectionConfigFilename
-        );
-    if (conflict) {
-      await this.dependencies.deleteAssetsWithClient(
-        { projectId: this.projectId, ids: [asset.id] },
+    await this.validateCompletedCollectionUpload({
+      asset,
+      assets,
+      allowCollectionFolder,
+    });
+    return asset;
+  }
+
+  private async assertUploadAllowed({
+    asset,
+    assets,
+    allowCollectionFolder,
+  }: {
+    asset: Pick<Asset, "id" | "name" | "filename" | "folderId">;
+    assets?: readonly Asset[];
+    allowCollectionFolder: boolean;
+  }) {
+    const displayName = formatAssetName(asset);
+    if (
+      asset.folderId !== undefined &&
+      displayName === collectionConfigFilename
+    ) {
+      await this.assertCanConfigureCollections();
+      return false;
+    }
+    if (allowCollectionFolder || asset.folderId === undefined) {
+      return false;
+    }
+    const projectAssets =
+      assets ??
+      (await this.dependencies.loadAssetsByProjectWithClient(
+        this.projectId,
         this.context.postgrest.client
-      );
+      ));
+    const configAsset = projectAssets.find(
+      (candidate) =>
+        candidate.folderId === asset.folderId &&
+        formatAssetName(candidate) === collectionConfigFilename
+    );
+    if (configAsset === undefined) {
+      return false;
+    }
+    if (displayName.endsWith(".mdx") === false) {
       throw new AssetRepositoryConflictError(
-        isCollectionConfig
-          ? "Move non-entry files into a subfolder"
-          : "Use New entry to add files to a collection folder"
+        "Use New entry to add files to a collection folder"
       );
     }
-    return asset;
+    const config = parseCollectionConfig(
+      decodeUtf8(await this.readCollectionAssetBytes(configAsset))
+    );
+    const templateExists = projectAssets.some(
+      (candidate) =>
+        candidate.id !== asset.id &&
+        candidate.folderId === asset.folderId &&
+        formatAssetName(candidate) === config.template
+    );
+    if (displayName === config.template && templateExists === false) {
+      await this.assertCanConfigureCollections();
+      return true;
+    }
+    throw new AssetRepositoryConflictError(
+      "Use New entry to add files to a collection folder"
+    );
   }
 
   async completeUpload(
@@ -765,6 +993,9 @@ export class PostgresAssetRepository implements AssetRepository {
     }
     const isCollectionConfig =
       formatAssetName(currentAsset) === collectionConfigFilename;
+    if (isCollectionConfig) {
+      await this.assertCanConfigureCollections();
+    }
     if (
       isCollectionConfig === false &&
       isMdxFileAsset(currentAsset) === false
@@ -782,7 +1013,18 @@ export class PostgresAssetRepository implements AssetRepository {
       (asset) => formatAssetName(asset) === collectionConfigFilename
     );
     if (configAsset === undefined) {
+      if (isCollectionConfig) {
+        await this.assertCanConfigureCollections();
+      }
       return data;
+    }
+    const reservedAssetIds = await getCollectionReservedAssetIds({
+      assets,
+      assetStore: this.assetStore,
+      folderIds: new Set([currentAsset.folderId]),
+    });
+    if (isCollectionConfig === false && reservedAssetIds.has(currentAsset.id)) {
+      await this.assertCanConfigureCollections();
     }
     const bytes = await readBoundedBytes(
       data,
@@ -801,25 +1043,43 @@ export class PostgresAssetRepository implements AssetRepository {
         );
       }
       const nextConfig = parseCollectionConfig(decodeUtf8(bytes));
-      const templateAsset = siblings.find(
+      const configAssets = siblings.filter(
+        (asset) => formatAssetName(asset) === collectionConfigFilename
+      );
+      if (configAssets.length !== 1) {
+        throw new AssetRepositoryConflictError(
+          "A collection folder must contain exactly one collection.json"
+        );
+      }
+      if (
+        siblings.some(
+          (asset) =>
+            asset.id !== currentAsset.id && isMdxFileAsset(asset) === false
+        )
+      ) {
+        throw new AssetRepositoryConflictError(
+          "Move non-entry files into a subfolder"
+        );
+      }
+      const templateAssets = siblings.filter(
         (asset) =>
           asset.id !== currentAsset.id &&
           formatAssetName(asset) === nextConfig.template &&
           isMdxFileAsset(asset)
       );
+      const templateAsset = templateAssets[0];
       if (templateAsset === undefined) {
         throw new AssetRepositoryNotFoundError(
           `Collection template "${nextConfig.template}" not found`
         );
       }
-      const templateContent = await this.readContent({
-        assetId: templateAsset.id,
-        asset: templateAsset,
-      });
-      const templateBytes = await readBoundedBytes(
-        templateContent.data,
-        contentEngineLimits.hydratedFileBytes
-      );
+      if (templateAssets.length !== 1) {
+        throw new AssetRepositoryConflictError(
+          `Collection template "${nextConfig.template}" is ambiguous`
+        );
+      }
+      assertUniqueCollectionFilenames(siblings.map(formatAssetName));
+      const templateBytes = await this.readCollectionAssetBytes(templateAsset);
       const templateDocument = await parseCollectionTemplate(
         decodeUtf8(templateBytes)
       );
@@ -874,19 +1134,10 @@ export class PostgresAssetRepository implements AssetRepository {
         "Collection MDX files must remain MDX files"
       );
     }
-    const configContent = await this.readContent({
-      assetId: configAsset.id,
-      asset: configAsset,
-    });
     let config;
     try {
       config = parseCollectionConfig(
-        decodeUtf8(
-          await readBoundedBytes(
-            configContent.data,
-            contentEngineLimits.hydratedFileBytes
-          )
-        )
+        decodeUtf8(await this.readCollectionAssetBytes(configAsset))
       );
     } catch (error) {
       if (error instanceof ContentCollectionError === false) {
@@ -969,12 +1220,43 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async updateMetadata(assetId: Asset["id"], values: AssetMetadataUpdate) {
     await this.assertCanEdit();
+    const assets = await this.dependencies.loadAssetsByProjectWithClient(
+      this.projectId,
+      this.context.postgrest.client
+    );
+    const currentAsset = assets.find((asset) => asset.id === assetId);
+    const reservedAssetIds = await getCollectionReservedAssetIds({
+      assets,
+      assetStore: this.assetStore,
+      folderIds: new Set(
+        [currentAsset?.folderId, values.folderId].filter(
+          (folderId): folderId is string => typeof folderId === "string"
+        )
+      ),
+    });
+    const nextFilename =
+      values.filename === undefined
+        ? currentAsset?.filename
+        : (values.filename ?? undefined);
+    const nextDisplayName =
+      currentAsset === undefined
+        ? undefined
+        : formatAssetName({
+            name: currentAsset.name,
+            filename: nextFilename,
+          });
+    const nextFolderId =
+      values.folderId === null
+        ? undefined
+        : (values.folderId ?? currentAsset?.folderId);
+    if (
+      reservedAssetIds.has(assetId) ||
+      (nextFolderId !== undefined &&
+        nextDisplayName === collectionConfigFilename)
+    ) {
+      await this.assertCanConfigureCollections();
+    }
     if (typeof values.folderId === "string" || values.filename !== undefined) {
-      const assets = await this.dependencies.loadAssetsByProjectWithClient(
-        this.projectId,
-        this.context.postgrest.client
-      );
-      const currentAsset = assets.find((asset) => asset.id === assetId);
       if (
         values.filename !== undefined &&
         currentAsset?.folderId !== undefined &&
@@ -1004,6 +1286,52 @@ export class PostgresAssetRepository implements AssetRepository {
         );
       }
     }
+    if (currentAsset !== undefined) {
+      const nextAsset: Asset = {
+        ...currentAsset,
+        ...(values.filename === undefined
+          ? {}
+          : values.filename === null
+            ? { filename: undefined }
+            : { filename: values.filename }),
+        ...(values.folderId === undefined
+          ? {}
+          : values.folderId === null
+            ? { folderId: undefined }
+            : { folderId: values.folderId }),
+      };
+      const projectedAssets = assets.map((asset) =>
+        asset.id === currentAsset.id ? nextAsset : asset
+      );
+      if (
+        nextAsset.folderId !== undefined &&
+        formatAssetName(nextAsset) === collectionConfigFilename &&
+        (currentAsset.folderId !== nextAsset.folderId ||
+          formatAssetName(currentAsset) !== collectionConfigFilename)
+      ) {
+        await validateCollectionFolder({
+          assets: projectedAssets,
+          folderId: nextAsset.folderId,
+          assetStore: this.assetStore,
+        });
+      }
+      if (
+        reservedAssetIds.has(currentAsset.id) &&
+        currentAsset.folderId !== undefined &&
+        currentAsset.folderId !== nextAsset.folderId &&
+        projectedAssets.some(
+          (asset) =>
+            asset.folderId === currentAsset.folderId &&
+            formatAssetName(asset) === collectionConfigFilename
+        )
+      ) {
+        await validateCollectionFolder({
+          assets: projectedAssets,
+          folderId: currentAsset.folderId,
+          assetStore: this.assetStore,
+        });
+      }
+    }
     const asset = await this.dependencies.updateAssetMetadataWithClient(
       { projectId: this.projectId, assetId, values },
       this.context.postgrest.client
@@ -1014,6 +1342,51 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async delete(ids: Asset["id"][]) {
     await this.assertCanEdit();
+    const assets = await this.dependencies.loadAssetsByProjectWithClient(
+      this.projectId,
+      this.context.postgrest.client
+    );
+    const reservedAssetIds = await getCollectionReservedAssetIds({
+      assets,
+      assetStore: this.assetStore,
+      folderIds: new Set(
+        assets.flatMap((asset) =>
+          ids.includes(asset.id) && asset.folderId !== undefined
+            ? [asset.folderId]
+            : []
+        )
+      ),
+    });
+    if (ids.some((id) => reservedAssetIds.has(id))) {
+      await this.assertCanConfigureCollections();
+    }
+    const nextAssets = assets.filter(
+      (asset) => ids.includes(asset.id) === false
+    );
+    const affectedFolderIds = new Set(
+      assets.flatMap((asset) =>
+        ids.includes(asset.id) &&
+        reservedAssetIds.has(asset.id) &&
+        asset.folderId !== undefined
+          ? [asset.folderId]
+          : []
+      )
+    );
+    for (const folderId of affectedFolderIds) {
+      if (
+        nextAssets.some(
+          (asset) =>
+            asset.folderId === folderId &&
+            formatAssetName(asset) === collectionConfigFilename
+        )
+      ) {
+        await validateCollectionFolder({
+          assets: nextAssets,
+          folderId,
+          assetStore: this.assetStore,
+        });
+      }
+    }
     await this.dependencies.deleteAssetsWithClient(
       { projectId: this.projectId, ids },
       this.context.postgrest.client
@@ -1096,17 +1469,8 @@ export class PostgresAssetRepository implements AssetRepository {
         "A collection folder must contain exactly one collection.json"
       );
     }
-    const configContent = await this.readContent({
-      assetId: configAsset.id,
-      asset: configAsset,
-    });
     const config = parseCollectionConfig(
-      decodeUtf8(
-        await readBoundedBytes(
-          configContent.data,
-          contentEngineLimits.hydratedFileBytes
-        )
-      )
+      decodeUtf8(await this.readCollectionAssetBytes(configAsset))
     );
     const templateAssets = siblings.filter(
       (asset) =>
@@ -1123,6 +1487,7 @@ export class PostgresAssetRepository implements AssetRepository {
         `Collection template "${config.template}" is ambiguous`
       );
     }
+    assertUniqueCollectionFilenames(siblings.map(formatAssetName));
     if (
       siblings.some(
         (asset) =>
@@ -1135,26 +1500,47 @@ export class PostgresAssetRepository implements AssetRepository {
         "Move non-entry files into a subfolder"
       );
     }
-    const templateContent = await this.readContent({
-      assetId: templateAsset.id,
-      asset: templateAsset,
-    });
     const entry = await createCollectionEntry({
       config,
       templateSource: decodeUtf8(
-        await readBoundedBytes(
-          templateContent.data,
-          contentEngineLimits.hydratedFileBytes
-        )
+        await this.readCollectionAssetBytes(templateAsset)
       ),
       values,
-      existingFilenames: siblings.map(formatAssetName),
+      // Persistence performs the collision check so an exact retry can return
+      // the entry created by the first request instead of reporting a false
+      // conflict after the response was lost.
+      existingFilenames: [],
     });
     if (entry.filename.length > assetResourceLimits.assetFilenameCharacters) {
       throw new AssetRepositoryConflictError(
         "The generated entry filename is too long"
       );
     }
+    const existingAsset = siblings.find(
+      (asset) =>
+        formatAssetName(asset).toLowerCase() === entry.filename.toLowerCase()
+    );
+    if (existingAsset !== undefined) {
+      if (
+        existingAsset.id === configAsset.id ||
+        existingAsset.id === templateAsset.id
+      ) {
+        throw new AssetRepositoryConflictError(
+          `An entry named "${entry.filename}" already exists`
+        );
+      }
+      const existingSource = decodeUtf8(
+        await this.readCollectionAssetBytes(existingAsset)
+      );
+      if (existingSource === entry.source) {
+        return existingAsset;
+      }
+      throw new AssetRepositoryConflictError(
+        `An entry named "${entry.filename}" already exists`
+      );
+    }
+    const bytes = new TextEncoder().encode(entry.source);
+    const contentHash = createHash("sha256").update(bytes).digest("hex");
     const ticket = await this.dependencies.createUploadTicket(
       {
         projectId: this.projectId,
@@ -1162,12 +1548,35 @@ export class PostgresAssetRepository implements AssetRepository {
         filename: entry.filename,
         displayFilename: entry.filename.slice(0, -".mdx".length),
         folderId,
+        contentHash,
       },
       this.context
     );
     if (ticket.deduplicated) {
+      if (
+        ticket.asset.id !== configAsset.id &&
+        ticket.asset.id !== templateAsset.id &&
+        ticket.asset.folderId === folderId &&
+        formatAssetName(ticket.asset).toLowerCase() ===
+          entry.filename.toLowerCase()
+      ) {
+        const definition = await this.validateCompletedCollectionUpload({
+          asset: ticket.asset,
+          allowCollectionFolder: true,
+        });
+        if (
+          definition !== undefined &&
+          (ticket.asset.id === definition.configAsset.id ||
+            ticket.asset.id === definition.templateAsset.id)
+        ) {
+          throw new AssetRepositoryConflictError(
+            `An entry named "${entry.filename}" already exists`
+          );
+        }
+        return ticket.asset;
+      }
       throw new AssetRepositoryConflictError(
-        `An entry named "${entry.filename}" already exists`
+        "Entry upload was deduplicated incorrectly"
       );
     }
     let reservations: Awaited<
@@ -1180,29 +1589,30 @@ export class PostgresAssetRepository implements AssetRepository {
           this.context.postgrest.client
         );
     } catch (error) {
-      await this.dependencies.deleteAssetsWithClient(
-        { projectId: this.projectId, ids: [ticket.assetId] },
-        this.context.postgrest.client
-      );
+      await this.getUploadErrorCleanup(ticket.assetId)?.(ticket.name);
       throw error;
     }
-    const duplicateReservation = reservations.some(
-      (candidate) =>
-        candidate.id !== ticket.assetId &&
-        candidate.folderId === folderId &&
-        candidate.filename?.toLocaleLowerCase() ===
-          entry.filename.slice(0, -".mdx".length).toLocaleLowerCase()
-    );
-    if (duplicateReservation) {
-      await this.dependencies.deleteAssetsWithClient(
-        { projectId: this.projectId, ids: [ticket.assetId] },
-        this.context.postgrest.client
+    const matchingReservations = reservations
+      .filter(
+        (candidate) =>
+          candidate.folderId === folderId &&
+          candidate.filename?.toLowerCase() ===
+            entry.filename.slice(0, -".mdx".length).toLowerCase()
+      )
+      .sort(
+        (left, right) =>
+          left.createdAt.localeCompare(right.createdAt) ||
+          left.id.localeCompare(right.id)
       );
+    const duplicateReservation =
+      matchingReservations[0] !== undefined &&
+      matchingReservations[0].id !== ticket.assetId;
+    if (duplicateReservation) {
+      await this.getUploadErrorCleanup(ticket.assetId)?.(ticket.name);
       throw new AssetRepositoryConflictError(
         `An entry named "${entry.filename}" already exists`
       );
     }
-    const bytes = new TextEncoder().encode(entry.source);
     return await this.completeReservedUpload({
       name: ticket.name,
       data: new ReadableStream({
@@ -1277,6 +1687,17 @@ export class PostgresAssetRepository implements AssetRepository {
   async synchronize() {
     await this.assertCanEdit();
     return await this.synchronizeTrusted();
+  }
+
+  async validateCollections(assets: readonly Asset[]) {
+    await this.assertCanBuild();
+    for (const folderId of getCollectionFolderIds(assets)) {
+      await validateCollectionFolder({
+        assets,
+        folderId,
+        assetStore: this.assetStore,
+      });
+    }
   }
 
   private async synchronizeTrusted(
@@ -1523,12 +1944,13 @@ export class PostgresAssetRepository implements AssetRepository {
         if (folderId === undefined) {
           continue;
         }
+        const siblings = entries.filter(
+          (candidate) => candidate.document.folderId === folderId
+        );
         reservedAssetIds.add(entry.assetId);
         if (
-          entries.filter(
-            (candidate) =>
-              candidate.document.folderId === folderId &&
-              candidate.document.name === collectionConfigFilename
+          siblings.filter(
+            (candidate) => candidate.document.name === collectionConfigFilename
           ).length !== 1
         ) {
           throw new ContentCollectionError(
@@ -1541,19 +1963,19 @@ export class PostgresAssetRepository implements AssetRepository {
           );
         }
         try {
-          const response = await readFile(entry.document.contentRef, {
-            offset: 0,
-            length: entry.document.size,
-          });
+          const response = await readFile(entry.document.contentRef);
           const bytes = await readBoundedBytes(
             response.data,
             contentEngineLimits.hydratedFileBytes
           );
+          if (bytes.byteLength !== entry.document.size) {
+            throw new ContentCollectionError(
+              "collection.json content length does not match its metadata"
+            );
+          }
           const config = parseCollectionConfig(decodeUtf8(bytes));
-          const templates = entries.filter(
-            (candidate) =>
-              candidate.document.folderId === folderId &&
-              candidate.document.name === config.template
+          const templates = siblings.filter(
+            (candidate) => candidate.document.name === config.template
           );
           const template = templates[0];
           if (template === undefined) {
@@ -1566,21 +1988,24 @@ export class PostgresAssetRepository implements AssetRepository {
               `Collection template "${config.template}" is ambiguous`
             );
           }
+          assertUniqueCollectionFilenames(
+            siblings.map((candidate) => candidate.document.name)
+          );
           if (template.document.size > contentEngineLimits.hydratedFileBytes) {
             throw new ContentCollectionError(
               `Collection template "${config.template}" exceeds the content size limit`
             );
           }
-          const templateResponse = await readFile(
-            template.document.contentRef,
-            template.document.size === 0
-              ? undefined
-              : { offset: 0, length: template.document.size }
-          );
+          const templateResponse = await readFile(template.document.contentRef);
           const templateBytes = await readBoundedBytes(
             templateResponse.data,
             contentEngineLimits.hydratedFileBytes
           );
+          if (templateBytes.byteLength !== template.document.size) {
+            throw new ContentCollectionError(
+              `Collection template "${config.template}" content length does not match its metadata`
+            );
+          }
           let templateDocument;
           try {
             templateDocument = await parseMdxDocument({
@@ -1593,20 +2018,18 @@ export class PostgresAssetRepository implements AssetRepository {
               { cause: error }
             );
           }
-          const templateValidationError =
-            getCollectionTemplateValidationError(
-              config,
-              templateDocument.frontmatter.properties
-            );
+          const templateValidationError = getCollectionTemplateValidationError(
+            config,
+            templateDocument.frontmatter.properties
+          );
           if (templateValidationError !== undefined) {
             throw new ContentCollectionError(
               `Collection template "${config.template}": ${templateValidationError}`
             );
           }
           reservedAssetIds.add(template.assetId);
-          for (const candidate of entries) {
+          for (const candidate of siblings) {
             if (
-              candidate.document.folderId !== folderId ||
               candidate.assetId === entry.assetId ||
               candidate.assetId === template.assetId
             ) {
@@ -1625,9 +2048,8 @@ export class PostgresAssetRepository implements AssetRepository {
                   ? undefined
                   : { offset: 0, length: candidate.document.size }
               );
-              properties = (
-                await extractMarkdownFrontmatter(response.data)
-              ).properties;
+              properties = (await extractMarkdownFrontmatter(response.data))
+                .properties;
             } catch (error) {
               const details =
                 error instanceof Error ? `: ${error.message}` : "";
@@ -1645,9 +2067,7 @@ export class PostgresAssetRepository implements AssetRepository {
                 `Collection entry "${candidate.document.name}": ${validationError}`
               );
             }
-            if (
-              properties[config.slugField] !== candidate.document.key
-            ) {
+            if (properties[config.slugField] !== candidate.document.key) {
               throw new ContentCollectionError(
                 `Collection entry "${candidate.document.name}": The slug must match the entry filename`
               );

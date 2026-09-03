@@ -212,13 +212,18 @@ describe("asset runtime operations", () => {
 
   test("duplicates an asset into a target folder with a unique filename", () => {
     const source = imageAsset("source", "hero.png");
-    const existingCopy = imageAsset("existing-copy", "other.png");
-    existingCopy.filename = "hero copy";
+    const copyInOtherFolder = imageAsset("other-copy", "other.png");
+    copyInOtherFolder.filename = "hero copy";
+    copyInOtherFolder.folderId = "other";
+    const copyWithOtherExtension = imageAsset("jpg-copy", "other.jpg");
+    copyWithOtherExtension.filename = "hero copy";
+    copyWithOtherExtension.folderId = "target";
     const result = duplicateAsset(
       {
         assets: new Map([
           [source.id, source],
-          [existingCopy.id, existingCopy],
+          [copyInOtherFolder.id, copyInOtherFolder],
+          [copyWithOtherExtension.id, copyWithOtherExtension],
         ]),
         assetFolders: new Map([
           [
@@ -244,11 +249,46 @@ describe("asset runtime operations", () => {
         value: {
           ...source,
           id: "copy",
-          filename: "hero copy 2",
+          filename: "hero copy",
           folderId: "target",
         },
       },
     ]);
+  });
+
+  test("increments a duplicate name only when the full name exists in the target folder", () => {
+    const source = imageAsset("source", "hero.png");
+    const existingCopy = imageAsset("existing-copy", "other.png");
+    existingCopy.filename = "hero copy";
+    existingCopy.folderId = "target";
+
+    const result = duplicateAsset(
+      {
+        assets: new Map([
+          [source.id, source],
+          [existingCopy.id, existingCopy],
+        ]),
+        assetFolders: new Map([
+          [
+            "target",
+            {
+              id: "target",
+              projectId: "project",
+              name: "Target",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        ]),
+      },
+      { assetId: source.id, folderId: "target" },
+      { createId: () => "copy", projectId: "project" }
+    );
+
+    expect(result.payload[0]?.patches[0]).toEqual({
+      op: "add",
+      path: ["copy"],
+      value: expect.objectContaining({ filename: "hero copy 2" }),
+    });
   });
 
   test("rejects duplicating an asset into a collection folder", () => {
@@ -1413,6 +1453,89 @@ describe("updateAsset", () => {
           assetId: "asset-1",
           values: { filename: "Hero" },
         }
+      )
+    ).toThrow("Filename already used");
+  });
+
+  test("checks renamed full filenames only in the effective target folder", () => {
+    const renamed = imageAsset("renamed", "renamed.png");
+    renamed.folderId = "source";
+    const sameNameElsewhere = imageAsset("elsewhere", "elsewhere.png");
+    sameNameElsewhere.filename = "Hero";
+    sameNameElsewhere.folderId = "other";
+    const sameBasenameOtherExtension = imageAsset(
+      "other-extension",
+      "file.jpg"
+    );
+    sameBasenameOtherExtension.filename = "Hero";
+    sameBasenameOtherExtension.folderId = "target";
+
+    const result = updateAsset(
+      {
+        assets: new Map([
+          [renamed.id, renamed],
+          [sameNameElsewhere.id, sameNameElsewhere],
+          [sameBasenameOtherExtension.id, sameBasenameOtherExtension],
+        ]),
+        assetFolders: new Map([
+          [
+            "target",
+            {
+              id: "target",
+              projectId: "project",
+              name: "Target",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        ]),
+      },
+      {
+        assetId: renamed.id,
+        values: { filename: "Hero", folderId: "target" },
+      }
+    );
+
+    expect(result.payload[0]?.patches).toEqual([
+      {
+        op: "add",
+        path: [renamed.id, "filename"],
+        value: "Hero",
+      },
+      {
+        op: "replace",
+        path: [renamed.id, "folderId"],
+        value: "target",
+      },
+    ]);
+  });
+
+  test("rejects moving an asset onto the same full filename", () => {
+    const moved = imageAsset("moved", "hero.png");
+    moved.folderId = "source";
+    const existing = imageAsset("existing", "different.png");
+    existing.filename = "hero";
+    existing.folderId = "target";
+
+    expect(() =>
+      updateAsset(
+        {
+          assets: new Map([
+            [moved.id, moved],
+            [existing.id, existing],
+          ]),
+          assetFolders: new Map([
+            [
+              "target",
+              {
+                id: "target",
+                projectId: "project",
+                name: "Target",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { assetId: moved.id, values: { folderId: "target" } }
       )
     ).toThrow("Filename already used");
   });

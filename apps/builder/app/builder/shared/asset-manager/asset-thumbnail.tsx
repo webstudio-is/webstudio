@@ -153,6 +153,7 @@ type AssetThumbnailProps = {
   selectionActions?: AssetManagerItemActions;
   onMove?: () => void;
   isCollectionEntry?: boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
 };
 
 export const AssetThumbnail = ({
@@ -168,6 +169,7 @@ export const AssetThumbnail = ({
   selectionActions,
   onMove,
   isCollectionEntry = false,
+  unavailableDestinationFolderIds,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -324,6 +326,7 @@ export const AssetThumbnail = ({
               onDelete={actions.delete}
               onReplace={actions.replace}
               canRename={isCollectionEntry === false}
+              unavailableDestinationFolderIds={unavailableDestinationFolderIds}
             >
               <AssetManagerThumbnailMenu
                 actions={displayedActions}

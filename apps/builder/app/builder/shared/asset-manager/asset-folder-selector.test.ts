@@ -1,5 +1,8 @@
-import { describe, expect, test } from "vitest";
+import { createElement } from "react";
+import { act } from "react-dom/test-utils";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  AssetFolderSelector,
   createAssetFolderSelectorLevels,
   getAssetFolderSelectValue,
 } from "./asset-folder-selector";
@@ -7,9 +10,56 @@ import {
   createAssetFolderFixture,
   createAssetFoldersFixture as folders,
 } from "@webstudio-is/sdk/testing";
+import { $assetFolders } from "~/shared/sync/data-stores";
+import { createAssetManagerTestRenderer } from "./test-utils";
 
 const folder = (id: string, parentId?: string) =>
   createAssetFolderFixture({ id, parentId });
+const renderer = createAssetManagerTestRenderer();
+
+afterEach(() => {
+  renderer.cleanup();
+  $assetFolders.set(new Map());
+});
+
+const selectOption = (triggerLabel: string, optionLabel: string) => {
+  const trigger = document.querySelector<HTMLButtonElement>(
+    `[aria-label="${triggerLabel}"]`
+  );
+  expect(trigger).toBeInstanceOf(HTMLButtonElement);
+  act(() => {
+    trigger?.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerId: 1,
+        pointerType: "mouse",
+      })
+    );
+  });
+  const option = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((candidate) => candidate.textContent === optionLabel);
+  expect(option).toBeInstanceOf(HTMLElement);
+  act(() => {
+    option?.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerId: 1,
+        pointerType: "mouse",
+      })
+    );
+    option?.dispatchEvent(
+      new PointerEvent("pointerup", {
+        bubbles: true,
+        button: 0,
+        pointerId: 1,
+        pointerType: "mouse",
+      })
+    );
+  });
+};
 
 describe("asset folder selector levels", () => {
   const values = folders(
@@ -83,15 +133,65 @@ describe("asset folder selector levels", () => {
     expect(level.selected).toEqual({
       label: "Root",
       folderId: undefined,
+      canUseAsDestination: true,
     });
   });
 
+  test("blocks only exact unavailable destinations while preserving their descendants", () => {
+    const levels = createAssetFolderSelectorLevels({
+      folders: values,
+      value: "grandchild",
+      unavailableDestinationFolderIds: new Set(["parent"]),
+    });
+
+    expect(
+      levels.flatMap(({ options }) =>
+        options
+          .filter(({ folderId }) => folderId === "parent")
+          .map(({ canUseAsDestination }) => canUseAsDestination)
+      )
+    ).toEqual([false, false]);
+    expect(
+      levels.flatMap(({ options }) =>
+        options
+          .filter(
+            ({ folderId }) => folderId === "child" || folderId === "grandchild"
+          )
+          .map(({ canUseAsDestination }) => canUseAsDestination)
+      )
+    ).toEqual([true, true, true]);
+  });
+
+  test("navigates through an unavailable destination and commits its descendant", () => {
+    $assetFolders.set(values);
+    const onChange = vi.fn();
+    renderer.render(
+      createElement(AssetFolderSelector, {
+        value: undefined,
+        onChange,
+        unavailableDestinationFolderIds: new Set(["parent"]),
+      })
+    );
+
+    selectOption("Top level folder", "parent");
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(
+      document.querySelector('[aria-label="Asset subfolder level 1"]')
+    ).toBeInstanceOf(HTMLButtonElement);
+
+    selectOption("Asset subfolder level 1", "child");
+
+    expect(onChange).toHaveBeenCalledOnce();
+    expect(onChange).toHaveBeenCalledWith("child");
+  });
+
   test("uses non-empty unique select values for Root and folders", () => {
-    expect(
-      getAssetFolderSelectValue({ label: "Root", folderId: undefined })
-    ).toBe("no-folder");
-    expect(
-      getAssetFolderSelectValue({ label: "Folder", folderId: "no-folder" })
-    ).toBe("folder:no-folder");
+    expect(getAssetFolderSelectValue({ folderId: undefined })).toBe(
+      "no-folder"
+    );
+    expect(getAssetFolderSelectValue({ folderId: "no-folder" })).toBe(
+      "folder:no-folder"
+    );
   });
 });

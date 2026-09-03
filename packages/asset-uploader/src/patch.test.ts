@@ -8,7 +8,9 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
 import {
+  deleteAssetUploadReservationWithClient,
   deleteAssetsWithClient,
   loadAssetUploadReservationsByProjectWithClient,
   loadAssetsByProjectWithClient,
@@ -23,6 +25,7 @@ import {
   upsertAssetFolderWithClient,
 } from "./folder-persistence";
 import { patchAssets } from "./patch";
+import type { AssetObjectReader } from "./client";
 import type { Patch } from "immer";
 
 const server = createTestServer();
@@ -35,6 +38,32 @@ const createContext = (): AppContext =>
     authorization: { type: "user", userId: "user-1" },
     getOwnerPlanFeatures: async () => ({}),
   }) as unknown as AppContext;
+
+const unusedAssetStore: AssetObjectReader = {
+  readFile: async () => {
+    throw new Error("Unexpected asset content read");
+  },
+};
+
+const createSourceAssetStore = (
+  sources: Readonly<Record<string, string>>
+): AssetObjectReader => ({
+  readFile: async (name, range) => {
+    const source = sources[name];
+    if (source === undefined) {
+      throw new Error(`Unexpected asset content read: ${name}`);
+    }
+    const offset = range?.offset ?? 0;
+    const data =
+      range?.length === undefined
+        ? source.slice(offset)
+        : source.slice(offset, offset + range.length);
+    return {
+      data: new Blob([data]).stream(),
+      contentLength: data.length,
+    };
+  },
+});
 
 /** hasProjectPermit: direct ownership check — returns a row for any project */
 const ownershipHandler = db.get("Project", ({ request }) => {
@@ -553,8 +582,10 @@ describe("asset patch persistence", () => {
             filename: "hello-world",
             folderId: "posts",
             file: {
+              name: "uploading-entry.mdx",
               status: "UPLOADING",
               isDeleted: false,
+              createdAt: "2026-09-03T12:00:00.000Z",
               updatedAt: "2026-09-03T12:00:00.000Z",
             },
           },
@@ -564,8 +595,10 @@ describe("asset patch persistence", () => {
             filename: "hello-world",
             folderId: "posts",
             file: {
+              name: "stale-entry.mdx",
               status: "UPLOADING",
               isDeleted: false,
+              createdAt: "2026-09-03T10:00:00.000Z",
               updatedAt: "2026-09-03T10:00:00.000Z",
             },
           },
@@ -582,10 +615,32 @@ describe("asset patch persistence", () => {
     ).resolves.toEqual([
       {
         id: "uploading-entry",
+        name: "uploading-entry.mdx",
         filename: "hello-world",
         folderId: "posts",
+        createdAt: "2026-09-03T12:00:00.000Z",
+        status: "UPLOADING",
       },
     ]);
+  });
+
+  test("does not delete a file when the exact upload reservation is missing", async () => {
+    const projectId = uid();
+    let deletedFile = false;
+    server.use(
+      db.delete("Asset", () => json(null)),
+      db.delete("File", () => {
+        deletedFile = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    await deleteAssetUploadReservationWithClient(
+      { projectId, assetId: "missing", name: "reservation.mdx" },
+      testContext.postgrest.client
+    );
+
+    expect(deletedFile).toBe(false);
   });
 
   test("chunks large requested asset id filters", async () => {
@@ -712,7 +767,11 @@ describe("patchAssets (msw)", () => {
     );
 
     await expect(
-      patchAssets({ projectId }, [], createContext())
+      patchAssets(
+        { projectId, assetStore: unusedAssetStore },
+        [],
+        createContext()
+      )
     ).rejects.toThrow("You don't have edit access");
   });
 
@@ -724,7 +783,11 @@ describe("patchAssets (msw)", () => {
     );
 
     // Should complete without throwing
-    await patchAssets({ projectId }, [], createContext());
+    await patchAssets(
+      { projectId, assetStore: unusedAssetStore },
+      [],
+      createContext()
+    );
   });
 
   test("updates asset description via patch", async () => {
@@ -760,8 +823,269 @@ describe("patchAssets (msw)", () => {
       },
     ];
 
-    await patchAssets({ projectId }, patches, createContext());
+    await patchAssets(
+      { projectId, assetStore: unusedAssetStore },
+      patches,
+      createContext()
+    );
     expect(updatedDescription).toBe("New description");
+  });
+
+  test("requires build access to patch collection configuration assets", async () => {
+    const projectId = uid();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const configRow = {
+      ...assetRow,
+      assetId: "config",
+      projectId,
+      filename: "collection",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "config-storage.json",
+        format: "json",
+        size: configSource.length,
+      },
+    };
+    const templateRow = {
+      ...assetRow,
+      assetId: "template",
+      projectId,
+      filename: "template",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "template-storage.mdx",
+        format: "mdx",
+        size: templateSource.length,
+      },
+    };
+    let metadataUpdated = false;
+    server.use(
+      db.get("Project", ({ request }) => {
+        const url = new URL(request.url);
+        return url.searchParams.has("userId")
+          ? json(null)
+          : json({ id: projectId, userId: "owner-1" });
+      }),
+      db.get("WorkspaceProjectAuthorization", () =>
+        json([{ relation: "editors" }])
+      ),
+      db.get("Asset", () => json([configRow, templateRow])),
+      db.patch("Asset", () => {
+        metadataUpdated = true;
+        return json({ id: "template" });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configRow.file.name]: configSource,
+            [templateRow.file.name]: templateSource,
+          }),
+        },
+        [
+          {
+            op: "replace",
+            path: ["template", "description"],
+            value: "Reserved",
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow("permission to configure");
+    expect(metadataUpdated).toBe(false);
+  });
+
+  test("requires New entry when adding an asset to an existing collection", async () => {
+    const projectId = uid();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const entrySource =
+      "---\ntitle: Hello world\nslug: hello-world\ndraft: true\n---\n\nBody.\n";
+    const configRow = {
+      ...assetRow,
+      assetId: "config",
+      projectId,
+      filename: "collection",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "config-storage.json",
+        format: "json",
+        size: configSource.length,
+      },
+    };
+    const templateRow = {
+      ...assetRow,
+      assetId: "template",
+      projectId,
+      filename: "template",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "template-storage.mdx",
+        format: "mdx",
+        size: templateSource.length,
+      },
+    };
+    let inserted = false;
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([configRow, templateRow])),
+      db.get("File", () => json([{ name: "entry-storage.mdx" }])),
+      db.patch("File", () => empty({ status: 204 })),
+      db.post("Asset", () => {
+        inserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configRow.file.name]: configSource,
+            [templateRow.file.name]: templateSource,
+            "entry-storage.mdx": entrySource,
+          }),
+        },
+        [
+          {
+            op: "add",
+            path: ["entry"],
+            value: {
+              id: "entry",
+              projectId,
+              name: "entry-storage.mdx",
+              filename: "hello-world",
+              folderId: "posts",
+              type: "file",
+              format: "mdx",
+              size: entrySource.length,
+              description: null,
+              createdAt: "2026-09-03T00:00:00.000Z",
+              meta: {},
+            },
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow("Use New entry");
+    expect(inserted).toBe(false);
+  });
+
+  test("validates collection rules before persisting an asset patch", async () => {
+    const projectId = uid();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const configRow = {
+      ...assetRow,
+      assetId: "config",
+      projectId,
+      filename: "collection",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "config-storage.json",
+        format: "json",
+        size: configSource.length,
+      },
+    };
+    const templateRow = {
+      ...assetRow,
+      assetId: "template",
+      projectId,
+      filename: "template",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "template-storage.mdx",
+        format: "mdx",
+        size: templateSource.length,
+      },
+    };
+    let inserted = false;
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([])),
+      db.post("Asset", () => {
+        inserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configRow.file.name]: configSource,
+            [templateRow.file.name]: templateSource,
+          }),
+        },
+        [
+          {
+            op: "add",
+            path: ["config"],
+            value: {
+              id: "config",
+              projectId,
+              name: configRow.file.name,
+              filename: "collection",
+              folderId: "posts",
+              type: "file",
+              format: "json",
+              size: configSource.length,
+              description: null,
+              createdAt: "2026-09-03T00:00:00.000Z",
+              meta: {},
+            },
+          },
+          {
+            op: "add",
+            path: ["template"],
+            value: {
+              id: "template",
+              projectId,
+              name: templateRow.file.name,
+              filename: "template",
+              folderId: "posts",
+              type: "file",
+              format: "mdx",
+              size: templateSource.length,
+              description: null,
+              createdAt: "2026-09-03T00:00:00.000Z",
+              meta: {},
+            },
+          },
+          {
+            op: "add",
+            path: ["notes"],
+            value: {
+              id: "notes",
+              projectId,
+              name: "notes.txt",
+              filename: "notes",
+              folderId: "posts",
+              type: "file",
+              format: "txt",
+              size: 5,
+              description: null,
+              createdAt: "2026-09-03T00:00:00.000Z",
+              meta: {},
+            },
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow("Move non-entry files into a subfolder");
+    expect(inserted).toBe(false);
   });
 
   test("persists asset metadata via patch", async () => {
@@ -796,7 +1120,7 @@ describe("patchAssets (msw)", () => {
     );
 
     await patchAssets(
-      { projectId },
+      { projectId, assetStore: unusedAssetStore },
       [
         {
           op: "replace",
@@ -852,7 +1176,11 @@ describe("patchAssets (msw)", () => {
       },
     ];
 
-    await patchAssets({ projectId }, patches, createContext());
+    await patchAssets(
+      { projectId, assetStore: unusedAssetStore },
+      patches,
+      createContext()
+    );
     expect(updatedFilename).toBe("renamed-photo.jpg");
     await expect(
       loadAssetsByProjectWithClient(projectId, testContext.postgrest.client)
@@ -945,7 +1273,7 @@ describe("patchAssets (msw)", () => {
     );
 
     await patchAssets(
-      { projectId },
+      { projectId, assetStore: unusedAssetStore },
       [{ op: "remove", path: ["asset-1", "folderId"] }],
       createContext()
     );
@@ -974,7 +1302,7 @@ describe("patchAssets (msw)", () => {
       testContext.postgrest.client
     );
     await patchAssets(
-      { projectId },
+      { projectId, assetStore: unusedAssetStore },
       [{ op: "add", path: [asset.id], value: asset }],
       createContext()
     );
@@ -1002,7 +1330,7 @@ describe("patchAssets (msw)", () => {
 
     await expect(
       patchAssets(
-        { projectId },
+        { projectId, assetStore: unusedAssetStore },
         [
           {
             op: "replace",
@@ -1059,7 +1387,11 @@ describe("patchAssets (msw)", () => {
       },
     ];
 
-    await patchAssets({ projectId }, patches, createContext());
+    await patchAssets(
+      { projectId, assetStore: unusedAssetStore },
+      patches,
+      createContext()
+    );
     expect(insertedAssets).toBeDefined();
   });
 

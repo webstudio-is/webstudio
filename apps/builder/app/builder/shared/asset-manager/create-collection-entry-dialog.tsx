@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState, type KeyboardEvent } from "react";
 import {
+  collectionEntryFieldClearValue,
   getCollectionFieldValidationError,
   normalizeCollectionSlug,
   type CollectionField,
@@ -22,19 +23,21 @@ import {
   Grid,
   InputField,
   Label,
+  Select,
   Text,
   TextArea,
   toast,
   theme,
 } from "@webstudio-is/design-system";
 import { fetch } from "~/shared/fetch.client";
-import { $pages, $project } from "~/shared/sync/data-stores";
+import { $assets, $pages, $project } from "~/shared/sync/data-stores";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import type { ContentCollection } from "../assets/content-collections";
 import { selectPage } from "~/shared/nano-states";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
+import { isCollectionPreviewPath } from "./collection-preview-utils";
 
 const getInitialValue = (
   field: CollectionField,
@@ -47,13 +50,19 @@ const getInitialValue = (
     return field.defaultValue;
   }
   if (field.type === "boolean") {
-    return false;
+    return field.required ? false : undefined;
   }
   if (field.type === "number" || field.type === "integer") {
     return "";
   }
   return "";
 };
+
+const optionalBooleanOptions = [
+  { value: "unset", label: "Not set" },
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+] as const;
 
 const createInitialValues = (
   fields: readonly CollectionField[],
@@ -90,7 +99,9 @@ export const createCollectionEntryRequest = async ({
   values: Readonly<Record<string, unknown>>;
 }) => {
   const response = await fetch(
-    `/rest/assets/folders/${encodeURIComponent(folderId)}/entries?projectId=${encodeURIComponent(projectId)}`,
+    `/rest/assets/folders/${encodeURIComponent(
+      folderId
+    )}/entries?projectId=${encodeURIComponent(projectId)}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -122,19 +133,31 @@ const openConfiguredPreview = ({
   if (page === undefined) {
     return false;
   }
-  const parameters = tokenizePathnamePattern(
-    getPagePath(page.id, pages)
-  ).flatMap((token) => (token.type === "param" ? [token] : []));
-  const parameter =
-    parameters.find(({ name }) => name === collection.config.slugField) ??
-    parameters[0];
+  const pagePath = getPagePath(page.id, pages);
+  if (
+    isCollectionPreviewPath(pagePath, collection.config.slugField) === false
+  ) {
+    return false;
+  }
+  const parameters = tokenizePathnamePattern(pagePath).flatMap((token) =>
+    token.type === "param" ? [token] : []
+  );
+  const parameter = parameters.find(
+    ({ name }) => name === collection.config.slugField
+  );
   if (parameter === undefined) {
     return false;
   }
   selectPage(page.id);
+  const params = { ...$currentSystem.get().params };
+  for (const routeParameter of parameters) {
+    if (routeParameter.name !== parameter.name) {
+      delete params[routeParameter.name];
+    }
+  }
   updateCurrentSystem({
     params: {
-      ...$currentSystem.get().params,
+      ...params,
       [parameter.name]: getAssetDisplayNameParts(asset).basename,
     },
   });
@@ -157,6 +180,21 @@ export const CreateCollectionEntryDialog = ({
     createInitialValues(config.fields, collection.templateProperties)
   );
   const [slugEdited, setSlugEdited] = useState(false);
+  const [editedFields, setEditedFields] = useState<ReadonlySet<string>>(
+    () => new Set()
+  );
+  const [unsetFields, setUnsetFields] = useState<ReadonlySet<string>>(
+    () =>
+      new Set(
+        config.fields.flatMap((field) =>
+          field.required === false &&
+          Object.hasOwn(collection.templateProperties, field.key) === false &&
+          field.defaultValue === undefined
+            ? [field.key]
+            : []
+        )
+      )
+  );
   const [error, setError] = useState<string>();
   const [creating, setCreating] = useState(false);
 
@@ -166,12 +204,30 @@ export const CreateCollectionEntryDialog = ({
         createInitialValues(config.fields, collection.templateProperties)
       );
       setSlugEdited(false);
+      setEditedFields(new Set());
+      setUnsetFields(
+        new Set(
+          config.fields.flatMap((field) =>
+            field.required === false &&
+            Object.hasOwn(collection.templateProperties, field.key) === false &&
+            field.defaultValue === undefined
+              ? [field.key]
+              : []
+          )
+        )
+      );
       setError(undefined);
       setCreating(false);
     }
   }, [collection.templateProperties, config.fields, open]);
 
   const setValue = (field: CollectionField, value: unknown) => {
+    setEditedFields((current) => new Set(current).add(field.key));
+    setUnsetFields((current) => {
+      const next = new Set(current);
+      next.delete(field.key);
+      return next;
+    });
     setValues((current) => {
       const next = { ...current, [field.key]: value };
       if (
@@ -183,6 +239,16 @@ export const CreateCollectionEntryDialog = ({
       }
       return next;
     });
+    setError(undefined);
+  };
+
+  const unsetValue = (field: CollectionField) => {
+    setEditedFields((current) => new Set(current).add(field.key));
+    setUnsetFields((current) => new Set(current).add(field.key));
+    setValues((current) => ({
+      ...current,
+      [field.key]: field.type === "boolean" ? undefined : "",
+    }));
     setError(undefined);
   };
 
@@ -200,7 +266,13 @@ export const CreateCollectionEntryDialog = ({
       const submittedValues = Object.fromEntries(
         config.fields.flatMap((field) => {
           const value = values[field.key];
-          if (field.required === false && value === "") {
+          if (field.required === false && unsetFields.has(field.key)) {
+            if (
+              editedFields.has(field.key) &&
+              Object.hasOwn(collection.templateProperties, field.key)
+            ) {
+              return [[field.key, collectionEntryFieldClearValue]];
+            }
             return [];
           }
           if (
@@ -240,8 +312,12 @@ export const CreateCollectionEntryDialog = ({
           "The entry was created in the previous project. Return to that project to view it."
         );
       }
-      executeRuntimeMutation({ id: "assets.add", input: { asset } });
-      onNextTransactionComplete(invalidateAssets);
+      if ($assets.get().has(asset.id)) {
+        invalidateAssets();
+      } else {
+        executeRuntimeMutation({ id: "assets.add", input: { asset } });
+        onNextTransactionComplete(invalidateAssets);
+      }
       onOpenChange(false);
       const previewOpened = openConfiguredPreview({ collection, asset });
       toast.success(
@@ -259,23 +335,73 @@ export const CreateCollectionEntryDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (creating === false) {
+          onOpenChange(nextOpen);
+        }
+      }}
+    >
       <DialogContent
-        minWidth={400}
+        css={{ width: "min(560px, calc(100vw - 32px))" }}
         aria-describedby={undefined}
         onKeyDown={stopEscapePropagation}
       >
         <DialogTitle>New entry</DialogTitle>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <Grid
+          gap={3}
+          css={{
+            padding: theme.panel.padding,
+            maxHeight: "min(70vh, calc(100vh - 32px))",
+            overflow: "auto",
+          }}
+        >
           {config.fields.map((field, index) => {
             const value = values[field.key];
             const id = `collection-entry-${field.key}`;
+            const errorId = "collection-entry-error";
             if (field.type === "boolean") {
+              if (field.required === false) {
+                const selectedValue =
+                  value === true ? "true" : value === false ? "false" : "unset";
+                return (
+                  <Grid key={field.key} gap={1}>
+                    <Label>{field.label}</Label>
+                    <Select
+                      aria-label={field.label}
+                      aria-describedby={
+                        error === undefined ? undefined : errorId
+                      }
+                      options={optionalBooleanOptions}
+                      value={optionalBooleanOptions.find(
+                        ({ value }) => value === selectedValue
+                      )}
+                      getValue={(
+                        option: (typeof optionalBooleanOptions)[number]
+                      ) => option.value}
+                      getLabel={(
+                        option: (typeof optionalBooleanOptions)[number]
+                      ) => option.label}
+                      disabled={creating}
+                      onChange={({ value }) =>
+                        value === "unset"
+                          ? unsetValue(field)
+                          : setValue(field, value === "true")
+                      }
+                    />
+                  </Grid>
+                );
+              }
               return (
                 <CheckboxAndLabel key={field.key}>
                   <Checkbox
                     id={id}
                     checked={value === true}
+                    required
+                    aria-required="true"
+                    aria-describedby={error === undefined ? undefined : errorId}
+                    disabled={creating}
                     onCheckedChange={(checked) =>
                       setValue(field, checked === true)
                     }
@@ -291,14 +417,29 @@ export const CreateCollectionEntryDialog = ({
                     {field.label}
                     {field.required ? " *" : ""}
                   </Label>
-                  <TextArea
-                    id={id}
-                    minLength={field.minLength}
-                    maxLength={field.maxLength}
-                    value={typeof value === "string" ? value : ""}
-                    disabled={creating}
-                    onChange={(value) => setValue(field, value)}
-                  />
+                  <Flex gap={2} align="end">
+                    <TextArea
+                      id={id}
+                      required={field.required}
+                      aria-required={field.required}
+                      aria-describedby={
+                        error === undefined ? undefined : errorId
+                      }
+                      aria-invalid={error === undefined ? undefined : true}
+                      value={typeof value === "string" ? value : ""}
+                      disabled={creating}
+                      onChange={(value) => setValue(field, value)}
+                    />
+                    {field.required === false && (
+                      <Button
+                        aria-label={`Unset ${field.label}`}
+                        disabled={creating || unsetFields.has(field.key)}
+                        onClick={() => unsetValue(field)}
+                      >
+                        Unset
+                      </Button>
+                    )}
+                  </Flex>
                 </Grid>
               );
             }
@@ -308,40 +449,65 @@ export const CreateCollectionEntryDialog = ({
                   {field.label}
                   {field.required ? " *" : ""}
                 </Label>
-                <InputField
-                  id={id}
-                  autoFocus={index === 0}
-                  type={
-                    field.type === "number" || field.type === "integer"
-                      ? "number"
-                      : "text"
-                  }
-                  min={field.minimum}
-                  max={field.maximum}
-                  step={field.type === "integer" ? 1 : undefined}
-                  minLength={field.minLength}
-                  maxLength={field.maxLength}
-                  value={
-                    typeof value === "string" ? value : String(value ?? "")
-                  }
-                  disabled={creating}
-                  onChange={(event) => {
-                    if (field.key === config.slugField) {
-                      setSlugEdited(true);
+                <Flex gap={2} align="end">
+                  <InputField
+                    id={id}
+                    autoFocus={index === 0}
+                    type={
+                      field.type === "number" || field.type === "integer"
+                        ? "number"
+                        : "text"
                     }
-                    setValue(field, event.target.value);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      void submit();
+                    min={field.minimum}
+                    max={field.maximum}
+                    step={field.type === "integer" ? 1 : undefined}
+                    required={field.required}
+                    aria-required={field.required}
+                    aria-describedby={error === undefined ? undefined : errorId}
+                    aria-invalid={error === undefined ? undefined : true}
+                    value={
+                      typeof value === "string" ? value : String(value ?? "")
                     }
-                  }}
-                />
+                    disabled={creating}
+                    onChange={(event) => {
+                      if (field.key === config.slugField) {
+                        setSlugEdited(true);
+                      }
+                      if (
+                        (field.type === "number" || field.type === "integer") &&
+                        event.target.value === ""
+                      ) {
+                        unsetValue(field);
+                        return;
+                      }
+                      setValue(field, event.target.value);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        void submit();
+                      }
+                    }}
+                  />
+                  {field.required === false && (
+                    <Button
+                      aria-label={`Unset ${field.label}`}
+                      disabled={creating || unsetFields.has(field.key)}
+                      onClick={() => unsetValue(field)}
+                    >
+                      Unset
+                    </Button>
+                  )}
+                </Flex>
               </Grid>
             );
           })}
           {error !== undefined && (
-            <Text color="destructive" variant="tiny">
+            <Text
+              id="collection-entry-error"
+              role="alert"
+              color="destructive"
+              variant="tiny"
+            >
               {error}
             </Text>
           )}
