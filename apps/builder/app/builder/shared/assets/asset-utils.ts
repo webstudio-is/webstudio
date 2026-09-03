@@ -5,8 +5,8 @@ import type {
   VideoAsset,
   AllowedFileExtension,
 } from "@webstudio-is/sdk";
-import { nanoid } from "nanoid";
 import {
+  createId,
   getMimeTypeByExtension,
   getFileExtension,
   IMAGE_EXTENSIONS,
@@ -51,7 +51,7 @@ const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
   // Any image format is suitable
   const FALLBACK_URL_TYPE = "image/png";
 
-  return [FALLBACK_URL_TYPE, `${nanoid()}.png`] as const;
+  return [FALLBACK_URL_TYPE, `${createId("nano")}.png`] as const;
 };
 
 export const getSha256Hash = async (data: string) => {

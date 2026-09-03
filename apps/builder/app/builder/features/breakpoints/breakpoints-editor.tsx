@@ -1,6 +1,5 @@
 import { Fragment, useState, useMemo } from "react";
-import { nanoid } from "nanoid";
-import type { Breakpoint } from "@webstudio-is/sdk";
+import { createId, type Breakpoint } from "@webstudio-is/sdk";
 import {
   theme,
   Flex,
@@ -300,7 +299,7 @@ export const BreakpointsEditor = ({
                     return;
                   }
                   const newBreakpoint: Breakpoint = {
-                    id: nanoid(),
+                    id: createId("nano"),
                     label: "",
                     minWidth: 0,
                   };

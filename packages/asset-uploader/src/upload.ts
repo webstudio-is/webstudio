@@ -5,8 +5,8 @@ import {
   getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createHash } from "node:crypto";
-import { nanoid } from "nanoid";
 import {
+  createId as createSdkId,
   getFileExtension,
   getFileNameParts,
   type Asset,
@@ -287,7 +287,7 @@ const cleanupUploadError = async (
 export const createUploadTicket = async (
   data: CreateUploadTicketInput,
   context: AppContext,
-  createId: () => Asset["id"] = nanoid
+  createId: () => Asset["id"] = () => createSdkId("nano")
 ): Promise<UploadTicket> => {
   const {
     projectId,

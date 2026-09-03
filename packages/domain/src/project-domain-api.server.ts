@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import { z } from "zod";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
@@ -7,6 +6,7 @@ import {
 } from "@webstudio-is/project-build/server";
 import { parseDeployment } from "@webstudio-is/project-build/persistence";
 import {
+  createId,
   templates as templateSchema,
   type Deployment,
 } from "@webstudio-is/sdk";
@@ -258,7 +258,7 @@ export const publishStaticProject = async (
   {
     projectId,
     templates,
-    name = `${projectId}-${nanoid()}.zip`,
+    name = `${projectId}-${createId("nano")}.zip`,
   }: {
     projectId: string;
     templates: z.infer<typeof templateSchema>[];
@@ -441,4 +441,4 @@ export const verifyProjectDomainResult = async (
   return await db.verify(input, context);
 };
 
-export const createUnpublishJobId = () => `unpublish-${nanoid()}`;
+export const createUnpublishJobId = () => `unpublish-${createId("nano")}`;
