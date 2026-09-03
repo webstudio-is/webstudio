@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState, type KeyboardEvent } from "react";
 import {
+  getCollectionFieldValidationError,
   normalizeCollectionSlug,
   type CollectionField,
 } from "@webstudio-is/content-engine";
@@ -134,10 +135,12 @@ export const CreateCollectionEntryDialog = ({
   collection,
   open,
   onOpenChange,
+  createEntry = createCollectionEntryRequest,
 }: {
   collection: Extract<ContentCollection, { status: "ready" }>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  createEntry?: typeof createCollectionEntryRequest;
 }) => {
   const { config } = collection;
   const [values, setValues] = useState<Record<string, unknown>>(() =>
@@ -193,7 +196,25 @@ export const CreateCollectionEntryDialog = ({
           return [[field.key, value]];
         })
       );
-      const asset = await createCollectionEntryRequest({
+      const submittedSlug = submittedValues[config.slugField];
+      if (typeof submittedSlug !== "string" || submittedSlug.trim() === "") {
+        const slugSource = submittedValues[config.generateSlugFrom];
+        if (typeof slugSource === "string") {
+          submittedValues[config.slugField] =
+            normalizeCollectionSlug(slugSource);
+        }
+      } else {
+        submittedValues[config.slugField] =
+          normalizeCollectionSlug(submittedSlug);
+      }
+      const validationError = getCollectionFieldValidationError(
+        config,
+        submittedValues
+      );
+      if (validationError !== undefined) {
+        throw new Error(validationError);
+      }
+      const asset = await createEntry({
         folderId: collection.folderId,
         values: submittedValues,
       });

@@ -10,6 +10,7 @@ import {
   isAllowedMimeCategory,
   formatAssetName,
   getAssetDisplayNameParts,
+  isMdxFileAsset,
   mergeAssetMeta,
   parseAssetName,
   type Asset,
@@ -27,6 +28,7 @@ import {
   imageAsset,
   videoAsset,
 } from "@webstudio-is/sdk";
+import { collectionConfigFilename } from "@webstudio-is/content-engine";
 import {
   appendOptionalPropertyPatch,
   type BuilderPatchChange,
@@ -601,19 +603,23 @@ const assertAssetFolderExists = (
   }
 };
 
+const isCollectionFolder = (
+  assets: BuilderState["assets"],
+  folderId: string | undefined
+) =>
+  folderId !== undefined &&
+  assets !== undefined &&
+  Array.from(assets.values()).some(
+    (asset) =>
+      asset.folderId === folderId &&
+      formatAssetName(asset) === collectionConfigFilename
+  );
+
 const assertFolderAcceptsGenericAssets = (
   assets: BuilderState["assets"],
   folderId: string | undefined
 ) => {
-  if (
-    folderId !== undefined &&
-    assets !== undefined &&
-    Array.from(assets.values()).some(
-      (asset) =>
-        asset.folderId === folderId &&
-        formatAssetName(asset) === "collection.json"
-    )
-  ) {
+  if (isCollectionFolder(assets, folderId)) {
     return throwBuilderRuntimeError(
       "CONFLICT",
       "Use New entry to add files to a collection folder"
@@ -637,6 +643,15 @@ export const addAsset = (
     return throwBuilderRuntimeError("CONFLICT", "Asset already exists");
   }
   assertAssetFolderExists(state.assetFolders, input.asset.folderId);
+  if (
+    isCollectionFolder(assets, input.asset.folderId) &&
+    isMdxFileAsset(input.asset) === false
+  ) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Use New entry to add files to a collection folder"
+    );
+  }
   const asset: Asset = { ...input.asset, projectId: context.projectId };
   return createRuntimeMutation({
     payload: [
@@ -720,6 +735,16 @@ export const updateAsset = (
     }
   }
   if (input.values.filename !== undefined) {
+    if (
+      input.values.filename !== getAssetDisplayFilename(asset) &&
+      isMdxFileAsset(asset) &&
+      isCollectionFolder(assets, asset.folderId)
+    ) {
+      return throwBuilderRuntimeError(
+        "CONFLICT",
+        "Collection MDX filenames cannot be changed"
+      );
+    }
     if (isValidFilename(input.values.filename) === false) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Invalid filename");
     }

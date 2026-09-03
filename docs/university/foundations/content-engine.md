@@ -97,19 +97,31 @@ what makes Webstudio treat it as a collection and show the collection badge.
 Open **Collection settings** to add fields, choose their types, mark them as
 required, and set text-length or number limits. The configurator writes the
 schema; designers do not need to edit JSON. Choose the dynamic article page as
-the preview page so a new entry opens there with its slug filled into the first
-dynamic path parameter.
+the preview page so a new entry opens there with its slug filled into the
+matching path parameter. If no parameter has the slug field's name, Webstudio
+uses the first dynamic parameter.
 
 Editors choose **New entry**, complete the generated form, and select **Create
 entry**. Webstudio creates a lowercase, dash-separated slug from the title.
 Editors can change the slug before creating the entry. The schema is checked
-when an entry is created and whenever its frontmatter changes.
+when an entry is created and whenever its frontmatter changes. The slug becomes
+the MDX filename and cannot be changed after creation.
+
+When you change collection fields or limits, Webstudio also checks the entry
+template and every existing entry. Fix incompatible frontmatter before saving
+rules that would make existing content invalid.
 
 A collection folder accepts entries and subfolders. Uploading, creating a
 generic text file, pasting, moving, or duplicating another file directly into
 the collection is disabled. Put images and other supporting files in a
 subfolder. The collection configuration and template do not appear in Content
-Engine query results.
+Engine query results. Keep `collection.json` valid and its referenced template
+available; Webstudio blocks collection queries and publishing when it cannot
+safely identify the reserved files.
+
+**Delete unused assets** does not list the files directly inside a collection
+folder. Collection entries are loaded dynamically and may not have a direct
+page or component reference.
 
 Removing the collection in **Collection settings** deletes only
 `collection.json`. The folder becomes a normal folder again, while its entries

@@ -7,7 +7,9 @@ import {
   createCollectionEntry,
   extractMarkdownFrontmatter,
   createLiteralContentCompilationQuery,
+  getCollectionTemplateValidationError,
   getContentArtifactRuntimeAssetIds,
+  getCollectionValidationError,
   getDocumentFormatByContentType,
   isAssetQueryCoveredByCompilationPlan,
   isContentDocumentCandidate,
@@ -47,6 +49,7 @@ import {
 } from "@webstudio-is/content-engine/compiler";
 import {
   formatAssetName,
+  getAssetDisplayNameParts,
   isMdxFileAsset,
   toAssetReferenceRuntimeData,
   type Asset,
@@ -522,13 +525,16 @@ export class PostgresAssetRepository implements AssetRepository {
     return ticket;
   }
 
-  async completeUpload({
+  private async completeReservedUpload({
     name,
     data,
     assetInfoFallback,
     assetDataOverride,
     assetId,
-  }: Parameters<AssetRepository["completeUpload"]>[0]) {
+    allowCollectionFolder,
+  }: Parameters<AssetRepository["completeUpload"]>[0] & {
+    allowCollectionFolder: boolean;
+  }) {
     // Reserved upload names are not authorization credentials. Recheck the
     // derived owning project when the second upload step writes file content.
     await this.assertCanEdit();
@@ -541,7 +547,233 @@ export class PostgresAssetRepository implements AssetRepository {
       assetDataOverride,
       this.getUploadErrorCleanup(assetId)
     );
+    if (allowCollectionFolder || asset.folderId === undefined) {
+      return asset;
+    }
+    const assets = await this.dependencies.loadAssetsByProjectWithClient(
+      this.projectId,
+      this.context.postgrest.client
+    );
+    const isCollectionConfig =
+      formatAssetName(asset) === collectionConfigFilename;
+    const conflict = isCollectionConfig
+      ? assets.some(
+          (candidate) =>
+            candidate.id !== asset.id &&
+            candidate.folderId === asset.folderId &&
+            isMdxFileAsset(candidate) === false
+        )
+      : assets.some(
+          (candidate) =>
+            candidate.folderId === asset.folderId &&
+            formatAssetName(candidate) === collectionConfigFilename
+        );
+    if (conflict) {
+      await this.dependencies.deleteAssetsWithClient(
+        { projectId: this.projectId, ids: [asset.id] },
+        this.context.postgrest.client
+      );
+      throw new AssetRepositoryConflictError(
+        isCollectionConfig
+          ? "Move non-entry files into a subfolder"
+          : "Use New entry to add files to a collection folder"
+      );
+    }
     return asset;
+  }
+
+  async completeUpload(
+    input: Parameters<AssetRepository["completeUpload"]>[0]
+  ) {
+    return await this.completeReservedUpload({
+      ...input,
+      allowCollectionFolder: false,
+    });
+  }
+
+  private async prepareCollectionAssetContent({
+    currentAsset,
+    extension,
+    data,
+  }: {
+    currentAsset: Asset;
+    extension?: string;
+    data: ReadableStream<Uint8Array>;
+  }) {
+    if (currentAsset.folderId === undefined) {
+      return data;
+    }
+    const isCollectionConfig =
+      formatAssetName(currentAsset) === collectionConfigFilename;
+    if (
+      isCollectionConfig === false &&
+      isMdxFileAsset(currentAsset) === false
+    ) {
+      return data;
+    }
+    const assets = await this.dependencies.loadAssetsByProjectWithClient(
+      this.projectId,
+      this.context.postgrest.client
+    );
+    const siblings = assets.filter(
+      (asset) => asset.folderId === currentAsset.folderId
+    );
+    const configAsset = siblings.find(
+      (asset) => formatAssetName(asset) === collectionConfigFilename
+    );
+    if (configAsset === undefined) {
+      return data;
+    }
+    const bytes = await readBoundedBytes(
+      data,
+      contentEngineLimits.hydratedFileBytes
+    );
+    const nextData = new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes);
+        controller.close();
+      },
+    });
+    if (isCollectionConfig) {
+      if (extension !== undefined && extension.toLowerCase() !== "json") {
+        throw new AssetRepositoryConflictError(
+          "collection.json must remain a JSON file"
+        );
+      }
+      const nextConfig = parseCollectionConfig(decodeUtf8(bytes));
+      const templateAsset = siblings.find(
+        (asset) =>
+          asset.id !== currentAsset.id &&
+          formatAssetName(asset) === nextConfig.template &&
+          isMdxFileAsset(asset)
+      );
+      if (templateAsset === undefined) {
+        throw new AssetRepositoryNotFoundError(
+          `Collection template "${nextConfig.template}" not found`
+        );
+      }
+      const templateContent = await this.readContent({
+        assetId: templateAsset.id,
+        asset: templateAsset,
+      });
+      const templateFrontmatter = await extractMarkdownFrontmatter(
+        templateContent.data
+      );
+      const templateValidationError = getCollectionTemplateValidationError(
+        nextConfig,
+        templateFrontmatter.properties
+      );
+      if (templateValidationError !== undefined) {
+        throw new AssetRepositoryConflictError(
+          `Collection template "${nextConfig.template}": ${templateValidationError}`
+        );
+      }
+      for (const entryAsset of siblings) {
+        if (
+          entryAsset.id === currentAsset.id ||
+          entryAsset.id === templateAsset.id ||
+          isMdxFileAsset(entryAsset) === false
+        ) {
+          continue;
+        }
+        const entryContent = await this.readContent({
+          assetId: entryAsset.id,
+          asset: entryAsset,
+        });
+        const { properties } = await extractMarkdownFrontmatter(
+          entryContent.data
+        );
+        const validationError = getCollectionValidationError(
+          nextConfig,
+          properties
+        );
+        if (validationError !== undefined) {
+          throw new AssetRepositoryConflictError(
+            `Collection entry "${formatAssetName(entryAsset)}": ${validationError}`
+          );
+        }
+        const slug = properties[nextConfig.slugField];
+        if (slug !== getAssetDisplayNameParts(entryAsset).basename) {
+          throw new AssetRepositoryConflictError(
+            `Collection entry "${formatAssetName(entryAsset)}": The slug must match the entry filename`
+          );
+        }
+      }
+      return nextData;
+    }
+    if (
+      isMdxFileAsset(currentAsset) &&
+      extension !== undefined &&
+      extension.toLowerCase() !== "mdx"
+    ) {
+      throw new AssetRepositoryConflictError(
+        "Collection MDX files must remain MDX files"
+      );
+    }
+    const configContent = await this.readContent({
+      assetId: configAsset.id,
+      asset: configAsset,
+    });
+    let config;
+    try {
+      config = parseCollectionConfig(
+        decodeUtf8(
+          await readBoundedBytes(
+            configContent.data,
+            contentEngineLimits.hydratedFileBytes
+          )
+        )
+      );
+    } catch (error) {
+      if (error instanceof ContentCollectionError === false) {
+        throw error;
+      }
+      return nextData;
+    }
+    if (formatAssetName(currentAsset) === config.template) {
+      const { properties } = await extractMarkdownFrontmatter(bytes);
+      const validationError = getCollectionTemplateValidationError(
+        config,
+        properties
+      );
+      if (validationError !== undefined) {
+        throw new AssetRepositoryConflictError(
+          `Collection template: ${validationError}`
+        );
+      }
+      return nextData;
+    }
+    if (isMdxFileAsset(currentAsset) === false) {
+      return nextData;
+    }
+    const nextFrontmatter = await extractMarkdownFrontmatter(bytes);
+    const currentContent = await this.readContent({
+      assetId: currentAsset.id,
+      asset: currentAsset,
+    });
+    const currentFrontmatter = await extractMarkdownFrontmatter(
+      currentContent.data
+    );
+    const frontmatterChanged =
+      serializeJsonDeterministically(nextFrontmatter.properties) !==
+      serializeJsonDeterministically(currentFrontmatter.properties);
+    const validationError = getCollectionValidationError(
+      config,
+      nextFrontmatter.properties
+    );
+    if (validationError !== undefined && frontmatterChanged) {
+      throw new AssetRepositoryConflictError(validationError);
+    }
+    if (frontmatterChanged) {
+      const slug = nextFrontmatter.properties[config.slugField];
+      const filenameSlug = getAssetDisplayNameParts(currentAsset).basename;
+      if (slug !== filenameSlug) {
+        throw new AssetRepositoryConflictError(
+          "The slug must match the entry filename"
+        );
+      }
+    }
+    return nextData;
   }
 
   async updateContent({
@@ -551,100 +783,19 @@ export class PostgresAssetRepository implements AssetRepository {
     data,
   }: Parameters<AssetRepository["updateContent"]>[0]) {
     await this.assertCanEdit();
-    const assets = await this.dependencies.loadAssetsByProjectWithClient(
-      this.projectId,
-      this.context.postgrest.client
-    );
-    const currentAsset = assets.find((asset) => asset.id === assetId);
-    let nextData = data;
-    if (currentAsset?.folderId !== undefined) {
-      const siblings = assets.filter(
-        (asset) => asset.folderId === currentAsset.folderId
-      );
-      const configAsset = siblings.find(
-        (asset) => formatAssetName(asset) === collectionConfigFilename
-      );
-      if (configAsset !== undefined) {
-        const bytes = await readBoundedBytes(
-          data,
-          contentEngineLimits.hydratedFileBytes
-        );
-        nextData = new ReadableStream({
-          start(controller) {
-            controller.enqueue(bytes);
-            controller.close();
-          },
-        });
-        if (currentAsset.id === configAsset.id) {
-          const nextConfig = parseCollectionConfig(decodeUtf8(bytes));
-          if (
-            siblings.some(
-              (asset) =>
-                asset.id !== currentAsset.id &&
-                formatAssetName(asset) === nextConfig.template &&
-                isMdxFileAsset(asset)
-            ) === false
-          ) {
-            throw new AssetRepositoryNotFoundError(
-              `Collection template "${nextConfig.template}" not found`
-            );
-          }
-        } else {
-          const configContent = await this.readContent({
-            assetId: configAsset.id,
-            asset: configAsset,
-          });
-          let config;
-          try {
-            config = parseCollectionConfig(
-              decodeUtf8(
-                await readBoundedBytes(
-                  configContent.data,
-                  contentEngineLimits.hydratedFileBytes
-                )
-              )
-            );
-          } catch (error) {
-            if (error instanceof ContentCollectionError === false) {
-              throw error;
-            }
-          }
-          if (config !== undefined) {
-            if (formatAssetName(currentAsset) === config.template) {
-              await extractMarkdownFrontmatter(bytes);
-            } else if (isMdxFileAsset(currentAsset)) {
-              const nextFrontmatter = await extractMarkdownFrontmatter(bytes);
-              const validation = config.validate(nextFrontmatter.properties);
-              if (validation.success === false) {
-                const currentContent = await this.readContent({
-                  assetId: currentAsset.id,
-                  asset: currentAsset,
-                });
-                const currentFrontmatter = await extractMarkdownFrontmatter(
-                  currentContent.data
-                );
-                if (
-                  serializeJsonDeterministically(nextFrontmatter.properties) !==
-                  serializeJsonDeterministically(currentFrontmatter.properties)
-                ) {
-                  throw new AssetRepositoryConflictError(
-                    validation.error.issues[0]?.message ??
-                      "Collection entry does not match its schema"
-                  );
-                }
-              }
-            }
-          }
-        }
-      }
-    }
     const asset = await this.dependencies.updateAssetContent(
       {
         assetId,
         projectId: this.projectId,
         expectedName,
         extension,
-        data: nextData,
+        data,
+        prepareData: ({ asset, data }) =>
+          this.prepareCollectionAssetContent({
+            currentAsset: asset,
+            extension,
+            data,
+          }),
       },
       this.getWritableStore(),
       this.context
@@ -654,13 +805,29 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async updateMetadata(assetId: Asset["id"], values: AssetMetadataUpdate) {
     await this.assertCanEdit();
-    if (typeof values.folderId === "string") {
+    if (typeof values.folderId === "string" || values.filename !== undefined) {
       const assets = await this.dependencies.loadAssetsByProjectWithClient(
         this.projectId,
         this.context.postgrest.client
       );
       const currentAsset = assets.find((asset) => asset.id === assetId);
       if (
+        values.filename !== undefined &&
+        currentAsset?.folderId !== undefined &&
+        values.filename !== getAssetDisplayNameParts(currentAsset).basename &&
+        isMdxFileAsset(currentAsset) &&
+        assets.some(
+          (asset) =>
+            asset.folderId === currentAsset.folderId &&
+            formatAssetName(asset) === collectionConfigFilename
+        )
+      ) {
+        throw new AssetRepositoryConflictError(
+          "Collection MDX filenames cannot be changed"
+        );
+      }
+      if (
+        typeof values.folderId === "string" &&
         currentAsset?.folderId !== values.folderId &&
         assets.some(
           (asset) =>
@@ -823,7 +990,7 @@ export class PostgresAssetRepository implements AssetRepository {
       );
     }
     const bytes = new TextEncoder().encode(entry.source);
-    return await this.completeUpload({
+    return await this.completeReservedUpload({
       name: ticket.name,
       data: new ReadableStream({
         start(controller) {
@@ -833,6 +1000,7 @@ export class PostgresAssetRepository implements AssetRepository {
       }),
       assetInfoFallback: undefined,
       assetId: ticket.assetId,
+      allowCollectionFolder: true,
     });
   }
 
@@ -1051,7 +1219,9 @@ export class PostgresAssetRepository implements AssetRepository {
           continue;
         }
         if (entry.document.size > contentEngineLimits.hydratedFileBytes) {
-          continue;
+          throw new ContentCollectionError(
+            "collection.json exceeds the content size limit"
+          );
         }
         try {
           const response = await readFile(entry.document.contentRef, {
@@ -1071,9 +1241,13 @@ export class PostgresAssetRepository implements AssetRepository {
           if (template !== undefined) {
             reservedAssetIds.add(template.assetId);
           }
-        } catch {
-          // A broken collection stays discoverable through its entry point, but
-          // cannot safely identify any additional reserved files.
+        } catch (error) {
+          if (error instanceof ContentCollectionError) {
+            throw error;
+          }
+          throw new ContentCollectionError(
+            "Collection configuration could not be read"
+          );
         }
       }
       return entries.filter(

@@ -92,6 +92,7 @@ export const AssetsPanel = ({
               isContentMode === false && (
                 <Tooltip content="Collection settings">
                   <IconButton
+                    disabled={authPermit === "view"}
                     aria-label="Collection settings"
                     onClick={() => setCollectionSettingsOpen(true)}
                   >

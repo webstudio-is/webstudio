@@ -29,33 +29,42 @@ export const createTransactionCompletionStore = ({
   };
 
   const onNextTransactionComplete = (callback: () => void) => {
-    let unsubscribe: (() => void) | undefined;
-    unsubscribe = $lastTransactionId.subscribe((transactionId) => {
-      if (transactionId === undefined) {
-        return;
-      }
+    const register = (transactionId: string) => {
       onTransactionComplete(transactionId, (success) => {
         if (success) {
           callback();
         }
       });
-      unsubscribe?.();
+    };
+    const currentTransactionId = $lastTransactionId.get();
+    if (currentTransactionId !== undefined) {
+      register(currentTransactionId);
+      return;
+    }
+    const unsubscribe = $lastTransactionId.listen((transactionId) => {
+      if (transactionId === undefined) {
+        return;
+      }
+      register(transactionId);
+      unsubscribe();
     });
 
     scheduleTimeout(() => {
-      unsubscribe?.();
+      unsubscribe();
     });
   };
 
   const completeTransaction = (transactionId: string, success: boolean) => {
     const transactionCallbacks = callbacks.get(transactionId);
-    if (transactionCallbacks === undefined) {
-      return;
-    }
-    for (const callback of transactionCallbacks) {
-      callback(success);
-    }
     callbacks.delete(transactionId);
+    if ($lastTransactionId.get() === transactionId) {
+      $lastTransactionId.set(undefined);
+    }
+    if (transactionCallbacks !== undefined) {
+      for (const callback of transactionCallbacks) {
+        callback(success);
+      }
+    }
   };
 
   const clear = () => {

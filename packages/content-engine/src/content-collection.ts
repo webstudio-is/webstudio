@@ -5,6 +5,7 @@ import {
 } from "./frontmatter";
 
 export const collectionConfigFilename = "collection.json";
+const collectionSlugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
 export const defaultCollectionTemplateFilename = "template.mdx";
 
 const jsonObject = z.record(z.string(), z.json());
@@ -17,6 +18,7 @@ const collectionSettings = z.object({
 
 export type CollectionField = Readonly<{
   key: string;
+  originalKey?: string;
   label: string;
   type: "string" | "number" | "integer" | "boolean";
   control: "text" | "textarea" | "slug" | "number" | "checkbox";
@@ -73,6 +75,7 @@ const getField = ({
         : "text";
     return {
       key,
+      originalKey: key,
       label,
       type: "string",
       control,
@@ -85,6 +88,7 @@ const getField = ({
   if (value.type === "number" || value.type === "integer") {
     return {
       key,
+      originalKey: key,
       label,
       type: value.type,
       control: "number",
@@ -97,6 +101,7 @@ const getField = ({
   if (value.type === "boolean") {
     return {
       key,
+      originalKey: key,
       label,
       type: "boolean",
       control: "checkbox",
@@ -220,6 +225,49 @@ const getValidationError = (
   return `${label}: ${issue.message}`;
 };
 
+export const getCollectionValidationError = (
+  config: ContentCollectionConfig,
+  properties: unknown
+) => {
+  const validation = config.validate(properties);
+  if (validation.success) {
+    return;
+  }
+  return getValidationError(config, validation.error.issues[0]);
+};
+
+export const getCollectionFieldValidationError = (
+  config: ContentCollectionConfig,
+  properties: unknown
+) => {
+  const validation = config.validate(properties);
+  if (validation.success) {
+    return;
+  }
+  const fieldKeys = new Set(config.fields.map(({ key }) => key));
+  const issue = validation.error.issues.find(
+    ({ path }) => typeof path[0] === "string" && fieldKeys.has(path[0])
+  );
+  return issue === undefined ? undefined : getValidationError(config, issue);
+};
+
+export const getCollectionTemplateValidationError = (
+  config: ContentCollectionConfig,
+  properties: Readonly<Record<string, unknown>>
+) => {
+  const validation = config.validate(properties);
+  if (validation.success) {
+    return;
+  }
+  const issue = validation.error.issues.find(({ code, path }) => {
+    if (path.length === 0) {
+      return code === "unrecognized_keys";
+    }
+    return typeof path[0] === "string" && Object.hasOwn(properties, path[0]);
+  });
+  return issue === undefined ? undefined : getValidationError(config, issue);
+};
+
 export const createCollectionEntry = async ({
   config,
   templateSource,
@@ -244,11 +292,9 @@ export const createCollectionEntry = async ({
   } else {
     frontmatter[config.slugField] = normalizeCollectionSlug(currentSlug);
   }
-  const validation = config.validate(frontmatter);
-  if (validation.success === false) {
-    throw new ContentCollectionError(
-      getValidationError(config, validation.error.issues[0])
-    );
+  const validationError = getCollectionValidationError(config, frontmatter);
+  if (validationError !== undefined) {
+    throw new ContentCollectionError(validationError);
   }
   const slug = frontmatter[config.slugField];
   if (typeof slug !== "string" || slug === "") {
@@ -294,7 +340,7 @@ export const createDefaultCollectionConfig = () =>
           type: "string",
           minLength: 1,
           maxLength: 120,
-          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          pattern: collectionSlugPattern,
           "x-webstudio": { control: "slug" },
         },
         draft: { title: "Draft", type: "boolean", default: true },
@@ -313,11 +359,21 @@ export const createDefaultCollectionConfig = () =>
 export const createDefaultCollectionTemplate = () =>
   "---\ndraft: true\n---\n\nStart writing.\n";
 
-const serializeCollectionField = (field: CollectionField) => {
+const serializeCollectionField = (
+  field: CollectionField,
+  originalValue: unknown
+) => {
+  const original = isObject(originalValue) ? originalValue : {};
   const result: Record<string, unknown> = {
+    ...original,
     title: field.label,
     type: field.type,
   };
+  delete result.minLength;
+  delete result.maxLength;
+  delete result.minimum;
+  delete result.maximum;
+  delete result.default;
   if (field.minLength !== undefined) {
     result.minLength = field.minLength;
   }
@@ -333,11 +389,28 @@ const serializeCollectionField = (field: CollectionField) => {
   if (field.defaultValue !== undefined) {
     result.default = field.defaultValue;
   }
+  const originalExtension = isObject(original["x-webstudio"])
+    ? original["x-webstudio"]
+    : {};
+  if (
+    field.control !== "slug" &&
+    originalExtension.control === "slug" &&
+    result.pattern === collectionSlugPattern
+  ) {
+    delete result.pattern;
+  }
+  const extension = { ...originalExtension };
+  delete extension.control;
   if (field.control === "textarea" || field.control === "slug") {
-    result["x-webstudio"] = { control: field.control };
+    extension.control = field.control;
+  }
+  if (Object.keys(extension).length === 0) {
+    delete result["x-webstudio"];
+  } else {
+    result["x-webstudio"] = extension;
   }
   if (field.control === "slug") {
-    result.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
+    result.pattern = collectionSlugPattern;
   }
   return result;
 };
@@ -360,6 +433,13 @@ export const serializeCollectionConfig = ({
       ([key]) => editableKeys.has(key) === false
     )
   );
+  for (const field of fields) {
+    if (Object.hasOwn(preservedProperties, field.key)) {
+      throw new ContentCollectionError(
+        `Field key "${field.key}" is already used by a schema property that cannot be edited here`
+      );
+    }
+  }
   const preservedRequired = Array.isArray(config.schema.required)
     ? config.schema.required.filter(
         (key): key is string =>
@@ -368,6 +448,9 @@ export const serializeCollectionConfig = ({
     : [];
   const previewPage =
     settings === undefined ? config.previewPage : settings.previewPage;
+  const originalSettings = isObject(config.schema["x-webstudio"])
+    ? config.schema["x-webstudio"]
+    : {};
   const value = {
     ...config.schema,
     required: [
@@ -377,14 +460,23 @@ export const serializeCollectionConfig = ({
     properties: {
       ...preservedProperties,
       ...Object.fromEntries(
-        fields.map((field) => [field.key, serializeCollectionField(field)])
+        fields.map((field) => [
+          field.key,
+          serializeCollectionField(
+            field,
+            field.originalKey === undefined
+              ? undefined
+              : originalProperties[field.originalKey]
+          ),
+        ])
       ),
     },
     "x-webstudio": {
+      ...originalSettings,
       template: config.template,
       slugField: config.slugField,
       generateSlugFrom: config.generateSlugFrom,
-      ...(previewPage === undefined ? {} : { previewPage }),
+      previewPage,
     },
   };
   return `${JSON.stringify(value, undefined, 2)}\n`;

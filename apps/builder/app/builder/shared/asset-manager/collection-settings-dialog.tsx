@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  getCollectionTemplateValidationError,
   parseCollectionConfig,
   serializeCollectionConfig,
   type CollectionField,
@@ -74,6 +75,7 @@ const setFieldType = (
 ): CollectionField => {
   const shared = {
     key: field.key,
+    originalKey: field.originalKey,
     label: field.label,
     required: field.required,
   };
@@ -214,8 +216,15 @@ export const CollectionSettingsDialog = ({
         })),
         settings: { previewPage },
       });
-      parseCollectionConfig(configSource);
-      await parseMdxDocument({ source: template });
+      const nextConfig = parseCollectionConfig(configSource);
+      const templateDocument = await parseMdxDocument({ source: template });
+      const templateValidationError = getCollectionTemplateValidationError(
+        nextConfig,
+        templateDocument.frontmatter.properties
+      );
+      if (templateValidationError !== undefined) {
+        throw new Error(`Entry template: ${templateValidationError}`);
+      }
       await updateAssetContent({
         asset: collection.templateAsset,
         content: template,
@@ -446,7 +455,8 @@ export const CollectionSettingsDialog = ({
               )}
             </Flex>
             <Text color="subtle" variant="tiny">
-              New entries open here using the first dynamic path parameter.
+              New entries use a matching slug parameter or the first dynamic
+              parameter.
             </Text>
           </Grid>
           <Grid gap={1}>

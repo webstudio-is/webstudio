@@ -1128,6 +1128,41 @@ describe("addAsset", () => {
       )
     ).toThrow("Asset folder not found");
   });
+
+  test("rejects adding a non-MDX asset to a collection folder", () => {
+    const collectionConfig: Asset = {
+      id: "collection-config",
+      projectId: "project",
+      name: "collection.json",
+      type: "file",
+      folderId: "posts",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "json",
+      meta: {},
+    };
+
+    expect(() =>
+      addAsset(
+        {
+          assets: new Map([[collectionConfig.id, collectionConfig]]),
+          assetFolders: new Map([
+            [
+              "posts",
+              {
+                id: "posts",
+                projectId: "project",
+                name: "Posts",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { asset: { ...assetInput, folderId: "posts" } },
+        { projectId: "project" }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
+  });
 });
 
 test("creates asset delete payload", () => {
@@ -1140,6 +1175,40 @@ test("creates asset delete payload", () => {
 });
 
 describe("updateAsset", () => {
+  test("rejects renaming an entry in a collection folder", () => {
+    const entry: Asset = {
+      id: "entry",
+      projectId: "project",
+      name: "hello-world.mdx",
+      filename: "hello-world",
+      type: "file",
+      folderId: "posts",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "mdx",
+      meta: {},
+    };
+    const collectionConfig: Asset = {
+      ...entry,
+      id: "collection-config",
+      name: "collection.json",
+      filename: "collection",
+      format: "json",
+    };
+
+    expect(() =>
+      updateAsset(
+        {
+          assets: new Map([
+            [entry.id, entry],
+            [collectionConfig.id, collectionConfig],
+          ]),
+        },
+        { assetId: entry.id, values: { filename: "renamed" } }
+      )
+    ).toThrow("Collection MDX filenames cannot be changed");
+  });
+
   test("rejects moving an asset into a collection folder", () => {
     const source = imageAsset("source", "hero.png");
     const collectionConfig: Asset = {
