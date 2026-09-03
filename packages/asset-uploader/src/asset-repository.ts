@@ -118,15 +118,24 @@ type ContentBytesReference = {
 };
 
 type PreparedDiagnosticIssue = Omit<AssetQueryDiagnosticIssue, "scope">;
+type DiagnosticIssueIdentity = Pick<
+  AssetQueryDiagnosticIssue,
+  | "severity"
+  | "code"
+  | "assetId"
+  | "path"
+  | "line"
+  | "column"
+  | "reference"
+  | "message"
+>;
 
 const diagnosticIssuesByArtifact = new WeakMap<
   ContentArtifactV1,
   readonly PreparedDiagnosticIssue[]
 >();
 
-const getDiagnosticIssueKey = (
-  issue: Omit<AssetQueryDiagnosticIssue, "scope">
-) =>
+const getDiagnosticIssueKey = (issue: DiagnosticIssueIdentity) =>
   JSON.stringify([
     issue.severity,
     issue.code,
@@ -298,6 +307,24 @@ const getAssetQueryResultIds = (result: AssetQueryExecutionResult) =>
     : result.item === null
       ? []
       : [result.item.id];
+
+const queryEvaluationUsesStructuredProperties = (
+  query: Pick<AssetQuery, "where" | "sort">
+) => {
+  const whereUsesStructuredProperties = (
+    where: AssetQuery["where"]
+  ): boolean => {
+    if ("field" in where) {
+      return where.field[0] === "properties";
+    }
+    const conditions = "all" in where ? where.all : where.any;
+    return conditions.some(whereUsesStructuredProperties);
+  };
+  return (
+    whereUsesStructuredProperties(query.where) ||
+    query.sort.some(({ field }) => field[0] === "properties")
+  );
+};
 
 type AssetQueryOptionsWithoutDiagnostics = AssetQueryPreviewOptions & {
   includeDiagnostics: false;
@@ -783,6 +810,29 @@ export class PostgresAssetRepository implements AssetRepository {
     contentBytesCache = new RequestContentBytesCache()
   ) {
     const preparationIssues: PreparedDiagnosticIssue[] = [];
+    const preservePreparationIssues = async <Value>(
+      operation: () => Promise<Value>
+    ) => {
+      try {
+        return await operation();
+      } catch (error) {
+        if (
+          error instanceof DocumentSourceDiagnosticsError === false ||
+          preparationIssues.length === 0
+        ) {
+          throw error;
+        }
+        const diagnostics = [
+          ...new Map(
+            [...preparationIssues, ...error.diagnostics].map((diagnostic) => [
+              getDiagnosticIssueKey(diagnostic),
+              diagnostic,
+            ])
+          ).values(),
+        ];
+        throw new DocumentSourceDiagnosticsError(diagnostics, error.scope);
+      }
+    };
     const source = this.createContentSource(
       strict,
       contentBytesCache,
@@ -843,13 +893,15 @@ export class PostgresAssetRepository implements AssetRepository {
         documentGraph,
         assetReferenceIssues,
         sourceIssues,
-      } = await materializeContentSource({
-        source,
-        plan: requirements,
-        maximumContentBytes: this.contentDatabaseMaxBytes,
-        onPerformanceEvent: this.onPerformanceEvent,
-        performanceNow: this.dependencies.performanceNow,
-      });
+      } = await preservePreparationIssues(() =>
+        materializeContentSource({
+          source,
+          plan: requirements,
+          maximumContentBytes: this.contentDatabaseMaxBytes,
+          onPerformanceEvent: this.onPerformanceEvent,
+          performanceNow: this.dependencies.performanceNow,
+        })
+      );
       return await compile(
         entries,
         assetReferences,
@@ -875,8 +927,6 @@ export class PostgresAssetRepository implements AssetRepository {
         const cached = this.compilationCache.getOrCreateWithStatus(
           key,
           async () => {
-            // Do not retain warnings collected by an abandoned snapshot retry.
-            preparationIssues.length = 0;
             const {
               entries,
               assetReferences,
@@ -884,13 +934,15 @@ export class PostgresAssetRepository implements AssetRepository {
               documentGraph,
               assetReferenceIssues,
               sourceIssues,
-            } = await materializeContentSnapshot({
-              snapshot,
-              plan: requirements,
-              maximumContentBytes: this.contentDatabaseMaxBytes,
-              onPerformanceEvent: this.onPerformanceEvent,
-              performanceNow: this.dependencies.performanceNow,
-            });
+            } = await preservePreparationIssues(() =>
+              materializeContentSnapshot({
+                snapshot,
+                plan: requirements,
+                maximumContentBytes: this.contentDatabaseMaxBytes,
+                onPerformanceEvent: this.onPerformanceEvent,
+                performanceNow: this.dependencies.performanceNow,
+              })
+            );
             return await compile(
               entries,
               assetReferences,
@@ -930,6 +982,9 @@ export class PostgresAssetRepository implements AssetRepository {
       });
     return {
       openSnapshot: async () => {
+        // Each snapshot must report only issues observed during its own
+        // preparation, including when uncached materialization retries.
+        preparationIssues.length = 0;
         const baseEntries = await loadBaseEntries();
         const revision = await computeCanonicalAssetRevision(baseEntries);
         return {
@@ -1505,9 +1560,25 @@ export class PostgresAssetRepository implements AssetRepository {
       })
     );
     signal?.throwIfAborted();
+    if (includeDiagnostics === false) {
+      return { data };
+    }
+    const resultIds = getAssetQueryResultIds(data);
+    const resultIdSet = new Set(resultIds);
+    const evaluationUsesStructuredProperties =
+      queryEvaluationUsesStructuredProperties(query);
+    const queryIndexIssues = (
+      diagnosticIssuesByArtifact.get(queryIndex) ?? []
+    ).filter(
+      (issue) =>
+        resultIdSet.has(issue.assetId) ||
+        issue.code === "METADATA_PREPARATION_FAILED" ||
+        (issue.phase === "metadata" && evaluationUsesStructuredProperties) ||
+        (issue.phase === "reference" &&
+          query.content.mode === "markdown-body-ref")
+    );
     let sourceDiagnosticsIndex = queryIndex;
-    if (includeDiagnostics && query.content.mode === "none") {
-      const resultIds = getAssetQueryResultIds(data);
+    if (query.content.mode === "none") {
       if (resultIds.length > 0) {
         const sourceDiagnosticsPlan = createContentCompilationPlan([
           createLiteralContentCompilationQuery({
@@ -1536,62 +1607,92 @@ export class PostgresAssetRepository implements AssetRepository {
             },
           }),
         ]);
-        sourceDiagnosticsIndex = await this.prepareIndexAfterAuthorization(
-          sourceDiagnosticsPlan,
-          false,
-          contentBytesCache
-        );
+        try {
+          sourceDiagnosticsIndex = await this.prepareIndexAfterAuthorization(
+            sourceDiagnosticsPlan,
+            false,
+            contentBytesCache
+          );
+        } catch (error) {
+          if (error instanceof DocumentSourceDiagnosticsError) {
+            const diagnostics = [
+              ...queryIndexIssues.map((issue) => ({
+                ...issue,
+                scope: "query" as const,
+              })),
+              ...error.diagnostics.map((diagnostic) => ({
+                ...diagnostic,
+                scope: "query" as const,
+                phase: diagnostic.phase ?? ("source" as const),
+              })),
+            ];
+            throw new DocumentSourceDiagnosticsError([
+              ...new Map(
+                diagnostics.map((diagnostic) => [
+                  getDiagnosticIssueKey(diagnostic),
+                  diagnostic,
+                ])
+              ).values(),
+            ]);
+          }
+          throw error;
+        }
       }
     }
     signal?.throwIfAborted();
     const queryIssues = [
       ...new Map(
         [
-          ...(diagnosticIssuesByArtifact.get(queryIndex) ?? []),
+          ...queryIndexIssues,
           ...(sourceDiagnosticsIndex === queryIndex
             ? []
             : (diagnosticIssuesByArtifact.get(sourceDiagnosticsIndex) ?? [])),
         ].map((issue) => [getDiagnosticIssueKey(issue), issue])
       ).values(),
     ].map((issue) => ({ ...issue, scope: "query" as const }));
-    let publishedIndex: typeof index | undefined;
-    if (includeDiagnostics) {
-      const publishedPlan = diagnosticsPlan ?? databasePlan;
-      if (publishedPlan === undefined) {
-        publishedIndex = queryIndex;
-      } else {
-        const diagnosticsRepository = new PostgresAssetRepository({
-          projectId: this.projectId,
-          context: this.context,
-          assetStore: this.assetStore,
-          dependencies: this.dependencies,
-          contentDatabaseMaxBytes: this.contentDatabaseMaxBytes,
-        });
-        try {
-          publishedIndex = await this.measurePerformance(
-            "diagnostics-preparation",
-            () =>
-              diagnosticsRepository.prepareIndexAfterAuthorization(
-                publishedPlan,
-                false
-              )
-          );
-        } catch (error) {
-          if (error instanceof DocumentSourceDiagnosticsError) {
-            throw new DocumentSourceDiagnosticsError(
-              [
-                ...queryIssues,
-                ...error.diagnostics.map((diagnostic) => ({
+    const queryIssueKeys = new Set(queryIssues.map(getDiagnosticIssueKey));
+    let publishedIndex: typeof index;
+    const publishedPlan = diagnosticsPlan ?? databasePlan;
+    if (publishedPlan === undefined) {
+      publishedIndex = queryIndex;
+    } else {
+      const diagnosticsRepository = new PostgresAssetRepository({
+        projectId: this.projectId,
+        context: this.context,
+        assetStore: this.assetStore,
+        dependencies: this.dependencies,
+        contentDatabaseMaxBytes: this.contentDatabaseMaxBytes,
+      });
+      try {
+        publishedIndex = await this.measurePerformance(
+          "diagnostics-preparation",
+          () =>
+            diagnosticsRepository.prepareIndexAfterAuthorization(
+              publishedPlan,
+              false
+            )
+        );
+      } catch (error) {
+        if (error instanceof DocumentSourceDiagnosticsError) {
+          throw new DocumentSourceDiagnosticsError(
+            [
+              ...queryIssues,
+              ...error.diagnostics
+                .filter(
+                  (diagnostic) =>
+                    queryIssueKeys.has(getDiagnosticIssueKey(diagnostic)) ===
+                    false
+                )
+                .map((diagnostic) => ({
                   ...diagnostic,
                   scope: "database" as const,
                   phase: diagnostic.phase ?? ("source" as const),
                 })),
-              ],
-              "database"
-            );
-          }
-          throw error;
+            ],
+            "database"
+          );
         }
+        throw error;
       }
     }
     signal?.throwIfAborted();
@@ -1612,15 +1713,8 @@ export class PostgresAssetRepository implements AssetRepository {
       ...(omissionReason === undefined ? {} : { omissionReason }),
       truncated,
     });
-    if (includeDiagnostics === false) {
-      return { data };
-    }
-    if (publishedIndex === undefined) {
-      throw new Error("Diagnostics index was not prepared");
-    }
     const queryDatabase = getContentDatabaseForArtifact(queryIndex);
     const publishedDatabase = getContentDatabaseForArtifact(publishedIndex);
-    const queryIssueKeys = new Set(queryIssues.map(getDiagnosticIssueKey));
     const databaseIssues = (
       diagnosticIssuesByArtifact.get(publishedIndex) ?? []
     )

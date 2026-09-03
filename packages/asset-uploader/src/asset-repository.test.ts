@@ -627,6 +627,74 @@ describe("PostgresAssetRepository", () => {
     }
   );
 
+  test("discards preparation warnings from an abandoned uncached snapshot", async () => {
+    const dependencies = createDependencies();
+    const initial: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "removed",
+      revision: "removed-r1",
+      document: {
+        _id: "removed",
+        _type: "asset.file",
+        name: "removed.md",
+        path: "content/removed.md",
+        key: "removed",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision: "removed-r1",
+        contentRef: "storage:removed",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries
+      .mockResolvedValueOnce([initial])
+      .mockResolvedValue([]);
+    dependencies.synchronizeCanonicalAssets.mockResolvedValue({
+      scanned: 1,
+      indexed: 0,
+      metadataUpdated: 0,
+      unchanged: 0,
+      removed: 0,
+      skipped: 1,
+      inconsistent: 0,
+      issues: [
+        {
+          assetId: "removed",
+          storageName: "storage:removed",
+          revision: "removed-r1",
+          message: "Object is missing",
+        },
+      ],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+
+    const result = await repository.query({
+      query: {
+        where: {
+          field: ["properties", "title"],
+          operator: "eq",
+          value: "Healthy",
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    });
+
+    expect(result.data.items).toEqual([]);
+    expect(result.__diagnostics__.issues).toBeUndefined();
+    expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledOnce();
+  });
+
   test("creates a base-only index without synchronizing or reading content", async () => {
     const dependencies = createDependencies();
     const entries = [
@@ -2543,6 +2611,10 @@ describe("PostgresAssetRepository", () => {
           revision: "broken-r1",
           contentRef: "storage:broken",
           properties: {},
+          metadataError: {
+            code: "FRONTMATTER_INVALID",
+            message: "Broken metadata could not be indexed",
+          },
         },
       },
     ];
@@ -2575,9 +2647,14 @@ describe("PostgresAssetRepository", () => {
       content: { mode: "none" as const },
     };
 
-    await expect(repository.query({ query })).resolves.toMatchObject({
+    const firstPage = await repository.query({ query });
+    expect(firstPage).toMatchObject({
       data: { items: [{ id: "image" }] },
     });
+    expect(firstPage.__diagnostics__.issues).toMatchObject([
+      { scope: "query", path: "content/a.png" },
+      { scope: "database", path: "content/b.mdx" },
+    ]);
     expect(readFile).not.toHaveBeenCalled();
 
     await expect(
@@ -2609,7 +2686,10 @@ describe("PostgresAssetRepository", () => {
     await expect(
       repository.query({ query: { ...query, offset: 1 } })
     ).rejects.toMatchObject({
-      diagnostics: [{ severity: "error", path: "content/b.mdx" }],
+      diagnostics: [
+        { severity: "warning", path: "content/b.mdx" },
+        { severity: "error", path: "content/b.mdx" },
+      ],
     });
   });
 
@@ -2729,6 +2809,101 @@ describe("PostgresAssetRepository", () => {
         }),
       ])
     );
+  });
+
+  test("keeps exact content read warnings when another file is fatal", async () => {
+    const dependencies = createDependencies();
+    const brokenSource = "<ws.element";
+    const entries: CanonicalAssetFileEntry[] = [
+      {
+        projectId: "project-1",
+        assetId: "missing",
+        revision: "missing-r1",
+        document: {
+          _id: "missing",
+          _type: "asset.file",
+          name: "missing.md",
+          path: "content/missing.md",
+          key: "missing",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: 10,
+          revision: "missing-r1",
+          contentRef: "storage:missing",
+          properties: {},
+        },
+      },
+      {
+        projectId: "project-1",
+        assetId: "broken",
+        revision: "broken-r1",
+        document: {
+          _id: "broken",
+          _type: "asset.file",
+          name: "broken.mdx",
+          path: "content/broken.mdx",
+          key: "broken",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: brokenSource.length,
+          revision: "broken-r1",
+          contentRef: "storage:broken",
+          properties: {},
+        },
+      },
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries,
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async (contentRef) => {
+          if (contentRef === "storage:missing") {
+            throw new Error("Object is missing");
+          }
+          return {
+            data: new Blob([brokenSource]).stream(),
+            contentLength: brokenSource.length,
+          };
+        },
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.query({
+        query: {
+          where: { all: [] },
+          limit: 2,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: expect.arrayContaining([
+        expect.objectContaining({
+          severity: "warning",
+          code: "CONTENT_READ_FAILED",
+          message: "Object is missing",
+          path: "content/missing.md",
+        }),
+        expect.objectContaining({
+          severity: "error",
+          code: "invalid-mdx",
+          path: "content/broken.mdx",
+        }),
+      ]),
+    });
   });
 
   test("assembles document graph references in local query preview", async () => {
