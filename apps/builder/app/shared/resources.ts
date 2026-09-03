@@ -6,8 +6,11 @@ import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import { separateResourceDiagnostics } from "./resource-diagnostics";
-import type { ResourcePerformance } from "./resource-diagnostics";
+import {
+  createResourceDiagnosticsResponseError,
+  separateResourceDiagnostics,
+  type ResourcePerformance,
+} from "./resource-diagnostics";
 
 const MAX_PENDING_RESOURCES = 5;
 
@@ -71,7 +74,10 @@ const cacheResourceMetadata = ({
   } else {
     diagnosticsCache.set(key, separated.diagnostics);
   }
-  return separated.result;
+  if (separated.diagnosticsError !== undefined) {
+    diagnosticsErrorCache.set(key, separated.diagnosticsError);
+  }
+  return separated;
 };
 
 export const $pendingResourceKeys = atom<ReadonlySet<string>>(new Set());
@@ -130,15 +136,13 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
       ) {
         continue;
       }
-      cache.set(
+      const separated = cacheResourceMetadata({
         key,
-        cacheResourceMetadata({
-          key,
-          request,
-          result,
-          loaderDurationMs,
-        })
-      );
+        request,
+        result,
+        loaderDurationMs,
+      });
+      cache.set(key, separated.result);
     }
   } catch {
     if (controller.signal.aborted === false) {
@@ -314,7 +318,7 @@ export const loadResourceDiagnostics = (
       ) {
         return;
       }
-      cacheResourceMetadata({
+      const separated = cacheResourceMetadata({
         key,
         request: resource,
         result,
@@ -337,6 +341,23 @@ export const loadResourceDiagnostics = (
             ((result as { status: number }).status ?? 0) >= 400))
       ) {
         diagnosticsErrorCache.set(key, result);
+      } else if (separated.diagnosticsError !== undefined) {
+        diagnosticsErrorCache.set(key, separated.diagnosticsError);
+      } else if (separated.diagnostics === undefined) {
+        diagnosticsErrorCache.set(
+          key,
+          createResourceDiagnosticsResponseError({
+            message: "Resource diagnostics response is missing",
+            issues: [
+              {
+                code: "missing_diagnostics",
+                path: ["__diagnostics__"],
+                message:
+                  "The resource response does not contain diagnostics data",
+              },
+            ],
+          })
+        );
       } else {
         diagnosticsErrorCache.delete(key);
       }

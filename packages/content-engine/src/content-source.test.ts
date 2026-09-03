@@ -186,6 +186,44 @@ describe("content source snapshots", () => {
     ]);
   });
 
+  test("preserves complete MDX warning context", async () => {
+    const file = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [file],
+          async loadEntries() {
+            return [{ ...createEntry(file), content: "{1 + 1}" }];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+    expect(result.diagnostics.sourceIssues).toEqual([
+      expect.objectContaining({
+        severity: "warning",
+        code: "unsafe-mdx",
+        assetId: "post",
+        path: "blog/post.mdx",
+        nodeType: "mdxFlowExpression",
+        reason: "Executable MDX expressions are not supported",
+        sourceRange: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 8, offset: 7 },
+        },
+      }),
+    ]);
+  });
+
   test("warns when a selected source cannot be validated within limits", async () => {
     const file = createFile({ id: "post" });
     const source: ContentSource = {

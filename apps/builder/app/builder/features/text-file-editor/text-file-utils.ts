@@ -13,6 +13,7 @@ import { markdown } from "@codemirror/lang-markdown";
 import { parseJsonExpression } from "@webstudio-is/expression";
 import {
   type MdxSourcePoint,
+  type TextAssetSourceDiagnostic,
   validateTextAssetSource,
 } from "@webstudio-is/content-engine/mdx";
 import {
@@ -28,6 +29,18 @@ export type MdxPersistenceFeedback = Readonly<{
   kind: "failed" | "conflicting";
   message: string;
 }>;
+
+type TextFileSourceDiagnostic =
+  | TextAssetSourceDiagnostic
+  | ContentBlockDiagnostic;
+
+export type ValidateTextFileSource = (input: {
+  source: string;
+  format: "md" | "mdx";
+}) => Promise<readonly TextFileSourceDiagnostic[]>;
+
+const validateTextFileSource: ValidateTextFileSource = async (input) =>
+  (await validateTextAssetSource(input)).diagnostics;
 
 export const getMdxPersistenceFeedback = (
   state: Pick<AssetContentSessionState, "status" | "error">
@@ -64,35 +77,16 @@ export const getTextFileEditorDiagnostics = async ({
   source,
   format,
   semanticDiagnostics = [],
+  validateSource = validateTextFileSource,
 }: {
   source: string;
   format: "md" | "mdx";
   semanticDiagnostics?: readonly ContentBlockDiagnostic[];
+  validateSource?: ValidateTextFileSource;
 }): Promise<Diagnostic[]> => {
-  const sourceDiagnostics = (
-    await validateTextAssetSource({ source, format })
-  ).diagnostics.map((diagnostic) => ({
-    ...("sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
-      ? { sourceRange: diagnostic.sourceRange }
-      : {}),
-    ...("line" in diagnostic
-      ? { line: diagnostic.line, column: diagnostic.column }
-      : {}),
-    severity: diagnostic.severity,
-    message: diagnostic.message,
-  }));
   const diagnostics = [
-    ...sourceDiagnostics,
-    ...semanticDiagnostics.map((diagnostic) => ({
-      sourceRange: diagnostic.sourceRange,
-      severity: diagnostic.severity,
-      message:
-        diagnostic.code === "invalid-mdx"
-          ? diagnostic.message
-          : diagnostic.code === "unsafe-mdx"
-            ? diagnostic.reason
-            : formatContentBlockDiagnostic(diagnostic),
-    })),
+    ...(await validateSource({ source, format })),
+    ...semanticDiagnostics,
   ].map((diagnostic) => {
     const from =
       "sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
@@ -113,7 +107,13 @@ export const getTextFileEditorDiagnostics = async ({
       from,
       to,
       severity: diagnostic.severity,
-      message: diagnostic.message,
+      source: diagnostic.code,
+      message:
+        "message" in diagnostic
+          ? diagnostic.message
+          : diagnostic.code === "unsafe-mdx"
+            ? diagnostic.reason
+            : formatContentBlockDiagnostic(diagnostic),
     };
   });
   return Array.from(
@@ -125,7 +125,8 @@ export const getTextFileEditorDiagnostics = async ({
 
 const getMarkdownExtensions = (
   format: "md" | "mdx",
-  semanticDiagnostics: readonly ContentBlockDiagnostic[]
+  semanticDiagnostics: readonly ContentBlockDiagnostic[],
+  validateSource: ValidateTextFileSource
 ): Extension[] => [
   linter(
     (view) =>
@@ -133,6 +134,7 @@ const getMarkdownExtensions = (
         source: view.state.doc.toString(),
         format,
         semanticDiagnostics,
+        validateSource,
       }),
     { delay: 300 }
   ),
@@ -152,7 +154,8 @@ const languageExtensions = {
 
 export const getTextFileEditorExtensions = (
   asset: Pick<Asset, "format">,
-  semanticDiagnostics: readonly ContentBlockDiagnostic[] = []
+  semanticDiagnostics: readonly ContentBlockDiagnostic[] = [],
+  validateSource: ValidateTextFileSource = validateTextFileSource
 ): Extension[] => {
   const language = getAssetTextEditorLanguage(asset);
   if (language === undefined) {
@@ -161,7 +164,10 @@ export const getTextFileEditorExtensions = (
   const extensions = languageExtensions[language];
   const format = asset.format.toLowerCase();
   return format === "md" || format === "mdx"
-    ? [...extensions, ...getMarkdownExtensions(format, semanticDiagnostics)]
+    ? [
+        ...extensions,
+        ...getMarkdownExtensions(format, semanticDiagnostics, validateSource),
+      ]
     : extensions;
 };
 

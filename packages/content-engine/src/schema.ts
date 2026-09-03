@@ -299,8 +299,8 @@ export const contentArtifactV1 = strictObject({
 export type ContentArtifactV1 = Infer<typeof contentArtifactV1>;
 
 export const assetResourceContentOptions = discriminatedUnion("mode", [
-  object({ mode: literal("none") }),
-  object({
+  strictObject({ mode: literal("none") }),
+  strictObject({
     mode: literal("full"),
     maxBytes: number()
       .int()
@@ -308,7 +308,7 @@ export const assetResourceContentOptions = discriminatedUnion("mode", [
       .max(contentEngineLimits.hydratedFileBytes)
       .optional(),
   }),
-  object({
+  strictObject({
     mode: literal("range"),
     offset: number().int().nonnegative(),
     length: number()
@@ -316,7 +316,7 @@ export const assetResourceContentOptions = discriminatedUnion("mode", [
       .positive()
       .max(contentEngineLimits.hydratedRangeBytes),
   }),
-  object({
+  strictObject({
     mode: literal("markdown-body-ref"),
     maxBytes: number()
       .int()
@@ -682,6 +682,12 @@ export type AssetQueryExecutionResult = Infer<typeof assetQueryResult>;
 /** Backward-compatible collection result type for existing many-result APIs. */
 export type AssetQueryResult = AssetQueryCollectionResult;
 
+const assetQueryDiagnosticSourcePoint = strictObject({
+  line: number().int().positive(),
+  column: number().int().positive(),
+  offset: number().int().nonnegative().optional(),
+});
+
 export const assetQueryDiagnosticIssue = strictObject({
   severity: zEnum(["error", "warning"]),
   scope: zEnum(["query", "database"]),
@@ -695,6 +701,12 @@ export const assetQueryDiagnosticIssue = strictObject({
   line: number().int().positive().optional(),
   column: number().int().positive().optional(),
   reference: string().min(1).optional(),
+  nodeType: string().min(1).optional(),
+  reason: string().min(1).optional(),
+  sourceRange: strictObject({
+    start: assetQueryDiagnosticSourcePoint,
+    end: assetQueryDiagnosticSourcePoint,
+  }).optional(),
 });
 
 export type AssetQueryDiagnosticIssue = Infer<typeof assetQueryDiagnosticIssue>;

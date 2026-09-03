@@ -1,8 +1,10 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
 import {
+  blockComponent,
+  blockTemplateComponent,
   getInputJsonSchemaMetadata,
   getInputJsonSchemaProperties,
 } from "@webstudio-is/sdk";
@@ -13,6 +15,7 @@ import {
   listProjectSessionMcpTools,
 } from "@webstudio-is/project-build/mcp";
 import { publicApiOperations } from "@webstudio-is/protocol";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
 import {
   __testing__,
@@ -31,7 +34,10 @@ const {
   createMcpStatusReporter,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  prepareTextAssetWriteFeedback,
   withTextAssetWriteFeedback,
+  validateDownloadedTextAsset,
+  materializeValidatedDownloadedAsset,
   reportMcpSingleOpCallTermination,
   reportMcpRunTermination,
   createMcpRunTerminationController,
@@ -776,6 +782,44 @@ test("formats MCP run failures as structured JSON payloads", () => {
   });
 });
 
+test("preserves specific nested query errors at single-op and run boundaries", () => {
+  const error = {
+    code: "BAD_REQUEST",
+    message: "The Asset query index changed.",
+    data: {
+      code: "BAD_REQUEST",
+      webstudioCode: "STALE_INDEX",
+      issues: [
+        {
+          code: "STALE_INDEX",
+          path: ["indexRevision"],
+          message: "Refresh the Asset index and retry.",
+          constraint: "current_index_revision",
+        },
+      ],
+    },
+  };
+
+  expect(
+    createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 }).error
+  ).toMatchObject({
+    code: "STALE_INDEX",
+    issues: [expect.objectContaining({ path: ["indexRevision"] })],
+  });
+  expect(
+    createMcpRunErrorPayload({
+      error,
+      completedCalls: 0,
+      totalCalls: 1,
+      results: [],
+      elapsedMs: 1,
+    }).error
+  ).toMatchObject({
+    code: "STALE_INDEX",
+    issues: [expect.objectContaining({ path: ["indexRevision"] })],
+  });
+});
+
 test("reports termination while inserting a styled nested SVG", async () => {
   const operation = publicApiOperations.find(
     ({ command }) => command === "insert-fragment"
@@ -1151,6 +1195,102 @@ test("adapts MCP upload assets input to public API upload input", () => {
   expect(input).toHaveProperty("readAssetData", expect.any(Function));
 });
 
+test("rejects every Markdown and MDX upload filename/format mismatch", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("upload-assets", {
+      assets: [
+        { name: "article.txt", type: "file", format: "md", meta: {} },
+        { name: "page.mdx", type: "file", format: "md", meta: {} },
+      ],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset filename and format must match"),
+      issues: [
+        expect.objectContaining({ path: ["assets", "0", "format"] }),
+        expect.objectContaining({ path: ["assets", "1", "format"] }),
+      ],
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
+test("aggregates every invalid upload descriptor field before reading files", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("upload-assets", {
+      assetsDir: 42,
+      assets: [
+        { type: "file" },
+        {
+          name: "article.md",
+          type: "image",
+          format: "txt",
+          extra: true,
+        },
+      ],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset operation input is invalid."),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ path: ["assetsDir"] }),
+        expect.objectContaining({ path: ["assets", "0", "name"] }),
+        expect.objectContaining({ path: ["assets", "1", "extra"] }),
+        expect.objectContaining({ path: ["assets", "1", "format"] }),
+        expect.objectContaining({ path: ["assets", "1", "type"] }),
+      ]),
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
+test("reports every invalid update content selector field", () => {
+  let error: unknown;
+  try {
+    getMcpOperationInput("update-asset-content", {
+      assetId: "",
+      expectedName: 42,
+      path: "article.md",
+      content: "# duplicate source",
+      extra: true,
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset operation input is invalid."),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ path: ["extra"] }),
+        expect.objectContaining({ path: ["assetId"] }),
+        expect.objectContaining({ path: ["expectedName"] }),
+        expect.objectContaining({
+          path: [],
+          code: "invalid_source_selection",
+        }),
+      ]),
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
 test("adapts MCP asset content input to the shared revision client", async () => {
   const input = getMcpOperationInput("update-asset-content", {
     assetId: "asset-id",
@@ -1203,6 +1343,186 @@ test("returns diagnostics without rejecting an invalid MDX Asset write", async (
       ],
     },
   });
+});
+
+test("rejects invalid UTF-8 before an Asset write can start", async () => {
+  const assets = [
+    { name: "article.md", type: "file", format: "md", meta: {} },
+    { name: "page.mdx", type: "file", format: "mdx", meta: {} },
+  ];
+  const operationInput = {
+    assets,
+    readAssetData: vi.fn(async () => new Uint8Array([0xc3, 0x28])),
+  };
+
+  await expect(
+    prepareTextAssetWriteFeedback({
+      command: "upload-assets",
+      input: { assets },
+      operationInput,
+    })
+  ).rejects.toMatchObject({
+    code: "CONTENT_DECODING_FAILED",
+    issues: [
+      expect.objectContaining({
+        code: "MARKDOWN_BODY_DECODING_FAILED",
+        path: ["assets", "0", "name"],
+        severity: "error",
+      }),
+      expect.objectContaining({
+        code: "invalid-mdx",
+        path: ["assets", "1", "name"],
+        severity: "error",
+      }),
+    ],
+  });
+  expect(operationInput.readAssetData).toHaveBeenCalledTimes(2);
+});
+
+test("rejects oversized inline Markdown before an Asset write can start", async () => {
+  const input = {
+    assetId: "asset-id",
+    expectedName: "article_hash.md",
+    content: "x".repeat(contentEngineLimits.hydratedFileBytes + 1),
+  };
+
+  await expect(
+    prepareTextAssetWriteFeedback({
+      command: "update-asset-content",
+      input,
+      operationInput: getMcpOperationInput("update-asset-content", input),
+    })
+  ).rejects.toMatchObject({
+    code: "CONTENT_LIMIT_EXCEEDED",
+    issues: [
+      expect.objectContaining({
+        code: "MARKDOWN_BODY_BYTES_EXCEEDED",
+        path: ["content"],
+        severity: "error",
+      }),
+    ],
+  });
+});
+
+test("returns complete prepared diagnostics after an Asset write", async () => {
+  const source = "{run()}";
+  const input = {
+    assetId: "asset-id",
+    expectedName: "article_hash.mdx",
+    content: source,
+  };
+  const operationInput = getMcpOperationInput("update-asset-content", input);
+  const feedback = await prepareTextAssetWriteFeedback({
+    command: "update-asset-content",
+    input,
+    operationInput,
+  });
+
+  await expect(
+    withTextAssetWriteFeedback({
+      command: "update-asset-content",
+      input,
+      operationInput,
+      result: { result: { assetId: "asset-id" } },
+      feedback,
+    })
+  ).resolves.toMatchObject({
+    result: {
+      assetId: "asset-id",
+      source,
+      diagnostics: [
+        {
+          code: "unsafe-mdx",
+          severity: "warning",
+          message: "Executable MDX expressions are not supported",
+          nodeType: "mdxFlowExpression",
+          reason: "Executable MDX expressions are not supported",
+          sourceRange: {
+            start: { line: 1, column: 1, offset: 0 },
+            end: { line: 1, column: 8, offset: 7 },
+          },
+        },
+      ],
+    },
+  });
+});
+
+test("rejects invalid UTF-8 downloads with the asset identity", async () => {
+  await expect(
+    validateDownloadedTextAsset({
+      assetId: "asset-1",
+      path: "/tmp/broken.md",
+      format: "md",
+      content: new Uint8Array([0xc3, 0x28]),
+    })
+  ).rejects.toMatchObject({
+    code: "CONTENT_DECODING_FAILED",
+    assetId: "asset-1",
+    path: "/tmp/broken.md",
+    issues: [
+      expect.objectContaining({
+        code: "MARKDOWN_BODY_DECODING_FAILED",
+        severity: "error",
+        assetId: "asset-1",
+      }),
+    ],
+  });
+});
+
+test("materializes validated remote Asset content without overwriting a conflict", async () => {
+  const directory = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-download-")
+  );
+  const remotePath = path.join(directory, "remote.md");
+  const localPath = path.join(directory, "local", "article.md");
+  await writeFile(remotePath, "# Remote");
+
+  await expect(
+    materializeValidatedDownloadedAsset({
+      assetId: "asset-1",
+      remotePath,
+      localPath,
+      diagnostics: [],
+    })
+  ).resolves.toEqual(Buffer.from("# Remote"));
+  await expect(readFile(localPath, "utf8")).resolves.toBe("# Remote");
+
+  await writeFile(remotePath, "{unsafe()}");
+  await expect(
+    materializeValidatedDownloadedAsset({
+      assetId: "asset-1",
+      remotePath,
+      localPath,
+      diagnostics: [
+        {
+          code: "unsafe-mdx",
+          severity: "warning",
+          message: "Executable MDX expressions are not supported",
+          nodeType: "mdxFlowExpression",
+          reason: "Executable MDX expressions are not supported",
+        },
+      ],
+    })
+  ).rejects.toMatchObject({
+    code: "CONFLICT",
+    assetId: "asset-1",
+    path: localPath,
+    issues: [
+      expect.objectContaining({
+        code: "unsafe-mdx",
+        assetId: "asset-1",
+        file: localPath,
+      }),
+      expect.objectContaining({
+        code: "local_asset_conflict",
+        assetId: "asset-1",
+        file: localPath,
+      }),
+    ],
+  });
+  await expect(readFile(localPath, "utf8")).resolves.toBe("# Remote");
+
+  await rm(directory, { recursive: true, force: true });
 });
 
 test("returns every Markdown frontmatter diagnostic after an Asset write", async () => {
@@ -1269,6 +1589,116 @@ test("returns source diagnostics for every Markdown and MDX upload", async () =>
         diagnostics: [
           { code: "unsafe-mdx", severity: "warning" },
           { code: "unsafe-mdx", severity: "warning" },
+        ],
+      },
+    ],
+  });
+});
+
+test("runs contextual MDX validation with every uploaded Asset id", async () => {
+  const source = '<ws.element ws:name="Missing" />';
+  const asset = {
+    id: "uploaded-id",
+    projectId: "project",
+    name: "page.mdx",
+    type: "file" as const,
+    format: "mdx",
+    size: source.length,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+  const assets = [{ name: asset.name, type: "file", format: "mdx", meta: {} }];
+  const operationInput = {
+    assets,
+    readAssetData: async () => source,
+  };
+  const ensureNamespaces = vi.fn(async () => ({
+    projectId: "project",
+    state: {
+      pages: {
+        meta: {},
+        homePageId: "home",
+        rootFolderId: "root",
+        pages: new Map([
+          [
+            "home",
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: '"Home"',
+              meta: {},
+              rootInstanceId: "block",
+            },
+          ],
+        ]),
+        folders: new Map([
+          ["root", { id: "root", name: "Root", slug: "", children: ["home"] }],
+        ]),
+      },
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance" as const,
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id" as const, value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance" as const,
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ],
+      ]),
+      props: new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: "block",
+            name: "src",
+            type: "asset" as const,
+            value: asset.id,
+          },
+        ],
+      ]),
+      dataSources: new Map(),
+      resources: new Map(),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      styles: new Map(),
+      breakpoints: new Map(),
+      assets: new Map([[asset.id, asset]]),
+    },
+  }));
+
+  const response = await withTextAssetWriteFeedback({
+    command: "upload-assets",
+    input: { assets },
+    operationInput,
+    result: { result: { uploaded: [asset] } },
+    session: { ensureNamespaces } as never,
+  });
+
+  expect(ensureNamespaces).toHaveBeenCalledOnce();
+  expect(response.result).toMatchObject({
+    sourceDiagnostics: [
+      {
+        index: 0,
+        name: "page.mdx",
+        diagnostics: [
+          {
+            code: "unresolved-template",
+            severity: "warning",
+            assetId: "uploaded-id",
+            blockInstanceId: "block",
+            templateName: "Missing",
+          },
         ],
       },
     ],

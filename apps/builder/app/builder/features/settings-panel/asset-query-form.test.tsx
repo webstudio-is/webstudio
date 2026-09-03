@@ -2,12 +2,20 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
 import {
+  createDefaultStructuredAssetQueryResourceConfiguration,
+  type Resource,
+} from "@webstudio-is/sdk";
+import {
   createAssetQueryJsonSchema,
   createAssetResourceOpenApi,
 } from "@webstudio-is/protocol/asset-resource-api";
 import { AssetQueryForm, __testing__ } from "./asset-query-form";
 
-const { configureAssetQueryDefinition, loadAssetQueryDefinition } = __testing__;
+const {
+  configureAssetQueryDefinition,
+  getAssetQueryConfigurationValidation,
+  loadAssetQueryDefinition,
+} = __testing__;
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -68,6 +76,168 @@ test("reports while the query editor is loading", async () => {
   });
 
   expect(onPendingChange).toHaveBeenLastCalledWith(false);
+});
+
+test("preserves and explains an invalid stored Assets query", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const body = "({ query: { where: 1 } })";
+  const resource: Resource = {
+    id: "posts",
+    name: "Posts",
+    control: "system",
+    method: "post",
+    url: '"/$resources/assets"',
+    headers: [],
+    body,
+  };
+
+  act(() => {
+    root?.render(
+      <AssetQueryForm
+        resource={resource}
+        scope={{}}
+        aliases={new Map()}
+        fetchDescription={() => new Promise(() => {})}
+      />
+    );
+  });
+
+  expect(container.textContent).toContain(
+    "Stored Assets query is invalid: Enter valid filters."
+  );
+  expect(
+    container.querySelector<HTMLInputElement>('input[name="body"]')?.value
+  ).toBe(body);
+  expect(
+    container.querySelector<HTMLInputElement>('input[name="asset-query-valid"]')
+      ?.value
+  ).toBe("false");
+});
+
+test("reports every issue from the shared query validator", () => {
+  const configuration =
+    createDefaultStructuredAssetQueryResourceConfiguration();
+
+  expect(
+    getAssetQueryConfigurationValidation({
+      configuration: {
+        ...configuration,
+        where: {
+          all: [
+            {
+              field: ["size"],
+              operator: "gt",
+              value: '"large"',
+            },
+            {
+              field: ["extension"],
+              operator: "contains",
+              value: "{}",
+            },
+          ],
+        },
+      },
+      scope: {},
+    }).issues
+  ).toMatchObject([
+    {
+      code: "INCOMPATIBLE_VALUE",
+      path: ["query", "where", "all", "0", "value"],
+    },
+    {
+      code: "INCOMPATIBLE_VALUE",
+      path: ["query", "where", "all", "1", "value"],
+    },
+  ]);
+});
+
+test("reports every invalid query value expression", () => {
+  const configuration =
+    createDefaultStructuredAssetQueryResourceConfiguration();
+
+  expect(
+    getAssetQueryConfigurationValidation({
+      configuration: {
+        ...configuration,
+        where: {
+          all: [
+            { field: ["size"], operator: "gt", value: "(" },
+            { field: ["extension"], operator: "eq", value: "}" },
+          ],
+        },
+        limit: "missing(",
+        offset: "alsoMissing(",
+      },
+      scope: {},
+    }).issues
+  ).toMatchObject([
+    {
+      code: "INVALID_QUERY_EXPRESSION",
+      path: ["query", "where", "all", "0", "value"],
+    },
+    {
+      code: "INVALID_QUERY_EXPRESSION",
+      path: ["query", "where", "all", "1", "value"],
+    },
+    {
+      code: "INVALID_QUERY_EXPRESSION",
+      path: ["query", "limit"],
+    },
+    {
+      code: "INVALID_QUERY_EXPRESSION",
+      path: ["query", "offset"],
+    },
+  ]);
+});
+
+test("uses the loaded field catalog with the shared query validator", () => {
+  const configuration =
+    createDefaultStructuredAssetQueryResourceConfiguration();
+  const definition = {
+    version: 1,
+    fields: [
+      {
+        path: ["properties", "score"] as string[],
+        label: "score",
+        types: ["number"] as string[],
+      },
+    ],
+    operators: [],
+    source: { fieldPathSchema: true, controls: [] },
+  } as const;
+
+  expect(
+    getAssetQueryConfigurationValidation({
+      configuration: {
+        ...configuration,
+        where: {
+          field: ["properties", "score"],
+          operator: "eq",
+          value: '"high"',
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "missing"]],
+        },
+      },
+      scope: {},
+      definition,
+    }).issues
+  ).toMatchObject([
+    {
+      severity: "warning",
+      code: "INCOMPATIBLE_OBSERVED_VALUE",
+      path: ["query", "where", "value"],
+    },
+    {
+      severity: "warning",
+      code: "UNOBSERVED_FIELD",
+      path: ["query", "output", "fields", "0"],
+    },
+  ]);
 });
 
 test("loads the external query schema declared by OpenAPI", async () => {

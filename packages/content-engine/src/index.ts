@@ -15,3 +15,4 @@ export * from "./document-graph";
 export * from "./asset-value-references";
 export * from "./json-assets";
 export { createUniqueAssetIdsByPath } from "./asset-path-resolution";
+export { appendAssetFieldPath } from "./canonical";

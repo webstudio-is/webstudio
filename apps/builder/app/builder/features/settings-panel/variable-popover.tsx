@@ -923,7 +923,10 @@ const VariablePopoverContent = ({
   const resourceScope = useResourceScope({ variable });
 
   const reloadData = () => {
-    const formData = new FormData(formRef.current ?? undefined);
+    const formData = getReloadableResourceFormData(formRef.current);
+    if (formData === undefined) {
+      return;
+    }
     const resource = createResourceValueFromFormData({
       id: variable?.id ?? "new",
       formData,
@@ -1136,4 +1139,12 @@ export const VariablePopoverTrigger = ({
 
 VariablePopoverTrigger.displayName = "VariablePopoverTrigger";
 
-undefined;
+const getReloadableResourceFormData = (form: HTMLFormElement | null) => {
+  const formData = new FormData(form ?? undefined);
+  if (formData.get("asset-query-valid") === "false") {
+    return;
+  }
+  return formData;
+};
+
+export const __testing__ = { getReloadableResourceFormData };

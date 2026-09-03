@@ -69,6 +69,13 @@ export type ContentCompilerDiagnostics = {
     path: string;
     line?: number;
     column?: number;
+    reference?: string;
+    nodeType?: string;
+    reason?: string;
+    sourceRange?: Readonly<{
+      start: Readonly<{ line: number; column: number; offset?: number }>;
+      end: Readonly<{ line: number; column: number; offset?: number }>;
+    }>;
   }[];
 };
 

@@ -38,20 +38,22 @@ export const getAssetResourceQueryError = (
     };
   }
   if (error instanceof AssetQueryExecutionError) {
-    return {
-      code: "INVALID_REQUEST",
-      message: error.message,
-      retryable: false,
+    const details = {
+      ...error.details,
       ...(error.issues === undefined
         ? {}
         : {
-            details: {
-              issues: error.issues.map((issue) => ({
-                ...issue,
-                path: [...issue.path],
-              })),
-            },
+            issues: error.issues.map((issue) => ({
+              ...issue,
+              path: [...issue.path],
+            })),
           }),
+    };
+    return {
+      code: error.code,
+      message: error.message,
+      retryable: false,
+      ...(Object.keys(details).length === 0 ? {} : { details }),
       status: 400,
     };
   }

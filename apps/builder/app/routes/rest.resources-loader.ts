@@ -57,7 +57,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const requestList = z.array(z.unknown()).safeParse(requestJson);
 
   if (requestList.success === false) {
-    console.error("data:", requestJson);
     throw data(requestList.error, {
       status: 400,
       headers: privateNoStoreResponseHeaders,

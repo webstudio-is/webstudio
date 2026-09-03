@@ -1,4 +1,5 @@
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
+import { Flex, Text } from "@webstudio-is/design-system";
 import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 import {
   ContentDatabaseDiagnostics,
@@ -37,4 +38,9 @@ export const ResourceDiagnosticsView = ({
   if (performance !== undefined) {
     return <ResourcePerformanceDiagnostics value={performance} />;
   }
+  return (
+    <Flex align="center" justify="center" css={{ height: "100%" }}>
+      <Text color="moreSubtle">No diagnostics available</Text>
+    </Flex>
+  );
 };

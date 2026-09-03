@@ -18,6 +18,7 @@ import {
   blockComponent,
   collectionComponent,
   createReachableAssetContentCompilationPlan,
+  createReachableAssetContentCompilationPlanResult,
   decodeDataSourceVariable,
   findTreeInstanceIdsExcludingBlockTemplates,
   getContentBlockSource,
@@ -102,6 +103,15 @@ export const createBuildContentCompilationPlan = (
   build: ContentDatabaseBuild
 ) =>
   createReachableAssetContentCompilationPlan({
+    props: getBuildValues<Prop>(build.props),
+    dataSources: getBuildValues<DataSource>(build.dataSources),
+    resources: getBuildValues<Resource>(build.resources),
+  });
+
+export const createBuildContentCompilationPlanResult = (
+  build: ContentDatabaseBuild
+) =>
+  createReachableAssetContentCompilationPlanResult({
     props: getBuildValues<Prop>(build.props),
     dataSources: getBuildValues<DataSource>(build.dataSources),
     resources: getBuildValues<Resource>(build.resources),

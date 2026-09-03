@@ -9,6 +9,7 @@ import {
   executeAssetQueries,
   getAssetQueryFieldValue,
   supportsAssetQueryContent,
+  validateAssetQuery,
   validateAssetQueryAgainstCatalog,
 } from "./structured-query";
 import { contentEngineLimits } from "./limits";
@@ -870,6 +871,92 @@ describe("structured asset query", () => {
         ],
       })
     );
+  });
+
+  test("reports invalid standard-field values and output-only unobserved fields", () => {
+    expect(() =>
+      validateAssetQueryAgainstCatalog({
+        catalog,
+        query: {
+          where: {
+            all: [
+              { field: ["size"], operator: "gt", value: "large" },
+              { field: ["extension"], operator: "in", value: ["md", 1] },
+            ],
+          },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "summary"]],
+          },
+        },
+      })
+    ).toThrowError(
+      expect.objectContaining({
+        message: "2 invalid query operations found",
+        issues: [
+          expect.objectContaining({
+            severity: "error",
+            code: "INCOMPATIBLE_VALUE",
+            path: ["query", "where", "all", "0", "value"],
+          }),
+          expect.objectContaining({
+            severity: "error",
+            code: "INCOMPATIBLE_VALUE",
+            path: ["query", "where", "all", "1", "value", "1"],
+          }),
+          expect.objectContaining({
+            severity: "warning",
+            code: "UNOBSERVED_FIELD",
+            path: ["query", "output", "fields", "0"],
+          }),
+        ],
+      })
+    );
+  });
+
+  test("preserves structural issue codes and warns about observed value types", () => {
+    expect(
+      validateAssetQuery({
+        catalog,
+        query: {
+          limit: -1,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [],
+          },
+        },
+      })
+    ).toMatchObject({
+      success: false,
+      issues: [
+        { code: "too_small", path: ["query", "limit"] },
+        { code: "custom", path: ["query"] },
+      ],
+    });
+
+    expect(
+      validateAssetQuery({
+        catalog,
+        query: {
+          where: {
+            field: ["properties", "draft"],
+            operator: "eq",
+            value: "yes",
+          },
+        },
+      })
+    ).toMatchObject({
+      success: true,
+      issues: [
+        {
+          severity: "warning",
+          code: "INCOMPATIBLE_OBSERVED_VALUE",
+          path: ["query", "where", "value"],
+        },
+      ],
+    });
   });
 
   test("keeps sorting deterministic when a dynamic field becomes mixed", async () => {

@@ -1052,6 +1052,31 @@ describe("published asset resource runtime", () => {
     });
     expect(malformed?.status).toBe(400);
 
+    const structurallyInvalid = await runtimeFetch("/$resources/assets", {
+      method: "POST",
+      body: JSON.stringify({
+        query: {
+          result: "first",
+          limit: -1,
+          output: { mode: "fields", includeMetadata: false, fields: [] },
+          content: { mode: "none" },
+        },
+      }),
+    });
+    expect(structurallyInvalid?.status).toBe(400);
+    await expect(structurallyInvalid?.json()).resolves.toMatchObject({
+      error: {
+        code: "INVALID_REQUEST",
+        details: {
+          issues: [
+            { path: ["query", "limit"] },
+            { path: ["query"] },
+            { path: ["query", "sort"] },
+          ],
+        },
+      },
+    });
+
     const stale = await runtimeFetch("/$resources/assets", {
       method: "POST",
       body: JSON.stringify({

@@ -1,12 +1,15 @@
 import {
   assetQuery,
+  AssetResourceHydrationError,
   contentEngineLimits,
   createContentCompilationPlan,
   createContentFieldCatalogCompilationPlan,
   createDocumentResolutionSession,
   createLiteralContentCompilationQuery,
   getContentArtifactRuntimeAssetIds,
+  getAssetQueryErrorDiagnosticIssue,
   getDocumentFormatByContentType,
+  DocumentSourceCompilationAggregateError,
   isAssetQueryCoveredByCompilationPlan,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
@@ -109,6 +112,7 @@ import {
   type AssetQueryPerformancePhase,
 } from "./query-performance";
 import type { AssetContentRead as SharedAssetContentRead } from "@webstudio-is/content-engine/asset-content-repository";
+import { validateTextAssetSourceBytes } from "@webstudio-is/content-engine/mdx";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
@@ -128,23 +132,35 @@ type DiagnosticIssueIdentity = Pick<
   | "line"
   | "column"
   | "reference"
+  | "nodeType"
+  | "reason"
+  | "sourceRange"
   | "message"
->;
+> &
+  Partial<Pick<AssetQueryDiagnosticIssue, "phase">>;
 
 const diagnosticIssuesByArtifact = new WeakMap<
   ContentArtifactV1,
   readonly PreparedDiagnosticIssue[]
 >();
+const diagnosticPathsByArtifact = new WeakMap<
+  ContentArtifactV1,
+  ReadonlyMap<string, string>
+>();
 
 const getDiagnosticIssueKey = (issue: DiagnosticIssueIdentity) =>
   JSON.stringify([
     issue.severity,
+    issue.phase,
     issue.code,
     issue.assetId,
     issue.path,
     issue.line,
     issue.column,
     issue.reference,
+    issue.nodeType,
+    issue.reason,
+    issue.sourceRange,
     issue.message,
   ]);
 
@@ -309,23 +325,20 @@ const getAssetQueryResultIds = (result: AssetQueryExecutionResult) =>
       ? []
       : [result.item.id];
 
-const queryEvaluationUsesStructuredProperties = (
-  query: Pick<AssetQuery, "where" | "sort">
-) => {
-  const whereUsesStructuredProperties = (
-    where: AssetQuery["where"]
-  ): boolean => {
-    if ("field" in where) {
-      return where.field[0] === "properties";
-    }
-    const conditions = "all" in where ? where.all : where.any;
-    return conditions.some(whereUsesStructuredProperties);
-  };
-  return (
-    whereUsesStructuredProperties(query.where) ||
-    query.sort.some(({ field }) => field[0] === "properties")
-  );
-};
+const createAssetQueryDiagnosticMatchQuery = (
+  query: AssetQuery
+): AssetQuery => ({
+  ...query,
+  result: "many",
+  limit: contentEngineLimits.candidateDocuments,
+  offset: 0,
+  output: {
+    mode: "fields",
+    includeMetadata: false,
+    fields: [["id"]],
+  },
+  content: { mode: "none" },
+});
 
 type AssetQueryOptionsWithoutDiagnostics = AssetQueryPreviewOptions & {
   includeDiagnostics: false;
@@ -817,6 +830,31 @@ export class PostgresAssetRepository implements AssetRepository {
       try {
         return await operation();
       } catch (error) {
+        if (error instanceof DocumentSourceCompilationAggregateError) {
+          const diagnostics = error.errors.flatMap((nestedError) => {
+            const diagnostic = getAssetQueryErrorDiagnosticIssue({
+              error: nestedError,
+            });
+            return diagnostic === undefined ? [] : [diagnostic];
+          });
+          if (diagnostics.length === error.errors.length) {
+            throw new DocumentSourceDiagnosticsError([
+              ...preparationIssues,
+              ...diagnostics,
+            ]);
+          }
+        }
+        const diagnostic = getAssetQueryErrorDiagnosticIssue({ error });
+        if (diagnostic !== undefined) {
+          throw new DocumentSourceDiagnosticsError([
+            ...new Map(
+              [...preparationIssues, diagnostic].map((issue) => [
+                getDiagnosticIssueKey(issue),
+                issue,
+              ])
+            ).values(),
+          ]);
+        }
         if (
           error instanceof DocumentSourceDiagnosticsError === false ||
           preparationIssues.length === 0
@@ -879,6 +917,12 @@ export class PostgresAssetRepository implements AssetRepository {
           sourceIssues,
           preparationIssues,
         })
+      );
+      diagnosticPathsByArtifact.set(
+        artifact,
+        new Map(
+          entries.map(({ assetId, document }) => [assetId, document.path])
+        )
       );
       return artifact;
     };
@@ -1152,68 +1196,116 @@ export class PostgresAssetRepository implements AssetRepository {
         }
       );
     }
-    return await this.measurePerformance(
+    const byteSourceDiagnostics: PreparedDiagnosticIssue[] = [];
+    const preparedEntries = await this.measurePerformance(
       "compiler-entries",
       async () =>
         await prepareContentCompilerEntries({
           entries,
           plan: requirements,
           loadContent: async (entry) => {
-            const startedAt = this.dependencies.performanceNow();
-            let bytes: Uint8Array;
-            try {
-              const response = await this.assetStore.readFile(
-                entry.document.contentRef,
-                { offset: 0, length: entry.document.size }
-              );
-              bytes = await readBoundedBytes(
-                response.data,
-                entry.document.size
-              );
-              if (bytes.byteLength !== entry.document.size) {
-                throw new Error(
-                  "Asset content does not match its canonical size"
-                );
-              }
-            } catch (error) {
-              const message =
-                error instanceof Error && error.message !== ""
-                  ? error.message
-                  : "Selected asset content could not be read";
-              if (strict) {
-                throw new AssetIndexPreparationError([
-                  {
-                    assetId: entry.assetId,
-                    storageName: entry.document.contentRef,
-                    revision: entry.revision,
-                    message,
-                  },
-                ]);
-              }
-              preparationIssues.push({
-                severity: "warning",
-                phase: "source",
-                code: "CONTENT_READ_FAILED",
-                message,
-                assetId: entry.assetId,
-                path: entry.document.path,
-              });
-              return;
-            }
-            contentBytesCache.set({
+            let bytes = contentBytesCache.get({
               contentRef: entry.document.contentRef,
               revision: entry.revision,
-              bytes,
             });
-            emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
-              type: "content-read",
-              purpose: "compiler-entry",
-              byteLength: bytes.byteLength,
-              durationMs: Math.max(
-                0,
-                this.dependencies.performanceNow() - startedAt
-              ),
-            });
+            if (bytes === undefined) {
+              const startedAt = this.dependencies.performanceNow();
+              try {
+                const response = await this.assetStore.readFile(
+                  entry.document.contentRef,
+                  { offset: 0, length: entry.document.size }
+                );
+                bytes = await readBoundedBytes(
+                  response.data,
+                  entry.document.size
+                );
+                if (bytes.byteLength !== entry.document.size) {
+                  throw new Error(
+                    "Asset content does not match its canonical size"
+                  );
+                }
+              } catch (error) {
+                const message =
+                  error instanceof Error && error.message !== ""
+                    ? error.message
+                    : "Selected asset content could not be read";
+                if (strict) {
+                  throw new AssetIndexPreparationError([
+                    {
+                      assetId: entry.assetId,
+                      storageName: entry.document.contentRef,
+                      revision: entry.revision,
+                      message,
+                    },
+                  ]);
+                }
+                preparationIssues.push({
+                  severity: "warning",
+                  phase: "source",
+                  code: "CONTENT_READ_FAILED",
+                  message,
+                  assetId: entry.assetId,
+                  path: entry.document.path,
+                });
+                return;
+              }
+              contentBytesCache.set({
+                contentRef: entry.document.contentRef,
+                revision: entry.revision,
+                bytes,
+              });
+              emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
+                type: "content-read",
+                purpose: "compiler-entry",
+                byteLength: bytes.byteLength,
+                durationMs: Math.max(
+                  0,
+                  this.dependencies.performanceNow() - startedAt
+                ),
+              });
+            }
+            const documentFormat = getDocumentFormatByContentType(
+              entry.document.mimeType
+            );
+            if (documentFormat === "markdown" || documentFormat === "mdx") {
+              const validation = await validateTextAssetSourceBytes({
+                source: bytes,
+                format: documentFormat === "markdown" ? "md" : "mdx",
+              });
+              byteSourceDiagnostics.push(
+                ...validation.diagnostics.map((diagnostic) => ({
+                  severity: diagnostic.severity,
+                  phase: "source" as const,
+                  code: diagnostic.code,
+                  message: diagnostic.message,
+                  assetId: entry.assetId,
+                  path: entry.document.path,
+                  ...("nodeType" in diagnostic &&
+                  diagnostic.nodeType !== undefined
+                    ? { nodeType: diagnostic.nodeType }
+                    : {}),
+                  ...("reason" in diagnostic && diagnostic.reason !== undefined
+                    ? { reason: diagnostic.reason }
+                    : {}),
+                  ...("sourceRange" in diagnostic &&
+                  diagnostic.sourceRange !== undefined
+                    ? {
+                        line: diagnostic.sourceRange.start.line,
+                        column: diagnostic.sourceRange.start.column,
+                        sourceRange: diagnostic.sourceRange,
+                      }
+                    : "line" in diagnostic && diagnostic.line !== undefined
+                      ? {
+                          line: diagnostic.line,
+                          ...(diagnostic.column === undefined
+                            ? {}
+                            : { column: diagnostic.column }),
+                        }
+                      : {}),
+                }))
+              );
+              return validation.source;
+            }
             let content: string;
             try {
               content = decodeUtf8(bytes);
@@ -1243,6 +1335,11 @@ export class PostgresAssetRepository implements AssetRepository {
           maximumContentBytes,
         })
     );
+    preparationIssues.push(...byteSourceDiagnostics);
+    if (byteSourceDiagnostics.some(({ severity }) => severity === "error")) {
+      throw new DocumentSourceDiagnosticsError(byteSourceDiagnostics);
+    }
+    return preparedEntries;
   }
 
   async readFieldCatalog() {
@@ -1506,6 +1603,26 @@ export class PostgresAssetRepository implements AssetRepository {
   ): Promise<AssetQueryExecutionPreviewResult | AssetQueryResultOnly> {
     signal?.throwIfAborted();
     const contentBytesCache = new RequestContentBytesCache();
+    const executeDocumentGraphQuery = async <Result>({
+      artifact,
+      operation,
+    }: {
+      artifact: ContentArtifactV1;
+      operation: () => Promise<Result>;
+    }) => {
+      try {
+        return await operation();
+      } catch (error) {
+        const diagnostic = getAssetQueryErrorDiagnosticIssue({
+          error,
+          pathsByAssetId: diagnosticPathsByArtifact.get(artifact),
+        });
+        if (diagnostic !== undefined) {
+          throw new DocumentSourceDiagnosticsError([diagnostic]);
+        }
+        throw error;
+      }
+    };
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
@@ -1527,6 +1644,39 @@ export class PostgresAssetRepository implements AssetRepository {
     );
     signal?.throwIfAborted();
     const database = getContentDatabaseForArtifact(index);
+    const contentRevisions = new Map(
+      index.documents.flatMap((document) =>
+        typeof document.contentRef === "string" &&
+        typeof document.revision === "string"
+          ? [[document.contentRef, document.revision] as const]
+          : []
+      )
+    );
+    const readQueryContent = async (
+      contentRef: string,
+      range?: AssetReadRange
+    ) => {
+      const revision = contentRevisions.get(contentRef);
+      const cachedBytes =
+        revision === undefined
+          ? undefined
+          : contentBytesCache.get({ contentRef, revision });
+      if (cachedBytes === undefined) {
+        return await this.assetStore.readFile(contentRef, range);
+      }
+      const bytes =
+        range === undefined
+          ? cachedBytes
+          : cachedBytes.subarray(range.offset, range.offset + range.length);
+      return {
+        contentLength: bytes.byteLength,
+        data: {
+          async *[Symbol.asyncIterator]() {
+            yield bytes;
+          },
+        },
+      };
+    };
     const queryIndex =
       includeDiagnostics && usePublishedIndex
         ? await this.prepareIndexAfterAuthorization(
@@ -1550,94 +1700,130 @@ export class PostgresAssetRepository implements AssetRepository {
         )
       : undefined;
     signal?.throwIfAborted();
-    const data = await this.measurePerformance("document-resolution", () =>
-      database.queryWithDocumentGraph({
-        request,
-        readContent: this.assetStore.readFile,
-        runtimeAssets,
-        load: this.createQueryDocumentLoader(contentBytesCache),
-        signal,
-        onEvent: this.onDocumentGraphEvent,
-      })
-    );
-    signal?.throwIfAborted();
+    const executeData = () =>
+      this.measurePerformance("document-resolution", () =>
+        executeDocumentGraphQuery({
+          artifact: index,
+          operation: () =>
+            database.queryWithDocumentGraph({
+              request,
+              readContent: readQueryContent,
+              runtimeAssets,
+              load: this.createQueryDocumentLoader(contentBytesCache),
+              signal,
+              onEvent: this.onDocumentGraphEvent,
+            }),
+        })
+      );
     if (includeDiagnostics === false) {
+      const data = await executeData();
+      signal?.throwIfAborted();
       return { data };
     }
-    const resultIds = getAssetQueryResultIds(data);
-    const resultIdSet = new Set(resultIds);
-    const evaluationUsesStructuredProperties =
-      queryEvaluationUsesStructuredProperties(query);
-    const queryIndexIssues = (
-      diagnosticIssuesByArtifact.get(queryIndex) ?? []
-    ).filter(
-      (issue) =>
-        resultIdSet.has(issue.assetId) ||
-        issue.code === "METADATA_PREPARATION_FAILED" ||
-        (issue.phase === "metadata" && evaluationUsesStructuredProperties) ||
-        (issue.phase === "reference" &&
-          query.content.mode === "markdown-body-ref")
+    const diagnosticMatchQuery = createAssetQueryDiagnosticMatchQuery(query);
+    const diagnosticMatchPlan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "preview-diagnostic-matches",
+        query: diagnosticMatchQuery,
+      }),
+    ]);
+    const diagnosticMatchIndex = await this.prepareIndexAfterAuthorization(
+      diagnosticMatchPlan,
+      false,
+      contentBytesCache
     );
+    signal?.throwIfAborted();
+    const diagnosticRuntimeAssets = await this.measurePerformance(
+      "runtime-assets",
+      () =>
+        this.loadQueryRuntimeAssets({
+          artifact: diagnosticMatchIndex,
+          plan: diagnosticMatchPlan,
+        })
+    );
+    signal?.throwIfAborted();
+    const diagnosticMatchResult = await this.measurePerformance(
+      "document-resolution",
+      () =>
+        executeDocumentGraphQuery({
+          artifact: diagnosticMatchIndex,
+          operation: () =>
+            getContentDatabaseForArtifact(
+              diagnosticMatchIndex
+            ).queryWithDocumentGraph({
+              request: { query: diagnosticMatchQuery },
+              readContent: this.assetStore.readFile,
+              runtimeAssets: diagnosticRuntimeAssets,
+              load: this.createQueryDocumentLoader(contentBytesCache),
+              signal,
+              onEvent: this.onDocumentGraphEvent,
+            }),
+        })
+    );
+    const matchingIds = getAssetQueryResultIds(diagnosticMatchResult);
+    const matchingIdSet = new Set(matchingIds);
+    const queryIndexIssues = [
+      ...(diagnosticIssuesByArtifact.get(queryIndex) ?? []),
+      ...(diagnosticIssuesByArtifact.get(diagnosticMatchIndex) ?? []),
+    ].filter((issue) => matchingIdSet.has(issue.assetId));
     let sourceDiagnosticsIndex = queryIndex;
-    if (query.content.mode === "none") {
-      if (resultIds.length > 0) {
-        const sourceDiagnosticsPlan = createContentCompilationPlan([
-          createLiteralContentCompilationQuery({
-            id: "preview-source-diagnostics",
-            query: {
-              result: "many",
-              where: {
-                all: [
-                  { field: ["id"], operator: "in", value: resultIds },
-                  {
-                    field: ["extension"],
-                    operator: "in",
-                    value: ["md", "markdown", "mdx"],
-                  },
-                ],
-              },
-              sort: [],
-              limit: resultIds.length,
-              offset: 0,
-              output: {
-                mode: "fields",
-                includeMetadata: false,
-                fields: [["id"]],
-              },
-              content: { mode: "full" },
+    if (matchingIds.length > 0) {
+      const sourceDiagnosticsPlan = createContentCompilationPlan([
+        createLiteralContentCompilationQuery({
+          id: "preview-source-diagnostics",
+          query: {
+            result: "many",
+            where: {
+              all: [
+                { field: ["id"], operator: "in", value: matchingIds },
+                {
+                  field: ["extension"],
+                  operator: "in",
+                  value: ["md", "markdown", "mdx"],
+                },
+              ],
             },
-          }),
-        ]);
-        try {
-          sourceDiagnosticsIndex = await this.prepareIndexAfterAuthorization(
-            sourceDiagnosticsPlan,
-            false,
-            contentBytesCache
-          );
-        } catch (error) {
-          if (error instanceof DocumentSourceDiagnosticsError) {
-            const diagnostics = [
-              ...queryIndexIssues.map((issue) => ({
-                ...issue,
-                scope: "query" as const,
-              })),
-              ...error.diagnostics.map((diagnostic) => ({
-                ...diagnostic,
-                scope: "query" as const,
-                phase: diagnostic.phase ?? ("source" as const),
-              })),
-            ];
-            throw new DocumentSourceDiagnosticsError([
-              ...new Map(
-                diagnostics.map((diagnostic) => [
-                  getDiagnosticIssueKey(diagnostic),
-                  diagnostic,
-                ])
-              ).values(),
-            ]);
-          }
-          throw error;
+            sort: [],
+            limit: matchingIds.length,
+            offset: 0,
+            output: {
+              mode: "fields",
+              includeMetadata: false,
+              fields: [["id"]],
+            },
+            content: { mode: "full" },
+          },
+        }),
+      ]);
+      try {
+        sourceDiagnosticsIndex = await this.prepareIndexAfterAuthorization(
+          sourceDiagnosticsPlan,
+          false,
+          contentBytesCache
+        );
+      } catch (error) {
+        if (error instanceof DocumentSourceDiagnosticsError) {
+          const diagnostics = [
+            ...queryIndexIssues.map((issue) => ({
+              ...issue,
+              scope: "query" as const,
+            })),
+            ...error.diagnostics.map((diagnostic) => ({
+              ...diagnostic,
+              scope: "query" as const,
+              phase: diagnostic.phase ?? ("source" as const),
+            })),
+          ];
+          throw new DocumentSourceDiagnosticsError([
+            ...new Map(
+              diagnostics.map((diagnostic) => [
+                getDiagnosticIssueKey(diagnostic),
+                diagnostic,
+              ])
+            ).values(),
+          ]);
         }
+        throw error;
       }
     }
     signal?.throwIfAborted();
@@ -1651,6 +1837,42 @@ export class PostgresAssetRepository implements AssetRepository {
         ].map((issue) => [getDiagnosticIssueKey(issue), issue])
       ).values(),
     ].map((issue) => ({ ...issue, scope: "query" as const }));
+    let data: AssetQueryExecutionResult;
+    try {
+      data = await executeData();
+    } catch (error) {
+      if (
+        error instanceof DocumentSourceDiagnosticsError &&
+        queryIssues.length > 0
+      ) {
+        throw new DocumentSourceDiagnosticsError([
+          ...new Map(
+            [...queryIssues, ...error.diagnostics].map((diagnostic) => [
+              getDiagnosticIssueKey(diagnostic),
+              diagnostic,
+            ])
+          ).values(),
+        ]);
+      }
+      if (
+        error instanceof AssetResourceHydrationError &&
+        queryIssues.length > 0
+      ) {
+        const hydrationDiagnostics = Array.isArray(error.details?.diagnostics)
+          ? error.details.diagnostics
+          : [];
+        throw new AssetResourceHydrationError({
+          code: error.code,
+          message: error.message,
+          details: {
+            ...error.details,
+            diagnostics: [...queryIssues, ...hydrationDiagnostics],
+          },
+        });
+      }
+      throw error;
+    }
+    signal?.throwIfAborted();
     let publishedIndex: typeof index;
     const publishedPlan = diagnosticsPlan ?? databasePlan;
     if (publishedPlan === undefined) {
@@ -1719,10 +1941,10 @@ export class PostgresAssetRepository implements AssetRepository {
         scope: "query-preview",
         ...(queryValidation.warnings.length === 0
           ? {}
-          : {
-              queryWarnings: queryValidation.warnings,
-              queryIssues: queryValidation.warningIssues,
-            }),
+          : { queryWarnings: queryValidation.warnings }),
+        ...(queryValidation.warningIssues.length === 0
+          ? {}
+          : { queryIssues: queryValidation.warningIssues }),
         query: toCapacityStats(queryDatabase.getStats()),
         database: toCapacityStats(publishedDatabase.getStats()),
         ...(includeUnresolvedDiagnostics

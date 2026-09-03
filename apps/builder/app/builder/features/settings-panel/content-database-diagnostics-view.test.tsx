@@ -113,6 +113,11 @@ test("orders collapsible sections and opens only database sizes by default", () 
                 path: "posts/broken.md",
                 line: 3,
                 column: 1,
+                reference: "#frontmatter/author",
+                sourceRange: {
+                  start: { line: 3, column: 1, offset: 12 },
+                  end: { line: 3, column: 12, offset: 23 },
+                },
               },
             ],
             issueCount: 1,
@@ -179,6 +184,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
     "closed",
   ]);
   expect(container.textContent).toContain("posts/broken.md:3:1");
+  expect(container.textContent).toContain("Warning · posts/broken.md:3:1–3:12");
   expect(container.textContent).toContain("Invalid YAML at line 3, column 1");
   expect(container.textContent).toContain(
     "Warning · Query · query.where.all.0.field"
@@ -247,4 +253,57 @@ test("orders collapsible sections and opens only database sizes by default", () 
   expect(container.textContent).toContain("Assets batch work");
   expect(container.textContent).toContain("Database and sizes");
   expect(container.querySelectorAll('svg[tabindex="0"]')).toHaveLength(28);
+});
+
+test("counts and labels query setup errors by their severity", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <TooltipProvider>
+        <ContentDatabaseDiagnostics
+          value={{
+            scope: "query-preview",
+            queryIssues: [
+              {
+                severity: "error",
+                code: "INVALID_LIMIT",
+                path: ["query", "limit"],
+                message: "Limit must be a positive integer",
+              },
+              {
+                severity: "warning",
+                code: "UNOBSERVED_FIELD",
+                path: ["query", "sort", "0", "field"],
+                message: "The sort field is not currently observed",
+              },
+            ],
+            query: {
+              usedBytes: 0,
+              maxBytes: 500_000,
+              unboundedBytes: 0,
+              includedDocumentCount: 0,
+              omittedDocumentCount: 0,
+              truncated: false,
+            },
+            database: {
+              usedBytes: 0,
+              maxBytes: 500_000,
+              unboundedBytes: 0,
+              includedDocumentCount: 0,
+              omittedDocumentCount: 0,
+              truncated: false,
+            },
+          }}
+        />
+      </TooltipProvider>
+    );
+  });
+
+  expect(container.textContent).toContain("1 error and 1 warning.");
+  expect(container.textContent).toContain("Error · Query · query.limit");
+  expect(container.textContent).toContain(
+    "Warning · Query · query.sort.0.field"
+  );
 });

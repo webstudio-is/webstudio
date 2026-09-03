@@ -492,7 +492,10 @@ avatar:
 ---
 `;
   const invalidAuthorSource = `---
-name: [
+name: Ada
+name: Grace
+role: author
+role: editor
 ---
 `;
   const authorAsset: Asset = {
@@ -611,7 +614,11 @@ name: [
   ).toEqual([
     expect.objectContaining({
       severity: "error",
-      message: expect.stringContaining("Unable to resolve frontmatter"),
+      message: expect.stringContaining("Map keys must be unique"),
+    }),
+    expect.objectContaining({
+      severity: "error",
+      message: expect.stringContaining("Map keys must be unique"),
     }),
   ]);
 

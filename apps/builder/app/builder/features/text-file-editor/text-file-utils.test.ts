@@ -95,6 +95,7 @@ describe("text file assets", () => {
         from: 8,
         to: 18,
         severity: "warning",
+        source: "unsafe-mdx",
         message: "Executable MDX expressions are not supported",
       },
     ]);
@@ -153,6 +154,7 @@ describe("text file assets", () => {
         from: 27,
         to: 41,
         severity: "warning",
+        source: "ignored-template-prop",
         message:
           'Property "class" on template "Card" was ignored because it is incompatible. Line 1, column 28.',
       },
@@ -188,7 +190,60 @@ describe("text file assets", () => {
         from: 0,
         to: source.length,
         severity: "error",
+        source: "invalid-mdx",
         message: "Placing <li> element inside a <li> violates HTML spec.",
+      },
+    ]);
+  });
+
+  test("uses the shared contextual validator and keeps every diagnostic", async () => {
+    const validateSource = async () => [
+      {
+        code: "unresolved-template" as const,
+        severity: "warning" as const,
+        blockInstanceId: "block",
+        assetId: "asset",
+        templateName: "Card",
+        sourceRange: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 7, offset: 6 },
+        },
+      },
+      {
+        code: "unsafe-mdx" as const,
+        severity: "warning" as const,
+        blockInstanceId: "block",
+        assetId: "asset",
+        nodeType: "mdxFlowExpression",
+        reason: "Card",
+        sourceRange: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 7, offset: 6 },
+        },
+      },
+    ];
+
+    await expect(
+      getTextFileEditorDiagnostics({
+        source: "<Card>",
+        format: "mdx",
+        validateSource,
+      })
+    ).resolves.toEqual([
+      {
+        from: 0,
+        to: 6,
+        severity: "warning",
+        source: "unresolved-template",
+        message:
+          'Template "Card" is not available and was skipped. Line 1, column 1.',
+      },
+      {
+        from: 0,
+        to: 6,
+        severity: "warning",
+        source: "unsafe-mdx",
+        message: "Card",
       },
     ]);
   });

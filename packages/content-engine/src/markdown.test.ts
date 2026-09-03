@@ -7,6 +7,7 @@ import {
   extractMarkdownFrontmatter,
   MarkdownMetadataError,
 } from "./markdown";
+import { contentEngineLimits } from "./limits";
 
 describe("extractMarkdownFrontmatter", () => {
   test("parses schema-less nested YAML without retaining the body", async () => {
@@ -96,6 +97,44 @@ tags: [web, studio]
     ).resolves.toMatchObject([
       { code: "FRONTMATTER_INVALID", line: 3, column: 1 },
       { code: "FRONTMATTER_INVALID", line: 5, column: 1 },
+    ]);
+  });
+
+  test("reports every independent post-parse frontmatter limit", async () => {
+    const fields = Array.from(
+      { length: contentEngineLimits.frontmatterFields + 1 },
+      (_, index) => `field${index}: ${index}`
+    ).join("\n");
+    const depth = Array.from(
+      { length: contentEngineLimits.frontmatterDepth + 1 },
+      (_, index) => `${"  ".repeat(index)}depth${index}:`
+    ).join("\n");
+    const longString = "x".repeat(
+      contentEngineLimits.frontmatterStringBytes + 1
+    );
+    const compactValues = Array.from({ length: 17_000 }, () => "x").join(",");
+
+    await expect(
+      createMarkdownFrontmatterDiagnostics(
+        `---\n${depth}\n${"  ".repeat(contentEngineLimits.frontmatterDepth + 1)}value\n${fields}\nlong: ${longString}\ncompact: [${compactValues}]\n---\n`
+      )
+    ).resolves.toMatchObject([
+      { code: "FRONTMATTER_DEPTH_EXCEEDED", severity: "warning" },
+      { code: "FRONTMATTER_FIELDS_EXCEEDED", severity: "warning" },
+      { code: "FRONTMATTER_STRING_BYTES_EXCEEDED", severity: "warning" },
+      { code: "FRONTMATTER_BYTES_EXCEEDED", severity: "warning" },
+    ]);
+  });
+
+  test("reports every non-JSON frontmatter value at its source location", async () => {
+    await expect(
+      createMarkdownFrontmatterDiagnostics(
+        "---\nfirst: .nan\nsecond: .inf\nthird: 9007199254740993\n---\n"
+      )
+    ).resolves.toMatchObject([
+      { code: "FRONTMATTER_INVALID", line: 2, column: 8 },
+      { code: "FRONTMATTER_INVALID", line: 3, column: 9 },
+      { code: "FRONTMATTER_INVALID", line: 4, column: 8 },
     ]);
   });
 

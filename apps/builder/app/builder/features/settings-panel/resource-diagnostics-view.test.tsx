@@ -16,6 +16,68 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
+test("shows an explicit empty state when no diagnostics are available", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <TooltipProvider>
+        <ResourceDiagnosticsView />
+      </TooltipProvider>
+    );
+  });
+
+  expect(container.textContent).toContain("No diagnostics available");
+});
+
+test("shows every diagnostics response schema issue at its exact path", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <TooltipProvider>
+        <ResourceDiagnosticsView
+          diagnosticsRequestError={{
+            status: 500,
+            code: "INVALID_DIAGNOSTICS_RESPONSE",
+            message: "Resource diagnostics response is invalid",
+            retryable: true,
+            details: {
+              issues: [
+                {
+                  severity: "error",
+                  scope: "diagnostics",
+                  code: "invalid_value",
+                  path: ["__diagnostics__", "scope"],
+                  message: 'Expected "query-preview"',
+                },
+                {
+                  severity: "error",
+                  scope: "diagnostics",
+                  code: "invalid_type",
+                  path: ["__diagnostics__", "query", "usedBytes"],
+                  message: "Expected a number",
+                },
+              ],
+            },
+          }}
+        />
+      </TooltipProvider>
+    );
+  });
+
+  expect(container.textContent).toContain(
+    "Error · Diagnostics response · __diagnostics__.scope"
+  );
+  expect(container.textContent).toContain('Expected "query-preview"');
+  expect(container.textContent).toContain(
+    "Error · Diagnostics response · __diagnostics__.query.usedBytes"
+  );
+  expect(container.textContent).toContain("Expected a number");
+});
+
 test("shows every detailed diagnostic instead of the ordinary preview error", () => {
   const container = document.createElement("div");
   document.body.appendChild(container);

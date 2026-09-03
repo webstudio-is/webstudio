@@ -23,6 +23,8 @@ import {
   type AssetResourceOutputSelection,
   type BuilderAssetFieldCatalog,
   type AssetQuerySetupIssue,
+  type AssetResourceErrorCode,
+  type AssetResourceQueryFailure,
 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import {
@@ -49,15 +51,23 @@ import {
 export type { AssetRuntimeData } from "./asset-value-references";
 
 export class AssetQueryExecutionError extends Error {
+  readonly code: AssetResourceErrorCode;
   readonly issues?: readonly AssetQuerySetupIssue[];
+  readonly details?: NonNullable<AssetResourceQueryFailure["error"]["details"]>;
 
   constructor(
     message: string,
-    options?: ErrorOptions & { issues?: readonly AssetQuerySetupIssue[] }
+    options?: ErrorOptions & {
+      code?: AssetResourceErrorCode;
+      issues?: readonly AssetQuerySetupIssue[];
+      details?: NonNullable<AssetResourceQueryFailure["error"]["details"]>;
+    }
   ) {
     super(message, options);
     this.name = "AssetQueryExecutionError";
+    this.code = options?.code ?? "INVALID_REQUEST";
     this.issues = options?.issues;
+    this.details = options?.details;
   }
 }
 
@@ -107,6 +117,90 @@ const getCatalogField = (
     ? catalog.fields[path]
     : undefined;
 
+const getObservedValueType = (
+  value: unknown
+): AssetObservedFieldType | undefined => {
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  if (typeof value === "object") {
+    return "object";
+  }
+  if (typeof value === "boolean") {
+    return "boolean";
+  }
+  if (typeof value === "number") {
+    return "number";
+  }
+  if (typeof value === "string") {
+    return "string";
+  }
+};
+
+const getCompatibleFilterValueTypes = ({
+  operator,
+  fieldTypes,
+}: {
+  operator: AssetQueryFilter["operator"];
+  fieldTypes: readonly AssetObservedFieldType[];
+}) => {
+  if (operator === "contains" && fieldTypes.includes("array")) {
+    return;
+  }
+  if (
+    operator === "startsWith" ||
+    operator === "endsWith" ||
+    operator === "contains"
+  ) {
+    return ["string"] as const;
+  }
+  if (
+    operator === "gt" ||
+    operator === "gte" ||
+    operator === "lt" ||
+    operator === "lte"
+  ) {
+    return fieldTypes.filter(
+      (type): type is "string" | "number" =>
+        type === "string" || type === "number"
+    );
+  }
+  if (operator === "eq" || operator === "ne" || operator === "in") {
+    return fieldTypes;
+  }
+};
+
+const getIncompatibleFilterValuePaths = ({
+  filter,
+  fieldTypes,
+  path,
+}: {
+  filter: AssetQueryFilter;
+  fieldTypes: readonly AssetObservedFieldType[];
+  path: string[];
+}) => {
+  const compatibleTypes = getCompatibleFilterValueTypes({
+    operator: filter.operator,
+    fieldTypes,
+  });
+  if (compatibleTypes === undefined) {
+    return [];
+  }
+  const values = filter.operator === "in" ? filter.value : [filter.value];
+  return values.flatMap((value, index) =>
+    compatibleTypes.some((type) => type === getObservedValueType(value))
+      ? []
+      : [
+          filter.operator === "in"
+            ? [...path, "value", String(index)]
+            : [...path, "value"],
+        ]
+  );
+};
+
 const getQueryConditionsWithPaths = (
   where: AssetQueryWhere,
   path: string[] = ["query", "where"]
@@ -124,14 +218,28 @@ const getQueryConditionsWithPaths = (
   );
 };
 
-export const validateAssetQueryAgainstCatalog = ({
+export const validateAssetQuery = ({
   query: input,
   catalog,
 }: {
-  query: AssetQueryInput;
+  query: unknown;
   catalog?: BuilderAssetFieldCatalog;
 }) => {
-  const query = assetQuery.parse(input);
+  const parsed = assetQuery.safeParse(input);
+  if (parsed.success === false) {
+    return {
+      success: false as const,
+      issues: parsed.error.issues.map(
+        (issue): AssetQuerySetupIssue => ({
+          severity: "error",
+          code: issue.code,
+          path: ["query", ...issue.path.map(String)],
+          message: issue.message,
+        })
+      ),
+    };
+  }
+  const query = parsed.data;
   const referencedFieldPaths = new Map<string, AssetQueryFieldPath>();
   const warnings: string[] = [];
   const issues: AssetQuerySetupIssue[] = [];
@@ -139,6 +247,7 @@ export const validateAssetQueryAgainstCatalog = ({
     code:
       | "UNOBSERVED_FIELD"
       | "INCOMPATIBLE_OBSERVED_TYPES"
+      | "INCOMPATIBLE_OBSERVED_VALUE"
       | "STRUCTURED_SORT_ORDER",
     path: string[],
     message: string
@@ -170,15 +279,28 @@ export const validateAssetQueryAgainstCatalog = ({
           [...path, "operator"],
           `Operator ${filter.operator} is not compatible with the currently observed types of ${catalogPath}`
         );
+      } else if (field !== undefined) {
+        for (const valuePath of getIncompatibleFilterValuePaths({
+          filter,
+          fieldTypes: field.types,
+          path,
+        })) {
+          addWarning(
+            "INCOMPATIBLE_OBSERVED_VALUE",
+            valuePath,
+            `Filter value is not compatible with the currently observed types of ${catalogPath}`
+          );
+        }
       }
     } else {
+      const fieldTypes =
+        assetQueryStandardFieldTypes[
+          filter.field[0] as keyof typeof assetQueryStandardFieldTypes
+        ];
       if (
         isFilterOperatorCompatible({
           filter,
-          fieldTypes:
-            assetQueryStandardFieldTypes[
-              filter.field[0] as keyof typeof assetQueryStandardFieldTypes
-            ],
+          fieldTypes,
         }) === false
       ) {
         issues.push({
@@ -187,6 +309,19 @@ export const validateAssetQueryAgainstCatalog = ({
           path: [...path, "operator"],
           message: `Operator ${filter.operator} is incompatible with ${catalogPath}`,
         });
+      } else {
+        for (const valuePath of getIncompatibleFilterValuePaths({
+          filter,
+          fieldTypes,
+          path,
+        })) {
+          issues.push({
+            severity: "error",
+            code: "INCOMPATIBLE_VALUE",
+            path: valuePath,
+            message: `Filter value is incompatible with ${catalogPath}`,
+          });
+        }
       }
     }
   }
@@ -216,34 +351,65 @@ export const validateAssetQueryAgainstCatalog = ({
       }
     }
   }
-  const errors = issues.filter(({ severity }) => severity === "error");
-  if (errors.length > 0) {
-    throw new AssetQueryExecutionError(
-      `${errors.length} invalid query ${errors.length === 1 ? "operation" : "operations"} found`,
-      {
-        issues: [
-          ...new Map(
-            issues.map((issue) => [
-              JSON.stringify([issue.code, issue.path, issue.message]),
-              issue,
-            ])
-          ).values(),
-        ],
+  if (query.output.mode === "fields") {
+    for (const [index, fieldPath] of query.output.fields.entries()) {
+      const catalogPath = getCatalogPath(fieldPath);
+      referencedFieldPaths.set(catalogPath, fieldPath);
+      if (
+        fieldPath[0] === "properties" &&
+        catalog !== undefined &&
+        getCatalogField(catalog, catalogPath) === undefined
+      ) {
+        addWarning(
+          "UNOBSERVED_FIELD",
+          ["query", "output", "fields", String(index)],
+          `Asset field ${catalogPath} is not currently observed`
+        );
       }
-    );
+    }
   }
+  const uniqueIssues = [
+    ...new Map(
+      issues.map((issue) => [
+        JSON.stringify([issue.code, issue.path, issue.message]),
+        issue,
+      ])
+    ).values(),
+  ];
   return {
+    success:
+      uniqueIssues.some(({ severity }) => severity === "error") === false,
     query,
     referencedFieldPaths: [...referencedFieldPaths.values()],
     warnings: [...new Set(warnings)],
-    warningIssues: [
-      ...new Map(
-        issues.map((issue) => [
-          JSON.stringify([issue.code, issue.path, issue.message]),
-          issue,
-        ])
-      ).values(),
-    ],
+    issues: uniqueIssues,
+  };
+};
+
+export const validateAssetQueryAgainstCatalog = ({
+  query,
+  catalog,
+}: {
+  query: AssetQueryInput;
+  catalog?: BuilderAssetFieldCatalog;
+}) => {
+  const validation = validateAssetQuery({ query, catalog });
+  if (validation.success === false) {
+    const errors = validation.issues.filter(
+      ({ severity }) => severity === "error"
+    );
+    throw new AssetQueryExecutionError(
+      errors.length === 1
+        ? errors[0].message
+        : `${errors.length} invalid query operations found`,
+      { issues: validation.issues }
+    );
+  }
+  return {
+    query: validation.query,
+    referencedFieldPaths: validation.referencedFieldPaths,
+    warnings: validation.warnings,
+    warningIssues: validation.issues,
   };
 };
 
@@ -495,7 +661,10 @@ const toQueryItem = (
   runtimeAsset?: AssetRuntimeData
 ) => {
   if (includesOutputField(output, "url") && runtimeAsset === undefined) {
-    throw new Error(`Asset URL is unavailable for ${document._id}`);
+    throw new AssetQueryExecutionError(
+      `Asset URL is unavailable for ${document._id}`,
+      { details: { assetId: document._id } }
+    );
   }
   const properties = selectProperties(document, output);
   const hasDimensions =
@@ -527,12 +696,17 @@ const toQueryItem = (
 export const assertAssetQueryResultSize = (
   result: AssetQueryExecutionResult
 ) => {
-  if (
-    getUtf8ByteLength(serializeJsonDeterministically(result)) >
-    contentEngineLimits.resultBytes
-  ) {
+  const resultBytes = getUtf8ByteLength(serializeJsonDeterministically(result));
+  if (resultBytes > contentEngineLimits.resultBytes) {
     throw new AssetQueryExecutionError(
-      "Asset query result exceeds the byte limit"
+      "Asset query result exceeds the byte limit",
+      {
+        code: "CONTENT_LIMIT_EXCEEDED",
+        details: {
+          resultBytes,
+          resultByteLimit: contentEngineLimits.resultBytes,
+        },
+      }
     );
   }
 };
@@ -822,7 +996,16 @@ export const executeAssetQueries = async ({
       preparedQueries,
       results,
       createReason: () =>
-        new AssetQueryExecutionError("Asset query document limit was exceeded"),
+        new AssetQueryExecutionError(
+          "Asset query document limit was exceeded",
+          {
+            code: "CONTENT_LIMIT_EXCEEDED",
+            details: {
+              documentCount: documents.length,
+              documentLimit: contentEngineLimits.candidateDocuments,
+            },
+          }
+        ),
     });
     return requireSettledAssetQueryResults(results);
   }

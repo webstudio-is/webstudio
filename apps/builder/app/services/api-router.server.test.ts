@@ -276,6 +276,13 @@ describe("api router build operation adapters", () => {
           path: "content/broken.mdx",
           line: 8,
           column: 3,
+          reference: "Card",
+          nodeType: "mdxJsxFlowElement",
+          reason: "unexpected-close-tag",
+          sourceRange: {
+            start: { line: 8, column: 3, offset: 80 },
+            end: { line: 8, column: 10, offset: 87 },
+          },
         },
       ])
     );
@@ -304,6 +311,20 @@ describe("api router build operation adapters", () => {
             constraint: "invalid-mdx",
             detail:
               "Line 8, column 3. Scope: query. Severity: error. Asset: mdx",
+            severity: "error",
+            scope: "query",
+            phase: "source",
+            assetId: "mdx",
+            file: "content/broken.mdx",
+            line: 8,
+            column: 3,
+            reference: "Card",
+            nodeType: "mdxJsxFlowElement",
+            reason: "unexpected-close-tag",
+            sourceRange: {
+              start: { line: 8, column: 3, offset: 80 },
+              end: { line: 8, column: 10, offset: 87 },
+            },
           },
         ],
       },

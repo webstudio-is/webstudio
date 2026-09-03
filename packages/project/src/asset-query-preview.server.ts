@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/asset-uploader/server";
 import {
   createAssetQueryPreviewCompilationPlan,
-  createBuildContentCompilationPlan,
+  createBuildContentCompilationPlanResult,
 } from "@webstudio-is/project-build";
 import { loadDevBuildContentEngineDataByProjectId } from "@webstudio-is/project-build/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -66,7 +66,7 @@ export const previewProjectAssetQueries = async (
     context,
     assetClient,
     contentDatabaseMaxBytes,
-    databasePlan: createBuildContentCompilationPlan(build),
+    databasePlan: createBuildContentCompilationPlanResult(build).plan,
     signal,
     onPerformanceEvent,
     onDocumentGraphEvent,
@@ -104,7 +104,7 @@ export const previewProjectAssetQuery = async (
       ),
   });
   signal?.throwIfAborted();
-  const databasePlan = createBuildContentCompilationPlan(build);
+  const databasePlan = createBuildContentCompilationPlanResult(build).plan;
   return await dependencies.previewAssetResourceQuery({
     projectId,
     request,

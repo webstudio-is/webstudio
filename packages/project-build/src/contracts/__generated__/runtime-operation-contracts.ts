@@ -72337,6 +72337,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode"],
+                        additionalProperties: false,
                       },
                       {
                         type: "object",
@@ -72352,6 +72353,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode"],
+                        additionalProperties: false,
                       },
                       {
                         type: "object",
@@ -72372,6 +72374,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode", "offset", "length"],
+                        additionalProperties: false,
                       },
                       {
                         type: "object",
@@ -72387,6 +72390,7 @@ export const runtimeOperationContractData = [
                           },
                         },
                         required: ["mode"],
+                        additionalProperties: false,
                       },
                     ],
                   },
@@ -72734,6 +72738,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode"],
+                      additionalProperties: false,
                     },
                     {
                       type: "object",
@@ -72749,6 +72754,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode"],
+                      additionalProperties: false,
                     },
                     {
                       type: "object",
@@ -72769,6 +72775,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode", "offset", "length"],
+                      additionalProperties: false,
                     },
                     {
                       type: "object",
@@ -72784,6 +72791,7 @@ export const runtimeOperationContractData = [
                         },
                       },
                       required: ["mode"],
+                      additionalProperties: false,
                     },
                   ],
                 },
@@ -73211,6 +73219,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -73226,6 +73235,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -73246,6 +73256,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode", "offset", "length"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -73261,6 +73272,7 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
               ],
             },
@@ -73772,6 +73784,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode"],
+                          additionalProperties: false,
                         },
                         {
                           type: "object",
@@ -73787,6 +73800,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode"],
+                          additionalProperties: false,
                         },
                         {
                           type: "object",
@@ -73807,6 +73821,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode", "offset", "length"],
+                          additionalProperties: false,
                         },
                         {
                           type: "object",
@@ -73822,6 +73837,7 @@ export const runtimeOperationContractData = [
                             },
                           },
                           required: ["mode"],
+                          additionalProperties: false,
                         },
                       ],
                     },

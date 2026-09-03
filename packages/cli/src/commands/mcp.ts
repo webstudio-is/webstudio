@@ -1,5 +1,13 @@
 import { cwd, stdin, stdout, stderr } from "node:process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import {
   connectProjectSessionMcpServer,
@@ -29,9 +37,13 @@ import {
   mdxAssetInspectionNamespaces,
 } from "@webstudio-is/project-build/runtime";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { validateTextAssetSource } from "@webstudio-is/content-engine/mdx";
+import {
+  validateTextAssetSourceBytes,
+  type TextAssetSourceDiagnostic,
+} from "@webstudio-is/content-engine/mdx";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { assetQueryRequest } from "@webstudio-is/content-engine";
-import { getFileExtension } from "@webstudio-is/sdk";
+import { assetType, getFileExtension } from "@webstudio-is/sdk";
 import { resolveApiConnection } from "../api-connection";
 import {
   getCliErrorIssues,
@@ -185,43 +197,385 @@ const createMcpInputError = (message: string, code: string) =>
 const hasAssetName = (value: unknown): value is { name: string } =>
   isPlainRecord(value) && typeof value.name === "string";
 
-const getMcpUploadAssetInput = (input: unknown) => {
-  if (isPlainRecord(input) === false || hasAssetName(input.asset) === false) {
-    throw new Error("upload-asset requires an asset object.");
+const createAssetInputIssue = ({
+  path,
+  message,
+  code,
+}: {
+  path: string[];
+  message: string;
+  code: string;
+}) => ({
+  path,
+  code,
+  message,
+  constraint: code,
+});
+
+const getTextAssetFormat = (value: string): "md" | "mdx" | undefined => {
+  const extension = (getFileExtension(value) ?? value).toLowerCase();
+  return extension === "md" || extension === "mdx" ? extension : undefined;
+};
+
+const getTextAssetDescriptorIssues = ({
+  assets,
+  pathPrefix,
+}: {
+  assets: unknown[];
+  pathPrefix: string[];
+}) => {
+  const issues: SemanticValidationIssue[] = [];
+  for (const [index, value] of assets.entries()) {
+    const assetPath =
+      pathPrefix[0] === "asset" ? pathPrefix : [...pathPrefix, String(index)];
+    if (isPlainRecord(value) === false) {
+      issues.push(
+        createAssetInputIssue({
+          path: assetPath,
+          code: "invalid_type",
+          message: "Asset descriptor must be an object.",
+        })
+      );
+      continue;
+    }
+    const asset = value;
+    const allowedFields = new Set([
+      "name",
+      "type",
+      "format",
+      "description",
+      "folderId",
+      "force",
+      "meta",
+    ]);
+    for (const field of Object.keys(asset)) {
+      if (allowedFields.has(field) === false) {
+        issues.push(
+          createAssetInputIssue({
+            path: [...assetPath, field],
+            code: "unknown_field",
+            message: `Asset descriptor field ${JSON.stringify(field)} is not supported.`,
+          })
+        );
+      }
+    }
+    if (typeof asset.name !== "string") {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "name"],
+          code: "invalid_type",
+          message: "Asset name must be a string.",
+        })
+      );
+    }
+    if (
+      typeof asset.type !== "string" ||
+      assetType.options.includes(
+        asset.type as (typeof assetType.options)[number]
+      ) === false
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "type"],
+          code: "invalid_value",
+          message: `Asset type must be one of ${assetType.options.join(", ")}.`,
+        })
+      );
+    }
+    for (const field of ["format", "description", "folderId"] as const) {
+      if (asset[field] !== undefined && typeof asset[field] !== "string") {
+        issues.push(
+          createAssetInputIssue({
+            path: [...assetPath, field],
+            code: "invalid_type",
+            message: `Asset ${field} must be a string.`,
+          })
+        );
+      }
+    }
+    if (asset.folderId === "") {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "folderId"],
+          code: "too_small",
+          message: "Asset folderId must not be empty.",
+        })
+      );
+    }
+    if (asset.force !== undefined && typeof asset.force !== "boolean") {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "force"],
+          code: "invalid_type",
+          message: "Asset force must be a boolean.",
+        })
+      );
+    }
+    if (asset.meta !== undefined && isPlainRecord(asset.meta) === false) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "meta"],
+          code: "invalid_type",
+          message: "Asset meta must be an object.",
+        })
+      );
+    }
+    const name = typeof asset.name === "string" ? asset.name : "";
+    const filenameFormat = getFileExtension(name)?.toLowerCase();
+    const declaredFormat =
+      typeof asset.format === "string" ? asset.format.toLowerCase() : undefined;
+    const mentionsTextFormat =
+      filenameFormat === "md" ||
+      filenameFormat === "mdx" ||
+      declaredFormat === "md" ||
+      declaredFormat === "mdx";
+    if (
+      mentionsTextFormat &&
+      declaredFormat !== undefined &&
+      declaredFormat !== filenameFormat
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "format"],
+          code: "asset_filename_format_mismatch",
+          message: `Asset filename and format must match. ${JSON.stringify(name)} has extension ${JSON.stringify(filenameFormat ?? "(none)")} but format is ${JSON.stringify(declaredFormat ?? "(missing)")}.`,
+        })
+      );
+    }
+    if (
+      mentionsTextFormat &&
+      typeof asset.type === "string" &&
+      asset.type !== "file"
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [...assetPath, "type"],
+          code: "markdown_asset_type_mismatch",
+          message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(asset.type)}.`,
+        })
+      );
+    }
   }
-  return createLocalUploadAssetInput({
-    asset: input.asset,
+  return issues;
+};
+
+const assertTextAssetDescriptorFormats = ({
+  assets,
+  pathPrefix,
+}: {
+  assets: unknown[];
+  pathPrefix: string[];
+}) => {
+  const issues = getTextAssetDescriptorIssues({ assets, pathPrefix });
+  if (issues.length > 0) {
+    throw Object.assign(
+      new Error("Markdown and MDX Asset descriptors are invalid."),
+      { code: "INVALID_INPUT", issues }
+    );
+  }
+};
+
+const throwAssetInputIssues = (issues: readonly SemanticValidationIssue[]) => {
+  if (issues.length > 0) {
+    throw Object.assign(new Error("Asset operation input is invalid."), {
+      code: "INVALID_INPUT",
+      issues,
+    });
+  }
+};
+
+const getRootAssetInputIssues = ({
+  input,
+  allowedFields,
+}: {
+  input: Record<string, unknown>;
+  allowedFields: readonly string[];
+}) =>
+  Object.keys(input).flatMap((field) =>
+    allowedFields.includes(field)
+      ? []
+      : [
+          createAssetInputIssue({
+            path: [field],
+            code: "unknown_field",
+            message: `Asset operation field ${JSON.stringify(field)} is not supported.`,
+          }),
+        ]
+  );
+
+const getMcpUploadAssetInput = (input: unknown) => {
+  if (isPlainRecord(input) === false) {
+    throwAssetInputIssues([
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_type",
+        message: "upload-asset input must be an object.",
+      }),
+    ]);
+    throw new Error("Unreachable invalid upload input");
+  }
+  throwAssetInputIssues([
+    ...getRootAssetInputIssues({
+      input,
+      allowedFields: ["asset", "assetsDir"],
+    }),
+    ...(input.assetsDir === undefined || typeof input.assetsDir === "string"
+      ? []
+      : [
+          createAssetInputIssue({
+            path: ["assetsDir"],
+            code: "invalid_type",
+            message: "assetsDir must be a string.",
+          }),
+        ]),
+    ...getTextAssetDescriptorIssues({
+      assets: [input.asset],
+      pathPrefix: ["asset"],
+    }),
+  ]);
+  const asset = input.asset;
+  if (hasAssetName(asset) === false) {
+    throw new Error("Unreachable invalid Asset descriptor");
+  }
+  const prepared = createLocalUploadAssetInput({
+    asset,
     assetsDir:
       typeof input.assetsDir === "string" ? input.assetsDir : undefined,
     readFile,
   });
+  let content: Promise<unknown> | undefined;
+  return {
+    ...prepared,
+    readAssetData: () => (content ??= prepared.readAssetData(asset)),
+  };
 };
 
 const getMcpUploadAssetsInput = (input: unknown) => {
-  if (
-    isPlainRecord(input) === false ||
-    Array.isArray(input.assets) === false ||
-    input.assets.every(hasAssetName) === false
-  ) {
-    throw new Error("upload-assets requires an assets array.");
+  if (isPlainRecord(input) === false) {
+    throwAssetInputIssues([
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_type",
+        message: "upload-assets input must be an object.",
+      }),
+    ]);
+    throw new Error("Unreachable invalid upload input");
   }
-  return createLocalUploadAssetsInput({
-    assets: input.assets,
+  const assets = Array.isArray(input.assets) ? input.assets : [];
+  throwAssetInputIssues([
+    ...getRootAssetInputIssues({
+      input,
+      allowedFields: ["assets", "assetsDir"],
+    }),
+    ...(Array.isArray(input.assets)
+      ? []
+      : [
+          createAssetInputIssue({
+            path: ["assets"],
+            code: "invalid_type",
+            message: "upload-assets requires an assets array.",
+          }),
+        ]),
+    ...(input.assetsDir === undefined || typeof input.assetsDir === "string"
+      ? []
+      : [
+          createAssetInputIssue({
+            path: ["assetsDir"],
+            code: "invalid_type",
+            message: "assetsDir must be a string.",
+          }),
+        ]),
+    ...getTextAssetDescriptorIssues({ assets, pathPrefix: ["assets"] }),
+  ]);
+  if (assets.every(hasAssetName) === false) {
+    throw new Error("Unreachable invalid Asset descriptors");
+  }
+  const prepared = createLocalUploadAssetsInput({
+    assets,
     assetsDir:
       typeof input.assetsDir === "string" ? input.assetsDir : undefined,
     readFile,
   });
+  const contentByAsset = new Map<object, Promise<unknown>>();
+  return {
+    ...prepared,
+    readAssetData: (asset: { name: string }) => {
+      let content = contentByAsset.get(asset);
+      if (content === undefined) {
+        content = prepared.readAssetData(asset);
+        contentByAsset.set(asset, content);
+      }
+      return content;
+    },
+  };
 };
 
 const getMcpUpdateAssetContentInput = (input: unknown) => {
+  if (isPlainRecord(input) === false) {
+    throwAssetInputIssues([
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_type",
+        message: "update-asset-content input must be an object.",
+      }),
+    ]);
+    throw new Error("Unreachable invalid update input");
+  }
+  const issues = getRootAssetInputIssues({
+    input,
+    allowedFields: ["assetId", "expectedName", "extension", "path", "content"],
+  });
+  for (const field of ["assetId", "expectedName"] as const) {
+    if (typeof input[field] !== "string" || input[field].length === 0) {
+      issues.push(
+        createAssetInputIssue({
+          path: [field],
+          code: typeof input[field] === "string" ? "too_small" : "invalid_type",
+          message: `${field} must be a non-empty string.`,
+        })
+      );
+    }
+  }
+  for (const field of ["extension", "path"] as const) {
+    if (
+      input[field] !== undefined &&
+      (typeof input[field] !== "string" || input[field].length === 0)
+    ) {
+      issues.push(
+        createAssetInputIssue({
+          path: [field],
+          code: typeof input[field] === "string" ? "too_small" : "invalid_type",
+          message: `${field} must be a non-empty string.`,
+        })
+      );
+    }
+  }
+  if (input.content !== undefined && typeof input.content !== "string") {
+    issues.push(
+      createAssetInputIssue({
+        path: ["content"],
+        code: "invalid_type",
+        message: "content must be a string.",
+      })
+    );
+  }
+  const hasPath = typeof input.path === "string" && input.path.length > 0;
+  const hasContent = typeof input.content === "string";
+  if (hasPath === hasContent) {
+    issues.push(
+      createAssetInputIssue({
+        path: [],
+        code: "invalid_source_selection",
+        message: "Provide exactly one of path or content.",
+      })
+    );
+  }
+  throwAssetInputIssues(issues);
   if (
-    isPlainRecord(input) === false ||
     typeof input.assetId !== "string" ||
     typeof input.expectedName !== "string"
   ) {
-    throw new Error(
-      "update-asset-content requires assetId and expectedName strings."
-    );
+    throw new Error("Unreachable invalid update input");
   }
   const prepared = createLocalUpdateAssetContentInput({
     assetId: input.assetId,
@@ -239,36 +593,150 @@ const getMcpUpdateAssetContentInput = (input: unknown) => {
   };
 };
 
-const decodeTextAssetSource = (value: unknown) => {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (value instanceof Uint8Array) {
-    return new TextDecoder("utf-8", { fatal: true }).decode(value);
-  }
-  throw new Error("Markdown or MDX Asset content must be UTF-8 text.");
+type TextAssetDiagnostic =
+  | TextAssetSourceDiagnostic
+  | Awaited<ReturnType<typeof inspectMdxAssetSource>>[number];
+
+type TextAssetWriteFeedback =
+  | Readonly<{
+      type: "uploads";
+      sourceDiagnostics: readonly Readonly<{
+        index: number;
+        name: string;
+        source: string;
+        format: "md" | "mdx";
+        issuePath: string[];
+        diagnostics: readonly TextAssetDiagnostic[];
+      }>[];
+    }>
+  | Readonly<{
+      type: "update";
+      source: string;
+      diagnostics: readonly TextAssetDiagnostic[];
+    }>;
+
+const createTextAssetContentError = ({
+  assetId,
+  name,
+  path: filePath,
+  issuePath,
+  diagnostic,
+  code,
+}: {
+  assetId?: string;
+  name?: string;
+  path?: string;
+  issuePath: string[];
+  diagnostic: TextAssetSourceDiagnostic;
+  code: "CONTENT_DECODING_FAILED" | "CONTENT_LIMIT_EXCEEDED";
+}) => {
+  const location = name ?? filePath ?? assetId ?? "Markdown or MDX Asset";
+  const issue = {
+    ...diagnostic,
+    path: issuePath,
+    constraint: diagnostic.code,
+    ...(assetId === undefined ? {} : { assetId }),
+    ...(name === undefined ? {} : { name }),
+    ...(filePath === undefined ? {} : { file: filePath }),
+  };
+  return Object.assign(new Error(`${location}: ${diagnostic.message}`), {
+    code,
+    issues: [issue],
+    ...(assetId === undefined ? {} : { assetId }),
+    ...(name === undefined ? {} : { name }),
+    ...(filePath === undefined ? {} : { path: filePath }),
+  });
 };
 
-const getTextAssetFormat = (name: string): "md" | "mdx" | undefined => {
-  const extension = (getFileExtension(name) ?? name).toLowerCase();
-  return extension === "md" || extension === "mdx" ? extension : undefined;
+const validateTextAssetContent = async ({
+  content,
+  format,
+  assetId,
+  name,
+  path: filePath,
+  issuePath,
+  session,
+}: {
+  content: unknown;
+  format: "md" | "mdx";
+  assetId?: string;
+  name?: string;
+  path?: string;
+  issuePath: string[];
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+}): Promise<{
+  source: string;
+  diagnostics: readonly TextAssetDiagnostic[];
+}> => {
+  const bytes =
+    typeof content === "string"
+      ? new TextEncoder().encode(content)
+      : content instanceof Uint8Array
+        ? content
+        : undefined;
+  const validation =
+    bytes === undefined
+      ? undefined
+      : await validateTextAssetSourceBytes({ source: bytes, format });
+  if (bytes === undefined || validation === undefined) {
+    throw createTextAssetContentError({
+      assetId,
+      name,
+      path: filePath,
+      issuePath,
+      code: "CONTENT_DECODING_FAILED",
+      diagnostic: {
+        code: format === "md" ? "MARKDOWN_BODY_DECODING_FAILED" : "invalid-mdx",
+        severity: "error",
+        message: `${format === "md" ? "Markdown" : "MDX"} content must be UTF-8 text`,
+      },
+    });
+  }
+  const source = validation.source;
+  if (source === undefined) {
+    const diagnostic = validation.diagnostics[0];
+    if (diagnostic === undefined) {
+      throw new Error("Text Asset validation did not return decoded source.");
+    }
+    throw createTextAssetContentError({
+      assetId,
+      name,
+      path: filePath,
+      issuePath,
+      diagnostic,
+      code:
+        bytes.byteLength > contentEngineLimits.hydratedFileBytes
+          ? "CONTENT_LIMIT_EXCEEDED"
+          : "CONTENT_DECODING_FAILED",
+    });
+  }
+  if (format !== "mdx" || assetId === undefined || session === undefined) {
+    return { source, diagnostics: validation.diagnostics };
+  }
+  const snapshot = await session.ensureNamespaces(mdxAssetInspectionNamespaces);
+  return {
+    source,
+    diagnostics: await inspectMdxAssetSource({
+      source,
+      assetId,
+      state: snapshot.state,
+      metas: componentMetas,
+      projectId: snapshot.projectId,
+    }),
+  };
 };
 
-const withTextAssetWriteFeedback = async <
-  Envelope extends { result: unknown },
->({
+const prepareTextAssetWriteFeedback = async ({
   command,
   input,
   operationInput,
-  result,
   session,
 }: {
   command: string;
   input: unknown;
   operationInput: unknown;
-  result: Envelope;
   session?: Pick<CliProjectSession, "ensureNamespaces">;
-}): Promise<Envelope> => {
+}): Promise<TextAssetWriteFeedback | undefined> => {
   if (
     (command === "upload-asset" || command === "upload-assets") &&
     isPlainRecord(input) &&
@@ -284,29 +752,273 @@ const withTextAssetWriteFeedback = async <
           ? input.assets.filter(isPlainRecord)
           : [];
     const sourceDiagnostics = [];
+    const validationIssues: Array<{
+      index: number;
+      issues: NonNullable<ReturnType<typeof getCliErrorIssues>>;
+    }> = [];
+    const fatalErrors: unknown[] = [];
     for (const [index, asset] of assets.entries()) {
       if (typeof asset.name !== "string") {
         continue;
       }
+      const assetName = asset.name;
       const format = getTextAssetFormat(
-        typeof asset.format === "string" ? asset.format : asset.name
+        typeof asset.format === "string" ? asset.format : assetName
       );
       if (format === undefined) {
         continue;
       }
-      const source = decodeTextAssetSource(
-        await operationInput.readAssetData(asset)
+      const issuePath =
+        command === "upload-asset"
+          ? ["asset", "name"]
+          : ["assets", String(index), "name"];
+      try {
+        const { source, diagnostics } = await validateTextAssetContent({
+          content: await operationInput.readAssetData(asset),
+          format,
+          name: assetName,
+          issuePath,
+        });
+        sourceDiagnostics.push({
+          index,
+          name: assetName,
+          source,
+          format,
+          issuePath,
+          diagnostics,
+        });
+        validationIssues.push({
+          index,
+          issues: diagnostics.map((diagnostic) => ({
+            ...diagnostic,
+            path: issuePath,
+            constraint: diagnostic.code,
+            message:
+              "message" in diagnostic && typeof diagnostic.message === "string"
+                ? diagnostic.message
+                : "reason" in diagnostic &&
+                    typeof diagnostic.reason === "string"
+                  ? diagnostic.reason
+                  : diagnostic.code,
+            name: assetName,
+          })),
+        });
+      } catch (error) {
+        const issues = getCliErrorIssues(error);
+        const code = getStableErrorCode(error);
+        if (
+          issues === undefined ||
+          (code !== "CONTENT_DECODING_FAILED" &&
+            code !== "CONTENT_LIMIT_EXCEEDED")
+        ) {
+          throw error;
+        }
+        validationIssues.push({ index, issues });
+        fatalErrors.push(error);
+      }
+    }
+    if (fatalErrors.length > 0) {
+      const code = fatalErrors.some(
+        (error) => getStableErrorCode(error) === "CONTENT_DECODING_FAILED"
+      )
+        ? "CONTENT_DECODING_FAILED"
+        : "CONTENT_LIMIT_EXCEEDED";
+      throw Object.assign(
+        new Error(
+          `${fatalErrors.length} Markdown or MDX Asset${fatalErrors.length === 1 ? "" : "s"} could not be read before upload.`
+        ),
+        {
+          code,
+          issues: validationIssues
+            .sort((left, right) => left.index - right.index)
+            .flatMap(({ issues }) => issues),
+        }
       );
-      sourceDiagnostics.push({
-        index,
-        name: asset.name,
-        diagnostics: (await validateTextAssetSource({ source, format }))
-          .diagnostics,
-      });
     }
-    if (sourceDiagnostics.length === 0) {
-      return result;
+    return sourceDiagnostics.length === 0
+      ? undefined
+      : { type: "uploads", sourceDiagnostics };
+  }
+  if (
+    command !== "update-asset-content" ||
+    isPlainRecord(input) === false ||
+    isPlainRecord(operationInput) === false ||
+    typeof operationInput.readAssetData !== "function"
+  ) {
+    return;
+  }
+  const format = getTextAssetFormat(
+    typeof input.extension === "string"
+      ? input.extension
+      : typeof input.expectedName === "string"
+        ? input.expectedName
+        : ""
+  );
+  if (format === undefined) {
+    return;
+  }
+  const assetId = typeof input.assetId === "string" ? input.assetId : undefined;
+  const { source, diagnostics } = await validateTextAssetContent({
+    content: await operationInput.readAssetData(),
+    format,
+    assetId,
+    name:
+      typeof input.expectedName === "string" ? input.expectedName : undefined,
+    issuePath: ["content"],
+    session,
+  });
+  return { type: "update", source, diagnostics };
+};
+
+const validateDownloadedTextAsset = async ({
+  assetId,
+  path: filePath,
+  format,
+  content,
+  session,
+}: {
+  assetId: string;
+  path: string;
+  format: "md" | "mdx";
+  content: Uint8Array;
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+}) =>
+  validateTextAssetContent({
+    content,
+    format,
+    assetId,
+    path: filePath,
+    issuePath: [filePath],
+    session,
+  });
+
+const materializeValidatedDownloadedAsset = async ({
+  assetId,
+  remotePath,
+  localPath,
+  diagnostics,
+}: {
+  assetId: string;
+  remotePath: string;
+  localPath: string;
+  diagnostics: readonly TextAssetDiagnostic[];
+}) => {
+  const remote = await readFile(remotePath);
+  let local: Uint8Array | undefined;
+  try {
+    local = await readFile(localPath);
+  } catch (error) {
+    if (
+      typeof error !== "object" ||
+      error === null ||
+      !("code" in error) ||
+      error.code !== "ENOENT"
+    ) {
+      throw error;
     }
+  }
+  if (local !== undefined && Buffer.from(local).equals(remote) === false) {
+    const issues = [
+      ...diagnostics.map((diagnostic) => ({
+        ...diagnostic,
+        path: [localPath],
+        constraint: diagnostic.code,
+        assetId,
+        file: localPath,
+        message:
+          "message" in diagnostic && typeof diagnostic.message === "string"
+            ? diagnostic.message
+            : "reason" in diagnostic && typeof diagnostic.reason === "string"
+              ? diagnostic.reason
+              : diagnostic.code,
+      })),
+      {
+        code: "local_asset_conflict",
+        severity: "error" as const,
+        path: [localPath],
+        constraint: "remote_content_matches_local_file",
+        assetId,
+        file: localPath,
+        message:
+          "The existing local file differs from the current project Asset. Move or remove it, then download again.",
+      },
+    ];
+    throw Object.assign(
+      new Error(
+        `The existing local file differs from the current project Asset: ${localPath}`
+      ),
+      { code: "CONFLICT", assetId, path: localPath, issues }
+    );
+  }
+  if (local === undefined) {
+    await mkdir(path.dirname(localPath), { recursive: true });
+    await copyFile(remotePath, localPath);
+  }
+  return remote;
+};
+
+const withTextAssetWriteFeedback = async <
+  Envelope extends { result: unknown },
+>({
+  command,
+  input,
+  operationInput,
+  result,
+  session,
+  feedback,
+}: {
+  command: string;
+  input: unknown;
+  operationInput: unknown;
+  result: Envelope;
+  session?: Pick<CliProjectSession, "ensureNamespaces">;
+  feedback?: TextAssetWriteFeedback;
+}): Promise<Envelope> => {
+  const prepared =
+    feedback ??
+    (await prepareTextAssetWriteFeedback({
+      command,
+      input,
+      operationInput,
+      session,
+    }));
+  if (prepared?.type === "uploads") {
+    const uploaded =
+      isPlainRecord(result.result) && Array.isArray(result.result.uploaded)
+        ? result.result.uploaded
+        : [];
+    const uploadedByName = new Map<string, Array<Record<string, unknown>>>();
+    for (const asset of uploaded) {
+      if (isPlainRecord(asset) === false || typeof asset.name !== "string") {
+        continue;
+      }
+      const matches = uploadedByName.get(asset.name) ?? [];
+      matches.push(asset);
+      uploadedByName.set(asset.name, matches);
+    }
+    const sourceDiagnostics = await Promise.all(
+      prepared.sourceDiagnostics.map(async (entry) => {
+        let diagnostics = entry.diagnostics;
+        if (entry.format === "mdx" && session !== undefined) {
+          const uploadedAsset = uploadedByName.get(entry.name)?.shift();
+          if (typeof uploadedAsset?.id === "string") {
+            ({ diagnostics } = await validateTextAssetContent({
+              content: entry.source,
+              format: entry.format,
+              assetId: uploadedAsset.id,
+              name: entry.name,
+              issuePath: entry.issuePath,
+              session,
+            }));
+          }
+        }
+        return {
+          index: entry.index,
+          name: entry.name,
+          diagnostics,
+        };
+      })
+    );
     return {
       ...result,
       result: {
@@ -317,60 +1029,17 @@ const withTextAssetWriteFeedback = async <
       },
     };
   }
-  if (
-    command !== "update-asset-content" ||
-    isPlainRecord(input) === false ||
-    isPlainRecord(operationInput) === false ||
-    typeof operationInput.readAssetData !== "function" ||
-    getTextAssetFormat(
-      typeof input.extension === "string"
-        ? input.extension
-        : typeof input.expectedName === "string"
-          ? input.expectedName
-          : ""
-    ) === undefined
-  ) {
+  if (prepared?.type !== "update") {
     return result;
   }
-  const format = getTextAssetFormat(
-    typeof input.extension === "string"
-      ? input.extension
-      : typeof input.expectedName === "string"
-        ? input.expectedName
-        : ""
-  );
-  if (format === undefined) {
-    return result;
-  }
-  const source = decodeTextAssetSource(await operationInput.readAssetData());
-  const assetId =
-    typeof input.assetId === "string"
-      ? input.assetId
-      : isPlainRecord(result.result) &&
-          typeof result.result.assetId === "string"
-        ? result.result.assetId
-        : undefined;
-  const snapshot =
-    assetId === undefined || session === undefined
-      ? undefined
-      : await session.ensureNamespaces(mdxAssetInspectionNamespaces);
   return {
     ...result,
     result: {
       ...(isPlainRecord(result.result)
         ? result.result
         : { result: result.result }),
-      source,
-      diagnostics:
-        format === "mdx" && assetId !== undefined && snapshot !== undefined
-          ? await inspectMdxAssetSource({
-              source,
-              assetId,
-              state: snapshot.state,
-              metas: componentMetas,
-              projectId: snapshot.projectId,
-            })
-          : (await validateTextAssetSource({ source, format })).diagnostics,
+      source: prepared.source,
+      diagnostics: prepared.diagnostics,
     },
   };
 };
@@ -779,7 +1448,7 @@ const getMcpRunError = (error: unknown) => {
     return {
       code: isMissingApiAccessError(error)
         ? "UNAUTHORIZED"
-        : (error.code ?? "MCP_TOOL_FAILED"),
+        : (getStableErrorCode(error) ?? "MCP_TOOL_FAILED"),
       message: getCliErrorMessage(error),
       ...(issues === undefined ? {} : { issues }),
     };
@@ -1230,6 +1899,12 @@ const createCliMcpHost = async ({
     onProjectSessionChange: previewFreshness.markStale,
     executeOperation: async ({ command, input, dryRun }) => {
       const operationInput = getMcpOperationInput(command, input);
+      const textAssetFeedback = await prepareTextAssetWriteFeedback({
+        command,
+        input,
+        operationInput,
+        session,
+      });
       const result = await executeProjectSessionApiOperation({
         command,
         input: operationInput,
@@ -1246,6 +1921,7 @@ const createCliMcpHost = async ({
         operationInput,
         result,
         session,
+        feedback: textAssetFeedback,
       });
     },
     restorePoints: {
@@ -1313,35 +1989,51 @@ const createCliMcpHost = async ({
       if (asset === undefined) {
         throw new Error(`Asset not found: ${input.assetId}`);
       }
+      assertTextAssetDescriptorFormats({
+        assets: [asset as unknown as Record<string, unknown>],
+        pathPrefix: ["asset"],
+      });
+      const localPath = getLocalAssetPath(asset.name, input.assetsDir);
+      const format = getTextAssetFormat(asset.format);
+      if (format !== undefined) {
+        const temporaryDirectory = await mkdtemp(
+          path.join(tmpdir(), "webstudio-asset-download-")
+        );
+        try {
+          await downloadAssetFile({
+            asset,
+            assetsDirectory: temporaryDirectory,
+            origin: connection.origin,
+          });
+          const remotePath = getLocalAssetPath(asset.name, temporaryDirectory);
+          const { source, diagnostics } = await validateDownloadedTextAsset({
+            assetId: asset.id,
+            path: localPath,
+            format,
+            content: await readFile(remotePath),
+            session,
+          });
+          await materializeValidatedDownloadedAsset({
+            assetId: asset.id,
+            remotePath,
+            localPath,
+            diagnostics,
+          });
+          return {
+            assetId: asset.id,
+            path: localPath,
+            source,
+            diagnostics,
+          };
+        } finally {
+          await rm(temporaryDirectory, { recursive: true, force: true });
+        }
+      }
       await downloadAssetFile({
         asset,
         assetsDirectory: input.assetsDir,
         origin: connection.origin,
       });
-      const localPath = getLocalAssetPath(asset.name, input.assetsDir);
-      const format = getTextAssetFormat(asset.name);
-      if (format !== undefined) {
-        const source = await readFile(localPath, "utf8");
-        const inspectionSnapshot =
-          format === "mdx"
-            ? await session.ensureNamespaces(mdxAssetInspectionNamespaces)
-            : undefined;
-        return {
-          assetId: asset.id,
-          path: localPath,
-          source,
-          diagnostics:
-            format === "mdx" && inspectionSnapshot !== undefined
-              ? await inspectMdxAssetSource({
-                  source,
-                  assetId: asset.id,
-                  state: inspectionSnapshot.state,
-                  metas: componentMetas,
-                  projectId: inspectionSnapshot.projectId,
-                })
-              : (await validateTextAssetSource({ source, format })).diagnostics,
-        };
-      }
       return {
         assetId: asset.id,
         path: localPath,
@@ -2067,7 +2759,10 @@ export const __testing__ = {
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  prepareTextAssetWriteFeedback,
   withTextAssetWriteFeedback,
+  validateDownloadedTextAsset,
+  materializeValidatedDownloadedAsset,
   parseMcpSingleOpCallInput,
   validateSingleOpCallInput,
   isMcpToolCallFailure,

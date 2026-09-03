@@ -135,7 +135,7 @@ type SourceIssue = NonNullable<
   ContentCompilerDiagnostics["sourceIssues"]
 >[number];
 type DocumentSourceDiagnostic = SourceIssue &
-  Partial<Pick<AssetQueryDiagnosticIssue, "scope" | "phase">>;
+  Partial<Pick<AssetQueryDiagnosticIssue, "scope" | "phase" | "reference">>;
 
 export class DocumentSourceDiagnosticsError extends Error {
   readonly diagnostics: readonly DocumentSourceDiagnostic[];
@@ -298,10 +298,17 @@ const validateSnapshotDocumentSources = async (
         message: diagnostic.message,
         assetId: entry.assetId,
         path: entry.document.path,
+        ...("nodeType" in diagnostic && diagnostic.nodeType !== undefined
+          ? { nodeType: diagnostic.nodeType }
+          : {}),
+        ...("reason" in diagnostic && diagnostic.reason !== undefined
+          ? { reason: diagnostic.reason }
+          : {}),
         ...("sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
           ? {
               line: diagnostic.sourceRange.start.line,
               column: diagnostic.sourceRange.start.column,
+              sourceRange: diagnostic.sourceRange,
             }
           : "line" in diagnostic && diagnostic.line !== undefined
             ? {
@@ -524,6 +531,7 @@ const discoverSnapshotDocumentGraph = async (
       return {
         id: file.id,
         documentUrl: createDocumentSourceUrl(file.path),
+        documentPath: file.path,
         revision: file.revision,
         contentRef: file.contentRef,
         format,

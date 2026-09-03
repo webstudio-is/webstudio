@@ -32,7 +32,9 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import {
   getDetailedAssetResourceQueryError,
+  assetQueryDiagnosticIssue,
   assetQueryRequest,
+  assetQuerySetupIssue,
   getAssetQueryWhereMetrics,
   validateAssetQueryAgainstCatalog,
   type AssetResourceQueryError,
@@ -170,6 +172,19 @@ const getAssetQueryApiIssues = (error: AssetResourceQueryError) => {
     ]
       .filter((item) => item !== undefined)
       .join(". ");
+    const parsedSourceRange =
+      assetQueryDiagnosticIssue.shape.sourceRange.safeParse(
+        diagnostic.sourceRange
+      );
+    const sourceRange = parsedSourceRange.success
+      ? parsedSourceRange.data
+      : undefined;
+    const severity = diagnostic.severity === "warning" ? "warning" : "error";
+    const scope = diagnostic.scope === "database" ? "database" : "query";
+    const phase =
+      diagnostic.phase === "metadata" || diagnostic.phase === "reference"
+        ? diagnostic.phase
+        : "source";
     return [
       {
         code,
@@ -177,30 +192,46 @@ const getAssetQueryApiIssues = (error: AssetResourceQueryError) => {
         message,
         constraint: code,
         ...(detail === "" ? {} : { detail }),
+        severity,
+        scope,
+        phase,
+        file: diagnostic.path,
+        ...(typeof diagnostic.assetId === "string"
+          ? { assetId: diagnostic.assetId }
+          : {}),
+        ...(typeof diagnostic.line === "number"
+          ? { line: diagnostic.line }
+          : {}),
+        ...(typeof diagnostic.column === "number"
+          ? { column: diagnostic.column }
+          : {}),
+        ...(typeof diagnostic.reference === "string"
+          ? { reference: diagnostic.reference }
+          : {}),
+        ...(typeof diagnostic.nodeType === "string"
+          ? { nodeType: diagnostic.nodeType }
+          : {}),
+        ...(typeof diagnostic.reason === "string"
+          ? { reason: diagnostic.reason }
+          : {}),
+        ...(sourceRange === undefined ? {} : { sourceRange }),
       },
     ];
   });
   const queryIssues = Array.isArray(details?.issues)
     ? details.issues.flatMap((value) => {
-        const issue = asRecord(value);
-        const path = Array.isArray(issue?.path)
-          ? issue.path.filter(
-              (part): part is string => typeof part === "string"
-            )
-          : [];
-        if (
-          issue === undefined ||
-          typeof issue.code !== "string" ||
-          typeof issue.message !== "string"
-        ) {
+        const parsedIssue = assetQuerySetupIssue.safeParse(value);
+        if (parsedIssue.success === false) {
           return [];
         }
+        const issue = parsedIssue.data;
         return [
           {
             code: issue.code,
-            path,
+            path: issue.path,
             message: issue.message,
             constraint: issue.code,
+            severity: issue.severity,
             ...(issue.severity === "warning"
               ? { detail: "Severity: warning" }
               : {}),

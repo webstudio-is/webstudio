@@ -21,6 +21,10 @@ import {
   RequestDiagnosticsContent,
   RequestDiagnosticsTable,
 } from "./request-inspector";
+import {
+  getRequestSourceDiagnosticDescription,
+  getRequestSourceDiagnosticLabel,
+} from "./request-error-diagnostics";
 
 const runtimeContentNote =
   "Referenced documents fetched from storage at runtime are not included.";
@@ -379,11 +383,20 @@ export const ContentDatabaseDiagnostics = ({
     value.database.omittedDocumentCount === 1 ? "file" : "files"
   }`;
   const rows = getContentDatabaseDiagnosticRows(value);
+  const queryIssueErrorCount =
+    value.queryIssues?.filter(({ severity }) => severity === "error").length ??
+    0;
+  const queryIssueWarningCount =
+    value.queryIssues === undefined
+      ? (value.queryWarnings?.length ?? 0)
+      : value.queryIssues.filter(({ severity }) => severity === "warning")
+          .length;
   const errorCount =
-    value.issues?.filter(({ severity }) => severity === "error").length ?? 0;
+    (value.issues?.filter(({ severity }) => severity === "error").length ?? 0) +
+    queryIssueErrorCount;
   const warningCount =
     (value.issues?.filter(({ severity }) => severity === "warning").length ??
-      0) + (value.queryIssues?.length ?? value.queryWarnings?.length ?? 0);
+      0) + queryIssueWarningCount;
   const databaseAndSizes = {
     ...getPerformanceSizes(performance),
     scope: value.scope,
@@ -404,14 +417,7 @@ export const ContentDatabaseDiagnostics = ({
           }}
           isOpen
         >
-          <PanelBanner
-            variant={
-              value.issues?.some(({ severity }) => severity === "error") ===
-              true
-                ? "error"
-                : "warning"
-            }
-          >
+          <PanelBanner variant={errorCount > 0 ? "error" : "warning"}>
             <Text>
               {errorCount} {errorCount === 1 ? "error" : "errors"} and{" "}
               {warningCount} {warningCount === 1 ? "warning" : "warnings"}
@@ -425,7 +431,11 @@ export const ContentDatabaseDiagnostics = ({
               ? value.queryIssues.map((issue, index) => (
                   <RequestDiagnosticsRow
                     key={`${issue.path.join(".")}:${issue.code}:${index}`}
-                    label={`Warning · Query · ${issue.path.join(".")}`}
+                    label={`${issue.severity === "error" ? "Error" : "Warning"} · Query${
+                      issue.path.length === 0
+                        ? ""
+                        : ` · ${issue.path.join(".")}`
+                    }`}
                     value={issue.message}
                     description={issue.code}
                   />
@@ -441,21 +451,9 @@ export const ContentDatabaseDiagnostics = ({
             {value.issues?.map((issue, index) => (
               <RequestDiagnosticsRow
                 key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
-                label={`${issue.severity === "error" ? "Error" : "Warning"} · ${
-                  issue.path
-                }${
-                  issue.line === undefined
-                    ? ""
-                    : `:${issue.line}${
-                        issue.column === undefined ? "" : `:${issue.column}`
-                      }`
-                }`}
+                label={getRequestSourceDiagnosticLabel(issue)}
                 value={issue.message}
-                description={`${
-                  issue.scope === "query"
-                    ? "Current query"
-                    : "Published database"
-                } · ${issue.code}`}
+                description={getRequestSourceDiagnosticDescription(issue)}
               />
             ))}
           </RequestDiagnosticsTable>

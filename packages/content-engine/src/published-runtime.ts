@@ -7,6 +7,7 @@ import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
 import { getAssetResourceQueryError } from "./query-error";
+import { getDetailedAssetResourceQueryError } from "./query-error-details";
 import {
   createCachedDocumentSourceLoader,
   createHttpDocumentSourceLoader,
@@ -219,7 +220,11 @@ const createPublishedAssetResourceHandler = ({
     let parsedRequest;
     try {
       parsedRequest = await readAssetQueryRequest(request.clone());
-    } catch {
+    } catch (error) {
+      const queryError = getDetailedAssetResourceQueryError(error);
+      if (queryError !== undefined) {
+        return failure(queryError);
+      }
       return failure({
         code: "INVALID_REQUEST",
         message: "Asset resource request is invalid",
