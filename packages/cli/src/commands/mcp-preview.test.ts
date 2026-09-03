@@ -162,7 +162,11 @@ test("retries automatic MCP preview ports after a startup race", async () => {
     .mockResolvedValueOnce(53125);
   const startPreview = vi
     .fn()
-    .mockRejectedValueOnce(new Error("Preview server exited before ready"))
+    .mockRejectedValueOnce(
+      Object.assign(new Error("Preview port became occupied"), {
+        code: "PREVIEW_PORT_IN_USE",
+      })
+    )
     .mockResolvedValueOnce({ url: "http://127.0.0.1:53125/" });
   const sleep = vi.fn(async () => undefined);
 
@@ -183,6 +187,29 @@ test("retries automatic MCP preview ports after a startup race", async () => {
     port: 53125,
   });
   expect(sleep).toHaveBeenCalledWith(500);
+});
+
+test("does not retry automatic ports after a non-port preview failure", async () => {
+  const getAvailablePort = vi.fn(async () => 53124);
+  const error = Object.assign(new Error("Preview returned HTTP 500"), {
+    code: "PREVIEW_HTTP_ERROR",
+  });
+  const startPreview = vi.fn(async () => {
+    throw error;
+  });
+  const sleep = vi.fn(async () => undefined);
+
+  await expect(
+    startMcpPreview({
+      input: { source: "session" },
+      getAvailablePort,
+      startPreview,
+      sleep,
+    })
+  ).rejects.toBe(error);
+  expect(startPreview).toHaveBeenCalledOnce();
+  expect(getAvailablePort).toHaveBeenCalledOnce();
+  expect(sleep).not.toHaveBeenCalled();
 });
 
 test("does not mark a preview fresh after a newer mutation", () => {

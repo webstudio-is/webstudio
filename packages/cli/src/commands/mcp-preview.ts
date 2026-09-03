@@ -11,6 +11,7 @@ import {
 } from "../screenshot";
 import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
 import { createExclusiveAsyncRunner, withTimeout } from "../async-utils";
+import { getStableErrorCode } from "../error-codes";
 import {
   defaultScreenshotTimeout,
   isBrowserSessionClosedError,
@@ -219,7 +220,11 @@ export const startMcpPreview = async <Result>({
     try {
       return await startPreview(resolvedInput);
     } catch (error) {
-      if (attempt === attempts - 1) {
+      const code = getStableErrorCode(error);
+      if (
+        attempt === attempts - 1 ||
+        (code !== "EADDRINUSE" && code !== "PREVIEW_PORT_IN_USE")
+      ) {
         throw error;
       }
       await sleep(500);

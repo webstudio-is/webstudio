@@ -490,6 +490,50 @@ test("preview controller waits when starting through startAndWait", async () => 
   });
 });
 
+test("preserves readiness diagnostics when adding preview output", async () => {
+  let now = 0;
+  const dateNow = vi.spyOn(Date, "now").mockImplementation(() => now);
+  const process = createPreviewProcess({
+    stdout: {
+      on: vi.fn((event: string, handler: (chunk: Buffer) => void) => {
+        if (event === "data") {
+          handler(Buffer.from("Local: http://127.0.0.1:5173/"));
+        }
+        return process.stdout;
+      }),
+    } as never,
+  });
+  const controller = createPreviewController(
+    { host: "127.0.0.1", port: 5173, mode: "iterative" },
+    createDependencies({
+      spawn: vi.fn(() => process) as never,
+      fetch: vi.fn(async () => new Response("failed", { status: 500 })),
+      sleep: async (duration) => {
+        now += duration;
+      },
+    })
+  );
+
+  try {
+    const result = expect(controller.startAndWait()).rejects.toMatchObject({
+      code: "PREVIEW_HTTP_ERROR",
+      message: expect.stringContaining(
+        "Preview server output:\nLocal: http://127.0.0.1:5173/"
+      ),
+      issues: [
+        {
+          code: "preview_http_error",
+          path: [],
+          constraint: "http_status:500",
+        },
+      ],
+    });
+    await result;
+  } finally {
+    dateNow.mockRestore();
+  }
+});
+
 test("preview controller derives and verifies the generated project identity", async () => {
   const process = createPreviewProcess();
   const buildProcess = createPreviewProcess();
@@ -553,15 +597,23 @@ test("preview controller fails immediately when the dev server exits before read
       fetch,
     })
   );
-  await expect(controller.startAndWait()).rejects.toThrow(
-    [
+  await expect(controller.startAndWait()).rejects.toMatchObject({
+    code: "PREVIEW_PORT_IN_USE",
+    message: [
       "Preview server exited before it became ready at http://127.0.0.1:5173/.",
       "",
       "Preview server output:",
       "Error: listen EADDRINUSE: address already in use 127.0.0.1:5173",
       "",
       "Port is already in use. Stop the existing preview server for http://127.0.0.1:5173/, or start preview with a different port.",
-    ].join("\n")
-  );
+    ].join("\n"),
+    issues: [
+      {
+        code: "preview_port_in_use",
+        path: [],
+        constraint: "available_preview_port",
+      },
+    ],
+  });
   expect(fetch).not.toHaveBeenCalled();
 });
