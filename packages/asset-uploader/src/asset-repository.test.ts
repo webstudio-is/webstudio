@@ -479,6 +479,21 @@ describe("PostgresAssetRepository", () => {
       context.postgrest.client
     );
     expect(dependencies.uploadFile).not.toHaveBeenCalled();
+
+    dependencies.deleteAssetsWithClient.mockClear();
+    dependencies.loadAssetUploadReservationsByProjectWithClient.mockRejectedValueOnce(
+      new Error("Reservation lookup failed")
+    );
+    await expect(
+      repository.createCollectionEntry({
+        folderId: folder.id,
+        values: { title: "Hello world" },
+      })
+    ).rejects.toThrow("Reservation lookup failed");
+    expect(dependencies.deleteAssetsWithClient).toHaveBeenCalledWith(
+      { projectId: "project-1", ids: [createdAsset.id] },
+      context.postgrest.client
+    );
   });
 
   test("rejects collection entry filenames beyond the Assets limit", async () => {
@@ -1459,11 +1474,13 @@ describe("PostgresAssetRepository", () => {
       name,
       mimeType,
       size = 10,
+      folderId = "posts",
     }: {
       id: string;
       name: string;
       mimeType: string;
       size?: number;
+      folderId?: string;
     }): CanonicalAssetFileEntry => ({
       projectId: "project-1",
       assetId: id,
@@ -1475,7 +1492,7 @@ describe("PostgresAssetRepository", () => {
         path: `posts/${name}`,
         key: name.slice(0, name.lastIndexOf(".")),
         extension: name.slice(name.lastIndexOf(".") + 1),
-        folderId: "posts",
+        ...(folderId === "" ? {} : { folderId }),
         mimeType,
         size,
         revision: `revision-${id}`,
@@ -1489,26 +1506,46 @@ describe("PostgresAssetRepository", () => {
       mimeType: "application/json",
       size: new TextEncoder().encode(configSource).byteLength,
     });
+    const templateSource = "---\ndraft: true\n---\nTemplate\n";
+    const postSource =
+      "---\ntitle: Hello world\nslug: hello-world\ndraft: false\n---\n";
     const template = createEntry({
       id: "template",
       name: "template.mdx",
       mimeType: "text/mdx",
+      size: new TextEncoder().encode(templateSource).byteLength,
     });
     const post = createEntry({
       id: "post",
       name: "hello-world.mdx",
       mimeType: "text/mdx",
+      size: new TextEncoder().encode(postSource).byteLength,
+    });
+    const rootConfig = createEntry({
+      id: "root-config",
+      name: "collection.json",
+      mimeType: "application/json",
+      folderId: "",
     });
     dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
       config,
       template,
       post,
+      rootConfig,
     ]);
     dependencies.createAssetIndex.mockResolvedValue({} as never);
-    const readFile = vi.fn(async () => ({
-      data: new Blob([configSource]).stream(),
-      contentLength: new TextEncoder().encode(configSource).byteLength,
-    }));
+    const sources = new Map([
+      ["collection.json", configSource],
+      ["template.mdx", templateSource],
+      ["hello-world.mdx", postSource],
+    ]);
+    const readFile = vi.fn(async (name: string) => {
+      const source = sources.get(name) ?? "";
+      return {
+        data: new Blob([source]).stream(),
+        contentLength: new TextEncoder().encode(source).byteLength,
+      };
+    });
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
@@ -1524,7 +1561,12 @@ describe("PostgresAssetRepository", () => {
     );
 
     expect(dependencies.createAssetIndex).toHaveBeenCalledWith(
-      expect.objectContaining({ entries: [post] })
+      expect.objectContaining({
+        entries: [
+          expect.objectContaining({ assetId: "post" }),
+          expect.objectContaining({ assetId: "root-config" }),
+        ],
+      })
     );
 
     const duplicateTemplate = createEntry({
@@ -1569,6 +1611,47 @@ describe("PostgresAssetRepository", () => {
     ).rejects.toThrow(
       "A collection folder must contain exactly one collection.json"
     );
+
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      config,
+      template,
+      post,
+    ]);
+    sources.set("template.mdx", "---\ndraft: [\n---\n");
+    await expect(
+      repository.prepareIndex(
+        createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "base", includeMetadata: true },
+        })
+      )
+    ).rejects.toThrow("Collection template is invalid");
+
+    sources.set("template.mdx", templateSource);
+    sources.set(
+      "hello-world.mdx",
+      "---\ntitle: Hello world\nslug: wrong-slug\n---\n"
+    );
+    await expect(
+      repository.prepareIndex(
+        createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "base", includeMetadata: true },
+        })
+      )
+    ).rejects.toThrow(
+      'Collection entry "hello-world.mdx": The slug must match the entry filename'
+    );
+
+    sources.set("hello-world.mdx", "---\nslug: hello-world\n---\n");
+    await expect(
+      repository.prepareIndex(
+        createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "base", includeMetadata: true },
+        })
+      )
+    ).rejects.toThrow('Collection entry "hello-world.mdx": Title');
   });
 
   test("rejects content snapshots when a collection cannot identify its template", async () => {

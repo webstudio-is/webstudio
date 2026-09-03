@@ -116,8 +116,9 @@ generic text file, pasting, moving, or duplicating another file directly into
 the collection is disabled. Put images and other supporting files in a
 subfolder. The collection configuration and template do not appear in Content
 Engine query results. Keep `collection.json` valid and its referenced template
-available; Webstudio blocks collection queries and publishing when it cannot
-safely identify the reserved files.
+available. Webstudio blocks collection queries and publishing when it cannot
+safely identify the reserved files, the template is invalid, or an entry no
+longer matches the schema and its filename slug.
 
 **Delete unused assets** does not list the files directly inside a collection
 folder. Collection entries are loaded dynamically and may not have a direct

@@ -316,6 +316,7 @@ export const CollectionSettingsDialog = ({
               const protectedField =
                 field.key === collection.config.slugField ||
                 field.key === collection.config.generateSlugFrom;
+              const requiredField = field.key === collection.config.slugField;
               const stringField = field.type === "string";
               const numberField =
                 field.type === "number" || field.type === "integer";
@@ -392,7 +393,7 @@ export const CollectionSettingsDialog = ({
                       <Checkbox
                         aria-label={`${field.label} required`}
                         checked={field.required}
-                        disabled={protectedField}
+                        disabled={requiredField}
                         onCheckedChange={(checked) =>
                           updateField(index, {
                             ...field,
