@@ -141,9 +141,10 @@ export const resolveMcpPreviewInput = async (
   };
 };
 
-const getRunningPreviewTarget = (
-  previewStatus: { running: boolean; url?: string }
-) => {
+const getRunningPreviewTarget = (previewStatus: {
+  running: boolean;
+  url?: string;
+}) => {
   if (previewStatus.running === false || previewStatus.url === undefined) {
     return;
   }
