@@ -432,7 +432,8 @@ export const ContentDatabaseDiagnostics = ({
               ? value.queryIssues.map((issue, index) => (
                   <RequestDiagnosticDisclosure
                     key={`${issue.path.join(".")}:${issue.code}:${index}`}
-                    title={`${issue.severity === "error" ? "Error" : "Warning"} · ${issue.message}`}
+                    severity={issue.severity}
+                    title={issue.message}
                     label={`Query${
                       issue.path.length === 0
                         ? ""
@@ -444,7 +445,8 @@ export const ContentDatabaseDiagnostics = ({
               : value.queryWarnings?.map((warning, index) => (
                   <RequestDiagnosticDisclosure
                     key={`query-warning:${index}`}
-                    title={`Warning · ${warning}`}
+                    severity="warning"
+                    title={warning}
                     label="Query setup"
                     details="Current query"
                   />
@@ -452,7 +454,8 @@ export const ContentDatabaseDiagnostics = ({
             {value.issues?.map((issue, index) => (
               <RequestDiagnosticDisclosure
                 key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
-                title={`${issue.severity === "error" ? "Error" : "Warning"} · ${issue.message}`}
+                severity={issue.severity}
+                title={issue.message}
                 label={getRequestSourceDiagnosticLabel(issue)}
                 details={getRequestSourceDiagnosticDescription(issue)}
               />

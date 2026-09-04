@@ -187,19 +187,22 @@ test("orders collapsible sections and opens only database sizes by default", () 
     "closed",
   ]);
   const diagnosticTriggers = triggers.filter((trigger) =>
-    trigger.parentElement?.textContent?.startsWith("Warning · ")
+    trigger.getAttribute("aria-label")?.startsWith("Warning: ")
   );
   expect(diagnosticTriggers).toHaveLength(2);
   expect(diagnosticTriggers.map((trigger) => trigger.dataset.state)).toEqual([
     "closed",
     "closed",
   ]);
+  expect(container.textContent).toContain("Invalid YAML at line 3, column 1");
   expect(container.textContent).toContain(
-    "Warning · Invalid YAML at line 3, column 1"
+    "Asset field properties.subtitle is not currently observed"
   );
-  expect(container.textContent).toContain(
-    "Warning · Asset field properties.subtitle is not currently observed"
-  );
+  expect(
+    diagnosticTriggers[0]?.parentElement?.querySelector(
+      'svg[aria-hidden="true"]'
+    )
+  ).not.toBeNull();
   expect(container.textContent).not.toContain("posts/broken.md:3:1");
   expect(container.textContent).not.toContain("query.where.all.0.field");
   expect(container.textContent).toContain("0 errors and 2 warnings.");
@@ -322,13 +325,13 @@ test("counts and labels query setup errors by their severity", () => {
     "Error · Limit must be a positive integer"
   );
   expect(container.textContent).toContain(
-    "Warning · The sort field is not currently observed"
+    "The sort field is not currently observed"
   );
   expect(container.textContent).not.toContain("query.limit");
   const diagnosticTriggers = Array.from(
     container.querySelectorAll<HTMLButtonElement>('button[data-state="closed"]')
   ).filter((trigger) =>
-    trigger.parentElement?.textContent?.match(/^(Error|Warning) · /)
+    trigger.getAttribute("aria-label")?.match(/^(Error|Warning): /)
   );
   act(() => diagnosticTriggers.forEach((trigger) => trigger.click()));
   expect(container.textContent).toContain("Query · query.limit");

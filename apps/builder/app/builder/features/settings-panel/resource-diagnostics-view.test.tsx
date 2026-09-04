@@ -154,7 +154,7 @@ test("shows every detailed diagnostic instead of the ordinary preview error", ()
   });
 
   expect(container.textContent).toContain(
-    "Warning · Markdown frontmatter contains invalid YAML"
+    "Markdown frontmatter contains invalid YAML"
   );
   expect(container.textContent).toContain("Error · Unexpected closing tag");
   expect(container.textContent).not.toContain("content/broken.md:4:1");

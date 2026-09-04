@@ -9,12 +9,14 @@ import {
   PanelTabsTrigger,
   rawTheme,
   ScrollAreaNative,
+  SectionTitle,
+  SectionTitleLabel,
   styled,
   Text,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { AlertIcon, InfoCircleIcon, SpinnerIcon } from "@webstudio-is/icons";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 
 export const clearSettledDiagnosticsKey = (
@@ -104,10 +106,12 @@ export const RequestDiagnosticsRow = ({
 );
 
 export const RequestDiagnosticDisclosure = ({
+  severity,
   title,
   label,
   details,
 }: {
+  severity: "error" | "warning";
   title: string;
   label: string;
   details: ReactNode;
@@ -121,11 +125,26 @@ export const RequestDiagnosticDisclosure = ({
       }}
     >
       <CollapsibleSectionRoot
-        label={title}
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         fullWidth
         showSeparator={false}
+        trigger={
+          <SectionTitle
+            aria-label={`${severity === "error" ? "Error" : "Warning"}: ${title}`}
+          >
+            {severity === "warning" && (
+              <AlertIcon
+                aria-hidden
+                color={cssVar("--foreground-warning")}
+                style={{ flexShrink: 0 }}
+              />
+            )}
+            <SectionTitleLabel>
+              {severity === "error" ? `Error · ${title}` : title}
+            </SectionTitleLabel>
+          </SectionTitle>
+        }
       >
         <Flex
           direction="column"

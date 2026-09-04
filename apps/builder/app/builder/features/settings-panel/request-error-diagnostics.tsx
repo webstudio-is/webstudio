@@ -363,7 +363,8 @@ export const RequestErrorDiagnostics = ({
         {sourceDiagnostics.map((diagnostic, index) => (
           <RequestDiagnosticDisclosure
             key={`${diagnostic.path}:${diagnostic.code}:${index}`}
-            title={`${diagnostic.severity === "error" ? "Error" : "Warning"} · ${diagnostic.message}`}
+            severity={diagnostic.severity}
+            title={diagnostic.message}
             label={getRequestSourceDiagnosticLabel(diagnostic)}
             details={getRequestSourceDiagnosticDescription(diagnostic)}
           />
@@ -371,7 +372,8 @@ export const RequestErrorDiagnostics = ({
         {queryDiagnostics.map((diagnostic, index) => (
           <RequestDiagnosticDisclosure
             key={`${diagnostic.path.join(".")}:${diagnostic.code}:${index}`}
-            title={`${diagnostic.severity === "warning" ? "Warning" : "Error"} · ${diagnostic.message}`}
+            severity={diagnostic.severity}
+            title={diagnostic.message}
             label={`${
               diagnostic.context === "diagnostics"
                 ? "Diagnostics response"
