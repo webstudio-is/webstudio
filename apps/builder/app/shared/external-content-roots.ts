@@ -284,7 +284,7 @@ const getMutationRootChildren = (
   return [...templateChildren, ...authoredChildren];
 };
 
-const getTemplateOwnership = (entry: RootEntry) => {
+const getTemplateSnapshot = (entry: RootEntry) => {
   const data = getWebstudioData();
   const sourceBlock = data.instances.get(entry.sourceBlockInstanceId);
   const templateContainers =
@@ -298,7 +298,10 @@ const getTemplateOwnership = (entry: RootEntry) => {
     templateContainers.map(({ id }) => id),
     templateContainers.map(({ id }) => extractWebstudioFragment(data, id))
   );
-  return getExternalContentFragmentOwnership(templateFragment);
+  return {
+    containerIds: templateContainers.map(({ id }) => id),
+    ownership: getExternalContentFragmentOwnership(templateFragment),
+  };
 };
 
 const registerMutationRoot = (
@@ -306,6 +309,7 @@ const registerMutationRoot = (
   fragment: WebstudioFragment
 ) => {
   const owned = getExternalContentFragmentOwnership(fragment);
+  const templateSnapshot = getTemplateSnapshot(entry);
   const instanceSelector = parseContentBlockRenderScope(entry.renderScope);
   entry.unregisterMutationRoot = registerExternalContentRoot(entry.key, {
     sourceBlockInstanceId: entry.sourceBlockInstanceId,
@@ -321,7 +325,8 @@ const registerMutationRoot = (
     instanceIds: owned.instances,
     propIds: owned.props,
     ownership: owned,
-    templateOwnership: getTemplateOwnership(entry),
+    templateContainerIds: templateSnapshot.containerIds,
+    templateOwnership: templateSnapshot.ownership,
     mutationRevision: 0,
     projectId: entry.projectId,
     identity: entry.root.identity,
@@ -1148,7 +1153,9 @@ subscribeExternalContentTemplateMutations((rootKeys) => {
     }
     const registeredRoot = getExternalContentRoots().get(key);
     if (registeredRoot !== undefined) {
-      registeredRoot.templateOwnership = getTemplateOwnership(entry);
+      const templateSnapshot = getTemplateSnapshot(entry);
+      registeredRoot.templateContainerIds = templateSnapshot.containerIds;
+      registeredRoot.templateOwnership = templateSnapshot.ownership;
     }
     const templateVersion = ++entry.templateVersion;
     const rematerialize = async () => {

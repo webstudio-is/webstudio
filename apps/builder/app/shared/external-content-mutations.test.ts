@@ -334,6 +334,99 @@ describe("external content mutation detection", () => {
       })
     ).toEqual(["scope"]);
   });
+
+  test("detects remotely applied Templates container changes", () => {
+    const template = {
+      type: "instance" as const,
+      id: "templates",
+      component: blockTemplateComponent,
+      children: [],
+    };
+    const removalRoots = new Map([
+      [
+        "scope",
+        {
+          sourceBlockInstanceId: "block",
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateContainerIds: [template.id],
+          templateOwnership: { instances: new Set([template.id]) },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+    const removalPayload = [
+      change("instances", [
+        { op: "replace" as const, path: ["block", "children"], value: [] },
+        { op: "remove" as const, path: [template.id] },
+      ]),
+    ];
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: {
+          instances: new Map([
+            [
+              "block",
+              {
+                type: "instance",
+                id: "block",
+                component: blockComponent,
+                children: [],
+              },
+            ],
+          ]),
+        },
+        roots: removalRoots,
+        payload: removalPayload,
+      })
+    ).toEqual(["scope"]);
+
+    const additionRoots = new Map([
+      [
+        "scope",
+        {
+          sourceBlockInstanceId: "block",
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateContainerIds: [],
+          templateOwnership: { instances: new Set<string>() },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+    const additionPayload = [
+      change("instances", [
+        { op: "add" as const, path: [template.id], value: template },
+        {
+          op: "replace" as const,
+          path: ["block", "children"],
+          value: [{ type: "id", value: template.id }],
+        },
+      ]),
+    ];
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: {
+          instances: new Map([
+            [
+              "block",
+              {
+                type: "instance",
+                id: "block",
+                component: blockComponent,
+                children: [{ type: "id", value: template.id }],
+              },
+            ],
+            [template.id, template],
+          ]),
+        },
+        roots: additionRoots,
+        payload: additionPayload,
+      })
+    ).toEqual(["scope"]);
+  });
 });
 
 test("identifies only instances authored by external content", () => {

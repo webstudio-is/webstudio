@@ -31,6 +31,7 @@ export type ExternalContentRoot = {
   instanceIds: ReadonlySet<Instance["id"]>;
   propIds?: ReadonlySet<Prop["id"]>;
   ownership?: ExternalContentOwnership;
+  templateContainerIds?: readonly Instance["id"][];
   templateOwnership?: ExternalContentOwnership;
   mutationRevision: number;
   projectId?: string;
@@ -350,11 +351,21 @@ export const getAffectedExternalContentTemplateRootKeys = ({
     .filter(([, root]) => {
       const sourceBlockInstanceId =
         root.sourceBlockInstanceId ?? root.blockInstanceId;
+      const currentTemplateContainerIds = getTemplateContainerIds(
+        state.instances,
+        sourceBlockInstanceId
+      );
+      if (
+        root.templateContainerIds !== undefined &&
+        (root.templateContainerIds.length !==
+          currentTemplateContainerIds.length ||
+          root.templateContainerIds.some(
+            (id, index) => id !== currentTemplateContainerIds[index]
+          ))
+      ) {
+        return true;
+      }
       if (nextInstances !== undefined) {
-        const currentTemplateContainerIds = getTemplateContainerIds(
-          state.instances,
-          sourceBlockInstanceId
-        );
         const nextTemplateContainerIds = getTemplateContainerIds(
           nextInstances,
           sourceBlockInstanceId
