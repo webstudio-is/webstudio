@@ -344,7 +344,7 @@ const curatedPublicApiOperationDocumentation = [
     description:
       "Insert authored/styled Webstudio JSX with components, text, props, tokens, and styles. The CLI converts the JSX string to structured Webstudio data before mutation.",
     examples: [
-      'MCP tool: insert-fragment {"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\'section\' />"}',
+      'MCP tool: insert-fragment {"parentInstanceId":"parent-id","fragment":"<section />"}',
     ],
   },
   {

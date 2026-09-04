@@ -4,6 +4,7 @@ import { blockComponent, blockTemplateComponent } from "./core-metas";
 import { coreTemplates } from "./core-templates";
 import {
   contentBlockMdxTemplateDescriptors,
+  getDefaultContentBlockTemplateName,
   getContentBlockMdxTemplateDescriptor,
 } from "./content-block";
 
@@ -85,20 +86,27 @@ test("generates the ordered semantic defaults from their descriptors", () => {
         index,
         component: instance.component,
         label: instance.label,
+        name: instance.name,
       };
     }
     return {
       type: "semantic" as const,
       resolutionKey: descriptor.resolutionKey,
       label: instance.label,
+      name: instance.name,
     };
   });
 
   const expectedSemanticDefaults = contentBlockMdxTemplateDescriptors.map(
-    ({ resolutionKey, label }) => ({
+    (descriptor) => ({
       type: "semantic" as const,
-      resolutionKey,
-      label,
+      resolutionKey: descriptor.resolutionKey,
+      label: descriptor.label,
+      name: getDefaultContentBlockTemplateName(
+        descriptor.kind === "element"
+          ? { component: "ws:element", tag: descriptor.tag }
+          : { component: descriptor.component }
+      ),
     })
   );
   expect(
@@ -116,6 +124,7 @@ test("generates the ordered semantic defaults from their descriptors", () => {
       ),
       component: "HtmlEmbed",
       label: undefined,
+      name: "HtmlEmbed",
     },
   ]);
 });

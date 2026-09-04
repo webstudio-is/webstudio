@@ -22,6 +22,7 @@ import {
 } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   elementComponent,
+  getComponentByJsxName,
   getStyleDeclKey,
   type ContentBlockDiagnostic,
   type ContentBlockExternalContentIdentity,
@@ -1262,15 +1263,30 @@ export const materializeMdxAuthoredContent = ({
         children.push({ type: "id", value: rootId });
         continue;
       }
-      const materializedComponent = materializeMdxComponent(node);
+      const registeredComponent =
+        node.type === "template" && node.syntax === "jsx" && metas !== undefined
+          ? getComponentByJsxName({
+              name: node.name,
+              components: metas.keys(),
+            })
+          : undefined;
+      const materializedComponent = materializeMdxComponent(
+        node,
+        registeredComponent
+      );
       if (materializedComponent !== undefined) {
+        const isDirectRegisteredComponent =
+          "authoredChildren" in materializedComponent;
         const createId = createMdxScopeIdGenerator({ identity, path });
         const instanceId = createId();
         const instance: Instance = {
           type: "instance",
           id: instanceId,
           component: materializedComponent.component,
-          children: materializedComponent.children,
+          children:
+            "authoredChildren" in materializedComponent
+              ? visit(node.children, path)
+              : materializedComponent.children,
         };
         fragment.instances.push(instance);
         const componentData =
@@ -1432,8 +1448,19 @@ export const materializeMdxAuthoredContent = ({
               assetId: assetReference?.assetId,
             });
           } else {
+            const declaredType = metas?.get(instance.component)?.props?.[
+              instanceProp.name
+            ]?.type;
+            const directBinding =
+              isDirectRegisteredComponent &&
+              (declaredType === "string" ||
+                declaredType === "number" ||
+                declaredType === "boolean")
+                ? parseMdxStaticProp({ prop: instanceProp, type: declaredType })
+                : undefined;
             const binding =
-              assetReference === undefined
+              directBinding ??
+              (assetReference === undefined
                 ? getMdxPropBinding({
                     capabilities: componentCapabilities,
                     instance,
@@ -1447,7 +1474,7 @@ export const materializeMdxAuthoredContent = ({
                       jsxPropName,
                     }).editable
                   ? { type: "asset" as const, value: assetReference.assetId }
-                  : undefined;
+                  : undefined);
             if (binding === undefined) {
               const eligibility = getMdxPropEligibility({
                 capabilities: componentCapabilities,
@@ -2773,6 +2800,26 @@ export const reconcileMdxAuthoredContent = ({
       instanceProps.length === 0 &&
       (componentProvenance === undefined ||
         originalComponentNode?.type === "template");
+    let genericNamedJsxChildren: readonly MdxAuthoredNode[] | undefined;
+    if (
+      namedJsxProvenance !== undefined &&
+      hasMdxComponentAdapter(instance.component) === false
+    ) {
+      active.add(instanceId);
+      genericNamedJsxChildren = reconcileChildren({
+        original:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.children
+            : [],
+        children: instance.children,
+        mode:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.mdxMode
+            : mode,
+        active,
+      });
+      active.delete(instanceId);
+    }
     const componentNode =
       instance.component === elementComponent ||
       preferComponentReference ||
@@ -2790,7 +2837,16 @@ export const reconcileMdxAuthoredContent = ({
         instance,
         props: authoredComponentProps,
         instanceProps,
+        templateName:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.name
+            : undefined,
+        mdxMode:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.mdxMode
+            : mode,
         jsxPropContext: namedJsxProvenance?.jsxPropContext,
+        children: genericNamedJsxChildren,
       });
     const sourcePreservingComponent =
       namedJsxProvenance === undefined ||

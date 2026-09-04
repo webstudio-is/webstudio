@@ -4263,7 +4263,7 @@ describe("project session mcp adapter", () => {
         inputFile: expect.objectContaining({
           path: ".temp/design-system-section.json",
           contents: expect.objectContaining({
-            fragment: expect.stringContaining("ws:tag='h2'"),
+            fragment: expect.stringContaining("<h2>"),
           }),
         }),
         nextPhase: "commit-section",
@@ -5276,7 +5276,8 @@ describe("project session mcp adapter", () => {
           }),
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-            jsxElement: "<radix.Checkbox />",
+            jsxName: "RadixCheckbox",
+            jsxElement: "<RadixCheckbox />",
             hasTemplate: true,
             templateRootComponents: [
               "@webstudio-is/sdk-components-react-radix:Label",
@@ -5285,7 +5286,8 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({
             component:
               "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
-            jsxElement: "<radix.SelectItemIndicator />",
+            jsxName: "SelectItemIndicator",
+            jsxElement: "<SelectItemIndicator />",
             standaloneInsertable: false,
           }),
         ]),
@@ -5674,7 +5676,6 @@ describe("project session mcp adapter", () => {
     expect(collectionDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "ws:collection",
-        jsxElement: "<ws.collection />",
         props: expect.objectContaining({
           data: expect.objectContaining({ type: "json", required: true }),
           item: expect.objectContaining({ type: "string" }),
@@ -5682,12 +5683,17 @@ describe("project session mcp adapter", () => {
         }),
       })
     );
+    expect(collectionDetails.structuredContent.data).not.toHaveProperty(
+      "jsxElement"
+    );
     expect(blockTemplateDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "ws:block-template",
-        jsxElement: "<ws.blockTemplate />",
         standaloneInsertable: false,
       })
+    );
+    expect(blockTemplateDetails.structuredContent.data).not.toHaveProperty(
+      "jsxElement"
     );
     expect(selectTemplateDetails.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -5839,25 +5845,25 @@ describe("project session mcp adapter", () => {
         covered: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Switch",
-            jsxElement: "<radix.Switch />",
+            jsxElement: "<Switch />",
           }),
         ]),
         missing: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
-            jsxElement: "<radix.Select />",
+            jsxElement: "<RadixSelect />",
           }),
         ]),
         missingRoots: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
-            jsxElement: "<radix.Select />",
+            jsxElement: "<RadixSelect />",
           }),
         ]),
         missingParts: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:AccordionItem",
-            jsxElement: "<radix.AccordionItem />",
+            jsxElement: "<AccordionItem />",
           }),
         ]),
       })
@@ -6093,22 +6099,11 @@ describe("project session mcp adapter", () => {
             result: { instances },
           });
         }
-        if (command === "insert-fragment") {
-          const fragment =
-            isTestRecord(input) && isTestRecord(input.fragment)
-              ? input.fragment
-              : undefined;
+        if (command === "insert-component") {
           expect(input).toEqual(
             expect.objectContaining({
               parentInstanceId: "animation-group",
-              fragment: expect.objectContaining({
-                instances: expect.arrayContaining([
-                  expect.objectContaining({
-                    component:
-                      "@webstudio-is/sdk-components-animation:AnimateText",
-                  }),
-                ]),
-              }),
+              component: "@webstudio-is/sdk-components-animation:AnimateText",
             })
           );
           instances.push({
@@ -6117,16 +6112,14 @@ describe("project session mcp adapter", () => {
             depth: 2,
           });
           return createEnvelope({
-            operationId: "instances.insertFragment",
+            operationId: "instances.insertComponent",
             result: {
-              rootInstanceIds: ["animate-text"],
               instanceIds: ["animate-text"],
               parentInstanceId:
                 isTestRecord(input) &&
                 typeof input.parentInstanceId === "string"
                   ? input.parentInstanceId
                   : undefined,
-              fragment,
             },
             state: { committed: true, freshness: {} },
             version: 2,
@@ -6151,16 +6144,10 @@ describe("project session mcp adapter", () => {
     });
 
     expect(executeOperation).toHaveBeenNthCalledWith(2, {
-      command: "insert-fragment",
+      command: "insert-component",
       input: expect.objectContaining({
         parentInstanceId: "animation-group",
-        fragment: expect.objectContaining({
-          instances: expect.arrayContaining([
-            expect.objectContaining({
-              component: "@webstudio-is/sdk-components-animation:AnimateText",
-            }),
-          ]),
-        }),
+        component: "@webstudio-is/sdk-components-animation:AnimateText",
       }),
       dryRun: false,
     });
@@ -6168,7 +6155,7 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         inserted: expect.objectContaining({
           component: "@webstudio-is/sdk-components-animation:AnimateText",
-          mode: "fragment",
+          mode: "component",
         }),
         parentInstanceId: "animation-group",
       })

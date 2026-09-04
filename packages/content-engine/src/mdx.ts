@@ -43,6 +43,7 @@ import {
   serializeMdxDocument,
 } from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
+import htmlTags from "html-tags";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -483,6 +484,8 @@ const unsupportedElementTags = new Set([
   "title",
 ]);
 
+const supportedIntrinsicElementTags = new Set<string>(htmlTags);
+
 const urlPropNames = new Set([
   "action",
   "cite",
@@ -739,27 +742,33 @@ const createMdxJsxElementHandler =
   (options: MapHastOptions = {}): Handler =>
   (state, value) => {
     const node = value as SyntaxTreeNode;
+    const tagName =
+      typeof node.name === "string"
+        ? node.name
+        : throwUnsafeNode(node, "MDX JSX elements must have a name");
+    const isTemplate = isMdxTemplateComponentName(tagName);
+    const isIntrinsic = supportedIntrinsicElementTags.has(tagName);
     if (
-      node.name !== "ws.element" &&
-      isMdxTemplateComponentName(node.name) === false
+      tagName !== "ws.element" &&
+      isTemplate === false &&
+      isIntrinsic === false
     ) {
       return throwUnsafeNode(
         node,
-        "Only ws.element and named template components are supported in authored MDX"
+        "Only standard HTML elements and named template components are supported in authored MDX"
       );
     }
     const staticProps = mapStaticProps(node, options);
     const properties = Object.fromEntries(
       staticProps.map((prop) => [prop.name, prop.value])
     );
-    const tagName = node.name;
     const result = state(value, tagName, properties, state.all(value));
     if (isSyntaxTreeNode(result)) {
       setHastData(result, {
         mdxMode: getMdxMode(node),
         mdxSelfClosing:
           isRecord(node.data) && node.data.mdxSelfClosing === true,
-        ...(tagName === "ws.element"
+        ...(tagName === "ws.element" || isIntrinsic
           ? {}
           : { mdxTemplateName: tagName, mdxTemplateProps: staticProps }),
         mdxPropSourceRanges: Object.fromEntries(

@@ -228,9 +228,7 @@ describe("materializeMdxSource", () => {
       root: result.root,
       fragment,
     });
-    expect(source).toBe(
-      '<ws.element ws:name="Image" title="Greeting">Hello</ws.element>\n'
-    );
+    expect(source).toBe('<Image title="Greeting">Hello</Image>\n');
 
     const reloaded = await materializeMdxSource({
       source,
@@ -529,9 +527,7 @@ describe("materializeMdxSource", () => {
     );
 
     expect(source).toContain("<Card>");
-    expect(source).toContain(
-      '<ws.element ws:tag="button">Authored action</ws.element>'
-    );
+    expect(source).toContain("<button>Authored action</button>");
     expect(reloadedButton?.children).toEqual([
       { type: "text", value: "Authored action" },
     ]);
@@ -2511,7 +2507,7 @@ featureImage:
       root: result.root,
       fragment,
     });
-    expect(source).toBe('<ws.element ws:name="Image" src="./hero.png" />\n');
+    expect(source).toBe('<Image src="./hero.png" />\n');
 
     const customized = structuredClone(fragment);
     customized.props.push({
@@ -2526,9 +2522,7 @@ featureImage:
         root: result.root,
         fragment: customized,
       })
-    ).toBe(
-      '<ws.element ws:name="Image" src="./hero.png" className="hero" />\n'
-    );
+    ).toBe('<Image src="./hero.png" className="hero" />\n');
 
     const reloaded = await materializeMdxSource({
       source,
@@ -2560,7 +2554,7 @@ featureImage:
       root: reloaded.root,
       fragment: reset,
     });
-    expect(resetSource).toBe('<ws.element ws:name="Image" />\n');
+    expect(resetSource).toBe("<Image />\n");
     const resetReloaded = await materializeMdxSource({
       source: resetSource,
       identity,

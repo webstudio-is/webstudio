@@ -418,7 +418,7 @@ Commands:
 
 Commands:
 
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section' ws:style={css`padding: 32px;`}><ws.element ws:tag='h2'>Product OS</ws.element><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<section ws:style={css`padding: 32px;`}><h2>Product OS</h2><Switch><SwitchThumb /></Switch></section>"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"Form"}
 
@@ -426,7 +426,7 @@ Notes:
 
 - Use MCP `insert-fragment` as the default way to author styled component trees. It converts JSX to a structured fragment before mutation.
 - Use only exact component ids returned by `components.search`, `components.get`, or `templates.get`. Never derive or guess component ids.
-- The `ws:` namespace contains specific Webstudio core components; it is not HTML-tag shorthand. Use `<ws.element ws:tag="div">` for a native `div` and `<ws.element ws:tag="form">` for a native form, never `<ws.div>` or `<ws.form>`.
+- Use lowercase HTML JSX such as `<div>` and `<form>`. The internal `ws:` namespace is not HTML-tag shorthand.
 - For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"Form"`.
 - MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
 - In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
@@ -434,7 +434,7 @@ Notes:
 - Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
 - Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
 - Plain prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
-- Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`.
+- Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<Switch><SwitchThumb /></Switch>`.
 - Webstudio applies a registered template automatically when using `insert-component`, so composed components such as Switch include required child parts and styles.
 - Use `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get` to discover known registry items, component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
 - Component/template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. They are for Builder/MCP discovery, not a published shadcn install registry yet.
@@ -476,11 +476,11 @@ Notes:
 - `renderScope` accepts any non-empty stable key for one rendered occurrence. Use a page-based key for a direct Content Block and a distinct key for each repeated Collection occurrence. It does not load a page, route parameters, or resource results. Supply the concrete scoped values needed to resolve an expression through `variables`.
 - For a result-one Assets resource, preview the concrete query, then connect its persisted expression with the previewed item supplied as `variables`, for example `source:{"type":"expression","value":"post.data.id"}` and `variables:{"post":{"data":{"id":"<mdxAssetId>"}}}`.
 - Connecting replaces existing Body content. If the result returns `requiresConfirmation:true`, report that replacement to the user and repeat the same call with `confirmReplacement:true` only after approval.
-- Prefer Markdown for standard document content; it automatically uses a unique matching semantic template when one exists. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties that Markdown cannot express.
+- Prefer Markdown for standard document content; it automatically uses a unique matching semantic template when one exists. Use lowercase JSX such as `<section>` for HTML with authored properties that Markdown cannot express.
 - Verify that the Content Block has exactly one direct Templates container before connecting or editing MDX. Zero or multiple containers block materialization and publication.
-- Read the Content Block's Templates children before writing a custom reference. Use capitalized JSX such as `<PromotionCard />` for a unique JSX-compatible top-level instance name, or legacy `<ws.element ws:name="Promotion Card">` syntax for other names. `Image` and `CodeText` are reserved built-ins, so give custom templates distinct, unique names. JSX attributes accept quoted static values and bare booleans; expressions such as `{false}` are unsupported.
+- Read the Content Block's Templates children before writing a custom reference. Use capitalized JSX such as `<PromotionCard />` for its stable **Name**, which is independent from the display label. A matching template wins; otherwise Webstudio uses the exact registered component export. JSX attributes accept quoted static values and bare booleans; expressions such as `{false}` are unsupported. Legacy `ws.element`, `ws:name`, and `$.*` forms are compatibility input only.
 - When explicit JSX children match the designed template structure, their text and supported props overlay the cloned descendants and retain template styles. A mismatched child structure replaces the root defaults, while each authored child still resolves through a matching template when possible. An explicit empty pair clears defaults, and a self-closing reference keeps them. Editing inherited default content writes it back as explicit JSX children. Template resolution is live, so adding a matching semantic or named template later updates existing MDX. Preserve unresolved names and report their diagnostics instead of deleting them.
-- When a template is renamed or deleted, use `migrate-content-block-template-references` to update a selected set of affected MDX files. The first call returns a plan. Report its changed-file, update, omission, and diagnostic counts, then repeat the exact request with its `confirmationToken` only after approval. Renames and removals update custom-template JSX and legacy `ws:name` references; reserved `<Image>` and `<CodeText>` JSX stays unchanged. Renaming JSX to a name that is not JSX-compatible or is reserved converts that reference to the legacy form. Removing a paired reference unwraps and preserves its authored children; removing a self-closing reference removes the node because it has no authored children. Invalid files remain unchanged and are reported in diagnostics.
+- When a template is renamed or deleted, use `migrate-content-block-template-references` to update a selected set of affected MDX files. The first call returns a plan. Report its changed-file, update, omission, and diagnostic counts, then repeat the exact request with its `confirmationToken` only after approval. Renames and removals update named JSX and legacy `ws:name` references, including names such as `Image` and `CodeText` when they identify templates. Rename targets must be valid PascalCase JSX identifiers. Removing a paired reference unwraps and preserves its authored children; removing a self-closing reference removes the node because it has no authored children. Invalid files remain unchanged and are reported in diagnostics.
 - `edit-content-block-source` replaces the complete MDX source. Preserve frontmatter and unrelated source when making a bounded edit.
 - `update-content-block-frontmatter` replaces the complete frontmatter mapping. Inspect the current source first and include every property that must remain.
 - Store frontmatter images as exact `$ref` objects. Bind an Image source to the resolved `.src` field and its alt property to `.description` so the Asset description supplies alternative text.
@@ -1215,7 +1215,7 @@ Notes:
 
 Commands:
 
-- MCP tool: insert-collection {"parentInstanceId":"<instanceId>","data":{"type":"expression","value":"posts.data.items"},"itemFragment":"<ws.element ws:tag='article'><ws.element ws:tag='h2'>{expression`collectionItem.title`}</ws.element></ws.element>"}
+- MCP tool: insert-collection {"parentInstanceId":"<instanceId>","data":{"type":"expression","value":"posts.data.items"},"itemFragment":"<article><h2>{expression`collectionItem.title`}</h2></article>"}
 - MCP tool: inspect-instance {"instanceId":"<collectionId>","include":["props","bindings","children"]}
 
 Notes:
@@ -1280,7 +1280,7 @@ Commands:
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
 - MCP tool: list-breakpoints {}
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section'><ws.element ws:tag='p'>Section copy</ws.element></ws.element>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<section><p>Section copy</p></section>"}
 - MCP tool: update-styles {"updates":[{"instanceId":"<instanceId>","breakpoint":"<breakpointId-from-list-breakpoints>","property":"padding-left","value":{"type":"unit","unit":"px","value":24}}]}
 - MCP tool: preview.start {}
 - MCP tool: screenshot {"path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}

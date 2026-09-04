@@ -45,7 +45,7 @@ describe("MDX template migration", () => {
   test("previews nested AST renames while preserving frontmatter and comments", async () => {
     const plan = await planMdxTemplateMigration({
       projectId: "project",
-      migration: { type: "rename", from: "Card", to: "Feature Card" },
+      migration: { type: "rename", from: "Card", to: "FeatureCard" },
       files,
     });
 
@@ -64,8 +64,8 @@ describe("MDX template migration", () => {
     });
     expect(document.children[1]).toMatchObject({
       type: "template",
-      name: "Feature Card",
-      children: [{ type: "template", name: "Feature Card" }],
+      name: "FeatureCard",
+      children: [{ type: "template", name: "FeatureCard" }],
     });
     expect(document.children[2]).toMatchObject({
       type: "template",
@@ -73,7 +73,7 @@ describe("MDX template migration", () => {
     });
   });
 
-  test("renames JSX references and uses legacy syntax for incompatible names", async () => {
+  test("renames JSX references and rejects incompatible names", async () => {
     const file = {
       ...files[0],
       source: "<Card><Card /></Card>",
@@ -87,28 +87,16 @@ describe("MDX template migration", () => {
       "<FeatureCard>\n  <FeatureCard />\n</FeatureCard>\n"
     );
 
-    const legacyPlan = await planMdxTemplateMigration({
-      projectId: "project",
-      migration: { type: "rename", from: "Card", to: "Feature Card" },
-      files: [file],
-    });
-    expect(legacyPlan.files[0]?.source).toBe(
-      '<ws.element ws:name="Feature Card">\n  <ws.element ws:name="Feature Card" />\n</ws.element>\n'
-    );
     await expect(
-      parseMdxDocument({ source: legacyPlan.files[0]?.source ?? "" })
-    ).resolves.toMatchObject({
-      children: [
-        {
-          type: "template",
-          name: "Feature Card",
-          children: [{ type: "template", name: "Feature Card" }],
-        },
-      ],
-    });
+      planMdxTemplateMigration({
+        projectId: "project",
+        migration: { type: "rename", from: "Card", to: "Feature Card" },
+        files: [file],
+      })
+    ).rejects.toThrow("valid PascalCase MDX name");
   });
 
-  test("migrates a custom template without rewriting reserved adapter JSX", async () => {
+  test("migrates every reference because template names take precedence", async () => {
     const file = {
       ...files[0],
       source: `<Image src="hero.png" alt="Hero" />
@@ -124,10 +112,10 @@ describe("MDX template migration", () => {
       source: renamePlan.files[0]?.source ?? "",
     });
 
-    expect(renamePlan).toMatchObject({ updateCount: 1, changedFileCount: 1 });
+    expect(renamePlan).toMatchObject({ updateCount: 2, changedFileCount: 1 });
     expect(renamed.children).toMatchObject([
-      { type: "template", name: "Image", syntax: "jsx" },
-      { type: "template", name: "Photo", syntax: "ws-element" },
+      { type: "template", name: "Photo", syntax: "jsx" },
+      { type: "template", name: "Photo", syntax: "jsx" },
     ]);
 
     const removePlan = await planMdxTemplateMigration({
@@ -139,14 +127,12 @@ describe("MDX template migration", () => {
       source: removePlan.files[0]?.source ?? "",
     });
 
-    expect(removePlan).toMatchObject({ omissionCount: 1, changedFileCount: 1 });
-    expect(removed.children).toMatchObject([
-      { type: "template", name: "Image", syntax: "jsx" },
-    ]);
+    expect(removePlan).toMatchObject({ omissionCount: 2, changedFileCount: 1 });
+    expect(removed.children).toEqual([]);
   });
 
   test.each(["Image", "CodeText"])(
-    "uses legacy syntax when renaming custom JSX to reserved %s",
+    "uses canonical JSX when renaming a template to %s",
     async (reservedName) => {
       const plan = await planMdxTemplateMigration({
         projectId: "project",
@@ -154,9 +140,7 @@ describe("MDX template migration", () => {
         files: [{ ...files[0], source: "<Card />" }],
       });
 
-      expect(plan.files[0]?.source).toBe(
-        `<ws.element ws:name="${reservedName}" />\n`
-      );
+      expect(plan.files[0]?.source).toBe(`<${reservedName} />\n`);
     }
   );
 

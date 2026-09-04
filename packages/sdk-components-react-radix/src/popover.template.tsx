@@ -3,6 +3,7 @@ import {
   $,
   css,
   PlaceholderValue,
+  setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
 import { radix } from "./shared/proxy";
@@ -19,6 +20,9 @@ import {
   opacity,
 } from "./shared/theme";
 
+const { Button, HtmlEmbed, Text } = $;
+const { Popover, PopoverClose, PopoverContent, PopoverTrigger } = radix;
+
 /**
  * Styles source without animations:
  * https://github.com/shadcn-ui/ui/blob/main/apps/www/registry/default/ui/popover.tsx
@@ -32,13 +36,13 @@ export const meta: TemplateMeta = {
   description: "Displays rich content in a portal, triggered by a button.",
   order: 6,
   template: (
-    <radix.Popover>
-      <radix.PopoverTrigger>
-        <$.Button ws:style={getButtonStyle("outline")}>
+    <Popover>
+      <PopoverTrigger>
+        <Button ws:style={getButtonStyle("outline")}>
           {new PlaceholderValue("Button")}
-        </$.Button>
-      </radix.PopoverTrigger>
-      <radix.PopoverContent
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
         /**
          *  z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none
          **/
@@ -54,44 +58,45 @@ export const meta: TemplateMeta = {
           outline: none;
         `}
       >
-        <$.Text>{new PlaceholderValue("The text you can edit")}</$.Text>
-        <radix.PopoverClose
-          ws:label="Close Button"
-          /**
-           * absolute right-4 top-4
-           * rounded-sm opacity-70
-           * ring-offset-background
-           * hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-           * flex items-center justify-center h-4 w-4
-           **/
-          ws:style={css`
-            position: absolute;
-            right: ${spacing[4]};
-            top: ${spacing[4]};
-            border-radius: ${borderRadius.sm};
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: ${height[4]};
-            width: ${height[4]};
-            border: 0;
-            background-color: transparent;
-            outline: none;
-            &:hover {
-              opacity: ${opacity[100]};
-            }
-            &:focus-visible {
-              box-shadow: ${boxShadow.ring};
-            }
-          `}
-        >
-          <$.HtmlEmbed
-            ws:label="Close Icon"
-            ws:style={iconEmbedStyle}
-            code={LargeXIcon}
-          />
-        </radix.PopoverClose>
-      </radix.PopoverContent>
-    </radix.Popover>
+        <Text>{new PlaceholderValue("The text you can edit")}</Text>
+        {setInstanceMeta(
+          { label: "Close Button" },
+          <PopoverClose
+            /**
+             * absolute right-4 top-4
+             * rounded-sm opacity-70
+             * ring-offset-background
+             * hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+             * flex items-center justify-center h-4 w-4
+             **/
+            ws:style={css`
+              position: absolute;
+              right: ${spacing[4]};
+              top: ${spacing[4]};
+              border-radius: ${borderRadius.sm};
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: ${height[4]};
+              width: ${height[4]};
+              border: 0;
+              background-color: transparent;
+              outline: none;
+              &:hover {
+                opacity: ${opacity[100]};
+              }
+              &:focus-visible {
+                box-shadow: ${boxShadow.ring};
+              }
+            `}
+          >
+            {setInstanceMeta(
+              { label: "Close Icon" },
+              <HtmlEmbed ws:style={iconEmbedStyle} code={LargeXIcon} />
+            )}
+          </PopoverClose>
+        )}
+      </PopoverContent>
+    </Popover>
   ),
 };

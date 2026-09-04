@@ -7783,6 +7783,10 @@ export const runtimeOperationContractData = [
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
                           },
+                          name: {
+                            type: "string",
+                            minLength: 1,
+                          },
                           label: {
                             type: "string",
                           },
@@ -10988,6 +10992,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -14206,6 +14214,10 @@ export const runtimeOperationContractData = [
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
                           },
+                          name: {
+                            type: "string",
+                            minLength: 1,
+                          },
                           label: {
                             type: "string",
                           },
@@ -17411,6 +17423,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -23319,6 +23335,10 @@ export const runtimeOperationContractData = [
                                   description:
                                     "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
                                 },
+                                name: {
+                                  type: "string",
+                                  minLength: 1,
+                                },
                                 label: {
                                   type: "string",
                                 },
@@ -26732,6 +26752,10 @@ export const runtimeOperationContractData = [
                                   minLength: 1,
                                   description:
                                     "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                                },
+                                name: {
+                                  type: "string",
+                                  minLength: 1,
                                 },
                                 label: {
                                   type: "string",
@@ -30307,6 +30331,10 @@ export const runtimeOperationContractData = [
                     minLength: 1,
                     description:
                       "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                  },
+                  name: {
+                    type: "string",
+                    minLength: 1,
                   },
                   label: {
                     type: "string",
@@ -41410,6 +41438,10 @@ export const runtimeOperationContractData = [
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
                           },
+                          name: {
+                            type: "string",
+                            minLength: 1,
+                          },
                           label: {
                             type: "string",
                           },
@@ -44694,6 +44726,10 @@ export const runtimeOperationContractData = [
                             minLength: 1,
                             description:
                               "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          name: {
+                            type: "string",
+                            minLength: 1,
                           },
                           label: {
                             type: "string",
@@ -51741,6 +51777,10 @@ export const runtimeOperationContractData = [
                     description:
                       "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
                   },
+                  name: {
+                    type: "string",
+                    minLength: 1,
+                  },
                   label: {
                     type: "string",
                   },
@@ -57635,6 +57675,10 @@ export const runtimeOperationContractData = [
                     minLength: 1,
                     description:
                       "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                  },
+                  name: {
+                    type: "string",
+                    minLength: 1,
                   },
                   label: {
                     type: "string",
@@ -67522,6 +67566,10 @@ export const runtimeOperationContractData = [
                 description:
                   "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
               },
+              name: {
+                type: "string",
+                minLength: 1,
+              },
               label: {
                 type: "string",
               },
@@ -67776,6 +67824,72 @@ export const runtimeOperationContractData = [
       additionalProperties: {},
     },
     readNamespaces: ["instances"],
+    writeNamespaces: ["instances"],
+    invalidatesNamespaces: ["instances"],
+    retryOnConflict: true,
+  },
+  {
+    id: "instances.setName",
+    command: "set-instance-name",
+    client: "setInstanceName",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        instanceId: {
+          type: "string",
+        },
+        name: {
+          type: "string",
+        },
+        templateNameConfirmation: {
+          type: "object",
+          properties: {
+            action: {
+              type: "string",
+              enum: ["rename", "delete"],
+            },
+            templates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  instanceId: {
+                    type: "string",
+                  },
+                  oldName: {
+                    type: "string",
+                  },
+                  newName: {
+                    type: "string",
+                  },
+                },
+                required: ["instanceId", "oldName"],
+              },
+            },
+          },
+          required: ["action", "templates"],
+          description:
+            "Retry with the exact confirmation example returned by template_name_change_requires_confirmation after user approval.",
+        },
+      },
+      required: ["instanceId", "name"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        instanceId: {
+          type: "string",
+        },
+        name: {
+          type: "string",
+        },
+      },
+      required: ["instanceId", "name"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["instances", "props"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,

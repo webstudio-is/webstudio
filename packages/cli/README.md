@@ -83,7 +83,7 @@ webstudio insert-fragment --input-file .temp/insert-fragment.json --dry-run
 ```json
 {
   "parentInstanceId": "<parent-id>",
-  "fragment": "<ws.element ws:tag='section' />"
+  "fragment": "<section />"
 }
 ```
 

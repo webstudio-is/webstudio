@@ -2,6 +2,7 @@ import {
   $,
   css,
   PlaceholderValue,
+  setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
 import { radix } from "./shared/proxy";
@@ -19,21 +20,30 @@ import {
 import { ChevronDownIcon } from "@webstudio-is/icons/svg";
 import { iconEmbedStyle } from "./shared/styles";
 
+const { Box, HtmlEmbed, Text } = $;
+const {
+  Accordion,
+  AccordionContent,
+  AccordionHeader,
+  AccordionItem,
+  AccordionTrigger,
+} = radix;
+
 const createAccordionItem = (triggerText: string, contentText: string) => {
   return (
-    <radix.AccordionItem
+    <AccordionItem
       // border-b
       ws:style={css`
         border-bottom: ${borderWidth.DEFAULT} solid ${colors.border};
       `}
     >
-      <radix.AccordionHeader
+      <AccordionHeader
         // flex
         ws:style={css`
           display: flex;
         `}
       >
-        <radix.AccordionTrigger
+        <AccordionTrigger
           // flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180
           ws:style={css`
             display: flex;
@@ -51,28 +61,29 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
             }
           `}
         >
-          <$.Text>{new PlaceholderValue(triggerText)}</$.Text>
-          <$.Box
-            ws:label="Icon Container"
-            // h-4 w-4 shrink-0 transition-transform duration-200
-            ws:style={css`
-              rotate: var(--accordion-trigger-icon-transform);
-              height: ${height[4]};
-              width: ${width[4]};
-              flex-shrink: 0;
-              transition: ${transition.all};
-              transition-duration: 200ms;
-            `}
-          >
-            <$.HtmlEmbed
-              ws:label="Chevron Icon"
-              ws:style={iconEmbedStyle}
-              code={ChevronDownIcon}
-            />
-          </$.Box>
-        </radix.AccordionTrigger>
-      </radix.AccordionHeader>
-      <radix.AccordionContent
+          <Text>{new PlaceholderValue(triggerText)}</Text>
+          {setInstanceMeta(
+            { label: "Icon Container" },
+            <Box
+              // h-4 w-4 shrink-0 transition-transform duration-200
+              ws:style={css`
+                rotate: var(--accordion-trigger-icon-transform);
+                height: ${height[4]};
+                width: ${width[4]};
+                flex-shrink: 0;
+                transition: ${transition.all};
+                transition-duration: 200ms;
+              `}
+            >
+              {setInstanceMeta(
+                { label: "Chevron Icon" },
+                <HtmlEmbed ws:style={iconEmbedStyle} code={ChevronDownIcon} />
+              )}
+            </Box>
+          )}
+        </AccordionTrigger>
+      </AccordionHeader>
+      <AccordionContent
         forceMount={true}
         // overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down
         // pb-4 pt-0
@@ -90,8 +101,8 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
         `}
       >
         {new PlaceholderValue(contentText)}
-      </radix.AccordionContent>
-    </radix.AccordionItem>
+      </AccordionContent>
+    </AccordionItem>
   );
 };
 
@@ -109,7 +120,7 @@ export const meta: TemplateMeta = {
     "A vertically stacked set of interactive headings that each reveal an associated section of content. Clicking on the heading will open the item and close other items.",
   order: 3,
   template: (
-    <radix.Accordion collapsible={true} value="0">
+    <Accordion collapsible={true} value="0">
       {createAccordionItem(
         "Is it accessible?",
         "Yes. It adheres to the WAI-ARIA design pattern."
@@ -122,6 +133,6 @@ export const meta: TemplateMeta = {
         "Is it animated?",
         "Yes. It's animated by default, but you can disable it if you prefer."
       )}
-    </radix.Accordion>
+    </Accordion>
   ),
 };

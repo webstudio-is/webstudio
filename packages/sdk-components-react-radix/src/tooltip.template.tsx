@@ -16,6 +16,9 @@ import {
   zIndex,
 } from "./shared/theme";
 
+const { Button, Text } = $;
+const { Tooltip, TooltipContent, TooltipTrigger } = radix;
+
 /**
  * Styles source without animations:
  * https://github.com/shadcn-ui/ui/blob/main/apps/www/registry/default/ui/tooltip.tsx
@@ -30,13 +33,13 @@ export const meta: TemplateMeta = {
     "Displays content that is related to the trigger, when the trigger is hovered with the mouse or focused with the keyboard. You are reading an example of a tooltip right now.",
   order: 7,
   template: (
-    <radix.Tooltip>
-      <radix.TooltipTrigger>
-        <$.Button ws:style={getButtonStyle("outline")}>
+    <Tooltip>
+      <TooltipTrigger>
+        <Button ws:style={getButtonStyle("outline")}>
           {new PlaceholderValue("Button")}
-        </$.Button>
-      </radix.TooltipTrigger>
-      <radix.TooltipContent
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent
         /**
          *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
          **/
@@ -52,8 +55,8 @@ export const meta: TemplateMeta = {
           box-shadow: ${boxShadow.md};
         `}
       >
-        <$.Text>{new PlaceholderValue("The text you can edit")}</$.Text>
-      </radix.TooltipContent>
-    </radix.Tooltip>
+        <Text>{new PlaceholderValue("The text you can edit")}</Text>
+      </TooltipContent>
+    </Tooltip>
   ),
 };

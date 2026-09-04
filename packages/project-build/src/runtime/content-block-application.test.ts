@@ -423,6 +423,6 @@ describe("createContentBlockApplication", () => {
       confirmationToken: plan.confirmationToken,
     });
     expect(result.status).toBe("complete");
-    expect(fixture.getSource()).toContain('ws:name="New"');
+    expect(fixture.getSource()).toContain("<New />");
   });
 });

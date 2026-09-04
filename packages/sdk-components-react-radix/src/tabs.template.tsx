@@ -17,6 +17,8 @@ import {
   spacing,
 } from "./shared/theme";
 
+const { Tabs, TabsContent, TabsList, TabsTrigger } = radix;
+
 /**
  * Styles source without animations:
  * https://github.com/shadcn-ui/ui/blob/main/apps/www/registry/default/ui/tabs.tsx
@@ -73,8 +75,8 @@ export const meta: TemplateMeta = {
     "A set of panels with content that are displayed one at a time. Duplicate both a tab trigger and tab content to add more tabs. Triggers and content are connected according to their order in the Navigator.",
   order: 2,
   template: (
-    <radix.Tabs value="0">
-      <radix.TabsList
+    <Tabs value="0">
+      <TabsList
         // inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground
         ws:style={css`
           display: inline-flex;
@@ -87,19 +89,19 @@ export const meta: TemplateMeta = {
           color: ${colors.mutedForeground};
         `}
       >
-        <radix.TabsTrigger ws:style={tabsTriggerStyle}>
+        <TabsTrigger ws:style={tabsTriggerStyle}>
           {new PlaceholderValue("Account")}
-        </radix.TabsTrigger>
-        <radix.TabsTrigger ws:style={tabsTriggerStyle}>
+        </TabsTrigger>
+        <TabsTrigger ws:style={tabsTriggerStyle}>
           {new PlaceholderValue("Password")}
-        </radix.TabsTrigger>
-      </radix.TabsList>
-      <radix.TabsContent ws:style={tabsContentStyle}>
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent ws:style={tabsContentStyle}>
         {new PlaceholderValue("Make changes to your account here.")}
-      </radix.TabsContent>
-      <radix.TabsContent ws:style={tabsContentStyle}>
+      </TabsContent>
+      <TabsContent ws:style={tabsContentStyle}>
         {new PlaceholderValue("Change your password here.")}
-      </radix.TabsContent>
-    </radix.Tabs>
+      </TabsContent>
+    </Tabs>
   ),
 };

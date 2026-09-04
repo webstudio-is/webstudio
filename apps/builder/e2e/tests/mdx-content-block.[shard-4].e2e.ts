@@ -3,6 +3,7 @@ import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   configureDynamicDetailContentBlock,
   configureEmptyHeadingTemplate,
+  configureNamedTemplateLifecycle,
   configureRepresentableContentBlockBody,
   configureRepeatedContentBlock,
 } from "../fixtures/mdx-content-block-project";
@@ -32,6 +33,7 @@ import {
 } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { openNavigatorPanel } from "../flows/navigator";
+import { selectNavigatorItem } from "../flows/navigator";
 import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { fillSelectedStringProperty } from "../flows/props-panel";
 import { getProjectBuilderUrl, test } from "../test";
@@ -41,6 +43,7 @@ test.describe.configure({ mode: "parallel" });
 const sourceFilename = "content-source.mdx";
 const alternateFilename = "alternate-source.mdx";
 const unresolvedFilename = "unresolved-source.mdx";
+const namedTemplateFilename = "named-template-source.mdx";
 const emptyFilename = "empty-source.mdx";
 
 const sourceHeading = "MDX source heading";
@@ -123,6 +126,22 @@ const expectCanvasTextOrder = async ({
     await page.waitForTimeout(100);
   }
   throw new Error(`Expected "${before}" before "${after}" on the canvas`);
+};
+
+const expandNavigatorItem = async ({
+  page,
+  name,
+}: {
+  page: Page;
+  name: string;
+}) => {
+  await openNavigatorPanel({ page });
+  const item = page
+    .locator("[data-navigator-tree] [data-tree-button]")
+    .filter({ has: page.getByText(name, { exact: true }) })
+    .last();
+  await item.waitFor({ state: "visible" });
+  await item.press("ArrowRight");
 };
 
 const insertTemplateIntoEmptyContentBlock = async ({
@@ -640,7 +659,7 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
     text: "Valid content after the missing template.",
   });
   const canvas = await waitForCanvasFrame({ page });
-  const warning = canvas.getByText("Missing template: Missing E2E Template", {
+  const warning = canvas.getByText("Missing template: MissingE2ETemplate", {
     exact: true,
   });
   await warning.waitFor();
@@ -662,7 +681,87 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
   });
   const previewCanvas = await waitForCanvasFrame({ page });
   await previewCanvas
-    .getByText("Missing template: Missing E2E Template", { exact: true })
+    .getByText("Missing template: MissingE2ETemplate", { exact: true })
+    .waitFor({ state: "hidden" });
+});
+
+test("Named MDX templates re-resolve after rename, reload, and removal", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createContentModeProject({
+    context,
+    email: "mdx-template-lifecycle-e2e@webstudio.test",
+    title: "MDX Template Lifecycle E2E",
+  });
+  await configureNamedTemplateLifecycle(fixture.projectId);
+
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: namedTemplateFilename });
+  await selectContentBlock({ page });
+  await chooseContentBlockSource({ page, filename: namedTemplateFilename });
+  await confirmContentBlockConnection({ page });
+  await waitForCanvasText({ page, text: "Authored lifecycle card" });
+
+  await expandNavigatorItem({ page, name: "Content Block" });
+  await expandNavigatorItem({ page, name: "Block Template" });
+  await selectNavigatorItem({ page, name: "Lifecycle Card" });
+  await page.getByRole("tab", { name: "Settings" }).click();
+  const nameInput = page.getByLabel("Name", { exact: true });
+  await nameInput.fill("RenamedLifecycleCard");
+  await nameInput.press("Tab");
+  const renameSaved = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Rename", exact: true }).click();
+  await renameSaved;
+  await selectContentBlock({ page });
+  await waitForCanvasText({ page, text: "Missing template: LifecycleCard" });
+
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForCanvasText({ page, text: "Missing template: LifecycleCard" });
+
+  await expandNavigatorItem({ page, name: "Content Block" });
+  await expandNavigatorItem({ page, name: "Block Template" });
+  await selectNavigatorItem({ page, name: "Lifecycle Card" });
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("LifecycleCard");
+  await page.getByLabel("Name", { exact: true }).press("Tab");
+  const restoreNameSaved = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Rename", exact: true }).click();
+  await restoreNameSaved;
+  await selectContentBlock({ page });
+  await waitForCanvasText({ page, text: "Authored lifecycle card" });
+
+  await expandNavigatorItem({ page, name: "Content Block" });
+  await expandNavigatorItem({ page, name: "Block Template" });
+  await selectNavigatorItem({ page, name: "Lifecycle Card" });
+  await page.keyboard.press("Delete");
+  const deleteSaved = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await deleteSaved;
+  await selectContentBlock({ page });
+  await waitForCanvasText({ page, text: "Missing template: LifecycleCard" });
+
+  const previewUrl = getProjectBuilderUrl({
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "preview",
+  });
+  await page.goto(previewUrl);
+  const previewCanvas = await waitForCanvasFrame({ page });
+  await previewCanvas
+    .getByText("Missing template: LifecycleCard", { exact: true })
+    .waitFor({ state: "hidden" });
+  await previewCanvas
+    .getByText("Authored lifecycle card", { exact: true })
     .waitFor({ state: "hidden" });
 });
 

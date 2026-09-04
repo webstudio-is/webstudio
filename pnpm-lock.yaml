@@ -1537,6 +1537,9 @@ importers:
       hast-util-to-mdast:
         specifier: 9.0.0
         version: 9.0.0
+      html-tags:
+        specifier: ^4.0.0
+        version: 4.0.0
       lru-cache:
         specifier: 10.4.3
         version: 10.4.3

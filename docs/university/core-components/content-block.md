@@ -120,6 +120,14 @@ An `.mdx` file supports standard Markdown and constrained JSX in one document.
 
 Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Each node uses the uniquely matching semantic template from the Content Block when one exists. Matching uses the element tag or adapted component type, not the template's editable label. If no standard template exists, Webstudio renders the normal semantic fallback. The fallback is still a normal element or component, so its applicable component and global styles continue to work; it simply has no Content Block template styles. If more than one standard template matches, Webstudio reports a warning and uses the fallback.
 
+Use lowercase JSX when Markdown cannot express the required HTML element or attributes:
+
+```mdx
+<section aria-label="Launch details">
+  <h2>Launch offer</h2>
+</section>
+```
+
 Use a capitalized JSX name for a uniquely named custom template:
 
 ```mdx
@@ -132,9 +140,11 @@ Regular document content stays Markdown and uses the matching standard templates
 </PromotionCard>
 ```
 
-The JSX name must exactly match a unique top-level instance name in the Content Block's Templates list. `Image` and `CodeText` are reserved for Webstudio's built-in MDX components. Give custom templates distinct, unique names. Use the legacy `ws:name` syntax when a distinct custom name is not a valid JSX component name.
+The JSX name first matches the stable **Name** of a unique top-level template in the Content Block's Templates list. **Name** is a JavaScript identifier and is separate from the optional **Label** shown in the canvas. If no template has that name, Webstudio uses the exact registered component with that exported name. A new template gets its default name from its root component or HTML tag, and duplicate defaults get deterministic numeric suffixes.
 
-JSX attributes accept quoted static values and bare booleans. Webstudio converts quoted values to the property's declared string, number, or boolean type when possible. Imports, exports, expressions such as `{false}`, spreads, functions, lowercase HTML-looking JSX, and executable JavaScript are not supported.
+When two component libraries export the same name, the core component keeps the plain identifier and the namespaced component gets a stable library prefix, such as `Checkbox` and `RadixCheckbox`. Component discovery reports the exact JSX identifier to use.
+
+JSX attributes accept quoted static values and bare booleans. Webstudio converts quoted values to the property's declared string, number, or boolean type when possible. Imports, exports, expressions such as `{false}`, spreads, functions, and executable JavaScript are not supported. Internal forms such as `<ws.element>`, `ws:name`, `ws:tag`, `ws:label`, and `<$.*>` are not current authoring syntax.
 
 An explicit JSX child tree that matches the designed template structure overlays its text and supported properties onto the cloned template descendants. Their template styles and structure stay intact. If the child structure does not match, the explicit children replace the template root's default children and each authored child resolves through a matching template when possible. An empty pair such as `<PromotionCard></PromotionCard>` clears the defaults, while a self-closing reference such as `<PromotionCard />` keeps them. If you edit inherited default content in Builder, Webstudio writes that content as explicit JSX children so the edit persists without changing the template.
 
@@ -144,13 +154,9 @@ If a Content Block that already renders connected MDX temporarily has zero or mu
 
 Missing or duplicate custom templates show a source-ranged warning and a selectable placeholder in Builder. Published pages omit only the unresolved custom subtree. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
 
-Existing files can continue using the legacy form when a template name contains spaces or is not a valid JSX component name:
+Legacy files that already contain internal `ws.element`, `ws:name`, or `$.*` syntax remain readable during migration, but Webstudio does not emit or recommend those forms.
 
-```mdx
-<ws.element ws:name="Promotion Card" />
-```
-
-Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX or `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files. A confirmed rename changes the reference name. A confirmed removal unwraps and preserves explicit authored children; a self-closing reference disappears because it has no authored children.
+Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files. A confirmed rename changes the reference name. A confirmed removal unwraps and preserves explicit authored children; a self-closing reference disappears because it has no authored children.
 
 #### Use frontmatter in the designed shell
 

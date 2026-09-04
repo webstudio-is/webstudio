@@ -72,7 +72,7 @@ Save the readable payload in `.temp/insert-fragment.json`:
 ```json
 {
   "parentInstanceId": "parent-id",
-  "fragment": "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Launch Kit</ws.element><ws.element ws:tag='p'>A focused section created with Webstudio JSX.</ws.element><ws.element ws:tag='button'>Get started</ws.element></ws.element>"
+  "fragment": "<section ws:style={css`padding: 32px; display: grid; gap: 12px;`}><h2>Launch Kit</h2><p>A focused section created with Webstudio JSX.</p><button>Get started</button></section>"
 }
 ```
 
@@ -90,7 +90,7 @@ When authoring JSX for `insert-fragment`, use Webstudio component helpers and We
 
 When the task says another user will edit a page in Content mode, use a Content Block (`ws:block`) around every editable region. Content-mode users can edit text and supported props only in descendants of that block; content outside it is read-only. Put reusable insertable options in exactly one direct `ws:block-template` child. Do not put intended editor content inside that template container: templates are protected source material, while an inserted template copy becomes editable Content Block body content. A missing or second template container makes the block invalid. Verify this structure before handoff.
 
-When the Content Block body must be stored in an `.mdx` Asset, use the dedicated `connect-content-block-source`, `switch-content-block-source`, `inspect-content-block-source`, `edit-content-block-source`, `update-content-block-frontmatter`, `reload-content-block-source`, and `disconnect-content-block-source` tools. Do not manipulate its `src` with generic prop tools. Connecting replaces existing Body content, so report `requiresConfirmation:true` and retry with `confirmReplacement:true` only after user approval. Prefer Markdown for standard document content; it automatically uses unique matching semantic templates. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties Markdown cannot express. Reference a uniquely named top-level custom template with capitalized JSX such as `<PromotionCard />`; use `<ws.element ws:name="Promotion Card">` when its name is not JSX-compatible. `Image` and `CodeText` are reserved built-ins, so give custom templates distinct, unique names. JSX attributes accept quoted values and bare booleans; expressions such as `{false}` are unsupported. Matching explicit children overlay designed descendants and keep their template styles. A mismatched child structure replaces defaults, while an explicit empty pair clears defaults and a self-closing reference keeps them. Editing inherited default content writes it back as explicit JSX children. Template resolution is live, including when a matching template is added after the MDX element. Preserve invalid MDX and unresolved template names, inspect all source-located diagnostics, and resolve revision conflicts by reloading before reapplying the change. After a template rename or deletion, use `migrate-content-block-template-references` to preview and confirm custom-template JSX and legacy updates across selected MDX files; reserved `<Image>` and `<CodeText>` JSX stays unchanged. A confirmed removal unwraps paired references and preserves their authored children; a self-closing reference disappears because it has none.
+When the Content Block body must be stored in an `.mdx` Asset, use the dedicated `connect-content-block-source`, `switch-content-block-source`, `inspect-content-block-source`, `edit-content-block-source`, `update-content-block-frontmatter`, `reload-content-block-source`, and `disconnect-content-block-source` tools. Do not manipulate its `src` with generic prop tools. Connecting replaces existing Body content, so report `requiresConfirmation:true` and retry with `confirmReplacement:true` only after user approval. Prefer Markdown for standard document content; it automatically uses unique matching semantic templates. Use lowercase JSX such as `<section>` for HTML that Markdown cannot express. Capitalized JSX first resolves the stable template **Name**, then the exact registered component export. The display label is independent. JSX attributes accept quoted values and bare booleans; expressions such as `{false}` are unsupported. Legacy `ws.element`, `ws:name`, and `$.*` forms are compatibility input only. Matching explicit children overlay designed descendants and keep their template styles. A mismatched child structure replaces defaults, while an explicit empty pair clears defaults and a self-closing reference keeps them. Editing inherited default content writes it back as explicit JSX children. Template resolution is live, including when a matching template is added after the MDX element. Preserve invalid MDX and unresolved template names, inspect all source-located diagnostics, and resolve revision conflicts by reloading before reapplying the change. After a template rename or deletion, use `migrate-content-block-template-references` to preview and confirm custom-template JSX and legacy updates across selected MDX files. A confirmed removal unwraps paired references and preserves their authored children; a self-closing reference disappears because it has none.
 
 Frontmatter is part of the same MDX source. `update-content-block-frontmatter` receives the complete replacement property map, so inspect and preserve properties the user did not ask to remove. Store frontmatter images as exact `$ref` objects, bind Image sources to their resolved `.src`, and bind alt properties to their Asset `.description`. Use `update-content-block-frontmatter` for MCP frontmatter edits; MDX-rendered elements are not persistent targets for generic prop or text mutations. Preserve existing `mode:"readwrite"` bindings, which are valid only for exact direct frontmatter paths. Computed expressions and `$ref` values stay read-only. For an expression-bound source inside a Collection, pass the occurrence's scoped values and a distinct stable `renderScope`; for example, resolve `post.assetId` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
 
@@ -101,17 +101,14 @@ Use Webstudio prop names in JSX: `class`, `for`, `aria-label`, and other HTML/We
 Use Webstudio actions for event/action props. Do not pass JavaScript functions such as `onClick={() => ...}`; the runtime rejects them because functions cannot be persisted as Webstudio project data.
 
 ```tsx
-<ws.element
-  ws:tag="button"
-  onClick={new ActionValue(["event"], expression`console.log(event)`)}
->
+<button onClick={new ActionValue(["event"], expression`console.log(event)`)}>
   Open
-</ws.element>
+</button>
 ```
 
 Plain JSX prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
 
-If a component has a registered template with required parts, JSX must include those parts explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`. Use `insert-component` when you want Webstudio to apply one component template automatically.
+If a component has a registered template with required parts, JSX must include those parts explicitly under the same parent structure as the template, for example `<Switch><SwitchThumb /></Switch>`. Use `insert-component` when you want Webstudio to apply one component template automatically.
 
 ## Animation Components
 
@@ -137,7 +134,7 @@ Video Animation settings: `timeline` is a boolean. Prefer `insert-component` for
 Use JSX fragments for authored animation structures when you need styled, editable examples. Put the final visual state in `ws:style` and put the starting or ending animated state in the Animation Group `action` keyframes. Include an explicit `offset` on every keyframe: use `offset: 0` for starting-state keyframes with `fill:"backwards"` and `offset: 1` for ending-state keyframes with `fill:"forwards"`.
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     axis: "block",
@@ -168,8 +165,7 @@ Use JSX fragments for authored animation structures when you need styled, editab
     ],
   }}
 >
-  <ws.element
-    ws:tag="section"
+  <section
     ws:style={css`
       display: grid;
       gap: 16px;
@@ -179,18 +175,16 @@ Use JSX fragments for authored animation structures when you need styled, editab
       color: white;
     `}
   >
-    <ws.element ws:tag="h2">Launch metrics</ws.element>
-    <ws.element ws:tag="p">
-      A polished card that fades up as it enters the viewport.
-    </ws.element>
-  </ws.element>
-</animation.AnimateChildren>
+    <h2>Launch metrics</h2>
+    <p>A polished card that fades up as it enters the viewport.</p>
+  </section>
+</AnimateChildren>
 ```
 
-For Text Animation, keep `animation.AnimateText` as the direct child of Animation Group and place the text-containing element inside it:
+For Text Animation, keep `AnimateText` as the direct child of Animation Group and place the text-containing element inside it:
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     animations: [
@@ -290,20 +284,16 @@ For Text Animation, keep `animation.AnimateText` as the direct child of Animatio
     isPinned: true,
   }}
 >
-  <animation.AnimateText
-    splitBy="space"
-    slidingWindow={5}
-    easing="easeOutQuart"
-  >
-    <ws.element ws:tag="h2">Animate words with controlled rhythm</ws.element>
-  </animation.AnimateText>
-</animation.AnimateChildren>
+  <AnimateText splitBy="space" slidingWindow={5} easing="easeOutQuart">
+    <h2>Animate words with controlled rhythm</h2>
+  </AnimateText>
+</AnimateChildren>
 ```
 
-For Stagger Animation, put the repeated cards or rows directly inside `animation.StaggerAnimation`:
+For Stagger Animation, put the repeated cards or rows directly inside `StaggerAnimation`:
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     animations: [
@@ -325,9 +315,8 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
     ],
   }}
 >
-  <animation.StaggerAnimation>
-    <ws.element
-      ws:tag="article"
+  <StaggerAnimation>
+    <article
       ws:style={css`
         padding: 20px;
         border: 1px solid #d1d5db;
@@ -335,9 +324,8 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
       `}
     >
       Plan
-    </ws.element>
-    <ws.element
-      ws:tag="article"
+    </article>
+    <article
       ws:style={css`
         padding: 20px;
         border: 1px solid #d1d5db;
@@ -345,9 +333,8 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
       `}
     >
       Build
-    </ws.element>
-    <ws.element
-      ws:tag="article"
+    </article>
+    <article
       ws:style={css`
         padding: 20px;
         border: 1px solid #d1d5db;
@@ -355,15 +342,15 @@ For Stagger Animation, put the repeated cards or rows directly inside `animation
       `}
     >
       Launch
-    </ws.element>
-  </animation.StaggerAnimation>
-</animation.AnimateChildren>
+    </article>
+  </StaggerAnimation>
+</AnimateChildren>
 ```
 
 For Video Animation, use the registered template via `insert-component` when possible. If you author JSX, include the Video child explicitly:
 
 ```tsx
-<animation.AnimateChildren
+<AnimateChildren
   action={{
     type: "view",
     animations: [
@@ -379,16 +366,16 @@ For Video Animation, use the registered template via `insert-component` when pos
     ],
   }}
 >
-  <animation.VideoAnimation timeline={true}>
-    <$.Video
+  <VideoAnimation timeline={true}>
+    <Video
       preload="auto"
       autoPlay={true}
       muted={true}
       playsInline={true}
       crossOrigin="anonymous"
     />
-  </animation.VideoAnimation>
-</animation.AnimateChildren>
+  </VideoAnimation>
+</AnimateChildren>
 ```
 
 ## Command Surface Boundary

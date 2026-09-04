@@ -212,7 +212,7 @@ export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
       ? " Every opening element must use the same closing tag or end with />. Fragment parsing is stateless, so refresh cannot repair unmatched JSX."
       : "";
     return throwWebstudioJsxValidationError(
-      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${message}${recovery}`,
+      `Could not parse JSX fragment. Pass Webstudio JSX such as <section><Heading tag="h2">Title</Heading></section>. ${message}${recovery}`,
       "valid_webstudio_jsx_syntax",
       message
     );

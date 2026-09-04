@@ -15,7 +15,6 @@ import {
   createConfirmationToken,
   validateConfirmationToken,
 } from "../confirmation-token";
-import { hasMdxComponentAdapter } from "./mdx-component-adapters";
 
 export const mdxTemplateMigrationFileLimit = 100;
 const mdxTemplateMigrationByteLimit = 10 * 1024 * 1024;
@@ -82,15 +81,8 @@ const updateNodes = (
   let changed = false;
   const nextNodes: MdxAuthoredNode[] = [];
   for (const node of nodes) {
-    // Reserved adapter JSX such as <Image> names a built-in MDX component.
-    // Legacy ws:name remains eligible so historical named references migrate.
-    const isReservedAdapterJsx =
-      node.type === "template" &&
-      node.syntax === "jsx" &&
-      hasMdxComponentAdapter(node.name);
     const matches =
       node.type === "template" &&
-      isReservedAdapterJsx === false &&
       (migration.type === "rename"
         ? node.name === migration.from
         : node.name === migration.name);
@@ -119,12 +111,7 @@ const updateNodes = (
       nextNodes.push({
         ...node,
         name: migration.to,
-        syntax:
-          node.syntax === "jsx" &&
-          (isMdxTemplateComponentName(migration.to) === false ||
-            hasMdxComponentAdapter(migration.to))
-            ? "ws-element"
-            : node.syntax,
+        syntax: "jsx",
         children: children.nodes,
       });
       continue;
@@ -225,6 +212,12 @@ export const planMdxTemplateMigration = async ({
   confirmationScope?: Readonly<Record<string, unknown>>;
   confirmationTtlMs?: number;
 }): Promise<MdxTemplateMigrationPlan> => {
+  if (
+    migration.type === "rename" &&
+    isMdxTemplateComponentName(migration.to) === false
+  ) {
+    throw new Error("Renamed template must use a valid PascalCase MDX name");
+  }
   if (files.length > mdxTemplateMigrationFileLimit) {
     throw new Error("MDX template migration is limited to 100 files");
   }

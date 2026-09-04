@@ -55,7 +55,7 @@ const protectTextWhitespace = (value: string) =>
  * Authored template JSX intentionally supports only one static component-name
  * segment. Member expressions and namespaced names are not template labels.
  */
-export const isMdxTemplateComponentName = (name: unknown): name is string =>
+export const isMdxTemplateComponentName = (name: unknown): boolean =>
   typeof name === "string" && /^[A-Z][A-Za-z0-9_$]*$/.test(name);
 
 const toHastProperties = (props: readonly MdxAuthoredProp[]) =>
@@ -127,7 +127,6 @@ const toSerializationNode = (
     };
   }
   if (node.type === "template") {
-    const syntax = node.syntax ?? "ws-element";
     const selfClosing = node.selfClosing ?? node.children.length === 0;
     if (selfClosing && node.children.length > 0) {
       throw new Error("Self-closing MDX templates cannot contain children");
@@ -137,7 +136,7 @@ const toSerializationNode = (
     ) {
       throw new Error("Named MDX templates cannot use ws:name or ws:tag");
     }
-    if (syntax === "jsx" && isMdxTemplateComponentName(node.name)) {
+    if (isMdxTemplateComponentName(node.name)) {
       return toWebstudioElement({
         tagName: "ws.template",
         jsxName: node.name,
@@ -161,8 +160,10 @@ const toSerializationNode = (
   }
   if (node.syntax === "mdx") {
     return toWebstudioElement({
+      tagName: "ws.element",
+      jsxName: node.tag,
       mode: node.mdxMode,
-      props: [{ name: "ws:tag", value: node.tag }, ...node.props],
+      props: node.props,
       children: node.children,
       propsUseJsxNames: false,
     });

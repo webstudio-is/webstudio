@@ -1,6 +1,6 @@
 import {
   getHtmlTagFromInstance,
-  getInstanceName,
+  getContentBlockTemplateName,
   isContentBlockMdxTemplateInsertable,
   type Instance,
   type Props,
@@ -219,10 +219,7 @@ export const insertTemplateAt = async (
     recordExternalContentTemplateInsertion({
       instanceSelector: selectedInstanceSelector,
       insertion: {
-        templateName: getInstanceName({
-          instance: template,
-          metas,
-        }),
+        templateName: getContentBlockTemplateName(template),
         pristineFragment,
         htmlTags: pristineFragment.instances.flatMap((instance) => {
           const tag = getHtmlTagFromInstance({

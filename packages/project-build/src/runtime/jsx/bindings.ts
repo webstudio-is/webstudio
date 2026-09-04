@@ -14,6 +14,9 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { hasUnsupportedCssTemplateRules } from "@webstudio-is/css-data";
+import { getComponentByJsxName, getComponentJsxName } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 
 const css = (strings: TemplateStringsArray, ...values: string[]) => {
   const source = String.raw({ raw: strings }, ...values);
@@ -25,11 +28,36 @@ const css = (strings: TemplateStringsArray, ...values: string[]) => {
   return parseTemplateCss(source);
 };
 
-const componentBindings = {
+const directComponentBindings = Object.fromEntries(
+  Array.from(componentMetas.keys()).flatMap((candidate) => {
+    const jsxName = getComponentJsxName({
+      component: candidate,
+      components: componentMetas.keys(),
+    });
+    if (
+      jsxName === "Fragment" ||
+      isMdxTemplateComponentName(jsxName) === false
+    ) {
+      return [];
+    }
+    const component = getComponentByJsxName({
+      name: jsxName,
+      components: componentMetas.keys(),
+    });
+    return component === undefined ? [] : [[jsxName, $[component]]];
+  })
+);
+
+const legacyComponentBindings = {
   $,
   ws,
   radix: createProxy("@webstudio-is/sdk-components-react-radix:"),
   animation: createProxy("@webstudio-is/sdk-components-animation:"),
+};
+
+const componentBindings = {
+  ...directComponentBindings,
+  ...legacyComponentBindings,
 };
 
 const helperBindings = {
@@ -60,17 +88,17 @@ const listFormatter = new Intl.ListFormat("en", {
 });
 
 const webstudioJsxComponentNamespaceNames = listFormatter.format(
-  Object.keys(componentBindings)
+  Object.keys(legacyComponentBindings)
 );
 
 const webstudioJsxHelperNames = listFormatter.format(
   Object.keys(helperBindings)
 );
 
-export const webstudioJsxBindingGuidance = `component namespaces ${webstudioJsxComponentNamespaceNames} and value helpers ${webstudioJsxHelperNames}`;
+export const webstudioJsxBindingGuidance = `lowercase HTML elements, unique direct component identifiers, and value helpers ${webstudioJsxHelperNames}. Legacy component namespaces ${webstudioJsxComponentNamespaceNames} are accepted only for existing input and must not be emitted or recommended`;
 
 export const webstudioJsxAnimationGuidance =
-  "animation is a component namespace such as <animation.AnimateChildren>; it is not a callable CSS keyframes helper.";
+  "Use direct animation component identifiers such as <AnimateChildren>. The legacy animation namespace is not a callable CSS keyframes helper.";
 
 export const webstudioJsxFragmentInputDescription =
   `Webstudio JSX fragment. Use ${webstudioJsxBindingGuidance}. ${webstudioJsxAnimationGuidance} ` +

@@ -5,6 +5,7 @@ import {
   animationAction,
   encodeDataSourceVariable,
   getStyleDeclKey,
+  tags,
 } from "@webstudio-is/sdk";
 import type {
   Breakpoint,
@@ -21,8 +22,54 @@ import type {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
+import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import { parseTemplateCss, type TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
+
+declare module "react" {
+  interface HTMLAttributes<T> {
+    "ws:id"?: string;
+    "ws:style"?: TemplateStyleDecl[];
+    "ws:tokens"?: Token[];
+    "ws:show"?: boolean | Expression;
+  }
+
+  interface SVGAttributes<T> {
+    "ws:id"?: string;
+    "ws:style"?: TemplateStyleDecl[];
+    "ws:tokens"?: Token[];
+    "ws:show"?: boolean | Expression;
+  }
+}
+
+const instanceMetaByElement = new WeakMap<
+  JSX.Element,
+  Readonly<{ name?: string; label?: string }>
+>();
+const intrinsicTags = new Set(tags);
+
+/** Associates instance metadata without exposing it as JSX properties. */
+export const setInstanceMeta = (
+  meta: Readonly<{ label?: string }>,
+  element: JSX.Element
+): JSX.Element => {
+  instanceMetaByElement.set(element, meta);
+  return element;
+};
+
+/** Associates structured Content Block template metadata without JSX props. */
+export const setTemplateMeta = (
+  meta: Readonly<{ name: string; label?: string }>,
+  element: JSX.Element
+): JSX.Element => {
+  if (isMdxTemplateComponentName(meta.name) === false) {
+    throw new Error(
+      "Template name must be a PascalCase JavaScript identifier, for example PromotionCard"
+    );
+  }
+  instanceMetaByElement.set(element, meta);
+  return element;
+};
 
 export class Token {
   name: string;
@@ -523,12 +570,17 @@ export const renderTemplate = (
   ): Instance["children"][number] => {
     if (element.type === Fragment) {
       throw new Error(
-        "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in a component such as <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+        "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in an element such as <section><p>Text</p></section>."
       );
     }
-    if (typeof element.type === "string") {
+    const intrinsicTag =
+      typeof element.type === "string" ? element.type : undefined;
+    if (
+      intrinsicTag !== undefined &&
+      intrinsicTags.has(intrinsicTag) === false
+    ) {
       throw new Error(
-        `Do not use raw HTML tag <${element.type}> in Webstudio JSX. Use Webstudio components such as <$.Box>...</$.Box>, or use <ws.element ws:tag="${element.type}">...</ws.element> when a specific HTML tag is required.`
+        `Invalid intrinsic JSX element "${intrinsicTag}". Use a standard lowercase HTML or SVG tag.`
       );
     }
     if (
@@ -539,20 +591,22 @@ export const renderTemplate = (
         "Do not set ws:id in JSX fragments. Webstudio runtime generates system ids automatically."
       );
     }
-    const component = element.type.displayName;
+    const component =
+      intrinsicTag === undefined ? element.type.displayName : "ws:element";
     if (typeof component !== "string") {
       throw new Error(
-        "Invalid JSX component in Webstudio JSX. Use Webstudio component helpers such as <$.Box>...</$.Box>."
+        "Invalid JSX component in Webstudio JSX. Use a lowercase HTML element or an available PascalCase component identifier."
       );
     }
     const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
     const componentMeta = options.componentMetas?.get(component);
     const componentPropNames = new Set(Object.keys(componentMeta?.props ?? {}));
     const acceptsHtmlAttributes =
+      intrinsicTag !== undefined ||
       component === "ws:element" ||
       typeof element.props?.["ws:tag"] === "string" ||
       Object.keys(componentMeta?.presetStyle ?? {}).length > 0;
-    let tag: string | undefined;
+    let tag: string | undefined = intrinsicTag;
     const mappedProps = mapAttributeNames({
       attributes: Object.entries({ ...element.props }).flatMap(
         ([name, value]) =>
@@ -568,6 +622,11 @@ export const renderTemplate = (
       let { name } = mappedProp;
       const { value } = mappedProp;
       if (name === "ws:tag") {
+        if (intrinsicTag !== undefined) {
+          throw new Error(
+            `Do not set ws:tag on intrinsic JSX <${intrinsicTag}>. Use the intended HTML tag directly.`
+          );
+        }
         tag = value as string;
         continue;
       }
@@ -686,8 +745,16 @@ export const renderTemplate = (
       component,
       children: [],
     };
+    const templateMeta = instanceMetaByElement.get(element);
+    if (templateMeta !== undefined) {
+      instance.name = templateMeta.name;
+      instance.label = templateMeta.label;
+      if (instance.label === undefined) {
+        delete instance.label;
+      }
+    }
     instances.push(instance);
-    if (element.props?.["ws:label"]) {
+    if (element.props?.["ws:label"] && templateMeta === undefined) {
       instance.label = element.props?.["ws:label"];
     }
     if (tag !== undefined) {
@@ -726,7 +793,7 @@ export const renderTemplate = (
     (children.length === 0 || instances.length === 0)
   ) {
     throw new Error(
-      "JSX fragment must contain at least one Webstudio component, for example <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+      "JSX fragment must contain at least one element or component, for example <section><p>Text</p></section>."
     );
   }
   for (const [instanceId, localStyles] of localStylesByInstanceId) {

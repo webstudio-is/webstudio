@@ -21,7 +21,7 @@ import {
 } from "./mdx";
 import { contentEngineLimits } from "./limits";
 
-test("serializes the legacy public template node shape", () => {
+test("canonicalizes the legacy public template node shape", () => {
   const document: MdxDocument = {
     frontmatter: { properties: {} },
     children: [
@@ -35,9 +35,7 @@ test("serializes the legacy public template node shape", () => {
     ],
   };
 
-  expect(serializeMdxDocument(document)).toBe(
-    '<ws.element ws:name="Card" />\n'
-  );
+  expect(serializeMdxDocument(document)).toBe("<Card />\n");
 });
 
 test("creates and reads canonical fenced code blocks", async () => {
@@ -198,6 +196,32 @@ describe("parseMdxDocument", () => {
       start: { line: 1, column: 7, offset: 6 },
       end: { line: 1, column: 19, offset: 18 },
     });
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test("parses and preserves intrinsic HTML JSX", async () => {
+    const source = `<section data-kind="hero">\n  <h2>Title</h2>\n</section>\n`;
+    const document = await parseMdxDocument({ source });
+
+    expect(omitSourceRanges(document.children)).toEqual([
+      {
+        type: "element",
+        syntax: "mdx",
+        tag: "section",
+        props: [{ name: "data-kind", value: "hero" }],
+        children: [
+          {
+            type: "element",
+            syntax: "mdx",
+            tag: "h2",
+            props: [],
+            children: [{ type: "text", value: "Title" }],
+            mdxMode: "text",
+          },
+        ],
+        mdxMode: "flow",
+      },
+    ]);
     expect(serializeMdxDocument(document)).toBe(source);
   });
 
@@ -854,7 +878,7 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
     expect(serialized.indexOf("title:")).toBeLessThan(
       serialized.indexOf("author:")
     );
-    expect(serialized).toContain('<ws.element ws:tag="section"');
+    expect(serialized).toContain('<section data-kind="hero"');
     expect(serialized).toContain('<ws.element ws:name="Hero Card"');
     expect(serialized).toContain("{/* keep this note */}");
 
@@ -923,7 +947,7 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
     expect(source).toContain("-   First\n-   Second");
     expect(source).not.toContain('<ws.element ws:tag="p"');
     expect(source).not.toContain('<ws.element ws:tag="ul"');
-    expect(source).toContain('<ws.element ws:tag="section" data-kind="hero">');
+    expect(source).toContain('<section data-kind="hero">');
     expect(source).toContain("## Title");
     expect(source).not.toContain('<ws.element ws:tag="h2"');
     expect(
@@ -1136,13 +1160,9 @@ next</ws.element>
     const preferred = serializeMdxDocument(
       await preferMarkdownSyntax(document)
     );
-    expect(preferred).toContain(
-      '<ws.element ws:tag="ul">\n  <ws.element ws:tag="div">Not a list item</ws.element>\n</ws.element>'
-    );
-    expect(preferred).toContain(
-      '<ws.element ws:tag="a" href="/guide" target="_blank">Guide</ws.element>'
-    );
-    expect(preferred).toContain('<ws.element ws:tag="ol" start="007">');
+    expect(preferred).toContain("<ul>\n  <div>Not a list item</div>\n</ul>");
+    expect(preferred).toContain('<a href="/guide" target="_blank">Guide</a>');
+    expect(preferred).toContain('<ol start="007">');
   });
 
   test.each([
@@ -1183,7 +1203,7 @@ next</ws.element>
     });
 
     expect(source).toBe(
-      '<ws.element ws:name="Card" className="featured" htmlFor="title" tabIndex="0" readOnly />\n'
+      '<Card className="featured" htmlFor="title" tabIndex="0" readOnly />\n'
     );
     expect(omitSourceRanges(await parseMdxDocument({ source }))).toMatchObject({
       frontmatter: { properties: {} },
@@ -1214,14 +1234,14 @@ next</ws.element>
     });
   });
 
-  test("roundtrips template JSX prop names without component metadata", async () => {
+  test("canonicalizes legacy template JSX without component metadata", async () => {
     const source = '<ws.element ws:name="Card" class="featured" />\n';
     const document = await parseMdxDocument({ source });
 
-    expect(serializeMdxDocument(document)).toBe(source);
+    expect(serializeMdxDocument(document)).toBe('<Card class="featured" />\n');
   });
 
-  test("preserves template prop aliases for metadata-aware materialization", async () => {
+  test("preserves legacy template prop aliases while canonicalizing syntax", async () => {
     const source =
       '<ws.element ws:name="Card" class="legacy" className="canonical" />\n';
     const document = await parseMdxDocument({ source });
@@ -1233,7 +1253,9 @@ next</ws.element>
         { name: "className", value: "canonical" },
       ],
     });
-    expect(serializeMdxDocument(document)).toBe(source);
+    expect(serializeMdxDocument(document)).toBe(
+      '<Card class="legacy" className="canonical" />\n'
+    );
   });
 
   test("preserves component JSX prop aliases for metadata-aware materialization", async () => {
@@ -1318,8 +1340,7 @@ next</ws.element>
       '<ws.element ws:tag="div" {...props} />',
       "mdxJsxExpressionAttribute",
     ],
-    ["lowercase JSX", "<card />", "mdxJsxFlowElement"],
-    ["HTML-looking JSX", "<div>Unsafe</div>", "mdxJsxTextElement"],
+    ["unknown lowercase JSX", "<card />", "mdxJsxFlowElement"],
   ])("rejects %s", async (_name, source, nodeType) => {
     await expect(parseMdxDocument({ source })).rejects.toMatchObject({
       code: "unsafe-mdx",
@@ -1491,10 +1512,10 @@ describe("parseMdxDocumentRecovering", () => {
         code: "unsafe-mdx",
         severity: "warning",
         message:
-          "Only ws.element and named template components are supported in authored MDX",
+          "Only standard HTML elements and named template components are supported in authored MDX",
         nodeType: "mdxJsxFlowElement",
         reason:
-          "Only ws.element and named template components are supported in authored MDX",
+          "Only standard HTML elements and named template components are supported in authored MDX",
         sourceRange: {
           start: { line: 3, column: 1, offset: 11 },
           end: { line: 3, column: 14, offset: 24 },
@@ -1520,9 +1541,9 @@ describe("parseMdxDocumentRecovering", () => {
     });
 
     expect(result.diagnostics.map(({ message }) => message)).toEqual([
-      "Only ws.element and named template components are supported in authored MDX",
+      "Only standard HTML elements and named template components are supported in authored MDX",
       "Executable MDX expressions are not supported",
-      "Only ws.element and named template components are supported in authored MDX",
+      "Only standard HTML elements and named template components are supported in authored MDX",
     ]);
     expect(
       result.diagnostics.map((diagnostic) =>

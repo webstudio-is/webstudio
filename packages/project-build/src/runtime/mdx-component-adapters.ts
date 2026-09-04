@@ -62,7 +62,9 @@ const getStringProps = (props: readonly MdxAuthoredProp[]) => {
   return values;
 };
 
-const materializeNamedProps = (props: readonly MdxAuthoredProp[]) =>
+const materializeNamedProps = (
+  props: readonly MdxAuthoredProp[]
+): MaterializedComponentProp[] =>
   props.map((prop, propIndex) => ({
     prop,
     source: { nodePath: [], propIndex },
@@ -352,13 +354,11 @@ export const hasMdxComponentAdapter = (component: Instance["component"]) =>
 
 export const getMdxNamedTemplateSyntax = ({
   templateName,
-  component,
 }: {
   templateName: string;
   component?: Instance["component"];
 }) =>
-  isMdxTemplateComponentName(templateName) &&
-  (hasMdxComponentAdapter(templateName) === false || templateName === component)
+  isMdxTemplateComponentName(templateName)
     ? ("jsx" as const)
     : ("ws-element" as const);
 
@@ -447,6 +447,7 @@ export const serializeMdxComponentFallback = ({
   templateName,
   mdxMode,
   jsxPropContext,
+  children: authoredChildren,
 }: {
   instance: Instance;
   props: readonly MdxAuthoredProp[];
@@ -457,10 +458,31 @@ export const serializeMdxComponentFallback = ({
     acceptsHtmlAttributes: boolean;
     componentPropNames: readonly string[];
   }>;
+  children?: readonly MdxAuthoredNode[];
 }): Extract<MdxAuthoredNode, { type: "template" }> | undefined => {
   const adapter = componentAdapters.get(instance.component);
   if (adapter === undefined) {
-    return;
+    if (templateName === undefined || authoredChildren === undefined) {
+      return;
+    }
+    const children = authoredChildren ?? [];
+    return {
+      type: "template",
+      syntax: "jsx",
+      selfClosing: children.length === 0,
+      name: templateName,
+      props: mapAttributeNames({
+        attributes: props,
+        direction: "instance-to-jsx",
+        acceptsHtmlAttributes: jsxPropContext?.acceptsHtmlAttributes ?? false,
+        componentPropNames:
+          jsxPropContext === undefined
+            ? undefined
+            : new Set(jsxPropContext.componentPropNames),
+      }),
+      children,
+      mdxMode: mdxMode ?? "flow",
+    };
   }
   const authoredProps: MdxAuthoredProp[] = [];
   const propNames = new Set<string>();
@@ -515,16 +537,28 @@ export const serializeMdxComponentFallback = ({
   };
 };
 
-export const materializeMdxComponent = (node: MdxAuthoredNode) => {
+export const materializeMdxComponent = (
+  node: MdxAuthoredNode,
+  registeredComponent?: Instance["component"]
+) => {
   if (node.type === "template") {
     if (node.syntax !== "jsx") {
       return;
     }
     const adapter = componentAdapters.get(node.name);
     const component = adapter?.fromNamedMdx?.(node);
-    return component === undefined || adapter === undefined
-      ? undefined
-      : { ...component, component: adapter.component };
+    if (component !== undefined && adapter !== undefined) {
+      return { ...component, component: adapter.component };
+    }
+    if (registeredComponent !== undefined) {
+      return {
+        component: registeredComponent,
+        children: [] as Instance["children"],
+        props: materializeNamedProps(node.props),
+        authoredChildren: true as const,
+      };
+    }
+    return;
   }
   for (const adapter of componentAdapters.values()) {
     const component = adapter.fromMdx(node);

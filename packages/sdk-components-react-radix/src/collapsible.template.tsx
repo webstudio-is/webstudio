@@ -7,19 +7,22 @@ import {
 import { radix } from "./shared/proxy";
 import { getButtonStyle } from "./shared/styles";
 
+const { Button, Text } = $;
+const { Collapsible, CollapsibleContent, CollapsibleTrigger } = radix;
+
 export const meta: TemplateMeta = {
   category: "radix",
   description:
     "An interactive component which expands and collapses some content, triggered by a button.",
   order: 5,
   template: (
-    <radix.Collapsible>
-      <radix.CollapsibleTrigger>
-        <$.Button ws:style={getButtonStyle("outline")}>
+    <Collapsible>
+      <CollapsibleTrigger>
+        <Button ws:style={getButtonStyle("outline")}>
           {new PlaceholderValue("Click to toggle content")}
-        </$.Button>
-      </radix.CollapsibleTrigger>
-      <radix.CollapsibleContent
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent
         forceMount={true}
         ws:style={css`
           overflow: hidden;
@@ -31,8 +34,8 @@ export const meta: TemplateMeta = {
           }
         `}
       >
-        <$.Text>{new PlaceholderValue("Collapsible Content")}</$.Text>
-      </radix.CollapsibleContent>
-    </radix.Collapsible>
+        <Text>{new PlaceholderValue("Collapsible Content")}</Text>
+      </CollapsibleContent>
+    </Collapsible>
   ),
 };

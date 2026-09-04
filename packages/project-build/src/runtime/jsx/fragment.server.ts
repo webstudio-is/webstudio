@@ -10,7 +10,6 @@ import { evaluateJsx } from "./evaluate.server";
 import { getErrorMessage } from "./errors";
 
 const templateValidationMessagePrefixes = [
-  "Do not use raw HTML tag",
   "Do not use React fragment shorthand",
   "Invalid JSX component",
   "Invalid JSX prop",
@@ -46,7 +45,7 @@ export const evaluateWebstudioJsxFragment = async (
       ...webstudioJsxRuntimeBindings,
     },
     parseErrorMessage: (error) =>
-      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(
+      `Could not parse JSX fragment. Pass Webstudio JSX such as <section><Heading tag="h2">Title</Heading></section>. ${getErrorMessage(
         error
       )}`,
     evaluationErrorMessage: (error) => {

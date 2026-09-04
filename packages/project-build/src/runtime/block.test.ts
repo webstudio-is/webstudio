@@ -3,11 +3,11 @@ import {
   blockComponent,
   blockBodyComponent,
   blockTemplateComponent,
+  assignUniqueBlockTemplateNamesMutable,
   contentBlockSourceProp,
   type Instance,
 } from "@webstudio-is/sdk";
 import {
-  assignUniqueBlockTemplateNamesMutable,
   canDeleteInstanceInContentMode,
   canMoveInstanceInContentMode,
   findBlockTemplateNameCollision,
@@ -389,14 +389,21 @@ describe("block template names", () => {
           { type: "id", value: "card" },
         ]),
       ],
-      ["hero", { ...createInstance("hero", "Box"), label: "Hero Card" }],
+      [
+        "hero",
+        {
+          ...createInstance("hero", "Box"),
+          name: "HeroCard",
+          label: "Hero Card",
+        },
+      ],
       ["card", createInstance("card", "Box")],
     ]);
   test("assigns unique names to newly inserted template entries", () => {
     const instances = createBlockInstances();
     instances.set("card-copy", createInstance("card-copy", "Box"));
     instances.set("card-copy-2", createInstance("card-copy-2", "Box"));
-    instances.get("card-copy-2")!.label = "Box 2";
+    instances.get("card-copy-2")!.name = "Box2";
 
     assignUniqueBlockTemplateNamesMutable({
       instanceIds: ["card-copy", "card-copy-2"],
@@ -404,8 +411,9 @@ describe("block template names", () => {
       instances,
     });
 
-    expect(instances.get("card-copy")?.label).toBe("Box 2");
-    expect(instances.get("card-copy-2")?.label).toBe("Box 3");
+    expect(instances.get("card-copy")?.name).toBe("Box2");
+    expect(instances.get("card-copy-2")?.name).toBe("Box3");
+    expect(instances.get("hero")?.label).toBe("Hero Card");
   });
 
   test("finds exact name collisions in the same flat list", () => {
@@ -414,14 +422,14 @@ describe("block template names", () => {
     expect(
       findBlockTemplateNameCollision({
         instance: instances.get("card")!,
-        nextInstance: { ...instances.get("card")!, label: "Hero Card" },
+        nextInstance: { ...instances.get("card")!, name: "HeroCard" },
         instances,
       })?.instance.id
     ).toBe("hero");
     expect(
       findBlockTemplateNameCollision({
         instance: instances.get("card")!,
-        nextInstance: { ...instances.get("card")!, label: "hero card" },
+        nextInstance: { ...instances.get("card")!, name: "heroCard" },
         instances,
       })
     ).toBeUndefined();
@@ -456,8 +464,8 @@ describe("block template names", () => {
     expect(
       getBlockTemplateNameConfirmation({
         changes: [
-          { instance, nextInstance: { ...instance, label: "Article Card" } },
-          { instance: hero, nextInstance: { ...hero, label: "Article Hero" } },
+          { instance, nextInstance: { ...instance, name: "ArticleCard" } },
+          { instance: hero, nextInstance: { ...hero, name: "ArticleHero" } },
         ],
         instances,
         props: new Map([[source.id, source]]).values(),
@@ -465,11 +473,11 @@ describe("block template names", () => {
     ).toEqual({
       action: "rename",
       templates: [
-        { instanceId: "card", oldName: "Box", newName: "Article Card" },
+        { instanceId: "card", oldName: "Box", newName: "ArticleCard" },
         {
           instanceId: "hero",
-          oldName: "Hero Card",
-          newName: "Article Hero",
+          oldName: "HeroCard",
+          newName: "ArticleHero",
         },
       ],
     });

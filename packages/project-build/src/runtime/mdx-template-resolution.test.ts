@@ -203,7 +203,7 @@ describe("resolveMdxTemplates", () => {
           reference.type === "resolved-template" &&
           reference.templateInstanceId === codeTemplate?.id
       )?.templateName
-    ).toBe("Code Block");
+    ).toBe("CodeText");
 
     const componentNameDocument = await parseMdxDocument({
       source: "<CodeText />\n",
@@ -218,7 +218,7 @@ describe("resolveMdxTemplates", () => {
     ).toEqual([
       expect.objectContaining({
         type: "resolved-template",
-        templateName: "Code Block",
+        templateName: "CodeText",
         templateInstanceId: codeTemplate?.id,
       }),
     ]);
@@ -227,7 +227,7 @@ describe("resolveMdxTemplates", () => {
       const templateInstance = fragment.instances.find(
         (instance) => instance.component === component
       );
-      const templateName = templateInstance?.label ?? component;
+      const templateName = templateInstance?.name ?? component;
       const legacyDocument = await parseMdxDocument({
         source: `<ws.element ws:name="${templateName}" />\n`,
       });
@@ -275,7 +275,63 @@ describe("resolveMdxTemplates", () => {
     });
   });
 
-  test("does not let an incompatible template name shadow adapter JSX", async () => {
+  test("reads a legacy label alias and resolves it to the stable name", async () => {
+    const instances = createInstances();
+    const card = instances.get("card");
+    if (card === undefined) {
+      throw new Error("Expected card template");
+    }
+    card.name = "Card";
+    card.label = "Promotion Card";
+    const document = await parseMdxDocument({
+      source: '<ws.element ws:name="Promotion Card" />\n',
+    });
+
+    expect(
+      resolveMdxTemplates({ document, identity, instances, metas }).references
+    ).toEqual([
+      expect.objectContaining({
+        type: "resolved-template",
+        templateName: "Card",
+        templateInstanceId: "card",
+      }),
+    ]);
+  });
+
+  test("lets a canonical name win over another template's legacy label alias", async () => {
+    const instances = createInstances();
+    const card = instances.get("card");
+    const templates = instances.get("templates");
+    if (card === undefined || templates === undefined) {
+      throw new Error("Expected card and templates");
+    }
+    card.name = "Card";
+    card.label = "PromotionCard";
+    instances.set("promotion", {
+      ...createInstance("promotion", "Badge"),
+      name: "PromotionCard",
+    });
+    templates.children.push({ type: "id", value: "promotion" });
+
+    const document = await parseMdxDocument({ source: "<PromotionCard />\n" });
+    const result = resolveMdxTemplates({
+      document,
+      identity,
+      instances,
+      metas,
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.references).toEqual([
+      expect.objectContaining({
+        type: "resolved-template",
+        templateName: "PromotionCard",
+        templateInstanceId: "promotion",
+      }),
+    ]);
+  });
+
+  test("lets a stable template name shadow the registered component fallback", async () => {
     const instances = createInstances();
     instances.set(
       "reserved-image-name",
@@ -299,7 +355,12 @@ describe("resolveMdxTemplates", () => {
       metas,
     });
 
-    expect(result.references).toEqual([]);
+    expect(result.references).toEqual([
+      expect.objectContaining({
+        type: "resolved-template",
+        templateInstanceId: "reserved-image-name",
+      }),
+    ]);
     expect(result.diagnostics).toEqual([]);
 
     const explicitNamed = await parseMdxDocument({
@@ -324,7 +385,7 @@ describe("resolveMdxTemplates", () => {
     ["without a same-named template", false],
     ["with a same-named custom template", true],
   ] as const)(
-    "keeps structurally invalid reserved JSX out of name resolution %s",
+    "resolves component-like JSX by the normal template precedence %s",
     async (_description, withSameNamedTemplate) => {
       const instances = createInstances();
       if (withSameNamedTemplate) {
@@ -351,20 +412,25 @@ describe("resolveMdxTemplates", () => {
         metas,
       });
 
-      expect(result.references).toEqual([]);
-      expect(result.diagnostics).toEqual([
-        expect.objectContaining({
-          code: "invalid-mdx",
-          severity: "error",
-          message: expect.stringContaining(
-            'Built-in MDX component "Image" cannot represent this authored structure'
-          ),
-          sourceRange: {
-            start: { line: 1, column: 1, offset: 0 },
-            end: { line: 1, column: 23, offset: 22 },
-          },
-        }),
+      expect(result.references).toEqual([
+        expect.objectContaining(
+          withSameNamedTemplate
+            ? {
+                type: "resolved-template",
+                templateInstanceId: "reserved-image-name",
+              }
+            : { type: "unresolved-template", templateName: "Image" }
+        ),
       ]);
+      expect(result.diagnostics).toEqual(
+        [
+          expect.objectContaining(
+            withSameNamedTemplate
+              ? {}
+              : { code: "unresolved-template", templateName: "Image" }
+          ),
+        ].filter(() => withSameNamedTemplate === false)
+      );
     }
   );
 
@@ -834,8 +900,8 @@ describe("resolveMdxTemplates", () => {
     ]);
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
-        code: "unresolved-template",
-        templateName: "Hero Card",
+        code: "ambiguous-template",
+        semanticKey: "name:Hero Card",
       }),
     ]);
     expect(result.templateNames).toEqual(["Hero Card", "Card", "Hero Card"]);

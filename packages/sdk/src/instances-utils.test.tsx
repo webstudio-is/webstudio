@@ -7,6 +7,8 @@ import {
   findTreeInstanceIdsExcludingSubtrees,
   findTreeInstanceIdsExcludingSlotDescendants,
   findParentInstanceReference,
+  getComponentByJsxName,
+  getComponentJsxName,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
   getIndexesWithinAncestors,
@@ -16,6 +18,49 @@ import {
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
 import type { Prop, Props } from "./schema/props";
+
+test("resolves component JSX names and prefixes namespaced collisions", () => {
+  const components = [
+    "Heading",
+    "@webstudio-is/radix:Button",
+    "@webstudio-is/base:Button",
+  ];
+
+  expect(getComponentByJsxName({ name: "Heading", components })).toBe(
+    "Heading"
+  );
+  expect(getComponentByJsxName({ name: "Button", components })).toBe(undefined);
+  expect(getComponentByJsxName({ name: "RadixButton", components })).toBe(
+    "@webstudio-is/radix:Button"
+  );
+  expect(
+    getComponentJsxName({
+      component: "@webstudio-is/radix:Button",
+      components,
+    })
+  ).toBe("RadixButton");
+});
+
+test("keeps the base component unprefixed when it collides", () => {
+  const components = ["Button", "@webstudio-is/radix:Button"];
+  expect(getComponentByJsxName({ name: "Button", components })).toBe("Button");
+  expect(getComponentByJsxName({ name: "RadixButton", components })).toBe(
+    "@webstudio-is/radix:Button"
+  );
+});
+
+test("keeps direct JSX names unique across arbitrary component libraries", () => {
+  const components = ["@acme/one:Button", "@acme/two:Button"];
+  expect(
+    getComponentJsxName({ component: "@acme/one:Button", components })
+  ).toBe("AcmeOneButton");
+  expect(
+    getComponentJsxName({ component: "@acme/two:Button", components })
+  ).toBe("AcmeTwoButton");
+  expect(getComponentByJsxName({ name: "AcmeTwoButton", components })).toBe(
+    "@acme/two:Button"
+  );
+});
 
 test("find all tree instances", () => {
   const { instances } = renderData(

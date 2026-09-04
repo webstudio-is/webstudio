@@ -18,6 +18,7 @@ import {
   serializeMdxAuthoredContent,
   serializeMdxTemplateInsertion,
 } from "./mdx-authored-content";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 
 const identity: ContentBlockExternalContentIdentity = {
   blockInstanceId: "block",
@@ -77,6 +78,54 @@ const createCodeTextFragment = (theme = "github-light"): WebstudioFragment => ({
 });
 
 describe("MDX authored content", () => {
+  test("materializes and round-trips exact registered component JSX", async () => {
+    const source =
+      "<PromotionCard><Heading>Launch offer</Heading></PromotionCard>\n";
+    const document = await parseMdxDocument({ source });
+    const metas = new Map([
+      ["PromotionCard", { label: "Promotion card" }],
+      ["Heading", { label: "Heading" }],
+    ]);
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+      metas,
+    });
+
+    expect(root.fragment.instances).toEqual([
+      expect.objectContaining({ component: "Heading" }),
+      expect.objectContaining({
+        component: "PromotionCard",
+        children: [{ type: "id", value: expect.any(String) }],
+      }),
+    ]);
+    await expect(
+      serializeMdxAuthoredContent({ root, fragment: root.fragment })
+    ).resolves.toBe(source);
+  });
+
+  test("materializes static props on an exact registered component", async () => {
+    const source = '<Heading tag="h2">Test</Heading>\n';
+    const document = await parseMdxDocument({ source });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+      metas: componentMetas,
+    });
+
+    expect(root.fragment.instances).toEqual([
+      expect.objectContaining({ component: "Heading" }),
+    ]);
+    expect(root.fragment.props).toEqual([
+      expect.objectContaining({ name: "tag", type: "string", value: "h2" }),
+    ]);
+    await expect(
+      serializeMdxAuthoredContent({ root, fragment: root.fragment })
+    ).resolves.toBe(source);
+  });
+
   test("treats a legacy template node without syntax metadata as self-closing", async () => {
     const document: MdxDocument = {
       frontmatter: { properties: {} },
@@ -140,7 +189,7 @@ describe("MDX authored content", () => {
     ]);
     await expect(
       serializeMdxAuthoredContent({ root, fragment: root.fragment })
-    ).resolves.toBe('<ws.element ws:name="Card" />\n');
+    ).resolves.toBe("<Card />\n");
   });
 
   test("rejects a canvas edit prepared from a stale Asset document", async () => {
@@ -549,6 +598,7 @@ describe("MDX authored content", () => {
           id: "heading",
           component: elementComponent,
           tag: "h1",
+          name: "Heading1",
           label: "Heading 1",
           children: [{ type: "text", value: "Test" }],
         },
@@ -568,14 +618,14 @@ describe("MDX authored content", () => {
         await serializeMdxTemplateInsertion({
           identity,
           fragment,
-          templateName: "Heading 1",
+          templateName: "Heading1",
         })
       )
-    ).toBe('<ws.element ws:name="Heading 1">Test</ws.element>\n');
+    ).toBe("<Heading1>Test</Heading1>\n");
   });
 
   test.each(["Image", "CodeText"])(
-    "uses ws.element when inserting a custom template named %s",
+    "keeps a matching custom template named %s ahead of component fallback",
     async (templateName) => {
       const fragment: WebstudioFragment = {
         children: [{ type: "id", value: "custom" }],
@@ -606,9 +656,7 @@ describe("MDX authored content", () => {
             templateName,
           })
         )
-      ).toBe(
-        `<ws.element ws:name="${templateName}">Custom content</ws.element>\n`
-      );
+      ).toBe(`<${templateName}>Custom content</${templateName}>\n`);
     }
   );
 
@@ -954,14 +1002,14 @@ describe("MDX authored content", () => {
             [
               "heading",
               {
-                templateName: "Heading 1",
+                templateName: "Heading1",
                 pristineFragment: structuredClone(fragment),
               },
             ],
           ]),
         })
       )
-    ).toBe('<ws.element ws:name="Heading 1" />\n');
+    ).toBe("<Heading1 />\n");
   });
 
   test("serializes explicitly configured Code Text presentation as JSX", async () => {
@@ -1306,9 +1354,7 @@ describe("MDX authored content", () => {
       serializeMdxDocument(
         reconcileMdxAuthoredContent({ root, fragment: next })
       )
-    ).toBe(
-      '<ws.element ws:name="CodeText" theme="nord">const ready = true;</ws.element>\n'
-    );
+    ).toBe('<CodeText theme="nord">const ready = true;</CodeText>\n');
   });
 
   test("keeps a named Code Text reference after resetting presentation props", async () => {
@@ -1357,7 +1403,7 @@ describe("MDX authored content", () => {
       serializeMdxDocument(
         reconcileMdxAuthoredContent({ root, fragment: next })
       )
-    ).toBe('<ws.element ws:name="CodeText">const ready = true;</ws.element>\n');
+    ).toBe("<CodeText>const ready = true;</CodeText>\n");
   });
 
   test("materializes deterministic nested Markdown and MDX elements", async () => {
@@ -1402,8 +1448,7 @@ describe("MDX authored content", () => {
   });
 
   test("round-trips typed static props on generic MDX elements", async () => {
-    const source =
-      '<ws.element ws:tag="input" tabIndex="2" hidden="false" />\n';
+    const source = '<input tabIndex="2" hidden="false" />\n';
     const document = await parseMdxDocument({ source });
     const root = materializeMdxAuthoredContent({
       identity,
@@ -2038,7 +2083,7 @@ describe("MDX authored content", () => {
     classProp.value = "new";
 
     expect(await serializeMdxAuthoredContent({ root, fragment: next })).toBe(
-      '<ws.element ws:name="Card" className="new" />\n'
+      '<Card className="new" />\n'
     );
   });
 
@@ -2104,7 +2149,7 @@ describe("MDX authored content", () => {
     });
 
     expect(await serializeMdxAuthoredContent({ root, fragment: next })).toBe(
-      '<ws.element ws:name="Card" className="new" />\n'
+      '<Card className="new" />\n'
     );
 
     const invalid = structuredClone(root.fragment);

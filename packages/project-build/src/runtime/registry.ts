@@ -18,6 +18,7 @@ import {
 import { pageCopyNamespaces } from "../contracts/namespaces";
 import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
+import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import * as assets from "./assets";
 import * as assetResources from "./asset-resources";
 import * as bindingVerification from "./binding-verification";
@@ -374,7 +375,10 @@ const contentBlockTemplateMigrationInput = z.object({
     z.object({
       type: z.literal("rename"),
       from: z.string().min(1),
-      to: z.string().min(1),
+      to: z
+        .string()
+        .min(1)
+        .refine(isMdxTemplateComponentName, "Use a PascalCase MDX name"),
     }),
     z.object({ type: z.literal("remove"), name: z.string().min(1) }),
   ]),
@@ -1717,6 +1721,17 @@ export const builderRuntimeOperations = [
     }),
     instances.setInstanceLabelInput,
     ({ state, input }) => instances.setInstanceLabel(state, input)
+  ),
+  runtimeOperation(
+    "instances.setName",
+    api("set-instance-name", "setInstanceName", "edit"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["instances"],
+      retryOnConflict: true,
+    }),
+    instances.setInstanceNameInput,
+    ({ state, input }) => instances.setInstanceName(state, input)
   ),
   runtimeOperation(
     "styles.getDeclarations",

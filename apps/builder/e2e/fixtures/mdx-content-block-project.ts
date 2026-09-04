@@ -6,6 +6,7 @@ type InstanceData = {
   id: string;
   component: string;
   tag?: string;
+  name?: string;
   label?: string;
   children: Array<{ type: string; value: string }>;
 };
@@ -67,8 +68,29 @@ export const configureEmptyHeadingTemplate = async (projectId: string) => {
     id: emptyHeadingId,
     component: "ws:element",
     tag: "h1",
+    name: "EmptyHeadingTemplate",
     label: "Empty Heading Template",
     children: [],
+  });
+  await updateBuild(build.id, { instances: JSON.stringify(instances) });
+};
+
+export const configureNamedTemplateLifecycle = async (projectId: string) => {
+  const { build, instances } = await getBuildData(projectId);
+  const templates = instances.find((instance) => instance.id === templateId);
+  if (templates === undefined) {
+    throw new Error("Expected the Content Block templates fixture instance");
+  }
+  const lifecycleTemplateId = "lifecycle-card-template";
+  templates.children.push({ type: "id", value: lifecycleTemplateId });
+  instances.push({
+    type: "instance",
+    id: lifecycleTemplateId,
+    component: "ws:element",
+    tag: "section",
+    name: "LifecycleCard",
+    label: "Lifecycle Card",
+    children: [{ type: "text", value: "Default lifecycle card" }],
   });
   await updateBuild(build.id, { instances: JSON.stringify(instances) });
 };

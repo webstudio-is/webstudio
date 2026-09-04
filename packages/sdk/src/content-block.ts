@@ -21,6 +21,14 @@ import type { ExpressionChild, Instance, Instances } from "./schema/instances";
 import type { ExpressionBinding } from "./schema/expression";
 import type { Prop, Props } from "./schema/props";
 import { decodeDataSourceVariable } from "./expression";
+import { pascalCase } from "change-case";
+import { getComponentJsxName } from "./instances-utils";
+
+const toContentBlockTemplateIdentifier = (value: string) =>
+  pascalCase(value.normalize("NFKD").replaceAll(/\p{M}/gu, "")).replaceAll(
+    "_",
+    ""
+  ) || "Template";
 
 export type ContentBlockMdxTemplateDescriptor =
   | Readonly<{
@@ -119,6 +127,78 @@ export const isContentBlockMdxTemplateInsertable = (instance: {
   component: string;
   tag?: string;
 }) => getContentBlockMdxTemplateDescriptor(instance)?.insertable ?? true;
+
+/**
+ * Derives the canonical MDX identifier for a template that does not have a
+ * persisted name yet. Display labels never participate in this identity.
+ */
+export const getDefaultContentBlockTemplateName = (
+  instance: Pick<Instance, "component" | "tag">,
+  components?: Iterable<Instance["component"]>
+) => {
+  if (instance.component === "ws:element") {
+    return toContentBlockTemplateIdentifier(instance.tag ?? "Element");
+  }
+  const componentName =
+    components === undefined
+      ? (instance.component.split(":").at(-1) ?? "Component")
+      : getComponentJsxName({ component: instance.component, components });
+  return toContentBlockTemplateIdentifier(componentName);
+};
+
+/**
+ * Returns the stable MDX identifier for a direct Content Block template.
+ * The label fallback reads projects created before template names existed and
+ * can be removed after their authored MDX has been migrated.
+ */
+export const getContentBlockTemplateName = (
+  instance: Pick<Instance, "component" | "label" | "name" | "tag">
+) =>
+  instance.name ??
+  instance.label ??
+  getDefaultContentBlockTemplateName(instance);
+
+/** Assigns stable, unique MDX names to templates newly placed in a container. */
+export const assignUniqueBlockTemplateNamesMutable = ({
+  instanceIds,
+  parent,
+  replacedInstanceIds = [],
+  instances,
+  components,
+}: {
+  instanceIds: readonly Instance["id"][];
+  parent: Instance;
+  replacedInstanceIds?: readonly Instance["id"][];
+  instances: Instances;
+  components?: Iterable<Instance["component"]>;
+}) => {
+  if (parent.component !== blockTemplateComponent) {
+    return;
+  }
+  const ignoredIds = new Set([...instanceIds, ...replacedInstanceIds]);
+  const existingNames = new Set<string>();
+  for (const child of parent.children) {
+    const instance =
+      child.type === "id" ? instances.get(child.value) : undefined;
+    if (instance !== undefined && ignoredIds.has(instance.id) === false) {
+      existingNames.add(getContentBlockTemplateName(instance));
+    }
+  }
+  for (const instanceId of instanceIds) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      continue;
+    }
+    const uniqueName = allocateUniqueContentBlockTemplateName({
+      name:
+        instance.name ??
+        getDefaultContentBlockTemplateName(instance, components),
+      existingNames,
+    });
+    instance.name = uniqueName;
+    existingNames.add(uniqueName);
+  }
+};
 
 export const createContentBlockExternalContentIdentity = ({
   blockInstanceId,
@@ -627,12 +707,12 @@ export const allocateUniqueContentBlockTemplateName = ({
   name: string;
   existingNames: ReadonlySet<string>;
 }) => {
-  const normalizedName = name.trim();
+  const normalizedName = toContentBlockTemplateIdentifier(name);
   if (existingNames.has(normalizedName) === false) {
     return normalizedName;
   }
 
-  const suffixMatch = /^(.*) (\d+)$/.exec(normalizedName);
+  const suffixMatch = /^(.*?)(\d+)$/.exec(normalizedName);
   let baseName = normalizedName;
   let index = 2;
   if (suffixMatch !== null) {
@@ -642,7 +722,7 @@ export const allocateUniqueContentBlockTemplateName = ({
       index = suffix + 1;
     }
   }
-  let candidate = `${baseName} ${index}`;
+  let candidate = `${baseName}${index}`;
   while (existingNames.has(candidate)) {
     if (Number.isSafeInteger(index + 1) === false) {
       baseName = candidate;
@@ -650,7 +730,7 @@ export const allocateUniqueContentBlockTemplateName = ({
     } else {
       index += 1;
     }
-    candidate = `${baseName} ${index}`;
+    candidate = `${baseName}${index}`;
   }
   return candidate;
 };

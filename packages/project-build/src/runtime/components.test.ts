@@ -130,7 +130,7 @@ test("assigns a unique name when inserting into a Templates list", async () => {
     component: "Box",
     children: [],
   });
-  const fragment = await parseWebstudioJsxFragment("<$.Box />");
+  const fragment = await parseWebstudioJsxFragment("<Box />");
 
   const mutation = insertFragment(
     state,
@@ -142,7 +142,30 @@ test("assigns a unique name when inserting into a Templates list", async () => {
     expect.objectContaining({
       id: "generated-0",
       component: "Box",
-      label: "Box 2",
+      name: "Box2",
+    })
+  );
+});
+
+test("uses the public collision-safe component identifier as the template name", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [],
+  };
+  const fragment = await parseWebstudioJsxFragment("<RadixCheckbox />");
+
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+      name: "RadixCheckbox",
     })
   );
 });
@@ -1873,8 +1896,7 @@ test("rejects module syntax in webstudio jsx fragments", async () => {
         code: "invalid_webstudio_jsx",
         path: ["fragment"],
         constraint: "declarative_jsx_without_modules",
-        example:
-          '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
+        example: "<section><h2>Title</h2></section>",
       }),
     ],
   });
@@ -1889,13 +1911,14 @@ test("rejects react fragment shorthand in webstudio jsx fragments", async () => 
   );
 });
 
-test("rejects raw html tags in webstudio jsx fragments", async () => {
-  await expect(parseWebstudioJsxFragment(`<div>Hello</div>`)).rejects.toThrow(
-    "Use Webstudio components such as <$.Box>...</$.Box>"
+test("compiles lowercase html tags in webstudio jsx fragments", async () => {
+  const fragment = await parseWebstudioJsxFragment(
+    `<div>Hello</div><button>Open</button>`
   );
-  await expect(
-    parseWebstudioJsxFragment(`<button>Open</button>`)
-  ).rejects.toThrow("Use Webstudio components such as <$.Box>...</$.Box>");
+  expect(fragment.instances).toEqual([
+    expect.objectContaining({ component: "ws:element", tag: "div" }),
+    expect.objectContaining({ component: "ws:element", tag: "button" }),
+  ]);
 });
 
 test("validates ws.element tag in fragment insertion", async () => {
@@ -1973,28 +1996,28 @@ test("allows html and fragment syntax inside text values", async () => {
   ]);
 });
 
-test("suggests built-in helpers for unknown jsx identifiers", async () => {
-  await expect(parseWebstudioJsxFragment(`<Box />`)).rejects.toThrow(
-    "Use component namespaces $, ws, radix, and animation and value helpers css, token, expression, Variable, Parameter, ResourceValue, ActionValue, AssetValue, PageValue, and PlaceholderValue. Box is not defined"
-  );
+test("resolves direct registered component identifiers", async () => {
+  expect((await parseWebstudioJsxFragment(`<Box />`)).instances).toEqual([
+    expect.objectContaining({ component: "Box" }),
+  ]);
 });
 
-test("explains that animation is a component namespace", async () => {
+test("explains that animation is a legacy component namespace", async () => {
   await expect(
     parseWebstudioJsxFragment(
       '<$.Box data-animation={animation("pulse", css`opacity: 1;`)} />'
     )
   ).rejects.toThrow(
-    "animation is a component namespace such as <animation.AnimateChildren>; it is not a callable CSS keyframes helper."
+    "Use direct animation component identifiers such as <AnimateChildren>. The legacy animation namespace is not a callable CSS keyframes helper."
   );
 });
 
 test("rejects empty webstudio jsx fragments", async () => {
   await expect(parseWebstudioJsxFragment("")).rejects.toThrow(
-    "JSX fragment must contain at least one Webstudio component"
+    "JSX fragment must contain at least one element or component"
   );
   await expect(parseWebstudioJsxFragment("{null}")).rejects.toThrow(
-    "JSX fragment must contain at least one Webstudio component"
+    "JSX fragment must contain at least one element or component"
   );
 });
 

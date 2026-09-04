@@ -1,6 +1,7 @@
 import equal from "fast-deep-equal";
 import {
   blockTemplateComponent,
+  assignUniqueBlockTemplateNamesMutable,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -69,10 +70,7 @@ import {
   getNewFragmentContentModelWarnings,
 } from "./matcher";
 import { z } from "zod";
-import {
-  assignUniqueBlockTemplateNamesMutable,
-  getBlockTemplateNameConfirmation,
-} from "./block";
+import { getBlockTemplateNameConfirmation } from "./block";
 
 const conflictResolutionInput = z
   .enum(["ours", "theirs", "merge"])
@@ -222,7 +220,7 @@ const getUnknownCoreComponentError = ({
     componentMetas.has(component) === false &&
     templates.has(component) === false
   ) {
-    return `Component "${component}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. To create a native HTML element, use component "ws:element" with its "tag" property, for example <ws.element ws:tag="div">...</ws.element>.`;
+    return `Component "${component}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. In structured instance data, create a native HTML element with component "ws:element" and its "tag" property.`;
   }
 };
 
@@ -592,7 +590,7 @@ const validateFragmentComponent = ({
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      'Component "ws:element" requires a non-empty tag, for example <ws.element ws:tag="section">...</ws.element>. Use a Webstudio component such as <$.Box>...</$.Box> when you do not need a specific HTML tag.'
+      'Component "ws:element" requires a non-empty tag. In JSX, use a lowercase HTML element such as <section>...</section>; in structured instance data, set component "ws:element" and tag "section".'
     );
   }
   const insertCategory = templates.get(component)?.category ?? meta?.category;
@@ -866,6 +864,7 @@ const createInsertFragmentMutation = <
           )
         : [],
     instances: nextData.instances,
+    components: componentMetas.keys(),
   });
   const requiredTemplateNameConfirmation =
     mode === "replace" && parent.component === blockTemplateComponent

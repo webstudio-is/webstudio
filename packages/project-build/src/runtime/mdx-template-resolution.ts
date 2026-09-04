@@ -9,7 +9,8 @@ import type {
 } from "@webstudio-is/content-engine/mdx";
 import {
   findContentBlockTemplateContainers,
-  getInstanceName,
+  getContentBlockTemplateName,
+  getComponentByJsxName,
   getHtmlTagsFromProps,
   type ContentBlockDiagnostic,
   type ContentBlockExternalContentIdentity,
@@ -24,7 +25,6 @@ import {
   getMdxNamedTemplateComponentBinding,
   getMdxStandardTemplateKeyForInstance,
   getMdxStandardTemplateBinding,
-  hasMdxComponentAdapter,
 } from "./mdx-component-adapters";
 
 export type MdxTemplateReference = Readonly<{
@@ -128,6 +128,7 @@ export const resolveMdxTemplates = ({
   const htmlTagsByInstanceId =
     props === undefined ? undefined : getHtmlTagsFromProps(props);
   const templateIdsByName = new Map<string, Instance["id"][]>();
+  const legacyTemplateIdsByLabel = new Map<string, Instance["id"][]>();
   const templateIdsByStandardKey = new Map<string, Instance["id"][]>();
   const templateNameById = new Map<Instance["id"], string>();
   const templateNames: string[] = [];
@@ -135,12 +136,18 @@ export const resolveMdxTemplates = ({
     anchor: [identity.blockInstanceId],
     instances,
   }) ?? []) {
-    const name = getInstanceName({ instance: template, metas });
+    const name = getContentBlockTemplateName(template);
     templateNames.push(name);
     templateNameById.set(template.id, name);
     const templateIds = templateIdsByName.get(name) ?? [];
     templateIds.push(template.id);
     templateIdsByName.set(name, templateIds);
+    if (template.name !== undefined && template.label !== undefined) {
+      const legacyTemplateIds =
+        legacyTemplateIdsByLabel.get(template.label) ?? [];
+      legacyTemplateIds.push(template.id);
+      legacyTemplateIdsByLabel.set(template.label, legacyTemplateIds);
+    }
     const standardKey = getMdxStandardTemplateKeyForInstance({
       instance: template,
       metas,
@@ -164,32 +171,34 @@ export const resolveMdxTemplates = ({
     for (const [index, node] of nodes.entries()) {
       const path = [...parentPath, index];
       if (node.type === "template") {
-        const isReservedComponentJsx =
-          node.syntax === "jsx" && hasMdxComponentAdapter(node.name);
         const standard = getMdxStandardTemplateBinding(node);
-        if (isReservedComponentJsx && standard === undefined) {
+        const templateIds =
+          templateIdsByName.get(node.name) ??
+          (node.syntax !== "jsx"
+            ? legacyTemplateIdsByLabel.get(node.name)
+            : undefined);
+        if ((templateIds?.length ?? 0) > 1) {
+          references.push({
+            type: "unresolved-template",
+            path,
+            templateName: node.name,
+            sourceRange: node.sourceRange,
+          });
           diagnostics.push({
-            code: "invalid-mdx",
-            severity: "error",
+            code: "ambiguous-template",
+            severity: "warning",
             blockInstanceId: identity.blockInstanceId,
             assetId: identity.assetId,
             contentRef: identity.contentRef,
             renderScope: identity.renderScope,
-            message: `Built-in MDX component "${node.name}" cannot represent this authored structure.`,
+            semanticKey: `name:${node.name}`,
+            templateNames: templateIds!.map(
+              (templateId) => templateNameById.get(templateId) ?? node.name
+            ),
             sourceRange: node.sourceRange,
           });
           continue;
         }
-        const namedTemplateIds = templateIdsByName.get(node.name);
-        const templateIds =
-          isReservedComponentJsx &&
-          standard?.key.startsWith("component:") === true
-            ? namedTemplateIds?.filter(
-                (templateId) =>
-                  instances.get(templateId)?.component ===
-                  standard.key.slice("component:".length)
-              )
-            : namedTemplateIds;
         if (templateIds?.length === 1) {
           const templateInstance = instances.get(templateIds[0]);
           const componentBinding =
@@ -202,7 +211,7 @@ export const resolveMdxTemplates = ({
           references.push({
             type: "resolved-template",
             path,
-            templateName: node.name,
+            templateName: templateNameById.get(templateIds[0]) ?? node.name,
             props:
               componentBinding?.props.map(({ prop }) => prop) ?? node.props,
             propBindings: componentBinding?.props.map(
@@ -257,6 +266,15 @@ export const resolveMdxTemplates = ({
             continue;
           }
           if (standard?.key.startsWith("component:") === true) {
+            continue;
+          }
+          if (
+            node.syntax === "jsx" &&
+            getComponentByJsxName({
+              name: node.name,
+              components: metas.keys(),
+            }) !== undefined
+          ) {
             continue;
           }
           references.push({

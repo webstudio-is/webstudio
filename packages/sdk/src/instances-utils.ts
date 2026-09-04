@@ -2,6 +2,7 @@ import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance, Instances } from "./schema/instances";
 import type { Prop } from "./schema/props";
 import { blockTemplateComponent, elementComponent } from "./core-metas";
+import { pascalCase } from "change-case";
 
 export const ROOT_INSTANCE_ID = ":root";
 
@@ -115,6 +116,78 @@ export const parseComponentName = (componentName: string) => {
     [namespace, name] = parts;
   }
   return [namespace, name] as const;
+};
+
+const getPreferredComponentNamespaceJsxPrefix = (namespace: string) => {
+  if (namespace.includes("radix")) {
+    return "Radix";
+  }
+  if (namespace.includes("animation")) {
+    return "Animation";
+  }
+  return "Library";
+};
+
+const getQualifiedComponentNamespaceJsxPrefix = (namespace: string) =>
+  pascalCase(namespace.replaceAll("/", "-"));
+
+/** Returns the stable public JSX identifier for a registered component. */
+export const getComponentJsxName = ({
+  component,
+  components,
+}: {
+  component: Instance["component"];
+  components: Iterable<Instance["component"]>;
+}) => {
+  const [namespace, exportName] = parseComponentName(component);
+  const matches = Array.from(components).filter(
+    (candidate) => parseComponentName(candidate)[1] === exportName
+  );
+  if (matches.length === 1 || namespace === undefined) {
+    return exportName;
+  }
+  const preferredPrefix = getPreferredComponentNamespaceJsxPrefix(namespace);
+  const preferredPrefixMatches = matches.filter((candidate) => {
+    const [candidateNamespace] = parseComponentName(candidate);
+    return (
+      candidateNamespace !== undefined &&
+      getPreferredComponentNamespaceJsxPrefix(candidateNamespace) ===
+        preferredPrefix
+    );
+  });
+  const prefix =
+    preferredPrefixMatches.length === 1
+      ? preferredPrefix
+      : getQualifiedComponentNamespaceJsxPrefix(namespace);
+  return `${prefix}${exportName}`;
+};
+
+/** Resolves direct and collision-prefixed public JSX component identifiers. */
+export const getComponentByJsxName = ({
+  name,
+  components,
+}: {
+  name: string;
+  components: Iterable<Instance["component"]>;
+}) => {
+  const candidates = Array.from(components);
+  const exact = candidates.filter(
+    (component) => parseComponentName(component)[1] === name
+  );
+  if (exact.length === 1) {
+    return exact[0];
+  }
+  const core = exact.filter(
+    (component) => parseComponentName(component)[0] === undefined
+  );
+  if (core.length === 1) {
+    return core[0];
+  }
+  const aliases = candidates.filter(
+    (component) =>
+      getComponentJsxName({ component, components: candidates }) === name
+  );
+  return aliases.length === 1 ? aliases[0] : undefined;
 };
 
 /**

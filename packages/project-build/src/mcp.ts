@@ -7,6 +7,7 @@ import {
   getInputJsonSchemaMetadata,
   getInputJsonSchemaProperties,
   getFileExtension,
+  getComponentJsxName,
   inputJsonSchemaAcceptsType,
   parseComponentName,
   toInputJsonSchemaObject,
@@ -18,7 +19,10 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
-import type { TextAssetSourceDiagnostic } from "@webstudio-is/content-engine/mdx";
+import {
+  isMdxTemplateComponentName,
+  type TextAssetSourceDiagnostic,
+} from "@webstudio-is/content-engine/mdx";
 import { validateAssetQuery } from "@webstudio-is/content-engine";
 import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
@@ -70,12 +74,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import {
-  animationComponentNamespace,
-  componentMetas,
-  radixComponentNamespace,
-} from "@webstudio-is/sdk-components-registry/metas";
-import { camelCase } from "change-case";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { readProjectBuildDoc } from "./docs";
 import type { ComponentTemplateRegistry } from "./runtime/component-template";
 import {
@@ -2401,7 +2400,7 @@ export const mcpArgumentExamples: Record<
       parentInstanceId: "parent-id",
       data: { type: "expression", value: "Posts.data.items" },
       itemFragment:
-        "<ws.element ws:tag='article'><ws.element ws:tag='h2'>{expression`collectionItem.title ?? 'Untitled'`}</ws.element></ws.element>",
+        "<article><h2>{expression`collectionItem.title ?? 'Untitled'`}</h2></article>",
     },
     {
       parentInstanceId: "parent-id",
@@ -2409,38 +2408,35 @@ export const mcpArgumentExamples: Record<
         type: "json",
         value: [{ name: "Starter" }, { name: "Pro" }],
       },
-      itemFragment:
-        "<ws.element ws:tag='div'>{expression`collectionItem.name`}</ws.element>",
+      itemFragment: "<div>{expression`collectionItem.name`}</div>",
     },
   ],
   "insert-fragment": [
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag='h2'>Northstar Product OS</ws.element><ws.element ws:tag='p'>Reusable patterns for teams.</ws.element></ws.element>",
+        "<section ws:style={css`padding: 32px; display: grid; gap: 16px;`}><h2>Northstar Product OS</h2><p>Reusable patterns for teams.</p></section>",
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<ws.element ws:tag='section' style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag='h2'>Operations Console</ws.element><ws.element ws:tag='p'>Semantic section with React-style object styles converted into editable Webstudio styles.</ws.element></ws.element>",
+        "<section style={{ padding: 32, borderRadius: 16 }}><h2>Operations Console</h2><p>Semantic section with React-style object styles converted into editable Webstudio styles.</p></section>",
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<ws.element ws:tag='section' ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Token Example</ws.element><ws.element ws:tag='button' onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</ws.element></ws.element>",
+        "<section ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><h2>Token Example</h2><button onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</button></section>",
     },
     {
       parentInstanceId: "parent-id",
-      fragment:
-        "<ws.element ws:tag='section'><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>",
+      fragment: "<section><Switch><SwitchThumb /></Switch></section>",
     },
   ],
   "insert-fragment-verified": [
     {
       parentInstanceId: "parent-id",
       pagePath: "/pricing",
-      fragment:
-        "<ws.element ws:tag='section'><ws.element ws:tag='h2'>Pricing</ws.element></ws.element>",
+      fragment: "<section><h2>Pricing</h2></section>",
     },
   ],
   "update-text": [
@@ -4015,6 +4011,10 @@ export const hiddenMcpOperationCommands = new Set<string>([
 
 const mcpOperationSchemaInlineSizes = new Map<string, number>([
   ["search-project", 0],
+  ["set-instance-name", 0],
+  ["migrate-content-block-template-references", 0],
+  ["edit-content-block-source", 0],
+  ["update-content-block-frontmatter", 0],
   ["insert-fragment", 1_000],
   ["create-assets-resource", 2_500],
   ["update-assets-resource", 2_500],
@@ -4510,7 +4510,7 @@ const getTemplateInput = (input: unknown) => {
 const getInsertFragmentInput = async (input: unknown) => {
   if (isPlainRecord(input) === false) {
     throw new Error(
-      'insert-fragment requires {"parentInstanceId":"...","fragment":"<ws.element ws:tag=\'section\' />"}.'
+      'insert-fragment requires {"parentInstanceId":"...","fragment":"<section />"}.'
     );
   }
   if ("parentId" in input && "parentInstanceId" in input === false) {
@@ -4533,7 +4533,7 @@ const getInsertFragmentInput = async (input: unknown) => {
   }
   if (typeof input.fragment !== "string") {
     throw new Error(
-      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<ws.element ws:tag=\'section\' />"}.'
+      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<section />"}.'
     );
   }
   const { fragment: fragmentSource, ...runtimeInput } =
@@ -5293,16 +5293,13 @@ const getComponentSummaryEntry = ({
   }
   const [parsedNamespace, exportName] = parseComponentName(component);
   const namespace = parsedNamespace ?? "global";
-  const jsxNamespace =
-    parsedNamespace === radixComponentNamespace
-      ? "radix"
-      : parsedNamespace === animationComponentNamespace
-        ? "animation"
-        : parsedNamespace === "ws"
-          ? "ws"
-          : "$";
-  const jsxExportName =
-    parsedNamespace === "ws" ? camelCase(exportName) : exportName;
+  const candidateJsxName = getComponentJsxName({
+    component,
+    components: componentMetas.keys(),
+  });
+  const jsxName = isMdxTemplateComponentName(candidateJsxName)
+    ? candidateJsxName
+    : undefined;
   const template = templateMeta?.template;
   const hasTemplate = template !== undefined;
   const instancesById = new Map(
@@ -5346,7 +5343,7 @@ const getComponentSummaryEntry = ({
     component,
     exportName,
     namespace,
-    jsxElement: `<${jsxNamespace}.${jsxExportName} />`,
+    ...(jsxName === undefined ? {} : { jsxName, jsxElement: `<${jsxName} />` }),
     label: meta.label,
     category: visibleCategory,
     contentCategory: meta.contentModel?.category,
@@ -5830,16 +5827,13 @@ const getComponentCoverageStatus = async ({
   );
   const toCoverageEntry = ({
     component,
+    jsxName,
     jsxElement,
     namespace,
     label,
-  }: {
-    component: string;
-    jsxElement: string;
-    namespace: string;
-    label?: string;
-  }) => ({
+  }: ComponentSummaryEntry) => ({
     component,
+    jsxName,
     jsxElement,
     namespace,
     label,
@@ -5939,18 +5933,12 @@ const getComponentCoverageInsertNext = async ({
     throw new Error("components.coverage-insert-next found no component.");
   }
   const insert = await executeOperation({
-    command:
-      selectedRoot === undefined ? "insert-fragment" : "insert-component",
-    input:
-      selectedRoot === undefined
-        ? {
-            parentInstanceId: partParentInstanceId,
-            fragment: await parseWebstudioJsxFragment(selected.jsxElement),
-          }
-        : {
-            parentInstanceId,
-            component: selected.component,
-          },
+    command: "insert-component",
+    input: {
+      parentInstanceId:
+        selectedRoot === undefined ? partParentInstanceId : parentInstanceId,
+      component: selected.component,
+    },
     dryRun,
   });
   const after = await getComponentCoverageStatus({
@@ -5980,7 +5968,7 @@ const getComponentCoverageInsertNext = async ({
       label: selected.label,
       jsxElement: selected.jsxElement,
       namespace: selected.namespace,
-      mode: selectedRoot === undefined ? "fragment" : "component",
+      mode: "component",
     },
     parentInstanceId:
       selectedRoot === undefined ? partParentInstanceId : parentInstanceId,
@@ -6164,7 +6152,7 @@ const insertFragmentInputFilePath = ".temp/insert-fragment.json";
 const insertFragmentInputFileExample = {
   parentInstanceId: "parent-id",
   fragment:
-    "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Section title</ws.element><ws.element ws:tag='p'>Section copy.</ws.element></ws.element>",
+    "<section ws:style={css`padding: 32px; display: grid; gap: 12px;`}><h2>Section title</h2><p>Section copy.</p></section>",
 };
 
 const getToolCatalogOverview = (tools: readonly ProjectSessionMcpTool[]) => ({
@@ -6361,12 +6349,12 @@ const metaGoalGuides = [
         parentInstanceId: "<overview-root-id>",
         data: { type: "expression", value: "posts.data" },
         itemFragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.properties.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
+          '<article><h2>{expression`collectionItem.properties.title ?? "Untitled"`}</h2><p>{expression`collectionItem.properties.excerpt ?? ""`}</p><p>By {expression`collectionItem.properties.author.name`}</p><time>{expression`collectionItem.properties.publishedAt ?? ""`}</time><a href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</a></article>',
       },
       detailFragment: {
         parentInstanceId: "<detail-root-id>",
         fragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`post.data.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`post.data.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`post.data.content.text`} /></ws.element>',
+          '<article><h1>{expression`post.data.properties.title ?? "Untitled"`}</h1><p>By {expression`post.data.properties.author.name ?? ""`}</p><MarkdownEmbed code={expression`post.data.content.text`} /></article>',
       },
       detailPageSettings: {
         pageId: "<detail-page-id>",
@@ -6481,7 +6469,7 @@ const metaGoalGuides = [
       "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
       "Create resources only after their scope and referenced variables exist. When reusing the discovered /api/auth/session convention, pass recipe.createResourceInput directly as the entire create-resource tool input, unchanged except for its account root id placeholder. Do not wrap it in another resource object. Keep every request field nested under resource. resource.url is the HTTP request target, not a provider call or session-state expression. Use literal wrappers only for fixed header, search-parameter, and body text.",
       "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
-      'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
+      "Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <main><section><h2>Signed-out</h2></section><section><h2>Loading</h2></section><section><h2>Signed-in</h2></section><section><h2>Failed-auth</h2></section></main>.",
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
       'Ask whether the user wants visual verification unless they explicitly requested it. If they decline, run a focused static audit and stop without preview or screenshots. If they opt in, call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
@@ -6877,14 +6865,14 @@ const designSystemWorkflowPhases: Record<
       contents: {
         parentInstanceId: "root-id",
         fragment:
-          "<ws.element ws:tag='section' ws:style={css`padding: 24px;`}><ws.element ws:tag='h2'>Design System</ws.element></ws.element>",
+          "<section ws:style={css`padding: 24px;`}><h2>Design System</h2></section>",
       },
     },
     constraints: [
       "Save inputFile.contents at inputFile.path, replacing only root-id, then use the commandPattern as-is.",
       "Keep the dry-run fragment tiny, ideally under 500 characters.",
       "Do not design the real page in this phase.",
-      "Use ws.element tags or components confirmed by components.get; do not use deprecated $.Box, $.Heading, $.Paragraph, or $.Button.",
+      "Use lowercase HTML tags or direct component identifiers confirmed by components.get; do not use legacy ws.element, $.Box, $.Heading, $.Paragraph, or $.Button syntax.",
       "Return immediately after one dry-run result.",
     ],
     expectedReturn: [
