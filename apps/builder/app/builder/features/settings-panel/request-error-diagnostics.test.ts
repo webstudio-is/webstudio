@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   getRequestErrorDiagnostics,
   getRequestQueryDiagnostics,
-  getRequestSourceDiagnosticDescription,
+  getRequestSourceDiagnosticDetails,
   getRequestSourceDiagnosticLocation,
   getRequestSourceDiagnostics,
 } from "./request-error-diagnostics";
@@ -63,9 +63,20 @@ describe("request error diagnostics", () => {
         path: "two.mdx",
       },
     ]);
-    expect(diagnostics.map(getRequestSourceDiagnosticDescription)).toEqual([
-      "Current query · Source · invalid-mdx · Asset: one · Reference: #frontmatter/author · Source offsets: 12–19",
-      "Published database · Source · unsafe-mdx",
+    expect(diagnostics.map(getRequestSourceDiagnosticDetails)).toEqual([
+      [
+        { label: "Context", value: "Current query" },
+        { label: "Phase", value: "Source" },
+        { label: "Code", value: "invalid-mdx" },
+        { label: "Asset ID", value: "one" },
+        { label: "Reference", value: "#frontmatter/author" },
+        { label: "Source offsets", value: "12–19" },
+      ],
+      [
+        { label: "Context", value: "Published database" },
+        { label: "Phase", value: "Source" },
+        { label: "Code", value: "unsafe-mdx" },
+      ],
     ]);
     expect(diagnostics.map(getRequestSourceDiagnosticLocation)).toEqual([
       "one.mdx:2:1–2:8",
@@ -120,9 +131,16 @@ describe("request error diagnostics", () => {
     expect(getRequestSourceDiagnosticLocation(diagnostics[0])).toBe(
       "content/post.mdx:4:3–4:22"
     );
-    expect(getRequestSourceDiagnosticDescription(diagnostics[0])).toBe(
-      "Current query · Reference · TARGET_NOT_FOUND · Asset: post · Reference: #frontmatter/author · Node type: mdxJsxFlowElement · Reason: missing-reference · Source offsets: 31–50"
-    );
+    expect(getRequestSourceDiagnosticDetails(diagnostics[0])).toEqual([
+      { label: "Context", value: "Current query" },
+      { label: "Phase", value: "Reference" },
+      { label: "Code", value: "TARGET_NOT_FOUND" },
+      { label: "Asset ID", value: "post" },
+      { label: "Reference", value: "#frontmatter/author" },
+      { label: "Node type", value: "mdxJsxFlowElement" },
+      { label: "Reason", value: "missing-reference" },
+      { label: "Source offsets", value: "31–50" },
+    ]);
   });
 
   test("keeps every structured query setup error", () => {

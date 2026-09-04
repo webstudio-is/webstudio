@@ -1,4 +1,10 @@
-import { useState, type ComponentProps, type ReactNode, type Ref } from "react";
+import {
+  Fragment,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+  type Ref,
+} from "react";
 import {
   cssVar,
   Flex,
@@ -115,7 +121,7 @@ export const RequestDiagnosticDisclosure = ({
   severity: "error" | "warning";
   title: string;
   location: string;
-  details: ReactNode;
+  details: readonly { label: string; value: ReactNode }[];
   defaultOpen?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -164,8 +170,12 @@ export const RequestDiagnosticDisclosure = ({
         >
           <Text color="moreSubtle">Location</Text>
           <Text userSelect="text">{location}</Text>
-          <Text color="moreSubtle">Details</Text>
-          <Text userSelect="text">{details}</Text>
+          {details.map(({ label, value }) => (
+            <Fragment key={label}>
+              <Text color="moreSubtle">{label}</Text>
+              <Text userSelect="text">{value}</Text>
+            </Fragment>
+          ))}
         </Grid>
       </CollapsibleSectionRoot>
     </Grid>

@@ -276,47 +276,54 @@ export const getRequestQueryDiagnostics = (
       })
     : [];
 
-export const getRequestSourceDiagnosticDescription = (
+export const getRequestSourceDiagnosticDetails = (
   diagnostic: SourceDiagnostic
 ) => {
-  const parts: string[] = [];
+  const details: { label: string; value: string }[] = [];
   if (diagnostic.scope !== undefined) {
-    parts.push(
-      diagnostic.scope === "query" ? "Current query" : "Published database"
-    );
+    details.push({
+      label: "Context",
+      value:
+        diagnostic.scope === "query" ? "Current query" : "Published database",
+    });
   }
   if (diagnostic.phase !== undefined) {
-    parts.push(
-      diagnostic.phase === "metadata"
-        ? "Metadata"
-        : diagnostic.phase === "reference"
-          ? "Reference"
-          : "Source"
-    );
+    details.push({
+      label: "Phase",
+      value:
+        diagnostic.phase === "metadata"
+          ? "Metadata"
+          : diagnostic.phase === "reference"
+            ? "Reference"
+            : "Source",
+    });
   }
-  parts.push(diagnostic.code);
+  details.push({ label: "Code", value: diagnostic.code });
   if (diagnostic.assetId !== undefined) {
-    parts.push(`Asset: ${diagnostic.assetId}`);
+    details.push({ label: "Asset ID", value: diagnostic.assetId });
   }
   if (diagnostic.reference !== undefined) {
-    parts.push(`Reference: ${diagnostic.reference}`);
+    details.push({ label: "Reference", value: diagnostic.reference });
   }
   if (diagnostic.nodeType !== undefined) {
-    parts.push(`Node type: ${diagnostic.nodeType}`);
+    details.push({ label: "Node type", value: diagnostic.nodeType });
   }
   if (diagnostic.reason !== undefined) {
-    parts.push(`Reason: ${diagnostic.reason}`);
+    details.push({ label: "Reason", value: diagnostic.reason });
   }
   const startOffset = diagnostic.sourceRange?.start.offset;
   const endOffset = diagnostic.sourceRange?.end.offset;
   if (startOffset !== undefined && endOffset !== undefined) {
-    parts.push(`Source offsets: ${startOffset}–${endOffset}`);
+    details.push({
+      label: "Source offsets",
+      value: `${startOffset}–${endOffset}`,
+    });
   } else if (startOffset !== undefined) {
-    parts.push(`Source start offset: ${startOffset}`);
+    details.push({ label: "Source start offset", value: `${startOffset}` });
   } else if (endOffset !== undefined) {
-    parts.push(`Source end offset: ${endOffset}`);
+    details.push({ label: "Source end offset", value: `${endOffset}` });
   }
-  return parts.join(" · ");
+  return details;
 };
 
 export const getRequestSourceDiagnosticLocation = (
@@ -365,7 +372,7 @@ export const RequestErrorDiagnostics = ({
             severity={diagnostic.severity}
             title={diagnostic.message}
             location={getRequestSourceDiagnosticLocation(diagnostic)}
-            details={getRequestSourceDiagnosticDescription(diagnostic)}
+            details={getRequestSourceDiagnosticDetails(diagnostic)}
           />
         ))}
         {queryDiagnostics.map((diagnostic, index) => (
@@ -382,7 +389,7 @@ export const RequestErrorDiagnostics = ({
                 ? ""
                 : ` · ${diagnostic.path.join(".")}`
             }`}
-            details={diagnostic.code}
+            details={[{ label: "Code", value: diagnostic.code }]}
           />
         ))}
         {value.retryable !== undefined && (

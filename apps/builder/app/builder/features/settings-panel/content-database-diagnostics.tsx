@@ -23,7 +23,7 @@ import {
   RequestDiagnosticsTable,
 } from "./request-inspector";
 import {
-  getRequestSourceDiagnosticDescription,
+  getRequestSourceDiagnosticDetails,
   getRequestSourceDiagnosticLocation,
 } from "./request-error-diagnostics";
 
@@ -439,7 +439,7 @@ export const ContentDatabaseDiagnostics = ({
                         ? ""
                         : ` · ${issue.path.join(".")}`
                     }`}
-                    details={issue.code}
+                    details={[{ label: "Code", value: issue.code }]}
                   />
                 ))
               : value.queryWarnings?.map((warning, index) => (
@@ -448,7 +448,7 @@ export const ContentDatabaseDiagnostics = ({
                     severity="warning"
                     title={warning}
                     location="Query setup"
-                    details="Current query"
+                    details={[{ label: "Context", value: "Current query" }]}
                   />
                 ))}
             {value.issues?.map((issue, index) => (
@@ -457,7 +457,7 @@ export const ContentDatabaseDiagnostics = ({
                 severity={issue.severity}
                 title={issue.message}
                 location={getRequestSourceDiagnosticLocation(issue)}
-                details={getRequestSourceDiagnosticDescription(issue)}
+                details={getRequestSourceDiagnosticDetails(issue)}
               />
             ))}
           </RequestDiagnosticsTable>
