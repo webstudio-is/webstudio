@@ -76,7 +76,7 @@ jobs:
           )
         )
       )
-    timeout-minutes: 5
+    timeout-minutes: 7
     runs-on: ubuntu-latest
     environment:
       name: development
