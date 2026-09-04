@@ -3,7 +3,7 @@ import {
   getRequestErrorDiagnostics,
   getRequestQueryDiagnostics,
   getRequestSourceDiagnosticDescription,
-  getRequestSourceDiagnosticLabel,
+  getRequestSourceDiagnosticLocation,
   getRequestSourceDiagnostics,
 } from "./request-error-diagnostics";
 
@@ -67,9 +67,9 @@ describe("request error diagnostics", () => {
       "Current query · Source · invalid-mdx · Asset: one · Reference: #frontmatter/author · Source offsets: 12–19",
       "Published database · Source · unsafe-mdx",
     ]);
-    expect(diagnostics.map(getRequestSourceDiagnosticLabel)).toEqual([
-      "Error · one.mdx:2:1–2:8",
-      "Warning · two.mdx",
+    expect(diagnostics.map(getRequestSourceDiagnosticLocation)).toEqual([
+      "one.mdx:2:1–2:8",
+      "two.mdx",
     ]);
   });
 
@@ -117,8 +117,8 @@ describe("request error diagnostics", () => {
       },
     ]);
     expect(getRequestQueryDiagnostics(details)).toEqual([]);
-    expect(getRequestSourceDiagnosticLabel(diagnostics[0])).toBe(
-      "Error · content/post.mdx:4:3–4:22"
+    expect(getRequestSourceDiagnosticLocation(diagnostics[0])).toBe(
+      "content/post.mdx:4:3–4:22"
     );
     expect(getRequestSourceDiagnosticDescription(diagnostics[0])).toBe(
       "Current query · Reference · TARGET_NOT_FOUND · Asset: post · Reference: #frontmatter/author · Node type: mdxJsxFlowElement · Reason: missing-reference · Source offsets: 31–50"

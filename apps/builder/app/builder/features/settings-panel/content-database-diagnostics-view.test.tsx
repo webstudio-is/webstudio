@@ -255,7 +255,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
 
   expect(diagnosticTriggers[0]?.dataset.state).toBe("open");
   expect(container.textContent).toContain("posts/broken.md:3:1");
-  expect(container.textContent).toContain("Warning · posts/broken.md:3:1–3:12");
+  expect(container.textContent).toContain("posts/broken.md:3:1–3:12");
   expect(container.textContent).toContain("query.where.all.0.field");
   expect(container.textContent).toContain("UNOBSERVED_FIELD");
   const queryDiagnosticContent = document.getElementById(

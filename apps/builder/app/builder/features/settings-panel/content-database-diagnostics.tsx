@@ -24,7 +24,7 @@ import {
 } from "./request-inspector";
 import {
   getRequestSourceDiagnosticDescription,
-  getRequestSourceDiagnosticLabel,
+  getRequestSourceDiagnosticLocation,
 } from "./request-error-diagnostics";
 
 const runtimeContentNote =
@@ -456,7 +456,7 @@ export const ContentDatabaseDiagnostics = ({
                 key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
                 severity={issue.severity}
                 title={issue.message}
-                location={getRequestSourceDiagnosticLabel(issue)}
+                location={getRequestSourceDiagnosticLocation(issue)}
                 details={getRequestSourceDiagnosticDescription(issue)}
               />
             ))}

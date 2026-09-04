@@ -319,18 +319,17 @@ export const getRequestSourceDiagnosticDescription = (
   return parts.join(" · ");
 };
 
-export const getRequestSourceDiagnosticLabel = (
+export const getRequestSourceDiagnosticLocation = (
   diagnostic: SourceDiagnostic
 ) => {
-  const severity = diagnostic.severity === "error" ? "Error" : "Warning";
   if (diagnostic.sourceRange !== undefined) {
     const { start, end } = diagnostic.sourceRange;
-    return `${severity} · ${diagnostic.path}:${start.line}:${start.column}–${end.line}:${end.column}`;
+    return `${diagnostic.path}:${start.line}:${start.column}–${end.line}:${end.column}`;
   }
   if (diagnostic.line === undefined) {
-    return `${severity} · ${diagnostic.path}`;
+    return diagnostic.path;
   }
-  return `${severity} · ${diagnostic.path}:${diagnostic.line}${
+  return `${diagnostic.path}:${diagnostic.line}${
     diagnostic.column === undefined ? "" : `:${diagnostic.column}`
   }`;
 };
@@ -365,7 +364,7 @@ export const RequestErrorDiagnostics = ({
             key={`${diagnostic.path}:${diagnostic.code}:${index}`}
             severity={diagnostic.severity}
             title={diagnostic.message}
-            location={getRequestSourceDiagnosticLabel(diagnostic)}
+            location={getRequestSourceDiagnosticLocation(diagnostic)}
             details={getRequestSourceDiagnosticDescription(diagnostic)}
           />
         ))}
