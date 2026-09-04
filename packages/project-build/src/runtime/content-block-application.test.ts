@@ -326,7 +326,10 @@ describe("createContentBlockApplication", () => {
       blockInstanceId: "block",
       renderScope: "page:/articles/example",
       source: { type: "expression", value: "post.data.id" },
-      variables: { post: { data: { id: 42, token: "private-value" } } },
+      variables: {
+        post: { data: { id: 42, token: "private-value" } },
+        options: {},
+      },
     });
 
     const error = await inspection.catch((error: unknown) => error);
@@ -342,7 +345,7 @@ describe("createContentBlockApplication", () => {
             variables: { post: { data: { id: "<mdxAssetId>" } } },
           },
           detail:
-            'Expression result: number. Supplied values: "post" (object with keys "data"). Available project resource variables: "post". Resource results are loaded only while rendering and must be supplied in variables for this operation. renderScope is a stable occurrence key; it does not load route data or resource results.',
+            'Expression result: number. Supplied variables: "post" (object with keys "data"), "options" (empty object). Project resource variables: "post". This operation does not load route data or resource results; pass concrete values in variables. renderScope only identifies the rendered occurrence.',
         },
       ],
     });

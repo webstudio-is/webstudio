@@ -57,7 +57,7 @@ const describeValueShape = (value: unknown): string => {
   if (typeof value === "object") {
     const keys = Object.keys(value).slice(0, 10);
     return keys.length === 0
-      ? "object with no keys"
+      ? "empty object"
       : `object with keys ${keys.map((key) => JSON.stringify(key)).join(", ")}`;
   }
   return typeof value;
@@ -196,10 +196,18 @@ export const createContentBlockApplication = ({
       source.type === "expression"
         ? computeExpression(source.value, values)
         : undefined;
-    const suppliedValues = Object.entries(variables ?? {});
-    const resourceNames = Array.from(state.dataSources?.values() ?? [])
-      .filter((dataSource) => dataSource.type === "resource")
-      .map((dataSource) => JSON.stringify(dataSource.name));
+    const suppliedVariableShapes =
+      Object.entries(variables ?? {})
+        .map(
+          ([name, value]) =>
+            `${JSON.stringify(name)} (${describeValueShape(value)})`
+        )
+        .join(", ") || "none";
+    const projectResourceNames =
+      Array.from(state.dataSources?.values() ?? [])
+        .filter((dataSource) => dataSource.type === "resource")
+        .map((dataSource) => JSON.stringify(dataSource.name))
+        .join(", ") || "none";
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Content source expression does not resolve to an MDX Asset id.",
@@ -214,16 +222,7 @@ export const createContentBlockApplication = ({
             example: {
               variables: { post: { data: { id: "<mdxAssetId>" } } },
             },
-            detail: `Expression result: ${describeValueShape(evaluated)}. Supplied values: ${
-              suppliedValues.length === 0
-                ? "none"
-                : suppliedValues
-                    .map(
-                      ([name, value]) =>
-                        `${JSON.stringify(name)} (${describeValueShape(value)})`
-                    )
-                    .join(", ")
-            }. Available project resource variables: ${resourceNames.length === 0 ? "none" : resourceNames.join(", ")}. Resource results are loaded only while rendering and must be supplied in variables for this operation. renderScope is a stable occurrence key; it does not load route data or resource results.`,
+            detail: `Expression result: ${describeValueShape(evaluated)}. Supplied variables: ${suppliedVariableShapes}. Project resource variables: ${projectResourceNames}. This operation does not load route data or resource results; pass concrete values in variables. renderScope only identifies the rendered occurrence.`,
           },
         ],
       }
