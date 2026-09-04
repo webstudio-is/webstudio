@@ -100,6 +100,15 @@ tags: [web, studio]
     ]);
   });
 
+  test("uses the YAML parser error as the frontmatter title and reason", async () => {
+    const [diagnostic] = await createMarkdownFrontmatterDiagnostics(
+      '---\ntitle: "Broken article\npublished: true\n---\n'
+    );
+
+    expect(diagnostic.message.startsWith("Missing closing")).toBe(true);
+    expect(diagnostic.reason).toBe(diagnostic.message);
+  });
+
   test("reports every independent post-parse frontmatter limit", async () => {
     const fields = Array.from(
       { length: contentEngineLimits.frontmatterFields + 1 },

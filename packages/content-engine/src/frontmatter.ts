@@ -139,16 +139,19 @@ export type MarkdownFrontmatterDiagnostic = Readonly<{
   code: MarkdownMetadataError["code"];
   severity: "warning";
   message: string;
+  reason?: string;
   line?: number;
   column?: number;
 }>;
 
 const toFrontmatterDiagnostic = (
-  error: MarkdownMetadataError
+  error: MarkdownMetadataError,
+  reason?: string
 ): MarkdownFrontmatterDiagnostic => ({
   code: error.code,
   severity: "warning",
-  message: error.message,
+  message: reason ?? error.message,
+  ...(reason === undefined ? {} : { reason }),
   ...(error.line === undefined ? {} : { line: error.line }),
   ...(error.column === undefined ? {} : { column: error.column }),
 });
@@ -323,7 +326,8 @@ export const createMarkdownFrontmatterDiagnostics = async (
           `Markdown frontmatter contains invalid YAML: ${error.message}`,
           { line: location.line + 1, column: location.col },
           error
-        )
+        ),
+        error.message
       );
     });
   }

@@ -22,13 +22,18 @@ const DiagnosticExamples = ({
         <RequestDiagnosticDisclosure
           defaultOpen={defaultOpen}
           severity="warning"
-          title="Markdown frontmatter contains invalid YAML: Missing closing quote in title"
+          title='Missing closing "quote at line 3, column 1: published: true ^'
           location="content/articles/broken.md:4:1"
           details={[
             { label: "Context", value: "Current query" },
             { label: "Phase", value: "Metadata" },
             { label: "Code", value: "FRONTMATTER_INVALID" },
             { label: "Asset ID", value: "RI08dJPedj6XKX0nCJopT" },
+            {
+              label: "Reason",
+              value:
+                'Missing closing "quote at line 3, column 1: published: true ^',
+            },
           ]}
         />
         <RequestDiagnosticDisclosure
@@ -41,6 +46,7 @@ const DiagnosticExamples = ({
             { label: "Phase", value: "Source" },
             { label: "Code", value: "INVALID_MDX" },
             { label: "Asset ID", value: "broken-mdx" },
+            { label: "Reason", value: "Unexpected closing tag in MDX content" },
           ]}
         />
       </RequestDiagnosticsTable>
