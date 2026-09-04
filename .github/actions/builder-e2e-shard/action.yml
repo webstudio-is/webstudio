@@ -64,9 +64,9 @@ runs:
     - name: Print service logs
       if: failure()
       shell: bash
-      run: pnpm --filter @webstudio-is/builder backend snapshot logs
+      run: bash apps/builder/backend/run.sh snapshot logs
 
     - name: Stop services
       if: always()
       shell: bash
-      run: pnpm --filter @webstudio-is/builder backend snapshot down --volumes --remove-orphans
+      run: bash apps/builder/backend/run.sh snapshot down --volumes --remove-orphans
