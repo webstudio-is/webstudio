@@ -137,9 +137,12 @@ export const prepareCanonicalContentMetadata = async ({
         if (error instanceof MarkdownMetadataError === false) {
           throw error;
         }
+        const reason =
+          error.cause instanceof Error ? error.cause.message : undefined;
         metadataError = {
           code: error.code,
-          message: error.message,
+          message: reason ?? error.message,
+          ...(reason === undefined ? {} : { reason }),
           ...(error.line === undefined ? {} : { line: error.line }),
           ...(error.column === undefined ? {} : { column: error.column }),
         };

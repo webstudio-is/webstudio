@@ -308,9 +308,6 @@ export const getRequestSourceDiagnosticDetails = (
   if (diagnostic.nodeType !== undefined) {
     details.push({ label: "Node type", value: diagnostic.nodeType });
   }
-  if (diagnostic.reason !== undefined) {
-    details.push({ label: "Reason", value: diagnostic.reason });
-  }
   const startOffset = diagnostic.sourceRange?.start.offset;
   const endOffset = diagnostic.sourceRange?.end.offset;
   if (startOffset !== undefined && endOffset !== undefined) {
@@ -372,6 +369,7 @@ export const RequestErrorDiagnostics = ({
             severity={diagnostic.severity}
             title={diagnostic.message}
             location={getRequestSourceDiagnosticLocation(diagnostic)}
+            reason={diagnostic.reason ?? diagnostic.message}
             details={getRequestSourceDiagnosticDetails(diagnostic)}
           />
         ))}
@@ -389,6 +387,7 @@ export const RequestErrorDiagnostics = ({
                 ? ""
                 : ` · ${diagnostic.path.join(".")}`
             }`}
+            reason={diagnostic.message}
             details={[{ label: "Code", value: diagnostic.code }]}
           />
         ))}

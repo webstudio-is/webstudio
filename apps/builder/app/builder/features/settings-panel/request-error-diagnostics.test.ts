@@ -138,7 +138,6 @@ describe("request error diagnostics", () => {
       { label: "Asset ID", value: "post" },
       { label: "Reference", value: "#frontmatter/author" },
       { label: "Node type", value: "mdxJsxFlowElement" },
-      { label: "Reason", value: "missing-reference" },
       { label: "Source offsets", value: "31–50" },
     ]);
   });

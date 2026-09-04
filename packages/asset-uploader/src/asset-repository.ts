@@ -113,6 +113,7 @@ import {
 } from "./query-performance";
 import type { AssetContentRead as SharedAssetContentRead } from "@webstudio-is/content-engine/asset-content-repository";
 import { validateTextAssetSourceBytes } from "@webstudio-is/content-engine/mdx";
+import { removeMetadataIssuesDuplicatedBySource } from "./diagnostic-utils";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
@@ -182,26 +183,32 @@ const getPreparedDiagnosticIssues = ({
   const pathsById = new Map(
     entries.map(({ assetId, document }) => [assetId, document.path])
   );
-  const metadataIssues = entries.flatMap(({ assetId, document }) =>
-    document.metadataError === undefined
-      ? []
-      : [
-          {
-            severity: "warning" as const,
-            phase: "metadata" as const,
-            code: document.metadataError.code,
-            message: document.metadataError.message,
-            assetId,
-            path: document.path,
-            ...(document.metadataError.line === undefined
-              ? {}
-              : { line: document.metadataError.line }),
-            ...(document.metadataError.column === undefined
-              ? {}
-              : { column: document.metadataError.column }),
-          },
-        ]
-  );
+  const metadataIssues = removeMetadataIssuesDuplicatedBySource({
+    metadataIssues: entries.flatMap(({ assetId, document }) =>
+      document.metadataError === undefined
+        ? []
+        : [
+            {
+              severity: "warning" as const,
+              phase: "metadata" as const,
+              code: document.metadataError.code,
+              message: document.metadataError.message,
+              assetId,
+              path: document.path,
+              ...(document.metadataError.reason === undefined
+                ? {}
+                : { reason: document.metadataError.reason }),
+              ...(document.metadataError.line === undefined
+                ? {}
+                : { line: document.metadataError.line }),
+              ...(document.metadataError.column === undefined
+                ? {}
+                : { column: document.metadataError.column }),
+            },
+          ]
+    ),
+    sourceIssues,
+  });
   const referenceIssues = assetReferenceIssues.flatMap((issue) => {
     const path = pathsById.get(issue.sourceDocumentId);
     return path === undefined

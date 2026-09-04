@@ -115,12 +115,14 @@ export const RequestDiagnosticDisclosure = ({
   severity,
   title,
   location,
+  reason,
   details,
   defaultOpen = false,
 }: {
   severity: "error" | "warning";
   title: string;
   location: string;
+  reason: ReactNode;
   details: readonly { label: string; value: ReactNode }[];
   defaultOpen?: boolean;
 }) => {
@@ -170,6 +172,10 @@ export const RequestDiagnosticDisclosure = ({
         >
           <Text color="moreSubtle">Location</Text>
           <Text userSelect="text">{location}</Text>
+          <Text color="moreSubtle">Reason</Text>
+          <Text userSelect="text" css={{ whiteSpace: "pre-wrap" }}>
+            {reason}
+          </Text>
           {details.map(({ label, value }) => (
             <Fragment key={label}>
               <Text color="moreSubtle">{label}</Text>

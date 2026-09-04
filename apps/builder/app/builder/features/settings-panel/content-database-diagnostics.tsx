@@ -439,6 +439,7 @@ export const ContentDatabaseDiagnostics = ({
                         ? ""
                         : ` · ${issue.path.join(".")}`
                     }`}
+                    reason={issue.message}
                     details={[{ label: "Code", value: issue.code }]}
                   />
                 ))
@@ -448,6 +449,7 @@ export const ContentDatabaseDiagnostics = ({
                     severity="warning"
                     title={warning}
                     location="Query setup"
+                    reason={warning}
                     details={[{ label: "Context", value: "Current query" }]}
                   />
                 ))}
@@ -457,6 +459,7 @@ export const ContentDatabaseDiagnostics = ({
                 severity={issue.severity}
                 title={issue.message}
                 location={getRequestSourceDiagnosticLocation(issue)}
+                reason={issue.reason ?? issue.message}
                 details={getRequestSourceDiagnosticDetails(issue)}
               />
             ))}

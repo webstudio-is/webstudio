@@ -262,7 +262,7 @@ test("orders collapsible sections and opens only database sizes by default", () 
     diagnosticTriggers[0]?.getAttribute("aria-controls") ?? ""
   );
   expect(queryDiagnosticContent?.textContent).toBe(
-    "LocationQuery · query.where.all.0.fieldCodeUNOBSERVED_FIELD"
+    "LocationQuery · query.where.all.0.fieldReasonAsset field properties.subtitle is not currently observedCodeUNOBSERVED_FIELD"
   );
   const editor = container.querySelector(".cm-content");
   expect(editor).not.toBeNull();

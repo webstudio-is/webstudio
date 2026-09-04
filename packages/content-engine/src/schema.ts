@@ -65,6 +65,7 @@ export const assetFileDocument = strictObject({
   metadataError: strictObject({
     code: string().min(1),
     message: string().min(1),
+    reason: string().min(1).optional(),
     line: number().int().positive().optional(),
     column: number().int().positive().optional(),
   }).optional(),
