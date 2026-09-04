@@ -66,6 +66,7 @@ import { $selectedPageId } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { deleteAssets, updateAssetContent } from "~/builder/shared/assets";
 import { normalizeTextFileConversion } from "~/builder/features/text-file-editor/text-file-utils";
+import { isAssetFilenameUsed } from "~/builder/shared/assets/asset-utils";
 import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
@@ -312,12 +313,16 @@ const AssetSettingsContent = ({
   onDelete,
   onReplace,
   focusName,
+  canRename,
+  unavailableDestinationFolderIds,
 }: {
   asset: Asset;
   usages: AssetUsage[];
   onDelete?: () => void;
   onReplace?: () => void;
   focusName: boolean;
+  canRename: boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
 }) => {
   const { canDownloadAssets } = useStore($permissions);
   const { size, meta, id } = asset;
@@ -338,14 +343,16 @@ const AssetSettingsContent = ({
       return;
     }
 
-    for (const candidate of $assets.get().values()) {
-      if (
-        candidate.id !== assetId &&
-        formatAssetName(candidate) === newFilename
-      ) {
-        setFilenameError("Filename already used");
-        return;
-      }
+    if (
+      isAssetFilenameUsed({
+        assets: $assets.get().values(),
+        filename: newFilename,
+        folderId: currentAsset.folderId,
+        excludeAssetId: assetId,
+      })
+    ) {
+      setFilenameError("Filename already used");
+      return;
     }
 
     if (extension.toLowerCase() !== currentExtension.toLowerCase()) {
@@ -510,7 +517,7 @@ const AssetSettingsContent = ({
           <InputField
             id="asset-manager-filename"
             autoFocus={focusName}
-            readOnly={authPermit === "view"}
+            readOnly={authPermit === "view" || canRename === false}
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -525,6 +532,7 @@ const AssetSettingsContent = ({
         <AssetFolderSelector
           value={asset.folderId}
           onChange={moveToFolder}
+          unavailableDestinationFolderIds={unavailableDestinationFolderIds}
           rootLabel="Folder"
           disabled={authPermit === "view"}
           deferChangesUntilBlur
@@ -678,6 +686,8 @@ export const AssetSettings = ({
   onDelete,
   onReplace,
   focusName = false,
+  canRename = true,
+  unavailableDestinationFolderIds,
   children,
 }: {
   asset: Asset;
@@ -686,6 +696,8 @@ export const AssetSettings = ({
   onDelete?: () => void;
   onReplace?: () => void;
   focusName?: boolean;
+  canRename?: boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
   children: ReactNode;
 }) => {
   const usagesByAssetId = useStore($usagesByAssetId);
@@ -722,6 +734,8 @@ export const AssetSettings = ({
           onDelete={deleteAsset}
           onReplace={replaceAsset}
           focusName={focusName}
+          canRename={canRename}
+          unavailableDestinationFolderIds={unavailableDestinationFolderIds}
         />
       </PopoverContent>
     </Popover>

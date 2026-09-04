@@ -40,14 +40,19 @@ export const openAssetsPanel = async ({
 export const createAssetFolder = async ({
   page,
   name,
+  useAsContentCollection = false,
 }: {
   page: Page;
   name: string;
+  useAsContentCollection?: boolean;
 }) => {
   await openAddAssetMenu(page);
   await page.getByRole("menuitem", { name: "Create folder" }).click();
   const dialog = page.getByRole("dialog", { name: "New folder" });
   await dialog.getByLabel("Name", { exact: true }).fill(name);
+  if (useAsContentCollection) {
+    await dialog.getByLabel("Use as content collection").check();
+  }
   await Promise.all([
     waitForChangeToBeSaved({ page }),
     dialog.getByRole("button", { name: "Create folder" }).click(),

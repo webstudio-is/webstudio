@@ -152,6 +152,8 @@ type AssetThumbnailProps = {
   onElementChange?: (element: HTMLElement | null) => void;
   selectionActions?: AssetManagerItemActions;
   onMove?: () => void;
+  isCollectionEntry?: boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
 };
 
 export const AssetThumbnail = ({
@@ -166,6 +168,8 @@ export const AssetThumbnail = ({
   onElementChange,
   selectionActions,
   onMove,
+  isCollectionEntry = false,
+  unavailableDestinationFolderIds,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -206,6 +210,7 @@ export const AssetThumbnail = ({
             ? {}
             : {
                 ...createAssetManagerClipboardActions(item),
+                ...(isCollectionEntry ? { duplicate: undefined } : {}),
                 move: onMove,
                 delete: () => setDeleteOpen(true),
                 ...(asset.type === "image"
@@ -320,6 +325,8 @@ export const AssetThumbnail = ({
               }}
               onDelete={actions.delete}
               onReplace={actions.replace}
+              canRename={isCollectionEntry === false}
+              unavailableDestinationFolderIds={unavailableDestinationFolderIds}
             >
               <AssetManagerThumbnailMenu
                 actions={displayedActions}

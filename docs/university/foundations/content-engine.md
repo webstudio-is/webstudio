@@ -77,13 +77,69 @@ blog/
     assets/
 ```
 
-Keeping all articles in one folder makes them easy to query. Images can live
-next to the articles or in a nested folder.
+Keeping all articles in one folder makes them easy to query. Put images and
+other supporting files in a nested folder.
 
 Open the settings for the `posts` folder and copy its ID. Both Assets resources
 in this guide use that ID to query only files in this folder.
 
+### Make the folder a content collection
+
+Turn on **Use as content collection** when you create the `posts` folder if
+editors should be able to add articles without writing MDX frontmatter. This
+creates two files in the folder:
+
+- `collection.json` defines the entry fields and their rules with JSON Schema.
+- `template.mdx` supplies the starting frontmatter and body for each entry.
+
+The folder remains a normal Assets folder. The direct `collection.json` file is
+what makes Webstudio treat it as a collection and show the collection badge.
+Open **Collection settings** to add fields, choose their types, mark them as
+required, set defaults and text-length or number limits, edit the entry
+template, and select the slug and slug-source fields. The configurator writes
+the schema; designers do not need to edit JSON. Choose a dynamic article page
+whose path parameter has the same name as the slug field. A new entry then
+opens on that page with its slug filled into the matching parameter.
+
+The collection format uses a supported subset of JSON Schema draft 2020-12.
+It covers object fields, required fields, strings, numbers, integers, booleans,
+arrays, nested objects, defaults, and the limits available in the configurator.
+It does not support `$ref`, composition keywords, enums, formats, or custom
+regular-expression patterns. Webstudio reports unsupported rules with their
+location instead of silently ignoring them.
+
+Editors choose **New entry**, complete the generated form, and select **Create
+entry**. Webstudio creates a lowercase, dash-separated slug from the title.
+Editors can change the slug before creating the entry. The schema is checked
+when an entry is created and whenever its frontmatter changes. The slug becomes
+the MDX filename and cannot be changed after creation.
+
+When you change collection fields or limits, Webstudio also checks the entry
+template and every existing entry. Fix incompatible frontmatter before saving
+rules that would make existing content invalid.
+
+A collection folder accepts entries and subfolders. Uploading, creating a
+generic text file, pasting, moving, or duplicating another file directly into
+the collection is disabled. Put images and other supporting files in a
+subfolder. The collection configuration and template do not appear in Content
+Engine query results. Keep `collection.json` valid and its referenced template
+available. Webstudio blocks collection queries and publishing when it cannot
+safely identify the reserved files, the template is invalid, or an entry no
+longer matches the schema and its filename slug.
+
+**Delete unused assets** does not list the files directly inside a collection
+folder. Collection entries are loaded dynamically and may not have a direct
+page or component reference.
+
+Removing the collection in **Collection settings** deletes only
+`collection.json`. The folder becomes a normal folder again, while its entries
+and template remain. The former template is then a regular MDX file and can
+appear in Assets query results.
+
 ## 2. Create an article
+
+If `posts` is a content collection, choose **New entry** and fill in its form.
+Otherwise, create the file and frontmatter manually:
 
 1. Open `blog/posts` in the Assets panel.
 2. Open the add menu and choose **Create text file**.
@@ -109,7 +165,6 @@ Write the article here.
 ```
 
 <figure><img src="../../.gitbook/assets/content-engine-markdown-editor.png" alt="Markdown editor showing article frontmatter and body"><figcaption><p>An article's metadata and body in the Markdown editor</p></figcaption></figure>
-
 
 ### Frontmatter
 
@@ -147,8 +202,8 @@ Select only the referenced fields the page uses, such as
 value becomes structured data:
 
 ```js
-post.properties.featureImage.src
-post.properties.featureImage.description
+post.properties.featureImage.src;
+post.properties.featureImage.description;
 ```
 
 Bind the Image source to `post.properties.featureImage.src`. Bind its
@@ -210,7 +265,8 @@ page-level **Dynamic data**:
 5. Under **Content**, choose **Metadata only**. The overview does not render
    complete article bodies.
 6. Add these filters:
-   - `extension` **equals** `"md"`
+   - `extension` **equals** `"mdx"` for collection entries, or `"md"` for the
+     manually created Markdown files in this guide
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.draft` **does not equal** `true`
 7. Sort `properties.publishedAt` in descending order. Add `id` in ascending
@@ -218,7 +274,6 @@ page-level **Dynamic data**:
    stable order.
 
 <figure><img src="../../.gitbook/assets/content-engine-overview-query.png" alt="Assets overview query filtering Markdown files and drafts, then sorting by publication date and ID"><figcaption><p>An overview query for the Webstudio Updates project</p></figcaption></figure>
-
 
 Choosing only the fields the page renders keeps the published content data
 small. Leaving article bodies out of the overview also avoids loading every
@@ -259,13 +314,13 @@ Add another Assets resource to the page-level **Dynamic data**:
 4. Under **Result**, choose **Exactly one**.
 5. Under **Content**, choose **Markdown body reference**.
 6. Add these filters:
-   - `extension` **equals** `"md"`
+   - `extension` **equals** `"mdx"` for collection entries, or `"md"` for the
+     manually created Markdown files in this guide
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.slug` **equals** `system.params.slug`
    - `properties.draft` **does not equal** `true`
 
 <figure><img src="../../.gitbook/assets/content-engine-article-query.png" alt="Assets resource filtering one Markdown article by folder and the dynamic page slug"><figcaption><p>The article Resource uses the dynamic slug from the page URL</p></figcaption></figure>
-
 
 **Exactly one** returns the matching article directly at `post.data`. It also
 reports an error if two articles use the same slug. You do not need a
@@ -338,9 +393,10 @@ give its Assets resource the same `properties.draft does not equal true`
 filter. The metadata field does not automatically remove an article from a
 custom sitemap.
 
-To publish another article, duplicate the Markdown file and change its title,
-slug, publication date, image, and body. The existing overview and dynamic page
-will render it without another page design.
+To publish another collection article, choose **New entry**. For the manual
+workflow, duplicate the Markdown file and change its title, slug, publication
+date, image, and body. The existing overview and dynamic page will render it
+without another page design.
 
 ## Connect content with document references
 
@@ -352,10 +408,10 @@ for values inside JSON files, but it does not implement JSON Schema resolution.
 
 All supported source formats can reference the other content formats:
 
-| Source | Where references can appear | JSON target | Markdown or MDX target |
-| --- | --- | --- | --- |
-| Markdown or MDX | YAML frontmatter | Yes | Yes |
-| JSON | Anywhere in the document | Yes | Yes |
+| Source          | Where references can appear | JSON target | Markdown or MDX target |
+| --------------- | --------------------------- | ----------- | ---------------------- |
+| Markdown or MDX | YAML frontmatter            | Yes         | Yes                    |
+| JSON            | Anywhere in the document    | Yes         | Yes                    |
 
 References do not work inside a Markdown or MDX body. A `$ref` object can be
 nested in an object or array, including inside a file reached through another
@@ -375,13 +431,13 @@ relative to the file containing the reference, not the project root.
 
 The optional fragment selects which value to insert:
 
-| Reference | Value inserted at `$ref` |
-| --- | --- |
-| `../authors/ada.json` | The complete JSON value |
-| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name` |
-| `../authors/ada.md` | The complete Markdown source, including frontmatter |
-| `../authors/ada.md#frontmatter` | The Markdown frontmatter as an object |
-| `../authors/ada.md#body` | The Markdown body without frontmatter |
+| Reference                           | Value inserted at `$ref`                            |
+| ----------------------------------- | --------------------------------------------------- |
+| `../authors/ada.json`               | The complete JSON value                             |
+| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name`           |
+| `../authors/ada.md`                 | The complete Markdown source, including frontmatter |
+| `../authors/ada.md#frontmatter`     | The Markdown frontmatter as an object               |
+| `../authors/ada.md#body`            | The Markdown body without frontmatter               |
 
 JSON Pointer fragments apply only to JSON files. Use `~1` for `/` and `~0` for
 `~` inside a property name. For example, `#/social~1links/0` selects the first

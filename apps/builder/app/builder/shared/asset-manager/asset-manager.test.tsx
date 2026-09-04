@@ -25,6 +25,7 @@ import {
 } from "~/shared/nano-states";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import { AssetManager } from "./asset-manager";
+import type { ContentCollection } from "../assets/content-collections";
 import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import {
   createAssetFolderFixture,
@@ -121,10 +122,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const renderManager = (canManageFolders = true) =>
+const renderManager = (
+  canManageFolders = true,
+  props: { collections?: ReadonlyMap<string, ContentCollection> } = {}
+) =>
   renderer.render(
     <TooltipProvider>
-      <AssetManager canManageFolders={canManageFolders} />
+      <AssetManager canManageFolders={canManageFolders} {...props} />
     </TooltipProvider>
   );
 
@@ -215,6 +219,43 @@ const createAsset = (id: string): Asset => ({
   meta: { width: 1, height: 1 },
   createdAt: "2026-01-01T00:00:00.000Z",
 });
+
+const createLoadingCollection = (folderId: string): ContentCollection => {
+  const configAsset: Asset = {
+    id: `${folderId}-config`,
+    projectId: "project",
+    name: "collection.json",
+    filename: "collection",
+    folderId,
+    format: "json",
+    size: 1,
+    type: "file",
+    meta: {},
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+  return {
+    status: "loading",
+    folderId,
+    configAsset,
+    reservedAssets: [configAsset],
+    siblingAssets: [configAsset],
+  };
+};
+
+const setNestedCollectionFolders = () => {
+  $assetFolders.set(
+    createAssetFoldersFixture(
+      createAssetFolderFixture({ id: "alpha", name: "Alpha" }),
+      createAssetFolderFixture({
+        id: "bravo",
+        name: "Bravo",
+        parentId: "alpha",
+      }),
+      createAssetFolderFixture({ id: "charlie", name: "Charlie" })
+    )
+  );
+  return new Map([["bravo", createLoadingCollection("bravo")]]);
+};
 
 describe("Asset Manager multiselect interactions", () => {
   test("keeps the selected asset in the path while focusing the copy action", () => {
@@ -659,6 +700,167 @@ describe("Asset Manager multiselect interactions", () => {
     ).map((item) => item.textContent);
     expect(labels.some((label) => label?.startsWith("Copy"))).toBe(true);
     expect(labels).not.toContain("Upload asset");
+  });
+});
+
+describe("Asset Manager collection folder permissions", () => {
+  test("hides copy, duplicate, and delete for a collection ancestor from edit users", () => {
+    let collections: ReadonlyMap<string, ContentCollection> = new Map();
+    act(() => {
+      $authPermit.set("edit");
+      collections = setNestedCollectionFolders();
+    });
+    const container = renderManager(true, { collections });
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+
+    openContextMenu(folderButton);
+
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels).toContain("Settings");
+    expect(labels.some((label) => label?.startsWith("Cut"))).toBe(true);
+    expect(labels).toContain("Move");
+    expect(labels.some((label) => label?.startsWith("Copy"))).toBe(false);
+    expect(labels.some((label) => label?.startsWith("Duplicate"))).toBe(false);
+    expect(labels.some((label) => label?.startsWith("Delete"))).toBe(false);
+  });
+
+  test("keeps collection ancestor rename settings but hides folder deletion", () => {
+    let collections: ReadonlyMap<string, ContentCollection> = new Map();
+    act(() => {
+      $authPermit.set("edit");
+      collections = setNestedCollectionFolders();
+    });
+    const container = renderManager(true, { collections });
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    openContextMenu(folderButton);
+    const settings = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Settings");
+
+    act(() => settings?.click());
+
+    expect(document.body.textContent).toContain("Folder settings");
+    expect(
+      document.querySelector<HTMLInputElement>("#asset-folder-name-alpha")
+    ).not.toBeNull();
+    expect(
+      Array.from(document.body.querySelectorAll("button")).some(
+        (button) => button.textContent === "Delete"
+      )
+    ).toBe(false);
+  });
+
+  test("removes unsafe actions from a multiselection containing a collection ancestor", () => {
+    let collections: ReadonlyMap<string, ContentCollection> = new Map();
+    act(() => {
+      $authPermit.set("edit");
+      collections = setNestedCollectionFolders();
+    });
+    const container = renderManager(true, { collections });
+    const options = getOptions(container);
+    const alpha = options.find(
+      ({ button }) => button.getAttribute("aria-label") === "Folder Alpha"
+    )!;
+    const charlie = options.find(
+      ({ button }) => button.getAttribute("aria-label") === "Folder Charlie"
+    )!;
+    act(() => alpha.button.focus());
+    pointerDown(charlie.button, { ctrlKey: true });
+
+    openContextMenu(alpha.button);
+
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels.some((label) => label?.startsWith("Cut"))).toBe(true);
+    expect(labels).toContain("Move");
+    expect(labels.some((label) => label?.startsWith("Copy"))).toBe(false);
+    expect(labels.some((label) => label?.startsWith("Duplicate"))).toBe(false);
+    expect(labels.some((label) => label?.startsWith("Delete"))).toBe(false);
+  });
+
+  test("blocks unsafe collection ancestor shortcuts but preserves cut", () => {
+    let collections: ReadonlyMap<string, ContentCollection> = new Map();
+    act(() => {
+      $authPermit.set("edit");
+      collections = setNestedCollectionFolders();
+    });
+    const container = renderManager(true, { collections });
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    act(() => folderButton.focus());
+
+    keyDown(folderButton, "c", { metaKey: true });
+    expect($assetManagerClipboard.get()).toBeUndefined();
+
+    keyDown(folderButton, "d", { ctrlKey: true });
+    expect($assetFolders.get()).toHaveLength(3);
+
+    keyDown(folderButton, "Delete");
+    expect(document.body.textContent).not.toContain("Delete selected items");
+
+    keyDown(folderButton, "x", { ctrlKey: true });
+    expect($assetManagerClipboard.get()).toMatchObject({
+      operation: "cut",
+      items: [{ type: "folder", id: "alpha" }],
+    });
+  });
+
+  test("blocks a stale copied collection ancestor from being pasted", () => {
+    let collections: ReadonlyMap<string, ContentCollection> = new Map();
+    act(() => {
+      $authPermit.set("edit");
+      collections = setNestedCollectionFolders();
+      $assetManagerClipboard.set({
+        operation: "copy",
+        items: [{ type: "folder", id: "alpha" }],
+        projectId: "project",
+      });
+    });
+    const container = renderManager(true, { collections });
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Charlie"]'
+    )!;
+    act(() => folderButton.focus());
+
+    openContextMenu(folderButton);
+    expect(
+      Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+      ).some((item) => item.textContent?.startsWith("Paste"))
+    ).toBe(false);
+    dismissContextMenu();
+
+    keyDown(folderButton, "v", { metaKey: true });
+
+    expect($assetFolders.get()).toHaveLength(3);
+  });
+
+  test("keeps collection folder copy, duplicate, and delete available to builders", () => {
+    let collections: ReadonlyMap<string, ContentCollection> = new Map();
+    act(() => {
+      collections = setNestedCollectionFolders();
+    });
+    const container = renderManager(true, { collections });
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+
+    openContextMenu(folderButton);
+
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels.some((label) => label?.startsWith("Copy"))).toBe(true);
+    expect(labels.some((label) => label?.startsWith("Duplicate"))).toBe(true);
+    expect(labels.some((label) => label?.startsWith("Delete"))).toBe(true);
   });
 });
 

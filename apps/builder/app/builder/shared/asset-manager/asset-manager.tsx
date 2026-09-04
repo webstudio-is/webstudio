@@ -95,6 +95,13 @@ import { getAssetManagerDragItems } from "./asset-manager-drag";
 import type { AssetManagerThumbnailInteractions } from "./asset-manager-thumbnail";
 import { $authPermit } from "~/shared/nano-states";
 import { MoveAssetManagerItemsDialog } from "./asset-folder-dialogs";
+import {
+  canConfigureContentCollections,
+  type ContentCollection,
+} from "../assets/content-collections";
+
+const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
+  items.every((item) => item.type === "folder");
 
 type FolderNavigationProps =
   | { folderId?: never; onFolderChange?: never }
@@ -112,9 +119,16 @@ type AssetManagerProps = FolderNavigationProps & {
   panelActions?: Partial<
     Pick<
       AssetManagerItemActions,
-      "createFolder" | "createFile" | "upload" | "deleteUnusedAssets"
+      | "createFolder"
+      | "createFile"
+      | "upload"
+      | "deleteUnusedAssets"
+      | "createEntry"
     >
   >;
+  collections?: ReadonlyMap<string, ContentCollection>;
+  hiddenAssetIds?: ReadonlySet<string>;
+  emptyMessage?: string;
 };
 
 const AssetGrid = ({
@@ -148,7 +162,14 @@ export const AssetManager = ({
   onFolderChange,
   canManageFolders = false,
   panelActions,
+  collections = new Map(),
+  hiddenAssetIds = new Set(),
+  emptyMessage,
 }: AssetManagerProps) => {
+  const collectionFolderIds = useMemo(
+    () => new Set(collections.keys()),
+    [collections]
+  );
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
   const project = useStore($project);
@@ -157,6 +178,26 @@ export const AssetManager = ({
   const folderHierarchy = useMemo(
     () => createAssetFolderHierarchy(folders),
     [folders]
+  );
+  const canConfigureCollections = canConfigureContentCollections(authPermit);
+  const collectionProtectedFolderIds = useMemo(() => {
+    const protectedFolderIds = new Set<string>();
+    for (const collectionFolderId of collectionFolderIds) {
+      for (const folder of folderHierarchy.getPath(collectionFolderId)) {
+        protectedFolderIds.add(folder.id);
+      }
+    }
+    return protectedFolderIds;
+  }, [collectionFolderIds, folderHierarchy]);
+  const canCopyOrDeleteItems = useCallback(
+    (items: readonly AssetManagerSelection[]) =>
+      canConfigureCollections ||
+      items.every(
+        (item) =>
+          item.type !== "folder" ||
+          collectionProtectedFolderIds.has(item.id) === false
+      ),
+    [canConfigureCollections, collectionProtectedFolderIds]
   );
   const mimePatterns = useMemo(() => acceptToMimePatterns(accept), [accept]);
   const [internalFolderId, setInternalFolderId] = useState(folderId);
@@ -190,6 +231,42 @@ export const AssetManager = ({
   }, [clearMultiselect]);
   const currentFolderId =
     onFolderChange === undefined ? internalFolderId : folderId;
+  const currentFolderIsCollection =
+    currentFolderId !== undefined && collectionFolderIds.has(currentFolderId);
+  const canPasteClipboardToFolder = useCallback(
+    (targetFolderId: string | undefined) => {
+      if (
+        clipboard?.operation === "copy" &&
+        canCopyOrDeleteItems(clipboard.items) === false
+      ) {
+        return false;
+      }
+      return canPasteAssetManagerClipboard(
+        targetFolderId,
+        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
+          ? acceptFolderClipboardItems
+          : undefined
+      );
+    },
+    [canCopyOrDeleteItems, clipboard, collectionFolderIds]
+  );
+  const pasteClipboardToFolder = useCallback(
+    (targetFolderId: string | undefined) => {
+      if (
+        clipboard?.operation === "copy" &&
+        canCopyOrDeleteItems(clipboard.items) === false
+      ) {
+        return;
+      }
+      pasteAssetManagerClipboard(
+        targetFolderId,
+        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
+          ? acceptFolderClipboardItems
+          : undefined
+      );
+    },
+    [canCopyOrDeleteItems, clipboard, collectionFolderIds]
+  );
   const setCurrentFolderId = useCallback(
     (nextFolderId: string | undefined) => {
       if (onFolderChange === undefined) {
@@ -219,13 +296,16 @@ export const AssetManager = ({
   // Only show assets that match the accept constraint so incompatible types
   // (e.g. video files) can never be selected from an image picker.
   const compatibleContainers = useMemo(() => {
+    const visibleContainers = assetContainers.filter(
+      ({ asset }) => hiddenAssetIds.has(asset.id) === false
+    );
     if (mimePatterns === "*") {
-      return assetContainers;
+      return visibleContainers;
     }
-    return assetContainers.filter((container) =>
+    return visibleContainers.filter((container) =>
       doesAssetMatchMimePatterns(container.asset, mimePatterns)
     );
-  }, [assetContainers, mimePatterns]);
+  }, [assetContainers, hiddenAssetIds, mimePatterns]);
 
   const [selectedExtensions, setSelectedExtensions] = useState<
     AllowedFileExtension[] | "*"
@@ -609,6 +689,14 @@ export const AssetManager = ({
           ...item,
           projectId: project.id,
         }));
+  const selectionContainsCollectionEntry = normalizedShortcutSelection.some(
+    (item) =>
+      item.type === "asset" &&
+      collectionFolderIds.has(assetsById.get(item.id)?.folderId ?? "")
+  );
+  const canCopyOrDeleteSelection = canCopyOrDeleteItems(
+    normalizedShortcutSelection
+  );
   const copyItems = (items: readonly AssetManagerItem[]) => {
     copyAssetManagerItems(items);
     setAnnouncement(`${getItemCountLabel(items.length)} copied.`);
@@ -626,11 +714,28 @@ export const AssetManager = ({
       ? {}
       : {
           cut: () => cutItems(shortcutItems),
-          copy: () => copyItems(shortcutItems),
-          duplicate: () => duplicateItems(shortcutItems),
+          copy: canCopyOrDeleteSelection
+            ? () => copyItems(shortcutItems)
+            : undefined,
+          duplicate:
+            canCopyOrDeleteSelection &&
+            selectionContainsCollectionEntry === false
+              ? () => duplicateItems(shortcutItems)
+              : undefined,
           move: () => setPendingMoveItems(normalizedShortcutSelection),
-          delete: () => setPendingDeleteItems(normalizedShortcutSelection),
+          delete: canCopyOrDeleteSelection
+            ? () => setPendingDeleteItems(normalizedShortcutSelection)
+            : undefined,
         };
+
+  useEffect(() => {
+    if (
+      pendingDeleteItems !== undefined &&
+      canCopyOrDeleteItems(pendingDeleteItems) === false
+    ) {
+      setPendingDeleteItems(undefined);
+    }
+  }, [canCopyOrDeleteItems, pendingDeleteItems]);
 
   const moveItems = useCallback(
     (items: readonly AssetManagerSelection[], parentId: string | undefined) => {
@@ -649,13 +754,21 @@ export const AssetManager = ({
     (
       items: readonly AssetManagerSelection[],
       targetFolderId: string | undefined
-    ) =>
-      canMoveAssetManagerItems({
+    ) => {
+      if (
+        targetFolderId !== undefined &&
+        collectionFolderIds.has(targetFolderId) &&
+        items.some((item) => item.type === "asset")
+      ) {
+        return false;
+      }
+      return canMoveAssetManagerItems({
         items,
         targetFolderId,
         hierarchy: folderHierarchy,
-      }),
-    [folderHierarchy]
+      });
+    },
+    [collectionFolderIds, folderHierarchy]
   );
   const moveExcludedFolderIds = useMemo(() => {
     if (pendingMoveItems === undefined) {
@@ -716,11 +829,11 @@ export const AssetManager = ({
   const panelContextMenuActions: AssetManagerItemActions = {
     ...panelActions,
     ...(canManageFolders
-      ? { paste: () => pasteAssetManagerClipboard(currentFolderId) }
+      ? { paste: () => pasteClipboardToFolder(currentFolderId) }
       : {}),
   };
   const canPaste =
-    canManageFolders && canPasteAssetManagerClipboard(currentFolderId);
+    canManageFolders && canPasteClipboardToFolder(currentFolderId);
   const disabledPanelActions = new Set<keyof AssetManagerItemActions>();
   if (canPaste === false) {
     disabledPanelActions.add("paste");
@@ -775,21 +888,34 @@ export const AssetManager = ({
         setSelection(renderedItems[0]);
         announceSelection(renderedItems);
       }
-    } else if (key === "c" && shortcutItems.length > 0) {
+    } else if (
+      key === "c" &&
+      shortcutItems.length > 0 &&
+      canCopyOrDeleteSelection
+    ) {
       copyItems(shortcutItems);
     } else if (key === "x" && shortcutItems.length > 0) {
       cutItems(shortcutItems);
-    } else if (key === "d" && shortcutItems.length > 0) {
+    } else if (
+      key === "d" &&
+      shortcutItems.length > 0 &&
+      canCopyOrDeleteSelection &&
+      selectionContainsCollectionEntry === false
+    ) {
       duplicateItems(shortcutItems);
     } else if (key === "v" && canPaste) {
       const pastedItemCount = clipboard?.items.length ?? 0;
-      pasteAssetManagerClipboard(currentFolderId);
+      pasteClipboardToFolder(currentFolderId);
       setAnnouncement(
         `${getItemCountLabel(pastedItemCount)} pasted into ${getFolderName(
           currentFolderId
         )}.`
       );
-    } else if (isDeleteCommand && shortcutItems.length > 0) {
+    } else if (
+      isDeleteCommand &&
+      shortcutItems.length > 0 &&
+      canCopyOrDeleteSelection
+    ) {
       setPendingDeleteItems(normalizedShortcutSelection);
     }
   };
@@ -911,7 +1037,9 @@ export const AssetManager = ({
         }
         searchProps={searchProps}
         isEmpty={filteredItems.length === 0 && visibleFolders.length === 0}
-        emptyMessage={isSearching ? "No matching assets or folders" : undefined}
+        emptyMessage={
+          isSearching ? "No matching assets or folders" : emptyMessage
+        }
         emptyContent={
           backCard === undefined ? undefined : (
             <AssetGrid role="listbox" aria-multiselectable={canManageFolders}>
@@ -961,6 +1089,7 @@ export const AssetManager = ({
         onKeyDown={handleShortcut}
         autoScrollOnElementDrag={canManageFolders}
         allowFolderDrop={canManageFolders}
+        allowExternalDrop={currentFolderIsCollection === false}
         contextMenu={
           hasPanelContextMenuActions ? (
             <AssetManagerItemContextMenuContent
@@ -980,10 +1109,8 @@ export const AssetManager = ({
             folderId={currentFolderId}
             selectedItem={selectedBreadcrumbItem}
             onChange={setCurrentFolderId}
-            canPaste={
-              canManageFolders ? canPasteAssetManagerClipboard : undefined
-            }
-            onPaste={canManageFolders ? pasteAssetManagerClipboard : undefined}
+            canPaste={canManageFolders ? canPasteClipboardToFolder : undefined}
+            onPaste={canManageFolders ? pasteClipboardToFolder : undefined}
           />
         }
       >
@@ -1008,6 +1135,7 @@ export const AssetManager = ({
                 <FolderThumbnail
                   key={folder.id}
                   folder={folder}
+                  collection={collections.get(folder.id)}
                   interactions={thumbnailInteractions}
                   selected={isItemSelected({ type: "folder", id: folder.id })}
                   forcedSelection={forcedSelection !== undefined}
@@ -1015,6 +1143,12 @@ export const AssetManager = ({
                     forcedSelection === undefined ? undefined : selectionActions
                   }
                   canManage={canManageFolders}
+                  canCopyOrDelete={
+                    canConfigureCollections ||
+                    collectionProtectedFolderIds.has(folder.id) === false
+                  }
+                  canPasteClipboard={canPasteClipboardToFolder(folder.id)}
+                  onPasteClipboard={() => pasteClipboardToFolder(folder.id)}
                   canMoveItems={canMoveItems}
                   onOpen={() => openFolder(folder.id)}
                   path={
@@ -1064,6 +1198,10 @@ export const AssetManager = ({
                       : undefined
                   }
                   canDrag={canManageFolders}
+                  isCollectionEntry={collectionFolderIds.has(
+                    assetContainer.asset.folderId ?? ""
+                  )}
+                  unavailableDestinationFolderIds={collectionFolderIds}
                   onMove={() =>
                     setPendingMoveItems([
                       { type: "asset", id: assetContainer.asset.id },
@@ -1104,6 +1242,10 @@ export const AssetManager = ({
                 prefix={<TrashIcon />}
                 onClick={() => {
                   const items = pendingDeleteItems ?? [];
+                  if (canCopyOrDeleteItems(items) === false) {
+                    setPendingDeleteItems(undefined);
+                    return;
+                  }
                   deleteAssetManagerItems(items);
                   setPendingDeleteItems(undefined);
                   clearMultiselect();

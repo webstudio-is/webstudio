@@ -13,4 +13,7 @@ export * from "./query-error";
 export * from "./document-graph";
 export * from "./asset-value-references";
 export * from "./json-assets";
+export * from "./content-collection";
+export { extractMarkdownFrontmatter } from "./frontmatter";
+export { MarkdownMetadataError } from "./markdown-errors";
 export { createUniqueAssetIdsByPath } from "./asset-path-resolution";

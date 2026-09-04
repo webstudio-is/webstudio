@@ -300,6 +300,7 @@ const submitAssetUpload = async ({
 const createUploadTicket = async ({
   authToken,
   projectId,
+  folderId,
   fileOrUrl,
   contentHash,
   deduplicate = true,
@@ -308,6 +309,7 @@ const createUploadTicket = async ({
 }: {
   authToken: undefined | string;
   projectId: string;
+  folderId?: string;
   fileOrUrl: File | URL;
   contentHash?: string;
   deduplicate?: boolean;
@@ -317,13 +319,18 @@ const createUploadTicket = async ({
   const fileName = getFileName(fileOrUrl);
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
+  if (folderId !== undefined) {
+    metaFormData.append("folderId", folderId);
+  }
   metaFormData.append("type", assetType);
   if (contentHash !== undefined && deduplicate) {
     metaFormData.append("contentHash", contentHash);
   }
   const existingNames = new Set<string>();
   for (const asset of $assets.get().values()) {
-    existingNames.add(formatAssetName(asset));
+    if (asset.folderId === folderId) {
+      existingNames.add(formatAssetName(asset));
+    }
   }
   const deduplicatedFilename = deduplicateAssetName(fileName, existingNames);
   // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
@@ -524,6 +531,7 @@ export const uploadAssets = async <T extends File | URL>(
       const ticket = await createUploadTicket({
         authToken,
         projectId,
+        folderId: fileData.folderId,
         fileOrUrl:
           fileData.source === "file" ? fileData.file : new URL(fileData.url),
         contentHash:

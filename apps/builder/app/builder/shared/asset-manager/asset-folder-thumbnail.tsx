@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronRightIcon, FolderIcon } from "@webstudio-is/icons";
+import { useStore } from "@nanostores/react";
+import {
+  AlertCircleIcon,
+  ChevronRightIcon,
+  FolderIcon,
+  ListIcon,
+} from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
@@ -25,6 +31,15 @@ import {
   AssetManagerThumbnailMenu,
   type AssetManagerThumbnailInteractions,
 } from "./asset-manager-thumbnail";
+import {
+  canConfigureContentCollections,
+  type ContentCollection,
+} from "../assets/content-collections";
+import { CollectionSettingsDialog } from "./collection-settings-dialog";
+import { $authPermit, $isContentMode } from "~/shared/nano-states";
+
+const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
+  items.every((item) => item.type === "folder");
 
 export const FolderThumbnail = ({
   folder,
@@ -32,6 +47,9 @@ export const FolderThumbnail = ({
   interactions,
   onOpen,
   canManage,
+  canCopyOrDelete = true,
+  canPasteClipboard,
+  onPasteClipboard,
   canMoveItems,
   onMoveItems,
   onMove,
@@ -39,12 +57,16 @@ export const FolderThumbnail = ({
   onElementChange,
   forcedSelection,
   selectionActions,
+  collection,
 }: {
   folder: AssetFolder;
   selected: boolean;
   interactions: AssetManagerThumbnailInteractions;
   onOpen: () => void;
   canManage: boolean;
+  canCopyOrDelete?: boolean;
+  canPasteClipboard?: boolean;
+  onPasteClipboard?: () => void;
   canMoveItems: (
     items: readonly AssetManagerSelection[],
     folderId: string
@@ -58,10 +80,15 @@ export const FolderThumbnail = ({
   onElementChange?: (element: HTMLElement | null) => void;
   forcedSelection?: boolean;
   selectionActions?: AssetManagerItemActions;
+  collection?: ContentCollection;
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
+  const [collectionSettingsOpen, setCollectionSettingsOpen] = useState(false);
+  const isContentMode = useStore($isContentMode);
+  const authPermit = useStore($authPermit);
+  const canConfigureCollections = canConfigureContentCollections(authPermit);
   const elementRef = useRef<HTMLElement | null>(null);
   const getDragItems = interactions.getDragItems;
 
@@ -74,17 +101,41 @@ export const FolderThumbnail = ({
     id: folder.id,
     projectId: folder.projectId,
   };
+  const clipboardActions = createAssetManagerClipboardActions(item);
   const actions: AssetManagerItemActions = {
     open: onOpen,
     ...(canManage
       ? {
           settings: () => openSettings(),
-          ...createAssetManagerClipboardActions(item),
+          ...(collection?.status === "ready" &&
+          isContentMode === false &&
+          canConfigureCollections
+            ? { collectionSettings: () => setCollectionSettingsOpen(true) }
+            : {}),
+          cut: clipboardActions.cut,
+          ...(canCopyOrDelete
+            ? {
+                copy: clipboardActions.copy,
+                duplicate: clipboardActions.duplicate,
+              }
+            : {}),
           move: onMove,
-          paste: canPasteAssetManagerClipboard(folder.id)
-            ? () => pasteAssetManagerClipboard(folder.id)
-            : undefined,
-          delete: () => openSettings(true),
+          paste:
+            (canPasteClipboard ??
+            canPasteAssetManagerClipboard(
+              folder.id,
+              collection === undefined ? undefined : acceptFolderClipboardItems
+            ))
+              ? (onPasteClipboard ??
+                (() =>
+                  pasteAssetManagerClipboard(
+                    folder.id,
+                    collection === undefined
+                      ? undefined
+                      : acceptFolderClipboardItems
+                  )))
+              : undefined,
+          ...(canCopyOrDelete ? { delete: () => openSettings(true) } : {}),
         }
       : {}),
   };
@@ -148,9 +199,29 @@ export const FolderThumbnail = ({
         }}
         label={folder.name}
         path={path}
-        preview={<FolderIcon size={40} />}
+        preview={
+          <div style={{ position: "relative" }}>
+            <FolderIcon size={40} />
+            {collection !== undefined &&
+              (collection.status === "invalid" ? (
+                <AlertCircleIcon
+                  size={16}
+                  style={{ position: "absolute", right: -4, bottom: -2 }}
+                />
+              ) : (
+                <ListIcon
+                  size={16}
+                  style={{ position: "absolute", right: -4, bottom: -2 }}
+                />
+              ))}
+          </div>
+        }
         aria-label={`Folder ${folder.name}`}
-        aria-description="Double-click to open. Drag assets or folders here to move them."
+        aria-description={
+          collection === undefined
+            ? "Double-click to open. Drag assets or folders here to move them."
+            : "Content collection. Double-click to open. Only folders can be moved here."
+        }
         data-is-drop-over={isDropTarget ? "true" : undefined}
         clickable
         dropTarget={isDropTarget}
@@ -177,8 +248,19 @@ export const FolderThumbnail = ({
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
           initialDeleteConfirmation={deleteConfirmationOpen}
+          canDelete={canCopyOrDelete}
         />
       )}
+      {canManage &&
+        collection?.status === "ready" &&
+        isContentMode === false &&
+        canConfigureCollections && (
+          <CollectionSettingsDialog
+            collection={collection}
+            open={collectionSettingsOpen}
+            onOpenChange={setCollectionSettingsOpen}
+          />
+        )}
     </>
   );
 };

@@ -4,6 +4,8 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { patchLoadedBuild } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
+import type { AssetObjectReader } from "@webstudio-is/asset-uploader/server";
+import { createAssetClient } from "~/shared/asset-client";
 import {
   assertProjectPermit,
   authorizePatchEntries,
@@ -232,11 +234,13 @@ const applyAuthorizedEntries = async ({
   build,
   patch,
   version,
+  assetStore,
 }: {
   authorized: AuthorizedPatchEntry[];
   build?: BuildRow;
   patch: NormalizedPatchRequest;
   version: number;
+  assetStore: AssetObjectReader;
 }) => {
   if (authorized.length === 0) {
     return {
@@ -263,6 +267,7 @@ const applyAuthorizedEntries = async ({
         projectId: patch.projectId,
         clientVersion: version,
         transactions: authorized.map(({ entry }) => entry.transaction),
+        assetStore,
       },
       applyContext
     );
@@ -291,6 +296,7 @@ const applyAuthorizedEntries = async ({
         projectId: patch.projectId,
         clientVersion: currentVersion,
         transactions: [entry.transaction],
+        assetStore,
       },
       entryContext
     );
@@ -349,6 +355,7 @@ export const applyPatchRequest = async (
     build,
     patch,
     version: authorized.length === 0 ? state.version : patch.clientVersion,
+    assetStore: createAssetClient(),
   });
 
   if (applied.status === "version_mismatched") {

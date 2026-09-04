@@ -242,6 +242,10 @@ describe("api build patch commits", () => {
     expect(patchBuild).toHaveBeenNthCalledWith(
       1,
       {
+        assetStore: expect.objectContaining({
+          readFile: expect.any(Function),
+          uploadFile: expect.any(Function),
+        }),
         buildId: "build",
         projectId: "project",
         clientVersion: 1,
@@ -252,6 +256,10 @@ describe("api build patch commits", () => {
     expect(patchBuild).toHaveBeenNthCalledWith(
       2,
       {
+        assetStore: expect.objectContaining({
+          readFile: expect.any(Function),
+          uploadFile: expect.any(Function),
+        }),
         buildId: "build",
         projectId: "project",
         clientVersion: 1,
