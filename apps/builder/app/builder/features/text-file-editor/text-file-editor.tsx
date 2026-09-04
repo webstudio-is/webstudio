@@ -42,8 +42,10 @@ import {
 } from "@webstudio-is/icons";
 import {
   formatAssetName,
+  inspectMdxAssetSource,
   MdxAuthoredContentConflictError,
 } from "@webstudio-is/project-build/runtime";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   getAssetUrl,
   getPagePath,
@@ -57,6 +59,7 @@ import {
   $assets,
   $pages,
   $props,
+  readBuilderStateStores,
 } from "~/shared/sync/data-stores";
 import { $authPermit } from "~/shared/nano-states";
 import { AssetManager } from "~/builder/shared/asset-manager";
@@ -470,22 +473,31 @@ export const TextFileEditor = ({
     asset.projectId !== undefined
       ? getAssetContentBridge().getContentSession?.(asset.projectId)
       : undefined;
-  const semanticDiagnostics = useMemo(
-    () =>
-      Array.from(externalContentRoots.values()).flatMap((root) =>
-        root.identity?.assetId === assetId &&
-        (root.projectId === undefined || root.projectId === asset?.projectId)
-          ? (root.diagnostics ?? [])
-          : []
-      ),
-    [asset?.projectId, assetId, externalContentRoots]
-  );
   const languageExtensions = useMemo(
-    () =>
-      asset === undefined
-        ? []
-        : getTextFileEditorExtensions(asset, semanticDiagnostics),
-    [asset, semanticDiagnostics]
+    () => {
+      // The state reader below is intentionally refreshed when its external
+      // Content Block context changes.
+      void externalContentRoots;
+      if (asset === undefined) {
+        return [];
+      }
+      if (isMdxFileAsset(asset) === false || asset.projectId === undefined) {
+        return getTextFileEditorExtensions(asset);
+      }
+      const projectId = asset.projectId;
+      return getTextFileEditorExtensions(asset, [], async ({ source }) =>
+        inspectMdxAssetSource({
+          source,
+          assetId,
+          state: readBuilderStateStores(),
+          metas: componentMetas,
+          projectId,
+        })
+      );
+    },
+    // Recreate the linter after a Content Block is materialized or refreshed so
+    // contextual template and content-model diagnostics are recalculated.
+    [asset, assetId, externalContentRoots]
   );
 
   useEffect(() => {

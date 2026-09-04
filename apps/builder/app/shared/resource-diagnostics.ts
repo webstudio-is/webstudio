@@ -44,6 +44,44 @@ export const resourcePerformance = z.object({
 
 export type ResourcePerformance = z.infer<typeof resourcePerformance>;
 
+type ResourceDiagnosticsSchemaIssue = {
+  code: string;
+  path: string[];
+  message: string;
+};
+
+export const createResourceDiagnosticsResponseError = ({
+  message,
+  issues,
+}: {
+  message: string;
+  issues: readonly ResourceDiagnosticsSchemaIssue[];
+}) => ({
+  ok: false as const,
+  status: 500,
+  data: {
+    error: {
+      code: "INVALID_DIAGNOSTICS_RESPONSE",
+      message,
+      retryable: true,
+      details: {
+        issues: issues.map((issue) => ({
+          ...issue,
+          severity: "error" as const,
+          scope: "diagnostics" as const,
+        })),
+      },
+    },
+  },
+});
+
+type SeparatedResourceDiagnostics = {
+  result: unknown;
+  diagnostics?: z.infer<typeof assetQueryPreviewDiagnostics>;
+  diagnosticsError?: ReturnType<typeof createResourceDiagnosticsResponseError>;
+  performance?: ResourcePerformance;
+};
+
 // Assets diagnostics may be shown by Builder, but must never enter the value
 // exposed to expressions. Ordinary APIs may legitimately use the same field.
 export const separateResourceDiagnostics = ({
@@ -52,7 +90,7 @@ export const separateResourceDiagnostics = ({
 }: {
   request?: ResourceRequest;
   result: unknown;
-}) => {
+}): SeparatedResourceDiagnostics => {
   if (typeof result !== "object" || result === null) {
     return { result, diagnostics: undefined, performance: undefined };
   }
@@ -73,9 +111,37 @@ export const separateResourceDiagnostics = ({
     };
   }
   const { __diagnostics__, ...resourceResult } = resultWithoutPerformance;
+  const parsedDiagnostics =
+    assetQueryPreviewDiagnostics.safeParse(__diagnostics__);
+  if (parsedDiagnostics.success === false) {
+    const issues: ResourceDiagnosticsSchemaIssue[] = [];
+    for (const issue of parsedDiagnostics.error.issues) {
+      const path = ["__diagnostics__", ...issue.path.map(String)];
+      if (issue.code === "unrecognized_keys") {
+        for (const key of issue.keys) {
+          issues.push({
+            code: issue.code,
+            path: [...path, key],
+            message: issue.message,
+          });
+        }
+        continue;
+      }
+      issues.push({ code: issue.code, path, message: issue.message });
+    }
+    return {
+      result: resourceResult,
+      diagnostics: undefined,
+      diagnosticsError: createResourceDiagnosticsResponseError({
+        message: "Resource diagnostics response is invalid",
+        issues,
+      }),
+      performance,
+    };
+  }
   return {
     result: resourceResult,
-    diagnostics: assetQueryPreviewDiagnostics.safeParse(__diagnostics__).data,
+    diagnostics: parsedDiagnostics.data,
     performance,
   };
 };

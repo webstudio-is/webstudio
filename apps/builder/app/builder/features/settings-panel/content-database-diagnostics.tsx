@@ -19,8 +19,13 @@ import {
 import {
   RequestDiagnosticsRow,
   RequestDiagnosticsContent,
+  RequestDiagnosticDisclosure,
   RequestDiagnosticsTable,
 } from "./request-inspector";
+import {
+  getRequestSourceDiagnosticDetails,
+  getRequestSourceDiagnosticLocation,
+} from "./request-error-diagnostics";
 
 const runtimeContentNote =
   "Referenced documents fetched from storage at runtime are not included.";
@@ -379,6 +384,20 @@ export const ContentDatabaseDiagnostics = ({
     value.database.omittedDocumentCount === 1 ? "file" : "files"
   }`;
   const rows = getContentDatabaseDiagnosticRows(value);
+  const queryIssueErrorCount =
+    value.queryIssues?.filter(({ severity }) => severity === "error").length ??
+    0;
+  const queryIssueWarningCount =
+    value.queryIssues === undefined
+      ? (value.queryWarnings?.length ?? 0)
+      : value.queryIssues.filter(({ severity }) => severity === "warning")
+          .length;
+  const errorCount =
+    (value.issues?.filter(({ severity }) => severity === "error").length ?? 0) +
+    queryIssueErrorCount;
+  const warningCount =
+    (value.issues?.filter(({ severity }) => severity === "warning").length ??
+      0) + queryIssueWarningCount;
   const databaseAndSizes = {
     ...getPerformanceSizes(performance),
     scope: value.scope,
@@ -387,6 +406,66 @@ export const ContentDatabaseDiagnostics = ({
   };
   return (
     <RequestDiagnosticsContent padded={false}>
+      {(value.issues !== undefined && value.issues.length > 0) ||
+      (value.queryIssues !== undefined && value.queryIssues.length > 0) ||
+      (value.queryWarnings !== undefined && value.queryWarnings.length > 0) ? (
+        <DiagnosticsSection
+          label="Errors and warnings"
+          data={{
+            queryIssues: value.queryIssues,
+            queryWarnings: value.queryWarnings,
+            issues: value.issues,
+          }}
+          isOpen
+        >
+          <PanelBanner variant={errorCount > 0 ? "error" : "warning"}>
+            <Text>
+              {errorCount} {errorCount === 1 ? "error" : "errors"} and{" "}
+              {warningCount} {warningCount === 1 ? "warning" : "warnings"}
+              {value.issuesTruncated
+                ? `; showing the first ${value.issues?.length ?? 0}.`
+                : "."}
+            </Text>
+          </PanelBanner>
+          <RequestDiagnosticsTable>
+            {value.queryIssues !== undefined
+              ? value.queryIssues.map((issue, index) => (
+                  <RequestDiagnosticDisclosure
+                    key={`${issue.path.join(".")}:${issue.code}:${index}`}
+                    severity={issue.severity}
+                    title={issue.message}
+                    location={`Query${
+                      issue.path.length === 0
+                        ? ""
+                        : ` · ${issue.path.join(".")}`
+                    }`}
+                    reason={issue.message}
+                    details={[{ label: "Code", value: issue.code }]}
+                  />
+                ))
+              : value.queryWarnings?.map((warning, index) => (
+                  <RequestDiagnosticDisclosure
+                    key={`query-warning:${index}`}
+                    severity="warning"
+                    title={warning}
+                    location="Query setup"
+                    reason={warning}
+                    details={[{ label: "Context", value: "Current query" }]}
+                  />
+                ))}
+            {value.issues?.map((issue, index) => (
+              <RequestDiagnosticDisclosure
+                key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
+                severity={issue.severity}
+                title={issue.message}
+                location={getRequestSourceDiagnosticLocation(issue)}
+                reason={issue.reason ?? issue.message}
+                details={getRequestSourceDiagnosticDetails(issue)}
+              />
+            ))}
+          </RequestDiagnosticsTable>
+        </DiagnosticsSection>
+      ) : undefined}
       <DiagnosticsSection
         label="Database and sizes"
         data={databaseAndSizes}

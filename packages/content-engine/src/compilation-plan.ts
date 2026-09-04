@@ -483,7 +483,7 @@ const getStandardFieldPaths = (query: ContentCompilationQuery) => {
     }
   }
   if (query.content.mode !== "none") {
-    for (const field of ["mimeType", "size", "revision"] as const) {
+    for (const field of ["mimeType", "path", "size", "revision"] as const) {
       addField(fields, [field]);
     }
   }

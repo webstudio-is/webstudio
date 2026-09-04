@@ -11,6 +11,7 @@ import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { validateAssetQuery } from "@webstudio-is/content-engine";
 import { builderPatchTransactionSchema } from "./contracts/patch";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
@@ -1310,6 +1311,15 @@ describe("project session mcp adapter", () => {
             end: { line: 3, column: 11, offset: 18 },
           },
         },
+        {
+          code: "unresolved-template" as const,
+          severity: "warning" as const,
+          blockInstanceId: "content-block-1",
+          assetId,
+          contentRef: "asset:hero",
+          renderScope: "asset:hero:block:content-block-1",
+          templateName: "MissingCard",
+        },
       ],
     }));
     const adapter = createProjectSessionMcpCore({
@@ -1334,6 +1344,15 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({
             code: "unsafe-mdx",
             severity: "warning",
+          }),
+          expect.objectContaining({
+            code: "unresolved-template",
+            severity: "warning",
+            blockInstanceId: "content-block-1",
+            assetId: "hero",
+            contentRef: "asset:hero",
+            renderScope: "asset:hero:block:content-block-1",
+            templateName: "MissingCard",
           }),
         ],
       },
@@ -2396,6 +2415,88 @@ describe("project session mcp adapter", () => {
       "list-instances input.instanceId is not supported. Expected one of: rootInstanceId, maxDepth. Did you mean rootInstanceId? Use rootInstanceId to list a subtree, or inspect-instance to inspect one element."
     );
 
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("reports unknown, missing, and wrong-type input fields together", async () => {
+    const createPageOperation = publicOperation({
+      command: "create-page",
+      id: "pages.create",
+      description: "Create a page",
+      method: "mutation",
+      inputSchema: getTestInputSchema(
+        z.object({ name: z.string(), path: z.string() })
+      ),
+    });
+    const executeOperation: ExecuteOperation = vi.fn();
+    const adapter = createProjectSessionMcpCore({
+      operations: [...publicMcpOperations, createPageOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    let error: unknown;
+    try {
+      await adapter.callTool({
+        name: "create-page",
+        input: { name: 42, unexpected: true },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toMatchObject({
+      code: "INVALID_INPUT",
+      issues: [
+        expect.objectContaining({ path: ["path"], constraint: "required" }),
+        expect.objectContaining({ path: ["name"], constraint: "type:string" }),
+        expect.objectContaining({ path: ["unexpected"] }),
+      ],
+    });
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("uses the shared query validator and keeps root input errors", async () => {
+    const operation = publicOperation({
+      command: "validate-asset-query",
+      id: "assetQueries.validate",
+      description: "Validate an Asset query",
+      inputSchema: getTestInputSchema(z.object({ query: z.unknown() })),
+    });
+    const executeOperation: ExecuteOperation = vi.fn();
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const query = {
+      result: "first",
+      limit: -1,
+      output: { mode: "fields", includeMetadata: false, fields: [] },
+      content: { mode: "none" },
+      unexpected: true,
+    };
+    const sharedIssues = validateAssetQuery({ query })
+      .issues.filter(({ severity }) => severity === "error")
+      .map((issue) => ({ ...issue, constraint: issue.code }));
+
+    let error: unknown;
+    try {
+      await adapter.callTool({
+        name: "validate-asset-query",
+        input: { query, unexpectedRoot: true },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toMatchObject({
+      code: "INVALID_INPUT",
+      issues: [
+        ...sharedIssues,
+        expect.objectContaining({ path: ["unexpectedRoot"] }),
+      ],
+    });
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
@@ -8692,6 +8793,180 @@ describe("project session mcp adapter", () => {
           },
         })
       );
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns all input shape errors through the MCP server", async () => {
+    const executeOperation = createExecuteOperation();
+    const createPageOperation = publicOperation({
+      command: "create-page",
+      id: "pages.create",
+      description: "Create a page",
+      method: "mutation",
+      inputSchema: getTestInputSchema(
+        z.object({ name: z.string(), path: z.string() })
+      ),
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: [...publicMcpOperations, createPageOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "create-page",
+        arguments: { name: 42, unexpected: true },
+      });
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          issues: [
+            expect.objectContaining({ path: ["path"], constraint: "required" }),
+            expect.objectContaining({
+              path: ["name"],
+              constraint: "type:string",
+            }),
+            expect.objectContaining({ path: ["unexpected"] }),
+          ],
+        },
+      });
+      expect(executeOperation).not.toHaveBeenCalled();
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns every Markdown upload input error through the MCP server", async () => {
+    const executeOperation = createExecuteOperation();
+    const uploadAssetsOperation = publicOperation({
+      command: "upload-assets",
+      id: "assets.uploadMany",
+      description: "Upload Assets",
+      method: "mutation",
+      inputSchema: getTestInputSchema(
+        z.object({
+          assets: z.array(
+            z.object({
+              name: z.string(),
+              type: z.string(),
+              format: z.string().optional(),
+            })
+          ),
+          assetsDir: z.string().optional(),
+        })
+      ),
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: [...publicMcpOperations, uploadAssetsOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "upload-assets",
+        arguments: {
+          assets: [
+            { name: 42, type: "file", format: "md" },
+            { name: "page.mdx", type: "image", format: "md" },
+          ],
+          unexpected: true,
+        },
+      });
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          issues: expect.arrayContaining([
+            expect.objectContaining({
+              path: ["assets", "0", "name"],
+              constraint: "type:string",
+            }),
+            expect.objectContaining({
+              path: ["assets", "1", "format"],
+              code: "asset_filename_format_mismatch",
+            }),
+            expect.objectContaining({
+              path: ["assets", "1", "type"],
+              code: "markdown_asset_type_mismatch",
+            }),
+            expect.objectContaining({ path: ["unexpected"] }),
+          ]),
+        },
+      });
+      expect(executeOperation).not.toHaveBeenCalled();
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns every Asset content update input error through the MCP server", async () => {
+    const executeOperation = createExecuteOperation();
+    const baseInputSchema = getTestInputSchema(
+      z.object({
+        assetId: z.string().min(1),
+        expectedName: z.string().min(1),
+        extension: z.string().min(1).optional(),
+        path: z.string().min(1).optional(),
+        content: z.string().optional(),
+      })
+    );
+    const updateAssetContentOperation = publicOperation({
+      command: "update-asset-content",
+      id: "assets.updateContent",
+      description: "Update Asset content",
+      method: "mutation",
+      inputSchema: {
+        ...baseInputSchema,
+        oneOf: [{ required: ["path"] }, { required: ["content"] }],
+      },
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: [...publicMcpOperations, updateAssetContentOperation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "update-asset-content",
+        arguments: {
+          assetId: 42,
+          expectedName: "",
+          path: "article.md",
+          content: "# Duplicate source",
+          unexpected: true,
+        },
+      });
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          issues: expect.arrayContaining([
+            expect.objectContaining({
+              path: ["assetId"],
+              constraint: "type:string",
+            }),
+            expect.objectContaining({
+              path: ["expectedName"],
+              constraint: "minLength:1",
+            }),
+            expect.objectContaining({
+              path: [],
+              constraint: "exactly_one_of:path|content",
+            }),
+            expect.objectContaining({ path: ["unexpected"] }),
+          ]),
+        },
+      });
+      expect(executeOperation).not.toHaveBeenCalled();
     } finally {
       await close();
     }

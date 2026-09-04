@@ -834,14 +834,35 @@ export const ResourceForm = forwardRef<
 });
 ResourceForm.displayName = "ResourceForm";
 
+type SystemResourceFormProps = {
+  variable?: DataSource;
+  querySourceContainer?: Element | null;
+  onQueryActiveChange?: (active: boolean) => void;
+  onQueryPendingChange?: (pending: boolean) => void;
+};
+
+const AssetQueryLoadingFallback = ({
+  onPendingChange,
+}: {
+  onPendingChange?: (pending: boolean) => void;
+}) => {
+  useEffect(() => {
+    onPendingChange?.(true);
+    return () => onPendingChange?.(false);
+  }, [onPendingChange]);
+  return <CenteredPanelMessage>Loading query editor…</CenteredPanelMessage>;
+};
+
 export const SystemResourceForm = forwardRef<
   undefined | PanelApi,
-  {
-    variable?: DataSource;
-    querySourceContainer?: Element | null;
-    onQueryActiveChange?: (active: boolean) => void;
-  }
->(({ variable, querySourceContainer, onQueryActiveChange }, ref) => {
+  SystemResourceFormProps
+>((props, ref) => {
+  const {
+    variable,
+    querySourceContainer,
+    onQueryActiveChange,
+    onQueryPendingChange,
+  } = props;
   const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
   const { allowDynamicData } = useStore($permissions);
@@ -888,8 +909,11 @@ export const SystemResourceForm = forwardRef<
     localResource.value === JSON.stringify(assetsResourceUrl);
   useEffect(() => {
     onQueryActiveChange?.(isAssetsResource);
-    return () => onQueryActiveChange?.(false);
-  }, [isAssetsResource, onQueryActiveChange]);
+    return () => {
+      onQueryActiveChange?.(false);
+      onQueryPendingChange?.(false);
+    };
+  }, [isAssetsResource, onQueryActiveChange, onQueryPendingChange]);
   useImperativeHandle(ref, () => ({
     save: (formData) => {
       if (formData.get("asset-query-valid") === "false") {
@@ -961,7 +985,7 @@ export const SystemResourceForm = forwardRef<
       {isAssetsResource && (
         <Suspense
           fallback={
-            <CenteredPanelMessage>Loading query editor…</CenteredPanelMessage>
+            <AssetQueryLoadingFallback onPendingChange={onQueryPendingChange} />
           }
         >
           <AssetQueryForm
@@ -969,6 +993,7 @@ export const SystemResourceForm = forwardRef<
             scope={scope}
             aliases={aliases}
             sourceContainer={querySourceContainer}
+            onPendingChange={onQueryPendingChange}
           />
         </Suspense>
       )}

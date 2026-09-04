@@ -627,6 +627,74 @@ describe("PostgresAssetRepository", () => {
     }
   );
 
+  test("discards preparation warnings from an abandoned uncached snapshot", async () => {
+    const dependencies = createDependencies();
+    const initial: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "removed",
+      revision: "removed-r1",
+      document: {
+        _id: "removed",
+        _type: "asset.file",
+        name: "removed.md",
+        path: "content/removed.md",
+        key: "removed",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision: "removed-r1",
+        contentRef: "storage:removed",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries
+      .mockResolvedValueOnce([initial])
+      .mockResolvedValue([]);
+    dependencies.synchronizeCanonicalAssets.mockResolvedValue({
+      scanned: 1,
+      indexed: 0,
+      metadataUpdated: 0,
+      unchanged: 0,
+      removed: 0,
+      skipped: 1,
+      inconsistent: 0,
+      issues: [
+        {
+          assetId: "removed",
+          storageName: "storage:removed",
+          revision: "removed-r1",
+          message: "Object is missing",
+        },
+      ],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: assetClient,
+      dependencies,
+    });
+
+    const result = await repository.query({
+      query: {
+        where: {
+          field: ["properties", "title"],
+          operator: "eq",
+          value: "Healthy",
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    });
+
+    expect(result.data.items).toEqual([]);
+    expect(result.__diagnostics__.issues).toBeUndefined();
+    expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledOnce();
+  });
+
   test("creates a base-only index without synchronizing or reading content", async () => {
     const dependencies = createDependencies();
     const entries = [
@@ -1931,12 +1999,16 @@ describe("PostgresAssetRepository", () => {
         })
       )
     ).rejects.toMatchObject({
-      name: "AssetIndexPreparationError",
-      issues: [
-        expect.objectContaining({
+      name: "DocumentSourceDiagnosticsError",
+      diagnostics: [
+        {
+          severity: "error",
+          phase: "source",
+          code: "MARKDOWN_BODY_DECODING_FAILED",
+          message: "Markdown content is not valid UTF-8",
           assetId: "post",
-          message: "Selected asset content is not valid UTF-8",
-        }),
+          path: "blog/post.md",
+        },
       ],
     });
   });
@@ -1999,7 +2071,7 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
   });
 
-  test("keeps healthy indexed assets readable when another asset is broken", async () => {
+  test("keeps unrelated broken assets out of query diagnostics", async () => {
     const dependencies = createDependencies();
     dependencies.synchronizeCanonicalAssets.mockResolvedValue({
       scanned: 2,
@@ -2018,7 +2090,26 @@ describe("PostgresAssetRepository", () => {
         },
       ],
     });
-    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([]);
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      {
+        projectId: "project-1",
+        assetId: "broken",
+        revision: "revision-broken",
+        document: {
+          _id: "broken",
+          _type: "asset.file",
+          name: "broken.md",
+          path: "broken.md",
+          key: "broken",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: 4,
+          revision: "revision-broken",
+          contentRef: "broken.md",
+          properties: {},
+        },
+      },
+    ]);
     dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([]);
     dependencies.createAssetIndex.mockImplementation(createAssetIndex);
     const repository = new PostgresAssetRepository({
@@ -2028,14 +2119,43 @@ describe("PostgresAssetRepository", () => {
       dependencies,
     });
 
-    await expect(
-      repository.query({
-        query: {
-          where: { all: [] },
-          output: { mode: "base", includeMetadata: true },
+    const request = {
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "title"],
+              operator: "eq",
+              value: "Healthy",
+            },
+          ],
         },
-      })
-    ).resolves.toMatchObject({ data: { items: [] } });
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    } satisfies Parameters<typeof repository.query>[0];
+    const result = await repository.query(request);
+    const cachedResult = await repository.query(request);
+
+    expect(result).toMatchObject({
+      data: { items: [] },
+      __diagnostics__: {
+        queryIssues: [
+          expect.objectContaining({
+            severity: "warning",
+            code: "UNOBSERVED_FIELD",
+          }),
+        ],
+      },
+    });
+    expect(result.__diagnostics__.issues).toBeUndefined();
+    expect(cachedResult.__diagnostics__.queryIssues).toEqual(
+      result.__diagnostics__.queryIssues
+    );
+    expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(2);
   });
 
   test("updates metadata without eagerly maintaining query fields", async () => {
@@ -2168,6 +2288,10 @@ describe("PostgresAssetRepository", () => {
         revision,
         contentRef: "post.md",
         properties: { title: "New post" },
+        metadataError: {
+          code: "FRONTMATTER_INVALID",
+          message: "Invalid YAML in post.md",
+        },
       },
     };
     const otherEntry = {
@@ -2183,6 +2307,7 @@ describe("PostgresAssetRepository", () => {
         revision: "revision-2",
         contentRef: "other.md",
         properties: { title: "Other post" },
+        metadataError: undefined,
       },
     };
     dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
@@ -2263,6 +2388,19 @@ describe("PostgresAssetRepository", () => {
         omittedDocumentCount: 0,
         truncated: false,
       },
+      issues: [
+        {
+          severity: "warning",
+          scope: "query",
+          phase: "metadata",
+          code: "FRONTMATTER_INVALID",
+          message: "Invalid YAML in post.md",
+          assetId: "asset-1",
+          path: "post.md",
+        },
+      ],
+      issueCount: 1,
+      issuesTruncated: false,
     });
     expect(result.__diagnostics__.database.usedBytes).toBeGreaterThan(
       result.__diagnostics__.query.usedBytes
@@ -2317,6 +2455,36 @@ describe("PostgresAssetRepository", () => {
     );
     expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
 
+    const unobservedFieldResult = await repository.query({
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "subtitle"],
+              operator: "exists",
+              value: false,
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    });
+    expect(unobservedFieldResult.__diagnostics__.queryWarnings).toEqual([
+      "Asset field properties.subtitle is not currently observed",
+    ]);
+    expect(unobservedFieldResult.__diagnostics__.queryIssues).toEqual([
+      {
+        severity: "warning",
+        code: "UNOBSERVED_FIELD",
+        path: ["query", "where", "all", "0", "field"],
+        message: "Asset field properties.subtitle is not currently observed",
+      },
+    ]);
+
     vi.mocked(assetClient.readFile).mockImplementation(async () => ({
       data: new Blob(["# New post"]).stream(),
       contentLength: 10,
@@ -2365,6 +2533,802 @@ describe("PostgresAssetRepository", () => {
           content: { text: "# New post" },
         },
       ],
+    });
+  });
+
+  test("reports every MDX error matched by a query without content output", async () => {
+    const dependencies = createDependencies();
+    const brokenSource = "<ws.element";
+    const entries = ["one", "two"].map(
+      (id): CanonicalAssetFileEntry => ({
+        projectId: "project-1",
+        assetId: id,
+        revision: `${id}-r1`,
+        document: {
+          _id: id,
+          _type: "asset.file",
+          name: `${id}.mdx`,
+          path: `content/${id}.mdx`,
+          key: id,
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: new TextEncoder().encode(brokenSource).byteLength,
+          revision: `${id}-r1`,
+          contentRef: `storage:${id}`,
+          properties: {},
+        },
+      })
+    );
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries,
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async () => ({
+          data: new Blob([brokenSource]).stream(),
+          contentLength: brokenSource.length,
+        }),
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.query({
+        query: {
+          where: { all: [] },
+          limit: 2,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: [
+        { severity: "error", path: "content/one.mdx" },
+        { severity: "error", path: "content/two.mdx" },
+      ],
+    });
+  });
+
+  test("validates every matching file before pagination", async () => {
+    const dependencies = createDependencies();
+    const brokenSource = "<ws.element";
+    const entries: CanonicalAssetFileEntry[] = [
+      {
+        projectId: "project-1",
+        assetId: "image",
+        revision: "image-r1",
+        document: {
+          _id: "image",
+          _type: "asset.file",
+          name: "a.png",
+          path: "content/a.png",
+          key: "a",
+          extension: "png",
+          mimeType: "image/png",
+          size: 1,
+          revision: "image-r1",
+          contentRef: "storage:image",
+          properties: {},
+          metadataError: {
+            code: "FRONTMATTER_INVALID",
+            message: "Image metadata could not be indexed",
+          },
+        },
+      },
+      {
+        projectId: "project-1",
+        assetId: "broken",
+        revision: "broken-r1",
+        document: {
+          _id: "broken",
+          _type: "asset.file",
+          name: "b.mdx",
+          path: "content/b.mdx",
+          key: "b",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: brokenSource.length,
+          revision: "broken-r1",
+          contentRef: "storage:broken",
+          properties: {},
+          metadataError: {
+            code: "FRONTMATTER_INVALID",
+            message: "Broken metadata could not be indexed",
+          },
+        },
+      },
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries,
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async () => ({
+      data: new Blob([brokenSource]).stream(),
+      contentLength: brokenSource.length,
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+    const query = {
+      where: { all: [] },
+      sort: [{ field: ["name"] as ["name"], direction: "asc" as const }],
+      limit: 1,
+      output: {
+        mode: "fields" as const,
+        includeMetadata: false,
+        fields: [["id"] as ["id"]],
+      },
+      content: { mode: "none" as const },
+    };
+
+    await expect(repository.query({ query })).rejects.toMatchObject({
+      diagnostics: [
+        { severity: "warning", path: "content/a.png" },
+        { severity: "warning", path: "content/b.mdx" },
+        { severity: "error", path: "content/b.mdx" },
+      ],
+    });
+    expect(readFile).toHaveBeenCalled();
+
+    await expect(
+      repository.query({ query: { ...query, offset: 1 } })
+    ).rejects.toMatchObject({
+      diagnostics: [
+        { severity: "warning", path: "content/a.png" },
+        { severity: "warning", path: "content/b.mdx" },
+        { severity: "error", path: "content/b.mdx" },
+      ],
+    });
+  });
+
+  test("excludes diagnostics from files outside the query", async () => {
+    const dependencies = createDependencies();
+    const sources = {
+      "storage:included": "# Included\n",
+      "storage:unrelated": "<ws.element",
+    } as const;
+    const entries: CanonicalAssetFileEntry[] = [
+      {
+        projectId: "project-1",
+        assetId: "included",
+        revision: "included-r1",
+        document: {
+          _id: "included",
+          _type: "asset.file",
+          name: "included.md",
+          path: "content/included.md",
+          key: "included",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: sources["storage:included"].length,
+          revision: "included-r1",
+          contentRef: "storage:included",
+          properties: {},
+        },
+      },
+      {
+        projectId: "project-1",
+        assetId: "unrelated",
+        revision: "unrelated-r1",
+        document: {
+          _id: "unrelated",
+          _type: "asset.file",
+          name: "unrelated.mdx",
+          path: "content/unrelated.mdx",
+          key: "unrelated",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: sources["storage:unrelated"].length,
+          revision: "unrelated-r1",
+          contentRef: "storage:unrelated",
+          properties: {},
+          metadataError: {
+            code: "FRONTMATTER_INVALID",
+            message: "Unrelated metadata is invalid",
+          },
+        },
+      },
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries,
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async (contentRef: string) => ({
+      data: new Blob([sources[contentRef as keyof typeof sources]]).stream(),
+      contentLength: sources[contentRef as keyof typeof sources].length,
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+
+    const result = await repository.query(
+      {
+        query: {
+          where: { field: ["id"], operator: "eq", value: "included" },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      },
+      {
+        diagnosticsPlan: createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "all", includeMetadata: true },
+        }),
+      }
+    );
+
+    expect(result.__diagnostics__.issues).toBeUndefined();
+    expect(readFile).not.toHaveBeenCalledWith("storage:unrelated");
+  });
+
+  test("keeps source warnings when one matching document reference is invalid", async () => {
+    const dependencies = createDependencies();
+    const sources = {
+      "storage:warning": "{1 + 1}",
+      "storage:broken": '{"author":{"$ref":"./missing.md#frontmatter"}}',
+    } as const;
+    const entries: CanonicalAssetFileEntry[] = [
+      {
+        projectId: "project-1",
+        assetId: "warning",
+        revision: "warning-r1",
+        document: {
+          _id: "warning",
+          _type: "asset.file",
+          name: "warning.mdx",
+          path: "content/warning.mdx",
+          key: "warning",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: sources["storage:warning"].length,
+          revision: "warning-r1",
+          contentRef: "storage:warning",
+          properties: {},
+        },
+      },
+      {
+        projectId: "project-1",
+        assetId: "broken",
+        revision: "broken-r1",
+        document: {
+          _id: "broken",
+          _type: "asset.file",
+          name: "broken.json",
+          path: "content/broken.json",
+          key: "broken",
+          extension: "json",
+          mimeType: "application/json",
+          size: sources["storage:broken"].length,
+          revision: "broken-r1",
+          contentRef: "storage:broken",
+          properties: {
+            author: { $ref: "./missing.md#frontmatter" },
+          },
+        },
+      },
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries,
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async (contentRef: string) => ({
+          data: new Blob([
+            sources[contentRef as keyof typeof sources],
+          ]).stream(),
+          contentLength: sources[contentRef as keyof typeof sources].length,
+        }),
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.query({
+        query: {
+          where: { all: [] },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "author"]],
+          },
+          content: { mode: "full" },
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: expect.arrayContaining([
+        expect.objectContaining({
+          severity: "warning",
+          code: "unsafe-mdx",
+          assetId: "warning",
+          path: "content/warning.mdx",
+        }),
+        expect.objectContaining({
+          severity: "error",
+          code: "TARGET_NOT_FOUND",
+          assetId: "broken",
+          path: "content/broken.json",
+          reference: "#/author",
+        }),
+      ]),
+    });
+  });
+
+  test("ignores one unrelated saved-plan reference failure", async () => {
+    const dependencies = createDependencies();
+    const sources = {
+      "storage:included": "# Included\n",
+      "storage:unrelated": '{"author":{"$ref":"./missing.md#frontmatter"}}',
+    } as const;
+    const entries: CanonicalAssetFileEntry[] = [
+      {
+        projectId: "project-1",
+        assetId: "included",
+        revision: "included-r1",
+        document: {
+          _id: "included",
+          _type: "asset.file",
+          name: "included.md",
+          path: "content/included.md",
+          key: "included",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: sources["storage:included"].length,
+          revision: "included-r1",
+          contentRef: "storage:included",
+          properties: {},
+        },
+      },
+      {
+        projectId: "project-1",
+        assetId: "unrelated",
+        revision: "unrelated-r1",
+        document: {
+          _id: "unrelated",
+          _type: "asset.file",
+          name: "unrelated.json",
+          path: "content/unrelated.json",
+          key: "unrelated",
+          extension: "json",
+          mimeType: "application/json",
+          size: sources["storage:unrelated"].length,
+          revision: "unrelated-r1",
+          contentRef: "storage:unrelated",
+          properties: {
+            author: { $ref: "./missing.md#frontmatter" },
+          },
+        },
+      },
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries,
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async (contentRef: string) => ({
+          data: new Blob([
+            sources[contentRef as keyof typeof sources],
+          ]).stream(),
+          contentLength: sources[contentRef as keyof typeof sources].length,
+        }),
+      },
+      dependencies,
+    });
+
+    const result = await repository.query(
+      {
+        query: {
+          where: { field: ["id"], operator: "eq", value: "included" },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      },
+      {
+        diagnosticsPlan: createCompilationPlan({
+          where: { field: ["id"], operator: "eq", value: "unrelated" },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "author"]],
+          },
+        }),
+      }
+    );
+
+    expect(result.data).toMatchObject({
+      items: [{ id: "included" }],
+    });
+    expect(result.__diagnostics__.issues).toBeUndefined();
+  });
+
+  test("validates the file returned by a single-result query", async () => {
+    const dependencies = createDependencies();
+    const brokenSource = "<ws.element";
+    const entry: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "broken",
+      revision: "broken-r1",
+      document: {
+        _id: "broken",
+        _type: "asset.file",
+        name: "broken.mdx",
+        path: "content/broken.mdx",
+        key: "broken",
+        extension: "mdx",
+        mimeType: "text/mdx",
+        size: brokenSource.length,
+        revision: "broken-r1",
+        contentRef: "storage:broken",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries: [entry],
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async () => ({
+          data: new Blob([brokenSource]).stream(),
+          contentLength: brokenSource.length,
+        }),
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.query({
+        query: {
+          result: "one",
+          where: { field: ["id"], operator: "eq", value: "broken" },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: [{ severity: "error", path: "content/broken.mdx" }],
+    });
+  });
+
+  test("shows the file when diagnostics cannot read its content", async () => {
+    const dependencies = createDependencies();
+    const entry: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "post",
+      revision: "post-r1",
+      document: {
+        _id: "post",
+        _type: "asset.file",
+        name: "post.md",
+        path: "content/post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision: "post-r1",
+        contentRef: "storage:post",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries: [entry],
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: vi.fn().mockRejectedValue(new Error("Object is missing")),
+      },
+      dependencies,
+    });
+
+    const result = await repository.query({
+      query: {
+        where: { field: ["id"], operator: "eq", value: "post" },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    });
+
+    expect(result.__diagnostics__.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          severity: "warning",
+          code: "CONTENT_READ_FAILED",
+          message: "Object is missing",
+          assetId: "post",
+          path: "content/post.md",
+        }),
+      ])
+    );
+  });
+
+  test("returns fatal UTF-8 diagnostics from the shared byte validator", async () => {
+    const dependencies = createDependencies();
+    const entry: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "invalid-utf8",
+      revision: "invalid-utf8-r1",
+      document: {
+        _id: "invalid-utf8",
+        _type: "asset.file",
+        name: "invalid.md",
+        path: "content/invalid.md",
+        key: "invalid",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 2,
+        revision: "invalid-utf8-r1",
+        contentRef: "storage:invalid-utf8",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries: [entry],
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async () => ({
+          data: new Blob([new Uint8Array([0xc3, 0x28])]).stream(),
+          contentLength: 2,
+        }),
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.query({
+        query: {
+          where: { field: ["id"], operator: "eq", value: "invalid-utf8" },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: [
+        {
+          severity: "error",
+          phase: "source",
+          code: "MARKDOWN_BODY_DECODING_FAILED",
+          message: "Markdown content is not valid UTF-8",
+          assetId: "invalid-utf8",
+          path: "content/invalid.md",
+        },
+      ],
+    });
+  });
+
+  test("preserves complete nonfatal MDX diagnostics", async () => {
+    const dependencies = createDependencies();
+    const source = "{1 + 1}";
+    const entry: CanonicalAssetFileEntry = {
+      projectId: "project-1",
+      assetId: "unsafe-mdx",
+      revision: "unsafe-mdx-r1",
+      document: {
+        _id: "unsafe-mdx",
+        _type: "asset.file",
+        name: "unsafe.mdx",
+        path: "content/unsafe.mdx",
+        key: "unsafe",
+        extension: "mdx",
+        mimeType: "text/mdx",
+        size: source.length,
+        revision: "unsafe-mdx-r1",
+        contentRef: "storage:unsafe-mdx",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries: [entry],
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async () => ({
+          data: new Blob([source]).stream(),
+          contentLength: source.length,
+        }),
+      },
+      dependencies,
+    });
+
+    const result = await repository.query({
+      query: {
+        where: {
+          field: ["extension"],
+          operator: "contains",
+          value: "mdx",
+        },
+        output: {
+          mode: "all",
+          includeMetadata: false,
+        },
+        content: { mode: "none" },
+      },
+    });
+
+    expect(result.data.items).toEqual([{ id: "unsafe-mdx" }]);
+    expect(result.__diagnostics__.issues).toEqual([
+      expect.objectContaining({
+        severity: "warning",
+        code: "unsafe-mdx",
+        assetId: "unsafe-mdx",
+        path: "content/unsafe.mdx",
+        nodeType: "mdxFlowExpression",
+        reason: "Executable MDX expressions are not supported",
+        sourceRange: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 8, offset: 7 },
+        },
+      }),
+    ]);
+  });
+
+  test("keeps exact content read warnings when another file is fatal", async () => {
+    const dependencies = createDependencies();
+    const brokenSource = "<ws.element";
+    const entries: CanonicalAssetFileEntry[] = [
+      {
+        projectId: "project-1",
+        assetId: "missing",
+        revision: "missing-r1",
+        document: {
+          _id: "missing",
+          _type: "asset.file",
+          name: "missing.md",
+          path: "content/missing.md",
+          key: "missing",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: 10,
+          revision: "missing-r1",
+          contentRef: "storage:missing",
+          properties: {},
+        },
+      },
+      {
+        projectId: "project-1",
+        assetId: "broken",
+        revision: "broken-r1",
+        document: {
+          _id: "broken",
+          _type: "asset.file",
+          name: "broken.mdx",
+          path: "content/broken.mdx",
+          key: "broken",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: brokenSource.length,
+          revision: "broken-r1",
+          contentRef: "storage:broken",
+          properties: {},
+        },
+      },
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntriesForRecovery.mockResolvedValue({
+      entries,
+      inconsistentRows: [],
+    });
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async (contentRef) => {
+          if (contentRef === "storage:missing") {
+            throw new Error("Object is missing");
+          }
+          return {
+            data: new Blob([brokenSource]).stream(),
+            contentLength: brokenSource.length,
+          };
+        },
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.query({
+        query: {
+          where: { all: [] },
+          limit: 2,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: expect.arrayContaining([
+        expect.objectContaining({
+          severity: "warning",
+          code: "CONTENT_READ_FAILED",
+          message: "Object is missing",
+          path: "content/missing.md",
+        }),
+        expect.objectContaining({
+          severity: "error",
+          code: "invalid-mdx",
+          path: "content/broken.mdx",
+        }),
+      ]),
     });
   });
 

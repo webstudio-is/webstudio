@@ -109,6 +109,54 @@ describe("document source graph compiler", () => {
     } satisfies Partial<DocumentSourceCompilationError>);
   });
 
+  test("ignores invalid catalog entries outside the selected root closure", async () => {
+    const graph = await compileDocumentSourceGraph({
+      documents: [
+        { ...documents[0], source: '{"title":"Selected"}' },
+        {
+          ...documents[1],
+          id: "unrelated-one",
+          documentUrl: "https://content.webstudio.test/unrelated.md",
+        },
+        {
+          ...documents[1],
+          id: "unrelated-two",
+          documentUrl: "https://content.webstudio.test/unrelated.md",
+        },
+      ],
+      rootIds: ["post"],
+    });
+
+    expect(graph.nodes.map(({ id }) => id)).toEqual(["post"]);
+  });
+
+  test("reports every reachable reference failure", async () => {
+    await expect(
+      compileDocumentSourceGraph({
+        documents: [
+          {
+            ...documents[0],
+            id: "first",
+            documentUrl: "https://content.webstudio.test/posts/first.json",
+            source: '{"author":{"$ref":"../missing/first.md#frontmatter"}}',
+          },
+          {
+            ...documents[0],
+            id: "second",
+            documentUrl: "https://content.webstudio.test/posts/second.json",
+            source: '{"author":{"$ref":"../missing/second.md#frontmatter"}}',
+          },
+        ],
+        rootIds: ["first", "second"],
+      })
+    ).rejects.toMatchObject({
+      errors: [
+        { code: "TARGET_NOT_FOUND", sourceDocumentId: "first" },
+        { code: "TARGET_NOT_FOUND", sourceDocumentId: "second" },
+      ],
+    });
+  });
+
   test("rejects an already-cancelled compilation before reading sources", async () => {
     const controller = new AbortController();
     controller.abort("cancelled");

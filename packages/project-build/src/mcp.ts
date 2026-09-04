@@ -6,6 +6,7 @@ import {
 import {
   getInputJsonSchemaMetadata,
   getInputJsonSchemaProperties,
+  getFileExtension,
   inputJsonSchemaAcceptsType,
   parseComponentName,
   toInputJsonSchemaObject,
@@ -17,6 +18,8 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
+import type { TextAssetSourceDiagnostic } from "@webstudio-is/content-engine/mdx";
+import { validateAssetQuery } from "@webstudio-is/content-engine";
 import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
@@ -297,20 +300,7 @@ export type ProjectSessionDownloadAssetResult = {
   assetId: string;
   path: string;
   source?: string;
-  diagnostics?: readonly (
-    | ContentBlockDiagnostic
-    | Readonly<{
-        code: "invalid-mdx" | "unsafe-mdx";
-        severity: "error" | "warning";
-        message: string;
-        nodeType?: string;
-        reason?: string;
-        sourceRange?: Readonly<{
-          start: Readonly<{ line: number; column: number; offset?: number }>;
-          end: Readonly<{ line: number; column: number; offset?: number }>;
-        }>;
-      }>
-  )[];
+  diagnostics?: readonly (ContentBlockDiagnostic | TextAssetSourceDiagnostic)[];
 };
 
 type DownloadAsset = (
@@ -1024,7 +1014,95 @@ const getUnsupportedInputFieldHint = ({
   return "";
 };
 
-const assertKnownInputFields = ({
+export const getMcpTextAssetFormat = (
+  value: string
+): "md" | "mdx" | undefined => {
+  const extension = (getFileExtension(value) ?? value).toLowerCase();
+  return extension === "md" || extension === "mdx" ? extension : undefined;
+};
+
+export const getMcpTextAssetDescriptorIssues = ({
+  assets,
+  pathPrefix,
+}: {
+  assets: readonly Record<string, unknown>[];
+  pathPrefix: readonly string[];
+}): SemanticValidationIssue[] => {
+  const issues: SemanticValidationIssue[] = [];
+  for (const [index, asset] of assets.entries()) {
+    const name = typeof asset.name === "string" ? asset.name : undefined;
+    const filenameFormat =
+      name === undefined ? undefined : getFileExtension(name)?.toLowerCase();
+    const declaredFormat =
+      typeof asset.format === "string" ? asset.format.toLowerCase() : undefined;
+    const mentionsTextFormat =
+      filenameFormat === "md" ||
+      filenameFormat === "mdx" ||
+      declaredFormat === "md" ||
+      declaredFormat === "mdx";
+    const assetPath =
+      pathPrefix[0] === "asset"
+        ? [...pathPrefix]
+        : [...pathPrefix, String(index)];
+    if (
+      name !== undefined &&
+      mentionsTextFormat &&
+      declaredFormat !== undefined &&
+      declaredFormat !== filenameFormat
+    ) {
+      issues.push({
+        path: [...assetPath, "format"],
+        code: "asset_filename_format_mismatch",
+        message: `Asset filename and format must match. ${JSON.stringify(name)} has extension ${JSON.stringify(filenameFormat ?? "(none)")} but format is ${JSON.stringify(declaredFormat)}.`,
+        constraint: "asset_filename_format_mismatch",
+      });
+    }
+    if (
+      mentionsTextFormat &&
+      typeof asset.type === "string" &&
+      asset.type !== "file"
+    ) {
+      issues.push({
+        path: [...assetPath, "type"],
+        code: "markdown_asset_type_mismatch",
+        message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(asset.type)}.`,
+        constraint: "markdown_asset_type_mismatch",
+      });
+    }
+  }
+  return issues;
+};
+
+const getLocalTextAssetInputIssues = ({
+  command,
+  input,
+}: {
+  command: string;
+  input: unknown;
+}) => {
+  if (isPlainRecord(input) === false) {
+    return [];
+  }
+  if (command === "upload-asset") {
+    return isPlainRecord(input.asset)
+      ? getMcpTextAssetDescriptorIssues({
+          assets: [input.asset],
+          pathPrefix: ["asset"],
+        })
+      : [];
+  }
+  if (command === "upload-assets") {
+    return Array.isArray(input.assets)
+      ? getMcpTextAssetDescriptorIssues({
+          assets: input.assets.filter(isPlainRecord),
+          pathPrefix: ["assets"],
+        })
+      : [];
+  }
+  return [];
+};
+
+const collectUnknownInputFields = ({
   command,
   input,
   schema,
@@ -1034,30 +1112,38 @@ const assertKnownInputFields = ({
   input: unknown;
   schema: InputJsonSchema | undefined;
   path?: string[];
-}) => {
+}): Array<{ message: string; issue: SemanticValidationIssue }> => {
+  const results: Array<{ message: string; issue: SemanticValidationIssue }> =
+    [];
   if (Array.isArray(input)) {
     for (const [index, item] of input.entries()) {
-      assertKnownInputFields({
-        command,
-        input: item,
-        schema: toInputJsonSchemaObject(schema?.items),
-        path: [...path, String(index)],
-      });
+      results.push(
+        ...collectUnknownInputFields({
+          command,
+          input: item,
+          schema: toInputJsonSchemaObject(schema?.items),
+          path: [...path, String(index)],
+        })
+      );
     }
-    return;
+    return results;
   }
   if (isPlainRecord(input) === false) {
-    return;
+    return results;
   }
   const properties = getInputJsonSchemaProperties(schema);
   const additionalProperties = schema?.additionalProperties;
-  if (additionalProperties !== false) {
-    return;
-  }
   const allowedFields = Object.keys(properties ?? {});
   for (const [field, value] of Object.entries(input)) {
-    const fieldSchema = toInputJsonSchemaObject(properties?.[field]);
-    if (fieldSchema === undefined) {
+    const isKnownField =
+      properties !== undefined &&
+      Object.prototype.hasOwnProperty.call(properties, field);
+    const fieldSchema = isKnownField
+      ? toInputJsonSchemaObject(properties[field])
+      : typeof additionalProperties === "object"
+        ? toInputJsonSchemaObject(additionalProperties)
+        : undefined;
+    if (isKnownField === false && additionalProperties === false) {
       const inputPath = ["input", ...path, field].join(".");
       const expected =
         allowedFields.length === 0
@@ -1067,16 +1153,402 @@ const assertKnownInputFields = ({
       const suggestion =
         closestField === undefined ? "" : ` Did you mean ${closestField}?`;
       const hint = getUnsupportedInputFieldHint({ command, field });
-      throw new Error(
-        `${command} ${inputPath} is not supported. ${expected}${suggestion}${hint}`
+      const message = `${command} ${inputPath} is not supported. ${expected}${suggestion}${hint}`;
+      results.push({
+        message,
+        issue: {
+          code: "unknown_field",
+          path: [...path, field],
+          message,
+          constraint: "known_input_field",
+          ...(closestField === undefined ? {} : { example: closestField }),
+        },
+      });
+      continue;
+    }
+    if (fieldSchema === undefined) {
+      continue;
+    }
+    results.push(
+      ...collectUnknownInputFields({
+        command,
+        input: value,
+        schema: fieldSchema,
+        path: [...path, field],
+      })
+    );
+  }
+  return results;
+};
+
+const getJsonValueType = (value: unknown) => {
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return "integer";
+  }
+  return typeof value;
+};
+
+const collectInputSchemaIssues = ({
+  command,
+  input,
+  schema,
+  path = [],
+  depth = 0,
+}: {
+  command: string;
+  input: unknown;
+  schema: InputJsonSchema | undefined;
+  path?: string[];
+  depth?: number;
+}): SemanticValidationIssue[] => {
+  if (schema === undefined || depth > 64) {
+    return [];
+  }
+  const inputPath = ["input", ...path].join(".");
+  const issue = ({
+    code,
+    message,
+    constraint,
+    example,
+  }: {
+    code: string;
+    message: string;
+    constraint: string;
+    example?: unknown;
+  }): SemanticValidationIssue => ({
+    code,
+    path,
+    message: `${command} ${inputPath} ${message}`,
+    constraint,
+    ...(example === undefined ? {} : { example }),
+  });
+  const discriminatedSchema = resolveDiscriminatedInputSchema(schema, input);
+  if (discriminatedSchema !== schema) {
+    return collectInputSchemaIssues({
+      command,
+      input,
+      schema: discriminatedSchema,
+      path,
+      depth: depth + 1,
+    });
+  }
+  const allowedTypes =
+    schema.type === undefined
+      ? []
+      : Array.isArray(schema.type)
+        ? schema.type
+        : [schema.type];
+  if (allowedTypes.length > 0) {
+    const actualType = getJsonValueType(input);
+    const matches = allowedTypes.some(
+      (type) =>
+        type === actualType || (type === "number" && actualType === "integer")
+    );
+    if (matches === false) {
+      return [
+        issue({
+          code: "invalid_type",
+          message: `must be ${allowedTypes.join(" or ")}, not ${actualType}.`,
+          constraint: `type:${allowedTypes.join("|")}`,
+        }),
+      ];
+    }
+  }
+  if ("const" in schema && Object.is(input, schema.const) === false) {
+    return [
+      issue({
+        code: "invalid_value",
+        message: `must equal ${JSON.stringify(schema.const)}.`,
+        constraint: "const",
+        example: schema.const,
+      }),
+    ];
+  }
+  if (
+    Array.isArray(schema.enum) &&
+    schema.enum.some((value) => Object.is(value, input)) === false
+  ) {
+    return [
+      issue({
+        code: "invalid_value",
+        message: `must be one of ${schema.enum.map((value) => JSON.stringify(value)).join(", ")}.`,
+        constraint: "enum",
+        example: schema.enum[0],
+      }),
+    ];
+  }
+  const issues: SemanticValidationIssue[] = [];
+  if (typeof input === "string") {
+    if (
+      typeof schema.minLength === "number" &&
+      input.length < schema.minLength
+    ) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must contain at least ${schema.minLength} characters.`,
+          constraint: `minLength:${schema.minLength}`,
+        })
       );
     }
-    assertKnownInputFields({
-      command,
-      input: value,
-      schema: fieldSchema,
-      path: [...path, field],
-    });
+    if (
+      typeof schema.maxLength === "number" &&
+      input.length > schema.maxLength
+    ) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must contain at most ${schema.maxLength} characters.`,
+          constraint: `maxLength:${schema.maxLength}`,
+        })
+      );
+    }
+  }
+  if (typeof input === "number") {
+    if (typeof schema.minimum === "number" && input < schema.minimum) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must be at least ${schema.minimum}.`,
+          constraint: `minimum:${schema.minimum}`,
+        })
+      );
+    }
+    if (typeof schema.maximum === "number" && input > schema.maximum) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must be at most ${schema.maximum}.`,
+          constraint: `maximum:${schema.maximum}`,
+        })
+      );
+    }
+    if (
+      typeof schema.exclusiveMinimum === "number" &&
+      input <= schema.exclusiveMinimum
+    ) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must be greater than ${schema.exclusiveMinimum}.`,
+          constraint: `exclusiveMinimum:${schema.exclusiveMinimum}`,
+        })
+      );
+    }
+    if (
+      typeof schema.exclusiveMaximum === "number" &&
+      input >= schema.exclusiveMaximum
+    ) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must be less than ${schema.exclusiveMaximum}.`,
+          constraint: `exclusiveMaximum:${schema.exclusiveMaximum}`,
+        })
+      );
+    }
+  }
+  if (isPlainRecord(input)) {
+    for (const requiredField of schema.required ?? []) {
+      if (typeof requiredField !== "string" || requiredField in input) {
+        continue;
+      }
+      issues.push({
+        code: "invalid_type",
+        path: [...path, requiredField],
+        message: `${command} ${["input", ...path, requiredField].join(".")} is required.`,
+        constraint: "required",
+      });
+    }
+    const properties = getInputJsonSchemaProperties(schema);
+    for (const [field, value] of Object.entries(input)) {
+      const fieldSchema = toInputJsonSchemaObject(properties?.[field]);
+      if (fieldSchema === undefined) {
+        continue;
+      }
+      issues.push(
+        ...collectInputSchemaIssues({
+          command,
+          input: value,
+          schema: fieldSchema,
+          path: [...path, field],
+          depth: depth + 1,
+        })
+      );
+    }
+  }
+  if (Array.isArray(input)) {
+    if (typeof schema.minItems === "number" && input.length < schema.minItems) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must contain at least ${schema.minItems} items.`,
+          constraint: `minItems:${schema.minItems}`,
+        })
+      );
+    }
+    if (typeof schema.maxItems === "number" && input.length > schema.maxItems) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must contain at most ${schema.maxItems} items.`,
+          constraint: `maxItems:${schema.maxItems}`,
+        })
+      );
+    }
+    const itemSchema = toInputJsonSchemaObject(schema.items);
+    if (itemSchema !== undefined) {
+      for (const [index, value] of input.entries()) {
+        issues.push(
+          ...collectInputSchemaIssues({
+            command,
+            input: value,
+            schema: itemSchema,
+            path: [...path, String(index)],
+            depth: depth + 1,
+          })
+        );
+      }
+    }
+  }
+  for (const branch of schema.allOf ?? []) {
+    issues.push(
+      ...collectInputSchemaIssues({
+        command,
+        input,
+        schema: toInputJsonSchemaObject(branch),
+        path,
+        depth: depth + 1,
+      })
+    );
+  }
+  const oneOfBranches = (schema.oneOf ?? []).flatMap((branch) => {
+    const branchSchema = toInputJsonSchemaObject(branch);
+    return branchSchema === undefined
+      ? []
+      : [
+          collectInputSchemaIssues({
+            command,
+            input,
+            schema: branchSchema,
+            path,
+            depth: depth + 1,
+          }),
+        ];
+  });
+  if (oneOfBranches.length > 0) {
+    const matchingBranches = oneOfBranches.filter(
+      (branchIssues) => branchIssues.length === 0
+    ).length;
+    if (matchingBranches !== 1) {
+      const requiredFields = (schema.oneOf ?? []).flatMap((branch) => {
+        const branchSchema = toInputJsonSchemaObject(branch);
+        return branchSchema?.required?.length === 1 &&
+          typeof branchSchema.required[0] === "string"
+          ? [branchSchema.required[0]]
+          : [];
+      });
+      issues.push(
+        issue({
+          code: "invalid_union",
+          message:
+            requiredFields.length === oneOfBranches.length
+              ? `must provide exactly one of ${requiredFields.join(", ")}.`
+              : "must match exactly one allowed input shape.",
+          constraint:
+            requiredFields.length === oneOfBranches.length
+              ? `exactly_one_of:${requiredFields.join("|")}`
+              : "oneOf",
+        })
+      );
+    }
+  }
+  const anyOfBranches = (schema.anyOf ?? []).flatMap((branch) => {
+    const branchSchema = toInputJsonSchemaObject(branch);
+    return branchSchema === undefined
+      ? []
+      : [
+          collectInputSchemaIssues({
+            command,
+            input,
+            schema: branchSchema,
+            path,
+            depth: depth + 1,
+          }),
+        ];
+  });
+  if (
+    anyOfBranches.length > 0 &&
+    anyOfBranches.some((branchIssues) => branchIssues.length === 0) === false
+  ) {
+    issues.push(
+      ...anyOfBranches.reduce((best, current) =>
+        current.length < best.length ? current : best
+      )
+    );
+  }
+  return issues;
+};
+
+const assertKnownInputFields = (
+  options: Parameters<typeof collectUnknownInputFields>[0]
+) => {
+  const validatesAssetQuery =
+    options.command === "validate-asset-query" ||
+    options.command === "preview-asset-query";
+  const queryValidation =
+    validatesAssetQuery && isPlainRecord(options.input)
+      ? validateAssetQuery({ query: options.input.query })
+      : undefined;
+  const queryIssues = (queryValidation?.issues ?? [])
+    .filter(({ severity }) => severity === "error")
+    .map(
+      (issue): SemanticValidationIssue => ({
+        ...issue,
+        constraint: issue.code,
+      })
+    );
+  const outsideQuery = (issue: SemanticValidationIssue) =>
+    validatesAssetQuery === false || issue.path[0] !== "query";
+  const unknownFields = collectUnknownInputFields(options).filter(({ issue }) =>
+    outsideQuery(issue)
+  );
+  const localTextAssetIssues = getLocalTextAssetInputIssues(options);
+  const validatesLocalTextAssetInput =
+    options.command === "upload-asset" ||
+    options.command === "upload-assets" ||
+    options.command === "update-asset-content";
+  // The operation executor remains the source of truth for ordinary schema
+  // validation. Only validate the JSON-schema shape here when this boundary
+  // must already reject the call, so its unknown-field error does not hide
+  // simultaneous missing or wrong-type fields. Query validation is also owned
+  // here because both MCP query tools must use the shared query validator.
+  const schemaIssues =
+    unknownFields.length > 0 ||
+    queryIssues.length > 0 ||
+    validatesLocalTextAssetInput
+      ? collectInputSchemaIssues(options).filter(outsideQuery)
+      : [];
+  const issues = [
+    ...queryIssues,
+    ...schemaIssues,
+    ...localTextAssetIssues,
+    ...unknownFields.map(({ issue }) => issue),
+  ];
+  if (issues.length > 0) {
+    const messages = [
+      ...queryIssues.map(({ message }) => message),
+      ...schemaIssues.map(({ message }) => message),
+      ...localTextAssetIssues.map(({ message }) => message),
+      ...unknownFields.map(({ message }) => message),
+    ];
+    throwBuilderValidationError(messages.join("\n"), issues);
   }
 };
 
@@ -1659,7 +2131,7 @@ const importInputSchema = {
 const downloadAssetInputSchema = {
   ...emptyInputSchema,
   description:
-    "Download one project Asset. MDX results also include source and diagnostics.",
+    "Download one project Asset. Markdown and MDX results also include source and diagnostics.",
   properties: {
     assetId: {
       type: "string",
@@ -3335,7 +3807,7 @@ const importTool = createProjectSessionMcpTool({
 const downloadAssetTool = createProjectSessionMcpTool({
   name: "download-asset",
   description:
-    "Download one project Asset. MDX includes source and diagnostics.",
+    "Download one project Asset. Markdown and MDX include source and diagnostics.",
   inputSchema: downloadAssetInputSchema,
   outputSchema: getMcpOutputSchema({
     type: "object",
@@ -3348,11 +3820,19 @@ const downloadAssetTool = createProjectSessionMcpTool({
         items: {
           type: "object",
           properties: {
-            code: { type: "string", enum: ["invalid-mdx", "unsafe-mdx"] },
+            code: { type: "string" },
             severity: { type: "string", enum: ["error", "warning"] },
             message: { type: "string" },
             nodeType: { type: "string" },
             reason: { type: "string" },
+            assetId: { type: "string" },
+            blockInstanceId: { type: "string" },
+            contentRef: { type: "string" },
+            renderScope: { type: "string" },
+            templateName: { type: "string" },
+            propName: { type: "string" },
+            line: { type: "number" },
+            column: { type: "number" },
             sourceRange: {
               type: "object",
               properties: {
@@ -3378,7 +3858,7 @@ const downloadAssetTool = createProjectSessionMcpTool({
               required: ["start", "end"],
             },
           },
-          required: ["code", "severity", "message"],
+          required: ["code", "severity"],
         },
       },
     },

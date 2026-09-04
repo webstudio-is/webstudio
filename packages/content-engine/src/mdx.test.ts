@@ -8,13 +8,17 @@ import {
   MdxDocumentError,
   parseMdxDocument,
   parseMdxDocumentRecovering,
+  validateMdxDocumentSource,
   preferMarkdownSyntax,
   readMdxCodeBlock,
   replaceMdxFrontmatter,
   rewriteMdxAssetReferences,
   serializeMdxDocument,
+  validateTextAssetSource,
+  validateTextAssetSourceBytes,
   type MdxAuthoredNode,
 } from "./mdx";
+import { contentEngineLimits } from "./limits";
 
 test("creates and reads canonical fenced code blocks", async () => {
   const node = createMdxCodeBlock({
@@ -1127,6 +1131,154 @@ describe("replaceMdxFrontmatter", () => {
 });
 
 describe("parseMdxDocumentRecovering", () => {
+  test("uses fatal UTF-8 decoding for byte source validation", async () => {
+    const invalidUtf8 = new Uint8Array([0xc3, 0x28]);
+
+    await expect(
+      validateTextAssetSourceBytes({ format: "md", source: invalidUtf8 })
+    ).resolves.toEqual({
+      format: "md",
+      diagnostics: [
+        {
+          code: "MARKDOWN_BODY_DECODING_FAILED",
+          severity: "error",
+          message: "Markdown content is not valid UTF-8",
+        },
+      ],
+    });
+    await expect(
+      validateTextAssetSourceBytes({ format: "mdx", source: invalidUtf8 })
+    ).resolves.toEqual({
+      format: "mdx",
+      diagnostics: [
+        {
+          code: "invalid-mdx",
+          severity: "error",
+          message: "MDX content is not valid UTF-8",
+        },
+      ],
+      recovery: {
+        status: "unrecoverable",
+        diagnostics: [
+          expect.objectContaining({
+            code: "invalid-mdx",
+            message: "MDX content is not valid UTF-8",
+          }),
+        ],
+      },
+    });
+  });
+
+  test("returns decoded source with byte source validation", async () => {
+    await expect(
+      validateTextAssetSourceBytes({
+        format: "mdx",
+        source: new TextEncoder().encode("# Valid\n"),
+      })
+    ).resolves.toMatchObject({
+      format: "mdx",
+      source: "# Valid\n",
+      diagnostics: [],
+      recovery: { status: "parsed" },
+    });
+  });
+
+  test("uses the shared text validator for Markdown file size errors", async () => {
+    await expect(
+      validateTextAssetSource({
+        format: "md",
+        source: "x".repeat(contentEngineLimits.hydratedFileBytes + 1),
+      })
+    ).resolves.toMatchObject({
+      diagnostics: [
+        {
+          code: "MARKDOWN_BODY_BYTES_EXCEEDED",
+          severity: "error",
+        },
+      ],
+    });
+  });
+
+  test("reports every recoverable problem as a warning", async () => {
+    const result = await validateMdxDocumentSource({
+      source: "---\na: 1\na: 2\nb: 1\nb: 2\n---\n\n{first()}\n\n{second()}\n",
+    });
+
+    expect(result.diagnostics).toMatchObject([
+      { severity: "warning", code: "FRONTMATTER_INVALID", line: 3 },
+      { severity: "warning", code: "FRONTMATTER_INVALID", line: 5 },
+      {
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+      },
+      {
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+      },
+    ]);
+  });
+
+  test("continues after an unsupported component to report every sibling", async () => {
+    const result = await validateMdxDocumentSource({
+      source: "{first()}\n\n<Card />\n\n{second()}\n",
+    });
+
+    expect(result.diagnostics).toEqual([
+      {
+        code: "unsafe-mdx",
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+        nodeType: "mdxFlowExpression",
+        reason: "Executable MDX expressions are not supported",
+        sourceRange: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 10, offset: 9 },
+        },
+      },
+      {
+        code: "unsafe-mdx",
+        severity: "warning",
+        message: "Only the ws.element component is supported in authored MDX",
+        nodeType: "mdxJsxFlowElement",
+        reason: "Only the ws.element component is supported in authored MDX",
+        sourceRange: {
+          start: { line: 3, column: 1, offset: 11 },
+          end: { line: 3, column: 9, offset: 19 },
+        },
+      },
+      {
+        code: "unsafe-mdx",
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+        nodeType: "mdxFlowExpression",
+        reason: "Executable MDX expressions are not supported",
+        sourceRange: {
+          start: { line: 5, column: 1, offset: 21 },
+          end: { line: 5, column: 11, offset: 31 },
+        },
+      },
+    ]);
+  });
+
+  test("reports diagnostics nested inside an unsupported component", async () => {
+    const result = await validateMdxDocumentSource({
+      source: "<Card>{danger()}<Other /></Card>\n",
+    });
+
+    expect(result.diagnostics.map(({ message }) => message)).toEqual([
+      "Only the ws.element component is supported in authored MDX",
+      "Executable MDX expressions are not supported",
+      "Only the ws.element component is supported in authored MDX",
+    ]);
+    expect(
+      result.diagnostics.map((diagnostic) =>
+        "sourceRange" in diagnostic
+          ? diagnostic.sourceRange?.start.offset
+          : undefined
+      )
+    ).toEqual([0, 6, 16]);
+  });
+
   test("ignores invalid JSX properties without dropping the element", async () => {
     const source =
       '<ws.element ws:tag="a" href="/safe" onclick="alert(1)">Kept</ws.element>\n';

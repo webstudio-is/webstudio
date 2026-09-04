@@ -1,5 +1,7 @@
 import type {
+  AssetQueryDiagnosticIssue,
   AssetResourceContentOptions,
+  AssetResourceQueryFailure,
   ContentDatabaseDocument,
   HydratedAssetContent,
 } from "./schema";
@@ -19,11 +21,12 @@ import {
 
 export class AssetResourceHydrationError extends Error {
   readonly code:
+    | "INVALID_REQUEST"
     | "CONTENT_IDENTITY_REQUIRED"
     | "CONTENT_NOT_TEXT"
     | "CONTENT_DECODING_FAILED"
     | "CONTENT_LIMIT_EXCEEDED";
-  readonly details?: Record<string, string | number>;
+  readonly details?: NonNullable<AssetResourceQueryFailure["error"]["details"]>;
 
   constructor({
     code,
@@ -174,6 +177,78 @@ const getAssetResourceHydrationReadLength = (
   return document.size;
 };
 
+const throwHydrationFailures = (
+  failures: readonly {
+    reason: unknown;
+    document: ContentDatabaseDocument;
+  }[]
+): never => {
+  const diagnostics = failures.flatMap(
+    ({ reason, document }): AssetQueryDiagnosticIssue[] => {
+      if (typeof document.path !== "string") {
+        return [];
+      }
+      const code =
+        reason instanceof AssetResourceHydrationError
+          ? reason.code
+          : "CONTENT_READ_FAILED";
+      const message =
+        reason instanceof Error && reason.message !== ""
+          ? reason.message
+          : "Selected asset content could not be read";
+      return [
+        {
+          severity: "error",
+          scope: "query",
+          phase: "source",
+          code,
+          message,
+          assetId: document._id,
+          path: document.path,
+        },
+      ];
+    }
+  );
+  if (diagnostics.length !== failures.length) {
+    throw failures[0].reason;
+  }
+  if (failures.length === 1) {
+    const reason = failures[0].reason;
+    const diagnostic = diagnostics[0];
+    if (diagnostic === undefined) {
+      throw reason;
+    }
+    throw new AssetResourceHydrationError({
+      code:
+        reason instanceof AssetResourceHydrationError
+          ? reason.code
+          : "INVALID_REQUEST",
+      message: diagnostic.message,
+      details: {
+        ...(reason instanceof AssetResourceHydrationError
+          ? reason.details
+          : {}),
+        diagnostics,
+      },
+    });
+  }
+  const codes = new Set(diagnostics.map(({ code }) => code));
+  const commonCode = diagnostics[0]?.code;
+  const code =
+    codes.size === 1 &&
+    (commonCode === "CONTENT_IDENTITY_REQUIRED" ||
+      commonCode === "CONTENT_NOT_TEXT" ||
+      commonCode === "CONTENT_DECODING_FAILED" ||
+      commonCode === "CONTENT_LIMIT_EXCEEDED")
+      ? commonCode
+      : "INVALID_REQUEST";
+  throw new AssetResourceHydrationError({
+    code,
+    message: `${diagnostics.length} selected asset content errors found`,
+    details: { diagnostics },
+  });
+};
+
 export const hydrateAssetResourceResult = async ({
   result,
   documents,
@@ -206,45 +281,66 @@ export const hydrateAssetResourceResult = async ({
   const documentsById = new Map(
     documents.map((document) => [document._id, document])
   );
-  const selected = identities.map((identity) => {
+  const selectionSettlements = identities.map((identity) => {
     const document = documentsById.get(identity._id);
-    if (
-      document === undefined ||
-      document.revision !== identity.revision ||
-      document.contentRef !== identity.contentRef ||
-      typeof document.size !== "number" ||
-      typeof document.mimeType !== "string"
-    ) {
-      throw new AssetResourceHydrationError({
-        code: "CONTENT_IDENTITY_REQUIRED",
-        message: "Selected asset content identity is stale or unavailable",
-        details: { assetId: identity._id },
-      });
-    }
-    const hydratableDocument = {
-      ...document,
-      size: document.size,
-      mimeType: document.mimeType,
-    };
-    if (isTextDocument(hydratableDocument) === false) {
-      throw new AssetResourceHydrationError({
-        code: "CONTENT_NOT_TEXT",
-        message: "Selected binary asset cannot be embedded as text",
-        details: {
-          assetId: identity._id,
-          mimeType: hydratableDocument.mimeType,
+    try {
+      if (
+        document === undefined ||
+        document.revision !== identity.revision ||
+        document.contentRef !== identity.contentRef ||
+        typeof document.size !== "number" ||
+        typeof document.mimeType !== "string"
+      ) {
+        throw new AssetResourceHydrationError({
+          code: "CONTENT_IDENTITY_REQUIRED",
+          message: "Selected asset content identity is stale or unavailable",
+          details: { assetId: identity._id },
+        });
+      }
+      const hydratableDocument = {
+        ...document,
+        size: document.size,
+        mimeType: document.mimeType,
+      };
+      if (isTextDocument(hydratableDocument) === false) {
+        throw new AssetResourceHydrationError({
+          code: "CONTENT_NOT_TEXT",
+          message: "Selected binary asset cannot be embedded as text",
+          details: {
+            assetId: identity._id,
+            mimeType: hydratableDocument.mimeType,
+          },
+        });
+      }
+      return {
+        status: "fulfilled" as const,
+        value: {
+          identity,
+          document: hydratableDocument,
+          readLength: getAssetResourceHydrationReadLength(
+            hydratableDocument,
+            options
+          ),
         },
-      });
+      };
+    } catch (reason) {
+      return {
+        status: "rejected" as const,
+        reason,
+        document:
+          document ?? ({ _id: identity._id } as ContentDatabaseDocument),
+      };
     }
-    return {
-      identity,
-      document: hydratableDocument,
-      readLength: getAssetResourceHydrationReadLength(
-        hydratableDocument,
-        options
-      ),
-    };
   });
+  const selectionFailures = selectionSettlements.flatMap((settlement) =>
+    settlement.status === "rejected" ? [settlement] : []
+  );
+  if (selectionFailures.length > 0) {
+    throwHydrationFailures(selectionFailures);
+  }
+  const selected = selectionSettlements.flatMap((settlement) =>
+    settlement.status === "fulfilled" ? [settlement.value] : []
+  );
   const totalReadBytes = selected.reduce(
     (total, item) => total + item.readLength,
     0
@@ -260,71 +356,88 @@ export const hydrateAssetResourceResult = async ({
     });
   }
 
-  const hydrated = await mapBounded(
+  const settlements = await mapBounded(
     selected,
     contentEngineLimits.concurrentContentReads,
     async (item) => {
-      const range =
-        options.mode === "range"
-          ? { offset: options.offset, length: item.readLength }
-          : item.readLength === 0
-            ? undefined
-            : { offset: 0, length: item.readLength };
-      const bytes = await readBytes({
-        read,
-        contentRef: item.identity.contentRef,
-        range,
-        maximumBytes: item.readLength,
-      });
-      if (bytes.byteLength !== item.readLength) {
-        throw new AssetResourceHydrationError({
-          code: "CONTENT_IDENTITY_REQUIRED",
-          message: "Selected asset bytes do not match canonical metadata",
-          details: { assetId: item.identity._id },
+      try {
+        const range =
+          options.mode === "range"
+            ? { offset: options.offset, length: item.readLength }
+            : item.readLength === 0
+              ? undefined
+              : { offset: 0, length: item.readLength };
+        const bytes = await readBytes({
+          read,
+          contentRef: item.identity.contentRef,
+          range,
+          maximumBytes: item.readLength,
         });
-      }
-      let text: string;
-      if (options.mode === "markdown-body-ref") {
-        try {
-          text = (await extractMarkdownBody(bytes, item.readLength || 1)).body;
-          const references = assetReferences?.[item.identity.contentRef];
-          if (references !== undefined && assetUrls !== undefined) {
-            text = rewriteMarkdownAssetReferenceRanges({
-              markdown: text,
-              references,
-              assetUrls,
-            });
-          }
-        } catch {
+        if (bytes.byteLength !== item.readLength) {
           throw new AssetResourceHydrationError({
-            code: "CONTENT_DECODING_FAILED",
-            message: "Selected Markdown body could not be decoded",
+            code: "CONTENT_IDENTITY_REQUIRED",
+            message: "Selected asset bytes do not match canonical metadata",
             details: { assetId: item.identity._id },
           });
         }
-      } else {
-        text = decodeText(bytes);
+        let text: string;
+        if (options.mode === "markdown-body-ref") {
+          try {
+            text = (await extractMarkdownBody(bytes, item.readLength || 1))
+              .body;
+            const references = assetReferences?.[item.identity.contentRef];
+            if (references !== undefined && assetUrls !== undefined) {
+              text = rewriteMarkdownAssetReferenceRanges({
+                markdown: text,
+                references,
+                assetUrls,
+              });
+            }
+          } catch {
+            throw new AssetResourceHydrationError({
+              code: "CONTENT_DECODING_FAILED",
+              message: "Selected Markdown body could not be decoded",
+              details: { assetId: item.identity._id },
+            });
+          }
+        } else {
+          text = decodeText(bytes);
+        }
+        const returnedBytes = getUtf8ByteLength(text);
+        return {
+          status: "fulfilled" as const,
+          value: {
+            id: item.identity._id,
+            returnedBytes,
+            content: {
+              ...item.identity,
+              encoding: "utf-8" as const,
+              text,
+              ...(options.mode === "range"
+                ? {
+                    range: {
+                      offset: options.offset,
+                      length: bytes.byteLength,
+                      total: item.document.size,
+                    },
+                  }
+                : {}),
+            },
+          },
+        };
+      } catch (reason) {
+        return { status: "rejected" as const, reason, document: item.document };
       }
-      const returnedBytes = getUtf8ByteLength(text);
-      return {
-        id: item.identity._id,
-        returnedBytes,
-        content: {
-          ...item.identity,
-          encoding: "utf-8" as const,
-          text,
-          ...(options.mode === "range"
-            ? {
-                range: {
-                  offset: options.offset,
-                  length: bytes.byteLength,
-                  total: item.document.size,
-                },
-              }
-            : {}),
-        },
-      };
     }
+  );
+  const failures = settlements.flatMap((settlement) =>
+    settlement.status === "rejected" ? [settlement] : []
+  );
+  if (failures.length > 0) {
+    throwHydrationFailures(failures);
+  }
+  const hydrated = settlements.flatMap((settlement) =>
+    settlement.status === "fulfilled" ? [settlement.value] : []
   );
   return {
     content: Object.fromEntries(

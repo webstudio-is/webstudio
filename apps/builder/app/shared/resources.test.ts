@@ -3,7 +3,9 @@ import type { ResourceRequest } from "@webstudio-is/sdk";
 import {
   __testing__,
   $hasPendingResources,
+  $pendingResourceKeys,
   $resourceDiagnosticsCache,
+  $resourceDiagnosticsErrorCache,
   $resourcePerformanceCache,
   $resourcesCache,
   getResourceKey,
@@ -39,6 +41,7 @@ test("removes obsolete queued requests but keeps cached results", () => {
   queueResources([request]);
   $resourcesCache.get().set(key, { stale: true });
   expect($hasPendingResources.get()).toBe(true);
+  expect($pendingResourceKeys.get()).toEqual(new Set([key]));
 
   const resourceCacheListener = vi.fn();
   const unlisten = $resourcesCache.listen(resourceCacheListener);
@@ -47,6 +50,7 @@ test("removes obsolete queued requests but keeps cached results", () => {
 
   expect($resourcesCache.get().has(key)).toBe(true);
   expect($hasPendingResources.get()).toBe(false);
+  expect($pendingResourceKeys.get()).toEqual(new Set());
   expect(resourceCacheListener).not.toHaveBeenCalled();
   unlisten();
 });
@@ -477,6 +481,163 @@ test("loads detailed Assets diagnostics and performance only on demand", async (
     },
   });
   expect($resourcesCache.get().has(key)).toBe(false);
+});
+
+test("keeps a diagnostics-only failure separate from the resource value", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+  $resourcesCache.get().set(key, { data: { items: [] } });
+  const failure = {
+    ok: false,
+    status: 400,
+    data: {
+      error: {
+        code: "INVALID_REQUEST",
+        message: "Unexpected closing tag",
+        details: { path: "posts/broken.mdx", line: 7, column: 4 },
+      },
+    },
+  };
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([[key, failure]])
+  );
+
+  await loadResourceDiagnostics(request, fetch);
+
+  expect($resourcesCache.get().get(key)).toEqual({ data: { items: [] } });
+  expect($resourceDiagnosticsCache.get().has(key)).toBe(false);
+  expect($resourceDiagnosticsErrorCache.get().get(key)).toEqual(failure);
+});
+
+test("caches every malformed diagnostics schema issue", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json([
+      [
+        key,
+        {
+          data: { items: [] },
+          __diagnostics__: {
+            scope: "other",
+            query: {
+              usedBytes: "large",
+              maxBytes: 500,
+              unboundedBytes: 100,
+              includedDocumentCount: 1,
+              omittedDocumentCount: 0,
+              truncated: false,
+            },
+            database: {
+              usedBytes: 500,
+              maxBytes: 500,
+              unboundedBytes: 500,
+              includedDocumentCount: 1,
+              omittedDocumentCount: 0,
+              truncated: false,
+            },
+          },
+        },
+      ],
+    ])
+  );
+
+  await loadResourceDiagnostics(request, fetch);
+
+  const error = $resourceDiagnosticsErrorCache.get().get(key) as {
+    data?: { error?: { details?: { issues?: Array<{ path: string[] }> } } };
+  };
+  expect(error).toMatchObject({
+    ok: false,
+    status: 500,
+    data: {
+      error: {
+        code: "INVALID_DIAGNOSTICS_RESPONSE",
+        message: "Resource diagnostics response is invalid",
+      },
+    },
+  });
+  expect(error.data?.error?.details?.issues?.map(({ path }) => path)).toEqual([
+    ["__diagnostics__", "scope"],
+    ["__diagnostics__", "query", "usedBytes"],
+  ]);
+});
+
+test("reports a diagnostics response that omits the requested resource", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+
+  await loadResourceDiagnostics(
+    request,
+    vi.fn<typeof globalThis.fetch>(async () => Response.json([]))
+  );
+
+  expect($resourceDiagnosticsErrorCache.get().get(key)).toEqual({
+    ok: false,
+    data: {
+      error: { message: "Resource diagnostics response is missing" },
+    },
+  });
+});
+
+test("reports a resource response that omits its diagnostics payload", async () => {
+  const request: ResourceRequest = {
+    name: "assets",
+    method: "post",
+    url: "/$resources/assets",
+    searchParams: [],
+    headers: [],
+    body: { query: {} },
+  };
+  const key = getResourceKey(request);
+
+  await loadResourceDiagnostics(
+    request,
+    vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json([[key, { data: { items: [] } }]])
+    )
+  );
+
+  expect($resourceDiagnosticsErrorCache.get().get(key)).toMatchObject({
+    ok: false,
+    status: 500,
+    data: {
+      error: {
+        code: "INVALID_DIAGNOSTICS_RESPONSE",
+        message: "Resource diagnostics response is missing",
+        details: {
+          issues: [
+            {
+              path: ["__diagnostics__"],
+              message:
+                "The resource response does not contain diagnostics data",
+            },
+          ],
+        },
+      },
+    },
+  });
 });
 
 test("caches performance metrics separately from resource values", async () => {

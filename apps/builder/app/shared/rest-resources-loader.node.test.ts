@@ -141,3 +141,46 @@ test("records non-bindable server duration and response size", async () => {
     ],
   ]);
 });
+
+test("returns every invalid resource field as structured diagnostics", async () => {
+  const request = new Request(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",
+    { method: "POST" }
+  );
+  const invalidResource = {
+    name: 42,
+    method: "invalid",
+    searchParams: "invalid",
+    headers: "invalid",
+  };
+
+  const output = await loadResourceRequestList({
+    request,
+    requestList: [invalidResource],
+    sourceOrigin: "https://source.example",
+    includeDiagnostics: true,
+    customFetch: vi.fn(),
+  });
+
+  expect(output[0]?.[1]).toMatchObject({
+    ok: false,
+    status: 400,
+    statusText: "Bad Request",
+    data: {
+      error: {
+        code: "INVALID_REQUEST",
+        message: "Resource request is invalid",
+        retryable: false,
+        details: {
+          issues: expect.arrayContaining([
+            expect.objectContaining({ path: ["name"] }),
+            expect.objectContaining({ path: ["method"] }),
+            expect.objectContaining({ path: ["url"] }),
+            expect.objectContaining({ path: ["searchParams"] }),
+            expect.objectContaining({ path: ["headers"] }),
+          ]),
+        },
+      },
+    },
+  });
+});

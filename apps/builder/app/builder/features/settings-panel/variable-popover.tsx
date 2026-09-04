@@ -15,7 +15,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
+import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
@@ -30,14 +30,11 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
-  Link,
-  PanelBanner,
   ProChip,
   ScrollArea,
   Select,
   SplitView,
   Switch,
-  Text,
   TextArea,
   Tooltip,
   theme,
@@ -89,7 +86,9 @@ import {
 import { generateCurl } from "./curl";
 import {
   $hasPendingResources,
+  $pendingResourceKeys,
   $resourceDiagnosticsCache,
+  $resourceDiagnosticsErrorCache,
   $resourcePerformanceCache,
   $resourcesCache,
   computeResourceRequest,
@@ -104,14 +103,11 @@ import {
   RequestInspector,
 } from "./request-inspector";
 import {
-  ContentDatabaseDiagnostics,
-  ResourcePerformanceDiagnostics,
-} from "./content-database-diagnostics";
-import {
   getRequestErrorDiagnostics,
   RequestErrorDiagnostics,
 } from "./request-error-diagnostics";
 import type { ResourcePerformance } from "~/shared/resource-diagnostics";
+import { ResourceDiagnosticsView } from "./resource-diagnostics-view";
 
 const NameField = ({
   variable,
@@ -552,6 +548,7 @@ const VariablePanelForm = forwardRef<
     onValueChange: (value: unknown) => void;
     querySourceContainer: Element | null;
     onQueryActiveChange: (active: boolean) => void;
+    onQueryPendingChange: (pending: boolean) => void;
   }
 >(
   (
@@ -563,33 +560,12 @@ const VariablePanelForm = forwardRef<
       onValueChange,
       querySourceContainer,
       onQueryActiveChange,
+      onQueryPendingChange,
     },
     ref
   ) => {
-    const { allowDynamicData } = useStore($permissions);
-
-    const isResource =
-      variableType === "resource" ||
-      variableType === "graphql-resource" ||
-      variableType === "system-resource";
-    const requiresUpgrade = allowDynamicData === false && isResource;
     return (
       <>
-        {requiresUpgrade && (
-          <PanelBanner>
-            <Text>Resource fetching is part of the CMS functionality.</Text>
-            <Flex align="center" gap={1}>
-              <UpgradeIcon />
-              <Link
-                color="inherit"
-                target="_blank"
-                href="https://webstudio.is/pricing"
-              >
-                Upgrade to Pro
-              </Link>
-            </Flex>
-          </PanelBanner>
-        )}
         <Flex
           direction="column"
           css={{
@@ -664,6 +640,7 @@ const VariablePanelForm = forwardRef<
               variable={variable}
               querySourceContainer={querySourceContainer}
               onQueryActiveChange={onQueryActiveChange}
+              onQueryPendingChange={onQueryPendingChange}
             />
           )}
         </Flex>
@@ -686,6 +663,7 @@ const VariablePreview = ({
   variableValue,
   onLoadData,
   queryActive,
+  queryPending,
   queryContainerRef,
 }: {
   variable?: DataSource;
@@ -693,6 +671,7 @@ const VariablePreview = ({
   variableValue: unknown;
   onLoadData: () => void;
   queryActive: boolean;
+  queryPending: boolean;
   queryContainerRef: (element: HTMLDivElement | null) => void;
 }) => {
   const [pendingDiagnosticsKey, setPendingDiagnosticsKey] = useState<string>();
@@ -701,15 +680,20 @@ const VariablePreview = ({
     variableType === "graphql-resource" ||
     variableType === "system-resource";
   const hasPendingResources = useStore($hasPendingResources);
+  const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
   const variableValues = useStore($instanceVariableValues);
   const resourcesCache = useStore($resourcesCache);
   const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
+  const resourceDiagnosticsErrorCache = useStore(
+    $resourceDiagnosticsErrorCache
+  );
   const resourcePerformanceCache = useStore($resourcePerformanceCache);
   const resourceScope = useResourceScope({ variable });
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
   let resourcePerformance: ResourcePerformance | undefined;
+  let resourceDiagnosticsError: unknown;
   let computedResourceRequest: ResourceRequest | undefined;
   let computedResourceKey: string | undefined;
   if (variableType === "string" || variableType === "boolean") {
@@ -741,6 +725,7 @@ const VariablePreview = ({
       computedResourceKey = resourceKey;
       computedValue = resourcesCache.get(resourceKey);
       resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
+      resourceDiagnosticsError = resourceDiagnosticsErrorCache.get(resourceKey);
       resourcePerformance = resourcePerformanceCache.get(resourceKey);
     }
   }
@@ -756,7 +741,7 @@ const VariablePreview = ({
     onChange: () => {},
     onChangeComplete: () => {},
   };
-  const preview = (
+  const previewContent = (
     <Grid
       align="stretch"
       css={{
@@ -786,13 +771,27 @@ const VariablePreview = ({
     </Grid>
   );
   if (isResource === false) {
-    return preview;
+    return previewContent;
   }
   const requestErrorDiagnostics = getRequestErrorDiagnostics(computedValue);
+  const diagnosticsRequestError = getRequestErrorDiagnostics(
+    resourceDiagnosticsError
+  );
+  const preview =
+    requestErrorDiagnostics === undefined ? (
+      previewContent
+    ) : (
+      <RequestErrorDiagnostics value={requestErrorDiagnostics} />
+    );
   return (
     <RequestInspector
       queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={preview}
+      queryPending={queryPending}
+      previewPending={
+        computedResourceKey !== undefined &&
+        pendingResourceKeys.has(computedResourceKey)
+      }
       onDiagnosticsOpen={
         computedResourceRequest !== undefined &&
         isAssetsResourceRequest(computedResourceRequest) &&
@@ -809,21 +808,14 @@ const VariablePreview = ({
             }
           : undefined
       }
-      diagnosticsPending={
-        pendingDiagnosticsKey === computedResourceKey &&
-        resourceDiagnostics === undefined
-      }
+      diagnosticsPending={pendingDiagnosticsKey === computedResourceKey}
       diagnostics={
-        requestErrorDiagnostics !== undefined ? (
-          <RequestErrorDiagnostics value={requestErrorDiagnostics} />
-        ) : resourceDiagnostics !== undefined ? (
-          <ContentDatabaseDiagnostics
-            value={resourceDiagnostics}
-            performance={resourcePerformance}
-          />
-        ) : resourcePerformance !== undefined ? (
-          <ResourcePerformanceDiagnostics value={resourcePerformance} />
-        ) : undefined
+        <ResourceDiagnosticsView
+          requestError={requestErrorDiagnostics}
+          diagnosticsRequestError={diagnosticsRequestError}
+          diagnostics={resourceDiagnostics}
+          performance={resourcePerformance}
+        />
       }
     />
   );
@@ -841,6 +833,7 @@ const VariablePopoverContent = ({
   const hasPendingResources = useStore($hasPendingResources);
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const [queryActive, setQueryActive] = useState(false);
+  const [queryPending, setQueryPending] = useState(false);
   const [querySourceContainer, setQuerySourceContainer] =
     useState<HTMLDivElement | null>(null);
   const queryContainerRef = useCallback(
@@ -905,7 +898,10 @@ const VariablePopoverContent = ({
   const resourceScope = useResourceScope({ variable });
 
   const reloadData = () => {
-    const formData = new FormData(formRef.current ?? undefined);
+    const formData = getReloadableResourceFormData(formRef.current);
+    if (formData === undefined) {
+      return;
+    }
     const resource = createResourceValueFromFormData({
       id: variable?.id ?? "new",
       formData,
@@ -987,6 +983,7 @@ const VariablePopoverContent = ({
                   onValueChange={setValue}
                   querySourceContainer={querySourceContainer}
                   onQueryActiveChange={setQueryActive}
+                  onQueryPendingChange={setQueryPending}
                 />
               </fieldset>
             </form>
@@ -999,6 +996,7 @@ const VariablePopoverContent = ({
             variableValue={value}
             onLoadData={reloadData}
             queryActive={queryActive}
+            queryPending={queryPending}
             queryContainerRef={queryContainerRef}
           />
         }
@@ -1116,4 +1114,12 @@ export const VariablePopoverTrigger = ({
 
 VariablePopoverTrigger.displayName = "VariablePopoverTrigger";
 
-undefined;
+const getReloadableResourceFormData = (form: HTMLFormElement | null) => {
+  const formData = new FormData(form ?? undefined);
+  if (formData.get("asset-query-valid") === "false") {
+    return;
+  }
+  return formData;
+};
+
+export const __testing__ = { getReloadableResourceFormData };

@@ -1,5 +1,6 @@
 import {
   createCanonicalAssetPath,
+  createMarkdownFrontmatterDiagnostics,
   parseMdxDocumentRecovering,
   replaceMdxFrontmatter,
   serializeMdxDocument,
@@ -113,6 +114,44 @@ type AssetUpdate = (
   state: AssetContentSessionState,
   latestDocument: MdxDocument | undefined
 ) => PreparedAssetUpdate | Promise<PreparedAssetUpdate>;
+
+type MarkdownFrontmatterDiagnostic = Awaited<
+  ReturnType<typeof createMarkdownFrontmatterDiagnostics>
+>[number];
+
+class ExternalContentFrontmatterDiagnosticsError extends Error {
+  readonly assetId: string;
+  readonly path: string;
+  readonly diagnostics: readonly MarkdownFrontmatterDiagnostic[];
+
+  constructor({
+    assetId,
+    path,
+    diagnostics,
+  }: {
+    assetId: string;
+    path: string;
+    diagnostics: readonly MarkdownFrontmatterDiagnostic[];
+  }) {
+    super(`Frontmatter validation failed for ${path}`);
+    this.name = "ExternalContentFrontmatterDiagnosticsError";
+    this.assetId = assetId;
+    this.path = path;
+    this.diagnostics = diagnostics;
+  }
+}
+
+const findExternalContentFrontmatterDiagnostics = (error: unknown) => {
+  const visited = new Set<unknown>();
+  let cause = error;
+  while (cause !== undefined && visited.has(cause) === false) {
+    if (cause instanceof ExternalContentFrontmatterDiagnosticsError) {
+      return cause;
+    }
+    visited.add(cause);
+    cause = cause instanceof Error ? cause.cause : undefined;
+  }
+};
 
 const roots = new Map<string, RootEntry>();
 const rootOpenGenerations = new Map<
@@ -519,11 +558,20 @@ const resolveExternalContentFrontmatter = async (
         format,
         source: {
           async *[Symbol.asyncIterator]() {
-            yield encoder.encode(
+            const source =
               asset.id === entry.assetId
                 ? sourceState.source
-                : (await session.open(asset.id)).source
-            );
+                : (await session.open(asset.id)).source;
+            const diagnostics =
+              await createMarkdownFrontmatterDiagnostics(source);
+            if (diagnostics.length > 0) {
+              throw new ExternalContentFrontmatterDiagnosticsError({
+                assetId: asset.id,
+                path,
+                diagnostics,
+              });
+            }
+            yield encoder.encode(source);
           },
         },
       })),
@@ -659,6 +707,40 @@ const materialize = async ({
       };
     }
   } catch (error) {
+    const frontmatterError = findExternalContentFrontmatterDiagnostics(error);
+    if (frontmatterError !== undefined) {
+      return {
+        ...result,
+        diagnostics: [
+          ...result.diagnostics,
+          ...frontmatterError.diagnostics.map(
+            (diagnostic): ContentBlockDiagnostic => ({
+              code: "invalid-mdx",
+              severity: "error",
+              blockInstanceId: entry.sourceBlockInstanceId,
+              assetId: frontmatterError.assetId,
+              renderScope: entry.renderScope,
+              message: `${frontmatterError.path}: ${diagnostic.message}`,
+              ...(diagnostic.line === undefined ||
+              diagnostic.column === undefined
+                ? {}
+                : {
+                    sourceRange: {
+                      start: {
+                        line: diagnostic.line,
+                        column: diagnostic.column,
+                      },
+                      end: {
+                        line: diagnostic.line,
+                        column: diagnostic.column,
+                      },
+                    },
+                  }),
+            })
+          ),
+        ],
+      };
+    }
     const diagnostic: ContentBlockDiagnostic = {
       code: "invalid-mdx",
       severity: "error",

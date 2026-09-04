@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  getCliErrorIssues,
   getCliErrorMessage,
   getStableErrorCode,
   isMissingApiAccessError,
@@ -21,10 +22,89 @@ describe("getStableErrorCode", () => {
     ).toBe("NOT_FOUND");
   });
 
+  test("prefers a specific nested Webstudio error code", () => {
+    expect(
+      getStableErrorCode({
+        code: "BAD_REQUEST",
+        data: { code: "BAD_REQUEST", webstudioCode: "STALE_INDEX" },
+      })
+    ).toBe("STALE_INDEX");
+  });
+
+  test("reads a stable Webstudio error code from an error cause", () => {
+    expect(
+      getStableErrorCode(
+        Object.assign(new Error("Asset query failed"), {
+          cause: { webstudioCode: "CONTENT_DECODING_FAILED" },
+        })
+      )
+    ).toBe("CONTENT_DECODING_FAILED");
+  });
+
+  test("looks through generic MCP and internal error wrappers", () => {
+    expect(
+      getStableErrorCode({
+        code: "MCP_TOOL_FAILED",
+        cause: {
+          code: "INTERNAL_ERROR",
+          cause: { webstudioCode: "INVALID_REQUEST" },
+        },
+      })
+    ).toBe("INVALID_REQUEST");
+  });
+
   test("rejects dynamic values as stable error codes", () => {
     expect(getStableErrorCode({ code: "customer-specific-code" })).toBe(
       undefined
     );
+  });
+});
+
+describe("getCliErrorIssues", () => {
+  test("preserves complete asset diagnostic fields", () => {
+    expect(
+      getCliErrorIssues({
+        data: {
+          issues: [
+            {
+              code: "invalid-mdx",
+              path: ["posts/broken.mdx"],
+              message: "Unexpected end of file",
+              constraint: "invalid-mdx",
+              severity: "error",
+              scope: "query",
+              phase: "source",
+              assetId: "asset-1",
+              line: 4,
+              column: 9,
+              nodeType: "mdxJsxFlowElement",
+              reason: "Closing tag is missing",
+              sourceRange: {
+                start: { line: 4, column: 1, offset: 30 },
+                end: { line: 4, column: 9, offset: 38 },
+              },
+            },
+          ],
+        },
+      })
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid-mdx",
+        path: ["posts/broken.mdx"],
+        severity: "error",
+        scope: "query",
+        phase: "source",
+        assetId: "asset-1",
+        line: 4,
+        column: 9,
+        nodeType: "mdxJsxFlowElement",
+        reason: "Closing tag is missing",
+        sourceRange: {
+          start: { line: 4, column: 1, offset: 30 },
+          end: { line: 4, column: 9, offset: 38 },
+        },
+      }),
+    ]);
   });
 });
 

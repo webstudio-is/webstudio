@@ -72,15 +72,21 @@ const contentRows = [
   },
   {
     value: "full",
-    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected file is larger.`,
+    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected file is larger.`,
   },
   {
     value: "range",
-    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(contentEngineLimits.hydratedRangeBytes)}.`,
+    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(
+      contentEngineLimits.hydratedRangeBytes
+    )}.`,
   },
   {
     value: "markdown-body-ref",
-    description: `Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected source file is larger.`,
+    description: `Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected source file is larger.`,
   },
 ] as const satisfies readonly ReferenceRow[];
 
@@ -95,6 +101,20 @@ const diagnosticRows = [
 ] as const;
 
 const optionalDiagnosticRows = [
+  [
+    "`queryIssues`",
+    "Structured nonfatal query warnings with a stable code and exact query path.",
+  ],
+  [
+    "`queryWarnings`",
+    "Deprecated plain-text query warnings retained for compatibility.",
+  ],
+  [
+    "`issues`",
+    "All content errors and warnings found in files matched by the current query. Each diagnostic identifies its phase, code, message, asset, path, and source location when available.",
+  ],
+  ["`issueCount`", "Total errors and warnings in `issues`."],
+  ["`issuesTruncated`", "Always `false`; retained for response compatibility."],
   [
     "`artifacts`",
     "Optional query and merged compiled artifacts used by detailed Builder diagnostics.",
@@ -156,7 +176,9 @@ const assertSameValues = ({
   const implementedValues = [...implemented].sort();
   if (JSON.stringify(documentedValues) !== JSON.stringify(implementedValues)) {
     throw new Error(
-      `${label} documentation is out of sync: documented ${documentedValues.join(", ")}; implemented ${implementedValues.join(", ")}`
+      `${label} documentation is out of sync: documented ${documentedValues.join(
+        ", "
+      )}; implemented ${implementedValues.join(", ")}`
     );
   }
 };

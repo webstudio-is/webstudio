@@ -65,6 +65,9 @@ export const assetFileDocument = strictObject({
   metadataError: strictObject({
     code: string().min(1),
     message: string().min(1),
+    reason: string().min(1).optional(),
+    line: number().int().positive().optional(),
+    column: number().int().positive().optional(),
   }).optional(),
 });
 
@@ -297,8 +300,8 @@ export const contentArtifactV1 = strictObject({
 export type ContentArtifactV1 = Infer<typeof contentArtifactV1>;
 
 export const assetResourceContentOptions = discriminatedUnion("mode", [
-  object({ mode: literal("none") }),
-  object({
+  strictObject({ mode: literal("none") }),
+  strictObject({
     mode: literal("full"),
     maxBytes: number()
       .int()
@@ -306,7 +309,7 @@ export const assetResourceContentOptions = discriminatedUnion("mode", [
       .max(contentEngineLimits.hydratedFileBytes)
       .optional(),
   }),
-  object({
+  strictObject({
     mode: literal("range"),
     offset: number().int().nonnegative(),
     length: number()
@@ -314,7 +317,7 @@ export const assetResourceContentOptions = discriminatedUnion("mode", [
       .positive()
       .max(contentEngineLimits.hydratedRangeBytes),
   }),
-  object({
+  strictObject({
     mode: literal("markdown-body-ref"),
     maxBytes: number()
       .int()
@@ -680,8 +683,49 @@ export type AssetQueryExecutionResult = Infer<typeof assetQueryResult>;
 /** Backward-compatible collection result type for existing many-result APIs. */
 export type AssetQueryResult = AssetQueryCollectionResult;
 
+const assetQueryDiagnosticSourcePoint = strictObject({
+  line: number().int().positive(),
+  column: number().int().positive(),
+  offset: number().int().nonnegative().optional(),
+});
+
+export const assetQueryDiagnosticIssue = strictObject({
+  severity: zEnum(["error", "warning"]),
+  scope: zEnum(["query", "database"]),
+  phase: zEnum(["metadata", "reference", "source"]),
+  code: string().min(1),
+  message: string().min(1),
+  assetId: string().min(1),
+  // Diagnostics must preserve even legacy or storage-derived paths that do
+  // not satisfy the canonical asset path grammar.
+  path: string().min(1),
+  line: number().int().positive().optional(),
+  column: number().int().positive().optional(),
+  reference: string().min(1).optional(),
+  nodeType: string().min(1).optional(),
+  reason: string().min(1).optional(),
+  sourceRange: strictObject({
+    start: assetQueryDiagnosticSourcePoint,
+    end: assetQueryDiagnosticSourcePoint,
+  }).optional(),
+});
+
+export type AssetQueryDiagnosticIssue = Infer<typeof assetQueryDiagnosticIssue>;
+
+export const assetQuerySetupIssue = strictObject({
+  severity: zEnum(["error", "warning"]),
+  code: string().min(1),
+  path: array(string()),
+  message: string().min(1),
+});
+
+export type AssetQuerySetupIssue = Infer<typeof assetQuerySetupIssue>;
+
 export const assetQueryPreviewDiagnostics = strictObject({
   scope: literal("query-preview"),
+  queryIssues: array(assetQuerySetupIssue).optional(),
+  /** @deprecated Use queryIssues for codes and exact query paths. */
+  queryWarnings: array(string().min(1)).optional(),
   query: contentDatabaseCapacityStats,
   database: contentDatabaseCapacityStats,
   artifacts: strictObject({
@@ -689,6 +733,9 @@ export const assetQueryPreviewDiagnostics = strictObject({
     database: contentArtifactV1,
   }).optional(),
   unresolved: assetQueryResult.optional(),
+  issues: array(assetQueryDiagnosticIssue).optional(),
+  issueCount: number().int().nonnegative().optional(),
+  issuesTruncated: boolean().optional(),
 });
 
 export type AssetQueryPreviewDiagnostics = Infer<

@@ -681,6 +681,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -696,6 +697,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -716,6 +718,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode", "offset", "length"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -731,6 +734,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
               ],
             },
@@ -1067,6 +1071,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -1082,6 +1087,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -1102,6 +1108,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode", "offset", "length"],
+                  additionalProperties: false,
                 },
                 {
                   type: "object",
@@ -1117,6 +1124,7 @@ export const serverOnlyRouterOperationMetadata = {
                     },
                   },
                   required: ["mode"],
+                  additionalProperties: false,
                 },
               ],
             },

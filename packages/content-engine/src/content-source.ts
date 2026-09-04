@@ -9,7 +9,7 @@ import {
   type ContentCompilerDiagnostics,
   type ContentCompilerInput,
 } from "./asset-index";
-import type { ContentArtifactV1 } from "./schema";
+import type { AssetQueryDiagnosticIssue, ContentArtifactV1 } from "./schema";
 import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
 import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import type { MarkdownAssetReferences } from "./markdown-references";
@@ -26,7 +26,11 @@ import {
 } from "./byte-stream";
 import { extractMarkdownBody } from "./markdown-body";
 import { contentEngineLimits } from "./limits";
-import { discoverMdxBodyAssetReferences, parseMdxDocument } from "./mdx";
+import {
+  discoverMdxBodyAssetReferences,
+  validateTextAssetSource,
+  type MdxDocument,
+} from "./mdx";
 import {
   compileDocumentSourceGraph,
   createDocumentSourceUrl,
@@ -124,6 +128,34 @@ export class ContentSourceChangedError extends Error {
   constructor() {
     super("Content source changed while the database was being compiled");
     this.name = "ContentSourceChangedError";
+  }
+}
+
+type SourceIssue = NonNullable<
+  ContentCompilerDiagnostics["sourceIssues"]
+>[number];
+type DocumentSourceDiagnostic = SourceIssue &
+  Partial<Pick<AssetQueryDiagnosticIssue, "scope" | "phase" | "reference">>;
+
+export class DocumentSourceDiagnosticsError extends Error {
+  readonly diagnostics: readonly DocumentSourceDiagnostic[];
+  readonly scope: "query" | "database";
+
+  constructor(
+    diagnostics: readonly DocumentSourceDiagnostic[],
+    scope: "query" | "database" = "query"
+  ) {
+    const errorCount = diagnostics.filter(
+      ({ severity }) => severity === "error"
+    ).length;
+    super(
+      `${errorCount} document source ${
+        errorCount === 1 ? "error" : "errors"
+      } found`
+    );
+    this.name = "DocumentSourceDiagnosticsError";
+    this.diagnostics = diagnostics;
+    this.scope = scope;
   }
 }
 
@@ -226,15 +258,95 @@ const discoverSnapshotAssetReferences = async ({
   return references;
 };
 
+const validateSnapshotDocumentSources = async (
+  entries: readonly ContentCompilerInput[]
+): Promise<{
+  sourceIssues: readonly SourceIssue[];
+  mdxDocuments: ReadonlyMap<string, MdxDocument>;
+}> => {
+  const sourceIssues: SourceIssue[] = [];
+  const mdxDocuments = new Map<string, MdxDocument>();
+  for (const entry of entries) {
+    const format = getDocumentFormatByContentType(entry.document.mimeType);
+    if (
+      entry.contentRequired &&
+      entry.content === undefined &&
+      (format === "markdown" || format === "mdx")
+    ) {
+      sourceIssues.push({
+        severity: "warning",
+        code: "SOURCE_VALIDATION_UNAVAILABLE",
+        message: "File content could not be validated within the query limits",
+        assetId: entry.assetId,
+        path: entry.document.path,
+      });
+    }
+    if (
+      entry.content === undefined ||
+      (format !== "markdown" && format !== "mdx")
+    ) {
+      continue;
+    }
+    const validation = await validateTextAssetSource({
+      source: entry.content,
+      format: format === "markdown" ? "md" : "mdx",
+    });
+    sourceIssues.push(
+      ...validation.diagnostics.map((diagnostic) => ({
+        severity: diagnostic.severity,
+        code: diagnostic.code,
+        message: diagnostic.message,
+        assetId: entry.assetId,
+        path: entry.document.path,
+        ...("nodeType" in diagnostic && diagnostic.nodeType !== undefined
+          ? { nodeType: diagnostic.nodeType }
+          : {}),
+        ...("reason" in diagnostic && diagnostic.reason !== undefined
+          ? { reason: diagnostic.reason }
+          : {}),
+        ...("sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+          ? {
+              line: diagnostic.sourceRange.start.line,
+              column: diagnostic.sourceRange.start.column,
+              sourceRange: diagnostic.sourceRange,
+            }
+          : "line" in diagnostic && diagnostic.line !== undefined
+            ? {
+                line: diagnostic.line,
+                ...(diagnostic.column === undefined
+                  ? {}
+                  : { column: diagnostic.column }),
+              }
+            : {}),
+      }))
+    );
+    if (
+      validation.format === "mdx" &&
+      validation.recovery.status === "parsed"
+    ) {
+      mdxDocuments.set(entry.assetId, validation.recovery.document);
+    }
+  }
+  if (sourceIssues.some(({ severity }) => severity === "error")) {
+    throw new DocumentSourceDiagnosticsError(sourceIssues);
+  }
+  return { sourceIssues, mdxDocuments };
+};
+
 const discoverSnapshotAssetValueReferences = async ({
   snapshot,
   entries,
   analyzedProperties,
+  validation,
 }: {
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
   analyzedProperties: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
-}): Promise<AssetValueReferences> => {
+  validation: Awaited<ReturnType<typeof validateSnapshotDocumentSources>>;
+}): Promise<{
+  references: AssetValueReferences;
+  sourceIssues: readonly SourceIssue[];
+}> => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
   const structuredAssetIds = new Set(
     snapshot.files
@@ -263,14 +375,11 @@ const discoverSnapshotAssetValueReferences = async ({
       path: entry.document.path,
       properties: entry.document.properties ?? {},
     });
-    if (
-      entry.content !== undefined &&
-      getDocumentFormatByContentType(entry.document.mimeType) === "mdx"
-    ) {
-      const document = await parseMdxDocument({ source: entry.content });
+    const mdxDocument = validation.mdxDocuments.get(entry.assetId);
+    if (mdxDocument !== undefined) {
       discovered.push(
         ...discoverMdxBodyAssetReferences({
-          document,
+          document: mdxDocument,
           sourcePath: entry.document.path,
           assetIdsByPath,
         })
@@ -297,7 +406,7 @@ const discoverSnapshotAssetValueReferences = async ({
       }
     }
   }
-  return references;
+  return { references, sourceIssues: validation.sourceIssues };
 };
 
 const queryNeedsDocumentGraph = (
@@ -422,6 +531,7 @@ const discoverSnapshotDocumentGraph = async (
       return {
         id: file.id,
         documentUrl: createDocumentSourceUrl(file.path),
+        documentPath: file.path,
         revision: file.revision,
         contentRef: file.contentRef,
         format,
@@ -498,6 +608,7 @@ export const materializeContentSnapshot = async ({
       string,
       Readonly<Record<string, unknown>>
     >();
+    const validation = await validateSnapshotDocumentSources(entries);
     const documentGraphResult = await measureContentSourcePerformance({
       phase: "document-graph",
       observer: onPerformanceEvent,
@@ -518,11 +629,13 @@ export const materializeContentSnapshot = async ({
       operation: () =>
         discoverSnapshotAssetReferences({ snapshot, entries, plan }),
     });
-    const assetValueReferences = await discoverSnapshotAssetValueReferences({
-      snapshot,
-      entries,
-      analyzedProperties,
-    });
+    const assetValueReferenceResult =
+      await discoverSnapshotAssetValueReferences({
+        snapshot,
+        entries,
+        analyzedProperties,
+        validation,
+      });
     if (
       await measureContentSourcePerformance({
         phase: "source-validation",
@@ -535,7 +648,8 @@ export const materializeContentSnapshot = async ({
         sourceRevision: snapshot.revision,
         entries,
         assetReferences,
-        assetValueReferences,
+        assetValueReferences: assetValueReferenceResult.references,
+        sourceIssues: assetValueReferenceResult.sourceIssues,
         documentGraph,
         documentContents: documentGraphResult?.contents,
         assetReferenceIssues: documentGraphResult?.assetReferenceIssues ?? [],
@@ -581,6 +695,7 @@ export const compileContentSource = async ({
     entries,
     assetReferences,
     assetValueReferences,
+    sourceIssues,
     documentGraph,
     documentContents,
     assetReferenceIssues,
@@ -608,6 +723,7 @@ export const compileContentSource = async ({
     diagnostics: {
       ...compiled.diagnostics,
       ...(assetReferenceIssues.length === 0 ? {} : { assetReferenceIssues }),
+      ...(sourceIssues.length === 0 ? {} : { sourceIssues }),
     },
   };
 };
@@ -632,6 +748,7 @@ export const materializeContentSource = async ({
   documentGraph?: DocumentGraph;
   documentContents?: Readonly<Record<string, string>>;
   assetReferenceIssues: readonly AssetReferenceIssue[];
+  sourceIssues: readonly SourceIssue[];
 }> => {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const snapshot = await source.openSnapshot();

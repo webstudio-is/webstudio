@@ -6,8 +6,11 @@ import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import { separateResourceDiagnostics } from "./resource-diagnostics";
-import type { ResourcePerformance } from "./resource-diagnostics";
+import {
+  createResourceDiagnosticsResponseError,
+  separateResourceDiagnostics,
+  type ResourcePerformance,
+} from "./resource-diagnostics";
 
 const MAX_PENDING_RESOURCES = 5;
 
@@ -27,6 +30,7 @@ const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, InFlightResourceBatch>();
 const cache = new Map<string, unknown>();
 const diagnosticsCache = new Map<string, AssetQueryPreviewDiagnostics>();
+const diagnosticsErrorCache = new Map<string, unknown>();
 const performanceCache = new Map<string, ResourcePerformance>();
 const pendingDiagnostics = new Map<string, InFlightResourceDiagnostics>();
 const knownRequests = new Map<string, ResourceRequest>();
@@ -35,10 +39,12 @@ const inFlightBatches = new Set<InFlightResourceBatch>();
 
 export const $resourcesCache = atom(cache);
 export const $resourceDiagnosticsCache = atom(diagnosticsCache);
+export const $resourceDiagnosticsErrorCache = atom(diagnosticsErrorCache);
 export const $resourcePerformanceCache = atom(performanceCache);
 
 const updateMetadataCache = () => {
   $resourceDiagnosticsCache.set(new Map(diagnosticsCache));
+  $resourceDiagnosticsErrorCache.set(new Map(diagnosticsErrorCache));
   $resourcePerformanceCache.set(new Map(performanceCache));
 };
 
@@ -68,18 +74,21 @@ const cacheResourceMetadata = ({
   } else {
     diagnosticsCache.set(key, separated.diagnostics);
   }
-  return separated.result;
+  if (separated.diagnosticsError !== undefined) {
+    diagnosticsErrorCache.set(key, separated.diagnosticsError);
+  }
+  return separated;
 };
 
-const $pendingUpdater = atom({});
+export const $pendingResourceKeys = atom<ReadonlySet<string>>(new Set());
 
 const updatePending = () => {
-  $pendingUpdater.set({});
+  $pendingResourceKeys.set(new Set([...queue.keys(), ...pending.keys()]));
 };
 
 export const $hasPendingResources = computed(
-  $pendingUpdater,
-  () => queue.size > 0 || pending.size > 0
+  $pendingResourceKeys,
+  (pendingResourceKeys) => pendingResourceKeys.size > 0
 );
 
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
@@ -127,15 +136,13 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
       ) {
         continue;
       }
-      cache.set(
+      const separated = cacheResourceMetadata({
         key,
-        cacheResourceMetadata({
-          key,
-          request,
-          result,
-          loaderDurationMs,
-        })
-      );
+        request,
+        result,
+        loaderDurationMs,
+      });
+      cache.set(key, separated.result);
     }
   } catch {
     if (controller.signal.aborted === false) {
@@ -193,6 +200,7 @@ const preloadResource = (resource: ResourceRequest) => {
 
 const invalidateRequestState = (key: string) => {
   diagnosticsCache.delete(key);
+  diagnosticsErrorCache.delete(key);
   performanceCache.delete(key);
   pendingDiagnostics.get(key)?.controller.abort();
   pendingDiagnostics.delete(key);
@@ -280,6 +288,25 @@ export const loadResourceDiagnostics = (
         }
       );
       if (response.ok === false) {
+        let data: unknown;
+        try {
+          data = await response.json();
+        } catch {
+          data = undefined;
+        }
+        if (
+          controller.signal.aborted === false &&
+          pendingDiagnostics.get(key)?.controller === controller &&
+          (resourceVersions.get(key) ?? 0) === version
+        ) {
+          diagnosticsErrorCache.set(key, {
+            ok: false,
+            status: response.status,
+            statusText: response.statusText,
+            data,
+          });
+          updateMetadataCache();
+        }
         return;
       }
       const result = new Map<string, unknown>(await response.json()).get(key);
@@ -291,16 +318,70 @@ export const loadResourceDiagnostics = (
       ) {
         return;
       }
-      cacheResourceMetadata({
+      const separated = cacheResourceMetadata({
         key,
         request: resource,
         result,
         loaderDurationMs,
       });
+      if (result === undefined) {
+        diagnosticsErrorCache.set(key, {
+          ok: false,
+          data: {
+            error: {
+              message: "Resource diagnostics response is missing",
+            },
+          },
+        });
+      } else if (
+        typeof result === "object" &&
+        result !== null &&
+        ((result as { ok?: unknown }).ok === false ||
+          (typeof (result as { status?: unknown }).status === "number" &&
+            ((result as { status: number }).status ?? 0) >= 400))
+      ) {
+        diagnosticsErrorCache.set(key, result);
+      } else if (separated.diagnosticsError !== undefined) {
+        diagnosticsErrorCache.set(key, separated.diagnosticsError);
+      } else if (separated.diagnostics === undefined) {
+        diagnosticsErrorCache.set(
+          key,
+          createResourceDiagnosticsResponseError({
+            message: "Resource diagnostics response is missing",
+            issues: [
+              {
+                code: "missing_diagnostics",
+                path: ["__diagnostics__"],
+                message:
+                  "The resource response does not contain diagnostics data",
+              },
+            ],
+          })
+        );
+      } else {
+        diagnosticsErrorCache.delete(key);
+      }
       updateMetadataCache();
-    } catch {
+    } catch (error) {
       if (controller.signal.aborted === false) {
         console.error("Resource diagnostics request failed");
+        if (
+          pendingDiagnostics.get(key)?.controller === controller &&
+          (resourceVersions.get(key) ?? 0) === version
+        ) {
+          diagnosticsErrorCache.set(key, {
+            ok: false,
+            data: {
+              error: {
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Resource diagnostics request failed",
+              },
+            },
+          });
+          updateMetadataCache();
+        }
       }
     } finally {
       if (pendingDiagnostics.get(key)?.controller === controller) {
@@ -361,6 +442,7 @@ const reset = () => {
   pending.clear();
   cache.clear();
   diagnosticsCache.clear();
+  diagnosticsErrorCache.clear();
   performanceCache.clear();
   for (const { controller } of pendingDiagnostics.values()) {
     controller.abort();

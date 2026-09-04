@@ -1,4 +1,10 @@
-import type { ComponentProps, ReactNode, Ref } from "react";
+import {
+  Fragment,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+  type Ref,
+} from "react";
 import {
   cssVar,
   Flex,
@@ -7,13 +13,17 @@ import {
   PanelTabsContent,
   PanelTabsList,
   PanelTabsTrigger,
+  rawTheme,
   ScrollAreaNative,
+  SectionTitle,
+  SectionTitleLabel,
   styled,
   Text,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import { AlertIcon, InfoCircleIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 
 export const clearSettledDiagnosticsKey = (
   pendingKey: string | undefined,
@@ -101,16 +111,118 @@ export const RequestDiagnosticsRow = ({
   </Grid>
 );
 
+export const RequestDiagnosticDisclosure = ({
+  severity,
+  title,
+  location,
+  reason,
+  details,
+  defaultOpen = false,
+}: {
+  severity: "error" | "warning";
+  title: string;
+  location: string;
+  reason: ReactNode;
+  details: readonly { label: string; value: ReactNode }[];
+  defaultOpen?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <Grid
+      css={{
+        borderBottom: `1px solid ${cssVar("--border-default")}`,
+        "&:last-child": { borderBottom: 0 },
+      }}
+    >
+      <CollapsibleSectionRoot
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        fullWidth
+        showSeparator={false}
+        trigger={
+          <SectionTitle
+            aria-label={`${severity === "error" ? "Error" : "Warning"}: ${title}`}
+          >
+            {severity === "warning" && (
+              <AlertIcon
+                aria-hidden
+                color={cssVar("--foreground-warning")}
+                style={{ flexShrink: 0 }}
+              />
+            )}
+            <SectionTitleLabel onClick={() => setIsOpen((value) => !value)}>
+              {severity === "error" ? `Error · ${title}` : title}
+            </SectionTitleLabel>
+          </SectionTitle>
+        }
+      >
+        <Grid
+          css={{
+            gridTemplateColumns: "max-content minmax(0, 1fr)",
+            columnGap: theme.spacing[7],
+            rowGap: theme.spacing[3],
+            paddingInline: theme.panel.paddingInline,
+            paddingTop: theme.spacing[2],
+            "& > :nth-child(odd)": { minWidth: theme.spacing[17] },
+            "& > :nth-child(even)": {
+              minWidth: 0,
+              overflowWrap: "anywhere",
+            },
+          }}
+        >
+          <Text color="moreSubtle">Location</Text>
+          <Text userSelect="text">{location}</Text>
+          <Text color="moreSubtle">Reason</Text>
+          <Text userSelect="text" css={{ whiteSpace: "pre-wrap" }}>
+            {reason}
+          </Text>
+          {details.map(({ label, value }) => (
+            <Fragment key={label}>
+              <Text color="moreSubtle">{label}</Text>
+              <Text userSelect="text">{value}</Text>
+            </Fragment>
+          ))}
+        </Grid>
+      </CollapsibleSectionRoot>
+    </Grid>
+  );
+};
+
+const RequestInspectorLoading = ({ label }: { label: string }) => (
+  <Flex
+    role="status"
+    aria-label={label}
+    aria-live="polite"
+    direction="column"
+    align="center"
+    justify="center"
+    gap={2}
+    css={{
+      position: "absolute",
+      inset: 0,
+      zIndex: 1,
+      backgroundColor: cssVar("--background-primary"),
+    }}
+  >
+    <SpinnerIcon size={rawTheme.spacing[15]} />
+    <Text color="moreSubtle">{label}</Text>
+  </Flex>
+);
+
 export const RequestInspector = ({
   queryContainerRef,
   preview,
   diagnostics,
+  queryPending = false,
+  previewPending = false,
   diagnosticsPending = false,
   onDiagnosticsOpen,
 }: {
   queryContainerRef?: Ref<HTMLDivElement>;
   preview: ReactNode;
   diagnostics?: ReactNode;
+  queryPending?: boolean;
+  previewPending?: boolean;
   diagnosticsPending?: boolean;
   onDiagnosticsOpen?: () => void;
 }) => (
@@ -137,6 +249,7 @@ export const RequestInspector = ({
     {queryContainerRef !== undefined && (
       <PanelTabsContent
         value="query"
+        aria-busy={queryPending}
         css={{ flex: 1, position: "relative", overflow: "hidden" }}
       >
         <div
@@ -149,26 +262,29 @@ export const RequestInspector = ({
             position: "relative",
           }}
         />
+        {queryPending && <RequestInspectorLoading label="Loading query…" />}
       </PanelTabsContent>
     )}
     <PanelTabsContent
       value="preview"
+      aria-busy={previewPending}
       css={{ flex: 1, position: "relative", overflow: "hidden" }}
     >
       {preview}
+      {previewPending && <RequestInspectorLoading label="Loading preview…" />}
     </PanelTabsContent>
     <PanelTabsContent
       value="diagnostics"
+      aria-busy={diagnosticsPending}
       css={{ flex: 1, position: "relative", overflow: "hidden" }}
     >
       {diagnostics ?? (
         <Flex align="center" justify="center" css={{ height: "100%" }}>
-          <Text color="moreSubtle">
-            {diagnosticsPending
-              ? "Loading diagnostics..."
-              : "No diagnostics available"}
-          </Text>
+          <Text color="moreSubtle">No diagnostics available</Text>
         </Flex>
+      )}
+      {diagnosticsPending && (
+        <RequestInspectorLoading label="Loading diagnostics…" />
       )}
     </PanelTabsContent>
   </PanelTabs>

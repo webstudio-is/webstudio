@@ -121,6 +121,138 @@ const createDocumentSource = ({
 });
 
 describe("content source snapshots", () => {
+  test("reports all fatal MDX errors from selected files", async () => {
+    const files = [
+      createFile({ id: "one", path: "blog/one.mdx", contentType: "text/mdx" }),
+      createFile({ id: "two", path: "blog/two.mdx", contentType: "text/mdx" }),
+    ];
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files,
+          async loadEntries() {
+            return files.map((file) => ({
+              ...createEntry(file),
+              content: "<ws.element",
+            }));
+          },
+          async loadDocumentSources() {
+            return files.map(({ id }) => ({ id, source: "<ws.element" }));
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    await expect(
+      compileContentSource({ source, projectId })
+    ).rejects.toMatchObject({
+      diagnostics: [
+        { severity: "error", assetId: "one", path: "blog/one.mdx" },
+        { severity: "error", assetId: "two", path: "blog/two.mdx" },
+      ],
+    });
+  });
+
+  test("keeps all nonfatal Markdown errors as warnings", async () => {
+    const file = createFile({ id: "post" });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [file],
+          async loadEntries() {
+            return [
+              {
+                ...createEntry(file),
+                content: "---\na: 1\na: 2\nb: 1\nb: 2\n---\n",
+              },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+    expect(result.diagnostics.sourceIssues).toMatchObject([
+      { severity: "warning", path: "blog/post.md", line: 3 },
+      { severity: "warning", path: "blog/post.md", line: 5 },
+    ]);
+  });
+
+  test("preserves complete MDX warning context", async () => {
+    const file = createFile({
+      id: "post",
+      path: "blog/post.mdx",
+      contentType: "text/mdx",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [file],
+          async loadEntries() {
+            return [{ ...createEntry(file), content: "{1 + 1}" }];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+    expect(result.diagnostics.sourceIssues).toEqual([
+      expect.objectContaining({
+        severity: "warning",
+        code: "unsafe-mdx",
+        assetId: "post",
+        path: "blog/post.mdx",
+        nodeType: "mdxFlowExpression",
+        reason: "Executable MDX expressions are not supported",
+        sourceRange: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 8, offset: 7 },
+        },
+      }),
+    ]);
+  });
+
+  test("warns when a selected source cannot be validated within limits", async () => {
+    const file = createFile({ id: "post" });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [file],
+          async loadEntries() {
+            return [{ ...createEntry(file), contentRequired: true }];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+    expect(result.diagnostics.sourceIssues).toEqual([
+      {
+        severity: "warning",
+        code: "SOURCE_VALIDATION_UNAVAILABLE",
+        message: "File content could not be validated within the query limits",
+        assetId: "post",
+        path: "blog/post.md",
+      },
+    ]);
+  });
+
   test("compiles MDX sources into the document graph", async () => {
     const mdx =
       '---\nauthor:\n  $ref: ./author.json#/profile\n---\n<ws.element ws:name="Hero">Hello</ws.element>\n';

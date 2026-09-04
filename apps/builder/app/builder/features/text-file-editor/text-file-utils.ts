@@ -12,9 +12,9 @@ import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { parseJsonExpression } from "@webstudio-is/expression";
 import {
-  createMdxSourceDiagnostics,
-  parseMdxDocumentRecovering,
   type MdxSourcePoint,
+  type TextAssetSourceDiagnostic,
+  validateTextAssetSource,
 } from "@webstudio-is/content-engine/mdx";
 import {
   getAssetTextEditorLanguage,
@@ -29,6 +29,18 @@ export type MdxPersistenceFeedback = Readonly<{
   kind: "failed" | "conflicting";
   message: string;
 }>;
+
+type TextFileSourceDiagnostic =
+  | TextAssetSourceDiagnostic
+  | ContentBlockDiagnostic;
+
+export type ValidateTextFileSource = (input: {
+  source: string;
+  format: "md" | "mdx";
+}) => Promise<readonly TextFileSourceDiagnostic[]>;
+
+const validateTextFileSource: ValidateTextFileSource = async (input) =>
+  (await validateTextAssetSource(input)).diagnostics;
 
 export const getMdxPersistenceFeedback = (
   state: Pick<AssetContentSessionState, "status" | "error">
@@ -61,41 +73,47 @@ const getPointOffset = (source: string, point: MdxSourcePoint) => {
   return Math.min(offset + point.column - 1, source.length);
 };
 
-export const getMdxEditorDiagnostics = async (
-  source: string,
-  semanticDiagnostics: readonly ContentBlockDiagnostic[] = []
-): Promise<Diagnostic[]> => {
-  const result = await parseMdxDocumentRecovering({ source });
+export const getTextFileEditorDiagnostics = async ({
+  source,
+  format,
+  semanticDiagnostics = [],
+  validateSource = validateTextFileSource,
+}: {
+  source: string;
+  format: "md" | "mdx";
+  semanticDiagnostics?: readonly ContentBlockDiagnostic[];
+  validateSource?: ValidateTextFileSource;
+}): Promise<Diagnostic[]> => {
   const diagnostics = [
-    ...createMdxSourceDiagnostics(result.diagnostics).map((diagnostic) => ({
-      sourceRange: diagnostic.sourceRange,
-      severity: diagnostic.severity,
-      message: diagnostic.message,
-    })),
-    ...semanticDiagnostics.map((diagnostic) => ({
-      sourceRange: diagnostic.sourceRange,
-      severity: diagnostic.severity,
-      message:
-        diagnostic.code === "invalid-mdx"
-          ? diagnostic.message
-          : diagnostic.code === "unsafe-mdx"
-            ? diagnostic.reason
-            : formatContentBlockDiagnostic(diagnostic),
-    })),
+    ...(await validateSource({ source, format })),
+    ...semanticDiagnostics,
   ].map((diagnostic) => {
     const from =
-      diagnostic.sourceRange === undefined
-        ? 0
-        : getPointOffset(source, diagnostic.sourceRange.start);
+      "sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+        ? getPointOffset(source, diagnostic.sourceRange.start)
+        : "line" in diagnostic &&
+            diagnostic.line !== undefined &&
+            diagnostic.column !== undefined
+          ? getPointOffset(source, {
+              line: diagnostic.line,
+              column: diagnostic.column,
+            })
+          : 0;
     const to =
-      diagnostic.sourceRange === undefined
-        ? Math.min(1, source.length)
-        : Math.max(from, getPointOffset(source, diagnostic.sourceRange.end));
+      "sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+        ? Math.max(from, getPointOffset(source, diagnostic.sourceRange.end))
+        : Math.min(source.length, from + 1);
     return {
       from,
       to,
       severity: diagnostic.severity,
-      message: diagnostic.message,
+      source: diagnostic.code,
+      message:
+        "message" in diagnostic
+          ? diagnostic.message
+          : diagnostic.code === "unsafe-mdx"
+            ? diagnostic.reason
+            : formatContentBlockDiagnostic(diagnostic),
     };
   });
   return Array.from(
@@ -105,12 +123,19 @@ export const getMdxEditorDiagnostics = async (
   );
 };
 
-const getMdxExtensions = (
-  semanticDiagnostics: readonly ContentBlockDiagnostic[]
+const getMarkdownExtensions = (
+  format: "md" | "mdx",
+  semanticDiagnostics: readonly ContentBlockDiagnostic[],
+  validateSource: ValidateTextFileSource
 ): Extension[] => [
   linter(
     (view) =>
-      getMdxEditorDiagnostics(view.state.doc.toString(), semanticDiagnostics),
+      getTextFileEditorDiagnostics({
+        source: view.state.doc.toString(),
+        format,
+        semanticDiagnostics,
+        validateSource,
+      }),
     { delay: 300 }
   ),
   lintGutter(),
@@ -129,15 +154,20 @@ const languageExtensions = {
 
 export const getTextFileEditorExtensions = (
   asset: Pick<Asset, "format">,
-  semanticDiagnostics: readonly ContentBlockDiagnostic[] = []
+  semanticDiagnostics: readonly ContentBlockDiagnostic[] = [],
+  validateSource: ValidateTextFileSource = validateTextFileSource
 ): Extension[] => {
   const language = getAssetTextEditorLanguage(asset);
   if (language === undefined) {
     return [];
   }
   const extensions = languageExtensions[language];
-  return asset.format.toLowerCase() === "mdx"
-    ? [...extensions, ...getMdxExtensions(semanticDiagnostics)]
+  const format = asset.format.toLowerCase();
+  return format === "md" || format === "mdx"
+    ? [
+        ...extensions,
+        ...getMarkdownExtensions(format, semanticDiagnostics, validateSource),
+      ]
     : extensions;
 };
 

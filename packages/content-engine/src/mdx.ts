@@ -17,11 +17,14 @@ import {
 } from "./asset-reference-utils";
 import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import { getInstancePropName } from "./jsx-attributes";
-import { getUtf8ByteLength } from "./byte-stream";
+import { decodeUtf8, getUtf8ByteLength } from "./byte-stream";
 import {
+  createMarkdownFrontmatterDiagnostics,
   extractMarkdownFrontmatter,
   replaceMarkdownFrontmatter,
 } from "./frontmatter";
+
+export { createMarkdownFrontmatterDiagnostics } from "./frontmatter";
 import { contentEngineLimits } from "./limits";
 import {
   getSyntaxTreeChildren,
@@ -30,7 +33,9 @@ import {
   type SyntaxTreeNode,
 } from "./markdown-ast";
 import { findMarkdownFrontmatter } from "./markdown-scanner";
+import { extractMarkdownBody } from "./markdown-body";
 import { serializeMdxDocument } from "./mdx-serialization";
+import { MarkdownMetadataError } from "./markdown-errors";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -240,17 +245,34 @@ export const createMdxSourceDiagnostics = (
           code: error.code,
           severity: "error",
           message: error.message,
-          sourceRange: error.sourceRange,
+          ...(error.sourceRange === undefined
+            ? {}
+            : { sourceRange: error.sourceRange }),
         }
       : {
           code: error.code,
           severity: "warning",
           message: error.reason ?? error.message,
-          nodeType: error.nodeType,
-          reason: error.reason,
-          sourceRange: error.sourceRange,
+          ...(error.nodeType === undefined ? {} : { nodeType: error.nodeType }),
+          ...(error.reason === undefined ? {} : { reason: error.reason }),
+          ...(error.sourceRange === undefined
+            ? {}
+            : { sourceRange: error.sourceRange }),
         }
   );
+
+const hasMarkdownMetadataCause = (error: MdxDocumentError) => {
+  const visited = new Set<unknown>();
+  let cause = error.cause;
+  while (cause !== undefined && visited.has(cause) === false) {
+    if (cause instanceof MarkdownMetadataError) {
+      return true;
+    }
+    visited.add(cause);
+    cause = cause instanceof Error ? cause.cause : undefined;
+  }
+  return false;
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -766,6 +788,10 @@ const createRecoveringHandlers = ({
         if (start === undefined || end === undefined) {
           throw error;
         }
+        // The rejected parent is preserved as opaque source, but its children
+        // still need validation so one unsupported component cannot hide later
+        // diagnostics inside that component.
+        state.all(value);
         diagnostics.push(error);
         const opaque = {
           type: "opaque",
@@ -786,18 +812,32 @@ const createRecoveringHandlers = ({
       recover(handler),
     ])
   ) as Handlers;
-  handlers.mdxJsxFlowElement = createMdxJsxElementHandler({
-    shouldOmitUnsafePart,
-  });
-  handlers.mdxJsxTextElement = createMdxJsxElementHandler({
-    shouldOmitUnsafePart,
-  });
+  handlers.mdxJsxFlowElement = recover(
+    createMdxJsxElementHandler({ shouldOmitUnsafePart })
+  );
+  handlers.mdxJsxTextElement = recover(
+    createMdxJsxElementHandler({ shouldOmitUnsafePart })
+  );
   return {
     handlers,
     unknownHandler: recover(rejectUnsupportedNode),
     shouldOmitUnsafePart,
   };
 };
+
+const sortMdxDocumentErrors = (errors: readonly MdxDocumentError[]) =>
+  [...errors].sort((left, right) => {
+    const leftOffset = left.sourceRange?.start.offset;
+    const rightOffset = right.sourceRange?.start.offset;
+    if (leftOffset === undefined || rightOffset === undefined) {
+      return leftOffset === undefined
+        ? rightOffset === undefined
+          ? 0
+          : 1
+        : -1;
+    }
+    return leftOffset - rightOffset;
+  });
 
 const createMarkdownHastForMdx = (root: SyntaxTreeNode) => {
   const hast = toHast(root as Parameters<typeof toHast>[0], {
@@ -1420,7 +1460,7 @@ export const parseMdxDocumentRecovering = async ({
         frontmatter,
         children: mapAuthoredChildren(root, recovery),
       },
-      diagnostics,
+      diagnostics: sortMdxDocumentErrors(diagnostics),
     };
   } catch (cause) {
     const error =
@@ -1434,6 +1474,170 @@ export const parseMdxDocumentRecovering = async ({
           });
     return { status: "unrecoverable", diagnostics: [error] };
   }
+};
+
+export type MdxDocumentSourceDiagnostic =
+  | MdxSourceDiagnostic
+  | Awaited<ReturnType<typeof createMarkdownFrontmatterDiagnostics>>[number];
+
+/** Validates MDX once and returns every diagnostic with its fatality. */
+export const validateMdxDocumentSource = async ({
+  source,
+}: {
+  source: string;
+}) => {
+  const recovery = await parseMdxDocumentRecovering({ source });
+  const frontmatterDiagnostics =
+    await createMarkdownFrontmatterDiagnostics(source);
+  const mdxDiagnostics = createMdxSourceDiagnostics(
+    recovery.diagnostics
+  ).filter(
+    (_diagnostic, index) =>
+      frontmatterDiagnostics.length === 0 ||
+      hasMarkdownMetadataCause(recovery.diagnostics[index]) === false
+  );
+  return {
+    recovery,
+    diagnostics: [
+      ...frontmatterDiagnostics,
+      ...mdxDiagnostics,
+    ] satisfies readonly MdxDocumentSourceDiagnostic[],
+  };
+};
+
+export type MarkdownTextAssetSourceDiagnostic =
+  | Awaited<ReturnType<typeof createMarkdownFrontmatterDiagnostics>>[number]
+  | Readonly<{
+      code: "MARKDOWN_BODY_BYTES_EXCEEDED" | "MARKDOWN_BODY_DECODING_FAILED";
+      severity: "error";
+      message: string;
+    }>;
+
+export type TextAssetSourceDiagnostic =
+  | MarkdownTextAssetSourceDiagnostic
+  | MdxDocumentSourceDiagnostic;
+
+export type TextAssetSourceValidation =
+  | Readonly<{
+      format: "md";
+      diagnostics: readonly MarkdownTextAssetSourceDiagnostic[];
+    }>
+  | Readonly<{
+      format: "mdx";
+      diagnostics: readonly MdxDocumentSourceDiagnostic[];
+      recovery: Awaited<ReturnType<typeof parseMdxDocumentRecovering>>;
+    }>;
+
+export type TextAssetByteSourceValidation = TextAssetSourceValidation &
+  Readonly<{
+    /** Available only when the complete byte input is valid UTF-8. */
+    source?: string;
+  }>;
+
+/** Shared source validation contract for the editor, query engine, and MCP. */
+export const validateTextAssetSource = async ({
+  source,
+  format,
+}: {
+  source: string;
+  format: "md" | "mdx";
+}): Promise<TextAssetSourceValidation> => {
+  if (format === "md") {
+    const diagnostics: MarkdownTextAssetSourceDiagnostic[] = [
+      ...(await createMarkdownFrontmatterDiagnostics(source)),
+    ];
+    try {
+      await extractMarkdownBody(source);
+    } catch (error) {
+      if (
+        error instanceof MarkdownMetadataError &&
+        error.code === "MARKDOWN_BODY_BYTES_EXCEEDED"
+      ) {
+        return {
+          format,
+          diagnostics: [
+            ...diagnostics,
+            {
+              code: error.code,
+              severity: "error",
+              message: error.message,
+            },
+          ],
+        };
+      }
+      throw error;
+    }
+    return {
+      format,
+      diagnostics,
+    };
+  }
+  const validation = await validateMdxDocumentSource({ source });
+  return { format, ...validation };
+};
+
+/**
+ * Fatal-decodes one complete byte source before running the shared source
+ * validator. This is the byte-input entry point for query and MCP callers.
+ */
+export const validateTextAssetSourceBytes = async ({
+  source: bytes,
+  format,
+}: {
+  source: Uint8Array;
+  format: "md" | "mdx";
+}): Promise<TextAssetByteSourceValidation> => {
+  if (bytes.byteLength > contentEngineLimits.hydratedFileBytes) {
+    if (format === "md") {
+      return {
+        format,
+        diagnostics: [
+          {
+            code: "MARKDOWN_BODY_BYTES_EXCEEDED",
+            severity: "error",
+            message: "Markdown content exceeds the byte limit",
+          },
+        ],
+      };
+    }
+    const error = new MdxDocumentError({
+      code: "invalid-mdx",
+      message: "MDX content exceeds the byte limit",
+    });
+    return {
+      format,
+      diagnostics: createMdxSourceDiagnostics([error]),
+      recovery: { status: "unrecoverable", diagnostics: [error] },
+    };
+  }
+
+  let source: string;
+  try {
+    source = decodeUtf8(bytes);
+  } catch {
+    if (format === "md") {
+      return {
+        format,
+        diagnostics: [
+          {
+            code: "MARKDOWN_BODY_DECODING_FAILED",
+            severity: "error",
+            message: "Markdown content is not valid UTF-8",
+          },
+        ],
+      };
+    }
+    const error = new MdxDocumentError({
+      code: "invalid-mdx",
+      message: "MDX content is not valid UTF-8",
+    });
+    return {
+      format,
+      diagnostics: createMdxSourceDiagnostics([error]),
+      recovery: { status: "unrecoverable", diagnostics: [error] },
+    };
+  }
+  return { ...(await validateTextAssetSource({ source, format })), source };
 };
 
 const withMarkdownSyntax = (node: MdxAuthoredNode): MdxAuthoredNode => {

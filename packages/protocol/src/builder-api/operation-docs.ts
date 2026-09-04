@@ -647,7 +647,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "validate-asset-query",
     description:
-      "Validate a structured Assets query and return its referenced dynamic fields and bounded operation counts.",
+      "Validate a structured Assets query and return every setup error or warning, referenced dynamic fields, and bounded operation counts.",
     examples: [
       'webstudio validate-asset-query \'{"query":{"where":{"all":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}]},"limit":1}}\'',
     ],
@@ -813,7 +813,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "upload-asset",
     description:
-      "Upload one local asset file from a descriptor, optionally into an Asset Manager folder",
+      "Upload one local asset file from a descriptor, optionally into an Asset Manager folder. Markdown and MDX uploads return source diagnostics",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio upload-asset --input asset.json --assets-dir .webstudio/assets --json",
@@ -822,7 +822,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "upload-assets",
     description:
-      "Upload local asset files from descriptors, optionally into Asset Manager folders; returns uploaded, retryable failures, and commit-ambiguous forced uploads separately so only safe retries are suggested",
+      "Upload local asset files from descriptors, optionally into Asset Manager folders; returns uploaded, retryable failures, commit-ambiguous forced uploads, and Markdown or MDX source diagnostics",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio upload-assets --input assets.json --assets-dir .webstudio/assets --json",
@@ -831,7 +831,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-asset-content",
     description:
-      "Replace a text Asset's content or extension without changing its ID. Provide path or content and its current name as expectedName. Invalid MDX is saved with diagnostics",
+      "Replace a text Asset's content or extension without changing its ID. Provide path or content and its current name as expectedName. Markdown and MDX validation diagnostics are returned without blocking the save",
     examples: [
       `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{theme:'dark'}"}`,
       `MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.md","extension":"json","content":"{theme:'dark'}"}`,
