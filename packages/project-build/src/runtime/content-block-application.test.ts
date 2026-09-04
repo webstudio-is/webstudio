@@ -3,6 +3,7 @@ import {
   blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
+  getContentBlockSource,
   type Asset,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
@@ -286,6 +287,30 @@ describe("createContentBlockApplication", () => {
     expect(inspected.source).toBe("# From file");
   });
 
+  test("resolves a supplied Assets resource result", async () => {
+    const fixture = createFixture();
+
+    const connected = await fixture.application.connect({
+      state: fixture.state,
+      blockInstanceId: "block",
+      renderScope: "page:/articles/example",
+      source: { type: "expression", value: "post.data.id" },
+      variables: { post: { data: { id: "asset" } } },
+    });
+
+    expect(connected.inspection.identity.assetId).toBe("asset");
+    expect(connected.inspection.source).toBe("# From file");
+    const connectedState = applyBuilderPatchTransactions(fixture.state, [
+      { id: "connect", payload: [...connected.projectPayload] },
+    ]).state;
+    expect(
+      getContentBlockSource({
+        blockInstanceId: "block",
+        props: connectedState.props?.values() ?? [],
+      })
+    ).toEqual({ type: "expression", value: "post.data.id" });
+  });
+
   test("explains unresolved Assets resource expressions without exposing values", async () => {
     const fixture = createFixture();
     fixture.state.dataSources?.set("postDataSource", {
@@ -296,14 +321,16 @@ describe("createContentBlockApplication", () => {
       resourceId: "postResource",
     });
 
-    await expect(
-      fixture.application.inspect({
-        state: fixture.state,
-        blockInstanceId: "block",
-        renderScope: "page:/articles/example",
-        source: { type: "expression", value: "post.data.id" },
-      })
-    ).rejects.toMatchObject({
+    const inspection = fixture.application.inspect({
+      state: fixture.state,
+      blockInstanceId: "block",
+      renderScope: "page:/articles/example",
+      source: { type: "expression", value: "post.data.id" },
+      variables: { post: { data: { id: 42, token: "private-value" } } },
+    });
+
+    const error = await inspection.catch((error: unknown) => error);
+    expect(error).toMatchObject({
       name: "BuilderRuntimeError",
       code: "BAD_REQUEST",
       issues: [
@@ -315,10 +342,11 @@ describe("createContentBlockApplication", () => {
             variables: { post: { data: { id: "<mdxAssetId>" } } },
           },
           detail:
-            'Expression result: undefined. Supplied values: none. Available project resource variables: "post". Resource results are loaded only while rendering and must be supplied in variables for this operation. renderScope is a stable occurrence key; it does not load route data or resource results.',
+            'Expression result: number. Supplied values: "post" (object with keys "data"). Available project resource variables: "post". Resource results are loaded only while rendering and must be supplied in variables for this operation. renderScope is a stable occurrence key; it does not load route data or resource results.',
         },
       ],
     });
+    expect(JSON.stringify(error)).not.toContain("private-value");
   });
 
   test("previews frontmatter without mutating the Asset session", async () => {

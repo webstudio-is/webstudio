@@ -188,13 +188,14 @@ export const createContentBlockApplication = ({
     for (const [name, value] of Object.entries(variables ?? {})) {
       values.set(name, value);
     }
-    if (source.type === "asset") {
-      return source.assetId;
+    const assetId = resolveContentBlockSourceAssetId({ source, values });
+    if (assetId !== undefined) {
+      return assetId;
     }
-    const evaluated = computeExpression(source.value, values);
-    if (typeof evaluated === "string" && evaluated !== "") {
-      return evaluated;
-    }
+    const evaluated =
+      source.type === "expression"
+        ? computeExpression(source.value, values)
+        : undefined;
     const suppliedValues = Object.entries(variables ?? {});
     const resourceNames = Array.from(state.dataSources?.values() ?? [])
       .filter((dataSource) => dataSource.type === "resource")
