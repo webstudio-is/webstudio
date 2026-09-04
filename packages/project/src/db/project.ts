@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import {
   authorizeProject,
   type AppContext,
@@ -99,7 +99,7 @@ export const create = async (
     throw new Error("The user must be authenticated to create a project");
   }
 
-  const projectId = crypto.randomUUID();
+  const projectId = createId();
 
   // When creating inside a workspace, the project is owned by the workspace
   // owner — not the creating user. This ensures the workspace owner retains
@@ -225,7 +225,7 @@ export const softDeleteProject = async (
     .update({
       isDeleted: true,
       // Free the subdomain — each project needs a unique value
-      domain: nanoid(),
+      domain: createId("nano"),
     })
     .eq("id", projectId);
 

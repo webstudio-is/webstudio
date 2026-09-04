@@ -1,5 +1,6 @@
 import { useRevalidator, useSearchParams } from "react-router-dom";
 import { useState, type ComponentProps } from "react";
+import { createId } from "@webstudio-is/sdk";
 import {
   Text,
   theme,
@@ -28,7 +29,6 @@ import {
 } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
-import { nanoid } from "nanoid";
 import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
 
 const tagColorPalette = Array.from({ length: 50 }, (_, index) => {
@@ -322,7 +322,9 @@ export const TagsDialog = ({
             <DialogActions>
               <Button
                 color="primary"
-                onClick={() => setEditingTag({ id: nanoid(5), label: "" })}
+                onClick={() =>
+                  setEditingTag({ id: createId("nano"), label: "" })
+                }
               >
                 Create tag
               </Button>

@@ -6543,11 +6543,11 @@ describe("project session mcp adapter", () => {
         input: {
           baseUrl: "http://127.0.0.1:5177",
           path: "/design-system",
-          port: 5173,
+          source: "session",
         },
       })
     ).rejects.toThrow(
-      "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, mode, or imageDomains."
+      "screenshot baseUrl uses an existing preview/site and cannot be combined with source, mode, or imageDomains."
     );
   });
 
@@ -6800,7 +6800,7 @@ describe("project session mcp adapter", () => {
 
     const started = await adapter.callTool({
       name: "preview.start",
-      input: { host: "127.0.0.1", port: 5173, source: "session" },
+      input: { source: "session" },
     });
     const status = await adapter.callTool({ name: "preview.status" });
     const stopped = await adapter.callTool({ name: "preview.stop" });
@@ -6811,11 +6811,7 @@ describe("project session mcp adapter", () => {
     });
 
     expect(startPreview).toHaveBeenCalledWith(
-      {
-        host: "127.0.0.1",
-        port: 5173,
-        source: "session",
-      },
+      { source: "session" },
       expect.objectContaining({ report: expect.any(Function) })
     );
     expect(getPreviewStatus).toHaveBeenCalledOnce();
@@ -7210,60 +7206,67 @@ describe("project session mcp adapter", () => {
     );
   });
 
-  test("rejects invalid preview ports", async () => {
+  test.each([{ port: 5173 }, { host: "127.0.0.1" }])(
+    "keeps preview network binding under runner control for %o",
+    async (input) => {
+      const startPreview = vi.fn();
+      const adapter = createProjectSessionMcpCore({
+        operations: publicMcpOperations,
+        createProjectSession: createSessionFactory(),
+        executeOperation: createExecuteOperation(),
+        startPreview,
+        getPreviewStatus: vi.fn(),
+      });
+
+      await expect(
+        adapter.callTool({ name: "preview.start", input })
+      ).rejects.toThrow(
+        "preview.start does not accept host or port. The MCP runner selects an available local address and returns its URL."
+      );
+      expect(startPreview).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([{ port: 5173 }, { host: "127.0.0.1" }])(
+    "keeps screenshot network binding under runner control for %o",
+    async (networkInput) => {
+      const captureScreenshot = vi.fn();
+      const adapter = createProjectSessionMcpCore({
+        operations: publicMcpOperations,
+        createProjectSession: createSessionFactory(),
+        executeOperation: createExecuteOperation(),
+        captureScreenshot,
+      });
+
+      await expect(
+        adapter.callTool({
+          name: "screenshot",
+          input: { path: "/", ...networkInput },
+        })
+      ).rejects.toThrow(
+        "screenshot does not accept host or port. The MCP runner selects an available local address and returns its URL."
+      );
+      expect(captureScreenshot).not.toHaveBeenCalled();
+    }
+  );
+
+  test("does not advertise MCP network binding fields", () => {
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
       startPreview: vi.fn(),
       getPreviewStatus: vi.fn(),
     });
 
-    await expect(
-      adapter.callTool({
-        name: "preview.start",
-        input: { port: 70000 },
-      })
-    ).rejects.toThrow("preview port must be an integer between 0 and 65535.");
-  });
-
-  test("allows preview hosts to allocate a port", async () => {
-    const startPreview = vi.fn(async () => ({
-      url: "http://127.0.0.1:5173/",
-      running: true,
-      mode: "iterative" as const,
-    }));
-    const adapter = createProjectSessionMcpCore({
-      operations: publicMcpOperations,
-      createProjectSession: createSessionFactory(),
-      executeOperation: createExecuteOperation(),
-      startPreview,
-      getPreviewStatus: vi.fn(),
-    });
-
-    await adapter.callTool({ name: "preview.start", input: { port: 0 } });
-
-    expect(startPreview).toHaveBeenCalledWith(
-      expect.objectContaining({ port: 0 }),
-      expect.objectContaining({ report: expect.any(Function) })
-    );
-  });
-
-  test("rejects empty preview host", async () => {
-    const adapter = createProjectSessionMcpCore({
-      operations: publicMcpOperations,
-      createProjectSession: createSessionFactory(),
-      executeOperation: createExecuteOperation(),
-      startPreview: vi.fn(),
-      getPreviewStatus: vi.fn(),
-    });
-
-    await expect(
-      adapter.callTool({
-        name: "preview.start",
-        input: { host: "" },
-      })
-    ).rejects.toThrow("preview host must not be empty.");
+    for (const name of ["preview.start", "screenshot"]) {
+      const tool = adapter
+        .listTools()
+        .find((candidate) => candidate.name === name);
+      expect(tool?.inputSchema.properties).not.toHaveProperty("host");
+      expect(tool?.inputSchema.properties).not.toHaveProperty("port");
+    }
   });
 
   test("uses discovery tools when meta guide has no brief", async () => {
@@ -8637,7 +8640,17 @@ describe("project session mcp adapter", () => {
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
       captureScreenshot: vi.fn(async () => {
-        throw new Error("Chromium executable was not found");
+        throw Object.assign(new Error("Chromium executable was not found"), {
+          issues: [
+            {
+              code: "browser_ipc_permission_denied",
+              path: [],
+              message:
+                "The operating system denied browser IPC or socket access.",
+              constraint: "stage:browser-startup",
+            },
+          ],
+        });
       }),
     });
     const { client, close } = await createConnectedClient(server);
@@ -8654,6 +8667,13 @@ describe("project session mcp adapter", () => {
           error: {
             code: "SCREENSHOT_CAPTURE_FAILED",
             message: expect.stringContaining("preview.status"),
+            issues: [
+              {
+                code: "browser_ipc_permission_denied",
+                path: [],
+                constraint: "stage:browser-startup",
+              },
+            ],
           },
         },
       });

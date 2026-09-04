@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import {
+  createId,
   dataSource,
   type Deployment,
   type Resource,
@@ -279,7 +280,7 @@ export const createBuild = async (
   const data = createPages();
   const pages = removeLegacyProjectSettingsFromPages(data.pages);
   const newBuild = await context.postgrest.client.from("Build").insert({
-    id: crypto.randomUUID(),
+    id: createId(),
     projectId: props.projectId,
     pages: JSON.stringify(serializePages(pages)),
     projectSettings: JSON.stringify({ meta: {}, compiler: {} }),

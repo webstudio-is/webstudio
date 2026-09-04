@@ -1,8 +1,5 @@
-import { atom } from "nanostores";
-import { useStore } from "@nanostores/react";
 import type { ReactNode } from "react";
 import {
-  Button,
   css,
   cssVar,
   Flex,
@@ -32,19 +29,7 @@ const scrimForeground = `light-dark(
   ${cssVar("--foreground-primary")}
 )`;
 
-const $isAlertDismissed = atom(false);
-
-export const Alert = ({
-  message,
-  isDismissable,
-}: {
-  message: string | ReactNode;
-  isDismissable?: boolean;
-}) => {
-  const isAlertDismissed = useStore($isAlertDismissed);
-  if (isAlertDismissed) {
-    return;
-  }
+export const Alert = ({ message }: { message: string | ReactNode }) => {
   return (
     <Popover open>
       <PopoverContent css={{ zIndex: theme.zIndices.max }}>
@@ -59,14 +44,6 @@ export const Alert = ({
             <Text align="center" css={{ color: scrimForeground }}>
               {message}
             </Text>
-            {isDismissable && (
-              <Button
-                color="destructive"
-                onClick={() => $isAlertDismissed.set(true)}
-              >
-                Dismiss
-              </Button>
-            )}
           </Flex>
         </Flex>
       </PopoverContent>

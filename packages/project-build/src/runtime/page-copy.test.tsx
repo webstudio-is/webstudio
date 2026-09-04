@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  createId,
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
   encodeDataVariableId,
@@ -48,8 +49,9 @@ import {
   Variable,
   ws,
 } from "@webstudio-is/template";
-import { nanoid } from "nanoid";
 import { applyBuilderPatchTransactions } from "../state/patch";
+
+const createNanoId = () => createId("nano");
 
 const { deduplicateName, deduplicatePath, joinPath } = pageCopyTesting;
 
@@ -78,7 +80,7 @@ test("requires an explicit resolution for conflicting transferred root styles", 
           }),
         },
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     )
   ).toThrow(/root style conflicts require an explicit/i);
 });
@@ -94,7 +96,7 @@ test("requires an explicit resolution for conflicting copied root styles", () =>
         sourceData: source,
         pageId: "source-page",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     )
   ).toThrow(/root style conflicts require an explicit/i);
 });
@@ -114,7 +116,7 @@ test.each([
         pageId: "source-page",
         rootStyleConflictResolution,
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
     const updated = applyBuilderPatchTransactions(target, [
       { id: "copy-page", payload: mutation.payload },
@@ -498,7 +500,7 @@ describe("insert page copy", () => {
         name: "Copy",
         path: "/copy",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(result.result.pageId).toEqual(expect.any(String));
@@ -572,7 +574,7 @@ describe("insert page copy", () => {
         name: "Copy",
         path: "/copy",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(mutation.payload).toContainEqual({
@@ -728,7 +730,7 @@ describe("insert page copy", () => {
             },
           },
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow('Copied variable "missing" was not found');
     expect(data.pages.pages.size).toBe(2);
@@ -779,7 +781,7 @@ describe("insert page copy", () => {
           pageId: "pageId",
           path: "/copy",
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow('Page path "/copy" is already in use');
   });
@@ -827,7 +829,7 @@ describe("insert page copy", () => {
         projectId: "projectId",
         folderId: "folderId",
       },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(result.result.folderId).toEqual(expect.any(String));
@@ -862,7 +864,7 @@ describe("insert page copy", () => {
           projectId: "projectId",
           folderId: "missing",
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow("Folder parent folder was not found");
   });
@@ -1297,7 +1299,7 @@ describe("insert page copy", () => {
           </$.Body>
         </ws.root>,
         // generate different ids in source and data projects
-        nanoid
+        createNanoId
       ),
     };
     sourceData.instances.delete(ROOT_INSTANCE_ID);
@@ -1310,7 +1312,7 @@ describe("insert page copy", () => {
           <$.Body ws:id="anotherBodyId"></$.Body>
         </ws.root>,
         // generate different ids in source and data projects
-        nanoid
+        createNanoId
       ),
     };
     targetData.instances.delete(ROOT_INSTANCE_ID);
@@ -1349,7 +1351,7 @@ describe("insert page copy", () => {
           </$.Body>
         </ws.root>,
         // generate different ids in source and data projects
-        nanoid
+        createNanoId
       ),
     };
     sourceData.instances.delete(ROOT_INSTANCE_ID);
@@ -1358,7 +1360,7 @@ describe("insert page copy", () => {
         rootInstanceId: "anotherBodyId",
       }),
       // generate different ids in source and data projects
-      ...renderData(<$.Body ws:id="anotherBodyId"></$.Body>, nanoid),
+      ...renderData(<$.Body ws:id="anotherBodyId"></$.Body>, createNanoId),
     };
     insertPageCopyMutable({
       source: { data: sourceData, pageId: sourceData.pages.homePageId },
@@ -1738,7 +1740,7 @@ describe("insert page copy", () => {
     const result = duplicatePageTemplate(
       data,
       { projectId: "projectId", templateId: "templateId" },
-      { createId: nanoid }
+      { createId: createNanoId }
     );
 
     expect(result.result.templateId).toEqual(expect.any(String));
@@ -1942,7 +1944,7 @@ describe("insert page copy", () => {
           name: "Landing",
           path: "/landing",
         },
-        { createId: nanoid }
+        { createId: createNanoId }
       )
     ).toThrow('Page path "/landing" is already in use');
   });

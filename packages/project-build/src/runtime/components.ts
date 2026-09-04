@@ -344,10 +344,12 @@ const getInsertionPage = (
 };
 
 const createRecordAddPatches = <Value>({
+  namespace,
   before,
   after,
   skip = new Set(),
 }: {
+  namespace: (typeof componentInsertNamespaces)[number];
   before: Map<string, Value>;
   after: Map<string, Value>;
   skip?: Set<string>;
@@ -362,7 +364,18 @@ const createRecordAddPatches = <Value>({
       if (equal(previous, value) === false) {
         return throwBuilderRuntimeError(
           "CONFLICT",
-          `Generated record id "${id}" already exists`
+          `Generated record ID already exists in ${namespace}.`,
+          {
+            issues: [
+              {
+                code: "generated_id_conflict",
+                path: [],
+                message: `Generated record ID conflicts with an existing ${namespace} record.`,
+                constraint: `unique_generated_id:${namespace}`,
+                detail: "stage:fragment-record-insertion",
+              },
+            ],
+          }
         );
       }
       continue;
@@ -406,6 +419,7 @@ const createFragmentPayload = ({
     {
       namespace: "assets",
       patches: createRecordAddPatches({
+        namespace: "assets",
         before: before.assets,
         after: after.assets,
       }),
@@ -413,6 +427,7 @@ const createFragmentPayload = ({
     {
       namespace: "breakpoints",
       patches: createRecordAddPatches({
+        namespace: "breakpoints",
         before: before.breakpoints,
         after: after.breakpoints,
       }),
@@ -420,6 +435,7 @@ const createFragmentPayload = ({
     {
       namespace: "dataSources",
       patches: createRecordAddPatches({
+        namespace: "dataSources",
         before: before.dataSources,
         after: after.dataSources,
       }),
@@ -427,6 +443,7 @@ const createFragmentPayload = ({
     {
       namespace: "resources",
       patches: createRecordAddPatches({
+        namespace: "resources",
         before: before.resources,
         after: after.resources,
       }),
@@ -434,6 +451,7 @@ const createFragmentPayload = ({
     {
       namespace: "styleSources",
       patches: createRecordAddPatches({
+        namespace: "styleSources",
         before: before.styleSources,
         after: after.styleSources,
       }),
@@ -441,6 +459,7 @@ const createFragmentPayload = ({
     {
       namespace: "styleSourceSelections",
       patches: createRecordAddPatches({
+        namespace: "styleSourceSelections",
         before: before.styleSourceSelections,
         after: after.styleSourceSelections,
       }),
@@ -459,6 +478,7 @@ const createFragmentPayload = ({
     {
       namespace: "props",
       patches: createRecordAddPatches({
+        namespace: "props",
         before: before.props,
         after: after.props,
       }),
@@ -485,6 +505,7 @@ const createFragmentInsertPayload = ({
     after,
     instancePatches: [
       ...createRecordAddPatches({
+        namespace: "instances",
         before: before.instances,
         after: after.instances,
         skip: new Set([parent.id]),
@@ -517,6 +538,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "assets",
       patches: createRecordAddPatches({
+        namespace: "assets",
         before: before.assets,
         after: after.assets,
       }),
@@ -524,6 +546,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "breakpoints",
       patches: createRecordAddPatches({
+        namespace: "breakpoints",
         before: before.breakpoints,
         after: after.breakpoints,
       }),
@@ -531,6 +554,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "styleSources",
       patches: createRecordAddPatches({
+        namespace: "styleSources",
         before: before.styleSources,
         after: after.styleSources,
       }),
@@ -804,7 +828,19 @@ const createInsertFragmentMutation = <
     ) {
       return throwBuilderRuntimeError(
         "CONFLICT",
-        `Generated instance id "${instanceId}" already exists`
+        "Generated record ID already exists in instances.",
+        {
+          issues: [
+            {
+              code: "generated_id_conflict",
+              path: [],
+              message:
+                "Generated record ID conflicts with an existing instances record.",
+              constraint: "unique_generated_id:instances",
+              detail: "stage:fragment-instance-insertion",
+            },
+          ],
+        }
       );
     }
   }

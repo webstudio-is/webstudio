@@ -1,0 +1,13 @@
+name: Approved fork workflows
+
+on:
+  workflow_call:
+
+jobs:
+  main:
+    uses: ./.github/workflows/main.yml
+    secrets: inherit
+
+  vercel-deploy-staging:
+    uses: ./.github/workflows/vercel-deploy-staging.yml
+    secrets: inherit

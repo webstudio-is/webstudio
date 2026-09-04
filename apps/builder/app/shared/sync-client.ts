@@ -1,5 +1,5 @@
-import { nanoid } from "nanoid";
 import { createNanoEvents } from "nanoevents";
+import { createId } from "@webstudio-is/sdk";
 import type { Change, Store } from "immerhin";
 import type { WritableAtom } from "nanostores";
 import type {
@@ -154,7 +154,11 @@ export class NanostoresSyncObject implements SyncObject {
       if (this.operation !== "local") {
         return;
       }
-      const transaction = { id: nanoid(), object: this.name, payload };
+      const transaction = {
+        id: createId("nano"),
+        object: this.name,
+        payload,
+      };
       sendTransaction(transaction);
     });
     signal.addEventListener("abort", unsubscribe);
@@ -218,7 +222,7 @@ type SyncClientOptions = {
 };
 
 export class SyncClient {
-  clientId = nanoid();
+  clientId = createId("nano");
   role: SyncClientOptions["role"];
   object: SyncObject;
   storages: SyncStorage[];

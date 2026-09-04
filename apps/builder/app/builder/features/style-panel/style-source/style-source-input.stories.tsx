@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import { useState } from "react";
 import { Flex, StorySection, Text, theme } from "@webstudio-is/design-system";
 import {
@@ -6,6 +6,8 @@ import {
   type ItemSource,
   StyleSourceInput as StyleSourceInputComponent,
 } from ".";
+
+const createNanoId = () => createId("nano");
 
 export default {
   title: "Style panel/Style Source Input",
@@ -22,7 +24,7 @@ type Item = {
 };
 
 const localItem: Item = {
-  id: nanoid(),
+  id: createNanoId(),
   label: "Local",
   source: "local",
   disabled: false,
@@ -32,7 +34,7 @@ const localItem: Item = {
 
 const getItems = (): Array<Item> => [
   {
-    id: nanoid(),
+    id: createNanoId(),
     label: "Token",
     source: "token",
     disabled: false,
@@ -40,7 +42,7 @@ const getItems = (): Array<Item> => [
     states: [],
   },
   {
-    id: nanoid(),
+    id: createNanoId(),
     label: "Tag",
     source: "tag",
     disabled: false,
@@ -55,7 +57,7 @@ const createItem = (
   setValue: (value: Array<Item>) => void
 ) => {
   const item: Item = {
-    id: nanoid(),
+    id: createNanoId(),
     label,
     source: "token",
     disabled: false,
@@ -78,7 +80,7 @@ export const StyleSourceInput = () => {
     localItem,
     ...getItems(),
     {
-      id: nanoid(),
+      id: createNanoId(),
       label: "Disabled",
       source: "token",
       disabled: true,
@@ -91,7 +93,7 @@ export const StyleSourceInput = () => {
   >({ styleSourceId: localItem.id });
   const [editingItemId, setEditingItemId] = useState<undefined | Item["id"]>();
 
-  const truncatedId = nanoid();
+  const truncatedId = createNanoId();
   const [truncated, setTruncated] = useState<Array<Item>>([
     {
       id: truncatedId,
