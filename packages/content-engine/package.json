@@ -20,6 +20,7 @@
     "@webstudio-is/expression": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
     "canonicalize": "3.0.0",
+    "estree-util-is-identifier-name": "3.0.0",
     "hast-util-to-mdast": "9.0.0",
     "html-tags": "^4.0.0",
     "lru-cache": "10.4.3",

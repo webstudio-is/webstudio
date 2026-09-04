@@ -17,6 +17,7 @@ import {
   type MdxJsxTextElement,
 } from "mdast-util-mdx-jsx";
 import { toMarkdown } from "mdast-util-to-markdown";
+import { name as isIdentifierName } from "estree-util-is-identifier-name";
 import { serializeMarkdownFrontmatter } from "./frontmatter";
 import type {
   MdxAuthoredNode,
@@ -51,12 +52,18 @@ type SerializationNode = {
 const protectTextWhitespace = (value: string) =>
   value.replace(/[\t\n\v\f\r ]/g, "\uE000");
 
-/**
- * Authored template JSX intentionally supports only one static component-name
- * segment. Member expressions and namespaced names are not template labels.
- */
-export const isMdxTemplateComponentName = (name: unknown): boolean =>
-  typeof name === "string" && /^[A-Z][A-Za-z0-9_$]*$/.test(name);
+/** Authored template JSX uses one valid PascalCase JavaScript identifier. */
+export const isMdxTemplateComponentName = (name: unknown): boolean => {
+  if (typeof name !== "string" || isIdentifierName(name) === false) {
+    return false;
+  }
+  const firstCharacter = Array.from(name)[0];
+  return (
+    firstCharacter !== undefined &&
+    firstCharacter === firstCharacter.toUpperCase() &&
+    firstCharacter !== firstCharacter.toLowerCase()
+  );
+};
 
 const toHastProperties = (props: readonly MdxAuthoredProp[]) =>
   Object.fromEntries(

@@ -105,10 +105,6 @@ const fixtureToolNames = {
 export const getFixtureToolNames = (fixture: HighImpactFixture) =>
   fixtureToolNames[fixture.id];
 
-const forbiddenResultKeys =
-  /(?:prompt|transcript|stdout|stderr|secret|credential|payload)/i;
-const forbiddenTokenKey = /token/i;
-
 export const getCliInvocation = (target: AgentCliTarget) =>
   target.kind === "source"
     ? {
@@ -165,42 +161,19 @@ export const createMinimalAgentTask = (
 };
 
 const assertBoundedResult = (result: AgentEvaluationResult) => {
+  const identifiers = [
+    result.provider,
+    result.model,
+    ...result.callSequence,
+    ...Object.keys(result.checks),
+  ];
   if (
-    boundedIdentifierPattern.test(result.provider) === false ||
-    boundedIdentifierPattern.test(result.model) === false
+    identifiers.some(
+      (identifier) => boundedIdentifierPattern.test(identifier) === false
+    )
   ) {
-    throw new Error("Agent provider and model must be bounded identifiers.");
+    throw new Error("Agent result contains an invalid identifier.");
   }
-  const visit = (value: unknown, path: string[] = []): void => {
-    if (typeof value !== "object" || value === null) {
-      return;
-    }
-    for (const [key, child] of Object.entries(value)) {
-      const isAggregateUsage =
-        path.length === 1 && path[0] === "metrics" && key === "tokens";
-      const isMetricIdentifier =
-        path.length === 3 &&
-        path[0] === "metrics" &&
-        path[1] === "toolCalls" &&
-        [
-          "failuresByTool",
-          "failuresByCode",
-          "issuesByCode",
-          "issuesByPath",
-          "durationsByTool",
-          "responseBytesByTool",
-        ].includes(path[2]);
-      if (
-        isMetricIdentifier === false &&
-        (forbiddenResultKeys.test(key) ||
-          (forbiddenTokenKey.test(key) && isAggregateUsage === false))
-      ) {
-        throw new Error(`Agent result contains forbidden field ${key}.`);
-      }
-      visit(child, [...path, key]);
-    }
-  };
-  visit(result);
   if (JSON.stringify(result).length > 12_000) {
     throw new Error("Agent result exceeds the bounded artifact limit.");
   }

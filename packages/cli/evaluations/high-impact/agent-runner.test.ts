@@ -207,7 +207,11 @@ describe("high-impact agent runner", () => {
         ],
         evaluate: async () => ({
           passed: true,
-          checks: { privacy: "passed", audit: "passed" },
+          checks: {
+            privacy: "passed",
+            audit: "passed",
+            designTokenApplied: "passed",
+          },
           failures: [],
         }),
       });
@@ -249,7 +253,10 @@ describe("high-impact agent runner", () => {
           },
         },
         callSequence: ["meta.guide", "attach-design-token", "audit"],
-        checks: { usageCaptured: "passed" },
+        checks: {
+          designTokenApplied: "passed",
+          usageCaptured: "passed",
+        },
       });
       const source = await readFile(resultPath, "utf8");
       expect(source).not.toMatch(/transcript|stdout|stderr|credential/i);

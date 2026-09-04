@@ -5,6 +5,7 @@ import {
   createMdxCodeBlock,
   createMdxSourceDiagnostics,
   discoverMdxAssetReferences,
+  isMdxTemplateComponentName,
   MdxDocumentError,
   parseMdxDocument,
   parseMdxDocumentRecovering,
@@ -20,6 +21,15 @@ import {
   type MdxDocument,
 } from "./mdx";
 import { contentEngineLimits } from "./limits";
+
+test("validates template names as PascalCase JavaScript identifiers", () => {
+  expect(isMdxTemplateComponentName("PromotionCard")).toBe(true);
+  expect(isMdxTemplateComponentName("ÉditionCard")).toBe(true);
+  expect(isMdxTemplateComponentName("Card$2")).toBe(true);
+  expect(isMdxTemplateComponentName("promotionCard")).toBe(false);
+  expect(isMdxTemplateComponentName("$Card")).toBe(false);
+  expect(isMdxTemplateComponentName("Promotion-Card")).toBe(false);
+});
 
 test("canonicalizes the legacy public template node shape", () => {
   const document: MdxDocument = {
