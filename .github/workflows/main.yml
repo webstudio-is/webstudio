@@ -5,10 +5,8 @@ on:
     branches:
       - main
   pull_request:
-  pull_request_target:
-    types: [labeled]
+  workflow_call:
 
-# Keep pull_request_target label events from canceling pull_request checks.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
@@ -19,11 +17,7 @@ permissions:
 jobs:
   ssg-artifact:
     name: Packaged SSG Assets build
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 5
+    timeout-minutes: 7
     runs-on: ubuntu-24.04-arm
     environment:
       name: development
@@ -44,11 +38,7 @@ jobs:
 
   tests:
     name: tests (${{ matrix.environment }}, ${{ matrix.suite.name }})
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 5
+    timeout-minutes: 7
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -87,13 +77,7 @@ jobs:
           browsers: ${{ matrix.suite.browsers }}
 
   checks:
-    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-
-    timeout-minutes: 5
+    timeout-minutes: 7
 
     environment:
       name: empty
@@ -144,13 +128,7 @@ jobs:
           pnpm -r typecheck
 
   check-size:
-    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-
-    timeout-minutes: 5
+    timeout-minutes: 7
 
     runs-on: ubuntu-24.04-arm
 
@@ -174,13 +152,7 @@ jobs:
 
   builder-e2e-build:
     name: builder-e2e build
-    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-
-    timeout-minutes: 5
+    timeout-minutes: 7
 
     runs-on: ubuntu-24.04
 
@@ -202,11 +174,7 @@ jobs:
 
   supabase-migrations:
     name: Supabase migrations
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    timeout-minutes: 5
+    timeout-minutes: 7
     runs-on: ubuntu-24.04
     environment:
       name: empty
@@ -225,13 +193,7 @@ jobs:
 
   builder-e2e:
     name: builder-e2e (${{ matrix.shard }})
-    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-
-    timeout-minutes: 5
+    timeout-minutes: 7
 
     needs: builder-e2e-build
 
