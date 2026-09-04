@@ -4812,6 +4812,16 @@ describe("project session mcp adapter", () => {
               "collectionItem.properties.author.name"
             ),
           }),
+          detailCollection: expect.objectContaining({
+            parentInstanceId: "<detail-root-id>",
+            data: {
+              type: "expression",
+              value: "post.data == null ? [] : [post.data]",
+            },
+            itemFragment: expect.stringContaining(
+              "collectionItem.content.text"
+            ),
+          }),
           detailFragment: expect.objectContaining({
             parentInstanceId: "<detail-root-id>",
             fragment: expect.stringContaining("post.data.content.text"),
@@ -7795,11 +7805,21 @@ describe("project session mcp adapter", () => {
           z.object({
             operation: z.literal("set"),
             instanceId: z.string(),
+            category: z.union([
+              z.literal("sectionTemplates"),
+              z.literal("pageTemplates"),
+              z.literal("integrationTemplates"),
+            ]),
             text: z.string(),
           }),
           z.object({
             operation: z.literal("reset"),
             instanceId: z.string(),
+            category: z.union([
+              z.literal("sectionTemplates"),
+              z.literal("pageTemplates"),
+              z.literal("integrationTemplates"),
+            ]),
           }),
         ])
       ),
@@ -7884,24 +7904,43 @@ describe("project session mcp adapter", () => {
         listedTools.tools.find(({ name }) => name === "set-text-content")
           ?.inputSchema
       ).toMatchObject({
+        properties: {
+          instanceId: { type: "string" },
+          category: {
+            enum: ["sectionTemplates", "pageTemplates", "integrationTemplates"],
+          },
+        },
+        required: ["operation", "instanceId", "category"],
         oneOf: [
           {
             properties: {
-              operation: { type: "string", const: "set" },
-              instanceId: { type: "string" },
+              operation: { const: "set" },
               text: { type: "string" },
             },
-            required: ["operation", "instanceId", "text"],
+            required: ["text"],
           },
           {
             properties: {
-              operation: { type: "string", const: "reset" },
-              instanceId: { type: "string" },
+              operation: { const: "reset" },
             },
-            required: ["operation", "instanceId"],
           },
         ],
       });
+      const setTextContentSchema = listedTools.tools.find(
+        ({ name }) => name === "set-text-content"
+      )?.inputSchema;
+      expect(setTextContentSchema?.properties?.category).toEqual({
+        enum: ["sectionTemplates", "pageTemplates", "integrationTemplates"],
+      });
+      const [setTextVariant] =
+        (setTextContentSchema?.oneOf as unknown[] | undefined) ?? [];
+      expect(getSchemaProperties(setTextVariant).operation).toEqual({
+        const: "set",
+      });
+      expect(
+        listedTools.tools.find(({ name }) => name === "meta.guide")?.inputSchema
+          .properties?.workflow
+      ).not.toHaveProperty("default");
       expect(
         listedTools.tools.find(({ name }) => name === "list-css-variables")
           ?.inputSchema.properties

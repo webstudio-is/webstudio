@@ -6363,6 +6363,15 @@ const metaGoalGuides = [
         itemFragment:
           '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.properties.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
       },
+      detailCollection: {
+        parentInstanceId: "<detail-root-id>",
+        data: {
+          type: "expression",
+          value: "post.data == null ? [] : [post.data]",
+        },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text ?? ""`} /></ws.element>',
+      },
       detailFragment: {
         parentInstanceId: "<detail-root-id>",
         fragment:
@@ -7206,7 +7215,6 @@ const sdkScalarSchemaKeys = new Set([
   "enum",
   "const",
   "format",
-  "default",
   "minimum",
   "maximum",
   "exclusiveMinimum",
@@ -7232,9 +7240,32 @@ const getSdkSchemaProperty = (
   if (typeof value === "boolean") {
     return value;
   }
+  const scalarConstBranches = value.anyOf?.flatMap((branch) =>
+    typeof branch !== "boolean" &&
+    Object.keys(branch).length === 2 &&
+    typeof branch.type === "string" &&
+    Object.hasOwn(branch, "const")
+      ? [branch]
+      : []
+  );
+  const scalarConstType = scalarConstBranches?.[0]?.type;
+  if (
+    Object.keys(value).every((key) => key === "anyOf") &&
+    Array.isArray(value.anyOf) &&
+    value.anyOf.length > 1 &&
+    scalarConstBranches?.length === value.anyOf.length &&
+    scalarConstBranches.every(({ type }) => type === scalarConstType)
+  ) {
+    return {
+      enum: scalarConstBranches.map(({ const: constant }) => constant),
+    };
+  }
   const result: InputJsonSchema = Object.fromEntries(
     Object.entries(value).filter(([key]) => sdkScalarSchemaKeys.has(key))
   );
+  if (Object.hasOwn(result, "const") || result.enum !== undefined) {
+    delete result.type;
+  }
   if (value.items !== undefined) {
     result.items = getSdkSchemaProperty(value.items, preserveRequiredShape);
   }
@@ -7267,6 +7298,63 @@ const getSdkSchemaProperty = (
   return result;
 };
 
+const compactSdkRootUnions = (schema: ProjectSessionMcpInputSchema) => {
+  const rootRequired = new Set(schema.required ?? []);
+  for (const key of ["allOf", "anyOf", "oneOf"] as const) {
+    const branches = schema[key];
+    if (Array.isArray(branches) === false) {
+      continue;
+    }
+    const objectBranches = branches.flatMap((branch) =>
+      typeof branch === "boolean" ? [] : [branch]
+    );
+    if (objectBranches.length !== branches.length) {
+      continue;
+    }
+    const [firstBranch, ...remainingBranches] = objectBranches;
+    if (firstBranch !== undefined && remainingBranches.length > 0) {
+      for (const [name, property] of Object.entries(
+        firstBranch.properties ?? {}
+      )) {
+        const serializedProperty = JSON.stringify(property);
+        const rootProperty = schema.properties?.[name];
+        if (
+          remainingBranches.every(
+            (branch) =>
+              JSON.stringify(branch.properties?.[name]) === serializedProperty
+          ) === false ||
+          (rootProperty !== undefined &&
+            JSON.stringify(rootProperty) !== serializedProperty)
+        ) {
+          continue;
+        }
+        schema.properties ??= {};
+        schema.properties[name] = property;
+        for (const branch of objectBranches) {
+          delete branch.properties?.[name];
+          if (Object.keys(branch.properties ?? {}).length === 0) {
+            delete branch.properties;
+          }
+        }
+      }
+    }
+    for (const branch of objectBranches) {
+      if (branch.type === "object") {
+        delete branch.type;
+      }
+      if (Array.isArray(branch.required)) {
+        branch.required = branch.required.filter(
+          (name) => rootRequired.has(name) === false
+        );
+        if (branch.required.length === 0) {
+          delete branch.required;
+        }
+      }
+    }
+  }
+  return schema;
+};
+
 const getSdkInputSchema = (
   schema: ProjectSessionMcpInputSchema,
   includeOptionalProperties: boolean
@@ -7282,7 +7370,7 @@ const getSdkInputSchema = (
         : []
     )
   );
-  return {
+  return compactSdkRootUnions({
     type: "object",
     additionalProperties:
       schema.additionalProperties === undefined
@@ -7303,7 +7391,7 @@ const getSdkInputSchema = (
           : [];
       })
     ),
-  };
+  });
 };
 
 const sdkDetailedInputToolNames = new Set([

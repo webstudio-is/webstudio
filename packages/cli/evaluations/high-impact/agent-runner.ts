@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { HighImpactFixture } from "./fixtures";
+import {
+  fontAssetFixtureFiles,
+  fontAssetFixtureUploadMeta,
+} from "./font-assets-fixture";
 import { markdownBlogFixtureDocuments } from "./markdown-blog-fixture";
 import type {
   EvaluationToolCall,
@@ -103,6 +107,16 @@ const markdownBlogUploadInput = JSON.stringify({
   assetsDir: ".webstudio/assets",
 });
 
+const fontAssetsUploadInput = JSON.stringify({
+  assets: fontAssetFixtureFiles.map(({ name, format }) => ({
+    name,
+    type: "font",
+    format,
+    meta: fontAssetFixtureUploadMeta,
+  })),
+  assetsDir: ".webstudio/assets",
+});
+
 export const getFixtureToolNames = (fixture: HighImpactFixture) =>
   fixtureToolNames[fixture.id];
 
@@ -127,6 +141,10 @@ export const createMinimalAgentTask = (
       ? (fixture as HighImpactFixture & { designReference: unknown })
           .designReference
       : undefined;
+  const hasAuthoritativeFixtureSequence =
+    fixture.id === "font-assets-v1" ||
+    fixture.id === "markdown-blog-v1" ||
+    fixture.id === "markdown-references-discovery-v1";
   return {
     schemaVersion: 1,
     fixtureId: fixture.id,
@@ -136,14 +154,18 @@ export const createMinimalAgentTask = (
     constraints: [
       "Use the configured Webstudio project and local CLI.",
       "Call Webstudio operations only through the configured webstudio MCP tools exposed directly in your tool list. Never use a shell, terminal, exec tool, node, webstudio CLI shortcut, mcp single-op-call, or mcp run. Shell-invoked operations are invisible to this evaluation and make the result fail.",
-      fixture.id === "markdown-blog-v1"
+      hasAuthoritativeFixtureSequence
         ? 'Call meta.guide exactly once at the beginning with {"brief":"<objective>"}: copy the objective field verbatim into brief. Treat its response as reference only; the fixture sequence below is authoritative and supersedes every workflow or next-step suggestion. Do not call meta.guide again.'
         : 'Call meta.guide exactly once at the beginning with {"brief":"<objective>"}: copy the objective field verbatim into brief, follow the returned workflow, and do not call meta.guide again.',
       "Choose focused reads and semantic edits yourself.",
       "Never use broad project reads: snapshot, components.list, or components.coverage-plan.",
       "Do not persist or report credentials or private session data.",
-      "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
-      ...(fixture.id === "markdown-blog-v1"
+      ...(hasAuthoritativeFixtureSequence
+        ? []
+        : [
+            "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
+          ]),
+      ...(hasAuthoritativeFixtureSequence
         ? []
         : [
             "Treat the successful final audit and requested visual evidence as terminal; do not mutate, verify, restart preview, or capture more evidence afterward.",
@@ -159,8 +181,8 @@ export const createMinimalAgentTask = (
         : []),
       ...(fixture.id === "markdown-references-discovery-v1"
         ? [
-            'Follow the structured recipe returned by meta.guide. Pass each complete recipe object without reshaping its fields, changing only documented id placeholders. Call meta.get-more-tools exactly once with {"tools":["create-assets-resource"]}; do not search by brief or rediscover tools later.',
-            "Create the Blog folder before uploading, and reuse that returned folder id for every uploaded article and both resource queries. Create exactly two create-assets-resource calls and exactly two insert-collection calls: one of each per page. Bind the overview Collection to the many-result overview data. For the detail Collection, wrap the one-result detail data as a zero-or-one-item array and render that item. Do not create repair or replacement resources or Collections.",
+            'For this fixture, the exact sequence below supersedes the workflow and mutation next steps returned by meta.guide. Copy recipe.overviewResource, recipe.detailResource, recipe.overviewCollection, and recipe.detailCollection without reshaping their fields, changing only the documented root and folder id placeholders. After meta.guide, call meta.get-more-tools exactly once with {"tools":["create-assets-resource"]}; do not search by brief or rediscover tools later. Then create the Blog folder, upload all articles, create both pages, create both resources, insert both Collections, and run the two final verifications in that order.',
+            `Create the Blog folder before uploading, then upload all supplied articles together with exactly one upload-assets call using this complete input, substituting only the returned folder id: ${markdownBlogUploadInput}. Do not add, remove, or move fields. Reuse the returned folder id for both resource queries. Create exactly two create-assets-resource calls and exactly two insert-collection calls: one of each per page. Bind the overview Collection to the many-result overview data. For the detail Collection, wrap the one-result detail data as a zero-or-one-item array and render that item. Do not create repair or replacement resources or Collections.`,
             "Call each mutation in the documented workflow once as a committed mutation. Do not dry-run or plan mutations. If any tool fails, stop immediately and report the failure; never retry it, repair it with repeated mutations, or continue to verification.",
             "Do not call verify-page-responsive until both Collections succeed. Then call it exactly once for /blog and exactly once for /blog/aurora-trails. Stop without retrying if either verification fails.",
           ]
@@ -179,8 +201,9 @@ export const createMinimalAgentTask = (
       ...(fixture.id === "font-assets-v1"
         ? [
             "Do not call meta.index, meta.get-more-tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas. Upload both supplied fonts together with exactly one upload-assets call; do not use upload-asset.",
+            `Use this exact upload-assets input without adding or moving fields: ${fontAssetsUploadInput}.`,
             'After upload, update both font assets together in one parallel tool-call batch. For each returned asset id, use exactly {"assetId":"<returned-asset-id>","values":{"meta":{"family":"Rajdhani","style":"normal","weight":600}}}. Keep family, style, and weight inside values.meta; do not send an empty values object. Make exactly two update-asset calls total and stop instead of retrying if either fails.',
-            'After both updates, call verify-font-assets exactly once with both returned asset ids, then call audit exactly once with {"scopes":["assets"],"limit":10}. Do not call refresh or get-asset separately.',
+            'After both updates, call verify-font-assets exactly once with both returned asset ids, then call audit exactly once with the complete input {"scopes":["assets"],"limit":10}. Do not add fields such as verbose to the audit input. Do not call refresh or get-asset separately.',
           ]
         : []),
       ...(fixture.id === "markdown-blog-v1"

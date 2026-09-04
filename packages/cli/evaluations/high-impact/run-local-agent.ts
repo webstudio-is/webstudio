@@ -87,7 +87,7 @@ const compileEvaluationContentDatabase = async (projectDirectory: string) => {
     resources: snapshot.state.resources?.values() ?? [],
   });
   if (plan === undefined) {
-    throw new Error("Evaluation blog has no reachable Assets resources");
+    return;
   }
   const { artifact } = await compileContentSource({
     source: createFileSystemContentSource({
@@ -132,6 +132,8 @@ const runFixture = async ({
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
   const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.4-mini";
+  const reasoningEffort =
+    fixture.id === markdownReferencesDiscoveryFixture.id ? "medium" : "low";
   const directory = await mkdtemp(
     join(tmpdir(), "webstudio-high-impact-agent-")
   );
@@ -180,6 +182,8 @@ const runFixture = async ({
       "--json",
       "--model",
       shellQuote(model),
+      "--config",
+      shellQuote(`model_reasoning_effort="${reasoningEffort}"`),
       "--cd",
       shellQuote(projectDirectory),
       ...mcpConfig.flatMap((config) => ["--config", shellQuote(config)]),

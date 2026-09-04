@@ -106,23 +106,30 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("Do not call meta.index"),
       ]),
     });
-    expect(
-      createMinimalAgentTask(fontAssetsFixture, {
-        kind: "source",
-        repositoryRoot: root,
-      }).constraints
-    ).toEqual(
+    const fontConstraints = createMinimalAgentTask(fontAssetsFixture, {
+      kind: "source",
+      repositoryRoot: root,
+    }).constraints;
+    expect(fontConstraints).toEqual(
       expect.arrayContaining([
         expect.stringContaining("Do not call meta.index, meta.get-more-tools"),
         expect.stringContaining("Call meta.guide exactly once"),
+        expect.stringContaining("fixture sequence below is authoritative"),
         expect.stringContaining("exactly one upload-assets call"),
+        expect.stringContaining(
+          '"name":"rajdhani-latin-600-normal.woff2","type":"font","format":"woff2","meta":{"family":"Imported Rajdhani","style":"normal","weight":400}'
+        ),
         expect.stringContaining("parallel tool-call batch"),
         expect.stringContaining("verify-font-assets exactly once"),
         expect.stringContaining(
-          'audit exactly once with {"scopes":["assets"],"limit":10}'
+          'audit exactly once with the complete input {"scopes":["assets"],"limit":10}'
         ),
+        expect.stringContaining("Do not add fields such as verbose"),
         expect.stringContaining("Do not call refresh or get-asset separately"),
       ])
+    );
+    expect(fontConstraints.join("\n")).not.toContain(
+      "Use one verify-page-responsive call"
     );
     const blogConstraints = createMinimalAgentTask(markdownBlogFixture, {
       kind: "source",
@@ -194,9 +201,31 @@ describe("high-impact agent runner", () => {
     expect(discoveryPrompt).not.toContain("markdown-body-ref");
     expect(discoveryPrompt).not.toContain("collectionItem");
     expect(discoveryPrompt).toContain("Do not dry-run or plan mutations");
-    expect(discoveryPrompt).toContain("without reshaping its fields");
+    expect(discoveryPrompt).toContain("without reshaping their fields");
+    expect(discoveryPrompt).toContain("recipe.overviewResource");
+    expect(discoveryPrompt).toContain("recipe.detailResource");
+    expect(discoveryPrompt).toContain("recipe.overviewCollection");
+    expect(discoveryPrompt).toContain("recipe.detailCollection");
     expect(discoveryPrompt).toContain(
-      "reuse that returned folder id for every uploaded article"
+      "exact sequence below supersedes the workflow and mutation next steps"
+    );
+    expect(discoveryPrompt).toContain(
+      "create both pages, create both resources, insert both Collections"
+    );
+    expect(discoveryPrompt).not.toContain(
+      "Use one verify-page-responsive call for all requested viewports"
+    );
+    expect(discoveryPrompt).not.toContain(
+      "Treat mutation meta.next steps as required"
+    );
+    expect(discoveryPrompt).toContain(
+      "upload all supplied articles together with exactly one upload-assets call"
+    );
+    expect(discoveryPrompt).toContain(
+      '\\"type\\":\\"file\\",\\"format\\":\\"md\\",\\"folderId\\":\\"<blog-folder-id>\\"'
+    );
+    expect(discoveryPrompt).toContain(
+      "substituting only the returned folder id"
     );
     expect(discoveryPrompt).toContain(
       "exactly two create-assets-resource calls"
