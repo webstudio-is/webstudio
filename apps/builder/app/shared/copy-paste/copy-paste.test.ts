@@ -156,18 +156,6 @@ class TestDataTransfer {
   }
 }
 
-class TestClipboardEvent extends Event {
-  clipboardData?: DataTransfer;
-
-  constructor(
-    type: string,
-    options: EventInit & { clipboardData?: DataTransfer }
-  ) {
-    super(type, options);
-    this.clipboardData = options.clipboardData;
-  }
-}
-
 class FirefoxClipboardEvent extends Event {
   clipboardData = new TestDataTransfer() as unknown as DataTransfer;
 
@@ -1248,6 +1236,7 @@ test("copies selected instance to clipboard", async () => {
 
 test("copies multi-selected instances to clipboard and emits paste for every root", async () => {
   resetStores();
+  setupPage();
   const abortController = new AbortController();
   initCopyPaste({ signal: abortController.signal });
   let clipboardText = "";
@@ -1261,7 +1250,7 @@ test("copies multi-selected instances to clipboard and emits paste for every roo
     },
   });
   vi.stubGlobal("DataTransfer", TestDataTransfer);
-  vi.stubGlobal("ClipboardEvent", TestClipboardEvent);
+  vi.stubGlobal("ClipboardEvent", FirefoxClipboardEvent);
   $project.set({ id: "project-id" } as Project);
   $instances.set(
     new Map<Instance["id"], Instance>([
@@ -1321,7 +1310,6 @@ test("copies multi-selected instances to clipboard and emits paste for every roo
 
   selectInstance(["target", "body-id"]);
   await emitPaste();
-  await waitForClipboardEvent();
 
   expect($instances.get().get("target")?.children).toEqual([
     { type: "id", value: expect.any(String) },
@@ -1332,6 +1320,7 @@ test("copies multi-selected instances to clipboard and emits paste for every roo
 
 const setupEmitPasteProject = () => {
   resetStores();
+  setupPage();
   $project.set({ id: "project-id" } as Project);
   $instances.set(
     new Map<Instance["id"], Instance>([
@@ -1374,24 +1363,6 @@ const setupEmitPasteClipboard = () => {
   vi.stubGlobal("ClipboardEvent", FirefoxClipboardEvent);
 };
 
-test("emits paste without relying on synthetic clipboard event data", async () => {
-  setupEmitPasteProject();
-  setupEmitPasteClipboard();
-  const abortController = new AbortController();
-  initCopyPaste({ signal: abortController.signal });
-
-  selectInstance(["source", "body-id"]);
-  await copyInstance();
-  selectInstance(["target", "body-id"]);
-  await emitPaste();
-  await waitForClipboardEvent();
-
-  expect($instances.get().get("target")?.children).toEqual([
-    { type: "id", value: expect.any(String) },
-  ]);
-  abortController.abort();
-});
-
 test("content mode emits paste through the content mode handler", async () => {
   setupEmitPasteProject();
   setupEmitPasteClipboard();
@@ -1402,7 +1373,6 @@ test("content mode emits paste through the content mode handler", async () => {
   await copyInstance();
   selectInstance(["target", "body-id"]);
   await emitPaste();
-  await waitForClipboardEvent();
 
   expect($instances.get().get("target")?.children).toEqual([
     { type: "id", value: expect.any(String) },
@@ -1419,7 +1389,6 @@ test("content mode reports clipboard text it cannot paste through emit paste", a
 
   selectInstance(["target", "body-id"]);
   await emitPaste();
-  await waitForClipboardEvent();
 
   expect(toastInfo).toHaveBeenCalledWith(
     "This clipboard data cannot be pasted here."
@@ -1442,7 +1411,6 @@ test("does not emit paste when copy permission is disabled", async () => {
   });
   selectInstance(["target", "body-id"]);
   await emitPaste();
-  await waitForClipboardEvent();
 
   expect($instances.get().get("target")?.children).toEqual([]);
   abortController.abort();
@@ -1464,7 +1432,6 @@ test("does not emit paste while editing canvas text", async () => {
   });
   selectInstance(["target", "body-id"]);
   await emitPaste();
-  await waitForClipboardEvent();
 
   expect($instances.get().get("target")?.children).toEqual([]);
   abortController.abort();
