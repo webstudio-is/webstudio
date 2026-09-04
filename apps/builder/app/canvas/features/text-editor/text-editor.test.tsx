@@ -9,10 +9,11 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import {
+  $textEditorContextMenu,
   $textEditingInstanceSelector,
   selectInstance,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { TextEditor } from "./text-editor";
 
 (
@@ -28,8 +29,10 @@ afterEach(() => {
   root = undefined;
   document.body.innerHTML = "";
   $textEditingInstanceSelector.set(undefined);
+  $textEditorContextMenu.set(undefined);
   selectInstance(undefined);
   $instances.set(new Map());
+  $props.set(new Map());
 });
 
 describe("TextEditor", () => {
@@ -161,5 +164,91 @@ describe("TextEditor", () => {
         children: [{ type: "text", value: "Before" }],
       })
     );
+  });
+
+  test("enables the slash menu when a template is added while editing", async () => {
+    const current: Instance = {
+      type: "instance",
+      id: "current",
+      component: elementComponent,
+      tag: "p",
+      children: [{ type: "text", value: "Before" }],
+    };
+    const block: Instance = {
+      type: "instance",
+      id: "block",
+      component: blockComponent,
+      children: [
+        { type: "id", value: "templates" },
+        { type: "id", value: current.id },
+      ],
+    };
+    const templates: Instance = {
+      type: "instance",
+      id: "templates",
+      component: blockTemplateComponent,
+      children: [],
+    };
+    const instances = new Map(
+      [block, templates, current].map((instance) => [instance.id, instance])
+    );
+    $instances.set(instances);
+    selectInstance([current.id, block.id]);
+    $textEditingInstanceSelector.set({
+      selector: [current.id, block.id],
+      reason: "left",
+    });
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(
+        <TextEditor
+          rootInstanceSelector={[current.id, block.id]}
+          instances={instances}
+          props={new Map()}
+          contentEditable={<ContentEditable />}
+          onChange={() => {}}
+          onSelectInstance={() => {}}
+        />
+      );
+    });
+
+    const template: Instance = {
+      type: "instance",
+      id: "paragraph-template",
+      component: elementComponent,
+      tag: "p",
+      label: "Paragraph",
+      children: [],
+    };
+    await act(async () => {
+      $instances.set(
+        new Map([
+          ...instances,
+          [
+            templates.id,
+            { ...templates, children: [{ type: "id", value: template.id }] },
+          ],
+          [template.id, template],
+        ])
+      );
+    });
+
+    const editable = container.querySelector<HTMLElement>(
+      "[data-lexical-editor]"
+    );
+    await act(async () => {
+      editable?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "/", bubbles: true })
+      );
+    });
+    expect($textEditorContextMenu.get()).toBeDefined();
+
+    await act(async () => {
+      $instances.set(new Map($instances.get()));
+    });
+    expect($textEditorContextMenu.get()).toBeDefined();
   });
 });

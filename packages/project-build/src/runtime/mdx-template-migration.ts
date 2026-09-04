@@ -1,3 +1,8 @@
+/**
+ * Plans and confirms explicit batch rewrites of authored MDX references after
+ * custom templates are renamed or removed; normal template resolution does not
+ * depend on this migration.
+ */
 import {
   isMdxTemplateComponentName,
   parseMdxDocument,
@@ -10,6 +15,7 @@ import {
   createConfirmationToken,
   validateConfirmationToken,
 } from "../confirmation-token";
+import { hasMdxComponentAdapter } from "./mdx-component-adapters";
 
 export const mdxTemplateMigrationFileLimit = 100;
 const mdxTemplateMigrationByteLimit = 10 * 1024 * 1024;
@@ -76,16 +82,18 @@ const updateNodes = (
   let changed = false;
   const nextNodes: MdxAuthoredNode[] = [];
   for (const node of nodes) {
+    // Reserved adapter JSX such as <Image> names a built-in MDX component.
+    // Legacy ws:name remains eligible so historical named references migrate.
+    const isReservedAdapterJsx =
+      node.type === "template" &&
+      node.syntax === "jsx" &&
+      hasMdxComponentAdapter(node.name);
     const matches =
       node.type === "template" &&
+      isReservedAdapterJsx === false &&
       (migration.type === "rename"
         ? node.name === migration.from
         : node.name === migration.name);
-    if (node.type === "template" && matches && migration.type === "remove") {
-      omissionCount += 1;
-      changed = true;
-      continue;
-    }
     if (
       node.type === "text" ||
       node.type === "comment" ||
@@ -97,6 +105,14 @@ const updateNodes = (
     const children = updateNodes(node.children, migration);
     updateCount += children.updateCount;
     omissionCount += children.omissionCount;
+    if (node.type === "template" && matches && migration.type === "remove") {
+      // Removing a template reference removes only its wrapper. Authored
+      // children remain in place; self-closing references have none to retain.
+      omissionCount += 1;
+      changed = true;
+      nextNodes.push(...children.nodes);
+      continue;
+    }
     if (node.type === "template" && matches && migration.type === "rename") {
       updateCount += 1;
       changed = true;
@@ -105,7 +121,8 @@ const updateNodes = (
         name: migration.to,
         syntax:
           node.syntax === "jsx" &&
-          isMdxTemplateComponentName(migration.to) === false
+          (isMdxTemplateComponentName(migration.to) === false ||
+            hasMdxComponentAdapter(migration.to))
             ? "ws-element"
             : node.syntax,
         children: children.nodes,

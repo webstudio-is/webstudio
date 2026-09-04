@@ -10,6 +10,7 @@ import {
   materializePublishedMdx,
   type PublishedMdxRoot,
 } from "./published-mdx";
+import { InvalidMdxTemplateStructureError } from "./mdx-template-resolution";
 
 const revision = (value: string) => `sha256:${value.repeat(64)}` as const;
 
@@ -26,26 +27,26 @@ const createData = ({
     type: "instance",
     id: "block",
     component: "ws:block",
-    children: withTemplate ? [{ type: "id", value: "templates" }] : [],
+    children: [{ type: "id", value: "templates" }],
   };
-  const instances: Instance[] = [block];
+  const instances: Instance[] = [
+    block,
+    {
+      type: "instance",
+      id: "templates",
+      component: "ws:block-template",
+      children: withTemplate ? [{ type: "id", value: "hero" }] : [],
+    },
+  ];
   if (withTemplate) {
-    instances.push(
-      {
-        type: "instance",
-        id: "templates",
-        component: "ws:block-template",
-        children: [{ type: "id", value: "hero" }],
-      },
-      {
-        type: "instance",
-        id: "hero",
-        component: "ws:element",
-        tag: "section",
-        label: "Hero",
-        children: [{ type: "text", value: "Template body" }],
-      }
-    );
+    instances.push({
+      type: "instance",
+      id: "hero",
+      component: "ws:element",
+      tag: "section",
+      label: "Hero",
+      children: [{ type: "text", value: "Template body" }],
+    });
   }
   return {
     instances: new Map(instances.map((instance) => [instance.id, instance])),
@@ -124,6 +125,47 @@ describe("published MDX materialization", () => {
       renderScope: "route:/blog/article:block:block",
     });
     expect(getFragmentText(result.roots[0].fragment)).toContain("Published");
+  });
+
+  test("rejects publication with multiple Templates containers", async () => {
+    const data = createData({ withTemplate: true });
+    const block = data.instances.get("block");
+    if (block === undefined) {
+      throw new Error("Expected Content Block");
+    }
+    block.children.push({ type: "id", value: "templates-2" });
+    data.instances.set("templates-2", {
+      type: "instance",
+      id: "templates-2",
+      component: "ws:block-template",
+      children: [],
+    });
+
+    await expect(
+      materializePublishedMdx({
+        route: "/blog/article",
+        data,
+        artifact: createArtifact([{ id: "article", source: "# Published" }]),
+        metas: new Map(),
+        projectId: "project",
+      })
+    ).rejects.toBeInstanceOf(InvalidMdxTemplateStructureError);
+  });
+
+  test("rejects publication without a Templates container", async () => {
+    const data = createData({});
+    data.instances.get("block")!.children = [];
+    data.instances.delete("templates");
+
+    await expect(
+      materializePublishedMdx({
+        route: "/blog/article",
+        data,
+        artifact: createArtifact([{ id: "article", source: "# Published" }]),
+        metas: new Map(),
+        projectId: "project",
+      })
+    ).rejects.toBeInstanceOf(InvalidMdxTemplateStructureError);
   });
 
   test("resolves referenced document frontmatter for the designed shell", async () => {
@@ -435,6 +477,78 @@ featureImage:
     );
   });
 
+  test("materializes one MDX Asset through each Content Block's template scope", async () => {
+    const data = createData({});
+    data.instances.get("block")!.children = [
+      { type: "id", value: "templates-a" },
+    ];
+    data.instances.set("templates-a", {
+      type: "instance",
+      id: "templates-a",
+      component: "ws:block-template",
+      children: [{ type: "id", value: "heading-a" }],
+    });
+    data.instances.set("heading-a", {
+      type: "instance",
+      id: "heading-a",
+      component: "ws:element",
+      tag: "h1",
+      label: "First scope heading",
+      children: [],
+    });
+    data.instances.set("block-b", {
+      type: "instance",
+      id: "block-b",
+      component: "ws:block",
+      children: [{ type: "id", value: "templates-b" }],
+    });
+    data.instances.set("templates-b", {
+      type: "instance",
+      id: "templates-b",
+      component: "ws:block-template",
+      children: [{ type: "id", value: "heading-b" }],
+    });
+    data.instances.set("heading-b", {
+      type: "instance",
+      id: "heading-b",
+      component: "ws:element",
+      tag: "h1",
+      label: "Second scope heading",
+      children: [],
+    });
+    data.props.set("source-b", {
+      id: "source-b",
+      instanceId: "block-b",
+      name: "src",
+      type: "asset",
+      value: "article",
+    });
+
+    const result = await materializePublishedMdx({
+      route: "/",
+      data,
+      artifact: createArtifact([{ id: "article", source: "# Shared\n" }]),
+      metas: new Map(),
+      projectId: "project",
+    });
+
+    expect(
+      result.roots.map((root) => ({
+        blockInstanceId: root.identity.blockInstanceId,
+        labels: root.fragment.instances.map(({ label }) => label),
+      }))
+    ).toEqual([
+      {
+        blockInstanceId: "block",
+        labels: ["First scope heading"],
+      },
+      {
+        blockInstanceId: "block-b",
+        labels: ["Second scope heading"],
+      },
+    ]);
+  });
+
   test("omits an unresolved template subtree and keeps valid siblings", async () => {
     const result = await materializePublishedMdx({
       route: "/",
@@ -604,6 +718,104 @@ featureImage:
           value: "hero-image",
         }),
       ])
+    );
+  });
+
+  test("keeps Asset bindings when a published Markdown image uses a template", async () => {
+    const source = "![](./images/hero.png)\n";
+    const document = await parseMdxDocument({ source });
+    const data = createData({});
+    data.instances.get("block")!.children = [
+      { type: "id", value: "templates" },
+    ];
+    data.instances.set("templates", {
+      type: "instance",
+      id: "templates",
+      component: "ws:block-template",
+      children: [{ type: "id", value: "image-template" }],
+    });
+    data.instances.set("image-template", {
+      type: "instance",
+      id: "image-template",
+      component: "Image",
+      label: "Image",
+      children: [],
+    });
+    const result = await materializePublishedMdx({
+      route: "/",
+      data,
+      artifact: createArtifact([{ id: "article", source }], {
+        article: discoverMdxBodyAssetReferences({
+          document,
+          sourcePath: "article.mdx",
+          assetIdsByPath: new Map([["images/hero.png", "hero-image"]]),
+        }),
+      }),
+      metas: new Map(),
+      projectId: "project",
+    });
+
+    expect(
+      result.roots[0].fragment.props.map(({ name, type, value }) => ({
+        name,
+        type,
+        value,
+      }))
+    ).toEqual(
+      ["src", "width", "height", "alt"].map((name) => ({
+        name,
+        type: "asset",
+        value: "hero-image",
+      }))
+    );
+  });
+
+  test("keeps Asset bindings for a published named Image template", async () => {
+    const source = '<Image src="./images/hero.png" />\n';
+    const document = await parseMdxDocument({ source });
+    const data = createData({});
+    data.instances.get("block")!.children = [
+      { type: "id", value: "templates" },
+    ];
+    data.instances.set("templates", {
+      type: "instance",
+      id: "templates",
+      component: "ws:block-template",
+      children: [{ type: "id", value: "image-template" }],
+    });
+    data.instances.set("image-template", {
+      type: "instance",
+      id: "image-template",
+      component: "Image",
+      label: "Image",
+      children: [],
+    });
+    const result = await materializePublishedMdx({
+      route: "/",
+      data,
+      artifact: createArtifact([{ id: "article", source }], {
+        article: discoverMdxBodyAssetReferences({
+          document,
+          sourcePath: "article.mdx",
+          assetIdsByPath: new Map([["images/hero.png", "hero-image"]]),
+        }),
+      }),
+      metas: new Map(),
+      projectId: "project",
+    });
+
+    expect(
+      result.roots[0].fragment.props.map(({ name, type, value }) => ({
+        name,
+        type,
+        value,
+      }))
+    ).toEqual(
+      ["src", "width", "height", "alt"].map((name) => ({
+        name,
+        type: "asset",
+        value: "hero-image",
+      }))
     );
   });
 

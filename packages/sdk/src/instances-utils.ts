@@ -1,6 +1,6 @@
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance, Instances } from "./schema/instances";
-import type { Props } from "./schema/props";
+import type { Prop } from "./schema/props";
 import { blockTemplateComponent, elementComponent } from "./core-metas";
 
 export const ROOT_INSTANCE_ID = ":root";
@@ -143,14 +143,53 @@ export const getInstanceName = ({
   );
 };
 
-export const getHtmlTagsFromProps = (props: Props) => {
+const unresolvedHtmlTagIdsByIndex = new WeakMap<
+  ReadonlyMap<Instance["id"], string>,
+  ReadonlySet<Instance["id"]>
+>();
+
+export const getHtmlTagsFromProps = (props: ReadonlyMap<Prop["id"], Prop>) => {
   const tags = new Map<Instance["id"], string>();
+  const unresolvedIds = new Set<Instance["id"]>();
   for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "tag") {
+    if (prop.name !== "tag") {
+      continue;
+    }
+    if (tags.has(prop.instanceId) || prop.type !== "string") {
+      unresolvedIds.add(prop.instanceId);
+    }
+    // Preserve the public index's existing behavior: it contains only static
+    // string values and, for invalid duplicates, the last static value.
+    if (prop.type === "string") {
       tags.set(prop.instanceId, prop.value);
     }
   }
+  unresolvedHtmlTagIdsByIndex.set(tags, unresolvedIds);
   return tags;
+};
+
+const ambiguousProp = Symbol("ambiguous prop");
+
+const findUniqueInstanceProp = ({
+  props,
+  instanceId,
+  name,
+}: {
+  props: ReadonlyMap<Prop["id"], Prop> | undefined;
+  instanceId: Instance["id"];
+  name: string;
+}): Prop | typeof ambiguousProp | undefined => {
+  let result: Prop | undefined;
+  for (const prop of props?.values() ?? []) {
+    if (prop.instanceId !== instanceId || prop.name !== name) {
+      continue;
+    }
+    if (result !== undefined) {
+      return ambiguousProp;
+    }
+    result = prop;
+  }
+  return result;
 };
 
 export const getHtmlTagFromInstance = ({
@@ -160,9 +199,9 @@ export const getHtmlTagFromInstance = ({
   htmlTagsByInstanceId,
 }: {
   instance: Instance;
-  metas: Map<Instance["component"], WsComponentMeta>;
-  props?: Props;
-  htmlTagsByInstanceId?: Map<Instance["id"], string>;
+  metas: ReadonlyMap<Instance["component"], WsComponentMeta>;
+  props?: ReadonlyMap<Prop["id"], Prop>;
+  htmlTagsByInstanceId?: ReadonlyMap<Instance["id"], string>;
 }) => {
   // XmlNode's "tag" prop is an XML element name, not an HTML rendering tag.
   if (instance.component === "XmlNode") {
@@ -171,16 +210,46 @@ export const getHtmlTagFromInstance = ({
   if (instance.tag !== undefined) {
     return instance.tag;
   }
-  const propTag =
-    htmlTagsByInstanceId === undefined
-      ? props === undefined
-        ? undefined
-        : getHtmlTagsFromProps(props).get(instance.id)
-      : htmlTagsByInstanceId.get(instance.id);
-  if (propTag !== undefined) {
-    return propTag;
+  if (htmlTagsByInstanceId !== undefined) {
+    const unresolvedIds = unresolvedHtmlTagIdsByIndex.get(htmlTagsByInstanceId);
+    if (unresolvedIds?.has(instance.id)) {
+      return;
+    }
+    if (htmlTagsByInstanceId.has(instance.id)) {
+      return htmlTagsByInstanceId.get(instance.id);
+    }
+  } else {
+    const tagProp = findUniqueInstanceProp({
+      props,
+      instanceId: instance.id,
+      name: "tag",
+    });
+    if (tagProp === ambiguousProp || (tagProp && tagProp.type !== "string")) {
+      return;
+    }
+    if (tagProp?.type === "string") {
+      return tagProp.value;
+    }
   }
   const meta = metas.get(instance.component);
+  if (meta?.renderedTag !== undefined) {
+    const tagProp = findUniqueInstanceProp({
+      props,
+      instanceId: instance.id,
+      name: meta.renderedTag.prop,
+    });
+    if (tagProp === undefined) {
+      return meta.renderedTag.default;
+    }
+    if (tagProp === ambiguousProp) {
+      return;
+    }
+    const propMeta = meta.props?.[meta.renderedTag.prop];
+    if (propMeta === undefined || tagProp.type !== propMeta.type) {
+      return;
+    }
+    return meta.renderedTag.values[String(tagProp.value)];
+  }
   const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
   return metaTag;
 };

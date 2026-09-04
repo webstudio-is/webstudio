@@ -3,6 +3,7 @@ import {
   discoverMdxBodyAssetReferences,
   parseMdxDocument,
   serializeMdxDocument,
+  type MdxDocument,
 } from "@webstudio-is/content-engine/mdx";
 import {
   elementComponent,
@@ -76,6 +77,72 @@ const createCodeTextFragment = (theme = "github-light"): WebstudioFragment => ({
 });
 
 describe("MDX authored content", () => {
+  test("treats a legacy template node without syntax metadata as self-closing", async () => {
+    const document: MdxDocument = {
+      frontmatter: { properties: {} },
+      children: [
+        {
+          type: "template",
+          name: "Card",
+          props: [],
+          children: [],
+          mdxMode: "flow",
+        },
+      ],
+    };
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: {
+        templates: [
+          {
+            type: "resolved-template",
+            reference: {
+              type: "resolved-template",
+              path: [0],
+              templateName: "Card",
+              templateInstanceId: "card-template",
+              props: [],
+            },
+            fragment: {
+              children: [{ type: "id", value: "card" }],
+              instances: [
+                {
+                  type: "instance",
+                  id: "card",
+                  component: elementComponent,
+                  tag: "section",
+                  children: [{ type: "text", value: "Template default" }],
+                },
+              ],
+              props: [],
+              assets: [],
+              dataSources: [],
+              resources: [],
+              breakpoints: [],
+              styleSourceSelections: [],
+              styleSources: [],
+              styles: [],
+            },
+            editablePropNames: [],
+            jsxPropContext: htmlJsxPropContext,
+            propNameMappings: [],
+            ignoredJsxPropNames: [],
+          },
+        ],
+        diagnostics: [],
+        dependencies: { templateNames: ["Card"], templates: [] },
+      },
+    });
+
+    expect(root.fragment.instances[0]?.children).toEqual([
+      { type: "text", value: "Template default" },
+    ]);
+    await expect(
+      serializeMdxAuthoredContent({ root, fragment: root.fragment })
+    ).resolves.toBe('<ws.element ws:name="Card" />\n');
+  });
+
   test("rejects a canvas edit prepared from a stale Asset document", async () => {
     const document = await parseMdxDocument({ source: "Original\n" });
     const root = materializeMdxAuthoredContent({
@@ -473,7 +540,7 @@ describe("MDX authored content", () => {
     ).resolves.toBe("######\n\n-\n");
   });
 
-  test("serializes a lossless template insertion as Markdown", async () => {
+  test("preserves the selected template identity for a lossless insertion", async () => {
     const fragment: WebstudioFragment = {
       children: [{ type: "id", value: "heading" }],
       instances: [
@@ -504,7 +571,86 @@ describe("MDX authored content", () => {
           templateName: "Heading 1",
         })
       )
-    ).toBe("# Test\n");
+    ).toBe('<ws.element ws:name="Heading 1">Test</ws.element>\n');
+  });
+
+  test.each(["Image", "CodeText"])(
+    "uses ws.element when inserting a custom template named %s",
+    async (templateName) => {
+      const fragment: WebstudioFragment = {
+        children: [{ type: "id", value: "custom" }],
+        instances: [
+          {
+            type: "instance",
+            id: "custom",
+            component: elementComponent,
+            tag: "section",
+            children: [{ type: "text", value: "Custom content" }],
+          },
+        ],
+        props: [],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      };
+
+      expect(
+        serializeMdxDocument(
+          await serializeMdxTemplateInsertion({
+            identity,
+            fragment,
+            templateName,
+          })
+        )
+      ).toBe(
+        `<ws.element ws:name="${templateName}">Custom content</ws.element>\n`
+      );
+    }
+  );
+
+  test("rejects an immediate descendant edit that cannot be serialized", async () => {
+    const pristineFragment: WebstudioFragment = {
+      children: [{ type: "id", value: "card" }],
+      instances: [
+        {
+          type: "instance",
+          id: "card",
+          component: elementComponent,
+          tag: "section",
+          children: [{ type: "id", value: "unknown" }],
+        },
+        {
+          type: "instance",
+          id: "unknown",
+          component: "Unknown",
+          children: [{ type: "text", value: "Template default" }],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+    const edited = structuredClone(pristineFragment);
+    edited.instances[1]!.children = [{ type: "text", value: "Immediate edit" }];
+
+    await expect(
+      serializeMdxTemplateInsertion({
+        identity,
+        fragment: edited,
+        pristineFragment,
+        templateName: "Card",
+        htmlTags: [{ instanceId: "card", tag: "section" }],
+      })
+    ).rejects.toThrow("cannot be represented losslessly in MDX");
   });
 
   test("serializes Markdown-compatible Image props as an image", async () => {
@@ -558,7 +704,7 @@ describe("MDX authored content", () => {
           templateName: "Image",
         })
       )
-    ).toBe('![Hero](/hero.png "Cover")\n');
+    ).toBe('<Image src="/hero.png" alt="Hero" title="Cover" />\n');
   });
 
   test("uses JSX when an Image has props Markdown cannot express", async () => {
@@ -688,7 +834,7 @@ describe("MDX authored content", () => {
     ).toBe('<Widget for="custom-target" />\n');
   });
 
-  test("rebases a styled template insertion as a template reference", async () => {
+  test("preserves edits made before a template insertion is materialized", async () => {
     const document = await parseMdxDocument({ source: "" });
     const root = materializeMdxAuthoredContent({
       identity,
@@ -704,7 +850,7 @@ describe("MDX authored content", () => {
           component: elementComponent,
           tag: "h1",
           label: "Styled Heading",
-          children: [{ type: "text", value: "Test" }],
+          children: [{ type: "text", value: "Default" }],
         },
       ],
       props: [
@@ -713,7 +859,7 @@ describe("MDX authored content", () => {
           instanceId: "heading",
           name: "title",
           type: "string",
-          value: "Updated",
+          value: "Original",
         },
       ],
       assets: [],
@@ -733,7 +879,29 @@ describe("MDX authored content", () => {
         },
       ],
     };
+    const pristineFragment = structuredClone(fragment);
+    const heading = fragment.instances[0];
+    const title = fragment.props[0];
+    if (heading === undefined || title?.type !== "string") {
+      throw new Error("Expected the inserted heading defaults");
+    }
+    heading.children = [{ type: "text", value: "Test" }];
+    title.value = "Updated";
 
+    expect(
+      serializeMdxDocument(
+        await rebaseMdxAuthoredContent({
+          root,
+          fragment,
+          latest: document,
+          insertedTemplates: new Map([
+            ["heading", { templateName: "Styled Heading", pristineFragment }],
+          ]),
+        })
+      )
+    ).toBe(
+      '<ws.element ws:name="Styled Heading" title="Updated">Test</ws.element>\n'
+    );
     expect(
       serializeMdxDocument(
         await rebaseMdxAuthoredContent({
@@ -748,6 +916,54 @@ describe("MDX authored content", () => {
     );
   });
 
+  test("rebases a fresh empty template insertion as self-closing", async () => {
+    const document = await parseMdxDocument({ source: "" });
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document,
+      templateMaterialization: emptyTemplates,
+    });
+    const fragment: WebstudioFragment = {
+      children: [{ type: "id", value: "heading" }],
+      instances: [
+        {
+          type: "instance",
+          id: "heading",
+          component: elementComponent,
+          tag: "h1",
+          children: [],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+
+    expect(
+      serializeMdxDocument(
+        await rebaseMdxAuthoredContent({
+          root,
+          fragment,
+          latest: document,
+          insertedTemplates: new Map([
+            [
+              "heading",
+              {
+                templateName: "Heading 1",
+                pristineFragment: structuredClone(fragment),
+              },
+            ],
+          ]),
+        })
+      )
+    ).toBe('<ws.element ws:name="Heading 1" />\n');
+  });
+
   test("serializes explicitly configured Code Text presentation as JSX", async () => {
     const document = await serializeMdxTemplateInsertion({
       identity,
@@ -760,7 +976,7 @@ describe("MDX authored content", () => {
     );
   });
 
-  test("serializes Code Text without presentation props as fenced Markdown", async () => {
+  test("preserves Code Text template identity without presentation props", async () => {
     const fragment = createCodeTextFragment();
     fragment.props = [];
     const code = fragment.instances[0]?.children[0];
@@ -775,7 +991,9 @@ describe("MDX authored content", () => {
       templateName: "CodeText",
     });
 
-    expect(serializeMdxDocument(document)).toBe("```\na = 1\nb=2\nc=5\n```\n");
+    expect(serializeMdxDocument(document)).toBe(
+      "<CodeText>a = 1\nb=2\nc=5</CodeText>\n"
+    );
   });
 
   test("serializes the legacy Code Text code property as text content", async () => {
@@ -1041,7 +1259,7 @@ describe("MDX authored content", () => {
 
     expect(
       await serializeMdxAuthoredContent({ root: jsxRoot, fragment: reset })
-    ).toBe("```\nconst ready = true;\n```\n");
+    ).toBe("<CodeText>const ready = true;</CodeText>\n");
   });
 
   test("persists a newly authored prop without copying inherited defaults", async () => {
@@ -1093,7 +1311,7 @@ describe("MDX authored content", () => {
     );
   });
 
-  test("switches a Code Text template reference to a fence after resetting presentation props", async () => {
+  test("keeps a named Code Text reference after resetting presentation props", async () => {
     const document = await parseMdxDocument({
       source:
         '<ws.element ws:name="CodeText" language="javascript" theme="github-light">const ready = true;</ws.element>',
@@ -1139,7 +1357,7 @@ describe("MDX authored content", () => {
       serializeMdxDocument(
         reconcileMdxAuthoredContent({ root, fragment: next })
       )
-    ).toBe("```\nconst ready = true;\n```\n");
+    ).toBe('<ws.element ws:name="CodeText">const ready = true;</ws.element>\n');
   });
 
   test("materializes deterministic nested Markdown and MDX elements", async () => {
@@ -1719,9 +1937,20 @@ describe("MDX authored content", () => {
     next.instances.find(({ id }) => id === "template-heading")!.children = [
       { type: "text", value: "Changed internal" },
     ];
-    expect(() => reconcileMdxAuthoredContent({ root, fragment: next })).toThrow(
-      "Expanded template internals"
-    );
+    expect(
+      reconcileMdxAuthoredContent({ root, fragment: next }).children[0]
+    ).toMatchObject({
+      type: "template",
+      name: "Card",
+      selfClosing: false,
+      children: [
+        {
+          type: "element",
+          tag: "h2",
+          children: [{ type: "text", value: "Changed internal" }],
+        },
+      ],
+    });
 
     expect(
       reconcileMdxAuthoredContent({

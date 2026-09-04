@@ -1,8 +1,14 @@
+// Proxies MCP stdio traffic for an evaluation while recording the bounded,
+// sanitized request evidence needed by structured outcome validation.
 import { appendFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { boundedIdentifierPattern, isPlainRecord } from "../../src/type-utils";
 import type { McpCatalogObservation } from "./evaluation-metrics";
+import {
+  getAssetQueryContractFingerprints,
+  getPageSettingsContractFingerprint,
+} from "./evaluation-trace-contract";
 
 type JsonRpcId = string | number;
 
@@ -15,6 +21,9 @@ export type BoundedMcpCall = {
     dryRun?: true;
     confirmDestructive?: true;
     hasConfirmationToken?: true;
+    assetQuerySha256?: string;
+    assetQueryShapeSha256?: string;
+    pageSettingsSha256?: string;
   };
   startedAtMs: number;
   durationMs?: number;
@@ -112,7 +121,8 @@ export const getMcpTraceRequest = (
   if (
     (typeof id !== "string" && typeof id !== "number") ||
     isPlainRecord(params) === false ||
-    typeof params.name !== "string"
+    typeof params.name !== "string" ||
+    boundedIdentifierPattern.test(params.name) === false
   ) {
     return;
   }
@@ -165,6 +175,26 @@ export const getMcpTraceRequest = (
     }
     if (typeof params.arguments.confirmationToken === "string") {
       args.hasConfirmationToken = true;
+    }
+    if (
+      params.name === "validate-asset-query" ||
+      params.name === "preview-asset-query"
+    ) {
+      const fingerprints = getAssetQueryContractFingerprints(
+        params.arguments.query
+      );
+      if (fingerprints !== undefined) {
+        args.assetQuerySha256 = fingerprints.sha256;
+        args.assetQueryShapeSha256 = fingerprints.shapeSha256;
+      }
+    }
+    if (params.name === "update-page") {
+      const pageSettingsSha256 = getPageSettingsContractFingerprint(
+        params.arguments
+      );
+      if (pageSettingsSha256 !== undefined) {
+        args.pageSettingsSha256 = pageSettingsSha256;
+      }
     }
     if (Object.keys(args).length > 0) {
       call.arguments = args;

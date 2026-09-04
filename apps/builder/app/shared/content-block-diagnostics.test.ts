@@ -48,6 +48,6 @@ test("formats ambiguous semantic template diagnostics", () => {
       templateNames: ["Primary Heading", "Alternate Heading"],
     })
   ).toBe(
-    "Multiple templates match element:h1: Primary Heading, Alternate Heading. The unstyled fallback was used."
+    "Multiple templates match element:h1: Primary Heading, Alternate Heading. The semantic fallback without Content Block template styles was used."
   );
 });

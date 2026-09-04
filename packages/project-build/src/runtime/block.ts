@@ -362,13 +362,14 @@ export const findBlockTemplates = ({
     return;
   }
 
-  const templateInstance = findContentBlockTemplateContainers({
+  const templateInstances = findContentBlockTemplateContainers({
     blockInstance,
     instances,
-  })[0];
-  if (templateInstance === undefined) {
+  });
+  if (templateInstances.length !== 1) {
     return;
   }
+  const templateInstance = templateInstances[0];
 
   return templateInstance.children
     .filter((child) => child.type === "id")

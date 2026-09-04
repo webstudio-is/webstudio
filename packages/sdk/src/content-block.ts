@@ -22,6 +22,104 @@ import type { ExpressionBinding } from "./schema/expression";
 import type { Prop, Props } from "./schema/props";
 import { decodeDataSourceVariable } from "./expression";
 
+export type ContentBlockMdxTemplateDescriptor =
+  | Readonly<{
+      kind: "element";
+      resolutionKey: `element:${string}`;
+      label: string;
+      tag: string;
+      insertable: boolean;
+    }>
+  | Readonly<{
+      kind: "component";
+      resolutionKey: `component:${string}`;
+      label: string;
+      component: string;
+      insertable: boolean;
+    }>;
+
+const defineMdxElementTemplate = <const Tag extends string>(
+  tag: Tag,
+  label: string,
+  insertable: boolean
+) =>
+  ({
+    kind: "element",
+    resolutionKey: `element:${tag}`,
+    label,
+    tag,
+    insertable,
+  }) as const;
+
+const defineMdxComponentTemplate = <const Component extends string>(
+  component: Component,
+  label: string,
+  insertable: boolean
+) =>
+  ({
+    kind: "component",
+    resolutionKey: `component:${component}`,
+    label,
+    component,
+    insertable,
+  }) as const;
+
+/**
+ * Defines every MDX semantic that can resolve through a default Content Block
+ * template, in its default display order. Structural and inline-only semantics
+ * remain available for styling without being offered as standalone slash-menu
+ * insertions.
+ */
+export const contentBlockMdxTemplateDescriptors = [
+  defineMdxElementTemplate("p", "Paragraph", true),
+  defineMdxElementTemplate("h1", "Heading 1", true),
+  defineMdxElementTemplate("h2", "Heading 2", true),
+  defineMdxElementTemplate("h3", "Heading 3", true),
+  defineMdxElementTemplate("h4", "Heading 4", true),
+  defineMdxElementTemplate("h5", "Heading 5", true),
+  defineMdxElementTemplate("h6", "Heading 6", true),
+  defineMdxElementTemplate("ul", "Unordered List", true),
+  defineMdxElementTemplate("ol", "Ordered List", true),
+  defineMdxElementTemplate("li", "List Item", false),
+  defineMdxElementTemplate("a", "Link", true),
+  defineMdxComponentTemplate("Image", "Image", true),
+  defineMdxElementTemplate("hr", "Separator", true),
+  defineMdxElementTemplate("br", "Line Break", false),
+  defineMdxElementTemplate("blockquote", "Blockquote", true),
+  defineMdxElementTemplate("em", "Emphasis", false),
+  defineMdxElementTemplate("strong", "Strong", false),
+  defineMdxElementTemplate("del", "Strikethrough", false),
+  defineMdxElementTemplate("code", "Inline Code", false),
+  defineMdxElementTemplate("input", "Task Checkbox", false),
+  defineMdxElementTemplate("table", "Table", true),
+  defineMdxElementTemplate("thead", "Table Head", false),
+  defineMdxElementTemplate("tbody", "Table Body", false),
+  defineMdxElementTemplate("tr", "Table Row", false),
+  defineMdxElementTemplate("th", "Table Header", false),
+  defineMdxElementTemplate("td", "Table Cell", false),
+  defineMdxComponentTemplate("CodeText", "Code Block", true),
+] as const satisfies readonly ContentBlockMdxTemplateDescriptor[];
+
+export type ContentBlockMdxTemplateResolutionKey =
+  (typeof contentBlockMdxTemplateDescriptors)[number]["resolutionKey"];
+
+export const getContentBlockMdxTemplateDescriptor = (instance: {
+  component: string;
+  tag?: string;
+}): ContentBlockMdxTemplateDescriptor | undefined =>
+  contentBlockMdxTemplateDescriptors.find((descriptor) => {
+    if (descriptor.kind === "component") {
+      return descriptor.component === instance.component;
+    }
+    return descriptor.tag === instance.tag;
+  });
+
+/** Unknown, author-defined templates stay insertable. */
+export const isContentBlockMdxTemplateInsertable = (instance: {
+  component: string;
+  tag?: string;
+}) => getContentBlockMdxTemplateDescriptor(instance)?.insertable ?? true;
+
 export const createContentBlockExternalContentIdentity = ({
   blockInstanceId,
   asset,

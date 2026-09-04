@@ -1,13 +1,21 @@
+// Validates each high-impact fixture from typed final-state and MCP-trace
+// evidence instead of depending on agent prose or exact replayed wording.
 import { parseExpressionAt } from "acorn";
-import { transpileExpression } from "@webstudio-is/expression";
-import { getFontFaces } from "@webstudio-is/fonts";
-import { getQueryConditions } from "@webstudio-is/query-builder/runtime";
 import {
+  parseDirectPathExpression,
+  parseJsonExpression,
+  transpileExpression,
+} from "@webstudio-is/expression";
+import { getFontFaces } from "@webstudio-is/fonts";
+import { mapQueryWhere } from "@webstudio-is/query-builder/runtime";
+import {
+  collectionComponent,
   decodeDataSourceVariable,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
   type FontAsset,
   type Resource,
+  type StructuredAssetQueryResourceConfiguration,
   type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
 import {
@@ -30,6 +38,10 @@ import {
   markdownBlogFixtureDocuments,
 } from "./markdown-blog-fixture";
 import { hasMcpToolCallRetries, isBroadRead } from "./evaluation-metrics";
+import {
+  getAssetQueryContractFingerprints,
+  getPageSettingsContractFingerprint,
+} from "./evaluation-trace-contract";
 
 export type EvaluationToolCall = {
   name: string;
@@ -260,12 +272,17 @@ const validateCommon = (
   failures: string[]
 ) => {
   const source = stringifyProject(input.project);
+  const guidanceCalls = input.toolCalls.filter(
+    (call) => call.name === "meta.guide"
+  );
   recordCheck(
     checks,
     failures,
     "guidance",
-    hasSuccessfulCall(input.toolCalls, "meta.guide"),
-    "The agent did not request focused guidance before authoring."
+    guidanceCalls.length === 1 &&
+      guidanceCalls[0]?.isError !== true &&
+      input.toolCalls[0] === guidanceCalls[0],
+    "The agent must request focused guidance exactly once before other operations."
   );
   recordCheck(
     checks,
@@ -576,10 +593,21 @@ const getAssetResourceConfigurations = (project: EvaluationProject) =>
     return configuration === undefined ? [] : [{ resource, configuration }];
   });
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 const pathsEqual = (left: unknown, right: readonly string[]) =>
   Array.isArray(left) &&
   left.length === right.length &&
   left.every((segment, index) => segment === right[index]);
+
+const hasExactAllWhere = (
+  where: StructuredAssetQueryWhereBinding,
+  conditionCount: number
+) =>
+  "all" in where &&
+  where.all.length === conditionCount &&
+  where.all.every((condition) => "field" in condition);
 
 const hasWhereCondition = ({
   where,
@@ -593,14 +621,19 @@ const hasWhereCondition = ({
   operator: string;
   value: string;
   normalizeExpression?: (expression: string) => string;
-}) =>
-  getQueryConditions(where).some(
+}) => {
+  if (!("all" in where)) {
+    return false;
+  }
+  return where.all.some(
     (condition) =>
+      "field" in condition &&
       pathsEqual(condition.field, field) &&
       condition.operator === operator &&
       typeof condition.value === "string" &&
       normalizeExpression(condition.value) === normalizeExpression(value)
   );
+};
 
 const getMemberPath = (value: unknown): string[] | undefined => {
   if (typeof value !== "object" || value === null || !("type" in value)) {
@@ -680,6 +713,14 @@ const hasOutputField = (output: unknown, field: string[]) =>
   Array.isArray(output.fields) &&
   output.fields.some((candidate) => pathsEqual(candidate, field));
 
+const hasExactOutputFields = (output: unknown, fields: string[][]) =>
+  isRecord(output) &&
+  output.mode === "fields" &&
+  output.includeMetadata === false &&
+  Array.isArray(output.fields) &&
+  output.fields.length === fields.length &&
+  fields.every((field) => hasOutputField(output, field));
+
 const hasSort = (
   sort: unknown,
   expected: Array<{ field: string[]; direction: string }>
@@ -743,6 +784,18 @@ const validateMarkdownBlog = (
   const blogFolder = input.project.assetFolders.find(
     (folder) => folder.name === "Blog"
   );
+  const fixtureAssetFolderIds = new Set(
+    input.fixture.project.assetFolders.map((folder) => folder.id)
+  );
+  const preservesFixtureAssetFolders = input.fixture.project.assetFolders.every(
+    (expected) =>
+      input.project.assetFolders.some(
+        (candidate) =>
+          candidate.id === expected.id &&
+          candidate.name === expected.name &&
+          candidate.parentId === expected.parentId
+      )
+  );
   recordCheck(
     checks,
     failures,
@@ -767,22 +820,55 @@ const validateMarkdownBlog = (
     failures,
     "blogAssetFolder",
     blogFolder !== undefined &&
+      blogFolder.parentId === undefined &&
+      fixtureAssetFolderIds.has(blogFolder.id) === false &&
+      input.project.assetFolders.length ===
+        input.fixture.project.assetFolders.length + 1 &&
+      preservesFixtureAssetFolders &&
       folderIds.size === 1 &&
       folderIds.has(blogFolder.id),
-    "The Markdown articles are not all stored in one Blog asset folder."
+    "The project must preserve its existing asset folders and add only one Blog folder containing every Markdown article."
   );
 
   const overview = getPageEvaluationContext(input.project, "/blog");
   const detail = getPageEvaluationContext(input.project, "/blog/:slug");
+  const fixturePageIds = new Set(
+    input.fixture.project.pages.map((page) => page.id)
+  );
+  const preservesFixturePages = input.fixture.project.pages.every((expected) =>
+    input.project.pages.some(
+      (candidate) =>
+        candidate.id === expected.id &&
+        candidate.path === expected.path &&
+        candidate.rootInstanceId === expected.rootInstanceId
+    )
+  );
   recordCheck(
     checks,
     failures,
     "blogRoutes",
-    overview.page !== undefined && detail.page !== undefined,
-    "The /blog overview and /blog/:slug detail pages are required."
+    overview.page !== undefined &&
+      detail.page !== undefined &&
+      overview.page.id !== detail.page.id &&
+      fixturePageIds.has(overview.page.id) === false &&
+      fixturePageIds.has(detail.page.id) === false &&
+      input.project.pages.length === input.fixture.project.pages.length + 2 &&
+      preservesFixturePages,
+    "The project must preserve its existing pages and add only /blog and /blog/:slug."
   );
 
   const configurations = getAssetResourceConfigurations(input.project);
+  const assetResources = input.project.resources.filter((resource) =>
+    isAssetsResource(resource as Resource)
+  );
+  const assetResourceIds = new Set(
+    assetResources.map((resource) => String(resource.id))
+  );
+  const assetResourceDataSources = input.project.dataSources.filter(
+    (dataSource) =>
+      dataSource.type === "resource" &&
+      assetResourceIds.has(String(dataSource.resourceId))
+  );
   const dataSourceNameById = new Map(
     input.project.dataSources.map((dataSource) => [
       String(dataSource.id),
@@ -808,6 +894,87 @@ const validateMarkdownBlog = (
       return expression;
     }
   };
+  const matchesOverviewQuery = (
+    configuration: StructuredAssetQueryResourceConfiguration | undefined
+  ) =>
+    configuration !== undefined &&
+    blogFolder !== undefined &&
+    configuration.result === "many" &&
+    hasExactAllWhere(configuration.where, 3) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["extension"],
+      operator: "eq",
+      value: '"md"',
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["folderId"],
+      operator: "eq",
+      value: JSON.stringify(blogFolder.id),
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["properties", "draft"],
+      operator: "ne",
+      value: "true",
+      normalizeExpression,
+    }) &&
+    hasSort(configuration.sort, [
+      { field: ["properties", "publishedAt"], direction: "desc" },
+      { field: ["id"], direction: "asc" },
+    ]) &&
+    configuration.limit === "20" &&
+    configuration.offset === "0" &&
+    hasExactOutputFields(configuration.output, [
+      ["properties", "title"],
+      ["properties", "slug"],
+      ["properties", "publishedAt"],
+      ["properties", "author"],
+      ["properties", "excerpt"],
+    ]) &&
+    configuration.content.mode === "none";
+  const matchesDetailQuery = (
+    configuration: StructuredAssetQueryResourceConfiguration | undefined,
+    slugValue: string
+  ) =>
+    configuration !== undefined &&
+    blogFolder !== undefined &&
+    configuration.result === "one" &&
+    hasExactAllWhere(configuration.where, 4) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["extension"],
+      operator: "eq",
+      value: '"md"',
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["folderId"],
+      operator: "eq",
+      value: JSON.stringify(blogFolder.id),
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["properties", "slug"],
+      operator: "eq",
+      value: slugValue,
+      normalizeExpression,
+    }) &&
+    hasWhereCondition({
+      where: configuration.where,
+      field: ["properties", "draft"],
+      operator: "ne",
+      value: "true",
+      normalizeExpression,
+    }) &&
+    hasExactOutputFields(configuration.output, [
+      ["properties", "title"],
+      ["properties", "author"],
+      ["properties", "excerpt"],
+      ["properties", "featureImage", "src"],
+    ]) &&
+    configuration.content.mode === "markdown-body-ref";
   const findConfigurationByDataSourceName = (name: string) => {
     const resourceId = input.project.dataSources.find(
       (dataSource) => dataSource.type === "resource" && dataSource.name === name
@@ -839,77 +1006,105 @@ const validateMarkdownBlog = (
     checks,
     failures,
     "scopedBlogResources",
-    isResourceScopedTo(listingEntry?.resource.id, overviewInstanceIds) &&
+    assetResources.length === 2 &&
+      configurations.length === 2 &&
+      assetResourceDataSources.length === 2 &&
+      new Set(assetResourceDataSources.map(({ resourceId }) => resourceId))
+        .size === 2 &&
+      listingEntry?.resource.id !== articleEntry?.resource.id &&
+      isResourceScopedTo(listingEntry?.resource.id, overviewInstanceIds) &&
       isResourceScopedTo(articleEntry?.resource.id, detailInstanceIds),
-    "Each Assets resource must be scoped to its corresponding blog page."
+    "The blog must have exactly two valid Assets resources, each scoped to its corresponding page without stale placeholders."
+  );
+
+  const indexedCalls = input.toolCalls.map((call, index) => ({ call, index }));
+  const validationCalls = indexedCalls.filter(
+    ({ call }) => call.name === "validate-asset-query"
+  );
+  const previewCalls = indexedCalls.filter(
+    ({ call }) => call.name === "preview-asset-query"
+  );
+  const resourceCreationCalls = indexedCalls.filter(
+    ({ call }) => call.name === "create-assets-resource"
+  );
+  const toResolvedQuery = (
+    configuration: StructuredAssetQueryResourceConfiguration | undefined
+  ) => {
+    if (configuration === undefined) {
+      return;
+    }
+    let valid = true;
+    const resolveValue = (expression: string) => {
+      const literal = parseJsonExpression(expression);
+      if (literal !== undefined) {
+        return literal;
+      }
+      if (normalizeExpression(expression) === "system.params.slug") {
+        return "aurora-trails";
+      }
+      valid = false;
+    };
+    const query = {
+      ...configuration,
+      where: mapQueryWhere(configuration.where, (condition) => ({
+        ...condition,
+        value: resolveValue(condition.value),
+      })),
+      limit: resolveValue(configuration.limit),
+      offset: resolveValue(configuration.offset),
+    };
+    return valid ? query : undefined;
+  };
+  const overviewQueryFingerprints = getAssetQueryContractFingerprints(
+    toResolvedQuery(listing)
+  );
+  const detailQueryFingerprints = getAssetQueryContractFingerprints(
+    toResolvedQuery(article)
+  );
+  const validatedQueryShapeFingerprints = validationCalls.map(
+    ({ call }) => call.arguments?.assetQueryShapeSha256
+  );
+  const lastValidationIndex = validationCalls.at(-1)?.index ?? -1;
+  const previewIndex = previewCalls[0]?.index ?? -1;
+  const firstResourceCreationIndex =
+    resourceCreationCalls[0]?.index ?? Number.POSITIVE_INFINITY;
+  recordCheck(
+    checks,
+    failures,
+    "queryVerification",
+    validationCalls.length === 2 &&
+      validationCalls.every(({ call }) => call.isError !== true) &&
+      overviewQueryFingerprints !== undefined &&
+      detailQueryFingerprints !== undefined &&
+      validatedQueryShapeFingerprints.includes(
+        overviewQueryFingerprints.shapeSha256
+      ) &&
+      validatedQueryShapeFingerprints.includes(
+        detailQueryFingerprints.shapeSha256
+      ) &&
+      previewCalls.length === 1 &&
+      previewCalls[0]?.call.isError !== true &&
+      previewCalls[0]?.call.arguments?.assetQuerySha256 ===
+        detailQueryFingerprints.sha256 &&
+      resourceCreationCalls.length === 2 &&
+      resourceCreationCalls.every(({ call }) => call.isError !== true) &&
+      lastValidationIndex < previewIndex &&
+      previewIndex < firstResourceCreationIndex,
+    "Both blog queries must be validated, then the detail query previewed, before exactly two Assets resources are created."
   );
   recordCheck(
     checks,
     failures,
     "listingQuery",
-    listing !== undefined &&
-      blogFolder !== undefined &&
-      hasWhereCondition({
-        where: listing.where,
-        field: ["extension"],
-        operator: "eq",
-        value: '"md"',
-      }) &&
-      hasWhereCondition({
-        where: listing.where,
-        field: ["folderId"],
-        operator: "eq",
-        value: JSON.stringify(blogFolder.id),
-      }) &&
-      hasWhereCondition({
-        where: listing.where,
-        field: ["properties", "draft"],
-        operator: "ne",
-        value: "true",
-        normalizeExpression,
-      }) &&
-      hasSort(listing.sort, [
-        { field: ["properties", "publishedAt"], direction: "desc" },
-        { field: ["id"], direction: "asc" },
-      ]) &&
-      listing.limit === "20" &&
-      ["title", "slug", "publishedAt"].every((field) =>
-        hasOutputField(listing.output, ["properties", field])
-      ) &&
-      hasOutputField(listing.output, ["properties", "excerpt"]) &&
-      listing.output.includeMetadata === false,
+    matchesOverviewQuery(listing),
     "The overview Assets resource is not a bounded metadata-only published-post query."
   );
   recordCheck(
     checks,
     failures,
     "detailQuery",
-    article !== undefined &&
-      blogFolder !== undefined &&
-      article.content.mode === "markdown-body-ref" &&
-      hasWhereCondition({
-        where: article.where,
-        field: ["extension"],
-        operator: "eq",
-        value: '"md"',
-      }) &&
-      hasWhereCondition({
-        where: article.where,
-        field: ["folderId"],
-        operator: "eq",
-        value: JSON.stringify(blogFolder.id),
-      }) &&
-      hasWhereCondition({
-        where: article.where,
-        field: ["properties", "slug"],
-        operator: "eq",
-        value: "system.params.slug",
-        normalizeExpression,
-      }) &&
-      article.result === "one" &&
-      article.output.includeMetadata === false &&
-      hasOutputField(article.output, ["properties", "body"]) === false,
-    "The detail Assets resource does not defer one Markdown body selected by the dynamic slug parameter."
+    matchesDetailQuery(article, "system.params.slug"),
+    "The detail Assets resource must exclude drafts, select the metadata consumed by the page, and defer one Markdown body selected by the dynamic slug parameter."
   );
   recordCheck(
     checks,
@@ -966,13 +1161,27 @@ const validateMarkdownBlog = (
   };
   const overviewExpressionPaths = getPageExpressionPaths(overview.instances);
   const detailExpressionPaths = getPageExpressionPaths(detail.instances);
+  const overviewCollections = overview.instances.filter(
+    (instance) => instance.component === collectionComponent
+  );
+  const markdownEmbedInstances = detail.instances.filter(
+    (instance) => instance.component === "MarkdownEmbed"
+  );
+  const markdownEmbed = markdownEmbedInstances[0];
+  const markdownCodeBindings = input.project.props.filter(
+    (prop) =>
+      prop.instanceId === markdownEmbed?.id &&
+      prop.name === "code" &&
+      prop.type === "expression"
+  );
+  const markdownCodePath = parseDirectPathExpression(
+    normalizeExpression(String(markdownCodeBindings[0]?.value ?? ""))
+  )?.path;
   recordCheck(
     checks,
     failures,
     "editableBlogBindings",
-    overview.instances.some((instance) =>
-      instance.component.toLowerCase().endsWith("collection")
-    ) &&
+    overviewCollections.length === 1 &&
       [
         "collectionItem.properties.title",
         "collectionItem.properties.excerpt",
@@ -980,33 +1189,87 @@ const validateMarkdownBlog = (
         "collectionItem.properties.slug",
         "collectionItem.properties.author.name",
       ].every((expression) => overviewExpressionPaths.has(expression)) &&
-      detail.instances.some((instance) =>
-        instance.component.toLowerCase().endsWith("collection")
+      detail.instances.every(
+        (instance) => instance.component !== collectionComponent
       ) &&
-      detail.instances.some((instance) =>
-        instance.component.toLowerCase().endsWith("markdownembed")
-      ) &&
-      detailExpressionPaths.has("collectionItem.content.text") &&
-      detailExpressionPaths.has("collectionItem.properties.author.name"),
-    "The blog is not rendered through editable Collections, author bindings, and a Markdown Embed."
+      markdownEmbedInstances.length === 1 &&
+      markdownCodeBindings.length === 1 &&
+      pathsEqual(markdownCodePath, ["post", "data", "content", "text"]) &&
+      detailExpressionPaths.has("post.data.properties.title") &&
+      detailExpressionPaths.has("post.data.properties.author.name"),
+    "The overview must use an editable Collection and the result-one detail must bind directly to a Markdown Embed."
   );
   recordCheck(
     checks,
     failures,
     "bindingVerification",
-    hasSuccessfulCall(input.toolCalls, "insert-fragment-verified") ||
-      hasSuccessfulCall(input.toolCalls, "verify-bindings") ||
-      hasSuccessfulCall(input.toolCalls, "insert-collection"),
-    "The persisted blog bindings were not verified."
+    input.toolCalls.filter(
+      (call) => call.name === "insert-collection" && call.isError !== true
+    ).length === 1 &&
+      input.toolCalls.filter(
+        (call) => call.name === "insert-fragment" && call.isError !== true
+      ).length === 1,
+    "Exactly one persisted overview Collection and one direct detail fragment must be inserted successfully."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "detailPageSettings",
+    (() => {
+      const expected = {
+        title: 'post.data.properties.title ?? "Article"',
+        description: 'post.data.properties.excerpt ?? ""',
+        socialImageUrl: 'post.data.properties.featureImage.src ?? ""',
+        status: "post.data ? 200 : 404",
+      };
+      const matchesExpression = (value: unknown, expression: string) =>
+        typeof value === "string" &&
+        normalizeExpression(value) === normalizeExpression(expression);
+      const pageMatches =
+        matchesExpression(detail.page?.title, expected.title) &&
+        matchesExpression(
+          detail.page?.meta?.description,
+          expected.description
+        ) &&
+        matchesExpression(
+          detail.page?.meta?.socialImageUrl,
+          expected.socialImageUrl
+        ) &&
+        matchesExpression(detail.page?.meta?.status, expected.status);
+      const updateCalls = input.toolCalls.filter(
+        (call) => call.name === "update-page" && call.isError !== true
+      );
+      const updateCall = updateCalls[0];
+      const expectedPageSettingsFingerprint =
+        detail.page === undefined
+          ? undefined
+          : getPageSettingsContractFingerprint({
+              pageId: detail.page.id,
+              values: {
+                title: expected.title,
+                meta: {
+                  description: expected.description,
+                  socialImageUrl: expected.socialImageUrl,
+                  status: expected.status,
+                },
+              },
+            });
+      const callMatches =
+        updateCalls.length === 1 &&
+        expectedPageSettingsFingerprint !== undefined &&
+        updateCall?.arguments?.pageSettingsSha256 ===
+          expectedPageSettingsFingerprint;
+      return pageMatches && callMatches;
+    })(),
+    "The dynamic detail page title, description, social image, and status must be persisted and applied to the detail page from the post resource."
   );
 
-  const verificationCalls = input.toolCalls.filter(
-    (call) => call.name === "verify-page-responsive" && call.isError !== true
+  const verificationCalls = input.toolCalls.flatMap((call, index) =>
+    call.name === "verify-page-responsive" && call.isError !== true
+      ? [{ call, index }]
+      : []
   );
-  const verifiedPaths = new Set(
-    verificationCalls.map((call) => String(call.arguments?.path ?? ""))
-  );
-  const hasBothViewports = verificationCalls.every((call) => {
+  const hasBothViewports = verificationCalls.every(({ call }) => {
     const viewports = Array.isArray(call.arguments?.viewports)
       ? call.arguments.viewports
       : [];
@@ -1030,10 +1293,12 @@ const validateMarkdownBlog = (
     failures,
     "blogRouteEvidence",
     verificationCalls.length === 2 &&
-      verifiedPaths.has("/blog") &&
-      verifiedPaths.has("/blog/aurora-trails") &&
+      verificationCalls[0]?.index === input.toolCalls.length - 2 &&
+      verificationCalls[1]?.index === input.toolCalls.length - 1 &&
+      verificationCalls[0]?.call.arguments?.path === "/blog" &&
+      verificationCalls[1]?.call.arguments?.path === "/blog/aurora-trails" &&
       hasBothViewports,
-    "Both blog routes require successful desktop and mobile rendered verification."
+    "The final two calls must verify /blog and /blog/aurora-trails consecutively at desktop and mobile sizes."
   );
 };
 

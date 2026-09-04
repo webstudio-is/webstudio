@@ -30,7 +30,11 @@ import {
   $selectedOrLastStyleSourceSelector,
 } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
-import { $styles, $styleSourceSelections } from "~/shared/sync/data-stores";
+import {
+  $props,
+  $styles,
+  $styleSourceSelections,
+} from "~/shared/sync/data-stores";
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
@@ -62,8 +66,13 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
 });
 
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $propsIndex, $selectedInstancePathWithRoot],
-  (metas, propsIndex, instancePath) => {
+  [
+    $registeredComponentMetas,
+    $propsIndex,
+    $props,
+    $selectedInstancePathWithRoot,
+  ],
+  (metas, propsIndex, props, instancePath) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
       return instanceTags;
@@ -72,6 +81,7 @@ export const $instanceTags = computed(
       const tag = getHtmlTagFromInstance({
         instance,
         metas,
+        props,
         htmlTagsByInstanceId: propsIndex.htmlTagsByInstanceId,
       });
       if (tag !== undefined) {

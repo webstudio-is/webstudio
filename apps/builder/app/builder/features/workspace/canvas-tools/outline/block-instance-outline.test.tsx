@@ -1,4 +1,6 @@
-import { useState } from "react";
+// Verifies pointer interaction for the Content Block template menu while the
+// canvas editor deliberately retains DOM focus.
+import { useEffect, useState } from "react";
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
@@ -57,17 +59,31 @@ test("supports mouse hover and selection while preserving editor focus", async (
   const firstSelector = [first.id, "templates", "block"];
   const secondSelector = [second.id, "templates", "block"];
   const onValueChangeComplete = vi.fn();
+  const onOpenChange = vi.fn();
+  const editor = document.createElement("input");
+  editor.setAttribute("aria-label", "Editor");
+  document.body.appendChild(editor);
+  editor.focus();
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
 
   const Harness = () => {
+    const [open, setOpen] = useState(true);
+    const [inert, setInert] = useState(true);
     const [value, setValue] = useState<string[] | undefined>(firstSelector);
+    useEffect(() => {
+      const timeout = setTimeout(() => setInert(false), 0);
+      return () => clearTimeout(timeout);
+    }, []);
     return (
       <TooltipProvider>
         <TemplatesMenu
-          open={true}
-          onOpenChange={() => {}}
+          open={open}
+          onOpenChange={(nextOpen) => {
+            onOpenChange(nextOpen);
+            setOpen(nextOpen);
+          }}
           anchor={["current", "block"]}
           triggerTooltipContent={<>Templates</>}
           templates={[
@@ -78,7 +94,7 @@ test("supports mouse hover and selection while preserving editor focus", async (
           onValueChange={setValue}
           onValueChangeComplete={onValueChangeComplete}
           modal={false}
-          inert={false}
+          inert={inert}
           preventFocusOnHover={true}
         >
           <button>Templates</button>
@@ -89,12 +105,12 @@ test("supports mouse hover and selection while preserving editor focus", async (
 
   await act(async () => {
     root?.render(<Harness />);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
   });
 
-  const items = document.querySelectorAll<HTMLElement>(
-    '[role="menuitemradio"]'
-  );
+  let items = document.querySelectorAll<HTMLElement>('[role="menuitemradio"]');
   expect(items).toHaveLength(2);
+  expect(document.activeElement).toBe(editor);
 
   await act(async () => {
     items[1]?.dispatchEvent(
@@ -104,8 +120,11 @@ test("supports mouse hover and selection while preserving editor focus", async (
       })
     );
   });
+  items = document.querySelectorAll<HTMLElement>('[role="menuitemradio"]');
   expect(items[1]?.hasAttribute("data-highlighted")).toBe(true);
+  expect(document.activeElement).toBe(editor);
 
+  let mouseDownWasAllowed = true;
   act(() => {
     items[1]?.dispatchEvent(
       new PointerEvent("pointerdown", {
@@ -114,6 +133,14 @@ test("supports mouse hover and selection while preserving editor focus", async (
         pointerType: "mouse",
       })
     );
+    mouseDownWasAllowed =
+      items[1]?.dispatchEvent(
+        new MouseEvent("mousedown", {
+          bubbles: true,
+          button: 0,
+          cancelable: true,
+        })
+      ) ?? true;
     items[1]?.dispatchEvent(
       new PointerEvent("pointerup", {
         bubbles: true,
@@ -121,7 +148,15 @@ test("supports mouse hover and selection while preserving editor focus", async (
         pointerType: "mouse",
       })
     );
+    items[1]?.dispatchEvent(
+      new MouseEvent("mouseup", { bubbles: true, button: 0 })
+    );
+    items[1]?.click();
   });
 
-  expect(onValueChangeComplete).toHaveBeenCalledWith(secondSelector);
+  expect(mouseDownWasAllowed).toBe(false);
+  expect(onValueChangeComplete).toHaveBeenCalledExactlyOnceWith(secondSelector);
+  expect(onOpenChange).toHaveBeenCalledWith(false);
+  expect(document.querySelectorAll('[role="menuitemradio"]')).toHaveLength(0);
+  expect(document.activeElement).toBe(editor);
 });

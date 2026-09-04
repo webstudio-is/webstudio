@@ -9,6 +9,7 @@ import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { parseExpressionAt } from "acorn";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { parseDirectPathExpression } from "@webstudio-is/expression";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { validateAssetQuery } from "@webstudio-is/content-engine";
@@ -17,6 +18,7 @@ import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
 import { imageDescriptionsSetInput } from "./runtime/assets";
 import { BuilderRuntimeError } from "./runtime/errors";
+import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
@@ -4812,19 +4814,9 @@ describe("project session mcp adapter", () => {
               "collectionItem.properties.author.name"
             ),
           }),
-          detailCollection: expect.objectContaining({
-            parentInstanceId: "<detail-root-id>",
-            data: {
-              type: "expression",
-              value: "post.data == null ? [] : [post.data]",
-            },
-            itemFragment: expect.stringContaining(
-              "collectionItem.content.text"
-            ),
-          }),
           detailFragment: expect.objectContaining({
             parentInstanceId: "<detail-root-id>",
-            fragment: expect.stringContaining("post.data.content.text"),
+            fragment: expect.any(String),
           }),
           detailPageSettings: expect.objectContaining({
             pageId: "<detail-page-id>",
@@ -4849,6 +4841,56 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    const markdownBlogRecipe = (
+      markdownBlogGuide.structuredContent.data as {
+        recipe: {
+          detailResource: {
+            query: {
+              output: { fields: string[][] };
+            };
+          };
+          detailFragment: { fragment: string };
+          detailPageSettings: {
+            values: {
+              meta: { socialImageUrl: string };
+            };
+          };
+        };
+      }
+    ).recipe;
+    const detailFragment = await parseWebstudioJsxFragment(
+      markdownBlogRecipe.detailFragment.fragment
+    );
+    const markdownEmbedInstances = detailFragment.instances.filter(
+      (instance) => instance.component === "MarkdownEmbed"
+    );
+    const markdownCodeProps = detailFragment.props.filter(
+      (prop) =>
+        prop.instanceId === markdownEmbedInstances[0]?.id &&
+        prop.name === "code" &&
+        prop.type === "expression"
+    );
+    expect(markdownEmbedInstances).toHaveLength(1);
+    expect(markdownCodeProps).toHaveLength(1);
+    expect(
+      parseDirectPathExpression(String(markdownCodeProps[0]?.value))?.path
+    ).toEqual(["post", "data", "content", "text"]);
+    expect(
+      markdownBlogRecipe.detailResource.query.output.fields
+    ).toContainEqual(["properties", "featureImage", "src"]);
+    expect(
+      markdownBlogRecipe.detailResource.query.output.fields
+    ).not.toContainEqual(["properties", "featureImage"]);
+    expect(
+      markdownBlogRecipe.detailPageSettings.values.meta.socialImageUrl
+    ).toBe('post.data.properties.featureImage.src ?? ""');
+    expect(
+      (
+        markdownBlogGuide.structuredContent.data as {
+          recipe: Record<string, unknown>;
+        }
+      ).recipe
+    ).not.toHaveProperty("detailCollection");
     expect(authenticatedPageGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: {
@@ -7805,21 +7847,11 @@ describe("project session mcp adapter", () => {
           z.object({
             operation: z.literal("set"),
             instanceId: z.string(),
-            category: z.union([
-              z.literal("sectionTemplates"),
-              z.literal("pageTemplates"),
-              z.literal("integrationTemplates"),
-            ]),
             text: z.string(),
           }),
           z.object({
             operation: z.literal("reset"),
             instanceId: z.string(),
-            category: z.union([
-              z.literal("sectionTemplates"),
-              z.literal("pageTemplates"),
-              z.literal("integrationTemplates"),
-            ]),
           }),
         ])
       ),
@@ -7904,43 +7936,24 @@ describe("project session mcp adapter", () => {
         listedTools.tools.find(({ name }) => name === "set-text-content")
           ?.inputSchema
       ).toMatchObject({
-        properties: {
-          instanceId: { type: "string" },
-          category: {
-            enum: ["sectionTemplates", "pageTemplates", "integrationTemplates"],
-          },
-        },
-        required: ["operation", "instanceId", "category"],
         oneOf: [
           {
             properties: {
-              operation: { const: "set" },
+              operation: { type: "string", const: "set" },
+              instanceId: { type: "string" },
               text: { type: "string" },
             },
-            required: ["text"],
+            required: ["operation", "instanceId", "text"],
           },
           {
             properties: {
-              operation: { const: "reset" },
+              operation: { type: "string", const: "reset" },
+              instanceId: { type: "string" },
             },
+            required: ["operation", "instanceId"],
           },
         ],
       });
-      const setTextContentSchema = listedTools.tools.find(
-        ({ name }) => name === "set-text-content"
-      )?.inputSchema;
-      expect(setTextContentSchema?.properties?.category).toEqual({
-        enum: ["sectionTemplates", "pageTemplates", "integrationTemplates"],
-      });
-      const [setTextVariant] =
-        (setTextContentSchema?.oneOf as unknown[] | undefined) ?? [];
-      expect(getSchemaProperties(setTextVariant).operation).toEqual({
-        const: "set",
-      });
-      expect(
-        listedTools.tools.find(({ name }) => name === "meta.guide")?.inputSchema
-          .properties?.workflow
-      ).not.toHaveProperty("default");
       expect(
         listedTools.tools.find(({ name }) => name === "list-css-variables")
           ?.inputSchema.properties

@@ -1,3 +1,7 @@
+/**
+ * Serializes the safe MDX document model back to authored MDX while choosing
+ * Markdown or JSX syntax without exposing runtime Webstudio instances.
+ */
 import {
   defaultHandlers,
   toMdast,
@@ -38,6 +42,7 @@ type SerializationNode = {
     props?: readonly MdxAuthoredProp[];
     propsUseJsxNames?: boolean;
     jsxName?: string;
+    selfClosing?: boolean;
     rawText?: string;
     rawSource?: string;
   };
@@ -45,6 +50,13 @@ type SerializationNode = {
 
 const protectTextWhitespace = (value: string) =>
   value.replace(/[\t\n\v\f\r ]/g, "\uE000");
+
+/**
+ * Authored template JSX intentionally supports only one static component-name
+ * segment. Member expressions and namespaced names are not template labels.
+ */
+export const isMdxTemplateComponentName = (name: unknown): name is string =>
+  typeof name === "string" && /^[A-Z][A-Za-z0-9_$]*$/.test(name);
 
 const toHastProperties = (props: readonly MdxAuthoredProp[]) =>
   Object.fromEntries(
@@ -80,6 +92,7 @@ const toWebstudioElement = ({
   props,
   children,
   propsUseJsxNames,
+  selfClosing,
 }: {
   tagName?: string;
   jsxName?: string;
@@ -87,12 +100,13 @@ const toWebstudioElement = ({
   props: readonly MdxAuthoredProp[];
   children: readonly MdxAuthoredNode[];
   propsUseJsxNames: boolean;
+  selfClosing?: boolean;
 }): SerializationNode => ({
   type: "element",
   tagName,
   properties: {},
   children: children.map((child) => toSerializationNode(child)),
-  data: { mode, props, propsUseJsxNames, jsxName },
+  data: { mode, props, propsUseJsxNames, jsxName, selfClosing },
 });
 
 const toSerializationNode = (
@@ -113,7 +127,17 @@ const toSerializationNode = (
     };
   }
   if (node.type === "template") {
-    if (node.syntax === "jsx") {
+    const syntax = node.syntax ?? "ws-element";
+    const selfClosing = node.selfClosing ?? node.children.length === 0;
+    if (selfClosing && node.children.length > 0) {
+      throw new Error("Self-closing MDX templates cannot contain children");
+    }
+    if (
+      node.props.some(({ name }) => name === "ws:name" || name === "ws:tag")
+    ) {
+      throw new Error("Named MDX templates cannot use ws:name or ws:tag");
+    }
+    if (syntax === "jsx" && isMdxTemplateComponentName(node.name)) {
       return toWebstudioElement({
         tagName: "ws.template",
         jsxName: node.name,
@@ -121,13 +145,18 @@ const toSerializationNode = (
         props: node.props,
         children: node.children,
         propsUseJsxNames: true,
+        selfClosing,
       });
+    }
+    if (node.name.length === 0) {
+      throw new Error("MDX template names must not be empty");
     }
     return toWebstudioElement({
       mode: node.mdxMode,
       props: [{ name: "ws:name", value: node.name }, ...node.props],
       children: node.children,
       propsUseJsxNames: true,
+      selfClosing,
     });
   }
   if (node.syntax === "mdx") {
@@ -183,7 +212,12 @@ const mapWebstudioElement: Handle = (state, node) => {
     name: prop.name,
     value: prop.value === true ? null : prop.value,
   }));
-  const children = state.all(node as never);
+  let children = state.all(node as never);
+  if (data?.selfClosing === false && children.length === 0) {
+    // hast-util-to-mdast removes empty text nodes. An empty raw node survives
+    // its cleanup and makes the MDX serializer emit an explicit closing tag.
+    children = [{ type: "html", value: "" }];
+  }
   if (data?.mode === "text") {
     return {
       type: "mdxJsxTextElement",

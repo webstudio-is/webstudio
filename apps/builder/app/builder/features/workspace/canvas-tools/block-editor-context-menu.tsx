@@ -3,16 +3,20 @@ import { styled } from "@webstudio-is/design-system";
 
 import {
   $modifierKeys,
+  $registeredComponentMetas,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   $textEditorContextMenuCommand,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
 import { TemplatesMenu } from "./outline/block-instance-outline";
-import { insertTemplateAt } from "./outline/block-utils";
+import {
+  filterInsertableContentBlockTemplates,
+  insertTemplateAt,
+} from "./outline/block-utils";
 import { useCallback, useEffect, useState } from "react";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
@@ -208,6 +212,8 @@ export const TextEditorContextMenu = () => {
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const textEditorContextMenu = useStore($textEditorContextMenu);
   const instances = useStore($instances);
+  const props = useStore($props);
+  const metas = useStore($registeredComponentMetas);
 
   if (textEditorContextMenu === undefined) {
     return;
@@ -226,12 +232,22 @@ export const TextEditorContextMenu = () => {
     return;
   }
 
+  const insertableTemplates = filterInsertableContentBlockTemplates({
+    templates,
+    props,
+    metas,
+  });
+
+  if (insertableTemplates.length === 0) {
+    return;
+  }
+
   return (
     <Menu
       key={JSON.stringify(textEditingInstanceSelector.selector)}
       cursorRect={textEditorContextMenu.cursorRect}
       anchor={textEditingInstanceSelector.selector}
-      templates={templates}
+      templates={insertableTemplates}
     />
   );
 };

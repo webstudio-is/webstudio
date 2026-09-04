@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
   blockComponent,
@@ -8,10 +8,18 @@ import {
   type Prop,
 } from "@webstudio-is/sdk";
 import {
+  $externalContentRoots,
   getAffectedExternalContentTemplateRootKeys,
   isExternalContentInstance,
   isExternalContentMutation,
+  publishExternalContentTemplateMutation,
+  registerExternalContentRoot,
+  subscribeExternalContentTemplateMutations,
 } from "./external-content-mutations";
+
+afterEach(() => {
+  $externalContentRoots.set(new Map());
+});
 
 const instance = (
   id: string,
@@ -444,4 +452,97 @@ test("identifies only instances authored by external content", () => {
   expect(isExternalContentInstance(roots, "external")).toBe(true);
   expect(isExternalContentInstance(roots, "block")).toBe(false);
   expect(isExternalContentInstance(roots, "ordinary")).toBe(false);
+});
+
+test("routes template invalidation through the synchronized root revision", () => {
+  const root = {
+    blockInstanceId: "block",
+    instanceIds: new Set<string>(),
+    mutationRevision: 0,
+    templateMutationRevision: 0,
+  };
+  $externalContentRoots.set(new Map([["scope", root]]));
+  const listener = vi.fn();
+  const unsubscribe = subscribeExternalContentTemplateMutations(listener);
+
+  try {
+    $externalContentRoots.set(
+      new Map([
+        [
+          "scope",
+          {
+            ...root,
+            templateMutationRevision: 1,
+          },
+        ],
+      ])
+    );
+  } finally {
+    unsubscribe();
+  }
+
+  expect(listener).toHaveBeenCalledExactlyOnceWith(["scope"]);
+});
+
+test("publishing a template mutation advances only matching roots", () => {
+  $externalContentRoots.set(
+    new Map([
+      [
+        "current",
+        {
+          blockInstanceId: "current-block",
+          instanceIds: new Set<string>(),
+          mutationRevision: 0,
+          templateMutationRevision: 2,
+        },
+      ],
+      [
+        "other",
+        {
+          blockInstanceId: "other-block",
+          instanceIds: new Set<string>(),
+          mutationRevision: 0,
+          templateMutationRevision: 4,
+        },
+      ],
+    ])
+  );
+
+  publishExternalContentTemplateMutation(["current", "missing"]);
+
+  expect(
+    $externalContentRoots.get().get("current")?.templateMutationRevision
+  ).toBe(3);
+  expect(
+    $externalContentRoots.get().get("other")?.templateMutationRevision
+  ).toBe(4);
+});
+
+test("unregisters the current root after synchronized revisions replace it", () => {
+  const unregister = registerExternalContentRoot("scope", {
+    blockInstanceId: "block",
+    instanceIds: new Set<string>(),
+    mutationRevision: 0,
+  });
+
+  publishExternalContentTemplateMutation(["scope"]);
+  unregister();
+
+  expect($externalContentRoots.get().has("scope")).toBe(false);
+});
+
+test("does not let an older disposer unregister a replacement root", () => {
+  const root = {
+    blockInstanceId: "block",
+    instanceIds: new Set<string>(),
+    mutationRevision: 0,
+  };
+  const unregisterPrevious = registerExternalContentRoot("scope", root);
+  const unregisterCurrent = registerExternalContentRoot("scope", root);
+
+  unregisterPrevious();
+  expect($externalContentRoots.get().has("scope")).toBe(true);
+
+  unregisterCurrent();
+  expect($externalContentRoots.get().has("scope")).toBe(false);
 });

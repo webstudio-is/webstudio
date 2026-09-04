@@ -15,7 +15,9 @@ import {
   getWritableContentBlockDocumentBinding,
   findWritableContentBlockDocumentBindings,
   getContentBlockSourceIntegrityIssues,
+  getContentBlockMdxTemplateDescriptor,
   isEqualContentBlockSource,
+  isContentBlockMdxTemplateInsertable,
   parseContentBlockSourceProp,
 } from "./content-block";
 import { encodeDataSourceVariable } from "./expression";
@@ -66,6 +68,35 @@ const mdxAsset: FileAsset = {
   description: null,
   createdAt: "2026-08-14T00:00:00.000Z",
 };
+
+describe("Content Block MDX template semantics", () => {
+  test("matches element semantics by rendered tag across component types", () => {
+    expect(
+      getContentBlockMdxTemplateDescriptor({
+        component: "Heading",
+        tag: "h2",
+      })
+    ).toEqual({
+      kind: "element",
+      resolutionKey: "element:h2",
+      label: "Heading 2",
+      tag: "h2",
+      insertable: true,
+    });
+  });
+
+  test("keeps custom templates insertable while hiding structural semantics", () => {
+    expect(
+      isContentBlockMdxTemplateInsertable({
+        component: "Element",
+        tag: "td",
+      })
+    ).toBe(false);
+    expect(
+      isContentBlockMdxTemplateInsertable({ component: "CustomCard" })
+    ).toBe(true);
+  });
+});
 
 describe("Content Block source", () => {
   test("finds every Templates container without hiding invalid duplicates", () => {

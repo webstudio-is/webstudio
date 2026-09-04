@@ -1,3 +1,7 @@
+/**
+ * Maps MDX asset references between persisted asset ids and stable authored
+ * paths so materialization and later source edits agree on the same asset.
+ */
 import { createCanonicalAssetPath } from "@webstudio-is/content-engine/mdx";
 import {
   createAssetFolderHierarchy,

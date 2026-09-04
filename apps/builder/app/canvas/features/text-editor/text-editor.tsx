@@ -49,10 +49,12 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { useStore } from "@nanostores/react";
 
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import {
   createId,
+  getHtmlTagFromInstance,
   type Instance,
   type Instances,
   type Props,
@@ -87,7 +89,7 @@ import {
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
 
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import {
   findBlockChildSelector,
   findBlockTemplates,
@@ -106,6 +108,7 @@ import {
 import { selectInstance } from "~/shared/nano-states";
 import { shallowEqual } from "shallow-equal";
 import {
+  filterInsertableContentBlockTemplates,
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
@@ -1042,22 +1045,30 @@ type RichTextContentPluginProps = {
 };
 
 const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
-  const [templates] = useState(() =>
-    findBlockTemplates({
-      anchor: props.rootInstanceSelector,
-      instances: $instances.get(),
-    })
-  );
+  const instances = useStore($instances);
+  const instanceProps = useStore($props);
+  const metas = useStore($registeredComponentMetas);
+  const templates = findBlockTemplates({
+    anchor: props.rootInstanceSelector,
+    instances,
+  });
 
   if (templates === undefined) {
     return;
   }
 
-  if (templates.length === 0) {
+  const insertableTemplates = filterInsertableContentBlockTemplates({
+    templates,
+    props: instanceProps,
+    metas,
+  });
+  if (insertableTemplates.length === 0) {
     return;
   }
 
-  return <RichTextContentPluginInternal {...props} templates={templates} />;
+  return (
+    <RichTextContentPluginInternal {...props} templates={insertableTemplates} />
+  );
 };
 
 const getTag = (instanceId: Instance["id"]) => {
@@ -1067,9 +1078,11 @@ const getTag = (instanceId: Instance["id"]) => {
   if (instance === undefined) {
     return;
   }
-  const meta = metas.get(instance.component);
-  const tags = Object.keys(meta?.presetStyle ?? {});
-  return instance.tag ?? tags[0];
+  return getHtmlTagFromInstance({
+    instance,
+    metas,
+    props: $props.get(),
+  });
 };
 
 const RichTextContentPluginInternal = ({
@@ -1085,6 +1098,7 @@ const RichTextContentPluginInternal = ({
   const [preservedSelection] = useState(rootInstanceSelector);
 
   const handleOpen = useEffectEvent(onOpen);
+  const getTemplates = useEffectEvent(() => templates);
 
   useEffect(() => {
     if (!editor.isEditable()) {
@@ -1268,7 +1282,7 @@ const RichTextContentPluginInternal = ({
             const allowedTags = ["p", "h1", "h2", "h3", "h4", "h5", "h6"];
 
             for (const tag of allowedTags) {
-              const templateSelector = templates.find(
+              const templateSelector = getTemplates().find(
                 ([instance]) => getTag(instance.id) === tag
               )?.[1];
 
@@ -1485,7 +1499,6 @@ const RichTextContentPluginInternal = ({
     onNext,
     preservedSelection,
     rootInstanceSelector,
-    templates,
     transientTextNodeKeys,
   ]);
 
@@ -1736,9 +1749,7 @@ export const TextEditor = ({
         if (instance === undefined) {
           continue;
         }
-        const meta = metas.get(instance.component);
-        const tags = Object.keys(meta?.presetStyle ?? {});
-        const tag = instance.tag ?? tags[0];
+        const tag = getHtmlTagFromInstance({ instance, metas, props });
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (

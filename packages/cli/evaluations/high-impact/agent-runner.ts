@@ -1,12 +1,9 @@
+// Builds bounded high-impact agent tasks and turns their recorded MCP activity
+// and final project state into versioned evaluation results.
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import type { HighImpactFixture } from "./fixtures";
-import {
-  fontAssetFixtureFiles,
-  fontAssetFixtureUploadMeta,
-} from "./font-assets-fixture";
-import { markdownBlogFixtureDocuments } from "./markdown-blog-fixture";
+import type { EvaluationReasoningEffort, HighImpactFixture } from "./fixtures";
 import type {
   EvaluationToolCall,
   HighImpactEvaluationResult,
@@ -29,13 +26,14 @@ export type AgentCliTarget =
   | { kind: "packaged"; executable: string };
 
 export type AgentEvaluationResult = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   kind: "high-impact-minimal-context-agent-evaluation-result";
   fixtureId: HighImpactFixture["id"];
   outcome: "passed" | "failed";
   cli: "source" | "packaged";
   provider: string;
   model: string;
+  reasoningEffort: EvaluationReasoningEffort;
   commandSha256: string;
   exitCode: number;
   metrics: {
@@ -80,8 +78,12 @@ const fixtureToolNames = {
     "create-asset-folder",
     "upload-assets",
     "create-page",
+    "validate-asset-query",
+    "preview-asset-query",
     "create-assets-resource",
     "insert-collection",
+    "insert-fragment",
+    "update-page",
     "verify-page-responsive",
   ],
   "markdown-references-discovery-v1": [
@@ -90,32 +92,15 @@ const fixtureToolNames = {
     "create-asset-folder",
     "upload-assets",
     "create-page",
+    "validate-asset-query",
+    "preview-asset-query",
     "create-assets-resource",
     "insert-collection",
+    "insert-fragment",
+    "update-page",
     "verify-page-responsive",
   ],
 } as const satisfies Record<HighImpactFixture["id"], readonly string[]>;
-
-const markdownBlogUploadInput = JSON.stringify({
-  assets: markdownBlogFixtureDocuments.map(({ name, format }) => ({
-    name,
-    type: "file",
-    format,
-    folderId: "<blog-folder-id>",
-    meta: {},
-  })),
-  assetsDir: ".webstudio/assets",
-});
-
-const fontAssetsUploadInput = JSON.stringify({
-  assets: fontAssetFixtureFiles.map(({ name, format }) => ({
-    name,
-    type: "font",
-    format,
-    meta: fontAssetFixtureUploadMeta,
-  })),
-  assetsDir: ".webstudio/assets",
-});
 
 export const getFixtureToolNames = (fixture: HighImpactFixture) =>
   fixtureToolNames[fixture.id];
@@ -141,83 +126,38 @@ export const createMinimalAgentTask = (
       ? (fixture as HighImpactFixture & { designReference: unknown })
           .designReference
       : undefined;
-  const hasAuthoritativeFixtureSequence =
-    fixture.id === "font-assets-v1" ||
+  const isMarkdownBlogFixture =
     fixture.id === "markdown-blog-v1" ||
     fixture.id === "markdown-references-discovery-v1";
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     fixtureId: fixture.id,
     objective: fixture.objective,
     ...(designReference === undefined ? {} : { designReference }),
+    ...(fixture.agent.inputs === undefined
+      ? {}
+      : { inputs: fixture.agent.inputs }),
+    guidance: {
+      tool: "meta.guide",
+      arguments: fixture.agent.guidance,
+      argumentBindings: { brief: "objective" },
+      calls: 1,
+      followReturnedWorkflow: true,
+    },
     mcp: getCliInvocation(target),
     constraints: [
       "Use the configured Webstudio project and local CLI.",
       "Call Webstudio operations only through the configured webstudio MCP tools exposed directly in your tool list. Never use a shell, terminal, exec tool, node, webstudio CLI shortcut, mcp single-op-call, or mcp run. Shell-invoked operations are invisible to this evaluation and make the result fail.",
-      hasAuthoritativeFixtureSequence
-        ? 'Call meta.guide exactly once at the beginning with {"brief":"<objective>"}: copy the objective field verbatim into brief. Treat its response as reference only; the fixture sequence below is authoritative and supersedes every workflow or next-step suggestion. Do not call meta.guide again.'
-        : 'Call meta.guide exactly once at the beginning with {"brief":"<objective>"}: copy the objective field verbatim into brief, follow the returned workflow, and do not call meta.guide again.',
+      "Run the guidance call exactly once before other tools, then follow its returned workflow and recipe.",
       "Choose focused reads and semantic edits yourself.",
       "Never use broad project reads: snapshot, components.list, or components.coverage-plan.",
       "Do not persist or report credentials or private session data.",
-      ...(hasAuthoritativeFixtureSequence
-        ? []
-        : [
-            "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
-          ]),
-      ...(hasAuthoritativeFixtureSequence
-        ? []
-        : [
-            "Treat the successful final audit and requested visual evidence as terminal; do not mutate, verify, restart preview, or capture more evidence afterward.",
-            "Finish all visual polish before evidence capture. Use one verify-page-responsive call for all requested viewports and the terminal static audit. After it begins, do not mutate, rediscover, restart preview, or capture more evidence.",
-          ]),
-      ...(fixture.id === "authenticated-page-v1"
+      "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
+      "Finish all visual polish before evidence capture. Run the planned verify-page-responsive calls consecutively, once per route with all requested viewports and that route's static audit. During this final verification sequence, make no mutations, discovery calls, preview restarts, or separate evidence calls. After the last planned route verification, make no more tool calls.",
+      ...(isMarkdownBlogFixture
         ? [
-            "For this fixture, meta.guide already returns the required auth discovery and authoring tool schemas. Do not call list-breakpoints because responsive styling is not required, and do not call meta.get-more-tools or any other tool discovery operation. Create exactly one scoped non-secret fixture variable and keep the required state gallery expression-free. Do not call list-variables again after creating it.",
-            "After meta.guide, call inspect-auth-context exactly once. Do not call get-project-settings, list-pages, list-resources, or list-variables separately.",
-            'After the context read, call create-page exactly once. Then call create-variable exactly once with {"name":"Account preview state","scopeInstanceId":"<returned-account-root-id>","value":{"type":"string","value":"signed-out"}}, substituting only the returned root id. Keep type exactly string; do not invent a state type. Then call create-resource exactly once: copy recipe.createResourceInput from meta.guide as the entire create-resource tool input and substitute only its account root id placeholder. Do not wrap that input in another resource object. Keep name, method, url, headers, and searchParams nested under resource; never move them to the top level. Do not set exposeAsDataSource separately, parallelize these mutations, or retry failed calls. Call insert-fragment-verified only after all three succeed, using their returned ids and pagePath /account. Do not call insert-fragment or verify-bindings separately.',
-            'Then call verify-page-responsive exactly once with {"path":"/account","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. It captures both required screenshots and runs the terminal static audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately.',
-          ]
-        : []),
-      ...(fixture.id === "markdown-references-discovery-v1"
-        ? [
-            'For this fixture, the exact sequence below supersedes the workflow and mutation next steps returned by meta.guide. Copy recipe.overviewResource, recipe.detailResource, recipe.overviewCollection, and recipe.detailCollection without reshaping their fields, changing only the documented root and folder id placeholders. After meta.guide, call meta.get-more-tools exactly once with {"tools":["create-assets-resource"]}; do not search by brief or rediscover tools later. Then create the Blog folder, upload all articles, create both pages, create both resources, insert both Collections, and run the two final verifications in that order.',
-            `Create the Blog folder before uploading, then upload all supplied articles together with exactly one upload-assets call using this complete input, substituting only the returned folder id: ${markdownBlogUploadInput}. Do not add, remove, or move fields. Reuse the returned folder id for both resource queries. Create exactly two create-assets-resource calls and exactly two insert-collection calls: one of each per page. Bind the overview Collection to the many-result overview data. For the detail Collection, wrap the one-result detail data as a zero-or-one-item array and render that item. Do not create repair or replacement resources or Collections.`,
-            "Call each mutation in the documented workflow once as a committed mutation. Do not dry-run or plan mutations. If any tool fails, stop immediately and report the failure; never retry it, repair it with repeated mutations, or continue to verification.",
-            "Do not call verify-page-responsive until both Collections succeed. Then call it exactly once for /blog and exactly once for /blog/aurora-trails. Stop without retrying if either verification fails.",
-          ]
-        : []),
-      ...(fixture.id === "design-input-v1"
-        ? [
-            "For this fixture, do not call list-instances because the project has no representative existing page pattern. Do not call meta.index, meta.get-more-tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas.",
-            "After meta.guide, call inspect-design-context exactly once before mutation. Do not call list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Do not call get-page-by-path or repeat discovery. Call create-page once, then call insert-fragment-verified once with pagePath /summer before token or style mutations. Do not call insert-fragment or verify-bindings separately.",
-            "For this fixture, make exactly three attach-design-token calls: attach only the returned Brand / Coral, Text / Ink, and Type / Heading token ids once each to compatible inserted element instance ids. Attach all three tokens in one parallel tool-call batch. Omit the optional position field and do not attempt any other token attachment.",
-            'After the early binding checkpoint, make exactly one batched update-styles call containing all remaining fixed styles. Its updates array must include an item shaped exactly {"instanceId":"<returned-main-or-section-instance-id>","property":"padding-left","value":{"type":"keyword","value":"16px"},"breakpoint":"<returned-mobile-breakpoint-id>"}, substituting only returned ids. The update-styles field is breakpoint, never breakpointId. Do not omit this mobile item; it proves responsive behavior is persisted before preview.',
-            'Use this exact fragment verbatim in the single insert-fragment-verified call; do not add props, styles, expressions, or alternate components until after it commits: <ws.element ws:tag="header"><ws.element ws:tag="nav"><ws.element ws:tag="a">Northstar</ws.element><ws.element ws:tag="button">Menu</ws.element></ws.element></ws.element><ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h1">Find your latitude</ws.element><ws.element ws:tag="p">Plan a memorable summer escape.</ws.element><ws.element ws:tag="a">Explore trips</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Featured trips</ws.element><ws.element ws:tag="article"><ws.element ws:tag="h3">Coastal escape</ws.element><ws.element ws:tag="p">A restorative journey by the sea.</ws.element></ws.element></ws.element></ws.element><ws.element ws:tag="footer"><ws.element ws:tag="p">Northstar travel</ws.element></ws.element>',
-            "The exact fragment already contains all required content. Do not call clone-instance, update-text, set-text-content, or any other content or structure mutation after insertion; only attach the three tokens and apply the one batched style update.",
-            'After the style update, call verify-page-responsive exactly once with {"path":"/summer","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. It captures both required screenshots and runs the terminal static audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately.',
-          ]
-        : []),
-      ...(fixture.id === "font-assets-v1"
-        ? [
-            "Do not call meta.index, meta.get-more-tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas. Upload both supplied fonts together with exactly one upload-assets call; do not use upload-asset.",
-            `Use this exact upload-assets input without adding or moving fields: ${fontAssetsUploadInput}.`,
-            'After upload, update both font assets together in one parallel tool-call batch. For each returned asset id, use exactly {"assetId":"<returned-asset-id>","values":{"meta":{"family":"Rajdhani","style":"normal","weight":600}}}. Keep family, style, and weight inside values.meta; do not send an empty values object. Make exactly two update-asset calls total and stop instead of retrying if either fails.',
-            'After both updates, call verify-font-assets exactly once with both returned asset ids, then call audit exactly once with the complete input {"scopes":["assets"],"limit":10}. Do not add fields such as verbose to the audit input. Do not call refresh or get-asset separately.',
-          ]
-        : []),
-      ...(fixture.id === "markdown-blog-v1"
-        ? [
-            'For this fixture, call meta.get-more-tools exactly once immediately after meta.guide with {"brief":"create-assets-resource"} to load the complete schema for its complex query input. Do not call meta.index, list/get/preview asset tools, list pages, or any other discovery operation. Then create one asset folder named Blog and upload all supplied Markdown files together with exactly one upload-assets call using type file, format md, that returned folder id, empty metadata, and assetsDir .webstudio/assets. Do not create or upload companion JSON descriptors.',
-            `Use this exact upload-assets input, substituting only the returned Blog folder id for <blog-folder-id>: ${markdownBlogUploadInput}.`,
-            "For this fixture, the exact sequence below supersedes every workflow and mutation meta.next suggestion. After a listed call succeeds, continue immediately to the next listed call without inspecting, repairing, updating, or repeating its result. If any call fails, stop immediately; retries and repair mutations fail this evaluation. Never call update-assets-resource or any tool not explicitly listed in these fixture constraints.",
-            "Create exactly two pages: first /blog, then /blog/:slug. Do not call create-assets-resource while creating either page. Never call create-assets-resource without a query. After both page calls succeed, make exactly two create-assets-resource calls total using the complete inputs below; any omitted query or additional resource fails this evaluation.",
-            "Database size is part of the evaluated outcome. The final project must have exactly the two intended reachable Assets queries, one materialized overview, all five source documents included without truncation, and zero embedded Markdown body bytes. Do not leave a placeholder, preview copy, stale resource, or replacement data source in the project.",
-            'First call create-assets-resource exactly once with this complete overview input, substituting the returned overview root id and Blog folder id: {"name":"Published posts","scopeInstanceId":"<overview-root-id>","dataSourceName":"posts","query":{"result":"many","where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["folderId"],"operator":"eq","value":{"type":"literal","value":"<blog-folder-id>"}},{"field":["properties","draft"],"operator":"ne","value":{"type":"literal","value":true}}]},"sort":[{"field":["properties","publishedAt"],"direction":"desc"},{"field":["id"],"direction":"asc"}],"limit":{"type":"literal","value":20},"offset":{"type":"literal","value":0},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","slug"],["properties","publishedAt"],["properties","author"],["properties","excerpt"]]},"content":{"mode":"none"}}}. Keep literal wrappers and field-path arrays unchanged.',
-            'Then call create-assets-resource exactly once with this complete detail input, substituting the returned detail root id and the same Blog folder id: {"name":"Post by slug","scopeInstanceId":"<detail-root-id>","dataSourceName":"post","query":{"result":"one","where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["folderId"],"operator":"eq","value":{"type":"literal","value":"<blog-folder-id>"}},{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"}]},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","author"]]},"content":{"mode":"markdown-body-ref"}}}. Do not call create-assets-resource again.',
-            'After both resources succeed, call insert-collection exactly once on the overview root with {"parentInstanceId":"<overview-root-id>","data":{"type":"expression","value":"posts.data"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h2\">{expression`collectionItem.properties.title ?? \\"Untitled\\"`}</ws.element><ws.element ws:tag=\"p\">{expression`collectionItem.properties.excerpt ?? \\"\\"`}</ws.element><ws.element ws:tag=\"p\">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag=\"time\">{expression`collectionItem.properties.publishedAt ?? \\"\\"`}</ws.element><ws.element ws:tag=\"a\" href={expression`\\"/blog/\\" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>"}, substituting only the returned overview root id.',
-            'Then call insert-collection exactly once on the detail root with {"parentInstanceId":"<detail-root-id>","data":{"type":"expression","value":"post.data == null ? [] : [post.data]"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h1\">{expression`collectionItem.properties.title ?? \\"Untitled\\"`}</ws.element><ws.element ws:tag=\"p\">By {expression`collectionItem.properties.author.name`}</ws.element><$.MarkdownEmbed code={expression`collectionItem.content.text`} /></ws.element>"}, substituting only the returned detail root id. insert-collection validates and persists its bindings atomically, so do not call verify-bindings or perform any repair afterward.',
-            'After both Collections succeed, call verify-page-responsive exactly twice: first with {"path":"/blog","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}, then with {"path":"/blog/aurora-trails","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. Do not mutate, rediscover, restart preview, or capture separate screenshots or audits after verification begins. If either verification fails, stop immediately without retrying or changing the project.',
+            "Treat the supplied asset manifest as input inventory. Derive operation payloads from the MCP schemas and the markdown-blog guide instead of a fixture-specific answer.",
+            "Substitute returned IDs only for the documented placeholders in the guide's recipe. Call each mutation once as a committed mutation; if one fails, stop and report it instead of retrying or inventing a repair workflow.",
           ]
         : []),
     ],
@@ -275,6 +215,7 @@ export const runHighImpactAgentEvaluation = async ({
   resultPath,
   provider,
   model,
+  reasoningEffort,
   getToolCalls,
   getCatalogObservations,
   evaluate,
@@ -290,6 +231,7 @@ export const runHighImpactAgentEvaluation = async ({
   resultPath: string;
   provider: string;
   model: string;
+  reasoningEffort: EvaluationReasoningEffort;
   getToolCalls: () => EvaluationToolCall[];
   getCatalogObservations: () => McpCatalogObservation[];
   evaluate: () => Promise<HighImpactEvaluationResult>;
@@ -333,7 +275,7 @@ export const runHighImpactAgentEvaluation = async ({
   };
   const toolCallMetrics = getMcpEvaluationMetrics(toolCalls);
   const result: AgentEvaluationResult = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     kind: "high-impact-minimal-context-agent-evaluation-result",
     fixtureId: fixture.id,
     outcome:
@@ -347,6 +289,7 @@ export const runHighImpactAgentEvaluation = async ({
     cli: target.kind,
     provider,
     model,
+    reasoningEffort,
     commandSha256: createHash("sha256").update(agentCommand).digest("hex"),
     exitCode: execution.exitCode,
     metrics: {

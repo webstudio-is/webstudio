@@ -1,3 +1,5 @@
+// Serves deterministic in-memory Webstudio project fixtures through the real
+// local API boundary used by high-impact CLI and MCP evaluations.
 import type { Server } from "node:http";
 import { fontFormat, fontMeta } from "@webstudio-is/fonts";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
@@ -30,8 +32,8 @@ const createPersistedPages = (project: EvaluationProject) => ({
   rootFolderId: "root-folder",
   pages: project.pages.map((page) => ({
     ...page,
-    title: page.name,
-    meta: {},
+    title: page.title ?? page.name,
+    meta: page.meta ?? {},
   })),
   folders: [
     {
@@ -51,6 +53,8 @@ const stateToProject = (state: BuilderState): EvaluationProject => ({
     name: page.name,
     path: page.path,
     rootInstanceId: page.rootInstanceId,
+    title: page.title,
+    meta: page.meta,
   })),
   instances: Array.from(
     state.instances?.values() ?? []

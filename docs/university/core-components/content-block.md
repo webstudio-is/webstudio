@@ -40,13 +40,15 @@ Notice that the child of Content Block is Templates.&#x20;
 
 Drag/build the various instances you want to provide editors here.
 
+A Content Block must have exactly one direct Templates container. A missing or second Templates container makes the block invalid. Connected MDX content does not resolve or publish until you restore that structure.
+
 For example, your client wants to update the section under the hero with the latest promotion. Sometimes the promotion is for an event while other times it’s a product. You can create those two designs, add them to “Templates” within Content Block, and your client can insert instances of the desired template and edit its content.
 
 {% hint style="info" %}
 Editors don’t have access to the Style Panel, so be sure to provide fully designed templates.
 {% endhint %}
 
-Every top-level instance within Templates will appear in Content mode like this:
+Reusable top-level templates appear in Content mode like this. Structural and inline templates supplied for MDX styling, such as table cells and emphasis, do not appear as standalone insertion choices.
 
 <div><figure><img src="../../.gitbook/assets/templates-design-mode.png" alt="Templates in Design mode"><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template in Content mode"><figcaption><p>Template in Content mode</p></figcaption></figure></div>
 
@@ -72,9 +74,9 @@ Connect a `.mdx` file when the Content Block's body should live in Assets instea
 
 1. Add the Content Block and design its shell in Design mode.
 2. Place the **Body** outlet where the article body should render.
-3. Style the standard document elements already provided in **Templates**.
+3. Keep exactly one direct **Templates** container. Style the standard document elements already provided inside it.
 4. Add any reusable custom content to **Templates**.
-5. Give every custom top-level template a unique JSX-compatible instance name, such as `PromotionCard`.
+5. Give every custom top-level template a unique instance name. Use a JSX-compatible name such as `PromotionCard` when you want component-style JSX.
 
 New Content Blocks already include a Body outlet and direct templates for every supported Markdown element, including headings, paragraphs, marks, links, images, quotes, lists, task controls, code, separators, and tables. When you connect an older Content Block without a Body outlet, Webstudio adds it automatically.
 
@@ -116,7 +118,7 @@ If the file changes after a canvas edit starts but before it is saved, reload th
 
 An `.mdx` file supports standard Markdown and constrained JSX in one document.
 
-Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Each node uses the uniquely matching semantic template from the Content Block when one exists. Matching uses the element tag or adapted component type, not the template's editable label. If no standard template exists, Webstudio renders the normal semantic fallback. If more than one standard template matches, Webstudio reports a warning and uses the fallback.
+Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Each node uses the uniquely matching semantic template from the Content Block when one exists. Matching uses the element tag or adapted component type, not the template's editable label. If no standard template exists, Webstudio renders the normal semantic fallback. The fallback is still a normal element or component, so its applicable component and global styles continue to work; it simply has no Content Block template styles. If more than one standard template matches, Webstudio reports a warning and uses the fallback.
 
 Use a capitalized JSX name for a uniquely named custom template:
 
@@ -130,11 +132,15 @@ Regular document content stays Markdown and uses the matching standard templates
 </PromotionCard>
 ```
 
-The JSX name must exactly match a unique top-level instance name in the Content Block's Templates list. JSX attributes must be static values. Imports, exports, expressions, spreads, functions, lowercase HTML-looking JSX, and executable JavaScript are not supported.
+The JSX name must exactly match a unique top-level instance name in the Content Block's Templates list. `Image` and `CodeText` are reserved for Webstudio's built-in MDX components. Give custom templates distinct, unique names. Use the legacy `ws:name` syntax when a distinct custom name is not a valid JSX component name.
 
-Explicit JSX children replace the template root's default children. Use a self-closing reference such as `<PromotionCard />` to keep the template's designed default subtree.
+JSX attributes accept quoted static values and bare booleans. Webstudio converts quoted values to the property's declared string, number, or boolean type when possible. Imports, exports, expressions such as `{false}`, spreads, functions, lowercase HTML-looking JSX, and executable JavaScript are not supported.
 
-Template resolution is live. If the file already contains `<PromotionCard />` or a Markdown element that has no matching template, adding the template later updates the rendered content without rewriting the MDX file. Renaming or removing a template re-resolves the same source.
+An explicit JSX child tree that matches the designed template structure overlays its text and supported properties onto the cloned template descendants. Their template styles and structure stay intact. If the child structure does not match, the explicit children replace the template root's default children and each authored child resolves through a matching template when possible. An empty pair such as `<PromotionCard></PromotionCard>` clears the defaults, while a self-closing reference such as `<PromotionCard />` keeps them. If you edit inherited default content in Builder, Webstudio writes that content as explicit JSX children so the edit persists without changing the template.
+
+Template resolution is live. If the file already contains `<PromotionCard />` or a Markdown element that has no matching template, adding the template later updates the rendered content without rewriting the MDX file. This also applies to elements added to an explicit JSX child tree. Renaming or removing a template re-resolves the same source.
+
+If a Content Block that already renders connected MDX temporarily has zero or multiple Templates containers, Builder keeps the last valid rendered content and reports the structural error. Fixing the container structure resolves the current MDX again automatically.
 
 Missing or duplicate custom templates show a source-ranged warning and a selectable placeholder in Builder. Published pages omit only the unresolved custom subtree. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
 
@@ -144,13 +150,20 @@ Existing files can continue using the legacy form when a template name contains 
 <ws.element ws:name="Promotion Card" />
 ```
 
-Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX or `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files.
+Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX or `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files. A confirmed rename changes the reference name. A confirmed removal unwraps and preserves explicit authored children; a self-closing reference disappears because it has no authored children.
 
 #### Use frontmatter in the designed shell
 
 Edit frontmatter as YAML in the MDX file editor. Visual body edits preserve the frontmatter source, including comments and formatting.
 
-To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title` or an image source to `document.frontmatter.featureImage.src`. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
+Store every frontmatter image as an exact `$ref` object so it resolves to structured Asset metadata:
+
+```yaml
+featureImage:
+  $ref: ./images/feature.png
+```
+
+To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title`, an Image source to `document.frontmatter.featureImage.src`, and its alternative text to `document.frontmatter.featureImage.description`. This uses the image's Asset description instead of duplicating alternative text in frontmatter. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
 
 #### Use one file in repeated or shared content
 

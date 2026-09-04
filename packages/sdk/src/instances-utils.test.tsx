@@ -213,6 +213,29 @@ test("get html tag from instance", () => {
       props,
     })
   ).toEqual("section");
+  props.set("dynamic-tag", {
+    id: "dynamic-tag",
+    instanceId: "meta",
+    name: "tag",
+    type: "expression",
+    value: '"aside"',
+    mode: "read",
+  });
+  expect(
+    getHtmlTagFromInstance({
+      instance: instances.get("meta") as Instance,
+      metas,
+      props,
+    })
+  ).toBeUndefined();
+  expect(
+    getHtmlTagFromInstance({
+      instance: instances.get("meta") as Instance,
+      metas,
+      props,
+      htmlTagsByInstanceId: getHtmlTagsFromProps(props),
+    })
+  ).toBeUndefined();
   expect(
     getHtmlTagFromInstance({
       instance: instances.get("prop") as Instance,
@@ -240,6 +263,136 @@ test("get html tag from instance", () => {
   ).toBeUndefined();
 });
 
+test("gets the rendered tag of the deprecated List component", () => {
+  const instance: Instance = {
+    type: "instance",
+    id: "list",
+    component: "List",
+    children: [],
+  };
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    [
+      "List",
+      {
+        presetStyle: { ol: [], ul: [] },
+        props: {
+          ordered: {
+            type: "boolean",
+            control: "boolean",
+            required: false,
+          },
+        },
+        renderedTag: {
+          prop: "ordered",
+          values: { true: "ol", false: "ul" },
+          default: "ul",
+        },
+      },
+    ],
+  ]);
+  const props = new Map<string, Prop>();
+
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBe("ul");
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: false,
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBe("ul");
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: true,
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBe("ol");
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "expression",
+    value: "true",
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "string",
+    value: "false",
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: true,
+  });
+  props.set("ordered-duplicate", {
+    id: "ordered-duplicate",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: false,
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+});
+
+test("does not choose between duplicate tag props", () => {
+  const instance: Instance = {
+    type: "instance",
+    id: "box",
+    component: "Box",
+    children: [],
+  };
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+  ]);
+  const props = new Map<string, Prop>([
+    [
+      "first-tag",
+      {
+        id: "first-tag",
+        instanceId: instance.id,
+        name: "tag",
+        type: "string",
+        value: "article",
+      },
+    ],
+    [
+      "second-tag",
+      {
+        id: "second-tag",
+        instanceId: instance.id,
+        name: "tag",
+        type: "string",
+        value: "aside",
+      },
+    ],
+  ]);
+
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+  const htmlTagsByInstanceId = getHtmlTagsFromProps(props);
+  expect(htmlTagsByInstanceId).toEqual(new Map([[instance.id, "aside"]]));
+  expect(
+    getHtmlTagFromInstance({
+      instance,
+      metas,
+      props,
+      htmlTagsByInstanceId,
+    })
+  ).toBeUndefined();
+});
+
 test("gets html tags from props", () => {
   const { props } = renderData(
     <$.Body ws:id="body">
@@ -252,6 +405,14 @@ test("gets html tags from props", () => {
     name: "tag",
     type: "string",
     value: "article",
+  });
+  props.set("dynamic-tag-prop", {
+    id: "dynamic-tag-prop",
+    instanceId: "dynamic-box",
+    name: "tag",
+    type: "expression",
+    value: '"aside"',
+    mode: "read",
   });
 
   expect(getHtmlTagsFromProps(props)).toEqual(

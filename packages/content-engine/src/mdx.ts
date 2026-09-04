@@ -1,3 +1,7 @@
+/**
+ * Defines the safe MDX document model and owns parsing, validation, asset
+ * reference discovery, and source-preserving document edits.
+ */
 import {
   defaultHandlers,
   toHast,
@@ -34,7 +38,10 @@ import {
 } from "./markdown-ast";
 import { findMarkdownFrontmatter } from "./markdown-scanner";
 import { extractMarkdownBody } from "./markdown-body";
-import { serializeMdxDocument } from "./mdx-serialization";
+import {
+  isMdxTemplateComponentName,
+  serializeMdxDocument,
+} from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
 
 export type MdxSourcePoint = Readonly<{
@@ -60,36 +67,6 @@ export type MdxMarkdownListItem = Readonly<{
   checked?: boolean;
   spread: boolean;
 }>;
-
-export const standardMdxTemplateKeys = [
-  "element:p",
-  "element:h1",
-  "element:h2",
-  "element:h3",
-  "element:h4",
-  "element:h5",
-  "element:h6",
-  "element:blockquote",
-  "element:ul",
-  "element:ol",
-  "element:li",
-  "element:a",
-  "element:hr",
-  "element:br",
-  "element:em",
-  "element:strong",
-  "element:del",
-  "element:code",
-  "element:input",
-  "element:table",
-  "element:thead",
-  "element:tbody",
-  "element:tr",
-  "element:th",
-  "element:td",
-  "component:Image",
-  "component:CodeText",
-] as const;
 
 export type MdxAuthoredNode =
   | Readonly<{
@@ -130,7 +107,20 @@ export type MdxAuthoredNode =
     }>
   | Readonly<{
       type: "template";
+      /**
+       * Additive parse metadata. Legacy callers may omit it; serialization
+       * then preserves the historical ws.element representation.
+       */
       syntax?: "jsx" | "ws-element";
+      /**
+       * Self-closing template usages inherit the template's default children.
+       * Paired tags explicitly replace them, including when children is empty.
+       */
+      /**
+       * Additive parse metadata. Legacy callers may omit it, in which case
+       * serialization infers the historical behavior from children.
+       */
+      selfClosing?: boolean;
       name: string;
       props: readonly MdxAuthoredProp[];
       children: readonly MdxAuthoredNode[];
@@ -345,33 +335,69 @@ const toSourceRange = (position: unknown): MdxSourceRange | undefined => {
   }
 };
 
-const addMdxJsxAttributePositions = (root: SyntaxTreeNode, source: string) => {
+const addMdxJsxSourceMetadata = (root: SyntaxTreeNode, source: string) => {
   if (source.includes("<") === false) {
     return;
   }
-  let ranges: Array<{ start: unknown; end: unknown }>;
+  let events: ReturnType<typeof postprocess>;
   try {
-    ranges = postprocess(
+    events = postprocess(
       parse({ extensions: [mdxjs()] })
         .document()
         .write(preprocess()(source, undefined, true))
-    ).flatMap(([phase, token]) => {
-      const tokenType: string = token.type;
-      return phase === "enter" &&
-        (tokenType === "mdxJsxFlowTagAttribute" ||
-          tokenType === "mdxJsxTextTagAttribute" ||
-          tokenType === "mdxJsxFlowTagExpressionAttribute" ||
-          tokenType === "mdxJsxTextTagExpressionAttribute")
-        ? [{ start: token.start, end: token.end }]
-        : [];
-    });
+    );
   } catch {
-    // Source validation remains owned by the document parser. Location
-    // enrichment must not make otherwise recoverable MDX unrecoverable.
+    // Source validation remains owned by the document parser. Location and
+    // syntax enrichment must not make otherwise recoverable MDX unrecoverable.
     return;
+  }
+  const ranges = events.flatMap(([phase, token]) => {
+    const tokenType: string = token.type;
+    return phase === "enter" &&
+      (tokenType === "mdxJsxFlowTagAttribute" ||
+        tokenType === "mdxJsxTextTagAttribute" ||
+        tokenType === "mdxJsxFlowTagExpressionAttribute" ||
+        tokenType === "mdxJsxTextTagExpressionAttribute")
+      ? [{ start: token.start, end: token.end }]
+      : [];
+  });
+  const selfClosingTagOffsets = new Set<number>();
+  let activeTagStartOffset: number | undefined;
+  for (const [phase, token] of events) {
+    const tokenType: string = token.type;
+    if (
+      phase === "enter" &&
+      (tokenType === "mdxJsxFlowTag" || tokenType === "mdxJsxTextTag")
+    ) {
+      activeTagStartOffset = toSourcePoint(token.start)?.offset;
+      continue;
+    }
+    if (
+      phase === "enter" &&
+      tokenType.endsWith("TagSelfClosingMarker") &&
+      activeTagStartOffset !== undefined
+    ) {
+      selfClosingTagOffsets.add(activeTagStartOffset);
+      continue;
+    }
+    if (
+      phase === "exit" &&
+      (tokenType === "mdxJsxFlowTag" || tokenType === "mdxJsxTextTag")
+    ) {
+      activeTagStartOffset = undefined;
+    }
   }
   const visit = (node: SyntaxTreeNode) => {
     const nodeRange = toSourceRange(node.position);
+    if (
+      nodeRange?.start.offset !== undefined &&
+      (node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement")
+    ) {
+      node.data = {
+        ...(isRecord(node.data) ? node.data : {}),
+        mdxSelfClosing: selfClosingTagOffsets.has(nodeRange.start.offset),
+      };
+    }
     if (nodeRange !== undefined && Array.isArray(node.attributes)) {
       let rangeIndex = ranges.findIndex(({ start }) => {
         const point = toSourcePoint(start);
@@ -608,9 +634,6 @@ const setHastData = (node: SyntaxTreeNode, data: Record<string, unknown>) => {
   node.data = { ...(isRecord(node.data) ? node.data : {}), ...data };
 };
 
-export const isMdxTemplateComponentName = (name: unknown): name is string =>
-  typeof name === "string" && /^[A-Z][A-Za-z0-9_$]*$/.test(name);
-
 const isCommentExpression = (node: SyntaxTreeNode) => {
   if (isRecord(node.data) === false || isRecord(node.data.estree) === false) {
     return false;
@@ -734,7 +757,11 @@ const createMdxJsxElementHandler =
     if (isSyntaxTreeNode(result)) {
       setHastData(result, {
         mdxMode: getMdxMode(node),
-        ...(tagName === "ws.element" ? {} : { mdxTemplateName: tagName }),
+        mdxSelfClosing:
+          isRecord(node.data) && node.data.mdxSelfClosing === true,
+        ...(tagName === "ws.element"
+          ? {}
+          : { mdxTemplateName: tagName, mdxTemplateProps: staticProps }),
         mdxPropSourceRanges: Object.fromEntries(
           staticProps.flatMap((prop) =>
             prop.sourceRange === undefined
@@ -908,6 +935,14 @@ const findHastTemplateName = (node: SyntaxTreeNode) =>
     ? node.data.mdxTemplateName
     : undefined;
 
+const findHastTemplateProps = (node: SyntaxTreeNode) =>
+  isRecord(node.data) && Array.isArray(node.data.mdxTemplateProps)
+    ? (node.data.mdxTemplateProps as readonly MdxAuthoredProp[])
+    : undefined;
+
+const getHastMdxSelfClosing = (node: SyntaxTreeNode) =>
+  isRecord(node.data) && node.data.mdxSelfClosing === true;
+
 const mapHastProperties = (
   node: SyntaxTreeNode,
   options: MapHastOptions,
@@ -1061,6 +1096,7 @@ const mapWebstudioElement = (
     return {
       type: "template",
       syntax: "ws-element",
+      selfClosing: getHastMdxSelfClosing(node),
       name: nameProp.value,
       props: props.filter((prop) => prop.name !== "ws:name"),
       children: mapHastChildren(node, options),
@@ -1146,8 +1182,41 @@ const mapHastNode = (
   }
   const authoredMdxMode = findHastMdxMode(node);
   const templateName = findHastTemplateName(node);
+  const templateProps =
+    templateName === undefined ? undefined : findHastTemplateProps(node);
+  const { props, requiresMdxFallback } =
+    templateProps === undefined
+      ? mapHastProperties(
+          node,
+          options,
+          node.tagName === "ws.element" || templateName !== undefined,
+          node.tagName === "ws.element" &&
+            isRecord(node.properties) &&
+            Object.hasOwn(node.properties, "ws:name")
+        )
+      : { props: templateProps, requiresMdxFallback: false };
+  if (node.tagName === "ws.element") {
+    return mapWebstudioElement(node, props, options);
+  }
+  if (templateName !== undefined) {
+    if (props.some(({ name }) => name === "ws:name" || name === "ws:tag")) {
+      return throwUnsafeNode(
+        node,
+        "Named MDX templates cannot use ws:name or ws:tag"
+      );
+    }
+    return {
+      type: "template",
+      syntax: "jsx",
+      selfClosing: getHastMdxSelfClosing(node),
+      name: templateName,
+      props,
+      children: mapHastChildren(node, options),
+      mdxMode: getHastMdxMode(node),
+      sourceRange: toSourceRange(node.position),
+    };
+  }
   if (
-    node.tagName !== "ws.element" &&
     authoredMdxMode !== undefined &&
     unsupportedElementTags.has(node.tagName.toLowerCase())
   ) {
@@ -1155,28 +1224,6 @@ const mapHastNode = (
       node,
       `Webstudio element tag ${node.tagName} is not supported`
     );
-  }
-  const { props, requiresMdxFallback } = mapHastProperties(
-    node,
-    options,
-    node.tagName === "ws.element" || templateName !== undefined,
-    node.tagName === "ws.element" &&
-      isRecord(node.properties) &&
-      Object.hasOwn(node.properties, "ws:name")
-  );
-  if (node.tagName === "ws.element") {
-    return mapWebstudioElement(node, props, options);
-  }
-  if (templateName !== undefined) {
-    return {
-      type: "template",
-      syntax: "jsx",
-      name: templateName,
-      props,
-      children: mapHastChildren(node, options),
-      mdxMode: getHastMdxMode(node),
-      sourceRange: toSourceRange(node.position),
-    };
   }
   let mdxMode = authoredMdxMode ?? (requiresMdxFallback ? "text" : undefined);
   const children = mapHastChildren(node, options);
@@ -1460,7 +1507,7 @@ export const parseMdxDocument = async ({
       cause,
     });
   }
-  addMdxJsxAttributePositions(root, source);
+  addMdxJsxSourceMetadata(root, source);
   validateAstLimits(root);
 
   return {
@@ -1490,7 +1537,7 @@ export const parseMdxDocumentRecovering = async ({
   try {
     validateMdxSourceBytes({ source, maximumBytes });
     const root = parseMarkdownAst(source, "mdx");
-    addMdxJsxAttributePositions(root, source);
+    addMdxJsxSourceMetadata(root, source);
     validateAstLimits(root);
     const diagnostics: MdxDocumentError[] = [];
     const recovery = createRecoveringHandlers({ source, diagnostics });
@@ -1786,6 +1833,9 @@ const areAuthoredNodesEquivalent = (
   if (left.type === "template" && right.type === "template") {
     return (
       left.name === right.name &&
+      (left.syntax ?? "ws-element") === (right.syntax ?? "ws-element") &&
+      (left.selfClosing ?? left.children.length === 0) ===
+        (right.selfClosing ?? right.children.length === 0) &&
       areAuthoredPropsEqual(left.props, right.props) &&
       areAuthoredNodeListsEquivalent(left.children, right.children, false)
     );
@@ -1930,5 +1980,5 @@ export const replaceMdxFrontmatter = async ({
   return replaceMarkdownFrontmatter({ source, properties });
 };
 
-export { serializeMdxDocument };
+export { isMdxTemplateComponentName, serializeMdxDocument };
 export { createCanonicalAssetPath } from "./asset-path";

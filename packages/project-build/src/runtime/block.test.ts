@@ -103,6 +103,46 @@ describe("block tree helpers", () => {
     ]);
   });
 
+  test("rejects blocks with multiple Templates containers", () => {
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "templates-1" },
+          { type: "id", value: "templates-2" },
+        ]),
+      ],
+      [
+        "templates-1",
+        createInstance("templates-1", blockTemplateComponent, [
+          { type: "id", value: "hero" },
+        ]),
+      ],
+      [
+        "templates-2",
+        createInstance("templates-2", blockTemplateComponent, [
+          { type: "id", value: "pricing" },
+        ]),
+      ],
+      ["hero", createInstance("hero", "Box")],
+      ["pricing", createInstance("pricing", "Box")],
+    ]);
+
+    expect(
+      findBlockTemplates({ anchor: ["block"], instances })
+    ).toBeUndefined();
+  });
+
+  test("does not expose templates without a Templates container", () => {
+    const instances = new Map<Instance["id"], Instance>([
+      ["block", createInstance("block", blockComponent)],
+    ]);
+
+    expect(
+      findBlockTemplates({ anchor: ["block"], instances })
+    ).toBeUndefined();
+  });
+
   test("finds block template insertion index", () => {
     const instances = new Map<Instance["id"], Instance>([
       [

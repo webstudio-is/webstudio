@@ -19,7 +19,11 @@ import {
   DropdownMenuSeparator,
   menuItemCss,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
+import {
+  blockTemplateComponent,
+  type Instance,
+  type Instances,
+} from "@webstudio-is/sdk";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   $blockChildOutline,
@@ -27,19 +31,24 @@ import {
   $hoveredInstanceSelector,
   $isContentMode,
   $modifierKeys,
+  $registeredComponentMetas,
   type BlockChildOutline,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import {
   canDeleteInstanceInContentMode,
+  findBlockContentSelector,
   findBlockSelector,
   findBlockTemplates,
 } from "@webstudio-is/project-build/runtime";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { insertTemplateAt } from "./block-utils";
+import {
+  filterInsertableContentBlockTemplates,
+  insertTemplateAt,
+} from "./block-utils";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";
 import { canvasToolColors } from "../color-recipes";
@@ -48,6 +57,27 @@ import {
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { useOutlineControlPosition } from "./use-outline-control-position";
+
+const hasBlockContent = ({
+  anchor,
+  instances,
+}: {
+  anchor: InstanceSelector;
+  instances: Instances;
+}) => {
+  const contentSelector = findBlockContentSelector({ anchor, instances });
+  const content =
+    contentSelector === undefined
+      ? undefined
+      : instances.get(contentSelector[0]);
+  return (
+    content?.children.some(
+      (child) =>
+        child.type !== "id" ||
+        instances.get(child.value)?.component !== blockTemplateComponent
+    ) ?? false
+  );
+};
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -104,8 +134,7 @@ export const TemplatesMenu = ({
     return;
   }
 
-  // 1 child is Templates instance
-  const hasChildren = blockInstance.children.length > 1;
+  const hasChildren = hasBlockContent({ anchor, instances });
 
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
@@ -174,24 +203,10 @@ export const TemplatesMenu = ({
                           }
                         : undefined
                     }
-                    onPointerDown={
+                    onMouseDown={
                       preventFocusOnHover
                         ? (event) => {
                             event.preventDefault();
-                          }
-                        : undefined
-                    }
-                    onPointerUp={
-                      preventFocusOnHover
-                        ? (event) => {
-                            if (event.button !== 0) {
-                              return;
-                            }
-                            event.preventDefault();
-                            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
-                            handleValueChangeComplete(
-                              JSON.stringify(item.value)
-                            );
                           }
                         : undefined
                     }
@@ -199,7 +214,7 @@ export const TemplatesMenu = ({
                     value={JSON.stringify(item.value)}
                     {...{ [skipInertHandlersAttribute]: true }}
                   >
-                    <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
+                    <Flex css={{ px: theme.spacing[3] }} gap={2}>
                       {item.icon}
                       <Box css={{ textTransform: "none" }}>{item.title}</Box>
                     </Flex>
@@ -258,6 +273,8 @@ export const BlockChildHoveredInstanceOutline = () => {
   const isContentMode = useStore($isContentMode);
   const modifierKeys = useStore($modifierKeys);
   const instances = useStore($instances);
+  const props = useStore($props);
+  const metas = useStore($registeredComponentMetas);
   const clampingRect = useStore($clampingRect);
 
   const timeoutRef = useRef<undefined | ReturnType<typeof setTimeout>>(
@@ -311,12 +328,20 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
-  if (templates.length === 0) {
+  const insertableTemplates = filterInsertableContentBlockTemplates({
+    templates,
+    props,
+    metas,
+  });
+
+  if (insertableTemplates.length === 0) {
     return;
   }
 
-  // 1 child is Templates instance
-  const hasChildren = blockInstance.children.length > 1;
+  const hasChildren = hasBlockContent({
+    anchor: outline.selector,
+    instances,
+  });
 
   const canDeleteHoveredInstance =
     shallowEqual(outline.selector, outline.hoveredSelector) &&
@@ -399,7 +424,7 @@ export const BlockChildHoveredInstanceOutline = () => {
           }}
           anchor={outline.selector}
           triggerTooltipContent={tooltipContent}
-          templates={templates}
+          templates={insertableTemplates}
           onValueChangeComplete={(templateSelector) => {
             const insertBefore = modifierKeys.altKey;
             insertTemplateAt(templateSelector, outline.selector, insertBefore);

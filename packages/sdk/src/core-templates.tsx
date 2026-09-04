@@ -19,6 +19,10 @@ import {
   descendantComponent,
   elementComponent,
 } from "./core-metas";
+import {
+  contentBlockMdxTemplateDescriptors,
+  type ContentBlockMdxTemplateDescriptor,
+} from "./content-block";
 import { contentBlockDocumentProp } from "./schema/content-block";
 
 const elementMeta: TemplateMeta = {
@@ -73,45 +77,68 @@ const BlockTemplate = ws["block-template"];
 const BlockBody = ws["content-block-body"];
 const blockDocument = new Parameter(contentBlockDocumentProp);
 
+const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
+  ({ resolutionKey }) => resolutionKey === "element:li"
+);
+if (listItemMdxTemplateDescriptor?.kind !== "element") {
+  throw new Error("Expected the Content Block list item template descriptor");
+}
+
+const createContentBlockMdxTemplate = (
+  descriptor: ContentBlockMdxTemplateDescriptor
+) => {
+  if (descriptor.kind === "element") {
+    if (descriptor.tag === "ul" || descriptor.tag === "ol") {
+      return (
+        <ws.element
+          key={descriptor.resolutionKey}
+          ws:label={descriptor.label}
+          ws:tag={descriptor.tag}
+        >
+          <ws.element
+            ws:label={listItemMdxTemplateDescriptor.label}
+            ws:tag={listItemMdxTemplateDescriptor.tag}
+          ></ws.element>
+        </ws.element>
+      );
+    }
+    return (
+      <ws.element
+        key={descriptor.resolutionKey}
+        ws:label={descriptor.label}
+        ws:tag={descriptor.tag}
+      ></ws.element>
+    );
+  }
+
+  const Component = $[descriptor.component];
+  if (descriptor.component === "CodeText") {
+    return (
+      <Component key={descriptor.resolutionKey} ws:label={descriptor.label}>
+        {'const status = "ready";'}
+      </Component>
+    );
+  }
+  return (
+    <Component key={descriptor.resolutionKey} ws:label={descriptor.label} />
+  );
+};
+
+const contentBlockDefaultTemplates = contentBlockMdxTemplateDescriptors.flatMap(
+  (descriptor) => [
+    ...(descriptor.resolutionKey === "component:CodeText"
+      ? [<$.HtmlEmbed key="custom:HtmlEmbed" />]
+      : []),
+    createContentBlockMdxTemplate(descriptor),
+  ]
+);
+
 const blockMeta: TemplateMeta = {
   category: "general",
   template: (
     <ws.block document={blockDocument}>
       <BlockTemplate ws:label="Templates">
-        <ws.element ws:label="Paragraph" ws:tag="p"></ws.element>
-        <ws.element ws:label="Heading 1" ws:tag="h1"></ws.element>
-        <ws.element ws:label="Heading 2" ws:tag="h2"></ws.element>
-        <ws.element ws:label="Heading 3" ws:tag="h3"></ws.element>
-        <ws.element ws:label="Heading 4" ws:tag="h4"></ws.element>
-        <ws.element ws:label="Heading 5" ws:tag="h5"></ws.element>
-        <ws.element ws:label="Heading 6" ws:tag="h6"></ws.element>
-        <ws.element ws:label="Unordered List" ws:tag="ul">
-          <ws.element ws:label="List Item" ws:tag="li"></ws.element>
-        </ws.element>
-        <ws.element ws:label="Ordered List" ws:tag="ol">
-          <ws.element ws:label="List Item" ws:tag="li"></ws.element>
-        </ws.element>
-        <ws.element ws:label="List Item" ws:tag="li"></ws.element>
-        <ws.element ws:label="Link" ws:tag="a"></ws.element>
-        <$.Image ws:label="Image" />
-        <ws.element ws:label="Separator" ws:tag="hr" />
-        <ws.element ws:label="Line Break" ws:tag="br" />
-        <ws.element ws:label="Blockquote" ws:tag="blockquote"></ws.element>
-        <ws.element ws:label="Emphasis" ws:tag="em"></ws.element>
-        <ws.element ws:label="Strong" ws:tag="strong"></ws.element>
-        <ws.element ws:label="Strikethrough" ws:tag="del"></ws.element>
-        <ws.element ws:label="Inline Code" ws:tag="code"></ws.element>
-        <ws.element ws:label="Task Checkbox" ws:tag="input" />
-        <ws.element ws:label="Table" ws:tag="table"></ws.element>
-        <ws.element ws:label="Table Head" ws:tag="thead"></ws.element>
-        <ws.element ws:label="Table Body" ws:tag="tbody"></ws.element>
-        <ws.element ws:label="Table Row" ws:tag="tr"></ws.element>
-        <ws.element ws:label="Table Header" ws:tag="th"></ws.element>
-        <ws.element ws:label="Table Cell" ws:tag="td"></ws.element>
-        <$.HtmlEmbed />
-        <$.CodeText ws:label="Code Block">
-          {'const status = "ready";'}
-        </$.CodeText>
+        {contentBlockDefaultTemplates}
       </BlockTemplate>
       <BlockBody>
         <ws.element ws:label="Paragraph" ws:tag="p">

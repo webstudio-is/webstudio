@@ -836,6 +836,14 @@ describe("prebuild", () => {
           {
             id: "content",
             component: "ws:block",
+            children: [{ type: "id", value: "content-templates" }],
+          },
+        ],
+        [
+          "content-templates",
+          {
+            id: "content-templates",
+            component: "ws:block-template",
             children: [],
           },
         ],
@@ -925,6 +933,14 @@ describe("prebuild", () => {
             id: "nested-block",
             component: "ws:block",
             label: "Nested",
+            children: [{ type: "id", value: "nested-templates" }],
+          },
+        ],
+        [
+          "nested-templates",
+          {
+            id: "nested-templates",
+            component: "ws:block-template",
             children: [],
           },
         ],

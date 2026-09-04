@@ -17,171 +17,83 @@ import {
 } from "./agent-runner";
 
 describe("high-impact agent runner", () => {
-  test("points source evaluations at the local CLI", () => {
+  test("serializes fixture contracts without embedding project state", () => {
     const root = resolve(import.meta.dirname, "../../../..");
-    expect(getCliInvocation({ kind: "source", repositoryRoot: root })).toEqual({
+    const target = { kind: "source", repositoryRoot: root } as const;
+    expect(getCliInvocation(target)).toEqual({
       command: process.execPath,
       args: [resolve(root, "packages/cli/local.js"), "mcp"],
     });
-    const task = createMinimalAgentTask(authenticatedPageFixture, {
-      kind: "source",
-      repositoryRoot: root,
+
+    const authTask = createMinimalAgentTask(authenticatedPageFixture, target);
+    expect(authTask).toMatchObject({
+      schemaVersion: 2,
+      fixtureId: authenticatedPageFixture.id,
+      objective: authenticatedPageFixture.objective,
+      guidance: {
+        tool: "meta.guide",
+        arguments: {
+          workflow: "authenticated-page",
+        },
+        argumentBindings: { brief: "objective" },
+        calls: 1,
+        followReturnedWorkflow: true,
+      },
+      mcp: getCliInvocation(target),
     });
-    expect(task).not.toHaveProperty("project");
-    expect(task).toMatchObject({
-      constraints: expect.arrayContaining([
-        expect.any(String),
-        expect.stringContaining("only through the configured webstudio MCP"),
-        expect.stringContaining("Never use a shell"),
-        expect.stringContaining("exactly once at the beginning"),
-        expect.any(String),
-        expect.stringContaining("Never use broad project reads"),
-        expect.any(String),
-        expect.stringContaining("meta.next"),
-        expect.stringContaining("terminal static audit"),
-        expect.stringContaining("Use one verify-page-responsive call"),
-        expect.stringContaining("Do not call list-breakpoints"),
-      ]),
-    });
-    const authConstraints = task.constraints.join("\n");
-    expect(authConstraints).toContain("Do not call list-breakpoints");
-    expect(authConstraints).toContain("do not call meta.get-more-tools");
-    expect(authConstraints).toContain(
-      "Create exactly one scoped non-secret fixture variable"
-    );
-    expect(authConstraints).toContain("Do not call list-variables again");
-    expect(authConstraints).toContain("static audit");
-    expect(authConstraints).toContain(
-      "copy the objective field verbatim into brief"
-    );
-    expect(authConstraints).toContain("call inspect-auth-context exactly once");
-    expect(authConstraints).not.toContain(
-      "call get-project-settings, list-pages, list-resources, and list-variables"
-    );
-    expect(authConstraints).toContain("call create-page exactly once");
-    expect(authConstraints).toContain("copy recipe.createResourceInput");
-    expect(authConstraints).toContain("entire create-resource tool input");
-    expect(authConstraints).toContain(
-      '"value":{"type":"string","value":"signed-out"}'
-    );
-    expect(authConstraints).toContain(
-      "Call insert-fragment-verified only after all three succeed"
-    );
-    expect(authConstraints).toContain(
-      "Do not call insert-fragment or verify-bindings separately"
-    );
-    expect(authConstraints).toContain(
-      "call verify-page-responsive exactly once"
-    );
-    expect(authConstraints).toContain(
-      "Do not call preview.start, screenshot, screenshot.responsive, or audit separately"
-    );
-    expect(
-      createMinimalAgentTask(designInputFixture, {
-        kind: "source",
-        repositoryRoot: root,
-      })
-    ).toMatchObject({
+
+    const designTask = createMinimalAgentTask(designInputFixture, target);
+    expect(designTask).toMatchObject({
+      schemaVersion: 2,
+      fixtureId: designInputFixture.id,
+      objective: designInputFixture.objective,
       designReference: {
         desktop: { viewport: { width: 1440, height: 900 } },
         mobile: { viewport: { width: 390, height: 844 } },
       },
-      constraints: expect.arrayContaining([
-        expect.stringContaining("exactly three attach-design-token calls"),
-        expect.stringContaining("Omit the optional position field"),
-        expect.stringContaining("exactly one batched update-styles call"),
-        expect.stringContaining('"breakpoint":"<returned-mobile'),
-        expect.stringContaining("never breakpointId"),
-        expect.stringContaining("Use this exact fragment verbatim"),
-        expect.stringContaining('ws:tag="footer"'),
-        expect.stringContaining("Do not call clone-instance"),
-        expect.stringContaining("set-text-content"),
-        expect.stringContaining("call inspect-design-context exactly once"),
-        expect.stringContaining("Do not call list-pages, list-breakpoints"),
-        expect.stringContaining("Attach all three tokens in one parallel"),
-        expect.stringContaining("Do not call get-page-by-path"),
-        expect.stringContaining("call insert-fragment-verified once"),
-        expect.stringContaining("pagePath /summer"),
-        expect.stringContaining("do not call list-instances"),
-        expect.stringContaining("Do not call meta.index"),
-      ]),
+      guidance: {
+        tool: "meta.guide",
+        arguments: {
+          workflow: "design-input",
+        },
+        argumentBindings: { brief: "objective" },
+      },
     });
-    const fontConstraints = createMinimalAgentTask(fontAssetsFixture, {
-      kind: "source",
-      repositoryRoot: root,
-    }).constraints;
-    expect(fontConstraints).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining("Do not call meta.index, meta.get-more-tools"),
-        expect.stringContaining("Call meta.guide exactly once"),
-        expect.stringContaining("fixture sequence below is authoritative"),
-        expect.stringContaining("exactly one upload-assets call"),
-        expect.stringContaining(
-          '"name":"rajdhani-latin-600-normal.woff2","type":"font","format":"woff2","meta":{"family":"Imported Rajdhani","style":"normal","weight":400}'
-        ),
-        expect.stringContaining("parallel tool-call batch"),
-        expect.stringContaining("verify-font-assets exactly once"),
-        expect.stringContaining(
-          'audit exactly once with the complete input {"scopes":["assets"],"limit":10}'
-        ),
-        expect.stringContaining("Do not add fields such as verbose"),
-        expect.stringContaining("Do not call refresh or get-asset separately"),
-      ])
-    );
-    expect(fontConstraints.join("\n")).not.toContain(
-      "Use one verify-page-responsive call"
-    );
-    const blogConstraints = createMinimalAgentTask(markdownBlogFixture, {
-      kind: "source",
-      repositoryRoot: root,
-    }).constraints.join("\n");
-    expect(blogConstraints).toContain("one asset folder named Blog");
-    expect(blogConstraints).toContain("one upload-assets call");
-    expect(blogConstraints).toContain("aurora-trails.md");
-    expect(blogConstraints).toContain("city-walks.md");
-    expect(blogConstraints).toContain("Do not create or upload companion JSON");
-    expect(blogConstraints).toContain('"format":"md"');
-    expect(blogConstraints).toContain("/blog/:slug");
-    expect(blogConstraints).toContain(
-      '"field":["properties","draft"],"operator":"ne"'
-    );
-    expect(blogConstraints).toContain(
-      '"value":{"type":"literal","value":true}'
-    );
-    expect(blogConstraints).toContain('"limit":{"type":"literal","value":20}');
-    expect(blogConstraints).toContain('"offset":{"type":"literal","value":0}');
-    expect(blogConstraints).toContain("Never call update-assets-resource");
-    expect(blogConstraints).toContain(
-      "Database size is part of the evaluated outcome"
-    );
-    expect(blogConstraints).toContain("one materialized overview");
-    expect(blogConstraints).toContain("zero embedded Markdown body bytes");
-    expect(blogConstraints).toContain("stale resource");
-    expect(blogConstraints).toContain(
-      '"fields":[["properties","title"],["properties","slug"]'
-    );
-    expect(blogConstraints).toContain('"mode":"none"');
-    expect(blogConstraints).toContain('"mode":"markdown-body-ref"');
-    expect(blogConstraints).not.toContain('["properties","body"]');
-    expect(blogConstraints).toContain('["properties","author"]');
-    expect(blogConstraints).toContain("collectionItem.properties.author.name");
-    expect(blogConstraints).toContain("collectionItem.content.text");
-    expect(blogConstraints).toContain("$.MarkdownEmbed");
-    expect(blogConstraints).toContain(
-      "call verify-page-responsive exactly twice"
-    );
-    expect(blogConstraints).toContain('"path":"/blog/aurora-trails"');
-    expect(blogConstraints).not.toContain(
-      "Use one verify-page-responsive call for all requested viewports"
-    );
+
+    const fontTask = createMinimalAgentTask(fontAssetsFixture, target);
+    expect(fontTask.inputs).toEqual(fontAssetsFixture.agent.inputs);
+    expect(fontTask.guidance).toEqual({
+      tool: "meta.guide",
+      arguments: {
+        workflow: "font-assets",
+      },
+      argumentBindings: { brief: "objective" },
+      calls: 1,
+      followReturnedWorkflow: true,
+    });
+    const blogTask = createMinimalAgentTask(markdownBlogFixture, target);
+    expect(blogTask.inputs).toEqual(markdownBlogFixture.agent.inputs);
+    expect(blogTask.guidance).toEqual({
+      tool: "meta.guide",
+      arguments: {
+        workflow: "markdown-blog",
+      },
+      argumentBindings: { brief: "objective" },
+      calls: 1,
+      followReturnedWorkflow: true,
+    });
     expect(getFixtureToolNames(markdownBlogFixture)).toEqual([
       "meta.guide",
       "meta.get-more-tools",
       "create-asset-folder",
       "upload-assets",
       "create-page",
+      "validate-asset-query",
+      "preview-asset-query",
       "create-assets-resource",
       "insert-collection",
+      "insert-fragment",
+      "update-page",
       "verify-page-responsive",
     ]);
     expect(getFixtureToolNames(markdownBlogFixture)).not.toContain(
@@ -190,62 +102,49 @@ describe("high-impact agent runner", () => {
 
     const discoveryTask = createMinimalAgentTask(
       markdownReferencesDiscoveryFixture,
-      {
-        kind: "source",
-        repositoryRoot: root,
-      }
+      target
     );
-    const discoveryPrompt = JSON.stringify(discoveryTask);
-    expect(discoveryPrompt).not.toContain("$ref");
-    expect(discoveryPrompt).not.toContain('"where"');
-    expect(discoveryPrompt).not.toContain("markdown-body-ref");
-    expect(discoveryPrompt).not.toContain("collectionItem");
-    expect(discoveryPrompt).toContain("Do not dry-run or plan mutations");
-    expect(discoveryPrompt).toContain("without reshaping their fields");
-    expect(discoveryPrompt).toContain("recipe.overviewResource");
-    expect(discoveryPrompt).toContain("recipe.detailResource");
-    expect(discoveryPrompt).toContain("recipe.overviewCollection");
-    expect(discoveryPrompt).toContain("recipe.detailCollection");
-    expect(discoveryPrompt).toContain(
-      "exact sequence below supersedes the workflow and mutation next steps"
+    expect(discoveryTask.inputs).toEqual(
+      markdownReferencesDiscoveryFixture.agent.inputs
     );
-    expect(discoveryPrompt).toContain(
-      "create both pages, create both resources, insert both Collections"
-    );
-    expect(discoveryPrompt).not.toContain(
-      "Use one verify-page-responsive call for all requested viewports"
-    );
-    expect(discoveryPrompt).not.toContain(
-      "Treat mutation meta.next steps as required"
-    );
-    expect(discoveryPrompt).toContain(
-      "upload all supplied articles together with exactly one upload-assets call"
-    );
-    expect(discoveryPrompt).toContain(
-      '\\"type\\":\\"file\\",\\"format\\":\\"md\\",\\"folderId\\":\\"<blog-folder-id>\\"'
-    );
-    expect(discoveryPrompt).toContain(
-      "substituting only the returned folder id"
-    );
-    expect(discoveryPrompt).toContain(
-      "exactly two create-assets-resource calls"
-    );
-    expect(discoveryPrompt).toContain(
-      "wrap the one-result detail data as a zero-or-one-item array"
-    );
-    expect(discoveryPrompt).toContain(
-      'exactly once with {\\"tools\\":[\\"create-assets-resource\\"]}'
-    );
+    expect(discoveryTask.guidance).toEqual({
+      tool: "meta.guide",
+      arguments: {
+        workflow: "markdown-blog",
+      },
+      argumentBindings: { brief: "objective" },
+      calls: 1,
+      followReturnedWorkflow: true,
+    });
     expect(getFixtureToolNames(markdownReferencesDiscoveryFixture)).toEqual([
       "meta.guide",
       "meta.get-more-tools",
       "create-asset-folder",
       "upload-assets",
       "create-page",
+      "validate-asset-query",
+      "preview-asset-query",
       "create-assets-resource",
       "insert-collection",
+      "insert-fragment",
+      "update-page",
       "verify-page-responsive",
     ]);
+
+    for (const task of [
+      authTask,
+      designTask,
+      fontTask,
+      blogTask,
+      discoveryTask,
+    ]) {
+      expect(task).not.toHaveProperty("project");
+      expect(JSON.stringify(task).split(task.objective)).toHaveLength(2);
+      expect(task.constraints.length).toBeGreaterThan(0);
+      expect(
+        task.constraints.every((constraint) => typeof constraint === "string")
+      ).toBe(true);
+    }
   });
 
   test("retains only a bounded privacy-safe result from a real process", async () => {
@@ -274,6 +173,7 @@ describe("high-impact agent runner", () => {
         resultPath,
         provider: "test-provider",
         model: "test-model",
+        reasoningEffort: "low",
         getToolCalls: () => [
           {
             name: "meta.guide",
@@ -312,9 +212,10 @@ describe("high-impact agent runner", () => {
         }),
       });
       expect(result).toMatchObject({
-        schemaVersion: 2,
+        schemaVersion: 3,
         outcome: "failed",
         cli: "packaged",
+        reasoningEffort: "low",
         metrics: {
           durationMs: expect.any(Number),
           tokens: {
@@ -353,14 +254,25 @@ describe("high-impact agent runner", () => {
       const source = await readFile(resultPath, "utf8");
       expect(source).not.toMatch(/transcript|stdout|stderr|credential/i);
       expect(source).not.toContain(usageEvent);
-      expect(JSON.parse(await readFile(taskPath, "utf8"))).toMatchObject({
+      const task = JSON.parse(await readFile(taskPath, "utf8"));
+      expect(task).toMatchObject({
+        schemaVersion: 2,
         fixtureId: "authenticated-page-v1",
         mcp: { args: ["mcp"] },
-        constraints: expect.arrayContaining([
-          expect.stringContaining("terminal static audit"),
-          expect.stringContaining("Use one verify-page-responsive call"),
-        ]),
+        guidance: {
+          tool: "meta.guide",
+          arguments: {
+            workflow: "authenticated-page",
+          },
+          argumentBindings: { brief: "objective" },
+          calls: 1,
+          followReturnedWorkflow: true,
+        },
       });
+      expect(task).not.toHaveProperty("project");
+      expect(task.constraints).toEqual(
+        expect.arrayContaining([expect.any(String)])
+      );
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

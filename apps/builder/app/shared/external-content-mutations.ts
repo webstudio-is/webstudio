@@ -1,3 +1,7 @@
+/**
+ * Owns the synchronized registry of mounted external-content roots and routes
+ * Builder patches to authored-content saves or live-template invalidations.
+ */
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
   applyBuilderNamespacePatches,
@@ -14,10 +18,14 @@ import {
   blockBodyComponent,
   blockComponent,
   findContentBlockTemplateContainers,
+  findTreeInstanceIds,
 } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
+import type {
+  InstanceSelector,
+  MdxTemplateInsertion,
+} from "@webstudio-is/project-build/runtime";
 import type { MdxDocument } from "@webstudio-is/content-engine/mdx";
-import { atom } from "nanostores";
+import { atom, type ReadableAtom } from "nanostores";
 import type { ExternalContentOwnership } from "./external-content-persistence";
 
 export type ExternalContentRoot = {
@@ -31,10 +39,19 @@ export type ExternalContentRoot = {
   instanceIds: ReadonlySet<Instance["id"]>;
   propIds?: ReadonlySet<Prop["id"]>;
   ownership?: ExternalContentOwnership;
+  /** Latest template tree observed in the project stores for mutation routing. */
   templateContainerIds?: readonly Instance["id"][];
+  /** Latest template ownership observed in the project stores. */
   templateOwnership?: ExternalContentOwnership;
   mutationRevision: number;
+  /** Cross-realm signal that the mounted content must resolve templates again. */
+  templateMutationRevision?: number;
   projectId?: string;
+  assetId?: string;
+  /** User-visible failure from the latest template rematerialization attempt. */
+  templateMaterializationError?: string;
+  /** Unsaved clones that retain the exact template selected by the user. */
+  insertedTemplates?: ReadonlyMap<Instance["id"], MdxTemplateInsertion>;
   identity?: ContentBlockExternalContentIdentity;
   diagnostics?: readonly ContentBlockDiagnostic[];
   document?: MdxDocument;
@@ -157,30 +174,73 @@ const mutationListeners = new Set<(rootKeys: readonly string[]) => void>();
 const templateMutationListeners = new Set<
   (rootKeys: readonly string[]) => void
 >();
-const observedMutationRevisions = new Map<string, number>();
+const rootRegistrationGenerations = new Map<string, number>();
 
-$externalContentRoots.listen((roots) => {
-  const changedRootKeys: string[] = [];
-  for (const [key, root] of roots) {
-    const previousRevision = observedMutationRevisions.get(key);
-    observedMutationRevisions.set(key, root.mutationRevision);
-    if (
-      previousRevision !== undefined &&
-      root.mutationRevision > previousRevision
-    ) {
-      changedRootKeys.push(key);
+const observeExternalContentRootMutations = ({
+  store,
+  onMutation,
+  onTemplateMutation,
+}: {
+  store: ReadableAtom<Map<string, ExternalContentRoot>>;
+  onMutation: (rootKeys: readonly string[]) => void;
+  onTemplateMutation: (rootKeys: readonly string[]) => void;
+}) => {
+  const observedMutationRevisions = new Map<string, number>();
+  const observedTemplateMutationRevisions = new Map<string, number>();
+  return store.listen((roots) => {
+    const changedRootKeys: string[] = [];
+    const changedTemplateRootKeys: string[] = [];
+    for (const [key, root] of roots) {
+      const previousRevision = observedMutationRevisions.get(key);
+      observedMutationRevisions.set(key, root.mutationRevision);
+      if (
+        previousRevision !== undefined &&
+        root.mutationRevision > previousRevision
+      ) {
+        changedRootKeys.push(key);
+      }
+      const templateMutationRevision = root.templateMutationRevision ?? 0;
+      const previousTemplateMutationRevision =
+        observedTemplateMutationRevisions.get(key);
+      observedTemplateMutationRevisions.set(key, templateMutationRevision);
+      if (
+        previousTemplateMutationRevision !== undefined &&
+        templateMutationRevision > previousTemplateMutationRevision
+      ) {
+        changedTemplateRootKeys.push(key);
+      }
     }
-  }
-  for (const key of observedMutationRevisions.keys()) {
-    if (roots.has(key) === false) {
-      observedMutationRevisions.delete(key);
+    for (const key of observedMutationRevisions.keys()) {
+      if (roots.has(key) === false) {
+        observedMutationRevisions.delete(key);
+      }
     }
-  }
-  if (changedRootKeys.length > 0) {
+    for (const key of observedTemplateMutationRevisions.keys()) {
+      if (roots.has(key) === false) {
+        observedTemplateMutationRevisions.delete(key);
+      }
+    }
+    if (changedRootKeys.length > 0) {
+      onMutation(changedRootKeys);
+    }
+    if (changedTemplateRootKeys.length > 0) {
+      onTemplateMutation(changedTemplateRootKeys);
+    }
+  });
+};
+
+observeExternalContentRootMutations({
+  store: $externalContentRoots,
+  onMutation(rootKeys) {
     for (const listener of mutationListeners) {
-      listener(changedRootKeys);
+      listener(rootKeys);
     }
-  }
+  },
+  onTemplateMutation(rootKeys) {
+    for (const listener of templateMutationListeners) {
+      listener(rootKeys);
+    }
+  },
 });
 
 export const registerExternalContentRoot = (
@@ -188,18 +248,31 @@ export const registerExternalContentRoot = (
   root: ExternalContentRoot
 ) => {
   const current = $externalContentRoots.get();
+  const registrationGeneration =
+    (rootRegistrationGenerations.get(key) ?? 0) + 1;
+  rootRegistrationGenerations.set(key, registrationGeneration);
   const registeredRoot = {
     ...root,
     mutationRevision: current.get(key)?.mutationRevision ?? 0,
+    templateMutationRevision:
+      current.get(key)?.templateMutationRevision ??
+      root.templateMutationRevision ??
+      0,
+    templateMaterializationError:
+      current.get(key)?.templateMaterializationError,
+    insertedTemplates:
+      current.get(key)?.insertedTemplates ?? root.insertedTemplates,
   };
   $externalContentRoots.set(new Map(current).set(key, registeredRoot));
   return () => {
-    const roots = $externalContentRoots.get();
-    if (roots.get(key) === registeredRoot) {
-      const nextRoots = new Map(roots);
-      nextRoots.delete(key);
-      $externalContentRoots.set(nextRoots);
+    if (rootRegistrationGenerations.get(key) !== registrationGeneration) {
+      return;
     }
+    rootRegistrationGenerations.delete(key);
+    const roots = $externalContentRoots.get();
+    const nextRoots = new Map(roots);
+    nextRoots.delete(key);
+    $externalContentRoots.set(nextRoots);
   };
 };
 
@@ -240,9 +313,88 @@ export const publishExternalContentTemplateMutation = (
   if (rootKeys.length === 0) {
     return;
   }
-  for (const listener of templateMutationListeners) {
-    listener(rootKeys);
+  const roots = $externalContentRoots.get();
+  const nextRoots = new Map(roots);
+  let changed = false;
+  for (const key of rootKeys) {
+    const root = roots.get(key);
+    if (root === undefined) {
+      continue;
+    }
+    nextRoots.set(key, {
+      ...root,
+      templateMutationRevision: (root.templateMutationRevision ?? 0) + 1,
+    });
+    changed = true;
   }
+  if (changed) {
+    $externalContentRoots.set(nextRoots);
+  }
+};
+
+export const recordExternalContentTemplateInsertion = ({
+  instanceSelector,
+  insertion,
+}: {
+  instanceSelector: InstanceSelector;
+  insertion: MdxTemplateInsertion;
+}) => {
+  const roots = $externalContentRoots.get();
+  const entry = findExternalContentRootEntryBySelector(roots, instanceSelector);
+  if (entry === undefined) {
+    return;
+  }
+  const [key, root] = entry;
+  const insertedTemplates = new Map(root.insertedTemplates);
+  insertedTemplates.set(instanceSelector[0], insertion);
+  $externalContentRoots.set(
+    new Map(roots).set(key, { ...root, insertedTemplates })
+  );
+};
+
+export const clearExternalContentTemplateInsertions = ({
+  key,
+  instanceIds,
+}: {
+  key: string;
+  instanceIds: Iterable<Instance["id"]>;
+}) => {
+  const roots = $externalContentRoots.get();
+  const root = roots.get(key);
+  if (root?.insertedTemplates === undefined) {
+    return;
+  }
+  const insertedTemplates = new Map(root.insertedTemplates);
+  for (const instanceId of instanceIds) {
+    insertedTemplates.delete(instanceId);
+  }
+  $externalContentRoots.set(
+    new Map(roots).set(key, {
+      ...root,
+      insertedTemplates:
+        insertedTemplates.size === 0 ? undefined : insertedTemplates,
+    })
+  );
+};
+
+export const updateExternalContentTemplateMaterializationError = ({
+  key,
+  error,
+}: {
+  key: string;
+  error: string | undefined;
+}) => {
+  const roots = $externalContentRoots.get();
+  const root = roots.get(key);
+  if (root === undefined || root.templateMaterializationError === error) {
+    return;
+  }
+  $externalContentRoots.set(
+    new Map(roots).set(key, {
+      ...root,
+      templateMaterializationError: error,
+    })
+  );
 };
 
 export const publishExternalContentMutation = (rootKeys: readonly string[]) => {
@@ -384,11 +536,19 @@ export const getAffectedExternalContentTemplateRootKeys = ({
       if (ownership === undefined) {
         return false;
       }
+      const liveTemplateInstanceIds = new Set(
+        currentTemplateContainerIds.flatMap((containerId) =>
+          Array.from(findTreeInstanceIds(state.instances, containerId))
+        )
+      );
       return doesMutationAffectRoot({
         state,
         root: {
           ...root,
-          instanceIds: ownership.instances ?? new Set(),
+          instanceIds: new Set([
+            ...(ownership.instances ?? []),
+            ...liveTemplateInstanceIds,
+          ]),
           propIds: ownership.props,
           ownership,
         },
@@ -402,6 +562,7 @@ export const getAffectedExternalContentTemplateRootKeys = ({
 type ExternalContentMutationState = {
   instances: NonNullable<BuilderState["instances"]>;
   props?: BuilderState["props"];
+  styleSourceSelections?: BuilderState["styleSourceSelections"];
 };
 
 const getPatchId = (patch: BuilderPatchChange["patches"][number]) => {
@@ -524,10 +685,14 @@ const doesMutationAffectRoot = ({
         return false;
       }
       if (change.namespace === "styles" && "styleSourceId" in patch.value) {
-        return (
-          root.ownership?.styleSources?.has(
-            String(patch.value.styleSourceId)
-          ) === true
+        const styleSourceId = String(patch.value.styleSourceId);
+        if (root.ownership?.styleSources?.has(styleSourceId) === true) {
+          return true;
+        }
+        return Array.from(state.styleSourceSelections?.values() ?? []).some(
+          (selection) =>
+            root.instanceIds.has(selection.instanceId) &&
+            selection.values.includes(styleSourceId)
         );
       }
       return false;
@@ -546,3 +711,5 @@ export const isExternalContentMutation = ({
   Array.from(roots.values()).some((root) =>
     doesMutationAffectRoot({ state, root, payload })
   );
+
+export const __testing__ = { observeExternalContentRootMutations };

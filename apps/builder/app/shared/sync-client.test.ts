@@ -180,6 +180,34 @@ test("recreates transaction values in the receiving realm", () => {
   expect(Object.getPrototypeOf(receivedValue)).toBe(Object.prototype);
 });
 
+test("reports the rejected changes when a transaction is reverted", () => {
+  const store = createFollowerStore();
+  const onRevert = vi.fn();
+  const object = new ImmerhinSyncObject("my-data", store, { onRevert });
+  object.applyTransaction({
+    id: "transaction-id",
+    object: "my-data",
+    payload: [
+      {
+        namespace: "users",
+        patches: [{ op: "add", path: ["james"], value: "James Jameson" }],
+        revisePatches: [{ op: "remove", path: ["james"] }],
+      },
+    ],
+  });
+
+  object.revertTransaction({ id: "transaction-id", object: "my-data" });
+
+  expect(store.containers.get("users")?.get().has("james")).toBe(false);
+  expect(onRevert).toHaveBeenCalledExactlyOnceWith([
+    {
+      namespace: "users",
+      patches: [{ op: "add", path: ["james"], value: "James Jameson" }],
+      revisePatches: [{ op: "remove", path: ["james"] }],
+    },
+  ]);
+});
+
 test("exchange transactions between followers", async () => {
   const emitter = new NanoEventsSyncEmitter();
   const follower1Store = createFollowerStore();
