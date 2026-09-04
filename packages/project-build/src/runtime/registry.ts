@@ -342,8 +342,16 @@ const assetUsageNamespaces = [
 const emptyInput = z.object({});
 const contentBlockOperationInput = z.object({
   blockInstanceId: z.string().min(1),
-  renderScope: z.string().min(1),
-  variables: z.record(z.string(), z.unknown()).optional(),
+  renderScope: z
+    .string()
+    .min(1)
+    .describe("Stable occurrence key; does not load route or resource data."),
+  variables: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe(
+      'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.'
+    ),
 });
 const contentBlockSourceInput = contentBlockOperationInput.extend({
   source: contentBlockSourceSchema,
