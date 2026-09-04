@@ -240,14 +240,20 @@ test("orders collapsible sections and opens only database sizes by default", () 
     },
   });
 
+  const firstDiagnosticTitle =
+    diagnosticTriggers[0]?.parentElement?.querySelector<HTMLButtonElement>(
+      'button[tabindex="-1"]'
+    );
+  expect(firstDiagnosticTitle).not.toBeNull();
   act(() => {
-    diagnosticTriggers[0]?.click();
+    firstDiagnosticTitle?.click();
     diagnosticTriggers[1]?.click();
     sectionTriggers[2]?.click();
     sectionTriggers[3]?.click();
     sectionTriggers[6]?.click();
   });
 
+  expect(diagnosticTriggers[0]?.dataset.state).toBe("open");
   expect(container.textContent).toContain("posts/broken.md:3:1");
   expect(container.textContent).toContain("Warning · posts/broken.md:3:1–3:12");
   expect(container.textContent).toContain("query.where.all.0.field");

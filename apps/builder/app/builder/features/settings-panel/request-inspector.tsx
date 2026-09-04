@@ -140,7 +140,7 @@ export const RequestDiagnosticDisclosure = ({
                 style={{ flexShrink: 0 }}
               />
             )}
-            <SectionTitleLabel>
+            <SectionTitleLabel onClick={() => setIsOpen((value) => !value)}>
               {severity === "error" ? `Error · ${title}` : title}
             </SectionTitleLabel>
           </SectionTitle>
