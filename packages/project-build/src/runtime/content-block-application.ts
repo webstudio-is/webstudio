@@ -26,6 +26,8 @@ import {
   getRequiredComponentInsertData,
 } from "./components";
 import { resolveContentBlockSourceAssetId } from "./block";
+import { computeExpression } from "./data";
+import { throwBuilderRuntimeError } from "./errors";
 import { materializeMdxSource } from "./mdx-source";
 import {
   planMdxTemplateMigration,
@@ -41,6 +43,25 @@ const getData = (state: BuilderState): Omit<WebstudioData, "pages"> => ({
 });
 
 export const mdxAssetInspectionNamespaces = componentInsertReadNamespaces;
+
+const describeValueShape = (value: unknown): string => {
+  if (value === undefined) {
+    return "undefined";
+  }
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  if (typeof value === "object") {
+    const keys = Object.keys(value).slice(0, 10);
+    return keys.length === 0
+      ? "object with no keys"
+      : `object with keys ${keys.map((key) => JSON.stringify(key)).join(", ")}`;
+  }
+  return typeof value;
+};
 
 export const inspectMdxAssetSource = async ({
   source,
@@ -167,11 +188,45 @@ export const createContentBlockApplication = ({
     for (const [name, value] of Object.entries(variables ?? {})) {
       values.set(name, value);
     }
-    const assetId = resolveContentBlockSourceAssetId({ source, values });
-    if (assetId === undefined || assetId === "") {
-      throw new Error("Content source does not resolve to an MDX Asset");
+    if (source.type === "asset") {
+      return source.assetId;
     }
-    return assetId;
+    const evaluated = computeExpression(source.value, values);
+    if (typeof evaluated === "string" && evaluated !== "") {
+      return evaluated;
+    }
+    const suppliedValues = Object.entries(variables ?? {});
+    const resourceNames = Array.from(state.dataSources?.values() ?? [])
+      .filter((dataSource) => dataSource.type === "resource")
+      .map((dataSource) => JSON.stringify(dataSource.name));
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Content source expression does not resolve to an MDX Asset id.",
+      {
+        issues: [
+          {
+            code: "unresolved-content-block-source",
+            path: ["source", "value"],
+            message:
+              "The expression must evaluate to a non-empty MDX Asset id for one rendered occurrence.",
+            constraint: "non_empty_mdx_asset_id",
+            example: {
+              variables: { post: { data: { id: "<mdxAssetId>" } } },
+            },
+            detail: `Expression result: ${describeValueShape(evaluated)}. Supplied values: ${
+              suppliedValues.length === 0
+                ? "none"
+                : suppliedValues
+                    .map(
+                      ([name, value]) =>
+                        `${JSON.stringify(name)} (${describeValueShape(value)})`
+                    )
+                    .join(", ")
+            }. Available project resource variables: ${resourceNames.length === 0 ? "none" : resourceNames.join(", ")}. Resource results are loaded only while rendering and must be supplied in variables for this operation. renderScope is a stable occurrence key; it does not load route data or resource results.`,
+          },
+        ],
+      }
+    );
   };
 
   const open = async ({

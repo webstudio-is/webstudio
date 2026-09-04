@@ -18,8 +18,12 @@ export const runtimeOperationContractData = [
         renderScope: {
           type: "string",
           minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
         },
         variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
           type: "object",
           propertyNames: {
             type: "string",
@@ -490,8 +494,12 @@ export const runtimeOperationContractData = [
         renderScope: {
           type: "string",
           minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
         },
         variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
           type: "object",
           propertyNames: {
             type: "string",
@@ -988,8 +996,12 @@ export const runtimeOperationContractData = [
         renderScope: {
           type: "string",
           minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
         },
         variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
           type: "object",
           propertyNames: {
             type: "string",
@@ -1483,8 +1495,12 @@ export const runtimeOperationContractData = [
         renderScope: {
           type: "string",
           minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
         },
         variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
           type: "object",
           propertyNames: {
             type: "string",
@@ -1944,8 +1960,12 @@ export const runtimeOperationContractData = [
         renderScope: {
           type: "string",
           minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
         },
         variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
           type: "object",
           propertyNames: {
             type: "string",
@@ -2389,8 +2409,12 @@ export const runtimeOperationContractData = [
         renderScope: {
           type: "string",
           minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
         },
         variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
           type: "object",
           propertyNames: {
             type: "string",
@@ -2838,8 +2862,12 @@ export const runtimeOperationContractData = [
         renderScope: {
           type: "string",
           minLength: 1,
+          description:
+            "Stable occurrence key; does not load route or resource data.",
         },
         variables: {
+          description:
+            'Concrete expression values. Result-one example: {post:{data:{id:"<mdxAssetId>"}}}.',
           type: "object",
           propertyNames: {
             type: "string",

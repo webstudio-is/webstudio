@@ -286,6 +286,41 @@ describe("createContentBlockApplication", () => {
     expect(inspected.source).toBe("# From file");
   });
 
+  test("explains unresolved Assets resource expressions without exposing values", async () => {
+    const fixture = createFixture();
+    fixture.state.dataSources?.set("postDataSource", {
+      id: "postDataSource",
+      scopeInstanceId: "block",
+      name: "post",
+      type: "resource",
+      resourceId: "postResource",
+    });
+
+    await expect(
+      fixture.application.inspect({
+        state: fixture.state,
+        blockInstanceId: "block",
+        renderScope: "page:/articles/example",
+        source: { type: "expression", value: "post.data.id" },
+      })
+    ).rejects.toMatchObject({
+      name: "BuilderRuntimeError",
+      code: "BAD_REQUEST",
+      issues: [
+        {
+          code: "unresolved-content-block-source",
+          path: ["source", "value"],
+          constraint: "non_empty_mdx_asset_id",
+          example: {
+            variables: { post: { data: { id: "<mdxAssetId>" } } },
+          },
+          detail:
+            'Expression result: undefined. Supplied values: none. Available project resource variables: "post". Resource results are loaded only while rendering and must be supplied in variables for this operation. renderScope is a stable occurrence key; it does not load route data or resource results.',
+        },
+      ],
+    });
+  });
+
   test("previews frontmatter without mutating the Asset session", async () => {
     const fixture = createFixture();
     const connected = await fixture.application.connect({
