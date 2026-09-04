@@ -110,13 +110,15 @@ export const RequestDiagnosticDisclosure = ({
   title,
   location,
   details,
+  defaultOpen = false,
 }: {
   severity: "error" | "warning";
   title: string;
   location: string;
   details: ReactNode;
+  defaultOpen?: boolean;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <Grid
       css={{
@@ -147,11 +149,17 @@ export const RequestDiagnosticDisclosure = ({
         }
       >
         <Grid
-          columns={2}
-          gap={2}
           css={{
+            gridTemplateColumns: "max-content minmax(0, 1fr)",
+            columnGap: theme.spacing[7],
+            rowGap: theme.spacing[3],
             paddingInline: theme.panel.paddingInline,
-            "& > :nth-child(even)": { overflowWrap: "anywhere" },
+            paddingTop: theme.spacing[2],
+            "& > :nth-child(odd)": { minWidth: theme.spacing[17] },
+            "& > :nth-child(even)": {
+              minWidth: 0,
+              overflowWrap: "anywhere",
+            },
           }}
         >
           <Text color="moreSubtle">Location</Text>
