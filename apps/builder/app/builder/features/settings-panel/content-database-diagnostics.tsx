@@ -434,7 +434,7 @@ export const ContentDatabaseDiagnostics = ({
                     key={`${issue.path.join(".")}:${issue.code}:${index}`}
                     severity={issue.severity}
                     title={issue.message}
-                    label={`Query${
+                    location={`Query${
                       issue.path.length === 0
                         ? ""
                         : ` · ${issue.path.join(".")}`
@@ -447,7 +447,7 @@ export const ContentDatabaseDiagnostics = ({
                     key={`query-warning:${index}`}
                     severity="warning"
                     title={warning}
-                    label="Query setup"
+                    location="Query setup"
                     details="Current query"
                   />
                 ))}
@@ -456,7 +456,7 @@ export const ContentDatabaseDiagnostics = ({
                 key={`${issue.scope}:${issue.assetId}:${issue.code}:${index}`}
                 severity={issue.severity}
                 title={issue.message}
-                label={getRequestSourceDiagnosticLabel(issue)}
+                location={getRequestSourceDiagnosticLabel(issue)}
                 details={getRequestSourceDiagnosticDescription(issue)}
               />
             ))}

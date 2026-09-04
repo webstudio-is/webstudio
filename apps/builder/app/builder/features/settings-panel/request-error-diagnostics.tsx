@@ -365,7 +365,7 @@ export const RequestErrorDiagnostics = ({
             key={`${diagnostic.path}:${diagnostic.code}:${index}`}
             severity={diagnostic.severity}
             title={diagnostic.message}
-            label={getRequestSourceDiagnosticLabel(diagnostic)}
+            location={getRequestSourceDiagnosticLabel(diagnostic)}
             details={getRequestSourceDiagnosticDescription(diagnostic)}
           />
         ))}
@@ -374,7 +374,7 @@ export const RequestErrorDiagnostics = ({
             key={`${diagnostic.path.join(".")}:${diagnostic.code}:${index}`}
             severity={diagnostic.severity}
             title={diagnostic.message}
-            label={`${
+            location={`${
               diagnostic.context === "diagnostics"
                 ? "Diagnostics response"
                 : "Query"

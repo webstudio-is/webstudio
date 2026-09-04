@@ -108,12 +108,12 @@ export const RequestDiagnosticsRow = ({
 export const RequestDiagnosticDisclosure = ({
   severity,
   title,
-  label,
+  location,
   details,
 }: {
   severity: "error" | "warning";
   title: string;
-  label: string;
+  location: string;
   details: ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -146,14 +146,19 @@ export const RequestDiagnosticDisclosure = ({
           </SectionTitle>
         }
       >
-        <Flex
-          direction="column"
-          gap={1}
-          css={{ paddingInline: theme.panel.paddingInline }}
+        <Grid
+          columns={2}
+          gap={2}
+          css={{
+            paddingInline: theme.panel.paddingInline,
+            "& > :nth-child(even)": { overflowWrap: "anywhere" },
+          }}
         >
-          <Text color="moreSubtle">{label}</Text>
+          <Text color="moreSubtle">Location</Text>
+          <Text userSelect="text">{location}</Text>
+          <Text color="moreSubtle">Details</Text>
           <Text userSelect="text">{details}</Text>
-        </Flex>
+        </Grid>
       </CollapsibleSectionRoot>
     </Grid>
   );

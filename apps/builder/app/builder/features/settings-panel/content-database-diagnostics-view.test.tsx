@@ -258,6 +258,12 @@ test("orders collapsible sections and opens only database sizes by default", () 
   expect(container.textContent).toContain("Warning · posts/broken.md:3:1–3:12");
   expect(container.textContent).toContain("query.where.all.0.field");
   expect(container.textContent).toContain("UNOBSERVED_FIELD");
+  const queryDiagnosticContent = document.getElementById(
+    diagnosticTriggers[0]?.getAttribute("aria-controls") ?? ""
+  );
+  expect(queryDiagnosticContent?.textContent).toBe(
+    "LocationQuery · query.where.all.0.fieldDetailsUNOBSERVED_FIELD"
+  );
   const editor = container.querySelector(".cm-content");
   expect(editor).not.toBeNull();
   expect(editor?.getAttribute("aria-readonly")).toBe("true");
