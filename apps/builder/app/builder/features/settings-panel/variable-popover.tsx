@@ -15,7 +15,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
+import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
@@ -30,14 +30,11 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
-  Link,
-  PanelBanner,
   ProChip,
   ScrollArea,
   Select,
   SplitView,
   Switch,
-  Text,
   TextArea,
   Tooltip,
   theme,
@@ -567,30 +564,8 @@ const VariablePanelForm = forwardRef<
     },
     ref
   ) => {
-    const { allowDynamicData } = useStore($permissions);
-
-    const isResource =
-      variableType === "resource" ||
-      variableType === "graphql-resource" ||
-      variableType === "system-resource";
-    const requiresUpgrade = allowDynamicData === false && isResource;
     return (
       <>
-        {requiresUpgrade && (
-          <PanelBanner>
-            <Text>Resource fetching is part of the CMS functionality.</Text>
-            <Flex align="center" gap={1}>
-              <UpgradeIcon />
-              <Link
-                color="inherit"
-                target="_blank"
-                href="https://webstudio.is/pricing"
-              >
-                Upgrade to Pro
-              </Link>
-            </Flex>
-          </PanelBanner>
-        )}
         <Flex
           direction="column"
           css={{
