@@ -11,7 +11,7 @@ on:
 
 concurrency:
   # A synchronize action emits both pull_request and pull_request_target. Keep
-  # their runs separate so approval cleanup cannot cancel the visual check.
+  # same-repository and fork runs separate.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
@@ -19,27 +19,6 @@ permissions:
   contents: read
 
 jobs:
-  remove-approval:
-    if: github.event_name == 'pull_request_target' && github.event.action == 'synchronize'
-    permissions:
-      contents: read
-      pull-requests: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Remove visual change approval
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const labels = context.payload.pull_request.labels.map(({ name }) => name);
-            if (labels.includes('visual-change-approved')) {
-              await github.rest.issues.removeLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                name: 'visual-change-approved',
-              });
-            }
-
   visual-regression:
     # Same-repository PRs use the unprivileged event. Organization members'
     # fork PRs are trusted; every other fork revision needs safe-to-deploy.

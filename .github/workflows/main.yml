@@ -5,10 +5,8 @@ on:
     branches:
       - main
   pull_request:
-  pull_request_target:
-    types: [labeled]
+  workflow_call:
 
-# Keep pull_request_target label events from canceling pull_request checks.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true

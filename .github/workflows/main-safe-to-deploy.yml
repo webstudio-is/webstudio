@@ -1,0 +1,16 @@
+name: Main workflow for approved forks
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  main:
+    # GitHub cannot filter labeled events by label name. Gate one workflow call
+    # instead of adding a skipped copy of every Main workflow job.
+    if: github.event.label.name == 'safe-to-deploy'
+    uses: ./.github/workflows/main.yml
+    secrets: inherit

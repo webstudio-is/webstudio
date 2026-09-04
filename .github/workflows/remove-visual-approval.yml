@@ -1,0 +1,32 @@
+name: Remove visual change approval
+
+# Keep synchronization-only housekeeping out of label-triggered visual runs.
+on:
+  pull_request_target:
+    types: [synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  remove-approval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove visual change approval
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(({ name }) => name);
+            if (labels.includes('visual-change-approved')) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'visual-change-approved',
+              });
+            }
