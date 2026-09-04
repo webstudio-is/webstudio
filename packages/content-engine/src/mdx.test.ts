@@ -1271,7 +1271,7 @@ describe("parseMdxDocumentRecovering", () => {
 
   test("continues after an unsupported component to report every sibling", async () => {
     const result = await validateMdxDocumentSource({
-      source: "{first()}\n\n<Card />\n\n{second()}\n",
+      source: "{first()}\n\n<Card.Item />\n\n{second()}\n",
     });
 
     expect(result.diagnostics).toEqual([
@@ -1289,12 +1289,14 @@ describe("parseMdxDocumentRecovering", () => {
       {
         code: "unsafe-mdx",
         severity: "warning",
-        message: "Only the ws.element component is supported in authored MDX",
+        message:
+          "Only ws.element and named template components are supported in authored MDX",
         nodeType: "mdxJsxFlowElement",
-        reason: "Only the ws.element component is supported in authored MDX",
+        reason:
+          "Only ws.element and named template components are supported in authored MDX",
         sourceRange: {
           start: { line: 3, column: 1, offset: 11 },
-          end: { line: 3, column: 9, offset: 19 },
+          end: { line: 3, column: 14, offset: 24 },
         },
       },
       {
@@ -1304,8 +1306,8 @@ describe("parseMdxDocumentRecovering", () => {
         nodeType: "mdxFlowExpression",
         reason: "Executable MDX expressions are not supported",
         sourceRange: {
-          start: { line: 5, column: 1, offset: 21 },
-          end: { line: 5, column: 11, offset: 31 },
+          start: { line: 5, column: 1, offset: 26 },
+          end: { line: 5, column: 11, offset: 36 },
         },
       },
     ]);
@@ -1313,13 +1315,13 @@ describe("parseMdxDocumentRecovering", () => {
 
   test("reports diagnostics nested inside an unsupported component", async () => {
     const result = await validateMdxDocumentSource({
-      source: "<Card>{danger()}<Other /></Card>\n",
+      source: "<Card.Item>{danger()}<Other.Item /></Card.Item>\n",
     });
 
     expect(result.diagnostics.map(({ message }) => message)).toEqual([
-      "Only the ws.element component is supported in authored MDX",
+      "Only ws.element and named template components are supported in authored MDX",
       "Executable MDX expressions are not supported",
-      "Only the ws.element component is supported in authored MDX",
+      "Only ws.element and named template components are supported in authored MDX",
     ]);
     expect(
       result.diagnostics.map((diagnostic) =>
@@ -1327,7 +1329,7 @@ describe("parseMdxDocumentRecovering", () => {
           ? diagnostic.sourceRange?.start.offset
           : undefined
       )
-    ).toEqual([0, 6, 16]);
+    ).toEqual([0, 11, 21]);
   });
 
   test("ignores invalid JSX properties without dropping the element", async () => {

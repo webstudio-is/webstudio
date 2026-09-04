@@ -73,6 +73,41 @@ describe("MDX template migration", () => {
     });
   });
 
+  test("renames JSX references and uses legacy syntax for incompatible names", async () => {
+    const file = {
+      ...files[0],
+      source: "<Card><Card /></Card>",
+    };
+    const jsxPlan = await planMdxTemplateMigration({
+      projectId: "project",
+      migration: { type: "rename", from: "Card", to: "FeatureCard" },
+      files: [file],
+    });
+    expect(jsxPlan.files[0]?.source).toBe(
+      "<FeatureCard>\n  <FeatureCard />\n</FeatureCard>\n"
+    );
+
+    const legacyPlan = await planMdxTemplateMigration({
+      projectId: "project",
+      migration: { type: "rename", from: "Card", to: "Feature Card" },
+      files: [file],
+    });
+    expect(legacyPlan.files[0]?.source).toBe(
+      '<ws.element ws:name="Feature Card">\n  <ws.element ws:name="Feature Card" />\n</ws.element>\n'
+    );
+    await expect(
+      parseMdxDocument({ source: legacyPlan.files[0]?.source ?? "" })
+    ).resolves.toMatchObject({
+      children: [
+        {
+          type: "template",
+          name: "Feature Card",
+          children: [{ type: "template", name: "Feature Card" }],
+        },
+      ],
+    });
+  });
+
   test("omits the complete matching subtree and reports invalid files", async () => {
     const plan = await planMdxTemplateMigration({
       projectId: "project",

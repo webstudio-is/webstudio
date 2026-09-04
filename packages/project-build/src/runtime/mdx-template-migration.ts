@@ -1,4 +1,5 @@
 import {
+  isMdxTemplateComponentName,
   parseMdxDocument,
   serializeMdxDocument,
   type MdxAuthoredNode,
@@ -102,6 +103,11 @@ const updateNodes = (
       nextNodes.push({
         ...node,
         name: migration.to,
+        syntax:
+          node.syntax === "jsx" &&
+          isMdxTemplateComponentName(migration.to) === false
+            ? "ws-element"
+            : node.syntax,
         children: children.nodes,
       });
       continue;
