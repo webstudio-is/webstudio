@@ -1,9 +1,9 @@
-import { nanoid } from "nanoid";
 import { useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
 import {
+  createId,
   type Instance,
   type Prop,
   type Props,
@@ -378,7 +378,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
           if (isEphemeral && value !== undefined) {
             memoryInstanceProp.set(animationAction.propName, {
-              id: nanoid(),
+              id: createId("nano"),
               instanceId: props.instanceId,
               type: "animationAction",
               name: animationAction.propName,

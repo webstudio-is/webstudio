@@ -3,6 +3,7 @@ import {
   AuthorizationError,
   getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
+import { createId } from "@webstudio-is/sdk";
 import {
   type NotificationType,
   type NotificationStatus,
@@ -89,7 +90,7 @@ export const create = async (
     }
   }
 
-  const newId = crypto.randomUUID();
+  const newId = createId();
 
   const result = await context.postgrest.client
     .from("Notification")

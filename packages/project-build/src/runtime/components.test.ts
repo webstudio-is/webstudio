@@ -2539,7 +2539,7 @@ test("inserts into instances without children field", async () => {
   });
 });
 
-test("rejects generated id collisions", async () => {
+test("reports the namespace and stage of generated id collisions", async () => {
   const parent = createParent();
   const state = createState(parent);
   state.instances.set("generated-1", {
@@ -2549,7 +2549,7 @@ test("rejects generated id collisions", async () => {
     children: [],
   });
 
-  expect(() =>
+  try {
     insertComponent(
       state,
       {
@@ -2559,6 +2559,59 @@ test("rejects generated id collisions", async () => {
       {
         createId: createIdFactory(),
       }
-    )
-  ).toThrow('Generated instance id "generated-1" already exists');
+    );
+    throw new Error("Expected insertion to reject the generated ID collision");
+  } catch (error) {
+    expect(error).toMatchObject({
+      code: "CONFLICT",
+      message: "Generated record ID already exists in instances.",
+      issues: [
+        {
+          code: "generated_id_conflict",
+          path: [],
+          constraint: "unique_generated_id:instances",
+          detail: "stage:fragment-instance-insertion",
+        },
+      ],
+    });
+    expect(JSON.stringify(error)).not.toContain("generated-1");
+  }
+});
+
+test("reports generated record collision context without exposing the id", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  state.props.set("generated-1", {
+    id: "generated-1",
+    instanceId: parent.id,
+    name: "existing",
+    type: "string",
+    value: "existing",
+  });
+  const fragment = await parseWebstudioJsxFragment(
+    '<$.HtmlEmbed code="<p>New</p>" />'
+  );
+
+  try {
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    );
+    throw new Error("Expected insertion to reject the generated ID collision");
+  } catch (error) {
+    expect(error).toMatchObject({
+      code: "CONFLICT",
+      message: "Generated record ID already exists in props.",
+      issues: [
+        {
+          code: "generated_id_conflict",
+          path: [],
+          constraint: "unique_generated_id:props",
+          detail: "stage:fragment-record-insertion",
+        },
+      ],
+    });
+    expect(JSON.stringify(error)).not.toContain("generated-1");
+  }
 });

@@ -2221,6 +2221,8 @@ describe("builder runtime registry", () => {
 
     expect(schema?.properties).toHaveProperty("confirmReplacement");
     expect(switchSchema?.properties).not.toHaveProperty("confirmReplacement");
+    expect(schema?.properties?.renderScope).toHaveProperty("description");
+    expect(schema?.properties?.variables).toHaveProperty("description");
   });
 
   test("keeps router adapter policy in runtime metadata", () => {

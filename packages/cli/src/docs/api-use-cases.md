@@ -131,7 +131,7 @@ Notes:
 
 Commands:
 
-- MCP tool: preview.start {"host":"127.0.0.1","port":5173}
+- MCP tool: preview.start {}
 - MCP tool: preview.status {}
 - MCP tool: preview.stop {}
 - MCP tool: screenshot {"path":"/","output":".webstudio/screenshots/home-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
@@ -147,6 +147,7 @@ Notes:
 
 - Enter this workflow only when the user explicitly requests visual verification or opts in after being asked. Do not start preview, screenshots, diffs, OCR, or rendered audits automatically after a mutation.
 - `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are omitted. When present, `renderedProjectVersion` is the last project version materialized into the preview.
+- MCP preview and path-based screenshot tools select an available loopback port and return the preview URL. Do not pass `host` or `port`.
 - A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
 
 - After opt-in, use this so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
@@ -472,7 +473,8 @@ Notes:
 
 - Create the local `.mdx` file under `.webstudio/assets` before calling `upload-asset`. Use the returned Asset ID when connecting it.
 - Use the Content Block source operations for connecting, switching, inspecting, editing, reloading, and disconnecting. Do not create or delete the `src` prop with generic prop tools; the source operations preserve the Body outlet and Content Block lifecycle.
-- `renderScope` is a stable key for the rendered occurrence. Use a page-based key for a direct Content Block. For a repeated Collection occurrence, use a distinct key and pass the scoped values required to resolve an expression source. For example, use `source:{"type":"expression","value":"post.assetId"}` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
+- `renderScope` accepts any non-empty stable key for one rendered occurrence. Use a page-based key for a direct Content Block and a distinct key for each repeated Collection occurrence. It does not load a page, route parameters, or resource results. Supply the concrete scoped values needed to resolve an expression through `variables`.
+- For a result-one Assets resource, preview the concrete query, then connect its persisted expression with the previewed item supplied as `variables`, for example `source:{"type":"expression","value":"post.data.id"}` and `variables:{"post":{"data":{"id":"<mdxAssetId>"}}}`.
 - Connecting replaces existing Body content. If the result returns `requiresConfirmation:true`, report that replacement to the user and repeat the same call with `confirmReplacement:true` only after approval.
 - Prefer Markdown whenever it can represent the component and all authored properties. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties that Markdown cannot express. Use `<ws.element ws:name="Template name">` only for a uniquely named top-level Content Block template.
 - Read the Content Block's Templates children before writing `ws:name`. The value must exactly match a unique top-level template instance name. Preserve unresolved names and report their diagnostics instead of deleting them.
@@ -1277,7 +1279,7 @@ Commands:
 - MCP tool: list-breakpoints {}
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section'><ws.element ws:tag='p'>Section copy</ws.element></ws.element>"}
 - MCP tool: update-styles {"updates":[{"instanceId":"<instanceId>","breakpoint":"<breakpointId-from-list-breakpoints>","property":"padding-left","value":{"type":"unit","unit":"px","value":24}}]}
-- MCP tool: preview.start {"host":"127.0.0.1","port":5173}
+- MCP tool: preview.start {}
 - MCP tool: screenshot {"path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"path":"/landing","output":"landing-mobile.png","viewport":{"width":390,"height":844},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}

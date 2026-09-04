@@ -1,5 +1,5 @@
-import { nanoid } from "nanoid";
 import {
+  createId,
   initialBreakpoints,
   type Pages,
   type WebstudioData,
@@ -11,12 +11,12 @@ import { createRootFolder } from "./shared/pages-utils";
 export const createPages = (): WebstudioData => {
   const breakpoints = initialBreakpoints.map((breakpoint) => ({
     ...breakpoint,
-    id: nanoid(),
+    id: createId("nano"),
   }));
-  const homePageId = nanoid();
-  const homeBodyId = nanoid();
-  const notFoundPageId = nanoid();
-  const notFoundBodyId = nanoid();
+  const homePageId = createId("nano");
+  const homeBodyId = createId("nano");
+  const notFoundPageId = createId("nano");
+  const notFoundBodyId = createId("nano");
 
   const data = renderData(
     <>
@@ -94,7 +94,7 @@ export const createPages = (): WebstudioData => {
         {coreTemplates.builtWithWebstudio.template}
       </ws.element>
     </>,
-    nanoid,
+    () => createId("nano"),
     breakpoints
   );
 

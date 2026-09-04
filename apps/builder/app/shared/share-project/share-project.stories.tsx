@@ -7,7 +7,7 @@ import {
   StorySection,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import {
   type LinkOptions,
   ShareProject as ShareProjectComponent,
@@ -20,7 +20,7 @@ export default {
 
 const initialLinks: Array<LinkOptions> = [
   {
-    token: nanoid(),
+    token: createId("nano"),
     name: "View Only",
     relation: "viewers",
     canClone: false,
@@ -29,7 +29,7 @@ const initialLinks: Array<LinkOptions> = [
     canUseApi: false,
   },
   {
-    token: nanoid(),
+    token: createId("nano"),
     name: "View and Edit",
     relation: "editors",
     canClone: false,
@@ -38,7 +38,7 @@ const initialLinks: Array<LinkOptions> = [
     canUseApi: false,
   },
   {
-    token: nanoid(),
+    token: createId("nano"),
     name: "Build",
     relation: "builders",
     canClone: false,
@@ -70,7 +70,7 @@ const useShareProject = (
     setLinks([
       ...currentLinks,
       {
-        token: nanoid(),
+        token: createId("nano"),
         name: "Custom Link",
         relation: "viewers",
         canClone: false,

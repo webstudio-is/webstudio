@@ -1,6 +1,6 @@
-import { nanoid } from "nanoid";
 import { toValue } from "@webstudio-is/css-engine";
 import {
+  createId,
   getStyleDeclKey,
   ROOT_INSTANCE_ID,
   type Breakpoint,
@@ -13,6 +13,8 @@ import {
   type Styles,
 } from "@webstudio-is/sdk";
 import { getUniqueNameWithSuffix } from "./style-utils";
+
+const createNanoId = () => createId("nano");
 
 export type ConflictResolution = "ours" | "theirs" | "merge";
 export type RootStyleConflictResolution = "ours" | "theirs";
@@ -291,7 +293,7 @@ export const insertStyleSources = ({
   breakpoints,
   mergedBreakpointIds,
   conflictResolution = "theirs",
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
@@ -598,7 +600,7 @@ export const insertLocalStyleSourcesWithNewIds = ({
   styleSources,
   styleSourceSelections,
   styles,
-  createId = nanoid,
+  createId = createNanoId,
   contentMode = false,
   breakpoints,
   styleSourceIdMap = new Map(),
