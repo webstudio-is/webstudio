@@ -292,7 +292,18 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
       "Opening an MDX Asset after a canvas save must show the latest content"
     );
   }
+  const rawEditorHeading = "Raw editor heading";
+  const rawEditorWrite = waitForAssetWrite(page, (source) =>
+    source.includes(`## ${rawEditorHeading}`)
+  );
+  await fileEditor.click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type(`## ${rawEditorHeading}`);
   await page.keyboard.press("Escape");
+  await waitForCanvasText({ page, text: rawEditorHeading });
+  await rawEditorWrite;
   await openFixture({
     page,
     projectId: fixture.projectId,

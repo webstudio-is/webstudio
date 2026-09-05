@@ -846,9 +846,6 @@ export const TextFileEditor = ({
         readOnly={canEdit === false}
         onChange={(content) => {
           setState({ status: "loaded", content });
-          if (isMdxFileAsset(asset)) {
-            save(content);
-          }
         }}
         onChangeComplete={save}
       />
