@@ -57,7 +57,7 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
         truncate
         variant="labels"
         title={label}
-        css={{ minWidth: 0, maxWidth: "50%", flexShrink: 1 }}
+        css={{ minWidth: 0, maxWidth: "50%", flexShrink: 0 }}
       >
         {label}
       </Text>

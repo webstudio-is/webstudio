@@ -112,6 +112,7 @@ test("shows and truncates the instance label and JSX component name", () => {
   expect(component).not.toBeNull();
   expect(getComputedStyle(label!).textOverflow).toBe("ellipsis");
   expect(getComputedStyle(label!).maxWidth).toBe("50%");
+  expect(getComputedStyle(label!).flexShrink).toBe("0");
   expect(getComputedStyle(component!).textOverflow).toBe("ellipsis");
   expect(label!.scrollWidth).toBeGreaterThan(label!.clientWidth);
   expect(component!.scrollWidth).toBeGreaterThan(component!.clientWidth);
