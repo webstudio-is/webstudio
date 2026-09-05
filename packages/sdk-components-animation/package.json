@@ -19,6 +19,11 @@
       "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js"
     },
+    "./components": {
+      "webstudio": "./src/components.ts",
+      "types": "./lib/types/components.d.ts",
+      "import": "./lib/components.js"
+    },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",

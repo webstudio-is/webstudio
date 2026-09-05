@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/sdk-components-react/components";
 import { canvasComponents } from "@webstudio-is/sdk-components-react/canvas-components";
 import { Label as RadixLabel } from "@webstudio-is/sdk-components-react-radix";
+import { VideoAnimation as PublicVideoAnimation } from "@webstudio-is/sdk-components-animation/components";
 import { componentIds, componentsById } from "./components";
 
 test("distinguishes component exports with the same display name", () => {
@@ -17,6 +18,9 @@ test("distinguishes component exports with the same display name", () => {
     "@webstudio-is/sdk-components-react-radix:Label"
   );
   expect(componentsById.get("Label")).toBe(BaseLabel);
+  expect(componentIds.get(PublicVideoAnimation)).toBe(
+    "@webstudio-is/sdk-components-animation:VideoAnimation"
+  );
   expect(
     componentsById.get("@webstudio-is/sdk-components-react-radix:Label")
   ).toBe(RadixLabel);
