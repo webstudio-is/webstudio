@@ -37,7 +37,7 @@ import {
   $selectedInstanceKey,
   $selectedPage,
 } from "~/shared/nano-states";
-import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
+import { getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
@@ -52,29 +52,24 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
         }));
   const componentTag = `<${componentName}>`;
   return (
-    <Flex gap="1" align="center" css={{ minWidth: 0, overflow: "hidden" }}>
-      <Flex shrink={false}>
-        <InstanceIcon instance={instance} />
-      </Flex>
-      <Flex gap="1" css={{ minWidth: 0, overflow: "hidden" }}>
-        <Text
-          truncate
-          variant="labels"
-          title={label}
-          css={{ minWidth: 0, maxWidth: "50%", flexShrink: 1 }}
-        >
-          {label}
-        </Text>
-        <Text
-          truncate
-          variant="labels"
-          color="subtle"
-          title={componentTag}
-          css={{ minWidth: 0, flexShrink: 1 }}
-        >
-          {componentTag}
-        </Text>
-      </Flex>
+    <Flex gap="1" align="center" grow css={{ minWidth: 0, overflow: "hidden" }}>
+      <Text
+        truncate
+        variant="labels"
+        title={label}
+        css={{ minWidth: 0, maxWidth: "50%", flexShrink: 1 }}
+      >
+        {label}
+      </Text>
+      <Text
+        truncate
+        variant="labels"
+        color="subtle"
+        title={componentTag}
+        css={{ minWidth: 0, flexShrink: 1 }}
+      >
+        {componentTag}
+      </Text>
     </Flex>
   );
 };

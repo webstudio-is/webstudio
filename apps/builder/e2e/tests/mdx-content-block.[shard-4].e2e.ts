@@ -439,10 +439,19 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
     .waitFor();
 });
 
-test("Empty MDX content supports slash menu mouse insertion and keeps the next paragraph focused", async ({
+test("Empty MDX content supports slash menu keyboard and mouse insertion", async ({
   page,
   context,
 }) => {
+  const unexpectedDialogs: string[] = [];
+  page.on("dialog", async (dialog) => {
+    if (dialog.type() === "beforeunload") {
+      await dialog.accept();
+      return;
+    }
+    unexpectedDialogs.push(dialog.message());
+    await dialog.dismiss();
+  });
   const fixture = await createContentModeProject({
     context: context,
     email: "empty-mdx-content-source-e2e@webstudio.test",
@@ -480,7 +489,33 @@ test("Empty MDX content supports slash menu mouse insertion and keeps the next p
   await headingEditor.getByText("First heading", { exact: true }).waitFor();
   await page.keyboard.press("Enter");
 
-  const emptyParagraphEditor = canvas.locator("p[contenteditable]");
+  const keyboardAnchorEditor = canvas.locator("p[contenteditable]").last();
+  await keyboardAnchorEditor.waitFor({ state: "visible" });
+  await page.keyboard.type("Keyboard anchor");
+  await page.keyboard.type("/Empty");
+  const keyboardTemplateItem = page
+    .getByRole("menuitemradio", { name: "Empty Heading Template" })
+    .last();
+  await keyboardTemplateItem.waitFor({ state: "visible" });
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await keyboardTemplateItem.waitFor({ state: "detached" });
+  await canvas.locator("h1").nth(1).waitFor({ state: "visible" });
+  await page.waitForTimeout(100);
+  const headingCount = await canvas.locator("h1").count();
+  if (headingCount !== 2) {
+    throw new Error(
+      `Expected one keyboard insertion, found ${headingCount - 1}`
+    );
+  }
+  const keyboardHeadingEditor = canvas.locator("h1[contenteditable]").last();
+  await page.keyboard.type("Keyboard heading");
+  await keyboardHeadingEditor
+    .getByText("Keyboard heading", { exact: true })
+    .waitFor();
+  await page.keyboard.press("Enter");
+
+  const emptyParagraphEditor = canvas.locator("p[contenteditable]").last();
   await emptyParagraphEditor.waitFor({ state: "visible" });
   const replacedParagraphId =
     await emptyParagraphEditor.getAttribute("data-ws-id");
@@ -536,6 +571,8 @@ test("Empty MDX content supports slash menu mouse insertion and keeps the next p
     page,
     (source) =>
       source.includes("# First heading") &&
+      source.includes("Keyboard anchor") &&
+      source.includes("# Keyboard heading") &&
       source.includes("Focused paragraph") &&
       source.includes('ws:tag="p"') === false
   );
@@ -558,16 +595,24 @@ test("Empty MDX content supports slash menu mouse insertion and keeps the next p
   }
   await page.mouse.click(5, 5);
   const finalSource = (await finalWrite).request().postData() ?? "";
-  const headingIndex = finalSource.indexOf("# First heading");
-  const paragraphIndex = finalSource.indexOf("Focused paragraph");
-  if (
-    headingIndex === -1 ||
-    paragraphIndex === -1 ||
-    headingIndex > paragraphIndex ||
-    finalSource.indexOf("# First heading", headingIndex + 1) !== -1 ||
-    finalSource.indexOf("Focused paragraph", paragraphIndex + 1) !== -1 ||
-    finalSource.includes('ws:tag="p"')
-  ) {
+  const expectedContentOrder = [
+    "# First heading",
+    "Keyboard anchor",
+    "# Keyboard heading",
+    "Focused paragraph",
+  ];
+  let previousIndex = -1;
+  for (const content of expectedContentOrder) {
+    const index = finalSource.indexOf(content);
+    if (
+      index <= previousIndex ||
+      finalSource.indexOf(content, index + 1) !== -1
+    ) {
+      throw new Error(`Unexpected final MDX source: ${finalSource}`);
+    }
+    previousIndex = index;
+  }
+  if (finalSource.includes("/Empty") || finalSource.includes('ws:tag="p"')) {
     throw new Error(`Unexpected final MDX source: ${finalSource}`);
   }
 
@@ -578,17 +623,24 @@ test("Empty MDX content supports slash menu mouse insertion and keeps the next p
     mode: "content",
   });
   await waitForCanvasText({ page, text: "First heading" });
+  await waitForCanvasText({ page, text: "Keyboard anchor" });
+  await waitForCanvasText({ page, text: "Keyboard heading" });
   await waitForCanvasText({ page, text: "Focused paragraph" });
   const reloadedCanvas = await waitForCanvasFrame({ page });
-  if (
-    (await reloadedCanvas
-      .getByText("First heading", { exact: true })
-      .count()) !== 1 ||
-    (await reloadedCanvas
-      .getByText("Focused paragraph", { exact: true })
-      .count()) !== 1
-  ) {
-    throw new Error("Expected one of each inserted block after reload");
+  for (const text of [
+    "First heading",
+    "Keyboard anchor",
+    "Keyboard heading",
+    "Focused paragraph",
+  ]) {
+    if ((await reloadedCanvas.getByText(text, { exact: true }).count()) !== 1) {
+      throw new Error(`Expected one ${text} block after reload`);
+    }
+  }
+  if (unexpectedDialogs.length > 0) {
+    throw new Error(
+      `Normal Content Block edits opened dialogs: ${unexpectedDialogs.join(", ")}`
+    );
   }
 });
 
@@ -707,7 +759,13 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
   await warning.click();
   await selectContentBlock({ page });
   await page.getByRole("img", { name: /^MDX source warning:/ }).waitFor();
-  await page.getByRole("button", { name: "Open", exact: true }).waitFor();
+  const openButton = page.getByRole("button", { name: "Open", exact: true });
+  await openButton.click();
+  await page
+    .locator(".cm-lintRange-warning")
+    .filter({ hasText: "MissingE2ETemplate" })
+    .waitFor();
+  await page.keyboard.press("Escape");
 
   const previewUrl = getProjectBuilderUrl({
     projectId: fixture.projectId,

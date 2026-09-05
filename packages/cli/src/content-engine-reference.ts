@@ -13,6 +13,20 @@ type ReferenceRow = Readonly<{
   description: string;
 }>;
 
+export const structuredAssetImageRecipe = {
+  frontmatter: {
+    featureImage: { $ref: "./assets/hero.png" },
+  },
+  outputFields: [
+    ["properties", "featureImage", "src"],
+    ["properties", "featureImage", "description"],
+  ],
+  bindings: {
+    src: "post.properties.featureImage.src",
+    alt: "post.properties.featureImage.description ?? post.properties.title",
+  },
+} as const;
+
 const formatBytes = (bytes: number) => {
   if (bytes % (1024 * 1024) === 0) {
     return `${bytes / (1024 * 1024)} MiB`;
@@ -397,7 +411,7 @@ export const renderContentEngineReferenceMarkdown = ({
     "",
     "```yaml",
     "featureImage:",
-    "  $ref: ./assets/hero.png",
+    `  $ref: ${structuredAssetImageRecipe.frontmatter.featureImage.$ref}`,
     "```",
     "",
     "The reference declares only the relationship. The query decides which metadata enters its result and published database. A complete `properties.featureImage` selection returns the Asset Manager asset metadata together with its resolved `src`. This includes fields such as `id`, `name`, `description`, `mimeType`, `width`, and `height`; new asset metadata becomes available to references without changing the document. Select only the nested fields the page uses:",
@@ -409,14 +423,14 @@ export const renderContentEngineReferenceMarkdown = ({
     '    "includeMetadata": false,',
     '    "fields": [',
     '      ["properties", "title"],',
-    '      ["properties", "featureImage", "src"],',
-    '      ["properties", "featureImage", "description"]',
+    `      [${structuredAssetImageRecipe.outputFields[0].map((part) => JSON.stringify(part)).join(", ")}],`,
+    `      [${structuredAssetImageRecipe.outputFields[1].map((part) => JSON.stringify(part)).join(", ")}]`,
     "    ]",
     "  }",
     "}",
     "```",
     "",
-    "The selected value becomes an object. Bind an Image source to `post.properties.featureImage.src` and its alternative text to `post.properties.featureImage.description ?? post.properties.title`. A missing description therefore falls back to the article title without duplicating text in frontmatter.",
+    `The selected value becomes an object. Bind an Image source to \`${structuredAssetImageRecipe.bindings.src}\` and its alternative text to \`${structuredAssetImageRecipe.bindings.alt}\`. A missing description therefore falls back to the article title without duplicating text in frontmatter.`,
     "",
     "External URLs remain ordinary strings. Existing local path strings also keep their URL string shape, so adopting structured references does not change existing queries or bindings.",
     "",

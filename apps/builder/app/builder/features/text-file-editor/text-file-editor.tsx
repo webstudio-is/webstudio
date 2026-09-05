@@ -393,6 +393,10 @@ const MarkdownImagePicker = ({
   );
 };
 
+export const __testing__ = {
+  getMdxCompletionComponents,
+};
+
 const getMarkdownHref = (value: UrlInputValue) => {
   if (value.type === "string" || value.type === "asset") {
     return value.value;

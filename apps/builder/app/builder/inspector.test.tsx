@@ -41,13 +41,17 @@ test("shows and truncates the instance label and JSX component name", () => {
           type: "instance",
           id: "heading",
           component: "Heading",
-          label: "Heading 1",
+          label: "Heading",
           children: [],
         }}
       />
     );
   });
-  expect(container.textContent).toContain("Heading 1<Heading>");
+  expect(container.textContent).toContain("Heading<Heading>");
+  const shortLabel = container.querySelector<HTMLElement>('[title="Heading"]');
+  expect(shortLabel).not.toBeNull();
+  expect(shortLabel!.scrollWidth).toBeLessThanOrEqual(shortLabel!.clientWidth);
+  expect(container.querySelector("svg")).toBeNull();
 
   act(() => {
     root.render(
