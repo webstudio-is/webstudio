@@ -23,6 +23,8 @@ import {
 import {
   elementComponent,
   getComponentByJsxName,
+  getContentBlockMdxTemplateDescriptor,
+  getDefaultContentBlockTemplateName,
   getStyleDeclKey,
   type ContentBlockDiagnostic,
   type ContentBlockExternalContentIdentity,
@@ -3248,29 +3250,39 @@ export const serializeMdxTemplateInsertion = async ({
   const pristineRoot = pristineFragment?.children[0];
   const pristineRootId =
     pristineRoot?.type === "id" ? pristineRoot.value : undefined;
+  const rootTemplateDescriptor =
+    rootInstance === undefined
+      ? undefined
+      : getContentBlockMdxTemplateDescriptor(rootInstance);
+  const isDefaultElementTemplate =
+    rootInstance?.component === elementComponent &&
+    rootTemplateDescriptor?.kind === "element" &&
+    (templateName === getDefaultContentBlockTemplateName(rootInstance) ||
+      (rootInstance.name === undefined && rootInstance.label === templateName));
   const canInheritTemplateDefaults =
-    inheritTemplateDefaults ||
-    (pristineFragment !== undefined &&
-      root?.type === "id" &&
-      pristineRootId === root.value &&
-      equal(
-        {
-          ...fragment,
-          props: fragment.props.filter(
-            ({ instanceId }) => instanceId !== root.value
-          ),
-          // Asset records are immutable inputs. A newly selected root Asset is
-          // represented by its authored reference, not by expanding children.
-          assets: [],
-        },
-        {
-          ...pristineFragment,
-          props: pristineFragment.props.filter(
-            ({ instanceId }) => instanceId !== root.value
-          ),
-          assets: [],
-        }
-      ));
+    isDefaultElementTemplate === false &&
+    (inheritTemplateDefaults ||
+      (pristineFragment !== undefined &&
+        root?.type === "id" &&
+        pristineRootId === root.value &&
+        equal(
+          {
+            ...fragment,
+            props: fragment.props.filter(
+              ({ instanceId }) => instanceId !== root.value
+            ),
+            // Asset records are immutable inputs. A newly selected root Asset is
+            // represented by its authored reference, not by expanding children.
+            assets: [],
+          },
+          {
+            ...pristineFragment,
+            props: pristineFragment.props.filter(
+              ({ instanceId }) => instanceId !== root.value
+            ),
+            assets: [],
+          }
+        )));
   if (canInheritTemplateDefaults) {
     if (
       fragment.children.length !== 1 ||
@@ -3398,6 +3410,13 @@ export const serializeMdxTemplateInsertion = async ({
       rootNode.type === "opaque"
     ) {
       throw new Error("Inserted template root cannot be represented in MDX");
+    }
+    if (
+      isDefaultElementTemplate &&
+      rootNode.type === "element" &&
+      rootNode.syntax === "markdown"
+    ) {
+      return authored;
     }
     const rootChild = fragment.children[0];
     const rootInstance =

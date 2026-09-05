@@ -42,6 +42,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/svg-tags": "1.0.2",
     "@webstudio-is/tsconfig": "workspace:*",
     "esbuild": "^0.25.3",
     "vitest": "^3.1.2"

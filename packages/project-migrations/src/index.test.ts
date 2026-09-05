@@ -101,42 +101,6 @@ test("migrates legacy pages inside webstudio data", () => {
   });
 });
 
-test("backfills stable unique Content Block template names", () => {
-  const data = structuredClone(emptyData);
-  data.instances.set("templates", {
-    type: "instance",
-    id: "templates",
-    component: "ws:block-template",
-    children: [
-      { type: "id", value: "heading-a" },
-      { type: "id", value: "heading-b" },
-    ],
-  });
-  data.instances.set("heading-a", {
-    type: "instance",
-    id: "heading-a",
-    component: "ws:element",
-    tag: "h1",
-    label: "Editorial title",
-    children: [],
-  });
-  data.instances.set("heading-b", {
-    type: "instance",
-    id: "heading-b",
-    component: "ws:element",
-    tag: "h1",
-    children: [],
-  });
-
-  migrateWebstudioDataMutable(data);
-
-  expect(data.instances.get("heading-a")).toMatchObject({
-    name: "H1",
-    label: "Editorial title",
-  });
-  expect(data.instances.get("heading-b")).toMatchObject({ name: "H12" });
-});
-
 test("migrates styles inside webstudio data", () => {
   const data = structuredClone(emptyData);
   data.styles.set("base:local:overflow::hover", {

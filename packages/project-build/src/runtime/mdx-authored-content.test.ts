@@ -624,6 +624,42 @@ describe("MDX authored content", () => {
     ).toBe("<Heading1>Test</Heading1>\n");
   });
 
+  test("keeps a default generic element template insertion as Markdown", async () => {
+    const fragment: WebstudioFragment = {
+      children: [{ type: "id", value: "paragraph" }],
+      instances: [
+        {
+          type: "instance",
+          id: "paragraph",
+          component: elementComponent,
+          tag: "p",
+          label: "Editable text template",
+          children: [{ type: "text", value: "Editable template content" }],
+        },
+      ],
+      props: [],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    };
+
+    expect(
+      serializeMdxDocument(
+        await serializeMdxTemplateInsertion({
+          identity,
+          fragment,
+          pristineFragment: structuredClone(fragment),
+          templateName: "Editable text template",
+          htmlTags: [{ instanceId: "paragraph", tag: "p" }],
+        })
+      )
+    ).toBe("Editable template content\n");
+  });
+
   test.each(["Image", "CodeText"])(
     "keeps a matching custom template named %s ahead of component fallback",
     async (templateName) => {

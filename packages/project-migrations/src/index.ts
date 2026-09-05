@@ -1,5 +1,4 @@
 import {
-  assignUniqueBlockTemplateNamesMutable,
   blockTemplateComponent,
   codeTextDefaultLanguage,
   codeTextDefaultTheme,
@@ -75,27 +74,6 @@ export const migrateCodeTextContentMutable = (
       continue;
     }
     data.props.delete(propId);
-  }
-};
-
-/** Backfills stable MDX identifiers without changing user-facing labels. */
-export const migrateContentBlockTemplateNamesMutable = (
-  data: Pick<WebstudioData, "instances">
-) => {
-  for (const container of data.instances.values()) {
-    if (container.component !== blockTemplateComponent) {
-      continue;
-    }
-    assignUniqueBlockTemplateNamesMutable({
-      parent: container,
-      instanceIds: container.children.flatMap((child) =>
-        child.type === "id" &&
-        data.instances.get(child.value)?.name === undefined
-          ? [child.value]
-          : []
-      ),
-      instances: data.instances,
-    });
   }
 };
 
@@ -205,5 +183,4 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   migrateCodeTextContentMutable(data);
   migrateContentBlockImageStylesMutable(data);
   migrateContentBlockDocumentBindingsMutable(data);
-  migrateContentBlockTemplateNamesMutable(data);
 };

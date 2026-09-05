@@ -778,7 +778,7 @@ test("Dynamic detail source follows the selected route parameter", async ({
   await openFixture({
     page,
     projectId: fixture.projectId,
-    authToken: fixture.editorToken,
+    authToken: fixture.builderToken,
   });
   await openAssetsPanel({ page });
   await uploadAsset({ page, filename: sourceFilename });
@@ -801,6 +801,7 @@ test("Dynamic detail source follows the selected route parameter", async ({
     projectId: fixture.projectId,
     authToken: fixture.editorToken,
     pageId: detailPageId,
+    mode: "content",
   });
   await waitForCanvasText({ page, text: sourceHeading });
 
@@ -835,7 +836,7 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
   await openFixture({
     page,
     projectId: fixture.projectId,
-    authToken: fixture.editorToken,
+    authToken: fixture.builderToken,
   });
   await openAssetsPanel({ page });
   await uploadAsset({ page, filename: sourceFilename });
@@ -857,6 +858,7 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
     page,
     projectId: fixture.projectId,
     authToken: fixture.editorToken,
+    mode: "content",
   });
   await waitForCanvasText({ page, text: sourceHeading });
   await waitForCanvasText({ page, text: alternateHeading });
@@ -876,6 +878,7 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
     page,
     projectId: fixture.projectId,
     authToken: fixture.editorToken,
+    mode: "content",
   });
   await waitForCanvasText({ page, text: editedHeading });
   await waitForCanvasText({ page, text: alternateHeading });
