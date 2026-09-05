@@ -1,7 +1,7 @@
 import { SwitchIcon, TriggerIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import { buttonReset } from "./shared/preset-styles";
 import { propsSwitch, propsSwitchThumb } from "./__generated__/switch.props";
 
@@ -10,7 +10,7 @@ export const metaSwitch: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.SwitchThumb],
+    descendants: [getRadixComponentId("SwitchThumb")],
   },
   states: [
     { label: "Checked", selector: '[data-state="checked"]' },

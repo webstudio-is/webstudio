@@ -2416,6 +2416,7 @@ describe("builder runtime registry", () => {
       ["instances.updateTextTree", {}],
       ["instances.setTag", {}],
       ["instances.setLabel", {}],
+      ["instances.setName", {}],
       ["styles.updateDeclarations", { updates: {} }],
       ["styles.deleteDeclarations", { deletions: {} }],
       ["styles.updateSelectedDeclarations", { updates: {} }],

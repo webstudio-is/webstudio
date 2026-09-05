@@ -1,3 +1,7 @@
+/**
+ * Orchestrates the complete MDX source pipeline: parse, resolve templates and
+ * assets, materialize editable instances, and combine source diagnostics.
+ */
 import {
   discoverNamedMdxAssetReferences,
   parseMdxDocumentRecovering,
@@ -26,7 +30,10 @@ import {
 } from "./mdx-diagnostics";
 import { createMdxAssetReferenceValues } from "./mdx-asset-references";
 import { materializeMdxTemplates } from "./mdx-materialization";
-import { resolveMdxTemplates } from "./mdx-template-resolution";
+import {
+  assertMdxTemplateStructure,
+  resolveMdxTemplates,
+} from "./mdx-template-resolution";
 
 const emptyMdxDocument: MdxDocument = {
   frontmatter: { properties: {} },
@@ -68,8 +75,10 @@ export const materializeMdxSource = async ({
     document,
     identity,
     instances: data.instances,
+    props: data.props,
     metas,
   });
+  assertMdxTemplateStructure(resolution);
   const sourceAsset = data.assets.get(identity.assetId);
   const hierarchy = createAssetFolderHierarchy(data.assetFolders ?? new Map());
   const getNamedAsset = (asset: Asset) => ({
@@ -98,6 +107,7 @@ export const materializeMdxSource = async ({
     document,
     templateMaterialization: templates,
     assetReferences,
+    metas,
     assetReferenceValues:
       sourceAsset === undefined
         ? undefined
@@ -145,6 +155,7 @@ export const materializeMdxSource = async ({
         diagnostics: parsedSource.diagnostics,
       }),
       ...templates.diagnostics,
+      ...(authoredRoot.diagnostics ?? []),
       ...createMdxContentModelDiagnostics({ root, metas }),
     ],
   };

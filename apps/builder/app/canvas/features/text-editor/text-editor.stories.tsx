@@ -3,10 +3,17 @@ import { useStore } from "@nanostores/react";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import type { StoryFn, Meta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
-import { Box, Button, Flex, StorySection } from "@webstudio-is/design-system";
+import {
+  Box as DesignSystemBox,
+  Button,
+  Flex,
+  StorySection,
+} from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances, Props } from "@webstudio-is/sdk";
-import { $, renderData } from "@webstudio-is/template";
+import { Body, Bold, Box } from "@webstudio-is/sdk-components-react/components";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
+import { renderData } from "@webstudio-is/template";
 import {
   $registeredComponentMetas,
   $textEditingInstanceSelector,
@@ -120,7 +127,7 @@ export const Basic: StoryFn<typeof TextEditor> = () => {
         >
           Clear
         </button>
-        <Box
+        <DesignSystemBox
           css={{
             "& > div": {
               padding: `0 ${theme.spacing[5]}`,
@@ -139,7 +146,7 @@ export const Basic: StoryFn<typeof TextEditor> = () => {
               console.info("select instance", instanceId)
             }
           />
-        </Box>
+        </DesignSystemBox>
       </div>
     </StorySection>
   );
@@ -150,7 +157,7 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = () => {
 
   return (
     <StorySection title="Cursor Positioning">
-      <Box
+      <DesignSystemBox
         css={{
           width: 300,
           "& > div": {
@@ -200,7 +207,7 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = () => {
             <strong> la la la subtext</strong>
           </div>
         )}
-      </Box>
+      </DesignSystemBox>
       <br />
       <div>
         <i>Click on text above, see cursor position and start editing text</i>
@@ -271,17 +278,19 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
     );
 
     return renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxAId">
-          Hello world <$.Bold ws:id="boldA">Hello world</$.Bold> Hello world
-          world Hello worldsdsdj skdk ls dk jslkdjklsjdkl sdk jskdj ksjd lksdj
-          dsj
-        </$.Box>
-        <$.Box ws:id="boxBId">
-          Let it be Let it be <$.Bold ws:id="boldB">Let it be Let</$.Bold> Let
-          it be Let it be Let it be Let it be Let it be Let it be
-        </$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxAId">
+          Hello world <Bold ws:id="boldA">Hello world</Bold> Hello world world
+          Hello worldsdsdj skdk ls dk jslkdjklsjdkl sdk jskdj ksjd lksdj dsj
+        </Box>
+        <Box ws:id="boxBId">
+          Let it be Let it be <Bold ws:id="boldB">Let it be Let</Bold> Let it be
+          Let it be Let it be Let it be Let it be Let it be
+        </Box>
+      </Body>,
+      undefined,
+      [],
+      { componentIds }
     );
   });
 

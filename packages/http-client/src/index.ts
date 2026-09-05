@@ -1455,6 +1455,8 @@ export const setInstanceTag = runtimeProjectMutation("set-instance-tag");
 
 export const setInstanceLabel = runtimeProjectMutation("set-instance-label");
 
+export const setInstanceName = runtimeProjectMutation("set-instance-name");
+
 export const updateSelectedStyleDeclarations = runtimeProjectMutation(
   "update-selected-styles"
 );

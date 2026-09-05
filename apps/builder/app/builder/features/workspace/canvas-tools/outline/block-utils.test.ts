@@ -5,12 +5,19 @@ import {
   coreMetas,
   elementComponent,
   type Instance,
+  type Prop,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { __testing__, insertListItemAt, insertTemplateAt } from "./block-utils";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
+import {
+  __testing__,
+  filterInsertableContentBlockTemplates,
+  insertListItemAt,
+  insertTemplateAt,
+} from "./block-utils";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import {
   $instances,
@@ -26,6 +33,7 @@ import {
   selectPage,
   selectInstance,
 } from "~/shared/nano-states";
+import { $externalContentRoots } from "~/shared/external-content-mutations";
 
 const { getTemplateTokenConflicts } = __testing__;
 registerContainers();
@@ -86,6 +94,36 @@ describe("getTemplateTokenConflicts", () => {
     ).toBe(conflicts);
     expect(detect).toHaveBeenCalledWith({ fragment, targetData });
   });
+});
+
+test("keeps structural MDX templates out of insertion menus", () => {
+  const templates: [Instance, InstanceSelector][] = [
+    [
+      { ...createInstance("cell", elementComponent), tag: "td" },
+      ["cell", "templates", "block"],
+    ],
+    [createInstance("heading", "Heading"), ["heading", "templates", "block"]],
+    [createInstance("card", "Card"), ["card", "templates", "block"]],
+  ];
+  const props = new Map<string, Prop>([
+    [
+      "heading-tag",
+      {
+        id: "heading-tag",
+        instanceId: "heading",
+        name: "tag",
+        type: "string",
+        value: "h2",
+      },
+    ],
+  ]);
+  const metas = new Map(Object.entries({ ...defaultMetas, ...coreMetas }));
+
+  expect(
+    filterInsertableContentBlockTemplates({ templates, props, metas }).map(
+      ([template]) => template.id
+    )
+  ).toEqual(["heading", "card"]);
 });
 
 describe("insertListItemAt", () => {
@@ -149,6 +187,7 @@ describe("insertTemplateAt", () => {
 
   afterEach(() => {
     $builderMode.set("design");
+    $externalContentRoots.set(new Map());
   });
 
   test("inserts synchronously when content mode has no token conflicts", async () => {
@@ -176,6 +215,7 @@ describe("insertTemplateAt", () => {
           {
             ...createInstance("template", elementComponent),
             tag: "p",
+            label: "Card",
           },
         ],
         [
@@ -187,17 +227,104 @@ describe("insertTemplateAt", () => {
         ],
       ])
     );
-
-    const insertion = insertTemplateAt(
-      ["template", "templates", "block", "body"],
-      ["current", "block", "body"],
-      false
+    $externalContentRoots.set(
+      new Map([
+        [
+          "scope",
+          {
+            blockInstanceId: "block",
+            instanceIds: new Set<string>(),
+            mutationRevision: 0,
+          },
+        ],
+      ])
     );
+
+    const insertion = insertTemplateAt({
+      templateSelector: ["template", "templates", "block", "body"],
+      anchor: ["current", "block", "body"],
+      insertBefore: false,
+    });
 
     const insertedSelector = $selectedInstanceSelector.get();
     expect(insertedSelector?.[0]).not.toBe("current");
     expect(insertedSelector?.slice(1)).toEqual(["block", "body"]);
+    const insertedId = insertedSelector?.[0];
+    const recordedInsertion =
+      insertedId === undefined
+        ? undefined
+        : $externalContentRoots
+            .get()
+            .get("scope")
+            ?.insertedTemplates?.get(insertedId);
+    expect(recordedInsertion).toMatchObject({ templateName: "Card" });
+    expect(recordedInsertion?.pristineFragment.children).toEqual([
+      { type: "id", value: insertedId },
+    ]);
+    expect(recordedInsertion?.htmlTags).toEqual([
+      { instanceId: insertedId, tag: "p" },
+    ]);
 
     await expect(insertion).resolves.toBe(true);
+  });
+
+  test("replaces the current block when slash replaces all of its text", async () => {
+    $instances.set(
+      new Map<Instance["id"], Instance>([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", blockComponent, [
+            { type: "id", value: "templates" },
+            { type: "id", value: "current" },
+          ]),
+        ],
+        [
+          "templates",
+          createInstance("templates", blockTemplateComponent, [
+            { type: "id", value: "template" },
+          ]),
+        ],
+        [
+          "template",
+          {
+            ...createInstance("template", elementComponent, [
+              { type: "text", value: "Template content" },
+            ]),
+            tag: "p",
+            label: "Paragraph",
+          },
+        ],
+        [
+          "current",
+          {
+            ...createInstance("current", elementComponent, [
+              { type: "text", value: "Replaced content" },
+            ]),
+            tag: "p",
+          },
+        ],
+      ])
+    );
+
+    const insertion = insertTemplateAt({
+      templateSelector: ["template", "templates", "block", "body"],
+      anchor: ["current", "block", "body"],
+      insertBefore: false,
+      replaceAnchor: true,
+    });
+
+    await expect(insertion).resolves.toBe(true);
+    const children = $instances.get().get("block")?.children ?? [];
+    expect(children).toHaveLength(2);
+    expect(children[0]).toEqual({ type: "id", value: "templates" });
+    expect(children).not.toContainEqual({ type: "id", value: "current" });
+    const insertedId = children[1]?.type === "id" ? children[1].value : "";
+    expect($instances.get().get(insertedId)?.children).toEqual([
+      { type: "text", value: "Template content" },
+    ]);
   });
 });

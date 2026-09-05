@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  $,
+  createTemplateComponentFixture,
   ActionValue,
   expression,
   Parameter,
@@ -74,6 +74,12 @@ import {
   validateResourceBodyExpression,
   validateResourceUrlExpression,
 } from "./data";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Slot = createTemplateComponentFixture("Slot");
+const Text = createTemplateComponentFixture("Text");
 
 test("creates Map-backed patches without mutating caller-owned data", () => {
   const before = {
@@ -839,9 +845,9 @@ test("find available variables", () => {
   const bodyVariable = new Variable("bodyVariable", "");
   const boxVariable = new Variable("boxVariable", "");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+    </Body>
   );
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
@@ -856,9 +862,9 @@ test("find masked variables", () => {
   const bodyVariable = new Variable("myVariable", "");
   const boxVariable = new Variable("myVariable", "");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+    </Body>
   );
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
@@ -873,9 +879,9 @@ test("find global variables", () => {
   const boxVariable = new Variable("boxVariable", "");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -894,13 +900,13 @@ test("find global variables in slots", () => {
   const boxVariable = new Variable("boxVariable", "");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Slot ws:id="slotId">
-          <$.Fragment ws:id="fragmentId">
-            <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Slot ws:id="slotId">
+          <Fragment ws:id="fragmentId">
+            <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -915,9 +921,9 @@ test("find global variables in slots", () => {
 
 test("find legacy global variables with missing scope", () => {
   const data = renderData(
-    <$.Body ws:id="bodyId">
-      <$.Box ws:id="boxId"></$.Box>
-    </$.Body>
+    <Body ws:id="bodyId">
+      <Box ws:id="boxId"></Box>
+    </Body>
   );
   data.dataSources.set("legacyGlobalVariableId", {
     id: "legacyGlobalVariableId",
@@ -1087,16 +1093,16 @@ test("find unset variable names", () => {
     body: expression`thirteen`,
   });
   const data = renderData(
-    <$.Body ws:id="body" data-prop={expression`two`}>
-      <$.Box ws:id="box" data-prop={expression`three`}>
-        <$.Text
+    <Body ws:id="body" data-prop={expression`two`}>
+      <Box ws:id="box" data-prop={expression`three`}>
+        <Text
           ws:id="text"
           data-variables={expression`${resourceVariable}`}
           data-resource={resourceProp}
           data-action={new ActionValue(["five"], expression`four + five`)}
-        >{expression`one`}</$.Text>
-      </$.Box>
-    </$.Body>
+        >{expression`one`}</Text>
+      </Box>
+    </Body>
   );
   expect(
     findUnsetVariableNames({ startingInstanceId: "body", ...data })
@@ -1120,11 +1126,11 @@ test("restore tree variables in children", () => {
   const bodyVariable = new Variable("one", "one value of body");
   const boxVariable = new Variable("one", "one value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
-        <$.Text ws:id="textId">{expression`one`}</$.Text>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
+        <Text ws:id="textId">{expression`one`}</Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1147,16 +1153,16 @@ test("restore tree variables in props", () => {
   const oneBox = new Variable("one", "one value of box");
   const twoBox = new Variable("two", "two value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${oneBody}`}>
-      <$.Box
+    <Body ws:id="bodyId" data-body-vars={expression`${oneBody}`}>
+      <Box
         ws:id="boxId"
         data-box-vars={expression`${oneBox} ${twoBox}`}
         data-one={expression`one`}
         data-action={new ActionValue(["one"], expression`one + two + three`)}
       >
-        <$.Text ws:id="text" data-two={expression`one + two + three`}></$.Text>
-      </$.Box>
-    </$.Body>
+        <Text ws:id="text" data-two={expression`one + two + three`}></Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1197,17 +1203,17 @@ test("rebind tree variables in props and children", () => {
   const bodyVariable = new Variable("one", "one value of body");
   const boxVariable = new Variable("one", "one value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-        <$.Text
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+        <Text
           ws:id="textId"
           data-text-vars={expression`${bodyVariable}`}
           data-action={new ActionValue([], expression`${bodyVariable}`)}
         >
           {expression`${bodyVariable}`}
-        </$.Text>
-      </$.Box>
-    </$.Body>
+        </Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1238,11 +1244,11 @@ test("preserve nested variables with the same name when rebind", () => {
   const bodyVariable = new Variable("one", "one value of body");
   const textVariable = new Variable("one", "one value of box");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Text ws:id="textId" data-text-vars={expression`${textVariable}`}>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Text ws:id="textId" data-text-vars={expression`${textVariable}`}>
         {expression`${textVariable}`}
-      </$.Text>
-    </$.Body>
+      </Text>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "bodyId",
@@ -1278,15 +1284,15 @@ test("restore tree variables in resources", () => {
     body: expression`one + 2`,
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
-        <$.Text
+    <Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-vars={expression`${boxVariable}`}>
+        <Text
           ws:id="text"
           data-vars={expression`${resourceVariable}`}
           data-resource={resourceProp}
-        ></$.Text>
-      </$.Box>
-    </$.Body>
+        ></Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1336,15 +1342,15 @@ test("rebind tree variables in resources", () => {
     body: expression`${bodyVariable}`,
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-        <$.Text
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+        <Text
           ws:id="textId"
           data-text-vars={expression`${resourceVariable}`}
           data-action={resourceProp}
-        ></$.Text>
-      </$.Box>
-    </$.Body>
+        ></Text>
+      </Box>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1380,9 +1386,9 @@ test("rebind global variables in resources", () => {
   const globalVariable = new Variable("globalVariable", "");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} data-vars={expression`${globalVariable}`}>
-      <$.Body ws:id="bodyId">
-        <$.Text ws:id="textId">{expression`globalVariable`}</$.Text>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Text ws:id="textId">{expression`globalVariable`}</Text>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -1405,9 +1411,9 @@ test("preserve other variables when rebind", () => {
   const bodyVariable = new Variable("globalVariable", "");
   const textVariable = new Variable("textVariable", "");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
-      <$.Text ws:id="textId">{expression`${textVariable}`}</$.Text>
-    </$.Body>
+    <Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
+      <Text ws:id="textId">{expression`${textVariable}`}</Text>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "bodyId",
@@ -1428,13 +1434,13 @@ test("preserve other variables when rebind", () => {
 test("prevent rebinding tree variables from slots", () => {
   const bodyVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Slot ws:id="slotId">
-        <$.Fragment ws:id="fragmentId">
-          <$.Box ws:id="boxId">{expression`myVariable`}</$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Slot ws:id="slotId">
+        <Fragment ws:id="fragmentId">
+          <Box ws:id="boxId">{expression`myVariable`}</Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
   rebindTreeVariablesMutable({
     startingInstanceId: "boxId",
@@ -1450,7 +1456,7 @@ test("prevent rebinding with nested collection item", () => {
   const collectionItem = new Parameter("collectionITem");
   const nestedCollectionItem = new Parameter("collectionITem");
   const data = renderData(
-    <$.Body ws:id="bodyId">
+    <Body ws:id="bodyId">
       <ws.collection ws:id="collectionId" data={[]} item={collectionItem}>
         <ws.collection
           ws:id="nestedCollectionId"
@@ -1462,7 +1468,7 @@ test("prevent rebinding with nested collection item", () => {
           </ws.element>
         </ws.collection>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "collectionId" }),
@@ -1507,14 +1513,14 @@ test("prevent rebinding with nested collection item", () => {
 test("delete variable and unset it in expressions", () => {
   const bodyVariable = new Variable("bodyVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box
         ws:id="boxId"
         data-action={new ActionValue([], expression`${bodyVariable}`)}
       >
         {expression`${bodyVariable}`}
-      </$.Box>
-    </$.Body>
+      </Box>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1542,11 +1548,11 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
     headers: [{ name: "auth", value: expression`${bodyVariable}` }],
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${resourceVariable}`}>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${resourceVariable}`}>
         {expression`${bodyVariable}`}
-      </$.Box>
-    </$.Body>
+      </Box>
+    </Body>
   );
   const [bodyVariableId] = data.dataSources.keys();
   const pages = createDefaultPages({ rootInstanceId: "bodyId" });
@@ -1656,13 +1662,13 @@ test("delete variable and unset it in resources", () => {
     body: expression`${bodyVariable}`,
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box
         ws:id="boxId"
         data-box-vars={expression`${resourceVariable}`}
         data-resource={resourceProp}
-      ></$.Box>
-    </$.Body>
+      ></Box>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1692,11 +1698,11 @@ test("rebind expressions with parent variable when delete variable on child", ()
   const bodyVariable = new Variable("myVariable", "one value of body");
   const boxVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-        <$.Text ws:id="textId">{expression`${boxVariable}`}</$.Text>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+        <Text ws:id="textId">{expression`${boxVariable}`}</Text>
+      </Box>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1714,15 +1720,15 @@ test("prevent rebinding with variables outside of slot content scope", () => {
   const bodyVariable = new Variable("myVariable", "one value of body");
   const boxVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
-    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
-      <$.Slot>
-        <$.Fragment>
-          <$.Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
-            <$.Text ws:id="textId">{expression`${boxVariable}`}</$.Text>
-          </$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <Slot>
+        <Fragment>
+          <Box ws:id="boxId" data-box-vars={expression`${boxVariable}`}>
+            <Text ws:id="textId">{expression`${boxVariable}`}</Text>
+          </Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
@@ -1750,12 +1756,12 @@ test("unset global variables on all pages when delete", () => {
     pages,
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="homeBodyId">
-          <$.Text ws:id="homeTextId">{expression`${globalVariable}`}</$.Text>
-        </$.Body>
-        <$.Body ws:id="aboutBodyId">
-          <$.Text ws:id="aboutTextId">{expression`${globalVariable}`}</$.Text>
-        </$.Body>
+        <Body ws:id="homeBodyId">
+          <Text ws:id="homeTextId">{expression`${globalVariable}`}</Text>
+        </Body>
+        <Body ws:id="aboutBodyId">
+          <Text ws:id="aboutTextId">{expression`${globalVariable}`}</Text>
+        </Body>
       </ws.root>
     ),
   };
@@ -1775,9 +1781,9 @@ test("unset legacy global variables with missing scope when delete", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
     ...renderData(
-      <$.Body ws:id="homeBodyId">
-        <$.Text ws:id="homeTextId"></$.Text>
-      </$.Body>
+      <Body ws:id="homeBodyId">
+        <Text ws:id="homeTextId"></Text>
+      </Body>
     ),
   };
   data.pages.pages.set("aboutPage", {
@@ -1830,13 +1836,13 @@ test("unset global variables in slots when delete", () => {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slotId">
-            <$.Fragment ws:id="fragmentId">
-              <$.Text ws:id="textId">{expression`${globalVariable}`}</$.Text>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+        <Body ws:id="bodyId">
+          <Slot ws:id="slotId">
+            <Fragment ws:id="fragmentId">
+              <Text ws:id="textId">{expression`${globalVariable}`}</Text>
+            </Fragment>
+          </Slot>
+        </Body>
       </ws.root>
     ),
   };
@@ -1854,7 +1860,7 @@ test("unset body variables in page meta when delete", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
     ),
   };
   expect(data.dataSources.size).toEqual(1);
@@ -1888,8 +1894,8 @@ test("unset global variables in all pages meta when delete", () => {
     pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="homeBodyId"></$.Body>
-        <$.Body ws:id="aboutBodyId"></$.Body>
+        <Body ws:id="homeBodyId"></Body>
+        <Body ws:id="aboutBodyId"></Body>
       </ws.root>
     ),
   };
@@ -1936,19 +1942,19 @@ test("find variable usages by instance", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${bodyVariable}`}
         data-prop={expression`${bodyVariable} + "test"`}
       >
-        <$.Box
+        <Box
           ws:id="boxId"
           vars={expression`${boxVariable}`}
           data-prop={expression`${boxVariable} + ${bodyVariable}`}
         >
-          <$.Text ws:id="textId">{expression`${bodyVariable}`}</$.Text>
-        </$.Box>
-      </$.Body>
+          <Text ws:id="textId">{expression`${bodyVariable}`}</Text>
+        </Box>
+      </Body>
     ),
   };
   const bodyVariableId = [...data.dataSources.values()].find(
@@ -1975,12 +1981,12 @@ test("find variable usages from root includes all pages", () => {
     pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
     ...renderData(
       <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-        <$.Body ws:id="homeBodyId">
-          <$.Box ws:id="homeBoxId" data-prop={expression`${globalVariable}`} />
-        </$.Body>
-        <$.Body ws:id="aboutBodyId">
-          <$.Box ws:id="aboutBoxId" data-prop={expression`${globalVariable}`} />
-        </$.Body>
+        <Body ws:id="homeBodyId">
+          <Box ws:id="homeBoxId" data-prop={expression`${globalVariable}`} />
+        </Body>
+        <Body ws:id="aboutBodyId">
+          <Box ws:id="aboutBoxId" data-prop={expression`${globalVariable}`} />
+        </Body>
       </ws.root>
     ),
   };
@@ -2012,7 +2018,7 @@ test("find variable usages in page meta", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
     ),
   };
   const [bodyVariableId] = data.dataSources.keys();
@@ -2040,13 +2046,13 @@ test("find variable usages counts unique instances not expressions", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${bodyVariable}`}
         data-prop1={expression`${bodyVariable}`}
         data-prop2={expression`${bodyVariable}`}
         data-prop3={expression`${bodyVariable}`}
-      ></$.Body>
+      ></Body>
     ),
   };
   const [bodyVariableId] = data.dataSources.keys();
@@ -2068,11 +2074,11 @@ test("finds and deletes unused data variables in one runtime mutation", () => {
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${usedVariable};${unusedVariable}`}
         data-prop={expression`${usedVariable}`}
-      ></$.Body>
+      ></Body>
     ),
   };
   const usedVariableId = [...data.dataSources.values()].find(
@@ -2111,11 +2117,11 @@ test("delete unused data variables is a noop when all variables are used", () =>
   const data = {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...renderData(
-      <$.Body
+      <Body
         ws:id="bodyId"
         vars={expression`${usedVariable}`}
         data-prop={expression`${usedVariable}`}
-      ></$.Body>
+      ></Body>
     ),
   };
 

@@ -51,6 +51,7 @@ export const $textEditingInstanceSelector = atom<
 export const $textEditorContextMenu = atom<
   | {
       cursorRect: DOMRect;
+      replaceAnchor: boolean;
     }
   | undefined
 >(undefined);
@@ -63,6 +64,7 @@ type ContextMenuCommand =
   | { type: "selectNext" }
   | { type: "selectPrevious" }
   | { type: "enter" }
+  | { type: "close" }
   | { type: "templateInsertionStarted" }
   | { type: "templateInsertionCancelled" };
 

@@ -1589,7 +1589,7 @@ export const applyContentModeTransaction = ({
       ])
     ),
     props: new Map(capabilities.props),
-    htmlTagsByInstanceId: new Map(capabilities.htmlTagsByInstanceId),
+    htmlTagsByInstanceId: getHtmlTagsFromProps(capabilities.props),
     styleSources: new Map(capabilities.styleSources),
     styleSourceSelections: new Map(capabilities.styleSourceSelections),
     styles: new Map(capabilities.styles),

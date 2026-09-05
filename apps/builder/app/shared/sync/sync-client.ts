@@ -31,6 +31,10 @@ import {
   $publisherHost,
   resetDataStores,
 } from "./data-stores";
+import {
+  getExternalContentRoots,
+  publishExternalContentTemplateMutation,
+} from "../external-content-mutations";
 
 let client: SyncClient | undefined;
 let currentProjectId: string | undefined;
@@ -82,6 +86,11 @@ const applyBuilderData = (data: LoadedBuilderData) => {
   $styles.set(data.styles);
   $marketplaceProduct.set(data.marketplaceProduct);
   $projectSettings.set(data.projectSettings);
+  publishExternalContentTemplateMutation(
+    Array.from(getExternalContentRoots())
+      .filter(([, root]) => root.projectId === data.project.id)
+      .map(([key]) => key)
+  );
 };
 
 const applyBuilderMetadata = (data: LoadedBuilderData) => {
@@ -246,6 +255,7 @@ export const destroyClientSync = () => {
 export const getSyncClient = () => client;
 
 export const __testing__ = {
+  applyBuilderData,
   getServerSyncState,
   resolveMultiplayerRelayUrl,
 };

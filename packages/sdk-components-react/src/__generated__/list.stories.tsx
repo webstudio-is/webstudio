@@ -28,7 +28,7 @@ const Story = {
   div.w-box {
     box-sizing: border-box
   }
-  ol.w-list {
+  ul.w-list {
     box-sizing: border-box;
     margin-top: 0;
     margin-bottom: 10px;

@@ -1,3 +1,7 @@
+/**
+ * Clones resolved Content Block templates into runtime fragments, applies
+ * authored MDX props and children, and records their source provenance.
+ */
 import hash from "@emotion/hash";
 import { migrateCodeTextPropMutable } from "@webstudio-is/project-migrations";
 import type { AssetValueReference } from "@webstudio-is/content-engine";
@@ -40,7 +44,7 @@ import { getHtmlAttributeType } from "./html-attribute-utils";
 import { parseMdxStaticProp, type MdxStaticPropType } from "./mdx-static-props";
 import { getMdxPropValuePathKey } from "./mdx-asset-references";
 
-const getMdxPropEligibility = ({
+export const getMdxPropEligibility = ({
   capabilities,
   instance,
   prop,
@@ -83,7 +87,7 @@ const getMdxPropEligibility = ({
     : ({ editable: false, reason: "incompatible" } as const);
 };
 
-const getMdxPropBinding = ({
+export const getMdxPropBinding = ({
   capabilities,
   instance,
   prop,
@@ -118,6 +122,53 @@ const getMdxPropBinding = ({
   }
 };
 
+export const resolveMdxPropCollisions = ({
+  authoredProps,
+  mappedProps,
+  componentPropNames,
+  acceptsHtmlAttributes,
+  canUseProp,
+}: {
+  authoredProps: readonly MdxAuthoredProp[];
+  mappedProps: readonly MdxAuthoredProp[];
+  componentPropNames: ReadonlySet<string>;
+  acceptsHtmlAttributes: boolean;
+  canUseProp: (index: number) => boolean;
+}) => {
+  const propIndexesByInstanceName = new Map<string, number[]>();
+  for (const [index, prop] of mappedProps.entries()) {
+    const indexes = propIndexesByInstanceName.get(prop.name) ?? [];
+    indexes.push(index);
+    propIndexesByInstanceName.set(prop.name, indexes);
+  }
+  const conflictingPropIndexes = new Set<number>();
+  const collidedInstancePropNames = new Set<string>();
+  for (const [instancePropName, indexes] of propIndexesByInstanceName) {
+    if (indexes.length < 2) {
+      continue;
+    }
+    collidedInstancePropNames.add(instancePropName);
+    const canonicalJsxName = getJsxPropName({
+      instancePropName,
+      componentPropNames,
+      acceptsHtmlAttributes,
+    });
+    const orderedIndexes = indexes.toSorted((left, right) => {
+      const leftIsCanonical = authoredProps[left]?.name === canonicalJsxName;
+      const rightIsCanonical = authoredProps[right]?.name === canonicalJsxName;
+      return Number(rightIsCanonical) - Number(leftIsCanonical);
+    });
+    const selectedIndex =
+      orderedIndexes.find((index) => canUseProp(index)) ?? orderedIndexes[0];
+    for (const index of indexes) {
+      if (index !== selectedIndex) {
+        conflictingPropIndexes.add(index);
+      }
+    }
+  }
+  return { conflictingPropIndexes, collidedInstancePropNames };
+};
+
 export type MdxJsxPropContext = Readonly<{
   acceptsHtmlAttributes: boolean;
   componentPropNames: readonly string[];
@@ -141,6 +192,10 @@ export type MaterializedMdxTemplate =
       }>[];
       preservedJsxPropNames?: readonly string[];
       ignoredJsxPropNames: readonly string[];
+      htmlTags?: readonly Readonly<{
+        instanceId: Instance["id"];
+        tag: string;
+      }>[];
     }>
   | Readonly<{
       type: "unresolved-template";
@@ -373,43 +428,23 @@ export const materializeMdxTemplates = async ({
         acceptsHtmlAttributes,
       }),
     }));
-    const propIndexesByInstanceName = new Map<string, number[]>();
-    for (const [index, prop] of mappedReferenceProps.entries()) {
-      const indexes = propIndexesByInstanceName.get(prop.name) ?? [];
-      indexes.push(index);
-      propIndexesByInstanceName.set(prop.name, indexes);
-    }
-    const conflictingPropIndexes = new Set<number>();
-    const collidedInstancePropNames = new Set<string>();
-    for (const [instancePropName, indexes] of propIndexesByInstanceName) {
-      if (indexes.length < 2) {
-        continue;
-      }
-      collidedInstancePropNames.add(instancePropName);
-      const canonicalJsxName = getJsxPropName({
-        instancePropName,
+    const { conflictingPropIndexes, collidedInstancePropNames } =
+      resolveMdxPropCollisions({
+        authoredProps: reference.props,
+        mappedProps: mappedReferenceProps,
         componentPropNames: declaredJsxPropNames,
         acceptsHtmlAttributes,
-      });
-      const orderedIndexes = indexes.toSorted((left, right) => {
-        const leftIsCanonical =
-          reference.props[left]?.name === canonicalJsxName;
-        const rightIsCanonical =
-          reference.props[right]?.name === canonicalJsxName;
-        return Number(rightIsCanonical) - Number(leftIsCanonical);
-      });
-      const existingProp = findProp(
-        materializedData.props.values(),
-        materializedRootId,
-        instancePropName
-      );
-      const selectedIndex =
-        orderedIndexes.find((index) => {
+        canUseProp: (index) => {
           const authoredProp = reference.props[index];
           const instanceProp = mappedReferenceProps[index];
           if (authoredProp === undefined || instanceProp === undefined) {
             return false;
           }
+          const existingProp = findProp(
+            materializedData.props.values(),
+            materializedRootId,
+            instanceProp.name
+          );
           return (
             getMdxPropBinding({
               capabilities,
@@ -424,13 +459,8 @@ export const materializeMdxTemplates = async ({
                   : undefined,
             }) !== undefined
           );
-        }) ?? orderedIndexes[0];
-      for (const index of indexes) {
-        if (index !== selectedIndex) {
-          conflictingPropIndexes.add(index);
-        }
-      }
-    }
+        },
+      });
     const propNameMappings: Array<{
       jsxPropName: string;
       instancePropName: string;
@@ -474,12 +504,25 @@ export const materializeMdxTemplates = async ({
         );
       }
       const existingProp = canonicalExistingProp ?? aliasedExistingProp;
+      const propBinding = reference.propBindings?.[index];
       const assetReference = assetReferenceByPath.get(
         getMdxPropValuePathKey({
-          nodePath: reference.path,
-          propIndex: index,
+          nodePath:
+            propBinding?.source === undefined
+              ? reference.path
+              : [...reference.path, ...propBinding.source.nodePath],
+          propIndex: propBinding?.source?.propIndex ?? index,
         })
       );
+      if (
+        propBinding?.requiresAssetReference === true &&
+        assetReference === undefined
+      ) {
+        if (existingProp !== undefined) {
+          materializedData.props.delete(existingProp.id);
+        }
+        continue;
+      }
       const rawBinding =
         assetReference !== undefined
           ? ({ type: "asset", value: assetReference.assetId } as const)
@@ -487,6 +530,7 @@ export const materializeMdxTemplates = async ({
             ? ({ type: "boolean", value: true } as const)
             : ({ type: "string", value: authoredProp.value } as const);
       if (
+        instancePropName === "code" &&
         migrateCodeTextPropMutable({
           instance: rootInstance,
           prop: createPropValue({
@@ -665,10 +709,14 @@ export const materializeMdxTemplates = async ({
       }
     }
 
+    const materializedFragment = extractWebstudioFragment(
+      materializedData,
+      materializedRootId
+    );
     materializedTemplates.push({
       type: "resolved-template",
       reference,
-      fragment: extractWebstudioFragment(materializedData, materializedRootId),
+      fragment: materializedFragment,
       editablePropNames,
       jsxPropContext: {
         acceptsHtmlAttributes,
@@ -686,6 +734,14 @@ export const materializeMdxTemplates = async ({
           : [];
       }),
       ignoredJsxPropNames: Array.from(ignoredJsxPropNames),
+      htmlTags: materializedFragment.instances.flatMap((instance) => {
+        const tag = getHtmlTagFromInstance({
+          instance,
+          metas,
+          props: materializedData.props,
+        });
+        return tag === undefined ? [] : [{ instanceId: instance.id, tag }];
+      }),
     });
   }
   return {

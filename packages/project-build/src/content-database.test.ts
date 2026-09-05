@@ -266,6 +266,67 @@ describe("Content Block MDX compilation", () => {
     expect(queryIds).not.toContain("__content-block-mdx__:private.mdx");
   });
 
+  test("retains nested sources through semantic component templates", async () => {
+    const build = createBuild({});
+    build.instances[0].children = [{ type: "id", value: "templates" }];
+    build.instances.push(
+      {
+        type: "instance",
+        id: "templates",
+        component: "ws:block-template",
+        children: [{ type: "id", value: "paragraph" }],
+      },
+      {
+        type: "instance",
+        id: "paragraph",
+        component: "Paragraph",
+        children: [{ type: "id", value: "nested" }],
+      },
+      {
+        type: "instance",
+        id: "nested",
+        component: "ws:block",
+        children: [],
+      }
+    );
+    build.props.push({
+      id: "nested-source",
+      instanceId: "nested",
+      name: "src",
+      type: "asset",
+      value: "nested.mdx",
+    });
+    const source = "Authored paragraph\n";
+    const artifact = {
+      format: "webstudio-content-database",
+      version: 1,
+      documents: [
+        {
+          _id: "article.mdx",
+          _type: "asset.file",
+          name: "article.mdx",
+          path: "article.mdx",
+          key: "article",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: source.length,
+          revision: "article-revision",
+          contentRef: "article.mdx",
+        },
+      ],
+      contents: { "article.mdx": source },
+    } as unknown as ContentArtifactV1;
+
+    const plan = await resolvePublishedMdxDependencyClosure({
+      build,
+      artifact,
+    });
+
+    expect(plan?.queries.map(({ id }) => id)).toContain(
+      "__content-block-mdx__:nested.mdx"
+    );
+  });
+
   test("keeps internal MDX retention out of Assets Resource plans", () => {
     expect(createBuildContentCompilationPlan(createBuild({}))).toBeUndefined();
   });

@@ -51,18 +51,21 @@ export class ImmerhinSyncObject implements SyncObject {
   store: Store;
   transformOnSend?: (changes: Change[]) => Change[];
   transformOnReceive?: (changes: Change[]) => Change[];
+  onRevert?: (changes: Change[]) => void;
   constructor(
     name: string,
     store: Store,
     transform?: {
       onSend?: (changes: Change[]) => Change[];
       onReceive?: (changes: Change[]) => Change[];
+      onRevert?: (changes: Change[]) => void;
     }
   ) {
     this.name = name;
     this.store = store;
     this.transformOnSend = transform?.onSend;
     this.transformOnReceive = transform?.onReceive;
+    this.onRevert = transform?.onRevert;
   }
   getState() {
     const state = new Map<string, unknown>();
@@ -94,7 +97,13 @@ export class ImmerhinSyncObject implements SyncObject {
     this.store.addTransaction(transaction.id, payload, "remote");
   }
   revertTransaction(transaction: RevertedTransaction) {
+    const revertedChanges = this.store.transactionManager.currentStack
+      .find(({ id }) => id === transaction.id)
+      ?.getChanges();
     this.store.revertTransaction(transaction.id);
+    if (revertedChanges !== undefined) {
+      this.onRevert?.(revertedChanges);
+    }
   }
   subscribe(
     sendTransaction: (transaction: Transaction<Change[]>) => void,

@@ -45,7 +45,7 @@ describe("MDX template migration", () => {
   test("previews nested AST renames while preserving frontmatter and comments", async () => {
     const plan = await planMdxTemplateMigration({
       projectId: "project",
-      migration: { type: "rename", from: "Card", to: "Feature Card" },
+      migration: { type: "rename", from: "Card", to: "FeatureCard" },
       files,
     });
 
@@ -64,8 +64,8 @@ describe("MDX template migration", () => {
     });
     expect(document.children[1]).toMatchObject({
       type: "template",
-      name: "Feature Card",
-      children: [{ type: "template", name: "Feature Card" }],
+      name: "FeatureCard",
+      children: [{ type: "template", name: "FeatureCard" }],
     });
     expect(document.children[2]).toMatchObject({
       type: "template",
@@ -73,7 +73,78 @@ describe("MDX template migration", () => {
     });
   });
 
-  test("omits the complete matching subtree and reports invalid files", async () => {
+  test("renames JSX references and rejects incompatible names", async () => {
+    const file = {
+      ...files[0],
+      source: "<Card><Card /></Card>",
+    };
+    const jsxPlan = await planMdxTemplateMigration({
+      projectId: "project",
+      migration: { type: "rename", from: "Card", to: "FeatureCard" },
+      files: [file],
+    });
+    expect(jsxPlan.files[0]?.source).toBe(
+      "<FeatureCard>\n  <FeatureCard />\n</FeatureCard>\n"
+    );
+
+    await expect(
+      planMdxTemplateMigration({
+        projectId: "project",
+        migration: { type: "rename", from: "Card", to: "Feature Card" },
+        files: [file],
+      })
+    ).rejects.toThrow("valid PascalCase MDX name");
+  });
+
+  test("migrates every reference because template names take precedence", async () => {
+    const file = {
+      ...files[0],
+      source: `<Image src="hero.png" alt="Hero" />
+
+<ws.element ws:name="Image" />`,
+    };
+    const renamePlan = await planMdxTemplateMigration({
+      projectId: "project",
+      migration: { type: "rename", from: "Image", to: "Photo" },
+      files: [file],
+    });
+    const renamed = await parseMdxDocument({
+      source: renamePlan.files[0]?.source ?? "",
+    });
+
+    expect(renamePlan).toMatchObject({ updateCount: 2, changedFileCount: 1 });
+    expect(renamed.children).toMatchObject([
+      { type: "template", name: "Photo", syntax: "jsx" },
+      { type: "template", name: "Photo", syntax: "jsx" },
+    ]);
+
+    const removePlan = await planMdxTemplateMigration({
+      projectId: "project",
+      migration: { type: "remove", name: "Image" },
+      files: [file],
+    });
+    const removed = await parseMdxDocument({
+      source: removePlan.files[0]?.source ?? "",
+    });
+
+    expect(removePlan).toMatchObject({ omissionCount: 2, changedFileCount: 1 });
+    expect(removed.children).toEqual([]);
+  });
+
+  test.each(["Image", "CodeText"])(
+    "uses canonical JSX when renaming a template to %s",
+    async (reservedName) => {
+      const plan = await planMdxTemplateMigration({
+        projectId: "project",
+        migration: { type: "rename", from: "Card", to: reservedName },
+        files: [{ ...files[0], source: "<Card />" }],
+      });
+
+      expect(plan.files[0]?.source).toBe(`<${reservedName} />\n`);
+    }
+  );
+
+  test("removes nested matching references and reports invalid files", async () => {
     const plan = await planMdxTemplateMigration({
       projectId: "project",
       migration: { type: "remove", name: "Card" },
@@ -85,10 +156,10 @@ describe("MDX template migration", () => {
 
     expect(plan).toMatchObject({
       updateCount: 0,
-      omissionCount: 1,
+      omissionCount: 2,
       changedFileCount: 1,
       files: [
-        { assetId: "article", omissionCount: 1, diagnostics: [] },
+        { assetId: "article", omissionCount: 2, diagnostics: [] },
         {
           assetId: "invalid",
           changed: false,
@@ -101,5 +172,37 @@ describe("MDX template migration", () => {
       expect.objectContaining({ type: "comment" }),
       expect.objectContaining({ type: "template", name: "Other" }),
     ]);
+  });
+
+  test("removes template wrappers without discarding authored children", async () => {
+    const plan = await planMdxTemplateMigration({
+      projectId: "project",
+      migration: { type: "remove", name: "Card" },
+      files: [
+        {
+          ...files[0],
+          source: "<Card>Before <Other /> after</Card>",
+        },
+      ],
+    });
+
+    expect(plan).toMatchObject({ omissionCount: 1, changedFileCount: 1 });
+    await expect(
+      parseMdxDocument({ source: plan.files[0]?.source ?? "" })
+    ).resolves.toMatchObject({
+      children: [
+        {
+          type: "element",
+          tag: "p",
+          children: [{ type: "text", value: "Before" }],
+        },
+        { type: "template", name: "Other" },
+        {
+          type: "element",
+          tag: "p",
+          children: [{ type: "text", value: "after" }],
+        },
+      ],
+    });
   });
 });

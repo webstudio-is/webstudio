@@ -33,8 +33,12 @@ import {
 } from "@webstudio-is/sdk";
 import { parseStaticMemberPath } from "@webstudio-is/expression";
 import type { Pages } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { parseMdxDocumentRecovering } from "@webstudio-is/content-engine/mdx";
-import { resolveMdxTemplates } from "./runtime/mdx-template-resolution";
+import {
+  assertMdxTemplateStructure,
+  resolveMdxTemplates,
+} from "./runtime/mdx-template-resolution";
 
 type BuildValues<Value> =
   | readonly Value[]
@@ -226,6 +230,7 @@ export const resolvePublishedMdxDependencyClosure = async ({
     ])
   );
   const props = getBuildValues<Prop>(build.props);
+  const propsById = new Map(props.map((prop) => [prop.id, prop]));
   const sourcesByBlockId = getContentBlockSources({
     instances: instances.values(),
     props,
@@ -301,8 +306,10 @@ export const resolvePublishedMdxDependencyClosure = async ({
           renderScope: "publication-dependency-discovery",
         },
         instances,
-        metas: new Map(),
+        props: propsById,
+        metas: componentMetas,
       });
+      assertMdxTemplateStructure(resolution);
       for (const reference of resolution.references) {
         if (reference.type === "resolved-template") {
           visitTemplateSubtree(reference.templateInstanceId);

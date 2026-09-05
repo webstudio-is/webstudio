@@ -1643,7 +1643,7 @@ const run = async () => {
     });
     await assertLocalDryRun("local fragment insertion", "insert-fragment", {
       parentInstanceId: "home-root",
-      fragment: '<ws.element ws:tag="p">Release smoke</ws.element>',
+      fragment: "<p>Release smoke</p>",
     });
     await assertLocalDryRun("local component insertion", "insert-component", {
       parentInstanceId: "home-root",

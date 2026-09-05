@@ -178,6 +178,7 @@ export const registerComponentLibrary = ({
   metas,
   hooks,
   templates,
+  componentIds = new Map(),
 }: {
   namespace?: string;
   // simplify adding component libraries
@@ -186,6 +187,7 @@ export const registerComponentLibrary = ({
   metas: Record<Instance["component"], WsComponentMeta>;
   hooks?: Hook[];
   templates: Record<Instance["component"], TemplateMeta>;
+  componentIds?: ReadonlyMap<object, Instance["component"]>;
 }) => {
   const prefix = namespace === undefined ? "" : `${namespace}:`;
 
@@ -203,13 +205,21 @@ export const registerComponentLibrary = ({
   }
   $registeredComponentMetas.set(nextMetas);
 
+  const resolvedComponentIds = new Map(componentIds);
+  for (const [componentId, component] of nextComponents) {
+    resolvedComponentIds.set(component, componentId);
+  }
+
   const prevTemplates = $registeredTemplates.get();
   const nextTemplates = new Map(prevTemplates);
   for (const [componentName, meta] of Object.entries(templates)) {
     const { template, ...generatedMeta } = meta;
     nextTemplates.set(`${prefix}${componentName}`, {
       ...generatedMeta,
-      template: renderTemplate(template),
+      template: renderTemplate(template, undefined, [], {
+        componentIds: resolvedComponentIds,
+        componentMetas: nextMetas,
+      }),
     });
   }
   $registeredTemplates.set(nextTemplates);

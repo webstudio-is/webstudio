@@ -3,6 +3,7 @@ import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   configureDynamicDetailContentBlock,
   configureEmptyHeadingTemplate,
+  configureNamedTemplateLifecycle,
   configureRepresentableContentBlockBody,
   configureRepeatedContentBlock,
 } from "../fixtures/mdx-content-block-project";
@@ -32,6 +33,7 @@ import {
 } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { openNavigatorPanel } from "../flows/navigator";
+import { selectNavigatorItem } from "../flows/navigator";
 import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { fillSelectedStringProperty } from "../flows/props-panel";
 import { getProjectBuilderUrl, test } from "../test";
@@ -41,6 +43,7 @@ test.describe.configure({ mode: "parallel" });
 const sourceFilename = "content-source.mdx";
 const alternateFilename = "alternate-source.mdx";
 const unresolvedFilename = "unresolved-source.mdx";
+const namedTemplateFilename = "named-template-source.mdx";
 const emptyFilename = "empty-source.mdx";
 
 const sourceHeading = "MDX source heading";
@@ -123,6 +126,22 @@ const expectCanvasTextOrder = async ({
     await page.waitForTimeout(100);
   }
   throw new Error(`Expected "${before}" before "${after}" on the canvas`);
+};
+
+const expandNavigatorItem = async ({
+  page,
+  name,
+}: {
+  page: Page;
+  name: string;
+}) => {
+  await openNavigatorPanel({ page });
+  const item = page
+    .locator("[data-navigator-tree] [data-tree-button]")
+    .filter({ has: page.getByText(name, { exact: true }) })
+    .last();
+  await item.waitFor({ state: "visible" });
+  await item.press("ArrowRight");
 };
 
 const insertTemplateIntoEmptyContentBlock = async ({
@@ -420,10 +439,19 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
     .waitFor();
 });
 
-test("Empty MDX content supports insertion and keeps the next paragraph focused", async ({
+test("Empty MDX content supports slash menu keyboard and mouse insertion", async ({
   page,
   context,
 }) => {
+  const unexpectedDialogs: string[] = [];
+  page.on("dialog", async (dialog) => {
+    if (dialog.type() === "beforeunload") {
+      await dialog.accept();
+      return;
+    }
+    unexpectedDialogs.push(dialog.message());
+    await dialog.dismiss();
+  });
   const fixture = await createContentModeProject({
     context: context,
     email: "empty-mdx-content-source-e2e@webstudio.test",
@@ -461,32 +489,81 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
   await headingEditor.getByText("First heading", { exact: true }).waitFor();
   await page.keyboard.press("Enter");
 
-  const paragraphEditor = canvas.locator("p[contenteditable]");
-  await paragraphEditor.waitFor({ state: "visible" });
-  await page.keyboard.press("/");
-  await page
+  const keyboardAnchorEditor = canvas.locator("p[contenteditable]").last();
+  await keyboardAnchorEditor.waitFor({ state: "visible" });
+  await page.keyboard.type("Keyboard anchor");
+  await page.keyboard.type("/Empty");
+  const keyboardTemplateItem = page
     .getByRole("menuitemradio", { name: "Empty Heading Template" })
-    .last()
-    .waitFor({ state: "visible" });
-  await page.keyboard.press("Escape");
-  const paragraphWrite = waitForAssetWrite(page, (source) =>
-    source.includes("Focused paragraph")
-  );
-  const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
-  await page.keyboard.type("Focused paragraph");
+    .last();
+  await keyboardTemplateItem.waitFor({ state: "visible" });
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await keyboardTemplateItem.waitFor({ state: "detached" });
+  await canvas.locator("h1").nth(1).waitFor({ state: "visible" });
+  await page.waitForTimeout(100);
+  const headingCount = await canvas.locator("h1").count();
+  if (headingCount !== 2) {
+    throw new Error(
+      `Expected one keyboard insertion, found ${headingCount - 1}`
+    );
+  }
+  const keyboardHeadingEditor = canvas.locator("h1[contenteditable]").last();
+  await page.keyboard.type("Keyboard heading");
+  await keyboardHeadingEditor
+    .getByText("Keyboard heading", { exact: true })
+    .waitFor();
+  await page.keyboard.press("Enter");
+
+  const emptyParagraphEditor = canvas.locator("p[contenteditable]").last();
+  await emptyParagraphEditor.waitFor({ state: "visible" });
+  const replacedParagraphId =
+    await emptyParagraphEditor.getAttribute("data-ws-id");
+  if (replacedParagraphId === null) {
+    throw new Error("Expected the paragraph instance being replaced");
+  }
+  await page.keyboard.press("/");
+  const templateItem = page
+    .getByRole("menuitemradio", {
+      name: fixture.editableTextTemplateName,
+    })
+    .last();
+  await templateItem.waitFor({ state: "visible" });
+  await templateItem.click();
+  await canvas
+    .locator(`[data-ws-id="${replacedParagraphId}"]`)
+    .waitFor({ state: "detached" });
+  await waitForCanvasText({ page, text: fixture.editableTextTemplateText });
+  if (
+    (await canvas
+      .getByText(fixture.editableTextTemplateText, { exact: true })
+      .count()) !== 1
+  ) {
+    throw new Error("Expected one live slash menu insertion on the canvas");
+  }
+  const paragraphEditor = canvas
+    .locator("p[contenteditable]")
+    .filter({ hasText: fixture.editableTextTemplateText });
+  await paragraphEditor.waitFor({ state: "visible" });
   const paragraphId = await paragraphEditor.getAttribute("data-ws-id");
   if (paragraphId === null) {
     throw new Error("Expected the focused paragraph instance id");
   }
+  const paragraphWrite = waitForAssetWrite(page, (source) =>
+    source.includes("Focused paragraph")
+  );
+  const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("Focused paragraph");
   await page.keyboard.press("Enter");
-  const emptyParagraphEditor = canvas.locator(
+  const nextEmptyParagraphEditor = canvas.locator(
     `p[contenteditable]:not([data-ws-id="${paragraphId}"])`
   );
-  await emptyParagraphEditor.waitFor({ state: "visible" });
+  await nextEmptyParagraphEditor.waitFor({ state: "visible" });
   await paragraphWrite;
   await paragraphMetadataWrite;
   const emptyParagraphId =
-    await emptyParagraphEditor.getAttribute("data-ws-id");
+    await nextEmptyParagraphEditor.getAttribute("data-ws-id");
   if (emptyParagraphId === null) {
     throw new Error("Expected the new paragraph instance id");
   }
@@ -494,6 +571,8 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     page,
     (source) =>
       source.includes("# First heading") &&
+      source.includes("Keyboard anchor") &&
+      source.includes("# Keyboard heading") &&
       source.includes("Focused paragraph") &&
       source.includes('ws:tag="p"') === false
   );
@@ -504,21 +583,36 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     .locator(`p[data-ws-id="${emptyParagraphId}"]`)
     .waitFor({ state: "detached" });
   if (
-    (await paragraphEditor.evaluate(
-      (element) =>
-        element === document.activeElement ||
-        element.contains(document.activeElement)
-    )) === false
+    (await canvas
+      .locator(`p[data-ws-id="${paragraphId}"]`)
+      .evaluate(
+        (element) =>
+          element === document.activeElement ||
+          element.contains(document.activeElement)
+      )) === false
   ) {
     throw new Error("Expected the previous paragraph to regain focus");
   }
   await page.mouse.click(5, 5);
   const finalSource = (await finalWrite).request().postData() ?? "";
-  if (
-    finalSource.includes("# First heading") === false ||
-    finalSource.includes("Focused paragraph") === false ||
-    finalSource.includes('ws:tag="p"')
-  ) {
+  const expectedContentOrder = [
+    "# First heading",
+    "Keyboard anchor",
+    "# Keyboard heading",
+    "Focused paragraph",
+  ];
+  let previousIndex = -1;
+  for (const content of expectedContentOrder) {
+    const index = finalSource.indexOf(content);
+    if (
+      index <= previousIndex ||
+      finalSource.indexOf(content, index + 1) !== -1
+    ) {
+      throw new Error(`Unexpected final MDX source: ${finalSource}`);
+    }
+    previousIndex = index;
+  }
+  if (finalSource.includes("/Empty") || finalSource.includes('ws:tag="p"')) {
     throw new Error(`Unexpected final MDX source: ${finalSource}`);
   }
 
@@ -529,7 +623,25 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     mode: "content",
   });
   await waitForCanvasText({ page, text: "First heading" });
+  await waitForCanvasText({ page, text: "Keyboard anchor" });
+  await waitForCanvasText({ page, text: "Keyboard heading" });
   await waitForCanvasText({ page, text: "Focused paragraph" });
+  const reloadedCanvas = await waitForCanvasFrame({ page });
+  for (const text of [
+    "First heading",
+    "Keyboard anchor",
+    "Keyboard heading",
+    "Focused paragraph",
+  ]) {
+    if ((await reloadedCanvas.getByText(text, { exact: true }).count()) !== 1) {
+      throw new Error(`Expected one ${text} block after reload`);
+    }
+  }
+  if (unexpectedDialogs.length > 0) {
+    throw new Error(
+      `Normal Content Block edits opened dialogs: ${unexpectedDialogs.join(", ")}`
+    );
+  }
 });
 
 test("Content Block requires a Builder reload after a stale file revision", async ({
@@ -640,14 +752,20 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
     text: "Valid content after the missing template.",
   });
   const canvas = await waitForCanvasFrame({ page });
-  const warning = canvas.getByText("Missing template: Missing E2E Template", {
+  const warning = canvas.getByText("Missing template: MissingE2ETemplate", {
     exact: true,
   });
   await warning.waitFor();
   await warning.click();
   await selectContentBlock({ page });
   await page.getByRole("img", { name: /^MDX source warning:/ }).waitFor();
-  await page.getByRole("button", { name: "Open", exact: true }).waitFor();
+  const openButton = page.getByRole("button", { name: "Open", exact: true });
+  await openButton.click();
+  await page
+    .locator(".cm-lintRange-warning")
+    .filter({ hasText: "MissingE2ETemplate" })
+    .waitFor();
+  await page.keyboard.press("Escape");
 
   const previewUrl = getProjectBuilderUrl({
     projectId: fixture.projectId,
@@ -662,7 +780,87 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
   });
   const previewCanvas = await waitForCanvasFrame({ page });
   await previewCanvas
-    .getByText("Missing template: Missing E2E Template", { exact: true })
+    .getByText("Missing template: MissingE2ETemplate", { exact: true })
+    .waitFor({ state: "hidden" });
+});
+
+test("Named MDX templates re-resolve after rename, reload, and removal", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createContentModeProject({
+    context,
+    email: "mdx-template-lifecycle-e2e@webstudio.test",
+    title: "MDX Template Lifecycle E2E",
+  });
+  await configureNamedTemplateLifecycle(fixture.projectId);
+
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await openAssetsPanel({ page });
+  await uploadAsset({ page, filename: namedTemplateFilename });
+  await selectContentBlock({ page });
+  await chooseContentBlockSource({ page, filename: namedTemplateFilename });
+  await confirmContentBlockConnection({ page });
+  await waitForCanvasText({ page, text: "Authored lifecycle card" });
+
+  await expandNavigatorItem({ page, name: "Content Block" });
+  await expandNavigatorItem({ page, name: "Block Template" });
+  await selectNavigatorItem({ page, name: "Lifecycle Card" });
+  await page.getByRole("tab", { name: "Settings" }).click();
+  const nameInput = page.getByLabel("Name", { exact: true });
+  await nameInput.fill("RenamedLifecycleCard");
+  await nameInput.press("Tab");
+  const renameSaved = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Rename", exact: true }).click();
+  await renameSaved;
+  await selectContentBlock({ page });
+  await waitForCanvasText({ page, text: "Missing template: LifecycleCard" });
+
+  await openFixture({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForCanvasText({ page, text: "Missing template: LifecycleCard" });
+
+  await expandNavigatorItem({ page, name: "Content Block" });
+  await expandNavigatorItem({ page, name: "Block Template" });
+  await selectNavigatorItem({ page, name: "Lifecycle Card" });
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("LifecycleCard");
+  await page.getByLabel("Name", { exact: true }).press("Tab");
+  const restoreNameSaved = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Rename", exact: true }).click();
+  await restoreNameSaved;
+  await selectContentBlock({ page });
+  await waitForCanvasText({ page, text: "Authored lifecycle card" });
+
+  await expandNavigatorItem({ page, name: "Content Block" });
+  await expandNavigatorItem({ page, name: "Block Template" });
+  await selectNavigatorItem({ page, name: "Lifecycle Card" });
+  await page.keyboard.press("Delete");
+  const deleteSaved = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await deleteSaved;
+  await selectContentBlock({ page });
+  await waitForCanvasText({ page, text: "Missing template: LifecycleCard" });
+
+  const previewUrl = getProjectBuilderUrl({
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "preview",
+  });
+  await page.goto(previewUrl);
+  const previewCanvas = await waitForCanvasFrame({ page });
+  await previewCanvas
+    .getByText("Missing template: LifecycleCard", { exact: true })
+    .waitFor({ state: "hidden" });
+  await previewCanvas
+    .getByText("Authored lifecycle card", { exact: true })
     .waitFor({ state: "hidden" });
 });
 
@@ -679,7 +877,7 @@ test("Dynamic detail source follows the selected route parameter", async ({
   await openFixture({
     page,
     projectId: fixture.projectId,
-    authToken: fixture.editorToken,
+    authToken: fixture.builderToken,
   });
   await openAssetsPanel({ page });
   await uploadAsset({ page, filename: sourceFilename });
@@ -702,6 +900,7 @@ test("Dynamic detail source follows the selected route parameter", async ({
     projectId: fixture.projectId,
     authToken: fixture.editorToken,
     pageId: detailPageId,
+    mode: "content",
   });
   await waitForCanvasText({ page, text: sourceHeading });
 
@@ -736,7 +935,7 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
   await openFixture({
     page,
     projectId: fixture.projectId,
-    authToken: fixture.editorToken,
+    authToken: fixture.builderToken,
   });
   await openAssetsPanel({ page });
   await uploadAsset({ page, filename: sourceFilename });
@@ -758,6 +957,7 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
     page,
     projectId: fixture.projectId,
     authToken: fixture.editorToken,
+    mode: "content",
   });
   await waitForCanvasText({ page, text: sourceHeading });
   await waitForCanvasText({ page, text: alternateHeading });
@@ -777,6 +977,7 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
     page,
     projectId: fixture.projectId,
     authToken: fixture.editorToken,
+    mode: "content",
   });
   await waitForCanvasText({ page, text: editedHeading });
   await waitForCanvasText({ page, text: alternateHeading });

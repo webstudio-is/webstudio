@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { $, ws, renderData, renderTemplate } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  ws,
+  renderData,
+  renderTemplate,
+} from "@webstudio-is/template";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
@@ -13,17 +18,23 @@ import {
 import { getComponentTemplates } from "./component-templates";
 import { builderRuntimeContext } from "./context";
 
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const List = createTemplateComponentFixture("List");
+const ListItem = createTemplateComponentFixture("ListItem");
+const Paragraph = createTemplateComponentFixture("Paragraph");
+
 const emptyProps = new Map();
 
 describe("insert target", () => {
   test("resolves default target after a selected textual container", () => {
     const data = renderData(
-      <$.Body ws:id="body">
+      <Body ws:id="body">
         <ws.element ws:id="div" ws:tag="div">
           text
         </ws.element>
         <ws.element ws:id="span" ws:tag="span"></ws.element>
-      </$.Body>
+      </Body>
     );
 
     expect(
@@ -38,9 +49,9 @@ describe("insert target", () => {
 
   test("finds the first valid html tag for an element target", () => {
     const data = renderData(
-      <$.Body ws:id="body">
+      <Body ws:id="body">
         <ws.element ws:id="list" ws:tag="ul"></ws.element>
-      </$.Body>
+      </Body>
     );
 
     expect(
@@ -55,13 +66,13 @@ describe("insert target", () => {
 
   test("finds closest content-model-compatible insertion target", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.List ws:id="list">
-          <$.ListItem ws:id="item"></$.ListItem>
-        </$.List>
-      </$.Body>
+      <Body ws:id="body">
+        <List ws:id="list">
+          <ListItem ws:id="item"></ListItem>
+        </List>
+      </Body>
     );
-    const fragment = renderTemplate(<$.Paragraph ws:id="paragraph" />);
+    const fragment = renderTemplate(<Paragraph ws:id="paragraph" />);
 
     expect(
       findClosestInsertTarget({
@@ -76,7 +87,7 @@ describe("insert target", () => {
   });
 
   test("keeps explicit matching target", () => {
-    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    const data = renderData(<Body ws:id="body"></Body>);
     const fragment = renderTemplate(
       <ws.element ws:id="element" ws:tag="section" />
     );
@@ -95,11 +106,11 @@ describe("insert target", () => {
 
   test("does not restore an incompatible explicit paste target", () => {
     const data = renderData(
-      <$.Body ws:id="body">
+      <Body ws:id="body">
         <ws.element ws:id="button" ws:tag="button" />
-      </$.Body>
+      </Body>
     );
-    const fragment = renderTemplate(<$.ListItem ws:id="item" />);
+    const fragment = renderTemplate(<ListItem ws:id="item" />);
 
     expect(
       resolveFragmentInsertTarget({
@@ -115,7 +126,7 @@ describe("insert target", () => {
   });
 
   test("reports global root target", () => {
-    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    const data = renderData(<Body ws:id="body"></Body>);
     const fragment = renderTemplate(
       <ws.element ws:id="element" ws:tag="section" />
     );
@@ -138,7 +149,7 @@ describe("insert target", () => {
   });
 
   test("finds default div tag for body insertion", () => {
-    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    const data = renderData(<Body ws:id="body"></Body>);
 
     expect(
       findElementTagForInsertTarget({
@@ -152,10 +163,10 @@ describe("insert target", () => {
 
   test("normalizes after position to the next sibling index", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="first"></$.Box>
-        <$.Box ws:id="second"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="first"></Box>
+        <Box ws:id="second"></Box>
+      </Body>
     );
 
     expect(
@@ -176,7 +187,7 @@ describe("insert target", () => {
   });
 
   test("normalizes after position on root selection to end", () => {
-    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    const data = renderData(<Body ws:id="body"></Body>);
 
     expect(
       resolveInsertTargetPosition({
@@ -193,11 +204,11 @@ describe("insert target", () => {
 
   test("resolves component target with template-aware matching", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.List ws:id="list">
-          <$.ListItem ws:id="item"></$.ListItem>
-        </$.List>
-      </$.Body>
+      <Body ws:id="body">
+        <List ws:id="list">
+          <ListItem ws:id="item"></ListItem>
+        </List>
+      </Body>
     );
 
     expect(
@@ -220,9 +231,9 @@ describe("insert target", () => {
 
   test("resolves element target with matching html tag", () => {
     const data = renderData(
-      <$.Body ws:id="body">
+      <Body ws:id="body">
         <ws.element ws:id="list" ws:tag="ul"></ws.element>
-      </$.Body>
+      </Body>
     );
 
     expect(
@@ -245,7 +256,7 @@ describe("insert target", () => {
   });
 
   test("reports missing resolved target", () => {
-    const fragment = renderTemplate(<$.Paragraph ws:id="paragraph" />);
+    const fragment = renderTemplate(<Paragraph ws:id="paragraph" />);
     let didReportMissingTarget = false;
 
     expect(

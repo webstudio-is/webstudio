@@ -1,4 +1,4 @@
-import { Store } from "immerhin";
+import { Store, type Change } from "immerhin";
 import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
 import { batched } from "nanostores";
@@ -95,6 +95,16 @@ setAutoFreeze(false);
 export const clientSyncStore = new Store();
 export const serverSyncStore = new Store();
 export const externalContentSyncStore = new Store();
+const serverSyncRevertListeners = new Set<
+  (changes: readonly Change[]) => void
+>();
+
+export const subscribeServerSyncReverts = (
+  listener: (changes: readonly Change[]) => void
+) => {
+  serverSyncRevertListeners.add(listener);
+  return () => serverSyncRevertListeners.delete(listener);
+};
 
 const serverSyncStores = {
   pages: $pages,
@@ -315,7 +325,13 @@ export const __testing__ = {
 
 export const createObjectPool = () => {
   return new SyncObjectPool([
-    new ImmerhinSyncObject("server", serverSyncStore),
+    new ImmerhinSyncObject("server", serverSyncStore, {
+      onRevert: (changes) => {
+        for (const listener of serverSyncRevertListeners) {
+          listener(changes);
+        }
+      },
+    }),
     new ImmerhinSyncObject("externalContent", externalContentSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
     new SelectedPageAndInstanceSyncObject(),

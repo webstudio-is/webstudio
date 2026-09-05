@@ -1,10 +1,10 @@
 import { Fragment, type JSX, type ReactNode } from "react";
-import { kebabCase } from "change-case";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
   animationAction,
   encodeDataSourceVariable,
   getStyleDeclKey,
+  tags,
 } from "@webstudio-is/sdk";
 import type {
   Breakpoint,
@@ -21,8 +21,63 @@ import type {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
+import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import { parseTemplateCss, type TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
+
+declare module "react" {
+  interface HTMLAttributes<T> {
+    "ws:id"?: string;
+    "ws:style"?: TemplateStyleDecl[];
+    "ws:tokens"?: Token[];
+    "ws:show"?: boolean | Expression;
+  }
+
+  interface SVGAttributes<T> {
+    "ws:id"?: string;
+    "ws:style"?: TemplateStyleDecl[];
+    "ws:tokens"?: Token[];
+    "ws:show"?: boolean | Expression;
+  }
+}
+
+const instanceMetaByElement = new WeakMap<
+  JSX.Element,
+  Readonly<{ name?: string; label?: string }>
+>();
+const componentIdByMarker = new WeakMap<object, Instance["component"]>();
+const intrinsicTags = new Set(tags);
+
+export type TemplateComponent = Exclude<JSX.Element["type"], string>;
+
+export type RenderTemplateOptions = {
+  allowManualIds?: boolean;
+  componentIds?: ReadonlyMap<TemplateComponent, Instance["component"]>;
+  componentMetas?: ReadonlyMap<Instance["component"], WsComponentMeta>;
+};
+
+/** Associates instance metadata without exposing it as JSX properties. */
+export const setInstanceMeta = (
+  meta: Readonly<{ label?: string }>,
+  element: JSX.Element
+): JSX.Element => {
+  instanceMetaByElement.set(element, meta);
+  return element;
+};
+
+/** Associates structured Content Block template metadata without JSX props. */
+export const setTemplateMeta = (
+  meta: Readonly<{ name: string; label?: string }>,
+  element: JSX.Element
+): JSX.Element => {
+  if (isMdxTemplateComponentName(meta.name) === false) {
+    throw new Error(
+      "Template name must be a PascalCase JavaScript identifier, for example PromotionCard"
+    );
+  }
+  instanceMetaByElement.set(element, meta);
+  return element;
+};
 
 export class Token {
   name: string;
@@ -153,14 +208,29 @@ const isChildValue = (child: unknown) =>
   child instanceof PlaceholderValue ||
   child instanceof Expression;
 
-const getElementChildren = (element: JSX.Element): JSX.Element[] => {
-  if (Array.isArray(element.props?.children)) {
-    return element.props?.children;
+type ElementChild = JSX.Element | string | PlaceholderValue | Expression;
+
+const appendElementChildren = (children: ElementChild[], child: unknown) => {
+  if (Array.isArray(child)) {
+    for (const item of child) {
+      appendElementChildren(children, item);
+    }
+    return;
   }
-  if (element.props?.children) {
-    return [element.props?.children];
+  if (child === undefined || child === null || typeof child === "boolean") {
+    return;
   }
-  return [];
+  if (typeof child === "number") {
+    children.push(String(child));
+    return;
+  }
+  children.push(child as ElementChild);
+};
+
+const getElementChildren = (element: JSX.Element): ElementChild[] => {
+  const children: ElementChild[] = [];
+  appendElementChildren(children, element.props?.children);
+  return children;
 };
 
 const findUnsupportedSerializableValue = (
@@ -347,10 +417,7 @@ export const renderTemplate = (
   root: JSX.Element,
   generateId?: () => string,
   initialBreakpoints: Breakpoint[] = [],
-  options: {
-    allowManualIds?: boolean;
-    componentMetas?: Map<Instance["component"], WsComponentMeta>;
-  } = {}
+  options: RenderTemplateOptions = {}
 ): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
@@ -523,12 +590,17 @@ export const renderTemplate = (
   ): Instance["children"][number] => {
     if (element.type === Fragment) {
       throw new Error(
-        "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in a component such as <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+        "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in an element such as <section><p>Text</p></section>."
       );
     }
-    if (typeof element.type === "string") {
+    const intrinsicTag =
+      typeof element.type === "string" ? element.type : undefined;
+    if (
+      intrinsicTag !== undefined &&
+      intrinsicTags.has(intrinsicTag) === false
+    ) {
       throw new Error(
-        `Do not use raw HTML tag <${element.type}> in Webstudio JSX. Use Webstudio components such as <$.Box>...</$.Box>, or use <ws.element ws:tag="${element.type}">...</ws.element> when a specific HTML tag is required.`
+        `Invalid intrinsic JSX element "${intrinsicTag}". Use a standard lowercase HTML or SVG tag.`
       );
     }
     if (
@@ -539,20 +611,31 @@ export const renderTemplate = (
         "Do not set ws:id in JSX fragments. Webstudio runtime generates system ids automatically."
       );
     }
-    const component = element.type.displayName;
+    const component =
+      intrinsicTag === undefined
+        ? (options.componentIds?.get(element.type) ??
+          componentIdByMarker.get(element.type))
+        : "ws:element";
     if (typeof component !== "string") {
+      const componentName =
+        typeof element.type === "function"
+          ? (element.type.displayName ?? element.type.name)
+          : typeof element.type === "object" && element.type !== null
+            ? element.type.displayName
+            : undefined;
       throw new Error(
-        "Invalid JSX component in Webstudio JSX. Use Webstudio component helpers such as <$.Box>...</$.Box>."
+        `Invalid JSX component${componentName ? ` "${componentName}"` : ""} in Webstudio JSX. Use a lowercase HTML element or an available PascalCase component identifier.`
       );
     }
     const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
     const componentMeta = options.componentMetas?.get(component);
     const componentPropNames = new Set(Object.keys(componentMeta?.props ?? {}));
     const acceptsHtmlAttributes =
+      intrinsicTag !== undefined ||
       component === "ws:element" ||
       typeof element.props?.["ws:tag"] === "string" ||
       Object.keys(componentMeta?.presetStyle ?? {}).length > 0;
-    let tag: string | undefined;
+    let tag: string | undefined = intrinsicTag;
     const mappedProps = mapAttributeNames({
       attributes: Object.entries({ ...element.props }).flatMap(
         ([name, value]) =>
@@ -568,6 +651,11 @@ export const renderTemplate = (
       let { name } = mappedProp;
       const { value } = mappedProp;
       if (name === "ws:tag") {
+        if (intrinsicTag !== undefined) {
+          throw new Error(
+            `Do not set ws:tag on intrinsic JSX <${intrinsicTag}>. Use the intended HTML tag directly.`
+          );
+        }
         tag = value as string;
         continue;
       }
@@ -686,8 +774,16 @@ export const renderTemplate = (
       component,
       children: [],
     };
+    const templateMeta = instanceMetaByElement.get(element);
+    if (templateMeta !== undefined) {
+      instance.name = templateMeta.name;
+      instance.label = templateMeta.label;
+      if (instance.label === undefined) {
+        delete instance.label;
+      }
+    }
     instances.push(instance);
-    if (element.props?.["ws:label"]) {
+    if (element.props?.["ws:label"] && templateMeta === undefined) {
       instance.label = element.props?.["ws:label"];
     }
     if (tag !== undefined) {
@@ -726,7 +822,7 @@ export const renderTemplate = (
     (children.length === 0 || instances.length === 0)
   ) {
     throw new Error(
-      "JSX fragment must contain at least one Webstudio component, for example <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+      "JSX fragment must contain at least one element or component, for example <section><p>Text</p></section>."
     );
   }
   for (const [instanceId, localStyles] of localStylesByInstanceId) {
@@ -814,7 +910,8 @@ export const renderTemplate = (
 export const renderData = (
   root: JSX.Element,
   generateId?: () => string,
-  initialBreakpoints: Breakpoint[] = []
+  initialBreakpoints: Breakpoint[] = [],
+  options: RenderTemplateOptions = {}
 ): Omit<WebstudioData, "pages"> => {
   const {
     instances,
@@ -826,7 +923,7 @@ export const renderData = (
     dataSources,
     resources,
     assets,
-  } = renderTemplate(root, generateId, initialBreakpoints);
+  } = renderTemplate(root, generateId, initialBreakpoints, options);
   return {
     instances: new Map(instances.map((item) => [item.id, item])),
     props: new Map(props.map((item) => [item.id, item])),
@@ -857,22 +954,41 @@ type Component = { displayName: string } & ((
   props: ComponentProps
 ) => ReactNode);
 
-export const createProxy = (
-  prefix: string,
-  transformName: (name: string) => string = (name) => name
-): Record<string, Component> => {
-  return new Proxy(
-    {},
-    {
-      get(_target, prop) {
-        const component: Component = () => undefined;
-        component.displayName = `${prefix}${transformName(String(prop))}`;
-        return component;
-      },
-    }
-  );
+const createComponentMarker = (
+  componentId: Instance["component"]
+): Component => {
+  const component: Component = () => undefined;
+  component.displayName = componentId;
+  componentIdByMarker.set(component, componentId);
+  return component;
 };
 
-export const $: Record<string, Component> = createProxy("");
+/** @internal Creates an explicit component marker for test fixtures. */
+export const createTemplateComponentFixture = (
+  componentId: Instance["component"]
+): Component => createComponentMarker(componentId);
 
-export const ws: Record<string, Component> = createProxy("ws:", kebabCase);
+const createCompilerPrimitive = (name: string): Component => {
+  return createComponentMarker(`ws:${name}`);
+};
+
+type CompilerPrimitives = {
+  root: Component;
+  element: Component;
+  collection: Component;
+  descendant: Component;
+  block: Component;
+  contentBlockBody: Component;
+  blockTemplate: Component;
+};
+
+/** Compiler-only primitives that have no React component implementation. */
+export const ws: CompilerPrimitives = {
+  root: createCompilerPrimitive("root"),
+  element: createCompilerPrimitive("element"),
+  collection: createCompilerPrimitive("collection"),
+  descendant: createCompilerPrimitive("descendant"),
+  block: createCompilerPrimitive("block"),
+  contentBlockBody: createCompilerPrimitive("content-block-body"),
+  blockTemplate: createCompilerPrimitive("block-template"),
+};

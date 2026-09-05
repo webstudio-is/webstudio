@@ -41,27 +41,35 @@ import {
   TextStrikethroughIcon,
 } from "@webstudio-is/icons";
 import {
+  findBlockTemplates,
   formatAssetName,
+  getMdxAssetSourceBlockInstanceIds,
   inspectMdxAssetSource,
   MdxAuthoredContentConflictError,
 } from "@webstudio-is/project-build/runtime";
-import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   getAssetUrl,
+  getComponentJsxName,
+  getContentBlockTemplateName,
+  getHtmlTagFromInstance,
   getPagePath,
   isMdxFileAsset,
   type Asset,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
 import {
   $assetFolders,
   $assets,
+  $dataSources,
+  $instances,
   $pages,
   $props,
   readBuilderStateStores,
 } from "~/shared/sync/data-stores";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $registeredComponentMetas } from "~/shared/nano-states";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import {
   AssetUpload,
@@ -76,6 +84,7 @@ import {
   getTextFileEditorExtensions,
   getMdxPersistenceFeedback,
   isMarkdownAsset,
+  type MdxCompletionComponent,
   type MdxPersistenceFeedback,
   normalizeTextFileContent,
 } from "./text-file-utils";
@@ -92,6 +101,123 @@ type TextFileState =
   | { status: "loading" }
   | { status: "loaded"; content: string }
   | { status: "error" };
+
+const getStaticMdxCompletionProps = (
+  meta: WsComponentMeta | undefined,
+  contentModeOnly = false
+): MdxCompletionComponent["props"] =>
+  Object.entries(meta?.props ?? {}).flatMap(([name, prop]) => {
+    if (
+      (contentModeOnly && prop.contentMode !== true) ||
+      (prop.type !== "string" &&
+        prop.type !== "number" &&
+        prop.type !== "boolean")
+    ) {
+      return [];
+    }
+    const values = "options" in prop ? prop.options : undefined;
+    return [
+      {
+        name,
+        ...(Array.isArray(values) ? { values } : {}),
+      },
+    ];
+  });
+
+const getMdxCompletionComponents = ({
+  assetId,
+  metas,
+}: {
+  assetId: string;
+  metas: Map<string, WsComponentMeta>;
+}): MdxCompletionComponent[] => {
+  const components = new Map<string, MdxCompletionComponent>();
+  const componentIds = Array.from(metas.keys());
+  for (const [component, meta] of metas) {
+    const name = getComponentJsxName({
+      component,
+      components: componentIds,
+    });
+    if (name !== undefined) {
+      components.set(name, {
+        name,
+        props: getStaticMdxCompletionProps(meta),
+      });
+    }
+  }
+
+  const state = readBuilderStateStores();
+  const instances = state.instances ?? new Map();
+  const propsByInstanceId = new Map<
+    string,
+    Array<{ name: string; type: "string" | "number" | "boolean" }>
+  >();
+  for (const prop of state.props?.values() ?? []) {
+    if (
+      prop.type !== "string" &&
+      prop.type !== "number" &&
+      prop.type !== "boolean"
+    ) {
+      continue;
+    }
+    const props = propsByInstanceId.get(prop.instanceId) ?? [];
+    props.push({ name: prop.name, type: prop.type });
+    propsByInstanceId.set(prop.instanceId, props);
+  }
+  const templates = new Map<string, MdxCompletionComponent>();
+  for (const blockInstanceId of getMdxAssetSourceBlockInstanceIds({
+    assetId,
+    state,
+  })) {
+    for (const [template] of findBlockTemplates({
+      anchor: [blockInstanceId],
+      instances,
+    }) ?? []) {
+      const name = getContentBlockTemplateName(template);
+      const existing = templates.get(name);
+      const meta = metas.get(template.component);
+      const componentPropNames = new Set(Object.keys(meta?.props ?? {}));
+      const acceptsHtmlAttributes =
+        getHtmlTagFromInstance({
+          instance: template,
+          metas,
+          props: state.props,
+        }) !== undefined;
+      const existingProps = (propsByInstanceId.get(template.id) ?? []).flatMap(
+        (prop) => {
+          const propMeta = meta?.props?.[prop.name];
+          if (
+            propMeta !== undefined &&
+            (propMeta.contentMode !== true || propMeta.type !== prop.type)
+          ) {
+            return [];
+          }
+          return [
+            {
+              name: getJsxPropName({
+                instancePropName: prop.name,
+                acceptsHtmlAttributes,
+                componentPropNames,
+              }),
+            },
+          ];
+        }
+      );
+      const props = new Map(
+        [
+          ...(existing?.props ?? []),
+          ...getStaticMdxCompletionProps(meta, true),
+          ...existingProps,
+        ].map((prop) => [prop.name, prop] as const)
+      );
+      templates.set(name, { name, props: Array.from(props.values()) });
+    }
+  }
+  for (const [name, template] of templates) {
+    components.set(name, template);
+  }
+  return Array.from(components.values());
+};
 
 const markdownActions = [
   {
@@ -265,6 +391,10 @@ const MarkdownImagePicker = ({
       </IconButton>
     </FloatingPanel>
   );
+};
+
+export const __testing__ = {
+  getMdxCompletionComponents,
 };
 
 const getMarkdownHref = (value: UrlInputValue) => {
@@ -453,6 +583,10 @@ export const TextFileEditor = ({
   const assets = useStore($assets);
   const assetFolders = useStore($assetFolders);
   const externalContentRoots = useStore($externalContentRoots);
+  const registeredComponentMetas = useStore($registeredComponentMetas);
+  const instances = useStore($instances);
+  const props = useStore($props);
+  const dataSources = useStore($dataSources);
   const asset = assets.get(assetId);
   const { assetContainers } = useAssets();
   const canEdit = useStore($authPermit) !== "view";
@@ -476,8 +610,11 @@ export const TextFileEditor = ({
   const languageExtensions = useMemo(
     () => {
       // The state reader below is intentionally refreshed when its external
-      // Content Block context changes.
+      // Content Block context or template definitions change.
       void externalContentRoots;
+      void instances;
+      void props;
+      void dataSources;
       if (asset === undefined) {
         return [];
       }
@@ -485,19 +622,34 @@ export const TextFileEditor = ({
         return getTextFileEditorExtensions(asset);
       }
       const projectId = asset.projectId;
-      return getTextFileEditorExtensions(asset, [], async ({ source }) =>
-        inspectMdxAssetSource({
-          source,
+      return getTextFileEditorExtensions(
+        asset,
+        [],
+        async ({ source }) =>
+          inspectMdxAssetSource({
+            source,
+            assetId,
+            state: readBuilderStateStores(),
+            metas: registeredComponentMetas,
+            projectId,
+          }),
+        getMdxCompletionComponents({
           assetId,
-          state: readBuilderStateStores(),
-          metas: componentMetas,
-          projectId,
+          metas: registeredComponentMetas,
         })
       );
     },
     // Recreate the linter after a Content Block is materialized or refreshed so
     // contextual template and content-model diagnostics are recalculated.
-    [asset, assetId, externalContentRoots]
+    [
+      asset,
+      assetId,
+      dataSources,
+      externalContentRoots,
+      instances,
+      props,
+      registeredComponentMetas,
+    ]
   );
 
   useEffect(() => {

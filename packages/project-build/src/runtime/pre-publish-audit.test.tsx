@@ -7,11 +7,24 @@ import {
   type Pages,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { $, renderData, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  ws,
+} from "@webstudio-is/template";
 import {
   formatPrePublishAuditFinding,
   runPrePublishAudit,
 } from "./pre-publish-audit";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const CodeText = createTemplateComponentFixture("CodeText");
+const Heading = createTemplateComponentFixture("Heading");
+const Link = createTemplateComponentFixture("Link");
+const Paragraph = createTemplateComponentFixture("Paragraph");
+const Text = createTemplateComponentFixture("Text");
+const Video = createTemplateComponentFixture("Video");
 
 const createPages = (page: Page): Pages => {
   const rootFolder: Folder = {
@@ -56,13 +69,13 @@ const runAudit = ({
 
 test("warns without blocking legacy invalid HTML", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
+    <Body ws:id="body">
       <ws.element ws:tag="button">
-        <$.Heading ws:id="heading" ws:tag="h3">
+        <Heading ws:id="heading" ws:tag="h3">
           Legacy accordion trigger
-        </$.Heading>
+        </Heading>
       </ws.element>
-    </$.Body>
+    </Body>
   );
 
   const findings = runAudit({ instances, props });
@@ -88,14 +101,14 @@ test("warns without blocking legacy invalid HTML", () => {
 test("allows valid publishable pages and ignores invalid drafts", () => {
   const { instances, props } = renderData(
     <>
-      <$.Body ws:id="body">
-        <$.Paragraph>Valid paragraph</$.Paragraph>
-      </$.Body>
-      <$.Body ws:id="draft-body">
-        <$.Paragraph>
-          <$.Heading ws:tag="h2">Invalid draft heading</$.Heading>
-        </$.Paragraph>
-      </$.Body>
+      <Body ws:id="body">
+        <Paragraph>Valid paragraph</Paragraph>
+      </Body>
+      <Body ws:id="draft-body">
+        <Paragraph>
+          <Heading ws:tag="h2">Invalid draft heading</Heading>
+        </Paragraph>
+      </Body>
     </>
   );
   const pages = createPages(marketEdgePage);
@@ -120,11 +133,11 @@ test("allows valid publishable pages and ignores invalid drafts", () => {
 
 test("allows valid legacy CodeText children", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.CodeText>
-        <$.Text ws:tag="span">Legacy code text</$.Text>
-      </$.CodeText>
-    </$.Body>
+    <Body ws:id="body">
+      <CodeText>
+        <Text ws:tag="span">Legacy code text</Text>
+      </CodeText>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([]);
@@ -132,14 +145,14 @@ test("allows valid legacy CodeText children", () => {
 
 test("allows Video inside a Div with valid children", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Box>
-        <$.Video>
+    <Body ws:id="body">
+      <Box>
+        <Video>
           <ws.element ws:tag="source" />
           <ws.element ws:tag="track" />
-        </$.Video>
-      </$.Box>
-    </$.Body>
+        </Video>
+      </Box>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([]);
@@ -147,13 +160,13 @@ test("allows Video inside a Div with valid children", () => {
 
 test("reports the Link constraint for Video inside a Div", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Link>
-        <$.Box>
-          <$.Video ws:id="video" controls />
-        </$.Box>
-      </$.Link>
-    </$.Body>
+    <Body ws:id="body">
+      <Link>
+        <Box>
+          <Video ws:id="video" controls />
+        </Box>
+      </Link>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([
@@ -173,11 +186,11 @@ test("reports the Link constraint for Video inside a Div", () => {
 
 test("warns about unknown element tags without throwing", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
+    <Body ws:id="body">
       <ws.element ws:id="custom" ws:tag="custom-element">
-        <$.Paragraph>Custom element content</$.Paragraph>
+        <Paragraph>Custom element content</Paragraph>
       </ws.element>
-    </$.Body>
+    </Body>
   );
 
   expect(runAudit({ instances, props })).toEqual([
@@ -198,9 +211,9 @@ test("warns about unknown element tags without throwing", () => {
 
 test("allows legacy components with unknown tags", () => {
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
+    <Body ws:id="body">
       <ws.element ws:id="legacy" ws:tag="legacy-element" />
-    </$.Body>
+    </Body>
   );
   const legacyInstance = instances.get("legacy");
   if (legacyInstance === undefined) {
@@ -212,7 +225,7 @@ test("allows legacy components with unknown tags", () => {
 });
 
 test("blocks publishing when required audit input is unavailable", () => {
-  const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
+  const { instances, props } = renderData(<Body ws:id="body"></Body>);
 
   const findings = runPrePublishAudit({
     pages: undefined,
@@ -235,7 +248,7 @@ test("blocks publishing when required audit input is unavailable", () => {
 });
 
 test("includes existing resource integrity checks in the audit pipeline", () => {
-  const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
+  const { instances, props } = renderData(<Body ws:id="body"></Body>);
   const findings = runPrePublishAudit({
     pages: createPages(marketEdgePage),
     instances,
@@ -272,7 +285,7 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
 });
 
 test("includes Content Block source integrity checks in the audit pipeline", () => {
-  const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
+  const { instances, props } = renderData(<Body ws:id="body"></Body>);
   instances.set("block", {
     type: "instance",
     id: "block",

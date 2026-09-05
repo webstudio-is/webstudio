@@ -1,33 +1,34 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "kind": "high-impact-minimal-context-agent-evaluation-result",
   "fixtureId": "font-assets-v1",
   "outcome": "passed",
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.4-mini",
-  "commandSha256": "894c6e39ef40250b37452fea3c1c8255932b086cae057392775f60e33eee8e81",
+  "reasoningEffort": "low",
+  "commandSha256": "6061f43100a5944dcc20cff24a704446f13bf7846846797db7942e95d73f3a3b",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 42054,
+    "durationMs": 40085,
     "tokens": {
-      "input": 154475,
-      "cachedInput": 134528,
-      "uncachedInput": 19947,
+      "input": 194782,
+      "cachedInput": 175616,
+      "uncachedInput": 19166,
       "cacheWriteInput": 0,
-      "output": 1936,
-      "reasoningOutput": 715,
-      "total": 156411,
-      "cachedInputRate": 0.8709
+      "output": 1494,
+      "reasoningOutput": 297,
+      "total": 196276,
+      "cachedInputRate": 0.9016
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 53114,
-      "maxResponseBytes": 53114,
-      "latestToolCount": 184,
-      "latestResponseBytes": 53114,
-      "latestInputSchemaBytes": 29971,
-      "latestDescriptionBytes": 4529
+      "totalResponseBytes": 61453,
+      "maxResponseBytes": 61453,
+      "latestToolCount": 196,
+      "latestResponseBytes": 61453,
+      "latestInputSchemaBytes": 35007,
+      "latestDescriptionBytes": 6407
     },
     "toolCalls": {
       "total": 6,
@@ -40,65 +41,65 @@
       "durationsByTool": {
         "audit": {
           "count": 1,
-          "totalMs": 18,
-          "p95Ms": 18,
-          "maxMs": 18
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 16,
-          "p95Ms": 16,
-          "maxMs": 16
+          "totalMs": 5,
+          "p95Ms": 5,
+          "maxMs": 5
         },
         "update-asset": {
           "count": 2,
-          "totalMs": 41,
-          "p95Ms": 29,
-          "maxMs": 29
+          "totalMs": 38,
+          "p95Ms": 21,
+          "maxMs": 21
         },
         "upload-assets": {
           "count": 1,
-          "totalMs": 51,
-          "p95Ms": 51,
-          "maxMs": 51
+          "totalMs": 38,
+          "p95Ms": 38,
+          "maxMs": 38
         },
         "verify-font-assets": {
           "count": 1,
-          "totalMs": 7,
-          "p95Ms": 7,
-          "maxMs": 7
+          "totalMs": 9,
+          "p95Ms": 9,
+          "maxMs": 9
         }
       },
       "responseBytesByTool": {
         "audit": {
           "count": 1,
-          "totalBytes": 4638,
-          "p95Bytes": 4638,
-          "maxBytes": 4638
+          "totalBytes": 10978,
+          "p95Bytes": 10978,
+          "maxBytes": 10978
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 6566,
-          "p95Bytes": 6566,
-          "maxBytes": 6566
+          "totalBytes": 3524,
+          "p95Bytes": 3524,
+          "maxBytes": 3524
         },
         "update-asset": {
           "count": 2,
-          "totalBytes": 1760,
-          "p95Bytes": 880,
-          "maxBytes": 880
+          "totalBytes": 1876,
+          "p95Bytes": 938,
+          "maxBytes": 938
         },
         "upload-assets": {
           "count": 1,
-          "totalBytes": 2196,
-          "p95Bytes": 2196,
-          "maxBytes": 2196
+          "totalBytes": 2292,
+          "p95Bytes": 2292,
+          "maxBytes": 2292
         },
         "verify-font-assets": {
           "count": 1,
-          "totalBytes": 2220,
-          "p95Bytes": 2220,
-          "maxBytes": 2220
+          "totalBytes": 2268,
+          "p95Bytes": 2268,
+          "maxBytes": 2268
         }
       },
       "retries": 0,
@@ -108,15 +109,15 @@
       "plannedMutations": 0,
       "committedMutations": 3,
       "verifications": 1,
-      "totalDurationMs": 133,
-      "p50DurationMs": 16,
-      "p95DurationMs": 51,
-      "totalResponseBytes": 17380,
-      "p50ResponseBytes": 2196,
-      "p95ResponseBytes": 6566,
-      "maxResponseBytes": 6566,
-      "timeToFirstMutationMs": 28505,
-      "timeToFirstVerificationMs": 37196
+      "totalDurationMs": 110,
+      "p50DurationMs": 17,
+      "p95DurationMs": 38,
+      "totalResponseBytes": 20938,
+      "p50ResponseBytes": 2268,
+      "p95ResponseBytes": 10978,
+      "maxResponseBytes": 10978,
+      "timeToFirstMutationMs": 24420,
+      "timeToFirstVerificationMs": 33444
     }
   },
   "callSequence": [
