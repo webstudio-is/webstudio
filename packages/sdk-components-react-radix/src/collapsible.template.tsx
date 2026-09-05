@@ -1,4 +1,9 @@
-import { $, PlaceholderValue, type TemplateMeta } from "@webstudio-is/template";
+import {
+  $,
+  css,
+  PlaceholderValue,
+  type TemplateMeta,
+} from "@webstudio-is/template";
 import { radix } from "./shared/proxy";
 import { getButtonStyle } from "./shared/styles";
 
@@ -14,7 +19,18 @@ export const meta: TemplateMeta = {
           {new PlaceholderValue("Click to toggle content")}
         </$.Button>
       </radix.CollapsibleTrigger>
-      <radix.CollapsibleContent>
+      <radix.CollapsibleContent
+        forceMount={true}
+        ws:style={css`
+          overflow: hidden;
+          &[data-state="closed"] {
+            height: 0;
+          }
+          &[data-state="open"] {
+            height: var(--radix-collapsible-content-height);
+          }
+        `}
+      >
         <$.Text>{new PlaceholderValue("Collapsible Content")}</$.Text>
       </radix.CollapsibleContent>
     </radix.Collapsible>

@@ -30,6 +30,10 @@ To customize the Collapsible component:
 2. **Collapsible Content**: Edit the content section to add whatever elements you want to show/hide when the collapsible is toggled.
 3. **Styling**: Any of the three components can be styled to match your design requirements.
 
+## Keep closed content in the HTML
+
+Select **Collapsible Content** and enable **Force Mount** to keep its content in the HTML while the Collapsible is closed. New Collapsible components enable this setting by default. Disable it to remove closed content from the HTML.
+
 ## Using Collapsible for UI Patterns
 
 The Collapsible component is useful for various UI patterns:
