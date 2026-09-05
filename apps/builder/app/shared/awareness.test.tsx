@@ -7,7 +7,10 @@ import { selectInstance, selectInstances } from "./nano-states/instances";
 import { $selectedPageId } from "./nano-states";
 import { $user } from "./nano-states/misc";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { createTemplateComponentFixture, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");

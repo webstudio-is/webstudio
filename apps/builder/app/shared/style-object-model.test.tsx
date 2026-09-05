@@ -9,7 +9,10 @@ import {
   type StyleDecl,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
-import { createTemplateComponentFixture, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import type {
   ColorValue,

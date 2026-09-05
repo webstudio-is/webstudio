@@ -10,7 +10,10 @@ import {
   type WebstudioFragment,
   type Instance,
 } from "@webstudio-is/sdk";
-import { createTemplateComponentFixture, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__, webflow } from "./plugin-webflow";
 import { $registeredComponentMetas } from "../../nano-states";

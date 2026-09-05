@@ -1,8 +1,5 @@
 import { Button, Text } from "@webstudio-is/sdk-components-react/components";
-import {
-  renderTemplate,
-  type TemplateComponent,
-} from "@webstudio-is/template";
+import { renderTemplate, type TemplateComponent } from "@webstudio-is/template";
 import { expect, test } from "vitest";
 import { propsCollapsibleContent } from "./__generated__/collapsible.props";
 import {

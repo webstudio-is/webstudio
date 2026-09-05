@@ -142,8 +142,12 @@ test("generate jsx element with children and without them", () => {
 });
 
 test("generate jsx element with a namespaced component", () => {
-  const LibraryBody = createTemplateComponentFixture("@webstudio-is/library:Body");
-  const LibraryImage = createTemplateComponentFixture("@webstudio-is/library:Image");
+  const LibraryBody = createTemplateComponentFixture(
+    "@webstudio-is/library:Body"
+  );
+  const LibraryImage = createTemplateComponentFixture(
+    "@webstudio-is/library:Image"
+  );
   expect(
     generateJsxChildren({
       scope: createScope(),

@@ -71,9 +71,7 @@ export const webstudioJsxRuntimeBindings = {
   ...helperBindings,
 };
 
-export const webstudioJsxRootNames = new Set(
-  Object.keys(componentBindings)
-);
+export const webstudioJsxRootNames = new Set(Object.keys(componentBindings));
 
 export const webstudioJsxCompilerPrimitiveNames = new Set(Object.keys(ws));
 

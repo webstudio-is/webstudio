@@ -248,8 +248,12 @@ test("generate component presets with multiple tags", () => {
 });
 
 test("deduplicate component presets for similarly named components", () => {
-  const RadixListItem = createTemplateComponentFixture("@webstudio/radix:ListItem");
-  const AriaListItem = createTemplateComponentFixture("@webstudio/aria:ListItem");
+  const RadixListItem = createTemplateComponentFixture(
+    "@webstudio/radix:ListItem"
+  );
+  const AriaListItem = createTemplateComponentFixture(
+    "@webstudio/aria:ListItem"
+  );
   const { cssText, atomicCssText, classes, atomicClasses } = generateAllCss({
     ...renderData(
       <ListItem>

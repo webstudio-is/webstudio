@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { createTemplateComponentFixture, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import { buildInstancePath } from "./lookup";
 
 const Body = createTemplateComponentFixture("Body");

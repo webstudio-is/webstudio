@@ -3,7 +3,10 @@ import { coreMetas, elementComponent } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as animationMetas from "@webstudio-is/sdk-components-animation/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { createTemplateComponentFixture, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $pages, $props } from "~/shared/sync/data-stores";

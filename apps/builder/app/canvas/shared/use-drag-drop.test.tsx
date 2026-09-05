@@ -12,7 +12,10 @@ import { coreMetas } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
-import { createTemplateComponentFixture, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
