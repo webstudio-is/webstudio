@@ -2,6 +2,7 @@ import { act } from "react-dom/test-utils";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { elementComponent } from "@webstudio-is/sdk";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { __testing__ } from "./inspector";
 
@@ -53,6 +54,38 @@ test("shows and truncates the instance label and JSX component name", () => {
       <InstanceInfo
         instance={{
           type: "instance",
+          id: "promotion-card",
+          component: elementComponent,
+          tag: "div",
+          name: "PromotionCard",
+          children: [],
+        }}
+      />
+    );
+  });
+  expect(container.textContent).toContain("Promotion Card<PromotionCard>");
+
+  act(() => {
+    root.render(
+      <InstanceInfo
+        instance={{
+          type: "instance",
+          id: "div",
+          component: elementComponent,
+          tag: "div",
+          name: "Div",
+          children: [],
+        }}
+      />
+    );
+  });
+  expect(container.textContent).toContain("Div<Div>");
+
+  act(() => {
+    root.render(
+      <InstanceInfo
+        instance={{
+          type: "instance",
           id: "heading",
           component: "HeadingBlaBlubbWithALongComponentName",
           label: "Heading bla blubb with a long label",
@@ -74,6 +107,7 @@ test("shows and truncates the instance label and JSX component name", () => {
   expect(label).not.toBeNull();
   expect(component).not.toBeNull();
   expect(getComputedStyle(label!).textOverflow).toBe("ellipsis");
+  expect(getComputedStyle(label!).maxWidth).toBe("50%");
   expect(getComputedStyle(component!).textOverflow).toBe("ellipsis");
   expect(label!.scrollWidth).toBeGreaterThan(label!.clientWidth);
   expect(component!.scrollWidth).toBeGreaterThan(component!.clientWidth);

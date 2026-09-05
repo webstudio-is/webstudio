@@ -1139,11 +1139,11 @@ test.each([
   selectInstance([heading.value, "block"]);
 
   await expect(
-    insertTemplateAt(
-      ["card", "templates", "block"],
-      [heading.value, "block"],
-      false
-    )
+    insertTemplateAt({
+      templateSelector: ["card", "templates", "block"],
+      anchor: [heading.value, "block"],
+      insertBefore: false,
+    })
   ).resolves.toBe(true);
   const inserted = getExternalContentRootChildren({
     projectId: "project",
@@ -1164,11 +1164,11 @@ test.each([
   }
 
   await expect(
-    insertTemplateAt(
-      ["note", "templates", "block"],
-      [inserted.value, "block"],
-      false
-    )
+    insertTemplateAt({
+      templateSelector: ["note", "templates", "block"],
+      anchor: [inserted.value, "block"],
+      insertBefore: false,
+    })
   ).resolves.toBe(true);
   const removedBeforeSave = getExternalContentRootChildren({
     projectId: "project",

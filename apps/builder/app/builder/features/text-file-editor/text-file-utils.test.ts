@@ -54,6 +54,20 @@ describe("text file assets", () => {
     ).resolves.not.toContain("class");
   });
 
+  test("does not offer display labels that are invalid JSX identifiers", async () => {
+    const source = createMdxCompletionSource([
+      { name: "Heading 1", props: [] },
+      { name: "Heading", props: [] },
+    ]);
+
+    await expect(getCompletionLabels(source, "<He")).resolves.toEqual(
+      expect.arrayContaining(["Heading"])
+    );
+    await expect(getCompletionLabels(source, "<He")).resolves.not.toContain(
+      "Heading 1"
+    );
+  });
+
   test("does not complete JSX inside Markdown code", async () => {
     const source = createMdxCompletionSource([
       { name: "Heading", props: [{ name: "tag" }] },

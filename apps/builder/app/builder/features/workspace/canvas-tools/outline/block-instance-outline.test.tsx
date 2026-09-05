@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
+import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   blockComponent,
@@ -60,9 +61,15 @@ test("supports mouse hover and selection while preserving editor focus", async (
   const secondSelector = [second.id, "templates", "block"];
   const onValueChangeComplete = vi.fn();
   const onOpenChange = vi.fn();
-  const editor = document.createElement("input");
+  const canvas = document.createElement("iframe");
+  document.body.appendChild(canvas);
+  const canvasDocument = canvas.contentDocument;
+  if (canvasDocument === null) {
+    throw new Error("Expected the canvas document");
+  }
+  const editor = canvasDocument.createElement("input");
   editor.setAttribute("aria-label", "Editor");
-  document.body.appendChild(editor);
+  canvasDocument.body.appendChild(editor);
   editor.focus();
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -110,7 +117,8 @@ test("supports mouse hover and selection while preserving editor focus", async (
 
   let items = document.querySelectorAll<HTMLElement>('[role="menuitemradio"]');
   expect(items).toHaveLength(2);
-  expect(document.activeElement).toBe(editor);
+  expect(document.activeElement).toBe(canvas);
+  expect(canvasDocument.activeElement).toBe(editor);
 
   await act(async () => {
     items[1]?.dispatchEvent(
@@ -122,41 +130,19 @@ test("supports mouse hover and selection while preserving editor focus", async (
   });
   items = document.querySelectorAll<HTMLElement>('[role="menuitemradio"]');
   expect(items[1]?.hasAttribute("data-highlighted")).toBe(true);
-  expect(document.activeElement).toBe(editor);
+  expect(document.activeElement).toBe(canvas);
+  expect(canvasDocument.activeElement).toBe(editor);
 
-  let mouseDownWasAllowed = true;
-  act(() => {
-    items[1]?.dispatchEvent(
-      new PointerEvent("pointerdown", {
-        bubbles: true,
-        button: 0,
-        pointerType: "mouse",
-      })
-    );
-    mouseDownWasAllowed =
-      items[1]?.dispatchEvent(
-        new MouseEvent("mousedown", {
-          bubbles: true,
-          button: 0,
-          cancelable: true,
-        })
-      ) ?? true;
-    items[1]?.dispatchEvent(
-      new PointerEvent("pointerup", {
-        bubbles: true,
-        button: 0,
-        pointerType: "mouse",
-      })
-    );
-    items[1]?.dispatchEvent(
-      new MouseEvent("mouseup", { bubbles: true, button: 0 })
-    );
-    items[1]?.click();
+  if (items[1] === undefined) {
+    throw new Error("Expected the second menu item");
+  }
+  await act(async () => {
+    await userEvent.click(items[1]);
   });
 
-  expect(mouseDownWasAllowed).toBe(false);
   expect(onValueChangeComplete).toHaveBeenCalledExactlyOnceWith(secondSelector);
   expect(onOpenChange).toHaveBeenCalledWith(false);
   expect(document.querySelectorAll('[role="menuitemradio"]')).toHaveLength(0);
-  expect(document.activeElement).toBe(editor);
+  expect(document.activeElement).toBe(canvas);
+  expect(canvasDocument.activeElement).toBe(editor);
 });

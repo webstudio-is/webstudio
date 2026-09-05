@@ -43,12 +43,13 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
   const label = getInstanceLabel(instance);
   const componentName =
-    instance.component === elementComponent
+    instance.name ??
+    (instance.component === elementComponent
       ? (instance.tag ?? "div")
       : getComponentJsxName({
           component: instance.component,
           components: new Set([...metas.keys(), instance.component]),
-        });
+        }));
   const componentTag = `<${componentName}>`;
   return (
     <Flex gap="1" align="center" css={{ minWidth: 0, overflow: "hidden" }}>
@@ -60,7 +61,7 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
           truncate
           variant="labels"
           title={label}
-          css={{ minWidth: 0, flexShrink: 1 }}
+          css={{ minWidth: 0, maxWidth: "50%", flexShrink: 1 }}
         >
           {label}
         </Text>

@@ -51,6 +51,7 @@ export const $textEditingInstanceSelector = atom<
 export const $textEditorContextMenu = atom<
   | {
       cursorRect: DOMRect;
+      replaceAnchor: boolean;
     }
   | undefined
 >(undefined);

@@ -4,7 +4,11 @@ import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { blockTemplateComponent, type Instance } from "@webstudio-is/sdk";
+import {
+  blockTemplateComponent,
+  elementComponent,
+  type Instance,
+} from "@webstudio-is/sdk";
 import { selectInstance } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $externalContentRoots } from "~/shared/external-content-mutations";
@@ -73,6 +77,33 @@ test("shows stable template name separately from its display label", () => {
       ({ value }) => value
     )
   ).toEqual(["PromotionCard", "Promotion card for launches"]);
+});
+
+test("humanizes the template name as the default label", () => {
+  renderSettings(
+    [
+      {
+        type: "instance",
+        id: "templates",
+        component: blockTemplateComponent,
+        children: [{ type: "id", value: "div" }],
+      },
+      {
+        type: "instance",
+        id: "div",
+        component: elementComponent,
+        tag: "div",
+        name: "Div",
+        children: [],
+      },
+    ],
+    "div"
+  );
+
+  const [name, label] = container.querySelectorAll<HTMLInputElement>("input");
+  expect(name?.value).toBe("Div");
+  expect(label?.value).toBe("");
+  expect(label?.placeholder).toBe("Div");
 });
 
 test("keeps ordinary instances on the label-only settings", () => {

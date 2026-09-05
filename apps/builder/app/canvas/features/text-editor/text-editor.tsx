@@ -1032,6 +1032,7 @@ const SwitchBlockPlugin = ({ onNext }: SwitchBlockPluginProps) => {
 
 type ContextMenuParams = {
   cursorRect: DOMRect;
+  replaceAnchor: boolean;
 };
 
 type RichTextContentPluginProps = {
@@ -1108,6 +1109,7 @@ const RichTextContentPluginInternal = ({
     let menuState: "closed" | "opening" | "opened" = "closed";
 
     let slashNodeKey: NodeKey | undefined = undefined;
+    let replaceAnchor = false;
     let removeSlashWhenSelectionChanges = false;
 
     const closeMenu = ({
@@ -1329,7 +1331,11 @@ const RichTextContentPluginInternal = ({
 
               */
 
-              insertTemplateAt(templateSelector, rootInstanceSelector, false);
+              insertTemplateAt({
+                templateSelector,
+                anchor: rootInstanceSelector,
+                insertBefore: false,
+              });
 
               if (tag === "li" && $getRoot().getTextContentSize() === 0) {
                 const parentInstanceSelector = rootInstanceSelector.slice(1);
@@ -1400,6 +1406,11 @@ const RichTextContentPluginInternal = ({
           }
 
           const slashNode = $createTextNode("/");
+          const rootText = $getRoot().getTextContent();
+          replaceAnchor =
+            rootText.length === 0 ||
+            (selection.isCollapsed() === false &&
+              selection.getTextContent() === rootText);
           slashNodeKey = slashNode.getKey();
           transientTextNodeKeys.add(slashNodeKey);
           menuState = "opening";
@@ -1476,6 +1487,7 @@ const RichTextContentPluginInternal = ({
 
             handleOpen(editor.getEditorState(), {
               cursorRect: rect,
+              replaceAnchor,
             });
           });
         }
@@ -1615,33 +1627,39 @@ export const TextEditor = ({
 
   const handleChange = useEffectEvent(
     (editorState: EditorState, reason: "blur" | "unmount" | "next") => {
-      editorState.read(() => {
-        const treeRootInstance = instances.get(rootInstanceSelector[0]);
-        if (treeRootInstance) {
-          const jsonState = editorState.toJSON();
-          if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
-            inflateInstance(rootInstanceSelector[0], false);
-            return;
-          }
+      const currentInstances = $instances.get();
+      const treeRootInstance = currentInstances.get(rootInstanceSelector[0]);
+      // Replacing a content block child unmounts its editor after the instance
+      // was deleted. Do not write the detached editor state back over the
+      // replacement.
+      if (treeRootInstance === undefined) {
+        return;
+      }
 
-          const updates = plainText
-            ? $convertToPlainTextUpdate(treeRootInstance)
-            : $convertToUpdates(
-                treeRootInstance,
-                refs,
-                newLinkKeyToInstanceId,
-                builderRuntimeContext.createId,
-                transientTextNodeKeys
-              );
-          const idMap = onChange(updates);
-          if (idMap !== undefined) {
-            for (const [key, instanceId] of refs) {
-              refs.set(key, idMap[instanceId] ?? instanceId);
-            }
-          }
-          newLinkKeyToInstanceId.clear();
-          lastSavedStateJsonRef.current = jsonState;
+      editorState.read(() => {
+        const jsonState = editorState.toJSON();
+        if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
+          inflateInstance(rootInstanceSelector[0], false);
+          return;
         }
+
+        const updates = plainText
+          ? $convertToPlainTextUpdate(treeRootInstance)
+          : $convertToUpdates(
+              treeRootInstance,
+              refs,
+              newLinkKeyToInstanceId,
+              builderRuntimeContext.createId,
+              transientTextNodeKeys
+            );
+        const idMap = onChange(updates);
+        if (idMap !== undefined) {
+          for (const [key, instanceId] of refs) {
+            refs.set(key, idMap[instanceId] ?? instanceId);
+          }
+        }
+        newLinkKeyToInstanceId.clear();
+        lastSavedStateJsonRef.current = jsonState;
 
         inflateInstance(rootInstanceSelector[0], false);
       });

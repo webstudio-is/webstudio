@@ -439,7 +439,7 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
     .waitFor();
 });
 
-test("Empty MDX content supports insertion and keeps the next paragraph focused", async ({
+test("Empty MDX content supports slash menu mouse insertion and keeps the next paragraph focused", async ({
   page,
   context,
 }) => {
@@ -480,32 +480,55 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
   await headingEditor.getByText("First heading", { exact: true }).waitFor();
   await page.keyboard.press("Enter");
 
-  const paragraphEditor = canvas.locator("p[contenteditable]");
-  await paragraphEditor.waitFor({ state: "visible" });
+  const emptyParagraphEditor = canvas.locator("p[contenteditable]");
+  await emptyParagraphEditor.waitFor({ state: "visible" });
+  const replacedParagraphId =
+    await emptyParagraphEditor.getAttribute("data-ws-id");
+  if (replacedParagraphId === null) {
+    throw new Error("Expected the paragraph instance being replaced");
+  }
   await page.keyboard.press("/");
-  await page
-    .getByRole("menuitemradio", { name: "Empty Heading Template" })
-    .last()
-    .waitFor({ state: "visible" });
-  await page.keyboard.press("Escape");
-  const paragraphWrite = waitForAssetWrite(page, (source) =>
-    source.includes("Focused paragraph")
-  );
-  const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
-  await page.keyboard.type("Focused paragraph");
+  const templateItem = page
+    .getByRole("menuitemradio", {
+      name: fixture.editableTextTemplateName,
+    })
+    .last();
+  await templateItem.waitFor({ state: "visible" });
+  await templateItem.click();
+  await canvas
+    .locator(`[data-ws-id="${replacedParagraphId}"]`)
+    .waitFor({ state: "detached" });
+  await waitForCanvasText({ page, text: fixture.editableTextTemplateText });
+  if (
+    (await canvas
+      .getByText(fixture.editableTextTemplateText, { exact: true })
+      .count()) !== 1
+  ) {
+    throw new Error("Expected one live slash menu insertion on the canvas");
+  }
+  const paragraphEditor = canvas
+    .locator("p[contenteditable]")
+    .filter({ hasText: fixture.editableTextTemplateText });
+  await paragraphEditor.waitFor({ state: "visible" });
   const paragraphId = await paragraphEditor.getAttribute("data-ws-id");
   if (paragraphId === null) {
     throw new Error("Expected the focused paragraph instance id");
   }
+  const paragraphWrite = waitForAssetWrite(page, (source) =>
+    source.includes("Focused paragraph")
+  );
+  const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("Focused paragraph");
   await page.keyboard.press("Enter");
-  const emptyParagraphEditor = canvas.locator(
+  const nextEmptyParagraphEditor = canvas.locator(
     `p[contenteditable]:not([data-ws-id="${paragraphId}"])`
   );
-  await emptyParagraphEditor.waitFor({ state: "visible" });
+  await nextEmptyParagraphEditor.waitFor({ state: "visible" });
   await paragraphWrite;
   await paragraphMetadataWrite;
   const emptyParagraphId =
-    await emptyParagraphEditor.getAttribute("data-ws-id");
+    await nextEmptyParagraphEditor.getAttribute("data-ws-id");
   if (emptyParagraphId === null) {
     throw new Error("Expected the new paragraph instance id");
   }
@@ -523,19 +546,26 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
     .locator(`p[data-ws-id="${emptyParagraphId}"]`)
     .waitFor({ state: "detached" });
   if (
-    (await paragraphEditor.evaluate(
-      (element) =>
-        element === document.activeElement ||
-        element.contains(document.activeElement)
-    )) === false
+    (await canvas
+      .locator(`p[data-ws-id="${paragraphId}"]`)
+      .evaluate(
+        (element) =>
+          element === document.activeElement ||
+          element.contains(document.activeElement)
+      )) === false
   ) {
     throw new Error("Expected the previous paragraph to regain focus");
   }
   await page.mouse.click(5, 5);
   const finalSource = (await finalWrite).request().postData() ?? "";
+  const headingIndex = finalSource.indexOf("# First heading");
+  const paragraphIndex = finalSource.indexOf("Focused paragraph");
   if (
-    finalSource.includes("# First heading") === false ||
-    finalSource.includes("Focused paragraph") === false ||
+    headingIndex === -1 ||
+    paragraphIndex === -1 ||
+    headingIndex > paragraphIndex ||
+    finalSource.indexOf("# First heading", headingIndex + 1) !== -1 ||
+    finalSource.indexOf("Focused paragraph", paragraphIndex + 1) !== -1 ||
     finalSource.includes('ws:tag="p"')
   ) {
     throw new Error(`Unexpected final MDX source: ${finalSource}`);
@@ -549,6 +579,17 @@ test("Empty MDX content supports insertion and keeps the next paragraph focused"
   });
   await waitForCanvasText({ page, text: "First heading" });
   await waitForCanvasText({ page, text: "Focused paragraph" });
+  const reloadedCanvas = await waitForCanvasFrame({ page });
+  if (
+    (await reloadedCanvas
+      .getByText("First heading", { exact: true })
+      .count()) !== 1 ||
+    (await reloadedCanvas
+      .getByText("Focused paragraph", { exact: true })
+      .count()) !== 1
+  ) {
+    throw new Error("Expected one of each inserted block after reload");
+  }
 });
 
 test("Content Block requires a Builder reload after a stale file revision", async ({

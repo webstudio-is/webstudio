@@ -42,8 +42,19 @@ export type RuntimeMutationOperation = {
   [Id in BuilderRuntimeMutationOperationId]: {
     id: Id;
     input: BuilderRuntimeOperationInput<Id>;
+    context?: RuntimeMutationContext;
   };
 }[BuilderRuntimeMutationOperationId];
+
+type RuntimeMutationSequenceResults<
+  Operations extends readonly RuntimeMutationOperation[],
+> = {
+  [Index in keyof Operations]: Operations[Index] extends {
+    id: infer Id extends BuilderRuntimeMutationOperationId;
+  }
+    ? RuntimeMutationResult<Id>["result"]
+    : never;
+};
 
 type TemplateNameConfirmation = ReturnType<
   typeof blockTemplateNameConfirmationInput.parse
@@ -301,15 +312,17 @@ export const confirmPendingTemplateNameChange = () => {
   }
 };
 
-export const executeRuntimeMutationSequence = (
-  operations: readonly RuntimeMutationOperation[]
-): void => {
+export const executeRuntimeMutationSequence = <
+  const Operations extends readonly RuntimeMutationOperation[],
+>(
+  operations: Operations
+): RuntimeMutationSequenceResults<Operations> | undefined => {
   if (canCommitWebstudioData() === false) {
     return;
   }
   const accumulator = createRuntimeMutationAccumulator(getWebstudioData());
   const results: Record<string, unknown>[] = [];
-  for (const [operationIndex, { id, input }] of operations.entries()) {
+  for (const [operationIndex, { id, input, context }] of operations.entries()) {
     try {
       results.push(
         accumulator.stage(
@@ -319,7 +332,7 @@ export const executeRuntimeMutationSequence = (
               id,
               state: accumulator.state,
               input,
-              context: getRuntimeMutationContext(),
+              context: { ...getRuntimeMutationContext(), ...context },
             })
           )
         )
@@ -338,6 +351,7 @@ export const executeRuntimeMutationSequence = (
     }
   }
   commitRuntimeMutation(accumulator.complete({ results }));
+  return results as RuntimeMutationSequenceResults<Operations>;
 };
 
 export const executeRuntimeMutationAsync = async <

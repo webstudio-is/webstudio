@@ -143,11 +143,17 @@ export const insertListItemAt = async (listItemSelector: InstanceSelector) => {
   selectInstance(selectedInstanceSelector);
 };
 
-export const insertTemplateAt = async (
-  templateSelector: InstanceSelector,
-  anchor: InstanceSelector,
-  insertBefore: boolean
-) => {
+export const insertTemplateAt = async ({
+  templateSelector,
+  anchor,
+  insertBefore,
+  replaceAnchor = false,
+}: {
+  templateSelector: InstanceSelector;
+  anchor: InstanceSelector;
+  insertBefore: boolean;
+  replaceAnchor?: boolean;
+}) => {
   const instances = $instances.get();
   const template = instances.get(templateSelector[0]);
   if (template === undefined) {
@@ -199,7 +205,10 @@ export const insertTemplateAt = async (
       fragment,
       target,
       conflictResolution,
-      { contentMode }
+      {
+        contentMode,
+        replaceInstanceSelector: replaceAnchor ? anchor : undefined,
+      }
     );
     if (didInsert === false) {
       return false;

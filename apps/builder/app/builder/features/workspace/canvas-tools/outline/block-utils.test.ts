@@ -240,11 +240,11 @@ describe("insertTemplateAt", () => {
       ])
     );
 
-    const insertion = insertTemplateAt(
-      ["template", "templates", "block", "body"],
-      ["current", "block", "body"],
-      false
-    );
+    const insertion = insertTemplateAt({
+      templateSelector: ["template", "templates", "block", "body"],
+      anchor: ["current", "block", "body"],
+      insertBefore: false,
+    });
 
     const insertedSelector = $selectedInstanceSelector.get();
     expect(insertedSelector?.[0]).not.toBe("current");
@@ -266,5 +266,65 @@ describe("insertTemplateAt", () => {
     ]);
 
     await expect(insertion).resolves.toBe(true);
+  });
+
+  test("replaces the current block when slash replaces all of its text", async () => {
+    $instances.set(
+      new Map<Instance["id"], Instance>([
+        [
+          "body",
+          createInstance("body", "Body", [{ type: "id", value: "block" }]),
+        ],
+        [
+          "block",
+          createInstance("block", blockComponent, [
+            { type: "id", value: "templates" },
+            { type: "id", value: "current" },
+          ]),
+        ],
+        [
+          "templates",
+          createInstance("templates", blockTemplateComponent, [
+            { type: "id", value: "template" },
+          ]),
+        ],
+        [
+          "template",
+          {
+            ...createInstance("template", elementComponent, [
+              { type: "text", value: "Template content" },
+            ]),
+            tag: "p",
+            label: "Paragraph",
+          },
+        ],
+        [
+          "current",
+          {
+            ...createInstance("current", elementComponent, [
+              { type: "text", value: "Replaced content" },
+            ]),
+            tag: "p",
+          },
+        ],
+      ])
+    );
+
+    const insertion = insertTemplateAt({
+      templateSelector: ["template", "templates", "block", "body"],
+      anchor: ["current", "block", "body"],
+      insertBefore: false,
+      replaceAnchor: true,
+    });
+
+    await expect(insertion).resolves.toBe(true);
+    const children = $instances.get().get("block")?.children ?? [];
+    expect(children).toHaveLength(2);
+    expect(children[0]).toEqual({ type: "id", value: "templates" });
+    expect(children).not.toContainEqual({ type: "id", value: "current" });
+    const insertedId = children[1]?.type === "id" ? children[1].value : "";
+    expect($instances.get().get(insertedId)?.children).toEqual([
+      { type: "text", value: "Template content" },
+    ]);
   });
 });

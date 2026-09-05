@@ -203,10 +203,82 @@ export const TemplatesMenu = ({
                           }
                         : undefined
                     }
-                    onMouseDown={
+                    onPointerDown={
                       preventFocusOnHover
                         ? (event) => {
+                            if (event.button !== 0) {
+                              return;
+                            }
                             event.preventDefault();
+                            event.stopPropagation();
+                            const pointerId = event.pointerId;
+                            const ownerDocument =
+                              event.currentTarget.ownerDocument;
+                            const captureTarget = ownerDocument.body;
+                            const preventClick = (clickEvent: MouseEvent) => {
+                              clickEvent.preventDefault();
+                              clickEvent.stopImmediatePropagation();
+                            };
+                            const releasePointer = (
+                              pointerEvent: PointerEvent
+                            ) => {
+                              pointerEvent.preventDefault();
+                              pointerEvent.stopImmediatePropagation();
+                              ownerDocument.removeEventListener(
+                                "pointerup",
+                                releasePointer,
+                                true
+                              );
+                              ownerDocument.removeEventListener(
+                                "pointercancel",
+                                releasePointer,
+                                true
+                              );
+                              if (pointerEvent.type === "pointercancel") {
+                                ownerDocument.removeEventListener(
+                                  "click",
+                                  preventClick,
+                                  true
+                                );
+                              } else {
+                                ownerDocument.defaultView?.setTimeout(() => {
+                                  ownerDocument.removeEventListener(
+                                    "click",
+                                    preventClick,
+                                    true
+                                  );
+                                }, 100);
+                              }
+                              if (captureTarget.hasPointerCapture(pointerId)) {
+                                captureTarget.releasePointerCapture(pointerId);
+                              }
+                              onOpenChange(false);
+                            };
+                            // Inserting replaces the canvas editor and unmounts
+                            // this menu before a normal click can fire. Activate
+                            // on pointer down and keep the remaining pointer
+                            // events in the Builder document so they do not
+                            // click the canvas underneath.
+                            ownerDocument.addEventListener(
+                              "click",
+                              preventClick,
+                              { capture: true, once: true }
+                            );
+                            captureTarget.setPointerCapture(pointerId);
+                            ownerDocument.addEventListener(
+                              "pointerup",
+                              releasePointer,
+                              { capture: true, once: true }
+                            );
+                            ownerDocument.addEventListener(
+                              "pointercancel",
+                              releasePointer,
+                              { capture: true, once: true }
+                            );
+                            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
+                            handleValueChangeComplete(
+                              JSON.stringify(item.value)
+                            );
                           }
                         : undefined
                     }
@@ -427,7 +499,11 @@ export const BlockChildHoveredInstanceOutline = () => {
           templates={insertableTemplates}
           onValueChangeComplete={(templateSelector) => {
             const insertBefore = modifierKeys.altKey;
-            insertTemplateAt(templateSelector, outline.selector, insertBefore);
+            insertTemplateAt({
+              templateSelector,
+              anchor: outline.selector,
+              insertBefore,
+            });
           }}
           value={undefined}
           modal={true}

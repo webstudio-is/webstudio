@@ -317,6 +317,28 @@ describe("parseMdxDocument", () => {
     expect(serializeMdxDocument(document)).toBe(source);
   });
 
+  test("keeps line-separated JSX components outside a Markdown paragraph", async () => {
+    const source =
+      '<PromotionCard>test</PromotionCard>\n<Heading tag="h1">Test</Heading>\n';
+    const document = await parseMdxDocument({ source });
+
+    expect(document.children).toMatchObject([
+      { type: "template", name: "PromotionCard" },
+      { type: "template", name: "Heading" },
+    ]);
+    expect(serializeMdxDocument(document)).toBe(
+      '<PromotionCard>test</PromotionCard>\n\n<Heading tag="h1">Test</Heading>\n'
+    );
+
+    const inlineDocument = await parseMdxDocument({
+      source: "<Badge>New</Badge> <Badge>Sale</Badge>\n",
+    });
+    expect(inlineDocument.children[0]).toMatchObject({
+      type: "element",
+      tag: "p",
+    });
+  });
+
   test("tracks nested template closing syntax independently", async () => {
     const document = await parseMdxDocument({
       source: "<Card>\n  <Link />\n</Card>\n",

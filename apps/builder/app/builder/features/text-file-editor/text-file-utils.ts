@@ -24,6 +24,7 @@ import { markdown } from "@codemirror/lang-markdown";
 import { parseJsonExpression } from "@webstudio-is/expression";
 import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
 import {
+  isMdxTemplateComponentName,
   type MdxSourcePoint,
   type TextAssetSourceDiagnostic,
   validateTextAssetSource,
@@ -76,11 +77,14 @@ const mdxCompletionExcludedSyntax = new Set([
 export const createMdxCompletionSource = (
   components: readonly MdxCompletionComponent[]
 ): CompletionSource => {
+  const validComponents = components.filter(({ name }) =>
+    isMdxTemplateComponentName(name)
+  );
   const componentsByName = new Map(
-    components.map((component) => [component.name, component] as const)
+    validComponents.map((component) => [component.name, component] as const)
   );
   const extraTags = Object.fromEntries(
-    components.map(({ name, props }) => [
+    validComponents.map(({ name, props }) => [
       name,
       {
         attrs: Object.fromEntries(

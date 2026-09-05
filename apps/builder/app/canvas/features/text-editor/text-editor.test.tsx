@@ -24,6 +24,51 @@ import { TextEditor } from "./text-editor";
 
 let root: Root | undefined;
 
+const createContentBlockInstances = () =>
+  new Map<Instance["id"], Instance>([
+    [
+      "block",
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [
+          { type: "id", value: "templates" },
+          { type: "id", value: "current" },
+        ],
+      },
+    ],
+    [
+      "templates",
+      {
+        type: "instance",
+        id: "templates",
+        component: blockTemplateComponent,
+        children: [{ type: "id", value: "template" }],
+      },
+    ],
+    [
+      "template",
+      {
+        type: "instance",
+        id: "template",
+        component: elementComponent,
+        tag: "p",
+        children: [],
+      },
+    ],
+    [
+      "current",
+      {
+        type: "instance",
+        id: "current",
+        component: elementComponent,
+        tag: "p",
+        children: [{ type: "text", value: "Before" }],
+      },
+    ],
+  ]);
+
 afterEach(() => {
   act(() => {
     root?.unmount();
@@ -78,49 +123,7 @@ describe("TextEditor", () => {
   });
 
   test("does not save the active slash-menu trigger on blur", async () => {
-    const instances = new Map<Instance["id"], Instance>([
-      [
-        "block",
-        {
-          type: "instance",
-          id: "block",
-          component: blockComponent,
-          children: [
-            { type: "id", value: "templates" },
-            { type: "id", value: "current" },
-          ],
-        },
-      ],
-      [
-        "templates",
-        {
-          type: "instance",
-          id: "templates",
-          component: blockTemplateComponent,
-          children: [{ type: "id", value: "template" }],
-        },
-      ],
-      [
-        "template",
-        {
-          type: "instance",
-          id: "template",
-          component: elementComponent,
-          tag: "p",
-          children: [],
-        },
-      ],
-      [
-        "current",
-        {
-          type: "instance",
-          id: "current",
-          component: elementComponent,
-          tag: "p",
-          children: [{ type: "text", value: "Before" }],
-        },
-      ],
-    ]);
+    const instances = createContentBlockInstances();
     $instances.set(instances);
     selectInstance(["current", "block"]);
     $textEditingInstanceSelector.set({
@@ -154,6 +157,9 @@ describe("TextEditor", () => {
       );
     });
     expect(editable?.textContent).toBe("Before/");
+    expect($textEditorContextMenu.get()).toMatchObject({
+      replaceAnchor: false,
+    });
 
     await act(async () => {
       editable?.dispatchEvent(new FocusEvent("blur"));
@@ -168,50 +174,89 @@ describe("TextEditor", () => {
     );
   });
 
+  test("does not save an editor after its instance was replaced", async () => {
+    const instances = createContentBlockInstances();
+    $instances.set(instances);
+    $textEditingInstanceSelector.set({
+      selector: ["current", "block"],
+      reason: "new",
+    });
+    const onChange = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(
+        <TextEditor
+          rootInstanceSelector={["current", "block"]}
+          instances={instances}
+          props={new Map()}
+          contentEditable={<ContentEditable />}
+          onChange={onChange}
+          onSelectInstance={() => {}}
+        />
+      );
+    });
+
+    const editable = container.querySelector<HTMLElement>(
+      "[data-lexical-editor]"
+    );
+    await act(async () => {
+      editable?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "/", bubbles: true })
+      );
+    });
+    await act(async () => {
+      $instances.set(new Map());
+      editable?.dispatchEvent(new FocusEvent("blur"));
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test("marks slash insertion as a replacement when it replaces all text", async () => {
+    const instances = createContentBlockInstances();
+    $instances.set(instances);
+    selectInstance(["current", "block"]);
+    $textEditingInstanceSelector.set({
+      selector: ["current", "block"],
+      reason: "new",
+    });
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(
+        <TextEditor
+          rootInstanceSelector={["current", "block"]}
+          instances={instances}
+          props={new Map()}
+          contentEditable={<ContentEditable />}
+          onChange={() => {}}
+          onSelectInstance={() => {}}
+        />
+      );
+    });
+
+    const editable = container.querySelector<HTMLElement>(
+      "[data-lexical-editor]"
+    );
+    await act(async () => {
+      editable?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "/", bubbles: true })
+      );
+    });
+
+    expect(editable?.textContent).toBe("/");
+    expect($textEditorContextMenu.get()).toMatchObject({
+      replaceAnchor: true,
+    });
+  });
+
   test("restores normal keyboard handling when template insertion is cancelled", async () => {
-    const instances = new Map<Instance["id"], Instance>([
-      [
-        "block",
-        {
-          type: "instance",
-          id: "block",
-          component: blockComponent,
-          children: [
-            { type: "id", value: "templates" },
-            { type: "id", value: "current" },
-          ],
-        },
-      ],
-      [
-        "templates",
-        {
-          type: "instance",
-          id: "templates",
-          component: blockTemplateComponent,
-          children: [{ type: "id", value: "template" }],
-        },
-      ],
-      [
-        "template",
-        {
-          type: "instance",
-          id: "template",
-          component: elementComponent,
-          tag: "p",
-          children: [],
-        },
-      ],
-      [
-        "current",
-        {
-          type: "instance",
-          id: "current",
-          component: elementComponent,
-          tag: "p",
-          children: [{ type: "text", value: "Before" }],
-        },
-      ],
-    ]);
+    const instances = createContentBlockInstances();
     $instances.set(instances);
     selectInstance(["current", "block"]);
     $textEditingInstanceSelector.set({
@@ -246,7 +291,9 @@ describe("TextEditor", () => {
     expect($textEditorContextMenu.get()).toBeDefined();
 
     await act(async () => {
-      execTextEditorContextMenuCommand({ type: "templateInsertionStarted" });
+      execTextEditorContextMenuCommand({
+        type: "templateInsertionStarted",
+      });
       execTextEditorContextMenuCommand({ type: "templateInsertionCancelled" });
       await Promise.resolve();
     });

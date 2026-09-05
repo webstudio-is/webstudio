@@ -68,7 +68,10 @@ test("closes the editor menu when every template is structural-only", async () =
     selector: ["current", "block"],
     reason: "left",
   });
-  $textEditorContextMenu.set({ cursorRect: new DOMRect() });
+  $textEditorContextMenu.set({
+    cursorRect: new DOMRect(),
+    replaceAnchor: false,
+  });
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);

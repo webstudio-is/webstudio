@@ -814,6 +814,24 @@ const mapParagraph: Handler = (state, value) => {
   if (children.length === 1 && children[0].type === "mdxJsxTextElement") {
     return state.one(value.children[0], value);
   }
+  const jsxChildren = children.filter(
+    (child) => child.type === "mdxJsxTextElement"
+  );
+  if (
+    jsxChildren.length > 1 &&
+    children.every(
+      (child) =>
+        child.type === "mdxJsxTextElement" ||
+        (child.type === "text" &&
+          typeof child.value === "string" &&
+          child.value.includes("\n") &&
+          child.value.trim() === "")
+    )
+  ) {
+    return state
+      .all(value)
+      .filter((child) => child.type !== "text" || child.value.trim() !== "");
+  }
   return defaultHandlers.paragraph(state, value);
 };
 

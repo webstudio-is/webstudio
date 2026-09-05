@@ -65,10 +65,12 @@ const Menu = ({
   cursorRect,
   anchor,
   templates,
+  replaceAnchor,
 }: {
   cursorRect: DOMRect;
   anchor: InstanceSelector;
   templates: [instance: Instance, instanceSelector: InstanceSelector][];
+  replaceAnchor: boolean;
 }) => {
   const [inert, setInert] = useState(true);
   const modifierKeys = useStore($modifierKeys);
@@ -88,7 +90,12 @@ const Menu = ({
     (templateSelector: InstanceSelector) => {
       const insertBefore = modifierKeys.altKey;
       execTextEditorContextMenuCommand({ type: "templateInsertionStarted" });
-      void insertTemplateAt(templateSelector, anchor, insertBefore).then(
+      void insertTemplateAt({
+        templateSelector,
+        anchor,
+        insertBefore,
+        replaceAnchor,
+      }).then(
         (didInsert) => {
           if (didInsert === false) {
             execTextEditorContextMenuCommand({
@@ -103,7 +110,7 @@ const Menu = ({
         }
       );
     },
-    [anchor, modifierKeys.altKey]
+    [anchor, modifierKeys.altKey, replaceAnchor]
   );
 
   const currentValue = intermediateValue ?? value;
@@ -257,6 +264,7 @@ export const TextEditorContextMenu = () => {
       cursorRect={textEditorContextMenu.cursorRect}
       anchor={textEditingInstanceSelector.selector}
       templates={insertableTemplates}
+      replaceAnchor={textEditorContextMenu.replaceAnchor}
     />
   );
 };
