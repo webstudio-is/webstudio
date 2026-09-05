@@ -1,10 +1,30 @@
-import { renderTemplate } from "@webstudio-is/template";
+import { Button, Text } from "@webstudio-is/sdk-components-react/components";
+import {
+  renderTemplate,
+  type TemplateComponent,
+} from "@webstudio-is/template";
 import { expect, test } from "vitest";
 import { propsCollapsibleContent } from "./__generated__/collapsible.props";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./components";
 import { meta } from "./collapsible.template";
+import { getRadixComponentId } from "./shared/component-id";
+
+const componentIds = new Map<TemplateComponent, string>([
+  [Button, "Button"],
+  [Text, "Text"],
+  [Collapsible, getRadixComponentId("Collapsible")],
+  [CollapsibleTrigger, getRadixComponentId("CollapsibleTrigger")],
+  [CollapsibleContent, getRadixComponentId("CollapsibleContent")],
+]);
 
 test("enables Force Mount for new Collapsible Content instances", () => {
-  const fragment = renderTemplate(meta.template);
+  const fragment = renderTemplate(meta.template, undefined, [], {
+    componentIds,
+  });
   const content = fragment.instances.find(
     ({ component }) =>
       component ===
