@@ -1,5 +1,6 @@
+/** @jsxImportSource @webstudio-is/template */
 import { css, type TemplateMeta } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { Switch, SwitchThumb } from "./components";
 import {
   borderRadius,
   borderWidth,
@@ -10,8 +11,6 @@ import {
   transition,
   width,
 } from "./shared/theme";
-
-const { Switch, SwitchThumb } = radix;
 
 export const meta: TemplateMeta = {
   category: "radix",

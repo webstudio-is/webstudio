@@ -1,12 +1,11 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
-
-const {
+import {
   Blockquote,
   Bold,
   Box,
@@ -35,12 +34,12 @@ const {
   Textarea,
   Time,
   Video,
-} = $;
+} from "./components";
 
 const sampleImage =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'%3E%3Crect width='640' height='360' fill='%23eef2ff'/%3E%3Cpath d='M96 264l120-120 88 88 56-56 184 184H96z' fill='%2394a3b8'/%3E%3Ccircle cx='456' cy='112' r='44' fill='%23f59e0b'/%3E%3C/svg%3E";
 
-export const BlockquoteTemplate: TemplateMeta = {
+const BlockquoteTemplate: TemplateMeta = {
   category: "typography",
   description: "A quoted customer insight or design principle.",
   template: (
@@ -56,12 +55,12 @@ export const BlockquoteTemplate: TemplateMeta = {
   ),
 };
 
-export const BoldTemplate: TemplateMeta = {
+const BoldTemplate: TemplateMeta = {
   category: "typography",
   template: <Bold>{new PlaceholderValue("Critical update")}</Bold>,
 };
 
-export const BoxTemplate: TemplateMeta = {
+const BoxTemplate: TemplateMeta = {
   category: "general",
   template: setInstanceMeta(
     { label: "Example Card" },
@@ -77,17 +76,17 @@ export const BoxTemplate: TemplateMeta = {
   ),
 };
 
-export const ButtonTemplate: TemplateMeta = {
+const ButtonTemplate: TemplateMeta = {
   category: "forms",
   template: <Button>{new PlaceholderValue("Save changes")}</Button>,
 };
 
-export const CheckboxTemplate: TemplateMeta = {
+const CheckboxTemplate: TemplateMeta = {
   category: "forms",
   template: <Checkbox aria-label="Enable weekly summary" />,
 };
 
-export const FragmentTemplate: TemplateMeta = {
+const FragmentTemplate: TemplateMeta = {
   category: "general",
   template: (
     <Fragment>
@@ -96,21 +95,21 @@ export const FragmentTemplate: TemplateMeta = {
   ),
 };
 
-export const HeadingTemplate: TemplateMeta = {
+const HeadingTemplate: TemplateMeta = {
   category: "typography",
   template: (
     <Heading tag="h2">{new PlaceholderValue("Operational UI pattern")}</Heading>
   ),
 };
 
-export const HtmlEmbedTemplate: TemplateMeta = {
+const HtmlEmbedTemplate: TemplateMeta = {
   category: "media",
   template: (
     <HtmlEmbed code="<div style='padding:12px;border:1px dashed #94a3b8;border-radius:8px'>Embedded status widget</div>" />
   ),
 };
 
-export const JsonLdTemplate: TemplateMeta = {
+const JsonLdTemplate: TemplateMeta = {
   category: "general",
   order: 6,
   template: (
@@ -124,7 +123,7 @@ export const JsonLdTemplate: TemplateMeta = {
   ),
 };
 
-export const ImageTemplate: TemplateMeta = {
+const ImageTemplate: TemplateMeta = {
   category: "media",
   template: (
     <Image
@@ -136,29 +135,29 @@ export const ImageTemplate: TemplateMeta = {
   ),
 };
 
-export const InputTemplate: TemplateMeta = {
+const InputTemplate: TemplateMeta = {
   category: "forms",
   template: <Input name="workspace" placeholder="Workspace name" />,
 };
 
-export const ItalicTemplate: TemplateMeta = {
+const ItalicTemplate: TemplateMeta = {
   category: "typography",
   template: <Italic>{new PlaceholderValue("Draft state")}</Italic>,
 };
 
-export const LabelTemplate: TemplateMeta = {
+const LabelTemplate: TemplateMeta = {
   category: "forms",
   template: <Label>{new PlaceholderValue("Workspace")}</Label>,
 };
 
-export const LinkTemplate: TemplateMeta = {
+const LinkTemplate: TemplateMeta = {
   category: "general",
   template: (
     <Link href="#components">{new PlaceholderValue("View components")}</Link>
   ),
 };
 
-export const ListTemplate: TemplateMeta = {
+const ListTemplate: TemplateMeta = {
   category: "typography",
   template: (
     <List>
@@ -169,12 +168,12 @@ export const ListTemplate: TemplateMeta = {
   ),
 };
 
-export const ListItemTemplate: TemplateMeta = {
+const ListItemTemplate: TemplateMeta = {
   category: "typography",
   template: <ListItem>{new PlaceholderValue("Review queue health")}</ListItem>,
 };
 
-export const ParagraphTemplate: TemplateMeta = {
+const ParagraphTemplate: TemplateMeta = {
   category: "typography",
   template: (
     <Paragraph>
@@ -187,7 +186,7 @@ export const ParagraphTemplate: TemplateMeta = {
   ),
 };
 
-export const RadioButtonTemplate: TemplateMeta = {
+const RadioButtonTemplate: TemplateMeta = {
   category: "forms",
   template: (
     <RadioButton
@@ -198,7 +197,7 @@ export const RadioButtonTemplate: TemplateMeta = {
   ),
 };
 
-export const RemixFormTemplate: TemplateMeta = {
+const RemixFormTemplate: TemplateMeta = {
   category: "forms",
   template: (
     <RemixForm>
@@ -209,7 +208,7 @@ export const RemixFormTemplate: TemplateMeta = {
   ),
 };
 
-export const RichTextLinkTemplate: TemplateMeta = {
+const RichTextLinkTemplate: TemplateMeta = {
   category: "typography",
   template: (
     <RichTextLink href="#guidelines">
@@ -218,37 +217,37 @@ export const RichTextLinkTemplate: TemplateMeta = {
   ),
 };
 
-export const SeparatorTemplate: TemplateMeta = {
+const SeparatorTemplate: TemplateMeta = {
   category: "general",
   template: <Separator />,
 };
 
-export const SpanTemplate: TemplateMeta = {
+const SpanTemplate: TemplateMeta = {
   category: "typography",
   template: <Span>{new PlaceholderValue("Inline status")}</Span>,
 };
 
-export const SubscriptTemplate: TemplateMeta = {
+const SubscriptTemplate: TemplateMeta = {
   category: "typography",
   template: <Subscript>{new PlaceholderValue("beta")}</Subscript>,
 };
 
-export const SuperscriptTemplate: TemplateMeta = {
+const SuperscriptTemplate: TemplateMeta = {
   category: "typography",
   template: <Superscript>{new PlaceholderValue("new")}</Superscript>,
 };
 
-export const TextTemplate: TemplateMeta = {
+const TextTemplate: TemplateMeta = {
   category: "typography",
   template: <Text>{new PlaceholderValue("System message")}</Text>,
 };
 
-export const TextareaTemplate: TemplateMeta = {
+const TextareaTemplate: TemplateMeta = {
   category: "forms",
   template: <Textarea name="notes" placeholder="Add handoff notes" />,
 };
 
-export const TimeTemplate: TemplateMeta = {
+const TimeTemplate: TemplateMeta = {
   category: "typography",
   template: (
     <Time datetime="2026-07-06T09:00:00Z">
@@ -257,7 +256,38 @@ export const TimeTemplate: TemplateMeta = {
   ),
 };
 
-export const VideoTemplate: TemplateMeta = {
+const VideoTemplate: TemplateMeta = {
   category: "media",
   template: <Video controls aria-label="Workflow walkthrough video" />,
 };
+
+export const templates = [
+  BlockquoteTemplate,
+  BoldTemplate,
+  BoxTemplate,
+  ButtonTemplate,
+  CheckboxTemplate,
+  FragmentTemplate,
+  HeadingTemplate,
+  HtmlEmbedTemplate,
+  ImageTemplate,
+  InputTemplate,
+  ItalicTemplate,
+  JsonLdTemplate,
+  LabelTemplate,
+  LinkTemplate,
+  ListTemplate,
+  ListItemTemplate,
+  ParagraphTemplate,
+  RadioButtonTemplate,
+  RemixFormTemplate,
+  RichTextLinkTemplate,
+  SeparatorTemplate,
+  SpanTemplate,
+  SubscriptTemplate,
+  SuperscriptTemplate,
+  TextTemplate,
+  TextareaTemplate,
+  TimeTemplate,
+  VideoTemplate,
+].map((meta) => ({ meta }));

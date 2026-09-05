@@ -16,6 +16,12 @@ import {
 import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
 
+export type StoryTemplate = {
+  meta: TemplateMeta;
+  /** Overrides only the generated Storybook file and export name. */
+  storyName?: string;
+};
+
 const WS_NAMESPACE = "ws";
 const BASE_NAMESPACE = "@webstudio-is/sdk-components-react/components";
 
@@ -97,14 +103,18 @@ export { Story as ${name} }
 
 export const generateStories = async ({
   packageName,
+  components,
   templates,
   metas,
+  namespaceComponents = new Map(),
   namespaceMetas = new Map(),
   outputDir = "src/__generated__",
 }: {
   packageName: string;
-  templates: Record<string, TemplateMeta>;
+  components: Record<string, object>;
+  templates: readonly StoryTemplate[];
   metas: Record<string, WsComponentMeta>;
+  namespaceComponents?: Map<string, Record<string, object>>;
   namespaceMetas?: Map<string, Record<string, WsComponentMeta>>;
   outputDir?: string;
 }) => {
@@ -115,14 +125,38 @@ export const generateStories = async ({
       `Cannot generate stories for ${packageName} from package ${packageJson.name}`
     );
   }
-  const templatesMap = new Map<string, TemplateMeta>(Object.entries(templates));
   const metasMap = new Map<string, WsComponentMeta>(Object.entries(metas));
   const storiesDir = join(cwd(), outputDir);
   await mkdir(storiesDir, { recursive: true });
 
-  for (const [name, meta] of templatesMap) {
+  const componentIds = new Map<object, Instance["component"]>();
+  const registerComponents = (
+    namespace: string,
+    registeredComponents: Record<string, object>
+  ) => {
+    for (const [name, component] of Object.entries(registeredComponents)) {
+      const componentId =
+        namespace === BASE_NAMESPACE ||
+        namespace === "@webstudio-is/sdk-components-react"
+          ? name
+          : `${namespace}:${name}`;
+      componentIds.set(component, componentId);
+    }
+  };
+  registerComponents(packageName, components);
+  for (const [namespace, components] of namespaceComponents) {
+    registerComponents(namespace, components);
+  }
+
+  for (const { meta, storyName } of templates) {
     const rootInstanceId = "root";
-    const data = renderTemplate(meta.template);
+    const data = renderTemplate(meta.template, undefined, [], { componentIds });
+    const rootComponent = data.instances[0]?.component;
+    if (rootComponent === undefined) {
+      throw Error("A story template must have a component at its root");
+    }
+    const [, componentName] = parseComponentName(rootComponent);
+    const name = storyName ?? componentName;
     const instances: Instances = new Map([
       [
         rootInstanceId,

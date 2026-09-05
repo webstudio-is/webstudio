@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/template";
 import { hasUnsupportedCssTemplateRules } from "@webstudio-is/css-data";
 import { getComponentByJsxName, getComponentJsxName } from "@webstudio-is/sdk";
-import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { componentsById } from "@webstudio-is/sdk-components-registry/components";
 import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 
 const css = (strings: TemplateStringsArray, ...values: string[]) => {
@@ -29,10 +29,10 @@ const css = (strings: TemplateStringsArray, ...values: string[]) => {
 };
 
 const directComponentBindings = Object.fromEntries(
-  Array.from(componentMetas.keys()).flatMap((candidate) => {
+  Array.from(componentsById.keys()).flatMap((candidate) => {
     const jsxName = getComponentJsxName({
       component: candidate,
-      components: componentMetas.keys(),
+      components: componentsById.keys(),
     });
     if (
       jsxName === "Fragment" ||
@@ -42,21 +42,23 @@ const directComponentBindings = Object.fromEntries(
     }
     const component = getComponentByJsxName({
       name: jsxName,
-      components: componentMetas.keys(),
+      components: componentsById.keys(),
     });
-    return component === undefined ? [] : [[jsxName, $[component]]];
+    const componentObject =
+      component === undefined ? undefined : componentsById.get(component);
+    return componentObject === undefined ? [] : [[jsxName, componentObject]];
   })
 );
 
 const legacyComponentBindings = {
   $,
-  ws,
   radix: createProxy("@webstudio-is/sdk-components-react-radix:"),
   animation: createProxy("@webstudio-is/sdk-components-animation:"),
 };
 
 const componentBindings = {
   ...directComponentBindings,
+  ws,
   ...legacyComponentBindings,
 };
 
@@ -82,6 +84,8 @@ export const webstudioJsxComponentNamespaces = new Set(
   Object.keys(componentBindings)
 );
 
+export const webstudioJsxCompilerPrimitiveNames = new Set(Object.keys(ws));
+
 const listFormatter = new Intl.ListFormat("en", {
   style: "long",
   type: "conjunction",
@@ -95,7 +99,7 @@ const webstudioJsxHelperNames = listFormatter.format(
   Object.keys(helperBindings)
 );
 
-export const webstudioJsxBindingGuidance = `lowercase HTML elements, unique direct component identifiers, and value helpers ${webstudioJsxHelperNames}. Legacy component namespaces ${webstudioJsxComponentNamespaceNames} are accepted only for existing input and must not be emitted or recommended`;
+export const webstudioJsxBindingGuidance = `lowercase HTML elements, unique direct component identifiers, compiler primitives from ws, and value helpers ${webstudioJsxHelperNames}. Legacy component namespaces ${webstudioJsxComponentNamespaceNames} are accepted only for existing input and must not be emitted or recommended`;
 
 export const webstudioJsxAnimationGuidance =
   "Use direct animation component identifiers such as <AnimateChildren>. The legacy animation namespace is not a callable CSS keyframes helper.";

@@ -1,5 +1,6 @@
-import { type TemplateMeta, $, setInstanceMeta } from "@webstudio-is/template";
-const { HeadLink, HeadMeta, HeadSlot, HeadTitle } = $;
+/** @jsxImportSource @webstudio-is/template */
+import { type TemplateMeta, setInstanceMeta } from "@webstudio-is/template";
+import { HeadLink, HeadMeta, HeadSlot, HeadTitle } from "./components";
 
 export const meta: TemplateMeta = {
   category: "general",

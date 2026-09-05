@@ -1,13 +1,30 @@
-export { meta as Label } from "./label.template";
-export { meta as Tabs } from "./tabs.template";
-export { meta as Sheet } from "./sheet.template";
-export { meta as Dialog } from "./dialog.template";
-export { meta as Switch } from "./switch.template";
-export { meta as Checkbox } from "./checkbox.template";
-export { meta as Collapsible } from "./collapsible.template";
-export { meta as Accordion } from "./accordion.template";
-export { meta as Tooltip } from "./tooltip.template";
-export { meta as Popover } from "./popover.template";
-export { meta as RadioGroup } from "./radio-group.template";
-export { meta as Select } from "./select.template";
-export { meta as NavigationMenu } from "./navigation-menu.template";
+/** Component templates consumed by story generation. */
+import { meta as label } from "./label.template";
+import { meta as tabs } from "./tabs.template";
+import { meta as sheet } from "./sheet.template";
+import { meta as dialog } from "./dialog.template";
+import { meta as switchTemplate } from "./switch.template";
+import { meta as checkbox } from "./checkbox.template";
+import { meta as collapsible } from "./collapsible.template";
+import { meta as accordion } from "./accordion.template";
+import { meta as tooltip } from "./tooltip.template";
+import { meta as popover } from "./popover.template";
+import { meta as radioGroup } from "./radio-group.template";
+import { meta as select } from "./select.template";
+import { meta as navigationMenu } from "./navigation-menu.template";
+
+export const templates = [
+  { meta: label },
+  { meta: tabs },
+  { meta: sheet },
+  { meta: dialog },
+  { meta: switchTemplate },
+  { storyName: "Checkbox", meta: checkbox },
+  { meta: collapsible },
+  { meta: accordion },
+  { meta: tooltip },
+  { meta: popover },
+  { meta: radioGroup },
+  { meta: select },
+  { meta: navigationMenu },
+];

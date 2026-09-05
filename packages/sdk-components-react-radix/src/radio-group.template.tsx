@@ -1,12 +1,18 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
 import { DotIcon } from "@webstudio-is/icons/svg";
-import { radix } from "./shared/proxy";
+import { HtmlEmbed, Text } from "@webstudio-is/sdk-components-react/components";
+import {
+  Label,
+  RadioGroup,
+  RadioGroupIndicator,
+  RadioGroupItem,
+} from "./components";
 import {
   borderRadius,
   borderWidth,
@@ -18,9 +24,6 @@ import {
   width,
 } from "./shared/theme";
 import { iconEmbedStyle } from "./shared/styles";
-
-const { HtmlEmbed, Text } = $;
-const { Label, RadioGroup, RadioGroupIndicator, RadioGroupItem } = radix;
 
 const createRadioGroupItem = ({
   value,

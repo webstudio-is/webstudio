@@ -1,14 +1,16 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { Button, Text } from "@webstudio-is/sdk-components-react/components";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./components";
 import { getButtonStyle } from "./shared/styles";
-
-const { Button, Text } = $;
-const { Collapsible, CollapsibleContent, CollapsibleTrigger } = radix;
 
 export const meta: TemplateMeta = {
   category: "radix",

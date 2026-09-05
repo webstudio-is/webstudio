@@ -1,5 +1,6 @@
-import { $, css, type TemplateMeta } from "@webstudio-is/template";
-const { Option, Select } = $;
+/** @jsxImportSource @webstudio-is/template */
+import { css, type TemplateMeta } from "@webstudio-is/template";
+import { Option, Select } from "./components";
 
 export const meta: TemplateMeta = {
   category: "forms",

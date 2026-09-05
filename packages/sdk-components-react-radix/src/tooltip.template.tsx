@@ -1,10 +1,11 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { Button, Text } from "@webstudio-is/sdk-components-react/components";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./components";
 import { getButtonStyle } from "./shared/styles";
 import {
   borderRadius,
@@ -15,9 +16,6 @@ import {
   spacing,
   zIndex,
 } from "./shared/theme";
-
-const { Button, Text } = $;
-const { Tooltip, TooltipContent, TooltipTrigger } = radix;
 
 /**
  * Styles source without animations:

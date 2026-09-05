@@ -2,7 +2,7 @@
 // editable canvas label without changing settings for ordinary instances.
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { blockTemplateComponent, type Instance } from "@webstudio-is/sdk";
 import { selectInstance } from "~/shared/nano-states";
@@ -18,14 +18,6 @@ let container: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
-  vi.stubGlobal(
-    "ResizeObserver",
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    }
-  );
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -38,7 +30,6 @@ afterEach(() => {
   selectInstance(undefined);
   $instances.set(new Map());
   $externalContentRoots.set(new Map());
-  vi.unstubAllGlobals();
 });
 
 const renderSettings = (instances: Instance[], selectedId: string) => {

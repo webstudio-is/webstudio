@@ -1,13 +1,10 @@
+/** Composes registered components with their canvas metadata and templates. */
 import { coreMetas } from "@webstudio-is/sdk";
-import { coreTemplates } from "@webstudio-is/sdk/core-templates";
-import * as baseComponents from "@webstudio-is/sdk-components-react/components";
-import { canvasComponents as baseCanvasComponents } from "@webstudio-is/sdk-components-react/canvas-components";
+import { coreTemplates } from "./core-templates";
 import { hooks as baseHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseTemplates from "@webstudio-is/sdk-components-react/templates";
-import * as animationComponents from "@webstudio-is/sdk-components-animation";
 import { hooks as animationHooks } from "@webstudio-is/sdk-components-animation/hooks";
 import * as animationTemplates from "@webstudio-is/sdk-components-animation/templates";
-import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import { hooks as radixHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import {
@@ -15,6 +12,12 @@ import {
   componentMetaLibraries,
   radixComponentNamespace,
 } from "./shared";
+import {
+  animationComponentLibrary,
+  baseComponentLibrary,
+  componentIds,
+  radixComponentLibrary,
+} from "./components";
 
 const getLibraryMetas = (namespace?: string) => {
   const library = componentMetaLibraries.find(
@@ -31,25 +34,29 @@ const getLibraryMetas = (namespace?: string) => {
 export const canvasComponentLibraries = [
   {
     components: {},
+    componentIds,
     metas: coreMetas,
     templates: coreTemplates,
   },
   {
-    components: { ...baseComponents, ...baseCanvasComponents },
+    components: baseComponentLibrary.components,
+    componentIds,
     metas: getLibraryMetas(),
     hooks: baseHooks,
     templates: baseTemplates,
   },
   {
     namespace: radixComponentNamespace,
-    components: radixComponents,
+    components: radixComponentLibrary.components,
+    componentIds,
     metas: getLibraryMetas(radixComponentNamespace),
     hooks: radixHooks,
     templates: radixTemplates,
   },
   {
     namespace: animationComponentNamespace,
-    components: animationComponents,
+    components: animationComponentLibrary.components,
+    componentIds,
     metas: getLibraryMetas(animationComponentNamespace),
     hooks: animationHooks,
     templates: animationTemplates,

@@ -1,5 +1,5 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   ActionValue,
   css,
   expression,
@@ -9,7 +9,7 @@ import {
   type TemplateMeta,
 } from "@webstudio-is/template";
 import type { ReactNode } from "react";
-const { Form } = $;
+import { Form } from "./components";
 
 const formState = new Variable("formState", "initial");
 

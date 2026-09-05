@@ -1,15 +1,8 @@
-import {
-  type TemplateMeta,
-  $,
-  setInstanceMeta,
-  ws,
-} from "@webstudio-is/template";
+/** @jsxImportSource @webstudio-is/template */
+import { type TemplateMeta, setInstanceMeta, ws } from "@webstudio-is/template";
 import { imagePlaceholderDataUrl } from "@webstudio-is/image";
 import { ContentEmbedIcon } from "@webstudio-is/icons/svg";
-const { HtmlEmbed } = $;
-
-const descendant = (label: string, selector: string) =>
-  setInstanceMeta({ label }, <ws.descendant selector={selector} />);
+import { HtmlEmbed } from "./html-embed";
 
 const htmlSample = `
 <h1>Styling HTML with Content Embed</h1>
@@ -70,26 +63,26 @@ export const meta: TemplateMeta = {
   template: setInstanceMeta(
     { label: "Content Embed" },
     <HtmlEmbed code={htmlSample}>
-      {descendant("Paragraph", " p")}
-      {descendant("Heading 1", " h1")}
-      {descendant("Heading 2", " h2")}
-      {descendant("Heading 3", " h3")}
-      {descendant("Heading 4", " h4")}
-      {descendant("Heading 5", " h5")}
-      {descendant("Heading 6", " h6")}
-      {descendant("Bold", " :where(strong, b)")}
-      {descendant("Italic", " :where(em, i)")}
-      {descendant("Link", " a")}
-      {descendant("Image", " img")}
-      {descendant("Blockquote", " blockquote")}
-      {descendant("Code Text", " code")}
-      {descendant("List", " :where(ul, ol)")}
-      {descendant("List Item", " li")}
-      {descendant("Separator", " hr")}
-      {descendant("Table", " table")}
-      {descendant("Table Row", " tr")}
-      {descendant("Table Header Cell", " th")}
-      {descendant("Table Cell", " td")}
+      <ws.descendant ws:label="Paragraph" selector=" p" />
+      <ws.descendant ws:label="Heading 1" selector=" h1" />
+      <ws.descendant ws:label="Heading 2" selector=" h2" />
+      <ws.descendant ws:label="Heading 3" selector=" h3" />
+      <ws.descendant ws:label="Heading 4" selector=" h4" />
+      <ws.descendant ws:label="Heading 5" selector=" h5" />
+      <ws.descendant ws:label="Heading 6" selector=" h6" />
+      <ws.descendant ws:label="Bold" selector=" :where(strong, b)" />
+      <ws.descendant ws:label="Italic" selector=" :where(em, i)" />
+      <ws.descendant ws:label="Link" selector=" a" />
+      <ws.descendant ws:label="Image" selector=" img" />
+      <ws.descendant ws:label="Blockquote" selector=" blockquote" />
+      <ws.descendant ws:label="Code Text" selector=" code" />
+      <ws.descendant ws:label="List" selector=" :where(ul, ol)" />
+      <ws.descendant ws:label="List Item" selector=" li" />
+      <ws.descendant ws:label="Separator" selector=" hr" />
+      <ws.descendant ws:label="Table" selector=" table" />
+      <ws.descendant ws:label="Table Row" selector=" tr" />
+      <ws.descendant ws:label="Table Header Cell" selector=" th" />
+      <ws.descendant ws:label="Table Cell" selector=" td" />
     </HtmlEmbed>
   ),
 };

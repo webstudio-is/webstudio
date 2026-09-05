@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div, h3, button } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsAccordion,
@@ -22,7 +22,7 @@ export const metaAccordion: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.AccordionItem],
+    descendants: [getRadixComponentId("AccordionItem")],
   },
   presetStyle: { div },
   initialProps: ["value", "collapsible"],
@@ -32,11 +32,14 @@ export const metaAccordion: WsComponentMeta = {
 export const metaAccordionItem: WsComponentMeta = {
   label: "Item",
   icon: ItemIcon,
-  indexWithinAncestor: radix.Accordion,
+  indexWithinAncestor: getRadixComponentId("Accordion"),
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.AccordionHeader, radix.AccordionContent],
+    descendants: [
+      getRadixComponentId("AccordionHeader"),
+      getRadixComponentId("AccordionContent"),
+    ],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },
@@ -53,7 +56,7 @@ export const metaAccordionHeader: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.AccordionTrigger],
+    descendants: [getRadixComponentId("AccordionTrigger")],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },

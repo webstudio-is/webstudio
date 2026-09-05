@@ -1,13 +1,18 @@
+/** @jsxImportSource @webstudio-is/template */
 import { PlayIcon, SpinnerIcon } from "@webstudio-is/icons/svg";
 import {
   type TemplateMeta,
-  $,
   css,
   setInstanceMeta,
 } from "@webstudio-is/template";
 import { iconEmbedStyle } from "./shared/icon-embed-style";
-const { HtmlEmbed, VimeoPlayButton, VimeoPreviewImage, VimeoSpinner, YouTube } =
-  $;
+import {
+  HtmlEmbed,
+  VimeoPlayButton,
+  VimeoPreviewImage,
+  VimeoSpinner,
+  YouTube,
+} from "./components";
 
 export const meta: TemplateMeta = {
   label: "YouTube",

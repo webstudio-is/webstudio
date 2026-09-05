@@ -1,6 +1,9 @@
 import { Parser } from "acorn";
 import jsx from "acorn-jsx";
-import { webstudioJsxBindingGuidance } from "./bindings";
+import {
+  webstudioJsxBindingGuidance,
+  webstudioJsxCompilerPrimitiveNames,
+} from "./bindings";
 import { getErrorMessage, throwWebstudioJsxValidationError } from "./errors";
 
 const JsxParser = Parser.extend(jsx());
@@ -218,6 +221,18 @@ export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
     );
   }
   const error = visitAst(ast, (node, context) => {
+    if (node.type === "JSXMemberExpression") {
+      const name = getJsxElementName(node);
+      const [namespace, primitive, nested] = name?.split(".") ?? [];
+      if (
+        namespace === "ws" &&
+        nested === undefined &&
+        primitive !== undefined &&
+        webstudioJsxCompilerPrimitiveNames.has(primitive) === false
+      ) {
+        return `Component "ws:${primitive}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. In JSX, use a lowercase HTML element such as <${primitive}>.`;
+      }
+    }
     if (node.type === "ImportExpression" || node.type === "Import") {
       return `Do not use dynamic import() in JSX fragments. JSX fragments are declarative Webstudio project data; use ${webstudioJsxBindingGuidance}.`;
     }

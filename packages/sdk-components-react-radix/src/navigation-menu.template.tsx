@@ -1,13 +1,29 @@
+/** @jsxImportSource @webstudio-is/template */
 import type { ReactNode } from "react";
 import { ChevronDownIcon } from "@webstudio-is/icons/svg";
 import {
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import {
+  Box,
+  Button,
+  HtmlEmbed,
+  Link,
+  Paragraph,
+  Text,
+} from "@webstudio-is/sdk-components-react/components";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuViewport,
+} from "./components";
 import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
 import {
   borderRadius,
@@ -22,17 +38,6 @@ import {
   weights,
   width,
 } from "./shared/theme";
-
-const { Box, Button, HtmlEmbed, Link, Paragraph, Text } = $;
-const {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
-} = radix;
 
 const components = [
   {

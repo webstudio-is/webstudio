@@ -4,7 +4,8 @@ import {
   type Pages,
   type WebstudioData,
 } from "@webstudio-is/sdk";
-import { coreTemplates } from "@webstudio-is/sdk/core-templates";
+import { coreTemplates } from "@webstudio-is/sdk-components-registry/core-templates";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { css, renderData } from "@webstudio-is/template";
 import { createRootFolder } from "./shared/pages-utils";
 
@@ -89,7 +90,8 @@ export const createPages = (): WebstudioData => {
       </body>
     </>,
     () => createId("nano"),
-    breakpoints
+    breakpoints,
+    { componentIds }
   );
 
   const pages: Pages = {

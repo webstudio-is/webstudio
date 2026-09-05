@@ -23,7 +23,7 @@ export const getComponentTemplates = () => {
   const templatesByComponent = new Map<string, GeneratedTemplateMeta>();
 
   for (const library of canvasComponentLibraries) {
-    const { templates } = library;
+    const { componentIds, templates } = library;
     const namespace = "namespace" in library ? library.namespace : undefined;
     const prefix = namespace === undefined ? "" : `${namespace}:`;
     for (const [componentName, meta] of Object.entries(
@@ -32,7 +32,10 @@ export const getComponentTemplates = () => {
       const { template, ...generatedMeta } = meta;
       templatesByComponent.set(`${prefix}${componentName}`, {
         ...generatedMeta,
-        template: renderTemplate(template, undefined, [], { componentMetas }),
+        template: renderTemplate(template, undefined, [], {
+          componentIds,
+          componentMetas,
+        }),
       });
     }
   }

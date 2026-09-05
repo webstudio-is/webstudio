@@ -1,12 +1,22 @@
+/** @jsxImportSource @webstudio-is/template */
 import { LargeXIcon } from "@webstudio-is/icons/svg";
 import {
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import {
+  Button,
+  HtmlEmbed,
+  Text,
+} from "@webstudio-is/sdk-components-react/components";
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverTrigger,
+} from "./components";
 import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
 import {
   borderRadius,
@@ -19,9 +29,6 @@ import {
   height,
   opacity,
 } from "./shared/theme";
-
-const { Button, HtmlEmbed, Text } = $;
-const { Popover, PopoverClose, PopoverContent, PopoverTrigger } = radix;
 
 /**
  * Styles source without animations:

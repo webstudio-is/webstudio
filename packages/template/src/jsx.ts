@@ -1,5 +1,4 @@
 import { Fragment, type JSX, type ReactNode } from "react";
-import { kebabCase } from "change-case";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
   animationAction,
@@ -46,7 +45,16 @@ const instanceMetaByElement = new WeakMap<
   JSX.Element,
   Readonly<{ name?: string; label?: string }>
 >();
+const componentIdByMarker = new WeakMap<object, Instance["component"]>();
 const intrinsicTags = new Set(tags);
+
+export type TemplateComponent = Exclude<JSX.Element["type"], string>;
+
+export type RenderTemplateOptions = {
+  allowManualIds?: boolean;
+  componentIds?: ReadonlyMap<TemplateComponent, Instance["component"]>;
+  componentMetas?: ReadonlyMap<Instance["component"], WsComponentMeta>;
+};
 
 /** Associates instance metadata without exposing it as JSX properties. */
 export const setInstanceMeta = (
@@ -394,10 +402,7 @@ export const renderTemplate = (
   root: JSX.Element,
   generateId?: () => string,
   initialBreakpoints: Breakpoint[] = [],
-  options: {
-    allowManualIds?: boolean;
-    componentMetas?: Map<Instance["component"], WsComponentMeta>;
-  } = {}
+  options: RenderTemplateOptions = {}
 ): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
@@ -592,10 +597,19 @@ export const renderTemplate = (
       );
     }
     const component =
-      intrinsicTag === undefined ? element.type.displayName : "ws:element";
+      intrinsicTag === undefined
+        ? (options.componentIds?.get(element.type) ??
+          componentIdByMarker.get(element.type))
+        : "ws:element";
     if (typeof component !== "string") {
+      const componentName =
+        typeof element.type === "function"
+          ? (element.type.displayName ?? element.type.name)
+          : typeof element.type === "object" && element.type !== null
+            ? element.type.displayName
+            : undefined;
       throw new Error(
-        "Invalid JSX component in Webstudio JSX. Use a lowercase HTML element or an available PascalCase component identifier."
+        `Invalid JSX component${componentName ? ` "${componentName}"` : ""} in Webstudio JSX. Use a lowercase HTML element or an available PascalCase component identifier.`
       );
     }
     const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
@@ -881,7 +895,8 @@ export const renderTemplate = (
 export const renderData = (
   root: JSX.Element,
   generateId?: () => string,
-  initialBreakpoints: Breakpoint[] = []
+  initialBreakpoints: Breakpoint[] = [],
+  options: RenderTemplateOptions = {}
 ): Omit<WebstudioData, "pages"> => {
   const {
     instances,
@@ -893,7 +908,7 @@ export const renderData = (
     dataSources,
     resources,
     assets,
-  } = renderTemplate(root, generateId, initialBreakpoints);
+  } = renderTemplate(root, generateId, initialBreakpoints, options);
   return {
     instances: new Map(instances.map((item) => [item.id, item])),
     props: new Map(props.map((item) => [item.id, item])),
@@ -924,6 +939,15 @@ type Component = { displayName: string } & ((
   props: ComponentProps
 ) => ReactNode);
 
+const createComponentMarker = (
+  componentId: Instance["component"]
+): Component => {
+  const component: Component = () => undefined;
+  component.displayName = componentId;
+  componentIdByMarker.set(component, componentId);
+  return component;
+};
+
 export const createProxy = (
   prefix: string,
   transformName: (name: string) => string = (name) => name
@@ -932,14 +956,43 @@ export const createProxy = (
     {},
     {
       get(_target, prop) {
-        const component: Component = () => undefined;
-        component.displayName = `${prefix}${transformName(String(prop))}`;
-        return component;
+        return createComponentMarker(`${prefix}${transformName(String(prop))}`);
       },
     }
   );
 };
 
+/** @deprecated Accepted only while legacy `$.*` JSX remains readable. */
 export const $: Record<string, Component> = createProxy("");
 
-export const ws: Record<string, Component> = createProxy("ws:", kebabCase);
+const createCompilerPrimitive = (name: string): Component => {
+  return createComponentMarker(`ws:${name}`);
+};
+
+const contentBlockBody = createCompilerPrimitive("content-block-body");
+const blockTemplate = createCompilerPrimitive("block-template");
+
+type CompilerPrimitives = {
+  root: Component;
+  element: Component;
+  collection: Component;
+  descendant: Component;
+  block: Component;
+  contentBlockBody: Component;
+  blockTemplate: Component;
+  "content-block-body": Component;
+  "block-template": Component;
+};
+
+/** Compiler-only primitives that have no React component implementation. */
+export const ws: CompilerPrimitives = {
+  root: createCompilerPrimitive("root"),
+  element: createCompilerPrimitive("element"),
+  collection: createCompilerPrimitive("collection"),
+  descendant: createCompilerPrimitive("descendant"),
+  block: createCompilerPrimitive("block"),
+  contentBlockBody,
+  blockTemplate,
+  "content-block-body": contentBlockBody,
+  "block-template": blockTemplate,
+};

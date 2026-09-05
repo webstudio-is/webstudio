@@ -1,7 +1,8 @@
-import { $, type TemplateMeta } from "@webstudio-is/template";
-const CodeTextComponent = $.CodeText;
+/** @jsxImportSource @webstudio-is/template */
+import type { TemplateMeta } from "@webstudio-is/template";
+import { CodeText } from "./base";
 
-export const CodeText: TemplateMeta = {
+export const meta: TemplateMeta = {
   category: "typography",
-  template: <CodeTextComponent>{'const status = "ready";'}</CodeTextComponent>,
+  template: <CodeText>{'const status = "ready";'}</CodeText>,
 };

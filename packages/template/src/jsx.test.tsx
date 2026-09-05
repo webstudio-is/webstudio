@@ -6,12 +6,12 @@ import {
   $,
   ActionValue,
   AssetValue,
-  createProxy,
   expression,
   PageValue,
   Parameter,
   PlaceholderValue,
-  renderTemplate,
+  renderTemplate as renderTemplateWithOptions,
+  type RenderTemplateOptions,
   ResourceValue,
   setInstanceMeta,
   setTemplateMeta,
@@ -47,9 +47,38 @@ const viewAnimationAction = {
   ],
 } as const;
 
-const animation = createProxy("@webstudio-is/sdk-components-animation:");
-const { AnimateChildren } = animation;
-const { Body, Box, Button, Span, Text } = $;
+type TestComponentProps = { children?: unknown } & Record<string, unknown>;
+const createTestComponent = () => (_props: TestComponentProps) => undefined;
+
+const Body = createTestComponent();
+const Box = createTestComponent();
+const Button = createTestComponent();
+const Span = createTestComponent();
+const Text = createTestComponent();
+const AnimateChildren = createTestComponent();
+
+const testComponentIds = new Map([
+  [Body, "Body"],
+  [Box, "Box"],
+  [Button, "Button"],
+  [Span, "Span"],
+  [Text, "Text"],
+  [AnimateChildren, "@webstudio-is/sdk-components-animation:AnimateChildren"],
+]);
+
+const renderTemplate = (
+  root: Parameters<typeof renderTemplateWithOptions>[0],
+  generateId?: () => string,
+  initialBreakpoints: Parameters<typeof renderTemplateWithOptions>[2] = [],
+  options: RenderTemplateOptions = {}
+) =>
+  renderTemplateWithOptions(root, generateId, initialBreakpoints, {
+    ...options,
+    componentIds: new Map([
+      ...testComponentIds,
+      ...(options.componentIds ?? []),
+    ]),
+  });
 
 test("render jsx into instances with generated id", () => {
   const { instances } = renderTemplate(
@@ -81,6 +110,46 @@ test("render jsx into instances with generated id", () => {
       children: [],
     },
   ]);
+});
+
+test("reads legacy proxy component markers", () => {
+  expect(renderTemplate(<$.Box />).instances[0]?.component).toBe("Box");
+});
+
+test("uses component object identity instead of displayName", () => {
+  const BaseLabel = () => undefined;
+  BaseLabel.displayName = "Label";
+  const RadixLabel = () => undefined;
+  RadixLabel.displayName = "Label";
+
+  const { instances } = renderTemplate(
+    <>
+      <BaseLabel />
+      <RadixLabel />
+    </>,
+    undefined,
+    [],
+    {
+      componentIds: new Map([
+        [BaseLabel, "Label"],
+        [RadixLabel, "@webstudio-is/sdk-components-react-radix:Label"],
+      ]),
+    }
+  );
+
+  expect(instances.map(({ component }) => component)).toEqual([
+    "Label",
+    "@webstudio-is/sdk-components-react-radix:Label",
+  ]);
+});
+
+test("rejects an unregistered real component even when it has a displayName", () => {
+  const Unregistered = () => undefined;
+  Unregistered.displayName = "Box";
+
+  expect(() => renderTemplate(<Unregistered />)).toThrow(
+    "Invalid JSX component"
+  );
 });
 
 test("uses component metas to convert animation action props", () => {
@@ -229,7 +298,6 @@ test("renders raw HTML tags as intrinsic elements", () => {
 });
 
 test("keeps structured instance and template metadata out of JSX props", () => {
-  const { Box } = $;
   const { instances, props } = renderTemplate(
     setTemplateMeta(
       { name: "PromotionCard", label: "Promotion card" },
@@ -253,7 +321,6 @@ test("keeps structured instance and template metadata out of JSX props", () => {
 });
 
 test("rejects invalid structured template names", () => {
-  const { Box } = $;
   expect(() => setTemplateMeta({ name: "Promotion Card" }, <Box />)).toThrow(
     "Template name must be a PascalCase JavaScript identifier"
   );

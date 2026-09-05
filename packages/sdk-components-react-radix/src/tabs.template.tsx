@@ -1,9 +1,10 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
   css,
   PlaceholderValue,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components";
 import {
   borderRadius,
   colors,
@@ -16,8 +17,6 @@ import {
   boxShadow,
   spacing,
 } from "./shared/theme";
-
-const { Tabs, TabsContent, TabsList, TabsTrigger } = radix;
 
 /**
  * Styles source without animations:

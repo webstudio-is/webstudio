@@ -1,4 +1,3 @@
-import { createElement } from "react";
 import {
   mkdir,
   mkdtemp,
@@ -9,7 +8,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
-import { $, type TemplateMeta } from "@webstudio-is/template";
+import type { TemplateMeta } from "@webstudio-is/template";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { generateStories } from "./generate-stories";
 
@@ -66,6 +65,13 @@ const labelMeta: WsComponentMeta = {
   props: {},
 };
 
+const Box = () => null;
+Box.displayName = "Box";
+const BaseLabel = () => null;
+BaseLabel.displayName = "Label";
+const RadixLabel = () => null;
+RadixLabel.displayName = "Label";
+
 describe("generateStories", () => {
   test("generates stories from explicit package-local templates and metas", async () => {
     const root = await createTempPackage({
@@ -78,12 +84,15 @@ describe("generateStories", () => {
     process.chdir(root);
     await generateStories({
       packageName: "@webstudio-is/sdk-components-react",
-      templates: {
-        Box: {
-          category: "general",
-          template: createElement($.Box, undefined, "Explicit story"),
-        } satisfies TemplateMeta,
-      },
+      components: { Box },
+      templates: [
+        {
+          meta: {
+            category: "general",
+            template: <Box />,
+          } satisfies TemplateMeta,
+        },
+      ],
       metas: {
         Box: boxMeta,
       },
@@ -105,18 +114,28 @@ describe("generateStories", () => {
     process.chdir(root);
     await generateStories({
       packageName: "@webstudio-is/sdk-components-react-radix",
-      templates: {
-        BaseLabel: {
-          category: "general",
-          template: createElement($.Label, undefined, "Base label"),
-        } satisfies TemplateMeta,
-      },
+      components: { Label: RadixLabel },
+      templates: [
+        {
+          storyName: "BaseLabel",
+          meta: {
+            category: "general",
+            template: <BaseLabel />,
+          } satisfies TemplateMeta,
+        },
+      ],
       metas: {
         Label: {
           ...labelMeta,
           label: "Radix Label",
         },
       },
+      namespaceComponents: new Map([
+        [
+          "@webstudio-is/sdk-components-react/components",
+          { Box, Label: BaseLabel },
+        ],
+      ]),
       namespaceMetas: new Map([
         [
           "@webstudio-is/sdk-components-react/components",
@@ -136,5 +155,36 @@ describe("generateStories", () => {
       'import { Box as Box, Label as Label } from "@webstudio-is/sdk-components-react/components";'
     );
     expect(story).not.toContain('from "../components"');
+  });
+
+  test("keeps namespaced component identity in generated stories", async () => {
+    const root = await createTempPackage({
+      packageJson: {
+        name: "@webstudio-is/sdk-components-react-radix",
+        type: "module",
+      },
+    });
+
+    process.chdir(root);
+    await generateStories({
+      packageName: "@webstudio-is/sdk-components-react-radix",
+      components: { Label: RadixLabel },
+      templates: [
+        {
+          meta: {
+            category: "general",
+            template: <RadixLabel />,
+          },
+        },
+      ],
+      metas: { Label: labelMeta },
+      namespaceMetas: new Map([
+        ["@webstudio-is/sdk-components-react/components", { Box: boxMeta }],
+      ]),
+    });
+
+    await expect(
+      readFile(path.join(root, "src/__generated__/label.stories.tsx"), "utf8")
+    ).resolves.toContain('import { Label as Label } from "../components";');
   });
 });

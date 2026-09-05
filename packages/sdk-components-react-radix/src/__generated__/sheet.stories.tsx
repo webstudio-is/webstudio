@@ -30,7 +30,7 @@ const Component = () => {
         </DialogTrigger>
         <DialogOverlay className={`w-dialog-overlay w-sheet-overlay`}>
           <DialogContent className={`w-dialog-content w-sheet-content`}>
-            <Box data-ws-tag="nav" className={`w-box`}>
+            <Box tag={"nav"} className={`w-box`}>
               <Box className={`w-box w-sheet-header`}>
                 <DialogTitle className={`w-dialog-title w-sheet-title`}>
                   {"Sheet Title"}

@@ -10,7 +10,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import {
   propsSelect,
   propsSelectContent,
@@ -27,7 +27,10 @@ export const metaSelect: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.SelectTrigger, radix.SelectContent],
+    descendants: [
+      getRadixComponentId("SelectTrigger"),
+      getRadixComponentId("SelectContent"),
+    ],
   },
   initialProps: ["name", "value", "open", "required"],
   props: propsSelect,
@@ -38,7 +41,7 @@ export const metaSelectTrigger: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.SelectValue],
+    descendants: [getRadixComponentId("SelectValue")],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },
@@ -65,7 +68,7 @@ export const metaSelectContent: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.SelectViewport],
+    descendants: [getRadixComponentId("SelectViewport")],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },
@@ -80,7 +83,7 @@ export const metaSelectViewport: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.SelectItem],
+    descendants: [getRadixComponentId("SelectItem")],
   },
   presetStyle: { div },
   props: propsSelectViewport,
@@ -91,7 +94,10 @@ export const metaSelectItem: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.SelectItemIndicator, radix.SelectItemText],
+    descendants: [
+      getRadixComponentId("SelectItemIndicator"),
+      getRadixComponentId("SelectItemText"),
+    ],
   },
   states: [
     { label: "Checked", selector: '[data-state="checked"]' },

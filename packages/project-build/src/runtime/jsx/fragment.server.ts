@@ -1,6 +1,7 @@
 import { createId, type WebstudioFragment } from "@webstudio-is/sdk";
 import { renderTemplate } from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import {
   webstudioJsxAnimationGuidance,
   webstudioJsxBindingGuidance,
@@ -37,9 +38,10 @@ export const evaluateWebstudioJsxFragment = async (
   return evaluateJsx<WebstudioFragment>({
     source,
     createModule: (jsx) =>
-      `exports.default = __renderTemplate(<>${jsx}</>, __createWebstudioJsxFragmentId, [], { allowManualIds: false, componentMetas: __componentMetas });`,
+      `exports.default = __renderTemplate(<>${jsx}</>, __createWebstudioJsxFragmentId, [], { allowManualIds: false, componentIds: __componentIds, componentMetas: __componentMetas });`,
     globals: {
       __createWebstudioJsxFragmentId: createId,
+      __componentIds: componentIds,
       __componentMetas: componentMetas,
       __renderTemplate: renderTemplate,
       ...webstudioJsxRuntimeBindings,

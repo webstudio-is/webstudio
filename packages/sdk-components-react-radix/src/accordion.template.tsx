@@ -1,11 +1,22 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import {
+  Box,
+  HtmlEmbed,
+  Text,
+} from "@webstudio-is/sdk-components-react/components";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionHeader,
+  AccordionItem,
+  AccordionTrigger,
+} from "./components";
 import {
   borderWidth,
   colors,
@@ -19,15 +30,6 @@ import {
 } from "./shared/theme";
 import { ChevronDownIcon } from "@webstudio-is/icons/svg";
 import { iconEmbedStyle } from "./shared/styles";
-
-const { Box, HtmlEmbed, Text } = $;
-const {
-  Accordion,
-  AccordionContent,
-  AccordionHeader,
-  AccordionItem,
-  AccordionTrigger,
-} = radix;
 
 const createAccordionItem = (triggerText: string, contentText: string) => {
   return (

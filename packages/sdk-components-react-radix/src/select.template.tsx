@@ -1,11 +1,21 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { HtmlEmbed } from "@webstudio-is/sdk-components-react/components";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+  SelectTrigger,
+  SelectValue,
+  SelectViewport,
+} from "./components";
 import {
   borderRadius,
   borderWidth,
@@ -21,18 +31,6 @@ import {
 } from "./shared/theme";
 import { CheckMarkIcon } from "@webstudio-is/icons/svg";
 import { iconEmbedStyle } from "./shared/styles";
-
-const { HtmlEmbed } = $;
-const {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectItemIndicator,
-  SelectItemText,
-  SelectTrigger,
-  SelectValue,
-  SelectViewport,
-} = radix;
 
 const createSelectItem = (value: string, label: string) => {
   return (

@@ -1,7 +1,7 @@
-import { $, type TemplateMeta } from "@webstudio-is/template";
-import { animation } from "./shared/proxy";
-const { Video } = $;
-const { VideoAnimation } = animation;
+/** @jsxImportSource @webstudio-is/template */
+import type { TemplateMeta } from "@webstudio-is/template";
+import { Video } from "@webstudio-is/sdk-components-react/components";
+import { VideoAnimation } from "./video-animation";
 
 export const meta: TemplateMeta = {
   category: "animations",

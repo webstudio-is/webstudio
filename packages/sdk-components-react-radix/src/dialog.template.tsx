@@ -1,12 +1,26 @@
+/** @jsxImportSource @webstudio-is/template */
 import { LargeXIcon } from "@webstudio-is/icons/svg";
 import {
   type TemplateMeta,
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import {
+  Box,
+  Button,
+  HtmlEmbed,
+  Text,
+} from "@webstudio-is/sdk-components-react/components";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogOverlay,
+  DialogTitle,
+  DialogTrigger,
+} from "./components";
 import {
   blur,
   borderRadius,
@@ -25,17 +39,6 @@ import {
   zIndex,
 } from "./shared/theme";
 import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
-
-const { Box, Button, HtmlEmbed, Text } = $;
-const {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogOverlay,
-  DialogTitle,
-  DialogTrigger,
-} = radix;
 
 /**
  * Styles source without animations:

@@ -2652,6 +2652,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -2686,9 +2689,6 @@ importers:
       '@webstudio-is/sdk-cli':
         specifier: workspace:^
         version: link:../sdk-cli
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../sdk-components-react
       '@webstudio-is/template':
         specifier: workspace:*
         version: link:../template
@@ -2879,6 +2879,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
       await-interaction-response:
         specifier: ^0.0.2
         version: 0.0.2
@@ -2904,9 +2907,6 @@ importers:
       '@webstudio-is/sdk-cli':
         specifier: workspace:^
         version: link:../sdk-cli
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../sdk-components-react
       '@webstudio-is/template':
         specifier: workspace:*
         version: link:../template
@@ -3002,6 +3002,9 @@ importers:
 
   packages/sdk-components-registry:
     dependencies:
+      '@webstudio-is/icons':
+        specifier: workspace:*
+        version: link:../icons
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -3024,6 +3027,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -3079,9 +3085,6 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
-      change-case:
-        specifier: ^5.4.4
-        version: 5.4.4
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318

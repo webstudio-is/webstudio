@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
-import { coreTemplates } from "@webstudio-is/sdk/core-templates";
+import { coreTemplates } from "@webstudio-is/sdk-components-registry/core-templates";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { renderTemplate } from "@webstudio-is/template";
 import {
   blockComponent,
@@ -149,7 +150,9 @@ describe("resolveMdxTemplates", () => {
     if (template === undefined) {
       throw new Error("Expected the core Content Block template");
     }
-    const fragment = renderTemplate(template.template);
+    const fragment = renderTemplate(template.template, undefined, [], {
+      componentIds,
+    });
     const instances = new Map(
       fragment.instances.map((instance) => [instance.id, instance])
     );

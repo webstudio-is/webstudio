@@ -777,22 +777,8 @@ test("rejects unknown Webstudio core components", () => {
 });
 
 test("rejects unknown Webstudio core components in JSX fragments", async () => {
-  const parent = createParent();
-  const fragment = await parseWebstudioJsxFragment(`<ws.div />`);
-
-  expect(() =>
-    insertFragment(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        fragment,
-      },
-      {
-        createId: createIdFactory(),
-      }
-    )
-  ).toThrow(
-    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands.'
+  await expect(parseWebstudioJsxFragment(`<ws.div />`)).rejects.toThrow(
+    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. In JSX, use a lowercase HTML element such as <div>.'
   );
 });
 

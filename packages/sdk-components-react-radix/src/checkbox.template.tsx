@@ -1,12 +1,13 @@
+/** @jsxImportSource @webstudio-is/template */
 import { CheckMarkIcon } from "@webstudio-is/icons/svg";
 import {
   type TemplateMeta,
-  $,
   css,
   PlaceholderValue,
   setInstanceMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { HtmlEmbed, Text } from "@webstudio-is/sdk-components-react/components";
+import { Checkbox, CheckboxIndicator, Label } from "./components";
 import {
   borderRadius,
   borderWidth,
@@ -18,9 +19,6 @@ import {
   width,
 } from "./shared/theme";
 import { iconEmbedStyle } from "./shared/styles";
-
-const { HtmlEmbed, Text } = $;
-const { Checkbox, CheckboxIndicator, Label } = radix;
 
 export const meta: TemplateMeta = {
   category: "radix",

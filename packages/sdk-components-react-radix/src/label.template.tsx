@@ -1,12 +1,11 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
   css,
   PlaceholderValue,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { radix } from "./shared/proxy";
+import { Label } from "./label";
 import { fontSize, lineHeight, weights } from "./shared/theme";
-
-const { Label } = radix;
 
 /**
  * Styles source without animations:
