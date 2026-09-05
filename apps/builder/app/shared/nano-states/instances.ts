@@ -63,6 +63,7 @@ type ContextMenuCommand =
   | { type: "selectNext" }
   | { type: "selectPrevious" }
   | { type: "enter" }
+  | { type: "close" }
   | { type: "templateInsertionStarted" }
   | { type: "templateInsertionCancelled" };
 

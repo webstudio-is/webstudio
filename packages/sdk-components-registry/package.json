@@ -34,13 +34,11 @@
       "import": "./lib/components.js"
     },
     "./core-templates": {
-      "webstudio": "./src/core-templates.tsx",
-      "types": "./lib/types/core-templates.d.ts",
-      "import": "./lib/core-templates.js"
+      "webstudio": "./src/core-templates.tsx"
     }
   },
   "scripts": {
-    "build": "rm -rf lib && esbuild src/metas.ts src/framework.ts src/components.ts src/canvas.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/metas.ts src/framework.ts src/components.ts src/canvas.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

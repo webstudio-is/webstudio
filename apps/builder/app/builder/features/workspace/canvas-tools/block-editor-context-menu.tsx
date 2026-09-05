@@ -162,7 +162,8 @@ const Menu = ({
         }
 
         case "templateInsertionStarted":
-        case "templateInsertionCancelled": {
+        case "templateInsertionCancelled":
+        case "close": {
           break;
         }
 
@@ -208,6 +209,14 @@ const Menu = ({
   );
 };
 
+const CloseTextEditorContextMenu = () => {
+  useEffect(() => {
+    $textEditorContextMenu.set(undefined);
+    execTextEditorContextMenuCommand({ type: "close" });
+  }, []);
+  return null;
+};
+
 export const TextEditorContextMenu = () => {
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const textEditorContextMenu = useStore($textEditorContextMenu);
@@ -229,7 +238,7 @@ export const TextEditorContextMenu = () => {
   });
 
   if (templates === undefined) {
-    return;
+    return <CloseTextEditorContextMenu />;
   }
 
   const insertableTemplates = filterInsertableContentBlockTemplates({
@@ -239,7 +248,7 @@ export const TextEditorContextMenu = () => {
   });
 
   if (insertableTemplates.length === 0) {
-    return;
+    return <CloseTextEditorContextMenu />;
   }
 
   return (

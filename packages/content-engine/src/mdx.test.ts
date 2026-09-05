@@ -235,6 +235,42 @@ describe("parseMdxDocument", () => {
     expect(serializeMdxDocument(document)).toBe(source);
   });
 
+  test("parses and preserves intrinsic SVG JSX", async () => {
+    const source = `<svg viewBox="0 0 24 24">
+  <path d="M0 0h24v24H0z" />
+</svg>
+`;
+    const document = await parseMdxDocument({ source });
+
+    expect(document.children[0]).toMatchObject({
+      type: "element",
+      syntax: "mdx",
+      tag: "svg",
+      children: [
+        expect.objectContaining({
+          type: "element",
+          syntax: "mdx",
+          tag: "path",
+        }),
+      ],
+    });
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test.each(["Foo", "my-widget"])(
+    "preserves legacy generic tag %s when direct JSX would change its meaning",
+    async (tag) => {
+      const legacySource = `<ws.element ws:tag="${tag}">Text</ws.element>\n`;
+      const document = await parseMdxDocument({ source: legacySource });
+      const serialized = serializeMdxDocument(document);
+
+      expect(serialized).toBe(legacySource);
+      expect(
+        omitSourceRanges(await parseMdxDocument({ source: serialized }))
+      ).toEqual(omitSourceRanges(document));
+    }
+  );
+
   test("preserves self-closing and explicitly empty template children", async () => {
     const selfClosing = await parseMdxDocument({ source: "<Card />\n" });
     const explicitlyEmpty = await parseMdxDocument({
@@ -1522,10 +1558,10 @@ describe("parseMdxDocumentRecovering", () => {
         code: "unsafe-mdx",
         severity: "warning",
         message:
-          "Only standard HTML elements and named template components are supported in authored MDX",
+          "Only standard HTML and SVG elements and named template components are supported in authored MDX",
         nodeType: "mdxJsxFlowElement",
         reason:
-          "Only standard HTML elements and named template components are supported in authored MDX",
+          "Only standard HTML and SVG elements and named template components are supported in authored MDX",
         sourceRange: {
           start: { line: 3, column: 1, offset: 11 },
           end: { line: 3, column: 14, offset: 24 },
@@ -1551,9 +1587,9 @@ describe("parseMdxDocumentRecovering", () => {
     });
 
     expect(result.diagnostics.map(({ message }) => message)).toEqual([
-      "Only standard HTML elements and named template components are supported in authored MDX",
+      "Only standard HTML and SVG elements and named template components are supported in authored MDX",
       "Executable MDX expressions are not supported",
-      "Only standard HTML elements and named template components are supported in authored MDX",
+      "Only standard HTML and SVG elements and named template components are supported in authored MDX",
     ]);
     expect(
       result.diagnostics.map((diagnostic) =>

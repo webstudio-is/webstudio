@@ -6426,7 +6426,7 @@ const metaGoalGuides = [
     workflow: [
       "Find the array or object to repeat. For a scoped resource result, select the complete nested array/object, commonly below the result's data field; do not bind the response wrapper or one indexed item.",
       "Call insert-collection once with the complete iterable and one repeated-item JSX root. Use expression`collectionItem.name` and expression`collectionItemKey` inside the item fragment; the operation creates and binds private parameters atomically.",
-      "Wrap multiple repeated sibling instances in one ws.element. Do not create, replace, or delete Collection parameter records manually.",
+      "Wrap multiple repeated sibling instances in one lowercase HTML element such as <div>. Do not create, replace, or delete Collection parameter records manually.",
       "Verify that every array/object entry renders once. For repeated Radix items, bind a stable unique id or slug to required value props.",
     ],
   },
@@ -6526,7 +6526,7 @@ const metaGoalGuides = [
       "Before the first mutation, call inspect-design-context exactly once instead of calling list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Use one list-instances call only when needed to inspect a representative existing page pattern. Do not call get-styles: the bounded design context and optional focused instance result provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
       "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
-      "Create semantic editable structure with insert-fragment-verified using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
+      "Create semantic editable structure with insert-fragment-verified using lowercase HTML elements and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
@@ -6920,7 +6920,7 @@ const designSystemWorkflowPhases: Record<
     constraints: [
       "Do not treat coverage 72/72 as completion by itself.",
       "Keep every covered component on the page while improving layout and styling.",
-      "Use styled ws.element sections/cards, update-styles, and move-instance as needed.",
+      "Use styled lowercase HTML sections/cards, update-styles, and move-instance as needed.",
       "Return a checkpoint with visual/presentation changes and final coverage.",
     ],
     expectedReturn: [

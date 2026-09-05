@@ -103,6 +103,28 @@ describe("generateStories", () => {
     ).resolves.toContain('title: "Components/Box"');
   });
 
+  test("rejects templates that resolve to the same story name", async () => {
+    const root = await createTempPackage({
+      packageJson: {
+        name: "@webstudio-is/sdk-components-react",
+        type: "module",
+      },
+    });
+
+    process.chdir(root);
+    await expect(
+      generateStories({
+        packageName: "@webstudio-is/sdk-components-react",
+        components: { Box },
+        templates: [
+          { meta: { category: "general", template: <Box /> } },
+          { meta: { category: "general", template: <Box /> } },
+        ],
+        metas: { Box: boxMeta },
+      })
+    ).rejects.toThrow('Story name "Box" is generated more than once');
+  });
+
   test("imports default components from the base package even when local metas share the short name", async () => {
     const root = await createTempPackage({
       packageJson: {

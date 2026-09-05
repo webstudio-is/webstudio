@@ -120,12 +120,20 @@ An `.mdx` file supports standard Markdown and constrained JSX in one document.
 
 Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Each node uses the uniquely matching semantic template from the Content Block when one exists. Matching uses the element tag or adapted component type, not the template's editable label. If no standard template exists, Webstudio renders the normal semantic fallback. The fallback is still a normal element or component, so its applicable component and global styles continue to work; it simply has no Content Block template styles. If more than one standard template matches, Webstudio reports a warning and uses the fallback.
 
-Use lowercase JSX when Markdown cannot express the required HTML element or attributes:
+Use lowercase JSX when Markdown cannot express the required HTML or SVG element or attributes:
 
 ```mdx
 <section aria-label="Launch details">
   <h2>Launch offer</h2>
 </section>
+```
+
+Standard SVG elements use the same syntax:
+
+```mdx
+<svg viewBox="0 0 24 24">
+  <path d="M0 0h24v24H0z" />
+</svg>
 ```
 
 Use a capitalized JSX name for a uniquely named custom template:

@@ -208,14 +208,29 @@ const isChildValue = (child: unknown) =>
   child instanceof PlaceholderValue ||
   child instanceof Expression;
 
-const getElementChildren = (element: JSX.Element): JSX.Element[] => {
-  if (Array.isArray(element.props?.children)) {
-    return element.props?.children;
+type ElementChild = JSX.Element | string | PlaceholderValue | Expression;
+
+const appendElementChildren = (children: ElementChild[], child: unknown) => {
+  if (Array.isArray(child)) {
+    for (const item of child) {
+      appendElementChildren(children, item);
+    }
+    return;
   }
-  if (element.props?.children) {
-    return [element.props?.children];
+  if (child === undefined || child === null || typeof child === "boolean") {
+    return;
   }
-  return [];
+  if (typeof child === "number") {
+    children.push(String(child));
+    return;
+  }
+  children.push(child as ElementChild);
+};
+
+const getElementChildren = (element: JSX.Element): ElementChild[] => {
+  const children: ElementChild[] = [];
+  appendElementChildren(children, element.props?.children);
+  return children;
 };
 
 const findUnsupportedSerializableValue = (

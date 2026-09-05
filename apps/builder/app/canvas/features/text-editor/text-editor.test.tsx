@@ -10,7 +10,9 @@ import {
 } from "@webstudio-is/sdk";
 import {
   $textEditorContextMenu,
+  $textEditorContextMenuCommand,
   $textEditingInstanceSelector,
+  execTextEditorContextMenuCommand,
   selectInstance,
 } from "~/shared/nano-states";
 import { $instances, $props } from "~/shared/sync/data-stores";
@@ -164,6 +166,108 @@ describe("TextEditor", () => {
         children: [{ type: "text", value: "Before" }],
       })
     );
+  });
+
+  test("restores normal keyboard handling when template insertion is cancelled", async () => {
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "block",
+        {
+          type: "instance",
+          id: "block",
+          component: blockComponent,
+          children: [
+            { type: "id", value: "templates" },
+            { type: "id", value: "current" },
+          ],
+        },
+      ],
+      [
+        "templates",
+        {
+          type: "instance",
+          id: "templates",
+          component: blockTemplateComponent,
+          children: [{ type: "id", value: "template" }],
+        },
+      ],
+      [
+        "template",
+        {
+          type: "instance",
+          id: "template",
+          component: elementComponent,
+          tag: "p",
+          children: [],
+        },
+      ],
+      [
+        "current",
+        {
+          type: "instance",
+          id: "current",
+          component: elementComponent,
+          tag: "p",
+          children: [{ type: "text", value: "Before" }],
+        },
+      ],
+    ]);
+    $instances.set(instances);
+    selectInstance(["current", "block"]);
+    $textEditingInstanceSelector.set({
+      selector: ["current", "block"],
+      reason: "left",
+    });
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(
+        <TextEditor
+          rootInstanceSelector={["current", "block"]}
+          instances={instances}
+          props={new Map()}
+          contentEditable={<ContentEditable />}
+          onChange={() => {}}
+          onSelectInstance={() => {}}
+        />
+      );
+    });
+
+    const editable = container.querySelector<HTMLElement>(
+      "[data-lexical-editor]"
+    );
+    await act(async () => {
+      editable?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "/", bubbles: true })
+      );
+    });
+    expect($textEditorContextMenu.get()).toBeDefined();
+
+    await act(async () => {
+      execTextEditorContextMenuCommand({ type: "templateInsertionStarted" });
+      execTextEditorContextMenuCommand({ type: "templateInsertionCancelled" });
+      await Promise.resolve();
+    });
+    expect($textEditorContextMenu.get()).toBeUndefined();
+
+    const commands: string[] = [];
+    const unsubscribe = $textEditorContextMenuCommand.listen((command) => {
+      if (command !== undefined) {
+        commands.push(command.type);
+      }
+    });
+    commands.length = 0;
+    editable?.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    unsubscribe();
+    expect(commands).not.toContain("selectNext");
   });
 
   test("enables the slash menu when a template is added while editing", async () => {

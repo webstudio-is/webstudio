@@ -177,7 +177,7 @@ webstudio reload-content-block-source '{"blockInstanceId":"<contentBlockInstance
 webstudio migrate-content-block-template-references '{"assetIds":["<mdxAssetId>"],"migration":{"type":"rename","from":"Old template name","to":"New template name"}}'
 ```
 
-Prefer Markdown for standard document content. Markdown nodes automatically use a unique matching semantic template when one exists and keep their normal semantic fallback otherwise. Use lowercase JSX such as `<section>` for a standard HTML element with authored properties Markdown cannot express.
+Prefer Markdown for standard document content. Markdown nodes automatically use a unique matching semantic template when one exists and keep their normal semantic fallback otherwise. Use lowercase JSX such as `<section>` or `<svg>` for a standard HTML or SVG element with authored properties Markdown cannot express.
 
 Reference a uniquely named top-level custom template with capitalized JSX such as `<PromotionCard tone="featured">Content</PromotionCard>`. The template's stable **Name** must be a valid JSX component identifier and is independent from its display label. A template name wins; otherwise the exact registered component export is used. Attributes accept quoted static values and bare booleans. Expressions such as `{false}` are unsupported, as are imports, spreads, functions, and executable JavaScript. Legacy `ws.element`, `ws:name`, and `$.*` forms are read for compatibility but are not emitted or recommended.
 

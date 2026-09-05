@@ -136,7 +136,7 @@ export const TemplatesMenu = ({
 
   const hasChildren = hasBlockContent({ anchor, instances });
 
-  const menuItems = templates?.map(([template, templateSelector]) => ({
+  const menuItems = templates.map(([template, templateSelector]) => ({
     id: template.id,
     icon: <InstanceIcon instance={{ component: template.component }} />,
     title: getInstanceLabel(template),

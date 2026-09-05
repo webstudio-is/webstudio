@@ -156,8 +156,7 @@ const forms: Record<string, TemplateMeta> = {
 
   input_label: {
     category: "forms",
-    template: setInstanceMeta(
-      { label: "Radio Field" },
+    template: (
       <label
         ws:style={css`
           display: block;
@@ -218,7 +217,7 @@ const forms: Record<string, TemplateMeta> = {
       "Use within a form to allow your users to select a single option from a set of mutually exclusive choices. Group multiple radios by matching their “Name” properties.",
     icon: RadioCheckedIcon,
     template: setInstanceMeta(
-      { label: "Checkbox Field" },
+      { label: "Radio Field" },
       <label
         ws:style={css`
           display: block;
@@ -244,7 +243,8 @@ const forms: Record<string, TemplateMeta> = {
     description:
       "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
     icon: CheckboxCheckedIcon,
-    template: (
+    template: setInstanceMeta(
+      { label: "Checkbox Field" },
       <label
         ws:style={css`
           display: block;

@@ -565,9 +565,32 @@ type ExternalContentMutationState = {
   styleSourceSelections?: BuilderState["styleSourceSelections"];
 };
 
+type ExternalContentPatchChange = BuilderPatchChange & {
+  /** Immerhin includes inverse record values for removals. */
+  revisePatches?: BuilderPatchChange["patches"];
+};
+
 const getPatchId = (patch: BuilderPatchChange["patches"][number]) => {
   const [id] = patch.path;
   return typeof id === "string" ? id : undefined;
+};
+
+const getRemovedRecord = (change: ExternalContentPatchChange, id: string) => {
+  const patch = change.revisePatches?.find(
+    (candidate) =>
+      candidate.op !== "remove" &&
+      candidate.path.length === 1 &&
+      getPatchId(candidate) === id
+  );
+  if (
+    patch === undefined ||
+    patch.op === "remove" ||
+    typeof patch.value !== "object" ||
+    patch.value === null
+  ) {
+    return;
+  }
+  return patch.value;
 };
 
 const affectsRootInstances = ({
@@ -576,7 +599,7 @@ const affectsRootInstances = ({
   includeContentContainer,
 }: {
   root: ExternalContentRoot;
-  change: BuilderPatchChange;
+  change: ExternalContentPatchChange;
   includeContentContainer: boolean;
 }) => {
   for (const patch of change.patches) {
@@ -615,7 +638,7 @@ const affectsRootProps = ({
 }: {
   state: ExternalContentMutationState;
   root: ExternalContentRoot;
-  change: BuilderPatchChange;
+  change: ExternalContentPatchChange;
 }) => {
   for (const patch of change.patches) {
     const id = getPatchId(patch);
@@ -623,6 +646,8 @@ const affectsRootProps = ({
       continue;
     }
     const existing = state.props?.get(id);
+    const removed =
+      patch.op === "remove" ? getRemovedRecord(change, id) : undefined;
     const added =
       patch.op !== "remove" &&
       patch.path.length === 1 &&
@@ -634,6 +659,9 @@ const affectsRootProps = ({
     if (
       root.propIds?.has(id) ||
       (existing !== undefined && root.instanceIds.has(existing.instanceId)) ||
+      (removed !== undefined &&
+        "instanceId" in removed &&
+        root.instanceIds.has(String(removed.instanceId))) ||
       (added !== undefined && root.instanceIds.has(String(added.instanceId)))
     ) {
       return true;
@@ -650,7 +678,7 @@ const doesMutationAffectRoot = ({
 }: {
   state: ExternalContentMutationState;
   root: ExternalContentRoot;
-  payload: readonly BuilderPatchChange[];
+  payload: readonly ExternalContentPatchChange[];
   includeContentContainer?: boolean;
 }) =>
   payload.some((change) => {
@@ -676,16 +704,19 @@ const doesMutationAffectRoot = ({
       ) {
         return true;
       }
-      if (
-        patch.op === "remove" ||
-        patch.path.length !== 1 ||
-        typeof patch.value !== "object" ||
-        patch.value === null
-      ) {
+      const record =
+        patch.op === "remove"
+          ? getRemovedRecord(change, id)
+          : patch.path.length === 1 &&
+              typeof patch.value === "object" &&
+              patch.value !== null
+            ? patch.value
+            : undefined;
+      if (record === undefined) {
         return false;
       }
-      if (change.namespace === "styles" && "styleSourceId" in patch.value) {
-        const styleSourceId = String(patch.value.styleSourceId);
+      if (change.namespace === "styles" && "styleSourceId" in record) {
+        const styleSourceId = String(record.styleSourceId);
         if (root.ownership?.styleSources?.has(styleSourceId) === true) {
           return true;
         }
@@ -706,7 +737,7 @@ export const isExternalContentMutation = ({
 }: {
   state: ExternalContentMutationState;
   roots: ReadonlyMap<string, ExternalContentRoot>;
-  payload: readonly BuilderPatchChange[];
+  payload: readonly ExternalContentPatchChange[];
 }) =>
   Array.from(roots.values()).some((root) =>
     doesMutationAffectRoot({ state, root, payload })

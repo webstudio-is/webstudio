@@ -248,6 +248,29 @@ test("render text children", () => {
   ]);
 });
 
+test("normalizes numeric and non-rendering React children", () => {
+  const { instances } = renderTemplate(
+    <Body>
+      {0}
+      {false}
+      <Box />
+    </Body>
+  );
+
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "0",
+      component: "Body",
+      children: [
+        { type: "text", value: "0" },
+        { type: "id", value: "1" },
+      ],
+    },
+    { type: "instance", id: "1", component: "Box", children: [] },
+  ]);
+});
+
 test("render template children with top level instance", () => {
   const { children } = renderTemplate(<Box></Box>);
   expect(children).toEqual([{ type: "id", value: "0" }]);

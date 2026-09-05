@@ -12,6 +12,7 @@ import {
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances, Props } from "@webstudio-is/sdk";
 import { Body, Bold, Box } from "@webstudio-is/sdk-components-react/components";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { renderData } from "@webstudio-is/template";
 import {
   $registeredComponentMetas,
@@ -286,7 +287,10 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
           Let it be Let it be <Bold ws:id="boldB">Let it be Let</Bold> Let it be
           Let it be Let it be Let it be Let it be Let it be
         </Box>
-      </Body>
+      </Body>,
+      undefined,
+      [],
+      { componentIds }
     );
   });
 

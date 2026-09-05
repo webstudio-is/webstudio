@@ -18,6 +18,8 @@ import {
 } from "mdast-util-mdx-jsx";
 import { toMarkdown } from "mdast-util-to-markdown";
 import { name as isIdentifierName } from "estree-util-is-identifier-name";
+import htmlTags from "html-tags";
+import svgTags from "svg-tags";
 import { serializeMarkdownFrontmatter } from "./frontmatter";
 import type {
   MdxAuthoredNode,
@@ -64,6 +66,15 @@ export const isMdxTemplateComponentName = (name: unknown): boolean => {
     firstCharacter !== firstCharacter.toLowerCase()
   );
 };
+
+const supportedIntrinsicElementTags = new Set<string>([
+  ...htmlTags,
+  ...svgTags,
+]);
+
+/** Authored intrinsic JSX is limited to known HTML and SVG elements. */
+export const isMdxIntrinsicElementName = (name: unknown): name is string =>
+  typeof name === "string" && supportedIntrinsicElementTags.has(name);
 
 const toHastProperties = (props: readonly MdxAuthoredProp[]) =>
   Object.fromEntries(
@@ -166,11 +177,14 @@ const toSerializationNode = (
     });
   }
   if (node.syntax === "mdx") {
+    const canUseDirectJsx = isMdxIntrinsicElementName(node.tag);
     return toWebstudioElement({
       tagName: "ws.element",
-      jsxName: node.tag,
+      jsxName: canUseDirectJsx ? node.tag : undefined,
       mode: node.mdxMode,
-      props: node.props,
+      props: canUseDirectJsx
+        ? node.props
+        : [{ name: "ws:tag", value: node.tag }, ...node.props],
       children: node.children,
       propsUseJsxNames: false,
     });

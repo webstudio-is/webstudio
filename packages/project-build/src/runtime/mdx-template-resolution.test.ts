@@ -384,6 +384,47 @@ describe("resolveMdxTemplates", () => {
     ]);
   });
 
+  test("resolves templates nested inside a direct registered component", async () => {
+    const instances = createInstances();
+    instances.set(
+      "heading-2",
+      createInstance("heading-2", elementComponent, { tag: "h2" })
+    );
+    instances.get("templates")?.children.push({
+      type: "id",
+      value: "heading-2",
+    });
+    const document = await parseMdxDocument({
+      source: "<Box><h2>Nested</h2><Missing /></Box>\n",
+    });
+
+    const result = resolveMdxTemplates({
+      document,
+      identity,
+      instances,
+      metas: new Map([...metas, ["Box", { label: "Box" }]]),
+    });
+
+    expect(result.references).toEqual([
+      expect.objectContaining({
+        type: "resolved-template",
+        path: [0, 0],
+        templateInstanceId: "heading-2",
+      }),
+      expect.objectContaining({
+        type: "unresolved-template",
+        path: [0, 1],
+        templateName: "Missing",
+      }),
+    ]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "unresolved-template",
+        templateName: "Missing",
+      }),
+    ]);
+  });
+
   test.each([
     ["without a same-named template", false],
     ["with a same-named custom template", true],

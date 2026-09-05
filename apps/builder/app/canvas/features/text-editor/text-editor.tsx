@@ -1196,6 +1196,11 @@ const RichTextContentPluginInternal = ({
         }
         if (command?.type === "templateInsertionCancelled") {
           removeSlashWhenSelectionChanges = false;
+          editor.update(() => closeMenu());
+        }
+        if (command?.type === "close") {
+          removeSlashWhenSelectionChanges = false;
+          editor.update(() => closeMenu());
         }
       }
     );

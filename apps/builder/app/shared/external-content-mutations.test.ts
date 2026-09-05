@@ -54,8 +54,11 @@ const state = {
 
 const change = (
   namespace: BuilderPatchChange["namespace"],
-  patches: BuilderPatchChange["patches"]
-): BuilderPatchChange => ({ namespace, patches });
+  patches: BuilderPatchChange["patches"],
+  revisePatches?: BuilderPatchChange["patches"]
+): BuilderPatchChange & {
+  revisePatches?: BuilderPatchChange["patches"];
+} => ({ namespace, patches, revisePatches });
 
 describe("external content mutation detection", () => {
   const roots = new Map([
@@ -268,6 +271,94 @@ describe("external content mutation detection", () => {
               },
             },
           ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+  });
+
+  test("detects removal of template records added before ownership refresh", () => {
+    const templateState = {
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance" as const,
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id" as const, value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance" as const,
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [{ type: "id" as const, value: "heading-template" }],
+          },
+        ],
+        ["heading-template", instance("heading-template")],
+      ]),
+      props: new Map<string, Prop>(),
+    };
+    const templateRoots = new Map([
+      [
+        "scope",
+        {
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateOwnership: {
+            instances: new Set(["templates", "heading-template"]),
+            props: new Set<string>(),
+            styleSources: new Set(["heading-template-style"]),
+            styles: new Set<string>(),
+          },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+    const removedProp: Prop = {
+      id: "new-template-prop",
+      instanceId: "heading-template",
+      name: "title",
+      type: "string",
+      value: "Temporary",
+    };
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload: [
+          change(
+            "props",
+            [{ op: "remove", path: [removedProp.id] }],
+            [{ op: "add", path: [removedProp.id], value: removedProp }]
+          ),
+        ],
+      })
+    ).toEqual(["scope"]);
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload: [
+          change(
+            "styles",
+            [{ op: "remove", path: ["new-template-style"] }],
+            [
+              {
+                op: "add",
+                path: ["new-template-style"],
+                value: {
+                  breakpointId: "base",
+                  styleSourceId: "heading-template-style",
+                  property: "color",
+                  value: { type: "keyword", value: "red" },
+                },
+              },
+            ]
+          ),
         ],
       })
     ).toEqual(["scope"]);

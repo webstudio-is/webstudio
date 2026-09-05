@@ -275,6 +275,7 @@ export const resolveMdxTemplates = ({
               components: metas.keys(),
             }) !== undefined
           ) {
+            visit(node.children, path);
             continue;
           }
           references.push({

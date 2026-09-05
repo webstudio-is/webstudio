@@ -16,7 +16,7 @@ import { meta as navigationMenu } from "./navigation-menu.template";
 export const templates = [
   { meta: label },
   { meta: tabs },
-  { meta: sheet },
+  { storyName: "Sheet", meta: sheet },
   { meta: dialog },
   { meta: switchTemplate },
   { storyName: "Checkbox", meta: checkbox },

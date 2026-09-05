@@ -39,11 +39,11 @@ import {
 import { findMarkdownFrontmatter } from "./markdown-scanner";
 import { extractMarkdownBody } from "./markdown-body";
 import {
+  isMdxIntrinsicElementName,
   isMdxTemplateComponentName,
   serializeMdxDocument,
 } from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
-import htmlTags from "html-tags";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -484,8 +484,6 @@ const unsupportedElementTags = new Set([
   "title",
 ]);
 
-const supportedIntrinsicElementTags = new Set<string>(htmlTags);
-
 const urlPropNames = new Set([
   "action",
   "cite",
@@ -747,7 +745,7 @@ const createMdxJsxElementHandler =
         ? node.name
         : throwUnsafeNode(node, "MDX JSX elements must have a name");
     const isTemplate = isMdxTemplateComponentName(tagName);
-    const isIntrinsic = supportedIntrinsicElementTags.has(tagName);
+    const isIntrinsic = isMdxIntrinsicElementName(tagName);
     if (
       tagName !== "ws.element" &&
       isTemplate === false &&
@@ -755,7 +753,7 @@ const createMdxJsxElementHandler =
     ) {
       return throwUnsafeNode(
         node,
-        "Only standard HTML elements and named template components are supported in authored MDX"
+        "Only standard HTML and SVG elements and named template components are supported in authored MDX"
       );
     }
     const staticProps = mapStaticProps(node, options);

@@ -120,7 +120,7 @@ response wrapper or one indexed item. The command creates the Collection and
 its private item parameters atomically, then renders the item root once per
 entry. Bind descendants with expressions such as `collectionItem.name`; for
 object iteration, `collectionItemKey` contains the current key. Wrap multiple
-repeated siblings in one `ws.element` root.
+repeated siblings in one lowercase HTML root such as `<div>`.
 
 ## Verification
 

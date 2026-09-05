@@ -148,6 +148,7 @@ export const generateStories = async ({
     registerComponents(namespace, components);
   }
 
+  const storyNameByFile = new Map<string, string>();
   for (const { meta, storyName } of templates) {
     const rootInstanceId = "root";
     const data = renderTemplate(meta.template, undefined, [], { componentIds });
@@ -157,6 +158,16 @@ export const generateStories = async ({
     }
     const [, componentName] = parseComponentName(rootComponent);
     const name = storyName ?? componentName;
+    const storyFile = `${kebabCase(name)}.stories.tsx`;
+    const existingName = storyNameByFile.get(storyFile);
+    if (existingName !== undefined) {
+      throw new Error(
+        existingName === name
+          ? `Story name "${name}" is generated more than once`
+          : `Story names "${existingName}" and "${name}" generate the same file`
+      );
+    }
+    storyNameByFile.set(storyFile, name);
     const instances: Instances = new Map([
       [
         rootInstanceId,
@@ -251,9 +262,6 @@ export const generateStories = async ({
     });
 
     content += getStoriesExports(name, cssText);
-    await writeFile(
-      join(storiesDir, kebabCase(name) + ".stories.tsx"),
-      content
-    );
+    await writeFile(join(storiesDir, storyFile), content);
   }
 };
