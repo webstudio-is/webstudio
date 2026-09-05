@@ -41,6 +41,33 @@ const getData = (state: BuilderState): Omit<WebstudioData, "pages"> => ({
     : { assetFolders: state.assetFolders }),
 });
 
+/** Finds every Content Block whose current source resolves to an MDX Asset. */
+export const getMdxAssetSourceBlockInstanceIds = ({
+  assetId,
+  state,
+}: {
+  assetId: string;
+  state: BuilderState;
+}) => {
+  const values = new Map<string, unknown>();
+  for (const dataSource of state.dataSources?.values() ?? []) {
+    if (dataSource.type === "variable") {
+      values.set(dataSource.name, dataSource.value.value);
+    }
+  }
+  return Array.from(
+    getContentBlockSources({
+      instances: state.instances?.values() ?? [],
+      props: state.props?.values() ?? [],
+    })
+  ).flatMap(([blockInstanceId, contentSource]) =>
+    resolveContentBlockSourceAssetId({ source: contentSource, values }) ===
+    assetId
+      ? [blockInstanceId]
+      : []
+  );
+};
+
 export const mdxAssetInspectionNamespaces = componentInsertReadNamespaces;
 
 const describeValueShape = (value: unknown): string => {
@@ -100,22 +127,10 @@ export const inspectMdxAssetSource = async ({
     return diagnostics;
   }
   const data = getData(state);
-  const values = new Map<string, unknown>();
-  for (const dataSource of state.dataSources?.values() ?? []) {
-    if (dataSource.type === "variable") {
-      values.set(dataSource.name, dataSource.value.value);
-    }
-  }
-  for (const [blockInstanceId, contentSource] of getContentBlockSources({
-    instances: state.instances?.values() ?? [],
-    props: state.props?.values() ?? [],
+  for (const blockInstanceId of getMdxAssetSourceBlockInstanceIds({
+    assetId,
+    state,
   })) {
-    if (
-      resolveContentBlockSourceAssetId({ source: contentSource, values }) !==
-      assetId
-    ) {
-      continue;
-    }
     const identity = createContentBlockExternalContentIdentity({
       blockInstanceId,
       asset,

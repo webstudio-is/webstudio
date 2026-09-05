@@ -248,6 +248,50 @@ describe("high-impact fixture API", () => {
           )
         )
       );
+      const query = {
+        result: "one",
+        where: {
+          all: [
+            { field: ["extension"], operator: "eq", value: "md" },
+            {
+              field: ["folderId"],
+              operator: "eq",
+              value: folderId,
+            },
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "aurora-trails",
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "markdown-body-ref" },
+      };
+      await expect(
+        run("validate-asset-query", { query })
+      ).resolves.toMatchObject({
+        ok: true,
+        data: { valid: true, filterCount: 3 },
+      });
+      await expect(
+        run("preview-asset-query", { query })
+      ).resolves.toMatchObject({
+        ok: true,
+        data: {
+          data: {
+            item: {
+              properties: { title: "Aurora trails" },
+              content: { text: expect.stringContaining("# Aurora trails") },
+            },
+            totalCount: 1,
+          },
+        },
+      });
       await expect(
         readFile(
           join(projectDirectory, ".webstudio/assets/aurora-trails.md"),

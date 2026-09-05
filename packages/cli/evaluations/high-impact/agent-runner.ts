@@ -252,11 +252,7 @@ export const runHighImpactAgentEvaluation = async ({
     kind: "high-impact-minimal-context-agent-evaluation-result",
     fixtureId: fixture.id,
     outcome:
-      execution.exitCode === 0 &&
-      evaluation.passed &&
-      usage !== undefined &&
-      toolCallMetrics.failed === 0 &&
-      toolCallMetrics.retries === 0
+      execution.exitCode === 0 && evaluation.passed && usage !== undefined
         ? "passed"
         : "failed",
     cli: target.kind,

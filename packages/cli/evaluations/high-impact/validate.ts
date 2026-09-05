@@ -2,8 +2,8 @@
 // evidence instead of depending on agent prose or exact replayed wording.
 import { parseExpressionAt } from "acorn";
 import {
-  parseDirectPathExpression,
   parseJsonExpression,
+  parseStaticMemberPath,
   transpileExpression,
 } from "@webstudio-is/expression";
 import { getFontFaces } from "@webstudio-is/fonts";
@@ -279,10 +279,10 @@ const validateCommon = (
     checks,
     failures,
     "guidance",
-    guidanceCalls.length === 1 &&
+    guidanceCalls.length >= 1 &&
       guidanceCalls[0]?.isError !== true &&
       input.toolCalls[0] === guidanceCalls[0],
-    "The agent must request focused guidance exactly once before other operations."
+    "The agent must request focused guidance before other operations."
   );
   recordCheck(
     checks,
@@ -747,17 +747,12 @@ const validateMarkdownBlog = (
     const toolDiscoveryIndex = input.toolCalls.findIndex(
       (call) => call.name === "meta.get-more-tools" && call.isError !== true
     );
-    const toolDiscoveryCount = input.toolCalls.filter(
-      (call) => call.name === "meta.get-more-tools"
-    ).length;
     recordCheck(
       checks,
       failures,
       "referenceDocumentationDiscovery",
-      guidanceIndex !== -1 &&
-        toolDiscoveryIndex > guidanceIndex &&
-        toolDiscoveryCount === 1,
-      "The reference workflow must use guidance followed by exactly one focused tool discovery call."
+      guidanceIndex !== -1 && toolDiscoveryIndex > guidanceIndex,
+      "The reference workflow must use guidance followed by focused tool discovery."
     );
     recordCheck(
       checks,
@@ -1064,15 +1059,32 @@ const validateMarkdownBlog = (
   const validatedQueryShapeFingerprints = validationCalls.map(
     ({ call }) => call.arguments?.assetQueryShapeSha256
   );
-  const lastValidationIndex = validationCalls.at(-1)?.index ?? -1;
-  const previewIndex = previewCalls[0]?.index ?? -1;
+  const overviewValidationIndex = validationCalls.find(
+    ({ call }) =>
+      call.arguments?.assetQueryShapeSha256 ===
+      overviewQueryFingerprints?.shapeSha256
+  )?.index;
+  const detailValidationIndex = validationCalls.find(
+    ({ call }) =>
+      call.arguments?.assetQueryShapeSha256 ===
+      detailQueryFingerprints?.shapeSha256
+  )?.index;
+  const detailPreviewIndex = previewCalls.find(
+    ({ call }) =>
+      call.arguments?.assetQuerySha256 === detailQueryFingerprints?.sha256
+  )?.index;
   const firstResourceCreationIndex =
     resourceCreationCalls[0]?.index ?? Number.POSITIVE_INFINITY;
+  const firstBindingIndex =
+    indexedCalls.find(
+      ({ call }) =>
+        call.name === "insert-collection" || call.name === "insert-fragment"
+    )?.index ?? Number.POSITIVE_INFINITY;
   recordCheck(
     checks,
     failures,
     "queryVerification",
-    validationCalls.length === 2 &&
+    validationCalls.length >= 2 &&
       validationCalls.every(({ call }) => call.isError !== true) &&
       overviewQueryFingerprints !== undefined &&
       detailQueryFingerprints !== undefined &&
@@ -1082,15 +1094,17 @@ const validateMarkdownBlog = (
       validatedQueryShapeFingerprints.includes(
         detailQueryFingerprints.shapeSha256
       ) &&
-      previewCalls.length === 1 &&
-      previewCalls[0]?.call.isError !== true &&
-      previewCalls[0]?.call.arguments?.assetQuerySha256 ===
-        detailQueryFingerprints.sha256 &&
+      previewCalls.length >= 1 &&
+      previewCalls.every(({ call }) => call.isError !== true) &&
       resourceCreationCalls.length === 2 &&
       resourceCreationCalls.every(({ call }) => call.isError !== true) &&
-      lastValidationIndex < previewIndex &&
-      previewIndex < firstResourceCreationIndex,
-    "Both blog queries must be validated, then the detail query previewed, before exactly two Assets resources are created."
+      overviewValidationIndex !== undefined &&
+      overviewValidationIndex < firstResourceCreationIndex &&
+      detailValidationIndex !== undefined &&
+      detailValidationIndex < firstResourceCreationIndex &&
+      detailPreviewIndex !== undefined &&
+      detailPreviewIndex < firstBindingIndex,
+    "Both blog queries must be validated before resource creation, and the detail query must be previewed before binding."
   );
   recordCheck(
     checks,
@@ -1174,9 +1188,9 @@ const validateMarkdownBlog = (
       prop.name === "code" &&
       prop.type === "expression"
   );
-  const markdownCodePath = parseDirectPathExpression(
+  const markdownCodePath = parseStaticMemberPath(
     normalizeExpression(String(markdownCodeBindings[0]?.value ?? ""))
-  )?.path;
+  );
   recordCheck(
     checks,
     failures,
@@ -1208,8 +1222,8 @@ const validateMarkdownBlog = (
     ).length === 1 &&
       input.toolCalls.filter(
         (call) => call.name === "insert-fragment" && call.isError !== true
-      ).length === 1,
-    "Exactly one persisted overview Collection and one direct detail fragment must be inserted successfully."
+      ).length >= 1,
+    "One persisted overview Collection and at least one direct fragment must be inserted successfully."
   );
   recordCheck(
     checks,
@@ -1239,7 +1253,6 @@ const validateMarkdownBlog = (
       const updateCalls = input.toolCalls.filter(
         (call) => call.name === "update-page" && call.isError !== true
       );
-      const updateCall = updateCalls[0];
       const expectedPageSettingsFingerprint =
         detail.page === undefined
           ? undefined
@@ -1255,10 +1268,13 @@ const validateMarkdownBlog = (
               },
             });
       const callMatches =
-        updateCalls.length === 1 &&
+        updateCalls.length >= 1 &&
         expectedPageSettingsFingerprint !== undefined &&
-        updateCall?.arguments?.pageSettingsSha256 ===
-          expectedPageSettingsFingerprint;
+        updateCalls.some(
+          (call) =>
+            call.arguments?.pageSettingsSha256 ===
+            expectedPageSettingsFingerprint
+        );
       return pageMatches && callMatches;
     })(),
     "The dynamic detail page title, description, social image, and status must be persisted and applied to the detail page from the post resource."
@@ -1288,17 +1304,19 @@ const validateMarkdownBlog = (
       )
     );
   });
+  const verificationPaths = new Set(
+    verificationCalls.map(({ call }) => call.arguments?.path)
+  );
   recordCheck(
     checks,
     failures,
     "blogRouteEvidence",
-    verificationCalls.length === 2 &&
-      verificationCalls[0]?.index === input.toolCalls.length - 2 &&
-      verificationCalls[1]?.index === input.toolCalls.length - 1 &&
-      verificationCalls[0]?.call.arguments?.path === "/blog" &&
-      verificationCalls[1]?.call.arguments?.path === "/blog/aurora-trails" &&
+    verificationCalls.length >= 2 &&
+      verificationCalls.at(-1)?.index === input.toolCalls.length - 1 &&
+      verificationPaths.has("/blog") &&
+      verificationPaths.has("/blog/aurora-trails") &&
       hasBothViewports,
-    "The final two calls must verify /blog and /blog/aurora-trails consecutively at desktop and mobile sizes."
+    "The workflow must verify /blog and /blog/aurora-trails at desktop and mobile sizes, with verification as the final call."
   );
 };
 

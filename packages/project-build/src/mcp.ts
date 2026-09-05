@@ -6247,16 +6247,115 @@ const metaGoalGuides = [
       "verify-page-responsive",
     ],
     workflow: [
-      'Call meta.get-more-tools once with {"tools":["create-assets-resource"]}; the recipe below supplies the remaining inputs.',
+      "Follow recipe.executionOrder in order. Resolve documented placeholders from earlier results, and do not add calls outside that sequence.",
       'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
       'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
-      "Substitute the returned folder id in both recipe queries. Validate both, then preview the detail query with one concrete slug. Keep overview values literal and keep system.params.slug as the detail query's only dynamic value.",
+      "Substitute the returned folder id in every recipe query. Pass recipe.overviewValidationQuery and recipe.detailValidationQuery directly to validate-asset-query, then pass recipe.detailValidationQuery directly to preview-asset-query. These execution queries contain resolved JSON values. Do not copy the expression-bearing resource queries into validation or preview tools.",
+      "After both validations and the preview succeed, call recipe.toolDiscovery exactly once immediately before creating the resources. Do not call meta.get-more-tools again.",
       'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one" and bind it directly without a Collection. Do not add query defaults or create placeholder resources.',
       "Insert recipe.overviewCollection under the overview root with insert-collection, then insert recipe.detailFragment under the detail root with insert-fragment. The overview repeats posts; the detail page binds post.data directly.",
       "Apply the page settings with update-page using recipe.detailPageSettings so the article title, description, social image, and 404 status use the same post resource as the page content.",
       'After both insertions succeed, ask whether the user wants visual verification unless they explicitly requested it. If they decline, use focused reads and a static audit. If they opt in, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
+      executionOrder: [
+        { tool: "create-asset-folder", calls: 1 },
+        { tool: "upload-assets", calls: 1 },
+        { tool: "create-page", calls: 2 },
+        { tool: "validate-asset-query", calls: 2 },
+        { tool: "preview-asset-query", calls: 1 },
+        { tool: "meta.get-more-tools", calls: 1 },
+        { tool: "create-assets-resource", calls: 2 },
+        { tool: "insert-collection", calls: 1 },
+        { tool: "insert-fragment", calls: 1 },
+        { tool: "update-page", calls: 1 },
+        { tool: "verify-page-responsive", calls: 2, terminal: true },
+      ],
+      toolDiscovery: {
+        tool: "meta.get-more-tools",
+        when: "after-query-verification",
+        input: {
+          tools: ["create-assets-resource"],
+        },
+      },
+      overviewValidationQuery: {
+        result: "many",
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: "md",
+            },
+            {
+              field: ["folderId"],
+              operator: "eq",
+              value: "<blog-folder-id>",
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: true,
+            },
+          ],
+        },
+        sort: [
+          { field: ["properties", "publishedAt"], direction: "desc" },
+          { field: ["id"], direction: "asc" },
+        ],
+        limit: 20,
+        offset: 0,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "slug"],
+            ["properties", "publishedAt"],
+            ["properties", "author"],
+            ["properties", "excerpt"],
+          ],
+        },
+        content: { mode: "none" },
+      },
+      detailValidationQuery: {
+        result: "one",
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: "md",
+            },
+            {
+              field: ["folderId"],
+              operator: "eq",
+              value: "<blog-folder-id>",
+            },
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "aurora-trails",
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: true,
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "author"],
+            ["properties", "excerpt"],
+            ["properties", "featureImage", "src"],
+          ],
+        },
+        content: { mode: "markdown-body-ref" },
+      },
       overviewResource: {
         name: "Published posts",
         scopeInstanceId: "<overview-root-id>",
@@ -6504,7 +6603,19 @@ const metaGoalGuides = [
       "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
       "Use update-asset to correct font metadata without re-uploading the binary.",
       "After font mutations, call verify-font-assets exactly once with every changed asset id. It refreshes the asset namespace and returns the persisted metadata in one bounded verification call; do not call refresh or get-asset separately.",
+      "Finish with exactly one audit call using recipe.audit. Do not pass asset ids or other unsupported fields to audit.",
     ],
+    recipe: {
+      upload: {
+        tool: "upload-assets",
+        input: {
+          assetsDir: ".webstudio/assets",
+          assetFields: ["name", "type", "format", "meta"],
+          excludedAssetFields: ["path"],
+        },
+      },
+      audit: { tool: "audit", input: {} },
+    },
   },
   {
     id: "design-input",
@@ -6525,13 +6636,25 @@ const metaGoalGuides = [
       "Interpret the supplied design before mutating: identify page sections, responsive behavior, reusable patterns, assets, typography, color, spacing, and interaction states. Ask for missing source assets rather than inventing brand-critical content.",
       "Before the first mutation, call inspect-design-context exactly once instead of calling list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Use one list-instances call only when needed to inspect a representative existing page pattern. Do not call get-styles: the bounded design context and optional focused instance result provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
-      "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
-      "Create semantic editable structure with insert-fragment-verified using lowercase HTML elements and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
+      "After insertion, call attach-design-token at least once with an exact existing style source id returned by inspect-design-context. Attach it where the shared typography, color, or other token is intended. Reusing only the token's current raw value creates a disconnected local copy.",
+      "Create semantic editable structure with insert-fragment-verified using only lowercase HTML elements and literal text. Do not include inline styles or ws:style in the fragment; apply fixed CSS with update-styles after insertion. Do not improvise component names, expression syntax, or object-valued style expressions. Use assets for real imagery and text or controls for real content; do not flatten the design into one image or absolute-position every element.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
       'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before asking whether the user wants visual verification, unless they explicitly requested it. If they decline, run a focused static audit and stop without preview or screenshots. If they opt in, call verify-page-responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically, captures both viewports, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
+    recipe: {
+      insertion: { includeStyles: false },
+      tokenReuse: {
+        minimumAttachments: 1,
+        source: "inspect-design-context",
+      },
+      responsiveStyles: {
+        tool: "update-styles",
+        breakpointSource: "inspect-design-context",
+        minimumBreakpointSpecificUpdates: 1,
+      },
+    },
   },
   {
     id: "craft",

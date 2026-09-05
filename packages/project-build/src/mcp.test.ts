@@ -4794,6 +4794,30 @@ describe("project session mcp adapter", () => {
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: expect.objectContaining({
+          executionOrder: [
+            { tool: "create-asset-folder", calls: 1 },
+            { tool: "upload-assets", calls: 1 },
+            { tool: "create-page", calls: 2 },
+            { tool: "validate-asset-query", calls: 2 },
+            { tool: "preview-asset-query", calls: 1 },
+            { tool: "meta.get-more-tools", calls: 1 },
+            { tool: "create-assets-resource", calls: 2 },
+            { tool: "insert-collection", calls: 1 },
+            { tool: "insert-fragment", calls: 1 },
+            { tool: "update-page", calls: 1 },
+            {
+              tool: "verify-page-responsive",
+              calls: 2,
+              terminal: true,
+            },
+          ],
+          toolDiscovery: {
+            tool: "meta.get-more-tools",
+            when: "after-query-verification",
+            input: {
+              tools: ["create-assets-resource"],
+            },
+          },
           overviewResource: expect.objectContaining({
             dataSourceName: "posts",
             query: expect.objectContaining({
@@ -4802,12 +4826,34 @@ describe("project session mcp adapter", () => {
               offset: { type: "literal", value: 0 },
             }),
           }),
+          overviewValidationQuery: expect.objectContaining({
+            where: {
+              all: expect.arrayContaining([
+                expect.objectContaining({ value: "md" }),
+                expect.objectContaining({ value: "<blog-folder-id>" }),
+                expect.objectContaining({ value: true }),
+              ]),
+            },
+            limit: 20,
+            offset: 0,
+          }),
           detailResource: expect.objectContaining({
             dataSourceName: "post",
             query: expect.objectContaining({
               result: "one",
               content: { mode: "markdown-body-ref" },
             }),
+          }),
+          detailValidationQuery: expect.objectContaining({
+            result: "one",
+            where: {
+              all: expect.arrayContaining([
+                expect.objectContaining({ value: "md" }),
+                expect.objectContaining({ value: "<blog-folder-id>" }),
+                expect.objectContaining({ value: "aurora-trails" }),
+                expect.objectContaining({ value: true }),
+              ]),
+            },
           }),
           overviewCollection: expect.objectContaining({
             itemFragment: expect.stringContaining(
@@ -4921,6 +4967,21 @@ describe("project session mcp adapter", () => {
       })
     );
     expect(fontAssetGuide.structuredContent.data).not.toHaveProperty("brief");
+    expect(fontAssetGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        recipe: {
+          upload: {
+            tool: "upload-assets",
+            input: {
+              assetsDir: ".webstudio/assets",
+              assetFields: ["name", "type", "format", "meta"],
+              excludedAssetFields: ["path"],
+            },
+          },
+          audit: { tool: "audit", input: {} },
+        },
+      })
+    );
     for (const tool of (
       fontAssetGuide.structuredContent.data as {
         tools: Array<Record<string, unknown>>;
@@ -4932,6 +4993,18 @@ describe("project session mcp adapter", () => {
     }
     expect(designInputGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        recipe: {
+          insertion: { includeStyles: false },
+          tokenReuse: {
+            minimumAttachments: 1,
+            source: "inspect-design-context",
+          },
+          responsiveStyles: {
+            tool: "update-styles",
+            breakpointSource: "inspect-design-context",
+            minimumBreakpointSpecificUpdates: 1,
+          },
+        },
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "inspect-design-context" }),
           expect.objectContaining({ name: "components.search" }),

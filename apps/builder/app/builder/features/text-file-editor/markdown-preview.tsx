@@ -1,15 +1,25 @@
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { css, cssVar, SplitView, theme } from "@webstudio-is/design-system";
 import { renderMarkdownHtml } from "@webstudio-is/sdk-components-react/markdown";
+import {
+  parseMdxDocument,
+  serializeMdxDocument,
+  type MdxAuthoredNode,
+} from "@webstudio-is/content-engine/mdx";
 import { discoverNamedMarkdownAssetReferenceRanges } from "@webstudio-is/content-engine/markdown-assets";
 import { rewriteMarkdownAssetReferenceRanges } from "@webstudio-is/content-engine/markdown-references";
 import {
   createAssetFolderHierarchy,
   formatAssetName,
+  getComponentByJsxName,
+  getHtmlTagFromInstance,
   getAssetUrl,
   type Asset,
   type AssetFolders,
+  type Instance,
+  type Prop,
 } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { AssetContainer } from "~/builder/shared/assets";
 
 const previewStyle = css({
@@ -69,7 +79,84 @@ const previewStyle = css({
   "& a": { color: cssVar("--foreground-accent") },
 });
 
-const renderMarkdownPreview = ({
+// A file can feed multiple Content Blocks, so this preview cannot choose one
+// block's custom templates. It can still preserve the semantic HTML tag of a
+// registered component fallback such as <Heading tag="h1">.
+const getRegisteredComponentPreviewTag = (
+  node: Extract<MdxAuthoredNode, { type: "template" }>
+) => {
+  const component = getComponentByJsxName({
+    name: node.name,
+    components: componentMetas.keys(),
+  });
+  const meta =
+    component === undefined ? undefined : componentMetas.get(component);
+  if (component === undefined || meta === undefined) {
+    return;
+  }
+  const instanceId = "markdown-preview-component";
+  const instance: Instance = {
+    type: "instance",
+    id: instanceId,
+    component,
+    children: [],
+  };
+  const selectorNames = new Set(["tag", meta.renderedTag?.prop]);
+  const props = new Map<string, Prop>();
+  for (const [index, prop] of node.props.entries()) {
+    if (
+      selectorNames.has(prop.name) === false ||
+      typeof prop.value !== "string"
+    ) {
+      continue;
+    }
+    props.set(`${instanceId}-${index}`, {
+      id: `${instanceId}-${index}`,
+      instanceId,
+      name: prop.name,
+      type: "string",
+      value: prop.value,
+    });
+  }
+  return {
+    tag: getHtmlTagFromInstance({ instance, metas: componentMetas, props }),
+    selectorNames,
+  };
+};
+
+const materializeRegisteredComponentTags = (
+  nodes: readonly MdxAuthoredNode[]
+): readonly MdxAuthoredNode[] =>
+  nodes.map((node) => {
+    if (
+      node.type === "text" ||
+      node.type === "comment" ||
+      node.type === "opaque"
+    ) {
+      return node;
+    }
+    const children = materializeRegisteredComponentTags(node.children);
+    if (node.type !== "template" || node.syntax !== "jsx") {
+      return { ...node, children };
+    }
+    const preview = getRegisteredComponentPreviewTag(node);
+    if (preview?.tag === undefined) {
+      return { ...node, children };
+    }
+    return {
+      type: "element",
+      syntax: "mdx",
+      tag: preview.tag,
+      props: node.props.filter(
+        ({ name }) => preview.selectorNames.has(name) === false
+      ),
+      children,
+      mdxMode: node.mdxMode,
+      sourceRange: node.sourceRange,
+    };
+  });
+
+const renderMarkdownPreview = async ({
   markdown,
   sourceAsset,
   folders,
@@ -101,10 +188,23 @@ const renderMarkdownPreview = ({
         : getAssetUrl(container.asset, origin).href,
     ])
   );
-  return renderMarkdownHtml(
-    rewriteMarkdownAssetReferenceRanges({ markdown, references, assetUrls }),
-    { allowBlobImages: true }
-  );
+  const rewritten = rewriteMarkdownAssetReferenceRanges({
+    markdown,
+    references,
+    assetUrls,
+  });
+  try {
+    const document = await parseMdxDocument({ source: rewritten });
+    return renderMarkdownHtml(
+      serializeMdxDocument({
+        ...document,
+        children: materializeRegisteredComponentTags(document.children),
+      }),
+      { allowBlobImages: true }
+    );
+  } catch {
+    return renderMarkdownHtml(rewritten, { allowBlobImages: true });
+  }
 };
 
 export const __testing__ = { renderMarkdownPreview };
@@ -124,17 +224,27 @@ export const MarkdownSplitView = ({
   assetContainers: AssetContainer[];
   children: ReactNode;
 }) => {
-  const html = useMemo(() => {
+  const [html, setHtml] = useState("");
+  useEffect(() => {
+    let active = true;
     if (open === false) {
-      return "";
+      setHtml("");
+      return;
     }
-    return renderMarkdownPreview({
+    void renderMarkdownPreview({
       markdown: source,
       sourceAsset,
       folders,
       assetContainers,
       origin: window.location.origin,
+    }).then((nextHtml) => {
+      if (active) {
+        setHtml(nextHtml);
+      }
     });
+    return () => {
+      active = false;
+    };
   }, [assetContainers, folders, open, source, sourceAsset]);
 
   return (

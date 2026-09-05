@@ -1,5 +1,12 @@
-import type { Extension } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { EditorState, type Extension } from "@codemirror/state";
+import { syntaxTree } from "@codemirror/language";
+import { keymap, tooltips } from "@codemirror/view";
+import {
+  autocompletion,
+  CompletionContext,
+  completionKeymap,
+  type CompletionSource,
+} from "@codemirror/autocomplete";
 import {
   linter,
   lintGutter,
@@ -7,10 +14,15 @@ import {
   type Diagnostic,
 } from "@codemirror/lint";
 import { css } from "@codemirror/lang-css";
-import { html } from "@codemirror/lang-html";
+import {
+  html as htmlLanguage,
+  htmlCompletionSourceWith,
+  type TagSpec,
+} from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { parseJsonExpression } from "@webstudio-is/expression";
+import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   type MdxSourcePoint,
   type TextAssetSourceDiagnostic,
@@ -41,6 +53,124 @@ export type ValidateTextFileSource = (input: {
 
 const validateTextFileSource: ValidateTextFileSource = async (input) =>
   (await validateTextAssetSource(input)).diagnostics;
+
+export type MdxCompletionComponent = Readonly<{
+  name: string;
+  props: readonly Readonly<{
+    name: string;
+    values?: readonly string[];
+  }>[];
+}>;
+
+const mdxCompletionExcludedSyntax = new Set([
+  "CodeBlock",
+  "FencedCode",
+  "InlineCode",
+  "ProcessingInstructionBlock",
+  "CommentBlock",
+  "Link",
+  "Image",
+]);
+
+/** Uses CodeMirror's HTML parser to complete constrained JSX inside MDX. */
+export const createMdxCompletionSource = (
+  components: readonly MdxCompletionComponent[]
+): CompletionSource => {
+  const componentsByName = new Map(
+    components.map((component) => [component.name, component] as const)
+  );
+  const extraTags = Object.fromEntries(
+    components.map(({ name, props }) => [
+      name,
+      {
+        attrs: Object.fromEntries(
+          props.map((prop) => [prop.name, prop.values ?? null])
+        ),
+      } satisfies TagSpec,
+    ])
+  );
+  const htmlSupport = htmlLanguage({
+    matchClosingTags: false,
+    autoCloseTags: false,
+    extraTags,
+  });
+  const completeHtml = htmlCompletionSourceWith({ extraTags });
+  return async (context) => {
+    let node = syntaxTree(context.state).resolveInner(context.pos, -1);
+    while (node.type.isTop === false) {
+      if (mdxCompletionExcludedSyntax.has(node.name)) {
+        return null;
+      }
+      const parent = node.parent;
+      if (parent === null) {
+        break;
+      }
+      node = parent;
+    }
+    const htmlState = EditorState.create({
+      doc: context.state.doc,
+      selection: { anchor: context.pos },
+      extensions: [htmlSupport],
+    });
+    const htmlContext = new CompletionContext(
+      htmlState,
+      context.pos,
+      context.explicit
+    );
+    const result = await completeHtml(htmlContext);
+    if (result === null) {
+      return null;
+    }
+    let htmlNode = syntaxTree(htmlState).resolveInner(context.pos, -1);
+    if (htmlNode.name === "AttributeValue") {
+      return result;
+    }
+    while (htmlNode.type.isTop === false && htmlNode.name !== "OpenTag") {
+      const parent = htmlNode.parent;
+      if (parent === null) {
+        break;
+      }
+      htmlNode = parent;
+    }
+    if (htmlNode.name !== "OpenTag") {
+      return result;
+    }
+    const tagNameNode = htmlNode.getChild("TagName");
+    if (
+      tagNameNode === null ||
+      context.pos <= tagNameNode.to ||
+      context.pos < tagNameNode.from
+    ) {
+      return result;
+    }
+    const tagName = htmlState.doc.sliceString(tagNameNode.from, tagNameNode.to);
+    const componentPropNames = new Set(
+      componentsByName.get(tagName)?.props.map(({ name }) => name) ?? []
+    );
+    const options = new Map(
+      result.options.map((option) => {
+        const label =
+          option.label === "class"
+            ? "className"
+            : componentPropNames.has(option.label)
+              ? option.label
+              : (standardAttributesToReactProps[option.label] ?? option.label);
+        return [
+          label,
+          {
+            ...option,
+            label,
+            ...(option.apply === option.label ? { apply: label } : {}),
+          },
+        ] as const;
+      })
+    );
+    return {
+      ...result,
+      options: Array.from(options.values()),
+    };
+  };
+};
 
 export const getMdxPersistenceFeedback = (
   state: Pick<AssetContentSessionState, "status" | "error">
@@ -126,36 +256,51 @@ export const getTextFileEditorDiagnostics = async ({
 const getMarkdownExtensions = (
   format: "md" | "mdx",
   semanticDiagnostics: readonly ContentBlockDiagnostic[],
-  validateSource: ValidateTextFileSource
-): Extension[] => [
-  linter(
-    (view) =>
-      getTextFileEditorDiagnostics({
-        source: view.state.doc.toString(),
-        format,
-        semanticDiagnostics,
-        validateSource,
+  validateSource: ValidateTextFileSource,
+  completionComponents: readonly MdxCompletionComponent[]
+): Extension[] => {
+  const extensions: Extension[] = [
+    linter(
+      (view) =>
+        getTextFileEditorDiagnostics({
+          source: view.state.doc.toString(),
+          format,
+          semanticDiagnostics,
+          validateSource,
+        }),
+      { delay: 300 }
+    ),
+    lintGutter(),
+    keymap.of(lintKeymap),
+  ];
+  if (format === "mdx") {
+    extensions.push(
+      tooltips({ parent: document.body }),
+      autocompletion({
+        override: [createMdxCompletionSource(completionComponents)],
+        icons: false,
       }),
-    { delay: 300 }
-  ),
-  lintGutter(),
-  keymap.of(lintKeymap),
-];
+      keymap.of(completionKeymap)
+    );
+  }
+  return extensions;
+};
 
 const languageExtensions = {
   plain: [],
   css: [css()],
-  html: [html()],
+  html: [htmlLanguage()],
   javascript: [javascript()],
   json: [javascript()],
   markdown: [markdown()],
-  xml: [html()],
+  xml: [htmlLanguage()],
 } satisfies Record<AssetTextEditorLanguage, Extension[]>;
 
 export const getTextFileEditorExtensions = (
   asset: Pick<Asset, "format">,
   semanticDiagnostics: readonly ContentBlockDiagnostic[] = [],
-  validateSource: ValidateTextFileSource = validateTextFileSource
+  validateSource: ValidateTextFileSource = validateTextFileSource,
+  completionComponents: readonly MdxCompletionComponent[] = []
 ): Extension[] => {
   const language = getAssetTextEditorLanguage(asset);
   if (language === undefined) {
@@ -166,7 +311,12 @@ export const getTextFileEditorExtensions = (
   return format === "md" || format === "mdx"
     ? [
         ...extensions,
-        ...getMarkdownExtensions(format, semanticDiagnostics, validateSource),
+        ...getMarkdownExtensions(
+          format,
+          semanticDiagnostics,
+          validateSource,
+          completionComponents
+        ),
       ]
     : extensions;
 };

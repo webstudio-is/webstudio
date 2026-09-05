@@ -10,7 +10,7 @@ import {
   markdownBlogFixtureDocuments,
 } from "./markdown-blog-fixture";
 
-export type EvaluationReasoningEffort = "low" | "medium";
+export type EvaluationReasoningEffort = "low" | "medium" | "high";
 
 type EvaluationAgentInputs = {
   assets: {
@@ -206,7 +206,7 @@ export const designInputFixture: HighImpactFixture & {
   objective:
     "Build an editable /summer page from the supplied desktop and mobile design reference. Preserve and reuse the existing design system, implement responsive behavior with the project's breakpoints, inspect desktop/mobile screenshots, then run a static route audit without duplicating the rendered captures.",
   agent: {
-    reasoningEffort: "low",
+    reasoningEffort: "high",
     guidance: { workflow: "design-input" },
   },
   project: {
@@ -296,7 +296,7 @@ export const markdownBlogFixture: HighImpactFixture = {
   id: "markdown-blog-v1",
   objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable, size-optimal blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, one overview Collection, and a directly bound detail Markdown Embed. Include the complete structured query in each initial resource creation; never create a default, placeholder, duplicate, preview copy, or repair replacement. Both queries must read the Markdown files directly. The overview query must be fully static and bounded, exclude drafts, sort newest first with a deterministic ID tie-breaker, select only the rendered title, slug, excerpt, publication date, and author frontmatter, and load no bodies so it can be materialized. The detail query must use only the dynamic slug, select only rendered metadata, and return one Markdown body without embedding it in the published database. The compiled database must include all articles without truncation, no embedded bodies, and only the intended materialized overview. Render the author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
   agent: {
-    reasoningEffort: "low",
+    reasoningEffort: "medium",
     guidance: { workflow: "markdown-blog" },
     inputs: markdownBlogAgentInputs,
   },

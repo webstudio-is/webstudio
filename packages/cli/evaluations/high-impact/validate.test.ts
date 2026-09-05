@@ -606,6 +606,13 @@ describe("Markdown blog evaluation", () => {
           }
         : prop
     );
+    const markdownCodeProp = project.props.find(
+      (prop) => prop.id === "markdown-content"
+    );
+    if (markdownCodeProp === undefined) {
+      throw new Error("Expected Markdown Embed code prop");
+    }
+    markdownCodeProp.value = `${postIdentifier}?.data?.content?.text`;
 
     const result = evaluateHighImpactOutcome({
       fixture: markdownBlogFixture,
@@ -707,7 +714,22 @@ describe("Markdown blog evaluation", () => {
     });
   });
 
-  test("requires validating both queries and previewing the detail query before resource creation", () => {
+  test("accepts a supporting fragment in addition to the bound detail fragment", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls: successfulCalls.flatMap((call) =>
+        call.name === "insert-fragment"
+          ? [{ name: "insert-fragment" }, call]
+          : [call]
+      ),
+      contentDatabase: optimalContentDatabase,
+    });
+
+    expect(result.checks.bindingVerification).toBe("passed");
+  });
+
+  test("requires validating both queries and previewing the detail query before binding", () => {
     for (const omittedCall of ["validate-asset-query", "preview-asset-query"]) {
       let omitted = false;
       const toolCalls = successfulCalls.filter((call) => {
@@ -726,6 +748,29 @@ describe("Markdown blog evaluation", () => {
 
       expect(result.checks.queryVerification).toBe("failed");
     }
+  });
+
+  test("accepts preview after resource creation when it still precedes binding", () => {
+    const previewCall = successfulCalls.find(
+      (call) => call.name === "preview-asset-query"
+    );
+    if (previewCall === undefined) {
+      throw new Error("Expected detail query preview call");
+    }
+    const toolCalls = successfulCalls.filter((call) => call !== previewCall);
+    const insertionIndex = toolCalls.findIndex(
+      (call) => call.name === "insert-collection"
+    );
+    toolCalls.splice(insertionIndex, 0, previewCall);
+
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls,
+      contentDatabase: optimalContentDatabase,
+    });
+
+    expect(result.checks.queryVerification).toBe("passed");
   });
 
   test("rejects validation calls for incomplete placeholder queries", () => {
@@ -1020,32 +1065,89 @@ describe("Markdown blog evaluation", () => {
     });
   });
 
-  test.each([
-    [
-      "an intervening call",
-      (calls: EvaluationToolCall[]) => [
-        ...calls.slice(0, -1),
-        { name: "list-pages" },
-        calls.at(-1)!,
-      ],
-    ],
-    [
-      "a later call",
-      (calls: EvaluationToolCall[]) => [...calls, { name: "list-pages" }],
-    ],
-  ] as const)(
-    "requires route verification calls to be consecutive and terminal: %s",
-    (_description, mutateCalls) => {
-      const result = evaluateHighImpactOutcome({
-        fixture: markdownBlogFixture,
-        project: addMarkdownBlog(),
-        toolCalls: mutateCalls(successfulCalls),
-        contentDatabase: optimalContentDatabase,
-      });
+  test("requires a route verification as the terminal call", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [...successfulCalls, { name: "list-pages" }],
+      contentDatabase: optimalContentDatabase,
+    });
 
-      expect(result.checks.blogRouteEvidence).toBe("failed");
+    expect(result.checks.blogRouteEvidence).toBe("failed");
+  });
+
+  test("accepts route checks separated by work when verification is terminal", () => {
+    const toolCalls = [
+      ...successfulCalls.slice(0, -1),
+      { name: "list-pages" },
+      successfulCalls.at(-1)!,
+    ];
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls,
+      contentDatabase: optimalContentDatabase,
+    });
+
+    expect(result.checks.blogRouteEvidence).toBe("passed");
+  });
+
+  test("accepts corrected settings followed by a final consecutive route check", () => {
+    const finalVerificationIndex = successfulCalls.findIndex(
+      (call) => call.name === "verify-page-responsive"
+    );
+    const toolCalls = successfulCalls.slice(0, finalVerificationIndex);
+    toolCalls.push(
+      {
+        name: "verify-page-responsive",
+        arguments: {
+          path: "/blog",
+          viewports: [{ width: 1440 }, { width: 390 }],
+        },
+      },
+      traceCall("update-page", detailPageSettingsInput),
+      ...successfulCalls.slice(finalVerificationIndex)
+    );
+
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project: addMarkdownBlog(),
+      toolCalls: [{ name: "meta.get-more-tools" }, ...toolCalls],
+      contentDatabase: optimalContentDatabase,
+    });
+
+    expect(result.checks).toMatchObject({
+      detailPageSettings: "passed",
+      blogRouteEvidence: "passed",
+    });
+  });
+
+  test("accepts the two terminal route checks in either order", () => {
+    const toolCalls = [...successfulCalls];
+    const firstVerificationIndex = toolCalls.findIndex(
+      (call) => call.name === "verify-page-responsive"
+    );
+    const firstVerification = toolCalls[firstVerificationIndex];
+    const secondVerification = toolCalls[firstVerificationIndex + 1];
+    if (firstVerification === undefined || secondVerification === undefined) {
+      throw new Error("Expected two route verification calls");
     }
-  );
+    toolCalls.splice(
+      firstVerificationIndex,
+      2,
+      secondVerification,
+      firstVerification
+    );
+
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project: addMarkdownBlog(),
+      toolCalls,
+      contentDatabase: optimalContentDatabase,
+    });
+
+    expect(result.checks.blogRouteEvidence).toBe("passed");
+  });
 
   test("rejects pages beyond the fixture and the two requested blog routes", () => {
     const project = addMarkdownBlog();
@@ -1108,6 +1210,21 @@ describe("Markdown blog evaluation", () => {
     });
     expect(withDiscovery).toMatchObject({ passed: true, failures: [] });
     expect(withDiscovery.checks.referenceDocumentationDiscovery).toBe("passed");
+
+    const withTwoFocusedDiscoveryCalls = evaluateHighImpactOutcome({
+      fixture: markdownReferencesDiscoveryFixture,
+      project,
+      contentDatabase: optimalContentDatabase,
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "meta.get-more-tools" },
+        { name: "meta.get-more-tools" },
+        ...successfulCalls.slice(1),
+      ],
+    });
+    expect(
+      withTwoFocusedDiscoveryCalls.checks.referenceDocumentationDiscovery
+    ).toBe("passed");
   });
 
   test("rejects a duplicated or oversized compiled blog database", () => {
@@ -1155,21 +1272,6 @@ describe("Markdown blog evaluation", () => {
     });
 
     expect(result.checks.retryFreeExecution).toBe("failed");
-  });
-
-  test("rejects repeated document-reference tool discovery", () => {
-    const result = evaluateHighImpactOutcome({
-      fixture: markdownReferencesDiscoveryFixture,
-      project: addMarkdownBlog(),
-      toolCalls: [
-        { name: "meta.guide" },
-        { name: "meta.get-more-tools" },
-        { name: "meta.get-more-tools" },
-        ...successfulCalls,
-      ],
-    });
-
-    expect(result.checks.referenceDocumentationDiscovery).toBe("failed");
   });
 });
 
@@ -1236,18 +1338,24 @@ describe("authenticated-page evaluation", () => {
     });
   });
 
-  test("requires exactly one guidance call before every other operation", () => {
-    for (const toolCalls of [
-      [{ name: "audit" }, { name: "meta.guide" }],
-      [{ name: "meta.guide" }, { name: "meta.guide" }],
-    ]) {
-      const result = evaluateHighImpactOutcome({
-        fixture: authenticatedPageFixture,
-        project: addAuthPage(),
-        toolCalls,
-      });
-      expect(result.checks.guidance).toBe("failed");
-    }
+  test("requires guidance before every other operation", () => {
+    const lateGuidance = evaluateHighImpactOutcome({
+      fixture: authenticatedPageFixture,
+      project: addAuthPage(),
+      toolCalls: [{ name: "audit" }, { name: "meta.guide" }],
+    });
+    expect(lateGuidance.checks.guidance).toBe("failed");
+
+    const repeatedGuidance = evaluateHighImpactOutcome({
+      fixture: authenticatedPageFixture,
+      project: addAuthPage(),
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "inspect-auth-context" },
+        { name: "meta.guide" },
+      ],
+    });
+    expect(repeatedGuidance.checks.guidance).toBe("passed");
   });
 });
 

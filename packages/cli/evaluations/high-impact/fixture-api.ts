@@ -1,6 +1,14 @@
 // Serves deterministic in-memory Webstudio project fixtures through the real
 // local API boundary used by high-impact CLI and MCP evaluations.
 import type { Server } from "node:http";
+import {
+  executeAssetQuery,
+  getAssetQueryWhereMetrics,
+  parseMarkdownDocumentSource,
+  validateAssetQuery,
+  type AssetQueryInput,
+  type ContentDatabaseDocument,
+} from "@webstudio-is/content-engine";
 import { fontFormat, fontMeta } from "@webstudio-is/fonts";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
@@ -128,7 +136,79 @@ export const startHighImpactFixtureApi = async (
   let version = initialVersion;
   let generatedId = 0;
   const calls: EvaluationToolCall[] = [];
+  const uploadedFileContents = new Map<string, Uint8Array>();
   let origin = "";
+  const validateFixtureAssetQuery = (query: unknown) => {
+    const validation = validateAssetQuery({ query });
+    if (validation.success === false) {
+      throw Object.assign(new Error("Invalid fixture asset query."), {
+        code: "INVALID_INPUT",
+        issues: validation.issues,
+      });
+    }
+    return validation;
+  };
+  const loadFixtureDocuments = async () => {
+    const documents: ContentDatabaseDocument[] = [];
+    for (const asset of state.assets?.values() ?? []) {
+      if (asset.type !== "file" || asset.format !== "md") {
+        continue;
+      }
+      const content = uploadedFileContents.get(asset.id);
+      if (content === undefined) {
+        continue;
+      }
+      const document = await parseMarkdownDocumentSource({ source: content });
+      documents.push({
+        _id: asset.id,
+        _type: "asset.file",
+        name: asset.name,
+        path: asset.name,
+        key: asset.id,
+        folderId: asset.folderId,
+        extension: asset.format,
+        mimeType: "text/markdown",
+        size: asset.size,
+        createdAt: asset.createdAt,
+        revision: `fixture-${asset.id}`,
+        contentRef: asset.id,
+        properties: structuredClone(
+          document.frontmatter
+        ) as ContentDatabaseDocument["properties"],
+      });
+    }
+    return documents;
+  };
+  const readFixtureContent = async (contentRef: string) => {
+    const content = uploadedFileContents.get(contentRef);
+    if (content === undefined) {
+      throw new Error(`Fixture content not found: ${contentRef}`);
+    }
+    return {
+      data: (async function* () {
+        yield content;
+      })(),
+      contentLength: content.byteLength,
+    };
+  };
+  const runFixtureAssetQuery = async <Result>({
+    name,
+    input,
+    execute,
+  }: {
+    name: "validate-asset-query" | "preview-asset-query";
+    input: Record<string, unknown>;
+    execute: () => Promise<Result> | Result;
+  }) => {
+    const call: EvaluationToolCall = { name, arguments: input };
+    calls.push(call);
+    try {
+      return await execute();
+    } catch (error) {
+      call.isError = true;
+      throw error;
+    }
+  };
   const fixtureApi = await startRuntimeFixtureApi(
     async ({ request, response, pathname, operationPath, readInput }) => {
       let data: unknown;
@@ -177,6 +257,7 @@ export const startHighImpactFixtureApi = async (
                 ),
               }
             : { ...assetBase, type, format: formatValue, meta: {} };
+        uploadedFileContents.set(asset.id, body);
         calls.push({
           name: "upload-asset",
           arguments: {
@@ -248,6 +329,56 @@ export const startHighImpactFixtureApi = async (
           projectId,
           buildId,
           version,
+        });
+      } else if (operationPath === "assetQueries.validate") {
+        const input = (await readInput()) as Record<string, unknown>;
+        data = await runFixtureAssetQuery({
+          name: "validate-asset-query",
+          input,
+          execute: () => {
+            const validation = validateFixtureAssetQuery(input.query);
+            return {
+              valid: true as const,
+              referencedFieldPaths: validation.referencedFieldPaths,
+              filterCount: getAssetQueryWhereMetrics(validation.query.where)
+                .filters,
+              sortCount: validation.query.sort.length,
+              warnings: validation.warnings,
+              issues: validation.issues,
+            };
+          },
+        });
+      } else if (operationPath === "assetQueries.preview") {
+        const input = (await readInput()) as Record<string, unknown>;
+        data = await runFixtureAssetQuery({
+          name: "preview-asset-query",
+          input,
+          execute: async () => {
+            const validation = validateFixtureAssetQuery(input.query);
+            const documents = await loadFixtureDocuments();
+            const result = await executeAssetQuery({
+              query: validation.query as AssetQueryInput,
+              documents,
+              read: readFixtureContent,
+            });
+            const usedBytes = Buffer.byteLength(JSON.stringify(documents));
+            const diagnostics = {
+              usedBytes,
+              maxBytes: 512_000,
+              unboundedBytes: usedBytes,
+              includedDocumentCount: documents.length,
+              omittedDocumentCount: 0,
+              truncated: false,
+            };
+            return {
+              data: result,
+              __diagnostics__: {
+                scope: "query-preview" as const,
+                query: diagnostics,
+                database: diagnostics,
+              },
+            };
+          },
         });
       } else if (
         operationPath === "projects.permissions" ||

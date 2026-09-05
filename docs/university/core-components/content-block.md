@@ -150,6 +150,8 @@ Regular document content stays Markdown and uses the matching standard templates
 
 The JSX name first matches the stable **Name** of a unique top-level template in the Content Block's Templates list. **Name** is a JavaScript identifier and is separate from the optional **Label** shown in the canvas. If no template has that name, Webstudio uses the exact registered component with that exported name. A new template gets its default name from its root component or HTML tag, and duplicate defaults get deterministic numeric suffixes.
 
+In the MDX editor, type `<` to autocomplete registered components and templates connected to the file. Inside a JSX tag, autocomplete suggests its supported properties and available property values.
+
 When two component libraries export the same name, the core component keeps the plain identifier and the namespaced component gets a stable library prefix, such as `Checkbox` and `RadixCheckbox`. Component discovery reports the exact JSX identifier to use.
 
 JSX attributes accept quoted static values and bare booleans. Webstudio converts quoted values to the property's declared string, number, or boolean type when possible. Imports, exports, expressions such as `{false}`, spreads, functions, and executable JavaScript are not supported. Internal forms such as `<ws.element>`, `ws:name`, `ws:tag`, `ws:label`, and `<$.*>` are not current authoring syntax.

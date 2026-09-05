@@ -12,6 +12,7 @@ import type { BuilderState } from "../state/builder-state";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
   createContentBlockApplication,
+  getMdxAssetSourceBlockInstanceIds,
   inspectMdxAssetSource,
 } from "./content-block-application";
 
@@ -134,6 +135,13 @@ describe("createContentBlockApplication", () => {
     const connectedState = applyBuilderPatchTransactions(fixture.state, [
       { id: "connect", payload: [...connected.projectPayload] },
     ]).state;
+
+    expect(
+      getMdxAssetSourceBlockInstanceIds({
+        assetId: "asset",
+        state: connectedState,
+      })
+    ).toEqual(["block"]);
 
     await expect(
       inspectMdxAssetSource({

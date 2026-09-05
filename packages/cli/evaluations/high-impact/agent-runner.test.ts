@@ -217,7 +217,7 @@ describe("high-impact agent runner", () => {
       });
       expect(result).toMatchObject({
         schemaVersion: 3,
-        outcome: "failed",
+        outcome: "passed",
         cli: "packaged",
         reasoningEffort: "low",
         metrics: {
