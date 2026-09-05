@@ -1,10 +1,9 @@
 import {
   type ReactNode,
-  type ForwardRefExoticComponent,
   forwardRef,
   Children,
   type ComponentProps,
-  type RefAttributes,
+  type ComponentPropsWithoutRef,
   useState,
   useEffect,
 } from "react";
@@ -40,10 +39,16 @@ export const CollapsibleTrigger = forwardRef<
   );
 });
 
-export const CollapsibleContent: ForwardRefExoticComponent<
-  Omit<ComponentProps<typeof Content>, "asChild"> &
-    RefAttributes<HTMLDivElement>
-> = Content;
+export const CollapsibleContent = forwardRef<
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof Content>, "asChild" | "forceMount"> & {
+    /** Used to force mounting when more control is needed. Useful when controlling animation with React animation libraries or keeping content available in the DOM. */
+    forceMount?: boolean;
+  }
+>(({ forceMount, ...props }, ref) => {
+  const contentProps = forceMount ? { forceMount: true as const } : {};
+  return <Content ref={ref} {...contentProps} {...props} />;
+});
 
 /* BUILDER HOOKS */
 
