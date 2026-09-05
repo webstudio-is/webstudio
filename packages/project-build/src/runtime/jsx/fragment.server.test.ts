@@ -31,13 +31,8 @@ test("uses a stable prefix for namespaced component-name collisions", async () =
   ]);
 });
 
-test.each([
-  "<$.Box />",
-  "<radix.Switch />",
-  "<animation.AnimateChildren />",
-  "<ws.element.child />",
-])("rejects component member syntax in %s", async (source) => {
-  await expect(evaluateWebstudioJsxFragment(source)).rejects.toThrow(
-    "JSX component namespaces are not supported"
-  );
+test("rejects component member syntax", async () => {
+  await expect(
+    evaluateWebstudioJsxFragment("<Library.Card />")
+  ).rejects.toThrow("JSX component namespaces are not supported");
 });

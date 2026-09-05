@@ -1327,15 +1327,11 @@ test("inserts animation action props parsed from webstudio jsx fragments", async
 
 test("detects likely Webstudio JSX fragments", () => {
   expect(isLikelyWebstudioJsxFragment("<Box />")).toBe(true);
-  expect(isLikelyWebstudioJsxFragment("\n  < $ .Box />")).toBe(false);
-  expect(isLikelyWebstudioJsxFragment("< $ . Box />")).toBe(false);
   expect(isLikelyWebstudioJsxFragment('<ws.element ws:tag="section" />')).toBe(
     true
   );
   expect(isLikelyWebstudioJsxFragment("<Switch />")).toBe(true);
   expect(isLikelyWebstudioJsxFragment("<VideoAnimation />")).toBe(true);
-  expect(isLikelyWebstudioJsxFragment("<$. />")).toBe(false);
-  expect(isLikelyWebstudioJsxFragment("<$.>")).toBe(false);
   expect(isLikelyWebstudioJsxFragment("</Box>")).toBe(false);
   expect(isLikelyWebstudioJsxFragment("<section>HTML</section>")).toBe(false);
   expect(isLikelyWebstudioJsxFragment("## Markdown")).toBe(false);

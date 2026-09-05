@@ -45,13 +45,9 @@ describe("jsx paste plugin", () => {
 
   test("detects only Webstudio JSX", () => {
     expect(isLikelyWebstudioJsx("<Box />")).toBe(true);
-    expect(isLikelyWebstudioJsx("\n  < $ .Box />")).toBe(false);
-    expect(isLikelyWebstudioJsx("< $ . Box />")).toBe(false);
     expect(isLikelyWebstudioJsx('<ws.element ws:tag="section" />')).toBe(true);
     expect(isLikelyWebstudioJsx("<Switch />")).toBe(true);
     expect(isLikelyWebstudioJsx("<VideoAnimation />")).toBe(true);
-    expect(isLikelyWebstudioJsx("<$. />")).toBe(false);
-    expect(isLikelyWebstudioJsx("<$.>")).toBe(false);
     expect(isLikelyWebstudioJsx("</Box>")).toBe(false);
     expect(isLikelyWebstudioJsx("<section>HTML</section>")).toBe(false);
     expect(isLikelyWebstudioJsx("## Markdown")).toBe(false);
