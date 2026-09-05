@@ -3,12 +3,12 @@ import { renderTemplate } from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import {
-  webstudioJsxAnimationGuidance,
   webstudioJsxBindingGuidance,
   webstudioJsxRuntimeBindings,
 } from "./bindings";
 import { evaluateJsx } from "./evaluate.server";
 import { getErrorMessage } from "./errors";
+import { inspectWebstudioJsxFragmentSyntax } from "./syntax";
 
 const templateValidationMessagePrefixes = [
   "Do not use React fragment shorthand",
@@ -34,6 +34,7 @@ const createWebstudioJsxFragmentIdFactory = () => {
 export const evaluateWebstudioJsxFragment = async (
   source: string
 ): Promise<WebstudioFragment> => {
+  inspectWebstudioJsxFragmentSyntax(source);
   const createId = createWebstudioJsxFragmentIdFactory();
   return evaluateJsx<WebstudioFragment>({
     source,
@@ -55,11 +56,7 @@ export const evaluateWebstudioJsxFragment = async (
       if (isTemplateValidationMessage(message)) {
         return message;
       }
-      const animationGuidance =
-        message === "animation is not a function"
-          ? ` ${webstudioJsxAnimationGuidance}`
-          : "";
-      return `Could not evaluate JSX fragment. Use ${webstudioJsxBindingGuidance}.${animationGuidance} ${message}`;
+      return `Could not evaluate JSX fragment. Use ${webstudioJsxBindingGuidance}. ${message}`;
     },
     missingResultMessage: "JSX fragment did not produce Webstudio data.",
   });

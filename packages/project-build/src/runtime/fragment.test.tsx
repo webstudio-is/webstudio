@@ -23,7 +23,7 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import {
-  $,
+  createTemplateComponentFixture,
   ws,
   css,
   renderData,
@@ -37,6 +37,15 @@ import {
   token,
 } from "@webstudio-is/template";
 import { findAvailableVariables } from "./data";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const CodeText = createTemplateComponentFixture("CodeText");
+const Fragment = createTemplateComponentFixture("Fragment");
+const HtmlEmbed = createTemplateComponentFixture("HtmlEmbed");
+const Paragraph = createTemplateComponentFixture("Paragraph");
+const Slot = createTemplateComponentFixture("Slot");
+const Text = createTemplateComponentFixture("Text");
 
 const stripIndent = (value: string) => {
   const lines = value.replace(/^\n|\n\s*$/g, "").split("\n");
@@ -95,11 +104,11 @@ const toCss = (data: WebstudioData) => {
 };
 
 test("copies a fragment for a target instance and maps root children", () => {
-  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const data = renderData(<Body ws:id="bodyId"></Body>);
   const fragment = renderTemplate(
-    <$.Box ws:id="boxId">
-      <$.Paragraph ws:id="paragraphId">Hello</$.Paragraph>
-    </$.Box>
+    <Box ws:id="boxId">
+      <Paragraph ws:id="paragraphId">Hello</Paragraph>
+    </Box>
   );
   const ids = ["boxCopyId", "paragraphCopyId"];
 
@@ -133,13 +142,11 @@ test("copies a fragment for a target instance and maps root children", () => {
 
 test("merges multiple copied fragments and preserves requested roots", () => {
   const first = renderTemplate(
-    <$.Box ws:id="box">
-      <$.Text ws:id="text">Hello</$.Text>
-    </$.Box>
+    <Box ws:id="box">
+      <Text ws:id="text">Hello</Text>
+    </Box>
   );
-  const second = renderTemplate(
-    <$.Paragraph ws:id="paragraph">World</$.Paragraph>
-  );
+  const second = renderTemplate(<Paragraph ws:id="paragraph">World</Paragraph>);
 
   const fragment = mergeWebstudioFragments(
     ["box", "paragraph"],
@@ -160,8 +167,8 @@ test("merges multiple copied fragments and preserves requested roots", () => {
 test("filters multi-root paste ids to unique ids present in fragment roots", () => {
   const fragment = renderTemplate(
     <>
-      <$.Box ws:id="box"></$.Box>
-      <$.Paragraph ws:id="paragraph"></$.Paragraph>
+      <Box ws:id="box"></Box>
+      <Paragraph ws:id="paragraph"></Paragraph>
     </>
   );
 
@@ -265,7 +272,7 @@ test("prevents pasting a portal fragment into one of its preserved children", ()
 });
 
 test("includes assets referenced by copied variable values", () => {
-  const data = createStub(<$.Box ws:id="boxId" />);
+  const data = createStub(<Box ws:id="boxId" />);
   data.assets.set("post", {
     id: "post",
     projectId: "source-project",
@@ -314,14 +321,14 @@ const insertStyles = ({
 
 test("extract the instance by id and all its descendants including slot instances", () => {
   const data = renderData(
-    <$.Body ws:id="bodyId">
-      <$.Box ws:id="boxId">
-        <$.Slot>
-          <$.Fragment></$.Fragment>
-        </$.Slot>
-      </$.Box>
-      <$.Text ws:id="textId"></$.Text>
-    </$.Body>
+    <Body ws:id="bodyId">
+      <Box ws:id="boxId">
+        <Slot>
+          <Fragment></Fragment>
+        </Slot>
+      </Box>
+      <Text ws:id="textId"></Text>
+    </Body>
   );
   const { instances } = extractWebstudioFragment(data, "boxId");
   expect(instances).toEqual([
@@ -332,13 +339,13 @@ test("extract the instance by id and all its descendants including slot instance
 });
 
 test("insert instances with slots", () => {
-  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const data = renderData(<Body ws:id="bodyId"></Body>);
   const fragment = renderTemplate(
-    <$.Slot ws:id="slotId">
-      <$.Fragment ws:id="fragmentId">
-        <$.Box ws:id="boxId"></$.Box>
-      </$.Fragment>
-    </$.Slot>
+    <Slot ws:id="slotId">
+      <Fragment ws:id="fragmentId">
+        <Box ws:id="boxId"></Box>
+      </Fragment>
+    </Slot>
   );
   expect(data.instances.size).toEqual(1);
   insertWebstudioFragmentCopy({
@@ -366,11 +373,11 @@ test("insert instances with slots", () => {
 });
 
 test("remap token selections in inserted slot content", () => {
-  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const data = renderData(<Body ws:id="bodyId"></Body>);
   const fragment = renderTemplate(
-    <$.Slot ws:id="slotId">
-      <$.Fragment ws:id="fragmentId">
-        <$.HtmlEmbed
+    <Slot ws:id="slotId">
+      <Fragment ws:id="fragmentId">
+        <HtmlEmbed
           ws:id="iconId"
           ws:tokens={[
             token(
@@ -381,8 +388,8 @@ test("remap token selections in inserted slot content", () => {
             ),
           ]}
         />
-      </$.Fragment>
-    </$.Slot>
+      </Fragment>
+    </Slot>
   );
 
   insertWebstudioFragmentCopy({
@@ -401,8 +408,8 @@ test("remap token selections in inserted slot content", () => {
 });
 
 test("preserves legacy HtmlEmbed code when copying internal fragments", () => {
-  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
-  const fragment = renderTemplate(<$.HtmlEmbed code="<div><span></div>" />);
+  const data = renderData(<Body ws:id="bodyId"></Body>);
+  const fragment = renderTemplate(<HtmlEmbed code="<div><span></div>" />);
 
   insertWebstudioFragmentCopy({
     data,
@@ -421,8 +428,8 @@ test("preserves legacy HtmlEmbed code when copying internal fragments", () => {
 });
 
 test("moves legacy Code Text properties into copied text content", () => {
-  const data = renderData(<$.Body ws:id="bodyId" />);
-  const fragment = renderTemplate(<$.CodeText code="const answer = 42;" />);
+  const data = renderData(<Body ws:id="bodyId" />);
+  const fragment = renderTemplate(<CodeText code="const answer = 42;" />);
 
   insertWebstudioFragmentCopy({
     data,
@@ -445,15 +452,15 @@ test("moves legacy Code Text properties into copied text content", () => {
 });
 
 test("insert instances with multiple roots", () => {
-  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const data = renderData(<Body ws:id="bodyId"></Body>);
   const fragment = renderTemplate(
     <>
-      <$.Box>
-        <$.Text></$.Text>
-      </$.Box>
-      <$.Box>
-        <$.Text></$.Text>
-      </$.Box>
+      <Box>
+        <Text></Text>
+      </Box>
+      <Box>
+        <Text></Text>
+      </Box>
     </>
   );
   expect(data.instances.size).toEqual(1);
@@ -474,10 +481,10 @@ test("should add :root local styles", () => {
         color: red;
       `}
     >
-      <$.Body></$.Body>
+      <Body></Body>
     </ws.root>
   );
-  const newProject = createStub(<$.Body></$.Body>);
+  const newProject = createStub(<Body></Body>);
   const fragment = extractWebstudioFragment(oldProject, ROOT_INSTANCE_ID);
   insertWebstudioFragmentCopy({
     data: newProject,
@@ -504,7 +511,7 @@ test("should merge :root local styles", () => {
         color: red;
       `}
     >
-      <$.Body></$.Body>
+      <Body></Body>
     </ws.root>
   );
   const newProject = createStub(
@@ -514,7 +521,7 @@ test("should merge :root local styles", () => {
         font-size: medium;
       `}
     >
-      <$.Body></$.Body>
+      <Body></Body>
     </ws.root>
   );
   const fragment = extractWebstudioFragment(oldProject, ROOT_INSTANCE_ID);
@@ -544,7 +551,7 @@ test("does not conflict when a breakpoint id is remapped during insertion", () =
         color: red;
       `}
     >
-      <$.Body></$.Body>
+      <Body></Body>
     </ws.root>
   );
   const target = createStub(
@@ -554,7 +561,7 @@ test("does not conflict when a breakpoint id is remapped during insertion", () =
         color: blue;
       `}
     >
-      <$.Body></$.Body>
+      <Body></Body>
     </ws.root>
   );
   const sourceBreakpoint = source.breakpoints.values().next().value;
@@ -590,14 +597,14 @@ test("does not conflict when a breakpoint id is remapped during insertion", () =
 
 test("should copy local styles of duplicated instance", () => {
   const project = createStub(
-    <$.Body>
-      <$.Box
+    <Body>
+      <Box
         ws:id="boxId"
         ws:style={css`
           color: red;
         `}
-      ></$.Box>
-    </$.Body>
+      ></Box>
+    </Body>
   );
   const fragment = extractWebstudioFragment(project, "boxId");
   insertWebstudioFragmentCopy({
@@ -646,11 +653,11 @@ test("should copy local styles of duplicated instance", () => {
 describe("props", () => {
   test("extract all props bound to fragment instances", () => {
     const data = renderData(
-      <$.Body ws:id="bodyId" data-body="">
-        <$.Box ws:id="boxId" data-box="">
-          <$.Text ws:id="textId" data-text=""></$.Text>
-        </$.Box>
-      </$.Body>
+      <Body ws:id="bodyId" data-body="">
+        <Box ws:id="boxId" data-box="">
+          <Text ws:id="textId" data-text=""></Text>
+        </Box>
+      </Body>
     );
     const { props } = extractWebstudioFragment(data, "boxId");
     expect(props).toEqual([
@@ -660,11 +667,11 @@ describe("props", () => {
   });
 
   test("insert props with new ids", () => {
-    const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const data = renderData(<Body ws:id="bodyId"></Body>);
     const fragment = renderTemplate(
-      <$.Box ws:id="boxId" data-box="">
-        <$.Text ws:id="textId" data-text=""></$.Text>
-      </$.Box>
+      <Box ws:id="boxId" data-box="">
+        <Text ws:id="textId" data-text=""></Text>
+      </Box>
     );
     insertWebstudioFragmentCopy({
       data,
@@ -685,15 +692,15 @@ describe("props", () => {
   });
 
   test("preserve ids when insert props from slots", () => {
-    const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const data = renderData(<Body ws:id="bodyId"></Body>);
     const fragment = renderTemplate(
-      <$.Slot>
-        <$.Fragment>
-          <$.Box ws:id="boxId" data-box="">
-            <$.Text ws:id="textId" data-text=""></$.Text>
-          </$.Box>
-        </$.Fragment>
-      </$.Slot>
+      <Slot>
+        <Fragment>
+          <Box ws:id="boxId" data-box="">
+            <Text ws:id="textId" data-text=""></Text>
+          </Box>
+        </Fragment>
+      </Slot>
     );
     insertWebstudioFragmentCopy({
       data,
@@ -718,9 +725,9 @@ describe("variables", () => {
   test("extract variable", () => {
     const boxVariable = new Variable("Box Variable", "");
     const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     expect(fragment.dataSources).toEqual([
@@ -737,8 +744,8 @@ describe("variables", () => {
   test("unset variable outside of scope", () => {
     const bodyVariable = new Variable("Body Variable", "");
     const data = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Box
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Box
           ws:id="boxId"
           vars={expression`${bodyVariable}`}
           action={
@@ -746,8 +753,8 @@ describe("variables", () => {
           }
         >
           {expression`${bodyVariable}`}
-        </$.Box>
-      </$.Body>
+        </Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     expect(fragment.dataSources).toEqual([]);
@@ -783,16 +790,16 @@ describe("variables", () => {
 
   test("insert variables with new ids", () => {
     const boxParameter = new Parameter("My Parameter");
-    const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const data = renderData(<Body ws:id="bodyId"></Body>);
     const fragment = renderTemplate(
-      <$.Box
+      <Box
         ws:id="boxId"
         vars={expression`${boxParameter}`}
         action={new ActionValue([], expression`${boxParameter}`)}
         parameter={boxParameter}
       >
         {expression`${boxParameter}`}
-      </$.Box>
+      </Box>
     );
     insertWebstudioFragmentCopy({
       data,
@@ -831,20 +838,20 @@ describe("variables", () => {
 
   test("preserve ids when insert variables from portals", () => {
     const boxParameter = new Parameter("My Parameter");
-    const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const data = renderData(<Body ws:id="bodyId"></Body>);
     const fragment = renderTemplate(
-      <$.Slot>
-        <$.Fragment>
-          <$.Box
+      <Slot>
+        <Fragment>
+          <Box
             ws:id="boxId"
             vars={expression`${boxParameter}`}
             action={new ActionValue([], expression`${boxParameter}`)}
             parameter={boxParameter}
           >
             {expression`${boxParameter}`}
-          </$.Box>
-        </$.Fragment>
-      </$.Slot>
+          </Box>
+        </Fragment>
+      </Slot>
     );
     insertWebstudioFragmentCopy({
       data,
@@ -883,8 +890,8 @@ describe("variables", () => {
   test("restore unset variables when insert fragment", () => {
     const bodyVariable = new Variable("Body Variable", "");
     const data = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Box
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Box
           ws:id="boxId"
           vars={expression`${bodyVariable} + unknownVariable`}
           action={
@@ -892,8 +899,8 @@ describe("variables", () => {
           }
         >
           {expression`${bodyVariable}`}
-        </$.Box>
-      </$.Body>
+        </Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     insertWebstudioFragmentCopy({
@@ -936,9 +943,9 @@ describe("resources", () => {
       body: expression`${boxVariable}`,
     });
     const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" vars={expression`${resourceVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId" vars={expression`${resourceVariable}`}></Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     expect(fragment.dataSources).toEqual([
@@ -965,9 +972,9 @@ describe("resources", () => {
       body: expression`${bodyVariable}`,
     });
     const data = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Box ws:id="boxId" vars={expression`${resourceVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Box ws:id="boxId" vars={expression`${resourceVariable}`}></Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     expect(fragment.dataSources).toEqual([
@@ -993,9 +1000,9 @@ describe("resources", () => {
       body: expression`${bodyVariable}`,
     });
     const data = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Box ws:id="boxId" vars={expression`${resourceVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Box ws:id="boxId" vars={expression`${resourceVariable}`}></Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     insertWebstudioFragmentCopy({
@@ -1035,9 +1042,9 @@ describe("resources", () => {
       body: expression`${boxVariable}`,
     });
     const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" resource={resourceProp}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId" resource={resourceProp}></Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     expect(fragment.dataSources).toEqual([
@@ -1063,9 +1070,9 @@ describe("resources", () => {
       body: expression`${bodyVariable}`,
     });
     const data = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Box ws:id="boxId" resource={resourceProp}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Box ws:id="boxId" resource={resourceProp}></Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     expect(fragment.dataSources).toEqual([]);
@@ -1089,9 +1096,9 @@ describe("resources", () => {
       body: expression`${bodyVariable}`,
     });
     const data = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Box ws:id="boxId" resource={resourceProp}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Box ws:id="boxId" resource={resourceProp}></Box>
+      </Body>
     );
     const fragment = extractWebstudioFragment(data, "boxId");
     insertWebstudioFragmentCopy({
@@ -1137,13 +1144,13 @@ describe("resources", () => {
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
-    const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const data = renderData(<Body ws:id="bodyId"></Body>);
     const fragment = renderTemplate(
-      <$.Box
+      <Box
         ws:id="boxId"
         action={resourceProp}
         vars={expression`${resourceVariable}`}
-      ></$.Box>
+      ></Box>
     );
     insertWebstudioFragmentCopy({
       data,
@@ -1204,17 +1211,17 @@ describe("resources", () => {
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
-    const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const data = renderData(<Body ws:id="bodyId"></Body>);
     const fragment = renderTemplate(
-      <$.Slot ws:id="slotId">
-        <$.Fragment ws:id="fragmentId">
-          <$.Box
+      <Slot ws:id="slotId">
+        <Fragment ws:id="fragmentId">
+          <Box
             ws:id="boxId"
             action={resourceProp}
             vars={expression`${resourceVariable}`}
-          ></$.Box>
-        </$.Fragment>
-      </$.Slot>
+          ></Box>
+        </Fragment>
+      </Slot>
     );
     insertWebstudioFragmentCopy({
       data,

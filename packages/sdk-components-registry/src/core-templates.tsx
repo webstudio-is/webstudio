@@ -25,8 +25,8 @@ import {
 } from "@webstudio-is/sdk-components-react/components";
 import { componentsById } from "./components";
 
-const BlockTemplate = ws["block-template"];
-const BlockBody = ws["content-block-body"];
+const BlockTemplate = ws.blockTemplate;
+const BlockBody = ws.contentBlockBody;
 const blockDocument = new Parameter(contentBlockDocumentProp);
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(

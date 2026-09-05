@@ -3,7 +3,6 @@ import { createElement } from "react";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import {
-  $,
   ActionValue,
   AssetValue,
   expression,
@@ -110,10 +109,6 @@ test("render jsx into instances with generated id", () => {
       children: [],
     },
   ]);
-});
-
-test("reads legacy proxy component markers", () => {
-  expect(renderTemplate(<$.Box />).instances[0]?.component).toBe("Box");
 });
 
 test("uses component object identity instead of displayName", () => {

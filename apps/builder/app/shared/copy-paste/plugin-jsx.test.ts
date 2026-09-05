@@ -44,23 +44,23 @@ describe("jsx paste plugin", () => {
   });
 
   test("detects only Webstudio JSX", () => {
-    expect(isLikelyWebstudioJsx("<$.Box />")).toBe(true);
-    expect(isLikelyWebstudioJsx("\n  < $ .Box />")).toBe(true);
-    expect(isLikelyWebstudioJsx("< $ . Box />")).toBe(true);
+    expect(isLikelyWebstudioJsx("<Box />")).toBe(true);
+    expect(isLikelyWebstudioJsx("\n  < $ .Box />")).toBe(false);
+    expect(isLikelyWebstudioJsx("< $ . Box />")).toBe(false);
     expect(isLikelyWebstudioJsx('<ws.element ws:tag="section" />')).toBe(true);
-    expect(isLikelyWebstudioJsx("<radix.Switch />")).toBe(true);
-    expect(isLikelyWebstudioJsx("<animation.VideoAnimation />")).toBe(true);
+    expect(isLikelyWebstudioJsx("<Switch />")).toBe(true);
+    expect(isLikelyWebstudioJsx("<VideoAnimation />")).toBe(true);
     expect(isLikelyWebstudioJsx("<$. />")).toBe(false);
     expect(isLikelyWebstudioJsx("<$.>")).toBe(false);
-    expect(isLikelyWebstudioJsx("</$.Box>")).toBe(false);
+    expect(isLikelyWebstudioJsx("</Box>")).toBe(false);
     expect(isLikelyWebstudioJsx("<section>HTML</section>")).toBe(false);
     expect(isLikelyWebstudioJsx("## Markdown")).toBe(false);
   });
 
   test("can import JSX syntax inspection without the Node evaluator", () => {
-    expect(() => inspectWebstudioJsxFragmentSyntax("<$.Box />")).not.toThrow();
+    expect(() => inspectWebstudioJsxFragmentSyntax("<Box />")).not.toThrow();
     expect(() =>
-      inspectWebstudioJsxFragmentSyntax("<$.Box data-secret={process.env} />")
+      inspectWebstudioJsxFragmentSyntax("<Box data-secret={process.env} />")
     ).toThrow('Do not access "process" in JSX fragments');
   });
 
@@ -69,11 +69,11 @@ describe("jsx paste plugin", () => {
     mocks.createJsxFragment.mockResolvedValue(fragment);
     mocks.insertWebstudioFragmentAt.mockReturnValue(true);
 
-    await expect(jsx.onPaste?.("<$.Box />")).resolves.toEqual(pasteHandled);
+    await expect(jsx.onPaste?.("<Box />")).resolves.toEqual(pasteHandled);
 
     expect(mocks.createJsxFragment).toHaveBeenCalledWith({
       projectId: "project-id",
-      source: "<$.Box />",
+      source: "<Box />",
     });
     expect(mocks.insertWebstudioFragmentAt).toHaveBeenCalledWith(
       fragment,
@@ -97,7 +97,7 @@ describe("jsx paste plugin", () => {
   test("does not claim JSX without a current project", async () => {
     $project.set(undefined);
 
-    await expect(jsx.onPaste?.("<$.Box />")).resolves.toEqual(pasteIgnored);
+    await expect(jsx.onPaste?.("<Box />")).resolves.toEqual(pasteIgnored);
 
     expect(mocks.createJsxFragment).not.toHaveBeenCalled();
     expect(mocks.insertWebstudioFragmentAt).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe("jsx paste plugin", () => {
   test("reports conversion errors and stops paste fallback", async () => {
     mocks.createJsxFragment.mockRejectedValue(new Error("Invalid JSX"));
 
-    await expect(jsx.onPaste?.('<$.Box ws:id="0" />')).resolves.toEqual({
+    await expect(jsx.onPaste?.('<Box ws:id="0" />')).resolves.toEqual({
       success: false,
       error: "Invalid JSX",
     });

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import {
   renderData,
-  $,
+  createTemplateComponentFixture,
   expression,
   ResourceValue,
 } from "@webstudio-is/template";
@@ -13,6 +13,9 @@ import {
   replaceFormActionsWithResources,
 } from "./resources-generator";
 import type { DataSource } from "./schema/data-sources";
+
+const Body = createTemplateComponentFixture("Body");
+const Form = createTemplateComponentFixture("Form");
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -341,7 +344,7 @@ test("generate global system variable and use in resources loader", () => {
         rootInstanceId: "bodyId",
       } as Page,
       ...renderData(
-        <$.Body ws:id="bodyId" vars={expression`${myResource}`}></$.Body>
+        <Body ws:id="bodyId" vars={expression`${myResource}`}></Body>
       ),
     })
   ).toMatchInlineSnapshot(`
@@ -647,7 +650,7 @@ test("skip missing resource referenced by action prop", () => {
 
 test("replace form action with resource", () => {
   const data = renderData(
-    <$.Form ws:id="formId" action="https://my-url.com"></$.Form>
+    <Form ws:id="formId" action="https://my-url.com"></Form>
   );
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
@@ -675,7 +678,7 @@ test("replace form action with resource", () => {
 });
 
 test("ignore empty form action", () => {
-  const data = renderData(<$.Form ws:id="formId" action=""></$.Form>);
+  const data = renderData(<Form ws:id="formId" action=""></Form>);
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
     toMap([

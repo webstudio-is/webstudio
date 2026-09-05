@@ -164,7 +164,7 @@ If a Content Block that already renders connected MDX temporarily has zero or mu
 
 Missing or duplicate custom templates show a source-ranged warning and a selectable placeholder in Builder. Published pages omit only the unresolved custom subtree. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
 
-Legacy files that already contain internal `ws.element`, `ws:name`, or `$.*` syntax remain readable during migration, but Webstudio does not emit or recommend those forms.
+Legacy files that already contain internal `ws.element` or `ws:name` syntax remain readable during migration, but Webstudio does not emit or recommend those forms. Component namespaces such as `$.*`, `radix.*`, and `animation.*` are unsupported; use the direct component identifier.
 
 Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files. A confirmed rename changes the reference name. A confirmed removal unwraps and preserves explicit authored children; a self-closing reference disappears because it has no authored children.
 

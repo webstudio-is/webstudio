@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { $, renderData, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  ws,
+} from "@webstudio-is/template";
 import {
   findChildReferenceIndex,
   findTreeInstanceIds,
@@ -18,6 +22,15 @@ import {
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
 import type { Prop, Props } from "./schema/props";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Slot = createTemplateComponentFixture("Slot");
+const Tabs = createTemplateComponentFixture("Tabs");
+const TabsContent = createTemplateComponentFixture("TabsContent");
+const TabsList = createTemplateComponentFixture("TabsList");
+const TabsTrigger = createTemplateComponentFixture("TabsTrigger");
+const XmlNode = createTemplateComponentFixture("XmlNode");
 
 test("resolves component JSX names and prefixes namespaced collisions", () => {
   const components = [
@@ -64,25 +77,25 @@ test("keeps direct JSX names unique across arbitrary component libraries", () =>
 
 test("find all tree instances", () => {
   const { instances } = renderData(
-    <$.Body ws:id="1">
-      <$.Box ws:id="2"></$.Box>
-      <$.Box ws:id="3">
-        <$.Box ws:id="4"></$.Box>
-        <$.Box ws:id="5"></$.Box>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="1">
+      <Box ws:id="2"></Box>
+      <Box ws:id="3">
+        <Box ws:id="4"></Box>
+        <Box ws:id="5"></Box>
+      </Box>
+    </Body>
   );
   expect(findTreeInstanceIds(instances, "3")).toEqual(new Set(["3", "4", "5"]));
 });
 
 test("find tree instances excluding complete subtrees", () => {
   const { instances } = renderData(
-    <$.Body ws:id="root">
-      <$.Box ws:id="hidden">
-        <$.Box ws:id="hidden-child"></$.Box>
-      </$.Box>
-      <$.Box ws:id="visible"></$.Box>
-    </$.Body>
+    <Body ws:id="root">
+      <Box ws:id="hidden">
+        <Box ws:id="hidden-child"></Box>
+      </Box>
+      <Box ws:id="visible"></Box>
+    </Body>
   );
 
   expect(
@@ -92,16 +105,16 @@ test("find tree instances excluding complete subtrees", () => {
 
 test("find all tree instances excluding slot descendants", () => {
   const { instances } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="box1">
-        <$.Slot ws:id="slot">
-          <$.Box ws:id="slotbox1"></$.Box>
-          <$.Box ws:id="slotbox2"></$.Box>
-        </$.Slot>
-        <$.Box ws:id="box2"></$.Box>
-      </$.Box>
-      <$.Box ws:id="box3"></$.Box>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="box1">
+        <Slot ws:id="slot">
+          <Box ws:id="slotbox1"></Box>
+          <Box ws:id="slotbox2"></Box>
+        </Slot>
+        <Box ws:id="box2"></Box>
+      </Box>
+      <Box ws:id="box3"></Box>
+    </Body>
   );
   expect(
     findTreeInstanceIdsExcludingSlotDescendants(instances, "box1")
@@ -157,7 +170,7 @@ test("finds rendered tree instances without traversing block templates", () => {
 });
 
 test("include not existing/virtual instance", () => {
-  const { instances } = renderData(<$.Body ws:id="1"></$.Body>);
+  const { instances } = renderData(<Body ws:id="1"></Body>);
   expect(findTreeInstanceIds(instances, ":root")).toEqual(new Set([":root"]));
   expect(
     findTreeInstanceIdsExcludingSlotDescendants(instances, ":root")
@@ -243,12 +256,12 @@ test("get html tag from instance", () => {
     ["XmlNode", { presetStyle: { div: [] } }],
   ]);
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="meta"></$.Box>
-      <$.Box ws:id="prop" ws:tag="article"></$.Box>
-      <$.Box ws:id="instance" ws:tag="nav"></$.Box>
-      <$.XmlNode ws:id="xml" tag="svg"></$.XmlNode>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="meta"></Box>
+      <Box ws:id="prop" ws:tag="article"></Box>
+      <Box ws:id="instance" ws:tag="nav"></Box>
+      <XmlNode ws:id="xml" tag="svg"></XmlNode>
+    </Body>
   );
 
   expect(
@@ -440,9 +453,9 @@ test("does not choose between duplicate tag props", () => {
 
 test("gets html tags from props", () => {
   const { props } = renderData(
-    <$.Body ws:id="body">
-      <$.XmlNode ws:id="xml" tag="svg"></$.XmlNode>
-    </$.Body>
+    <Body ws:id="body">
+      <XmlNode ws:id="xml" tag="svg"></XmlNode>
+    </Body>
   );
   props.set("tag-prop", {
     id: "tag-prop",
@@ -473,9 +486,9 @@ test("get html tag from instance reads mutable props maps", () => {
     ["Box", { presetStyle: { section: [] } }],
   ]);
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="box"></$.Box>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="box"></Box>
+    </Body>
   );
   const instance = instances.get("box") as Instance;
   props.set("tag-prop", {
@@ -551,25 +564,25 @@ test("get html tag from instance skips props when provided tag map has no tag", 
 
 test("get indexes within ancestors", () => {
   const { instances } = renderData(
-    <$.Body ws:id="body0">
-      <$.Tabs ws:id="tabs1">
-        <$.TabsList ws:id="tabs1list">
-          <$.Box>
-            <$.TabsTrigger ws:id="tabs1trigger1"></$.TabsTrigger>
-            <$.TabsTrigger ws:id="tabs1trigger2"></$.TabsTrigger>
-          </$.Box>
-        </$.TabsList>
-        <$.TabsContent ws:id="tabs1content1"></$.TabsContent>
-        <$.TabsContent ws:id="tabs1content2">
-          <$.Tabs ws:id="tabs2">
-            <$.TabsList ws:id="tabs2list">
-              <$.TabsTrigger ws:id="tabs2trigger1"></$.TabsTrigger>
-            </$.TabsList>
-            <$.TabsContent ws:id="tabs2content1"></$.TabsContent>
-          </$.Tabs>
-        </$.TabsContent>
-      </$.Tabs>
-    </$.Body>
+    <Body ws:id="body0">
+      <Tabs ws:id="tabs1">
+        <TabsList ws:id="tabs1list">
+          <Box>
+            <TabsTrigger ws:id="tabs1trigger1"></TabsTrigger>
+            <TabsTrigger ws:id="tabs1trigger2"></TabsTrigger>
+          </Box>
+        </TabsList>
+        <TabsContent ws:id="tabs1content1"></TabsContent>
+        <TabsContent ws:id="tabs1content2">
+          <Tabs ws:id="tabs2">
+            <TabsList ws:id="tabs2list">
+              <TabsTrigger ws:id="tabs2trigger1"></TabsTrigger>
+            </TabsList>
+            <TabsContent ws:id="tabs2content1"></TabsContent>
+          </Tabs>
+        </TabsContent>
+      </Tabs>
+    </Body>
   );
   const metas = new Map<Instance["component"], WsComponentMeta>([
     ["TabsList", { indexWithinAncestor: "Tabs" }],
@@ -592,17 +605,17 @@ test("get indexes within ancestors", () => {
 });
 
 test("ignore ws:block-template when compute indexes within ancestors", () => {
-  const BlockTemplate = ws["block-template"];
+  const BlockTemplate = ws.blockTemplate;
   const { instances } = renderData(
-    <$.Body ws:id="body0">
-      <$.Tabs>
+    <Body ws:id="body0">
+      <Tabs>
         <BlockTemplate>
-          <$.TabsTrigger ws:id="trigger1"></$.TabsTrigger>
+          <TabsTrigger ws:id="trigger1"></TabsTrigger>
         </BlockTemplate>
-        <$.TabsTrigger ws:id="trigger2"></$.TabsTrigger>
-        <$.TabsTrigger ws:id="trigger3"></$.TabsTrigger>
-      </$.Tabs>
-    </$.Body>
+        <TabsTrigger ws:id="trigger2"></TabsTrigger>
+        <TabsTrigger ws:id="trigger3"></TabsTrigger>
+      </Tabs>
+    </Body>
   );
   const metas = new Map<Instance["component"], WsComponentMeta>([
     ["TabsTrigger", { indexWithinAncestor: "Tabs" }],

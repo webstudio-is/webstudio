@@ -12,7 +12,7 @@ import { coreMetas } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
-import { $, renderData } from "@webstudio-is/template";
+import { createTemplateComponentFixture, renderData } from "@webstudio-is/template";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
@@ -35,6 +35,10 @@ import {
 } from "~/shared/sync/data-stores";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import { commitCanvasDragDrop } from "./use-drag-drop";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Text = createTemplateComponentFixture("Text");
 
 enableMapSet();
 registerContainers();
@@ -83,12 +87,12 @@ describe("commitCanvasDragDrop", () => {
 
   test("reparents existing subtree through runtime bridge and preserves related data", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="source">
-          <$.Text ws:id="child">Dynamic card</$.Text>
-        </$.Box>
-        <$.Box ws:id="target"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="source">
+          <Text ws:id="child">Dynamic card</Text>
+        </Box>
+        <Box ws:id="target"></Box>
+      </Body>
     );
     const prop = {
       id: "child-prop",
@@ -206,7 +210,7 @@ describe("commitCanvasDragDrop", () => {
   });
 
   test("inserts dragged component through runtime bridge", () => {
-    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    const data = renderData(<Body ws:id="body"></Body>);
     $instances.set(data.instances);
     serverSyncStore.popAll();
 
@@ -241,7 +245,7 @@ describe("commitCanvasDragDrop", () => {
   });
 
   test("inserts an Image with its source bound to the dragged asset", () => {
-    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    const data = renderData(<Body ws:id="body"></Body>);
     $instances.set(data.instances);
     serverSyncStore.popAll();
 
@@ -272,7 +276,7 @@ describe("commitCanvasDragDrop", () => {
   });
 
   test("does not commit incomplete drag state", () => {
-    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    const data = renderData(<Body ws:id="body"></Body>);
     $instances.set(data.instances);
 
     expect(

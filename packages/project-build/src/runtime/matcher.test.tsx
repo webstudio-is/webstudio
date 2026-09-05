@@ -1,21 +1,32 @@
 import { describe, expect, test, vi } from "vitest";
-import { $, renderData, renderTemplate, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  renderTemplate,
+  ws,
+} from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   findClosestInstanceMatchingFragment,
   getFragmentContentModelWarnings,
 } from "./matcher";
 
+const Body = createTemplateComponentFixture("Body");
+const Button = createTemplateComponentFixture("Button");
+const List = createTemplateComponentFixture("List");
+const ListItem = createTemplateComponentFixture("ListItem");
+const Text = createTemplateComponentFixture("Text");
+
 describe("findClosestInstanceMatchingFragment", () => {
   test("finds closest list with list item fragment", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.List ws:id="list">
-          <$.ListItem ws:id="listitem"></$.ListItem>
-        </$.List>
-      </$.Body>
+      <Body ws:id="body">
+        <List ws:id="list">
+          <ListItem ws:id="listitem"></ListItem>
+        </List>
+      </Body>
     );
-    const fragment = renderTemplate(<$.ListItem ws:id="new"></$.ListItem>);
+    const fragment = renderTemplate(<ListItem ws:id="new"></ListItem>);
     expect(
       findClosestInstanceMatchingFragment({
         metas: componentMetas,
@@ -47,11 +58,11 @@ describe("findClosestInstanceMatchingFragment", () => {
 
   test("finds button parent with button fragment", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Button ws:id="button"></$.Button>
-      </$.Body>
+      <Body ws:id="body">
+        <Button ws:id="button"></Button>
+      </Body>
     );
-    const fragment = renderTemplate(<$.Button ws:id="new"></$.Button>);
+    const fragment = renderTemplate(<Button ws:id="new"></Button>);
     expect(
       findClosestInstanceMatchingFragment({
         metas: componentMetas,
@@ -65,14 +76,14 @@ describe("findClosestInstanceMatchingFragment", () => {
 
   test("finds button parent with button and text fragment", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Button ws:id="button"></$.Button>
-      </$.Body>
+      <Body ws:id="body">
+        <Button ws:id="button"></Button>
+      </Body>
     );
     const fragment = renderTemplate(
       <>
-        <$.Button ws:id="new-button"></$.Button>
-        <$.Text ws:id="new-text"></$.Text>
+        <Button ws:id="new-button"></Button>
+        <Text ws:id="new-text"></Text>
       </>
     );
     expect(
@@ -88,8 +99,8 @@ describe("findClosestInstanceMatchingFragment", () => {
 
   test("reports first placement error", () => {
     const onError = vi.fn();
-    const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
-    const fragment = renderTemplate(<$.ListItem ws:id="listitem"></$.ListItem>);
+    const { instances, props } = renderData(<Body ws:id="body"></Body>);
+    const fragment = renderTemplate(<ListItem ws:id="listitem"></ListItem>);
     findClosestInstanceMatchingFragment({
       metas: componentMetas,
       instances,
@@ -105,9 +116,9 @@ describe("findClosestInstanceMatchingFragment", () => {
 
   test("allows fragment-internal warnings without allowing new placement violations", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
+      <Body ws:id="body">
         <ws.element ws:id="button" ws:tag="button" />
-      </$.Body>
+      </Body>
     );
     const legacyFragment = renderTemplate(
       <ws.element ws:id="legacy-button" ws:tag="button">

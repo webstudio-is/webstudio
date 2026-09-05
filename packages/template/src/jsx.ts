@@ -963,29 +963,14 @@ const createComponentMarker = (
   return component;
 };
 
-export const createProxy = (
-  prefix: string,
-  transformName: (name: string) => string = (name) => name
-): Record<string, Component> => {
-  return new Proxy(
-    {},
-    {
-      get(_target, prop) {
-        return createComponentMarker(`${prefix}${transformName(String(prop))}`);
-      },
-    }
-  );
-};
-
-/** @deprecated Accepted only while legacy `$.*` JSX remains readable. */
-export const $: Record<string, Component> = createProxy("");
+/** @internal Creates an explicit component marker for test fixtures. */
+export const createTemplateComponentFixture = (
+  componentId: Instance["component"]
+): Component => createComponentMarker(componentId);
 
 const createCompilerPrimitive = (name: string): Component => {
   return createComponentMarker(`ws:${name}`);
 };
-
-const contentBlockBody = createCompilerPrimitive("content-block-body");
-const blockTemplate = createCompilerPrimitive("block-template");
 
 type CompilerPrimitives = {
   root: Component;
@@ -995,8 +980,6 @@ type CompilerPrimitives = {
   block: Component;
   contentBlockBody: Component;
   blockTemplate: Component;
-  "content-block-body": Component;
-  "block-template": Component;
 };
 
 /** Compiler-only primitives that have no React component implementation. */
@@ -1006,8 +989,6 @@ export const ws: CompilerPrimitives = {
   collection: createCompilerPrimitive("collection"),
   descendant: createCompilerPrimitive("descendant"),
   block: createCompilerPrimitive("block"),
-  contentBlockBody,
-  blockTemplate,
-  "content-block-body": contentBlockBody,
-  "block-template": blockTemplate,
+  contentBlockBody: createCompilerPrimitive("content-block-body"),
+  blockTemplate: createCompilerPrimitive("block-template"),
 };

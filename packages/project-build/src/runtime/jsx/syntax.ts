@@ -224,8 +224,10 @@ export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
     if (node.type === "JSXMemberExpression") {
       const name = getJsxElementName(node);
       const [namespace, primitive, nested] = name?.split(".") ?? [];
+      if (namespace !== "ws" || nested !== undefined) {
+        return `JSX component namespaces are not supported. Use the direct component identifier for "${name}".`;
+      }
       if (
-        namespace === "ws" &&
         nested === undefined &&
         primitive !== undefined &&
         webstudioJsxCompilerPrimitiveNames.has(primitive) === false
