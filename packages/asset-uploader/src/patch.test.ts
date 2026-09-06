@@ -75,6 +75,18 @@ const ownershipHandler = db.get("Project", ({ request }) => {
   return json(null);
 });
 
+const editorPermitHandlers = (projectId: string) => [
+  db.get("Project", ({ request }) => {
+    const url = new URL(request.url);
+    return url.searchParams.has("userId")
+      ? json(null)
+      : json({ id: projectId, userId: "owner-1" });
+  }),
+  db.get("WorkspaceProjectAuthorization", () =>
+    json([{ relation: "editors" }])
+  ),
+];
+
 describe("asset folder persistence", () => {
   test("validates and upserts one REST folder mutation", async () => {
     const projectId = uid();
@@ -699,6 +711,46 @@ describe("asset patch persistence", () => {
     ).rejects.toThrow("belongs to another project");
   });
 
+  test("preserves mutable file metadata in the validation snapshot", async () => {
+    const projectId = uid();
+    const fontRow = {
+      ...assetRow,
+      projectId,
+      file: {
+        ...assetRow.file,
+        name: "font.woff2",
+        format: "woff2",
+        meta: JSON.stringify({
+          family: "Inter",
+          style: "normal",
+          weight: 400,
+        }),
+      },
+    };
+    const nextMeta = {
+      family: "Inter",
+      style: "normal" as const,
+      weight: 600,
+    };
+    let validatedMeta: unknown;
+    server.use(
+      db.get("Asset", () => json([fontRow])),
+      db.patch("File", () => json({ meta: JSON.stringify(nextMeta) }))
+    );
+
+    await patchAssetsWithClient(
+      { projectId, client: testContext.postgrest.client },
+      [{ op: "replace", path: ["asset-1", "meta"], value: nextMeta }],
+      {
+        validate: async ({ next }) => {
+          validatedMeta = next.get("asset-1")?.meta;
+        },
+      }
+    );
+
+    expect(validatedMeta).toEqual(nextMeta);
+  });
+
   test("updates only supplied metadata and reloads only that asset", async () => {
     const projectId = uid();
     let update: unknown;
@@ -966,7 +1018,158 @@ describe("patchAssets (msw)", () => {
     expect(metadataUpdated).toBe(false);
   });
 
-  test("requires New entry when adding an asset to an existing collection", async () => {
+  test("rejects mismatched asset map keys before collection authorization", async () => {
+    const projectId = uid();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const configFile = {
+      ...assetRow.file,
+      name: "config-storage.json",
+      format: "json",
+      size: configSource.length,
+      meta: "{}",
+      updatedAt: "2026-09-03T00:00:00.000Z",
+      isDeleted: true,
+    };
+    const templateRow = {
+      ...assetRow,
+      assetId: "template",
+      projectId,
+      filename: "template",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "template-storage.mdx",
+        format: "mdx",
+        size: templateSource.length,
+        meta: "{}",
+      },
+    };
+    let inserted = false;
+    server.use(
+      ...editorPermitHandlers(projectId),
+      db.get("Asset", () => json([templateRow])),
+      db.get("File", () => json([configFile])),
+      db.patch("File", () => empty({ status: 204 })),
+      db.post("Asset", () => {
+        inserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configFile.name]: configSource,
+            [templateRow.file.name]: templateSource,
+          }),
+        },
+        [
+          {
+            op: "add",
+            path: ["forged-map-key"],
+            value: {
+              id: "config",
+              projectId,
+              name: configFile.name,
+              filename: "collection",
+              folderId: "posts",
+              type: "file",
+              format: "json",
+              size: configSource.length,
+              description: null,
+              createdAt: configFile.createdAt,
+              meta: {},
+            },
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow("does not match its map key");
+    expect(inserted).toBe(false);
+  });
+
+  test("validates collection moves with authoritative file metadata", async () => {
+    const projectId = uid();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const entrySource =
+      "---\ntitle: Hello world\nslug: hello-world\ndraft: true\n---\n\nBody.\n";
+    const configRow = {
+      ...assetRow,
+      assetId: "config",
+      projectId,
+      filename: "collection",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "config-storage.json",
+        format: "json",
+        size: configSource.length,
+        meta: "{}",
+      },
+    };
+    const templateRow = {
+      ...assetRow,
+      assetId: "template",
+      projectId,
+      filename: "template",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "template-storage.mdx",
+        format: "mdx",
+        size: templateSource.length,
+        meta: "{}",
+      },
+    };
+    const textEntryRow = {
+      ...assetRow,
+      assetId: "entry",
+      projectId,
+      filename: "hello-world",
+      folderId: null,
+      file: {
+        ...assetRow.file,
+        name: "entry-storage.txt",
+        format: "txt",
+        size: entrySource.length,
+        meta: "{}",
+      },
+    };
+    let metadataUpdated = false;
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([configRow, templateRow, textEntryRow])),
+      db.patch("Asset", () => {
+        metadataUpdated = true;
+        return json({ id: "entry" });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configRow.file.name]: configSource,
+            [templateRow.file.name]: templateSource,
+            [textEntryRow.file.name]: entrySource,
+          }),
+        },
+        [
+          { op: "replace", path: ["entry", "format"], value: "mdx" },
+          { op: "add", path: ["entry", "folderId"], value: "posts" },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow("Move non-entry files into a subfolder");
+    expect(metadataUpdated).toBe(false);
+  });
+
+  test("restores a valid collection entry through a sync patch", async () => {
     const projectId = uid();
     const configSource = createDefaultCollectionConfig();
     const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
@@ -998,11 +1201,70 @@ describe("patchAssets (msw)", () => {
         size: templateSource.length,
       },
     };
+    const entryFile = {
+      ...assetRow.file,
+      name: "entry-storage.mdx",
+      format: "mdx",
+      size: entrySource.length,
+      meta: "{}",
+      updatedAt: "2026-09-03T00:00:00.000Z",
+    };
+    const invalidEntryFile = {
+      ...entryFile,
+      name: "invalid-entry-storage.mdx",
+    };
     let inserted = false;
+    const entryPatch: Patch[] = [
+      {
+        op: "add",
+        path: ["entry"],
+        value: {
+          id: "entry",
+          projectId,
+          name: "entry-storage.mdx",
+          filename: "hello-world",
+          folderId: "posts",
+          type: "file",
+          format: "mdx",
+          size: entrySource.length,
+          description: null,
+          createdAt: "2026-09-03T00:00:00.000Z",
+          meta: {},
+        },
+      },
+    ];
+    const invalidEntryPatch: Patch[] = [
+      {
+        op: "add",
+        path: ["invalid-entry"],
+        value: {
+          id: "invalid-entry",
+          projectId,
+          name: "invalid-entry-storage.mdx",
+          filename: "different-slug",
+          folderId: "posts",
+          type: "file",
+          format: "mdx",
+          size: entrySource.length,
+          description: null,
+          createdAt: "2026-09-03T00:00:00.000Z",
+          meta: {},
+        },
+      },
+    ];
     server.use(
-      ownershipHandler,
+      ...editorPermitHandlers(projectId),
       db.get("Asset", () => json([configRow, templateRow])),
-      db.get("File", () => json([{ name: "entry-storage.mdx" }])),
+      db.get("File", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("status")).toBe("eq.UPLOADED");
+        const filter = url.searchParams.get("name") ?? "";
+        return json(
+          [entryFile, invalidEntryFile].filter(({ name }) =>
+            filter.includes(name)
+          )
+        );
+      }),
       db.patch("File", () => empty({ status: 204 })),
       db.post("Asset", () => {
         inserted = true;
@@ -1018,31 +1280,190 @@ describe("patchAssets (msw)", () => {
             [configRow.file.name]: configSource,
             [templateRow.file.name]: templateSource,
             "entry-storage.mdx": entrySource,
+            "invalid-entry-storage.mdx": entrySource,
           }),
         },
-        [
-          {
-            op: "add",
-            path: ["entry"],
-            value: {
-              id: "entry",
-              projectId,
-              name: "entry-storage.mdx",
-              filename: "hello-world",
-              folderId: "posts",
-              type: "file",
-              format: "mdx",
-              size: entrySource.length,
-              description: null,
-              createdAt: "2026-09-03T00:00:00.000Z",
-              meta: {},
-            },
-          },
-        ],
+        invalidEntryPatch,
         createContext()
       )
-    ).rejects.toThrow("Use New entry");
+    ).rejects.toThrow("slug must match the entry filename");
     expect(inserted).toBe(false);
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configRow.file.name]: configSource,
+            [templateRow.file.name]: templateSource,
+            "entry-storage.mdx": entrySource,
+          }),
+        },
+        entryPatch,
+        createContext()
+      )
+    ).resolves.toBeUndefined();
+    expect(inserted).toBe(true);
+  });
+
+  test("moves a valid entry back into its collection through a sync patch", async () => {
+    const projectId = uid();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const entrySource =
+      "---\ntitle: Hello world\nslug: hello-world\ndraft: true\n---\n\nBody.\n";
+    const configRow = {
+      ...assetRow,
+      assetId: "config",
+      projectId,
+      filename: "collection",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "config-storage.json",
+        format: "json",
+        size: configSource.length,
+      },
+    };
+    const templateRow = {
+      ...assetRow,
+      assetId: "template",
+      projectId,
+      filename: "template",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "template-storage.mdx",
+        format: "mdx",
+        size: templateSource.length,
+      },
+    };
+    const entryRow = {
+      ...assetRow,
+      assetId: "entry",
+      projectId,
+      filename: "hello-world",
+      folderId: null,
+      file: {
+        ...assetRow.file,
+        name: "entry-storage.mdx",
+        format: "mdx",
+        size: entrySource.length,
+      },
+    };
+    let folderId: unknown;
+    server.use(
+      ...editorPermitHandlers(projectId),
+      db.get("Asset", () => json([configRow, templateRow, entryRow])),
+      db.patch("Asset", async ({ request }) => {
+        folderId = ((await request.json()) as { folderId: unknown }).folderId;
+        return json({ id: "entry" });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configRow.file.name]: configSource,
+            [templateRow.file.name]: templateSource,
+            [entryRow.file.name]: entrySource,
+          }),
+        },
+        [{ op: "add", path: ["entry", "folderId"], value: "posts" }],
+        createContext()
+      )
+    ).resolves.toBeUndefined();
+    expect(folderId).toBe("posts");
+  });
+
+  test("allows invalid collection entries to be repaired one at a time", async () => {
+    const projectId = uid();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const invalidEntrySource = "---\nslug: missing-title\ndraft: true\n---\n";
+    const configRow = {
+      ...assetRow,
+      assetId: "config",
+      projectId,
+      filename: "collection",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "config-storage.json",
+        format: "json",
+        size: configSource.length,
+      },
+    };
+    const templateRow = {
+      ...assetRow,
+      assetId: "template",
+      projectId,
+      filename: "template",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "template-storage.mdx",
+        format: "mdx",
+        size: templateSource.length,
+      },
+    };
+    const firstEntryRow = {
+      ...assetRow,
+      assetId: "first-entry",
+      projectId,
+      filename: "missing-title",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "first-entry-storage.mdx",
+        format: "mdx",
+        size: invalidEntrySource.length,
+      },
+    };
+    const secondEntryRow = {
+      ...assetRow,
+      assetId: "second-entry",
+      projectId,
+      filename: "also-missing-title",
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: "second-entry-storage.mdx",
+        format: "mdx",
+        size: invalidEntrySource.length,
+      },
+    };
+    let updatedFolderId: unknown = "not-updated";
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () =>
+        json([configRow, templateRow, firstEntryRow, secondEntryRow])
+      ),
+      db.patch("Asset", async ({ request }) => {
+        updatedFolderId = ((await request.json()) as { folderId: unknown })
+          .folderId;
+        return json({ id: "first-entry", folderId: null });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        {
+          projectId,
+          assetStore: createSourceAssetStore({
+            [configRow.file.name]: configSource,
+            [templateRow.file.name]: templateSource,
+            [firstEntryRow.file.name]: invalidEntrySource,
+            [secondEntryRow.file.name]: invalidEntrySource,
+          }),
+        },
+        [{ op: "remove", path: ["first-entry", "folderId"] }],
+        createContext()
+      )
+    ).resolves.toBeUndefined();
+    expect(updatedFolderId).toBeNull();
   });
 
   test("validates collection rules before persisting an asset patch", async () => {
@@ -1079,6 +1500,28 @@ describe("patchAssets (msw)", () => {
     server.use(
       ownershipHandler,
       db.get("Asset", () => json([])),
+      db.get("File", () =>
+        json([
+          {
+            ...configRow.file,
+            meta: "{}",
+            updatedAt: "2026-09-03T00:00:00.000Z",
+          },
+          {
+            ...templateRow.file,
+            meta: "{}",
+            updatedAt: "2026-09-03T00:00:00.000Z",
+          },
+          {
+            ...assetRow.file,
+            name: "notes.txt",
+            format: "txt",
+            size: 5,
+            meta: "{}",
+            updatedAt: "2026-09-03T00:00:00.000Z",
+          },
+        ])
+      ),
       db.post("Asset", () => {
         inserted = true;
         return empty({ status: 201 });
@@ -1153,7 +1596,7 @@ describe("patchAssets (msw)", () => {
     expect(inserted).toBe(false);
   });
 
-  test("persists asset metadata via patch", async () => {
+  test("persists legacy null-provenance asset metadata via patch", async () => {
     const projectId = uid();
     let localAssetRow = {
       ...assetRow,
@@ -1167,6 +1610,7 @@ describe("patchAssets (msw)", () => {
           style: "normal",
           weight: 400,
         }),
+        uploaderProjectId: null,
       },
     };
     let updatedMeta: unknown;
@@ -1174,6 +1618,7 @@ describe("patchAssets (msw)", () => {
     server.use(
       ownershipHandler,
       db.get("Asset", () => json([localAssetRow])),
+      db.get("File", () => json([localAssetRow.file])),
       db.patch("File", async ({ request }) => {
         updatedMeta = ((await request.json()) as { meta: unknown }).meta;
         localAssetRow = {
@@ -1297,6 +1742,151 @@ describe("patchAssets (msw)", () => {
       expected_name: "photo.jpg",
       replacement_name: "photo_revision.jpg",
     });
+  });
+
+  test("restores a shared clone file without requiring an owned revision", async () => {
+    const projectId = uid();
+    const sourceProjectId = uid();
+    const authoritativeMeta = { width: 1200, height: 800 };
+    const forgedMeta = { width: 9999, height: 9999 };
+    const staleMeta = { width: 320, height: 200 };
+    const sharedFile = {
+      ...assetRow.file,
+      name: "original_shared.jpg",
+      format: "jpg",
+      size: 2000,
+      meta: JSON.stringify(authoritativeMeta),
+      uploaderProjectId: sourceProjectId,
+      contentHash: "a".repeat(64),
+      isDeleted: false,
+      updatedAt: "2026-09-06T00:00:00.000Z",
+    };
+    const currentFile = {
+      ...sharedFile,
+      name: "current_clone.jpg",
+      size: 1000,
+      meta: JSON.stringify(staleMeta),
+      uploaderProjectId: projectId,
+      contentHash: "f".repeat(64),
+    };
+    let persistedFile = currentFile;
+    let persistedSharedMeta = sharedFile.meta;
+    let fileMetadataUpdates = 0;
+    const restoredFiles: string[] = [];
+    const directSwapInputs: Array<Record<string, unknown>> = [];
+    const swapInputs: Array<Record<string, unknown>> = [];
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () =>
+        json([
+          {
+            ...assetRow,
+            assetId: "entry",
+            projectId,
+            filename: "post",
+            folderId: null,
+            file: persistedFile,
+          },
+        ])
+      ),
+      db.get("File", ({ request }) => {
+        const url = new URL(request.url);
+        const nameFilter = url.searchParams.get("name") ?? "";
+        if (nameFilter.includes(sharedFile.name)) {
+          return json([{ ...sharedFile, meta: persistedSharedMeta }]);
+        }
+        return json([]);
+      }),
+      db.patch("File", async ({ request }) => {
+        const url = new URL(request.url);
+        const name = url.searchParams.get("name") ?? "";
+        const input = (await request.json()) as Record<string, unknown>;
+        if (Object.hasOwn(input, "isDeleted")) {
+          expect(url.searchParams.get("status")).toBe("eq.UPLOADED");
+          expect(input).toEqual({ isDeleted: false });
+          restoredFiles.push(name);
+          return json({ name: sharedFile.name });
+        }
+        if (typeof input.meta === "string") {
+          fileMetadataUpdates += 1;
+          persistedSharedMeta = input.meta;
+          return json({ meta: input.meta });
+        }
+        return json(null);
+      }),
+      db.patch("Asset", async ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("id")).toBe("eq.entry");
+        expect(url.searchParams.get("projectId")).toBe(`eq.${projectId}`);
+        expect(url.searchParams.get("name")).toBe(`eq.${currentFile.name}`);
+        const input = (await request.json()) as Record<string, unknown>;
+        directSwapInputs.push(input);
+        if (input.name !== sharedFile.name) {
+          return json(null);
+        }
+        persistedFile = sharedFile;
+        return json({ id: "entry" });
+      }),
+      http.post(
+        "http://test-postgrest/rpc/swap_asset_file",
+        async ({ request }) => {
+          const input = (await request.json()) as Record<string, unknown>;
+          swapInputs.push(input);
+          return HttpResponse.json("invalid_revision");
+        }
+      )
+    );
+    const assetStore = {
+      readFile: async () => {
+        throw new Error("Unexpected asset content read");
+      },
+    };
+    const patches: Patch[] = [
+      {
+        op: "replace",
+        path: ["entry", "name"],
+        value: sharedFile.name,
+      },
+      {
+        op: "replace",
+        path: ["entry", "meta"],
+        value: authoritativeMeta,
+      },
+    ];
+
+    await expect(
+      patchAssets(
+        { projectId, assetStore },
+        [
+          patches[0]!,
+          {
+            op: "replace",
+            path: ["entry", "meta"],
+            value: forgedMeta,
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow("Shared asset metadata does not match its file");
+    expect(restoredFiles).toEqual([]);
+    expect(directSwapInputs).toEqual([]);
+    expect(swapInputs).toEqual([]);
+    expect(persistedSharedMeta).toBe(sharedFile.meta);
+    expect(persistedFile).toEqual(currentFile);
+
+    await patchAssets({ projectId, assetStore }, patches, createContext());
+    await patchAssets({ projectId, assetStore }, patches, createContext());
+
+    expect(restoredFiles).toEqual([`eq.${sharedFile.name}`]);
+    expect(directSwapInputs).toEqual([
+      {
+        name: sharedFile.name,
+      },
+    ]);
+    expect(swapInputs).toEqual([]);
+    expect(persistedFile).toEqual(sharedFile);
+    expect(persistedSharedMeta).toBe(sharedFile.meta);
+    expect(fileMetadataUpdates).toBe(0);
   });
 
   test("persists moving an asset to root as null", async () => {
@@ -1423,7 +2013,18 @@ describe("patchAssets (msw)", () => {
         return json([]);
       }),
       // File lookup for undo restore
-      db.get("File", () => json([{ name: "new.jpg" }])),
+      db.get("File", () =>
+        json([
+          {
+            ...assetRow.file,
+            name: "new.jpg",
+            format: "jpg",
+            size: 500,
+            meta: JSON.stringify({ width: 50, height: 50 }),
+            updatedAt: "2024-01-01T00:00:00.000Z",
+          },
+        ])
+      ),
       // restore isDeleted=false
       db.patch("File", () => empty({ status: 204 })),
       // asset insert
@@ -1501,6 +2102,146 @@ describe("patchAssets (msw)", () => {
     ).rejects.toThrow("Asset file not found for missing");
     expect(restored).toBe(false);
     expect(inserted).toBe(false);
+  });
+
+  test("rejects an added asset whose file is not fully uploaded", async () => {
+    const projectId = uid();
+    let restored = false;
+    let inserted = false;
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([])),
+      db.get("File", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("status")).toBe(
+          "eq.UPLOADED"
+        );
+        return json([
+          {
+            ...assetRow.file,
+            name: "uploading.jpg",
+            status: "UPLOADING",
+          },
+        ]);
+      }),
+      db.patch("File", () => {
+        restored = true;
+        return empty({ status: 204 });
+      }),
+      db.post("Asset", () => {
+        inserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    await expect(
+      patchAssets(
+        { projectId, assetStore: unusedAssetStore },
+        [
+          {
+            op: "add",
+            path: ["uploading"],
+            value: {
+              id: "uploading",
+              name: "uploading.jpg",
+              type: "image",
+              projectId,
+              format: "jpg",
+              size: 1000,
+              description: null,
+              createdAt: "2024-01-01T00:00:00.000Z",
+              meta: { width: 100, height: 100 },
+            },
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow("Asset file not found");
+    expect(restored).toBe(false);
+    expect(inserted).toBe(false);
+  });
+
+  test("chunks uploaded file lookups and restores by bounded filter size", async () => {
+    const projectId = uid();
+    const fileNames = Array.from(
+      { length: 12 },
+      (_, index) => `${String(index).padStart(2, "0")}-${"a".repeat(490)}.jpg`
+    );
+    const assetFileNames = [...fileNames, fileNames[0]!];
+    const fileByName = new Map(
+      fileNames.map((name) => [
+        name,
+        {
+          ...assetRow.file,
+          name,
+          status: "UPLOADED",
+        },
+      ])
+    );
+    const readBatches: string[][] = [];
+    const restoreBatches: string[][] = [];
+    const getNames = (request: Request) => {
+      const url = new URL(request.url);
+      expect(url.search.length).toBeLessThan(4300);
+      expect(url.searchParams.get("status")).toBe("eq.UPLOADED");
+      const filter = url.searchParams.get("name");
+      expect(filter?.startsWith("in.(")).toBe(true);
+      return filter?.slice(4, -1).split(",") ?? [];
+    };
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([])),
+      db.get("File", ({ request }) => {
+        const names = getNames(request);
+        readBatches.push(names);
+        return json(
+          names.flatMap((name) => {
+            const file = fileByName.get(name);
+            return file === undefined ? [] : [file];
+          })
+        );
+      }),
+      db.patch("File", ({ request }) => {
+        restoreBatches.push(getNames(request));
+        return empty({ status: 204 });
+      }),
+      db.post("Asset", () => empty({ status: 201 }))
+    );
+
+    await patchAssets(
+      { projectId, assetStore: unusedAssetStore },
+      assetFileNames.map((name, index) => ({
+        op: "add" as const,
+        path: [`asset-${index}`],
+        value: {
+          id: `asset-${index}`,
+          name,
+          type: "image" as const,
+          projectId,
+          format: "jpg",
+          size: 1000,
+          description: null,
+          createdAt: "2024-01-01T00:00:00.000Z",
+          meta: { width: 100, height: 100 },
+        },
+      })),
+      createContext()
+    );
+
+    expect(readBatches.length).toBeGreaterThan(2);
+    expect(restoreBatches.length).toBeGreaterThan(1);
+    expect(readBatches.every((batch) => batch.length < fileNames.length)).toBe(
+      true
+    );
+    expect(
+      restoreBatches.every((batch) => batch.length < fileNames.length)
+    ).toBe(true);
+    expect(new Set(readBatches.flat())).toEqual(new Set(fileNames));
+    expect(new Set(restoreBatches.flat())).toEqual(new Set(fileNames));
+    expect(
+      [...readBatches, ...restoreBatches].every(
+        (batch) => new Set(batch).size === batch.length
+      )
+    ).toBe(true);
   });
 
   test("core helper deletes assets and marks unused files as deleted", async () => {

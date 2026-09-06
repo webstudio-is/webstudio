@@ -268,8 +268,8 @@ test("Editor can create and reload a content collection entry", async ({
     dialog.getByRole("button", { name: "Create entry" }).click(),
   ]);
   await waitForAsset({ page, filename: entryFilename });
-  await page.getByTitle("collection.json").waitFor({ state: "hidden" });
-  await page.getByTitle("template.mdx").waitFor({ state: "hidden" });
+  await page.getByTitle("collection.json").waitFor({ state: "visible" });
+  await page.getByTitle("template.mdx").waitFor({ state: "visible" });
 
   await openProjectBuilder({
     page,
@@ -282,6 +282,8 @@ test("Editor can create and reload a content collection entry", async ({
     .getByRole("button", { name: `Folder ${folderName}`, exact: true })
     .dblclick();
   await waitForAsset({ page, filename: entryFilename });
+  await page.getByTitle("collection.json").waitFor({ state: "visible" });
+  await page.getByTitle("template.mdx").waitFor({ state: "visible" });
 });
 
 test("Editor can replace image source with asset in content mode", async ({

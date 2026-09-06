@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, type KeyboardEvent } from "react";
 import {
   collectionEntryFieldClearValue,
-  getCollectionFieldValidationError,
+  getCollectionFieldValidationIssue,
   normalizeCollectionSlug,
   type CollectionField,
 } from "@webstudio-is/content-engine";
@@ -196,8 +196,12 @@ export const CreateCollectionEntryDialog = ({
         )
       )
   );
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<{
+    message: string;
+    fieldKey?: string;
+  }>();
   const [creating, setCreating] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   useLayoutEffect(() => {
     if (open) {
@@ -219,6 +223,7 @@ export const CreateCollectionEntryDialog = ({
       );
       setError(undefined);
       setCreating(false);
+      setConfirmDiscard(false);
     }
   }, [collection.templateProperties, config.fields, open]);
 
@@ -296,12 +301,18 @@ export const CreateCollectionEntryDialog = ({
         submittedValues[config.slugField] =
           normalizeCollectionSlug(submittedSlug);
       }
-      const validationError = getCollectionFieldValidationError(
+      const validationIssue = getCollectionFieldValidationIssue(
         config,
         submittedValues
       );
-      if (validationError !== undefined) {
-        throw new Error(validationError);
+      if (validationIssue !== undefined) {
+        setError(validationIssue);
+        requestAnimationFrame(() => {
+          document
+            .getElementById(`collection-entry-${validationIssue.fieldKey}`)
+            ?.focus();
+        });
+        return;
       }
       const asset = await createEntry({
         projectId,
@@ -333,22 +344,30 @@ export const CreateCollectionEntryDialog = ({
         previewOpened ? "Entry created and opened." : "Entry created."
       );
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "The entry could not be created."
-      );
+      setError({
+        message:
+          error instanceof Error
+            ? error.message
+            : "The entry could not be created.",
+      });
     } finally {
       setCreating(false);
     }
+  };
+  const requestClose = () => {
+    if (editedFields.size > 0) {
+      setConfirmDiscard(true);
+      return;
+    }
+    onOpenChange(false);
   };
 
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (creating === false) {
-          onOpenChange(nextOpen);
+        if (creating === false && nextOpen === false) {
+          requestClose();
         }
       }}
     >
@@ -359,6 +378,12 @@ export const CreateCollectionEntryDialog = ({
       >
         <DialogTitle>New entry</DialogTitle>
         <Grid
+          as="form"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
           gap={3}
           css={{
             padding: theme.panel.padding,
@@ -369,7 +394,10 @@ export const CreateCollectionEntryDialog = ({
           {config.fields.map((field, index) => {
             const value = values[field.key];
             const id = `collection-entry-${field.key}`;
-            const errorId = "collection-entry-error";
+            const hasFieldError = error?.fieldKey === field.key;
+            const errorId = hasFieldError
+              ? "collection-entry-error"
+              : undefined;
             if (field.type === "boolean") {
               if (field.required === false) {
                 const selectedValue =
@@ -379,9 +407,8 @@ export const CreateCollectionEntryDialog = ({
                     <Label>{field.label}</Label>
                     <Select
                       aria-label={field.label}
-                      aria-describedby={
-                        error === undefined ? undefined : errorId
-                      }
+                      aria-describedby={errorId}
+                      aria-invalid={hasFieldError || undefined}
                       options={optionalBooleanOptions}
                       value={optionalBooleanOptions.find(
                         ({ value }) => value === selectedValue
@@ -407,9 +434,8 @@ export const CreateCollectionEntryDialog = ({
                   <Checkbox
                     id={id}
                     checked={value === true}
-                    required
-                    aria-required="true"
-                    aria-describedby={error === undefined ? undefined : errorId}
+                    aria-describedby={errorId}
+                    aria-invalid={hasFieldError || undefined}
                     disabled={creating}
                     onCheckedChange={(checked) =>
                       setValue(field, checked === true)
@@ -431,16 +457,15 @@ export const CreateCollectionEntryDialog = ({
                       id={id}
                       required={field.required}
                       aria-required={field.required}
-                      aria-describedby={
-                        error === undefined ? undefined : errorId
-                      }
-                      aria-invalid={error === undefined ? undefined : true}
+                      aria-describedby={errorId}
+                      aria-invalid={hasFieldError || undefined}
                       value={typeof value === "string" ? value : ""}
                       disabled={creating}
                       onChange={(value) => setValue(field, value)}
                     />
                     {field.required === false && (
                       <Button
+                        type="button"
                         aria-label={`Unset ${field.label}`}
                         disabled={creating || unsetFields.has(field.key)}
                         onClick={() => unsetValue(field)}
@@ -472,8 +497,8 @@ export const CreateCollectionEntryDialog = ({
                     step={field.type === "integer" ? 1 : undefined}
                     required={field.required}
                     aria-required={field.required}
-                    aria-describedby={error === undefined ? undefined : errorId}
-                    aria-invalid={error === undefined ? undefined : true}
+                    aria-describedby={errorId}
+                    aria-invalid={hasFieldError || undefined}
                     value={
                       typeof value === "string" ? value : String(value ?? "")
                     }
@@ -491,14 +516,10 @@ export const CreateCollectionEntryDialog = ({
                       }
                       setValue(field, event.target.value);
                     }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        void submit();
-                      }
-                    }}
                   />
                   {field.required === false && (
                     <Button
+                      type="button"
                       aria-label={`Unset ${field.label}`}
                       disabled={creating || unsetFields.has(field.key)}
                       onClick={() => unsetValue(field)}
@@ -517,20 +538,38 @@ export const CreateCollectionEntryDialog = ({
               color="destructive"
               variant="tiny"
             >
-              {error}
+              {error.message}
             </Text>
           )}
           <Flex justify="end">
-            <Button
-              color="primary"
-              disabled={creating}
-              onClick={() => void submit()}
-            >
+            <Button type="submit" color="primary" disabled={creating}>
               {creating ? "Creating…" : "Create entry"}
             </Button>
           </Flex>
         </Grid>
       </DialogContent>
+      <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <DialogContent aria-describedby={undefined} width={420}>
+          <DialogTitle>Discard entry?</DialogTitle>
+          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+            <Text>Your unsaved entry values will be lost.</Text>
+            <Flex justify="end" gap={2}>
+              <Button onClick={() => setConfirmDiscard(false)}>
+                Keep editing
+              </Button>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  setConfirmDiscard(false);
+                  onOpenChange(false);
+                }}
+              >
+                Discard entry
+              </Button>
+            </Flex>
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

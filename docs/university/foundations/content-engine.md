@@ -104,9 +104,10 @@ entry then opens on that page with its slug filled into the matching parameter.
 
 The collection format uses a supported subset of JSON Schema draft 2020-12.
 The configurator exposes string, number, integer, boolean, and slug fields,
-along with required fields, defaults, and length or value limits. A hand-written
-schema can also describe supported arrays and nested objects. It does not
-support `$ref`, composition keywords, enums, formats, or custom
+along with required fields and length or value limits. Set starting values in
+the entry template frontmatter. A hand-written schema can also describe
+supported arrays and nested objects. It does not support `$ref`, composition
+keywords, enums, formats, or custom
 regular-expression patterns. Webstudio reports unsupported rules with their
 location instead of silently ignoring them.
 

@@ -64,6 +64,60 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+test("asks before closing a new entry with unsaved values", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const onOpenChange = vi.fn();
+  renderer.render(
+    <CreateCollectionEntryDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: {},
+      }}
+      open
+      onOpenChange={onOpenChange}
+    />
+  );
+  const title = document.querySelector<HTMLInputElement>(
+    "#collection-entry-title"
+  );
+  if (title === null) {
+    throw new Error("Expected title input");
+  }
+  input(title, "Unsaved title");
+
+  await act(async () => {
+    document.querySelector<HTMLButtonElement>('[aria-label="Close"]')?.click();
+  });
+
+  expect(document.body.textContent).toContain("Discard entry?");
+  expect(onOpenChange).not.toHaveBeenCalled();
+  expect(title.value).toBe("Unsaved title");
+  const discard = Array.from(
+    document.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Discard entry");
+  if (discard === undefined) {
+    throw new Error("Expected discard entry button");
+  }
+  await act(async () => {
+    discard.click();
+  });
+
+  expect(onOpenChange).toHaveBeenCalledWith(false);
+});
+
 test("validates entry fields before sending a create request", async () => {
   const configAsset = createAsset({
     id: "config",
@@ -106,9 +160,74 @@ test("validates entry fields before sending a create request", async () => {
   );
   expect(
     document.querySelector<HTMLInputElement>("#collection-entry-title")
+  ).toHaveAttribute("aria-invalid", "true");
+  expect(
+    document.querySelector<HTMLInputElement>("#collection-entry-slug")
+  ).not.toHaveAttribute("aria-invalid");
+  expect(document.activeElement).toBe(
+    document.querySelector<HTMLInputElement>("#collection-entry-title")
+  );
+  expect(
+    document.querySelector<HTMLInputElement>("#collection-entry-title")
       ?.required
   ).toBe(true);
   expect(onOpenChange).not.toHaveBeenCalled();
+});
+
+test("submits an entry through the native form path used by Enter", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const createEntry = vi.fn(async () => {
+    throw new Error("Stop after capturing the request");
+  });
+  renderer.render(
+    <CreateCollectionEntryDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: false },
+      }}
+      open
+      onOpenChange={vi.fn()}
+      createEntry={createEntry}
+    />
+  );
+
+  const title = document.querySelector<HTMLInputElement>(
+    "#collection-entry-title"
+  );
+  const form = document.querySelector<HTMLFormElement>("form");
+  if (title === null || form === null) {
+    throw new Error("Expected collection entry form");
+  }
+  input(title, "Keyboard entry");
+
+  await act(async () => {
+    form.requestSubmit();
+  });
+
+  await vi.waitFor(() =>
+    expect(createEntry).toHaveBeenCalledWith({
+      folderId: "posts",
+      projectId: "project",
+      values: {
+        draft: false,
+        slug: "keyboard-entry",
+        title: "Keyboard entry",
+      },
+    })
+  );
 });
 
 test("regenerates a cleared slug before validating the entry", async () => {
@@ -265,11 +384,17 @@ test("explicitly clears a template-backed optional value", async () => {
     throw new Error("Expected collection entry fields");
   }
   input(title, "Hello world");
-  act(() => {
-    document
-      .querySelector<HTMLButtonElement>('[aria-label="Unset Summary"]')
-      ?.click();
+  const unsetSummary = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Unset Summary"]'
+  );
+  if (unsetSummary === null) {
+    throw new Error("Expected unset summary button");
+  }
+  expect(unsetSummary.type).toBe("button");
+  await act(async () => {
+    unsetSummary.click();
   });
+  expect(createEntry).not.toHaveBeenCalled();
   const create = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   ).find((button) => button.textContent === "Create entry");
@@ -287,6 +412,7 @@ test("explicitly clears a template-backed optional value", async () => {
       title: "Hello world",
     },
   });
+  expect(createEntry).toHaveBeenCalledOnce();
 });
 
 test("preserves an explicit blank optional string", async () => {
@@ -462,5 +588,6 @@ test("reconciles an idempotent retry when the entry is already loaded", async ()
   });
 
   expect(document.body.textContent).not.toContain("Asset already exists");
+  expect(document.body.textContent).not.toContain("Discard entry?");
   expect(onOpenChange).toHaveBeenCalledWith(false);
 });

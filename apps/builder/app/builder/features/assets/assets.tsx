@@ -45,6 +45,10 @@ import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-ed
 import { CreateTextFileDialog } from "~/builder/features/text-file-editor/create-text-file-dialog";
 import { CreateCollectionEntryDialog } from "~/builder/shared/asset-manager/create-collection-entry-dialog";
 import { CollectionSettingsDialog } from "~/builder/shared/asset-manager/collection-settings-dialog";
+import {
+  CollectionRetryButton,
+  CollectionUnavailableNotice,
+} from "./collection-unavailable-notice";
 
 export const AssetsPanel = ({
   publish,
@@ -322,12 +326,19 @@ export const AssetsPanel = ({
                   Open {formatAssetName(repairAssetToOpen)}
                 </Button>
               )}
-              <Button onClick={() => setCollectionRefreshKey((key) => key + 1)}>
-                Check again
-              </Button>
+              <CollectionRetryButton
+                collection={currentCollection}
+                onCheckAgain={() => setCollectionRefreshKey((key) => key + 1)}
+              />
             </Flex>
           )}
         </Flex>
+      )}
+      {currentCollection?.status === "unavailable" && (
+        <CollectionUnavailableNotice
+          collection={currentCollection}
+          onCheckAgain={() => setCollectionRefreshKey((key) => key + 1)}
+        />
       )}
       <AssetManager
         folderId={folderId}

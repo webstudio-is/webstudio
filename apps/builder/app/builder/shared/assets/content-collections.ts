@@ -7,6 +7,7 @@ import {
   extractMarkdownFrontmatter,
   getCollectionValidationError,
   getCollectionTemplateValidationError,
+  MarkdownMetadataError,
   parseCollectionConfig,
   type ContentCollectionConfig,
 } from "@webstudio-is/content-engine";
@@ -44,6 +45,7 @@ export type ContentCollection =
       configAsset: Asset;
       templateAsset?: Asset;
       reservedAssets: readonly Asset[];
+      siblingAssets: readonly Asset[];
       repairAsset: Asset;
       missingTemplateFilename?: string;
       forbiddenAsset?: Asset;
@@ -51,6 +53,15 @@ export type ContentCollection =
         action: "edit" | "move";
         asset: Asset;
       }>;
+      message: string;
+    }>
+  | Readonly<{
+      status: "unavailable";
+      folderId: string;
+      configAsset: Asset;
+      templateAsset?: Asset;
+      reservedAssets: readonly Asset[];
+      siblingAssets: readonly Asset[];
       message: string;
     }>;
 
@@ -61,6 +72,8 @@ const getErrorMessage = (error: unknown) =>
   error instanceof Error
     ? error.message
     : "Collection configuration is invalid";
+
+export class ContentCollectionReadError extends Error {}
 
 export const discoverContentCollections = async ({
   assets,
@@ -83,6 +96,31 @@ export const discoverContentCollections = async ({
     assetsByFolder.set(asset.folderId, siblings);
   }
   const collections = new Map<string, ContentCollection>();
+  const readCollectionSource = async (asset: Asset) => {
+    if (asset.size > contentEngineLimits.hydratedFileBytes) {
+      throw new ContentCollectionError(
+        `Collection file "${formatAssetName(asset)}" exceeds the editing limit`
+      );
+    }
+    try {
+      return await readSource(asset);
+    } catch (error) {
+      if (
+        error instanceof ContentCollectionError ||
+        error instanceof MarkdownMetadataError
+      ) {
+        throw error;
+      }
+      throw new ContentCollectionReadError(getErrorMessage(error));
+    }
+  };
+  const readCollectionFrontmatter = async (asset: Asset) => {
+    if (readFrontmatter !== undefined) {
+      return readFrontmatter(asset);
+    }
+    return (await extractMarkdownFrontmatter(await readCollectionSource(asset)))
+      .properties;
+  };
   for (const [folderId, siblings] of assetsByFolder) {
     const configAssets = siblings.filter(
       (asset) => formatAssetName(asset) === collectionConfigFilename
@@ -105,7 +143,9 @@ export const discoverContentCollections = async ({
           "A collection folder must contain exactly one collection.json"
         );
       }
-      const config = parseCollectionConfig(await readSource(configAsset));
+      const config = parseCollectionConfig(
+        await readCollectionSource(configAsset)
+      );
       const configuredTemplateAssets = siblings.filter(
         (asset) =>
           formatAssetName(asset) === config.template && isMdxFileAsset(asset)
@@ -156,7 +196,7 @@ export const discoverContentCollections = async ({
       }
       repairAsset = configuredTemplateAsset;
       const templateDocument = await parseMdxDocument({
-        source: await readSource(configuredTemplateAsset),
+        source: await readCollectionSource(configuredTemplateAsset),
       });
       const templateValidationError = getCollectionTemplateValidationError(
         config,
@@ -181,14 +221,7 @@ export const discoverContentCollections = async ({
             .slice(index, index + contentEngineLimits.concurrentContentReads)
             .map(async (entryAsset) => {
               try {
-                const properties =
-                  readFrontmatter === undefined
-                    ? (
-                        await extractMarkdownFrontmatter(
-                          await readSource(entryAsset)
-                        )
-                      ).properties
-                    : await readFrontmatter(entryAsset);
+                const properties = await readCollectionFrontmatter(entryAsset);
                 const validationError = getCollectionValidationError(
                   config,
                   properties
@@ -213,6 +246,9 @@ export const discoverContentCollections = async ({
                   };
                 }
               } catch (error) {
+                if (error instanceof ContentCollectionReadError) {
+                  throw error;
+                }
                 const details =
                   error instanceof Error ? `: ${error.message}` : "";
                 return {
@@ -240,12 +276,25 @@ export const discoverContentCollections = async ({
         templateProperties: templateDocument.frontmatter.properties,
       });
     } catch (error) {
+      if (error instanceof ContentCollectionReadError) {
+        collections.set(folderId, {
+          status: "unavailable",
+          folderId,
+          configAsset,
+          templateAsset,
+          reservedAssets,
+          siblingAssets: siblings,
+          message: `Collection files could not be loaded: ${error.message}`,
+        });
+        continue;
+      }
       collections.set(folderId, {
         status: "invalid",
         folderId,
         configAsset,
         templateAsset,
         reservedAssets,
+        siblingAssets: siblings,
         repairAsset,
         missingTemplateFilename,
         forbiddenAsset,
@@ -293,14 +342,26 @@ export const readBuilderAssetFrontmatter = async ({
   asset: Asset;
 }) => {
   const repository = createBuilderHttpAssetContentRepository({ projectId });
-  const content = await repository.readContent({
-    assetId: asset.id,
-    range: {
-      offset: 0,
-      length: Math.min(asset.size, builderFrontmatterReadBytes),
-    },
-  });
-  return (await extractMarkdownFrontmatter(content.data)).properties;
+  let content;
+  try {
+    content = await repository.readContent({
+      assetId: asset.id,
+      range: {
+        offset: 0,
+        length: Math.min(asset.size, builderFrontmatterReadBytes),
+      },
+    });
+  } catch (error) {
+    throw new ContentCollectionReadError(getErrorMessage(error));
+  }
+  try {
+    return (await extractMarkdownFrontmatter(content.data)).properties;
+  } catch (error) {
+    if (error instanceof MarkdownMetadataError) {
+      throw error;
+    }
+    throw new ContentCollectionReadError(getErrorMessage(error));
+  }
 };
 
 const hasSameAssetVersion = (left: Asset, right: Asset) =>
@@ -312,6 +373,20 @@ const hasSameAssetVersion = (left: Asset, right: Asset) =>
   left.format === right.format &&
   left.size === right.size &&
   left.updatedAt === right.updatedAt;
+
+const hasSameAssetVersions = (
+  left: readonly Asset[],
+  right: readonly Asset[]
+) => {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const rightById = new Map(right.map((asset) => [asset.id, asset]));
+  return left.every((asset) => {
+    const candidate = rightById.get(asset.id);
+    return candidate !== undefined && hasSameAssetVersion(asset, candidate);
+  });
+};
 
 export const createLoadingContentCollections = (assets: readonly Asset[]) => {
   const assetsByFolder = new Map<string, Asset[]>();
@@ -375,6 +450,16 @@ const canKeepReadyCollection = (
   );
 };
 
+const canKeepDiscoveredCollection = (
+  current: ContentCollection,
+  loading: Extract<ContentCollection, { status: "loading" }>
+) => {
+  if (current.status === "invalid" || current.status === "unavailable") {
+    return hasSameAssetVersions(current.siblingAssets, loading.siblingAssets);
+  }
+  return canKeepReadyCollection(current, loading);
+};
+
 export const mergeLoadingContentCollections = ({
   current,
   loading,
@@ -389,7 +474,7 @@ export const mergeLoadingContentCollections = ({
       folderId,
       next.status === "loading" &&
         previous !== undefined &&
-        canKeepReadyCollection(previous, next)
+        canKeepDiscoveredCollection(previous, next)
         ? previous
         : next
     );
@@ -479,7 +564,7 @@ export const getCollectionReservedAssetIds = (
 ) =>
   new Set(
     Array.from(collections.values()).flatMap((collection) =>
-      collection.status === "invalid"
+      collection.status === "invalid" || collection.status === "unavailable"
         ? includeInvalid
           ? [...collection.reservedAssets.map(({ id }) => id)]
           : []

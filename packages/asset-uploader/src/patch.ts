@@ -4,10 +4,7 @@ import {
   authorizeProject,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import {
-  collectionConfigFilename,
-  ContentCollectionError,
-} from "@webstudio-is/content-engine";
+import { collectionConfigFilename } from "@webstudio-is/content-engine";
 import { formatAssetName, type Asset } from "@webstudio-is/sdk";
 import { patchAssetsWithClient } from "./asset-patch-core";
 import type { AssetObjectReader } from "./client";
@@ -74,14 +71,7 @@ const validateCollectionAssetPatch = async ({
   }
   const collectionValidationFolderIds = new Set<string>();
   for (const assetId of collectionChangedIds) {
-    const previous = current.get(assetId);
     const following = next.get(assetId);
-    if (
-      previous?.folderId !== undefined &&
-      currentCollectionFolderIds.has(previous.folderId)
-    ) {
-      collectionValidationFolderIds.add(previous.folderId);
-    }
     if (
       following?.folderId !== undefined &&
       nextCollectionFolderIds.has(following.folderId)
@@ -118,6 +108,16 @@ const validateCollectionAssetPatch = async ({
       folderIds: affectedCollectionFolderIds,
     }),
   ]);
+  for (const assetId of collectionChangedIds) {
+    const previous = current.get(assetId);
+    if (
+      previous?.folderId !== undefined &&
+      currentCollectionFolderIds.has(previous.folderId) &&
+      currentReservedIds.has(assetId)
+    ) {
+      collectionValidationFolderIds.add(previous.folderId);
+    }
+  }
   if (
     canBuild === false &&
     Array.from(changedIds).some(
@@ -130,40 +130,10 @@ const validateCollectionAssetPatch = async ({
     );
   }
 
-  if (
-    Array.from(collectionChangedIds).some((assetId) => {
-      const following = next.get(assetId);
-      return (
-        current.has(assetId) === false &&
-        following?.folderId !== undefined &&
-        nextCollectionFolderIds.has(following.folderId) &&
-        nextReservedIds.has(assetId) === false &&
-        (canBuild === false ||
-          currentCollectionFolderIds.has(following.folderId))
-      );
-    })
-  ) {
-    throw new ContentCollectionError(
-      "Use New entry to add files to a collection folder"
-    );
-  }
-
-  for (const assetId of collectionChangedIds) {
-    const previous = current.get(assetId);
-    const following = next.get(assetId);
-    if (
-      previous !== undefined &&
-      following?.folderId !== undefined &&
-      previous.folderId !== following.folderId &&
-      nextCollectionFolderIds.has(following.folderId) &&
-      nextReservedIds.has(assetId) === false
-    ) {
-      throw new ContentCollectionError(
-        "Use New entry to add files to a collection folder"
-      );
-    }
-  }
-
+  // The public upload and metadata APIs require the dedicated New entry flow.
+  // Versioned sync patches also carry Undo/Redo, which cannot be identified
+  // after an Asset row is deleted. Accept those state transitions only when
+  // the complete resulting collection still satisfies its file-backed rules.
   for (const folderId of collectionValidationFolderIds) {
     if (nextCollectionFolderIds.has(folderId)) {
       await validateCollectionFolder({
@@ -204,6 +174,9 @@ export const patchAssets = async (
     { projectId, client: context.postgrest.client },
     patches,
     {
+      // Undo in cloned projects can target a File row retained from the source
+      // project. This path is enabled only after the edit permit check above.
+      allowSharedFileRestore: true,
       validate: async ({ current, next }) =>
         validateCollectionAssetPatch({
           current,

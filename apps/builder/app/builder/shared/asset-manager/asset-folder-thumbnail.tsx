@@ -86,9 +86,27 @@ export const FolderThumbnail = ({
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
   const [collectionSettingsOpen, setCollectionSettingsOpen] = useState(false);
+  const [settingsCollection, setSettingsCollection] = useState<
+    Extract<ContentCollection, { status: "ready" }> | undefined
+  >();
   const isContentMode = useStore($isContentMode);
   const authPermit = useStore($authPermit);
   const canConfigureCollections = canConfigureContentCollections(authPermit);
+  const canConfigureCollection =
+    canManage &&
+    isContentMode === false &&
+    canConfigureCollections &&
+    collection?.status === "ready";
+  const canManageRef = useRef(canManage);
+  canManageRef.current = canManage;
+  const canCopyOrDeleteRef = useRef(canCopyOrDelete);
+  canCopyOrDeleteRef.current = canCopyOrDelete;
+  const configurableCollectionRef = useRef<
+    Extract<ContentCollection, { status: "ready" }> | undefined
+  >();
+  configurableCollectionRef.current = canConfigureCollection
+    ? collection
+    : undefined;
   const elementRef = useRef<HTMLElement | null>(null);
   const getDragItems = interactions.getDragItems;
 
@@ -102,40 +120,102 @@ export const FolderThumbnail = ({
     projectId: folder.projectId,
   };
   const clipboardActions = createAssetManagerClipboardActions(item);
+  const clipboardCanBePasted =
+    canPasteClipboard ??
+    canPasteAssetManagerClipboard(
+      folder.id,
+      collection === undefined ? undefined : acceptFolderClipboardItems
+    );
+  const clipboardCanBePastedRef = useRef(clipboardCanBePasted);
+  clipboardCanBePastedRef.current = clipboardCanBePasted;
+  useEffect(() => {
+    if (canManage === false) {
+      setSettingsOpen(false);
+      setDeleteConfirmationOpen(false);
+    }
+  }, [canManage]);
+  useEffect(() => {
+    if (canConfigureCollection === false) {
+      setCollectionSettingsOpen(false);
+      setSettingsCollection(undefined);
+    }
+  }, [canConfigureCollection]);
   const actions: AssetManagerItemActions = {
     open: onOpen,
     ...(canManage
       ? {
-          settings: () => openSettings(),
-          ...(collection?.status === "ready" &&
-          isContentMode === false &&
-          canConfigureCollections
-            ? { collectionSettings: () => setCollectionSettingsOpen(true) }
-            : {}),
-          cut: clipboardActions.cut,
-          ...(canCopyOrDelete
+          settings: () => {
+            if (canManageRef.current) {
+              openSettings();
+            }
+          },
+          ...(canConfigureCollection
             ? {
-                copy: clipboardActions.copy,
-                duplicate: clipboardActions.duplicate,
+                collectionSettings: () => {
+                  const currentCollection = configurableCollectionRef.current;
+                  if (currentCollection !== undefined) {
+                    setSettingsCollection(currentCollection);
+                    setCollectionSettingsOpen(true);
+                  }
+                },
               }
             : {}),
-          move: onMove,
-          paste:
-            (canPasteClipboard ??
-            canPasteAssetManagerClipboard(
-              folder.id,
-              collection === undefined ? undefined : acceptFolderClipboardItems
-            ))
-              ? (onPasteClipboard ??
-                (() =>
-                  pasteAssetManagerClipboard(
-                    folder.id,
-                    collection === undefined
-                      ? undefined
-                      : acceptFolderClipboardItems
-                  )))
-              : undefined,
-          ...(canCopyOrDelete ? { delete: () => openSettings(true) } : {}),
+          cut: () => {
+            if (canManageRef.current) {
+              clipboardActions.cut();
+            }
+          },
+          ...(canCopyOrDelete
+            ? {
+                copy: () => {
+                  if (canManageRef.current && canCopyOrDeleteRef.current) {
+                    clipboardActions.copy();
+                  }
+                },
+                duplicate: () => {
+                  if (canManageRef.current && canCopyOrDeleteRef.current) {
+                    clipboardActions.duplicate();
+                  }
+                },
+              }
+            : {}),
+          move:
+            onMove === undefined
+              ? undefined
+              : () => {
+                  if (canManageRef.current) {
+                    onMove();
+                  }
+                },
+          paste: clipboardCanBePasted
+            ? () => {
+                if (
+                  canManageRef.current === false ||
+                  clipboardCanBePastedRef.current === false
+                ) {
+                  return;
+                }
+                if (onPasteClipboard !== undefined) {
+                  onPasteClipboard();
+                  return;
+                }
+                pasteAssetManagerClipboard(
+                  folder.id,
+                  collection === undefined
+                    ? undefined
+                    : acceptFolderClipboardItems
+                );
+              }
+            : undefined,
+          ...(canCopyOrDelete
+            ? {
+                delete: () => {
+                  if (canManageRef.current && canCopyOrDeleteRef.current) {
+                    openSettings(true);
+                  }
+                },
+              }
+            : {}),
         }
       : {}),
   };
@@ -252,16 +332,18 @@ export const FolderThumbnail = ({
           canDelete={canCopyOrDelete}
         />
       )}
-      {canManage &&
-        collection?.status === "ready" &&
-        isContentMode === false &&
-        canConfigureCollections && (
-          <CollectionSettingsDialog
-            collection={collection}
-            open={collectionSettingsOpen}
-            onOpenChange={setCollectionSettingsOpen}
-          />
-        )}
+      {canConfigureCollection && settingsCollection !== undefined && (
+        <CollectionSettingsDialog
+          collection={settingsCollection}
+          open={collectionSettingsOpen}
+          onOpenChange={(open) => {
+            setCollectionSettingsOpen(open);
+            if (open === false) {
+              setSettingsCollection(undefined);
+            }
+          }}
+        />
+      )}
     </>
   );
 };

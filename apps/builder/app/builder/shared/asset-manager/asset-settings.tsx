@@ -55,7 +55,7 @@ import {
   $editingPageId,
   $permissions,
 } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import { $styleSourceSelections } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $styles } from "~/shared/sync/data-stores";
@@ -267,12 +267,13 @@ const AssetUsageIndicator = styled(Box, {
 
 const useLocalValue = <Type extends string>(
   savedValue: Type,
-  onSave: (value: Type) => void
+  onSave: (value: Type) => void,
+  canSave: () => boolean
 ) => {
   const [localValue, setLocalValue] = useState(savedValue);
 
   const save = () => {
-    if (localValue !== savedValue) {
+    if (canSave() && localValue !== savedValue) {
       // To synchronize with setState immediately followed by save
       onSave(localValue);
     }
@@ -314,6 +315,8 @@ const AssetSettingsContent = ({
   onReplace,
   focusName,
   canRename,
+  canSaveChanges,
+  canPersistChanges,
   unavailableDestinationFolderIds,
 }: {
   asset: Asset;
@@ -322,6 +325,8 @@ const AssetSettingsContent = ({
   onReplace?: () => void;
   focusName: boolean;
   canRename: boolean;
+  canSaveChanges: boolean;
+  canPersistChanges: (expectedAssetName?: string) => boolean;
   unavailableDestinationFolderIds?: ReadonlySet<string>;
 }) => {
   const { canDownloadAssets } = useStore($permissions);
@@ -329,7 +334,11 @@ const AssetSettingsContent = ({
   const { ext } = getAssetDisplayNameParts(asset);
   const [filenameError, setFilenameError] = useState<string>();
   const saveFilename = async (newFilename: string) => {
+    if (canPersistChanges() === false) {
+      return;
+    }
     const assetId = asset.id;
+    let expectedAssetName = asset.name;
     if (!isValidFilename(newFilename)) {
       setFilenameError("Invalid filename");
       return;
@@ -379,11 +388,15 @@ const AssetSettingsContent = ({
           setFilenameError(normalized.error);
           return;
         }
-        await updateAssetContent({
+        if (canPersistChanges() === false) {
+          return;
+        }
+        const updatedAsset = await updateAssetContent({
           asset: currentAsset,
           content: normalized.content,
           extension,
         });
+        expectedAssetName = updatedAsset.name;
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unable to rename file";
@@ -393,6 +406,9 @@ const AssetSettingsContent = ({
       }
     }
 
+    if (canPersistChanges(expectedAssetName) === false) {
+      return;
+    }
     executeRuntimeMutation({
       id: "assets.update",
       input: {
@@ -403,7 +419,8 @@ const AssetSettingsContent = ({
   };
   const [filename, setFilename] = useLocalValue(
     formatAssetName(asset),
-    (newFilename) => void saveFilename(newFilename)
+    (newFilename) => void saveFilename(newFilename),
+    canPersistChanges
   );
   const [description, setDescription] = useLocalValue(
     asset.description ?? "",
@@ -416,11 +433,16 @@ const AssetSettingsContent = ({
           values: { description: newDescription },
         },
       });
-    }
+    },
+    canPersistChanges
   );
 
-  const moveToFolder = (newFolderId: string | undefined) =>
+  const moveToFolder = (newFolderId: string | undefined) => {
+    if (canPersistChanges() === false) {
+      return;
+    }
     moveAssetManagerItems([{ type: "asset", id: asset.id }], newFolderId);
+  };
 
   const authPermit = useStore($authPermit);
   let downloadError: undefined | string;
@@ -517,7 +539,11 @@ const AssetSettingsContent = ({
           <InputField
             id="asset-manager-filename"
             autoFocus={focusName}
-            readOnly={authPermit === "view" || canRename === false}
+            readOnly={
+              authPermit === "view" ||
+              canRename === false ||
+              canSaveChanges === false
+            }
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -534,7 +560,7 @@ const AssetSettingsContent = ({
           onChange={moveToFolder}
           unavailableDestinationFolderIds={unavailableDestinationFolderIds}
           rootLabel="Folder"
-          disabled={authPermit === "view"}
+          disabled={authPermit === "view" || canSaveChanges === false}
           deferChangesUntilBlur
         />
       </Grid>
@@ -554,7 +580,7 @@ const AssetSettingsContent = ({
         </Label>
         <TextArea
           id="asset-manager-description"
-          readOnly={authPermit === "view"}
+          readOnly={authPermit === "view" || canSaveChanges === false}
           placeholder='Enter "alt" text'
           rows={1}
           maxRows={6}
@@ -687,6 +713,7 @@ export const AssetSettings = ({
   onReplace,
   focusName = false,
   canRename = true,
+  canSaveChanges = true,
   unavailableDestinationFolderIds,
   children,
 }: {
@@ -697,9 +724,24 @@ export const AssetSettings = ({
   onReplace?: () => void;
   focusName?: boolean;
   canRename?: boolean;
+  canSaveChanges?: boolean;
   unavailableDestinationFolderIds?: ReadonlySet<string>;
   children: ReactNode;
 }) => {
+  const canSaveChangesRef = useRef(canSaveChanges);
+  canSaveChangesRef.current = canSaveChanges;
+  const canPersistChanges = (expectedAssetName = asset.name) => {
+    if (canSaveChangesRef.current === false || $authPermit.get() === "view") {
+      return false;
+    }
+    const currentProject = $project.get();
+    const currentAsset = $assets.get().get(asset.id);
+    return (
+      currentProject?.id === asset.projectId &&
+      currentAsset?.projectId === asset.projectId &&
+      currentAsset.name === expectedAssetName
+    );
+  };
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
   const deleteAsset =
@@ -735,6 +777,8 @@ export const AssetSettings = ({
           onReplace={replaceAsset}
           focusName={focusName}
           canRename={canRename}
+          canSaveChanges={canSaveChanges}
+          canPersistChanges={canPersistChanges}
           unavailableDestinationFolderIds={unavailableDestinationFolderIds}
         />
       </PopoverContent>

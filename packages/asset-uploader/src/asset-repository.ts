@@ -1687,31 +1687,61 @@ export class PostgresAssetRepository implements AssetRepository {
         "Collection configuration not found"
       );
     }
+    const currentConfigSource = decodeUtf8(
+      await this.readCollectionAssetBytes(configAsset)
+    );
+    const currentConfig = parseCollectionConfig(currentConfigSource);
+    const nextConfig = parseCollectionConfig(configSource);
+    const requestedTemplateAsset = assets.find(
+      (asset) =>
+        asset.id === templateAssetId &&
+        asset.folderId === folderId &&
+        asset.filename === templateFilename &&
+        formatAssetName(asset) === nextConfig.template &&
+        isMdxFileAsset(asset)
+    );
+    if (
+      currentConfigSource === configSource &&
+      requestedTemplateAsset !== undefined
+    ) {
+      await validateCollectionFolder({
+        assets,
+        folderId,
+        assetStore: this.assetStore,
+      });
+      return {
+        configAsset,
+        templateAsset: requestedTemplateAsset,
+      };
+    }
     if (configAsset.name !== expectedConfigName) {
       throw new AssetRepositoryConflictError(
         "Collection configuration changed while settings were being saved"
       );
     }
-    const currentConfig = parseCollectionConfig(
-      decodeUtf8(await this.readCollectionAssetBytes(configAsset))
-    );
     const templateAsset = assets.find(
       (asset) =>
         asset.id === templateAssetId &&
         asset.folderId === folderId &&
-        formatAssetName(asset) === currentConfig.template &&
         isMdxFileAsset(asset)
     );
     if (templateAsset === undefined) {
       throw new AssetRepositoryNotFoundError("Collection template not found");
     }
-    if (templateAsset.filename !== expectedTemplateFilename) {
+    const expectedTemplateAsset = {
+      ...templateAsset,
+      filename: expectedTemplateFilename,
+    };
+    if (
+      currentConfig.template !== formatAssetName(expectedTemplateAsset) ||
+      (templateAsset.filename !== expectedTemplateFilename &&
+        templateAsset.filename !== templateFilename)
+    ) {
       throw new AssetRepositoryConflictError(
         "Collection template changed while settings were being saved"
       );
     }
     const nextTemplateAsset = { ...templateAsset, filename: templateFilename };
-    const nextConfig = parseCollectionConfig(configSource);
     if (nextConfig.template !== formatAssetName(nextTemplateAsset)) {
       throw new AssetRepositoryConflictError(
         "Collection configuration does not reference the renamed template"
@@ -1749,20 +1779,26 @@ export class PostgresAssetRepository implements AssetRepository {
       assetStore: projectedAssetStore,
     });
 
-    const renamedTemplate =
-      await this.dependencies.updateAssetFilenameIfCurrentWithClient(
-        {
-          projectId: this.projectId,
-          assetId: templateAsset.id,
-          expectedFilename: expectedTemplateFilename,
-          filename: templateFilename,
-        },
-        this.context.postgrest.client
-      );
-    if (renamedTemplate === undefined) {
-      throw new AssetRepositoryConflictError(
-        "Collection template changed while settings were being saved"
-      );
+    let renamedTemplate = templateAsset;
+    let renamedTemplateByThisRequest = false;
+    if (templateAsset.filename !== templateFilename) {
+      const updatedTemplate =
+        await this.dependencies.updateAssetFilenameIfCurrentWithClient(
+          {
+            projectId: this.projectId,
+            assetId: templateAsset.id,
+            expectedFilename: expectedTemplateFilename,
+            filename: templateFilename,
+          },
+          this.context.postgrest.client
+        );
+      if (updatedTemplate === undefined) {
+        throw new AssetRepositoryConflictError(
+          "Collection template changed while settings were being saved"
+        );
+      }
+      renamedTemplate = updatedTemplate;
+      renamedTemplateByThisRequest = true;
     }
     try {
       const updatedConfig = await this.updateContent({
@@ -1809,6 +1845,9 @@ export class PostgresAssetRepository implements AssetRepository {
           configAsset: currentConfigAsset,
           templateAsset: currentTemplateAsset,
         };
+      }
+      if (renamedTemplateByThisRequest === false) {
+        throw error;
       }
       let currentConfig;
       try {

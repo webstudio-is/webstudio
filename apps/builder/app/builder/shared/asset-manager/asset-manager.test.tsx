@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { act } from "react-dom/test-utils";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import {
+  createDefaultCollectionConfig,
+  parseCollectionConfig,
+} from "@webstudio-is/content-engine";
 import {
   $assetFolders,
   $assets,
@@ -25,6 +30,8 @@ import {
 } from "~/shared/nano-states";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import { AssetManager } from "./asset-manager";
+import { FolderThumbnail } from "./asset-folder-thumbnail";
+import type { AssetManagerThumbnailInteractions } from "./asset-manager-thumbnail";
 import type { ContentCollection } from "../assets/content-collections";
 import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import {
@@ -239,6 +246,91 @@ const createLoadingCollection = (folderId: string): ContentCollection => {
     configAsset,
     reservedAssets: [configAsset],
     siblingAssets: [configAsset],
+  };
+};
+
+const createReadyCollection = (
+  folderId: string
+): Extract<ContentCollection, { status: "ready" }> => {
+  const configAsset = createLoadingCollection(folderId).configAsset;
+  const templateAsset: Asset = {
+    id: `${folderId}-template`,
+    projectId: "project",
+    name: "template.mdx",
+    filename: "template",
+    folderId,
+    format: "mdx",
+    size: 1,
+    type: "file",
+    meta: {},
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+  return {
+    status: "ready",
+    folderId,
+    configAsset,
+    templateAsset,
+    config: parseCollectionConfig(createDefaultCollectionConfig()),
+    templateProperties: { draft: true },
+  };
+};
+
+const openMdxMultiselectAction = (label: "Move" | "Delete") => {
+  const entry: Asset = {
+    ...createAsset("entry"),
+    name: "entry.mdx",
+    filename: "entry",
+    folderId: "alpha",
+    type: "file",
+    format: "mdx",
+    meta: {},
+  };
+  const companion: Asset = {
+    ...createAsset("companion"),
+    folderId: "alpha",
+  };
+  $authPermit.set("edit");
+  $assets.set(
+    new Map<string, Asset>([
+      [entry.id, entry],
+      [companion.id, companion],
+    ])
+  );
+  const container = renderManager();
+  const folderButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Folder Alpha"]'
+  )!;
+  act(() => {
+    folderButton.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+  });
+  const options = getOptions(container);
+  const entryOption = options.find(({ button }) =>
+    button.textContent?.includes("entry.mdx")
+  )!;
+  const companionOption = options.find(({ button }) =>
+    button.textContent?.includes("companion.png")
+  )!;
+  act(() => entryOption.button.focus());
+  pointerDown(companionOption.button, { ctrlKey: true });
+  openContextMenu(entryOption.button);
+  const action = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  ).find((item) => item.textContent?.startsWith(label));
+  expect(action).toBeDefined();
+  return {
+    action: action!,
+    reserveEntry: () => {
+      const configAsset = createLoadingCollection("alpha").configAsset;
+      act(() => {
+        $assets.set(
+          new Map<string, Asset>([
+            [entry.id, entry],
+            [companion.id, companion],
+            [configAsset.id, configAsset],
+          ])
+        );
+      });
+    },
   };
 };
 
@@ -748,6 +840,254 @@ describe("Asset Manager multiselect interactions", () => {
 });
 
 describe("Asset Manager collection folder permissions", () => {
+  test("blocks a stale Move callback after a selected asset becomes reserved", () => {
+    const { action, reserveEntry } = openMdxMultiselectAction("Move");
+
+    reserveEntry();
+    act(() => action.click());
+
+    expect(document.body.textContent).not.toContain("Move items");
+  });
+
+  test.each([
+    {
+      name: "the selected asset becomes reserved",
+      updateProtection: (reserveEntry: () => void) => reserveEntry(),
+    },
+    {
+      name: "authorization changes to view-only",
+      updateProtection: () => act(() => $authPermit.set("view")),
+    },
+  ])("closes an open Move dialog when $name", ({ updateProtection }) => {
+    const { action, reserveEntry } = openMdxMultiselectAction("Move");
+    act(() => action.click());
+    expect(document.body.textContent).toContain("Move items");
+
+    updateProtection(reserveEntry);
+
+    expect(document.body.textContent).not.toContain("Move items");
+  });
+
+  test("closes an open Delete dialog when authorization changes to view-only", () => {
+    const { action } = openMdxMultiselectAction("Delete");
+    act(() => action.click());
+    expect(document.body.textContent).toContain("Delete selected items");
+
+    act(() => $authPermit.set("view"));
+
+    expect(document.body.textContent).not.toContain("Delete selected items");
+  });
+
+  test("does not reopen collection settings after configuration access is restored", () => {
+    const collection = createReadyCollection("alpha");
+    const container = renderManager(true, {
+      collections: new Map([[collection.folderId, collection]]),
+    });
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    openContextMenu(folderButton);
+    const settings = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Collection settings");
+    expect(settings).toBeDefined();
+    act(() => settings?.click());
+    expect(document.body.textContent).toContain("Collection settings");
+
+    act(() => $authPermit.set("edit"));
+    expect(document.body.textContent).not.toContain("Collection settings");
+
+    act(() => $authPermit.set("build"));
+    expect(document.body.textContent).not.toContain("Collection settings");
+  });
+
+  test("does not reopen folder settings after management access is restored", async () => {
+    const folder = createAssetFolderFixture({ id: "managed", name: "Managed" });
+    const interactions: AssetManagerThumbnailInteractions = {
+      onSelectionChange: vi.fn(),
+      onItemPointerDown: vi.fn(),
+      onItemClick: vi.fn(),
+      onModifiedArrow: vi.fn(),
+      onContextMenuSelection: vi.fn(),
+      onContextMenuActions: vi.fn(),
+      getDragItems: (item) => [item],
+    };
+    let setCanManage: (canManage: boolean) => void = () => undefined;
+    const Thumbnail = () => {
+      const [canManage, updateCanManage] = useState(true);
+      setCanManage = updateCanManage;
+      return (
+        <TooltipProvider>
+          <FolderThumbnail
+            folder={folder}
+            selected={false}
+            interactions={interactions}
+            onOpen={vi.fn()}
+            canManage={canManage}
+            canMoveItems={() => false}
+            onMoveItems={vi.fn()}
+          />
+        </TooltipProvider>
+      );
+    };
+    const container = renderer.render(<Thumbnail />);
+    const actions = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Actions for Managed"]'
+    )!;
+    act(() => {
+      actions.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+      );
+    });
+    const settings = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Settings");
+    expect(settings).toBeDefined();
+    act(() => settings?.click());
+    expect(document.body.textContent).toContain("Folder settings");
+
+    await act(async () => setCanManage(false));
+    expect(document.body.textContent).not.toContain("Folder settings");
+
+    await act(async () => setCanManage(true));
+    expect(document.body.textContent).not.toContain("Folder settings");
+  });
+
+  test("closes collection settings when the folder is no longer a ready collection", () => {
+    const collection = createReadyCollection("alpha");
+    let setCollectionReady: (ready: boolean) => void = () => undefined;
+    const Manager = () => {
+      const [ready, setReady] = useState(true);
+      setCollectionReady = setReady;
+      return (
+        <TooltipProvider>
+          <AssetManager
+            canManageFolders
+            collections={
+              ready ? new Map([[collection.folderId, collection]]) : new Map()
+            }
+          />
+        </TooltipProvider>
+      );
+    };
+    const container = renderer.render(<Manager />);
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    openContextMenu(folderButton);
+    const settings = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Collection settings");
+    expect(settings).toBeDefined();
+    act(() => settings?.click());
+    expect(document.body.textContent).toContain("Collection settings");
+
+    act(() => setCollectionReady(false));
+    expect(document.body.textContent).not.toContain("Collection settings");
+
+    act(() => setCollectionReady(true));
+    expect(document.body.textContent).not.toContain("Collection settings");
+  });
+
+  test.each(["Copy", "Duplicate", "Delete"] as const)(
+    "blocks a stale %s callback after a folder becomes a collection ancestor",
+    (action) => {
+      $assetFolders.set(
+        createAssetFoldersFixture(
+          createAssetFolderFixture({ id: "alpha", name: "Alpha" }),
+          createAssetFolderFixture({
+            id: "bravo",
+            name: "Bravo",
+            parentId: "alpha",
+          }),
+          createAssetFolderFixture({ id: "charlie", name: "Charlie" })
+        )
+      );
+      $authPermit.set("edit");
+      const container = renderManager();
+      const folderButton = container.querySelector<HTMLButtonElement>(
+        '[aria-label="Folder Alpha"]'
+      )!;
+      openContextMenu(folderButton);
+      const staleAction = Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+      ).find((item) => item.textContent?.startsWith(action));
+      expect(staleAction).toBeDefined();
+
+      const collection = createLoadingCollection("bravo");
+      act(() => {
+        $assets.set(
+          new Map([[collection.configAsset.id, collection.configAsset]])
+        );
+      });
+      act(() => staleAction?.click());
+
+      if (action === "Copy") {
+        expect($assetManagerClipboard.get()).toBeUndefined();
+      }
+      if (action === "Duplicate") {
+        expect($assetFolders.get()).toHaveLength(3);
+      }
+      if (action === "Delete") {
+        expect(document.body.textContent).not.toContain("Folder settings");
+        expect(document.body.textContent).not.toContain("Delete folder");
+      }
+    }
+  );
+
+  test("removes relocate and destructive actions when a selection contains a reserved file", () => {
+    const collection = createLoadingCollection("alpha");
+    const entry: Asset = {
+      ...createAsset("entry"),
+      name: "entry.mdx",
+      filename: "entry",
+      folderId: "alpha",
+      type: "file",
+      format: "mdx",
+      meta: {},
+    };
+    act(() => {
+      $authPermit.set("edit");
+      $assets.set(
+        new Map([
+          [collection.configAsset.id, collection.configAsset],
+          [entry.id, entry],
+        ])
+      );
+    });
+    const container = renderManager(true, {
+      collections: new Map([["alpha", collection]]),
+    });
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    act(() => {
+      folderButton.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    });
+    const options = getOptions(container);
+    const config = options.find(({ button }) =>
+      button.textContent?.includes("collection.json")
+    )!;
+    const entryOption = options.find(({ button }) =>
+      button.textContent?.includes("entry.mdx")
+    )!;
+    act(() => config.button.focus());
+    pointerDown(entryOption.button, { ctrlKey: true });
+    openContextMenu(config.button);
+
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels.some((label) => label?.startsWith("Cut"))).toBe(false);
+    expect(labels).not.toContain("Move");
+    expect(labels.some((label) => label?.startsWith("Copy"))).toBe(false);
+    expect(labels.some((label) => label?.startsWith("Delete"))).toBe(false);
+
+    dismissContextMenu();
+    keyDown(config.button, "x", { ctrlKey: true });
+    expect($assetManagerClipboard.get()).toBeUndefined();
+  });
+
   test("detects collection folders and protects reserved files without caller configuration", () => {
     const configAsset = createLoadingCollection("alpha").configAsset;
     const templateAsset: Asset = {

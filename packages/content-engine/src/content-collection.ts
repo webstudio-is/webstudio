@@ -776,7 +776,7 @@ export const getCollectionValidationError = (
   return getValidationError(config, validation.error.issues[0]);
 };
 
-export const getCollectionFieldValidationError = (
+export const getCollectionFieldValidationIssue = (
   config: ContentCollectionConfig,
   properties: unknown
 ) => {
@@ -801,8 +801,19 @@ export const getCollectionFieldValidationError = (
   const issue = validation.error.issues.find(
     ({ path }) => typeof path[0] === "string" && fieldKeys.has(path[0])
   );
-  return issue === undefined ? undefined : getValidationError(config, issue);
+  if (issue === undefined || typeof issue.path[0] !== "string") {
+    return;
+  }
+  return {
+    fieldKey: issue.path[0],
+    message: getValidationError(config, issue),
+  };
 };
+
+export const getCollectionFieldValidationError = (
+  config: ContentCollectionConfig,
+  properties: unknown
+) => getCollectionFieldValidationIssue(config, properties)?.message;
 
 export const getCollectionTemplateValidationError = (
   config: ContentCollectionConfig,

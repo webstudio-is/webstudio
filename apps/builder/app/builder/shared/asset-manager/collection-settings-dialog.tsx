@@ -323,6 +323,7 @@ export const CollectionSettingsDialog = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const pages = useStore($pages);
   const assets = useStore($assets);
   const hasEntries = Array.from(assets.values()).some(
@@ -370,6 +371,7 @@ export const CollectionSettingsDialog = ({
     setPreviewNotice(undefined);
     setError(undefined);
     setConfirmRemove(false);
+    setConfirmDiscard(false);
   }, [collection, open]);
 
   useLayoutEffect(() => {
@@ -438,6 +440,23 @@ export const CollectionSettingsDialog = ({
         fieldIndex === index ? field : candidate
       )
     );
+
+  const isDirty =
+    JSON.stringify(fields) !==
+      JSON.stringify(createEditableFields(collection.config.fields)) ||
+    (templateReady && template !== loadedTemplateRef.current) ||
+    templateName !==
+      getAssetDisplayNameParts(collection.templateAsset).basename ||
+    slugField !== collection.config.slugField ||
+    generateSlugFrom !== collection.config.generateSlugFrom ||
+    previewPage !== collection.config.previewPage;
+  const requestClose = () => {
+    if (isDirty) {
+      setConfirmDiscard(true);
+      return;
+    }
+    onOpenChange(false);
+  };
 
   const save = async () => {
     if (saving || loading || templateReady === false) {
@@ -660,8 +679,8 @@ export const CollectionSettingsDialog = ({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (formDisabled === false) {
-          onOpenChange(nextOpen);
+        if (saving === false && nextOpen === false) {
+          requestClose();
         }
       }}
     >
@@ -1252,7 +1271,7 @@ export const CollectionSettingsDialog = ({
             )}
           </Flex>
           <Flex gap={2}>
-            <Button disabled={formDisabled} onClick={() => onOpenChange(false)}>
+            <Button disabled={saving} onClick={requestClose}>
               Cancel
             </Button>
             <Button
@@ -1265,6 +1284,31 @@ export const CollectionSettingsDialog = ({
           </Flex>
         </Flex>
       </DialogContent>
+      <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <DialogContent aria-describedby={undefined} width={420}>
+          <DialogTitle>Discard changes?</DialogTitle>
+          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+            <Text>
+              Your unsaved collection settings and template changes will be
+              lost.
+            </Text>
+            <Flex justify="end" gap={2}>
+              <Button onClick={() => setConfirmDiscard(false)}>
+                Keep editing
+              </Button>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  setConfirmDiscard(false);
+                  onOpenChange(false);
+                }}
+              >
+                Discard changes
+              </Button>
+            </Flex>
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

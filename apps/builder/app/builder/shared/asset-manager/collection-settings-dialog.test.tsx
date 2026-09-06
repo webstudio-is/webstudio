@@ -1,9 +1,10 @@
 import { act } from "react-dom/test-utils";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   createDefaultCollectionConfig,
+  createDefaultCollectionTemplate,
   parseCollectionConfig,
 } from "@webstudio-is/content-engine";
 import {
@@ -127,6 +128,116 @@ beforeEach(() => {
       });
     },
   });
+});
+
+test("asks before discarding unsaved collection settings", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const onOpenChange = vi.fn();
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={onOpenChange}
+      readTemplateSource={async () =>
+        "---\ndraft: true\n---\n\nStart writing.\n"
+      }
+    />
+  );
+  await act(async () => undefined);
+  await vi.waitFor(() =>
+    expect(
+      Array.from(document.querySelectorAll("button")).find(
+        (button) => button.textContent === "Save"
+      )?.disabled
+    ).toBe(false)
+  );
+  const templateName = document.querySelector<HTMLInputElement>(
+    '[aria-label="Entry template name"]'
+  );
+  if (templateName === null) {
+    throw new Error("Expected template name control");
+  }
+  input(templateName, "article-template");
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Cancel")
+      ?.click();
+  });
+
+  expect(document.body.textContent).toContain("Discard changes?");
+  expect(onOpenChange).not.toHaveBeenCalled();
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Discard changes")
+      ?.click();
+  });
+  expect(onOpenChange).toHaveBeenCalledWith(false);
+});
+
+test("asks before discarding non-template edits after the template fails to load", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const onOpenChange = vi.fn();
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={onOpenChange}
+      readTemplateSource={async () => {
+        throw new Error("Template unavailable");
+      }}
+    />
+  );
+  await vi.waitFor(() =>
+    expect(document.body.textContent).toContain("Template unavailable")
+  );
+
+  const templateName = document.querySelector<HTMLInputElement>(
+    '[aria-label="Entry template name"]'
+  );
+  if (templateName === null) {
+    throw new Error("Expected template name control");
+  }
+  input(templateName, "article-template");
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Cancel")
+      ?.click();
+  });
+
+  expect(document.body.textContent).toContain("Discard changes?");
+  expect(onOpenChange).not.toHaveBeenCalled();
 });
 
 afterEach(() => {
@@ -287,12 +398,7 @@ test("does not enable saving when the entry template failed to load", async () =
   expect(save?.disabled).toBe(true);
 });
 
-test("does not close while the entry template is loading", async () => {
-  initBridge({
-    authorize: () => true,
-    requireReload: () => undefined,
-    request: () => new Promise(() => undefined),
-  });
+test("closes while the entry template is loading and ignores the late result", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -304,6 +410,61 @@ test("does not close while the entry template is loading", async () => {
     format: "mdx",
   });
   const onOpenChange = vi.fn();
+  let resolveTemplate: (source: string) => void = () => void 0;
+  const readTemplateSource = vi.fn(
+    () =>
+      new Promise<string>((resolve) => {
+        resolveTemplate = resolve;
+      })
+  );
+  const Dialog = () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <CollectionSettingsDialog
+        collection={{
+          status: "ready",
+          folderId: "posts",
+          configAsset,
+          templateAsset,
+          config: parseCollectionConfig(createDefaultCollectionConfig()),
+          templateProperties: { draft: true },
+        }}
+        open={open}
+        onOpenChange={(nextOpen) => {
+          onOpenChange(nextOpen);
+          setOpen(nextOpen);
+        }}
+        readTemplateSource={readTemplateSource}
+      />
+    );
+  };
+  render(<Dialog />);
+
+  await act(async () => {
+    document.querySelector<HTMLButtonElement>('[aria-label="Close"]')?.click();
+  });
+
+  expect(onOpenChange).toHaveBeenCalledWith(false);
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+
+  await act(async () => resolveTemplate(createDefaultCollectionTemplate()));
+
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+
+test("does not close while collection settings are saving", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const onOpenChange = vi.fn();
+  const updateContent = vi.fn(() => new Promise<Asset>(() => undefined));
   render(
     <CollectionSettingsDialog
       collection={{
@@ -316,9 +477,17 @@ test("does not close while the entry template is loading", async () => {
       }}
       open
       onOpenChange={onOpenChange}
+      readTemplateSource={async () => createDefaultCollectionTemplate()}
+      updateContent={updateContent}
     />
   );
+  await act(async () => undefined);
 
+  const save = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Save");
+  await act(async () => save?.click());
+  await vi.waitFor(() => expect(updateContent).toHaveBeenCalledOnce());
   await act(async () => {
     document.querySelector<HTMLButtonElement>('[aria-label="Close"]')?.click();
   });

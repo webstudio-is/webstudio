@@ -210,15 +210,55 @@ export const AssetManager = ({
     return protectedFolderIds;
   }, [collectionFolderIds, folderHierarchy]);
   const canCopyOrDeleteItems = useCallback(
-    (items: readonly AssetManagerSelection[]) =>
-      canConfigureCollections ||
-      items.every(
-        (item) =>
-          item.type !== "folder" ||
-          collectionProtectedFolderIds.has(item.id) === false
-      ),
-    [canConfigureCollections, collectionProtectedFolderIds]
+    (items: readonly AssetManagerSelection[]) => {
+      if (authPermit === "view") {
+        return false;
+      }
+      const currentAuthPermit = $authPermit.get();
+      return (
+        currentAuthPermit !== "view" &&
+        (canConfigureContentCollections(currentAuthPermit) ||
+          items.every(
+            (item) =>
+              (item.type !== "folder" ||
+                collectionProtectedFolderIds.has(item.id) === false) &&
+              (item.type !== "asset" ||
+                collectionReservedAssetIds.has(item.id) === false)
+          ))
+      );
+    },
+    [authPermit, collectionProtectedFolderIds, collectionReservedAssetIds]
   );
+  const canRelocateItems = useCallback(
+    (items: readonly AssetManagerSelection[]) => {
+      if (authPermit === "view") {
+        return false;
+      }
+      const currentAuthPermit = $authPermit.get();
+      return (
+        currentAuthPermit !== "view" &&
+        (canConfigureContentCollections(currentAuthPermit) ||
+          items.every(
+            (item) =>
+              item.type !== "asset" ||
+              collectionReservedAssetIds.has(item.id) === false
+          ))
+      );
+    },
+    [authPermit, collectionReservedAssetIds]
+  );
+  const currentProtectionRef = useRef({
+    canManageAssets: authPermit !== "view",
+    canCopyOrDeleteItems,
+    canRelocateItems,
+    collectionFolderIds,
+  });
+  currentProtectionRef.current = {
+    canManageAssets: authPermit !== "view",
+    canCopyOrDeleteItems,
+    canRelocateItems,
+    collectionFolderIds,
+  };
   const mimePatterns = useMemo(() => acceptToMimePatterns(accept), [accept]);
   const [internalFolderId, setInternalFolderId] = useState(folderId);
   const [selection, setSelection] = useState<AssetManagerSelection>();
@@ -256,8 +296,11 @@ export const AssetManager = ({
   const canPasteClipboardToFolder = useCallback(
     (targetFolderId: string | undefined) => {
       if (
-        clipboard?.operation === "copy" &&
-        canCopyOrDeleteItems(clipboard.items) === false
+        clipboard !== undefined &&
+        ((clipboard.operation === "copy" &&
+          canCopyOrDeleteItems(clipboard.items) === false) ||
+          (clipboard.operation === "cut" &&
+            canRelocateItems(clipboard.items) === false))
       ) {
         return false;
       }
@@ -268,13 +311,16 @@ export const AssetManager = ({
           : undefined
       );
     },
-    [canCopyOrDeleteItems, clipboard, collectionFolderIds]
+    [canCopyOrDeleteItems, canRelocateItems, clipboard, collectionFolderIds]
   );
   const pasteClipboardToFolder = useCallback(
     (targetFolderId: string | undefined) => {
       if (
-        clipboard?.operation === "copy" &&
-        canCopyOrDeleteItems(clipboard.items) === false
+        clipboard !== undefined &&
+        ((clipboard.operation === "copy" &&
+          canCopyOrDeleteItems(clipboard.items) === false) ||
+          (clipboard.operation === "cut" &&
+            canRelocateItems(clipboard.items) === false))
       ) {
         return;
       }
@@ -285,7 +331,7 @@ export const AssetManager = ({
           : undefined
       );
     },
-    [canCopyOrDeleteItems, clipboard, collectionFolderIds]
+    [canCopyOrDeleteItems, canRelocateItems, clipboard, collectionFolderIds]
   );
   const setCurrentFolderId = useCallback(
     (nextFolderId: string | undefined) => {
@@ -714,15 +760,44 @@ export const AssetManager = ({
   const canCopyOrDeleteSelection = canCopyOrDeleteItems(
     normalizedShortcutSelection
   );
+  const canRelocateSelection = canRelocateItems(normalizedShortcutSelection);
   const copyItems = (items: readonly AssetManagerItem[]) => {
+    const selections = items.map(({ type, id }) => ({ type, id }));
+    if (
+      currentProtectionRef.current.canManageAssets === false ||
+      currentProtectionRef.current.canCopyOrDeleteItems(selections) === false
+    ) {
+      return;
+    }
     copyAssetManagerItems(items);
     setAnnouncement(`${getItemCountLabel(items.length)} copied.`);
   };
   const cutItems = (items: readonly AssetManagerItem[]) => {
+    const selections = items.map(({ type, id }) => ({ type, id }));
+    if (
+      currentProtectionRef.current.canManageAssets === false ||
+      currentProtectionRef.current.canRelocateItems(selections) === false
+    ) {
+      return;
+    }
     cutAssetManagerItems(items);
     setAnnouncement(`${getItemCountLabel(items.length)} cut.`);
   };
   const duplicateItems = (items: readonly AssetManagerItem[]) => {
+    const selections = items.map(({ type, id }) => ({ type, id }));
+    if (
+      currentProtectionRef.current.canManageAssets === false ||
+      currentProtectionRef.current.canCopyOrDeleteItems(selections) === false ||
+      selections.some(
+        (item) =>
+          item.type === "asset" &&
+          currentProtectionRef.current.collectionFolderIds.has(
+            $assets.get().get(item.id)?.folderId ?? ""
+          )
+      )
+    ) {
+      return;
+    }
     duplicateAssetManagerItems(items);
     setAnnouncement(`${getItemCountLabel(items.length)} duplicated.`);
   };
@@ -730,7 +805,7 @@ export const AssetManager = ({
     forcedSelection === undefined || shortcutItems.length === 0
       ? {}
       : {
-          cut: () => cutItems(shortcutItems),
+          cut: canRelocateSelection ? () => cutItems(shortcutItems) : undefined,
           copy: canCopyOrDeleteSelection
             ? () => copyItems(shortcutItems)
             : undefined,
@@ -739,9 +814,29 @@ export const AssetManager = ({
             selectionContainsCollectionEntry === false
               ? () => duplicateItems(shortcutItems)
               : undefined,
-          move: () => setPendingMoveItems(normalizedShortcutSelection),
+          move: canRelocateSelection
+            ? () => {
+                if (
+                  currentProtectionRef.current.canManageAssets &&
+                  currentProtectionRef.current.canRelocateItems(
+                    normalizedShortcutSelection
+                  )
+                ) {
+                  setPendingMoveItems(normalizedShortcutSelection);
+                }
+              }
+            : undefined,
           delete: canCopyOrDeleteSelection
-            ? () => setPendingDeleteItems(normalizedShortcutSelection)
+            ? () => {
+                if (
+                  currentProtectionRef.current.canManageAssets &&
+                  currentProtectionRef.current.canCopyOrDeleteItems(
+                    normalizedShortcutSelection
+                  )
+                ) {
+                  setPendingDeleteItems(normalizedShortcutSelection);
+                }
+              }
             : undefined,
         };
 
@@ -754,8 +849,24 @@ export const AssetManager = ({
     }
   }, [canCopyOrDeleteItems, pendingDeleteItems]);
 
+  useEffect(() => {
+    if (
+      pendingMoveItems !== undefined &&
+      canRelocateItems(pendingMoveItems) === false
+    ) {
+      setPendingMoveItems(undefined);
+    }
+  }, [canRelocateItems, pendingMoveItems]);
+
   const moveItems = useCallback(
     (items: readonly AssetManagerSelection[], parentId: string | undefined) => {
+      if (
+        currentProtectionRef.current.canManageAssets === false ||
+        currentProtectionRef.current.canRelocateItems(items) === false
+      ) {
+        setPendingMoveItems(undefined);
+        return;
+      }
       const normalizedItems = normalizeItems(items);
       moveAssetManagerItems(normalizedItems, parentId);
       clearMultiselect();
@@ -772,6 +883,9 @@ export const AssetManager = ({
       items: readonly AssetManagerSelection[],
       targetFolderId: string | undefined
     ) => {
+      if (canRelocateItems(items) === false) {
+        return false;
+      }
       if (
         targetFolderId !== undefined &&
         collectionFolderIds.has(targetFolderId) &&
@@ -785,7 +899,7 @@ export const AssetManager = ({
         hierarchy: folderHierarchy,
       });
     },
-    [collectionFolderIds, folderHierarchy]
+    [canRelocateItems, collectionFolderIds, folderHierarchy]
   );
   const moveExcludedFolderIds = useMemo(() => {
     if (pendingMoveItems === undefined) {
@@ -918,7 +1032,11 @@ export const AssetManager = ({
       canCopyOrDeleteSelection
     ) {
       copyItems(shortcutItems);
-    } else if (key === "x" && shortcutItems.length > 0) {
+    } else if (
+      key === "x" &&
+      shortcutItems.length > 0 &&
+      canRelocateSelection
+    ) {
       cutItems(shortcutItems);
     } else if (
       key === "d" &&
@@ -1221,7 +1339,15 @@ export const AssetManager = ({
                         )
                       : undefined
                   }
-                  canDrag={canManageFolders}
+                  canDrag={
+                    canManageFolders &&
+                    canRelocateItems(
+                      getDragItems({
+                        type: "asset",
+                        id: assetContainer.asset.id,
+                      })
+                    )
+                  }
                   isCollectionEntry={collectionFolderIds.has(
                     assetContainer.asset.folderId ?? ""
                   )}
@@ -1269,7 +1395,11 @@ export const AssetManager = ({
                 prefix={<TrashIcon />}
                 onClick={() => {
                   const items = pendingDeleteItems ?? [];
-                  if (canCopyOrDeleteItems(items) === false) {
+                  if (
+                    currentProtectionRef.current.canManageAssets === false ||
+                    currentProtectionRef.current.canCopyOrDeleteItems(items) ===
+                      false
+                  ) {
                     setPendingDeleteItems(undefined);
                     return;
                   }

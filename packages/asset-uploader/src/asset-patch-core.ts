@@ -1,6 +1,6 @@
-import { type Asset, assets } from "@webstudio-is/sdk";
+import { asset as assetSchema, type Asset, assets } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
-import type { Client } from "@webstudio-is/postgrest/index.server";
+import type { Client, Database } from "@webstudio-is/postgrest/index.server";
 import { mapBounded } from "@webstudio-is/content-engine/compiler";
 import { formatAsset } from "./utils/format-asset";
 import {
@@ -9,11 +9,81 @@ import {
   diffMaps,
   type Patch,
 } from "./patch-utils";
-import { swapAssetFileWithClient } from "./revision";
+import {
+  AssetRevisionConflictError,
+  swapAssetFileWithClient,
+} from "./revision";
 import type { AssetMetadataUpdate } from "./asset-mutation-types";
 import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
+
+type FileRow = Database["public"]["Tables"]["File"]["Row"];
+
+const getCanonicalAssetsForValidation = async ({
+  current,
+  next,
+  client,
+}: {
+  current: ReadonlyMap<Asset["id"], Asset>;
+  next: ReadonlyMap<Asset["id"], Asset>;
+  client: Client;
+}) => {
+  const canonical = new Map<Asset["id"], Asset>();
+  const filesByName = new Map<string, FileRow>();
+  const assetsWithChangedFiles: Asset[] = [];
+  for (const [assetId, asset] of next) {
+    const previous = current.get(assetId);
+    if (previous?.name === asset.name) {
+      canonical.set(
+        assetId,
+        assetSchema.parse({
+          ...previous,
+          filename: asset.filename,
+          description: asset.description,
+          folderId: asset.folderId,
+          meta: asset.meta,
+        })
+      );
+      continue;
+    }
+    assetsWithChangedFiles.push(asset);
+  }
+  if (assetsWithChangedFiles.length === 0) {
+    return { assets: canonical, filesByName };
+  }
+
+  const files = await loadUploadedFilesByNames({
+    names: assetsWithChangedFiles.map((asset) => asset.name),
+    client,
+  });
+  for (const file of files) {
+    filesByName.set(file.name, file);
+  }
+  for (const asset of assetsWithChangedFiles) {
+    const file = filesByName.get(asset.name);
+    if (file === undefined) {
+      throw new AssetRepositoryNotFoundError(
+        `Asset file not found for ${asset.id}`
+      );
+    }
+    canonical.set(
+      asset.id,
+      assetSchema.parse({
+        ...formatAsset({
+          assetId: asset.id,
+          projectId: asset.projectId,
+          filename: asset.filename ?? null,
+          description: asset.description ?? null,
+          folderId: asset.folderId,
+          file,
+        }),
+        meta: asset.meta,
+      })
+    );
+  }
+  return { assets: canonical, filesByName };
+};
 
 // Supabase documents that REST requests most often hit Cloudflare 520 errors
 // at 16+ KiB across the URL and headers, especially with long `in` filters:
@@ -29,6 +99,132 @@ const maxAssetIdsPerPostgrestMetadataRequest = 100;
 const maxConcurrentAssetMetadataPostgrestRequests = Math.ceil(
   assetResourceLimits.concurrentContentReads / 2
 );
+
+// Keep encoded `in` filters around 4 KiB. File storage names can be much
+// longer than Asset ids, so a fixed item count cannot provide the same bound.
+const maxPostgrestInFilterCharacters = 4 * 1024;
+
+const chunkPostgrestInValues = (values: Iterable<string>) => {
+  const chunks: string[][] = [];
+  let chunk: string[] = [];
+  for (const value of new Set(values)) {
+    const candidate = [...chunk, value];
+    const encodedFilter = new URLSearchParams({
+      name: `in.(${candidate.join(",")})`,
+    }).toString();
+    if (
+      chunk.length > 0 &&
+      encodedFilter.length > maxPostgrestInFilterCharacters
+    ) {
+      chunks.push(chunk);
+      chunk = [value];
+      continue;
+    }
+    chunk = candidate;
+  }
+  if (chunk.length > 0) {
+    chunks.push(chunk);
+  }
+  return chunks;
+};
+
+// File.uploaderProjectId records physical-file provenance, not every project
+// allowed to reference it. clone_project intentionally shares File rows while
+// copying their logical Asset rows, so filtering these lookups by that field
+// would prevent cloned projects from restoring their shared files during Undo.
+const loadUploadedFilesByNames = async ({
+  names,
+  client,
+}: {
+  names: Iterable<string>;
+  client: Client;
+}) => {
+  const chunks = chunkPostgrestInValues(names);
+  return (
+    await mapBounded(
+      chunks,
+      maxConcurrentAssetMetadataPostgrestRequests,
+      async (chunk) => {
+        const files = await client
+          .from("File")
+          .select()
+          .in("name", chunk)
+          .eq("status", "UPLOADED");
+        assertPostgrestSuccess(files);
+        return (files.data ?? []).filter((file) => file.status === "UPLOADED");
+      }
+    )
+  ).flat();
+};
+
+const restoreUploadedFilesByNames = async ({
+  names,
+  client,
+}: {
+  names: Iterable<string>;
+  client: Client;
+}) => {
+  await mapBounded(
+    chunkPostgrestInValues(names),
+    maxConcurrentAssetMetadataPostgrestRequests,
+    async (chunk) => {
+      const restoredFiles = await client
+        .from("File")
+        .update({ isDeleted: false })
+        .in("name", chunk)
+        .eq("status", "UPLOADED");
+      assertPostgrestSuccess(restoredFiles);
+    }
+  );
+};
+
+const restoreSharedAssetFileWithClient = async (
+  {
+    projectId,
+    assetId,
+    expectedName,
+    replacementName,
+  }: {
+    projectId: string;
+    assetId: string;
+    expectedName: string;
+    replacementName: string;
+  },
+  client: Client
+) => {
+  // clone_project shares existing File revision rows with the source project.
+  // Restore the shared target before the compare-and-set so an Asset never
+  // points at a deleted file if either request fails.
+  const restoredFile = await client
+    .from("File")
+    .update({ isDeleted: false })
+    .eq("name", replacementName)
+    .eq("status", "UPLOADED")
+    .select("name")
+    .maybeSingle();
+  assertPostgrestSuccess(restoredFile);
+  if (restoredFile.data?.name !== replacementName) {
+    throw new AssetRepositoryNotFoundError("Asset revision is not available");
+  }
+
+  const updatedAsset = await client
+    .from("Asset")
+    .update({ name: replacementName })
+    .eq("id", assetId)
+    .eq("projectId", projectId)
+    .eq("name", expectedName)
+    .select("id")
+    .maybeSingle();
+  assertPostgrestSuccess(updatedAsset);
+  if (updatedAsset.data?.id !== assetId) {
+    throw new AssetRevisionConflictError(
+      "This file changed since it was opened. Reload it before saving again."
+    );
+  }
+  // Retain the prior File revision here. A separate read-then-delete cleanup
+  // could mark it deleted after another project or Undo restores a reference.
+  // Owned revisions use swap_asset_file's transactional cleanup instead.
+};
 
 export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
   Array.from(assets, (asset) => ({
@@ -371,11 +567,17 @@ export const patchAssetsWithClient = async (
   patches: Array<Patch>,
   {
     validate,
+    allowSharedFileRestore = false,
   }: {
     validate?: (input: {
       current: ReadonlyMap<Asset["id"], Asset>;
       next: ReadonlyMap<Asset["id"], Asset>;
     }) => Promise<void>;
+    /**
+     * Allows the authorized sync endpoint to restore File rows shared by a
+     * cloned project. Direct revision writes remain restricted to owned rows.
+     */
+    allowSharedFileRestore?: boolean;
   } = {}
 ): Promise<void> => {
   const assetsList = await loadAssetsByProjectWithClient(projectId, client);
@@ -386,12 +588,26 @@ export const patchAssetsWithClient = async (
   const patchedAssets = applyValidatedMapPatches(assetsMap, patches, (value) =>
     assets.parse(value)
   );
-  for (const asset of patchedAssets.values()) {
+  for (const [assetId, asset] of patchedAssets) {
+    if (asset.id !== assetId) {
+      throw new Error(
+        `Asset ${asset.id} does not match its map key ${assetId}`
+      );
+    }
     if (asset.projectId !== projectId) {
       throw new Error(`Asset ${asset.id} belongs to another project`);
     }
   }
-  await validate?.({ current: assetsMap, next: patchedAssets });
+  let replacementFilesByName = new Map<string, FileRow>();
+  if (validate !== undefined || allowSharedFileRestore) {
+    const canonical = await getCanonicalAssetsForValidation({
+      current: assetsMap,
+      next: patchedAssets,
+      client,
+    });
+    replacementFilesByName = canonical.filesByName;
+    await validate?.({ current: assetsMap, next: canonical.assets });
+  }
   const {
     added,
     updated,
@@ -406,6 +622,56 @@ export const patchAssetsWithClient = async (
       previous.folderId === asset.folderId &&
       serializeAssetMeta(previous.meta) === serializeAssetMeta(asset.meta)
   );
+  const sharedMetadataAssetIds = new Set<Asset["id"]>();
+  if (allowSharedFileRestore) {
+    const assetsWithMetadataChanges = updated.filter((asset) => {
+      const previous = assetsMap.get(asset.id);
+      return (
+        previous !== undefined &&
+        serializeAssetMeta(previous.meta) !== serializeAssetMeta(asset.meta)
+      );
+    });
+    const missingFileNames = assetsWithMetadataChanges.flatMap((asset) =>
+      replacementFilesByName.has(asset.name) ? [] : [asset.name]
+    );
+    for (const file of await loadUploadedFilesByNames({
+      names: missingFileNames,
+      client,
+    })) {
+      replacementFilesByName.set(file.name, file);
+    }
+    for (const asset of assetsWithMetadataChanges) {
+      const file = replacementFilesByName.get(asset.name);
+      if (file === undefined) {
+        throw new AssetRepositoryNotFoundError(
+          `Asset file not found for ${asset.id}`
+        );
+      }
+      // Files uploaded before provenance tracking have a null project id.
+      // Preserve their existing metadata edits, but validate replacement files.
+      if (
+        file.uploaderProjectId === projectId ||
+        (file.uploaderProjectId === null &&
+          assetsMap.get(asset.id)?.name === asset.name)
+      ) {
+        continue;
+      }
+      sharedMetadataAssetIds.add(asset.id);
+      const authoritativeMeta = formatAsset({
+        assetId: asset.id,
+        projectId,
+        filename: asset.filename ?? null,
+        description: asset.description ?? null,
+        folderId: asset.folderId,
+        file,
+      }).meta;
+      if (
+        serializeAssetMeta(asset.meta) !== serializeAssetMeta(authoritativeMeta)
+      ) {
+        throw new Error("Shared asset metadata does not match its file");
+      }
+    }
+  }
   if (deletedAssetIds.length !== 0) {
     await deleteAssetsWithClient({ projectId, ids: deletedAssetIds }, client);
   }
@@ -416,15 +682,37 @@ export const patchAssetsWithClient = async (
       throw new Error(`Asset ${asset.id} was not loaded`);
     }
     if (previous.name !== asset.name) {
-      await swapAssetFileWithClient(
-        {
-          projectId,
-          assetId: asset.id,
-          expectedName: previous.name,
-          replacementName: asset.name,
-        },
-        client
-      );
+      const replacementFile = replacementFilesByName.get(asset.name);
+      if (allowSharedFileRestore && replacementFile === undefined) {
+        throw new AssetRepositoryNotFoundError(
+          `Asset file not found for ${asset.id}`
+        );
+      }
+      if (
+        allowSharedFileRestore &&
+        replacementFile !== undefined &&
+        replacementFile.uploaderProjectId !== projectId
+      ) {
+        await restoreSharedAssetFileWithClient(
+          {
+            projectId,
+            assetId: asset.id,
+            expectedName: previous.name,
+            replacementName: asset.name,
+          },
+          client
+        );
+      } else {
+        await swapAssetFileWithClient(
+          {
+            projectId,
+            assetId: asset.id,
+            expectedName: previous.name,
+            replacementName: asset.name,
+          },
+          client
+        );
+      }
     }
     if (
       previous.filename !== asset.filename ||
@@ -441,7 +729,10 @@ export const patchAssetsWithClient = async (
         client
       );
     }
-    if (serializeAssetMeta(previous.meta) !== serializeAssetMeta(asset.meta)) {
+    if (
+      sharedMetadataAssetIds.has(asset.id) === false &&
+      serializeAssetMeta(previous.meta) !== serializeAssetMeta(asset.meta)
+    ) {
       const meta = serializeAssetMeta(asset.meta);
       const updatedFile = await client
         .from("File")
@@ -459,16 +750,11 @@ export const patchAssetsWithClient = async (
   }
   const addedAssets: Asset[] = added;
   if (addedAssets.length !== 0) {
-    const files = await client
-      .from("File")
-      .select()
-      .in(
-        "name",
-        addedAssets.map((asset) => asset.name)
-      );
-    assertPostgrestSuccess(files);
-
-    const fileNames = new Set(files.data?.map((file) => file.name));
+    const files = await loadUploadedFilesByNames({
+      names: addedAssets.map((asset) => asset.name),
+      client,
+    });
+    const fileNames = new Set(files.map((file) => file.name));
     const missingFile = addedAssets.find(
       (asset) => fileNames.has(asset.name) === false
     );
@@ -479,11 +765,7 @@ export const patchAssetsWithClient = async (
     }
 
     // restore file when undo is triggered
-    const restoredFiles = await client
-      .from("File")
-      .update({ isDeleted: false })
-      .in("name", Array.from(fileNames));
-    assertPostgrestSuccess(restoredFiles);
+    await restoreUploadedFilesByNames({ names: fileNames, client });
 
     const insertedAssets = await client
       .from("Asset")

@@ -1,4 +1,4 @@
-import { createElement } from "react";
+import { createElement, Fragment } from "react";
 import { act } from "react-dom/test-utils";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
@@ -184,6 +184,47 @@ describe("asset folder selector levels", () => {
 
     expect(onChange).toHaveBeenCalledOnce();
     expect(onChange).toHaveBeenCalledWith("child");
+  });
+
+  test("announces an unavailable destination and restores the committed folder on blur", async () => {
+    $assetFolders.set(values);
+    const onChange = vi.fn();
+    renderer.render(
+      createElement(
+        Fragment,
+        {},
+        createElement(AssetFolderSelector, {
+          value: undefined,
+          onChange,
+          unavailableDestinationFolderIds: new Set(["parent"]),
+          deferChangesUntilBlur: true,
+        }),
+        createElement("button", { type: "button" }, "Outside")
+      )
+    );
+
+    selectOption("Top level folder", "parent");
+
+    expect(document.querySelector('[role="status"]')?.textContent).toContain(
+      "Choose a subfolder"
+    );
+    expect(
+      document.querySelector('[aria-label="Top level folder"]')?.textContent
+    ).toContain("parent");
+    expect(onChange).not.toHaveBeenCalled();
+
+    await act(async () => {
+      Array.from(document.querySelectorAll("button"))
+        .find((button) => button.textContent === "Outside")
+        ?.focus();
+      await Promise.resolve();
+    });
+
+    expect(
+      document.querySelector('[aria-label="Top level folder"]')?.textContent
+    ).toContain("Root");
+    expect(document.querySelector('[role="status"]')).toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   test("uses non-empty unique select values for Root and folders", () => {

@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { useStore } from "@nanostores/react";
-import { Flex, Grid, Label, Select } from "@webstudio-is/design-system";
+import { Flex, Grid, Label, Select, Text } from "@webstudio-is/design-system";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import {
   createAssetFolderHierarchy,
@@ -123,7 +123,12 @@ export const AssetFolderSelector = ({
   const selectId = useId();
   const [draftValue, setDraftValue] = useState(value);
   const pendingValue = useRef<{ folderId: string | undefined }>();
+  const selectorRef = useRef<HTMLDivElement | null>(null);
+  const committedValue = useRef(value);
+  committedValue.current = value;
+  const navigatingUnavailableDestination = useRef(false);
   const openSelects = useRef(new Set<number>());
+  const [destinationNotice, setDestinationNotice] = useState<string>();
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -135,10 +140,20 @@ export const AssetFolderSelector = ({
     pendingValue.current = undefined;
     onChangeRef.current(pending.folderId);
   }, []);
+  const restoreCommittedValue = useCallback(() => {
+    if (navigatingUnavailableDestination.current === false) {
+      return;
+    }
+    navigatingUnavailableDestination.current = false;
+    setDraftValue(committedValue.current);
+    setDestinationNotice(undefined);
+  }, []);
 
   useEffect(() => {
     if (pendingValue.current === undefined) {
+      navigatingUnavailableDestination.current = false;
       setDraftValue(value);
+      setDestinationNotice(undefined);
     }
   }, [value]);
 
@@ -171,20 +186,31 @@ export const AssetFolderSelector = ({
 
   return (
     <Grid
+      ref={selectorRef}
       gap={1}
       onBlurCapture={(event) => {
-        if (deferChangesUntilBlur === false) {
+        if (
+          deferChangesUntilBlur === false &&
+          navigatingUnavailableDestination.current === false
+        ) {
           return;
         }
         const selector = event.currentTarget;
         queueMicrotask(() => {
+          if (selectorRef.current !== selector) {
+            return;
+          }
           if (
             openSelects.current.size > 0 ||
             selector.contains(document.activeElement)
           ) {
             return;
           }
-          commitPendingValue();
+          if (pendingValue.current !== undefined) {
+            commitPendingValue();
+            return;
+          }
+          restoreCommittedValue();
         });
       }}
     >
@@ -206,14 +232,33 @@ export const AssetFolderSelector = ({
                   openSelects.current.add(index);
                 } else {
                   openSelects.current.delete(index);
+                  queueMicrotask(() => {
+                    if (
+                      openSelects.current.size === 0 &&
+                      selectorRef.current?.contains(document.activeElement) ===
+                        false
+                    ) {
+                      if (pendingValue.current !== undefined) {
+                        commitPendingValue();
+                      } else {
+                        restoreCommittedValue();
+                      }
+                    }
+                  });
                 }
               }}
               onChange={(option: Option) => {
                 setDraftValue(option.folderId);
                 if (option.canUseAsDestination === false) {
                   pendingValue.current = undefined;
+                  navigatingUnavailableDestination.current = true;
+                  setDestinationNotice(
+                    `${option.label} is a collection folder. Choose a subfolder.`
+                  );
                   return;
                 }
+                navigatingUnavailableDestination.current = false;
+                setDestinationNotice(undefined);
                 if (deferChangesUntilBlur) {
                   pendingValue.current = { folderId: option.folderId };
                 } else {
@@ -225,6 +270,11 @@ export const AssetFolderSelector = ({
           </Flex>
         ))}
       </Flex>
+      {destinationNotice !== undefined && (
+        <Text role="status" color="subtle" variant="tiny">
+          {destinationNotice}
+        </Text>
+      )}
     </Grid>
   );
 };

@@ -182,6 +182,21 @@ export const AssetThumbnail = ({
   const collectionActionBlocked =
     isCollectionReserved &&
     canConfigureContentCollections(authPermit) === false;
+  const collectionActionBlockedRef = useRef(collectionActionBlocked);
+  collectionActionBlockedRef.current = collectionActionBlocked;
+  const canMutate = authPermit !== "view" && collectionActionBlocked === false;
+  const canMutateRef = useRef(canMutate);
+  canMutateRef.current = canMutate;
+  const isCollectionEntryRef = useRef(isCollectionEntry);
+  isCollectionEntryRef.current = isCollectionEntry;
+  useEffect(() => {
+    if (canMutate === false) {
+      setDeleteOpen(false);
+    }
+    if (collectionActionBlocked) {
+      setSettingsOpen(false);
+    }
+  }, [canMutate, collectionActionBlocked]);
   const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
   const getDragItems = interactions.getDragItems;
@@ -197,6 +212,7 @@ export const AssetThumbnail = ({
         ? assetContainer.asset.projectId
         : "uploading",
   };
+  const clipboardActions = createAssetManagerClipboardActions(item);
   const download = () => {
     if (assetContainer.status !== "uploaded") {
       return;
@@ -213,26 +229,70 @@ export const AssetThumbnail = ({
           open: onOpen,
           settings: collectionActionBlocked
             ? undefined
-            : () => setSettingsOpen(true),
+            : () => {
+                if (collectionActionBlockedRef.current === false) {
+                  setSettingsOpen(true);
+                }
+              },
           ...(authPermit === "view"
             ? {}
             : {
                 ...(collectionActionBlocked
                   ? {}
-                  : createAssetManagerClipboardActions(item)),
+                  : {
+                      cut: () => {
+                        if (canMutateRef.current) {
+                          clipboardActions.cut();
+                        }
+                      },
+                      copy: () => {
+                        if (canMutateRef.current) {
+                          clipboardActions.copy();
+                        }
+                      },
+                      duplicate: () => {
+                        if (
+                          canMutateRef.current &&
+                          isCollectionEntryRef.current === false
+                        ) {
+                          clipboardActions.duplicate();
+                        }
+                      },
+                    }),
                 ...(isCollectionEntry ? { duplicate: undefined } : {}),
-                move: collectionActionBlocked ? undefined : onMove,
+                move:
+                  collectionActionBlocked || onMove === undefined
+                    ? undefined
+                    : () => {
+                        if (canMutateRef.current) {
+                          onMove();
+                        }
+                      },
                 delete: collectionActionBlocked
                   ? undefined
-                  : () => setDeleteOpen(true),
+                  : () => {
+                      if (canMutateRef.current) {
+                        setDeleteOpen(true);
+                      }
+                    },
                 ...(asset.type === "image"
-                  ? { replace: () => replaceInputRef.current?.click() }
+                  ? {
+                      replace: () => {
+                        if (canMutateRef.current) {
+                          replaceInputRef.current?.click();
+                        }
+                      },
+                    }
                   : {}),
               }),
           ...(authPermit !== "view" && canDownloadAssets ? { download } : {}),
         };
 
   const handleReplaceFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (canMutateRef.current === false) {
+      event.target.value = "";
+      return;
+    }
     const file = validateFiles(Array.from(event.target.files ?? []))[0];
     if (file !== undefined) {
       replaceAsset(asset.id, file);
@@ -331,13 +391,14 @@ export const AssetThumbnail = ({
           assetContainer.status === "uploaded" ? (
             <AssetSettings
               asset={assetContainer.asset}
-              open={settingsOpen}
+              open={settingsOpen && collectionActionBlocked === false}
               onOpenChange={(open) => {
                 setSettingsOpen(open);
               }}
               onDelete={actions.delete}
               onReplace={actions.replace}
               canRename={isCollectionEntry === false}
+              canSaveChanges={canMutateRef.current}
               unavailableDestinationFolderIds={unavailableDestinationFolderIds}
             >
               <AssetManagerThumbnailMenu
@@ -354,7 +415,7 @@ export const AssetThumbnail = ({
       {assetContainer.status === "uploaded" && (
         <AssetDeleteDialog
           asset={assetContainer.asset}
-          open={deleteOpen}
+          open={deleteOpen && canMutate}
           onOpenChange={setDeleteOpen}
         />
       )}

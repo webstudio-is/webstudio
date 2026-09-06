@@ -57,6 +57,12 @@ export const createAssetFolder = async ({
     waitForChangeToBeSaved({ page }),
     dialog.getByRole("button", { name: "Create folder" }).click(),
   ]);
+  if (useAsContentCollection) {
+    const collectionCreatedDialog = page.getByRole("dialog", {
+      name: "Collection created",
+    });
+    await collectionCreatedDialog.getByRole("button", { name: "Done" }).click();
+  }
   return page.getByRole("button", { name: `Folder ${name}`, exact: true });
 };
 

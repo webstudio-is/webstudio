@@ -1,10 +1,140 @@
 import { describe, expect, test, vi } from "vitest";
+import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
+import type { Asset } from "@webstudio-is/sdk";
 import {
   preparePublishedAssetData,
   validatePublishedAssetCollections,
 } from "./publication";
 
+const createCollectionFixture = () => {
+  const configSource = createDefaultCollectionConfig();
+  const baseAsset: Asset = {
+    id: "config",
+    projectId: "project-1",
+    name: "config-storage.json",
+    filename: "collection",
+    folderId: "posts",
+    type: "file",
+    format: "json",
+    size: new TextEncoder().encode(configSource).byteLength,
+    description: null,
+    createdAt: "2026-09-06T00:00:00.000Z",
+    meta: {},
+  };
+  const configAsset = baseAsset;
+  const templateAsset: Asset = {
+    ...baseAsset,
+    id: "template",
+    name: "template-storage.mdx",
+    filename: "template",
+    format: "mdx",
+  };
+  const entryAsset: Asset = {
+    ...templateAsset,
+    id: "entry",
+    name: "entry-storage.mdx",
+    filename: "hello-world",
+  };
+  const imageAsset: Asset = {
+    ...baseAsset,
+    id: "image",
+    name: "image-storage.png",
+    filename: "image",
+    folderId: undefined,
+    type: "image",
+    format: "png",
+    meta: { width: 100, height: 100 },
+  };
+  const assetData = {
+    assets: [configAsset, templateAsset, entryAsset, imageAsset],
+    assetFolders: [{ id: "posts" }],
+  };
+  const assetStore = {
+    readFile: vi.fn(async (name: string) => {
+      if (name !== configAsset.name) {
+        throw new Error(`Unexpected asset read: ${name}`);
+      }
+      return {
+        data: new Blob([configSource]).stream(),
+        contentLength: configAsset.size,
+      };
+    }),
+    uploadFile: vi.fn(),
+  };
+  return { assetData, assetStore };
+};
+
 describe("published asset data", () => {
+  test("omits collection configuration and templates from public validation output", async () => {
+    const { assetData, assetStore } = createCollectionFixture();
+    const validateCollections = vi.fn();
+    const dependencies = {
+      createRepository: vi.fn(() => ({ validateCollections })),
+      loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
+    };
+
+    const publicResult = await validatePublishedAssetCollections(
+      {
+        projectId: "project-1",
+        context: { apiClient: { type: "service" } } as never,
+        assetStore: assetStore as never,
+      },
+      dependencies as never
+    );
+    expect(publicResult.assets.map(({ id }) => id)).toEqual(["entry", "image"]);
+
+    const authenticatedResult = await validatePublishedAssetCollections(
+      {
+        projectId: "project-1",
+        context: { apiClient: { type: "cli" } } as never,
+        assetStore: assetStore as never,
+      },
+      dependencies as never
+    );
+    expect(authenticatedResult.assets).toEqual(assetData.assets);
+    expect(validateCollections).toHaveBeenCalledWith(assetData.assets);
+    expect(assetStore.readFile).toHaveBeenCalledOnce();
+  });
+
+  test("omits collection configuration and templates from indexed public output", async () => {
+    const { assetData, assetStore } = createCollectionFixture();
+    const artifact = { documents: [], assetReferences: {} } as never;
+    const prepareIndex = vi.fn().mockResolvedValue(artifact);
+    const dependencies = {
+      createRepository: vi.fn(() => ({ prepareIndex })),
+      loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
+    };
+
+    const result = await preparePublishedAssetData(
+      {
+        projectId: "project-1",
+        context: { apiClient: { type: "service" } } as never,
+        assetStore: assetStore as never,
+        contentDatabaseMaxBytes: 512_000,
+        plan: { queries: [] } as never,
+        retainedAssetIds: [],
+      },
+      dependencies as never
+    );
+
+    expect(result.assets.map(({ id }) => id)).toEqual(["entry", "image"]);
+
+    const authenticatedResult = await preparePublishedAssetData(
+      {
+        projectId: "project-1",
+        context: { apiClient: { type: "cli" } } as never,
+        assetStore: assetStore as never,
+        contentDatabaseMaxBytes: 512_000,
+        plan: { queries: [] } as never,
+        retainedAssetIds: [],
+      },
+      dependencies as never
+    );
+    expect(authenticatedResult.assets).toEqual(assetData.assets);
+    expect(prepareIndex).toHaveBeenCalledTimes(2);
+    expect(assetStore.readFile).toHaveBeenCalledOnce();
+  });
+
   test("validates collections without compiling a content index", async () => {
     const validateCollections = vi.fn();
     const createRepository = vi.fn(() => ({ validateCollections }));

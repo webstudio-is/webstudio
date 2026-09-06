@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
-import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
 import {
+  ContentCollectionError,
+  contentEngineLimits,
+  createDefaultCollectionConfig,
+} from "@webstudio-is/content-engine";
+import {
+  ContentCollectionReadError,
   createLoadingContentCollections,
   discoverContentCollections,
   getCollectionReservedAssetIds,
@@ -31,6 +36,112 @@ const asset = ({
 });
 
 describe("discoverContentCollections", () => {
+  test("keeps temporary collection read failures retryable", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, template],
+      readSource: async () => {
+        throw new Error("Network request failed");
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "unavailable",
+      message: "Collection files could not be loaded: Network request failed",
+    });
+    expect(
+      mergeLoadingContentCollections({
+        current: collections,
+        loading: createLoadingContentCollections([config, template]),
+      }).get("folder")
+    ).toBe(collections.get("folder"));
+    expect(
+      getCollectionReservedAssetIds(collections, { includeInvalid: true })
+    ).toEqual(new Set([config.id, template.id]));
+  });
+
+  test("reports permanent collection content errors as invalid", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config],
+      readSource: async () => {
+        throw new ContentCollectionError("Collection file is not valid UTF-8");
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "invalid",
+      message: "Collection file is not valid UTF-8",
+    });
+  });
+
+  test("reports oversized collection sources as invalid without reading them", async () => {
+    const config = {
+      ...asset({
+        id: "config",
+        filename: "collection",
+        format: "json",
+      }),
+      size: contentEngineLimits.hydratedFileBytes + 1,
+    };
+    let read = false;
+    const collections = await discoverContentCollections({
+      assets: [config],
+      readSource: async () => {
+        read = true;
+        return createDefaultCollectionConfig();
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "invalid",
+      message: 'Collection file "collection.json" exceeds the editing limit',
+    });
+    expect(read).toBe(false);
+  });
+
+  test("keeps temporary entry reads separate from invalid frontmatter", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const entry = asset({ id: "entry", filename: "hello", format: "mdx" });
+    const collections = await discoverContentCollections({
+      assets: [config, template, entry],
+      readSource: async (currentAsset) =>
+        currentAsset.id === config.id
+          ? createDefaultCollectionConfig()
+          : "---\ndraft: false\n---\n",
+      readFrontmatter: async () => {
+        throw new ContentCollectionReadError("Request timed out");
+      },
+    });
+
+    expect(collections.get("folder")).toMatchObject({
+      status: "unavailable",
+      message: "Collection files could not be loaded: Request timed out",
+    });
+  });
+
   test("reserves possible templates while collection settings load", () => {
     const config = asset({
       id: "config",
@@ -126,8 +237,42 @@ describe("discoverContentCollections", () => {
       message: "collection.json contains invalid JSON",
     });
     expect(
+      mergeLoadingContentCollections({
+        current: collections,
+        loading: createLoadingContentCollections([config, possibleTemplate]),
+      }).get("folder")
+    ).toBe(collections.get("folder"));
+    expect(
       getCollectionReservedAssetIds(collections, { includeInvalid: true })
     ).toEqual(new Set([config.id, possibleTemplate.id]));
+  });
+
+  test("returns an invalid collection to loading when a sibling changes", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const possibleTemplate = asset({
+      id: "possible-template",
+      filename: "article",
+      format: "mdx",
+    });
+    const collections = await discoverContentCollections({
+      assets: [config, possibleTemplate],
+      readSource: async () => "not json",
+    });
+    const changedTemplate = {
+      ...possibleTemplate,
+      name: "article-revision.mdx",
+    };
+
+    expect(
+      mergeLoadingContentCollections({
+        current: collections,
+        loading: createLoadingContentCollections([config, changedTemplate]),
+      }).get("folder")
+    ).toMatchObject({ status: "loading" });
   });
 
   test("keeps an identified invalid template reserved in content mode", async () => {
