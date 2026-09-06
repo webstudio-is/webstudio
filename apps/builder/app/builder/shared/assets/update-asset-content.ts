@@ -28,6 +28,9 @@ export const createUpdateAssetContent =
     if (projectId === undefined) {
       throw new Error("Project not found");
     }
+    if (asset.projectId !== projectId) {
+      throw new Error("The file belongs to another project.");
+    }
 
     const origin = window.location.origin;
     const { asset: updatedAsset } = await dependencies.requestContentUpdate({
@@ -41,6 +44,11 @@ export const createUpdateAssetContent =
       request: fetch,
       requestOrigin: origin,
     });
+    if ($project.get()?.id !== projectId) {
+      throw new Error(
+        "The file was updated in the previous project. Return to that project to view it."
+      );
+    }
 
     dependencies.commitUpdatedAsset(updatedAsset);
     return updatedAsset;

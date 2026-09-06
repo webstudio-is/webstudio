@@ -42,7 +42,7 @@ import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
 import { AssetFilters } from "./asset-filters";
 import { AssetSortSelect } from "./asset-sort";
-import { $assetFolders, $project } from "~/shared/sync/data-stores";
+import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
 import { AssetFolderBreadcrumbs } from "./asset-folder-breadcrumbs";
 import {
   filterAssetFolders,
@@ -95,6 +95,18 @@ import { getAssetManagerDragItems } from "./asset-manager-drag";
 import type { AssetManagerThumbnailInteractions } from "./asset-manager-thumbnail";
 import { $authPermit } from "~/shared/nano-states";
 import { MoveAssetManagerItemsDialog } from "./asset-folder-dialogs";
+import {
+  canConfigureContentCollections,
+  createLoadingContentCollections,
+  getCollectionReservedAssetIds,
+  type ContentCollection,
+} from "../assets/content-collections";
+
+const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
+  items.every((item) => item.type === "folder");
+
+const emptyContentCollections: ReadonlyMap<string, ContentCollection> =
+  new Map();
 
 type FolderNavigationProps =
   | { folderId?: never; onFolderChange?: never }
@@ -112,9 +124,15 @@ type AssetManagerProps = FolderNavigationProps & {
   panelActions?: Partial<
     Pick<
       AssetManagerItemActions,
-      "createFolder" | "createFile" | "upload" | "deleteUnusedAssets"
+      | "createFolder"
+      | "createFile"
+      | "upload"
+      | "deleteUnusedAssets"
+      | "createEntry"
     >
   >;
+  collections?: ReadonlyMap<string, ContentCollection>;
+  emptyMessage?: string;
 };
 
 const AssetGrid = ({
@@ -148,7 +166,30 @@ export const AssetManager = ({
   onFolderChange,
   canManageFolders = false,
   panelActions,
+  collections = emptyContentCollections,
+  emptyMessage,
 }: AssetManagerProps) => {
+  const assets = useStore($assets);
+  const effectiveCollections = useMemo(() => {
+    const detected = createLoadingContentCollections(
+      Array.from(assets.values())
+    );
+    for (const [folderId, collection] of collections) {
+      detected.set(folderId, collection);
+    }
+    return detected;
+  }, [assets, collections]);
+  const collectionFolderIds = useMemo(
+    () => new Set(effectiveCollections.keys()),
+    [effectiveCollections]
+  );
+  const collectionReservedAssetIds = useMemo(
+    () =>
+      getCollectionReservedAssetIds(effectiveCollections, {
+        includeInvalid: true,
+      }),
+    [effectiveCollections]
+  );
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
   const project = useStore($project);
@@ -158,6 +199,66 @@ export const AssetManager = ({
     () => createAssetFolderHierarchy(folders),
     [folders]
   );
+  const canConfigureCollections = canConfigureContentCollections(authPermit);
+  const collectionProtectedFolderIds = useMemo(() => {
+    const protectedFolderIds = new Set<string>();
+    for (const collectionFolderId of collectionFolderIds) {
+      for (const folder of folderHierarchy.getPath(collectionFolderId)) {
+        protectedFolderIds.add(folder.id);
+      }
+    }
+    return protectedFolderIds;
+  }, [collectionFolderIds, folderHierarchy]);
+  const canCopyOrDeleteItems = useCallback(
+    (items: readonly AssetManagerSelection[]) => {
+      if (authPermit === "view") {
+        return false;
+      }
+      const currentAuthPermit = $authPermit.get();
+      return (
+        currentAuthPermit !== "view" &&
+        (canConfigureContentCollections(currentAuthPermit) ||
+          items.every(
+            (item) =>
+              (item.type !== "folder" ||
+                collectionProtectedFolderIds.has(item.id) === false) &&
+              (item.type !== "asset" ||
+                collectionReservedAssetIds.has(item.id) === false)
+          ))
+      );
+    },
+    [authPermit, collectionProtectedFolderIds, collectionReservedAssetIds]
+  );
+  const canRelocateItems = useCallback(
+    (items: readonly AssetManagerSelection[]) => {
+      if (authPermit === "view") {
+        return false;
+      }
+      const currentAuthPermit = $authPermit.get();
+      return (
+        currentAuthPermit !== "view" &&
+        (canConfigureContentCollections(currentAuthPermit) ||
+          items.every(
+            (item) =>
+              item.type !== "asset" ||
+              collectionReservedAssetIds.has(item.id) === false
+          ))
+      );
+    },
+    [authPermit, collectionReservedAssetIds]
+  );
+  const currentProtectionRef = useRef({
+    canManageAssets: authPermit !== "view",
+    canCopyOrDeleteItems,
+    canRelocateItems,
+    collectionFolderIds,
+  });
+  currentProtectionRef.current = {
+    canManageAssets: authPermit !== "view",
+    canCopyOrDeleteItems,
+    canRelocateItems,
+    collectionFolderIds,
+  };
   const mimePatterns = useMemo(() => acceptToMimePatterns(accept), [accept]);
   const [internalFolderId, setInternalFolderId] = useState(folderId);
   const [selection, setSelection] = useState<AssetManagerSelection>();
@@ -190,6 +291,48 @@ export const AssetManager = ({
   }, [clearMultiselect]);
   const currentFolderId =
     onFolderChange === undefined ? internalFolderId : folderId;
+  const currentFolderIsCollection =
+    currentFolderId !== undefined && collectionFolderIds.has(currentFolderId);
+  const canPasteClipboardToFolder = useCallback(
+    (targetFolderId: string | undefined) => {
+      if (
+        clipboard !== undefined &&
+        ((clipboard.operation === "copy" &&
+          canCopyOrDeleteItems(clipboard.items) === false) ||
+          (clipboard.operation === "cut" &&
+            canRelocateItems(clipboard.items) === false))
+      ) {
+        return false;
+      }
+      return canPasteAssetManagerClipboard(
+        targetFolderId,
+        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
+          ? acceptFolderClipboardItems
+          : undefined
+      );
+    },
+    [canCopyOrDeleteItems, canRelocateItems, clipboard, collectionFolderIds]
+  );
+  const pasteClipboardToFolder = useCallback(
+    (targetFolderId: string | undefined) => {
+      if (
+        clipboard !== undefined &&
+        ((clipboard.operation === "copy" &&
+          canCopyOrDeleteItems(clipboard.items) === false) ||
+          (clipboard.operation === "cut" &&
+            canRelocateItems(clipboard.items) === false))
+      ) {
+        return;
+      }
+      pasteAssetManagerClipboard(
+        targetFolderId,
+        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
+          ? acceptFolderClipboardItems
+          : undefined
+      );
+    },
+    [canCopyOrDeleteItems, canRelocateItems, clipboard, collectionFolderIds]
+  );
   const setCurrentFolderId = useCallback(
     (nextFolderId: string | undefined) => {
       if (onFolderChange === undefined) {
@@ -609,15 +752,52 @@ export const AssetManager = ({
           ...item,
           projectId: project.id,
         }));
+  const selectionContainsCollectionEntry = normalizedShortcutSelection.some(
+    (item) =>
+      item.type === "asset" &&
+      collectionFolderIds.has(assetsById.get(item.id)?.folderId ?? "")
+  );
+  const canCopyOrDeleteSelection = canCopyOrDeleteItems(
+    normalizedShortcutSelection
+  );
+  const canRelocateSelection = canRelocateItems(normalizedShortcutSelection);
   const copyItems = (items: readonly AssetManagerItem[]) => {
+    const selections = items.map(({ type, id }) => ({ type, id }));
+    if (
+      currentProtectionRef.current.canManageAssets === false ||
+      currentProtectionRef.current.canCopyOrDeleteItems(selections) === false
+    ) {
+      return;
+    }
     copyAssetManagerItems(items);
     setAnnouncement(`${getItemCountLabel(items.length)} copied.`);
   };
   const cutItems = (items: readonly AssetManagerItem[]) => {
+    const selections = items.map(({ type, id }) => ({ type, id }));
+    if (
+      currentProtectionRef.current.canManageAssets === false ||
+      currentProtectionRef.current.canRelocateItems(selections) === false
+    ) {
+      return;
+    }
     cutAssetManagerItems(items);
     setAnnouncement(`${getItemCountLabel(items.length)} cut.`);
   };
   const duplicateItems = (items: readonly AssetManagerItem[]) => {
+    const selections = items.map(({ type, id }) => ({ type, id }));
+    if (
+      currentProtectionRef.current.canManageAssets === false ||
+      currentProtectionRef.current.canCopyOrDeleteItems(selections) === false ||
+      selections.some(
+        (item) =>
+          item.type === "asset" &&
+          currentProtectionRef.current.collectionFolderIds.has(
+            $assets.get().get(item.id)?.folderId ?? ""
+          )
+      )
+    ) {
+      return;
+    }
     duplicateAssetManagerItems(items);
     setAnnouncement(`${getItemCountLabel(items.length)} duplicated.`);
   };
@@ -625,15 +805,68 @@ export const AssetManager = ({
     forcedSelection === undefined || shortcutItems.length === 0
       ? {}
       : {
-          cut: () => cutItems(shortcutItems),
-          copy: () => copyItems(shortcutItems),
-          duplicate: () => duplicateItems(shortcutItems),
-          move: () => setPendingMoveItems(normalizedShortcutSelection),
-          delete: () => setPendingDeleteItems(normalizedShortcutSelection),
+          cut: canRelocateSelection ? () => cutItems(shortcutItems) : undefined,
+          copy: canCopyOrDeleteSelection
+            ? () => copyItems(shortcutItems)
+            : undefined,
+          duplicate:
+            canCopyOrDeleteSelection &&
+            selectionContainsCollectionEntry === false
+              ? () => duplicateItems(shortcutItems)
+              : undefined,
+          move: canRelocateSelection
+            ? () => {
+                if (
+                  currentProtectionRef.current.canManageAssets &&
+                  currentProtectionRef.current.canRelocateItems(
+                    normalizedShortcutSelection
+                  )
+                ) {
+                  setPendingMoveItems(normalizedShortcutSelection);
+                }
+              }
+            : undefined,
+          delete: canCopyOrDeleteSelection
+            ? () => {
+                if (
+                  currentProtectionRef.current.canManageAssets &&
+                  currentProtectionRef.current.canCopyOrDeleteItems(
+                    normalizedShortcutSelection
+                  )
+                ) {
+                  setPendingDeleteItems(normalizedShortcutSelection);
+                }
+              }
+            : undefined,
         };
+
+  useEffect(() => {
+    if (
+      pendingDeleteItems !== undefined &&
+      canCopyOrDeleteItems(pendingDeleteItems) === false
+    ) {
+      setPendingDeleteItems(undefined);
+    }
+  }, [canCopyOrDeleteItems, pendingDeleteItems]);
+
+  useEffect(() => {
+    if (
+      pendingMoveItems !== undefined &&
+      canRelocateItems(pendingMoveItems) === false
+    ) {
+      setPendingMoveItems(undefined);
+    }
+  }, [canRelocateItems, pendingMoveItems]);
 
   const moveItems = useCallback(
     (items: readonly AssetManagerSelection[], parentId: string | undefined) => {
+      if (
+        currentProtectionRef.current.canManageAssets === false ||
+        currentProtectionRef.current.canRelocateItems(items) === false
+      ) {
+        setPendingMoveItems(undefined);
+        return;
+      }
       const normalizedItems = normalizeItems(items);
       moveAssetManagerItems(normalizedItems, parentId);
       clearMultiselect();
@@ -649,13 +882,24 @@ export const AssetManager = ({
     (
       items: readonly AssetManagerSelection[],
       targetFolderId: string | undefined
-    ) =>
-      canMoveAssetManagerItems({
+    ) => {
+      if (canRelocateItems(items) === false) {
+        return false;
+      }
+      if (
+        targetFolderId !== undefined &&
+        collectionFolderIds.has(targetFolderId) &&
+        items.some((item) => item.type === "asset")
+      ) {
+        return false;
+      }
+      return canMoveAssetManagerItems({
         items,
         targetFolderId,
         hierarchy: folderHierarchy,
-      }),
-    [folderHierarchy]
+      });
+    },
+    [canRelocateItems, collectionFolderIds, folderHierarchy]
   );
   const moveExcludedFolderIds = useMemo(() => {
     if (pendingMoveItems === undefined) {
@@ -713,14 +957,21 @@ export const AssetManager = ({
       />
     );
 
+  const collectionPanelActions = currentFolderIsCollection
+    ? {
+        createFolder: panelActions?.createFolder,
+        createEntry: panelActions?.createEntry,
+        deleteUnusedAssets: panelActions?.deleteUnusedAssets,
+      }
+    : panelActions;
   const panelContextMenuActions: AssetManagerItemActions = {
-    ...panelActions,
+    ...collectionPanelActions,
     ...(canManageFolders
-      ? { paste: () => pasteAssetManagerClipboard(currentFolderId) }
+      ? { paste: () => pasteClipboardToFolder(currentFolderId) }
       : {}),
   };
   const canPaste =
-    canManageFolders && canPasteAssetManagerClipboard(currentFolderId);
+    canManageFolders && canPasteClipboardToFolder(currentFolderId);
   const disabledPanelActions = new Set<keyof AssetManagerItemActions>();
   if (canPaste === false) {
     disabledPanelActions.add("paste");
@@ -775,21 +1026,38 @@ export const AssetManager = ({
         setSelection(renderedItems[0]);
         announceSelection(renderedItems);
       }
-    } else if (key === "c" && shortcutItems.length > 0) {
+    } else if (
+      key === "c" &&
+      shortcutItems.length > 0 &&
+      canCopyOrDeleteSelection
+    ) {
       copyItems(shortcutItems);
-    } else if (key === "x" && shortcutItems.length > 0) {
+    } else if (
+      key === "x" &&
+      shortcutItems.length > 0 &&
+      canRelocateSelection
+    ) {
       cutItems(shortcutItems);
-    } else if (key === "d" && shortcutItems.length > 0) {
+    } else if (
+      key === "d" &&
+      shortcutItems.length > 0 &&
+      canCopyOrDeleteSelection &&
+      selectionContainsCollectionEntry === false
+    ) {
       duplicateItems(shortcutItems);
     } else if (key === "v" && canPaste) {
       const pastedItemCount = clipboard?.items.length ?? 0;
-      pasteAssetManagerClipboard(currentFolderId);
+      pasteClipboardToFolder(currentFolderId);
       setAnnouncement(
         `${getItemCountLabel(pastedItemCount)} pasted into ${getFolderName(
           currentFolderId
         )}.`
       );
-    } else if (isDeleteCommand && shortcutItems.length > 0) {
+    } else if (
+      isDeleteCommand &&
+      shortcutItems.length > 0 &&
+      canCopyOrDeleteSelection
+    ) {
       setPendingDeleteItems(normalizedShortcutSelection);
     }
   };
@@ -911,7 +1179,9 @@ export const AssetManager = ({
         }
         searchProps={searchProps}
         isEmpty={filteredItems.length === 0 && visibleFolders.length === 0}
-        emptyMessage={isSearching ? "No matching assets or folders" : undefined}
+        emptyMessage={
+          isSearching ? "No matching assets or folders" : emptyMessage
+        }
         emptyContent={
           backCard === undefined ? undefined : (
             <AssetGrid role="listbox" aria-multiselectable={canManageFolders}>
@@ -961,6 +1231,7 @@ export const AssetManager = ({
         onKeyDown={handleShortcut}
         autoScrollOnElementDrag={canManageFolders}
         allowFolderDrop={canManageFolders}
+        allowExternalDrop={currentFolderIsCollection === false}
         contextMenu={
           hasPanelContextMenuActions ? (
             <AssetManagerItemContextMenuContent
@@ -980,10 +1251,8 @@ export const AssetManager = ({
             folderId={currentFolderId}
             selectedItem={selectedBreadcrumbItem}
             onChange={setCurrentFolderId}
-            canPaste={
-              canManageFolders ? canPasteAssetManagerClipboard : undefined
-            }
-            onPaste={canManageFolders ? pasteAssetManagerClipboard : undefined}
+            canPaste={canManageFolders ? canPasteClipboardToFolder : undefined}
+            onPaste={canManageFolders ? pasteClipboardToFolder : undefined}
           />
         }
       >
@@ -1008,6 +1277,7 @@ export const AssetManager = ({
                 <FolderThumbnail
                   key={folder.id}
                   folder={folder}
+                  collection={effectiveCollections.get(folder.id)}
                   interactions={thumbnailInteractions}
                   selected={isItemSelected({ type: "folder", id: folder.id })}
                   forcedSelection={forcedSelection !== undefined}
@@ -1015,6 +1285,12 @@ export const AssetManager = ({
                     forcedSelection === undefined ? undefined : selectionActions
                   }
                   canManage={canManageFolders}
+                  canCopyOrDelete={
+                    canConfigureCollections ||
+                    collectionProtectedFolderIds.has(folder.id) === false
+                  }
+                  canPasteClipboard={canPasteClipboardToFolder(folder.id)}
+                  onPasteClipboard={() => pasteClipboardToFolder(folder.id)}
                   canMoveItems={canMoveItems}
                   onOpen={() => openFolder(folder.id)}
                   path={
@@ -1063,7 +1339,22 @@ export const AssetManager = ({
                         )
                       : undefined
                   }
-                  canDrag={canManageFolders}
+                  canDrag={
+                    canManageFolders &&
+                    canRelocateItems(
+                      getDragItems({
+                        type: "asset",
+                        id: assetContainer.asset.id,
+                      })
+                    )
+                  }
+                  isCollectionEntry={collectionFolderIds.has(
+                    assetContainer.asset.folderId ?? ""
+                  )}
+                  isCollectionReserved={collectionReservedAssetIds.has(
+                    assetContainer.asset.id
+                  )}
+                  unavailableDestinationFolderIds={collectionFolderIds}
                   onMove={() =>
                     setPendingMoveItems([
                       { type: "asset", id: assetContainer.asset.id },
@@ -1104,6 +1395,14 @@ export const AssetManager = ({
                 prefix={<TrashIcon />}
                 onClick={() => {
                   const items = pendingDeleteItems ?? [];
+                  if (
+                    currentProtectionRef.current.canManageAssets === false ||
+                    currentProtectionRef.current.canCopyOrDeleteItems(items) ===
+                      false
+                  ) {
+                    setPendingDeleteItems(undefined);
+                    return;
+                  }
                   deleteAssetManagerItems(items);
                   setPendingDeleteItems(undefined);
                   clearMultiselect();

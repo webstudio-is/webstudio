@@ -71,3 +71,23 @@ test("does not commit a conflicting revision", async () => {
   );
   expect(commitUpdatedAsset).not.toHaveBeenCalled();
 });
+
+test("does not commit an updated Asset after the active project changes", async () => {
+  const revision = {
+    ...asset,
+    name: "settings_new.json",
+    size: 7,
+    createdAt: "2026-07-18T00:00:00.000Z",
+  };
+  requestContentUpdate.mockImplementation(async () => {
+    $project.set({ id: "another-project" } as never);
+    return { asset: revision };
+  });
+
+  await expect(
+    updateAssetContent({ asset, content: '{"a":1}' })
+  ).rejects.toThrow(
+    "The file was updated in the previous project. Return to that project to view it."
+  );
+  expect(commitUpdatedAsset).not.toHaveBeenCalled();
+});

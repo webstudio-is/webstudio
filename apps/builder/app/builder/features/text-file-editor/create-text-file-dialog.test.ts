@@ -46,17 +46,35 @@ test("accepts supported text names and rejects invalid or duplicate names", () =
     getTextFileNameError({
       name: "readme.md",
       assets: [existing],
+      folderId: "docs",
     })
   ).toBe("A file with this name already exists.");
 });
 
-test("compares global complete display names after an asset is renamed", () => {
+test("scopes complete display names to the target folder", () => {
   expect(
     getTextFileNameError({
       name: "guide.md",
       assets: [{ ...existing, filename: "guide", folderId: "other" }],
+      folderId: "docs",
+    })
+  ).toBeUndefined();
+
+  expect(
+    getTextFileNameError({
+      name: "guide.md",
+      assets: [{ ...existing, filename: "guide", folderId: "docs" }],
+      folderId: "docs",
     })
   ).toBe("A file with this name already exists.");
+
+  expect(
+    getTextFileNameError({
+      name: "guide.json",
+      assets: [{ ...existing, filename: "guide", folderId: "docs" }],
+      folderId: "docs",
+    })
+  ).toBeUndefined();
 });
 
 test("can restrict creation to the requested text format", () => {
@@ -88,6 +106,40 @@ test("can restrict creation to the requested text format", () => {
       allowedExtensions: ["mdx"],
     })
   ).toBe("Use a supported editable text extension.");
+});
+
+test("requires collection configuration permission to create a folder manifest", () => {
+  expect(
+    getTextFileNameError({
+      name: "collection.json",
+      assets: [],
+      folderId: "posts",
+      canCreateCollectionConfig: false,
+    })
+  ).toBe("You don't have permission to create a content collection.");
+  expect(
+    getTextFileNameError({
+      name: "collection.json",
+      assets: [],
+      canCreateCollectionConfig: false,
+    })
+  ).toBeUndefined();
+  expect(
+    getTextFileNameError({
+      name: "collection.json",
+      assets: [],
+      folderId: "posts",
+      canCreateCollectionConfig: true,
+    })
+  ).toBeUndefined();
+  expect(
+    getTextFileNameError({
+      name: "Collection.json",
+      assets: [],
+      folderId: "posts",
+      canCreateCollectionConfig: false,
+    })
+  ).toBeUndefined();
 });
 
 test("creates valid initial content for editable file types", async () => {

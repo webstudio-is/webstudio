@@ -24,6 +24,7 @@ import {
 import type { MimeCategory } from "@webstudio-is/sdk";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { $authPermit, $permissions } from "~/shared/nano-states";
+import { canConfigureContentCollections } from "../assets/content-collections";
 import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
@@ -152,6 +153,9 @@ type AssetThumbnailProps = {
   onElementChange?: (element: HTMLElement | null) => void;
   selectionActions?: AssetManagerItemActions;
   onMove?: () => void;
+  isCollectionEntry?: boolean;
+  isCollectionReserved?: boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
 };
 
 export const AssetThumbnail = ({
@@ -166,12 +170,33 @@ export const AssetThumbnail = ({
   onElementChange,
   selectionActions,
   onMove,
+  isCollectionEntry = false,
+  isCollectionReserved = false,
+  unavailableDestinationFolderIds,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const authPermit = useStore($authPermit);
+  const collectionActionBlocked =
+    isCollectionReserved &&
+    canConfigureContentCollections(authPermit) === false;
+  const collectionActionBlockedRef = useRef(collectionActionBlocked);
+  collectionActionBlockedRef.current = collectionActionBlocked;
+  const canMutate = authPermit !== "view" && collectionActionBlocked === false;
+  const canMutateRef = useRef(canMutate);
+  canMutateRef.current = canMutate;
+  const isCollectionEntryRef = useRef(isCollectionEntry);
+  isCollectionEntryRef.current = isCollectionEntry;
+  useEffect(() => {
+    if (canMutate === false) {
+      setDeleteOpen(false);
+    }
+    if (collectionActionBlocked) {
+      setSettingsOpen(false);
+    }
+  }, [canMutate, collectionActionBlocked]);
   const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
   const getDragItems = interactions.getDragItems;
@@ -187,6 +212,7 @@ export const AssetThumbnail = ({
         ? assetContainer.asset.projectId
         : "uploading",
   };
+  const clipboardActions = createAssetManagerClipboardActions(item);
   const download = () => {
     if (assetContainer.status !== "uploaded") {
       return;
@@ -201,21 +227,72 @@ export const AssetThumbnail = ({
       ? {}
       : {
           open: onOpen,
-          settings: () => setSettingsOpen(true),
+          settings: collectionActionBlocked
+            ? undefined
+            : () => {
+                if (collectionActionBlockedRef.current === false) {
+                  setSettingsOpen(true);
+                }
+              },
           ...(authPermit === "view"
             ? {}
             : {
-                ...createAssetManagerClipboardActions(item),
-                move: onMove,
-                delete: () => setDeleteOpen(true),
+                ...(collectionActionBlocked
+                  ? {}
+                  : {
+                      cut: () => {
+                        if (canMutateRef.current) {
+                          clipboardActions.cut();
+                        }
+                      },
+                      copy: () => {
+                        if (canMutateRef.current) {
+                          clipboardActions.copy();
+                        }
+                      },
+                      duplicate: () => {
+                        if (
+                          canMutateRef.current &&
+                          isCollectionEntryRef.current === false
+                        ) {
+                          clipboardActions.duplicate();
+                        }
+                      },
+                    }),
+                ...(isCollectionEntry ? { duplicate: undefined } : {}),
+                move:
+                  collectionActionBlocked || onMove === undefined
+                    ? undefined
+                    : () => {
+                        if (canMutateRef.current) {
+                          onMove();
+                        }
+                      },
+                delete: collectionActionBlocked
+                  ? undefined
+                  : () => {
+                      if (canMutateRef.current) {
+                        setDeleteOpen(true);
+                      }
+                    },
                 ...(asset.type === "image"
-                  ? { replace: () => replaceInputRef.current?.click() }
+                  ? {
+                      replace: () => {
+                        if (canMutateRef.current) {
+                          replaceInputRef.current?.click();
+                        }
+                      },
+                    }
                   : {}),
               }),
           ...(authPermit !== "view" && canDownloadAssets ? { download } : {}),
         };
 
   const handleReplaceFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (canMutateRef.current === false) {
+      event.target.value = "";
+      return;
+    }
     const file = validateFiles(Array.from(event.target.files ?? []))[0];
     if (file !== undefined) {
       replaceAsset(asset.id, file);
@@ -314,12 +391,15 @@ export const AssetThumbnail = ({
           assetContainer.status === "uploaded" ? (
             <AssetSettings
               asset={assetContainer.asset}
-              open={settingsOpen}
+              open={settingsOpen && collectionActionBlocked === false}
               onOpenChange={(open) => {
                 setSettingsOpen(open);
               }}
               onDelete={actions.delete}
               onReplace={actions.replace}
+              canRename={isCollectionEntry === false}
+              canSaveChanges={canMutateRef.current}
+              unavailableDestinationFolderIds={unavailableDestinationFolderIds}
             >
               <AssetManagerThumbnailMenu
                 actions={displayedActions}
@@ -335,7 +415,7 @@ export const AssetThumbnail = ({
       {assetContainer.status === "uploaded" && (
         <AssetDeleteDialog
           asset={assetContainer.asset}
-          open={deleteOpen}
+          open={deleteOpen && canMutate}
           onOpenChange={setDeleteOpen}
         />
       )}

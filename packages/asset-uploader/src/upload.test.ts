@@ -793,6 +793,17 @@ describe("uploadFile", () => {
             folderId: null,
           });
         }
+        if (url.searchParams.get("order") === "id.asc") {
+          return json([
+            {
+              id: "asset-1",
+              projectId: "project-1",
+              filename: null,
+              folderId: null,
+              file: uploadedFile,
+            },
+          ]);
+        }
         expect(url.searchParams.get("id")).toBe("in.(asset-1)");
         return json([
           {

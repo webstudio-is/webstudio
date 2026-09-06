@@ -212,13 +212,18 @@ describe("asset runtime operations", () => {
 
   test("duplicates an asset into a target folder with a unique filename", () => {
     const source = imageAsset("source", "hero.png");
-    const existingCopy = imageAsset("existing-copy", "other.png");
-    existingCopy.filename = "hero copy";
+    const copyInOtherFolder = imageAsset("other-copy", "other.png");
+    copyInOtherFolder.filename = "hero copy";
+    copyInOtherFolder.folderId = "other";
+    const copyWithOtherExtension = imageAsset("jpg-copy", "other.jpg");
+    copyWithOtherExtension.filename = "hero copy";
+    copyWithOtherExtension.folderId = "target";
     const result = duplicateAsset(
       {
         assets: new Map([
           [source.id, source],
-          [existingCopy.id, existingCopy],
+          [copyInOtherFolder.id, copyInOtherFolder],
+          [copyWithOtherExtension.id, copyWithOtherExtension],
         ]),
         assetFolders: new Map([
           [
@@ -244,11 +249,85 @@ describe("asset runtime operations", () => {
         value: {
           ...source,
           id: "copy",
-          filename: "hero copy 2",
+          filename: "hero copy",
           folderId: "target",
         },
       },
     ]);
+  });
+
+  test("increments a duplicate name only when the full name exists in the target folder", () => {
+    const source = imageAsset("source", "hero.png");
+    const existingCopy = imageAsset("existing-copy", "other.png");
+    existingCopy.filename = "hero copy";
+    existingCopy.folderId = "target";
+
+    const result = duplicateAsset(
+      {
+        assets: new Map([
+          [source.id, source],
+          [existingCopy.id, existingCopy],
+        ]),
+        assetFolders: new Map([
+          [
+            "target",
+            {
+              id: "target",
+              projectId: "project",
+              name: "Target",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        ]),
+      },
+      { assetId: source.id, folderId: "target" },
+      { createId: () => "copy", projectId: "project" }
+    );
+
+    expect(result.payload[0]?.patches[0]).toEqual({
+      op: "add",
+      path: ["copy"],
+      value: expect.objectContaining({ filename: "hero copy 2" }),
+    });
+  });
+
+  test("rejects duplicating an asset into a collection folder", () => {
+    const source = imageAsset("source", "hero.png");
+    const collectionConfig: Asset = {
+      id: "collection-config",
+      projectId: "project",
+      name: "collection.json",
+      type: "file",
+      folderId: "target",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "json",
+      meta: {},
+    };
+
+    expect(() =>
+      duplicateAsset(
+        {
+          assets: new Map([
+            [source.id, source],
+            [collectionConfig.id, collectionConfig],
+          ]),
+          assetFolders: new Map([
+            [
+              "target",
+              {
+                id: "target",
+                projectId: "project",
+                name: "Target",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { assetId: source.id, folderId: "target" },
+        { createId: () => "copy", projectId: "project" }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
   });
 
   test("lists assets with usage counts", () => {
@@ -1089,6 +1168,74 @@ describe("addAsset", () => {
       )
     ).toThrow("Asset folder not found");
   });
+
+  test("rejects adding generic assets to a collection folder", () => {
+    const collectionConfig: Asset = {
+      id: "collection-config",
+      projectId: "project",
+      name: "collection.json",
+      type: "file",
+      folderId: "posts",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "json",
+      meta: {},
+    };
+
+    expect(() =>
+      addAsset(
+        {
+          assets: new Map([[collectionConfig.id, collectionConfig]]),
+          assetFolders: new Map([
+            [
+              "posts",
+              {
+                id: "posts",
+                projectId: "project",
+                name: "Posts",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { asset: { ...assetInput, folderId: "posts" } },
+        { projectId: "project" }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
+
+    expect(() =>
+      addAsset(
+        {
+          assets: new Map([[collectionConfig.id, collectionConfig]]),
+          assetFolders: new Map([
+            [
+              "posts",
+              {
+                id: "posts",
+                projectId: "project",
+                name: "Posts",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        {
+          asset: {
+            id: "entry",
+            name: "entry.mdx",
+            filename: "entry",
+            type: "file",
+            folderId: "posts",
+            size: 1,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            format: "mdx",
+            meta: {},
+          },
+        },
+        { projectId: "project" }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
+  });
 });
 
 test("creates asset delete payload", () => {
@@ -1101,6 +1248,78 @@ test("creates asset delete payload", () => {
 });
 
 describe("updateAsset", () => {
+  test("rejects renaming an entry in a collection folder", () => {
+    const entry: Asset = {
+      id: "entry",
+      projectId: "project",
+      name: "hello-world.mdx",
+      filename: "hello-world",
+      type: "file",
+      folderId: "posts",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "mdx",
+      meta: {},
+    };
+    const collectionConfig: Asset = {
+      ...entry,
+      id: "collection-config",
+      name: "collection.json",
+      filename: "collection",
+      format: "json",
+    };
+
+    expect(() =>
+      updateAsset(
+        {
+          assets: new Map([
+            [entry.id, entry],
+            [collectionConfig.id, collectionConfig],
+          ]),
+        },
+        { assetId: entry.id, values: { filename: "renamed" } }
+      )
+    ).toThrow("Collection MDX filenames cannot be changed");
+  });
+
+  test("rejects moving an asset into a collection folder", () => {
+    const source = imageAsset("source", "hero.png");
+    const collectionConfig: Asset = {
+      id: "collection-config",
+      projectId: "project",
+      name: "collection.json",
+      type: "file",
+      folderId: "target",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "json",
+      meta: {},
+    };
+
+    expect(() =>
+      updateAsset(
+        {
+          assets: new Map([
+            [source.id, source],
+            [collectionConfig.id, collectionConfig],
+          ]),
+          assetFolders: new Map([
+            [
+              "target",
+              {
+                id: "target",
+                projectId: "project",
+                name: "Target",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { assetId: source.id, values: { folderId: "target" } }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
+  });
+
   test("updates font metadata without discarding the other fields", () => {
     const result = updateAsset(
       { assets: new Map([["font-1", fontAsset("font-1")]]) },
@@ -1267,6 +1486,89 @@ describe("updateAsset", () => {
           assetId: "asset-1",
           values: { filename: "Hero" },
         }
+      )
+    ).toThrow("Filename already used");
+  });
+
+  test("checks renamed full filenames only in the effective target folder", () => {
+    const renamed = imageAsset("renamed", "renamed.png");
+    renamed.folderId = "source";
+    const sameNameElsewhere = imageAsset("elsewhere", "elsewhere.png");
+    sameNameElsewhere.filename = "Hero";
+    sameNameElsewhere.folderId = "other";
+    const sameBasenameOtherExtension = imageAsset(
+      "other-extension",
+      "file.jpg"
+    );
+    sameBasenameOtherExtension.filename = "Hero";
+    sameBasenameOtherExtension.folderId = "target";
+
+    const result = updateAsset(
+      {
+        assets: new Map([
+          [renamed.id, renamed],
+          [sameNameElsewhere.id, sameNameElsewhere],
+          [sameBasenameOtherExtension.id, sameBasenameOtherExtension],
+        ]),
+        assetFolders: new Map([
+          [
+            "target",
+            {
+              id: "target",
+              projectId: "project",
+              name: "Target",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        ]),
+      },
+      {
+        assetId: renamed.id,
+        values: { filename: "Hero", folderId: "target" },
+      }
+    );
+
+    expect(result.payload[0]?.patches).toEqual([
+      {
+        op: "add",
+        path: [renamed.id, "filename"],
+        value: "Hero",
+      },
+      {
+        op: "replace",
+        path: [renamed.id, "folderId"],
+        value: "target",
+      },
+    ]);
+  });
+
+  test("rejects moving an asset onto the same full filename", () => {
+    const moved = imageAsset("moved", "hero.png");
+    moved.folderId = "source";
+    const existing = imageAsset("existing", "different.png");
+    existing.filename = "hero";
+    existing.folderId = "target";
+
+    expect(() =>
+      updateAsset(
+        {
+          assets: new Map([
+            [moved.id, moved],
+            [existing.id, existing],
+          ]),
+          assetFolders: new Map([
+            [
+              "target",
+              {
+                id: "target",
+                projectId: "project",
+                name: "Target",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        { assetId: moved.id, values: { folderId: "target" } }
       )
     ).toThrow("Filename already used");
   });

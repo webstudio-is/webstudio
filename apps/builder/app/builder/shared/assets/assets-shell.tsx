@@ -68,6 +68,7 @@ type AssetsShellProps = {
   onElementChange?: (element: HTMLDivElement | null) => void;
   autoScrollOnElementDrag?: boolean;
   allowFolderDrop?: boolean;
+  allowExternalDrop?: boolean;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -123,6 +124,7 @@ export const AssetsShell = ({
   onElementChange,
   autoScrollOnElementDrag = false,
   allowFolderDrop = false,
+  allowExternalDrop = true,
   type,
   accept,
 }: AssetsShellProps) => {
@@ -132,12 +134,16 @@ export const AssetsShell = ({
     useState<ExternalMonitorDragState>(IDLE);
 
   const [dropTargetState, setDropTargetState] = useState<DropTargetState>(IDLE);
-  const dropMessage = allowFolderDrop
-    ? "Drop files or folders here"
-    : "Drop files here";
-  const dropDescription = allowFolderDrop
-    ? "Drop files or folders from your computer into this panel."
-    : "Drop files from anywhere into this panel.";
+  const dropMessage = allowExternalDrop
+    ? allowFolderDrop
+      ? "Drop files or folders here"
+      : "Drop files here"
+    : "Uploads are unavailable here";
+  const dropDescription = allowExternalDrop
+    ? allowFolderDrop
+      ? "Drop files or folders from your computer into this panel."
+      : "Drop files from anywhere into this panel."
+    : undefined;
   const resolvedEmptyMessage = emptyMessage ?? dropMessage;
 
   useEffect(() => {
@@ -154,7 +160,8 @@ export const AssetsShell = ({
   useExternalDragStateEffect((state) => {
     const element = ref.current;
 
-    if (element == null) {
+    if (element == null || allowExternalDrop === false) {
+      setMonitorState(IDLE);
       return;
     }
 
@@ -197,7 +204,10 @@ export const AssetsShell = ({
     return combine(
       dropTargetForExternal({
         element: element,
-        canDrop: isBlockedByBackdropCallback(() => false, containsByType),
+        canDrop: isBlockedByBackdropCallback(
+          () => false,
+          allowExternalDrop ? containsByType : () => false
+        ),
         onDragEnter: () => setDropTargetState(OVER),
         onDragLeave: () => setDropTargetState(IDLE),
         onDrop: async ({ source }) => {
@@ -285,7 +295,14 @@ export const AssetsShell = ({
         },
       })
     );
-  }, [accept, allowFolderDrop, containsByType, folderId, type]);
+  }, [
+    accept,
+    allowExternalDrop,
+    allowFolderDrop,
+    containsByType,
+    folderId,
+    type,
+  ]);
 
   const dragState = Math.max(monitorState, dropTargetState);
 

@@ -1,9 +1,11 @@
 import {
+  createAssetFolder,
   deleteSelectedAsset,
   openAssetSettings,
   openAssetsPanel,
   replaceSelectedAsset,
   uploadAsset,
+  waitForAsset,
 } from "../flows/assets-panel";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
@@ -222,6 +224,66 @@ test("Editor can upload, replace, and delete asset in content mode", async ({
   await page.getByTitle(uploadedAssetTitle).waitFor({ state: "hidden" });
   await page.getByTitle(replacementAssetTitle).waitFor({ state: "hidden" });
   await waitForSyncStatus({ page, status: "idle" });
+});
+
+test("Editor can create and reload a content collection entry", async ({
+  page,
+}) => {
+  const folderName = "Content collection entries";
+  const entryTitle = "Content collection entry";
+  const entryFilename = "content-collection-entry.mdx";
+
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openAssetsPanel({ page });
+  const folder = await createAssetFolder({
+    page,
+    name: folderName,
+    useAsContentCollection: true,
+  });
+  await folder.dblclick();
+  await page.getByRole("button", { name: "Collection settings" }).waitFor();
+
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openAssetsPanel({ page });
+  await page
+    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
+    .dblclick();
+  await page.getByRole("button", { name: "Add asset" }).click();
+  await page.getByRole("menuitem", { name: "New entry" }).click();
+  const dialog = page.getByRole("dialog", { name: "New entry" });
+  await dialog.getByLabel("Title *").fill(entryTitle);
+  await Promise.all([
+    waitForChangeToBeSaved({ page }),
+    dialog.getByRole("button", { name: "Create entry" }).click(),
+  ]);
+  await waitForAsset({ page, filename: entryFilename });
+  await page.getByTitle("collection.json").waitFor({ state: "visible" });
+  await page.getByTitle("template.mdx").waitFor({ state: "visible" });
+
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await openAssetsPanel({ page });
+  await page
+    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
+    .dblclick();
+  await waitForAsset({ page, filename: entryFilename });
+  await page.getByTitle("collection.json").waitFor({ state: "visible" });
+  await page.getByTitle("template.mdx").waitFor({ state: "visible" });
 });
 
 test("Editor can replace image source with asset in content mode", async ({

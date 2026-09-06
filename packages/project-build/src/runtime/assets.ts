@@ -10,6 +10,7 @@ import {
   isAllowedMimeCategory,
   formatAssetName,
   getAssetDisplayNameParts,
+  isMdxFileAsset,
   mergeAssetMeta,
   parseAssetName,
   type Asset,
@@ -27,6 +28,7 @@ import {
   imageAsset,
   videoAsset,
 } from "@webstudio-is/sdk";
+import { collectionConfigFilename } from "@webstudio-is/content-engine";
 import {
   appendOptionalPropertyPatch,
   type BuilderPatchChange,
@@ -601,6 +603,30 @@ const assertAssetFolderExists = (
   }
 };
 
+const isCollectionFolder = (
+  assets: BuilderState["assets"],
+  folderId: string | undefined
+) =>
+  folderId !== undefined &&
+  assets !== undefined &&
+  Array.from(assets.values()).some(
+    (asset) =>
+      asset.folderId === folderId &&
+      formatAssetName(asset) === collectionConfigFilename
+  );
+
+const assertFolderAcceptsGenericAssets = (
+  assets: BuilderState["assets"],
+  folderId: string | undefined
+) => {
+  if (isCollectionFolder(assets, folderId)) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Use New entry to add files to a collection folder"
+    );
+  }
+};
+
 export const addAsset = (
   state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetAddInput>,
@@ -617,6 +643,7 @@ export const addAsset = (
     return throwBuilderRuntimeError("CONFLICT", "Asset already exists");
   }
   assertAssetFolderExists(state.assetFolders, input.asset.folderId);
+  assertFolderAcceptsGenericAssets(assets, input.asset.folderId);
   const asset: Asset = { ...input.asset, projectId: context.projectId };
   return createRuntimeMutation({
     payload: [
@@ -645,15 +672,18 @@ export const duplicateAsset = (
       ? asset.folderId
       : (input.folderId ?? undefined);
   assertAssetFolderExists(state.assetFolders, folderId);
+  assertFolderAcceptsGenericAssets(assets, folderId);
 
-  const displayFilenames = new Set(
-    Array.from(assets.values(), getAssetDisplayFilename)
+  const logicalFilenames = new Set(
+    Array.from(assets.values())
+      .filter((candidate) => candidate.folderId === folderId)
+      .map(formatAssetName)
   );
   const duplicatedAsset: Asset = {
     ...asset,
     id: context.createId(),
     filename: createCopyName(getAssetDisplayFilename(asset), (candidate) =>
-      displayFilenames.has(candidate)
+      logicalFilenames.has(formatAssetName({ ...asset, filename: candidate }))
     ),
     folderId,
   };
@@ -699,16 +729,18 @@ export const updateAsset = (
     }
   }
   if (input.values.filename !== undefined) {
+    if (
+      input.values.filename !== getAssetDisplayFilename(asset) &&
+      isMdxFileAsset(asset) &&
+      isCollectionFolder(assets, asset.folderId)
+    ) {
+      return throwBuilderRuntimeError(
+        "CONFLICT",
+        "Collection MDX filenames cannot be changed"
+      );
+    }
     if (isValidFilename(input.values.filename) === false) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Invalid filename");
-    }
-    for (const currentAsset of assets.values()) {
-      if (
-        currentAsset.id !== asset.id &&
-        getAssetDisplayFilename(currentAsset) === input.values.filename
-      ) {
-        return throwBuilderRuntimeError("CONFLICT", "Filename already used");
-      }
     }
     if (asset.filename !== input.values.filename) {
       appendOptionalPropertyPatch(patches, {
@@ -731,11 +763,35 @@ export const updateAsset = (
   if (input.values.folderId !== undefined) {
     const folderId = input.values.folderId ?? undefined;
     assertAssetFolderExists(state.assetFolders, folderId);
+    if (folderId !== asset.folderId) {
+      assertFolderAcceptsGenericAssets(assets, folderId);
+    }
     appendOptionalPropertyPatch(patches, {
       path: [asset.id, "folderId"],
       previous: asset.folderId,
       next: folderId,
     });
+  }
+
+  const nextFolderId =
+    input.values.folderId === null
+      ? undefined
+      : (input.values.folderId ?? asset.folderId);
+  const nextLogicalFilename = formatAssetName({
+    ...asset,
+    filename: input.values.filename ?? asset.filename,
+  });
+  if (
+    (nextFolderId !== asset.folderId ||
+      nextLogicalFilename !== formatAssetName(asset)) &&
+    Array.from(assets.values()).some(
+      (candidate) =>
+        candidate.id !== asset.id &&
+        candidate.folderId === nextFolderId &&
+        formatAssetName(candidate) === nextLogicalFilename
+    )
+  ) {
+    return throwBuilderRuntimeError("CONFLICT", "Filename already used");
   }
 
   return createRuntimeMutation({
