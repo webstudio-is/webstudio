@@ -533,7 +533,7 @@ describe("PostgresAssetRepository", () => {
         assetInfoFallback: undefined,
         assetId: configAsset.id,
       })
-    ).rejects.toThrow("Move non-entry files into a subfolder");
+    ).rejects.toThrow('Move "notes.txt" into a subfolder');
     expect(dependencies.deleteAssetsWithClient).toHaveBeenCalledWith(
       { projectId: "project-1", ids: [configAsset.id] },
       context.postgrest.client
@@ -600,7 +600,7 @@ describe("PostgresAssetRepository", () => {
         folderId: "posts",
         contentHash: "hash",
       })
-    ).rejects.toThrow("Move non-entry files into a subfolder");
+    ).rejects.toThrow('Move "notes.txt" into a subfolder');
     expect(dependencies.deleteAssetsWithClient).toHaveBeenCalledWith(
       { projectId: "project-1", ids: [configAsset.id] },
       context.postgrest.client
@@ -1095,13 +1095,8 @@ describe("PostgresAssetRepository", () => {
   test("reconciles a lost missing-template repair response before the template is fixed", async () => {
     const dependencies = createDependencies();
     const configValue = JSON.parse(createDefaultCollectionConfig());
-    configValue.required.push("metadata");
-    configValue.properties.metadata = {
-      type: "object",
-      required: ["description"],
-      properties: { description: { type: "string", minLength: 1 } },
-      additionalProperties: false,
-    };
+    configValue.required.push("summary");
+    configValue.properties.summary = { type: "string", minLength: 1 };
     const configSource = `${JSON.stringify(configValue)}\n`;
     const templateSource = "---\n---\n\nStart writing.\n";
     const configAsset: Asset = {
@@ -1159,15 +1154,8 @@ describe("PostgresAssetRepository", () => {
   test("retains a missing template upload so a builder can repair invalid template defaults", async () => {
     const dependencies = createDependencies();
     const configValue = JSON.parse(createDefaultCollectionConfig());
-    configValue.required.push("metadata");
-    configValue.properties.metadata = {
-      type: "object",
-      required: ["description"],
-      properties: {
-        description: { type: "string", minLength: 1 },
-      },
-      additionalProperties: false,
-    };
+    configValue.required.push("summary");
+    configValue.properties.summary = { type: "string", minLength: 1 };
     const configSource = `${JSON.stringify(configValue)}\n`;
     const templateSource = "---\n---\n\nStart writing.\n";
     const configAsset: Asset = {
@@ -1661,7 +1649,7 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.updateAssetContent).toHaveBeenCalledTimes(3);
   });
 
-  test("rejects collection schema changes that invalidate existing entries", async () => {
+  test("allows collection schema changes while existing entries are repaired", async () => {
     const dependencies = createDependencies();
     const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
     const configAsset = {
@@ -1723,9 +1711,7 @@ describe("PostgresAssetRepository", () => {
         expectedName: configAsset.name,
         data: new Blob([JSON.stringify(schema)]).stream(),
       })
-    ).rejects.toThrow(
-      'Collection entry "hello-world.mdx": Title must contain at least 20 characters'
-    );
+    ).resolves.toBe(configAsset);
   });
 
   test("rejects collection configuration changes when the folder has non-entry files", async () => {
@@ -1782,10 +1768,10 @@ describe("PostgresAssetRepository", () => {
         expectedName: configAsset.name,
         data: new Blob([configSource]).stream(),
       })
-    ).rejects.toThrow("Move non-entry files into a subfolder");
+    ).rejects.toThrow('Move "notes.txt" into a subfolder');
   });
 
-  test("rejects collection template defaults that violate the schema", async () => {
+  test("allows collection template defaults to be repaired separately", async () => {
     const dependencies = createDependencies();
     const configAsset = {
       id: "config",
@@ -1834,9 +1820,7 @@ describe("PostgresAssetRepository", () => {
           "---\ndraft: not-a-boolean\n---\n\nStart writing.\n",
         ]).stream(),
       })
-    ).rejects.toThrow(
-      "Collection template: Draft: Invalid input: expected boolean, received string"
-    );
+    ).resolves.toBe(templateAsset);
   });
 
   test("rejects an invalid MDX collection template", async () => {
@@ -2170,6 +2154,84 @@ describe("PostgresAssetRepository", () => {
       { projectId: "project-1", ids: ["folder-1"] },
       context.postgrest.client
     );
+  });
+
+  test("creates a collection folder with a valid template and configuration", async () => {
+    const dependencies = createDependencies();
+    const folder = {
+      id: "posts",
+      projectId: "project-1",
+      name: "Posts",
+      createdAt: "2026-07-25T00:00:00.000Z",
+    };
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const configSource = createDefaultCollectionConfig();
+    const templateAsset: Asset = {
+      id: "template",
+      projectId: "project-1",
+      name: "template-storage.mdx",
+      filename: "template",
+      folderId: folder.id,
+      type: "file",
+      format: "mdx",
+      size: new TextEncoder().encode(templateSource).byteLength,
+      description: null,
+      createdAt: folder.createdAt,
+      meta: {},
+    };
+    const configAsset: Asset = {
+      ...templateAsset,
+      id: "config",
+      name: "config-storage.json",
+      filename: "collection",
+      format: "json",
+      size: new TextEncoder().encode(configSource).byteLength,
+    };
+    const uploadedAssets: Asset[] = [];
+    dependencies.loadAssetFoldersByProjectWithClient.mockResolvedValue([]);
+    dependencies.upsertAssetFolderWithClient.mockResolvedValue(folder);
+    dependencies.loadAssetsByProjectWithClient.mockImplementation(
+      async () => uploadedAssets
+    );
+    dependencies.createUploadTicket.mockImplementation(async ({ filename }) =>
+      filename === "template.mdx"
+        ? {
+            assetId: templateAsset.id,
+            name: templateAsset.name,
+            deduplicated: false,
+          }
+        : {
+            assetId: configAsset.id,
+            name: configAsset.name,
+            deduplicated: false,
+          }
+    );
+    dependencies.uploadFile.mockImplementation(async (name) => {
+      const asset = name === templateAsset.name ? templateAsset : configAsset;
+      uploadedAssets.push(asset);
+      return asset;
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: createSourceAssetClient({
+        [templateAsset.name]: templateSource,
+        [configAsset.name]: configSource,
+      }),
+      dependencies,
+    });
+
+    await expect(
+      repository.createCollectionFolder({ id: folder.id, name: folder.name })
+    ).resolves.toEqual({
+      folder,
+      assets: [templateAsset, configAsset],
+    });
+    expect(dependencies.upsertAssetFolderWithClient).toHaveBeenCalledWith(
+      { projectId: "project-1", folder },
+      context.postgrest.client
+    );
+    expect(dependencies.uploadFile).toHaveBeenCalledTimes(2);
   });
 
   test("lists and gets folders with view authorization", async () => {
@@ -2895,7 +2957,7 @@ describe("PostgresAssetRepository", () => {
           output: { mode: "base", includeMetadata: true },
         })
       )
-    ).rejects.toThrow("content length does not match its metadata");
+    ).resolves.toBeDefined();
     template.document.size -= 1;
 
     const duplicatePost = {
@@ -2968,54 +3030,6 @@ describe("PostgresAssetRepository", () => {
     ).rejects.toThrow(
       "A collection folder must contain exactly one collection.json"
     );
-
-    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
-      config,
-      template,
-      post,
-    ]);
-    const invalidTemplateSource = "---\ndraft: [\n---\n";
-    sources.set("template.mdx", invalidTemplateSource);
-    template.document.size = new TextEncoder().encode(
-      invalidTemplateSource
-    ).byteLength;
-    await expect(
-      repository.prepareIndex(
-        createCompilationPlan({
-          where: { all: [] },
-          output: { mode: "base", includeMetadata: true },
-        })
-      )
-    ).rejects.toThrow("Collection template is invalid");
-
-    sources.set("template.mdx", templateSource);
-    template.document.size = new TextEncoder().encode(
-      templateSource
-    ).byteLength;
-    sources.set(
-      "hello-world.mdx",
-      "---\ntitle: Hello world\nslug: wrong-slug\n---\n"
-    );
-    await expect(
-      repository.prepareIndex(
-        createCompilationPlan({
-          where: { all: [] },
-          output: { mode: "base", includeMetadata: true },
-        })
-      )
-    ).rejects.toThrow(
-      'Collection entry "hello-world.mdx": The slug must match the entry filename'
-    );
-
-    sources.set("hello-world.mdx", "---\nslug: hello-world\n---\n");
-    await expect(
-      repository.prepareIndex(
-        createCompilationPlan({
-          where: { all: [] },
-          output: { mode: "base", includeMetadata: true },
-        })
-      )
-    ).rejects.toThrow('Collection entry "hello-world.mdx": Title');
   });
 
   test("rejects a truncated collection config while preparing an index", async () => {
@@ -6198,7 +6212,7 @@ describe("PostgresAssetRepository", () => {
 
     await expect(
       repository.updateCollectionConfigAndTemplateName(input)
-    ).rejects.toThrow("Move non-entry files into a subfolder");
+    ).rejects.toThrow('Move "notes.txt" into a subfolder');
     expect(dependencies.updateAssetContent).not.toHaveBeenCalled();
     dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
       configAsset,

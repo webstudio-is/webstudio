@@ -3,11 +3,9 @@ import {
   ContentCollectionError,
   contentEngineLimits,
   extractMarkdownFrontmatter,
-  getCollectionTemplateValidationError,
-  getCollectionValidationError,
+  inspectContentCollection,
   parseCollectionConfig,
 } from "@webstudio-is/content-engine";
-import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   decodeUtf8,
   readBoundedBytes,
@@ -62,25 +60,6 @@ const readAssetBytes = async (asset: Asset, assetStore: AssetObjectReader) => {
   return bytes;
 };
 
-const parseTemplate = async (asset: Asset, assetStore: AssetObjectReader) => {
-  try {
-    return await parseMdxDocument({
-      source: decodeUtf8(await readAssetBytes(asset, assetStore)),
-    });
-  } catch (error) {
-    if (error instanceof ContentCollectionError) {
-      throw error;
-    }
-    const details = error instanceof Error ? `: ${error.message}` : "";
-    throw new ContentCollectionError(
-      `Collection template is invalid${details}`,
-      {
-        cause: error,
-      }
-    );
-  }
-};
-
 export const getCollectionFolderIds = (assets: readonly Asset[]) =>
   new Set(
     assets.flatMap((asset) =>
@@ -95,96 +74,41 @@ export const validateCollectionFolder = async ({
   assets,
   folderId,
   assetStore,
+  validateTemplate = true,
+  validateEntries = true,
 }: {
   assets: readonly Asset[];
   folderId: string;
   assetStore: AssetObjectReader;
+  validateTemplate?: boolean;
+  validateEntries?: boolean;
 }): Promise<CollectionFolderDefinition> => {
   const siblings = getFolderAssets(assets, folderId);
-  const configAssets = siblings.filter(
-    (asset) => formatAssetName(asset) === collectionConfigFilename
-  );
-  if (configAssets.length !== 1) {
-    throw new ContentCollectionError(
-      "A collection folder must contain exactly one collection.json"
-    );
-  }
-  const configAsset = configAssets[0];
-  const config = parseCollectionConfig(
-    decodeUtf8(await readAssetBytes(configAsset, assetStore))
-  );
-  if (
-    siblings.some(
-      (asset) => asset.id !== configAsset.id && isMdxFileAsset(asset) === false
-    )
-  ) {
-    throw new ContentCollectionError("Move non-entry files into a subfolder");
-  }
-  const templates = siblings.filter(
-    (asset) =>
-      formatAssetName(asset) === config.template && isMdxFileAsset(asset)
-  );
-  if (templates.length === 0) {
-    throw new ContentCollectionError(
-      `Collection template "${config.template}" not found`
-    );
-  }
-  if (templates.length !== 1) {
-    throw new ContentCollectionError(
-      `Collection template "${config.template}" is ambiguous`
-    );
-  }
-  assertUniqueCollectionFilenames(siblings.map(formatAssetName));
-  const templateAsset = templates[0];
-  const template = await parseTemplate(templateAsset, assetStore);
-  const templateError = getCollectionTemplateValidationError(
-    config,
-    template.frontmatter.properties
-  );
-  if (templateError !== undefined) {
-    throw new ContentCollectionError(
-      `Collection template "${config.template}": ${templateError}`
-    );
-  }
-  for (const entryAsset of siblings) {
-    if (
-      entryAsset.id === configAsset.id ||
-      entryAsset.id === templateAsset.id
-    ) {
-      continue;
-    }
-    let properties: Record<string, unknown>;
-    try {
-      properties = (
+  const result = await inspectContentCollection({
+    files: siblings.map((asset) => ({
+      file: asset,
+      id: asset.id,
+      filename: formatAssetName(asset),
+      basename: getAssetDisplayNameParts(asset).basename,
+      isMdx: isMdxFileAsset(asset),
+    })),
+    readSource: async ({ file }) =>
+      decodeUtf8(await readAssetBytes(file, assetStore)),
+    readFrontmatter: async ({ file }) =>
+      (
         await extractMarkdownFrontmatter(
           (
-            await assetStore.readFile(entryAsset.name)
+            await assetStore.readFile(file.name)
           ).data
         )
-      ).properties;
-    } catch (error) {
-      const details = error instanceof Error ? `: ${error.message}` : "";
-      throw new ContentCollectionError(
-        `Collection entry "${formatAssetName(entryAsset)}" is invalid${details}`,
-        { cause: error }
-      );
-    }
-    const validationError = getCollectionValidationError(config, properties);
-    if (validationError !== undefined) {
-      throw new ContentCollectionError(
-        `Collection entry "${formatAssetName(entryAsset)}": ${validationError}`
-      );
-    }
-    if (
-      properties[config.slugField] !==
-      getAssetDisplayNameParts(entryAsset).basename
-    ) {
-      throw new ContentCollectionError(
-        `Collection entry "${formatAssetName(entryAsset)}": The slug must match the entry filename`
-      );
-    }
-  }
-  return { configAsset, templateAsset };
+      ).properties,
+    validateTemplate,
+    validateEntries,
+  });
+  return {
+    configAsset: result.configFile.file,
+    templateAsset: result.templateFile.file,
+  };
 };
 
 const readConfiguredTemplateName = async (

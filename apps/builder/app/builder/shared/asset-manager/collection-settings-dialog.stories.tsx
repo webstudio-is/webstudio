@@ -54,7 +54,6 @@ configValue.properties.readingTime = {
   type: "integer",
   minimum: 1,
   maximum: 60,
-  default: 5,
 };
 configValue["x-webstudio"].previewPage = "blog-post";
 

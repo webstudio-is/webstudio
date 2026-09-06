@@ -6,7 +6,6 @@ import {
   parseCollectionConfig,
   serializeCollectionConfig,
   type CollectionField,
-  type ContentCollectionConfig,
 } from "@webstudio-is/content-engine";
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
@@ -44,7 +43,6 @@ import {
   getAssetDisplayNameParts,
   getAllPages,
   getPagePath,
-  isMdxFileAsset,
 } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { $assets, $pages, $project } from "~/shared/sync/data-stores";
@@ -143,7 +141,6 @@ const setFieldType = (
         ? {
             minLength: field.minLength,
             maxLength: field.maxLength,
-            defaultValue: field.defaultValue,
           }
         : {}),
       type: "string",
@@ -156,7 +153,6 @@ const setFieldType = (
       ? {
           minLength: field.minLength,
           maxLength: field.maxLength,
-          defaultValue: field.defaultValue,
         }
       : {}),
     type: "string",
@@ -255,35 +251,6 @@ const getUniqueFieldKey = (fields: readonly EditableCollectionField[]) => {
   }
 };
 
-export const getCollectionSettingsSaveOrder = ({
-  currentConfig,
-  currentTemplateProperties,
-  nextConfig,
-  nextTemplateProperties,
-}: {
-  currentConfig: ContentCollectionConfig;
-  currentTemplateProperties: Readonly<Record<string, unknown>>;
-  nextConfig: ContentCollectionConfig;
-  nextTemplateProperties: Readonly<Record<string, unknown>>;
-}) => {
-  if (
-    getCollectionTemplateValidationError(
-      nextConfig,
-      currentTemplateProperties
-    ) === undefined
-  ) {
-    return "config-first" as const;
-  }
-  if (
-    getCollectionTemplateValidationError(
-      currentConfig,
-      nextTemplateProperties
-    ) === undefined
-  ) {
-    return "template-first" as const;
-  }
-};
-
 export const CollectionSettingsDialog = ({
   collection,
   open,
@@ -326,12 +293,6 @@ export const CollectionSettingsDialog = ({
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const pages = useStore($pages);
   const assets = useStore($assets);
-  const hasEntries = Array.from(assets.values()).some(
-    (asset) =>
-      asset.folderId === collection.folderId &&
-      asset.id !== collection.templateAsset.id &&
-      isMdxFileAsset(asset)
-  );
   const templateKey = `${collection.templateAsset.id}:${
     collection.templateAsset.name
   }:${collection.templateAsset.updatedAt ?? collection.templateAsset.size}`;
@@ -502,36 +463,6 @@ export const CollectionSettingsDialog = ({
       };
       const nextSlugField = normalizeLinkedFieldKey(slugField);
       const nextGenerateSlugFrom = normalizeLinkedFieldKey(generateSlugFrom);
-      const originalFields = new Map(
-        collection.config.fields.map((field) => [field.key, field])
-      );
-      const removesExistingField = collection.config.fields.some(
-        ({ key }) =>
-          nextFields.some(({ originalKey }) => originalKey === key) === false
-      );
-      const changesExistingFieldIdentity = nextFields.some(
-        ({ key, originalKey, type }) => {
-          if (originalKey === undefined) {
-            return false;
-          }
-          const original = originalFields.get(originalKey);
-          return (
-            original === undefined ||
-            key !== originalKey ||
-            type !== original.type
-          );
-        }
-      );
-      if (
-        hasEntries &&
-        (nextSlugField !== collection.config.slugField ||
-          removesExistingField ||
-          changesExistingFieldIdentity)
-      ) {
-        throw new Error(
-          "Slug fields and existing field keys or types cannot change after entries have been created."
-        );
-      }
       const configSource = serializeCollectionConfig({
         config: collection.config,
         fields: nextFields,
@@ -551,30 +482,6 @@ export const CollectionSettingsDialog = ({
       if (templateValidationError !== undefined) {
         throw new Error(`Entry template: ${templateValidationError}`);
       }
-      const defaultValidationError = getCollectionTemplateValidationError(
-        nextConfig,
-        Object.fromEntries(
-          nextFields.flatMap((field) =>
-            field.defaultValue === undefined
-              ? []
-              : [[field.key, field.defaultValue]]
-          )
-        )
-      );
-      if (defaultValidationError !== undefined) {
-        throw new Error(`Field default: ${defaultValidationError}`);
-      }
-      const saveOrder = getCollectionSettingsSaveOrder({
-        currentConfig: collection.config,
-        currentTemplateProperties: collection.templateProperties,
-        nextConfig,
-        nextTemplateProperties: templateDocument.frontmatter.properties,
-      });
-      if (saveOrder === undefined) {
-        throw new Error(
-          "This field type and its template default cannot change together. Remove the template default, save, then change the field type."
-        );
-      }
       const currentTemplateName = getAssetDisplayNameParts(
         collection.templateAsset
       ).basename;
@@ -583,85 +490,24 @@ export const CollectionSettingsDialog = ({
       if (projectId === undefined) {
         throw new Error("Project not found");
       }
-      const originalConfigSource = `${JSON.stringify(
-        collection.config.schema,
-        undefined,
-        2
-      )}\n`;
-      let updatedTemplateAsset = collection.templateAsset;
-      let updatedConfigAsset = collection.configAsset;
-      if (saveOrder === "template-first") {
-        updatedTemplateAsset = await updateContent({
+      if (template !== loadedTemplateRef.current) {
+        await updateContent({
           asset: collection.templateAsset,
           content: template,
         });
       }
-      try {
-        if (renamesTemplate) {
-          const updated = await updateConfigAndTemplateName({
-            projectId,
-            collection,
-            templateFilename: nextTemplateName,
-            configSource,
-          });
-          updatedConfigAsset = updated.configAsset;
-          updatedTemplateAsset = updated.templateAsset;
-        } else {
-          updatedConfigAsset = await updateContent({
-            asset: collection.configAsset,
-            content: configSource,
-          });
-        }
-      } catch (error) {
-        if (saveOrder === "template-first") {
-          try {
-            await updateContent({
-              asset: updatedTemplateAsset,
-              content: loadedTemplateRef.current,
-            });
-          } catch {
-            throw new Error(
-              "Collection settings failed and the entry template could not be restored",
-              { cause: error }
-            );
-          }
-        }
-        throw error;
-      }
-      if (saveOrder === "config-first") {
-        try {
-          await updateContent({
-            asset: updatedTemplateAsset,
-            content: template,
-          });
-        } catch (error) {
-          try {
-            if (renamesTemplate) {
-              await updateConfigAndTemplateName({
-                projectId,
-                collection: {
-                  ...collection,
-                  configAsset: updatedConfigAsset,
-                  templateAsset: updatedTemplateAsset,
-                  config: nextConfig,
-                },
-                templateFilename: currentTemplateName,
-                configSource: originalConfigSource,
-              });
-            } else {
-              await updateContent({
-                asset: updatedConfigAsset,
-                content: originalConfigSource,
-              });
-            }
-          } catch {
-            throw new Error(
-              "The entry template failed to save and the collection configuration could not be restored",
-              { cause: error }
-            );
-          }
-          throw error;
-        }
+      if (renamesTemplate) {
+        await updateConfigAndTemplateName({
+          projectId,
+          collection,
+          templateFilename: nextTemplateName,
+          configSource,
+        });
+      } else {
+        await updateContent({
+          asset: collection.configAsset,
+          content: configSource,
+        });
       }
       onOpenChange(false);
     } catch (error) {
@@ -741,12 +587,6 @@ export const CollectionSettingsDialog = ({
                     <Text color="subtle">
                       Define the information editors fill in for every entry.
                     </Text>
-                    {hasEntries && (
-                      <Text color="subtle" variant="tiny">
-                        Existing field keys and types are fixed after the first
-                        entry.
-                      </Text>
-                    )}
                   </Grid>
                   <Button
                     css={{ margin: theme.spacing[5] }}
@@ -879,11 +719,7 @@ export const CollectionSettingsDialog = ({
                                 <InputField
                                   aria-label={`${field.label} key`}
                                   value={field.key}
-                                  disabled={
-                                    formDisabled ||
-                                    (hasEntries &&
-                                      field.originalKey !== undefined)
-                                  }
+                                  disabled={formDisabled}
                                   onChange={(event) => {
                                     const nextKey = event.target.value;
                                     if (slugField === field.key) {
@@ -909,12 +745,7 @@ export const CollectionSettingsDialog = ({
                                       : fieldTypes
                                   }
                                   value={getEditableType(field)}
-                                  disabled={
-                                    formDisabled ||
-                                    protectedField ||
-                                    (hasEntries &&
-                                      field.originalKey !== undefined)
-                                  }
+                                  disabled={formDisabled || protectedField}
                                   onChange={(type) => {
                                     const editableType = type as EditableType;
                                     if (editableType === "Slug") {
@@ -950,12 +781,7 @@ export const CollectionSettingsDialog = ({
                               </Grid>
                               <SmallIconButton
                                 aria-label={`Remove ${field.label}`}
-                                disabled={
-                                  formDisabled ||
-                                  protectedField ||
-                                  (hasEntries &&
-                                    field.originalKey !== undefined)
-                                }
+                                disabled={formDisabled || protectedField}
                                 icon={<TrashIcon />}
                                 onClick={() => {
                                   setSelectedFieldRowId(

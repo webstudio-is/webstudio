@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   ContentCollectionError,
@@ -6,7 +6,6 @@ import {
   createDefaultCollectionConfig,
 } from "@webstudio-is/content-engine";
 import {
-  ContentCollectionReadError,
   createLoadingContentCollections,
   discoverContentCollections,
   getCollectionReservedAssetIds,
@@ -113,7 +112,7 @@ describe("discoverContentCollections", () => {
     expect(read).toBe(false);
   });
 
-  test("keeps temporary entry reads separate from invalid frontmatter", async () => {
+  test("does not read every entry while discovering a collection", async () => {
     const config = asset({
       id: "config",
       filename: "collection",
@@ -125,21 +124,20 @@ describe("discoverContentCollections", () => {
       format: "mdx",
     });
     const entry = asset({ id: "entry", filename: "hello", format: "mdx" });
+    const readSource = vi.fn(async (currentAsset: Asset) =>
+      currentAsset.id === config.id
+        ? createDefaultCollectionConfig()
+        : "---\ndraft: false\n---\n"
+    );
     const collections = await discoverContentCollections({
       assets: [config, template, entry],
-      readSource: async (currentAsset) =>
-        currentAsset.id === config.id
-          ? createDefaultCollectionConfig()
-          : "---\ndraft: false\n---\n",
-      readFrontmatter: async () => {
-        throw new ContentCollectionReadError("Request timed out");
-      },
+      readSource,
     });
 
     expect(collections.get("folder")).toMatchObject({
-      status: "unavailable",
-      message: "Collection files could not be loaded: Request timed out",
+      status: "ready",
     });
+    expect(readSource).toHaveBeenCalledTimes(2);
   });
 
   test("reserves possible templates while collection settings load", () => {
@@ -329,7 +327,7 @@ describe("discoverContentCollections", () => {
     });
   });
 
-  test("reports an invalid entry without reserving it from repair", async () => {
+  test("keeps collection configuration usable while an entry is invalid", async () => {
     const config = asset({
       id: "config",
       filename: "collection",
@@ -357,16 +355,13 @@ describe("discoverContentCollections", () => {
     });
 
     expect(collections.get("folder")).toMatchObject({
-      status: "invalid",
-      repairAsset: entry,
-      editorRepair: { action: "edit", asset: entry },
-      message:
-        'Collection entry "hello.mdx": The slug must match the entry filename',
+      status: "ready",
     });
     expect(
       getCollectionReservedAssetIds(collections, { includeInvalid: true })
     ).toEqual(new Set([config.id, template.id]));
     expect(reads.get(template.id)).toBe(1);
+    expect(reads.get(entry.id)).toBeUndefined();
   });
 
   test("rejects duplicate logical filenames case-insensitively", async () => {

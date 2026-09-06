@@ -285,7 +285,7 @@ test("regenerates a cleared slug before validating the entry", async () => {
   });
 });
 
-test("omits an optional boolean that has no default", async () => {
+test("uses only the entry template for optional field defaults", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -300,7 +300,7 @@ test("omits an optional boolean that has no default", async () => {
     throw new Error("Stop after capturing the request");
   });
   const configValue = JSON.parse(createDefaultCollectionConfig());
-  delete configValue.properties.draft.default;
+  configValue.properties.draft.default = true;
   renderer.render(
     <CreateCollectionEntryDialog
       collection={{
@@ -406,7 +406,6 @@ test("explicitly clears a template-backed optional value", async () => {
     folderId: "posts",
     projectId: "project",
     values: {
-      draft: true,
       slug: "hello-world",
       summary: null,
       title: "Hello world",
@@ -474,7 +473,6 @@ test("preserves an explicit blank optional string", async () => {
     folderId: "posts",
     projectId: "project",
     values: {
-      draft: true,
       slug: "hello-world",
       summary: "",
       title: "Hello world",

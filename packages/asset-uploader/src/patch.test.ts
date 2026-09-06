@@ -1165,7 +1165,7 @@ describe("patchAssets (msw)", () => {
         ],
         createContext()
       )
-    ).rejects.toThrow("Move non-entry files into a subfolder");
+    ).rejects.toThrow('Move "hello-world.txt" into a subfolder');
     expect(metadataUpdated).toBe(false);
   });
 
@@ -1592,7 +1592,7 @@ describe("patchAssets (msw)", () => {
         ],
         createContext()
       )
-    ).rejects.toThrow("Move non-entry files into a subfolder");
+    ).rejects.toThrow('Move "notes.txt" into a subfolder');
     expect(inserted).toBe(false);
   });
 

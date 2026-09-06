@@ -74,7 +74,7 @@ export const AssetsPanel = ({
   const isContentMode = useStore($isContentMode);
   const canManageFolders = authPermit !== "view";
   const canConfigureCollections = canConfigureContentCollections(authPermit);
-  const collections = useContentCollections(collectionRefreshKey);
+  const collections = useContentCollections(folderId, collectionRefreshKey);
   const collectionReservedAssetIds = getCollectionReservedAssetIds(
     collections,
     { includeInvalid: true }

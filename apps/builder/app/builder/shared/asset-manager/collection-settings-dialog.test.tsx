@@ -16,7 +16,6 @@ import { __testing__ } from "~/shared/asset-content-bridge.client";
 import { $assets, $pages, $project } from "~/shared/sync/data-stores";
 import {
   CollectionSettingsDialog,
-  getCollectionSettingsSaveOrder,
   updateCollectionConfigAndTemplateName,
 } from "./collection-settings-dialog";
 import { isCollectionPreviewPath } from "./collection-preview-utils";
@@ -317,45 +316,6 @@ test("keeps the slug source field type fixed but lets designers make it optional
   ).toContain("Slug");
 });
 
-test("orders schema and template writes without creating an invalid collection", () => {
-  const baseValue = JSON.parse(createDefaultCollectionConfig());
-  const baseConfig = parseCollectionConfig(JSON.stringify(baseValue));
-
-  const addedValue = structuredClone(baseValue);
-  addedValue.properties.summary = { type: "string" };
-  const addedConfig = parseCollectionConfig(JSON.stringify(addedValue));
-  expect(
-    getCollectionSettingsSaveOrder({
-      currentConfig: baseConfig,
-      currentTemplateProperties: { draft: true },
-      nextConfig: addedConfig,
-      nextTemplateProperties: { draft: true, summary: "Hello" },
-    })
-  ).toBe("config-first");
-
-  expect(
-    getCollectionSettingsSaveOrder({
-      currentConfig: addedConfig,
-      currentTemplateProperties: { draft: true, summary: "Hello" },
-      nextConfig: baseConfig,
-      nextTemplateProperties: { draft: true },
-    })
-  ).toBe("template-first");
-
-  const oldTypedValue = structuredClone(baseValue);
-  oldTypedValue.properties.rating = { type: "string" };
-  const nextTypedValue = structuredClone(baseValue);
-  nextTypedValue.properties.rating = { type: "number" };
-  expect(
-    getCollectionSettingsSaveOrder({
-      currentConfig: parseCollectionConfig(JSON.stringify(oldTypedValue)),
-      currentTemplateProperties: { draft: true, rating: "five" },
-      nextConfig: parseCollectionConfig(JSON.stringify(nextTypedValue)),
-      nextTemplateProperties: { draft: true, rating: 5 },
-    })
-  ).toBeUndefined();
-});
-
 test("does not enable saving when the entry template failed to load", async () => {
   initBridge({
     authorize: () => true,
@@ -622,7 +582,7 @@ test("organizes field, template, and collection settings by task", async () => {
   expect(document.body.textContent).toContain("Entry preview");
 });
 
-test("persists a template rename with the collection config before saving template content", async () => {
+test("persists a template rename without rewriting unchanged template content", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -684,9 +644,10 @@ test("persists a template rename with the collection config before saving templa
   await act(async () => {
     save.click();
   });
-  await vi.waitFor(() => expect(order).toHaveLength(2));
+  await vi.waitFor(() => expect(order).toHaveLength(1));
 
-  expect(order).toEqual(["config-and-name", "template-content"]);
+  expect(order).toEqual(["config-and-name"]);
+  expect(updateContent).not.toHaveBeenCalled();
   expect(updateConfigAndTemplateName).toHaveBeenCalledWith(
     expect.objectContaining({
       templateFilename: "post-template",
@@ -843,7 +804,7 @@ test("does not reuse an original field key for a new row", async () => {
   ).toBe("field2");
 });
 
-test("locks collection changes that require migrating existing entries", async () => {
+test("allows collection fields to change while existing entries are repaired", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -896,13 +857,13 @@ test("locks collection changes that require migrating existing entries", async (
   expect(
     document.querySelector<HTMLInputElement>('[aria-label="Summary key"]')
       ?.disabled
-  ).toBe(true);
+  ).toBe(false);
   expect(
     document.querySelector<HTMLButtonElement>('[aria-label="Summary type"]')
       ?.disabled
-  ).toBe(true);
+  ).toBe(false);
   expect(
     document.querySelector<HTMLButtonElement>('[aria-label="Remove Summary"]')
       ?.disabled
-  ).toBe(true);
+  ).toBe(false);
 });

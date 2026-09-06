@@ -24,26 +24,24 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import {
+  createId,
   createAssetFolderHierarchy,
-  formatAssetName,
+  type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
 import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
-import {
-  collectionConfigFilename,
-  createDefaultCollectionConfig,
-  createDefaultCollectionTemplate,
-  defaultCollectionTemplateFilename,
-} from "@webstudio-is/content-engine";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "~/shared/instance-utils/data";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { AssetFolderSelector } from "./asset-folder-selector";
-import { uploadSingleAsset } from "../assets/upload-assets";
-import {
-  $lastTransactionId,
-  waitForTransactionComplete,
-} from "~/shared/sync/project-queue";
+import { fetch } from "~/shared/fetch.client";
+import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
+import { onNextTransactionComplete } from "~/shared/sync/project-queue";
+import { invalidateAssets } from "~/shared/resources";
 
 type AssetFolderFormValues = {
   name: string;
@@ -66,11 +64,6 @@ const stopEscapePropagation = (event: KeyboardEvent) => {
   }
 };
 
-export const getCollectionFolderSyncError = (result: "failure" | "timeout") =>
-  result === "timeout"
-    ? "Folder synchronization timed out. Retry when the connection is stable."
-    : "The folder could not be synchronized. Close this dialog and reload the project before creating it again.";
-
 export const assertCollectionSetupProject = ({
   expectedProjectId,
   currentProjectId,
@@ -90,11 +83,79 @@ const createAssetFolder = (values: AssetFolderFormValues) => {
     id: "assetFolders.create",
     input: { name: values.name, parentId: values.parentId },
   });
-  const transactionId = $lastTransactionId.get();
-  if (result === undefined || transactionId === undefined) {
+  if (result === undefined) {
     return;
   }
-  return { ...result.result, transactionId };
+  return result.result;
+};
+
+export const createContentCollectionFolder = async ({
+  id,
+  name,
+  parentId,
+  projectId,
+  request = fetch,
+}: {
+  id: string;
+  name: string;
+  parentId: string | undefined;
+  projectId: string;
+  request?: typeof fetch;
+}) => {
+  const response = await request(
+    `/rest/assets/collection-folders?projectId=${encodeURIComponent(projectId)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, name, parentId }),
+    }
+  );
+  const payload = (await response.json()) as
+    | { folder: AssetFolder; assets: Asset[] }
+    | { errors?: string };
+  if (response.ok === false || "folder" in payload === false) {
+    throw new Error(
+      "errors" in payload && typeof payload.errors === "string"
+        ? payload.errors
+        : "The collection could not be created."
+    );
+  }
+  assertCollectionSetupProject({
+    expectedProjectId: projectId,
+    currentProjectId: $project.get()?.id,
+  });
+  const changes: BuilderPatchChange[] = [];
+  if ($assetFolders.get().has(payload.folder.id) === false) {
+    changes.push({
+      namespace: "assetFolders",
+      patches: [
+        { op: "add", path: [payload.folder.id], value: payload.folder },
+      ],
+    });
+  }
+  const newAssets = payload.assets.filter(
+    (asset) => $assets.get().has(asset.id) === false
+  );
+  if (newAssets.length > 0) {
+    changes.push({
+      namespace: "assets",
+      patches: newAssets.map((asset) => ({
+        op: "add",
+        path: [asset.id],
+        value: asset,
+      })),
+    });
+  }
+  if (changes.length === 0) {
+    invalidateAssets();
+  } else {
+    createTransactionFromBuilderPatchPayload({
+      data: getWebstudioData(),
+      payload: changes,
+    });
+    onNextTransactionComplete(invalidateAssets);
+  }
+  return payload.folder;
 };
 
 const AssetFolderForm = ({
@@ -246,8 +307,7 @@ export const CreateAssetFolderDialog = ({
   currentFolderId,
   canCreateContentCollection = true,
   createFolder = createAssetFolder,
-  waitForFolderSync = waitForTransactionComplete,
-  uploadAsset = uploadSingleAsset,
+  createCollection = createContentCollectionFolder,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -256,105 +316,35 @@ export const CreateAssetFolderDialog = ({
   canCreateContentCollection?: boolean;
   createFolder?: (
     values: AssetFolderFormValues
-  ) => { folderId: string; transactionId: string } | undefined;
-  waitForFolderSync?: (
-    transactionId: string
-  ) => Promise<"success" | "failure" | "timeout">;
-  uploadAsset?: typeof uploadSingleAsset;
+  ) => { folderId: string } | undefined;
+  createCollection?: typeof createContentCollectionFolder;
 }) => {
   const [pendingCollection, setPendingCollection] = useState<{
     folderId: string;
     projectId: string;
-    folderSynced: boolean;
-    transactionId: string;
+    name: string;
+    parentId: string | undefined;
   }>();
   const [initializing, setInitializing] = useState(false);
   const [initializationError, setInitializationError] = useState<string>();
-  const [folderSyncFailed, setFolderSyncFailed] = useState(false);
   const [createdCollectionFolderId, setCreatedCollectionFolderId] =
     useState<string>();
-
-  const initializeCollection = async ({
-    folderId,
-    projectId,
-  }: {
-    folderId: string;
-    projectId: string;
-  }) => {
-    assertCollectionSetupProject({
-      expectedProjectId: projectId,
-      currentProjectId: $project.get()?.id,
-    });
-    const folderAssets = Array.from($assets.get().values()).filter(
-      (asset) => asset.folderId === folderId
-    );
-    const templateExists = folderAssets.some(
-      (asset) => formatAssetName(asset) === defaultCollectionTemplateFilename
-    );
-    if (templateExists === false) {
-      const template = await uploadAsset(
-        "file",
-        new File(
-          [createDefaultCollectionTemplate()],
-          defaultCollectionTemplateFilename,
-          { type: "text/mdx" }
-        ),
-        { folderId, deduplicate: true }
-      );
-      if (template === undefined) {
-        throw new Error("The collection template could not be created.");
-      }
-    }
-    assertCollectionSetupProject({
-      expectedProjectId: projectId,
-      currentProjectId: $project.get()?.id,
-    });
-    const configExists = Array.from($assets.get().values()).some(
-      (asset) =>
-        asset.folderId === folderId &&
-        formatAssetName(asset) === collectionConfigFilename
-    );
-    if (configExists === false) {
-      const config = await uploadAsset(
-        "file",
-        new File([createDefaultCollectionConfig()], collectionConfigFilename, {
-          type: "application/json",
-        }),
-        { folderId, deduplicate: true }
-      );
-      if (config === undefined) {
-        throw new Error("The collection configuration could not be created.");
-      }
-    }
-    assertCollectionSetupProject({
-      expectedProjectId: projectId,
-      currentProjectId: $project.get()?.id,
-    });
-  };
 
   const finishCollectionSetup = (pending: {
     folderId: string;
     projectId: string;
-    folderSynced: boolean;
-    transactionId: string;
+    name: string;
+    parentId: string | undefined;
   }) => {
     setInitializing(true);
     setInitializationError(undefined);
     void (async () => {
-      let nextPending = pending;
-      if (nextPending.folderSynced === false) {
-        const completion = await waitForFolderSync(nextPending.transactionId);
-        if (completion !== "success") {
-          if (completion === "failure") {
-            setFolderSyncFailed(true);
-          }
-          throw new Error(getCollectionFolderSyncError(completion));
-        }
-        setFolderSyncFailed(false);
-        nextPending = { ...nextPending, folderSynced: true };
-        setPendingCollection(nextPending);
-      }
-      await initializeCollection(nextPending);
+      await createCollection({
+        id: pending.folderId,
+        name: pending.name,
+        parentId: pending.parentId,
+        projectId: pending.projectId,
+      });
     })()
       .then(() => {
         setPendingCollection(undefined);
@@ -378,22 +368,21 @@ export const CreateAssetFolderDialog = ({
       toast.error("Project not found");
       return;
     }
-    const result = createFolder(values);
-    if (result === undefined) {
-      return;
-    }
     if (values.useAsContentCollection !== true) {
+      const result = createFolder(values);
+      if (result === undefined) {
+        return;
+      }
       onOpenChange(false);
       return;
     }
     const pending = {
-      folderId: result.folderId,
+      folderId: createId(),
       projectId,
-      folderSynced: false,
-      transactionId: result.transactionId,
+      name: values.name,
+      parentId: values.parentId,
     };
     setPendingCollection(pending);
-    setFolderSyncFailed(false);
     finishCollectionSetup(pending);
   };
 
@@ -478,24 +467,19 @@ export const CreateAssetFolderDialog = ({
               {initializing === false && (
                 <Button
                   onClick={() => {
-                    if (folderSyncFailed) {
-                      setPendingCollection(undefined);
-                    }
                     onOpenChange(false);
                   }}
                 >
-                  {folderSyncFailed ? "Close" : "Finish later"}
+                  Finish later
                 </Button>
               )}
-              {folderSyncFailed === false && (
-                <Button
-                  color="primary"
-                  disabled={initializing}
-                  onClick={() => finishCollectionSetup(pendingCollection)}
-                >
-                  {initializing ? "Setting up…" : "Retry setup"}
-                </Button>
-              )}
+              <Button
+                color="primary"
+                disabled={initializing}
+                onClick={() => finishCollectionSetup(pendingCollection)}
+              >
+                {initializing ? "Setting up…" : "Retry setup"}
+              </Button>
             </Flex>
           </Grid>
         )}

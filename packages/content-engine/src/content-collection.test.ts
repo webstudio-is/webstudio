@@ -114,7 +114,7 @@ describe("content collections", () => {
           };
         },
         message:
-          'Unsupported JSON Schema keyword "uniqueItems" at #/properties/tags',
+          "type must be string, number, integer, or boolean at #/properties/tags/type",
       },
       {
         update: (schema: MutableCollectionSchema) => {
@@ -206,19 +206,14 @@ describe("content collections", () => {
     ).toThrow('Property key "constructor" is not supported');
   });
 
-  test("does not overwrite schema properties unsupported by the configurator", () => {
+  test("rejects schema properties unsupported by the configurator", () => {
     const schema = JSON.parse(createDefaultCollectionConfig());
     schema.properties.metadata = {
       type: "object",
       properties: { author: { type: "string" } },
     };
-    const config = parseCollectionConfig(JSON.stringify(schema));
-    const fields = config.fields.map((field) =>
-      field.key === "title" ? { ...field, key: "metadata" } : field
-    );
-
-    expect(() => serializeCollectionConfig({ config, fields })).toThrow(
-      'Field key "metadata" is already used by a schema property that cannot be edited here'
+    expect(() => parseCollectionConfig(JSON.stringify(schema))).toThrow(
+      "type must be string, number, integer, or boolean at #/properties/metadata/type"
     );
   });
 
@@ -490,32 +485,13 @@ describe("content collections", () => {
     expect(entry.source).toContain("Start writing.");
   });
 
-  test("rejects entry values for unknown and template-only properties", async () => {
-    const schema = JSON.parse(createDefaultCollectionConfig());
-    schema.properties.metadata = {
-      type: "object",
-      properties: { author: { type: "string" } },
-      additionalProperties: false,
-    };
-    const config = parseCollectionConfig(JSON.stringify(schema));
+  test("rejects entry values for unknown properties", async () => {
+    const config = parseCollectionConfig(createDefaultCollectionConfig());
 
     await expect(
       createCollectionEntry({
         config,
-        templateSource: "---\nmetadata:\n  author: Ada\n---\n",
-        values: {
-          title: "Protected metadata",
-          metadata: { author: "Grace" },
-        },
-        existingFilenames: [],
-      })
-    ).rejects.toThrow(
-      'Property "metadata" cannot be set when creating an entry'
-    );
-    await expect(
-      createCollectionEntry({
-        config,
-        templateSource: "---\nmetadata:\n  author: Ada\n---\n",
+        templateSource: "---\ndraft: true\n---\n",
         values: { title: "Unknown value", unknown: true },
         existingFilenames: [],
       })
@@ -604,41 +580,17 @@ describe("content collections", () => {
     ).toBe("Title must contain at least 2 characters");
   });
 
-  test("validates supported nested object and array schemas", () => {
-    const schema = JSON.parse(createDefaultCollectionConfig());
-    schema.required.push("metadata", "tags");
-    schema.properties.metadata = {
-      type: "object",
-      required: ["author"],
-      properties: { author: { type: "string", minLength: 1 } },
-      additionalProperties: false,
-    };
-    schema.properties.tags = {
-      type: "array",
-      items: { type: "string", minLength: 1 },
-      minItems: 1,
-      maxItems: 2,
-    };
-    const config = parseCollectionConfig(JSON.stringify(schema));
-
-    expect(
-      getCollectionValidationError(config, {
-        title: "Nested values",
-        slug: "nested-values",
-        draft: true,
-        metadata: { author: "Ada" },
-        tags: ["schema"],
-      })
-    ).toBeUndefined();
-    expect(
-      getCollectionValidationError(config, {
-        title: "Nested values",
-        slug: "nested-values",
-        draft: true,
-        metadata: { author: "Ada", extra: true },
-        tags: [],
-      })
-    ).toBeDefined();
+  test("rejects nested object and array fields", () => {
+    for (const field of [
+      { type: "object", properties: { author: { type: "string" } } },
+      { type: "array", items: { type: "string" } },
+    ]) {
+      const schema = JSON.parse(createDefaultCollectionConfig());
+      schema.properties.advanced = field;
+      expect(() => parseCollectionConfig(JSON.stringify(schema))).toThrow(
+        "type must be string, number, integer, or boolean at #/properties/advanced/type"
+      );
+    }
   });
 
   test("rejects a template with an invalid MDX body", async () => {
@@ -664,30 +616,6 @@ describe("content collections", () => {
         draft: true,
       })
     ).toBe("Title must contain at least 1 character");
-
-    const extendedSchema = JSON.parse(createDefaultCollectionConfig());
-    extendedSchema.required.push("metadata");
-    extendedSchema.properties.metadata = { type: "object" };
-    const extendedConfig = parseCollectionConfig(
-      JSON.stringify(extendedSchema)
-    );
-    expect(
-      getCollectionFieldValidationError(extendedConfig, {
-        title: "Valid title",
-        slug: "valid-title",
-        draft: true,
-      })
-    ).toBeUndefined();
-    expect(
-      getCollectionValidationError(extendedConfig, {
-        title: "Valid title",
-        slug: "valid-title",
-        draft: true,
-      })
-    ).toBeDefined();
-    expect(
-      getCollectionTemplateValidationError(extendedConfig, { draft: true })
-    ).toBeDefined();
 
     expect(
       getCollectionTemplateValidationError(config, { draft: true })

@@ -47,9 +47,6 @@ const getInitialValue = (
   if (Object.hasOwn(templateProperties, field.key)) {
     return templateProperties[field.key];
   }
-  if (field.defaultValue !== undefined) {
-    return field.defaultValue;
-  }
   if (field.type === "boolean") {
     return field.required ? false : undefined;
   }
@@ -189,8 +186,7 @@ export const CreateCollectionEntryDialog = ({
       new Set(
         config.fields.flatMap((field) =>
           field.required === false &&
-          Object.hasOwn(collection.templateProperties, field.key) === false &&
-          field.defaultValue === undefined
+          Object.hasOwn(collection.templateProperties, field.key) === false
             ? [field.key]
             : []
         )
@@ -214,8 +210,7 @@ export const CreateCollectionEntryDialog = ({
         new Set(
           config.fields.flatMap((field) =>
             field.required === false &&
-            Object.hasOwn(collection.templateProperties, field.key) === false &&
-            field.defaultValue === undefined
+            Object.hasOwn(collection.templateProperties, field.key) === false
               ? [field.key]
               : []
           )

@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { getUtf8ByteLength } from "./byte-stream";
-import { replaceMarkdownFrontmatter } from "./frontmatter";
+import {
+  extractMarkdownFrontmatter,
+  replaceMarkdownFrontmatter,
+} from "./frontmatter";
 import { contentEngineLimits } from "./limits";
 import { parseMdxDocument } from "./mdx";
 import {
@@ -50,6 +53,33 @@ export type ContentCollectionConfig = Readonly<{
 
 export class ContentCollectionError extends Error {}
 
+export class ContentCollectionInspectionError extends ContentCollectionError {
+  fileId?: string;
+  missingTemplateFilename?: string;
+  forbiddenFileId?: string;
+  repairAction?: "edit" | "move";
+  templateFileId?: string;
+
+  constructor(
+    message: string,
+    details: {
+      fileId?: string;
+      missingTemplateFilename?: string;
+      forbiddenFileId?: string;
+      repairAction?: "edit" | "move";
+      templateFileId?: string;
+      cause?: unknown;
+    } = {}
+  ) {
+    super(message, { cause: details.cause });
+    this.fileId = details.fileId;
+    this.missingTemplateFilename = details.missingTemplateFilename;
+    this.forbiddenFileId = details.forbiddenFileId;
+    this.repairAction = details.repairAction;
+    this.templateFileId = details.templateFileId;
+  }
+}
+
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && Array.isArray(value) === false;
 
@@ -73,23 +103,13 @@ const validatePropertyKey = (key: string) => {
   }
 };
 
-type SupportedSchemaType =
-  | "object"
-  | "array"
-  | "string"
-  | "number"
-  | "integer"
-  | "boolean"
-  | "null";
+type CollectionFieldType = "string" | "number" | "integer" | "boolean";
 
-const supportedSchemaTypes = new Set<SupportedSchemaType>([
-  "object",
-  "array",
+const collectionFieldTypes = new Set<CollectionFieldType>([
   "string",
   "number",
   "integer",
   "boolean",
-  "null",
 ]);
 
 // Keep acceptance and compilation in one allowlist so a new schema keyword
@@ -108,15 +128,12 @@ const commonSchemaKeywords = new Set([
 ]);
 
 const schemaKeywordsByType: Readonly<
-  Record<SupportedSchemaType, ReadonlySet<string>>
+  Record<CollectionFieldType, ReadonlySet<string>>
 > = {
-  object: new Set(["properties", "required", "additionalProperties"]),
-  array: new Set(["items", "minItems", "maxItems"]),
   string: new Set(["minLength", "maxLength", "pattern"]),
   number: new Set(["minimum", "maximum"]),
   integer: new Set(["minimum", "maximum"]),
   boolean: new Set(),
-  null: new Set(),
 };
 
 const escapeJsonPointerSegment = (value: string) =>
@@ -130,22 +147,22 @@ const getSchemaLocation = (path: readonly string[]) =>
 const getSchemaKeywordLocation = (path: readonly string[], keyword: string) =>
   getSchemaLocation([...path, keyword]);
 
-const getSchemaType = (
+const getFieldSchemaType = (
   schema: Readonly<Record<string, unknown>>,
   path: readonly string[]
-): SupportedSchemaType => {
+): CollectionFieldType => {
   if (
     typeof schema.type !== "string" ||
-    supportedSchemaTypes.has(schema.type as SupportedSchemaType) === false
+    collectionFieldTypes.has(schema.type as CollectionFieldType) === false
   ) {
     throw new ContentCollectionError(
-      `type must be one supported JSON Schema type at ${getSchemaKeywordLocation(
+      `type must be string, number, integer, or boolean at ${getSchemaKeywordLocation(
         path,
         "type"
       )}`
     );
   }
-  return schema.type as SupportedSchemaType;
+  return schema.type as CollectionFieldType;
 };
 
 const validateSchemaAnnotations = (
@@ -195,7 +212,7 @@ const getOptionalNonnegativeIntegerKeyword = ({
 }: {
   schema: Readonly<Record<string, unknown>>;
   path: readonly string[];
-  keyword: "minLength" | "maxLength" | "minItems" | "maxItems";
+  keyword: "minLength" | "maxLength";
 }) => {
   if (Object.hasOwn(schema, keyword) === false) {
     return;
@@ -283,18 +300,17 @@ const getRequiredPropertyKeys = ({
   return new Set(required);
 };
 
-const compileSupportedSchema = (
+const compileFieldSchema = (
   schema: Readonly<Record<string, unknown>>,
-  path: readonly string[] = []
+  path: readonly string[]
 ): z.ZodType => {
-  const type = getSchemaType(schema, path);
+  const type = getFieldSchemaType(schema, path);
   const supportedTypeKeywords = schemaKeywordsByType[type];
   for (const keyword of Object.keys(schema)) {
     if (
       commonSchemaKeywords.has(keyword) ||
       supportedTypeKeywords.has(keyword) ||
-      keyword.startsWith("x-") ||
-      (path.length === 0 && keyword === "$schema")
+      keyword.startsWith("x-")
     ) {
       continue;
     }
@@ -399,67 +415,38 @@ const compileSupportedSchema = (
     return parser;
   }
 
-  if (type === "boolean") {
-    return z.boolean();
-  }
-  if (type === "null") {
-    return z.null();
-  }
-  if (type === "array") {
-    const minItems = getOptionalNonnegativeIntegerKeyword({
-      schema,
-      path,
-      keyword: "minItems",
-    });
-    const maxItems = getOptionalNonnegativeIntegerKeyword({
-      schema,
-      path,
-      keyword: "maxItems",
-    });
-    if (
-      minItems !== undefined &&
-      maxItems !== undefined &&
-      minItems > maxItems
-    ) {
-      throw new ContentCollectionError(
-        `minItems cannot exceed maxItems at ${getSchemaLocation(path)}`
-      );
-    }
-    let itemParser: z.ZodType = z.unknown();
-    if (Object.hasOwn(schema, "items")) {
-      if (isObject(schema.items) === false) {
-        throw new ContentCollectionError(
-          `items must be a schema object at ${getSchemaKeywordLocation(
-            path,
-            "items"
-          )}`
-        );
-      }
-      itemParser = compileSupportedSchema(schema.items, [...path, "items"]);
-    }
-    let parser = z.array(itemParser);
-    if (minItems !== undefined) {
-      parser = parser.min(minItems);
-    }
-    if (maxItems !== undefined) {
-      parser = parser.max(maxItems);
-    }
-    return parser;
-  }
+  return z.boolean();
+};
 
-  let properties: Readonly<Record<string, unknown>> = {};
-  if (Object.hasOwn(schema, "properties")) {
-    if (isObject(schema.properties) === false) {
-      throw new ContentCollectionError(
-        `properties must be an object at ${getSchemaKeywordLocation(
-          path,
-          "properties"
-        )}`
-      );
+const compileCollectionSchema = (
+  schema: Readonly<Record<string, unknown>>,
+  properties: Readonly<Record<string, unknown>>
+) => {
+  const supportedRootKeywords = new Set([
+    ...commonSchemaKeywords,
+    "$schema",
+    "properties",
+    "required",
+    "additionalProperties",
+  ]);
+  for (const keyword of Object.keys(schema)) {
+    if (supportedRootKeywords.has(keyword) || keyword.startsWith("x-")) {
+      continue;
     }
-    properties = schema.properties;
+    throw new ContentCollectionError(
+      `Unsupported JSON Schema keyword "${keyword}" at schema root`
+    );
   }
-  const required = getRequiredPropertyKeys({ schema, properties, path });
+  validateSchemaAnnotations(schema, []);
+  if (
+    Object.hasOwn(schema, "additionalProperties") &&
+    typeof schema.additionalProperties !== "boolean"
+  ) {
+    throw new ContentCollectionError(
+      "additionalProperties must be true or false at #/additionalProperties"
+    );
+  }
+  const required = getRequiredPropertyKeys({ schema, properties, path: [] });
   const shape: Record<string, z.ZodType> = {};
   for (const [key, propertySchema] of Object.entries(properties)) {
     validatePropertyKey(key);
@@ -468,23 +455,8 @@ const compileSupportedSchema = (
         `Property "${key}" must contain a schema object`
       );
     }
-    const propertyParser = compileSupportedSchema(propertySchema, [
-      ...path,
-      "properties",
-      key,
-    ]);
-    shape[key] = required.has(key) ? propertyParser : propertyParser.optional();
-  }
-  if (
-    Object.hasOwn(schema, "additionalProperties") &&
-    typeof schema.additionalProperties !== "boolean"
-  ) {
-    throw new ContentCollectionError(
-      `additionalProperties must be true or false at ${getSchemaKeywordLocation(
-        path,
-        "additionalProperties"
-      )}`
-    );
+    const parser = compileFieldSchema(propertySchema, ["properties", key]);
+    shape[key] = required.has(key) ? parser : parser.optional();
   }
   const parser = z.object(shape);
   return schema.additionalProperties === false ? parser.strict() : parser;
@@ -547,7 +519,7 @@ const getField = ({
       value.type === "integer" ||
       value.type === "boolean") &&
     Object.hasOwn(value, "default") &&
-    compileSupportedSchema(value, ["properties", key]).safeParse(value.default)
+    compileFieldSchema(value, ["properties", key]).safeParse(value.default)
       .success === false
   ) {
     throw new ContentCollectionError(
@@ -673,7 +645,7 @@ export const parseCollectionConfig = (
       "Only JSON Schema draft 2020-12 is supported"
     );
   }
-  const parser = compileSupportedSchema(schema);
+  const parser = compileCollectionSchema(schema, schema.properties);
   const settingsResult = collectionSettings.safeParse(schema["x-webstudio"]);
   if (settingsResult.success === false) {
     throw new ContentCollectionError(
@@ -683,9 +655,14 @@ export const parseCollectionConfig = (
   const settings = settingsResult.data;
   validateTemplatePath(settings.template);
   const required = new Set(schema.required as string[] | undefined);
-  const fields = Object.entries(schema.properties).flatMap(([key, field]) => {
+  const fields = Object.entries(schema.properties).map(([key, field]) => {
     const parsed = getField({ key, value: field, required: required.has(key) });
-    return parsed === undefined ? [] : [parsed];
+    if (parsed === undefined) {
+      throw new ContentCollectionError(
+        `Property "${key}" must use a supported flat field type`
+      );
+    }
+    return parsed;
   });
   const slugField = fields.find(({ key }) => key === settings.slugField);
   if (slugField === undefined) {
@@ -859,6 +836,196 @@ const parseCollectionTemplate = async (source: string) => {
   }
 };
 
+export type ContentCollectionFile<File> = Readonly<{
+  file: File;
+  id: string;
+  filename: string;
+  basename: string;
+  isMdx: boolean;
+}>;
+
+export const inspectContentCollection = async <File>({
+  files,
+  readSource,
+  readFrontmatter,
+  validateTemplate = true,
+  validateEntries = true,
+}: {
+  files: readonly ContentCollectionFile<File>[];
+  readSource: (file: ContentCollectionFile<File>) => Promise<string>;
+  readFrontmatter?: (
+    file: ContentCollectionFile<File>
+  ) => Promise<Readonly<Record<string, unknown>>>;
+  validateTemplate?: boolean;
+  validateEntries?: boolean;
+}) => {
+  const configFiles = files.filter(
+    (file) => file.filename === collectionConfigFilename
+  );
+  const configFile = configFiles[0];
+  if (configFile === undefined || configFiles.length !== 1) {
+    throw new ContentCollectionInspectionError(
+      "A collection folder must contain exactly one collection.json",
+      { fileId: configFile?.id }
+    );
+  }
+  let config: ContentCollectionConfig;
+  try {
+    config = parseCollectionConfig(await readSource(configFile));
+  } catch (error) {
+    if (error instanceof ContentCollectionError === false) {
+      throw error;
+    }
+    throw new ContentCollectionInspectionError(error.message, {
+      fileId: configFile.id,
+      repairAction: "edit",
+      cause: error,
+    });
+  }
+  const forbiddenFile = files.find(
+    (file) => file.id !== configFile.id && file.isMdx === false
+  );
+  if (forbiddenFile !== undefined) {
+    throw new ContentCollectionInspectionError(
+      `Move "${forbiddenFile.filename}" into a subfolder`,
+      {
+        fileId: forbiddenFile.id,
+        forbiddenFileId: forbiddenFile.id,
+        repairAction: "move",
+      }
+    );
+  }
+  const templateFiles = files.filter(
+    (file) => file.filename === config.template && file.isMdx
+  );
+  const templateFile = templateFiles[0];
+  if (templateFile === undefined) {
+    throw new ContentCollectionInspectionError(
+      `Collection template "${config.template}" not found`,
+      {
+        fileId: configFile.id,
+        missingTemplateFilename: config.template,
+      }
+    );
+  }
+  if (templateFiles.length !== 1) {
+    throw new ContentCollectionInspectionError(
+      `Collection template "${config.template}" is ambiguous`,
+      {
+        fileId: templateFile.id,
+        templateFileId: templateFile.id,
+      }
+    );
+  }
+  const filenames = new Set<string>();
+  for (const file of files) {
+    const normalizedFilename = file.filename.toLowerCase();
+    if (filenames.has(normalizedFilename)) {
+      throw new ContentCollectionInspectionError(
+        `Collection folder contains duplicate filename "${file.filename}"`,
+        {
+          fileId: file.id,
+          repairAction: "move",
+          templateFileId: templateFile.id,
+        }
+      );
+    }
+    filenames.add(normalizedFilename);
+  }
+  let templateProperties: Readonly<Record<string, unknown>> = {};
+  if (validateTemplate) {
+    let templateDocument: Awaited<ReturnType<typeof parseCollectionTemplate>>;
+    try {
+      templateDocument = await parseCollectionTemplate(
+        await readSource(templateFile)
+      );
+    } catch (error) {
+      if (error instanceof ContentCollectionError === false) {
+        throw error;
+      }
+      throw new ContentCollectionInspectionError(error.message, {
+        fileId: templateFile.id,
+        repairAction: "edit",
+        templateFileId: templateFile.id,
+        cause: error,
+      });
+    }
+    templateProperties = templateDocument.frontmatter.properties;
+    const templateError = getCollectionTemplateValidationError(
+      config,
+      templateProperties
+    );
+    if (templateError !== undefined) {
+      throw new ContentCollectionInspectionError(
+        `Collection template "${config.template}": ${templateError}`,
+        {
+          fileId: templateFile.id,
+          repairAction: "edit",
+          templateFileId: templateFile.id,
+        }
+      );
+    }
+  }
+  const entryFiles = files.filter(
+    (file) => file.id !== configFile.id && file.id !== templateFile.id
+  );
+  if (validateEntries) {
+    for (let index = 0; index < entryFiles.length; index += 1) {
+      const entryFile = entryFiles[index];
+      let properties: Readonly<Record<string, unknown>>;
+      try {
+        properties =
+          readFrontmatter === undefined
+            ? (await extractMarkdownFrontmatter(await readSource(entryFile)))
+                .properties
+            : await readFrontmatter(entryFile);
+      } catch (error) {
+        if (error instanceof ContentCollectionError) {
+          throw error;
+        }
+        const details = error instanceof Error ? `: ${error.message}` : "";
+        throw new ContentCollectionInspectionError(
+          `Collection entry "${entryFile.filename}" is invalid${details}`,
+          {
+            fileId: entryFile.id,
+            repairAction: "edit",
+            templateFileId: templateFile.id,
+            cause: error,
+          }
+        );
+      }
+      const validationError = getCollectionValidationError(config, properties);
+      if (validationError !== undefined) {
+        throw new ContentCollectionInspectionError(
+          `Collection entry "${entryFile.filename}": ${validationError}`,
+          {
+            fileId: entryFile.id,
+            repairAction: "edit",
+            templateFileId: templateFile.id,
+          }
+        );
+      }
+      if (properties[config.slugField] !== entryFile.basename) {
+        throw new ContentCollectionInspectionError(
+          `Collection entry "${entryFile.filename}": The slug must match the entry filename`,
+          {
+            fileId: entryFile.id,
+            repairAction: "edit",
+            templateFileId: templateFile.id,
+          }
+        );
+      }
+    }
+  }
+  return {
+    configFile,
+    templateFile,
+    entryFiles,
+    config,
+    templateProperties,
+  };
+};
+
 export const createCollectionEntry = async ({
   config,
   templateSource,
@@ -946,7 +1113,7 @@ export const createDefaultCollectionConfig = () =>
           pattern: collectionSlugPattern,
           "x-webstudio": { control: "slug" },
         },
-        draft: { title: "Draft", type: "boolean", default: true },
+        draft: { title: "Draft", type: "boolean" },
       },
       additionalProperties: false,
       "x-webstudio": {
@@ -1141,28 +1308,6 @@ export const serializeCollectionConfig = ({
   const originalProperties = isObject(config.schema.properties)
     ? config.schema.properties
     : {};
-  const editableKeys = new Set(config.fields.map(({ key }) => key));
-  const preservedProperties = Object.fromEntries(
-    Object.entries(originalProperties).filter(
-      ([key]) => editableKeys.has(key) === false
-    )
-  );
-  for (const field of serializedFields) {
-    if (Object.hasOwn(preservedProperties, field.key)) {
-      throw new ContentCollectionError(
-        `Field key "${field.key}" is already used by a schema property that cannot be edited here`
-      );
-    }
-  }
-  const nextFieldKeys = new Set(serializedFields.map(({ key }) => key));
-  const preservedRequired = Array.isArray(config.schema.required)
-    ? config.schema.required.filter(
-        (key): key is string =>
-          typeof key === "string" &&
-          editableKeys.has(key) === false &&
-          nextFieldKeys.has(key) === false
-      )
-    : [];
   const previewPage =
     settings !== undefined && Object.hasOwn(settings, "previewPage")
       ? settings.previewPage
@@ -1172,26 +1317,20 @@ export const serializeCollectionConfig = ({
     : {};
   const value = {
     ...config.schema,
-    required: [
-      ...preservedRequired,
-      ...serializedFields
-        .filter(({ required }) => required)
-        .map(({ key }) => key),
-    ],
-    properties: {
-      ...preservedProperties,
-      ...Object.fromEntries(
-        serializedFields.map((field) => [
-          field.key,
-          serializeCollectionField(
-            field,
-            field.originalKey === undefined
-              ? undefined
-              : originalProperties[field.originalKey]
-          ),
-        ])
-      ),
-    },
+    required: serializedFields
+      .filter(({ required }) => required)
+      .map(({ key }) => key),
+    properties: Object.fromEntries(
+      serializedFields.map((field) => [
+        field.key,
+        serializeCollectionField(
+          field,
+          field.originalKey === undefined
+            ? undefined
+            : originalProperties[field.originalKey]
+        ),
+      ])
+    ),
     "x-webstudio": {
       ...originalSettings,
       template,

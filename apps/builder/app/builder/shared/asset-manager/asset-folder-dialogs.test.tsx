@@ -7,7 +7,7 @@ import {
   AssetFolderSettingsDialog,
   assertCollectionSetupProject,
   CreateAssetFolderDialog,
-  getCollectionFolderSyncError,
+  createContentCollectionFolder,
   MoveAssetManagerItemsDialog,
 } from "./asset-folder-dialogs";
 import {
@@ -15,7 +15,6 @@ import {
   createAssetFoldersFixture,
 } from "@webstudio-is/sdk/testing";
 import { createAssetManagerTestRenderer } from "./test-utils";
-import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
 
 const renderer = createAssetManagerTestRenderer();
 const render = (children: ReactNode) =>
@@ -159,13 +158,6 @@ test("hides collection creation from content editors", () => {
   expect(document.body.textContent).not.toContain("Use as content collection");
 });
 
-test.each([
-  ["failure", "could not be synchronized"],
-  ["timeout", "timed out"],
-] as const)("explains a collection folder %s", (result, message) => {
-  expect(getCollectionFolderSyncError(result)).toContain(message);
-});
-
 test("stops collection setup after the active project changes", () => {
   expect(() =>
     assertCollectionSetupProject({
@@ -177,11 +169,12 @@ test("stops collection setup after the active project changes", () => {
 
 test("keeps an incomplete collection setup when the dialog closes", async () => {
   $project.set({ id: "project" } as never);
-  const createFolder = vi.fn(() => ({
-    folderId: "new-folder",
-    transactionId: "folder-transaction",
-  }));
-  const waitForFolderSync = vi.fn(async () => "timeout" as const);
+  const folder = createAssetFolderFixture({ id: "new-folder", name: "Posts" });
+  const createFolder = vi.fn();
+  const createCollection = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("The collection could not be created."))
+    .mockResolvedValue(folder);
   const Harness = () => {
     const [open, setOpen] = useState(true);
     return (
@@ -192,7 +185,7 @@ test("keeps an incomplete collection setup when the dialog closes", async () => 
           onOpenChange={setOpen}
           currentFolderId={undefined}
           createFolder={createFolder}
-          waitForFolderSync={waitForFolderSync}
+          createCollection={createCollection}
         />
       </>
     );
@@ -219,7 +212,9 @@ test("keeps an incomplete collection setup when the dialog closes", async () => 
       .find((button) => button.textContent === "Create folder")
       ?.click();
   });
-  expect(document.body.textContent).toContain("timed out");
+  expect(document.body.textContent).toContain(
+    "The collection could not be created."
+  );
 
   act(() => {
     Array.from(document.querySelectorAll("button"))
@@ -231,25 +226,24 @@ test("keeps an incomplete collection setup when the dialog closes", async () => 
   });
 
   expect(document.body.textContent).toContain("Finish collection setup");
-  expect(createFolder).toHaveBeenCalledOnce();
+  expect(createFolder).not.toHaveBeenCalled();
   await act(async () => {
     Array.from(document.querySelectorAll("button"))
       .find((button) => button.textContent === "Retry setup")
       ?.click();
   });
-  expect(waitForFolderSync).toHaveBeenNthCalledWith(1, "folder-transaction");
-  expect(waitForFolderSync).toHaveBeenNthCalledWith(2, "folder-transaction");
+  await vi.waitFor(() => expect(createCollection).toHaveBeenCalledTimes(2));
+  expect(createCollection.mock.calls[1]).toEqual(
+    createCollection.mock.calls[0]
+  );
 });
 
-test("deduplicates collection seed uploads so setup can be retried", async () => {
+test("creates the collection folder and seed files together", async () => {
   $project.set({ id: "project" } as never);
-  const createFolder = vi.fn(() => ({
-    folderId: "new-folder",
-    transactionId: "folder-transaction",
-  }));
-  const waitForFolderSync = vi.fn(async () => "success" as const);
-  const uploadAsset = vi.fn<typeof uploadSingleAsset>(
-    async () => ({ id: "asset" }) as never
+  const folder = createAssetFolderFixture({ id: "new-folder", name: "Posts" });
+  const createFolder = vi.fn();
+  const createCollection = vi.fn<typeof createContentCollectionFolder>(
+    async () => folder
   );
   const onConfigureCollection = vi.fn();
   render(
@@ -259,8 +253,7 @@ test("deduplicates collection seed uploads so setup can be retried", async () =>
       onConfigureCollection={onConfigureCollection}
       currentFolderId={undefined}
       createFolder={createFolder}
-      waitForFolderSync={waitForFolderSync}
-      uploadAsset={uploadAsset}
+      createCollection={createCollection}
     />
   );
 
@@ -285,7 +278,7 @@ test("deduplicates collection seed uploads so setup can be retried", async () =>
       ?.click();
   });
 
-  await vi.waitFor(() => expect(uploadAsset).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() => expect(createCollection).toHaveBeenCalledOnce());
   await vi.waitFor(() =>
     expect(document.body.textContent).toContain("Collection created")
   );
@@ -294,25 +287,15 @@ test("deduplicates collection seed uploads so setup can be retried", async () =>
       .find((button) => button.textContent === "Configure collection")
       ?.click();
   });
-  expect(onConfigureCollection).toHaveBeenCalledWith("new-folder");
-  expect(
-    uploadAsset.mock.calls.map(([type, file, options]) => ({
-      type,
-      filename: file.name,
-      options,
-    }))
-  ).toEqual([
-    {
-      type: "file",
-      filename: "template.mdx",
-      options: { folderId: "new-folder", deduplicate: true },
-    },
-    {
-      type: "file",
-      filename: "collection.json",
-      options: { folderId: "new-folder", deduplicate: true },
-    },
-  ]);
+  const collectionId = createCollection.mock.calls[0]?.[0].id;
+  expect(onConfigureCollection).toHaveBeenCalledWith(collectionId);
+  expect(createFolder).not.toHaveBeenCalled();
+  expect(createCollection).toHaveBeenCalledWith({
+    id: expect.any(String),
+    name: "Posts",
+    parentId: undefined,
+    projectId: "project",
+  });
 });
 
 test("moves items to the selected folder from the folder-only dialog", () => {

@@ -105,11 +105,11 @@ entry then opens on that page with its slug filled into the matching parameter.
 The collection format uses a supported subset of JSON Schema draft 2020-12.
 The configurator exposes string, number, integer, boolean, and slug fields,
 along with required fields and length or value limits. Set starting values in
-the entry template frontmatter. A hand-written schema can also describe
-supported arrays and nested objects. It does not support `$ref`, composition
-keywords, enums, formats, or custom
-regular-expression patterns. Webstudio reports unsupported rules with their
-location instead of silently ignoring them.
+the entry template frontmatter. Collection fields are flat; arrays and nested
+objects are not supported. The schema also does not support `$ref`, composition
+keywords, enums, formats, or custom regular-expression patterns. Webstudio
+reports unsupported rules with their location instead of silently ignoring
+them.
 
 Editors choose **New entry**, complete the generated form, and select **Create
 entry**. Webstudio creates a lowercase, dash-separated slug from the title.
@@ -117,9 +117,10 @@ Editors can change the slug before creating the entry. The schema is checked
 when an entry is created and whenever its frontmatter changes. The slug becomes
 the MDX filename and cannot be changed after creation.
 
-When you change collection fields or limits, Webstudio also checks the entry
-template and every existing entry. Fix incompatible frontmatter before saving
-rules that would make existing content invalid.
+When you save collection settings, Webstudio checks the entry template against
+the new rules. Existing entries remain editable if a rule changes. Repair any
+entry that no longer matches before publishing; publication validates every
+entry and stops when an entry is invalid.
 
 A collection folder accepts entries and subfolders. Uploading, creating a
 generic text file, pasting, moving, or duplicating another file directly into

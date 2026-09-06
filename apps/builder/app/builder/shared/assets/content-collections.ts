@@ -3,15 +3,11 @@ import { useStore } from "@nanostores/react";
 import {
   collectionConfigFilename,
   ContentCollectionError,
+  ContentCollectionInspectionError,
   contentEngineLimits,
-  extractMarkdownFrontmatter,
-  getCollectionValidationError,
-  getCollectionTemplateValidationError,
-  MarkdownMetadataError,
-  parseCollectionConfig,
+  inspectContentCollection,
   type ContentCollectionConfig,
 } from "@webstudio-is/content-engine";
-import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import { readAssetContentBytes } from "@webstudio-is/content-engine/asset-content-repository";
 import {
   formatAssetName,
@@ -78,13 +74,9 @@ export class ContentCollectionReadError extends Error {}
 export const discoverContentCollections = async ({
   assets,
   readSource,
-  readFrontmatter,
 }: {
   assets: readonly Asset[];
   readSource: (asset: Asset) => Promise<string>;
-  readFrontmatter?: (
-    asset: Asset
-  ) => Promise<Readonly<Record<string, unknown>>>;
 }) => {
   const assetsByFolder = new Map<string, Asset[]>();
   for (const asset of assets) {
@@ -105,21 +97,11 @@ export const discoverContentCollections = async ({
     try {
       return await readSource(asset);
     } catch (error) {
-      if (
-        error instanceof ContentCollectionError ||
-        error instanceof MarkdownMetadataError
-      ) {
+      if (error instanceof ContentCollectionError) {
         throw error;
       }
       throw new ContentCollectionReadError(getErrorMessage(error));
     }
-  };
-  const readCollectionFrontmatter = async (asset: Asset) => {
-    if (readFrontmatter !== undefined) {
-      return readFrontmatter(asset);
-    }
-    return (await extractMarkdownFrontmatter(await readCollectionSource(asset)))
-      .properties;
   };
   for (const [folderId, siblings] of assetsByFolder) {
     const configAssets = siblings.filter(
@@ -138,142 +120,26 @@ export const discoverContentCollections = async ({
       | Readonly<{ action: "edit" | "move"; asset: Asset }>
       | undefined;
     try {
-      if (configAssets.length !== 1) {
-        throw new ContentCollectionError(
-          "A collection folder must contain exactly one collection.json"
-        );
-      }
-      const config = parseCollectionConfig(
-        await readCollectionSource(configAsset)
-      );
-      const configuredTemplateAssets = siblings.filter(
-        (asset) =>
-          formatAssetName(asset) === config.template && isMdxFileAsset(asset)
-      );
-      const configuredTemplateAsset = configuredTemplateAssets[0];
-      if (configuredTemplateAsset === undefined) {
-        missingTemplateFilename = config.template;
-        throw new ContentCollectionError(
-          `Collection template "${config.template}" was not found`
-        );
-      }
-      if (configuredTemplateAssets.length !== 1) {
-        throw new ContentCollectionError(
-          `Collection template "${config.template}" is ambiguous`
-        );
-      }
-      templateAsset = configuredTemplateAsset;
-      reservedAssets = [configAsset, configuredTemplateAsset];
-      forbiddenAsset = siblings.find(
-        (asset) =>
-          asset.id !== configAsset.id &&
-          asset.id !== configuredTemplateAsset.id &&
-          isMdxFileAsset(asset) === false
-      );
-      if (forbiddenAsset !== undefined) {
-        editorRepair = { action: "move", asset: forbiddenAsset };
-        throw new ContentCollectionError(
-          `Move "${formatAssetName(forbiddenAsset)}" into a subfolder`
-        );
-      }
-      const filenames = new Set<string>();
-      for (const asset of siblings) {
-        const filename = formatAssetName(asset);
-        const normalizedFilename = filename.toLowerCase();
-        if (filenames.has(normalizedFilename)) {
-          repairAsset = asset;
-          if (
-            asset.id !== configAsset.id &&
-            asset.id !== configuredTemplateAsset.id
-          ) {
-            editorRepair = { action: "move", asset };
-          }
-          throw new ContentCollectionError(
-            `Collection folder contains duplicate filename "${filename}"`
-          );
-        }
-        filenames.add(normalizedFilename);
-      }
-      repairAsset = configuredTemplateAsset;
-      const templateDocument = await parseMdxDocument({
-        source: await readCollectionSource(configuredTemplateAsset),
+      const inspected = await inspectContentCollection({
+        files: siblings.map((asset) => ({
+          file: asset,
+          id: asset.id,
+          filename: formatAssetName(asset),
+          basename: getAssetDisplayNameParts(asset).basename,
+          isMdx: isMdxFileAsset(asset),
+        })),
+        readSource: ({ file }) => readCollectionSource(file),
+        validateEntries: false,
       });
-      const templateValidationError = getCollectionTemplateValidationError(
-        config,
-        templateDocument.frontmatter.properties
-      );
-      if (templateValidationError !== undefined) {
-        throw new ContentCollectionError(
-          `Entry template: ${templateValidationError}`
-        );
-      }
-      const entryAssets = siblings.filter(
-        (asset) =>
-          asset.id !== configAsset.id && asset.id !== configuredTemplateAsset.id
-      );
-      for (
-        let index = 0;
-        index < entryAssets.length;
-        index += contentEngineLimits.concurrentContentReads
-      ) {
-        const results = await Promise.all(
-          entryAssets
-            .slice(index, index + contentEngineLimits.concurrentContentReads)
-            .map(async (entryAsset) => {
-              try {
-                const properties = await readCollectionFrontmatter(entryAsset);
-                const validationError = getCollectionValidationError(
-                  config,
-                  properties
-                );
-                if (validationError !== undefined) {
-                  return {
-                    entryAsset,
-                    message: `Collection entry "${formatAssetName(
-                      entryAsset
-                    )}": ${validationError}`,
-                  };
-                }
-                if (
-                  properties[config.slugField] !==
-                  getAssetDisplayNameParts(entryAsset).basename
-                ) {
-                  return {
-                    entryAsset,
-                    message: `Collection entry "${formatAssetName(
-                      entryAsset
-                    )}": The slug must match the entry filename`,
-                  };
-                }
-              } catch (error) {
-                if (error instanceof ContentCollectionReadError) {
-                  throw error;
-                }
-                const details =
-                  error instanceof Error ? `: ${error.message}` : "";
-                return {
-                  entryAsset,
-                  message: `Collection entry "${formatAssetName(
-                    entryAsset
-                  )}" is invalid${details}`,
-                };
-              }
-            })
-        );
-        const failure = results.find((result) => result !== undefined);
-        if (failure !== undefined) {
-          repairAsset = failure.entryAsset;
-          editorRepair = { action: "edit", asset: failure.entryAsset };
-          throw new ContentCollectionError(failure.message);
-        }
-      }
+      templateAsset = inspected.templateFile.file;
+      reservedAssets = [configAsset, templateAsset];
       collections.set(folderId, {
         status: "ready",
         folderId,
         configAsset,
-        templateAsset: configuredTemplateAsset,
-        config,
-        templateProperties: templateDocument.frontmatter.properties,
+        templateAsset,
+        config: inspected.config,
+        templateProperties: inspected.templateProperties,
       });
     } catch (error) {
       if (error instanceof ContentCollectionReadError) {
@@ -287,6 +153,34 @@ export const discoverContentCollections = async ({
           message: `Collection files could not be loaded: ${error.message}`,
         });
         continue;
+      }
+      if (error instanceof ContentCollectionInspectionError) {
+        repairAsset =
+          siblings.find((asset) => asset.id === error.fileId) ?? configAsset;
+        templateAsset =
+          siblings.find((asset) => asset.id === error.templateFileId) ??
+          (repairAsset.id !== configAsset.id && isMdxFileAsset(repairAsset)
+            ? repairAsset
+            : undefined);
+        if (templateAsset !== undefined) {
+          const templateFilename = formatAssetName(templateAsset);
+          reservedAssets = [
+            configAsset,
+            ...siblings.filter(
+              (asset) =>
+                isMdxFileAsset(asset) &&
+                formatAssetName(asset) === templateFilename
+            ),
+          ];
+        }
+        missingTemplateFilename = error.missingTemplateFilename;
+        forbiddenAsset =
+          error.forbiddenFileId === undefined
+            ? undefined
+            : siblings.find((asset) => asset.id === error.forbiddenFileId);
+        if (error.repairAction !== undefined) {
+          editorRepair = { action: error.repairAction, asset: repairAsset };
+        }
       }
       collections.set(folderId, {
         status: "invalid",
@@ -328,40 +222,6 @@ export const readBuilderAssetSource = async ({
     maxSize: contentEngineLimits.hydratedFileBytes,
   });
   return decodeUtf8(bytes);
-};
-
-// Frontmatter extraction needs only the bounded opening block. The small
-// allowance covers its optional byte-order mark and delimiter lines.
-const builderFrontmatterReadBytes = contentEngineLimits.frontmatterBytes + 64;
-
-export const readBuilderAssetFrontmatter = async ({
-  projectId,
-  asset,
-}: {
-  projectId: string;
-  asset: Asset;
-}) => {
-  const repository = createBuilderHttpAssetContentRepository({ projectId });
-  let content;
-  try {
-    content = await repository.readContent({
-      assetId: asset.id,
-      range: {
-        offset: 0,
-        length: Math.min(asset.size, builderFrontmatterReadBytes),
-      },
-    });
-  } catch (error) {
-    throw new ContentCollectionReadError(getErrorMessage(error));
-  }
-  try {
-    return (await extractMarkdownFrontmatter(content.data)).properties;
-  } catch (error) {
-    if (error instanceof MarkdownMetadataError) {
-      throw error;
-    }
-    throw new ContentCollectionReadError(getErrorMessage(error));
-  }
 };
 
 const hasSameAssetVersion = (left: Asset, right: Asset) =>
@@ -482,31 +342,10 @@ export const mergeLoadingContentCollections = ({
   return merged;
 };
 
-const mergeDiscoveredContentCollections = ({
-  current,
-  discovered,
-}: {
-  current: ReadonlyMap<string, ContentCollection>;
-  discovered: ReadonlyMap<string, ContentCollection>;
-}) => {
-  const merged = new Map<string, ContentCollection>();
-  for (const [folderId, next] of discovered) {
-    const previous = current.get(folderId);
-    if (
-      previous?.status === "ready" &&
-      next.status === "ready" &&
-      hasSameAssetVersion(previous.configAsset, next.configAsset) &&
-      hasSameAssetVersion(previous.templateAsset, next.templateAsset)
-    ) {
-      merged.set(folderId, previous);
-    } else {
-      merged.set(folderId, next);
-    }
-  }
-  return merged;
-};
-
-export const useContentCollections = (refreshKey = 0) => {
+export const useContentCollections = (
+  activeFolderId: string | undefined,
+  refreshKey = 0
+) => {
   const assets = useStore($assets);
   const project = useStore($project);
   const assetList = useMemo(() => Array.from(assets.values()), [assets]);
@@ -525,35 +364,63 @@ export const useContentCollections = (refreshKey = 0) => {
       }),
     [discoveredCollections, loadingCollections]
   );
+  const activeAssets = useMemo(
+    () =>
+      activeFolderId === undefined
+        ? []
+        : assetList.filter((asset) => asset.folderId === activeFolderId),
+    [activeFolderId, assetList]
+  );
+  const activeCollection =
+    activeFolderId === undefined
+      ? undefined
+      : loadingCollections.get(activeFolderId);
 
   useEffect(() => {
     let cancelled = false;
-    if (project === undefined || loadingCollections.size === 0) {
+    if (project === undefined || activeCollection === undefined) {
       return () => {
         cancelled = true;
       };
     }
     void discoverContentCollections({
-      assets: assetList,
+      assets: activeAssets,
       readSource: async (asset) => {
         return readBuilderAssetSource({
           projectId: project.id,
           assetId: asset.id,
         });
       },
-      readFrontmatter: async (asset) =>
-        readBuilderAssetFrontmatter({ projectId: project.id, asset }),
     }).then((result) => {
       if (cancelled === false) {
-        setDiscoveredCollections((current) =>
-          mergeDiscoveredContentCollections({ current, discovered: result })
-        );
+        setDiscoveredCollections((current) => {
+          const next = new Map(current);
+          for (const [folderId, collection] of result) {
+            const previous = current.get(folderId);
+            if (
+              previous?.status === "ready" &&
+              collection.status === "ready" &&
+              hasSameAssetVersion(
+                previous.configAsset,
+                collection.configAsset
+              ) &&
+              hasSameAssetVersion(
+                previous.templateAsset,
+                collection.templateAsset
+              )
+            ) {
+              continue;
+            }
+            next.set(folderId, collection);
+          }
+          return next;
+        });
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [assetList, loadingCollections, project, refreshKey]);
+  }, [activeAssets, activeCollection, project, refreshKey]);
 
   return collections;
 };
