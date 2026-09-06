@@ -1,7 +1,16 @@
 import { expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import { __testing__ } from "./use-switch-page";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Heading = createTemplateComponentFixture("Heading");
+const Slot = createTemplateComponentFixture("Slot");
 
 const { getDeepLinkedInstanceSelection, shouldNavigateToPageState } =
   __testing__;
@@ -43,11 +52,11 @@ test("resolves a deep-linked instance to its page and full selector", () => {
     rootInstanceId: "body",
   });
   const { instances } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="box">
-        <$.Heading ws:id="heading">Heading</$.Heading>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="box">
+        <Heading ws:id="heading">Heading</Heading>
+      </Box>
+    </Body>
   );
   expect(
     getDeepLinkedInstanceSelection({
@@ -68,18 +77,18 @@ test("restores the selected shared slot occurrence from its full selector", () =
     rootInstanceId: "body",
   });
   const { instances } = renderData(
-    <$.Body ws:id="body">
-      <$.Slot ws:id="slot-one">
-        <$.Fragment ws:id="fragment">
-          <$.Box ws:id="box"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-      <$.Slot ws:id="slot-two">
-        <$.Fragment ws:id="fragment">
-          <$.Box ws:id="box"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="body">
+      <Slot ws:id="slot-one">
+        <Fragment ws:id="fragment">
+          <Box ws:id="box"></Box>
+        </Fragment>
+      </Slot>
+      <Slot ws:id="slot-two">
+        <Fragment ws:id="fragment">
+          <Box ws:id="box"></Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
 
   expect(
@@ -100,7 +109,7 @@ test("ignores missing deep-linked instances", () => {
     homePageId: "home-page",
     rootInstanceId: "body",
   });
-  const { instances } = renderData(<$.Body ws:id="body"></$.Body>);
+  const { instances } = renderData(<Body ws:id="body"></Body>);
 
   expect(
     getDeepLinkedInstanceSelection({

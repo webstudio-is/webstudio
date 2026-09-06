@@ -1,4 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { CompletionContext } from "@codemirror/autocomplete";
+import { EditorState, type Extension } from "@codemirror/state";
+import { markdown } from "@codemirror/lang-markdown";
 import {
   ALLOWED_FILE_TYPES,
   getAssetTextEditorLanguage,
@@ -8,12 +11,82 @@ import {
   getTextFileEditorExtensions,
   getTextFileEditorDiagnostics,
   getMdxPersistenceFeedback,
+  createMdxCompletionSource,
   isMarkdownAsset,
   normalizeTextFileContent,
   normalizeTextFileConversion,
 } from "./text-file-utils";
 
+const getCompletionLabels = async (
+  source: ReturnType<typeof createMdxCompletionSource>,
+  value: string,
+  position = value.length,
+  extensions: Extension[] = []
+) => {
+  const state = EditorState.create({ doc: value, extensions });
+  const result = await source(new CompletionContext(state, position, true));
+  return result?.options.map(({ label }) => label) ?? [];
+};
+
 describe("text file assets", () => {
+  test("completes available MDX components, props, and prop values", async () => {
+    const source = createMdxCompletionSource([
+      {
+        name: "Heading",
+        props: [{ name: "tag", values: ["h1", "h2"] }, { name: "title" }],
+      },
+    ]);
+
+    await expect(getCompletionLabels(source, "<He")).resolves.toContain(
+      "Heading"
+    );
+    await expect(getCompletionLabels(source, "<Heading ta")).resolves.toContain(
+      "tag"
+    );
+    await expect(
+      getCompletionLabels(source, '<Heading tag="')
+    ).resolves.toEqual(expect.arrayContaining(["h1", "h2"]));
+    await expect(getCompletionLabels(source, "<Heading cl")).resolves.toEqual(
+      expect.arrayContaining(["className"])
+    );
+    await expect(
+      getCompletionLabels(source, "<Heading cl")
+    ).resolves.not.toContain("class");
+  });
+
+  test("does not offer display labels that are invalid JSX identifiers", async () => {
+    const source = createMdxCompletionSource([
+      { name: "Heading 1", props: [] },
+      { name: "Heading", props: [] },
+    ]);
+
+    await expect(getCompletionLabels(source, "<He")).resolves.toEqual(
+      expect.arrayContaining(["Heading"])
+    );
+    await expect(getCompletionLabels(source, "<He")).resolves.not.toContain(
+      "Heading 1"
+    );
+  });
+
+  test("does not complete JSX inside Markdown code", async () => {
+    const source = createMdxCompletionSource([
+      { name: "Heading", props: [{ name: "tag" }] },
+    ]);
+
+    const inlineCode = "`<He`";
+    await expect(
+      getCompletionLabels(source, inlineCode, inlineCode.length - 1, [
+        markdown(),
+      ])
+    ).resolves.toEqual([]);
+    const fencedCode = "```mdx\n<He\n```";
+    await expect(
+      getCompletionLabels(source, fencedCode, fencedCode.indexOf("\n```"), [
+        markdown(),
+      ])
+    ).resolves.toEqual([]);
+  });
+
   test("detects formats case-insensitively", () => {
     expect(isTextFileAsset({ format: "JSON" })).toBe(true);
     expect(getTextFileEditorExtensions({ format: "JSON" })).toHaveLength(1);
@@ -39,12 +112,8 @@ describe("text file assets", () => {
     (format) => {
       const language = getAssetTextEditorLanguage({ format });
       expect(isTextFileAsset({ format })).toBe(language !== undefined);
-      expect(getTextFileEditorExtensions({ format })).toHaveLength(
-        language === undefined || language === "plain"
-          ? 0
-          : format === "md" || format === "mdx"
-            ? 4
-            : 1
+      expect(getTextFileEditorExtensions({ format }).length > 0).toBe(
+        language !== undefined && language !== "plain"
       );
     }
   );

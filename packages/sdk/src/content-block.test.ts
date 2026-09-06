@@ -15,7 +15,10 @@ import {
   getWritableContentBlockDocumentBinding,
   findWritableContentBlockDocumentBindings,
   getContentBlockSourceIntegrityIssues,
+  getDefaultContentBlockTemplateName,
+  getContentBlockMdxTemplateDescriptor,
   isEqualContentBlockSource,
+  isContentBlockMdxTemplateInsertable,
   parseContentBlockSourceProp,
 } from "./content-block";
 import { encodeDataSourceVariable } from "./expression";
@@ -66,6 +69,53 @@ const mdxAsset: FileAsset = {
   description: null,
   createdAt: "2026-08-14T00:00:00.000Z",
 };
+
+describe("Content Block MDX template semantics", () => {
+  test("derives identity from the component or intrinsic tag, never its label", () => {
+    expect(
+      getDefaultContentBlockTemplateName({ component: "Heading", tag: "h1" })
+    ).toBe("Heading");
+    expect(
+      getDefaultContentBlockTemplateName({
+        component: "ws:element",
+        tag: "h1",
+      })
+    ).toBe("H1");
+    expect(
+      getDefaultContentBlockTemplateName({ component: "radix:Checkbox" }, [
+        "Checkbox",
+        "radix:Checkbox",
+      ])
+    ).toBe("RadixCheckbox");
+  });
+
+  test("matches element semantics by rendered tag across component types", () => {
+    expect(
+      getContentBlockMdxTemplateDescriptor({
+        component: "Heading",
+        tag: "h2",
+      })
+    ).toEqual({
+      kind: "element",
+      resolutionKey: "element:h2",
+      label: "Heading 2",
+      tag: "h2",
+      insertable: true,
+    });
+  });
+
+  test("keeps custom templates insertable while hiding structural semantics", () => {
+    expect(
+      isContentBlockMdxTemplateInsertable({
+        component: "Element",
+        tag: "td",
+      })
+    ).toBe(false);
+    expect(
+      isContentBlockMdxTemplateInsertable({ component: "CustomCard" })
+    ).toBe(true);
+  });
+});
 
 describe("Content Block source", () => {
   test("finds every Templates container without hiding invalid duplicates", () => {
@@ -356,123 +406,26 @@ describe("Content Block source", () => {
 
 describe("allocateUniqueContentBlockTemplateName", () => {
   test.each([
-    {
-      name: "Card",
-      existingNames: [],
-      expected: "Card",
-      reason: "keeps an unused name",
-    },
-    {
-      name: "  Card  ",
-      existingNames: [],
-      expected: "Card",
-      reason: "trims an unused name",
-    },
-    {
-      name: "Card",
-      existingNames: ["Card"],
-      expected: "Card 2",
-      reason: "adds the first suffix",
-    },
-    {
-      name: "Card",
-      existingNames: ["Card", "Card 2"],
-      expected: "Card 3",
-      reason: "skips a consecutive collision",
-    },
-    {
-      name: "Card",
-      existingNames: ["Card", "Card 3"],
-      expected: "Card 2",
-      reason: "fills the first available suffix",
-    },
-    {
-      name: "Card 2",
-      existingNames: ["Card 2"],
-      expected: "Card 3",
-      reason: "increments an existing suffix",
-    },
-    {
-      name: "Card 2",
-      existingNames: ["Card 2", "Card 3", "Card 5"],
-      expected: "Card 4",
-      reason: "fills a gap after an existing suffix",
-    },
-    {
-      name: "Card 20",
-      existingNames: ["Card 20"],
-      expected: "Card 21",
-      reason: "increments a multi-digit suffix",
-    },
-    {
-      name: "Card 1",
-      existingNames: ["Card 1"],
-      expected: "Card 1 2",
-      reason: "treats one as part of the base name",
-    },
-    {
-      name: "Card 0",
-      existingNames: ["Card 0"],
-      expected: "Card 0 2",
-      reason: "treats zero as part of the base name",
-    },
-    {
-      name: "Card -2",
-      existingNames: ["Card -2"],
-      expected: "Card -2 2",
-      reason: "does not interpret a negative suffix",
-    },
-    {
-      name: "Card 2.5",
-      existingNames: ["Card 2.5"],
-      expected: "Card 2.5 2",
-      reason: "does not interpret a decimal suffix",
-    },
-    {
-      name: "Card 9007199254740992",
-      existingNames: ["Card 9007199254740992"],
-      expected: "Card 9007199254740992 2",
-      reason: "does not increment an unsafe integer suffix",
-    },
-    {
-      name: "Card 9007199254740991",
-      existingNames: ["Card 9007199254740991"],
-      expected: "Card 9007199254740991 2",
-      reason: "does not increment past the safe integer range",
-    },
-    {
-      name: "Card 9007199254740990",
-      existingNames: ["Card 9007199254740990", "Card 9007199254740991"],
-      expected: "Card 9007199254740991 2",
-      reason: "falls back after colliding at the safe integer boundary",
-    },
-    {
-      name: "Card 02",
-      existingNames: ["Card 02"],
-      expected: "Card 3",
-      reason: "normalizes an incremented numeric suffix",
-    },
-    {
-      name: "card",
-      existingNames: ["Card"],
-      expected: "card",
-      reason: "matches names case-sensitively",
-    },
-    {
-      name: "Héro 🦸",
-      existingNames: ["Héro 🦸"],
-      expected: "Héro 🦸 2",
-      reason: "preserves Unicode names",
-    },
-  ])("$reason", ({ name, existingNames, expected }) => {
-    const names = new Set(existingNames);
+    ["Card", [], "Card"],
+    ["promotion card", [], "PromotionCard"],
+    ["Card", ["Card"], "Card2"],
+    ["Card", ["Card", "Card2"], "Card3"],
+    ["Card", ["Card", "Card3"], "Card2"],
+    ["Card2", ["Card2", "Card3"], "Card4"],
+    ["Héro 🦸", [], "Hero"],
+    ["", [], "Template"],
+  ])(
+    "allocates the canonical identifier %s",
+    (name, existingNames, expected) => {
+      const names = new Set(existingNames);
 
-    expect(
-      allocateUniqueContentBlockTemplateName({
-        name,
-        existingNames: names,
-      })
-    ).toBe(expected);
-    expect(names).toEqual(new Set(existingNames));
-  });
+      expect(
+        allocateUniqueContentBlockTemplateName({
+          name,
+          existingNames: names,
+        })
+      ).toBe(expected);
+      expect(names).toEqual(new Set(existingNames));
+    }
+  );
 });

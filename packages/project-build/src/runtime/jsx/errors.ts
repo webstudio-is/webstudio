@@ -26,8 +26,7 @@ export const throwWebstudioJsxValidationError = (
       path: ["fragment"],
       message: "Invalid Webstudio JSX fragment",
       constraint,
-      example:
-        '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
+      example: "<section><h2>Title</h2></section>",
       ...(detail === undefined
         ? {}
         : { detail: sanitizeValidationDetail(detail) }),

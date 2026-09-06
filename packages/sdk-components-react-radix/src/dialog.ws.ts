@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div, button, h2, p } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import {
   propsDialog,
   propsDialogContent,
@@ -39,7 +39,7 @@ export const metaDialogOverlay: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.DialogContent],
+    descendants: [getRadixComponentId("DialogContent")],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },
@@ -55,9 +55,9 @@ export const metaDialogContent: WsComponentMeta = {
     category: "none",
     children: ["instance"],
     descendants: [
-      radix.DialogTitle,
-      radix.DialogDescription,
-      radix.DialogClose,
+      getRadixComponentId("DialogTitle"),
+      getRadixComponentId("DialogDescription"),
+      getRadixComponentId("DialogClose"),
     ],
   },
   states: [
@@ -106,7 +106,10 @@ export const metaDialog: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.DialogTrigger, radix.DialogOverlay],
+    descendants: [
+      getRadixComponentId("DialogTrigger"),
+      getRadixComponentId("DialogOverlay"),
+    ],
   },
   initialProps: ["open"],
   props: propsDialog,

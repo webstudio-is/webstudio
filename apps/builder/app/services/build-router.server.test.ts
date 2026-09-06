@@ -115,7 +115,7 @@ describe("build router jsx fragment conversion", () => {
     await expect(
       caller.createJsxFragment({
         projectId: "project-id",
-        source: `<$.Box><$.Heading>Title</$.Heading></$.Box>`,
+        source: `<Box><Heading>Title</Heading></Box>`,
       })
     ).resolves.toEqual(
       expect.objectContaining({
@@ -134,7 +134,7 @@ describe("build router jsx fragment conversion", () => {
     await expect(
       caller.createJsxFragment({
         projectId: "project-id",
-        source: `<$.Box {...{"ws:id": "0"}} />`,
+        source: `<Box {...{"ws:id": "0"}} />`,
       })
     ).rejects.toThrow("Do not set ws:id in JSX fragments");
   });
@@ -146,7 +146,7 @@ describe("build router jsx fragment conversion", () => {
     await expect(
       caller.createJsxFragment({
         projectId: "project-id",
-        source: `<$.Box />`,
+        source: `<Box />`,
       })
     ).rejects.toThrow("You don't have access to this project");
   });

@@ -1534,9 +1534,15 @@ importers:
       canonicalize:
         specifier: 3.0.0
         version: 3.0.0
+      estree-util-is-identifier-name:
+        specifier: 3.0.0
+        version: 3.0.0
       hast-util-to-mdast:
         specifier: 9.0.0
         version: 9.0.0
+      html-tags:
+        specifier: ^4.0.0
+        version: 4.0.0
       lru-cache:
         specifier: 10.4.3
         version: 10.4.3
@@ -1576,6 +1582,9 @@ importers:
       remark-parse:
         specifier: 10.0.2
         version: 10.0.2
+      svg-tags:
+        specifier: 1.0.0
+        version: 1.0.0
       unified:
         specifier: 10.1.2
         version: 10.1.2
@@ -1586,6 +1595,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@types/svg-tags':
+        specifier: 1.0.2
+        version: 1.0.2
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -2646,6 +2658,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -2680,9 +2695,6 @@ importers:
       '@webstudio-is/sdk-cli':
         specifier: workspace:^
         version: link:../sdk-cli
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../sdk-components-react
       '@webstudio-is/template':
         specifier: workspace:*
         version: link:../template
@@ -2873,6 +2885,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
       await-interaction-response:
         specifier: ^0.0.2
         version: 0.0.2
@@ -2898,9 +2913,6 @@ importers:
       '@webstudio-is/sdk-cli':
         specifier: workspace:^
         version: link:../sdk-cli
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../sdk-components-react
       '@webstudio-is/template':
         specifier: workspace:*
         version: link:../template
@@ -2996,6 +3008,9 @@ importers:
 
   packages/sdk-components-registry:
     dependencies:
+      '@webstudio-is/icons':
+        specifier: workspace:*
+        version: link:../icons
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -3018,6 +3033,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -3073,9 +3091,6 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
-      change-case:
-        specifier: ^5.4.4
-        version: 5.4.4
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -6893,6 +6908,9 @@ packages:
 
   '@types/statuses@2.0.6':
     resolution: {integrity: sha512-xMAgYwceFhRA2zY+XbEA7mxYbA093wdiW8Vu6gZPGWy9cmOyU9XesH1tNcEWsKFd5Vzrqx5T3D38PWx1FIIXkA==}
+
+  '@types/svg-tags@1.0.2':
+    resolution: {integrity: sha512-D8rhCFfpmWzXvzVqdXo40EXNeropfqp4gvwn8fcVfzYIci8M1C1tk/L26Yacn/U9vaPM7FlS73BNoUtfjAjwAw==}
 
   '@types/unist@2.0.6':
     resolution: {integrity: sha512-PBjIUxZHOuj0R15/xuwJYjFi+KZdNFrehocChv4g5hu6aFroHue8m0lBP0POdK2nKzbw0cgV1mws8+V/JAcEkQ==}
@@ -11232,6 +11250,9 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  svg-tags@1.0.0:
+    resolution: {integrity: sha512-ovssysQTa+luh7A5Weu3Rta6FJlFBBbInjOh722LIt6klpU2/HtdUbszju/G4devcvk8PGt7FCLv5wftu3THUA==}
 
   svgo@3.0.2:
     resolution: {integrity: sha512-Z706C1U2pb1+JGP48fbazf3KxHrWOsLme6Rv7imFBn5EnuanDW1GPaA/P1/dvObE670JDePC3mnj0k0B7P0jjQ==}
@@ -16377,6 +16398,8 @@ snapshots:
       '@types/send': 0.17.6
 
   '@types/statuses@2.0.6': {}
+
+  '@types/svg-tags@1.0.2': {}
 
   '@types/unist@2.0.6': {}
 
@@ -21681,6 +21704,8 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  svg-tags@1.0.0: {}
 
   svgo@3.0.2:
     dependencies:

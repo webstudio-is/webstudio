@@ -2,7 +2,12 @@ import { test, expect } from "vitest";
 import { createHeadlessEditor } from "@lexical/headless";
 import { LinkNode } from "@lexical/link";
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
-import { $, renderData, renderTemplate, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  renderTemplate,
+  ws,
+} from "@webstudio-is/template";
 import {
   $convertToLexical,
   $convertToPlainTextUpdate,
@@ -10,21 +15,28 @@ import {
   type Refs,
 } from "./interop";
 
+const Body = createTemplateComponentFixture("Body");
+const Bold = createTemplateComponentFixture("Bold");
+const Box = createTemplateComponentFixture("Box");
+const Italic = createTemplateComponentFixture("Italic");
+const RichTextLink = createTemplateComponentFixture("RichTextLink");
+const Span = createTemplateComponentFixture("Span");
+
 const { instances } = renderData(
-  <$.Body ws:id="bodyId">
-    <$.Box ws:id="emptyBoxId"></$.Box>
-    <$.Box ws:id="textBoxId">
+  <Body ws:id="bodyId">
+    <Box ws:id="emptyBoxId"></Box>
+    <Box ws:id="textBoxId">
       Hello{"\n"}
-      <$.Bold ws:id="boldId">
-        <$.Italic ws:id="italicId">world</$.Italic>
-      </$.Bold>
+      <Bold ws:id="boldId">
+        <Italic ws:id="italicId">world</Italic>
+      </Bold>
       {"\n"}
-      <$.Span ws:id="spanId">and</$.Span>
+      <Span ws:id="spanId">and</Span>
       {"\n"}
-      <$.RichTextLink ws:id="linkId" href="/my-url">
+      <RichTextLink ws:id="linkId" href="/my-url">
         other realms
-      </$.RichTextLink>
-    </$.Box>
+      </RichTextLink>
+    </Box>
     <ws.element ws:tag="div" ws:id="textElementId">
       Hello{"\n"}
       <ws.element ws:tag="b" ws:id="boldElementId">
@@ -41,7 +53,7 @@ const { instances } = renderData(
         other realms
       </ws.element>
     </ws.element>
-  </$.Body>
+  </Body>
 );
 
 const expectedState = {
@@ -219,11 +231,11 @@ test("convert lexical to instances uses supplied id generator for new formatting
 
   expect(updates).toEqual(
     renderTemplate(
-      <$.Box ws:id="emptyBoxId">
+      <Box ws:id="emptyBoxId">
         <ws.element ws:tag="b" ws:id="generated-bold">
           Generated
         </ws.element>
-      </$.Box>
+      </Box>
     ).instances
   );
 });

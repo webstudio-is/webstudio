@@ -129,10 +129,12 @@ const getElementChildren = (
   let elementChildren = getElementContentModel(tag)?.children ?? [
     "transparent",
   ];
-  if (elementChildren.includes("transparent") && allowedCategories) {
-    // merge categories from parent and current element when transparent occured
+  if (elementChildren.includes("transparent")) {
+    // Transparent elements inherit their parent's content model. Without a
+    // known parent, HTML allows any flow content.
+    const inheritedCategories = allowedCategories ?? ["flow"];
     elementChildren = elementChildren.flatMap((category) =>
-      category === "transparent" ? allowedCategories : category
+      category === "transparent" ? inheritedCategories : category
     );
   }
   // introduce custom non-interactive category to restrict nesting interactive elements

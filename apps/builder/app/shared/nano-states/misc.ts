@@ -15,6 +15,7 @@ import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
 import {
   createId,
+  getHtmlTagsFromProps,
   type AssetType,
   type Instance,
   type Prop,
@@ -47,7 +48,6 @@ export const $memoryProps = atom<Map<string, Props>>(new Map());
 
 export const $propsIndex = computed($props, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
-  const htmlTagsByInstanceId = new Map<Instance["id"], string>();
   for (const prop of props.values()) {
     const { instanceId } = prop;
     let instanceProps = propsByInstanceId.get(instanceId);
@@ -56,13 +56,10 @@ export const $propsIndex = computed($props, (props) => {
       propsByInstanceId.set(instanceId, instanceProps);
     }
     instanceProps.push(prop);
-    if (prop.type === "string" && prop.name === "tag") {
-      htmlTagsByInstanceId.set(instanceId, prop.value);
-    }
   }
   return {
     propsByInstanceId,
-    htmlTagsByInstanceId,
+    htmlTagsByInstanceId: getHtmlTagsFromProps(props),
   };
 });
 

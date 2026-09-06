@@ -104,6 +104,14 @@ export const wsComponentMeta = z.object({
   deprecated: z.boolean().optional(),
   icon: z.string().optional(),
   presetStyle: z.optional(z.record(z.string(), z.array(presetStyleDecl))),
+  /** Selects the rendered HTML tag from a serializable component prop. */
+  renderedTag: z
+    .object({
+      prop: z.string(),
+      values: z.record(z.string(), z.string()),
+      default: z.string(),
+    })
+    .optional(),
   states: z.optional(z.array(componentState)),
   order: z.number().optional(),
   // properties and html attributes that will be always visible in properties panel

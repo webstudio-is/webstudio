@@ -1,3 +1,7 @@
+/**
+ * Converts the primitive static prop values allowed in authored MDX to and
+ * from persisted Webstudio props without evaluating JavaScript expressions.
+ */
 import type { MdxAuthoredProp } from "@webstudio-is/content-engine/mdx";
 import type { Prop } from "@webstudio-is/sdk";
 

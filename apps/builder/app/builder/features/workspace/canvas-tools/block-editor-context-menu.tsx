@@ -3,16 +3,20 @@ import { styled } from "@webstudio-is/design-system";
 
 import {
   $modifierKeys,
+  $registeredComponentMetas,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   $textEditorContextMenuCommand,
   execTextEditorContextMenuCommand,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
 import { TemplatesMenu } from "./outline/block-instance-outline";
-import { insertTemplateAt } from "./outline/block-utils";
+import {
+  filterInsertableContentBlockTemplates,
+  insertTemplateAt,
+} from "./outline/block-utils";
 import { useCallback, useEffect, useState } from "react";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
@@ -61,10 +65,12 @@ const Menu = ({
   cursorRect,
   anchor,
   templates,
+  replaceAnchor,
 }: {
   cursorRect: DOMRect;
   anchor: InstanceSelector;
   templates: [instance: Instance, instanceSelector: InstanceSelector][];
+  replaceAnchor: boolean;
 }) => {
   const [inert, setInert] = useState(true);
   const modifierKeys = useStore($modifierKeys);
@@ -84,7 +90,12 @@ const Menu = ({
     (templateSelector: InstanceSelector) => {
       const insertBefore = modifierKeys.altKey;
       execTextEditorContextMenuCommand({ type: "templateInsertionStarted" });
-      void insertTemplateAt(templateSelector, anchor, insertBefore).then(
+      void insertTemplateAt({
+        templateSelector,
+        anchor,
+        insertBefore,
+        replaceAnchor,
+      }).then(
         (didInsert) => {
           if (didInsert === false) {
             execTextEditorContextMenuCommand({
@@ -99,7 +110,7 @@ const Menu = ({
         }
       );
     },
-    [anchor, modifierKeys.altKey]
+    [anchor, modifierKeys.altKey, replaceAnchor]
   );
 
   const currentValue = intermediateValue ?? value;
@@ -158,7 +169,8 @@ const Menu = ({
         }
 
         case "templateInsertionStarted":
-        case "templateInsertionCancelled": {
+        case "templateInsertionCancelled":
+        case "close": {
           break;
         }
 
@@ -204,10 +216,20 @@ const Menu = ({
   );
 };
 
+const CloseTextEditorContextMenu = () => {
+  useEffect(() => {
+    $textEditorContextMenu.set(undefined);
+    execTextEditorContextMenuCommand({ type: "close" });
+  }, []);
+  return null;
+};
+
 export const TextEditorContextMenu = () => {
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const textEditorContextMenu = useStore($textEditorContextMenu);
   const instances = useStore($instances);
+  const props = useStore($props);
+  const metas = useStore($registeredComponentMetas);
 
   if (textEditorContextMenu === undefined) {
     return;
@@ -223,7 +245,17 @@ export const TextEditorContextMenu = () => {
   });
 
   if (templates === undefined) {
-    return;
+    return <CloseTextEditorContextMenu />;
+  }
+
+  const insertableTemplates = filterInsertableContentBlockTemplates({
+    templates,
+    props,
+    metas,
+  });
+
+  if (insertableTemplates.length === 0) {
+    return <CloseTextEditorContextMenu />;
   }
 
   return (
@@ -231,7 +263,8 @@ export const TextEditorContextMenu = () => {
       key={JSON.stringify(textEditingInstanceSelector.selector)}
       cursorRect={textEditorContextMenu.cursorRect}
       anchor={textEditingInstanceSelector.selector}
-      templates={templates}
+      templates={insertableTemplates}
+      replaceAnchor={textEditorContextMenu.replaceAnchor}
     />
   );
 };

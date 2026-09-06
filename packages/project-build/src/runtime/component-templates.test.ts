@@ -14,15 +14,19 @@ describe("getComponentTemplates", () => {
         }),
       })
     );
-    expect(
-      templates.get("@webstudio-is/sdk-components-react-radix:Switch")
-    ).toEqual(
+    const switchTemplate = templates.get(
+      "@webstudio-is/sdk-components-react-radix:Switch"
+    );
+    expect(switchTemplate).toEqual(
       expect.objectContaining({
         template: expect.objectContaining({
           children: expect.any(Array),
           instances: expect.any(Array),
         }),
       })
+    );
+    expect(switchTemplate?.template.instances[0]?.component).toBe(
+      "@webstudio-is/sdk-components-react-radix:Switch"
     );
   });
 });

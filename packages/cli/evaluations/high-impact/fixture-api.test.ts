@@ -23,10 +23,52 @@ import {
   markdownBlogFixtureDocuments,
   writeMarkdownBlogFixtureFiles,
 } from "./markdown-blog-fixture";
+import { evaluateHighImpactOutcome } from "./validate";
 
 const execFileAsync = promisify(execFile);
 
 describe("high-impact fixture API", () => {
+  test("keeps an untouched fixture page unchanged after persistence", async () => {
+    const fixtureApi = await startHighImpactFixtureApi(fontAssetsFixture);
+    try {
+      const result = evaluateHighImpactOutcome({
+        fixture: fontAssetsFixture,
+        project: fixtureApi.getProject(),
+        toolCalls: [],
+      });
+
+      expect(result.checks.pageUnchanged).toBe("passed");
+    } finally {
+      await fixtureApi.close();
+    }
+  });
+
+  test("round-trips persisted page title and metadata", async () => {
+    const fixture = structuredClone(authenticatedPageFixture);
+    fixture.project.pages[0] = {
+      ...fixture.project.pages[0]!,
+      title: 'account.data.name ?? "Account"',
+      meta: {
+        description: 'account.data.description ?? ""',
+        socialImageUrl: 'account.data.image.src ?? ""',
+        status: "account.data ? 200 : 404",
+      },
+    };
+    const fixtureApi = await startHighImpactFixtureApi(fixture);
+    try {
+      expect(fixtureApi.getProject().pages[0]).toMatchObject({
+        title: 'account.data.name ?? "Account"',
+        meta: {
+          description: 'account.data.description ?? ""',
+          socialImageUrl: 'account.data.image.src ?? ""',
+          status: "account.data ? 200 : 404",
+        },
+      });
+    } finally {
+      await fixtureApi.close();
+    }
+  });
+
   test("links and reads through the source CLI without persisting credentials", async () => {
     const fixtureApi = await startHighImpactFixtureApi(
       authenticatedPageFixture
@@ -206,6 +248,50 @@ describe("high-impact fixture API", () => {
           )
         )
       );
+      const query = {
+        result: "one",
+        where: {
+          all: [
+            { field: ["extension"], operator: "eq", value: "md" },
+            {
+              field: ["folderId"],
+              operator: "eq",
+              value: folderId,
+            },
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "aurora-trails",
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "markdown-body-ref" },
+      };
+      await expect(
+        run("validate-asset-query", { query })
+      ).resolves.toMatchObject({
+        ok: true,
+        data: { valid: true, filterCount: 3 },
+      });
+      await expect(
+        run("preview-asset-query", { query })
+      ).resolves.toMatchObject({
+        ok: true,
+        data: {
+          data: {
+            item: {
+              properties: { title: "Aurora trails" },
+              content: { text: expect.stringContaining("# Aurora trails") },
+            },
+            totalCount: 1,
+          },
+        },
+      });
       await expect(
         readFile(
           join(projectDirectory, ".webstudio/assets/aurora-trails.md"),

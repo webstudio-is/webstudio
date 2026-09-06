@@ -482,9 +482,6 @@ export const Builder = (props: BuilderProps) => {
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
-          <Main css={{ pointerEvents: "none" }}>
-            <CanvasToolsContainer />
-          </Main>
           {project ? (
             <Topbar
               project={project}

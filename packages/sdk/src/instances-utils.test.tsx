@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { $, renderData, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  ws,
+} from "@webstudio-is/template";
 import {
   findChildReferenceIndex,
   findTreeInstanceIds,
@@ -7,6 +11,8 @@ import {
   findTreeInstanceIdsExcludingSubtrees,
   findTreeInstanceIdsExcludingSlotDescendants,
   findParentInstanceReference,
+  getComponentByJsxName,
+  getComponentJsxName,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
   getIndexesWithinAncestors,
@@ -17,27 +23,79 @@ import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
 import type { Prop, Props } from "./schema/props";
 
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Slot = createTemplateComponentFixture("Slot");
+const Tabs = createTemplateComponentFixture("Tabs");
+const TabsContent = createTemplateComponentFixture("TabsContent");
+const TabsList = createTemplateComponentFixture("TabsList");
+const TabsTrigger = createTemplateComponentFixture("TabsTrigger");
+const XmlNode = createTemplateComponentFixture("XmlNode");
+
+test("resolves component JSX names and prefixes namespaced collisions", () => {
+  const components = [
+    "Heading",
+    "@webstudio-is/radix:Button",
+    "@webstudio-is/base:Button",
+  ];
+
+  expect(getComponentByJsxName({ name: "Heading", components })).toBe(
+    "Heading"
+  );
+  expect(getComponentByJsxName({ name: "Button", components })).toBe(undefined);
+  expect(getComponentByJsxName({ name: "RadixButton", components })).toBe(
+    "@webstudio-is/radix:Button"
+  );
+  expect(
+    getComponentJsxName({
+      component: "@webstudio-is/radix:Button",
+      components,
+    })
+  ).toBe("RadixButton");
+});
+
+test("keeps the base component unprefixed when it collides", () => {
+  const components = ["Button", "@webstudio-is/radix:Button"];
+  expect(getComponentByJsxName({ name: "Button", components })).toBe("Button");
+  expect(getComponentByJsxName({ name: "RadixButton", components })).toBe(
+    "@webstudio-is/radix:Button"
+  );
+});
+
+test("keeps direct JSX names unique across arbitrary component libraries", () => {
+  const components = ["@acme/one:Button", "@acme/two:Button"];
+  expect(
+    getComponentJsxName({ component: "@acme/one:Button", components })
+  ).toBe("AcmeOneButton");
+  expect(
+    getComponentJsxName({ component: "@acme/two:Button", components })
+  ).toBe("AcmeTwoButton");
+  expect(getComponentByJsxName({ name: "AcmeTwoButton", components })).toBe(
+    "@acme/two:Button"
+  );
+});
+
 test("find all tree instances", () => {
   const { instances } = renderData(
-    <$.Body ws:id="1">
-      <$.Box ws:id="2"></$.Box>
-      <$.Box ws:id="3">
-        <$.Box ws:id="4"></$.Box>
-        <$.Box ws:id="5"></$.Box>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="1">
+      <Box ws:id="2"></Box>
+      <Box ws:id="3">
+        <Box ws:id="4"></Box>
+        <Box ws:id="5"></Box>
+      </Box>
+    </Body>
   );
   expect(findTreeInstanceIds(instances, "3")).toEqual(new Set(["3", "4", "5"]));
 });
 
 test("find tree instances excluding complete subtrees", () => {
   const { instances } = renderData(
-    <$.Body ws:id="root">
-      <$.Box ws:id="hidden">
-        <$.Box ws:id="hidden-child"></$.Box>
-      </$.Box>
-      <$.Box ws:id="visible"></$.Box>
-    </$.Body>
+    <Body ws:id="root">
+      <Box ws:id="hidden">
+        <Box ws:id="hidden-child"></Box>
+      </Box>
+      <Box ws:id="visible"></Box>
+    </Body>
   );
 
   expect(
@@ -47,16 +105,16 @@ test("find tree instances excluding complete subtrees", () => {
 
 test("find all tree instances excluding slot descendants", () => {
   const { instances } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="box1">
-        <$.Slot ws:id="slot">
-          <$.Box ws:id="slotbox1"></$.Box>
-          <$.Box ws:id="slotbox2"></$.Box>
-        </$.Slot>
-        <$.Box ws:id="box2"></$.Box>
-      </$.Box>
-      <$.Box ws:id="box3"></$.Box>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="box1">
+        <Slot ws:id="slot">
+          <Box ws:id="slotbox1"></Box>
+          <Box ws:id="slotbox2"></Box>
+        </Slot>
+        <Box ws:id="box2"></Box>
+      </Box>
+      <Box ws:id="box3"></Box>
+    </Body>
   );
   expect(
     findTreeInstanceIdsExcludingSlotDescendants(instances, "box1")
@@ -112,7 +170,7 @@ test("finds rendered tree instances without traversing block templates", () => {
 });
 
 test("include not existing/virtual instance", () => {
-  const { instances } = renderData(<$.Body ws:id="1"></$.Body>);
+  const { instances } = renderData(<Body ws:id="1"></Body>);
   expect(findTreeInstanceIds(instances, ":root")).toEqual(new Set([":root"]));
   expect(
     findTreeInstanceIdsExcludingSlotDescendants(instances, ":root")
@@ -198,12 +256,12 @@ test("get html tag from instance", () => {
     ["XmlNode", { presetStyle: { div: [] } }],
   ]);
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="meta"></$.Box>
-      <$.Box ws:id="prop" ws:tag="article"></$.Box>
-      <$.Box ws:id="instance" ws:tag="nav"></$.Box>
-      <$.XmlNode ws:id="xml" tag="svg"></$.XmlNode>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="meta"></Box>
+      <Box ws:id="prop" ws:tag="article"></Box>
+      <Box ws:id="instance" ws:tag="nav"></Box>
+      <XmlNode ws:id="xml" tag="svg"></XmlNode>
+    </Body>
   );
 
   expect(
@@ -213,6 +271,29 @@ test("get html tag from instance", () => {
       props,
     })
   ).toEqual("section");
+  props.set("dynamic-tag", {
+    id: "dynamic-tag",
+    instanceId: "meta",
+    name: "tag",
+    type: "expression",
+    value: '"aside"',
+    mode: "read",
+  });
+  expect(
+    getHtmlTagFromInstance({
+      instance: instances.get("meta") as Instance,
+      metas,
+      props,
+    })
+  ).toBeUndefined();
+  expect(
+    getHtmlTagFromInstance({
+      instance: instances.get("meta") as Instance,
+      metas,
+      props,
+      htmlTagsByInstanceId: getHtmlTagsFromProps(props),
+    })
+  ).toBeUndefined();
   expect(
     getHtmlTagFromInstance({
       instance: instances.get("prop") as Instance,
@@ -240,11 +321,141 @@ test("get html tag from instance", () => {
   ).toBeUndefined();
 });
 
+test("gets the rendered tag of the deprecated List component", () => {
+  const instance: Instance = {
+    type: "instance",
+    id: "list",
+    component: "List",
+    children: [],
+  };
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    [
+      "List",
+      {
+        presetStyle: { ol: [], ul: [] },
+        props: {
+          ordered: {
+            type: "boolean",
+            control: "boolean",
+            required: false,
+          },
+        },
+        renderedTag: {
+          prop: "ordered",
+          values: { true: "ol", false: "ul" },
+          default: "ul",
+        },
+      },
+    ],
+  ]);
+  const props = new Map<string, Prop>();
+
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBe("ul");
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: false,
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBe("ul");
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: true,
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBe("ol");
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "expression",
+    value: "true",
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "string",
+    value: "false",
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+
+  props.set("ordered", {
+    id: "ordered",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: true,
+  });
+  props.set("ordered-duplicate", {
+    id: "ordered-duplicate",
+    instanceId: instance.id,
+    name: "ordered",
+    type: "boolean",
+    value: false,
+  });
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+});
+
+test("does not choose between duplicate tag props", () => {
+  const instance: Instance = {
+    type: "instance",
+    id: "box",
+    component: "Box",
+    children: [],
+  };
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+  ]);
+  const props = new Map<string, Prop>([
+    [
+      "first-tag",
+      {
+        id: "first-tag",
+        instanceId: instance.id,
+        name: "tag",
+        type: "string",
+        value: "article",
+      },
+    ],
+    [
+      "second-tag",
+      {
+        id: "second-tag",
+        instanceId: instance.id,
+        name: "tag",
+        type: "string",
+        value: "aside",
+      },
+    ],
+  ]);
+
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toBeUndefined();
+  const htmlTagsByInstanceId = getHtmlTagsFromProps(props);
+  expect(htmlTagsByInstanceId).toEqual(new Map([[instance.id, "aside"]]));
+  expect(
+    getHtmlTagFromInstance({
+      instance,
+      metas,
+      props,
+      htmlTagsByInstanceId,
+    })
+  ).toBeUndefined();
+});
+
 test("gets html tags from props", () => {
   const { props } = renderData(
-    <$.Body ws:id="body">
-      <$.XmlNode ws:id="xml" tag="svg"></$.XmlNode>
-    </$.Body>
+    <Body ws:id="body">
+      <XmlNode ws:id="xml" tag="svg"></XmlNode>
+    </Body>
   );
   props.set("tag-prop", {
     id: "tag-prop",
@@ -252,6 +463,14 @@ test("gets html tags from props", () => {
     name: "tag",
     type: "string",
     value: "article",
+  });
+  props.set("dynamic-tag-prop", {
+    id: "dynamic-tag-prop",
+    instanceId: "dynamic-box",
+    name: "tag",
+    type: "expression",
+    value: '"aside"',
+    mode: "read",
   });
 
   expect(getHtmlTagsFromProps(props)).toEqual(
@@ -267,9 +486,9 @@ test("get html tag from instance reads mutable props maps", () => {
     ["Box", { presetStyle: { section: [] } }],
   ]);
   const { instances, props } = renderData(
-    <$.Body ws:id="body">
-      <$.Box ws:id="box"></$.Box>
-    </$.Body>
+    <Body ws:id="body">
+      <Box ws:id="box"></Box>
+    </Body>
   );
   const instance = instances.get("box") as Instance;
   props.set("tag-prop", {
@@ -345,25 +564,25 @@ test("get html tag from instance skips props when provided tag map has no tag", 
 
 test("get indexes within ancestors", () => {
   const { instances } = renderData(
-    <$.Body ws:id="body0">
-      <$.Tabs ws:id="tabs1">
-        <$.TabsList ws:id="tabs1list">
-          <$.Box>
-            <$.TabsTrigger ws:id="tabs1trigger1"></$.TabsTrigger>
-            <$.TabsTrigger ws:id="tabs1trigger2"></$.TabsTrigger>
-          </$.Box>
-        </$.TabsList>
-        <$.TabsContent ws:id="tabs1content1"></$.TabsContent>
-        <$.TabsContent ws:id="tabs1content2">
-          <$.Tabs ws:id="tabs2">
-            <$.TabsList ws:id="tabs2list">
-              <$.TabsTrigger ws:id="tabs2trigger1"></$.TabsTrigger>
-            </$.TabsList>
-            <$.TabsContent ws:id="tabs2content1"></$.TabsContent>
-          </$.Tabs>
-        </$.TabsContent>
-      </$.Tabs>
-    </$.Body>
+    <Body ws:id="body0">
+      <Tabs ws:id="tabs1">
+        <TabsList ws:id="tabs1list">
+          <Box>
+            <TabsTrigger ws:id="tabs1trigger1"></TabsTrigger>
+            <TabsTrigger ws:id="tabs1trigger2"></TabsTrigger>
+          </Box>
+        </TabsList>
+        <TabsContent ws:id="tabs1content1"></TabsContent>
+        <TabsContent ws:id="tabs1content2">
+          <Tabs ws:id="tabs2">
+            <TabsList ws:id="tabs2list">
+              <TabsTrigger ws:id="tabs2trigger1"></TabsTrigger>
+            </TabsList>
+            <TabsContent ws:id="tabs2content1"></TabsContent>
+          </Tabs>
+        </TabsContent>
+      </Tabs>
+    </Body>
   );
   const metas = new Map<Instance["component"], WsComponentMeta>([
     ["TabsList", { indexWithinAncestor: "Tabs" }],
@@ -386,17 +605,17 @@ test("get indexes within ancestors", () => {
 });
 
 test("ignore ws:block-template when compute indexes within ancestors", () => {
-  const BlockTemplate = ws["block-template"];
+  const BlockTemplate = ws.blockTemplate;
   const { instances } = renderData(
-    <$.Body ws:id="body0">
-      <$.Tabs>
+    <Body ws:id="body0">
+      <Tabs>
         <BlockTemplate>
-          <$.TabsTrigger ws:id="trigger1"></$.TabsTrigger>
+          <TabsTrigger ws:id="trigger1"></TabsTrigger>
         </BlockTemplate>
-        <$.TabsTrigger ws:id="trigger2"></$.TabsTrigger>
-        <$.TabsTrigger ws:id="trigger3"></$.TabsTrigger>
-      </$.Tabs>
-    </$.Body>
+        <TabsTrigger ws:id="trigger2"></TabsTrigger>
+        <TabsTrigger ws:id="trigger3"></TabsTrigger>
+      </Tabs>
+    </Body>
   );
   const metas = new Map<Instance["component"], WsComponentMeta>([
     ["TabsTrigger", { indexWithinAncestor: "Tabs" }],

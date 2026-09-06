@@ -1,18 +1,16 @@
 import {
-  allocateUniqueContentBlockTemplateName,
   blockComponent,
   blockTemplateComponent,
   findContentBlockBodyContainerPaths,
   findParentInstanceReference,
   findContentBlockTemplateContainers,
   getContentBlockSource,
-  getInstanceName,
+  getContentBlockTemplateName,
   type ContentBlockSource,
   type Instance,
   type Instances,
   type Prop,
 } from "@webstudio-is/sdk";
-import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { computeStringExpression } from "./data";
 import type { InstanceSelector } from "./tree";
 
@@ -29,47 +27,6 @@ export const resolveContentBlockSourceAssetId = ({
       ? undefined
       : computeStringExpression(source.value, values);
 
-export const assignUniqueBlockTemplateNamesMutable = ({
-  instanceIds,
-  parent,
-  replacedInstanceIds = [],
-  instances,
-}: {
-  instanceIds: readonly Instance["id"][];
-  parent: Instance;
-  replacedInstanceIds?: readonly Instance["id"][];
-  instances: Instances;
-}) => {
-  if (parent.component !== blockTemplateComponent) {
-    return;
-  }
-  const ignoredIds = new Set([...instanceIds, ...replacedInstanceIds]);
-  const existingNames = new Set<string>();
-  for (const child of parent.children) {
-    const instance =
-      child.type === "id" ? instances.get(child.value) : undefined;
-    if (instance !== undefined && ignoredIds.has(instance.id) === false) {
-      existingNames.add(getInstanceName({ instance, metas: componentMetas }));
-    }
-  }
-
-  for (const instanceId of instanceIds) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      continue;
-    }
-    const currentName = getInstanceName({ instance, metas: componentMetas });
-    const uniqueName = allocateUniqueContentBlockTemplateName({
-      name: currentName,
-      existingNames,
-    });
-    if (uniqueName !== currentName) {
-      instance.label = uniqueName;
-    }
-    existingNames.add(uniqueName);
-  }
-};
-
 export const findBlockTemplateNameCollision = ({
   instance,
   nextInstance,
@@ -79,11 +36,8 @@ export const findBlockTemplateNameCollision = ({
   nextInstance: Instance;
   instances: Instances;
 }) => {
-  const name = getInstanceName({
-    instance: nextInstance,
-    metas: componentMetas,
-  });
-  if (name === getInstanceName({ instance, metas: componentMetas })) {
+  const name = getContentBlockTemplateName(nextInstance);
+  if (name === getContentBlockTemplateName(instance)) {
     return;
   }
   const parent = findParentInstanceReference(instances, instance.id)?.instance;
@@ -97,7 +51,7 @@ export const findBlockTemplateNameCollision = ({
     const sibling = instances.get(child.value);
     if (
       sibling !== undefined &&
-      getInstanceName({ instance: sibling, metas: componentMetas }) === name
+      getContentBlockTemplateName(sibling) === name
     ) {
       return { instance: sibling, name };
     }
@@ -148,10 +102,7 @@ export const getSourceBackedBlockTemplateContext = ({
     blockInstanceId: block.id,
     templatesInstanceId: templates.id,
     templateInstanceId,
-    templateName: getInstanceName({
-      instance: template,
-      metas: componentMetas,
-    }),
+    templateName: getContentBlockTemplateName(template),
     source,
   };
 };
@@ -183,7 +134,7 @@ export const getBlockTemplateNameConfirmation = ({
     const newName =
       nextInstance === undefined
         ? undefined
-        : getInstanceName({ instance: nextInstance, metas: componentMetas });
+        : getContentBlockTemplateName(nextInstance);
     if (newName === oldName) {
       continue;
     }
@@ -362,13 +313,14 @@ export const findBlockTemplates = ({
     return;
   }
 
-  const templateInstance = findContentBlockTemplateContainers({
+  const templateInstances = findContentBlockTemplateContainers({
     blockInstance,
     instances,
-  })[0];
-  if (templateInstance === undefined) {
+  });
+  if (templateInstances.length !== 1) {
     return;
   }
+  const templateInstance = templateInstances[0];
 
   return templateInstance.children
     .filter((child) => child.type === "id")

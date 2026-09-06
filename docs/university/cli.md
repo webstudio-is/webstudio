@@ -221,7 +221,7 @@ restarting an MCP client:
 
 ```bash
 npx webstudio meta.index
-npx webstudio insert-fragment '{"parentInstanceId":"<parent-id>","fragment":"<ws.element ws:tag=\"section\" />"}' --dry-run
+npx webstudio insert-fragment '{"parentInstanceId":"<parent-id>","fragment":"<section />"}' --dry-run
 ```
 
 The explicit equivalent is

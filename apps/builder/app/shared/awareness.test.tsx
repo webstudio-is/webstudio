@@ -7,7 +7,16 @@ import { selectInstance, selectInstances } from "./nano-states/instances";
 import { $selectedPageId } from "./nano-states";
 import { $user } from "./nano-states/misc";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Slot = createTemplateComponentFixture("Slot");
+const Text = createTemplateComponentFixture("Text");
 
 test("find awareness by instance", () => {
   const pages = createDefaultPages({
@@ -15,11 +24,11 @@ test("find awareness by instance", () => {
     rootInstanceId: "bodyId",
   });
   const { instances } = renderData(
-    <$.Body ws:id="bodyId">
-      <$.Box ws:id="boxId">
-        <$.Text ws:id="textId"></$.Text>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="bodyId">
+      <Box ws:id="boxId">
+        <Text ws:id="textId"></Text>
+      </Box>
+    </Body>
   );
   expect(findPageAndSelectorByInstanceId(pages, instances, "textId")).toEqual({
     pageId: "homePageId",
@@ -33,18 +42,18 @@ test("find awareness by instance inside of slot", () => {
     rootInstanceId: "bodyId",
   });
   const { instances } = renderData(
-    <$.Body ws:id="bodyId">
-      <$.Slot ws:id="slotOneId">
-        <$.Fragment ws:id="fragmentId">
-          <$.Box ws:id="boxId"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-      <$.Slot ws:id="slotTwoId">
-        <$.Fragment ws:id="fragmentId">
-          <$.Box ws:id="boxId"></$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="bodyId">
+      <Slot ws:id="slotOneId">
+        <Fragment ws:id="fragmentId">
+          <Box ws:id="boxId"></Box>
+        </Fragment>
+      </Slot>
+      <Slot ws:id="slotTwoId">
+        <Fragment ws:id="fragmentId">
+          <Box ws:id="boxId"></Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
   expect(findPageAndSelectorByInstanceId(pages, instances, "boxId")).toEqual({
     pageId: "homePageId",

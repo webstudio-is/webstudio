@@ -19,6 +19,11 @@
       "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js"
     },
+    "./components": {
+      "webstudio": "./src/components.ts",
+      "types": "./lib/types/components.d.ts",
+      "import": "./lib/components.js"
+    },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",
@@ -53,6 +58,7 @@
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
     "change-case": "^5.4.4",
     "nanostores": "^0.11.3",
     "react-error-boundary": "^5.0.0",
@@ -66,7 +72,6 @@
     "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:^",
-    "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "fast-glob": "^3.3.2",

@@ -9,6 +9,7 @@ import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { parseExpressionAt } from "acorn";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { parseDirectPathExpression } from "@webstudio-is/expression";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { validateAssetQuery } from "@webstudio-is/content-engine";
@@ -17,6 +18,7 @@ import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
 import { imageDescriptionsSetInput } from "./runtime/assets";
 import { BuilderRuntimeError } from "./runtime/errors";
+import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
@@ -4261,7 +4263,7 @@ describe("project session mcp adapter", () => {
         inputFile: expect.objectContaining({
           path: ".temp/design-system-section.json",
           contents: expect.objectContaining({
-            fragment: expect.stringContaining("ws:tag='h2'"),
+            fragment: expect.stringContaining("<h2>"),
           }),
         }),
         nextPhase: "commit-section",
@@ -4792,6 +4794,30 @@ describe("project session mcp adapter", () => {
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: expect.objectContaining({
+          executionOrder: [
+            { tool: "create-asset-folder", calls: 1 },
+            { tool: "upload-assets", calls: 1 },
+            { tool: "create-page", calls: 2 },
+            { tool: "validate-asset-query", calls: 2 },
+            { tool: "preview-asset-query", calls: 1 },
+            { tool: "meta.get-more-tools", calls: 1 },
+            { tool: "create-assets-resource", calls: 2 },
+            { tool: "insert-collection", calls: 1 },
+            { tool: "insert-fragment", calls: 1 },
+            { tool: "update-page", calls: 1 },
+            {
+              tool: "verify-page-responsive",
+              calls: 2,
+              terminal: true,
+            },
+          ],
+          toolDiscovery: {
+            tool: "meta.get-more-tools",
+            when: "after-query-verification",
+            input: {
+              tools: ["create-assets-resource"],
+            },
+          },
           overviewResource: expect.objectContaining({
             dataSourceName: "posts",
             query: expect.objectContaining({
@@ -4800,12 +4826,34 @@ describe("project session mcp adapter", () => {
               offset: { type: "literal", value: 0 },
             }),
           }),
+          overviewValidationQuery: expect.objectContaining({
+            where: {
+              all: expect.arrayContaining([
+                expect.objectContaining({ value: "md" }),
+                expect.objectContaining({ value: "<blog-folder-id>" }),
+                expect.objectContaining({ value: true }),
+              ]),
+            },
+            limit: 20,
+            offset: 0,
+          }),
           detailResource: expect.objectContaining({
             dataSourceName: "post",
             query: expect.objectContaining({
               result: "one",
               content: { mode: "markdown-body-ref" },
             }),
+          }),
+          detailValidationQuery: expect.objectContaining({
+            result: "one",
+            where: {
+              all: expect.arrayContaining([
+                expect.objectContaining({ value: "md" }),
+                expect.objectContaining({ value: "<blog-folder-id>" }),
+                expect.objectContaining({ value: "aurora-trails" }),
+                expect.objectContaining({ value: true }),
+              ]),
+            },
           }),
           overviewCollection: expect.objectContaining({
             itemFragment: expect.stringContaining(
@@ -4814,7 +4862,7 @@ describe("project session mcp adapter", () => {
           }),
           detailFragment: expect.objectContaining({
             parentInstanceId: "<detail-root-id>",
-            fragment: expect.stringContaining("post.data.content.text"),
+            fragment: expect.any(String),
           }),
           detailPageSettings: expect.objectContaining({
             pageId: "<detail-page-id>",
@@ -4839,6 +4887,56 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    const markdownBlogRecipe = (
+      markdownBlogGuide.structuredContent.data as {
+        recipe: {
+          detailResource: {
+            query: {
+              output: { fields: string[][] };
+            };
+          };
+          detailFragment: { fragment: string };
+          detailPageSettings: {
+            values: {
+              meta: { socialImageUrl: string };
+            };
+          };
+        };
+      }
+    ).recipe;
+    const detailFragment = await parseWebstudioJsxFragment(
+      markdownBlogRecipe.detailFragment.fragment
+    );
+    const markdownEmbedInstances = detailFragment.instances.filter(
+      (instance) => instance.component === "MarkdownEmbed"
+    );
+    const markdownCodeProps = detailFragment.props.filter(
+      (prop) =>
+        prop.instanceId === markdownEmbedInstances[0]?.id &&
+        prop.name === "code" &&
+        prop.type === "expression"
+    );
+    expect(markdownEmbedInstances).toHaveLength(1);
+    expect(markdownCodeProps).toHaveLength(1);
+    expect(
+      parseDirectPathExpression(String(markdownCodeProps[0]?.value))?.path
+    ).toEqual(["post", "data", "content", "text"]);
+    expect(
+      markdownBlogRecipe.detailResource.query.output.fields
+    ).toContainEqual(["properties", "featureImage", "src"]);
+    expect(
+      markdownBlogRecipe.detailResource.query.output.fields
+    ).not.toContainEqual(["properties", "featureImage"]);
+    expect(
+      markdownBlogRecipe.detailPageSettings.values.meta.socialImageUrl
+    ).toBe('post.data.properties.featureImage.src ?? ""');
+    expect(
+      (
+        markdownBlogGuide.structuredContent.data as {
+          recipe: Record<string, unknown>;
+        }
+      ).recipe
+    ).not.toHaveProperty("detailCollection");
     expect(authenticatedPageGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: {
@@ -4869,6 +4967,21 @@ describe("project session mcp adapter", () => {
       })
     );
     expect(fontAssetGuide.structuredContent.data).not.toHaveProperty("brief");
+    expect(fontAssetGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        recipe: {
+          upload: {
+            tool: "upload-assets",
+            input: {
+              assetsDir: ".webstudio/assets",
+              assetFields: ["name", "type", "format", "meta"],
+              excludedAssetFields: ["path"],
+            },
+          },
+          audit: { tool: "audit", input: {} },
+        },
+      })
+    );
     for (const tool of (
       fontAssetGuide.structuredContent.data as {
         tools: Array<Record<string, unknown>>;
@@ -4880,6 +4993,18 @@ describe("project session mcp adapter", () => {
     }
     expect(designInputGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        recipe: {
+          insertion: { includeStyles: false },
+          tokenReuse: {
+            minimumAttachments: 1,
+            source: "inspect-design-context",
+          },
+          responsiveStyles: {
+            tool: "update-styles",
+            breakpointSource: "inspect-design-context",
+            minimumBreakpointSpecificUpdates: 1,
+          },
+        },
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "inspect-design-context" }),
           expect.objectContaining({ name: "components.search" }),
@@ -5224,7 +5349,8 @@ describe("project session mcp adapter", () => {
           }),
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Checkbox",
-            jsxElement: "<radix.Checkbox />",
+            jsxName: "RadixCheckbox",
+            jsxElement: "<RadixCheckbox />",
             hasTemplate: true,
             templateRootComponents: [
               "@webstudio-is/sdk-components-react-radix:Label",
@@ -5233,7 +5359,8 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({
             component:
               "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
-            jsxElement: "<radix.SelectItemIndicator />",
+            jsxName: "SelectItemIndicator",
+            jsxElement: "<SelectItemIndicator />",
             standaloneInsertable: false,
           }),
         ]),
@@ -5622,7 +5749,6 @@ describe("project session mcp adapter", () => {
     expect(collectionDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "ws:collection",
-        jsxElement: "<ws.collection />",
         props: expect.objectContaining({
           data: expect.objectContaining({ type: "json", required: true }),
           item: expect.objectContaining({ type: "string" }),
@@ -5630,12 +5756,17 @@ describe("project session mcp adapter", () => {
         }),
       })
     );
+    expect(collectionDetails.structuredContent.data).not.toHaveProperty(
+      "jsxElement"
+    );
     expect(blockTemplateDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         component: "ws:block-template",
-        jsxElement: "<ws.blockTemplate />",
         standaloneInsertable: false,
       })
+    );
+    expect(blockTemplateDetails.structuredContent.data).not.toHaveProperty(
+      "jsxElement"
     );
     expect(selectTemplateDetails.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -5787,25 +5918,25 @@ describe("project session mcp adapter", () => {
         covered: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Switch",
-            jsxElement: "<radix.Switch />",
+            jsxElement: "<Switch />",
           }),
         ]),
         missing: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
-            jsxElement: "<radix.Select />",
+            jsxElement: "<RadixSelect />",
           }),
         ]),
         missingRoots: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
-            jsxElement: "<radix.Select />",
+            jsxElement: "<RadixSelect />",
           }),
         ]),
         missingParts: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:AccordionItem",
-            jsxElement: "<radix.AccordionItem />",
+            jsxElement: "<AccordionItem />",
           }),
         ]),
       })
@@ -6041,22 +6172,11 @@ describe("project session mcp adapter", () => {
             result: { instances },
           });
         }
-        if (command === "insert-fragment") {
-          const fragment =
-            isTestRecord(input) && isTestRecord(input.fragment)
-              ? input.fragment
-              : undefined;
+        if (command === "insert-component") {
           expect(input).toEqual(
             expect.objectContaining({
               parentInstanceId: "animation-group",
-              fragment: expect.objectContaining({
-                instances: expect.arrayContaining([
-                  expect.objectContaining({
-                    component:
-                      "@webstudio-is/sdk-components-animation:AnimateText",
-                  }),
-                ]),
-              }),
+              component: "@webstudio-is/sdk-components-animation:AnimateText",
             })
           );
           instances.push({
@@ -6065,16 +6185,14 @@ describe("project session mcp adapter", () => {
             depth: 2,
           });
           return createEnvelope({
-            operationId: "instances.insertFragment",
+            operationId: "instances.insertComponent",
             result: {
-              rootInstanceIds: ["animate-text"],
               instanceIds: ["animate-text"],
               parentInstanceId:
                 isTestRecord(input) &&
                 typeof input.parentInstanceId === "string"
                   ? input.parentInstanceId
                   : undefined,
-              fragment,
             },
             state: { committed: true, freshness: {} },
             version: 2,
@@ -6099,16 +6217,10 @@ describe("project session mcp adapter", () => {
     });
 
     expect(executeOperation).toHaveBeenNthCalledWith(2, {
-      command: "insert-fragment",
+      command: "insert-component",
       input: expect.objectContaining({
         parentInstanceId: "animation-group",
-        fragment: expect.objectContaining({
-          instances: expect.arrayContaining([
-            expect.objectContaining({
-              component: "@webstudio-is/sdk-components-animation:AnimateText",
-            }),
-          ]),
-        }),
+        component: "@webstudio-is/sdk-components-animation:AnimateText",
       }),
       dryRun: false,
     });
@@ -6116,7 +6228,7 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         inserted: expect.objectContaining({
           component: "@webstudio-is/sdk-components-animation:AnimateText",
-          mode: "fragment",
+          mode: "component",
         }),
         parentInstanceId: "animation-group",
       })

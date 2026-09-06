@@ -1,3 +1,7 @@
+/**
+ * Converts authored MDX nodes to editable Webstudio instances and reconciles
+ * instance edits back into MDX without treating generated instance ids as source.
+ */
 import equal from "fast-deep-equal";
 import { elementsByTag } from "@webstudio-is/html-data";
 import type { AssetValueReference } from "@webstudio-is/content-engine";
@@ -13,22 +17,32 @@ import {
 } from "@webstudio-is/content-engine/mdx";
 import {
   assertUniqueAttributeNames,
+  getInstancePropName,
   mapAttributeNames,
 } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   elementComponent,
+  getComponentByJsxName,
+  getContentBlockMdxTemplateDescriptor,
+  getDefaultContentBlockTemplateName,
   getStyleDeclKey,
+  type ContentBlockDiagnostic,
   type ContentBlockExternalContentIdentity,
   type Instance,
   type Prop,
   type WebstudioFragment,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   createMdxScopeIdGenerator,
+  getMdxPropBinding,
+  getMdxPropEligibility,
+  resolveMdxPropCollisions,
   type MaterializedMdxTemplate,
   type MdxJsxPropContext,
   type MdxTemplateMaterialization,
 } from "./mdx-materialization";
+import { getContentModeCapabilities } from "./content-mode-permissions";
 import { createEmptyWebstudioFragment } from "./component-template";
 import {
   createWebstudioDataFromFragment,
@@ -36,6 +50,8 @@ import {
 } from "./fragment";
 import {
   getDerivedMdxComponentPropIds,
+  getMdxNamedTemplateSyntax,
+  hasMdxComponentAdapter,
   materializeMdxComponent,
   normalizeMdxComponentProps,
   serializeMdxComponent,
@@ -64,15 +80,25 @@ type AuthoredComponentProvenance = Readonly<{
   type: "component";
   path: readonly number[];
   instanceId: Instance["id"];
+  ignoredInstancePropNames: readonly string[];
+  namedJsx?: Readonly<{
+    jsxPropContext: MdxJsxPropContext;
+    ignoredJsxPropNames: readonly string[];
+  }>;
   assetProps: AuthoredElementProvenance["assetProps"];
 }>;
 
 type TemplateProvenance = Readonly<{
   type: "template";
+  binding: "semantic" | "named";
+  templateName: string;
+  overridesTemplateChildren: boolean;
+  overlaysTemplateChildren: boolean;
   path: readonly number[];
   instanceId: Instance["id"];
   editableTextChildren: boolean;
   editablePropNames: readonly string[];
+  authoredPropNames: readonly string[];
   jsxPropContext: MdxJsxPropContext;
   propNameMappings: readonly Readonly<{
     jsxPropName: string;
@@ -81,6 +107,18 @@ type TemplateProvenance = Readonly<{
   preservedJsxPropNames?: readonly string[];
   ignoredJsxPropNames: readonly string[];
   expandedInstanceIds: readonly Instance["id"][];
+  htmlTags: readonly Readonly<{
+    instanceId: Instance["id"];
+    tag: string;
+  }>[];
+  overlaidDescendants: readonly Readonly<{
+    instanceId: Instance["id"];
+    path: readonly number[];
+    kind: "element" | "component";
+    componentPropNames: readonly string[];
+    ignoredInstancePropNames: readonly string[];
+    assetProps: AuthoredElementProvenance["assetProps"];
+  }>[];
   assetProps: AuthoredElementProvenance["assetProps"];
   namespaceKeys: readonly Readonly<{
     namespace: UnsupportedNamespace;
@@ -185,6 +223,8 @@ export type MaterializedMdxAuthoredContentRoot = Readonly<{
   document: MdxDocument;
   resolvedFrontmatter?: Readonly<Record<string, unknown>>;
   provenance: MdxAuthoredContentProvenance;
+  /** Optional so roots created by older API consumers remain serializable. */
+  diagnostics?: readonly ContentBlockDiagnostic[];
   assetReferenceValues?: ReadonlyMap<string, string>;
 }>;
 
@@ -208,17 +248,34 @@ const isMdxValueEqual = (left: unknown, right: unknown): boolean => {
   ) {
     const leftRecord = left as Record<string, unknown>;
     const rightRecord = right as Record<string, unknown>;
+    const bothTemplates =
+      leftRecord.type === "template" && rightRecord.type === "template";
     const keys = new Set([
       ...Object.keys(leftRecord),
       ...Object.keys(rightRecord),
     ]);
     keys.delete("sourceRange");
-    return Array.from(keys).every(
-      (key) =>
+    return Array.from(keys).every((key) => {
+      if (bothTemplates && key === "syntax") {
+        return (
+          (leftRecord.syntax ?? "ws-element") ===
+          (rightRecord.syntax ?? "ws-element")
+        );
+      }
+      if (bothTemplates && key === "selfClosing") {
+        const leftChildren = leftRecord.children as readonly unknown[];
+        const rightChildren = rightRecord.children as readonly unknown[];
+        return (
+          (leftRecord.selfClosing ?? leftChildren.length === 0) ===
+          (rightRecord.selfClosing ?? rightChildren.length === 0)
+        );
+      }
+      return (
         key in leftRecord &&
         key in rightRecord &&
         isMdxValueEqual(leftRecord[key], rightRecord[key])
-    );
+      );
+    });
   }
   return false;
 };
@@ -321,7 +378,9 @@ const mergeLocalNode = ({
   const mutableFields = [
     "tag",
     "name",
+    "syntax",
     "mdxMode",
+    "selfClosing",
     "markdownListItem",
     "preserveTextWhitespace",
   ] as const;
@@ -341,7 +400,7 @@ const getNodeShape = (node: MdxAuthoredNode) => {
     return `${node.type}:${node.syntax}:${node.tag}`;
   }
   if (node.type === "template") {
-    return `${node.type}:${node.name}`;
+    return `${node.type}:${node.syntax ?? "ws-element"}:${node.name}`;
   }
   return node.type;
 };
@@ -642,12 +701,54 @@ const getSingleTemplateRootId = (template: MaterializedMdxTemplate) => {
   return template.fragment.children[0].value;
 };
 
+const isSelfClosingTemplateNode = (
+  node: Extract<MdxAuthoredNode, { type: "template" }>
+) => node.selfClosing ?? node.children.length === 0;
+
+const getSourcePropName = ({
+  node,
+  source,
+  fallback,
+}: {
+  node: MdxAuthoredNode;
+  source:
+    | Readonly<{ nodePath: readonly number[]; propIndex: number }>
+    | undefined;
+  fallback: string;
+}) => {
+  let sourceNode = node;
+  for (const childIndex of source?.nodePath ?? []) {
+    if (
+      sourceNode.type === "text" ||
+      sourceNode.type === "comment" ||
+      sourceNode.type === "opaque"
+    ) {
+      return fallback;
+    }
+    const child = sourceNode.children[childIndex];
+    if (child === undefined) {
+      return fallback;
+    }
+    sourceNode = child;
+  }
+  if (
+    source === undefined ||
+    sourceNode.type === "text" ||
+    sourceNode.type === "comment" ||
+    sourceNode.type === "opaque"
+  ) {
+    return fallback;
+  }
+  return sourceNode.props[source.propIndex]?.name ?? fallback;
+};
+
 export const materializeMdxAuthoredContent = ({
   identity,
   document,
   templateMaterialization,
   assetReferences = [],
   assetReferenceValues,
+  metas,
   createUnresolvedTemplateInstance,
 }: {
   identity: ContentBlockExternalContentIdentity;
@@ -655,12 +756,14 @@ export const materializeMdxAuthoredContent = ({
   templateMaterialization: MdxTemplateMaterialization;
   assetReferences?: readonly AssetValueReference[];
   assetReferenceValues?: ReadonlyMap<string, string>;
+  metas?: Map<Instance["component"], WsComponentMeta>;
   createUnresolvedTemplateInstance?: (input: {
     markerId: string;
     templateName: string;
   }) => Instance;
 }): MaterializedMdxAuthoredContentRoot => {
   const fragment = createEmptyWebstudioFragment();
+  const diagnostics: ContentBlockDiagnostic[] = [];
   const nodes: MdxAuthoredContentProvenance["nodes"][number][] = [];
   const templatesByPath = new Map(
     templateMaterialization.templates.map((template) => [
@@ -691,11 +794,8 @@ export const materializeMdxAuthoredContent = ({
       if (node.type === "opaque") {
         continue;
       }
-      if (node.type === "template") {
-        const template = templatesByPath.get(pathKey(path));
-        if (template === undefined) {
-          continue;
-        }
+      const template = templatesByPath.get(pathKey(path));
+      if (template !== undefined) {
         if (template.type === "unresolved-template") {
           const placeholder = createUnresolvedTemplateInstance?.({
             markerId: template.markerId,
@@ -708,22 +808,367 @@ export const materializeMdxAuthoredContent = ({
           continue;
         }
         const rootId = getSingleTemplateRootId(template);
-        mergeTemplateFragment(fragment, template.fragment);
-        const rootInstance = fragment.instances.find(({ id }) => id === rootId);
-        if (rootInstance === undefined) {
+        const sourceRootInstance = template.fragment.instances.find(
+          ({ id }) => id === rootId
+        );
+        if (sourceRootInstance === undefined) {
           throw new Error("Resolved MDX template root is missing");
         }
-        const editableTextChildren = rootInstance.children.every(
+        const editableTextChildren = sourceRootInstance.children.every(
           (child) => child.type === "text"
         );
-        if (
-          editableTextChildren &&
-          node.children.length > 0 &&
-          node.children.every(
-            (child) => child.type === "text" || child.type === "comment"
-          )
-        ) {
-          rootInstance.children = visit(node.children, path);
+        const overridesTemplateChildren =
+          node.type === "element" ||
+          (node.type === "template" &&
+            isSelfClosingTemplateNode(node) === false);
+        let overlaysTemplateChildren = false;
+        let overlaidDescendants: TemplateProvenance["overlaidDescendants"] = [];
+        let resolvedFragment = template.fragment;
+        if (overridesTemplateChildren) {
+          resolvedFragment = structuredClone(template.fragment);
+          const rootInstance = resolvedFragment.instances.find(
+            ({ id }) => id === rootId
+          );
+          if (rootInstance === undefined) {
+            throw new Error("Resolved MDX template root is missing");
+          }
+          const templateData =
+            createWebstudioDataFromFragment(resolvedFragment);
+          const reservedIds = new Set([
+            ...resolvedFragment.instances.map(({ id }) => id),
+            ...resolvedFragment.props.map(({ id }) => id),
+            ...resolvedFragment.assets.map(({ id }) => id),
+            ...resolvedFragment.dataSources.map(({ id }) => id),
+            ...resolvedFragment.resources.map(({ id }) => id),
+            ...resolvedFragment.breakpoints.map(({ id }) => id),
+            ...resolvedFragment.styleSources.map(({ id }) => id),
+          ]);
+          const nextScopedId = createMdxScopeIdGenerator({ identity, path });
+          const createOverlayId = () => {
+            let id = nextScopedId();
+            while (reservedIds.has(id)) {
+              id = nextScopedId();
+            }
+            reservedIds.add(id);
+            return id;
+          };
+          const overlayCapabilities =
+            metas === undefined
+              ? undefined
+              : getContentModeCapabilities({
+                  instances: templateData.instances,
+                  metas,
+                  props: templateData.props,
+                  styleSources: templateData.styleSources,
+                  styleSourceSelections: templateData.styleSourceSelections,
+                  styles: templateData.styles,
+                  breakpoints: templateData.breakpoints,
+                  contentRootIds: new Set([rootId]),
+                });
+          const htmlTags = new Map(
+            (
+              template.htmlTags ??
+              resolvedFragment.instances.flatMap((instance) =>
+                instance.tag === undefined
+                  ? []
+                  : [{ instanceId: instance.id, tag: instance.tag }]
+              )
+            ).map(({ instanceId, tag }) => [instanceId, tag])
+          );
+          const matchedDescendants: Array<
+            TemplateProvenance["overlaidDescendants"][number]
+          > = [];
+          const overlayDiagnostics: ContentBlockDiagnostic[] = [];
+          const overlayChildren = (
+            authoredNodes: readonly MdxAuthoredNode[],
+            instanceChildren: Instance["children"],
+            parentNodePath: readonly number[]
+          ): boolean => {
+            const authoredChildren: Array<{
+              child: MdxAuthoredNode;
+              path: number[];
+              textNodes?: Array<Extract<MdxAuthoredNode, { type: "text" }>>;
+            }> = [];
+            authoredNodes.forEach((child, index) => {
+              if (child.type === "comment") {
+                return;
+              }
+              if (child.type === "text") {
+                const previous = authoredChildren.at(-1);
+                if (previous?.textNodes !== undefined) {
+                  previous.textNodes.push(child);
+                  return;
+                }
+                authoredChildren.push({
+                  child,
+                  path: [...parentNodePath, index],
+                  textNodes: [child],
+                });
+                return;
+              }
+              authoredChildren.push({
+                child,
+                path: [...parentNodePath, index],
+              });
+            });
+            if (authoredChildren.length !== instanceChildren.length) {
+              return false;
+            }
+            const nextInstanceChildren: Instance["children"] = [];
+            for (const [index, authored] of authoredChildren.entries()) {
+              const instanceChild = instanceChildren[index];
+              if (authored.child.type === "text") {
+                if (instanceChild?.type !== "text") {
+                  return false;
+                }
+                nextInstanceChildren.push(
+                  ...(authored.textNodes ?? [authored.child]).map(
+                    ({ value }) => ({ type: "text" as const, value })
+                  )
+                );
+                continue;
+              }
+              if (
+                authored.child.type === "opaque" ||
+                instanceChild?.type !== "id"
+              ) {
+                return false;
+              }
+              const instance = templateData.instances.get(instanceChild.value);
+              if (instance === undefined) {
+                return false;
+              }
+              const adapted = materializeMdxComponent(authored.child);
+              let authoredProps: readonly MdxAuthoredProp[];
+              let propBindings:
+                | readonly Readonly<{
+                    prop: MdxAuthoredProp;
+                    source?: Readonly<{
+                      nodePath: readonly number[];
+                      propIndex: number;
+                    }>;
+                    requiresAssetReference?: boolean;
+                  }>[]
+                | undefined;
+              let authoredGrandchildren: readonly MdxAuthoredNode[] | undefined;
+              let kind: "element" | "component";
+              let authoredJsxPropNames: readonly string[];
+              let componentPropNames: readonly string[];
+              if (adapted?.component === instance.component) {
+                kind = "component";
+                authoredProps = adapted.props.map(({ prop }) => prop);
+                authoredJsxPropNames = adapted.props.map(({ prop, source }) =>
+                  getSourcePropName({
+                    node: authored.child,
+                    source,
+                    fallback: prop.name,
+                  })
+                );
+                propBindings = adapted.props;
+                componentPropNames = Object.keys(
+                  metas?.get(instance.component)?.props ?? {}
+                );
+              } else if (
+                authored.child.type === "element" &&
+                authored.child.tag ===
+                  (htmlTags.get(instance.id) ?? instance.tag)
+              ) {
+                kind = "element";
+                componentPropNames = Object.keys(
+                  metas?.get(instance.component)?.props ?? {}
+                );
+                const declaredComponentPropNames = new Set(componentPropNames);
+                authoredProps = mapAttributeNames({
+                  attributes: authored.child.props,
+                  direction: "jsx-to-instance",
+                  acceptsHtmlAttributes: true,
+                  componentPropNames: declaredComponentPropNames,
+                });
+                authoredJsxPropNames = authored.child.props.map(
+                  ({ name }) => name
+                );
+                authoredGrandchildren = authored.child.children;
+              } else {
+                return false;
+              }
+              const assetProps: AuthoredElementProvenance["assetProps"][number][] =
+                [];
+              const ignoredInstancePropNames: string[] = [];
+              authoredProps.forEach((prop, propIndex) => {
+                const existing = Array.from(templateData.props.values()).find(
+                  (candidate) =>
+                    candidate.instanceId === instance.id &&
+                    candidate.name === prop.name
+                );
+                const source = propBindings?.[propIndex]?.source;
+                const assetReference = assetReferenceByPath.get(
+                  getMdxPropValuePathKey({
+                    nodePath:
+                      source === undefined
+                        ? authored.path
+                        : [...authored.path, ...source.nodePath],
+                    propIndex: source?.propIndex ?? propIndex,
+                  })
+                );
+                if (
+                  propBindings?.[propIndex]?.requiresAssetReference === true &&
+                  assetReference === undefined
+                ) {
+                  if (existing !== undefined) {
+                    templateData.props.delete(existing.id);
+                  }
+                  return;
+                }
+                let nextProp: Prop;
+                if (
+                  overlayCapabilities !== undefined &&
+                  instance.component !== elementComponent
+                ) {
+                  const binding =
+                    assetReference === undefined
+                      ? getMdxPropBinding({
+                          capabilities: overlayCapabilities,
+                          instance,
+                          prop,
+                          existingType:
+                            existing?.type === "string" ||
+                            existing?.type === "number" ||
+                            existing?.type === "boolean"
+                              ? existing.type
+                              : undefined,
+                          jsxPropName: authoredJsxPropNames[propIndex],
+                        })
+                      : getMdxPropEligibility({
+                            capabilities: overlayCapabilities,
+                            instance,
+                            prop: { name: prop.name, type: "asset" },
+                            jsxPropName: authoredJsxPropNames[propIndex],
+                          }).editable
+                        ? {
+                            type: "asset" as const,
+                            value: assetReference.assetId,
+                          }
+                        : undefined;
+                  if (binding === undefined) {
+                    const propName =
+                      authoredJsxPropNames[propIndex] ?? prop.name;
+                    const eligibility = getMdxPropEligibility({
+                      capabilities: overlayCapabilities,
+                      instance,
+                      prop: {
+                        name: prop.name,
+                        type:
+                          existing?.type === "number" ||
+                          existing?.type === "boolean"
+                            ? existing.type
+                            : "string",
+                      },
+                      jsxPropName: propName,
+                    });
+                    ignoredInstancePropNames.push(prop.name);
+                    overlayDiagnostics.push({
+                      code: "ignored-template-prop",
+                      severity: "warning",
+                      blockInstanceId: identity.blockInstanceId,
+                      assetId: identity.assetId,
+                      contentRef: identity.contentRef,
+                      renderScope: identity.renderScope,
+                      templateName: template.reference.templateName,
+                      propName,
+                      reason:
+                        eligibility.editable === false
+                          ? eligibility.reason
+                          : "incompatible",
+                      sourceRange: authored.child.sourceRange,
+                    });
+                    return;
+                  }
+                  nextProp = {
+                    id: existing?.id ?? createOverlayId(),
+                    instanceId: instance.id,
+                    name: prop.name,
+                    ...binding,
+                    required: existing?.required,
+                  };
+                } else {
+                  nextProp = createLiteralProp({
+                    id: existing?.id ?? createOverlayId(),
+                    instanceId: instance.id,
+                    prop,
+                    assetId: assetReference?.assetId,
+                    type:
+                      authored.child.type === "element"
+                        ? getHtmlAttributeType({
+                            tag: authored.child.tag,
+                            name: prop.name,
+                          })
+                        : undefined,
+                  });
+                }
+                templateData.props.set(nextProp.id, nextProp);
+                if (
+                  assetReference !== undefined &&
+                  typeof prop.value === "string"
+                ) {
+                  assetProps.push({
+                    propId: nextProp.id,
+                    assetId: assetReference.assetId,
+                    authoredValue: prop.value,
+                  });
+                }
+              });
+              matchedDescendants.push({
+                instanceId: instance.id,
+                path: authored.path,
+                kind,
+                componentPropNames,
+                ignoredInstancePropNames,
+                assetProps,
+              });
+              if (authoredGrandchildren !== undefined) {
+                if (
+                  overlayChildren(
+                    authoredGrandchildren,
+                    instance.children,
+                    authored.path
+                  ) === false
+                ) {
+                  return false;
+                }
+              } else if (adapted !== undefined) {
+                instance.children = adapted.children;
+              }
+              nextInstanceChildren.push(instanceChild);
+            }
+            instanceChildren.splice(
+              0,
+              instanceChildren.length,
+              ...nextInstanceChildren
+            );
+            return true;
+          };
+          overlaysTemplateChildren =
+            node.type === "template" &&
+            node.children.length > 0 &&
+            template.reference.componentChildren === undefined &&
+            overlayChildren(node.children, rootInstance.children, path);
+          if (overlaysTemplateChildren === false) {
+            matchedDescendants.length = 0;
+            rootInstance.children =
+              template.reference.componentChildren ??
+              visit(node.children, path);
+          } else {
+            diagnostics.push(...overlayDiagnostics);
+          }
+          overlaidDescendants = matchedDescendants;
+          resolvedFragment = extractWebstudioFragment(templateData, rootId);
+        }
+        mergeTemplateFragment(fragment, resolvedFragment);
+        const mergedRootInstance = fragment.instances.find(
+          ({ id }) => id === rootId
+        );
+        if (mergedRootInstance === undefined) {
+          throw new Error("Resolved MDX template root is missing");
         }
         const ignored = new Set(template.ignoredJsxPropNames);
         const instancePropNameByJsxName = new Map(
@@ -741,9 +1186,16 @@ export const materializeMdxAuthoredContent = ({
         ]);
         const assetProps: AuthoredElementProvenance["assetProps"][number][] =
           [];
-        node.props.forEach((prop, propIndex) => {
+        template.reference.props.forEach((prop, propIndex) => {
+          const propBinding = template.reference.propBindings?.[propIndex];
           const assetReference = assetReferenceByPath.get(
-            getMdxPropValuePathKey({ nodePath: path, propIndex })
+            getMdxPropValuePathKey({
+              nodePath:
+                propBinding?.source === undefined
+                  ? path
+                  : [...path, ...propBinding.source.nodePath],
+              propIndex: propBinding?.source?.propIndex ?? propIndex,
+            })
           );
           if (assetReference === undefined) {
             return;
@@ -770,9 +1222,18 @@ export const materializeMdxAuthoredContent = ({
         });
         nodes.push({
           type: "template",
+          binding: node.type === "element" ? "semantic" : "named",
+          templateName: template.reference.templateName,
+          overridesTemplateChildren,
+          overlaysTemplateChildren,
           path,
           instanceId: rootId,
           editableTextChildren,
+          authoredPropNames: template.reference.props.flatMap(({ name }) => {
+            const instancePropName =
+              instancePropNameByJsxName.get(name) ?? name;
+            return ignored.has(name) ? [] : [instancePropName];
+          }),
           editablePropNames: Array.from(editablePropNames).filter(
             (name) =>
               Array.from(instancePropNameByJsxName).some(
@@ -784,10 +1245,18 @@ export const materializeMdxAuthoredContent = ({
           propNameMappings: template.propNameMappings,
           preservedJsxPropNames: template.preservedJsxPropNames,
           ignoredJsxPropNames: template.ignoredJsxPropNames,
-          expandedInstanceIds: template.fragment.instances.map(({ id }) => id),
+          expandedInstanceIds: resolvedFragment.instances.map(({ id }) => id),
+          htmlTags:
+            template.htmlTags ??
+            resolvedFragment.instances.flatMap((instance) =>
+              instance.tag === undefined
+                ? []
+                : [{ instanceId: instance.id, tag: instance.tag }]
+            ),
+          overlaidDescendants,
           assetProps,
           namespaceKeys: unsupportedNamespaces.flatMap((namespace) =>
-            template.fragment[namespace].map((record) => ({
+            resolvedFragment[namespace].map((record) => ({
               namespace,
               key: getNamespaceRecordKey(namespace, record),
             }))
@@ -796,24 +1265,164 @@ export const materializeMdxAuthoredContent = ({
         children.push({ type: "id", value: rootId });
         continue;
       }
-
-      const materializedComponent = materializeMdxComponent(node);
+      const registeredComponent =
+        node.type === "template" && node.syntax === "jsx" && metas !== undefined
+          ? getComponentByJsxName({
+              name: node.name,
+              components: metas.keys(),
+            })
+          : undefined;
+      const materializedComponent = materializeMdxComponent(
+        node,
+        registeredComponent
+      );
       if (materializedComponent !== undefined) {
+        const isDirectRegisteredComponent =
+          "authoredChildren" in materializedComponent;
         const createId = createMdxScopeIdGenerator({ identity, path });
         const instanceId = createId();
-        fragment.instances.push({
+        const instance: Instance = {
           type: "instance",
           id: instanceId,
           component: materializedComponent.component,
-          children: materializedComponent.children,
-        });
+          children:
+            "authoredChildren" in materializedComponent
+              ? visit(node.children, path)
+              : materializedComponent.children,
+        };
+        fragment.instances.push(instance);
+        const componentData =
+          metas === undefined
+            ? undefined
+            : createWebstudioDataFromFragment({
+                ...createEmptyWebstudioFragment(),
+                children: [{ type: "id", value: instanceId }],
+                instances: [instance],
+              });
+        const componentCapabilities =
+          componentData === undefined || metas === undefined
+            ? undefined
+            : getContentModeCapabilities({
+                instances: componentData.instances,
+                metas,
+                props: componentData.props,
+                styleSources: componentData.styleSources,
+                styleSourceSelections: componentData.styleSourceSelections,
+                styles: componentData.styles,
+                breakpoints: componentData.breakpoints,
+                contentRootIds: new Set([instanceId]),
+              });
+        const namedJsxNode =
+          node.type === "template" && node.syntax === "jsx" ? node : undefined;
+        const declaredJsxPropNames = new Set(
+          Object.keys(metas?.get(instance.component)?.props ?? {})
+        );
+        const htmlTag =
+          componentCapabilities?.htmlTagsByInstanceId.get(instanceId);
+        // Both built-in adapters render an HTML element and accept global HTML
+        // attributes independently of whether component metadata is available.
+        const acceptsHtmlAttributes = true;
+        const declaredInstancePropNames = new Set(
+          Array.from(declaredJsxPropNames, (jsxPropName) =>
+            getInstancePropName({
+              jsxPropName,
+              componentPropNames: declaredJsxPropNames,
+              acceptsHtmlAttributes,
+            })
+          )
+        );
+        const namedJsxProps =
+          namedJsxNode === undefined
+            ? []
+            : namedJsxNode.props.map((prop) => ({
+                ...prop,
+                name: getInstancePropName({
+                  jsxPropName: prop.name,
+                  componentPropNames: declaredJsxPropNames,
+                  acceptsHtmlAttributes,
+                }),
+              }));
+        const conflictingPropIndexes =
+          namedJsxNode === undefined
+            ? new Set<number>()
+            : resolveMdxPropCollisions({
+                authoredProps: namedJsxNode.props,
+                mappedProps: namedJsxProps,
+                componentPropNames: declaredJsxPropNames,
+                acceptsHtmlAttributes,
+                canUseProp: (index) => {
+                  if (componentCapabilities === undefined) {
+                    return true;
+                  }
+                  const authoredProp = namedJsxNode.props[index];
+                  const instanceProp = namedJsxProps[index];
+                  return (
+                    authoredProp !== undefined &&
+                    instanceProp !== undefined &&
+                    getMdxPropBinding({
+                      capabilities: componentCapabilities,
+                      instance,
+                      prop: instanceProp,
+                      jsxPropName: authoredProp.name,
+                    }) !== undefined
+                  );
+                },
+              }).conflictingPropIndexes;
         const assetProps: AuthoredElementProvenance["assetProps"][number][] =
           [];
+        const ignoredJsxPropNames = new Set<string>();
+        const ignoredInstancePropNameByJsxName = new Map<string, string>();
+        const acceptedInstancePropNames = new Set<string>();
+        if (namedJsxNode !== undefined) {
+          for (const index of conflictingPropIndexes) {
+            const authoredProp = namedJsxNode.props[index];
+            const instanceProp = namedJsxProps[index];
+            if (authoredProp === undefined || instanceProp === undefined) {
+              continue;
+            }
+            ignoredJsxPropNames.add(authoredProp.name);
+            ignoredInstancePropNameByJsxName.set(
+              authoredProp.name,
+              instanceProp.name
+            );
+            diagnostics.push({
+              code: "ignored-template-prop",
+              severity: "warning",
+              blockInstanceId: identity.blockInstanceId,
+              assetId: identity.assetId,
+              contentRef: identity.contentRef,
+              renderScope: identity.renderScope,
+              templateName: materializedComponent.component,
+              propName: authoredProp.name,
+              reason: "incompatible",
+              sourceRange: authoredProp.sourceRange ?? node.sourceRange,
+            });
+          }
+        }
         for (const {
           prop,
           source,
           requiresAssetReference,
         } of materializedComponent.props) {
+          const sourcePropIndex =
+            source?.nodePath.length === 0 ? source.propIndex : undefined;
+          if (
+            sourcePropIndex !== undefined &&
+            conflictingPropIndexes.has(sourcePropIndex)
+          ) {
+            continue;
+          }
+          const instanceProp =
+            namedJsxNode === undefined
+              ? prop
+              : {
+                  ...prop,
+                  name: getInstancePropName({
+                    jsxPropName: prop.name,
+                    componentPropNames: declaredJsxPropNames,
+                    acceptsHtmlAttributes,
+                  }),
+                };
           const propId = createId();
           const assetReference =
             source === undefined
@@ -827,24 +1436,128 @@ export const materializeMdxAuthoredContent = ({
           if (requiresAssetReference && assetReference === undefined) {
             continue;
           }
-          fragment.props.push(
-            createLiteralProp({
+          const jsxPropName = getSourcePropName({
+            node,
+            source,
+            fallback: prop.name,
+          });
+          let materializedProp: Prop;
+          if (componentCapabilities === undefined) {
+            materializedProp = createLiteralProp({
               id: propId,
               instanceId,
-              prop,
+              prop: instanceProp,
               assetId: assetReference?.assetId,
-            })
-          );
+            });
+          } else {
+            const declaredType = metas?.get(instance.component)?.props?.[
+              instanceProp.name
+            ]?.type;
+            const directBinding =
+              isDirectRegisteredComponent &&
+              (declaredType === "string" ||
+                declaredType === "number" ||
+                declaredType === "boolean")
+                ? parseMdxStaticProp({ prop: instanceProp, type: declaredType })
+                : undefined;
+            const binding =
+              directBinding ??
+              (assetReference === undefined
+                ? getMdxPropBinding({
+                    capabilities: componentCapabilities,
+                    instance,
+                    prop: instanceProp,
+                    jsxPropName,
+                  })
+                : getMdxPropEligibility({
+                      capabilities: componentCapabilities,
+                      instance,
+                      prop: { name: instanceProp.name, type: "asset" },
+                      jsxPropName,
+                    }).editable
+                  ? { type: "asset" as const, value: assetReference.assetId }
+                  : undefined);
+            if (binding === undefined) {
+              const eligibility = getMdxPropEligibility({
+                capabilities: componentCapabilities,
+                instance,
+                prop: { name: instanceProp.name, type: "string" },
+                jsxPropName,
+              });
+              ignoredJsxPropNames.add(jsxPropName);
+              ignoredInstancePropNameByJsxName.set(
+                jsxPropName,
+                instanceProp.name
+              );
+              diagnostics.push({
+                code: "ignored-template-prop",
+                severity: "warning",
+                blockInstanceId: identity.blockInstanceId,
+                assetId: identity.assetId,
+                contentRef: identity.contentRef,
+                renderScope: identity.renderScope,
+                templateName: materializedComponent.component,
+                propName: jsxPropName,
+                reason:
+                  eligibility.editable === false
+                    ? eligibility.reason
+                    : "incompatible",
+                sourceRange:
+                  sourcePropIndex === undefined
+                    ? node.sourceRange
+                    : (namedJsxNode?.props[sourcePropIndex]?.sourceRange ??
+                      node.sourceRange),
+              });
+              continue;
+            }
+            materializedProp = {
+              id: propId,
+              instanceId,
+              name: instanceProp.name,
+              ...binding,
+            };
+          }
+          fragment.props.push(materializedProp);
+          componentData?.props.set(materializedProp.id, materializedProp);
+          acceptedInstancePropNames.add(materializedProp.name);
           if (assetReference !== undefined && typeof prop.value === "string") {
             assetProps.push({
-              propId,
+              propId: materializedProp.id,
               assetId: assetReference.assetId,
               authoredValue: prop.value,
             });
           }
         }
-        nodes.push({ type: "component", path, instanceId, assetProps });
+        nodes.push({
+          type: "component",
+          path,
+          instanceId,
+          ignoredInstancePropNames: Array.from(
+            new Set(
+              Array.from(ignoredInstancePropNameByJsxName.values()).filter(
+                (name) => acceptedInstancePropNames.has(name) === false
+              )
+            )
+          ),
+          ...(namedJsxNode === undefined
+            ? {}
+            : {
+                namedJsx: {
+                  jsxPropContext: {
+                    acceptsHtmlAttributes,
+                    componentPropNames: Array.from(declaredInstancePropNames),
+                    htmlTag,
+                    propTypes: [],
+                  },
+                  ignoredJsxPropNames: Array.from(ignoredJsxPropNames),
+                },
+              }),
+          assetProps,
+        });
         children.push({ type: "id", value: instanceId });
+        continue;
+      }
+      if (node.type === "template") {
         continue;
       }
 
@@ -905,6 +1618,7 @@ export const materializeMdxAuthoredContent = ({
     fragment,
     document,
     provenance: { nodes, unresolvedTemplates },
+    diagnostics,
     assetReferenceValues,
   };
 };
@@ -1059,6 +1773,17 @@ export const adoptMdxAuthoredContentFragment = ({
                 assetProps: mapAssetProps(node.assetProps),
                 expandedInstanceIds:
                   node.expandedInstanceIds.map(mapInstanceId),
+                htmlTags: node.htmlTags.map(({ instanceId, tag }) => ({
+                  instanceId: mapInstanceId(instanceId),
+                  tag,
+                })),
+                overlaidDescendants: node.overlaidDescendants.map(
+                  (descendant) => ({
+                    ...descendant,
+                    instanceId: mapInstanceId(descendant.instanceId),
+                    assetProps: mapAssetProps(descendant.assetProps),
+                  })
+                ),
                 namespaceKeys: node.namespaceKeys.map((entry) => {
                   const key = namespaceKeys.get(
                     `${entry.namespace}:${entry.key}`
@@ -1307,12 +2032,83 @@ export const reconcileMdxAuthoredContent = ({
   };
   indexOriginal(root.document.children, []);
 
+  const templatesExpandedToAuthoredChildren = new Set<Instance["id"]>();
+  for (const provenance of root.provenance.nodes) {
+    if (provenance.type !== "template") {
+      continue;
+    }
+    if (provenance.overlaysTemplateChildren) {
+      templatesExpandedToAuthoredChildren.add(provenance.instanceId);
+      continue;
+    }
+    const originalNode = originalNodeByPath.get(pathKey(provenance.path));
+    if (
+      originalNode?.type !== "template" ||
+      isSelfClosingTemplateNode(originalNode) === false
+    ) {
+      continue;
+    }
+    const originalRoot = originalInstanceById.get(provenance.instanceId);
+    const nextRoot = instanceById.get(provenance.instanceId);
+    if (originalRoot === undefined || nextRoot === undefined) {
+      continue;
+    }
+    const rootShellChanged =
+      equal({ ...nextRoot, children: originalRoot.children }, originalRoot) ===
+      false;
+    if (rootShellChanged) {
+      continue;
+    }
+    const descendantIds = provenance.expandedInstanceIds.filter(
+      (id) => id !== provenance.instanceId
+    );
+    const childrenChanged =
+      equal(nextRoot.children, originalRoot.children) === false;
+    const descendantInstancesChanged = descendantIds.some(
+      (id) =>
+        equal(instanceById.get(id), originalInstanceById.get(id)) === false
+    );
+    const descendantPropsChanged = descendantIds.some(
+      (id) =>
+        equal(
+          propsByInstanceId.get(id) ?? [],
+          originalPropsByInstanceId.get(id) ?? []
+        ) === false
+    );
+    if (
+      childrenChanged ||
+      descendantInstancesChanged ||
+      descendantPropsChanged
+    ) {
+      templatesExpandedToAuthoredChildren.add(provenance.instanceId);
+    }
+  }
+
   const templateByExpandedInstanceId = new Map(
     root.provenance.nodes.flatMap((node) =>
       node.type === "template"
         ? node.expandedInstanceIds.map((id) => [id, node] as const)
         : []
     )
+  );
+  const htmlTagByExpandedInstanceId = new Map(
+    root.provenance.nodes.flatMap((node) =>
+      node.type === "template"
+        ? node.htmlTags.map(({ instanceId, tag }) => [instanceId, tag] as const)
+        : []
+    )
+  );
+  const overlaidDescendantById = new Map(
+    root.provenance.nodes.flatMap((node) =>
+      node.type === "template"
+        ? node.overlaidDescendants.map(
+            (descendant) => [descendant.instanceId, descendant] as const
+          )
+        : []
+    )
+  );
+  const overlaidDescendantPaths = new Set(
+    Array.from(overlaidDescendantById.values(), ({ path }) => pathKey(path))
   );
   const templateInternalIds = new Set(templateByExpandedInstanceId.keys());
   const derivedTemplatePropIds = new Set<Prop["id"]>();
@@ -1376,11 +2172,15 @@ export const reconcileMdxAuthoredContent = ({
       next !== undefined &&
       next.children.every((child) => child.type === "text") &&
       equal({ ...next, children: original.children }, original);
+    const expandsToAuthoredChildren =
+      template !== undefined &&
+      templatesExpandedToAuthoredChildren.has(template.instanceId);
     if (
       templateInternalIds.has(original.id) &&
       (template?.type !== "template" ||
         deletedTemplateRootIds.has(template.instanceId) === false) &&
-      isEditableTemplateText === false
+      isEditableTemplateText === false &&
+      expandsToAuthoredChildren === false
     ) {
       if (next === undefined || !equal(next, original)) {
         throw new Error(
@@ -1399,9 +2199,19 @@ export const reconcileMdxAuthoredContent = ({
   );
   for (const prop of fragment.props) {
     const original = originalPropsById.get(prop.id);
+    const owningTemplate =
+      original === undefined
+        ? undefined
+        : templateByExpandedInstanceId.get(original.instanceId);
+    const isAuthoredChildProp =
+      original !== undefined &&
+      owningTemplate !== undefined &&
+      original.instanceId !== owningTemplate.instanceId &&
+      templatesExpandedToAuthoredChildren.has(owningTemplate.instanceId);
     if (
       original !== undefined &&
       templateInternalIds.has(original.instanceId) &&
+      isAuthoredChildProp === false &&
       !editableTemplatePropIds.has(prop.id) &&
       !derivedTemplatePropIds.has(prop.id) &&
       !equal(prop, original)
@@ -1423,8 +2233,16 @@ export const reconcileMdxAuthoredContent = ({
     }
   }
   for (const original of root.fragment.props) {
+    const owningTemplate = templateByExpandedInstanceId.get(
+      original.instanceId
+    );
+    const isAuthoredChildProp =
+      owningTemplate !== undefined &&
+      original.instanceId !== owningTemplate.instanceId &&
+      templatesExpandedToAuthoredChildren.has(owningTemplate.instanceId);
     if (
       templateInternalIds.has(original.instanceId) &&
+      isAuthoredChildProp === false &&
       deletedTemplateRootIds.has(
         templateByExpandedInstanceId.get(original.instanceId)?.instanceId ?? ""
       ) === false &&
@@ -1482,15 +2300,52 @@ export const reconcileMdxAuthoredContent = ({
       if (serializedInstanceIds.has(instanceId)) {
         throw new Error(`Authored MDX instance "${instanceId}" is reused`);
       }
-      for (const expandedId of provenance.expandedInstanceIds) {
-        serializedInstanceIds.add(expandedId);
+      const expandsToAuthoredChildren =
+        templatesExpandedToAuthoredChildren.has(instanceId);
+      if (expandsToAuthoredChildren) {
+        serializedInstanceIds.add(instanceId);
+      } else {
+        for (const expandedId of provenance.expandedInstanceIds) {
+          serializedInstanceIds.add(expandedId);
+        }
       }
       const original = originalNodeByPath.get(pathKey(provenance.path));
-      if (original?.type !== "template") {
+      if (
+        original === undefined ||
+        (original.type !== "template" && original.type !== "element") ||
+        (provenance.binding === "semantic") !== (original.type === "element")
+      ) {
         throw new Error("Authored MDX template provenance is invalid");
       }
+      const ignoredJsxPropNames = new Set(provenance.ignoredJsxPropNames);
+      const instancePropNameByJsxName = new Map(
+        provenance.propNameMappings.map((mapping) => [
+          mapping.jsxPropName,
+          mapping.instancePropName,
+        ])
+      );
+      const componentPropNames = new Set(
+        provenance.jsxPropContext.componentPropNames
+      );
+      const toInstancePropName = (jsxPropName: string) =>
+        instancePropNameByJsxName.get(jsxPropName) ??
+        getInstancePropName({
+          jsxPropName,
+          acceptsHtmlAttributes:
+            provenance.jsxPropContext.acceptsHtmlAttributes,
+          componentPropNames,
+        });
+      const authoredPropNames = new Set(provenance.authoredPropNames);
+      const originalEditablePropsByName = new Map(
+        (originalPropsByInstanceId.get(instanceId) ?? [])
+          .filter((prop) => isEditableTemplateProp({ provenance, prop }))
+          .map((prop) => [prop.name, prop])
+      );
       const editableProps = (propsByInstanceId.get(instanceId) ?? []).filter(
-        (prop) => isEditableTemplateProp({ provenance, prop })
+        (prop) =>
+          isEditableTemplateProp({ provenance, prop }) &&
+          (authoredPropNames.has(prop.name) ||
+            equal(originalEditablePropsByName.get(prop.name), prop) === false)
       );
       if (
         new Set(editableProps.map(({ name }) => name)).size !==
@@ -1502,18 +2357,6 @@ export const reconcileMdxAuthoredContent = ({
         ...provenance.editablePropNames,
         ...editableProps.map(({ name }) => name),
       ]);
-      const instancePropNameByJsxName = new Map(
-        provenance.propNameMappings.map((mapping) => [
-          mapping.jsxPropName,
-          mapping.instancePropName,
-        ])
-      );
-      const toInstancePropName = (jsxPropName: string) =>
-        instancePropNameByJsxName.get(jsxPropName) ?? jsxPropName;
-      const ignoredJsxPropNames = new Set(provenance.ignoredJsxPropNames);
-      const componentPropNames = new Set(
-        provenance.jsxPropContext.componentPropNames
-      );
       const authoredJsxPropNameByInstanceName = new Map(
         provenance.propNameMappings.flatMap((mapping) =>
           provenance.preservedJsxPropNames?.includes(mapping.jsxPropName)
@@ -1532,6 +2375,12 @@ export const reconcileMdxAuthoredContent = ({
             provenance.jsxPropContext.acceptsHtmlAttributes,
           componentPropNames,
         }).map((mapping) => [mapping.instancePropName, mapping.name])
+      );
+      const nextInstancePropNameByJsxName = new Map(
+        Array.from(
+          jsxPropNameByInstanceName,
+          ([instancePropName, jsxPropName]) => [jsxPropName, instancePropName]
+        )
       );
       const toJsxName = (instancePropName: string) => {
         const jsxPropName =
@@ -1557,9 +2406,21 @@ export const reconcileMdxAuthoredContent = ({
         assetReferenceValues: root.assetReferenceValues,
       });
       const nextByName = new Map(nextEditable.map((prop) => [prop.name, prop]));
+      const nextInstancePropNames = new Set(nextByName.keys());
+      const boundOriginalInstancePropNames = new Set(
+        original.props.flatMap((prop) =>
+          ignoredJsxPropNames.has(prop.name)
+            ? []
+            : [toInstancePropName(prop.name)]
+        )
+      );
       const props = original.props.flatMap((prop) => {
         if (ignoredJsxPropNames.has(prop.name)) {
-          return [prop];
+          const instancePropName = toInstancePropName(prop.name);
+          return boundOriginalInstancePropNames.has(instancePropName) &&
+            nextInstancePropNames.has(instancePropName) === false
+            ? []
+            : [prop];
         }
         const instancePropName = toInstancePropName(prop.name);
         if (editableNames.has(instancePropName) === false) {
@@ -1580,87 +2441,465 @@ export const reconcileMdxAuthoredContent = ({
       const normalizedProps = normalizeMdxComponentProps({
         instance,
         props,
-        instanceProps: editableProps,
+        instanceProps: propsByInstanceId.get(instanceId) ?? [],
       });
       assertUniqueAttributeNames(normalizedProps);
       let children = original.children;
       const originalInstance = originalInstanceById.get(instanceId);
       if (
-        provenance.editableTextChildren &&
-        originalInstance !== undefined &&
-        (original.children.length > 0 ||
-          equal(instance.children, originalInstance.children) === false)
+        expandsToAuthoredChildren ||
+        provenance.overridesTemplateChildren ||
+        (provenance.editableTextChildren &&
+          originalInstance !== undefined &&
+          (original.children.length > 0 ||
+            equal(instance.children, originalInstance.children) === false))
       ) {
         children = reconcileChildren({
           original: original.children,
           children: instance.children,
-          mode: original.mdxMode,
+          mode:
+            original.type === "element"
+              ? getChildrenMode({ original, tag: original.tag })
+              : original.mdxMode,
           active,
         });
-        if (children.length === 0) {
-          throw new Error(
-            "Empty template text cannot be represented losslessly in MDX"
-          );
-        }
       }
       if (
-        provenance.namespaceKeys.length === 0 &&
+        provenance.binding === "semantic" &&
         normalizedProps.every(
           ({ name }) =>
             ignoredJsxPropNames.has(name) === false &&
-            editableNames.has(toInstancePropName(name))
+            editableNames.has(
+              instancePropNameByJsxName.get(name) ??
+                nextInstancePropNameByJsxName.get(name) ??
+                name
+            )
         )
       ) {
         const componentNode = serializeMdxComponent({
           instance,
           props: nextEditable,
-          instanceProps: editableProps,
+          instanceProps: propsByInstanceId.get(instanceId) ?? [],
           original,
         });
         if (componentNode !== undefined) {
           return componentNode;
         }
+        const componentFallback = serializeMdxComponentFallback({
+          instance,
+          props: nextEditable,
+          instanceProps: propsByInstanceId.get(instanceId) ?? [],
+          templateName: provenance.templateName,
+          mdxMode: mode,
+        });
+        if (componentFallback !== undefined) {
+          return componentFallback;
+        }
+      }
+      if (original.type === "element") {
+        if (
+          original.syntax === "markdown" &&
+          equal(normalizedProps, original.props) === false
+        ) {
+          return {
+            type: "template",
+            syntax: getMdxNamedTemplateSyntax({
+              templateName: provenance.templateName,
+              component: instance.component,
+            }),
+            selfClosing: false,
+            name: provenance.templateName,
+            props: normalizedProps,
+            children,
+            mdxMode: getChildrenMode({ original, tag: original.tag }),
+            sourceRange: original.sourceRange,
+          };
+        }
+        return { ...original, props: normalizedProps, children };
+      }
+      if (expandsToAuthoredChildren) {
+        return {
+          ...original,
+          selfClosing: false,
+          props: normalizedProps,
+          children,
+          mdxMode:
+            mode === "text" ||
+            (provenance.editableTextChildren && children.length > 0)
+              ? "text"
+              : original.mdxMode,
+        };
       }
       return mode === "text" ||
         (provenance.editableTextChildren && children.length > 0)
         ? { ...original, props: normalizedProps, children, mdxMode: "text" }
         : { ...original, props: normalizedProps, children };
     }
+    const owningTemplate = templateByExpandedInstanceId.get(instanceId);
+    const isExpandedTemplateDescendant =
+      owningTemplate !== undefined &&
+      owningTemplate.instanceId !== instanceId &&
+      templatesExpandedToAuthoredChildren.has(owningTemplate.instanceId);
+    if (isExpandedTemplateDescendant) {
+      const originalInstance = originalInstanceById.get(instanceId);
+      if (
+        originalInstance === undefined ||
+        originalInstance.component !== instance.component ||
+        originalInstance.label !== instance.label
+      ) {
+        throw new Error(
+          "Template descendant metadata cannot be represented losslessly in MDX"
+        );
+      }
+      const descendantProvenance = overlaidDescendantById.get(instanceId);
+      const originalNode =
+        descendantProvenance === undefined
+          ? undefined
+          : originalNodeByPath.get(pathKey(descendantProvenance.path));
+      if (
+        originalNode !== undefined &&
+        (originalNode.type === "text" ||
+          originalNode.type === "comment" ||
+          originalNode.type === "opaque")
+      ) {
+        throw new Error("Overlaid template descendant provenance is invalid");
+      }
+      const originalProps = originalPropsByInstanceId.get(instanceId) ?? [];
+      const currentProps = propsByInstanceId.get(instanceId) ?? [];
+      // Removing a descendant prop resets its authored override and lets the
+      // current template default apply again on the next materialization.
+      const originalPropsById = new Map(
+        originalProps.map((prop) => [prop.id, prop])
+      );
+      const originalComponent =
+        descendantProvenance?.kind === "component" && originalNode !== undefined
+          ? materializeMdxComponent(originalNode)
+          : undefined;
+      if (
+        descendantProvenance?.kind === "component" &&
+        originalComponent?.component !== instance.component
+      ) {
+        throw new Error("Overlaid template component provenance is invalid");
+      }
+      const originalAuthoredProps =
+        originalNode === undefined
+          ? []
+          : descendantProvenance?.kind === "component"
+            ? (originalComponent?.props.map(({ prop }) => prop) ?? [])
+            : mapAttributeNames({
+                attributes: originalNode.props,
+                direction: "jsx-to-instance",
+                acceptsHtmlAttributes: true,
+                componentPropNames: new Set(
+                  descendantProvenance?.componentPropNames ?? []
+                ),
+              });
+      const ignoredInstancePropNames = new Set(
+        descendantProvenance?.ignoredInstancePropNames ?? []
+      );
+      for (const prop of currentProps) {
+        if (
+          ignoredInstancePropNames.has(prop.name) &&
+          equal(originalPropsById.get(prop.id), prop) === false
+        ) {
+          throw new Error(
+            "Ignored template descendant props cannot be represented losslessly in MDX"
+          );
+        }
+      }
+      const authoredPropNames = new Set(
+        originalAuthoredProps.flatMap(({ name }) =>
+          ignoredInstancePropNames.has(name) ? [] : [name]
+        )
+      );
+      const changedProps = currentProps.filter(
+        (prop) =>
+          ignoredInstancePropNames.has(prop.name) === false &&
+          (authoredPropNames.has(prop.name) ||
+            equal(originalPropsById.get(prop.id), prop) === false)
+      );
+      const editableAuthoredProps = toAuthoredProps({
+        original: originalAuthoredProps.filter(
+          ({ name }) => ignoredInstancePropNames.has(name) === false
+        ),
+        props: changedProps,
+        assetProps: descendantProvenance?.assetProps,
+        assetReferenceValues: root.assetReferenceValues,
+      });
+      const editableAuthoredPropsByName = new Map(
+        editableAuthoredProps.map((prop) => [prop.name, prop])
+      );
+      const authoredProps = originalAuthoredProps.flatMap((prop) => {
+        if (ignoredInstancePropNames.has(prop.name)) {
+          return [prop];
+        }
+        const next = editableAuthoredPropsByName.get(prop.name);
+        editableAuthoredPropsByName.delete(prop.name);
+        return next === undefined ? [] : [next];
+      });
+      authoredProps.push(...editableAuthoredPropsByName.values());
+      if (serializedInstanceIds.has(instanceId)) {
+        throw new Error(`Authored MDX instance "${instanceId}" is reused`);
+      }
+      serializedInstanceIds.add(instanceId);
+      if (descendantProvenance?.kind === "component") {
+        const componentNode =
+          originalNode?.type === "template" ||
+          (authoredProps.length === 0 && instance.children.length === 0)
+            ? serializeMdxComponentFallback({
+                instance,
+                props: authoredProps,
+                instanceProps: currentProps,
+                templateName:
+                  originalNode?.type === "template"
+                    ? originalNode.name
+                    : undefined,
+                mdxMode:
+                  originalNode?.type === "template"
+                    ? originalNode.mdxMode
+                    : mode,
+              })
+            : (serializeMdxComponent({
+                instance,
+                props: authoredProps,
+                instanceProps: currentProps,
+                original: originalNode,
+              }) ??
+              serializeMdxComponentFallback({
+                instance,
+                props: authoredProps,
+                instanceProps: currentProps,
+                mdxMode: mode,
+              }));
+        if (componentNode === undefined) {
+          throw new Error(
+            `Template component descendant "${instanceId}" cannot be represented losslessly in MDX`
+          );
+        }
+        return componentNode;
+      }
+      const tag =
+        instance.component === elementComponent
+          ? instance.tag
+          : (htmlTagByExpandedInstanceId.get(instanceId) ?? instance.tag);
+      if (tag === undefined) {
+        throw new Error(
+          `Template descendant "${instanceId}" has no deterministic HTML tag`
+        );
+      }
+      active.add(instanceId);
+      const children = reconcileChildren({
+        original: originalNode?.children ?? [],
+        children: instance.children,
+        mode:
+          elementsByTag[tag]?.children.includes("phrasing") === true
+            ? "text"
+            : "flow",
+        active,
+      });
+      active.delete(instanceId);
+      const props = mapAttributeNames({
+        attributes: authoredProps,
+        direction: "instance-to-jsx",
+        acceptsHtmlAttributes: true,
+        componentPropNames: new Set(
+          descendantProvenance?.componentPropNames ?? []
+        ),
+      });
+      return {
+        type: "element",
+        syntax: "mdx",
+        tag,
+        props,
+        children,
+        mdxMode: getInsertedNodeMode(instance.children),
+      };
+    }
     const instanceProps = propsByInstanceId.get(instanceId) ?? [];
-    const authoredComponentProps =
+    const componentProvenance =
+      provenance?.type === "component" ? provenance : undefined;
+    const originalComponentNode =
+      componentProvenance === undefined
+        ? undefined
+        : originalNodeByPath.get(pathKey(componentProvenance.path));
+    const originalComponent =
+      originalComponentNode === undefined
+        ? undefined
+        : materializeMdxComponent(originalComponentNode);
+    const originalComponentProps =
+      originalComponent?.component === instance.component
+        ? originalComponent.props.map(({ prop }) => prop)
+        : [];
+    const namedJsxProvenance = componentProvenance?.namedJsx;
+    const namedJsxComponentPropNames = new Set(
+      namedJsxProvenance?.jsxPropContext.componentPropNames ?? []
+    );
+    const toNamedJsxInstancePropName = (jsxPropName: string) =>
+      namedJsxProvenance === undefined
+        ? jsxPropName
+        : getInstancePropName({
+            jsxPropName,
+            acceptsHtmlAttributes:
+              namedJsxProvenance.jsxPropContext.acceptsHtmlAttributes,
+            componentPropNames: namedJsxComponentPropNames,
+          });
+    const ignoredJsxPropNames = new Set(
+      namedJsxProvenance?.ignoredJsxPropNames ?? []
+    );
+    const ignoredInstancePropNames = new Set(
+      componentProvenance?.ignoredInstancePropNames ?? []
+    );
+    if (instanceProps.some(({ name }) => ignoredInstancePropNames.has(name))) {
+      throw new Error(
+        "Ignored authored component props cannot be represented losslessly in MDX"
+      );
+    }
+    const editableAuthoredComponentProps =
       instance.component === elementComponent
         ? []
         : toAuthoredProps({
-            original: [],
+            original:
+              namedJsxProvenance === undefined
+                ? originalComponentProps.filter(
+                    ({ name }) => ignoredInstancePropNames.has(name) === false
+                  )
+                : originalComponentProps.flatMap((prop) =>
+                    ignoredJsxPropNames.has(prop.name)
+                      ? []
+                      : [
+                          {
+                            ...prop,
+                            name: toNamedJsxInstancePropName(prop.name),
+                          },
+                        ]
+                  ),
             props: instanceProps,
-            assetProps:
-              provenance?.type === "component"
-                ? provenance.assetProps
-                : undefined,
+            assetProps: componentProvenance?.assetProps,
             assetReferenceValues: root.assetReferenceValues,
           });
-    const componentNode =
+    const editableAuthoredComponentPropsByName = new Map(
+      editableAuthoredComponentProps.map((prop) => [prop.name, prop])
+    );
+    const authoredComponentProps =
       instance.component === elementComponent
+        ? []
+        : namedJsxProvenance !== undefined
+          ? editableAuthoredComponentProps
+          : originalComponentProps
+              .flatMap((prop) => {
+                if (ignoredInstancePropNames.has(prop.name)) {
+                  return [prop];
+                }
+                const next = editableAuthoredComponentPropsByName.get(
+                  prop.name
+                );
+                editableAuthoredComponentPropsByName.delete(prop.name);
+                return next === undefined ? [] : [next];
+              })
+              .concat(...editableAuthoredComponentPropsByName.values());
+    const preferComponentReference =
+      instance.children.length === 0 &&
+      instanceProps.length === 0 &&
+      (componentProvenance === undefined ||
+        originalComponentNode?.type === "template");
+    let genericNamedJsxChildren: readonly MdxAuthoredNode[] | undefined;
+    if (
+      namedJsxProvenance !== undefined &&
+      hasMdxComponentAdapter(instance.component) === false
+    ) {
+      active.add(instanceId);
+      genericNamedJsxChildren = reconcileChildren({
+        original:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.children
+            : [],
+        children: instance.children,
+        mode:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.mdxMode
+            : mode,
+        active,
+      });
+      active.delete(instanceId);
+    }
+    const componentNode =
+      instance.component === elementComponent ||
+      preferComponentReference ||
+      namedJsxProvenance !== undefined
         ? undefined
         : serializeMdxComponent({
             instance,
             props: authoredComponentProps,
             instanceProps,
-            original:
-              provenance?.type === "component"
-                ? originalNodeByPath.get(pathKey(provenance.path))
-                : undefined,
+            original: originalComponentNode,
           });
     const serializedComponent =
       componentNode ??
-      (provenance?.type === "component"
-        ? serializeMdxComponentFallback({
-            instance,
-            props: authoredComponentProps,
-            instanceProps,
-          })
-        : undefined);
-    if (serializedComponent !== undefined) {
+      serializeMdxComponentFallback({
+        instance,
+        props: authoredComponentProps,
+        instanceProps,
+        templateName:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.name
+            : undefined,
+        mdxMode:
+          originalComponentNode?.type === "template"
+            ? originalComponentNode.mdxMode
+            : mode,
+        jsxPropContext: namedJsxProvenance?.jsxPropContext,
+        children: genericNamedJsxChildren,
+      });
+    const sourcePreservingComponent =
+      namedJsxProvenance === undefined ||
+      serializedComponent === undefined ||
+      originalComponentNode?.type !== "template" ||
+      serializedComponent.type !== "template"
+        ? serializedComponent
+        : (() => {
+            const nextPropsByInstanceName = new Map(
+              serializedComponent.props.map((prop) => [
+                toNamedJsxInstancePropName(prop.name),
+                prop,
+              ])
+            );
+            const nextInstancePropNames = new Set(
+              nextPropsByInstanceName.keys()
+            );
+            const boundOriginalInstancePropNames = new Set(
+              originalComponentNode.props.flatMap((prop) =>
+                ignoredJsxPropNames.has(prop.name)
+                  ? []
+                  : [toNamedJsxInstancePropName(prop.name)]
+              )
+            );
+            const props = originalComponentNode.props.flatMap((prop) => {
+              if (ignoredJsxPropNames.has(prop.name)) {
+                const instancePropName = toNamedJsxInstancePropName(prop.name);
+                return boundOriginalInstancePropNames.has(instancePropName) &&
+                  nextInstancePropNames.has(instancePropName) === false
+                  ? []
+                  : [prop];
+              }
+              const instancePropName = toNamedJsxInstancePropName(prop.name);
+              const next = nextPropsByInstanceName.get(instancePropName);
+              nextPropsByInstanceName.delete(instancePropName);
+              return next === undefined ? [] : [{ ...next, name: prop.name }];
+            });
+            props.push(...nextPropsByInstanceName.values());
+            assertUniqueAttributeNames(props);
+            return {
+              ...serializedComponent,
+              name: originalComponentNode.name,
+              props,
+              sourceRange: originalComponentNode.sourceRange,
+              selfClosing:
+                serializedComponent.children.length === 0
+                  ? originalComponentNode.selfClosing
+                  : serializedComponent.selfClosing,
+            };
+          })();
+    if (sourcePreservingComponent !== undefined) {
       if (serializedInstanceIds.has(instanceId)) {
         throw new Error(`Authored MDX instance "${instanceId}" is reused`);
       }
@@ -1673,7 +2912,7 @@ export const reconcileMdxAuthoredContent = ({
         throw new Error("Authored MDX component provenance is invalid");
       }
       serializedInstanceIds.add(instanceId);
-      return serializedComponent;
+      return sourcePreservingComponent;
     }
     if (instance.component !== elementComponent || instance.tag === undefined) {
       throw new Error(
@@ -1791,11 +3030,13 @@ export const reconcileMdxAuthoredContent = ({
         return { key: entry?.key, node };
       }
       const provenance = provenanceById.get(child.value);
+      const authoredPath =
+        provenance?.path ?? overlaidDescendantById.get(child.value)?.path;
       return {
         key:
-          provenance === undefined
+          authoredPath === undefined
             ? undefined
-            : `node:${pathKey(provenance.path)}`,
+            : `node:${pathKey(authoredPath)}`,
         node: toNode(child.value, mode, active),
       };
     });
@@ -1811,12 +3052,14 @@ export const reconcileMdxAuthoredContent = ({
         originalPath === undefined
           ? undefined
           : provenanceByPath.get(originalPath);
+      const isOverlaidDescendant =
+        originalPath !== undefined && overlaidDescendantPaths.has(originalPath);
       const key =
         node.type === "text"
           ? `text:${index}`
-          : provenance === undefined
+          : provenance === undefined && isOverlaidDescendant === false
             ? undefined
-            : `node:${pathKey(provenance.path)}`;
+            : `node:${originalPath}`;
       if (key !== undefined && surviving.has(key)) {
         anchorsByKey.set(key, pending);
         pending = [];
@@ -1984,12 +3227,122 @@ export const serializeMdxTemplateInsertion = async ({
   fragment,
   templateName,
   assetReferenceValues,
+  inheritTemplateDefaults = false,
+  pristineFragment,
+  htmlTags = [],
 }: {
   identity: ContentBlockExternalContentIdentity;
   fragment: WebstudioFragment;
   templateName: string;
   assetReferenceValues?: ReadonlyMap<string, string>;
-}) => {
+  inheritTemplateDefaults?: boolean;
+  pristineFragment?: WebstudioFragment;
+  htmlTags?: readonly Readonly<{
+    instanceId: Instance["id"];
+    tag: string;
+  }>[];
+}): Promise<MdxDocument> => {
+  const root = fragment.children[0];
+  const rootInstance =
+    root?.type === "id"
+      ? fragment.instances.find(({ id }) => id === root.value)
+      : undefined;
+  const pristineRoot = pristineFragment?.children[0];
+  const pristineRootId =
+    pristineRoot?.type === "id" ? pristineRoot.value : undefined;
+  const rootTemplateDescriptor =
+    rootInstance === undefined
+      ? undefined
+      : getContentBlockMdxTemplateDescriptor(rootInstance);
+  const isDefaultElementTemplate =
+    rootInstance?.component === elementComponent &&
+    rootTemplateDescriptor?.kind === "element" &&
+    (templateName === getDefaultContentBlockTemplateName(rootInstance) ||
+      (rootInstance.name === undefined && rootInstance.label === templateName));
+  const canInheritTemplateDefaults =
+    isDefaultElementTemplate === false &&
+    (inheritTemplateDefaults ||
+      (pristineFragment !== undefined &&
+        root?.type === "id" &&
+        pristineRootId === root.value &&
+        equal(
+          {
+            ...fragment,
+            props: fragment.props.filter(
+              ({ instanceId }) => instanceId !== root.value
+            ),
+            // Asset records are immutable inputs. A newly selected root Asset is
+            // represented by its authored reference, not by expanding children.
+            assets: [],
+          },
+          {
+            ...pristineFragment,
+            props: pristineFragment.props.filter(
+              ({ instanceId }) => instanceId !== root.value
+            ),
+            assets: [],
+          }
+        )));
+  if (canInheritTemplateDefaults) {
+    if (
+      fragment.children.length !== 1 ||
+      root?.type !== "id" ||
+      rootInstance === undefined
+    ) {
+      throw new Error("Inserted template must have exactly one root instance");
+    }
+    const currentRootProps = fragment.props.filter(
+      ({ instanceId }) => instanceId === root.value
+    );
+    const pristineRootProps =
+      pristineFragment?.props.filter(
+        ({ instanceId }) => instanceId === root.value
+      ) ?? [];
+    const pristineRootPropsById = new Map(
+      pristineRootProps.map((prop) => [prop.id, prop])
+    );
+    const changedRootProps = currentRootProps.filter(
+      (prop) => equal(pristineRootPropsById.get(prop.id), prop) === false
+    );
+    const authoredRootProps = toAuthoredProps({
+      original: [],
+      props: changedRootProps,
+      assetReferenceValues,
+    });
+    const componentReference = serializeMdxComponentFallback({
+      instance: rootInstance,
+      props: authoredRootProps,
+      instanceProps: currentRootProps,
+      templateName,
+    });
+    const tag =
+      htmlTags.find(({ instanceId }) => instanceId === root.value)?.tag ??
+      rootInstance.tag;
+    const props =
+      componentReference?.props ??
+      mapAttributeNames({
+        attributes: authoredRootProps,
+        direction: "instance-to-jsx",
+        acceptsHtmlAttributes: tag !== undefined,
+      });
+    return {
+      frontmatter: { properties: {} },
+      children: [
+        {
+          type: "template",
+          syntax: getMdxNamedTemplateSyntax({
+            templateName,
+            component: rootInstance.component,
+          }),
+          selfClosing: true,
+          name: templateName,
+          props,
+          children: [],
+          mdxMode: "flow",
+        },
+      ],
+    };
+  }
   const emptyDocument: MdxDocument = {
     frontmatter: { properties: {} },
     children: [],
@@ -2004,11 +3357,130 @@ export const serializeMdxTemplateInsertion = async ({
     },
     assetReferenceValues,
   });
+  const pristinePropsById = new Map(
+    pristineFragment?.props.map((prop) => [prop.id, prop]) ?? []
+  );
+  const htmlTagByInstanceId = new Map(
+    htmlTags.map(({ instanceId, tag }) => [instanceId, tag])
+  );
+  const serializableProps = fragment.props.filter(
+    (prop) => equal(pristinePropsById.get(prop.id), prop) === false
+  );
+  const serializableAssetIds = new Set(
+    serializableProps.flatMap((prop) =>
+      prop.type === "asset" ? [prop.value] : []
+    )
+  );
+  const serializableFragment =
+    pristineFragment === undefined
+      ? fragment
+      : {
+          ...fragment,
+          instances: fragment.instances.map((instance) => {
+            const tag = htmlTagByInstanceId.get(instance.id) ?? instance.tag;
+            return tag === undefined ||
+              hasMdxComponentAdapter(instance.component)
+              ? instance
+              : { ...instance, component: elementComponent, tag };
+          }),
+          props: serializableProps,
+          assets: fragment.assets.filter(({ id }) =>
+            serializableAssetIds.has(id)
+          ),
+          dataSources: [],
+          resources: [],
+          breakpoints: [],
+          styleSourceSelections: [],
+          styleSources: [],
+          styles: [],
+        };
   try {
-    return preferMarkdownSyntax(
-      reconcileMdxAuthoredContent({ root: emptyRoot, fragment })
+    const authored = await preferMarkdownSyntax(
+      reconcileMdxAuthoredContent({
+        root: emptyRoot,
+        fragment: serializableFragment,
+      })
     );
-  } catch {
+    const rootNode =
+      authored.children.length === 1 ? authored.children[0] : undefined;
+    if (
+      rootNode === undefined ||
+      rootNode.type === "text" ||
+      rootNode.type === "comment" ||
+      rootNode.type === "opaque"
+    ) {
+      throw new Error("Inserted template root cannot be represented in MDX");
+    }
+    if (
+      isDefaultElementTemplate &&
+      rootNode.type === "element" &&
+      rootNode.syntax === "markdown"
+    ) {
+      return authored;
+    }
+    const rootChild = fragment.children[0];
+    const rootInstance =
+      rootChild?.type === "id"
+        ? fragment.instances.find(({ id }) => id === rootChild.value)
+        : undefined;
+    const rootInstanceProps =
+      rootInstance === undefined
+        ? []
+        : fragment.props.filter(
+            ({ instanceId }) => instanceId === rootInstance.id
+          );
+    const componentReference =
+      rootInstance === undefined
+        ? undefined
+        : serializeMdxComponentFallback({
+            instance: rootInstance,
+            props: toAuthoredProps({
+              original: [],
+              props: rootInstanceProps,
+              assetReferenceValues,
+            }),
+            instanceProps: rootInstanceProps,
+            templateName,
+          });
+    const props =
+      componentReference?.props ??
+      mapAttributeNames({
+        attributes: rootNode.props,
+        direction: "instance-to-jsx",
+        acceptsHtmlAttributes:
+          rootNode.type === "element" || rootInstance?.tag !== undefined,
+      });
+    const children = componentReference?.children ?? rootNode.children;
+    return {
+      ...authored,
+      children: [
+        {
+          type: "template" as const,
+          syntax: getMdxNamedTemplateSyntax({
+            templateName,
+            component: rootInstance?.component,
+          }),
+          selfClosing: componentReference?.selfClosing ?? false,
+          name: templateName,
+          props,
+          children,
+          mdxMode:
+            componentReference?.mdxMode ??
+            (rootNode.type === "element" && rootNode.syntax === "mdx"
+              ? rootNode.mdxMode
+              : rootNode.type === "template"
+                ? rootNode.mdxMode
+                : elementsByTag[rootNode.tag]?.children.includes("phrasing") ===
+                    true
+                  ? ("text" as const)
+                  : ("flow" as const)),
+        },
+      ],
+    };
+  } catch (error) {
+    if (pristineFragment !== undefined) {
+      throw error;
+    }
     const rootChild = fragment.children[0];
     const rootInstance =
       rootChild?.type === "id"
@@ -2034,7 +3506,13 @@ export const serializeMdxTemplateInsertion = async ({
     if (componentFallback !== undefined) {
       return {
         frontmatter: { properties: {} },
-        children: [componentFallback],
+        children: [
+          {
+            ...componentFallback,
+            selfClosing: componentFallback.children.length === 0,
+            name: templateName,
+          },
+        ],
       };
     }
     const props =
@@ -2067,6 +3545,11 @@ export const serializeMdxTemplateInsertion = async ({
       children: [
         {
           type: "template" as const,
+          syntax: getMdxNamedTemplateSyntax({
+            templateName,
+            component: rootInstance?.component,
+          }),
+          selfClosing: children.length === 0,
           name: templateName,
           props,
           children,
@@ -2078,18 +3561,32 @@ export const serializeMdxTemplateInsertion = async ({
   }
 };
 
+export type MdxTemplateInsertion = Readonly<{
+  templateName: string;
+  pristineFragment: WebstudioFragment;
+  htmlTags?: readonly Readonly<{
+    instanceId: Instance["id"];
+    tag: string;
+  }>[];
+}>;
+
 const reconcileMdxAuthoredContentWithTemplateInsertions = async ({
   root,
   fragment,
+  insertedTemplates,
   insertedTemplateNames,
 }: {
   root: MaterializedMdxAuthoredContentRoot;
   fragment: WebstudioFragment;
-  insertedTemplateNames: ReadonlyMap<string, string>;
+  insertedTemplates: ReadonlyMap<Instance["id"], MdxTemplateInsertion>;
+  insertedTemplateNames: ReadonlyMap<Instance["id"], string>;
 }) => {
-  if (insertedTemplateNames.size === 0) {
+  if (insertedTemplates.size === 0 && insertedTemplateNames.size === 0) {
     return preferMarkdownSyntax(
-      reconcileMdxAuthoredContent({ root, fragment })
+      reconcileMdxAuthoredContent({
+        root,
+        fragment: omitTransientEmptyMarkdownDrafts({ root, fragment }),
+      })
     );
   }
   const fragmentData = createWebstudioDataFromFragment(fragment);
@@ -2098,7 +3595,9 @@ const reconcileMdxAuthoredContentWithTemplateInsertions = async ({
       if (child.type !== "id") {
         return [];
       }
-      const templateName = insertedTemplateNames.get(child.value);
+      const insertion = insertedTemplates.get(child.value);
+      const templateName =
+        insertion?.templateName ?? insertedTemplateNames.get(child.value);
       if (templateName === undefined) {
         return [];
       }
@@ -2112,6 +3611,11 @@ const reconcileMdxAuthoredContentWithTemplateInsertions = async ({
           fragment: insertionFragment,
           templateName,
           assetReferenceValues: root.assetReferenceValues,
+          inheritTemplateDefaults:
+            insertion !== undefined &&
+            equal(insertionFragment, insertion.pristineFragment),
+          pristineFragment: insertion?.pristineFragment,
+          htmlTags: insertion?.htmlTags,
         }).then((document) => ({
           rootInstanceId: child.value,
           fragment: insertionFragment,
@@ -2122,7 +3626,10 @@ const reconcileMdxAuthoredContentWithTemplateInsertions = async ({
   );
   if (insertions.length === 0) {
     return preferMarkdownSyntax(
-      reconcileMdxAuthoredContent({ root, fragment })
+      reconcileMdxAuthoredContent({
+        root,
+        fragment: omitTransientEmptyMarkdownDrafts({ root, fragment }),
+      })
     );
   }
 
@@ -2203,7 +3710,7 @@ const reconcileMdxAuthoredContentWithTemplateInsertions = async ({
   } as WebstudioFragment;
   const reconciled = reconcileMdxAuthoredContent({
     root,
-    fragment: normalized,
+    fragment: omitTransientEmptyMarkdownDrafts({ root, fragment: normalized }),
   });
   const insertionByMarker = new Map(
     insertions.map((insertion) => [
@@ -2233,6 +3740,7 @@ export const rebaseMdxAuthoredContent = async ({
   latest,
   latestRevision,
   latestIsLocal = false,
+  insertedTemplates = new Map(),
   insertedTemplateNames = new Map(),
 }: {
   root: MaterializedMdxAuthoredContentRoot;
@@ -2240,7 +3748,9 @@ export const rebaseMdxAuthoredContent = async ({
   latest: MdxDocument;
   latestRevision?: string;
   latestIsLocal?: boolean;
-  insertedTemplateNames?: ReadonlyMap<string, string>;
+  insertedTemplates?: ReadonlyMap<Instance["id"], MdxTemplateInsertion>;
+  /** @deprecated Use insertedTemplates to preserve pristine template defaults. */
+  insertedTemplateNames?: ReadonlyMap<Instance["id"], string>;
 }) => {
   if (
     (latestRevision !== undefined &&
@@ -2254,7 +3764,8 @@ export const rebaseMdxAuthoredContent = async ({
   }
   const local = await reconcileMdxAuthoredContentWithTemplateInsertions({
     root,
-    fragment: omitTransientEmptyMarkdownDrafts({ root, fragment }),
+    fragment,
+    insertedTemplates,
     insertedTemplateNames,
   });
   return preferMarkdownSyntax(

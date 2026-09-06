@@ -1,3 +1,4 @@
+// Collects bounded rendered evidence without retaining page contents or logs.
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import type { EvaluationArtifact } from "./validate";

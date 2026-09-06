@@ -44,9 +44,7 @@
       "import": "./lib/__generated__/normalize.css.js"
     },
     "./core-templates": {
-      "webstudio": "./src/core-templates.tsx",
-      "types": "./lib/types/core-templates.d.ts",
-      "import": "./lib/core-templates.js"
+      "webstudio": "./src/core-templates.tsx"
     },
     "./router-path-test-data": {
       "webstudio": "./src/router-path-test-data.ts"
@@ -65,7 +63,7 @@
     "test": "vitest run",
     "build:schema-org-data": "tsx scripts/schema-org-data.ts && oxfmt src/__generated__/schema-org-data.ts",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && oxfmt src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {

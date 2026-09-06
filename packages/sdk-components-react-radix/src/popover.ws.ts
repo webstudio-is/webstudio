@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import {
   propsPopover,
   propsPopoverContent,
@@ -33,7 +33,7 @@ export const metaPopoverContent: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.PopoverClose],
+    descendants: [getRadixComponentId("PopoverClose")],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },
@@ -51,7 +51,10 @@ export const metaPopover: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.PopoverTrigger, radix.PopoverContent],
+    descendants: [
+      getRadixComponentId("PopoverTrigger"),
+      getRadixComponentId("PopoverContent"),
+    ],
   },
   initialProps: ["open"],
   props: propsPopover,

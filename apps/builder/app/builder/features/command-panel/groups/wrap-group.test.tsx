@@ -3,7 +3,10 @@ import { coreMetas, elementComponent } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as animationMetas from "@webstudio-is/sdk-components-animation/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+} from "@webstudio-is/template";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $pages, $props } from "~/shared/sync/data-stores";
@@ -11,6 +14,11 @@ import { registerContainers } from "~/shared/sync/sync-stores";
 import { $selectedPageId } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { canWrapInstance } from "@webstudio-is/project-build/runtime";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const ListItem = createTemplateComponentFixture("ListItem");
+const Text = createTemplateComponentFixture("Text");
 
 registerContainers();
 
@@ -28,9 +36,9 @@ describe("canWrapInstance for components", () => {
   test("should allow wrapping text in a Link", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Text ws:id="text">Hello</$.Text>
-        </$.Body>
+        <Body ws:id="body">
+          <Text ws:id="text">Hello</Text>
+        </Body>
       ).instances
     );
     selectInstance(["text", "body"]);
@@ -51,9 +59,9 @@ describe("canWrapInstance for components", () => {
   test("should allow wrapping text in a Heading", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Text ws:id="text">Hello</$.Text>
-        </$.Body>
+        <Body ws:id="body">
+          <Text ws:id="text">Hello</Text>
+        </Body>
       ).instances
     );
     selectInstance(["text", "body"]);
@@ -74,9 +82,9 @@ describe("canWrapInstance for components", () => {
   test("should allow wrapping box in a Form", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -97,9 +105,9 @@ describe("canWrapInstance for components", () => {
   test("should prevent wrapping an instance in CodeText", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Text ws:id="text">Hello</$.Text>
-        </$.Body>
+        <Body ws:id="body">
+          <Text ws:id="text">Hello</Text>
+        </Body>
       ).instances
     );
     selectInstance(["text", "body"]);
@@ -122,9 +130,9 @@ describe("canWrapInstance for HTML elements", () => {
   test("should allow wrapping text in a span", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Text ws:id="text">Hello</$.Text>
-        </$.Body>
+        <Body ws:id="body">
+          <Text ws:id="text">Hello</Text>
+        </Body>
       ).instances
     );
     selectInstance(["text", "body"]);
@@ -145,9 +153,9 @@ describe("canWrapInstance for HTML elements", () => {
   test("should allow wrapping box in a div", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -168,9 +176,9 @@ describe("canWrapInstance for HTML elements", () => {
   test("should allow wrapping box in span (content model allows it)", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -193,9 +201,9 @@ describe("canWrapInstance for HTML elements", () => {
   test("should allow wrapping list item in ul", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.ListItem ws:id="li">Item</$.ListItem>
-        </$.Body>
+        <Body ws:id="body">
+          <ListItem ws:id="li">Item</ListItem>
+        </Body>
       ).instances
     );
     selectInstance(["li", "body"]);
@@ -216,9 +224,9 @@ describe("canWrapInstance for HTML elements", () => {
   test("should reject wrapping box in ul (ul requires li children)", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -242,9 +250,9 @@ describe("canWrapInstance edge cases", () => {
   test("should handle wrapping with Slot", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -265,9 +273,9 @@ describe("canWrapInstance edge cases", () => {
   test("should allow wrapping with Collection", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -288,9 +296,9 @@ describe("canWrapInstance edge cases", () => {
   test("should allow wrapping with AnimateChildren", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -311,9 +319,9 @@ describe("canWrapInstance edge cases", () => {
   test("should allow wrapping with AnimateText", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -334,9 +342,9 @@ describe("canWrapInstance edge cases", () => {
   test("should allow wrapping with StaggerAnimation", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -357,9 +365,9 @@ describe("canWrapInstance edge cases", () => {
   test("should allow wrapping with VideoAnimation", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
     selectInstance(["box", "body"]);
@@ -380,12 +388,12 @@ describe("canWrapInstance edge cases", () => {
   test("should handle wrapping multiple elements", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="parent">
-            <$.Box ws:id="child1"></$.Box>
-            <$.Box ws:id="child2"></$.Box>
-          </$.Box>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="parent">
+            <Box ws:id="child1"></Box>
+            <Box ws:id="child2"></Box>
+          </Box>
+        </Body>
       ).instances
     );
     selectInstance(["child1", "parent", "body"]);

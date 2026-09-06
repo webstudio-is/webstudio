@@ -17,6 +17,8 @@ export const formatContentBlockDiagnostic = (
     message = diagnostic.reason;
   } else if (diagnostic.code === "unresolved-template") {
     message = `Template "${diagnostic.templateName}" is not available and was skipped.`;
+  } else if (diagnostic.code === "ambiguous-template") {
+    message = `Multiple templates match ${diagnostic.semanticKey}: ${diagnostic.templateNames.join(", ")}. The semantic fallback without Content Block template styles was used.`;
   } else if (diagnostic.code === "ignored-template-prop") {
     message = `Property "${diagnostic.propName}" on template "${
       diagnostic.templateName

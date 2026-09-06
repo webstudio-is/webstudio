@@ -1,16 +1,16 @@
 import { createId, type WebstudioFragment } from "@webstudio-is/sdk";
 import { renderTemplate } from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import {
-  webstudioJsxAnimationGuidance,
   webstudioJsxBindingGuidance,
   webstudioJsxRuntimeBindings,
 } from "./bindings";
 import { evaluateJsx } from "./evaluate.server";
 import { getErrorMessage } from "./errors";
+import { inspectWebstudioJsxFragmentSyntax } from "./syntax";
 
 const templateValidationMessagePrefixes = [
-  "Do not use raw HTML tag",
   "Do not use React fragment shorthand",
   "Invalid JSX component",
   "Invalid JSX prop",
@@ -34,19 +34,21 @@ const createWebstudioJsxFragmentIdFactory = () => {
 export const evaluateWebstudioJsxFragment = async (
   source: string
 ): Promise<WebstudioFragment> => {
+  inspectWebstudioJsxFragmentSyntax(source);
   const createId = createWebstudioJsxFragmentIdFactory();
   return evaluateJsx<WebstudioFragment>({
     source,
     createModule: (jsx) =>
-      `exports.default = __renderTemplate(<>${jsx}</>, __createWebstudioJsxFragmentId, [], { allowManualIds: false, componentMetas: __componentMetas });`,
+      `exports.default = __renderTemplate(<>${jsx}</>, __createWebstudioJsxFragmentId, [], { allowManualIds: false, componentIds: __componentIds, componentMetas: __componentMetas });`,
     globals: {
       __createWebstudioJsxFragmentId: createId,
+      __componentIds: componentIds,
       __componentMetas: componentMetas,
       __renderTemplate: renderTemplate,
       ...webstudioJsxRuntimeBindings,
     },
     parseErrorMessage: (error) =>
-      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(
+      `Could not parse JSX fragment. Pass Webstudio JSX such as <section><Heading tag="h2">Title</Heading></section>. ${getErrorMessage(
         error
       )}`,
     evaluationErrorMessage: (error) => {
@@ -54,11 +56,7 @@ export const evaluateWebstudioJsxFragment = async (
       if (isTemplateValidationMessage(message)) {
         return message;
       }
-      const animationGuidance =
-        message === "animation is not a function"
-          ? ` ${webstudioJsxAnimationGuidance}`
-          : "";
-      return `Could not evaluate JSX fragment. Use ${webstudioJsxBindingGuidance}.${animationGuidance} ${message}`;
+      return `Could not evaluate JSX fragment. Use ${webstudioJsxBindingGuidance}. ${message}`;
     },
     missingResultMessage: "JSX fragment did not produce Webstudio data.",
   });

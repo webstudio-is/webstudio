@@ -22,6 +22,9 @@ export const instanceTag = z
 export const instanceAttributes = z.object({
   component: instanceComponent,
   tag: instanceTag.optional(),
+  // Stable authoring identifier for contexts such as Content Block templates.
+  // It is independent from the user-facing instance label.
+  name: z.string().min(1).optional(),
   // The component or tag provides the default instance name. Renaming stores
   // the user-defined name in label without changing the component identity.
   label: z.string().optional(),
@@ -54,6 +57,7 @@ export const instance = z.object({
   id: instanceId,
   component: instanceAttributes.shape.component,
   tag: instanceAttributes.shape.tag,
+  name: instanceAttributes.shape.name,
   label: instanceAttributes.shape.label,
   children: z.array(instanceChild),
 });

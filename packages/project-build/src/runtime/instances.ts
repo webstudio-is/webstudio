@@ -1,5 +1,6 @@
 import {
   blockTemplateComponent,
+  assignUniqueBlockTemplateNamesMutable,
   elementComponent,
   findChildReferenceIndex,
   findParentInstanceReference,
@@ -83,10 +84,10 @@ import {
 } from "./style-utils";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
+import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import equal from "fast-deep-equal";
 import { z } from "zod";
 import {
-  assignUniqueBlockTemplateNamesMutable,
   type BlockTemplateNameConfirmation,
   findBlockTemplateNameCollision,
   getBlockTemplateNameConfirmation,
@@ -97,7 +98,7 @@ const throwDuplicateBlockTemplateName = ({
   path,
 }: {
   name: string;
-  path: "component" | "label" | "tag";
+  path: "component" | "label" | "name" | "tag";
 }): never =>
   throwBuilderValidationError("Template name must be unique", [
     {
@@ -137,6 +138,7 @@ export const requireBlockTemplateNameConfirmation = ({
     | "instanceSelector"
     | "label"
     | "mode"
+    | "name"
     | "tag";
 }) => {
   if (required === undefined || equal(required, confirm)) {
@@ -267,6 +269,12 @@ export const setInstanceTagInput = z.object({
 export const setInstanceLabelInput = z.object({
   instanceId: z.string(),
   label: z.string(),
+  templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
+});
+
+export const setInstanceNameInput = z.object({
+  instanceId: z.string(),
+  name: z.string(),
   templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
 });
 
@@ -1190,17 +1198,18 @@ export const createInstanceMovePatches = ({
       continue;
     }
     if (parent.instance.id !== nextParent.id) {
-      const previousLabel = instance.label;
+      const previousName = instance.name;
       assignUniqueBlockTemplateNamesMutable({
         instanceIds: [instance.id],
         parent: nextParent,
         instances: mutableInstances,
+        components: componentMetas.keys(),
       });
-      if (instance.label !== previousLabel && instance.label !== undefined) {
+      if (instance.name !== previousName && instance.name !== undefined) {
         patches.push({
-          op: previousLabel === undefined ? "add" : "replace",
-          path: [instance.id, "label"],
-          value: instance.label,
+          op: previousName === undefined ? "add" : "replace",
+          path: [instance.id, "name"],
+          value: instance.name,
         });
       }
     }
@@ -1605,6 +1614,7 @@ export const createInstanceClonePayload = ({
     instanceIds: [clonedRootId],
     parent: targetParent,
     instances: instancesWithClones,
+    components: componentMetas.keys(),
   });
   const propPatches = createPropClonePatches({
     nextIdById,
@@ -1925,6 +1935,7 @@ const moveInstanceToParentMutable = (
       instanceIds: [rootInstanceId],
       parent: newParent,
       instances: data.instances,
+      components: componentMetas.keys(),
     });
   }
   if (dropTarget.position === "end") {
@@ -2112,6 +2123,7 @@ export const wrapInstance = (
       instanceIds: [wrapperInstanceId],
       parent: parentInstance,
       instances: nextInstances,
+      components: componentMetas.keys(),
     });
     const wrapperSelector = [wrapperInstanceId, ...parentItem.instanceSelector];
     const isSatisfying = isTreeSatisfyingContentModel({
@@ -2191,6 +2203,7 @@ export const wrapInstance = (
     parent: nextParentInstance,
     replacedInstanceIds: [instanceId],
     instances: nextInstances,
+    components: componentMetas.keys(),
   });
   const wrapperSelector = [
     wrapperInstanceId,
@@ -2422,6 +2435,7 @@ const unwrapInstanceMutable = ({
     replacedInstanceIds:
       parentInstance.children.length === 0 ? [parentInstance.id] : [],
     instances,
+    components: componentMetas.keys(),
   });
   if (parentInstance.children.length === 0) {
     instances.delete(parentItem.instance.id);
@@ -2946,6 +2960,7 @@ export const unwrapInstance = (
       replacedInstanceIds:
         nextParentInstance.children.length === 0 ? [parentInstanceId] : [],
       instances: nextInstances,
+      components: componentMetas.keys(),
     });
   }
   const nextInstanceSelector = [instanceId, ...input.instanceSelector.slice(2)];
@@ -2960,11 +2975,11 @@ export const unwrapInstance = (
   }
 
   const patches: BuilderPatchChange["patches"] = [];
-  if (nextSelectedInstance.label !== selectedInstance.label) {
+  if (nextSelectedInstance.name !== selectedInstance.name) {
     patches.push({
-      op: selectedInstance.label === undefined ? "add" : "replace",
-      path: [instanceId, "label"],
-      value: nextSelectedInstance.label,
+      op: selectedInstance.name === undefined ? "add" : "replace",
+      path: [instanceId, "name"],
+      value: nextSelectedInstance.name,
     });
   }
   if (nextParentInstance.children.length === 0) {
@@ -3203,7 +3218,9 @@ export const setInstanceLabel = (
       : [instance];
 
   const prospectiveInstances = new Map(instances);
-  for (const targetInstance of targetInstances) {
+  for (const targetInstance of targetInstances.filter(
+    ({ name }) => name === undefined
+  )) {
     prospectiveInstances.set(targetInstance.id, { ...targetInstance, label });
   }
   for (const targetInstance of targetInstances) {
@@ -3219,18 +3236,23 @@ export const setInstanceLabel = (
       });
     }
   }
-  requireBlockTemplateNameConfirmation({
-    required: getBlockTemplateNameConfirmation({
-      changes: targetInstances.map((targetInstance) => ({
-        instance: targetInstance,
-        nextInstance: prospectiveInstances.get(targetInstance.id),
-      })),
-      instances,
-      props: state.props?.values() ?? [],
-    }),
-    confirm: input.templateNameConfirmation,
-    path: "label",
-  });
+  const legacyTemplates = targetInstances.filter(
+    ({ name }) => name === undefined
+  );
+  if (legacyTemplates.length > 0) {
+    requireBlockTemplateNameConfirmation({
+      required: getBlockTemplateNameConfirmation({
+        changes: legacyTemplates.map((targetInstance) => ({
+          instance: targetInstance,
+          nextInstance: prospectiveInstances.get(targetInstance.id),
+        })),
+        instances,
+        props: state.props?.values() ?? [],
+      }),
+      confirm: input.templateNameConfirmation,
+      path: "label",
+    });
+  }
 
   const patches: BuilderPatchChange["patches"] = [];
   for (const targetInstance of targetInstances) {
@@ -3250,6 +3272,77 @@ export const setInstanceLabel = (
       instanceIds: targetInstances.map((targetInstance) => targetInstance.id),
       label,
     },
+    invalidatesNamespaces: ["instances"],
+  });
+};
+
+export const setInstanceName = (
+  state: Pick<BuilderState, "instances"> & Partial<Pick<BuilderState, "props">>,
+  input: z.infer<typeof setInstanceNameInput>
+) => {
+  const instances = getRequiredInstances(state);
+  const instance = instances.get(input.instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const parent = findParentInstanceReference(instances, instance.id)?.instance;
+  if (parent?.component !== blockTemplateComponent) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Only direct Content Block templates have an MDX name"
+    );
+  }
+
+  const name = input.name.trim();
+  if (isMdxTemplateComponentName(name) === false) {
+    return throwBuilderValidationError(
+      "Template name must be a PascalCase JavaScript identifier",
+      [
+        {
+          code: "invalid_template_name",
+          path: ["name"],
+          message:
+            "Use a name such as PromotionCard. Spaces and punctuation are not allowed.",
+          constraint: "javascript_component_identifier",
+          example: "PromotionCard",
+        },
+      ]
+    );
+  }
+
+  const nextInstance = { ...instance, name };
+  const collision = findBlockTemplateNameCollision({
+    instance,
+    nextInstance,
+    instances,
+  });
+  if (collision !== undefined) {
+    return throwDuplicateBlockTemplateName({
+      name: collision.name,
+      path: "name",
+    });
+  }
+  requireBlockTemplateNameConfirmation({
+    required: getBlockTemplateNameConfirmation({
+      changes: [{ instance, nextInstance }],
+      instances,
+      props: state.props?.values() ?? [],
+    }),
+    confirm: input.templateNameConfirmation,
+    path: "name",
+  });
+
+  const patches: BuilderPatchChange["patches"] = [];
+  if (instance.name !== name) {
+    patches.push({
+      op: instance.name === undefined ? "add" : "replace",
+      path: [instance.id, "name"],
+      value: name,
+    });
+  }
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload([{ namespace: "instances", patches }]),
+    result: { instanceId: instance.id, name },
     invalidatesNamespaces: ["instances"],
   });
 };

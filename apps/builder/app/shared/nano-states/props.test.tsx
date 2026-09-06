@@ -30,7 +30,7 @@ import { $dataSourceVariables } from "./variables";
 import { $selectedPageId } from "./pages";
 import { getInstanceKey } from "../nano-states";
 import {
-  $,
+  createTemplateComponentFixture,
   expression,
   Parameter,
   renderData,
@@ -42,6 +42,12 @@ import { $systemDataByPage, updateCurrentSystem } from "../system";
 import { registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
 import { $externalContentRoots } from "../external-content-mutations";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Slot = createTemplateComponentFixture("Slot");
+const Text = createTemplateComponentFixture("Text");
 
 const { $computedResourceRequests } = __testing__;
 
@@ -152,20 +158,20 @@ test("does not reuse frontmatter from a previous Collection occurrence", () => {
   const collectionItem = new Parameter("Collection Item");
   const document = new Parameter(contentBlockDocumentProp);
   const data = renderData(
-    <$.Body ws:id="body">
+    <Body ws:id="body">
       <ws.collection
         ws:id="collection"
         data={expression`${collectionData}`}
         item={collectionItem}
       >
         <ws.block ws:id="block" document={document}>
-          <$.Box
+          <Box
             ws:id="title"
             ariaLabel={expression`${document}.frontmatter.title`}
           />
         </ws.block>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -601,15 +607,15 @@ test("compute expression from object collection items", () => {
   });
   const collectionItem = new Parameter("Collection Item");
   const data = renderData(
-    <$.Body ws:id="bodyId">
+    <Body ws:id="bodyId">
       <ws.collection
         ws:id="collectionId"
         data={expression`${dataVariable}`}
         item={collectionItem}
       >
-        <$.Box ws:id="boxId" ariaLabel={expression`${collectionItem}`}></$.Box>
+        <Box ws:id="boxId" ariaLabel={expression`${collectionItem}`}></Box>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -921,10 +927,10 @@ test("compute instance text content bound to expression", () => {
 test("use page system values in props", () => {
   const systemParameter = new Parameter("system");
   const data = renderData(
-    <$.Body
+    <Body
       ws:id="bodyId"
       data-origin={expression`${systemParameter}.origin`}
-    ></$.Body>
+    ></Body>
   );
   expect(data.dataSources.size).toEqual(1);
   const [systemParameterId] = data.dataSources.keys();
@@ -948,9 +954,9 @@ test("compute props with global variables", () => {
   const rootVariable = new Variable("rootVariable", "root value");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" data-value={expression`${rootVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId" data-value={expression`${rootVariable}`}></Box>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -971,7 +977,7 @@ test("compute props with global variables", () => {
 
 test("use global system values in props", () => {
   const data = renderData(
-    <$.Body ws:id="bodyId" data-origin={expression`$ws$system.origin`}></$.Body>
+    <Body ws:id="bodyId" data-origin={expression`$ws$system.origin`}></Body>
   );
   expect(data.dataSources.size).toEqual(0);
   $instances.set(data.instances);
@@ -993,7 +999,7 @@ test("use global system values in props", () => {
 test("compute variable values for page root", () => {
   const bodyVariable = new Variable("bodyVariable", "initial");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1018,10 +1024,10 @@ test("nest variable values from global root to current instance", () => {
   const boxVariable = new Variable("boxVariable", "");
   const textVariable = new Variable("textVariable", "");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" ars={expression`${boxVariable}`}></$.Box>
-      <$.Text ws:id="textId" ars={expression`${textVariable}`}></$.Text>
-    </$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" ars={expression`${boxVariable}`}></Box>
+      <Text ws:id="textId" ars={expression`${textVariable}`}></Text>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1077,15 +1083,15 @@ test("compute item values for collection", () => {
   ]);
   const collectionItem = new Parameter("Collection Item");
   const data = renderData(
-    <$.Body ws:id="bodyId">
+    <Body ws:id="bodyId">
       <ws.collection
         ws:id="collectionId"
         data={expression`${dataVariable}`}
         item={collectionItem}
       >
-        <$.Box ws:id="boxId"></$.Box>
+        <Box ws:id="boxId"></Box>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1143,15 +1149,15 @@ test("compute item values for collection with object data", () => {
   });
   const collectionItem = new Parameter("Collection Item");
   const data = renderData(
-    <$.Body ws:id="bodyId">
+    <Body ws:id="bodyId">
       <ws.collection
         ws:id="collectionId"
         data={expression`${dataVariable}`}
         item={collectionItem}
       >
-        <$.Box ws:id="boxId"></$.Box>
+        <Box ws:id="boxId"></Box>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1208,15 +1214,15 @@ test("compute item values for collection with nested object data", () => {
   });
   const collectionItem = new Parameter("Collection Item");
   const data = renderData(
-    <$.Body ws:id="bodyId">
+    <Body ws:id="bodyId">
       <ws.collection
         ws:id="collectionId"
         data={expression`${dataVariable}`}
         item={collectionItem}
       >
-        <$.Box ws:id="boxId"></$.Box>
+        <Box ws:id="boxId"></Box>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1259,7 +1265,7 @@ test("compute inherited item values inside collection without item parameter", (
   ]);
   const outerItem = new Parameter("Outer Item");
   const data = renderData(
-    <$.Body ws:id="bodyId">
+    <Body ws:id="bodyId">
       <ws.collection
         ws:id="outerCollectionId"
         data={expression`${dataVariable}`}
@@ -1269,10 +1275,10 @@ test("compute inherited item values inside collection without item parameter", (
           ws:id="innerCollectionId"
           data={expression`${outerItem}.items`}
         >
-          <$.Box ws:id="boxId"></$.Box>
+          <Box ws:id="boxId"></Box>
         </ws.collection>
       </ws.collection>
-    </$.Body>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1310,7 +1316,7 @@ test("compute resource variable values", () => {
     headers: [],
   });
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${resourceVariable}`}></$.Body>
+    <Body ws:id="bodyId" vars={expression`${resourceVariable}`}></Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1339,13 +1345,13 @@ test("stop variables lookup outside of slots", () => {
   const slotVariable = new Variable("slotVariable", "slot");
   const boxVariable = new Variable("boxVariable", "box");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-      <$.Slot ws:id="slotId" vars={expression`${slotVariable}`}>
-        <$.Fragment ws:id="fragmentId">
-          <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-        </$.Fragment>
-      </$.Slot>
-    </$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <Slot ws:id="slotId" vars={expression`${slotVariable}`}>
+        <Fragment ws:id="fragmentId">
+          <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+        </Fragment>
+      </Slot>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1383,10 +1389,10 @@ test("compute parameter and resource variables without values to make it availab
   });
   const parameterVariable = new Parameter("parameterVariable");
   const data = renderData(
-    <$.Body
+    <Body
       ws:id="bodyId"
       vars={expression`${resourceVariable} + ${parameterVariable}`}
-    ></$.Body>
+    ></Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1403,7 +1409,7 @@ test("compute parameter and resource variables without values to make it availab
 test("provide page system variable value", () => {
   const system = new Parameter("system");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${system}`}></$.Body>
+    <Body ws:id="bodyId" vars={expression`${system}`}></Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1434,7 +1440,7 @@ test("provide page system variable value", () => {
 
 test("provide global system variable value", () => {
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`$ws$system`}></$.Body>
+    <Body ws:id="bodyId" vars={expression`$ws$system`}></Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1480,9 +1486,9 @@ test("mask variables with the same name in nested scope", () => {
   const bodyVariable = new Variable("myVariable", "body");
   const boxVariable = new Variable("myVariable", "box");
   const data = renderData(
-    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-      <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-    </$.Body>
+    <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+    </Body>
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
@@ -1519,9 +1525,9 @@ test("inherit variables from global root", () => {
   const boxVariable = new Variable("myVariable", "box");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);
@@ -1564,13 +1570,13 @@ test("inherit variables from global root inside slots", () => {
   const boxVariable = new Variable("myVariable", "box");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
-        <$.Slot ws:id="slotId">
-          <$.Fragment ws:id="fragmentId">
-            <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <Slot ws:id="slotId">
+          <Fragment ws:id="fragmentId">
+            <Box ws:id="boxId" vars={expression`${boxVariable}`}></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     </ws.root>
   );
   data.instances.delete(ROOT_INSTANCE_ID);

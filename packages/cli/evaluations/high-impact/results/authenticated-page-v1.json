@@ -1,37 +1,38 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "kind": "high-impact-minimal-context-agent-evaluation-result",
   "fixtureId": "authenticated-page-v1",
   "outcome": "passed",
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.4-mini",
-  "commandSha256": "1f722c6fb110b0de65a89d07326dc21acfee50935b68ff1a5d3e1d483be791fe",
+  "reasoningEffort": "low",
+  "commandSha256": "3150ac354964486518b633ed39c3c58807dd68c80a875b01a5acfce14dbeadf6",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 60397,
+    "durationMs": 61462,
     "tokens": {
-      "input": 176838,
-      "cachedInput": 162048,
-      "uncachedInput": 14790,
+      "input": 172843,
+      "cachedInput": 146688,
+      "uncachedInput": 26155,
       "cacheWriteInput": 0,
-      "output": 2366,
-      "reasoningOutput": 1293,
-      "total": 179204,
-      "cachedInputRate": 0.9164
+      "output": 1768,
+      "reasoningOutput": 574,
+      "total": 174611,
+      "cachedInputRate": 0.8487
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 53114,
-      "maxResponseBytes": 53114,
-      "latestToolCount": 184,
-      "latestResponseBytes": 53114,
-      "latestInputSchemaBytes": 29971,
-      "latestDescriptionBytes": 4529
+      "totalResponseBytes": 61453,
+      "maxResponseBytes": 61453,
+      "latestToolCount": 196,
+      "latestResponseBytes": 61453,
+      "latestInputSchemaBytes": 35007,
+      "latestDescriptionBytes": 6407
     },
     "toolCalls": {
-      "total": 7,
-      "succeeded": 7,
+      "total": 5,
+      "succeeded": 5,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
@@ -40,89 +41,65 @@
       "durationsByTool": {
         "create-page": {
           "count": 1,
-          "totalMs": 45,
-          "p95Ms": 45,
-          "maxMs": 45
-        },
-        "create-resource": {
-          "count": 1,
-          "totalMs": 33,
-          "p95Ms": 33,
-          "maxMs": 33
-        },
-        "create-variable": {
-          "count": 1,
-          "totalMs": 37,
-          "p95Ms": 37,
-          "maxMs": 37
+          "totalMs": 35,
+          "p95Ms": 35,
+          "maxMs": 35
         },
         "insert-fragment-verified": {
           "count": 1,
-          "totalMs": 65,
-          "p95Ms": 65,
-          "maxMs": 65
+          "totalMs": 82,
+          "p95Ms": 82,
+          "maxMs": 82
         },
         "inspect-auth-context": {
           "count": 1,
-          "totalMs": 28,
-          "p95Ms": 28,
-          "maxMs": 28
+          "totalMs": 36,
+          "p95Ms": 36,
+          "maxMs": 36
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 13,
-          "p95Ms": 13,
-          "maxMs": 13
+          "totalMs": 2,
+          "p95Ms": 2,
+          "maxMs": 2
         },
         "verify-page-responsive": {
           "count": 1,
-          "totalMs": 10855,
-          "p95Ms": 10855,
-          "maxMs": 10855
+          "totalMs": 11466,
+          "p95Ms": 11466,
+          "maxMs": 11466
         }
       },
       "responseBytesByTool": {
         "create-page": {
           "count": 1,
-          "totalBytes": 1342,
-          "p95Bytes": 1342,
-          "maxBytes": 1342
-        },
-        "create-resource": {
-          "count": 1,
-          "totalBytes": 1644,
-          "p95Bytes": 1644,
-          "maxBytes": 1644
-        },
-        "create-variable": {
-          "count": 1,
-          "totalBytes": 1554,
-          "p95Bytes": 1554,
-          "maxBytes": 1554
+          "totalBytes": 2050,
+          "p95Bytes": 2050,
+          "maxBytes": 2050
         },
         "insert-fragment-verified": {
           "count": 1,
-          "totalBytes": 2662,
-          "p95Bytes": 2662,
-          "maxBytes": 2662
+          "totalBytes": 2956,
+          "p95Bytes": 2956,
+          "maxBytes": 2956
         },
         "inspect-auth-context": {
           "count": 1,
-          "totalBytes": 2576,
-          "p95Bytes": 2576,
-          "maxBytes": 2576
+          "totalBytes": 2644,
+          "p95Bytes": 2644,
+          "maxBytes": 2644
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 15934,
-          "p95Bytes": 15934,
-          "maxBytes": 15934
+          "totalBytes": 12314,
+          "p95Bytes": 12314,
+          "maxBytes": 12314
         },
         "verify-page-responsive": {
           "count": 1,
-          "totalBytes": 11730,
-          "p95Bytes": 11730,
-          "maxBytes": 11730
+          "totalBytes": 11800,
+          "p95Bytes": 11800,
+          "maxBytes": 11800
         }
       },
       "retries": 0,
@@ -130,25 +107,23 @@
       "broadReads": 0,
       "dryRuns": 0,
       "plannedMutations": 0,
-      "committedMutations": 4,
+      "committedMutations": 2,
       "verifications": 2,
-      "totalDurationMs": 11076,
-      "p50DurationMs": 37,
-      "p95DurationMs": 10855,
-      "totalResponseBytes": 37442,
-      "p50ResponseBytes": 2576,
-      "p95ResponseBytes": 15934,
-      "maxResponseBytes": 15934,
-      "timeToFirstMutationMs": 25967,
-      "timeToFirstVerificationMs": 39551
+      "totalDurationMs": 11621,
+      "p50DurationMs": 36,
+      "p95DurationMs": 11466,
+      "totalResponseBytes": 31764,
+      "p50ResponseBytes": 2956,
+      "p95ResponseBytes": 12314,
+      "maxResponseBytes": 12314,
+      "timeToFirstMutationMs": 25867,
+      "timeToFirstVerificationMs": 32553
     }
   },
   "callSequence": [
     "meta.guide",
     "inspect-auth-context",
     "create-page",
-    "create-variable",
-    "create-resource",
     "insert-fragment-verified",
     "verify-page-responsive"
   ],

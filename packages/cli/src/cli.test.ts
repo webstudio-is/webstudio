@@ -146,14 +146,14 @@ describe("registerCommands", () => {
     expect(
       getTopLevelMcpToolForwardArgs([
         "insert-fragment",
-        '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
+        '{"parentInstanceId":"parent-id","fragment":"<Box />"}',
         "--dry-run",
       ])
     ).toEqual([
       "mcp",
       "single-op-call",
       "insert-fragment",
-      '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
+      '{"parentInstanceId":"parent-id","fragment":"<Box />"}',
       "--dry-run",
     ]);
     expect(

@@ -41,7 +41,7 @@ import {
   updatePageTemplate,
 } from "./page-copy";
 import {
-  $,
+  createTemplateComponentFixture,
   css,
   expression,
   Parameter,
@@ -50,6 +50,11 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { applyBuilderPatchTransactions } from "../state/patch";
+
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Slot = createTemplateComponentFixture("Slot");
 
 const createNanoId = () => createId("nano");
 
@@ -177,7 +182,7 @@ const createConflictingRootStyleProjects = () => {
           color: red;
         `}
       >
-        <$.Body ws:id="source-body"></$.Body>
+        <Body ws:id="source-body"></Body>
       </ws.root>
     ),
     pages: sourcePages,
@@ -190,7 +195,7 @@ const createConflictingRootStyleProjects = () => {
           color: blue;
         `}
       >
-        <$.Body ws:id="target-body"></$.Body>
+        <Body ws:id="target-body"></Body>
       </ws.root>
     ),
     pages: createDefaultPages({
@@ -871,13 +876,13 @@ describe("insert page copy", () => {
 
   test("preserves slot content ids when duplicating page", () => {
     const dataWithoutPages = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slotId">
-          <$.Fragment ws:id="fragmentId">
-            <$.Box ws:id="boxId"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Slot ws:id="slotId">
+          <Fragment ws:id="fragmentId">
+            <Box ws:id="boxId"></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     const data = getWebstudioDataStub({
       ...dataWithoutPages,
@@ -1123,7 +1128,7 @@ describe("insert page copy", () => {
   test("replace variables in page copy meta", () => {
     const bodyVariable = new Variable("bodyVariable", "");
     const dataWithoutPage = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+      <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
     );
     const [variableId] = dataWithoutPage.dataSources.keys();
     const variableIdentifier = encodeDataVariableId(variableId);
@@ -1256,9 +1261,9 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">{expression`${globalVariable}`}</Box>
+          </Body>
         </ws.root>
       ),
     };
@@ -1294,9 +1299,9 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">{expression`${globalVariable}`}</Box>
+          </Body>
         </ws.root>,
         // generate different ids in source and data projects
         createNanoId
@@ -1309,7 +1314,7 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="anotherBodyId"></$.Body>
+          <Body ws:id="anotherBodyId"></Body>
         </ws.root>,
         // generate different ids in source and data projects
         createNanoId
@@ -1346,9 +1351,9 @@ describe("insert page copy", () => {
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">{expression`${globalVariable}`}</Box>
+          </Body>
         </ws.root>,
         // generate different ids in source and data projects
         createNanoId
@@ -1360,7 +1365,7 @@ describe("insert page copy", () => {
         rootInstanceId: "anotherBodyId",
       }),
       // generate different ids in source and data projects
-      ...renderData(<$.Body ws:id="anotherBodyId"></$.Body>, createNanoId),
+      ...renderData(<Body ws:id="anotherBodyId"></Body>, createNanoId),
     };
     insertPageCopyMutable({
       source: { data: sourceData, pageId: sourceData.pages.homePageId },
@@ -1387,9 +1392,9 @@ describe("insert page copy", () => {
   test("delete page system in favor of global one", () => {
     const pageSystemVariable = new Parameter("system");
     const dataWithoutPages = renderData(
-      <$.Body ws:id="bodyId" vars={expression`${pageSystemVariable}`}>
-        <$.Box ws:id="boxId">{expression`${pageSystemVariable}`}</$.Box>
-      </$.Body>
+      <Body ws:id="bodyId" vars={expression`${pageSystemVariable}`}>
+        <Box ws:id="boxId">{expression`${pageSystemVariable}`}</Box>
+      </Body>
     );
     const [pageSystemVariableId] = dataWithoutPages.dataSources.keys();
     const data = {
@@ -1426,9 +1431,9 @@ describe("insert page copy", () => {
   test("insert page from template with transformed metadata", () => {
     const templateVariable = new Variable("templateVariable", "");
     const dataWithoutPages = renderData(
-      <$.Body ws:id="templateBodyId" vars={expression`${templateVariable}`}>
-        <$.Box ws:id="boxId">{expression`${templateVariable}`}</$.Box>
-      </$.Body>
+      <Body ws:id="templateBodyId" vars={expression`${templateVariable}`}>
+        <Box ws:id="boxId">{expression`${templateVariable}`}</Box>
+      </Body>
     );
     const [templateVariableId] = dataWithoutPages.dataSources.keys();
     const templateVariableIdentifier = encodeDataVariableId(templateVariableId);

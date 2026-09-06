@@ -1,3 +1,5 @@
+// Compares versioned evaluation results with compatible baselines and applies
+// the suite's explicit quality and token-regression acceptance rules.
 import type { AgentEvaluationResult } from "./agent-runner";
 
 export type EvaluationMetricDelta = {
@@ -61,6 +63,17 @@ export const shouldUpdateEvaluationBaselines = ({
   comparisonsPassed &&
   aggregateTokensPassed;
 
+const isCompatibleBaseline = (
+  current: AgentEvaluationResult,
+  baseline: AgentEvaluationResult
+) =>
+  current.schemaVersion === baseline.schemaVersion &&
+  current.fixtureId === baseline.fixtureId &&
+  current.cli === baseline.cli &&
+  current.provider === baseline.provider &&
+  current.model === baseline.model &&
+  current.reasoningEffort === baseline.reasoningEffort;
+
 export const isAggregateTokenBaselineNonRegressed = (
   current: readonly AgentEvaluationResult[],
   baselines: readonly AgentEvaluationResult[]
@@ -73,7 +86,10 @@ export const isAggregateTokenBaselineNonRegressed = (
   let compared = 0;
   for (const result of current) {
     const baseline = baselineByFixture.get(result.fixtureId);
-    if (baseline === undefined) {
+    if (
+      baseline === undefined ||
+      isCompatibleBaseline(result, baseline) === false
+    ) {
       continue;
     }
     const currentTokens = result.metrics.tokens?.output;
@@ -117,16 +133,6 @@ const getNumericMetrics = (
   }
   return metrics;
 };
-
-const isCompatibleBaseline = (
-  current: AgentEvaluationResult,
-  baseline: AgentEvaluationResult
-) =>
-  current.schemaVersion === baseline.schemaVersion &&
-  current.fixtureId === baseline.fixtureId &&
-  current.cli === baseline.cli &&
-  current.provider === baseline.provider &&
-  current.model === baseline.model;
 
 export const compareEvaluationResult = (
   current: AgentEvaluationResult,
