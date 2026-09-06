@@ -238,11 +238,7 @@ export const AssetFolderSelector = ({
                       selectorRef.current?.contains(document.activeElement) ===
                         false
                     ) {
-                      if (pendingValue.current !== undefined) {
-                        commitPendingValue();
-                      } else {
-                        restoreCommittedValue();
-                      }
+                      restoreCommittedValue();
                     }
                   });
                 }
