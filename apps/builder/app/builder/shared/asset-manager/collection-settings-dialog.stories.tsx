@@ -4,9 +4,8 @@ import {
   createDefaultCollectionConfig,
   parseCollectionConfig,
 } from "@webstudio-is/content-engine";
-import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/sdk";
-import { $assets, $pages, $project } from "~/shared/sync/data-stores";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import { CollectionSettingsDialog } from "./collection-settings-dialog";
 
 const createAsset = ({
@@ -55,19 +54,6 @@ configValue.properties.readingTime = {
   minimum: 1,
   maximum: 60,
 };
-configValue["x-webstudio"].previewPage = "blog-post";
-
-const pages = createDefaultPages({ rootInstanceId: "root" });
-pages.pages.set("blog-post", {
-  id: "blog-post",
-  name: "Blog post",
-  title: "Blog post",
-  path: "/blog/:slug",
-  rootInstanceId: "blog-post-root",
-  meta: {},
-});
-pages.folders.get(pages.rootFolderId)?.children.push("blog-post");
-
 const template = `---
 title: Untitled post
 slug: untitled-post
@@ -86,10 +72,8 @@ const CollectionSettingsStory = (
 ) => {
   useLayoutEffect(() => {
     const previousProject = $project.get();
-    const previousPages = $pages.get();
     const previousAssets = $assets.get();
     $project.set({ id: "storybook-project" } as never);
-    $pages.set(pages);
     $assets.set(
       new Map([
         [configAsset.id, configAsset],
@@ -98,7 +82,6 @@ const CollectionSettingsStory = (
     );
     return () => {
       $project.set(previousProject);
-      $pages.set(previousPages);
       $assets.set(previousAssets);
     };
   }, []);

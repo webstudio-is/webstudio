@@ -13,12 +13,11 @@ import {
 } from "@webstudio-is/protocol/asset-resource-api";
 import type { Asset } from "@webstudio-is/sdk";
 import { __testing__ } from "~/shared/asset-content-bridge.client";
-import { $assets, $pages, $project } from "~/shared/sync/data-stores";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import {
   CollectionSettingsDialog,
   updateCollectionConfigAndTemplateName,
 } from "./collection-settings-dialog";
-import { isCollectionPreviewPath } from "./collection-preview-utils";
 import { createAssetManagerTestRenderer } from "./test-utils";
 
 const createAsset = ({
@@ -47,15 +46,6 @@ const renderer = createAssetManagerTestRenderer();
 const { initBridge, clearBridge } = __testing__;
 const render = (children: ReactNode) =>
   renderer.render(<TooltipProvider>{children}</TooltipProvider>);
-
-test("only accepts preview paths with the configured slug parameter", () => {
-  expect(isCollectionPreviewPath("/blog/:slug", "slug")).toBe(true);
-  expect(isCollectionPreviewPath("/:category/:slug", "slug")).toBe(false);
-  expect(isCollectionPreviewPath("/:category?/:slug", "slug")).toBe(true);
-  expect(isCollectionPreviewPath("/*/:slug", "slug")).toBe(true);
-  expect(isCollectionPreviewPath("/blog/:post", "slug")).toBe(false);
-  expect(isCollectionPreviewPath("/blog", "slug")).toBe(false);
-});
 
 test("does not commit collection settings after the active project changes", async () => {
   const configAsset = createAsset({
@@ -243,7 +233,6 @@ afterEach(() => {
   renderer.cleanup();
   clearBridge();
   $assets.set(new Map());
-  $pages.set(undefined);
   $project.set(undefined);
 });
 
@@ -558,6 +547,9 @@ test("organizes field, template, and collection settings by task", async () => {
   expect(
     document.querySelector('[role="toolbar"][aria-label="Markdown formatting"]')
   ).toBeInstanceOf(HTMLElement);
+  expect(document.querySelector('[aria-label="Show preview"]')).toBeInstanceOf(
+    HTMLButtonElement
+  );
   expect(
     document
       .querySelector('[aria-label="Entry template Markdown"]')
@@ -582,7 +574,7 @@ test("organizes field, template, and collection settings by task", async () => {
   expect(settingsSection).not.toBeUndefined();
   act(() => settingsSection?.click());
   expect(settingsSection?.getAttribute("aria-current")).toBe("true");
-  expect(document.body.textContent).toContain("Entry preview");
+  expect(document.body.textContent).toContain("Remove collection");
 });
 
 test("persists a template rename without rewriting unchanged template content", async () => {
@@ -738,100 +730,6 @@ test("retries settings after template content was already saved", async () => {
       }),
     })
   );
-});
-
-test("clears a preview that no longer matches a renamed slug field", async () => {
-  const configAsset = createAsset({
-    id: "config",
-    filename: "collection",
-    format: "json",
-  });
-  const templateAsset = createAsset({
-    id: "template",
-    filename: "template",
-    format: "mdx",
-  });
-  const configValue = JSON.parse(createDefaultCollectionConfig());
-  configValue["x-webstudio"].previewPage = "/blog/:slug";
-  $pages.set({
-    homePageId: "home",
-    rootFolderId: "root",
-    pages: new Map([
-      [
-        "home",
-        {
-          id: "home",
-          name: "Home",
-          title: "Home",
-          path: "",
-          rootInstanceId: "home-root",
-          meta: {},
-        },
-      ],
-      [
-        "blog",
-        {
-          id: "blog",
-          name: "Blog post",
-          title: "Blog post",
-          path: "/blog/:slug",
-          rootInstanceId: "blog-root",
-          meta: {},
-        },
-      ],
-    ]),
-    folders: new Map([
-      [
-        "root",
-        {
-          id: "root",
-          name: "Root",
-          slug: "",
-          children: ["home", "blog"],
-        },
-      ],
-    ]),
-  });
-  render(
-    <CollectionSettingsDialog
-      collection={{
-        status: "ready",
-        folderId: "posts",
-        configAsset,
-        templateAsset,
-        config: parseCollectionConfig(JSON.stringify(configValue)),
-        templateProperties: { draft: true },
-      }}
-      open
-      onOpenChange={() => undefined}
-    />
-  );
-
-  await act(async () => undefined);
-  expect(
-    Array.from(document.querySelectorAll("button")).some(
-      (button) => button.textContent === "Clear"
-    )
-  ).toBe(true);
-  act(() => {
-    document
-      .querySelector<HTMLButtonElement>('[aria-label="Edit URL slug"]')
-      ?.click();
-  });
-  const slugKey = document.querySelector<HTMLInputElement>(
-    '[aria-label="URL slug key"]'
-  );
-  if (slugKey === null) {
-    throw new Error("Expected slug key control");
-  }
-  input(slugKey, "permalink");
-  await act(async () => undefined);
-
-  expect(
-    Array.from(document.querySelectorAll("button")).some(
-      (button) => button.textContent === "Clear"
-    )
-  ).toBe(false);
 });
 
 test("does not reuse an original field key for a new row", async () => {

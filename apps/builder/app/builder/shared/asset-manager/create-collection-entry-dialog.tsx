@@ -5,13 +5,7 @@ import {
   normalizeCollectionSlug,
   type CollectionField,
 } from "@webstudio-is/content-engine";
-import {
-  findPageByIdOrPath,
-  getAssetDisplayNameParts,
-  getPagePath,
-  type Asset,
-} from "@webstudio-is/sdk";
-import { tokenizePathnamePattern } from "@webstudio-is/project-build/runtime";
+import type { Asset } from "@webstudio-is/sdk";
 import {
   Button,
   Checkbox,
@@ -30,15 +24,12 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { fetch } from "~/shared/fetch.client";
-import { $assets, $pages, $project } from "~/shared/sync/data-stores";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import { getWebstudioData } from "~/shared/instance-utils/data";
 import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import type { ContentCollection } from "../assets/content-collections";
-import { selectPage } from "~/shared/nano-states";
-import { $currentSystem, updateCurrentSystem } from "~/shared/system";
-import { isCollectionPreviewPath } from "./collection-preview-utils";
 
 const getInitialValue = (
   field: CollectionField,
@@ -114,53 +105,6 @@ const stopEscapePropagation = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
     event.stopPropagation();
   }
-};
-
-const openConfiguredPreview = ({
-  collection,
-  asset,
-}: {
-  collection: Extract<ContentCollection, { status: "ready" }>;
-  asset: Asset;
-}) => {
-  const previewPage = collection.config.previewPage;
-  const pages = $pages.get();
-  if (previewPage === undefined || pages === undefined) {
-    return false;
-  }
-  const page = findPageByIdOrPath(previewPage, pages);
-  if (page === undefined) {
-    return false;
-  }
-  const pagePath = getPagePath(page.id, pages);
-  if (
-    isCollectionPreviewPath(pagePath, collection.config.slugField) === false
-  ) {
-    return false;
-  }
-  const parameters = tokenizePathnamePattern(pagePath).flatMap((token) =>
-    token.type === "param" ? [token] : []
-  );
-  const parameter = parameters.find(
-    ({ name }) => name === collection.config.slugField
-  );
-  if (parameter === undefined) {
-    return false;
-  }
-  selectPage(page.id);
-  const params = { ...$currentSystem.get().params };
-  for (const routeParameter of parameters) {
-    if (routeParameter.name !== parameter.name) {
-      delete params[routeParameter.name];
-    }
-  }
-  updateCurrentSystem({
-    params: {
-      ...params,
-      [parameter.name]: getAssetDisplayNameParts(asset).basename,
-    },
-  });
-  return true;
 };
 
 export const CreateCollectionEntryDialog = ({
@@ -304,10 +248,7 @@ export const CreateCollectionEntryDialog = ({
         onNextTransactionComplete(invalidateAssets);
       }
       onOpenChange(false);
-      const previewOpened = openConfiguredPreview({ collection, asset });
-      toast.success(
-        previewOpened ? "Entry created and opened." : "Entry created."
-      );
+      toast.success("Entry created.");
     } catch (error) {
       setError({
         message:

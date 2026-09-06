@@ -4,8 +4,10 @@ import {
   parseCollectionConfig,
   createDefaultCollectionConfig,
 } from "@webstudio-is/content-engine";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/sdk";
-import { $assets, $project } from "~/shared/sync/data-stores";
+import { $assets, $pages, $project } from "~/shared/sync/data-stores";
+import { $selectedPageId } from "~/shared/nano-states";
 import { CreateCollectionEntryDialog } from "./create-collection-entry-dialog";
 import { createAssetManagerTestRenderer } from "./test-utils";
 
@@ -60,8 +62,71 @@ beforeEach(() => {
 afterEach(() => {
   renderer.cleanup();
   $assets.set(new Map());
+  $pages.set(undefined);
   $project.set(undefined);
+  $selectedPageId.set(undefined);
   vi.unstubAllGlobals();
+});
+
+test("does not navigate after creating an entry", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const createdAsset = createAsset({
+    id: "created",
+    filename: "hello-world",
+    format: "mdx",
+  });
+  const configValue = JSON.parse(createDefaultCollectionConfig());
+  configValue["x-webstudio"].previewPage = "/blog/:slug";
+  const pages = createDefaultPages({ rootInstanceId: "home-root" });
+  pages.pages.set("blog", {
+    id: "blog",
+    name: "Blog post",
+    title: "Blog post",
+    path: "/blog/:slug",
+    rootInstanceId: "blog-root",
+    meta: {},
+  });
+  pages.folders.get(pages.rootFolderId)?.children.push("blog");
+  $pages.set(pages);
+  $selectedPageId.set(pages.homePageId);
+  renderer.render(
+    <CreateCollectionEntryDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(JSON.stringify(configValue)),
+        templateProperties: {},
+      }}
+      open
+      onOpenChange={vi.fn()}
+      createEntry={vi.fn().mockResolvedValue(createdAsset)}
+    />
+  );
+
+  const title = document.querySelector<HTMLInputElement>(
+    "#collection-entry-title"
+  );
+  if (title === null) {
+    throw new Error("Expected collection entry title field");
+  }
+  input(title, "Hello world");
+  const create = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Create entry");
+  await act(async () => create?.click());
+
+  expect($selectedPageId.get()).toBe(pages.homePageId);
 });
 
 test("asks before closing a new entry with unsaved values", async () => {

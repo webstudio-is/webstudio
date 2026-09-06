@@ -37,15 +37,9 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
-import {
-  formatAssetName,
-  findPageByIdOrPath,
-  getAssetDisplayNameParts,
-  getAllPages,
-  getPagePath,
-} from "@webstudio-is/sdk";
+import { formatAssetName, getAssetDisplayNameParts } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
-import { $assets, $pages, $project } from "~/shared/sync/data-stores";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import {
   executeRuntimeMutation,
   getWebstudioData,
@@ -60,7 +54,6 @@ import {
   readBuilderAssetSource,
   type ContentCollection,
 } from "../assets/content-collections";
-import { isCollectionPreviewPath } from "./collection-preview-utils";
 import { MarkdownEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import { getTextFileEditorExtensions } from "~/builder/features/text-file-editor/text-file-utils";
 
@@ -285,32 +278,17 @@ export const CollectionSettingsDialog = ({
   const [generateSlugFrom, setGenerateSlugFrom] = useState(
     collection.config.generateSlugFrom
   );
-  const [previewPage, setPreviewPage] = useState(collection.config.previewPage);
-  const [previewNotice, setPreviewNotice] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const pages = useStore($pages);
   const assets = useStore($assets);
   const templateKey = `${collection.templateAsset.id}:${
     collection.templateAsset.name
   }:${collection.templateAsset.updatedAt ?? collection.templateAsset.size}`;
   const templateReady = loadedTemplateKey === templateKey;
   const formDisabled = loading || saving;
-  const previewPages = useMemo(
-    () =>
-      pages === undefined
-        ? []
-        : getAllPages(pages).flatMap((page) => {
-            const path = getPagePath(page.id, pages);
-            return isCollectionPreviewPath(path, slugField)
-              ? [{ id: page.id, name: page.name, path }]
-              : [];
-          }),
-    [pages, slugField]
-  );
   const templateLanguageExtensions = useMemo(
     () => getTextFileEditorExtensions(collection.templateAsset),
     [collection.templateAsset]
@@ -330,28 +308,10 @@ export const CollectionSettingsDialog = ({
     currentTemplateAssetRef.current = collection.templateAsset;
     setSlugField(collection.config.slugField);
     setGenerateSlugFrom(collection.config.generateSlugFrom);
-    setPreviewPage(collection.config.previewPage);
-    setPreviewNotice(undefined);
     setError(undefined);
     setConfirmRemove(false);
     setConfirmDiscard(false);
   }, [collection, open]);
-
-  useLayoutEffect(() => {
-    if (previewPage === undefined || pages === undefined) {
-      return;
-    }
-    const page = findPageByIdOrPath(previewPage, pages);
-    if (
-      page === undefined ||
-      isCollectionPreviewPath(getPagePath(page.id, pages), slugField) === false
-    ) {
-      setPreviewPage(undefined);
-      setPreviewNotice(
-        "The saved preview page is missing or no longer matches the slug field. Choose another page."
-      );
-    }
-  }, [pages, previewPage, slugField]);
 
   useLayoutEffect(() => {
     if (open === false) {
@@ -411,8 +371,7 @@ export const CollectionSettingsDialog = ({
     templateName !==
       getAssetDisplayNameParts(collection.templateAsset).basename ||
     slugField !== collection.config.slugField ||
-    generateSlugFrom !== collection.config.generateSlugFrom ||
-    previewPage !== collection.config.previewPage;
+    generateSlugFrom !== collection.config.generateSlugFrom;
   const requestClose = () => {
     if (isDirty) {
       setConfirmDiscard(true);
@@ -472,7 +431,6 @@ export const CollectionSettingsDialog = ({
           template: nextTemplateFilename,
           slugField: nextSlugField,
           generateSlugFrom: nextGenerateSlugFrom,
-          previewPage,
         },
       });
       const nextConfig = parseCollectionConfig(configSource);
@@ -958,54 +916,6 @@ export const CollectionSettingsDialog = ({
                   maxWidth: 560,
                 }}
               >
-                <Grid gap={1}>
-                  <Text variant="titles">Entry preview</Text>
-                  <Text color="subtle">
-                    Choose the page editors use to preview collection entries.
-                  </Text>
-                </Grid>
-                <Grid gap={1}>
-                  <Label>Dynamic preview page</Label>
-                  <Flex gap={2}>
-                    <Select
-                      aria-label="Dynamic preview page"
-                      options={previewPages}
-                      value={previewPages.find(
-                        ({ id, path }) =>
-                          id === previewPage || path === previewPage
-                      )}
-                      placeholder="Select a dynamic page"
-                      getValue={({ id }) => id}
-                      getLabel={({ name, path }) => `${name} (${path})`}
-                      disabled={formDisabled}
-                      onChange={({ path }) => {
-                        setPreviewPage(path);
-                        setPreviewNotice(undefined);
-                      }}
-                    />
-                    {previewPage !== undefined && (
-                      <Button
-                        disabled={formDisabled}
-                        onClick={() => {
-                          setPreviewPage(undefined);
-                          setPreviewNotice(undefined);
-                        }}
-                      >
-                        Clear
-                      </Button>
-                    )}
-                  </Flex>
-                  <Text color="subtle" variant="tiny">
-                    Preview pages need a dynamic “{slugField}” parameter. Any
-                    other parameters must be optional or catch-all.
-                  </Text>
-                  {previewNotice !== undefined && (
-                    <Text role="status" color="subtle" variant="tiny">
-                      {previewNotice}
-                    </Text>
-                  )}
-                </Grid>
-                <Separator />
                 <Grid gap={2}>
                   <Grid gap={1}>
                     <Text variant="titles">Remove collection</Text>
@@ -1082,6 +992,7 @@ export const CollectionSettingsDialog = ({
                     filename: templateName,
                   }}
                   ariaLabel="Entry template Markdown"
+                  defaultPreviewOpen={false}
                   value={template}
                   readOnly={formDisabled || templateReady === false}
                   languageExtensions={templateLanguageExtensions}

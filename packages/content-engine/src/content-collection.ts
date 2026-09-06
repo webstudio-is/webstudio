@@ -24,7 +24,6 @@ const collectionSettings = z.object({
   template: z.string().min(1),
   slugField: z.string().min(1),
   generateSlugFrom: z.string().min(1),
-  previewPage: z.string().min(1).optional(),
 });
 
 export type CollectionField = Readonly<{
@@ -45,7 +44,6 @@ export type ContentCollectionConfig = Readonly<{
   template: string;
   slugField: string;
   generateSlugFrom: string;
-  previewPage?: string;
   fields: readonly CollectionField[];
   validate: (value: unknown) => z.ZodSafeParseResult<unknown>;
 }>;
@@ -689,7 +687,6 @@ export const parseCollectionConfig = (
     template: settings.template,
     slugField: settings.slugField,
     generateSlugFrom: settings.generateSlugFrom,
-    previewPage: settings.previewPage,
     fields,
     validate: (candidate) => parser.safeParse(candidate),
   };
@@ -1180,7 +1177,6 @@ export const serializeCollectionConfig = ({
     template?: string;
     slugField?: string;
     generateSlugFrom?: string;
-    previewPage?: string;
   };
 }) => {
   const ownedOriginalKeys = new Set<string>();
@@ -1228,13 +1224,10 @@ export const serializeCollectionConfig = ({
   const originalProperties = isObject(config.schema.properties)
     ? config.schema.properties
     : {};
-  const previewPage =
-    settings !== undefined && Object.hasOwn(settings, "previewPage")
-      ? settings.previewPage
-      : config.previewPage;
   const originalSettings = isObject(config.schema["x-webstudio"])
-    ? config.schema["x-webstudio"]
+    ? { ...config.schema["x-webstudio"] }
     : {};
+  delete originalSettings.previewPage;
   const value = {
     ...config.schema,
     required: serializedFields
@@ -1256,7 +1249,6 @@ export const serializeCollectionConfig = ({
       template,
       slugField,
       generateSlugFrom,
-      previewPage,
     },
   };
   const source = `${JSON.stringify(value, undefined, 2)}\n`;

@@ -27,25 +27,17 @@ describe("content collections", () => {
     });
   });
 
-  test("stores and clears the configured dynamic preview page", () => {
-    const config = parseCollectionConfig(createDefaultCollectionConfig());
-    const withPreview = parseCollectionConfig(
-      serializeCollectionConfig({
-        config,
-        fields: config.fields,
-        settings: { previewPage: "blog-post" },
-      })
-    );
-    expect(withPreview.previewPage).toBe("blog-post");
+  test("ignores and removes the obsolete dynamic preview setting", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].previewPage = "blog-post";
+    const config = parseCollectionConfig(JSON.stringify(schema));
+
+    expect(config).not.toHaveProperty("previewPage");
     expect(
-      parseCollectionConfig(
-        serializeCollectionConfig({
-          config: withPreview,
-          fields: withPreview.fields,
-          settings: { previewPage: undefined },
-        })
-      ).previewPage
-    ).toBeUndefined();
+      JSON.parse(serializeCollectionConfig({ config, fields: config.fields }))[
+        "x-webstudio"
+      ]
+    ).not.toHaveProperty("previewPage");
   });
 
   test("requires a separate field for automatic slug generation", () => {
@@ -423,7 +415,6 @@ describe("content collections", () => {
           template: "entry.mdx",
           slugField: "permalink",
           generateSlugFrom: "headline",
-          previewPage: "post",
         },
       })
     );
@@ -432,7 +423,6 @@ describe("content collections", () => {
       template: "entry.mdx",
       slugField: "permalink",
       generateSlugFrom: "headline",
-      previewPage: "post",
     });
 
     const withTemplateOnly = parseCollectionConfig(
@@ -443,7 +433,6 @@ describe("content collections", () => {
       })
     );
     expect(withTemplateOnly.template).toBe("post.mdx");
-    expect(withTemplateOnly.previewPage).toBe("post");
   });
 
   test("validates explicit collection setting changes while serializing", () => {

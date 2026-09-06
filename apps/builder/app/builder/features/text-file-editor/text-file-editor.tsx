@@ -577,6 +577,7 @@ const MarkdownToolbar = ({
 export const MarkdownEditor = ({
   asset,
   ariaLabel = "Markdown source",
+  defaultPreviewOpen = true,
   value,
   readOnly,
   languageExtensions = [],
@@ -585,6 +586,7 @@ export const MarkdownEditor = ({
 }: {
   asset: Asset;
   ariaLabel?: string;
+  defaultPreviewOpen?: boolean;
   value: string;
   readOnly: boolean;
   languageExtensions?: Extension[];
@@ -593,7 +595,7 @@ export const MarkdownEditor = ({
 }) => {
   const assetFolders = useStore($assetFolders);
   const { assetContainers } = useAssets();
-  const [previewOpen, setPreviewOpen] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(defaultPreviewOpen);
   const editorApiRef = useRef<EditorApi>();
 
   return (
