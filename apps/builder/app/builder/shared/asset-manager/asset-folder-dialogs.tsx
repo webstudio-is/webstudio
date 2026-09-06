@@ -242,6 +242,7 @@ const AssetFolderForm = ({
 export const CreateAssetFolderDialog = ({
   open,
   onOpenChange,
+  onConfigureCollection,
   currentFolderId,
   canCreateContentCollection = true,
   createFolder = createAssetFolder,
@@ -250,6 +251,7 @@ export const CreateAssetFolderDialog = ({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConfigureCollection?: (folderId: string) => void;
   currentFolderId: string | undefined;
   canCreateContentCollection?: boolean;
   createFolder?: (
@@ -269,6 +271,8 @@ export const CreateAssetFolderDialog = ({
   const [initializing, setInitializing] = useState(false);
   const [initializationError, setInitializationError] = useState<string>();
   const [folderSyncFailed, setFolderSyncFailed] = useState(false);
+  const [createdCollectionFolderId, setCreatedCollectionFolderId] =
+    useState<string>();
 
   const initializeCollection = async ({
     folderId,
@@ -354,8 +358,8 @@ export const CreateAssetFolderDialog = ({
     })()
       .then(() => {
         setPendingCollection(undefined);
+        setCreatedCollectionFolderId(pending.folderId);
         toast.success("Collection folder created.");
-        onOpenChange(false);
       })
       .catch((error) => {
         const message =
@@ -398,6 +402,9 @@ export const CreateAssetFolderDialog = ({
       open={open}
       onOpenChange={(nextOpen) => {
         if (initializing === false) {
+          if (nextOpen === false) {
+            setCreatedCollectionFolderId(undefined);
+          }
           onOpenChange(nextOpen);
         }
       }}
@@ -408,11 +415,44 @@ export const CreateAssetFolderDialog = ({
         onKeyDown={stopEscapePropagation}
       >
         <DialogTitle>
-          {pendingCollection === undefined
-            ? "New folder"
-            : "Finish collection setup"}
+          {createdCollectionFolderId !== undefined
+            ? "Collection created"
+            : pendingCollection === undefined
+              ? "New folder"
+              : "Finish collection setup"}
         </DialogTitle>
-        {pendingCollection === undefined ? (
+        {createdCollectionFolderId !== undefined ? (
+          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+            <Text>
+              The collection files are ready. You can configure its fields and
+              entry rules now.
+            </Text>
+            <Flex justify="end" gap={2}>
+              <Button
+                autoFocus={onConfigureCollection === undefined}
+                onClick={() => {
+                  setCreatedCollectionFolderId(undefined);
+                  onOpenChange(false);
+                }}
+              >
+                Done
+              </Button>
+              {onConfigureCollection !== undefined && (
+                <Button
+                  autoFocus
+                  color="primary"
+                  onClick={() => {
+                    setCreatedCollectionFolderId(undefined);
+                    onOpenChange(false);
+                    onConfigureCollection(createdCollectionFolderId);
+                  }}
+                >
+                  Configure collection
+                </Button>
+              )}
+            </Flex>
+          </Grid>
+        ) : pendingCollection === undefined ? (
           <AssetFolderForm
             id="asset-folder-name"
             open={open}

@@ -42,7 +42,7 @@ import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
 import { AssetFilters } from "./asset-filters";
 import { AssetSortSelect } from "./asset-sort";
-import { $assetFolders, $project } from "~/shared/sync/data-stores";
+import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
 import { AssetFolderBreadcrumbs } from "./asset-folder-breadcrumbs";
 import {
   filterAssetFolders,
@@ -97,11 +97,16 @@ import { $authPermit } from "~/shared/nano-states";
 import { MoveAssetManagerItemsDialog } from "./asset-folder-dialogs";
 import {
   canConfigureContentCollections,
+  createLoadingContentCollections,
+  getCollectionReservedAssetIds,
   type ContentCollection,
 } from "../assets/content-collections";
 
 const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
   items.every((item) => item.type === "folder");
+
+const emptyContentCollections: ReadonlyMap<string, ContentCollection> =
+  new Map();
 
 type FolderNavigationProps =
   | { folderId?: never; onFolderChange?: never }
@@ -127,7 +132,6 @@ type AssetManagerProps = FolderNavigationProps & {
     >
   >;
   collections?: ReadonlyMap<string, ContentCollection>;
-  hiddenAssetIds?: ReadonlySet<string>;
   emptyMessage?: string;
 };
 
@@ -162,13 +166,29 @@ export const AssetManager = ({
   onFolderChange,
   canManageFolders = false,
   panelActions,
-  collections = new Map(),
-  hiddenAssetIds = new Set(),
+  collections = emptyContentCollections,
   emptyMessage,
 }: AssetManagerProps) => {
+  const assets = useStore($assets);
+  const effectiveCollections = useMemo(() => {
+    const detected = createLoadingContentCollections(
+      Array.from(assets.values())
+    );
+    for (const [folderId, collection] of collections) {
+      detected.set(folderId, collection);
+    }
+    return detected;
+  }, [assets, collections]);
   const collectionFolderIds = useMemo(
-    () => new Set(collections.keys()),
-    [collections]
+    () => new Set(effectiveCollections.keys()),
+    [effectiveCollections]
+  );
+  const collectionReservedAssetIds = useMemo(
+    () =>
+      getCollectionReservedAssetIds(effectiveCollections, {
+        includeInvalid: true,
+      }),
+    [effectiveCollections]
   );
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
@@ -296,16 +316,13 @@ export const AssetManager = ({
   // Only show assets that match the accept constraint so incompatible types
   // (e.g. video files) can never be selected from an image picker.
   const compatibleContainers = useMemo(() => {
-    const visibleContainers = assetContainers.filter(
-      ({ asset }) => hiddenAssetIds.has(asset.id) === false
-    );
     if (mimePatterns === "*") {
-      return visibleContainers;
+      return assetContainers;
     }
-    return visibleContainers.filter((container) =>
+    return assetContainers.filter((container) =>
       doesAssetMatchMimePatterns(container.asset, mimePatterns)
     );
-  }, [assetContainers, hiddenAssetIds, mimePatterns]);
+  }, [assetContainers, mimePatterns]);
 
   const [selectedExtensions, setSelectedExtensions] = useState<
     AllowedFileExtension[] | "*"
@@ -826,8 +843,15 @@ export const AssetManager = ({
       />
     );
 
+  const collectionPanelActions = currentFolderIsCollection
+    ? {
+        createFolder: panelActions?.createFolder,
+        createEntry: panelActions?.createEntry,
+        deleteUnusedAssets: panelActions?.deleteUnusedAssets,
+      }
+    : panelActions;
   const panelContextMenuActions: AssetManagerItemActions = {
-    ...panelActions,
+    ...collectionPanelActions,
     ...(canManageFolders
       ? { paste: () => pasteClipboardToFolder(currentFolderId) }
       : {}),
@@ -1135,7 +1159,7 @@ export const AssetManager = ({
                 <FolderThumbnail
                   key={folder.id}
                   folder={folder}
-                  collection={collections.get(folder.id)}
+                  collection={effectiveCollections.get(folder.id)}
                   interactions={thumbnailInteractions}
                   selected={isItemSelected({ type: "folder", id: folder.id })}
                   forcedSelection={forcedSelection !== undefined}
@@ -1200,6 +1224,9 @@ export const AssetManager = ({
                   canDrag={canManageFolders}
                   isCollectionEntry={collectionFolderIds.has(
                     assetContainer.asset.folderId ?? ""
+                  )}
+                  isCollectionReserved={collectionReservedAssetIds.has(
+                    assetContainer.asset.id
                   )}
                   unavailableDestinationFolderIds={collectionFolderIds}
                   onMove={() =>

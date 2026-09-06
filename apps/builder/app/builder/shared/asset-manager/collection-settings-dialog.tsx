@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import isValidFilename from "valid-filename";
 import { useStore } from "@nanostores/react";
 import {
   getCollectionTemplateValidationError,
@@ -19,31 +20,51 @@ import {
   Grid,
   InputField,
   Label,
+  List,
+  ListItem,
+  rawTheme,
+  ScrollAreaNative,
   Select,
+  Separator,
   SmallIconButton,
   Text,
-  TextArea,
   cssVar,
+  selectedItemBackground,
   theme,
 } from "@webstudio-is/design-system";
-import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
 import {
   formatAssetName,
   findPageByIdOrPath,
+  getAssetDisplayNameParts,
   getAllPages,
   getPagePath,
   isMdxFileAsset,
 } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { $assets, $pages, $project } from "~/shared/sync/data-stores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
+import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { invalidateAssets } from "~/shared/resources";
-import { updateAssetContent } from "../assets/update-asset-content";
+import { fetch } from "~/shared/fetch.client";
+import { updateAssetContent as updateBuilderAssetContent } from "../assets/update-asset-content";
+import { isAssetFilenameUsed } from "../assets/asset-utils";
 import {
   readBuilderAssetSource,
   type ContentCollection,
 } from "../assets/content-collections";
 import { isCollectionPreviewPath } from "./collection-preview-utils";
+import { MarkdownEditor } from "~/builder/features/text-file-editor/text-file-editor";
+import { getTextFileEditorExtensions } from "~/builder/features/text-file-editor/text-file-utils";
 
 type EditableType =
   | "Text"
@@ -53,6 +74,15 @@ type EditableType =
   | "Whole number"
   | "Boolean";
 type EditableCollectionField = CollectionField & { rowId: string };
+type SettingsSection = "fields" | "template" | "settings";
+const settingsSections: readonly {
+  id: SettingsSection;
+  label: string;
+}[] = [
+  { id: "fields", label: "Fields" },
+  { id: "template", label: "Template" },
+  { id: "settings", label: "Settings" },
+];
 const fieldTypes: readonly EditableType[] = [
   "Text",
   "Long text",
@@ -61,12 +91,6 @@ const fieldTypes: readonly EditableType[] = [
   "Whole number",
   "Boolean",
 ];
-const booleanDefaultOptions = [
-  { value: "unset", label: "Not set" },
-  { value: "true", label: "Yes" },
-  { value: "false", label: "No" },
-] as const;
-
 const createEditableFields = (
   collectionFields: readonly CollectionField[]
 ): EditableCollectionField[] =>
@@ -145,6 +169,78 @@ const optionalNumber = (value: string) =>
     ? undefined
     : Number(value);
 
+export const updateCollectionConfigAndTemplateName = async ({
+  projectId,
+  collection,
+  templateFilename,
+  configSource,
+  request = fetch,
+}: {
+  projectId: string;
+  collection: Extract<ContentCollection, { status: "ready" }>;
+  templateFilename: string;
+  configSource: string;
+  request?: typeof fetch;
+}) => {
+  const response = await request(
+    `/rest/assets/folders/${encodeURIComponent(
+      collection.folderId
+    )}/collection-settings?projectId=${encodeURIComponent(projectId)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        configAssetId: collection.configAsset.id,
+        expectedConfigName: collection.configAsset.name,
+        templateAssetId: collection.templateAsset.id,
+        expectedTemplateFilename: collection.templateAsset.filename ?? null,
+        templateFilename,
+        configSource,
+      }),
+    }
+  );
+  const payload = (await response.json()) as
+    | {
+        configAsset: typeof collection.configAsset;
+        templateAsset: typeof collection.templateAsset;
+      }
+    | { errors?: string };
+  if (response.ok === false || "configAsset" in payload === false) {
+    throw new Error(
+      "errors" in payload && typeof payload.errors === "string"
+        ? payload.errors
+        : "Collection settings could not be saved"
+    );
+  }
+  if ($project.get()?.id !== projectId) {
+    throw new Error(
+      "Collection settings were updated in the previous project. Return to that project to view them."
+    );
+  }
+  createTransactionFromBuilderPatchPayload({
+    data: getWebstudioData(),
+    payload: [
+      {
+        namespace: "assets",
+        patches: [
+          {
+            op: "replace",
+            path: [payload.configAsset.id],
+            value: payload.configAsset,
+          },
+          {
+            op: "replace",
+            path: [payload.templateAsset.id],
+            value: payload.templateAsset,
+          },
+        ],
+      },
+    ],
+  });
+  onNextTransactionComplete(invalidateAssets);
+  return payload;
+};
+
 const getUniqueFieldKey = (fields: readonly EditableCollectionField[]) => {
   const keys = new Set(
     fields.flatMap(({ key, originalKey }) =>
@@ -192,16 +288,30 @@ export const CollectionSettingsDialog = ({
   collection,
   open,
   onOpenChange,
+  readTemplateSource = readBuilderAssetSource,
+  updateContent = updateBuilderAssetContent,
+  updateConfigAndTemplateName = updateCollectionConfigAndTemplateName,
 }: {
   collection: Extract<ContentCollection, { status: "ready" }>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  readTemplateSource?: typeof readBuilderAssetSource;
+  updateContent?: typeof updateBuilderAssetContent;
+  updateConfigAndTemplateName?: typeof updateCollectionConfigAndTemplateName;
 }) => {
   const nextRowId = useRef(0);
   const [fields, setFields] = useState<EditableCollectionField[]>(() =>
     createEditableFields(collection.config.fields)
   );
+  const [selectedFieldRowId, setSelectedFieldRowId] = useState<
+    string | undefined
+  >(() => createEditableFields(collection.config.fields)[0]?.rowId);
+  const [activeSection, setActiveSection] = useState<SettingsSection>("fields");
   const [template, setTemplate] = useState("");
+  const loadedTemplateRef = useRef("");
+  const [templateName, setTemplateName] = useState(
+    () => getAssetDisplayNameParts(collection.templateAsset).basename
+  );
   const [loadedTemplateKey, setLoadedTemplateKey] = useState<string>();
   const [slugField, setSlugField] = useState(collection.config.slugField);
   const [generateSlugFrom, setGenerateSlugFrom] = useState(
@@ -238,12 +348,22 @@ export const CollectionSettingsDialog = ({
           }),
     [pages, slugField]
   );
+  const templateLanguageExtensions = useMemo(
+    () => getTextFileEditorExtensions(collection.templateAsset),
+    [collection.templateAsset]
+  );
 
   useLayoutEffect(() => {
     if (open === false) {
       return;
     }
-    setFields(createEditableFields(collection.config.fields));
+    const nextFields = createEditableFields(collection.config.fields);
+    setFields(nextFields);
+    setSelectedFieldRowId(nextFields[0]?.rowId);
+    setActiveSection("fields");
+    setTemplateName(
+      getAssetDisplayNameParts(collection.templateAsset).basename
+    );
     setSlugField(collection.config.slugField);
     setGenerateSlugFrom(collection.config.generateSlugFrom);
     setPreviewPage(collection.config.previewPage);
@@ -282,13 +402,14 @@ export const CollectionSettingsDialog = ({
     }
     let cancelled = false;
     setLoading(true);
-    void readBuilderAssetSource({
+    void readTemplateSource({
       projectId,
       assetId: collection.templateAsset.id,
     })
       .then((source) => {
         if (cancelled === false) {
           setTemplate(source);
+          loadedTemplateRef.current = source;
           setLoadedTemplateKey(templateKey);
         }
       })
@@ -309,7 +430,7 @@ export const CollectionSettingsDialog = ({
     return () => {
       cancelled = true;
     };
-  }, [collection.templateAsset.id, open, templateKey]);
+  }, [collection.templateAsset.id, open, readTemplateSource, templateKey]);
 
   const updateField = (index: number, field: EditableCollectionField) =>
     setFields((current) =>
@@ -330,6 +451,27 @@ export const CollectionSettingsDialog = ({
     setSaving(true);
     setError(undefined);
     try {
+      const nextTemplateName = templateName.trim();
+      const nextTemplateFilename = formatAssetName({
+        ...collection.templateAsset,
+        filename: nextTemplateName,
+      });
+      if (
+        nextTemplateName === "" ||
+        isValidFilename(nextTemplateFilename) === false
+      ) {
+        throw new Error("Enter a valid template name.");
+      }
+      if (
+        isAssetFilenameUsed({
+          assets: assets.values(),
+          filename: nextTemplateFilename,
+          folderId: collection.folderId,
+          excludeAssetId: collection.templateAsset.id,
+        })
+      ) {
+        throw new Error("That template name is already used in this folder.");
+      }
       const nextFields = fields.map((field, index) => {
         const { rowId, ...collectionField } = field;
         void rowId;
@@ -375,7 +517,7 @@ export const CollectionSettingsDialog = ({
         config: collection.config,
         fields: nextFields,
         settings: {
-          template: formatAssetName(collection.templateAsset),
+          template: nextTemplateFilename,
           slugField: nextSlugField,
           generateSlugFrom: nextGenerateSlugFrom,
           previewPage,
@@ -414,18 +556,93 @@ export const CollectionSettingsDialog = ({
           "This field type and its template default cannot change together. Remove the template default, save, then change the field type."
         );
       }
-      const updates =
-        saveOrder === "config-first"
-          ? [
-              { asset: collection.configAsset, content: configSource },
-              { asset: collection.templateAsset, content: template },
-            ]
-          : [
-              { asset: collection.templateAsset, content: template },
-              { asset: collection.configAsset, content: configSource },
-            ];
-      for (const update of updates) {
-        await updateAssetContent(update);
+      const currentTemplateName = getAssetDisplayNameParts(
+        collection.templateAsset
+      ).basename;
+      const renamesTemplate = nextTemplateName !== currentTemplateName;
+      const projectId = $project.get()?.id;
+      if (projectId === undefined) {
+        throw new Error("Project not found");
+      }
+      const originalConfigSource = `${JSON.stringify(
+        collection.config.schema,
+        undefined,
+        2
+      )}\n`;
+      let updatedTemplateAsset = collection.templateAsset;
+      let updatedConfigAsset = collection.configAsset;
+      if (saveOrder === "template-first") {
+        updatedTemplateAsset = await updateContent({
+          asset: collection.templateAsset,
+          content: template,
+        });
+      }
+      try {
+        if (renamesTemplate) {
+          const updated = await updateConfigAndTemplateName({
+            projectId,
+            collection,
+            templateFilename: nextTemplateName,
+            configSource,
+          });
+          updatedConfigAsset = updated.configAsset;
+          updatedTemplateAsset = updated.templateAsset;
+        } else {
+          updatedConfigAsset = await updateContent({
+            asset: collection.configAsset,
+            content: configSource,
+          });
+        }
+      } catch (error) {
+        if (saveOrder === "template-first") {
+          try {
+            await updateContent({
+              asset: updatedTemplateAsset,
+              content: loadedTemplateRef.current,
+            });
+          } catch {
+            throw new Error(
+              "Collection settings failed and the entry template could not be restored",
+              { cause: error }
+            );
+          }
+        }
+        throw error;
+      }
+      if (saveOrder === "config-first") {
+        try {
+          await updateContent({
+            asset: updatedTemplateAsset,
+            content: template,
+          });
+        } catch (error) {
+          try {
+            if (renamesTemplate) {
+              await updateConfigAndTemplateName({
+                projectId,
+                collection: {
+                  ...collection,
+                  configAsset: updatedConfigAsset,
+                  templateAsset: updatedTemplateAsset,
+                  config: nextConfig,
+                },
+                templateFilename: currentTemplateName,
+                configSource: originalConfigSource,
+              });
+            } else {
+              await updateContent({
+                asset: updatedConfigAsset,
+                content: originalConfigSource,
+              });
+            }
+          } catch {
+            throw new Error(
+              "The entry template failed to save and the collection configuration could not be restored",
+              { cause: error }
+            );
+          }
+          throw error;
+        }
       }
       onOpenChange(false);
     } catch (error) {
@@ -448,464 +665,595 @@ export const CollectionSettingsDialog = ({
         }
       }}
     >
-      <DialogContent
-        css={{ width: "min(720px, calc(100vw - 32px))" }}
-        aria-describedby={undefined}
-      >
+      <DialogContent width={880} height={640} aria-describedby={undefined}>
         <DialogTitle>Collection settings</DialogTitle>
-        <Grid
-          gap={4}
-          css={{
-            padding: theme.panel.padding,
-            maxHeight: "70vh",
-            overflow: "auto",
-          }}
-        >
-          <Grid gap={2}>
-            <Text variant="labels">Collection behavior</Text>
-            <Flex gap={2} wrap="wrap">
-              <Grid gap={1} css={{ flexGrow: 1, minWidth: 180 }}>
-                <Label htmlFor="collection-template-file">
-                  Entry template file
-                </Label>
-                <InputField
-                  id="collection-template-file"
-                  aria-label="Entry template file"
-                  value={formatAssetName(collection.templateAsset)}
-                  readOnly
-                />
-              </Grid>
-              <Grid gap={1} css={{ flexGrow: 1, minWidth: 180 }}>
-                <Label>Slug field</Label>
-                <Select
-                  aria-label="Slug field"
-                  options={fields.filter(({ type }) => type === "string")}
-                  value={fields.find(({ key }) => key === slugField)}
-                  getValue={({ key }) => key}
-                  getLabel={({ label, key }) => `${label} (${key})`}
-                  disabled={formDisabled || hasEntries}
-                  onChange={({ key }) => {
-                    setSlugField(key);
-                    setFields((current) =>
-                      current.map((field) => {
-                        if (field.key === key) {
-                          return {
-                            ...setFieldType(field, "Slug"),
-                            required: true,
-                          };
-                        }
-                        if (field.control === "slug") {
-                          return setFieldType(field, "Text");
-                        }
-                        return field;
-                      })
-                    );
-                  }}
-                />
-              </Grid>
-              <Grid gap={1} css={{ flexGrow: 1, minWidth: 180 }}>
-                <Label>Generate slug from</Label>
-                <Select
-                  aria-label="Generate slug from"
-                  options={fields.filter(({ type }) => type === "string")}
-                  value={fields.find(({ key }) => key === generateSlugFrom)}
-                  getValue={({ key }) => key}
-                  getLabel={({ label, key }) => `${label} (${key})`}
-                  disabled={formDisabled}
-                  onChange={({ key }) => setGenerateSlugFrom(key)}
-                />
-              </Grid>
+        <Flex grow css={{ minHeight: 0 }}>
+          <List asChild>
+            <Flex
+              direction="column"
+              shrink={false}
+              css={{
+                width: rawTheme.spacing[26],
+                borderRight: `1px solid ${cssVar("--border-default")}`,
+              }}
+            >
+              {settingsSections.map(({ id, label }, index) => (
+                <ListItem
+                  current={activeSection === id}
+                  asChild
+                  index={index}
+                  key={id}
+                  onSelect={() => setActiveSection(id)}
+                >
+                  <Flex
+                    align="center"
+                    css={{
+                      height: theme.spacing[13],
+                      paddingInline: theme.panel.paddingInline,
+                      outline: "none",
+                      "&:focus-visible, &:hover": {
+                        background: cssVar("--overlay-interaction-hover"),
+                      },
+                      "&[aria-current=true]": {
+                        background: selectedItemBackground,
+                        color: cssVar("--foreground-primary"),
+                      },
+                    }}
+                  >
+                    <Text variant="labels">{label}</Text>
+                  </Flex>
+                </ListItem>
+              ))}
             </Flex>
-            <Text color="subtle" variant="tiny">
-              The template seeds each entry. The slug field becomes the MDX
-              filename, and can be generated from another text field.
-            </Text>
-            {hasEntries && (
-              <Text color="subtle" variant="tiny">
-                The slug field and existing field keys and types are fixed after
-                the first entry because changing them would require migrating
-                every entry.
-              </Text>
-            )}
-          </Grid>
-          <Grid gap={2}>
-            <Text variant="labels">Frontmatter fields</Text>
-            {fields.map((field, index) => {
-              const protectedField =
-                field.key === slugField || field.key === generateSlugFrom;
-              const requiredField = field.key === slugField;
-              const stringField = field.type === "string";
-              const numberField =
-                field.type === "number" || field.type === "integer";
-              return (
+          </List>
+          <ScrollAreaNative css={{ width: "100%", minWidth: 0 }}>
+            <Grid css={{ minHeight: "100%" }}>
+              <Grid
+                gap={3}
+                css={{
+                  display: activeSection === "fields" ? "grid" : "none",
+                  minHeight: "100%",
+                  alignContent: "start",
+                }}
+              >
+                <Flex justify="between" align="start" gap={4}>
+                  <Grid gap={1} css={{ padding: theme.spacing[5] }}>
+                    <Text variant="titles">Fields</Text>
+                    <Text color="subtle">
+                      Define the information editors fill in for every entry.
+                    </Text>
+                    {hasEntries && (
+                      <Text color="subtle" variant="tiny">
+                        Existing field keys and types are fixed after the first
+                        entry.
+                      </Text>
+                    )}
+                  </Grid>
+                  <Button
+                    css={{ margin: theme.spacing[5] }}
+                    disabled={formDisabled}
+                    prefix={<PlusIcon />}
+                    onClick={() => {
+                      const key = getUniqueFieldKey(fields);
+                      const rowId = `new:${nextRowId.current}`;
+                      nextRowId.current += 1;
+                      setSelectedFieldRowId(rowId);
+                      setFields((current) => [
+                        ...current,
+                        {
+                          key,
+                          rowId,
+                          label: "New field",
+                          type: "string",
+                          control: "text",
+                          required: false,
+                        },
+                      ]);
+                    }}
+                  >
+                    Add field
+                  </Button>
+                </Flex>
                 <Grid
-                  key={field.rowId}
-                  gap={2}
                   css={{
-                    padding: theme.spacing[3],
-                    border: `1px solid ${cssVar("--border-default")}`,
-                    borderRadius: theme.borderRadius[4],
+                    borderTop: `1px solid ${cssVar("--border-default")}`,
                   }}
                 >
-                  <Flex gap={2} align="end" wrap="wrap">
-                    <Grid gap={1} css={{ flexGrow: 1 }}>
-                      <Label>Label</Label>
-                      <InputField
-                        aria-label={`${field.label} label`}
-                        value={field.label}
-                        disabled={formDisabled}
-                        onChange={(event) =>
-                          updateField(index, {
-                            ...field,
-                            label: event.target.value,
-                          })
-                        }
-                      />
-                    </Grid>
-                    <Grid gap={1} css={{ flexGrow: 1 }}>
-                      <Label>Key</Label>
-                      <InputField
-                        aria-label={`${field.label} key`}
-                        value={field.key}
-                        disabled={
-                          formDisabled ||
-                          (hasEntries && field.originalKey !== undefined)
-                        }
-                        onChange={(event) => {
-                          const nextKey = event.target.value;
-                          if (slugField === field.key) {
-                            setSlugField(nextKey);
-                          }
-                          if (generateSlugFrom === field.key) {
-                            setGenerateSlugFrom(nextKey);
-                          }
-                          updateField(index, {
-                            ...field,
-                            key: nextKey,
-                          });
+                  {fields.map((field, index) => {
+                    const protectedField =
+                      field.key === slugField || field.key === generateSlugFrom;
+                    const requiredField = field.key === slugField;
+                    const stringField = field.type === "string";
+                    const numberField =
+                      field.type === "number" || field.type === "integer";
+                    const expanded = field.rowId === selectedFieldRowId;
+                    return (
+                      <Grid
+                        key={field.rowId}
+                        css={{
+                          borderBottom: `1px solid ${cssVar(
+                            "--border-default"
+                          )}`,
                         }}
-                      />
-                    </Grid>
-                    <Grid gap={1} css={{ flexGrow: 1 }}>
-                      <Label>Type</Label>
-                      <Select
-                        aria-label={`${field.label} type`}
-                        options={
-                          field.control === "slug" ? ["Slug"] : fieldTypes
-                        }
-                        value={getEditableType(field)}
-                        disabled={
-                          formDisabled ||
-                          protectedField ||
-                          (hasEntries && field.originalKey !== undefined)
-                        }
-                        onChange={(type) => {
-                          const editableType = type as EditableType;
-                          if (editableType === "Slug") {
-                            setSlugField(field.key);
-                            setFields((current) =>
-                              current.map((candidate, fieldIndex) => {
-                                if (fieldIndex === index) {
-                                  return {
-                                    ...setFieldType(candidate, "Slug"),
-                                    required: true,
-                                  };
-                                }
-                                if (candidate.control === "slug") {
-                                  return setFieldType(candidate, "Text");
-                                }
-                                return candidate;
-                              })
-                            );
-                            return;
-                          }
-                          updateField(index, setFieldType(field, editableType));
-                        }}
-                      />
-                    </Grid>
-                    <SmallIconButton
-                      aria-label={`Remove ${field.label}`}
-                      disabled={
-                        formDisabled ||
-                        protectedField ||
-                        (hasEntries && field.originalKey !== undefined)
-                      }
-                      icon={<TrashIcon />}
-                      onClick={() =>
-                        setFields((current) =>
-                          current.filter(
-                            (_, fieldIndex) => fieldIndex !== index
-                          )
-                        )
-                      }
-                    />
-                  </Flex>
-                  <Flex gap={3} align="end" wrap="wrap">
-                    <CheckboxAndLabel>
-                      <Checkbox
-                        aria-label={`${field.label} required`}
-                        checked={field.required}
-                        disabled={formDisabled || requiredField}
-                        onCheckedChange={(checked) =>
-                          updateField(index, {
-                            ...field,
-                            required: checked === true,
-                          })
-                        }
-                      />
-                      <Text>Required</Text>
-                    </CheckboxAndLabel>
-                    {(stringField || numberField) && (
-                      <>
-                        <Grid gap={1} css={{ flexGrow: 1 }}>
-                          <Label>
-                            {stringField ? "Minimum length" : "Minimum"}
-                          </Label>
-                          <InputField
-                            aria-label={`${field.label} ${
-                              stringField ? "minimum length" : "minimum"
-                            }`}
-                            type="number"
-                            min={stringField ? 0 : undefined}
-                            value={String(
-                              stringField
-                                ? (field.minLength ?? "")
-                                : (field.minimum ?? "")
-                            )}
-                            disabled={formDisabled}
-                            onChange={(event) =>
-                              updateField(index, {
-                                ...field,
-                                ...(stringField
-                                  ? {
-                                      minLength: optionalNumber(
-                                        event.target.value
-                                      ),
-                                    }
-                                  : {
-                                      minimum: optionalNumber(
-                                        event.target.value
-                                      ),
-                                    }),
-                              })
-                            }
-                          />
-                        </Grid>
-                        <Grid gap={1} css={{ flexGrow: 1 }}>
-                          <Label>
-                            {stringField ? "Maximum length" : "Maximum"}
-                          </Label>
-                          <InputField
-                            aria-label={`${field.label} ${
-                              stringField ? "maximum length" : "maximum"
-                            }`}
-                            type="number"
-                            min={stringField ? 0 : undefined}
-                            value={String(
-                              stringField
-                                ? (field.maxLength ?? "")
-                                : (field.maximum ?? "")
-                            )}
-                            disabled={formDisabled}
-                            onChange={(event) =>
-                              updateField(index, {
-                                ...field,
-                                ...(stringField
-                                  ? {
-                                      maxLength: optionalNumber(
-                                        event.target.value
-                                      ),
-                                    }
-                                  : {
-                                      maximum: optionalNumber(
-                                        event.target.value
-                                      ),
-                                    }),
-                              })
-                            }
-                          />
-                        </Grid>
-                      </>
-                    )}
-                    <Grid gap={1} css={{ flexGrow: 1, minWidth: 120 }}>
-                      <Label>Default</Label>
-                      {field.type === "boolean" ? (
-                        <Select
-                          aria-label={`${field.label} default`}
-                          options={booleanDefaultOptions}
-                          value={booleanDefaultOptions.find(({ value }) =>
-                            field.defaultValue === true
-                              ? value === "true"
-                              : field.defaultValue === false
-                                ? value === "false"
-                                : value === "unset"
-                          )}
-                          getValue={(
-                            option: (typeof booleanDefaultOptions)[number]
-                          ) => option.value}
-                          getLabel={(
-                            option: (typeof booleanDefaultOptions)[number]
-                          ) => option.label}
-                          disabled={formDisabled}
-                          onChange={({ value }) =>
-                            updateField(index, {
-                              ...field,
-                              defaultValue:
-                                value === "unset"
-                                  ? undefined
-                                  : value === "true",
-                            })
-                          }
-                        />
-                      ) : (
-                        <InputField
-                          aria-label={`${field.label} default`}
-                          type={numberField ? "number" : "text"}
-                          step={field.type === "integer" ? 1 : undefined}
-                          value={
-                            field.defaultValue === undefined
-                              ? ""
-                              : String(field.defaultValue)
-                          }
-                          disabled={formDisabled}
-                          onChange={(event) =>
-                            updateField(index, {
-                              ...field,
-                              defaultValue: numberField
-                                ? optionalNumber(event.target.value)
-                                : event.target.value,
-                            })
-                          }
-                        />
-                      )}
-                      {stringField && (
+                      >
                         <Button
-                          aria-label={`Unset ${field.label} default`}
-                          disabled={
-                            formDisabled || field.defaultValue === undefined
-                          }
+                          color="ghost"
+                          aria-label={`Edit ${field.label}`}
+                          aria-expanded={expanded}
+                          css={{
+                            height: "auto",
+                            minHeight: theme.spacing[15],
+                            justifyContent: "stretch",
+                            paddingInline: theme.spacing[5],
+                            whiteSpace: "normal",
+                            ...(expanded
+                              ? {
+                                  background: selectedItemBackground,
+                                }
+                              : {}),
+                          }}
                           onClick={() =>
-                            updateField(index, {
-                              ...field,
-                              defaultValue: undefined,
-                            })
+                            setSelectedFieldRowId(
+                              expanded ? undefined : field.rowId
+                            )
                           }
                         >
-                          Unset
+                          <Grid
+                            align="center"
+                            gap={3}
+                            css={{
+                              width: "100%",
+                              gridTemplateColumns:
+                                "16px minmax(0, 1fr) 120px 72px",
+                              textAlign: "left",
+                            }}
+                          >
+                            {expanded ? (
+                              <ChevronDownIcon />
+                            ) : (
+                              <ChevronRightIcon />
+                            )}
+                            <Grid>
+                              <Text variant="labels">{field.label}</Text>
+                              <Text variant="tiny" color="subtle">
+                                {field.key}
+                              </Text>
+                            </Grid>
+                            <Text color="subtle">{getEditableType(field)}</Text>
+                            <Text color="subtle">
+                              {field.required ? "Required" : "Optional"}
+                            </Text>
+                          </Grid>
                         </Button>
+                        {expanded && (
+                          <Grid
+                            gap={4}
+                            css={{
+                              padding: theme.spacing[5],
+                              background: cssVar("--background-secondary"),
+                            }}
+                          >
+                            <Grid
+                              gap={3}
+                              css={{
+                                gridTemplateColumns:
+                                  "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto",
+                                alignItems: "end",
+                              }}
+                            >
+                              <Grid gap={1}>
+                                <Label>Label</Label>
+                                <InputField
+                                  aria-label={`${field.label} label`}
+                                  value={field.label}
+                                  disabled={formDisabled}
+                                  onChange={(event) =>
+                                    updateField(index, {
+                                      ...field,
+                                      label: event.target.value,
+                                    })
+                                  }
+                                />
+                              </Grid>
+                              <Grid gap={1}>
+                                <Label>Frontmatter key</Label>
+                                <InputField
+                                  aria-label={`${field.label} key`}
+                                  value={field.key}
+                                  disabled={
+                                    formDisabled ||
+                                    (hasEntries &&
+                                      field.originalKey !== undefined)
+                                  }
+                                  onChange={(event) => {
+                                    const nextKey = event.target.value;
+                                    if (slugField === field.key) {
+                                      setSlugField(nextKey);
+                                    }
+                                    if (generateSlugFrom === field.key) {
+                                      setGenerateSlugFrom(nextKey);
+                                    }
+                                    updateField(index, {
+                                      ...field,
+                                      key: nextKey,
+                                    });
+                                  }}
+                                />
+                              </Grid>
+                              <Grid gap={1}>
+                                <Label>Type</Label>
+                                <Select
+                                  aria-label={`${field.label} type`}
+                                  options={
+                                    field.control === "slug"
+                                      ? ["Slug"]
+                                      : fieldTypes
+                                  }
+                                  value={getEditableType(field)}
+                                  disabled={
+                                    formDisabled ||
+                                    protectedField ||
+                                    (hasEntries &&
+                                      field.originalKey !== undefined)
+                                  }
+                                  onChange={(type) => {
+                                    const editableType = type as EditableType;
+                                    if (editableType === "Slug") {
+                                      setSlugField(field.key);
+                                      setFields((current) =>
+                                        current.map((candidate, fieldIndex) => {
+                                          if (fieldIndex === index) {
+                                            return {
+                                              ...setFieldType(
+                                                candidate,
+                                                "Slug"
+                                              ),
+                                              required: true,
+                                            };
+                                          }
+                                          if (candidate.control === "slug") {
+                                            return setFieldType(
+                                              candidate,
+                                              "Text"
+                                            );
+                                          }
+                                          return candidate;
+                                        })
+                                      );
+                                      return;
+                                    }
+                                    updateField(
+                                      index,
+                                      setFieldType(field, editableType)
+                                    );
+                                  }}
+                                />
+                              </Grid>
+                              <SmallIconButton
+                                aria-label={`Remove ${field.label}`}
+                                disabled={
+                                  formDisabled ||
+                                  protectedField ||
+                                  (hasEntries &&
+                                    field.originalKey !== undefined)
+                                }
+                                icon={<TrashIcon />}
+                                onClick={() => {
+                                  setSelectedFieldRowId(
+                                    fields[index + 1]?.rowId ??
+                                      fields[index - 1]?.rowId
+                                  );
+                                  setFields((current) =>
+                                    current.filter(
+                                      (_, fieldIndex) => fieldIndex !== index
+                                    )
+                                  );
+                                }}
+                              />
+                            </Grid>
+                            <Grid
+                              gap={3}
+                              css={{
+                                gridTemplateColumns:
+                                  stringField || numberField
+                                    ? "minmax(120px, 1fr) minmax(0, 1fr) minmax(0, 1fr)"
+                                    : "minmax(120px, 1fr)",
+                              }}
+                            >
+                              <Grid gap={1}>
+                                <Label>Requirement</Label>
+                                <CheckboxAndLabel>
+                                  <Checkbox
+                                    aria-label={`${field.label} required`}
+                                    checked={field.required}
+                                    disabled={formDisabled || requiredField}
+                                    onCheckedChange={(checked) =>
+                                      updateField(index, {
+                                        ...field,
+                                        required: checked === true,
+                                      })
+                                    }
+                                  />
+                                  <Text>Required</Text>
+                                </CheckboxAndLabel>
+                              </Grid>
+                              {(stringField || numberField) && (
+                                <>
+                                  <Grid gap={1}>
+                                    <Label>
+                                      {stringField
+                                        ? "Minimum length"
+                                        : "Minimum"}
+                                    </Label>
+                                    <InputField
+                                      aria-label={`${field.label} ${
+                                        stringField
+                                          ? "minimum length"
+                                          : "minimum"
+                                      }`}
+                                      type="number"
+                                      min={stringField ? 0 : undefined}
+                                      value={String(
+                                        stringField
+                                          ? (field.minLength ?? "")
+                                          : (field.minimum ?? "")
+                                      )}
+                                      disabled={formDisabled}
+                                      onChange={(event) =>
+                                        updateField(index, {
+                                          ...field,
+                                          ...(stringField
+                                            ? {
+                                                minLength: optionalNumber(
+                                                  event.target.value
+                                                ),
+                                              }
+                                            : {
+                                                minimum: optionalNumber(
+                                                  event.target.value
+                                                ),
+                                              }),
+                                        })
+                                      }
+                                    />
+                                  </Grid>
+                                  <Grid gap={1}>
+                                    <Label>
+                                      {stringField
+                                        ? "Maximum length"
+                                        : "Maximum"}
+                                    </Label>
+                                    <InputField
+                                      aria-label={`${field.label} ${
+                                        stringField
+                                          ? "maximum length"
+                                          : "maximum"
+                                      }`}
+                                      type="number"
+                                      min={stringField ? 0 : undefined}
+                                      value={String(
+                                        stringField
+                                          ? (field.maxLength ?? "")
+                                          : (field.maximum ?? "")
+                                      )}
+                                      disabled={formDisabled}
+                                      onChange={(event) =>
+                                        updateField(index, {
+                                          ...field,
+                                          ...(stringField
+                                            ? {
+                                                maxLength: optionalNumber(
+                                                  event.target.value
+                                                ),
+                                              }
+                                            : {
+                                                maximum: optionalNumber(
+                                                  event.target.value
+                                                ),
+                                              }),
+                                        })
+                                      }
+                                    />
+                                  </Grid>
+                                </>
+                              )}
+                            </Grid>
+                            {field.control === "slug" && (
+                              <Grid gap={1} css={{ maxWidth: 320 }}>
+                                <Label>Generate from</Label>
+                                <Select
+                                  aria-label="Generate slug from"
+                                  options={fields.filter(
+                                    (candidate) =>
+                                      candidate.type === "string" &&
+                                      candidate.key !== field.key
+                                  )}
+                                  value={fields.find(
+                                    ({ key }) => key === generateSlugFrom
+                                  )}
+                                  getValue={({ key }) => key}
+                                  getLabel={({ label, key }) =>
+                                    `${label} (${key})`
+                                  }
+                                  disabled={formDisabled}
+                                  onChange={({ key }) =>
+                                    setGenerateSlugFrom(key)
+                                  }
+                                />
+                                <Text color="subtle" variant="tiny">
+                                  The slug becomes the MDX filename. It is
+                                  generated from this field when editors create
+                                  an entry.
+                                </Text>
+                              </Grid>
+                            )}
+                          </Grid>
+                        )}
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </Grid>
+              <Grid
+                gap={4}
+                css={{
+                  display: activeSection === "settings" ? "grid" : "none",
+                  padding: theme.spacing[5],
+                  alignContent: "start",
+                  maxWidth: 560,
+                }}
+              >
+                <Grid gap={1}>
+                  <Text variant="titles">Entry preview</Text>
+                  <Text color="subtle">
+                    Choose the page editors use to preview collection entries.
+                  </Text>
+                </Grid>
+                <Grid gap={1}>
+                  <Label>Dynamic preview page</Label>
+                  <Flex gap={2}>
+                    <Select
+                      aria-label="Dynamic preview page"
+                      options={previewPages}
+                      value={previewPages.find(
+                        ({ id, path }) =>
+                          id === previewPage || path === previewPage
                       )}
-                    </Grid>
+                      placeholder="Select a dynamic page"
+                      getValue={({ id }) => id}
+                      getLabel={({ name, path }) => `${name} (${path})`}
+                      disabled={formDisabled}
+                      onChange={({ path }) => {
+                        setPreviewPage(path);
+                        setPreviewNotice(undefined);
+                      }}
+                    />
+                    {previewPage !== undefined && (
+                      <Button
+                        disabled={formDisabled}
+                        onClick={() => {
+                          setPreviewPage(undefined);
+                          setPreviewNotice(undefined);
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </Flex>
+                  <Text color="subtle" variant="tiny">
+                    Preview pages need a dynamic “{slugField}” parameter. Any
+                    other parameters must be optional or catch-all.
+                  </Text>
+                  {previewNotice !== undefined && (
+                    <Text role="status" color="subtle" variant="tiny">
+                      {previewNotice}
+                    </Text>
+                  )}
+                </Grid>
+                <Separator />
+                <Grid gap={2}>
+                  <Grid gap={1}>
+                    <Text variant="titles">Remove collection</Text>
+                    <Text color="subtle">
+                      Turn this back into a regular folder. Existing MDX files
+                      and the template are kept.
+                    </Text>
+                  </Grid>
+                  {confirmRemove && (
+                    <Text role="alert">
+                      The collection rules will be removed. This cannot be
+                      undone from this dialog.
+                    </Text>
+                  )}
+                  <Flex>
+                    <Button
+                      color="destructive"
+                      disabled={formDisabled}
+                      onClick={() => {
+                        if (confirmRemove === false) {
+                          setConfirmRemove(true);
+                          return;
+                        }
+                        executeRuntimeMutation({
+                          id: "assets.delete",
+                          input: {
+                            assetIds: [collection.configAsset.id],
+                            force: true,
+                          },
+                        });
+                        onNextTransactionComplete(invalidateAssets);
+                        onOpenChange(false);
+                      }}
+                    >
+                      {confirmRemove ? "Confirm removal" : "Remove collection"}
+                    </Button>
                   </Flex>
                 </Grid>
-              );
-            })}
-            <Button
-              disabled={formDisabled}
-              prefix={<PlusIcon />}
-              onClick={() => {
-                const key = getUniqueFieldKey(fields);
-                const rowId = `new:${nextRowId.current}`;
-                nextRowId.current += 1;
-                setFields((current) => [
-                  ...current,
-                  {
-                    key,
-                    rowId,
-                    label: "New field",
-                    type: "string",
-                    control: "text",
-                    required: false,
-                  },
-                ]);
-              }}
-            >
-              Add field
-            </Button>
-          </Grid>
-          <Grid gap={1}>
-            <Label>Dynamic preview page</Label>
-            <Flex gap={2}>
-              <Select
-                aria-label="Dynamic preview page"
-                options={previewPages}
-                value={previewPages.find(
-                  ({ id, path }) => id === previewPage || path === previewPage
-                )}
-                placeholder="Select a dynamic page"
-                getValue={({ id }) => id}
-                getLabel={({ name, path }) => `${name} (${path})`}
-                disabled={formDisabled}
-                onChange={({ path }) => {
-                  setPreviewPage(path);
-                  setPreviewNotice(undefined);
+              </Grid>
+              <Grid
+                data-floating-panel-container
+                css={{
+                  display: activeSection === "template" ? "grid" : "none",
+                  gridTemplateRows: "auto auto minmax(320px, 1fr)",
+                  gap: theme.spacing[3],
+                  minHeight: "100%",
+                  padding: theme.spacing[5],
                 }}
-              />
-              {previewPage !== undefined && (
-                <Button
-                  disabled={formDisabled}
-                  onClick={() => {
-                    setPreviewPage(undefined);
-                    setPreviewNotice(undefined);
+              >
+                <Grid gap={1}>
+                  <Text variant="titles">Entry template</Text>
+                  <Text color="subtle">
+                    Set the frontmatter defaults and starter Markdown copied
+                    into every new entry.
+                  </Text>
+                </Grid>
+                <Grid gap={1} css={{ maxWidth: 320 }}>
+                  <Label htmlFor="collection-template-name">
+                    Template name
+                  </Label>
+                  <InputField
+                    id="collection-template-name"
+                    aria-label="Entry template name"
+                    value={templateName}
+                    maxLength={assetResourceLimits.assetFilenameCharacters}
+                    suffix=".mdx"
+                    disabled={formDisabled}
+                    onChange={(event) => setTemplateName(event.target.value)}
+                  />
+                </Grid>
+                <MarkdownEditor
+                  asset={{
+                    ...collection.templateAsset,
+                    filename: templateName,
                   }}
-                >
-                  Clear
-                </Button>
-              )}
-            </Flex>
-            <Text color="subtle" variant="tiny">
-              Preview pages need a dynamic “{slugField}” parameter. Any other
-              parameters must be optional or catch-all.
-            </Text>
-            {previewNotice !== undefined && (
-              <Text role="status" color="subtle" variant="tiny">
-                {previewNotice}
+                  ariaLabel="Entry template Markdown"
+                  value={template}
+                  readOnly={formDisabled || templateReady === false}
+                  languageExtensions={templateLanguageExtensions}
+                  onChange={setTemplate}
+                  onChangeComplete={setTemplate}
+                />
+              </Grid>
+            </Grid>
+          </ScrollAreaNative>
+        </Flex>
+        <Separator />
+        <Flex
+          justify="between"
+          align="center"
+          gap={3}
+          css={{ padding: theme.panel.padding }}
+        >
+          <Flex grow align="center">
+            {error !== undefined && (
+              <Text role="alert" color="destructive" variant="tiny">
+                {error}
               </Text>
             )}
-          </Grid>
-          <Grid gap={1}>
-            <Label htmlFor="collection-entry-template">Entry template</Label>
-            <TextArea
-              id="collection-entry-template"
-              variant="mono"
-              rows={10}
-              value={template}
-              disabled={formDisabled || templateReady === false}
-              onChange={setTemplate}
-            />
-          </Grid>
-          {error !== undefined && (
-            <Text role="alert" color="destructive" variant="tiny">
-              {error}
-            </Text>
-          )}
-          {confirmRemove && (
-            <Text role="alert" variant="regular">
-              Removing the collection keeps “
-              {formatAssetName(collection.templateAsset)}” as a regular MDX
-              file. It can then appear in asset queries.
-            </Text>
-          )}
-          <Flex justify="between">
-            <Button
-              color="destructive"
-              disabled={formDisabled}
-              onClick={() => {
-                if (confirmRemove === false) {
-                  setConfirmRemove(true);
-                  return;
-                }
-                executeRuntimeMutation({
-                  id: "assets.delete",
-                  input: {
-                    assetIds: [collection.configAsset.id],
-                    force: true,
-                  },
-                });
-                onNextTransactionComplete(invalidateAssets);
-                onOpenChange(false);
-              }}
-            >
-              {confirmRemove ? "Confirm removal" : "Remove collection"}
+          </Flex>
+          <Flex gap={2}>
+            <Button disabled={formDisabled} onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
             <Button
               color="primary"
@@ -915,7 +1263,7 @@ export const CollectionSettingsDialog = ({
               {saving ? "Saving…" : "Save"}
             </Button>
           </Flex>
-        </Grid>
+        </Flex>
       </DialogContent>
     </Dialog>
   );

@@ -41,12 +41,12 @@ export const requireAssetRestBody = (request: Request) => {
   return request.body;
 };
 
-const readAssetRestBody = async (request: Request) => {
+const readAssetRestBody = async (
+  request: Request,
+  maximumBytes = assetResourceLimits.restMutationRequestBytes
+) => {
   try {
-    return await readBoundedRequestBytes(
-      request,
-      assetResourceLimits.restMutationRequestBytes
-    );
+    return await readBoundedRequestBytes(request, maximumBytes);
   } catch (error) {
     if (error instanceof RequestByteLimitError) {
       throw new AssetRestPayloadTooLargeError(
@@ -58,8 +58,11 @@ const readAssetRestBody = async (request: Request) => {
   }
 };
 
-export const readAssetRestJson = async (request: Request) => {
-  const bytes = await readAssetRestBody(request);
+export const readAssetRestJson = async (
+  request: Request,
+  maximumBytes = assetResourceLimits.restMutationRequestBytes
+) => {
+  const bytes = await readAssetRestBody(request, maximumBytes);
   try {
     return JSON.parse(decodeUtf8(bytes)) as unknown;
   } catch (error) {

@@ -22,7 +22,11 @@ import { $assets } from "~/shared/sync/data-stores";
 import { $project } from "~/shared/sync/data-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "~/shared/instance-utils/data";
+import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import {
   getFileName,
@@ -67,9 +71,17 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
     return;
   }
 
-  executeRuntimeMutation({
-    id: "assets.add",
-    input: { asset },
+  // The upload API already validated and persisted this asset. Commit its
+  // canonical server record directly so collection-only creation rules do not
+  // reject a valid template repair while syncing it into Builder state.
+  createTransactionFromBuilderPatchPayload({
+    data: getWebstudioData(),
+    payload: [
+      {
+        namespace: "assets",
+        patches: [{ op: "add", path: [asset.id], value: asset }],
+      },
+    ],
   });
 
   onNextTransactionComplete(() => {
@@ -672,5 +684,6 @@ export const __testing__ = {
   deduplicateAssetName,
   getFilesData,
   getUniqueFilesData,
+  safeSetAsset,
   submitAssetUpload,
 };

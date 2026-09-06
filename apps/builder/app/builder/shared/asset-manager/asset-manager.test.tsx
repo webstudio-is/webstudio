@@ -258,6 +258,50 @@ const setNestedCollectionFolders = () => {
 };
 
 describe("Asset Manager multiselect interactions", () => {
+  test("shows collection configuration and template files", () => {
+    const configAsset = createLoadingCollection("alpha").configAsset;
+    const templateAsset: Asset = {
+      id: "alpha-template",
+      projectId: "project",
+      name: "template.mdx",
+      filename: "template",
+      folderId: "alpha",
+      format: "mdx",
+      size: 1,
+      type: "file",
+      meta: {},
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    act(() => {
+      $assets.set(
+        new Map([
+          [configAsset.id, configAsset],
+          [templateAsset.id, templateAsset],
+        ])
+      );
+    });
+    const collection: ContentCollection = {
+      status: "loading",
+      folderId: "alpha",
+      configAsset,
+      reservedAssets: [configAsset, templateAsset],
+      siblingAssets: [configAsset, templateAsset],
+    };
+    const container = renderManager(true, {
+      collections: new Map([["alpha", collection]]),
+    });
+    const alphaFolder = getOptions(container).find(({ button }) =>
+      button.textContent?.includes("Alpha")
+    )?.button;
+
+    act(() => {
+      alphaFolder?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain("collection.json");
+    expect(container.textContent).toContain("template.mdx");
+  });
+
   test("keeps the selected asset in the path while focusing the copy action", () => {
     const asset = createAsset("asset");
     act(() => $assets.set(new Map([[asset.id, asset]])));
@@ -704,6 +748,89 @@ describe("Asset Manager multiselect interactions", () => {
 });
 
 describe("Asset Manager collection folder permissions", () => {
+  test("detects collection folders and protects reserved files without caller configuration", () => {
+    const configAsset = createLoadingCollection("alpha").configAsset;
+    const templateAsset: Asset = {
+      id: "alpha-template",
+      projectId: "project",
+      name: "template.mdx",
+      filename: "template",
+      folderId: "alpha",
+      format: "mdx",
+      size: 1,
+      type: "file",
+      meta: {},
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    act(() => {
+      $authPermit.set("edit");
+      $assets.set(
+        new Map([
+          [configAsset.id, configAsset],
+          [templateAsset.id, templateAsset],
+        ])
+      );
+    });
+    const container = renderManager();
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    expect(
+      folderButton.querySelector("[data-collection-folder-icon]")
+    ).not.toBeNull();
+
+    act(() => {
+      folderButton.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    });
+    const configButton = getOptions(container).find(({ button }) =>
+      button.textContent?.includes("collection.json")
+    )!.button;
+    openContextMenu(configButton);
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels).not.toContain("Settings");
+    expect(labels.some((label) => label?.startsWith("Cut"))).toBe(false);
+    expect(labels).not.toContain("Move");
+    expect(labels.some((label) => label?.startsWith("Delete"))).toBe(false);
+  });
+
+  test("hides generic panel actions in a detected collection folder", () => {
+    const configAsset = createLoadingCollection("alpha").configAsset;
+    act(() => $assets.set(new Map([[configAsset.id, configAsset]])));
+    const container = renderer.render(
+      <TooltipProvider>
+        <AssetManager
+          canManageFolders
+          panelActions={{
+            upload: vi.fn(),
+            createFile: vi.fn(),
+            createFolder: vi.fn(),
+            createEntry: vi.fn(),
+          }}
+        />
+      </TooltipProvider>
+    );
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    act(() => {
+      folderButton.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    });
+
+    openContextMenu(
+      container.querySelector<HTMLElement>("[data-asset-manager-scroll-area]")!
+    );
+
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels).toContain("Create folder");
+    expect(labels).toContain("New entry");
+    expect(labels).not.toContain("Upload asset");
+    expect(labels).not.toContain("Create text file");
+  });
+
   test("hides copy, duplicate, and delete for a collection ancestor from edit users", () => {
     let collections: ReadonlyMap<string, ContentCollection> = new Map();
     act(() => {

@@ -232,6 +232,13 @@ describe("AssetThumbnail", () => {
     expect(thumbnail?.getAttribute("aria-description")).toBe(
       "Content collection. Double-click to open. Only folders can be moved here."
     );
+    const collectionIcon = thumbnail?.querySelector(
+      "[data-collection-folder-icon]"
+    );
+    expect(collectionIcon).toBeInstanceOf(SVGElement);
+    expect(
+      collectionIcon?.querySelector('path[stroke="currentColor"]')
+    ).toBeInstanceOf(SVGElement);
   });
 
   test("keeps collection entry filenames read-only", () => {

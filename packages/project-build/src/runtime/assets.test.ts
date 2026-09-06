@@ -1169,7 +1169,7 @@ describe("addAsset", () => {
     ).toThrow("Asset folder not found");
   });
 
-  test("rejects adding a non-MDX asset to a collection folder", () => {
+  test("rejects adding generic assets to a collection folder", () => {
     const collectionConfig: Asset = {
       id: "collection-config",
       projectId: "project",
@@ -1199,6 +1199,39 @@ describe("addAsset", () => {
           ]),
         },
         { asset: { ...assetInput, folderId: "posts" } },
+        { projectId: "project" }
+      )
+    ).toThrow("Use New entry to add files to a collection folder");
+
+    expect(() =>
+      addAsset(
+        {
+          assets: new Map([[collectionConfig.id, collectionConfig]]),
+          assetFolders: new Map([
+            [
+              "posts",
+              {
+                id: "posts",
+                projectId: "project",
+                name: "Posts",
+                createdAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          ]),
+        },
+        {
+          asset: {
+            id: "entry",
+            name: "entry.mdx",
+            filename: "entry",
+            type: "file",
+            folderId: "posts",
+            size: 1,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            format: "mdx",
+            meta: {},
+          },
+        },
         { projectId: "project" }
       )
     ).toThrow("Use New entry to add files to a collection folder");

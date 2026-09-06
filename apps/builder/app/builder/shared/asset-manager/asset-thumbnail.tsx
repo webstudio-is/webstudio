@@ -24,6 +24,7 @@ import {
 import type { MimeCategory } from "@webstudio-is/sdk";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { $authPermit, $permissions } from "~/shared/nano-states";
+import { canConfigureContentCollections } from "../assets/content-collections";
 import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
@@ -153,6 +154,7 @@ type AssetThumbnailProps = {
   selectionActions?: AssetManagerItemActions;
   onMove?: () => void;
   isCollectionEntry?: boolean;
+  isCollectionReserved?: boolean;
   unavailableDestinationFolderIds?: ReadonlySet<string>;
 };
 
@@ -169,6 +171,7 @@ export const AssetThumbnail = ({
   selectionActions,
   onMove,
   isCollectionEntry = false,
+  isCollectionReserved = false,
   unavailableDestinationFolderIds,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
@@ -176,6 +179,9 @@ export const AssetThumbnail = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const authPermit = useStore($authPermit);
+  const collectionActionBlocked =
+    isCollectionReserved &&
+    canConfigureContentCollections(authPermit) === false;
   const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
   const getDragItems = interactions.getDragItems;
@@ -205,14 +211,20 @@ export const AssetThumbnail = ({
       ? {}
       : {
           open: onOpen,
-          settings: () => setSettingsOpen(true),
+          settings: collectionActionBlocked
+            ? undefined
+            : () => setSettingsOpen(true),
           ...(authPermit === "view"
             ? {}
             : {
-                ...createAssetManagerClipboardActions(item),
+                ...(collectionActionBlocked
+                  ? {}
+                  : createAssetManagerClipboardActions(item)),
                 ...(isCollectionEntry ? { duplicate: undefined } : {}),
-                move: onMove,
-                delete: () => setDeleteOpen(true),
+                move: collectionActionBlocked ? undefined : onMove,
+                delete: collectionActionBlocked
+                  ? undefined
+                  : () => setDeleteOpen(true),
                 ...(asset.type === "image"
                   ? { replace: () => replaceInputRef.current?.click() }
                   : {}),

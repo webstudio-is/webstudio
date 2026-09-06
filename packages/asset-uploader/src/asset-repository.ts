@@ -92,6 +92,7 @@ import {
   deleteAssetsWithClient,
   deleteAssetUploadReservationWithClient,
   loadAssetUploadReservationsByProjectWithClient,
+  updateAssetFilenameIfCurrentWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
 } from "./asset-patch-core";
@@ -307,6 +308,7 @@ const defaultDependencies = {
   deleteAssetsWithClient,
   deleteAssetUploadReservationWithClient,
   loadAssetUploadReservationsByProjectWithClient,
+  updateAssetFilenameIfCurrentWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
   loadAssetFoldersByProjectWithClient,
@@ -452,6 +454,15 @@ export interface AssetRepository {
     folderId: string;
     values: Readonly<Record<string, unknown>>;
   }): Promise<Asset>;
+  updateCollectionConfigAndTemplateName(input: {
+    folderId: string;
+    configAssetId: Asset["id"];
+    expectedConfigName: Asset["name"];
+    templateAssetId: Asset["id"];
+    expectedTemplateFilename: Asset["filename"];
+    templateFilename: string;
+    configSource: string;
+  }): Promise<{ configAsset: Asset; templateAsset: Asset }>;
   updateFolder(
     folderId: string,
     values: AssetFolderUpdate
@@ -668,7 +679,9 @@ export class PostgresAssetRepository implements AssetRepository {
   private async readCollectionAssetBytes(asset: Asset) {
     if (asset.size > contentEngineLimits.hydratedFileBytes) {
       throw new ContentCollectionError(
-        `Collection file "${formatAssetName(asset)}" exceeds the content size limit`
+        `Collection file "${formatAssetName(
+          asset
+        )}" exceeds the content size limit`
       );
     }
     const content = await this.readContent({ assetId: asset.id, asset });
@@ -678,7 +691,9 @@ export class PostgresAssetRepository implements AssetRepository {
     );
     if (bytes.byteLength !== asset.size) {
       throw new ContentCollectionError(
-        `Collection file "${formatAssetName(asset)}" content length does not match its metadata`
+        `Collection file "${formatAssetName(
+          asset
+        )}" content length does not match its metadata`
       );
     }
     return bytes;
@@ -1113,13 +1128,17 @@ export class PostgresAssetRepository implements AssetRepository {
         );
         if (validationError !== undefined) {
           throw new AssetRepositoryConflictError(
-            `Collection entry "${formatAssetName(entryAsset)}": ${validationError}`
+            `Collection entry "${formatAssetName(
+              entryAsset
+            )}": ${validationError}`
           );
         }
         const slug = properties[nextConfig.slugField];
         if (slug !== getAssetDisplayNameParts(entryAsset).basename) {
           throw new AssetRepositoryConflictError(
-            `Collection entry "${formatAssetName(entryAsset)}": The slug must match the entry filename`
+            `Collection entry "${formatAssetName(
+              entryAsset
+            )}": The slug must match the entry filename`
           );
         }
       }
@@ -1625,6 +1644,205 @@ export class PostgresAssetRepository implements AssetRepository {
       assetId: ticket.assetId,
       allowCollectionFolder: true,
     });
+  }
+
+  async updateCollectionConfigAndTemplateName({
+    folderId,
+    configAssetId,
+    expectedConfigName,
+    templateAssetId,
+    expectedTemplateFilename,
+    templateFilename,
+    configSource,
+  }: {
+    folderId: string;
+    configAssetId: Asset["id"];
+    expectedConfigName: Asset["name"];
+    templateAssetId: Asset["id"];
+    expectedTemplateFilename: Asset["filename"];
+    templateFilename: string;
+    configSource: string;
+  }) {
+    await this.assertCanConfigureCollections();
+    if (
+      templateFilename.length === 0 ||
+      templateFilename.length > assetResourceLimits.assetFilenameCharacters
+    ) {
+      throw new AssetRepositoryConflictError(
+        "Collection template name is invalid"
+      );
+    }
+    const assets = await this.dependencies.loadAssetsByProjectWithClient(
+      this.projectId,
+      this.context.postgrest.client
+    );
+    const configAsset = assets.find(
+      (asset) =>
+        asset.id === configAssetId &&
+        asset.folderId === folderId &&
+        formatAssetName(asset) === collectionConfigFilename
+    );
+    if (configAsset === undefined) {
+      throw new AssetRepositoryNotFoundError(
+        "Collection configuration not found"
+      );
+    }
+    if (configAsset.name !== expectedConfigName) {
+      throw new AssetRepositoryConflictError(
+        "Collection configuration changed while settings were being saved"
+      );
+    }
+    const currentConfig = parseCollectionConfig(
+      decodeUtf8(await this.readCollectionAssetBytes(configAsset))
+    );
+    const templateAsset = assets.find(
+      (asset) =>
+        asset.id === templateAssetId &&
+        asset.folderId === folderId &&
+        formatAssetName(asset) === currentConfig.template &&
+        isMdxFileAsset(asset)
+    );
+    if (templateAsset === undefined) {
+      throw new AssetRepositoryNotFoundError("Collection template not found");
+    }
+    if (templateAsset.filename !== expectedTemplateFilename) {
+      throw new AssetRepositoryConflictError(
+        "Collection template changed while settings were being saved"
+      );
+    }
+    const nextTemplateAsset = { ...templateAsset, filename: templateFilename };
+    const nextConfig = parseCollectionConfig(configSource);
+    if (nextConfig.template !== formatAssetName(nextTemplateAsset)) {
+      throw new AssetRepositoryConflictError(
+        "Collection configuration does not reference the renamed template"
+      );
+    }
+    const configBytes = new TextEncoder().encode(configSource);
+    const projectedAssets = assets.map((asset) => {
+      if (asset.id === configAsset.id) {
+        return { ...asset, size: configBytes.byteLength };
+      }
+      return asset.id === templateAsset.id ? nextTemplateAsset : asset;
+    });
+    const projectedAssetStore: AssetObjectReader = {
+      readFile: async (name, range) => {
+        if (name !== configAsset.name) {
+          return await this.assetStore.readFile(name, range);
+        }
+        const bytes =
+          range === undefined
+            ? configBytes
+            : configBytes.subarray(range.offset, range.offset + range.length);
+        return {
+          data: {
+            [Symbol.asyncIterator]: async function* () {
+              yield bytes;
+            },
+          },
+          contentLength: bytes.byteLength,
+        };
+      },
+    };
+    await validateCollectionFolder({
+      assets: projectedAssets,
+      folderId,
+      assetStore: projectedAssetStore,
+    });
+
+    const renamedTemplate =
+      await this.dependencies.updateAssetFilenameIfCurrentWithClient(
+        {
+          projectId: this.projectId,
+          assetId: templateAsset.id,
+          expectedFilename: expectedTemplateFilename,
+          filename: templateFilename,
+        },
+        this.context.postgrest.client
+      );
+    if (renamedTemplate === undefined) {
+      throw new AssetRepositoryConflictError(
+        "Collection template changed while settings were being saved"
+      );
+    }
+    try {
+      const updatedConfig = await this.updateContent({
+        assetId: configAsset.id,
+        expectedName: configAsset.name,
+        data: new ReadableStream({
+          start(controller) {
+            controller.enqueue(configBytes);
+            controller.close();
+          },
+        }),
+      });
+      return { configAsset: updatedConfig, templateAsset: renamedTemplate };
+    } catch (error) {
+      const currentAssets =
+        await this.dependencies.loadAssetsByProjectWithClient(
+          this.projectId,
+          this.context.postgrest.client
+        );
+      const currentConfigAsset = currentAssets.find(
+        (asset) => asset.id === configAsset.id && asset.folderId === folderId
+      );
+      const currentTemplateAsset = currentAssets.find(
+        (asset) => asset.id === templateAsset.id && asset.folderId === folderId
+      );
+      if (
+        currentConfigAsset === undefined ||
+        currentTemplateAsset === undefined
+      ) {
+        throw new Error(
+          "Collection settings failed and the current collection state could not be verified",
+          { cause: error }
+        );
+      }
+      const currentConfigSource = decodeUtf8(
+        await this.readCollectionAssetBytes(currentConfigAsset)
+      );
+      const currentTemplateName = formatAssetName(currentTemplateAsset);
+      if (
+        currentConfigSource === configSource &&
+        currentTemplateName === formatAssetName(nextTemplateAsset)
+      ) {
+        return {
+          configAsset: currentConfigAsset,
+          templateAsset: currentTemplateAsset,
+        };
+      }
+      let currentConfig;
+      try {
+        currentConfig = parseCollectionConfig(currentConfigSource);
+      } catch {
+        throw new Error(
+          "Collection settings failed and the current collection state could not be verified",
+          { cause: error }
+        );
+      }
+      if (
+        currentConfig.template !== formatAssetName(templateAsset) ||
+        currentTemplateAsset.filename !== templateFilename
+      ) {
+        throw error;
+      }
+      const restoredTemplate =
+        await this.dependencies.updateAssetFilenameIfCurrentWithClient(
+          {
+            projectId: this.projectId,
+            assetId: templateAsset.id,
+            expectedFilename: templateFilename,
+            filename: templateAsset.filename,
+          },
+          this.context.postgrest.client
+        );
+      if (restoredTemplate === undefined) {
+        throw new Error(
+          "Collection settings failed and the template name could not be restored",
+          { cause: error }
+        );
+      }
+      throw error;
+    }
   }
 
   async updateFolder(folderId: string, values: AssetFolderUpdate) {

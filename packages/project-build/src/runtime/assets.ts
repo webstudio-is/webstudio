@@ -643,15 +643,7 @@ export const addAsset = (
     return throwBuilderRuntimeError("CONFLICT", "Asset already exists");
   }
   assertAssetFolderExists(state.assetFolders, input.asset.folderId);
-  if (
-    isCollectionFolder(assets, input.asset.folderId) &&
-    isMdxFileAsset(input.asset) === false
-  ) {
-    return throwBuilderRuntimeError(
-      "CONFLICT",
-      "Use New entry to add files to a collection folder"
-    );
-  }
+  assertFolderAcceptsGenericAssets(assets, input.asset.folderId);
   const asset: Asset = { ...input.asset, projectId: context.projectId };
   return createRuntimeMutation({
     payload: [

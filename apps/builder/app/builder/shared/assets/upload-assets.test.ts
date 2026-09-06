@@ -1,7 +1,15 @@
 import { beforeEach, describe, test, expect, vi } from "vitest";
 import { assetType, type Asset } from "@webstudio-is/sdk";
+import { createAssetFolderFixture } from "@webstudio-is/sdk/testing";
 import type { Project } from "@webstudio-is/project";
-import { $assets, $project } from "~/shared/sync/data-stores";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import {
+  $assetFolders,
+  $assets,
+  $pages,
+  $project,
+} from "~/shared/sync/data-stores";
+import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import { __testing__, importAssets } from "./upload-assets";
 
 const {
@@ -9,15 +17,62 @@ const {
   deduplicateAssetName,
   getFilesData,
   getUniqueFilesData,
+  safeSetAsset,
   submitAssetUpload,
 } = __testing__;
 const request = vi.fn<typeof fetch>();
+
+registerContainers();
 
 describe("upload-assets", () => {
   beforeEach(() => {
     request.mockReset();
     $project.set(undefined);
+    $assetFolders.set(new Map());
     $assets.set(new Map());
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+    serverSyncStore.transactionManager.currentStack = [];
+    serverSyncStore.transactionManager.undoneStack = [];
+    serverSyncStore.popAll();
+  });
+
+  test("commits a server-validated collection template repair", () => {
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project-id",
+      name: "collection.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file",
+      format: "json",
+      size: 1,
+      createdAt: "2026-09-06T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset: Asset = {
+      ...configAsset,
+      id: "template",
+      name: "template.mdx",
+      filename: "template",
+      format: "mdx",
+    };
+    $project.set({ id: "project-id" } as Project);
+    $assetFolders.set(
+      new Map([
+        [
+          "posts",
+          createAssetFolderFixture({
+            id: "posts",
+            name: "Posts",
+          }),
+        ],
+      ])
+    );
+    $assets.set(new Map([[configAsset.id, configAsset]]));
+
+    safeSetAsset(templateAsset, "project-id");
+
+    expect($assets.get().get(templateAsset.id)).toEqual(templateAsset);
   });
 
   test("requests upload tickets without client-supplied asset ids", async () => {

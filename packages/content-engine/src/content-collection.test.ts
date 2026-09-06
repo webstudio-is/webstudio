@@ -48,6 +48,15 @@ describe("content collections", () => {
     ).toBeUndefined();
   });
 
+  test("requires a separate field for automatic slug generation", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].generateSlugFrom = "slug";
+
+    expect(() => parseCollectionConfig(JSON.stringify(schema))).toThrow(
+      "Slug source field must be different from the slug field"
+    );
+  });
+
   test("preserves schema keywords that are not managed by the configurator", () => {
     const schema = JSON.parse(createDefaultCollectionConfig());
     schema.properties.summary = {
@@ -351,7 +360,7 @@ describe("content collections", () => {
       serializeCollectionConfig({
         config,
         fields: config.fields,
-        settings: { slugField: "title" },
+        settings: { slugField: "title", generateSlugFrom: "slug" },
       })
     );
     const title = nextConfig.schema.properties as Record<
@@ -360,6 +369,7 @@ describe("content collections", () => {
     >;
 
     expect(nextConfig.slugField).toBe("title");
+    expect(nextConfig.generateSlugFrom).toBe("slug");
     expect(title.title.pattern).toBe("^[a-z0-9]+(?:-[a-z0-9]+)*$");
     expect(title.title["x-webstudio"]).toMatchObject({ control: "slug" });
     expect(title.slug.pattern).toBeUndefined();

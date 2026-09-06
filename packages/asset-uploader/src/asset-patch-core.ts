@@ -279,6 +279,45 @@ export const updateAssetMetadataWithClient = async (
   return asset;
 };
 
+export const updateAssetFilenameIfCurrentWithClient = async (
+  {
+    projectId,
+    assetId,
+    expectedFilename,
+    filename,
+  }: {
+    projectId: string;
+    assetId: Asset["id"];
+    expectedFilename: string | undefined;
+    filename: string | undefined;
+  },
+  client: Client
+): Promise<Asset | undefined> => {
+  const query = client
+    .from("Asset")
+    .update({ filename: filename ?? null })
+    .eq("id", assetId)
+    .eq("projectId", projectId);
+  const result = await (
+    expectedFilename === undefined
+      ? query.is("filename", null)
+      : query.eq("filename", expectedFilename)
+  )
+    .select("id")
+    .maybeSingle();
+  assertPostgrestSuccess(result);
+  if (result.data?.id !== assetId) {
+    return;
+  }
+  const [asset] = await loadAssetsByProjectWithClient(projectId, client, [
+    assetId,
+  ]);
+  if (asset === undefined) {
+    throw new AssetRepositoryNotFoundError("Asset not found");
+  }
+  return asset;
+};
+
 const persistAssetMetadataWithClient = async (
   {
     projectId,

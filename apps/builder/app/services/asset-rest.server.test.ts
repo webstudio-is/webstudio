@@ -127,6 +127,25 @@ describe("Assets REST responses", () => {
     ).rejects.toBeInstanceOf(AssetRestPayloadTooLargeError);
   });
 
+  test("accepts a larger explicit JSON limit for internal asset operations", async () => {
+    const body = JSON.stringify({
+      configSource: "x".repeat(assetResourceLimits.restMutationRequestBytes),
+    });
+
+    await expect(
+      readAssetRestJson(
+        new Request("https://example.com/rest/assets", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body,
+        }),
+        new TextEncoder().encode(body).byteLength
+      )
+    ).resolves.toEqual({
+      configSource: "x".repeat(assetResourceLimits.restMutationRequestBytes),
+    });
+  });
+
   test("rejects malformed UTF-8 in JSON bodies", async () => {
     const prefix = new TextEncoder().encode('{"description":"');
     const suffix = new TextEncoder().encode('"}');

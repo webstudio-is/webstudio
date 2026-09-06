@@ -95,16 +95,18 @@ creates two files in the folder:
 The folder remains a normal Assets folder. The direct `collection.json` file is
 what makes Webstudio treat it as a collection and show the collection badge.
 Open **Collection settings** to add fields, choose their types, mark them as
-required, set defaults and text-length or number limits, edit the entry
-template, and select the slug and slug-source fields. The configurator writes
-the schema; designers do not need to edit JSON. Choose a dynamic article page
-whose path parameter has the same name as the slug field. A new entry then
-opens on that page with its slug filled into the matching parameter.
+required, set text-length or number limits, rename and edit the entry template,
+and select the slug and slug-source fields. The configurator writes the schema;
+designers do not need to edit JSON. Put default frontmatter and starter content
+in the entry template with the built-in Markdown editor. Choose a dynamic
+article page whose path parameter has the same name as the slug field. A new
+entry then opens on that page with its slug filled into the matching parameter.
 
 The collection format uses a supported subset of JSON Schema draft 2020-12.
-It covers object fields, required fields, strings, numbers, integers, booleans,
-arrays, nested objects, defaults, and the limits available in the configurator.
-It does not support `$ref`, composition keywords, enums, formats, or custom
+The configurator exposes string, number, integer, boolean, and slug fields,
+along with required fields, defaults, and length or value limits. A hand-written
+schema can also describe supported arrays and nested objects. It does not
+support `$ref`, composition keywords, enums, formats, or custom
 regular-expression patterns. Webstudio reports unsupported rules with their
 location instead of silently ignoring them.
 

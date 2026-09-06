@@ -19,7 +19,7 @@ import {
   PlusIcon,
   SettingsIcon,
 } from "@webstudio-is/icons";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   formatAssetName,
@@ -58,6 +58,7 @@ export const AssetsPanel = ({
   const [createEntryOpen, setCreateEntryOpen] = useState(false);
   const [collectionSettingsOpen, setCollectionSettingsOpen] = useState(false);
   const [collectionRefreshKey, setCollectionRefreshKey] = useState(0);
+  const [collectionToConfigure, setCollectionToConfigure] = useState<string>();
   const [repairingCollection, setRepairingCollection] = useState(false);
   const [entryCollection, setEntryCollection] =
     useState<Extract<ContentCollection, { status: "ready" }>>();
@@ -70,8 +71,28 @@ export const AssetsPanel = ({
   const canManageFolders = authPermit !== "view";
   const canConfigureCollections = canConfigureContentCollections(authPermit);
   const collections = useContentCollections(collectionRefreshKey);
+  const collectionReservedAssetIds = getCollectionReservedAssetIds(
+    collections,
+    { includeInvalid: true }
+  );
   const currentCollection =
     folderId === undefined ? undefined : collections.get(folderId);
+  useEffect(() => {
+    if (collectionToConfigure === undefined) {
+      return;
+    }
+    const collection = collections.get(collectionToConfigure);
+    if (collection?.status === "invalid") {
+      setCollectionToConfigure(undefined);
+      return;
+    }
+    if (collection?.status !== "ready") {
+      return;
+    }
+    setCollectionToConfigure(undefined);
+    setSettingsCollection(collection);
+    setCollectionSettingsOpen(true);
+  }, [collectionToConfigure, collections]);
   const builderRepair =
     currentCollection?.status === "invalid" &&
     isContentMode === false &&
@@ -104,9 +125,6 @@ export const AssetsPanel = ({
           : canConfigureCollections
             ? currentCollection.message
             : `${currentCollection.message} A builder must repair this collection.`;
-  const reservedAssetIds = getCollectionReservedAssetIds(collections, {
-    includeInvalid: isContentMode || canConfigureCollections === false,
-  });
   const addActions = {
     upload: () => uploadRef.current?.open(),
     createFile: () => setCreateTextFileOpen(true),
@@ -338,7 +356,6 @@ export const AssetsPanel = ({
           deleteUnusedAssets: openDeleteUnusedAssetsDialog,
         }}
         collections={collections}
-        hiddenAssetIds={reservedAssetIds}
         emptyMessage={
           currentCollection === undefined
             ? undefined
@@ -350,6 +367,11 @@ export const AssetsPanel = ({
       <CreateAssetFolderDialog
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
+        onConfigureCollection={(createdFolderId) => {
+          setFolderId(createdFolderId);
+          setCollectionToConfigure(createdFolderId);
+          setCollectionRefreshKey((key) => key + 1);
+        }}
         currentFolderId={folderId}
         canCreateContentCollection={
           isContentMode === false && canConfigureCollections
@@ -366,6 +388,10 @@ export const AssetsPanel = ({
         <TextFileEditor
           key={openedTextAssetId}
           assetId={openedTextAssetId}
+          readOnly={
+            canConfigureCollections === false &&
+            collectionReservedAssetIds.has(openedTextAssetId)
+          }
           onOpenChange={(open) => {
             if (open === false) {
               setOpenedTextAssetId(undefined);

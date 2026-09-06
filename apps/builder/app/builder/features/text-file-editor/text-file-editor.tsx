@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import type { Extension } from "@codemirror/state";
 import { useStore } from "@nanostores/react";
 import {
   Box,
@@ -573,33 +574,92 @@ const MarkdownToolbar = ({
   </Flex>
 );
 
+export const MarkdownEditor = ({
+  asset,
+  ariaLabel = "Markdown source",
+  value,
+  readOnly,
+  languageExtensions = [],
+  onChange,
+  onChangeComplete,
+}: {
+  asset: Asset;
+  ariaLabel?: string;
+  value: string;
+  readOnly: boolean;
+  languageExtensions?: Extension[];
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
+}) => {
+  const assetFolders = useStore($assetFolders);
+  const { assetContainers } = useAssets();
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const editorApiRef = useRef<EditorApi>();
+
+  return (
+    <Box
+      css={{
+        display: "grid",
+        gridTemplateRows: "auto minmax(0, 1fr)",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <MarkdownToolbar
+        editorApiRef={editorApiRef}
+        disabled={readOnly}
+        previewOpen={previewOpen}
+        onPreviewOpenChange={setPreviewOpen}
+      />
+      <MarkdownSplitView
+        open={previewOpen}
+        source={value}
+        sourceAsset={asset}
+        folders={assetFolders}
+        assetContainers={assetContainers}
+      >
+        <CodeEditor
+          ariaLabel={ariaLabel}
+          editorApiRef={editorApiRef}
+          value={value}
+          languageExtensions={languageExtensions}
+          size="full"
+          expandable={false}
+          chromeless
+          readOnly={readOnly}
+          onChange={onChange}
+          onChangeComplete={onChangeComplete}
+        />
+      </MarkdownSplitView>
+    </Box>
+  );
+};
+
 export const TextFileEditor = ({
   assetId,
   onOpenChange,
+  readOnly = false,
 }: {
   assetId: string;
   onOpenChange: (open: boolean) => void;
+  readOnly?: boolean;
 }) => {
   const assets = useStore($assets);
-  const assetFolders = useStore($assetFolders);
   const externalContentRoots = useStore($externalContentRoots);
   const registeredComponentMetas = useStore($registeredComponentMetas);
   const instances = useStore($instances);
   const props = useStore($props);
   const dataSources = useStore($dataSources);
   const asset = assets.get(assetId);
-  const { assetContainers } = useAssets();
-  const canEdit = useStore($authPermit) !== "view";
+  const canEdit = useStore($authPermit) !== "view" && readOnly === false;
   const [state, setState] = useState<TextFileState>({ status: "loading" });
   const [persistenceFeedback, setPersistenceFeedback] =
     useState<MdxPersistenceFeedback>();
-  const [previewOpen, setPreviewOpen] = useState(true);
   const currentAssetRef = useRef<Asset>();
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const pendingMdxSavesRef = useRef(0);
   const saveQueueRef = useRef(Promise.resolve());
-  const editorApiRef = useRef<EditorApi>();
   const reportedConflictRef = useRef<string>();
   const mdxSession =
     asset !== undefined &&
@@ -835,18 +895,27 @@ export const TextFileEditor = ({
   const isMarkdown = asset !== undefined && isMarkdownAsset(asset);
   let editor: ReactNode;
   if (state.status === "loaded" && asset !== undefined) {
-    editor = (
+    const onChange = (content: string) => {
+      setState({ status: "loaded", content });
+    };
+    editor = isMarkdown ? (
+      <MarkdownEditor
+        asset={asset}
+        value={state.content}
+        readOnly={canEdit === false}
+        languageExtensions={languageExtensions}
+        onChange={onChange}
+        onChangeComplete={save}
+      />
+    ) : (
       <CodeEditor
-        editorApiRef={editorApiRef}
         value={state.content}
         languageExtensions={languageExtensions}
         size="full"
         expandable={false}
         chromeless
         readOnly={canEdit === false}
-        onChange={(content) => {
-          setState({ status: "loaded", content });
-        }}
+        onChange={onChange}
         onChangeComplete={save}
       />
     );
@@ -884,11 +953,10 @@ export const TextFileEditor = ({
             <Box
               css={{
                 display: "grid",
-                gridTemplateRows: isMarkdown
-                  ? persistenceFeedback === undefined
-                    ? "auto minmax(0, 1fr)"
-                    : "auto auto minmax(0, 1fr)"
-                  : "minmax(0, 1fr)",
+                gridTemplateRows:
+                  persistenceFeedback === undefined
+                    ? "minmax(0, 1fr)"
+                    : "auto minmax(0, 1fr)",
                 height: "100%",
               }}
             >
@@ -925,27 +993,7 @@ export const TextFileEditor = ({
                     )}
                 </Flex>
               )}
-              {isMarkdown && (
-                <MarkdownToolbar
-                  editorApiRef={editorApiRef}
-                  disabled={canEdit === false}
-                  previewOpen={previewOpen}
-                  onPreviewOpenChange={setPreviewOpen}
-                />
-              )}
-              {isMarkdown ? (
-                <MarkdownSplitView
-                  open={previewOpen}
-                  source={state.content}
-                  sourceAsset={asset}
-                  folders={assetFolders}
-                  assetContainers={assetContainers}
-                >
-                  {editor}
-                </MarkdownSplitView>
-              ) : (
-                editor
-              )}
+              {editor}
             </Box>
           )}
         </Box>

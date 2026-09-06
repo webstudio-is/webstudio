@@ -719,6 +719,11 @@ export const parseCollectionConfig = (
   if (slugSourceField.type !== "string") {
     throw new ContentCollectionError("Slug source field must be a string");
   }
+  if (settings.generateSlugFrom === settings.slugField) {
+    throw new ContentCollectionError(
+      "Slug source field must be different from the slug field"
+    );
+  }
   return {
     schema,
     template: settings.template,

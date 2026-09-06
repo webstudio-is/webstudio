@@ -15,6 +15,7 @@ import {
   loadAssetUploadReservationsByProjectWithClient,
   loadAssetsByProjectWithClient,
   patchAssetsWithClient,
+  updateAssetFilenameIfCurrentWithClient,
   updateAssetMetadataWithClient,
 } from "./asset-patch-core";
 import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
@@ -727,6 +728,70 @@ describe("asset patch persistence", () => {
     );
     expect(update).toEqual({ description: null });
     expect(readIdFilter).toBe("in.(asset-1)");
+  });
+
+  test("updates an asset filename only when the expected value is current", async () => {
+    const projectId = uid();
+    let updatedFilename: unknown;
+    let expectedFilenameFilter: string | null = null;
+    server.use(
+      db.patch("Asset", async ({ request }) => {
+        const url = new URL(request.url);
+        expectedFilenameFilter = url.searchParams.get("filename");
+        updatedFilename = ((await request.json()) as { filename?: unknown })
+          .filename;
+        return json({ id: "asset-1" });
+      }),
+      db.get("Asset", () =>
+        json([{ ...assetRow, projectId, filename: "post-template" }])
+      )
+    );
+
+    await expect(
+      updateAssetFilenameIfCurrentWithClient(
+        {
+          projectId,
+          assetId: "asset-1",
+          expectedFilename: "template",
+          filename: "post-template",
+        },
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual(
+      expect.objectContaining({ id: "asset-1", filename: "post-template" })
+    );
+    expect(expectedFilenameFilter).toBe("eq.template");
+    expect(updatedFilename).toBe("post-template");
+  });
+
+  test("reports when a conditional filename update loses a race", async () => {
+    const projectId = uid();
+    let reloaded = false;
+    server.use(
+      db.patch("Asset", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("filename")).toBe(
+          "is.null"
+        );
+        return json(null);
+      }),
+      db.get("Asset", () => {
+        reloaded = true;
+        return json([]);
+      })
+    );
+
+    await expect(
+      updateAssetFilenameIfCurrentWithClient(
+        {
+          projectId,
+          assetId: "asset-1",
+          expectedFilename: undefined,
+          filename: "post-template",
+        },
+        testContext.postgrest.client
+      )
+    ).resolves.toBeUndefined();
+    expect(reloaded).toBe(false);
   });
 
   test("reports a missing metadata update as a repository not-found error", async () => {

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Asset } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import type { AssetObjectStore } from "./client";
 import { createUploadTicket, uploadFile } from "./upload";
 import {
@@ -38,6 +39,7 @@ import {
   deleteAssetsWithClient,
   loadAssetUploadReservationsByProjectWithClient,
   loadAssetsByProjectWithClient,
+  updateAssetFilenameIfCurrentWithClient,
   updateAssetMetadataWithClient,
 } from "./asset-patch-core";
 import { updateAssetContent } from "./revision";
@@ -143,6 +145,8 @@ const createDependencies = () => {
     createAssetIndex: vi.fn<typeof createAssetIndex>(),
     updateAssetMetadataWithClient:
       vi.fn<typeof updateAssetMetadataWithClient>(),
+    updateAssetFilenameIfCurrentWithClient:
+      vi.fn<typeof updateAssetFilenameIfCurrentWithClient>(),
     loadAssetsByProjectWithClient: vi
       .fn<typeof loadAssetsByProjectWithClient>()
       .mockResolvedValue([]),
@@ -5957,5 +5961,300 @@ describe("PostgresAssetRepository", () => {
         },
       ])
     );
+  });
+
+  test("updates a collection config and template name as one repository operation", async () => {
+    const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project-1",
+      name: "config-storage.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file",
+      format: "json",
+      size: new TextEncoder().encode(configSource).byteLength,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset: Asset = {
+      ...configAsset,
+      id: "template",
+      name: "template-storage.mdx",
+      filename: "template",
+      format: "mdx",
+      size: new TextEncoder().encode(templateSource).byteLength,
+    };
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      configAsset,
+      templateAsset,
+    ]);
+    const renamedTemplate = { ...templateAsset, filename: "post-template" };
+    dependencies.updateAssetFilenameIfCurrentWithClient
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(renamedTemplate);
+    const nextConfigValue = JSON.parse(configSource);
+    nextConfigValue["x-webstudio"].template = "post-template.mdx";
+    const nextConfigSource = `${JSON.stringify(
+      nextConfigValue,
+      undefined,
+      2
+    )}\n`;
+    const updatedConfig = { ...configAsset, name: "config-revision.json" };
+    dependencies.updateAssetContent.mockResolvedValue(updatedConfig);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: createSourceAssetClient({
+        [configAsset.name]: configSource,
+        [templateAsset.name]: templateSource,
+      }),
+      dependencies,
+    });
+
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: configAsset.name,
+        templateAssetId: templateAsset.id,
+        expectedTemplateFilename: templateAsset.filename,
+        templateFilename: "t".repeat(
+          assetResourceLimits.assetFilenameCharacters + 1
+        ),
+        configSource: nextConfigSource,
+      })
+    ).rejects.toThrow("Collection template name is invalid");
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: configAsset.name,
+        templateAssetId: configAsset.id,
+        expectedTemplateFilename: templateAsset.filename,
+        templateFilename: "post-template",
+        configSource: nextConfigSource,
+      })
+    ).rejects.toThrow("Collection template not found");
+    expect(
+      dependencies.updateAssetFilenameIfCurrentWithClient
+    ).not.toHaveBeenCalled();
+
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: "stale-config.json",
+        templateAssetId: templateAsset.id,
+        expectedTemplateFilename: templateAsset.filename,
+        templateFilename: "post-template",
+        configSource: nextConfigSource,
+      })
+    ).rejects.toThrow(
+      "Collection configuration changed while settings were being saved"
+    );
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: configAsset.name,
+        templateAssetId: templateAsset.id,
+        expectedTemplateFilename: "stale-template",
+        templateFilename: "post-template",
+        configSource: nextConfigSource,
+      })
+    ).rejects.toThrow(
+      "Collection template changed while settings were being saved"
+    );
+    expect(
+      dependencies.updateAssetFilenameIfCurrentWithClient
+    ).not.toHaveBeenCalled();
+
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: configAsset.name,
+        templateAssetId: templateAsset.id,
+        expectedTemplateFilename: templateAsset.filename,
+        templateFilename: "post-template",
+        configSource: nextConfigSource,
+      })
+    ).rejects.toThrow(
+      "Collection template changed while settings were being saved"
+    );
+    expect(dependencies.updateAssetContent).not.toHaveBeenCalled();
+
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: configAsset.name,
+        templateAssetId: templateAsset.id,
+        expectedTemplateFilename: templateAsset.filename,
+        templateFilename: "post-template",
+        configSource: nextConfigSource,
+      })
+    ).resolves.toEqual({
+      configAsset: updatedConfig,
+      templateAsset: renamedTemplate,
+    });
+    expect(
+      dependencies.updateAssetFilenameIfCurrentWithClient
+    ).toHaveBeenCalledTimes(2);
+    expect(dependencies.updateAssetContent).toHaveBeenCalledOnce();
+  });
+
+  test("restores the template name when the collection config update fails", async () => {
+    const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project-1",
+      name: "config-storage.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file",
+      format: "json",
+      size: new TextEncoder().encode(configSource).byteLength,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset: Asset = {
+      ...configAsset,
+      id: "template",
+      name: "template-storage.mdx",
+      filename: "template",
+      format: "mdx",
+      size: new TextEncoder().encode(templateSource).byteLength,
+    };
+    const renamedTemplate = { ...templateAsset, filename: "post-template" };
+    dependencies.loadAssetsByProjectWithClient
+      .mockResolvedValueOnce([configAsset, templateAsset])
+      .mockResolvedValueOnce([configAsset, renamedTemplate]);
+    dependencies.updateAssetFilenameIfCurrentWithClient
+      .mockResolvedValueOnce(renamedTemplate)
+      .mockResolvedValueOnce(templateAsset);
+    dependencies.updateAssetContent.mockRejectedValue(
+      new Error("write failed")
+    );
+    const nextConfigValue = JSON.parse(configSource);
+    nextConfigValue["x-webstudio"].template = "post-template.mdx";
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: createSourceAssetClient({
+        [configAsset.name]: configSource,
+        [templateAsset.name]: templateSource,
+      }),
+      dependencies,
+    });
+
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: configAsset.name,
+        templateAssetId: templateAsset.id,
+        expectedTemplateFilename: templateAsset.filename,
+        templateFilename: "post-template",
+        configSource: `${JSON.stringify(nextConfigValue)}\n`,
+      })
+    ).rejects.toThrow("write failed");
+    expect(
+      dependencies.updateAssetFilenameIfCurrentWithClient
+    ).toHaveBeenCalledTimes(2);
+    expect(
+      dependencies.updateAssetFilenameIfCurrentWithClient.mock.calls[1]?.[0]
+    ).toMatchObject({
+      assetId: templateAsset.id,
+      expectedFilename: "post-template",
+      filename: "template",
+    });
+  });
+
+  test("does not roll back collection settings that another save replaced", async () => {
+    const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const configAsset: Asset = {
+      id: "config",
+      projectId: "project-1",
+      name: "config-storage.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file",
+      format: "json",
+      size: new TextEncoder().encode(configSource).byteLength,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const templateAsset: Asset = {
+      ...configAsset,
+      id: "template",
+      name: "template-storage.mdx",
+      filename: "template",
+      format: "mdx",
+      size: new TextEncoder().encode(templateSource).byteLength,
+    };
+    const renamedTemplate = { ...templateAsset, filename: "post-template" };
+    const concurrentTemplate = {
+      ...templateAsset,
+      filename: "article-template",
+    };
+    const concurrentConfigValue = JSON.parse(configSource);
+    concurrentConfigValue["x-webstudio"].template = "article-template.mdx";
+    const concurrentConfigSource = `${JSON.stringify(
+      concurrentConfigValue,
+      undefined,
+      2
+    )}\n`;
+    const concurrentConfigAsset = {
+      ...configAsset,
+      name: "concurrent-config.json",
+      size: new TextEncoder().encode(concurrentConfigSource).byteLength,
+    };
+    dependencies.loadAssetsByProjectWithClient
+      .mockResolvedValueOnce([configAsset, templateAsset])
+      .mockResolvedValueOnce([concurrentConfigAsset, concurrentTemplate]);
+    dependencies.updateAssetFilenameIfCurrentWithClient.mockResolvedValueOnce(
+      renamedTemplate
+    );
+    dependencies.updateAssetContent.mockRejectedValue(
+      new Error("write failed")
+    );
+    const nextConfigValue = JSON.parse(configSource);
+    nextConfigValue["x-webstudio"].template = "post-template.mdx";
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: createSourceAssetClient({
+        [configAsset.name]: configSource,
+        [concurrentConfigAsset.name]: concurrentConfigSource,
+        [templateAsset.name]: templateSource,
+      }),
+      dependencies,
+    });
+
+    await expect(
+      repository.updateCollectionConfigAndTemplateName({
+        folderId: "posts",
+        configAssetId: configAsset.id,
+        expectedConfigName: configAsset.name,
+        templateAssetId: templateAsset.id,
+        expectedTemplateFilename: templateAsset.filename,
+        templateFilename: "post-template",
+        configSource: `${JSON.stringify(nextConfigValue)}\n`,
+      })
+    ).rejects.toThrow("write failed");
+    expect(
+      dependencies.updateAssetFilenameIfCurrentWithClient
+    ).toHaveBeenCalledOnce();
   });
 });

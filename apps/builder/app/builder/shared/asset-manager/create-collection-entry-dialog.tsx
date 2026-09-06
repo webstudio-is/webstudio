@@ -31,7 +31,8 @@ import {
 } from "@webstudio-is/design-system";
 import { fetch } from "~/shared/fetch.client";
 import { $assets, $pages, $project } from "~/shared/sync/data-stores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { getWebstudioData } from "~/shared/instance-utils/data";
+import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import type { ContentCollection } from "../assets/content-collections";
@@ -315,7 +316,15 @@ export const CreateCollectionEntryDialog = ({
       if ($assets.get().has(asset.id)) {
         invalidateAssets();
       } else {
-        executeRuntimeMutation({ id: "assets.add", input: { asset } });
+        createTransactionFromBuilderPatchPayload({
+          data: getWebstudioData(),
+          payload: [
+            {
+              namespace: "assets",
+              patches: [{ op: "add", path: [asset.id], value: asset }],
+            },
+          ],
+        });
         onNextTransactionComplete(invalidateAssets);
       }
       onOpenChange(false);

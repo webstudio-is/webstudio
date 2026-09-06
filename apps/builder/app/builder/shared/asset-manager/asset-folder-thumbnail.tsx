@@ -4,7 +4,7 @@ import {
   AlertCircleIcon,
   ChevronRightIcon,
   FolderIcon,
-  ListIcon,
+  ListViewIcon,
 } from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -209,7 +209,8 @@ export const FolderThumbnail = ({
                   style={{ position: "absolute", right: -4, bottom: -2 }}
                 />
               ) : (
-                <ListIcon
+                <ListViewIcon
+                  data-collection-folder-icon=""
                   size={16}
                   style={{ position: "absolute", right: -4, bottom: -2 }}
                 />

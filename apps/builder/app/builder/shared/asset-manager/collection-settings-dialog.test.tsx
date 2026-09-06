@@ -1,5 +1,7 @@
 import { act } from "react-dom/test-utils";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   createDefaultCollectionConfig,
   parseCollectionConfig,
@@ -14,6 +16,7 @@ import { $assets, $pages, $project } from "~/shared/sync/data-stores";
 import {
   CollectionSettingsDialog,
   getCollectionSettingsSaveOrder,
+  updateCollectionConfigAndTemplateName,
 } from "./collection-settings-dialog";
 import { isCollectionPreviewPath } from "./collection-preview-utils";
 import { createAssetManagerTestRenderer } from "./test-utils";
@@ -42,6 +45,8 @@ const createAsset = ({
 
 const renderer = createAssetManagerTestRenderer();
 const { initBridge, clearBridge } = __testing__;
+const render = (children: ReactNode) =>
+  renderer.render(<TooltipProvider>{children}</TooltipProvider>);
 
 test("only accepts preview paths with the configured slug parameter", () => {
   expect(isCollectionPreviewPath("/blog/:slug", "slug")).toBe(true);
@@ -50,6 +55,44 @@ test("only accepts preview paths with the configured slug parameter", () => {
   expect(isCollectionPreviewPath("/*/:slug", "slug")).toBe(true);
   expect(isCollectionPreviewPath("/blog/:post", "slug")).toBe(false);
   expect(isCollectionPreviewPath("/blog", "slug")).toBe(false);
+});
+
+test("does not commit collection settings after the active project changes", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const collection = {
+    status: "ready" as const,
+    folderId: "posts",
+    configAsset,
+    templateAsset,
+    config: parseCollectionConfig(createDefaultCollectionConfig()),
+    templateProperties: { draft: true },
+  };
+  const request = vi.fn(async () => {
+    $project.set({ id: "another-project" } as never);
+    return Response.json({
+      configAsset: { ...configAsset, name: "config-revision.json" },
+      templateAsset: { ...templateAsset, filename: "post-template" },
+    });
+  });
+
+  await expect(
+    updateCollectionConfigAndTemplateName({
+      projectId: "project",
+      collection,
+      templateFilename: "post-template",
+      configSource: createDefaultCollectionConfig(),
+      request,
+    })
+  ).rejects.toThrow("updated in the previous project");
 });
 
 const input = (element: HTMLInputElement, value: string) => {
@@ -105,7 +148,7 @@ test("keeps the slug source field type fixed but lets designers make it optional
     filename: "template",
     format: "mdx",
   });
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -140,6 +183,11 @@ test("keeps the slug source field type fixed but lets designers make it optional
     throw new Error("Expected title key control");
   }
   input(titleKey, "headline");
+  act(() => {
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit URL slug"]')
+      ?.click();
+  });
   expect(
     document.querySelector<HTMLButtonElement>(
       '[aria-label="Generate slug from"]'
@@ -153,9 +201,9 @@ test("keeps the slug source field type fixed but lets designers make it optional
   }
   input(slugKey, "permalink");
   expect(
-    document.querySelector<HTMLButtonElement>('[aria-label="Slug field"]')
+    document.querySelector<HTMLButtonElement>('[aria-label="URL slug type"]')
       ?.textContent
-  ).toContain("permalink");
+  ).toContain("Slug");
 });
 
 test("orders schema and template writes without creating an invalid collection", () => {
@@ -215,7 +263,7 @@ test("does not enable saving when the entry template failed to load", async () =
     filename: "template",
     format: "mdx",
   });
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -256,7 +304,7 @@ test("does not close while the entry template is loading", async () => {
     format: "mdx",
   });
   const onOpenChange = vi.fn();
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -294,7 +342,7 @@ test("keeps focus while editing a field key", async () => {
     title: "Summary",
     type: "string",
   };
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -311,6 +359,12 @@ test("keeps focus while editing a field key", async () => {
 
   await act(async () => undefined);
 
+  act(() => {
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit Summary"]')
+      ?.click();
+  });
+
   const keyControl = document.querySelector<HTMLInputElement>(
     '[aria-label="Summary key"]'
   );
@@ -323,7 +377,7 @@ test("keeps focus while editing a field key", async () => {
   expect(document.activeElement).toBe(keyControl);
 });
 
-test("shows the fixed collection template and slug settings", async () => {
+test("organizes field, template, and collection settings by task", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -334,7 +388,7 @@ test("shows the fixed collection template and slug settings", async () => {
     filename: "template",
     format: "mdx",
   });
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -351,23 +405,126 @@ test("shows the fixed collection template and slug settings", async () => {
 
   await act(async () => undefined);
 
-  expect(
-    document.querySelector<HTMLInputElement>(
-      '[aria-label="Entry template file"]'
-    )?.readOnly
-  ).toBe(true);
-  expect(document.querySelector('[aria-label="Slug field"]')).toBeInstanceOf(
-    HTMLButtonElement
+  const titleField = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Edit Title"]'
   );
+  expect(titleField?.getAttribute("aria-expanded")).toBe("true");
+  expect(titleField?.textContent).toContain("title");
+  expect(titleField?.textContent).toContain("Text");
+  expect(titleField?.textContent).toContain("Required");
+  act(() => {
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit URL slug"]')
+      ?.click();
+  });
   expect(
     document.querySelector('[aria-label="Generate slug from"]')
   ).toBeInstanceOf(HTMLButtonElement);
-  expect(document.querySelector('[aria-label="Title default"]')).toBeInstanceOf(
-    HTMLInputElement
-  );
-  expect(document.querySelector('[aria-label="Draft default"]')).toBeInstanceOf(
+  expect(document.querySelector('[aria-label="URL slug type"]')).toBeInstanceOf(
     HTMLButtonElement
   );
+  expect(
+    document.querySelector('[role="toolbar"][aria-label="Markdown formatting"]')
+  ).toBeInstanceOf(HTMLElement);
+  expect(
+    document
+      .querySelector('[aria-label="Entry template Markdown"]')
+      ?.classList.contains("cm-content")
+  ).toBe(true);
+  const templateName = document.querySelector<HTMLInputElement>(
+    '[aria-label="Entry template name"]'
+  );
+  expect(templateName?.value).toBe("template");
+  if (templateName === null) {
+    throw new Error("Expected template name control");
+  }
+  input(templateName, "post-template");
+  expect(templateName.value).toBe("post-template");
+  expect(document.querySelector("#collection-entry-template")).toBeNull();
+  expect(document.querySelector('[aria-label="Title default"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Draft default"]')).toBeNull();
+
+  const settingsSection = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((option) => option.textContent === "Settings");
+  expect(settingsSection).not.toBeUndefined();
+  act(() => settingsSection?.click());
+  expect(settingsSection?.getAttribute("aria-current")).toBe("true");
+  expect(document.body.textContent).toContain("Entry preview");
+});
+
+test("persists a template rename with the collection config before saving template content", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const order: string[] = [];
+  const updateConfigAndTemplateName = vi.fn(async () => {
+    order.push("config-and-name");
+    return {
+      configAsset: { ...configAsset, name: "config-revision.json" },
+      templateAsset: { ...templateAsset, filename: "post-template" },
+    };
+  });
+  const updateContent = vi.fn(async ({ asset }: { asset: Asset }) => {
+    order.push("template-content");
+    return { ...asset, name: "template-revision.mdx" };
+  });
+  const onOpenChange = vi.fn();
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={onOpenChange}
+      readTemplateSource={async () =>
+        "---\ndraft: true\n---\n\nStart writing.\n"
+      }
+      updateContent={updateContent}
+      updateConfigAndTemplateName={updateConfigAndTemplateName}
+    />
+  );
+  await act(async () => undefined);
+  const templateName = document.querySelector<HTMLInputElement>(
+    '[aria-label="Entry template name"]'
+  );
+  if (templateName === null) {
+    throw new Error("Expected template name control");
+  }
+  input(templateName, "post-template");
+  const save = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Save");
+  if (save === undefined) {
+    throw new Error("Expected save control");
+  }
+  await vi.waitFor(() => expect(save.disabled).toBe(false));
+
+  await act(async () => {
+    save.click();
+  });
+  await vi.waitFor(() => expect(order).toHaveLength(2));
+
+  expect(order).toEqual(["config-and-name", "template-content"]);
+  expect(updateConfigAndTemplateName).toHaveBeenCalledWith(
+    expect.objectContaining({
+      templateFilename: "post-template",
+      configSource: expect.stringContaining('"template": "post-template.mdx"'),
+    })
+  );
+  expect(onOpenChange).toHaveBeenCalledWith(false);
 });
 
 test("clears a preview that no longer matches a renamed slug field", async () => {
@@ -422,7 +579,7 @@ test("clears a preview that no longer matches a renamed slug field", async () =>
       ],
     ]),
   });
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -443,6 +600,11 @@ test("clears a preview that no longer matches a renamed slug field", async () =>
       (button) => button.textContent === "Clear"
     )
   ).toBe(true);
+  act(() => {
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit URL slug"]')
+      ?.click();
+  });
   const slugKey = document.querySelector<HTMLInputElement>(
     '[aria-label="URL slug key"]'
   );
@@ -472,7 +634,7 @@ test("does not reuse an original field key for a new row", async () => {
   });
   const configValue = JSON.parse(createDefaultCollectionConfig());
   configValue.properties.field1 = { title: "Field one", type: "string" };
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -488,6 +650,11 @@ test("does not reuse an original field key for a new row", async () => {
   );
 
   await act(async () => undefined);
+  act(() => {
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit Field one"]')
+      ?.click();
+  });
   const key = document.querySelector<HTMLInputElement>(
     '[aria-label="Field one key"]'
   );
@@ -526,7 +693,7 @@ test("locks collection changes that require migrating existing entries", async (
   const configValue = JSON.parse(createDefaultCollectionConfig());
   configValue.properties.summary = { title: "Summary", type: "string" };
   $assets.set(new Map([[entryAsset.id, entryAsset]]));
-  renderer.render(
+  render(
     <CollectionSettingsDialog
       collection={{
         status: "ready",
@@ -543,10 +710,20 @@ test("locks collection changes that require migrating existing entries", async (
 
   await act(async () => undefined);
 
+  act(() => {
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit URL slug"]')
+      ?.click();
+  });
   expect(
-    document.querySelector<HTMLButtonElement>('[aria-label="Slug field"]')
+    document.querySelector<HTMLButtonElement>('[aria-label="URL slug type"]')
       ?.disabled
   ).toBe(true);
+  act(() => {
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit Summary"]')
+      ?.click();
+  });
   expect(
     document.querySelector<HTMLInputElement>('[aria-label="Summary key"]')
       ?.disabled

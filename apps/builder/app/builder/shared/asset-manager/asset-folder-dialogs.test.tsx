@@ -251,10 +251,12 @@ test("deduplicates collection seed uploads so setup can be retried", async () =>
   const uploadAsset = vi.fn<typeof uploadSingleAsset>(
     async () => ({ id: "asset" }) as never
   );
+  const onConfigureCollection = vi.fn();
   render(
     <CreateAssetFolderDialog
       open
       onOpenChange={vi.fn()}
+      onConfigureCollection={onConfigureCollection}
       currentFolderId={undefined}
       createFolder={createFolder}
       waitForFolderSync={waitForFolderSync}
@@ -284,6 +286,15 @@ test("deduplicates collection seed uploads so setup can be retried", async () =>
   });
 
   await vi.waitFor(() => expect(uploadAsset).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() =>
+    expect(document.body.textContent).toContain("Collection created")
+  );
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Configure collection")
+      ?.click();
+  });
+  expect(onConfigureCollection).toHaveBeenCalledWith("new-folder");
   expect(
     uploadAsset.mock.calls.map(([type, file, options]) => ({
       type,
