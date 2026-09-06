@@ -81,6 +81,7 @@ const previewStyle = css({
     display: "grid",
     placeItems: "center",
     minHeight: theme.spacing[20],
+    border: `1px dotted ${cssVar("--border-default")}`,
   },
 });
 
