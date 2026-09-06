@@ -235,6 +235,31 @@ test("transparent category accepts flow", () => {
   ).toBeTruthy();
 });
 
+test("transparent root element accepts flow without allowing interactive children", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="a" ws:id="linkId">
+          <ws.element ws:tag="p"></ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["linkId"],
+    })
+  ).toBeTruthy();
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="a" ws:id="linkId">
+          <ws.element ws:tag="button"></ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["linkId"],
+    })
+  ).toBeFalsy();
+});
+
 test("phrasing category accepts element with transparent children", () => {
   expect(
     isTreeSatisfyingContentModel({

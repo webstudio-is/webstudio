@@ -74,3 +74,23 @@ test("renders named MDX heading components with their authored tag", async () =>
 
   expect(html).toBe("<h1>h1</h1>\n");
 });
+
+test("shows a placeholder for an empty component without a visible preview", async () => {
+  const html = await renderMarkdownPreview({
+    markdown:
+      '<YouTube src="https://youtu.be/KI5JHpzBK1s" />\n\n<Image src="https://example.com/image.png" alt="Example" />',
+    sourceAsset: markdown,
+    folders: new Map(),
+    assetContainers: [],
+    origin: "https://builder.example",
+  });
+
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  const placeholder = container.querySelector(
+    "[data-ws-mdx-component-placeholder]"
+  );
+  expect(placeholder?.tagName).toBe("DIV");
+  expect(placeholder?.textContent?.trim()).toBe("YouTube");
+  expect(container.querySelector("img")?.getAttribute("alt")).toBe("Example");
+});

@@ -77,6 +77,11 @@ const previewStyle = css({
   },
   "& img": { maxWidth: "100%" },
   "& a": { color: cssVar("--foreground-accent") },
+  "& [data-ws-mdx-component-placeholder]": {
+    display: "grid",
+    placeItems: "center",
+    minHeight: theme.spacing[20],
+  },
 });
 
 // A file can feed multiple Content Blocks, so this preview cannot choose one
@@ -140,6 +145,31 @@ const materializeRegisteredComponentTags = (
       return { ...node, children };
     }
     const preview = getRegisteredComponentPreviewTag(node);
+    if (
+      children.length === 0 &&
+      (preview === undefined || preview.tag === "div")
+    ) {
+      return {
+        type: "element",
+        syntax: "mdx",
+        tag: "div",
+        props: [
+          {
+            name: "data-ws-mdx-component-placeholder",
+            value: "",
+          },
+        ],
+        children: [
+          {
+            type: "text",
+            value: node.name,
+            sourceRange: node.sourceRange,
+          },
+        ],
+        mdxMode: "flow",
+        sourceRange: node.sourceRange,
+      };
+    }
     if (preview?.tag === undefined) {
       return { ...node, children };
     }
