@@ -67,10 +67,11 @@ const createInitialValues = (
   templateProperties: Readonly<Record<string, unknown>>
 ) =>
   Object.fromEntries(
-    fields.map((field) => [
-      field.key,
-      getInitialValue(field, templateProperties),
-    ])
+    fields.flatMap((field) =>
+      field.required || Object.hasOwn(templateProperties, field.key)
+        ? [[field.key, getInitialValue(field, templateProperties)]]
+        : []
+    )
   );
 
 const parseResponse = async (response: Response): Promise<Asset> => {
@@ -178,20 +179,7 @@ export const CreateCollectionEntryDialog = ({
     createInitialValues(config.fields, collection.templateProperties)
   );
   const [slugEdited, setSlugEdited] = useState(false);
-  const [editedFields, setEditedFields] = useState<ReadonlySet<string>>(
-    () => new Set()
-  );
-  const [unsetFields, setUnsetFields] = useState<ReadonlySet<string>>(
-    () =>
-      new Set(
-        config.fields.flatMap((field) =>
-          field.required === false &&
-          Object.hasOwn(collection.templateProperties, field.key) === false
-            ? [field.key]
-            : []
-        )
-      )
-  );
+  const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<{
     message: string;
     fieldKey?: string;
@@ -205,17 +193,7 @@ export const CreateCollectionEntryDialog = ({
         createInitialValues(config.fields, collection.templateProperties)
       );
       setSlugEdited(false);
-      setEditedFields(new Set());
-      setUnsetFields(
-        new Set(
-          config.fields.flatMap((field) =>
-            field.required === false &&
-            Object.hasOwn(collection.templateProperties, field.key) === false
-              ? [field.key]
-              : []
-          )
-        )
-      );
+      setDirty(false);
       setError(undefined);
       setCreating(false);
       setConfirmDiscard(false);
@@ -223,12 +201,7 @@ export const CreateCollectionEntryDialog = ({
   }, [collection.templateProperties, config.fields, open]);
 
   const setValue = (field: CollectionField, value: unknown) => {
-    setEditedFields((current) => new Set(current).add(field.key));
-    setUnsetFields((current) => {
-      const next = new Set(current);
-      next.delete(field.key);
-      return next;
-    });
+    setDirty(true);
     setValues((current) => {
       const next = { ...current, [field.key]: value };
       if (
@@ -244,12 +217,12 @@ export const CreateCollectionEntryDialog = ({
   };
 
   const unsetValue = (field: CollectionField) => {
-    setEditedFields((current) => new Set(current).add(field.key));
-    setUnsetFields((current) => new Set(current).add(field.key));
-    setValues((current) => ({
-      ...current,
-      [field.key]: field.type === "boolean" ? undefined : "",
-    }));
+    setDirty(true);
+    setValues((current) => {
+      const next = { ...current };
+      delete next[field.key];
+      return next;
+    });
     setError(undefined);
   };
 
@@ -266,16 +239,13 @@ export const CreateCollectionEntryDialog = ({
       }
       const submittedValues = Object.fromEntries(
         config.fields.flatMap((field) => {
-          const value = values[field.key];
-          if (field.required === false && unsetFields.has(field.key)) {
-            if (
-              editedFields.has(field.key) &&
+          if (Object.hasOwn(values, field.key) === false) {
+            return field.required === false &&
               Object.hasOwn(collection.templateProperties, field.key)
-            ) {
-              return [[field.key, collectionEntryFieldClearValue]];
-            }
-            return [];
+              ? [[field.key, collectionEntryFieldClearValue]]
+              : [];
           }
+          const value = values[field.key];
           if (
             (field.type === "number" || field.type === "integer") &&
             value !== ""
@@ -350,7 +320,7 @@ export const CreateCollectionEntryDialog = ({
     }
   };
   const requestClose = () => {
-    if (editedFields.size > 0) {
+    if (dirty) {
       setConfirmDiscard(true);
       return;
     }
@@ -462,7 +432,9 @@ export const CreateCollectionEntryDialog = ({
                       <Button
                         type="button"
                         aria-label={`Unset ${field.label}`}
-                        disabled={creating || unsetFields.has(field.key)}
+                        disabled={
+                          creating || Object.hasOwn(values, field.key) === false
+                        }
                         onClick={() => unsetValue(field)}
                       >
                         Unset
@@ -516,7 +488,9 @@ export const CreateCollectionEntryDialog = ({
                     <Button
                       type="button"
                       aria-label={`Unset ${field.label}`}
-                      disabled={creating || unsetFields.has(field.key)}
+                      disabled={
+                        creating || Object.hasOwn(values, field.key) === false
+                      }
                       onClick={() => unsetValue(field)}
                     >
                       Unset

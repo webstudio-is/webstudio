@@ -244,7 +244,6 @@ const createLoadingCollection = (folderId: string): ContentCollection => {
     status: "loading",
     folderId,
     configAsset,
-    reservedAssets: [configAsset],
     siblingAssets: [configAsset],
   };
 };
@@ -376,7 +375,6 @@ describe("Asset Manager multiselect interactions", () => {
       status: "loading",
       folderId: "alpha",
       configAsset,
-      reservedAssets: [configAsset, templateAsset],
       siblingAssets: [configAsset, templateAsset],
     };
     const container = renderManager(true, {

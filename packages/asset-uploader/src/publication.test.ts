@@ -100,8 +100,9 @@ describe("published asset data", () => {
     const { assetData, assetStore } = createCollectionFixture();
     const artifact = { documents: [], assetReferences: {} } as never;
     const prepareIndex = vi.fn().mockResolvedValue(artifact);
+    const validateCollections = vi.fn();
     const dependencies = {
-      createRepository: vi.fn(() => ({ prepareIndex })),
+      createRepository: vi.fn(() => ({ prepareIndex, validateCollections })),
       loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
     };
 
@@ -132,7 +133,41 @@ describe("published asset data", () => {
     );
     expect(authenticatedResult.assets).toEqual(assetData.assets);
     expect(prepareIndex).toHaveBeenCalledTimes(2);
+    expect(validateCollections).toHaveBeenCalledTimes(2);
     expect(assetStore.readFile).toHaveBeenCalledOnce();
+  });
+
+  test("rejects indexed publication when a collection is invalid", async () => {
+    const { assetData, assetStore } = createCollectionFixture();
+    const validationError = new Error("Collection entry violates its schema");
+    const prepareIndex = vi.fn().mockResolvedValue({
+      documents: [],
+      assetReferences: {},
+    });
+    const validateCollections = vi.fn().mockRejectedValue(validationError);
+
+    await expect(
+      preparePublishedAssetData(
+        {
+          projectId: "project-1",
+          context: { apiClient: { type: "service" } } as never,
+          assetStore: assetStore as never,
+          contentDatabaseMaxBytes: 512_000,
+          plan: { queries: [] } as never,
+          retainedAssetIds: [],
+        },
+        {
+          createRepository: vi.fn(() => ({
+            prepareIndex,
+            validateCollections,
+          })),
+          loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
+        } as never
+      )
+    ).rejects.toBe(validationError);
+
+    expect(validateCollections).toHaveBeenCalledWith(assetData.assets);
+    expect(prepareIndex).not.toHaveBeenCalled();
   });
 
   test("validates collections without compiling a content index", async () => {
@@ -199,7 +234,10 @@ describe("published asset data", () => {
     const prepareIndex = vi.fn().mockResolvedValue(artifact);
     const loadAssetDataByProject = vi.fn().mockResolvedValue(assetData);
     const dependencies = {
-      createRepository: vi.fn(() => ({ prepareIndex })),
+      createRepository: vi.fn(() => ({
+        prepareIndex,
+        validateCollections: vi.fn(),
+      })),
       loadAssetDataByProject,
     };
 
@@ -261,7 +299,10 @@ describe("published asset data", () => {
           retainedAssetIds: [],
         },
         {
-          createRepository: vi.fn(() => ({ prepareIndex })),
+          createRepository: vi.fn(() => ({
+            prepareIndex,
+            validateCollections: vi.fn(),
+          })),
           loadAssetDataByProject,
         } as never
       )
@@ -298,7 +339,10 @@ describe("published asset data", () => {
         resolvePlan,
       },
       {
-        createRepository: vi.fn(() => ({ prepareIndex })),
+        createRepository: vi.fn(() => ({
+          prepareIndex,
+          validateCollections: vi.fn(),
+        })),
         loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
       } as never
     );

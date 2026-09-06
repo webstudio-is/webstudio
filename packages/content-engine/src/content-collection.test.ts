@@ -292,7 +292,7 @@ describe("content collections", () => {
     expect(serialized.properties.draft["x-webstudio"]).toEqual({});
   });
 
-  test("rejects invalid field limits before serializing the schema", () => {
+  test("rejects invalid field limits through schema validation", () => {
     const config = parseCollectionConfig(createDefaultCollectionConfig());
     const titleIndex = config.fields.findIndex(({ key }) => key === "title");
     const withTitle = (values: Partial<(typeof config.fields)[number]>) =>
@@ -305,15 +305,13 @@ describe("content collections", () => {
         config,
         fields: withTitle({ minLength: -1 }),
       })
-    ).toThrow(
-      "Title: Minimum length must be a whole number of zero or greater"
-    );
+    ).toThrow("minLength must be a whole number of zero or greater");
     expect(() =>
       serializeCollectionConfig({
         config,
         fields: withTitle({ minLength: 5, maxLength: 4 }),
       })
-    ).toThrow("Title: Minimum length cannot exceed maximum length");
+    ).toThrow("minLength cannot exceed maxLength");
 
     const numericFields = withTitle({
       type: "number",
@@ -324,7 +322,7 @@ describe("content collections", () => {
     });
     expect(() =>
       serializeCollectionConfig({ config, fields: numericFields })
-    ).toThrow("Title: Minimum cannot exceed maximum");
+    ).toThrow("minimum cannot exceed maximum");
   });
 
   test("preserves the configured slug field invariant", () => {
@@ -552,17 +550,26 @@ describe("content collections", () => {
     expect(entry.frontmatter.draft).toBe(true);
   });
 
-  test("rejects editable field defaults that do not satisfy the field schema", () => {
-    const wrongType = JSON.parse(createDefaultCollectionConfig());
-    wrongType.properties.draft.default = "yes";
-    expect(() => parseCollectionConfig(JSON.stringify(wrongType))).toThrow(
-      'Default for property "draft" does not satisfy its schema'
+  test("preserves schema defaults as annotations when field rules change", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.title.default = "An old title that is no longer valid";
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const title = config.fields.find(({ key }) => key === "title");
+    if (title === undefined) {
+      throw new Error("Expected title field");
+    }
+
+    const serialized = JSON.parse(
+      serializeCollectionConfig({
+        config,
+        fields: config.fields.map((field) =>
+          field.key === "title" ? { ...field, maxLength: 5 } : field
+        ),
+      })
     );
 
-    const outsideLimits = JSON.parse(createDefaultCollectionConfig());
-    outsideLimits.properties.title.default = "";
-    expect(() => parseCollectionConfig(JSON.stringify(outsideLimits))).toThrow(
-      'Default for property "title" does not satisfy its schema'
+    expect(serialized.properties.title.default).toBe(
+      "An old title that is no longer valid"
     );
   });
 

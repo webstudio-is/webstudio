@@ -1,8 +1,6 @@
 import { atom } from "nanostores";
 
 type TransactionCompleteCallback = (success: boolean) => void;
-export type TransactionCompletionResult = "success" | "failure" | "timeout";
-const maxCompletedTransactions = 1_000;
 
 export const createTransactionCompletionStore = ({
   timeoutMs = 60_000,
@@ -13,7 +11,6 @@ export const createTransactionCompletionStore = ({
 } = {}) => {
   const $lastTransactionId = atom<string | undefined>();
   const callbacks = new Map<string, TransactionCompleteCallback[]>();
-  const completedTransactions = new Map<string, boolean>();
   const scheduleTimeout = (callback: () => void) => {
     return (setTimer ?? globalThis.setTimeout)(callback, timeoutMs);
   };
@@ -45,23 +42,21 @@ export const createTransactionCompletionStore = ({
     });
   };
 
-  const onNextTransactionSettled = (
-    callback: (result: TransactionCompletionResult) => void
-  ) => {
+  const onNextTransactionComplete = (callback: () => void) => {
     let settled = false;
     let unsubscribe = () => {};
-    const settle = (result: TransactionCompletionResult) => {
+    const settle = (success: boolean) => {
       if (settled) {
         return;
       }
       settled = true;
       unsubscribe();
-      callback(result);
+      if (success) {
+        callback();
+      }
     };
     const register = (transactionId: string) => {
-      onTransactionComplete(transactionId, (success) => {
-        settle(success ? "success" : "failure");
-      });
+      onTransactionComplete(transactionId, settle);
     };
     const currentTransactionId = $lastTransactionId.get();
     if (currentTransactionId !== undefined) {
@@ -77,7 +72,7 @@ export const createTransactionCompletionStore = ({
     }
 
     scheduleTimeout(() => {
-      settle("timeout");
+      settle(false);
     });
     return () => {
       settled = true;
@@ -85,50 +80,7 @@ export const createTransactionCompletionStore = ({
     };
   };
 
-  const onNextTransactionComplete = (callback: () => void) =>
-    onNextTransactionSettled((result) => {
-      if (result === "success") {
-        callback();
-      }
-    });
-
-  const waitForNextTransactionComplete = () =>
-    new Promise<TransactionCompletionResult>((resolve) => {
-      onNextTransactionSettled(resolve);
-    });
-
-  const waitForTransactionComplete = (
-    transactionId: string
-  ): Promise<TransactionCompletionResult> => {
-    const completed = completedTransactions.get(transactionId);
-    if (completed !== undefined) {
-      return Promise.resolve(completed ? "success" : "failure");
-    }
-    return new Promise<TransactionCompletionResult>((resolve) => {
-      let settled = false;
-      const settle = (result: TransactionCompletionResult) => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        resolve(result);
-      };
-      onTransactionComplete(transactionId, (success) => {
-        settle(success ? "success" : "failure");
-      });
-      scheduleTimeout(() => settle("timeout"));
-    });
-  };
-
   const completeTransaction = (transactionId: string, success: boolean) => {
-    completedTransactions.delete(transactionId);
-    completedTransactions.set(transactionId, success);
-    if (completedTransactions.size > maxCompletedTransactions) {
-      const oldestTransactionId = completedTransactions.keys().next().value;
-      if (oldestTransactionId !== undefined) {
-        completedTransactions.delete(oldestTransactionId);
-      }
-    }
     const transactionCallbacks = callbacks.get(transactionId);
     callbacks.delete(transactionId);
     if ($lastTransactionId.get() === transactionId) {
@@ -143,7 +95,6 @@ export const createTransactionCompletionStore = ({
 
   const clear = () => {
     callbacks.clear();
-    completedTransactions.clear();
     $lastTransactionId.set(undefined);
   };
 
@@ -153,8 +104,6 @@ export const createTransactionCompletionStore = ({
     clear,
     completeTransaction,
     onNextTransactionComplete,
-    waitForNextTransactionComplete,
-    waitForTransactionComplete,
     onTransactionComplete,
   };
 };

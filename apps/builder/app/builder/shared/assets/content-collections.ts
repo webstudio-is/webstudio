@@ -32,7 +32,6 @@ export type ContentCollection =
       status: "loading";
       folderId: string;
       configAsset: Asset;
-      reservedAssets: readonly Asset[];
       siblingAssets: readonly Asset[];
     }>
   | Readonly<{
@@ -45,10 +44,7 @@ export type ContentCollection =
       repairAsset: Asset;
       missingTemplateFilename?: string;
       forbiddenAsset?: Asset;
-      editorRepair?: Readonly<{
-        action: "edit" | "move";
-        asset: Asset;
-      }>;
+      repairAction?: "edit" | "move";
       message: string;
     }>
   | Readonly<{
@@ -60,6 +56,11 @@ export type ContentCollection =
       siblingAssets: readonly Asset[];
       message: string;
     }>;
+
+type LoadingContentCollection = Extract<
+  ContentCollection,
+  { status: "loading" }
+>;
 
 export const canConfigureContentCollections = (authPermit: AuthPermit) =>
   authPermit === "build" || authPermit === "admin" || authPermit === "own";
@@ -116,9 +117,7 @@ export const discoverContentCollections = async ({
     let repairAsset = configAsset;
     let missingTemplateFilename: string | undefined;
     let forbiddenAsset: Asset | undefined;
-    let editorRepair:
-      | Readonly<{ action: "edit" | "move"; asset: Asset }>
-      | undefined;
+    let repairAction: "edit" | "move" | undefined;
     try {
       const inspected = await inspectContentCollection({
         files: siblings.map((asset) => ({
@@ -178,9 +177,7 @@ export const discoverContentCollections = async ({
           error.forbiddenFileId === undefined
             ? undefined
             : siblings.find((asset) => asset.id === error.forbiddenFileId);
-        if (error.repairAction !== undefined) {
-          editorRepair = { action: error.repairAction, asset: repairAsset };
-        }
+        repairAction = error.repairAction;
       }
       collections.set(folderId, {
         status: "invalid",
@@ -192,7 +189,7 @@ export const discoverContentCollections = async ({
         repairAsset,
         missingTemplateFilename,
         forbiddenAsset,
-        editorRepair,
+        repairAction,
         message: getErrorMessage(error),
       });
     }
@@ -258,7 +255,7 @@ export const createLoadingContentCollections = (assets: readonly Asset[]) => {
     siblings.push(asset);
     assetsByFolder.set(asset.folderId, siblings);
   }
-  const collections = new Map<string, ContentCollection>();
+  const collections = new Map<string, LoadingContentCollection>();
   for (const [folderId, siblings] of assetsByFolder) {
     const configAsset = siblings.find(
       (asset) => formatAssetName(asset) === collectionConfigFilename
@@ -271,13 +268,6 @@ export const createLoadingContentCollections = (assets: readonly Asset[]) => {
       folderId,
       configAsset,
       siblingAssets: siblings,
-      reservedAssets: [
-        ...siblings.filter(
-          (asset) =>
-            formatAssetName(asset) === collectionConfigFilename ||
-            isMdxFileAsset(asset)
-        ),
-      ],
     });
   }
   return collections;
@@ -285,7 +275,7 @@ export const createLoadingContentCollections = (assets: readonly Asset[]) => {
 
 const canKeepReadyCollection = (
   current: ContentCollection,
-  loading: Extract<ContentCollection, { status: "loading" }>
+  loading: LoadingContentCollection
 ) => {
   if (
     current.status !== "ready" ||
@@ -312,7 +302,7 @@ const canKeepReadyCollection = (
 
 const canKeepDiscoveredCollection = (
   current: ContentCollection,
-  loading: Extract<ContentCollection, { status: "loading" }>
+  loading: LoadingContentCollection
 ) => {
   if (current.status === "invalid" || current.status === "unavailable") {
     return hasSameAssetVersions(current.siblingAssets, loading.siblingAssets);
@@ -364,30 +354,48 @@ export const useContentCollections = (
       }),
     [discoveredCollections, loadingCollections]
   );
-  const activeAssets = useMemo(
-    () =>
-      activeFolderId === undefined
-        ? []
-        : assetList.filter((asset) => asset.folderId === activeFolderId),
-    [activeFolderId, assetList]
-  );
   const activeCollection =
     activeFolderId === undefined
       ? undefined
       : loadingCollections.get(activeFolderId);
+  const activeCollectionVersion =
+    activeCollection !== undefined
+      ? JSON.stringify(
+          activeCollection.siblingAssets
+            .map((asset) => [
+              asset.id,
+              asset.name,
+              asset.filename,
+              asset.format,
+              asset.size,
+              asset.updatedAt,
+            ])
+            .sort(([left], [right]) =>
+              String(left).localeCompare(String(right))
+            )
+        )
+      : undefined;
+  const projectId = project?.id;
 
   useEffect(() => {
     let cancelled = false;
-    if (project === undefined || activeCollection === undefined) {
+    if (
+      projectId === undefined ||
+      activeFolderId === undefined ||
+      activeCollectionVersion === undefined
+    ) {
       return () => {
         cancelled = true;
       };
     }
+    const activeAssets = Array.from($assets.get().values()).filter(
+      (asset) => asset.folderId === activeFolderId
+    );
     void discoverContentCollections({
       assets: activeAssets,
       readSource: async (asset) => {
         return readBuilderAssetSource({
-          projectId: project.id,
+          projectId,
           assetId: asset.id,
         });
       },
@@ -420,7 +428,7 @@ export const useContentCollections = (
     return () => {
       cancelled = true;
     };
-  }, [activeAssets, activeCollection, project, refreshKey]);
+  }, [activeCollectionVersion, activeFolderId, projectId, refreshKey]);
 
   return collections;
 };
@@ -439,7 +447,12 @@ export const getCollectionReservedAssetIds = (
           ? [
               collection.configAsset.id,
               ...(includeInvalid
-                ? collection.reservedAssets.map(({ id }) => id)
+                ? collection.siblingAssets.flatMap((asset) =>
+                    formatAssetName(asset) === collectionConfigFilename ||
+                    isMdxFileAsset(asset)
+                      ? [asset.id]
+                      : []
+                  )
                 : []),
             ]
           : [collection.configAsset.id, collection.templateAsset.id]

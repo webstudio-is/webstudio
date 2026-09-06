@@ -26,21 +26,6 @@ export type CollectionFolderDefinition = Readonly<{
 const getFolderAssets = (assets: readonly Asset[], folderId: string) =>
   assets.filter((asset) => asset.folderId === folderId);
 
-export const assertUniqueCollectionFilenames = (
-  filenames: Iterable<string>
-) => {
-  const normalizedFilenames = new Set<string>();
-  for (const filename of filenames) {
-    const normalizedFilename = filename.toLowerCase();
-    if (normalizedFilenames.has(normalizedFilename)) {
-      throw new ContentCollectionError(
-        `Collection folder contains duplicate filename "${filename}"`
-      );
-    }
-    normalizedFilenames.add(normalizedFilename);
-  }
-};
-
 const readAssetBytes = async (asset: Asset, assetStore: AssetObjectReader) => {
   if (asset.size > contentEngineLimits.hydratedFileBytes) {
     throw new ContentCollectionError(

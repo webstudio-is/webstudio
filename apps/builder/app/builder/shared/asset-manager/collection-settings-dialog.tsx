@@ -276,6 +276,7 @@ export const CollectionSettingsDialog = ({
   const [activeSection, setActiveSection] = useState<SettingsSection>("fields");
   const [template, setTemplate] = useState("");
   const loadedTemplateRef = useRef("");
+  const currentTemplateAssetRef = useRef(collection.templateAsset);
   const [templateName, setTemplateName] = useState(
     () => getAssetDisplayNameParts(collection.templateAsset).basename
   );
@@ -326,6 +327,7 @@ export const CollectionSettingsDialog = ({
     setTemplateName(
       getAssetDisplayNameParts(collection.templateAsset).basename
     );
+    currentTemplateAssetRef.current = collection.templateAsset;
     setSlugField(collection.config.slugField);
     setGenerateSlugFrom(collection.config.generateSlugFrom);
     setPreviewPage(collection.config.previewPage);
@@ -491,19 +493,27 @@ export const CollectionSettingsDialog = ({
         throw new Error("Project not found");
       }
       if (template !== loadedTemplateRef.current) {
-        await updateContent({
-          asset: collection.templateAsset,
+        currentTemplateAssetRef.current = await updateContent({
+          asset: currentTemplateAssetRef.current,
           content: template,
         });
+        loadedTemplateRef.current = template;
       }
+      const currentCollection = {
+        ...collection,
+        templateAsset: currentTemplateAssetRef.current,
+      };
       if (renamesTemplate) {
         await updateConfigAndTemplateName({
           projectId,
-          collection,
+          collection: currentCollection,
           templateFilename: nextTemplateName,
           configSource,
         });
-      } else {
+      } else if (
+        JSON.stringify(nextConfig.schema) !==
+        JSON.stringify(collection.config.schema)
+      ) {
         await updateContent({
           asset: collection.configAsset,
           content: configSource,

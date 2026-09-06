@@ -36,6 +36,59 @@ const getOmittedCollectionAssetIds = async ({
   return await getCollectionReservedAssetIds({ assets, assetStore });
 };
 
+const prepareStablePublishedAssetData = async <Result>({
+  projectId,
+  context,
+  assetStore,
+  validateCollections,
+  prepare,
+  dependencies,
+}: {
+  projectId: string;
+  context: AppContext;
+  assetStore: AssetObjectStore;
+  validateCollections: (assets: readonly Asset[]) => Promise<void>;
+  prepare: () => Promise<Result>;
+  dependencies: typeof defaultDependencies;
+}) => {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const assetDataBefore = await dependencies.loadAssetDataByProject(
+      projectId,
+      context
+    );
+    await validateCollections(assetDataBefore.assets);
+    const result = await prepare();
+    const omittedCollectionAssetIds = await getOmittedCollectionAssetIds({
+      assets: assetDataBefore.assets,
+      assetStore,
+      context,
+    });
+    const assetDataAfter = await dependencies.loadAssetDataByProject(
+      projectId,
+      context
+    );
+    if (
+      serializeJsonDeterministically(assetDataBefore) ===
+      serializeJsonDeterministically(assetDataAfter)
+    ) {
+      return {
+        result,
+        assetData: {
+          ...assetDataAfter,
+          assets: assetDataAfter.assets.filter(
+            (asset: Asset) => omittedCollectionAssetIds.has(asset.id) === false
+          ),
+        },
+      };
+    }
+    if (attempt === 0) {
+      continue;
+    }
+    throw new Error("Assets changed while preparing publication; retry");
+  }
+  throw new Error("Asset data was not prepared");
+};
+
 export const validatePublishedAssetCollections = async (
   {
     projectId,
@@ -53,38 +106,15 @@ export const validatePublishedAssetCollections = async (
     context,
     assetStore,
   });
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const assetDataBefore = await dependencies.loadAssetDataByProject(
-      projectId,
-      context
-    );
-    await repository.validateCollections(assetDataBefore.assets);
-    const omittedCollectionAssetIds = await getOmittedCollectionAssetIds({
-      assets: assetDataBefore.assets,
-      assetStore,
-      context,
-    });
-    const assetDataAfter = await dependencies.loadAssetDataByProject(
-      projectId,
-      context
-    );
-    if (
-      serializeJsonDeterministically(assetDataBefore) ===
-      serializeJsonDeterministically(assetDataAfter)
-    ) {
-      return {
-        ...assetDataAfter,
-        assets: assetDataAfter.assets.filter(
-          (asset: Asset) => omittedCollectionAssetIds.has(asset.id) === false
-        ),
-      };
-    }
-    if (attempt === 0) {
-      continue;
-    }
-    throw new Error("Assets changed while preparing publication; retry");
-  }
-  throw new Error("Asset data was not validated");
+  const { assetData } = await prepareStablePublishedAssetData({
+    projectId,
+    context,
+    assetStore,
+    validateCollections: (assets) => repository.validateCollections(assets),
+    prepare: async () => undefined,
+    dependencies,
+  });
+  return assetData;
 };
 
 export const preparePublishedAssetData = async (
@@ -115,66 +145,54 @@ export const preparePublishedAssetData = async (
     assetStore,
     contentDatabaseMaxBytes,
   });
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const assetDataBefore = await dependencies.loadAssetDataByProject(
+  const { result: artifact, assetData } = await prepareStablePublishedAssetData(
+    {
       projectId,
-      context
-    );
-    let artifact = await repository.prepareIndex(plan);
-    if (resolvePlan !== undefined) {
-      let resolvedPlan = await resolvePlan(artifact);
-      for (let dependencyPass = 0; dependencyPass < 20; dependencyPass += 1) {
-        artifact = await repository.prepareIndex(resolvedPlan);
-        const validatedPlan = await resolvePlan(artifact);
-        if (
-          serializeJsonDeterministically(resolvedPlan) ===
-          serializeJsonDeterministically(validatedPlan)
-        ) {
-          break;
-        }
-        if (dependencyPass === 19) {
-          throw new Error(
-            "Dynamic MDX dependency closure exceeds the safe publication depth"
-          );
-        }
-        resolvedPlan = validatedPlan;
-      }
-    }
-    const omittedCollectionAssetIds = await getOmittedCollectionAssetIds({
-      assets: assetDataBefore.assets,
-      assetStore,
       context,
-    });
-    const assetDataAfter = await dependencies.loadAssetDataByProject(
-      projectId,
-      context
-    );
-    if (
-      serializeJsonDeterministically(assetDataBefore) !==
-      serializeJsonDeterministically(assetDataAfter)
-    ) {
-      if (attempt === 0) {
-        continue;
-      }
-      throw new Error("Assets changed while preparing publication; retry");
+      assetStore,
+      validateCollections: (assets) => repository.validateCollections(assets),
+      prepare: async () => {
+        let artifact = await repository.prepareIndex(plan);
+        if (resolvePlan !== undefined) {
+          let resolvedPlan = await resolvePlan(artifact);
+          for (
+            let dependencyPass = 0;
+            dependencyPass < 20;
+            dependencyPass += 1
+          ) {
+            artifact = await repository.prepareIndex(resolvedPlan);
+            const validatedPlan = await resolvePlan(artifact);
+            if (
+              serializeJsonDeterministically(resolvedPlan) ===
+              serializeJsonDeterministically(validatedPlan)
+            ) {
+              break;
+            }
+            if (dependencyPass === 19) {
+              throw new Error(
+                "Dynamic MDX dependency closure exceeds the safe publication depth"
+              );
+            }
+            resolvedPlan = validatedPlan;
+          }
+        }
+        return artifact;
+      },
+      dependencies,
     }
-
-    const runtimeAssetIds = new Set(retainedAssetIds);
-    for (const assetId of getContentArtifactRuntimeAssetIds({
-      artifact,
-      includeDocuments: true,
-    })) {
-      runtimeAssetIds.add(assetId);
-    }
-    return {
-      artifact,
-      assets: assetDataAfter.assets.filter(
-        (asset: Asset) =>
-          omittedCollectionAssetIds.has(asset.id) === false &&
-          (asset.type !== "font" || runtimeAssetIds.has(asset.id))
-      ),
-      assetFolders: assetDataAfter.assetFolders,
-    };
+  );
+  const runtimeAssetIds = new Set(retainedAssetIds);
+  for (const assetId of getContentArtifactRuntimeAssetIds({
+    artifact,
+    includeDocuments: true,
+  })) {
+    runtimeAssetIds.add(assetId);
   }
-  throw new Error("Asset index was not prepared");
+  return {
+    artifact,
+    assets: assetData.assets.filter(
+      (asset: Asset) => asset.type !== "font" || runtimeAssetIds.has(asset.id)
+    ),
+    assetFolders: assetData.assetFolders,
+  };
 };

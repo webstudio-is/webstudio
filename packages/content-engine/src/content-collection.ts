@@ -38,7 +38,6 @@ export type CollectionField = Readonly<{
   maxLength?: number;
   minimum?: number;
   maximum?: number;
-  defaultValue?: unknown;
 }>;
 
 export type ContentCollectionConfig = Readonly<{
@@ -513,19 +512,6 @@ const getField = ({
       `Control ${control} is not supported for property "${key}"`
     );
   }
-  if (
-    (value.type === "string" ||
-      value.type === "number" ||
-      value.type === "integer" ||
-      value.type === "boolean") &&
-    Object.hasOwn(value, "default") &&
-    compileFieldSchema(value, ["properties", key]).safeParse(value.default)
-      .success === false
-  ) {
-    throw new ContentCollectionError(
-      `Default for property "${key}" does not satisfy its schema`
-    );
-  }
   if (value.type === "string") {
     if (declaredControl === "slug" && value.pattern !== collectionSlugPattern) {
       throw new ContentCollectionError(
@@ -552,7 +538,6 @@ const getField = ({
       required,
       minLength: getNonnegativeInteger(value.minLength),
       maxLength: getNonnegativeInteger(value.maxLength),
-      defaultValue: value.default,
     };
   }
   if (value.type === "number" || value.type === "integer") {
@@ -565,7 +550,6 @@ const getField = ({
       required,
       minimum: getFiniteNumber(value.minimum),
       maximum: getFiniteNumber(value.maximum),
-      defaultValue: value.default,
     };
   }
   if (value.type === "boolean") {
@@ -576,7 +560,6 @@ const getField = ({
       type: "boolean",
       control: "checkbox",
       required,
-      defaultValue: value.default,
     };
   }
 };
@@ -800,14 +783,6 @@ export const getCollectionTemplateValidationError = (
   if (validation.success) {
     return;
   }
-  const required = new Set(
-    Array.isArray(config.schema.required)
-      ? config.schema.required.filter(
-          (key): key is string => typeof key === "string"
-        )
-      : []
-  );
-  const editable = new Set(config.fields.map(({ key }) => key));
   const issue = validation.error.issues.find(({ code, path }) => {
     if (path.length === 0) {
       return code === "unrecognized_keys";
@@ -816,10 +791,7 @@ export const getCollectionTemplateValidationError = (
     if (key === undefined) {
       return false;
     }
-    return (
-      Object.hasOwn(properties, key) ||
-      (required.has(key) && editable.has(key) === false)
-    );
+    return Object.hasOwn(properties, key);
   });
   return issue === undefined ? undefined : getValidationError(config, issue);
 };
@@ -1155,24 +1127,23 @@ const serializeCollectionField = (
     "pattern",
     "minimum",
     "maximum",
-    "default",
   ]) {
     delete result[keyword];
   }
-  if (field.minLength !== undefined) {
-    result.minLength = field.minLength;
-  }
-  if (field.maxLength !== undefined) {
-    result.maxLength = field.maxLength;
-  }
-  if (field.minimum !== undefined) {
-    result.minimum = field.minimum;
-  }
-  if (field.maximum !== undefined) {
-    result.maximum = field.maximum;
-  }
-  if (field.defaultValue !== undefined) {
-    result.default = field.defaultValue;
+  if (field.type === "string") {
+    if (field.minLength !== undefined) {
+      result.minLength = field.minLength;
+    }
+    if (field.maxLength !== undefined) {
+      result.maxLength = field.maxLength;
+    }
+  } else if (field.type === "number" || field.type === "integer") {
+    if (field.minimum !== undefined) {
+      result.minimum = field.minimum;
+    }
+    if (field.maximum !== undefined) {
+      result.maximum = field.maximum;
+    }
   }
   const originalExtension = isObject(original["x-webstudio"])
     ? original["x-webstudio"]
@@ -1196,56 +1167,6 @@ const serializeCollectionField = (
     result.pattern = collectionSlugPattern;
   }
   return result;
-};
-
-const validateCollectionFieldLimits = (field: CollectionField) => {
-  if (field.type === "string") {
-    for (const [name, value] of [
-      ["Minimum length", field.minLength],
-      ["Maximum length", field.maxLength],
-    ] as const) {
-      if (
-        value !== undefined &&
-        (Number.isInteger(value) === false || value < 0)
-      ) {
-        throw new ContentCollectionError(
-          `${field.label}: ${name} must be a whole number of zero or greater`
-        );
-      }
-    }
-    if (
-      field.minLength !== undefined &&
-      field.maxLength !== undefined &&
-      field.minLength > field.maxLength
-    ) {
-      throw new ContentCollectionError(
-        `${field.label}: Minimum length cannot exceed maximum length`
-      );
-    }
-    return;
-  }
-  if (field.type !== "number" && field.type !== "integer") {
-    return;
-  }
-  for (const [name, value] of [
-    ["Minimum", field.minimum],
-    ["Maximum", field.maximum],
-  ] as const) {
-    if (value !== undefined && Number.isFinite(value) === false) {
-      throw new ContentCollectionError(
-        `${field.label}: ${name} must be a finite number`
-      );
-    }
-  }
-  if (
-    field.minimum !== undefined &&
-    field.maximum !== undefined &&
-    field.minimum > field.maximum
-  ) {
-    throw new ContentCollectionError(
-      `${field.label}: Minimum cannot exceed maximum`
-    );
-  }
 };
 
 export const serializeCollectionConfig = ({
@@ -1303,7 +1224,6 @@ export const serializeCollectionConfig = ({
   }
   for (const field of serializedFields) {
     validatePropertyKey(field.key);
-    validateCollectionFieldLimits(field);
   }
   const originalProperties = isObject(config.schema.properties)
     ? config.schema.properties

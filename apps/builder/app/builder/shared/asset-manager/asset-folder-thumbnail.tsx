@@ -85,7 +85,6 @@ export const FolderThumbnail = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
-  const [collectionSettingsOpen, setCollectionSettingsOpen] = useState(false);
   const [settingsCollection, setSettingsCollection] = useState<
     Extract<ContentCollection, { status: "ready" }> | undefined
   >();
@@ -136,7 +135,6 @@ export const FolderThumbnail = ({
   }, [canManage]);
   useEffect(() => {
     if (canConfigureCollection === false) {
-      setCollectionSettingsOpen(false);
       setSettingsCollection(undefined);
     }
   }, [canConfigureCollection]);
@@ -155,7 +153,6 @@ export const FolderThumbnail = ({
                   const currentCollection = configurableCollectionRef.current;
                   if (currentCollection !== undefined) {
                     setSettingsCollection(currentCollection);
-                    setCollectionSettingsOpen(true);
                   }
                 },
               }
@@ -335,9 +332,8 @@ export const FolderThumbnail = ({
       {canConfigureCollection && settingsCollection !== undefined && (
         <CollectionSettingsDialog
           collection={settingsCollection}
-          open={collectionSettingsOpen}
+          open
           onOpenChange={(open) => {
-            setCollectionSettingsOpen(open);
             if (open === false) {
               setSettingsCollection(undefined);
             }

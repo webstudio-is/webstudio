@@ -442,6 +442,9 @@ test("does not close while collection settings are saving", async () => {
     />
   );
   await act(async () => undefined);
+  act(() => {
+    document.querySelector<HTMLButtonElement>('[aria-label="Bold"]')?.click();
+  });
 
   const save = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
@@ -655,6 +658,86 @@ test("persists a template rename without rewriting unchanged template content", 
     })
   );
   expect(onOpenChange).toHaveBeenCalledWith(false);
+});
+
+test("retries settings after template content was already saved", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const updatedTemplateAsset = {
+    ...templateAsset,
+    name: "template-revision.mdx",
+  };
+  const updateContent = vi.fn(async ({ asset }: { asset: Asset }) => {
+    expect(asset).toBe(templateAsset);
+    return updatedTemplateAsset;
+  });
+  const updateConfigAndTemplateName = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("Temporary failure"))
+    .mockResolvedValueOnce({
+      configAsset: { ...configAsset, name: "config-revision.json" },
+      templateAsset: { ...updatedTemplateAsset, filename: "post-template" },
+    });
+  const onOpenChange = vi.fn();
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={onOpenChange}
+      readTemplateSource={async () => createDefaultCollectionTemplate()}
+      updateContent={updateContent}
+      updateConfigAndTemplateName={updateConfigAndTemplateName}
+    />
+  );
+  await act(async () => undefined);
+
+  act(() => {
+    document.querySelector<HTMLButtonElement>('[aria-label="Bold"]')?.click();
+  });
+  const templateName = document.querySelector<HTMLInputElement>(
+    '[aria-label="Entry template name"]'
+  );
+  if (templateName === null) {
+    throw new Error("Expected template name control");
+  }
+  input(templateName, "post-template");
+  const save = Array.from(
+    document.body.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Save");
+  if (save === undefined) {
+    throw new Error("Expected save control");
+  }
+
+  await act(async () => save.click());
+  await vi.waitFor(() =>
+    expect(document.body.textContent).toContain("Temporary failure")
+  );
+  await act(async () => save.click());
+  await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+
+  expect(updateContent).toHaveBeenCalledOnce();
+  expect(updateConfigAndTemplateName).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      collection: expect.objectContaining({
+        templateAsset: updatedTemplateAsset,
+      }),
+    })
+  );
 });
 
 test("clears a preview that no longer matches a renamed slug field", async () => {

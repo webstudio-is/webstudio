@@ -323,7 +323,8 @@ describe("discoverContentCollections", () => {
     expect(collections.get("folder")).toMatchObject({
       status: "invalid",
       message: 'Move "cover.png" into a subfolder',
-      editorRepair: { action: "move", asset: image },
+      repairAsset: image,
+      repairAction: "move",
     });
   });
 
@@ -396,7 +397,7 @@ describe("discoverContentCollections", () => {
     expect(collections.get("folder")).toMatchObject({
       status: "invalid",
       repairAsset: duplicateEntry,
-      editorRepair: { action: "move", asset: duplicateEntry },
+      repairAction: "move",
       message: 'Collection folder contains duplicate filename "HELLO.mdx"',
     });
     expect(

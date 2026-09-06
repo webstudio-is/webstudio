@@ -59,8 +59,6 @@ export const AssetsPanel = ({
   const [folderId, setFolderId] = useState<string>();
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [createTextFileOpen, setCreateTextFileOpen] = useState(false);
-  const [createEntryOpen, setCreateEntryOpen] = useState(false);
-  const [collectionSettingsOpen, setCollectionSettingsOpen] = useState(false);
   const [collectionRefreshKey, setCollectionRefreshKey] = useState(0);
   const [collectionToConfigure, setCollectionToConfigure] = useState<string>();
   const [repairingCollection, setRepairingCollection] = useState(false);
@@ -95,7 +93,6 @@ export const AssetsPanel = ({
     }
     setCollectionToConfigure(undefined);
     setSettingsCollection(collection);
-    setCollectionSettingsOpen(true);
   }, [collectionToConfigure, collections]);
   const builderRepair =
     currentCollection?.status === "invalid" &&
@@ -103,14 +100,11 @@ export const AssetsPanel = ({
     canConfigureCollections
       ? currentCollection
       : undefined;
-  const editorRepair =
-    currentCollection?.status === "invalid" && authPermit !== "view"
-      ? currentCollection.editorRepair
-      : undefined;
+  const repairAction = builderRepair?.repairAction;
   const repairAssetToOpen =
-    editorRepair?.action === "edit"
-      ? editorRepair.asset
-      : editorRepair === undefined &&
+    repairAction === "edit" && builderRepair !== undefined
+      ? builderRepair.repairAsset
+      : repairAction === undefined &&
           builderRepair !== undefined &&
           builderRepair.missingTemplateFilename === undefined &&
           builderRepair.forbiddenAsset === undefined &&
@@ -120,10 +114,8 @@ export const AssetsPanel = ({
   const invalidCollectionMessage =
     currentCollection?.status !== "invalid"
       ? undefined
-      : currentCollection.editorRepair !== undefined
-        ? authPermit === "view"
-          ? `${currentCollection.message} Ask an editor or builder to repair this collection.`
-          : currentCollection.message
+      : builderRepair?.repairAction !== undefined
+        ? currentCollection.message
         : isContentMode
           ? "New entries are unavailable until a builder repairs this collection."
           : canConfigureCollections
@@ -136,7 +128,6 @@ export const AssetsPanel = ({
     createEntry: () => {
       if (currentCollection?.status === "ready") {
         setEntryCollection(currentCollection);
-        setCreateEntryOpen(true);
       }
     },
   };
@@ -211,7 +202,6 @@ export const AssetsPanel = ({
                     aria-label="Collection settings"
                     onClick={() => {
                       setSettingsCollection(currentCollection);
-                      setCollectionSettingsOpen(true);
                     }}
                   >
                     <SettingsIcon />
@@ -307,7 +297,7 @@ export const AssetsPanel = ({
           <Text color="destructive" variant="tiny">
             {invalidCollectionMessage}
           </Text>
-          {(builderRepair !== undefined || editorRepair !== undefined) && (
+          {builderRepair !== undefined && (
             <Flex gap={2} wrap="wrap">
               {builderRepair?.missingTemplateFilename !== undefined && (
                 <Button
@@ -413,9 +403,8 @@ export const AssetsPanel = ({
       {entryCollection !== undefined && (
         <CreateCollectionEntryDialog
           collection={entryCollection}
-          open={createEntryOpen}
+          open
           onOpenChange={(nextOpen) => {
-            setCreateEntryOpen(nextOpen);
             if (nextOpen === false) {
               setEntryCollection(undefined);
             }
@@ -427,9 +416,8 @@ export const AssetsPanel = ({
         canConfigureCollections && (
           <CollectionSettingsDialog
             collection={settingsCollection}
-            open={collectionSettingsOpen}
+            open
             onOpenChange={(nextOpen) => {
-              setCollectionSettingsOpen(nextOpen);
               if (nextOpen === false) {
                 setSettingsCollection(undefined);
               }

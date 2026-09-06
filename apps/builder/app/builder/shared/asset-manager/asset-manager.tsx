@@ -171,8 +171,8 @@ export const AssetManager = ({
 }: AssetManagerProps) => {
   const assets = useStore($assets);
   const effectiveCollections = useMemo(() => {
-    const detected = createLoadingContentCollections(
-      Array.from(assets.values())
+    const detected = new Map<string, ContentCollection>(
+      createLoadingContentCollections(Array.from(assets.values()))
     );
     for (const [folderId, collection] of collections) {
       detected.set(folderId, collection);

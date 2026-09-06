@@ -48,10 +48,6 @@ export const onTransactionComplete =
   transactionCompletion.onTransactionComplete;
 export const onNextTransactionComplete =
   transactionCompletion.onNextTransactionComplete;
-export const waitForNextTransactionComplete =
-  transactionCompletion.waitForNextTransactionComplete;
-export const waitForTransactionComplete =
-  transactionCompletion.waitForTransactionComplete;
 
 // polling is important to queue new transactions independently
 // from async iterator and batch them into single job
