@@ -97,7 +97,11 @@ export const RequestDiagnosticsRow = ({
       <Text color="moreSubtle">{label}</Text>
       {description !== undefined && (
         <Tooltip variant="wrapped" content={description}>
-          <InfoCircleIcon data-diagnostics-info tabIndex={0} />
+          <InfoCircleIcon
+            color={cssVar("--foreground-secondary")}
+            data-diagnostics-info
+            tabIndex={0}
+          />
         </Tooltip>
       )}
     </DiagnosticsLabel>

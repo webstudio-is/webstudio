@@ -1,4 +1,4 @@
-import { useLayoutEffect, type ComponentProps } from "react";
+import { useLayoutEffect, useState, type ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import {
   createDefaultCollectionConfig,
@@ -66,10 +66,18 @@ readingTime: 5
 
 Start writing here.
 `;
+configValue.properties = {
+  title: configValue.properties.title,
+  slug: configValue.properties.slug,
+  summary: configValue.properties.summary,
+  readingTime: configValue.properties.readingTime,
+  draft: configValue.properties.draft,
+};
 
 const CollectionSettingsStory = (
   props: ComponentProps<typeof CollectionSettingsDialog>
 ) => {
+  const [ready, setReady] = useState(false);
   useLayoutEffect(() => {
     const previousProject = $project.get();
     const previousAssets = $assets.get();
@@ -80,12 +88,13 @@ const CollectionSettingsStory = (
         [templateAsset.id, templateAsset],
       ])
     );
+    setReady(true);
     return () => {
       $project.set(previousProject);
       $assets.set(previousAssets);
     };
   }, []);
-  return <CollectionSettingsDialog {...props} />;
+  return ready && <CollectionSettingsDialog {...props} />;
 };
 
 const meta = {
@@ -106,6 +115,15 @@ export const Default: Story = {
     open: true,
     onOpenChange: () => undefined,
     readTemplateSource: async () => template,
+    updateContent: async ({ asset }) => asset,
+    convertCollection: async () => undefined,
+    updateConfigAndTemplateName: async ({ collection, templateFilename }) => ({
+      configAsset: collection.configAsset,
+      templateAsset: {
+        ...collection.templateAsset,
+        filename: templateFilename,
+      },
+    }),
     collection: {
       status: "ready",
       folderId: "posts",

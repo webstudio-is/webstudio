@@ -26,7 +26,10 @@ import type { User } from "~/shared/db/user.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 
-const infoIconStyle = css({ flexShrink: 0, opacity: 0.8 });
+const infoIconStyle = css({
+  flexShrink: 0,
+  color: cssVar("--foreground-secondary"),
+});
 const prefetchImageBackground = declareCssVar(
   "--project-card-prefetch-image-background"
 );

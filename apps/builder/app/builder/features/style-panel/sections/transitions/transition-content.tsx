@@ -16,6 +16,7 @@ import {
   Text,
   Grid,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { propertiesData, propertyDescriptions } from "@webstudio-is/css-data";
@@ -267,7 +268,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
                 </Text>
               }
             >
-              <InfoCircleIcon />
+              <InfoCircleIcon color={cssVar("--foreground-secondary")} />
             </Tooltip>
           </Flex>
         </Label>

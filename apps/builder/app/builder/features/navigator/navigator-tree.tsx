@@ -1038,7 +1038,7 @@ export const NavigatorTree = () => {
                     </Text>
                   }
                 >
-                  <InfoCircleIcon />
+                  <InfoCircleIcon color={cssVar("--foreground-secondary")} />
                 </Tooltip>
               }
             >

@@ -575,7 +575,7 @@ const AssetSettingsContent = ({
             variant="wrapped"
             content="The description is used as the default “alt” text for the image."
           >
-            <InfoCircleIcon />
+            <InfoCircleIcon color={cssVar("--foreground-secondary")} />
           </Tooltip>
         </Label>
         <TextArea

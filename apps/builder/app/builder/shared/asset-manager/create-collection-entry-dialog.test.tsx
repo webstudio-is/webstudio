@@ -1,4 +1,6 @@
 import { act } from "react-dom/test-utils";
+import type { ReactNode } from "react";
+import { TooltipProvider } from "@webstudio-is/design-system";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   parseCollectionConfig,
@@ -34,6 +36,8 @@ const createAsset = ({
 });
 
 const renderer = createAssetManagerTestRenderer();
+const render = (children: ReactNode) =>
+  renderer.render(<TooltipProvider>{children}</TooltipProvider>);
 
 const input = (element: HTMLInputElement, value: string) => {
   act(() => {
@@ -98,7 +102,7 @@ test("does not navigate after creating an entry", async () => {
   pages.folders.get(pages.rootFolderId)?.children.push("blog");
   $pages.set(pages);
   $selectedPageId.set(pages.homePageId);
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -141,7 +145,7 @@ test("asks before closing a new entry with unsaved values", async () => {
     format: "mdx",
   });
   const onOpenChange = vi.fn();
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -195,7 +199,7 @@ test("validates entry fields before sending a create request", async () => {
     format: "mdx",
   });
   const onOpenChange = vi.fn();
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -226,6 +230,15 @@ test("validates entry fields before sending a create request", async () => {
   expect(
     document.querySelector<HTMLInputElement>("#collection-entry-title")
   ).toHaveAttribute("aria-invalid", "true");
+  const titleInput = document.querySelector<HTMLInputElement>(
+    "#collection-entry-title"
+  )!;
+  const fieldError = document.getElementById(
+    titleInput.getAttribute("aria-describedby")!
+  );
+  expect(titleInput.parentElement?.parentElement?.contains(fieldError)).toBe(
+    true
+  );
   expect(
     document.querySelector<HTMLInputElement>("#collection-entry-slug")
   ).not.toHaveAttribute("aria-invalid");
@@ -253,7 +266,7 @@ test("submits an entry through the native form path used by Enter", async () => 
   const createEntry = vi.fn(async () => {
     throw new Error("Stop after capturing the request");
   });
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -309,7 +322,7 @@ test("regenerates a cleared slug before validating the entry", async () => {
   const createEntry = vi.fn(async () => {
     throw new Error("Stop after capturing the request");
   });
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -366,7 +379,7 @@ test("uses only the entry template for optional field defaults", async () => {
   });
   const configValue = JSON.parse(createDefaultCollectionConfig());
   configValue.properties.draft.default = true;
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -423,7 +436,7 @@ test("explicitly clears a template-backed optional value", async () => {
   const createEntry = vi.fn(async () => {
     throw new Error("Stop after capturing the request");
   });
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -449,16 +462,23 @@ test("explicitly clears a template-backed optional value", async () => {
     throw new Error("Expected collection entry fields");
   }
   input(title, "Hello world");
-  const unsetSummary = document.querySelector<HTMLButtonElement>(
-    '[aria-label="Unset Summary"]'
+  const summaryActions = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Summary actions"]'
   );
-  if (unsetSummary === null) {
-    throw new Error("Expected unset summary button");
+  if (summaryActions === null) {
+    throw new Error("Expected summary actions");
   }
-  expect(unsetSummary.type).toBe("button");
+  expect(summaryActions.type).toBe("button");
   await act(async () => {
-    unsetSummary.click();
+    summaryActions.dispatchEvent(
+      new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+    );
   });
+  const clear = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  ).find((item) => item.textContent === "Clear value");
+  expect(clear).toBeDefined();
+  await act(async () => clear?.click());
   expect(createEntry).not.toHaveBeenCalled();
   const create = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
@@ -499,7 +519,7 @@ test("preserves an explicit blank optional string", async () => {
   const createEntry = vi.fn(async () => {
     throw new Error("Stop after capturing the request");
   });
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -545,6 +565,109 @@ test("preserves an explicit blank optional string", async () => {
   });
 });
 
+test("preserves all three optional boolean states in compact controls", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const createEntry = vi.fn(async () => {
+    throw new Error("Request captured");
+  });
+  render(
+    <CreateCollectionEntryDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={() => undefined}
+      createEntry={createEntry}
+    />
+  );
+  input(
+    document.querySelector<HTMLInputElement>("#collection-entry-title")!,
+    "Hello"
+  );
+  const group = document.querySelector('[aria-label="Draft"]')!;
+  for (const [label, expected] of [
+    ["No", false],
+    ["Not set", null],
+    ["Yes", true],
+  ] as const) {
+    const choice = Array.from(
+      group.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent === label)!;
+    expect(choice).toBeDefined();
+    await act(async () => choice.click());
+    expect(choice.getAttribute("aria-checked")).toBe("true");
+    await act(async () =>
+      document.querySelector<HTMLFormElement>("form")!.requestSubmit()
+    );
+    expect(createEntry).toHaveBeenLastCalledWith({
+      projectId: "project",
+      folderId: "posts",
+      values: { title: "Hello", slug: "hello", draft: expected },
+    });
+  }
+});
+
+test("scrolls long forms without squeezing fields or hiding the create action", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const configValue = JSON.parse(createDefaultCollectionConfig());
+  for (let index = 0; index < 12; index += 1) {
+    configValue.properties[`extra${index}`] = {
+      title: `Extra ${index}`,
+      type: "string",
+    };
+  }
+  render(
+    <CreateCollectionEntryDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(JSON.stringify(configValue)),
+        templateProperties: {},
+      }}
+      open
+      onOpenChange={() => undefined}
+    />
+  );
+  await act(async () => undefined);
+  const form = document.querySelector("form")!;
+  const fields = form.firstElementChild as HTMLElement;
+  const create = form.querySelector<HTMLButtonElement>(
+    'button[type="submit"]'
+  )!;
+  expect(fields.scrollHeight).toBeGreaterThan(fields.clientHeight);
+  const before = create.getBoundingClientRect();
+  fields.scrollTop = fields.scrollHeight;
+  expect(create.getBoundingClientRect().top).toBe(before.top);
+  expect(before.bottom).toBeLessThanOrEqual(window.innerHeight - 16);
+  const firstInput = document.querySelector("#collection-entry-title")!;
+  expect(firstInput.getBoundingClientRect().height).toBeGreaterThanOrEqual(20);
+});
+
 test("does not commit an entry after the active project changes", async () => {
   const configAsset = createAsset({
     id: "config",
@@ -566,7 +689,7 @@ test("does not commit an entry after the active project changes", async () => {
     return createdAsset;
   });
   const onOpenChange = vi.fn();
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",
@@ -620,7 +743,7 @@ test("reconciles an idempotent retry when the entry is already loaded", async ()
   });
   $assets.set(new Map([[createdAsset.id, createdAsset]]));
   const onOpenChange = vi.fn();
-  renderer.render(
+  render(
     <CreateCollectionEntryDialog
       collection={{
         status: "ready",

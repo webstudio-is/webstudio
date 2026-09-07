@@ -1,4 +1,4 @@
-import { Flex, Tooltip, Text } from "@webstudio-is/design-system";
+import { Flex, Tooltip, Text, cssVar } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   toValue,
@@ -78,7 +78,7 @@ export const Section = () => {
                   </Flex>
                 }
               >
-                <InfoCircleIcon />
+                <InfoCircleIcon color={cssVar("--foreground-secondary")} />
               </Tooltip>
             }
           />

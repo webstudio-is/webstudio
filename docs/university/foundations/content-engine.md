@@ -94,13 +94,17 @@ creates two files in the folder:
 
 The folder remains a normal Assets folder. The direct `collection.json` file is
 what makes Webstudio treat it as a collection and show the collection badge.
-Open **Collection settings** to add fields, choose their types, mark them as
-required, set text-length or number limits, rename and edit the entry template,
-and select the slug and slug-source fields. The configurator writes the schema;
-designers do not need to edit JSON. Put default frontmatter and starter content
-in the entry template with the built-in Markdown editor. Choose a dynamic
-article page whose path parameter has the same name as the slug field. A new
-entry then opens on that page with its slug filled into the matching parameter.
+Open **Collection settings → Fields** and select a field from the list.
+Edit **Label** and **Field key** together, then choose the field's **Type**.
+Set required fields and length or number limits under **Validation**.
+Use **Move field up** and **Move field down** beneath the field list to set
+the order editors see in the **New entry** form.
+Choose **Add field** to add another entry field. The configurator writes the
+schema; designers do not need to edit JSON.
+
+Use the **Entry template** tab to rename the entry template and edit its default
+frontmatter and starter content with the built-in Markdown editor. Creating
+an entry keeps you on the current page.
 
 The collection format uses a supported subset of JSON Schema draft 2020-12.
 The configurator exposes string, number, integer, boolean, and slug fields,
@@ -112,13 +116,19 @@ reports unsupported rules with their location instead of silently ignoring
 them.
 
 Editors choose **New entry**, complete the generated form, and select **Create
-entry**. Webstudio creates a lowercase, dash-separated slug from the title.
+entry**. Webstudio creates a lowercase, dash-separated slug from the configured
+source field, which is **Title** by default.
 Editors can change the slug before creating the entry. The schema is checked
 when an entry is created and whenever its frontmatter changes. The slug becomes
 the MDX filename and cannot be changed after creation.
 
-When you save collection settings, Webstudio checks the entry template against
-the new rules. Existing entries remain editable if a rule changes. Repair any
+For optional fields, use the field's actions menu and choose **Clear value**
+to omit the value, including a value supplied by the template. An empty text
+value is different from an omitted value. Optional boolean fields offer
+**Yes**, **No**, and **Not set**. Validation errors appear beside their fields.
+
+Collection settings save automatically when valid. Webstudio checks the entry
+template against the new rules. Existing entries remain editable if a rule changes. Repair any
 entry that no longer matches before publishing; publication validates every
 entry and stops when an entry is invalid.
 
@@ -135,7 +145,8 @@ longer matches the schema and its filename slug.
 folder. Collection entries are loaded dynamically and may not have a direct
 page or component reference.
 
-Removing the collection in **Collection settings** deletes only
+Choose **Collection actions → Convert to regular folder…** in **Collection
+settings**, then confirm the conversion. This deletes only
 `collection.json`. The folder becomes a normal folder again, while its entries
 and template remain. The former template is then a regular MDX file and can
 appear in Assets query results.

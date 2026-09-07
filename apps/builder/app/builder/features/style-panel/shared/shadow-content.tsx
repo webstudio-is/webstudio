@@ -25,6 +25,7 @@ import {
   ToggleGroupButton,
   Tooltip,
   toast,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   InfoCircleIcon,
@@ -428,7 +429,7 @@ export const ShadowContent = ({
                     </Text>
                   }
                 >
-                  <InfoCircleIcon />
+                  <InfoCircleIcon color={cssVar("--foreground-secondary")} />
                 </Tooltip>
               </Flex>
             </Label>

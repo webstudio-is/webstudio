@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import isValidFilename from "valid-filename";
 import { useStore } from "@nanostores/react";
 import {
@@ -14,7 +14,15 @@ import {
   CheckboxAndLabel,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
+  DialogTitleActions,
+  DialogClose,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  SmallIconButton,
   Flex,
   Grid,
   InputField,
@@ -25,15 +33,17 @@ import {
   ScrollAreaNative,
   Select,
   Separator,
-  SmallIconButton,
   Text,
+  Tooltip,
   cssVar,
   selectedItemBackground,
   theme,
 } from "@webstudio-is/design-system";
 import {
-  ChevronDownIcon,
-  ChevronRightIcon,
+  EllipsesIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  InfoCircleIcon,
   PlusIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
@@ -41,7 +51,7 @@ import { formatAssetName, getAssetDisplayNameParts } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import {
-  executeRuntimeMutation,
+  executeRuntimeMutationAsync,
   getWebstudioData,
 } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
@@ -65,14 +75,13 @@ type EditableType =
   | "Whole number"
   | "Boolean";
 type EditableCollectionField = CollectionField & { rowId: string };
-type SettingsSection = "fields" | "template" | "settings";
+type SettingsSection = "fields" | "template";
 const settingsSections: readonly {
   id: SettingsSection;
   label: string;
 }[] = [
   { id: "fields", label: "Fields" },
-  { id: "template", label: "Template" },
-  { id: "settings", label: "Settings" },
+  { id: "template", label: "Entry template" },
 ];
 const fieldTypes: readonly EditableType[] = [
   "Text",
@@ -230,27 +239,30 @@ export const updateCollectionConfigAndTemplateName = async ({
   return payload;
 };
 
-const getUniqueFieldKey = (fields: readonly EditableCollectionField[]) => {
-  const keys = new Set(
-    fields.flatMap(({ key, originalKey }) =>
-      originalKey === undefined ? [key] : [key, originalKey]
-    )
-  );
-  for (let index = 1; ; index += 1) {
-    const key = `field${index}`;
-    if (keys.has(key) === false) {
-      return key;
-    }
+const convertCollectionToFolder = async (
+  configAsset: Extract<ContentCollection, { status: "ready" }>["configAsset"]
+) => {
+  if ($project.get()?.id !== configAsset.projectId) {
+    throw new Error("The collection belongs to another project.");
   }
+  const result = await executeRuntimeMutationAsync({
+    id: "assets.delete",
+    input: { assetIds: [configAsset.id], force: true },
+  });
+  if (result === undefined) {
+    throw new Error("The collection could not be converted.");
+  }
+  onNextTransactionComplete(invalidateAssets);
 };
 
 export const CollectionSettingsDialog = ({
-  collection,
+  collection: incomingCollection,
   open,
   onOpenChange,
   readTemplateSource = readBuilderAssetSource,
   updateContent = updateBuilderAssetContent,
   updateConfigAndTemplateName = updateCollectionConfigAndTemplateName,
+  convertCollection = convertCollectionToFolder,
 }: {
   collection: Extract<ContentCollection, { status: "ready" }>;
   open: boolean;
@@ -258,7 +270,18 @@ export const CollectionSettingsDialog = ({
   readTemplateSource?: typeof readBuilderAssetSource;
   updateContent?: typeof updateBuilderAssetContent;
   updateConfigAndTemplateName?: typeof updateCollectionConfigAndTemplateName;
+  convertCollection?: typeof convertCollectionToFolder;
 }) => {
+  // Keep the editing session stable when our own saves refresh asset metadata.
+  const collectionRef = useRef(incomingCollection);
+  const editingFolderRef = useRef<string>();
+  const collection = collectionRef.current;
+  const persistedFields = useRef(
+    createEditableFields(collection.config.fields)
+  );
+  const savedDraft = useRef<string>();
+  const attemptedDraft = useRef<string>();
+  const savingRef = useRef(false);
   const nextRowId = useRef(0);
   const [fields, setFields] = useState<EditableCollectionField[]>(() =>
     createEditableFields(collection.config.fields)
@@ -280,15 +303,19 @@ export const CollectionSettingsDialog = ({
   );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [error, setError] = useState<string>();
+  const [showKeyErrors, setShowKeyErrors] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [converting, setConverting] = useState(false);
+  const convertingRef = useRef(false);
+  const keepCollectionRef = useRef<HTMLButtonElement>(null);
+  const [conversionError, setConversionError] = useState<string>();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const assets = useStore($assets);
-  const templateKey = `${collection.templateAsset.id}:${
-    collection.templateAsset.name
-  }:${collection.templateAsset.updatedAt ?? collection.templateAsset.size}`;
+  const templateKey = collection.templateAsset.id;
   const templateReady = loadedTemplateKey === templateKey;
-  const formDisabled = loading || saving;
+  const formDisabled = loading || closing || converting;
   const templateLanguageExtensions = useMemo(
     () => getTextFileEditorExtensions(collection.templateAsset),
     [collection.templateAsset]
@@ -296,9 +323,19 @@ export const CollectionSettingsDialog = ({
 
   useLayoutEffect(() => {
     if (open === false) {
+      editingFolderRef.current = undefined;
       return;
     }
+    if (editingFolderRef.current === incomingCollection.folderId) {
+      return;
+    }
+    editingFolderRef.current = incomingCollection.folderId;
+    collectionRef.current = incomingCollection;
+    const collection = incomingCollection;
     const nextFields = createEditableFields(collection.config.fields);
+    persistedFields.current = nextFields;
+    savedDraft.current = undefined;
+    attemptedDraft.current = undefined;
     setFields(nextFields);
     setSelectedFieldRowId(nextFields[0]?.rowId);
     setActiveSection("fields");
@@ -309,9 +346,10 @@ export const CollectionSettingsDialog = ({
     setSlugField(collection.config.slugField);
     setGenerateSlugFrom(collection.config.generateSlugFrom);
     setError(undefined);
+    setShowKeyErrors(false);
     setConfirmRemove(false);
     setConfirmDiscard(false);
-  }, [collection, open]);
+  }, [incomingCollection, open]);
 
   useLayoutEffect(() => {
     if (open === false) {
@@ -364,31 +402,82 @@ export const CollectionSettingsDialog = ({
       )
     );
 
-  const isDirty =
-    JSON.stringify(fields) !==
-      JSON.stringify(createEditableFields(collection.config.fields)) ||
-    (templateReady && template !== loadedTemplateRef.current) ||
-    templateName !==
-      getAssetDisplayNameParts(collection.templateAsset).basename ||
-    slugField !== collection.config.slugField ||
-    generateSlugFrom !== collection.config.generateSlugFrom;
-  const requestClose = () => {
-    if (isDirty) {
-      setConfirmDiscard(true);
+  const selectedFieldIndex = fields.findIndex(
+    ({ rowId }) => rowId === selectedFieldRowId
+  );
+  const moveSelectedField = (direction: -1 | 1) => {
+    const nextIndex = selectedFieldIndex + direction;
+    if (selectedFieldIndex < 0 || nextIndex < 0 || nextIndex >= fields.length) {
       return;
     }
-    onOpenChange(false);
+    setFields((current) => {
+      const next = [...current];
+      [next[selectedFieldIndex], next[nextIndex]] = [
+        next[nextIndex],
+        next[selectedFieldIndex],
+      ];
+      return next;
+    });
+  };
+
+  const keyErrors = new Map<string, string>();
+  for (const field of fields) {
+    const key = field.key.trim();
+    if (key === "") {
+      keyErrors.set(field.rowId, "Enter a field key.");
+    } else if (
+      fields.some(
+        (candidate) =>
+          candidate.rowId !== field.rowId && candidate.key.trim() === key
+      )
+    ) {
+      keyErrors.set(field.rowId, "This key is already used by another field.");
+    }
+  }
+
+  const draft = JSON.stringify({
+    fields,
+    template,
+    templateName,
+    slugField,
+    generateSlugFrom,
+  });
+  const initialDraft = JSON.stringify({
+    fields: persistedFields.current,
+    template: loadedTemplateRef.current,
+    templateName: getAssetDisplayNameParts(collection.templateAsset).basename,
+    slugField: collection.config.slugField,
+    generateSlugFrom: collection.config.generateSlugFrom,
+  });
+  const isDirty = draft !== (savedDraft.current ?? initialDraft);
+  const requestClose = async () => {
+    if (savingRef.current) {
+      return;
+    }
+    setClosing(true);
+    try {
+      if (isDirty && (await save()) !== true) {
+        setConfirmDiscard(true);
+        return;
+      }
+      onOpenChange(false);
+    } finally {
+      setClosing(false);
+    }
   };
 
   const save = async () => {
-    if (saving || loading || templateReady === false) {
+    if (savingRef.current || loading || templateReady === false) {
       return;
     }
+    attemptedDraft.current = draft;
     const keys = fields.map(({ key }) => key.trim());
-    if (keys.some((key) => key === "") || new Set(keys).size !== keys.length) {
-      setError("Every field needs a unique key.");
+    if (keyErrors.size > 0) {
+      setShowKeyErrors(true);
+      setError(undefined);
       return;
     }
+    savingRef.current = true;
     setSaving(true);
     setError(undefined);
     try {
@@ -415,8 +504,13 @@ export const CollectionSettingsDialog = ({
       }
       const nextFields = fields.map((field, index) => {
         const { rowId, ...collectionField } = field;
-        void rowId;
-        return { ...collectionField, key: keys[index] };
+        return {
+          ...collectionField,
+          originalKey: persistedFields.current.find(
+            (candidate) => candidate.rowId === rowId
+          )?.key,
+          key: keys[index],
+        };
       });
       const normalizeLinkedFieldKey = (linkedKey: string) => {
         const fieldIndex = fields.findIndex(({ key }) => key === linkedKey);
@@ -446,9 +540,9 @@ export const CollectionSettingsDialog = ({
         collection.templateAsset
       ).basename;
       const renamesTemplate = nextTemplateName !== currentTemplateName;
-      const projectId = $project.get()?.id;
-      if (projectId === undefined) {
-        throw new Error("Project not found");
+      const projectId = collection.configAsset.projectId;
+      if ($project.get()?.id !== projectId) {
+        throw new Error("The collection belongs to another project.");
       }
       if (template !== loadedTemplateRef.current) {
         currentTemplateAssetRef.current = await updateContent({
@@ -456,28 +550,48 @@ export const CollectionSettingsDialog = ({
           content: template,
         });
         loadedTemplateRef.current = template;
+        // A later config save can fail; track the template write separately.
+        savedDraft.current = undefined;
       }
       const currentCollection = {
         ...collection,
         templateAsset: currentTemplateAssetRef.current,
       };
       if (renamesTemplate) {
-        await updateConfigAndTemplateName({
+        const updated = await updateConfigAndTemplateName({
           projectId,
           collection: currentCollection,
           templateFilename: nextTemplateName,
           configSource,
         });
+        collectionRef.current = {
+          ...currentCollection,
+          ...updated,
+          config: nextConfig,
+        };
+        currentTemplateAssetRef.current = updated.templateAsset;
       } else if (
         JSON.stringify(nextConfig.schema) !==
         JSON.stringify(collection.config.schema)
       ) {
-        await updateContent({
+        const configAsset = await updateContent({
           asset: collection.configAsset,
           content: configSource,
         });
+        collectionRef.current = {
+          ...currentCollection,
+          configAsset,
+          config: nextConfig,
+        };
+      } else {
+        collectionRef.current = currentCollection;
       }
-      onOpenChange(false);
+      persistedFields.current = fields.map((field, index) => ({
+        ...field,
+        key: keys[index],
+      }));
+      savedDraft.current = draft;
+      return true;
     } catch (error) {
       setError(
         error instanceof Error
@@ -485,21 +599,87 @@ export const CollectionSettingsDialog = ({
           : "Collection settings could not be saved"
       );
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
+
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    if (templateReady && !isDirty) {
+      attemptedDraft.current = undefined;
+      setError(undefined);
+      return;
+    }
+    if (
+      !open ||
+      !templateReady ||
+      loading ||
+      saving ||
+      confirmRemove ||
+      converting ||
+      !isDirty ||
+      attemptedDraft.current === draft
+    ) {
+      return;
+    }
+    const timeout = setTimeout(() => void saveRef.current(), 600);
+    return () => clearTimeout(timeout);
+  }, [
+    draft,
+    open,
+    templateReady,
+    loading,
+    saving,
+    isDirty,
+    confirmRemove,
+    converting,
+  ]);
 
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (saving === false && nextOpen === false) {
-          requestClose();
+        if (saving === false && converting === false && nextOpen === false) {
+          void requestClose();
         }
       }}
     >
-      <DialogContent width={880} height={640} aria-describedby={undefined}>
-        <DialogTitle>Collection settings</DialogTitle>
+      <DialogContent
+        width={880}
+        height={640}
+        css={{ maxWidth: "calc(100vw - 32px)" }}
+        aria-describedby={undefined}
+      >
+        <DialogTitle
+          suffix={
+            <DialogTitleActions>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SmallIconButton
+                    aria-label="Collection actions"
+                    disabled={saving || converting}
+                    icon={<EllipsesIcon />}
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setConversionError(undefined);
+                      setConfirmRemove(true);
+                    }}
+                  >
+                    Convert to regular folder…
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DialogClose />
+            </DialogTitleActions>
+          }
+        >
+          Collection settings
+        </DialogTitle>
         <Flex grow css={{ minHeight: 0 }}>
           <List asChild>
             <Flex
@@ -540,37 +720,52 @@ export const CollectionSettingsDialog = ({
             </Flex>
           </List>
           <ScrollAreaNative css={{ width: "100%", minWidth: 0 }}>
-            <Grid css={{ minHeight: "100%" }}>
+            <Grid
+              css={{
+                minHeight: "100%",
+                height: activeSection === "fields" ? "100%" : undefined,
+              }}
+            >
               <Grid
-                gap={3}
                 css={{
                   display: activeSection === "fields" ? "grid" : "none",
-                  minHeight: "100%",
-                  alignContent: "start",
+                  minHeight: 0,
+                  gridTemplateRows: "auto minmax(0, 1fr)",
                 }}
               >
-                <Flex justify="between" align="start" gap={4}>
-                  <Grid gap={1} css={{ padding: theme.spacing[5] }}>
+                <Flex
+                  justify="between"
+                  align="center"
+                  gap={4}
+                  css={{ padding: theme.spacing[9] }}
+                >
+                  <Flex gap={1} align="center">
                     <Text variant="titles">Fields</Text>
-                    <Text color="subtle">
-                      Define the information editors fill in for every entry.
-                    </Text>
-                  </Grid>
+                    <Tooltip
+                      variant="wrapped"
+                      content="Define the information editors fill in for every entry."
+                    >
+                      <InfoCircleIcon
+                        color={cssVar("--foreground-secondary")}
+                        tabIndex={0}
+                        aria-label="About collection fields"
+                      />
+                    </Tooltip>
+                  </Flex>
                   <Button
-                    css={{ margin: theme.spacing[5] }}
+                    css={{ flexShrink: 0 }}
                     disabled={formDisabled}
                     prefix={<PlusIcon />}
                     onClick={() => {
-                      const key = getUniqueFieldKey(fields);
                       const rowId = `new:${nextRowId.current}`;
                       nextRowId.current += 1;
                       setSelectedFieldRowId(rowId);
                       setFields((current) => [
                         ...current,
                         {
-                          key,
+                          key: "",
                           rowId,
-                          label: "New field",
+                          label: "",
                           type: "string",
                           control: "text",
                           required: false,
@@ -584,94 +779,129 @@ export const CollectionSettingsDialog = ({
                 <Grid
                   css={{
                     borderTop: `1px solid ${cssVar("--border-default")}`,
+                    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)",
+                    minHeight: 0,
                   }}
                 >
-                  {fields.map((field, index) => {
-                    const protectedField =
-                      field.key === slugField || field.key === generateSlugFrom;
-                    const requiredField = field.key === slugField;
-                    const stringField = field.type === "string";
-                    const numberField =
-                      field.type === "number" || field.type === "integer";
-                    const expanded = field.rowId === selectedFieldRowId;
-                    return (
-                      <Grid
+                  <Grid
+                    as="nav"
+                    aria-label="Collection fields"
+                    gap={1}
+                    css={{
+                      padding: theme.spacing[3],
+                      alignContent: "start",
+                      overflow: "auto",
+                    }}
+                  >
+                    {fields.map((field) => (
+                      <Button
                         key={field.rowId}
+                        color="ghost"
+                        aria-label={`Edit ${field.label || "New field"}`}
+                        aria-pressed={field.rowId === selectedFieldRowId}
                         css={{
-                          borderBottom: `1px solid ${cssVar(
-                            "--border-default"
-                          )}`,
+                          height: "auto",
+                          minHeight: theme.spacing[15],
+                          padding: theme.spacing[3],
+                          justifyContent: "stretch",
+                          textAlign: "left",
+                          background:
+                            field.rowId === selectedFieldRowId
+                              ? selectedItemBackground
+                              : undefined,
                         }}
+                        onClick={() => setSelectedFieldRowId(field.rowId)}
                       >
-                        <Button
-                          color="ghost"
-                          aria-label={`Edit ${field.label}`}
-                          aria-expanded={expanded}
-                          css={{
-                            height: "auto",
-                            minHeight: theme.spacing[15],
-                            justifyContent: "stretch",
-                            paddingInline: theme.spacing[5],
-                            whiteSpace: "normal",
-                            ...(expanded
-                              ? {
-                                  background: selectedItemBackground,
-                                }
-                              : {}),
-                          }}
-                          onClick={() =>
-                            setSelectedFieldRowId(
-                              expanded ? undefined : field.rowId
-                            )
+                        <Grid gap={1} css={{ minWidth: 0 }}>
+                          <Text
+                            variant="labels"
+                            truncate
+                            color={
+                              showKeyErrors && keyErrors.has(field.rowId)
+                                ? "destructive"
+                                : undefined
+                            }
+                          >
+                            {field.label || "New field"}
+                          </Text>
+                          <Text variant="tiny" color="subtle" truncate>
+                            {getEditableType(field)}
+                            {field.required ? " · Required" : ""}
+                          </Text>
+                        </Grid>
+                      </Button>
+                    ))}
+                    <Separator />
+                    <Flex gap={1}>
+                      <Tooltip content="Move field up">
+                        <SmallIconButton
+                          aria-label="Move field up"
+                          icon={<ArrowUpIcon />}
+                          disabled={formDisabled || selectedFieldIndex <= 0}
+                          onClick={() => moveSelectedField(-1)}
+                        />
+                      </Tooltip>
+                      <Tooltip content="Move field down">
+                        <SmallIconButton
+                          aria-label="Move field down"
+                          icon={<ArrowDownIcon />}
+                          disabled={
+                            formDisabled ||
+                            selectedFieldIndex < 0 ||
+                            selectedFieldIndex === fields.length - 1
                           }
-                        >
-                          <Grid
-                            align="center"
-                            gap={3}
-                            css={{
-                              width: "100%",
-                              gridTemplateColumns:
-                                "16px minmax(0, 1fr) 120px 72px",
-                              textAlign: "left",
-                            }}
-                          >
-                            {expanded ? (
-                              <ChevronDownIcon />
-                            ) : (
-                              <ChevronRightIcon />
-                            )}
-                            <Grid>
-                              <Text variant="labels">{field.label}</Text>
-                              <Text variant="tiny" color="subtle">
-                                {field.key}
-                              </Text>
-                            </Grid>
-                            <Text color="subtle">{getEditableType(field)}</Text>
-                            <Text color="subtle">
-                              {field.required ? "Required" : "Optional"}
-                            </Text>
-                          </Grid>
-                        </Button>
-                        {expanded && (
-                          <Grid
-                            gap={4}
-                            css={{
-                              padding: theme.spacing[5],
-                              background: cssVar("--background-secondary"),
-                            }}
-                          >
+                          onClick={() => moveSelectedField(1)}
+                        />
+                      </Tooltip>
+                    </Flex>
+                  </Grid>
+                  <Grid
+                    css={{
+                      minHeight: 0,
+                      overflow: "auto",
+                      alignContent: "start",
+                      gridAutoRows: "max-content",
+                      borderLeft: `1px solid ${cssVar("--border-default")}`,
+                    }}
+                  >
+                    {fields.map((field, index) => {
+                      if (field.rowId !== selectedFieldRowId) {
+                        return;
+                      }
+                      const protectedField =
+                        field.key === slugField ||
+                        field.key === generateSlugFrom;
+                      const requiredField = field.key === slugField;
+                      const keyError = showKeyErrors
+                        ? keyErrors.get(field.rowId)
+                        : undefined;
+                      const keyErrorId =
+                        keyError === undefined
+                          ? undefined
+                          : `collection-field-key-error-${field.rowId}`;
+                      const stringField = field.type === "string";
+                      const numberField =
+                        field.type === "number" || field.type === "integer";
+                      return (
+                        <Grid key={field.rowId} css={{ alignContent: "start" }}>
+                          <Grid gap={3} css={{ padding: theme.spacing[9] }}>
                             <Grid
                               gap={3}
                               css={{
                                 gridTemplateColumns:
-                                  "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto",
-                                alignItems: "end",
+                                  "minmax(0, 1fr) minmax(0, 1fr)",
+                                alignItems: "start",
                               }}
                             >
                               <Grid gap={1}>
-                                <Label>Label</Label>
+                                <Label
+                                  htmlFor={`collection-field-label-${field.rowId}`}
+                                >
+                                  Label
+                                </Label>
                                 <InputField
-                                  aria-label={`${field.label} label`}
+                                  id={`collection-field-label-${field.rowId}`}
+                                  aria-label={`${field.label || "New field"} label`}
                                   value={field.label}
                                   disabled={formDisabled}
                                   onChange={(event) =>
@@ -683,9 +913,34 @@ export const CollectionSettingsDialog = ({
                                 />
                               </Grid>
                               <Grid gap={1}>
-                                <Label>Frontmatter key</Label>
+                                <Flex gap={1} align="center">
+                                  <Label
+                                    htmlFor={`collection-field-key-${field.rowId}`}
+                                  >
+                                    Field key
+                                  </Label>
+                                  <Tooltip
+                                    variant="wrapped"
+                                    content="Stored in the entry’s frontmatter. Used to connect this field to your page."
+                                  >
+                                    <InfoCircleIcon
+                                      color={cssVar("--foreground-secondary")}
+                                      tabIndex={0}
+                                      aria-label="About field key"
+                                    />
+                                  </Tooltip>
+                                </Flex>
+
                                 <InputField
-                                  aria-label={`${field.label} key`}
+                                  id={`collection-field-key-${field.rowId}`}
+                                  aria-label={`${field.label || "New field"} key`}
+                                  aria-invalid={
+                                    keyError !== undefined || undefined
+                                  }
+                                  aria-describedby={keyErrorId}
+                                  color={
+                                    keyError === undefined ? undefined : "error"
+                                  }
                                   value={field.key}
                                   disabled={formDisabled}
                                   onChange={(event) => {
@@ -702,94 +957,146 @@ export const CollectionSettingsDialog = ({
                                     });
                                   }}
                                 />
+
+                                {keyError !== undefined && (
+                                  <Text
+                                    id={keyErrorId}
+                                    role="alert"
+                                    color="destructive"
+                                  >
+                                    {keyError}
+                                  </Text>
+                                )}
                               </Grid>
-                              <Grid gap={1}>
+                            </Grid>
+                            <Grid gap={1}>
+                              <Flex gap={1} align="center">
                                 <Label>Type</Label>
-                                <Select
-                                  aria-label={`${field.label} type`}
-                                  options={
-                                    field.control === "slug"
-                                      ? ["Slug"]
-                                      : fieldTypes
-                                  }
-                                  value={getEditableType(field)}
-                                  disabled={formDisabled || protectedField}
-                                  onChange={(type) => {
-                                    const editableType = type as EditableType;
-                                    if (editableType === "Slug") {
-                                      setSlugField(field.key);
-                                      setFields((current) =>
-                                        current.map((candidate, fieldIndex) => {
-                                          if (fieldIndex === index) {
-                                            return {
-                                              ...setFieldType(
-                                                candidate,
-                                                "Slug"
-                                              ),
-                                              required: true,
-                                            };
-                                          }
-                                          if (candidate.control === "slug") {
-                                            return setFieldType(
-                                              candidate,
-                                              "Text"
-                                            );
-                                          }
-                                          return candidate;
-                                        })
-                                      );
-                                      return;
+                                {protectedField && (
+                                  <Tooltip
+                                    variant="wrapped"
+                                    content={
+                                      requiredField
+                                        ? "The slug identifies each entry and is always required."
+                                        : "This text field is used to generate the entry slug."
                                     }
-                                    updateField(
-                                      index,
-                                      setFieldType(field, editableType)
+                                  >
+                                    <InfoCircleIcon
+                                      color={cssVar("--foreground-secondary")}
+                                      tabIndex={0}
+                                      aria-label="About field type"
+                                    />
+                                  </Tooltip>
+                                )}
+                              </Flex>
+                              <Select
+                                aria-label={`${field.label} type`}
+                                options={
+                                  field.control === "slug"
+                                    ? ["Slug"]
+                                    : field.key === generateSlugFrom
+                                      ? ["Text", "Long text"]
+                                      : fieldTypes
+                                }
+                                value={getEditableType(field)}
+                                disabled={formDisabled || requiredField}
+                                onChange={(type) => {
+                                  const editableType = type as EditableType;
+                                  if (editableType === "Slug") {
+                                    setSlugField(field.key);
+                                    setFields((current) =>
+                                      current.map((candidate, fieldIndex) => {
+                                        if (fieldIndex === index) {
+                                          return {
+                                            ...setFieldType(candidate, "Slug"),
+                                            required: true,
+                                          };
+                                        }
+                                        if (candidate.control === "slug") {
+                                          return setFieldType(
+                                            candidate,
+                                            "Text"
+                                          );
+                                        }
+                                        return candidate;
+                                      })
                                     );
-                                  }}
-                                />
-                              </Grid>
-                              <SmallIconButton
-                                aria-label={`Remove ${field.label}`}
-                                disabled={formDisabled || protectedField}
-                                icon={<TrashIcon />}
-                                onClick={() => {
-                                  setSelectedFieldRowId(
-                                    fields[index + 1]?.rowId ??
-                                      fields[index - 1]?.rowId
-                                  );
-                                  setFields((current) =>
-                                    current.filter(
-                                      (_, fieldIndex) => fieldIndex !== index
-                                    )
+                                    return;
+                                  }
+                                  updateField(
+                                    index,
+                                    setFieldType(field, editableType)
                                   );
                                 }}
                               />
                             </Grid>
+                          </Grid>
+                          {field.control === "slug" && (
+                            <Grid
+                              gap={2}
+                              css={{ padding: theme.spacing[9], paddingTop: 0 }}
+                            >
+                              <Flex gap={1} align="center">
+                                <Label>Generate from</Label>
+                                <Tooltip
+                                  variant="wrapped"
+                                  content="The slug becomes the MDX filename. It is generated from this field when editors create an entry."
+                                >
+                                  <InfoCircleIcon
+                                    color={cssVar("--foreground-secondary")}
+                                    tabIndex={0}
+                                    aria-label="About slug generation"
+                                  />
+                                </Tooltip>
+                              </Flex>
+                              <Select
+                                aria-label="Generate slug from"
+                                options={fields.filter(
+                                  (candidate) =>
+                                    candidate.type === "string" &&
+                                    candidate.key !== field.key
+                                )}
+                                value={fields.find(
+                                  ({ key }) => key === generateSlugFrom
+                                )}
+                                getValue={({ key }) => key}
+                                getLabel={({ label, key }) =>
+                                  `${label} (${key})`
+                                }
+                                disabled={formDisabled}
+                                onChange={({ key }) => setGenerateSlugFrom(key)}
+                              />
+                            </Grid>
+                          )}
+                          <Separator />
+                          <Grid gap={3} css={{ padding: theme.spacing[9] }}>
+                            <Text variant="labels">Validation</Text>
+                            <CheckboxAndLabel>
+                              <Checkbox
+                                id={`collection-field-required-${field.rowId}`}
+                                aria-label={`${field.label} required`}
+                                checked={field.required}
+                                disabled={formDisabled || requiredField}
+                                onCheckedChange={(checked) =>
+                                  updateField(index, {
+                                    ...field,
+                                    required: checked === true,
+                                  })
+                                }
+                              />
+                              <Label
+                                htmlFor={`collection-field-required-${field.rowId}`}
+                              >
+                                Required field
+                              </Label>
+                            </CheckboxAndLabel>
                             <Grid
                               gap={3}
                               css={{
                                 gridTemplateColumns:
-                                  stringField || numberField
-                                    ? "minmax(120px, 1fr) minmax(0, 1fr) minmax(0, 1fr)"
-                                    : "minmax(120px, 1fr)",
+                                  "minmax(0, 1fr) minmax(0, 1fr)",
                               }}
                             >
-                              <Grid gap={1}>
-                                <Label>Requirement</Label>
-                                <CheckboxAndLabel>
-                                  <Checkbox
-                                    aria-label={`${field.label} required`}
-                                    checked={field.required}
-                                    disabled={formDisabled || requiredField}
-                                    onCheckedChange={(checked) =>
-                                      updateField(index, {
-                                        ...field,
-                                        required: checked === true,
-                                      })
-                                    }
-                                  />
-                                  <Text>Required</Text>
-                                </CheckboxAndLabel>
-                              </Grid>
                               {(stringField || numberField) && (
                                 <>
                                   <Grid gap={1}>
@@ -805,6 +1112,7 @@ export const CollectionSettingsDialog = ({
                                           : "minimum"
                                       }`}
                                       type="number"
+                                      placeholder="No minimum"
                                       min={stringField ? 0 : undefined}
                                       value={String(
                                         stringField
@@ -843,6 +1151,7 @@ export const CollectionSettingsDialog = ({
                                           : "maximum"
                                       }`}
                                       type="number"
+                                      placeholder="No maximum"
                                       min={stringField ? 0 : undefined}
                                       value={String(
                                         stringField
@@ -871,88 +1180,37 @@ export const CollectionSettingsDialog = ({
                                 </>
                               )}
                             </Grid>
-                            {field.control === "slug" && (
-                              <Grid gap={1} css={{ maxWidth: 320 }}>
-                                <Label>Generate from</Label>
-                                <Select
-                                  aria-label="Generate slug from"
-                                  options={fields.filter(
-                                    (candidate) =>
-                                      candidate.type === "string" &&
-                                      candidate.key !== field.key
-                                  )}
-                                  value={fields.find(
-                                    ({ key }) => key === generateSlugFrom
-                                  )}
-                                  getValue={({ key }) => key}
-                                  getLabel={({ label, key }) =>
-                                    `${label} (${key})`
-                                  }
-                                  disabled={formDisabled}
-                                  onChange={({ key }) =>
-                                    setGenerateSlugFrom(key)
-                                  }
-                                />
-                                <Text color="subtle" variant="tiny">
-                                  The slug becomes the MDX filename. It is
-                                  generated from this field when editors create
-                                  an entry.
-                                </Text>
-                              </Grid>
-                            )}
                           </Grid>
-                        )}
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Grid>
-              <Grid
-                gap={4}
-                css={{
-                  display: activeSection === "settings" ? "grid" : "none",
-                  padding: theme.spacing[5],
-                  alignContent: "start",
-                  maxWidth: 560,
-                }}
-              >
-                <Grid gap={2}>
-                  <Grid gap={1}>
-                    <Text variant="titles">Remove collection</Text>
-                    <Text color="subtle">
-                      Turn this back into a regular folder. Existing MDX files
-                      and the template are kept.
-                    </Text>
+                          {protectedField === false && (
+                            <>
+                              <Separator />
+                              <Flex css={{ padding: theme.spacing[9] }}>
+                                <Button
+                                  color="ghost"
+                                  prefix={<TrashIcon />}
+                                  aria-label={`Remove ${field.label}`}
+                                  disabled={formDisabled}
+                                  onClick={() => {
+                                    setSelectedFieldRowId(
+                                      fields[index + 1]?.rowId ??
+                                        fields[index - 1]?.rowId
+                                    );
+                                    setFields((current) =>
+                                      current.filter(
+                                        (_, fieldIndex) => fieldIndex !== index
+                                      )
+                                    );
+                                  }}
+                                >
+                                  Remove field
+                                </Button>
+                              </Flex>
+                            </>
+                          )}
+                        </Grid>
+                      );
+                    })}
                   </Grid>
-                  {confirmRemove && (
-                    <Text role="alert">
-                      The collection rules will be removed. This cannot be
-                      undone from this dialog.
-                    </Text>
-                  )}
-                  <Flex>
-                    <Button
-                      color="destructive"
-                      disabled={formDisabled}
-                      onClick={() => {
-                        if (confirmRemove === false) {
-                          setConfirmRemove(true);
-                          return;
-                        }
-                        executeRuntimeMutation({
-                          id: "assets.delete",
-                          input: {
-                            assetIds: [collection.configAsset.id],
-                            force: true,
-                          },
-                        });
-                        onNextTransactionComplete(invalidateAssets);
-                        onOpenChange(false);
-                      }}
-                    >
-                      {confirmRemove ? "Confirm removal" : "Remove collection"}
-                    </Button>
-                  </Flex>
                 </Grid>
               </Grid>
               <Grid
@@ -965,13 +1223,19 @@ export const CollectionSettingsDialog = ({
                   padding: theme.spacing[5],
                 }}
               >
-                <Grid gap={1}>
+                <Flex gap={1} align="center">
                   <Text variant="titles">Entry template</Text>
-                  <Text color="subtle">
-                    Set the frontmatter defaults and starter Markdown copied
-                    into every new entry.
-                  </Text>
-                </Grid>
+                  <Tooltip
+                    variant="wrapped"
+                    content="Set the frontmatter defaults and starter Markdown copied into every new entry."
+                  >
+                    <InfoCircleIcon
+                      color={cssVar("--foreground-secondary")}
+                      tabIndex={0}
+                      aria-label="About entry template"
+                    />
+                  </Tooltip>
+                </Flex>
                 <Grid gap={1} css={{ maxWidth: 320 }}>
                   <Label htmlFor="collection-template-name">
                     Template name
@@ -981,7 +1245,11 @@ export const CollectionSettingsDialog = ({
                     aria-label="Entry template name"
                     value={templateName}
                     maxLength={assetResourceLimits.assetFilenameCharacters}
-                    suffix=".mdx"
+                    suffix={
+                      <Text as="span" color="subtle">
+                        .mdx
+                      </Text>
+                    }
                     disabled={formDisabled}
                     onChange={(event) => setTemplateName(event.target.value)}
                   />
@@ -1003,34 +1271,91 @@ export const CollectionSettingsDialog = ({
             </Grid>
           </ScrollAreaNative>
         </Flex>
-        <Separator />
-        <Flex
-          justify="between"
-          align="center"
-          gap={3}
-          css={{ padding: theme.panel.padding }}
-        >
-          <Flex grow align="center">
-            {error !== undefined && (
+        {(error !== undefined || saving) && (
+          <Flex css={{ padding: theme.panel.padding }}>
+            {error !== undefined ? (
               <Text role="alert" color="destructive" variant="tiny">
                 {error}
               </Text>
+            ) : (
+              <Text role="status" color="subtle" variant="tiny">
+                Saving…
+              </Text>
             )}
           </Flex>
-          <Flex gap={2}>
-            <Button disabled={saving} onClick={requestClose}>
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              disabled={loading || saving || templateReady === false}
-              onClick={() => void save()}
-            >
-              {saving ? "Saving…" : "Save"}
-            </Button>
-          </Flex>
-        </Flex>
+        )}
       </DialogContent>
+      <Dialog
+        open={confirmRemove}
+        onOpenChange={(nextOpen) => {
+          if (!convertingRef.current) {
+            setConfirmRemove(nextOpen);
+          }
+        }}
+      >
+        <DialogContent
+          width={420}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            keepCollectionRef.current?.focus();
+          }}
+        >
+          <DialogTitle>Convert to regular folder?</DialogTitle>
+          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+            <DialogDescription asChild>
+              <Text>
+                Your entries and template will stay. Collection rules and the
+                New entry action will be removed.
+              </Text>
+            </DialogDescription>
+            {isDirty && (
+              <Text>Unsaved collection settings will not be applied.</Text>
+            )}
+            {conversionError !== undefined && (
+              <Text role="alert" color="destructive">
+                {conversionError}
+              </Text>
+            )}
+            <Flex justify="end" gap={2}>
+              <Button
+                ref={keepCollectionRef}
+                disabled={converting}
+                onClick={() => setConfirmRemove(false)}
+              >
+                Keep collection
+              </Button>
+              <Button
+                color="destructive"
+                disabled={converting}
+                onClick={async () => {
+                  if (convertingRef.current) {
+                    return;
+                  }
+                  convertingRef.current = true;
+                  setConverting(true);
+                  setConversionError(undefined);
+                  try {
+                    await convertCollection(collectionRef.current.configAsset);
+                    setConfirmRemove(false);
+                    onOpenChange(false);
+                  } catch (error) {
+                    setConversionError(
+                      error instanceof Error
+                        ? error.message
+                        : "The collection could not be converted."
+                    );
+                  } finally {
+                    convertingRef.current = false;
+                    setConverting(false);
+                  }
+                }}
+              >
+                {converting ? "Converting…" : "Convert to regular folder"}
+              </Button>
+            </Flex>
+          </Grid>
+        </DialogContent>
+      </Dialog>
       <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <DialogContent aria-describedby={undefined} width={420}>
           <DialogTitle>Discard changes?</DialogTitle>

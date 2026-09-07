@@ -109,7 +109,10 @@ const BindingPanel = ({
               "Click on the available variables in this scope to insert them into the Expression Editor."
             }
           >
-            <InfoCircleIcon tabIndex={0} />
+            <InfoCircleIcon
+              color={cssVar("--foreground-secondary")}
+              tabIndex={0}
+            />
           </Tooltip>
         </Flex>
         {scopeEntries.length === 0 && (
@@ -168,7 +171,10 @@ const BindingPanel = ({
             </Text>
           }
         >
-          <InfoCircleIcon tabIndex={0} />
+          <InfoCircleIcon
+            color={cssVar("--foreground-secondary")}
+            tabIndex={0}
+          />
         </Tooltip>
       </Flex>
       <Box css={{ padding: theme.panel.padding, pt: 0 }}>

@@ -8,8 +8,6 @@ import {
 import type { Asset } from "@webstudio-is/sdk";
 import {
   Button,
-  Checkbox,
-  CheckboxAndLabel,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -17,12 +15,22 @@ import {
   Grid,
   InputField,
   Label,
-  Select,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  SmallIconButton,
+  ToggleGroup,
+  ToggleGroupButton,
+  Separator,
+  Tooltip,
+  cssVar,
   Text,
   TextArea,
   toast,
   theme,
 } from "@webstudio-is/design-system";
+import { EllipsesIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { fetch } from "~/shared/fetch.client";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import { getWebstudioData } from "~/shared/instance-utils/data";
@@ -278,89 +286,130 @@ export const CreateCollectionEntryDialog = ({
       }}
     >
       <DialogContent
-        css={{ width: "min(560px, calc(100vw - 32px))" }}
+        css={{
+          width: "min(560px, calc(100vw - 32px))",
+        }}
         aria-describedby={undefined}
         onKeyDown={stopEscapePropagation}
       >
         <DialogTitle>New entry</DialogTitle>
-        <Grid
+        <Flex
           as="form"
+          direction="column"
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
             void submit();
           }}
-          gap={3}
-          css={{
-            padding: theme.panel.padding,
-            maxHeight: "min(70vh, calc(100vh - 32px))",
-            overflow: "auto",
-          }}
+          css={{ minHeight: 0, maxHeight: "min(640px, calc(100vh - 96px))" }}
         >
-          {config.fields.map((field, index) => {
-            const value = values[field.key];
-            const id = `collection-entry-${field.key}`;
-            const hasFieldError = error?.fieldKey === field.key;
-            const errorId = hasFieldError
-              ? "collection-entry-error"
-              : undefined;
-            if (field.type === "boolean") {
-              if (field.required === false) {
-                const selectedValue =
-                  value === true ? "true" : value === false ? "false" : "unset";
-                return (
-                  <Grid key={field.key} gap={1}>
-                    <Label>{field.label}</Label>
-                    <Select
+          <Grid
+            gap={4}
+            css={{
+              padding: theme.spacing[9],
+              overflow: "auto",
+              minHeight: 0,
+              gridAutoRows: "max-content",
+              alignContent: "start",
+            }}
+          >
+            {config.fields.map((field, index) => {
+              const value = values[field.key];
+              const id = `collection-entry-${field.key}`;
+              const hasFieldError = error?.fieldKey === field.key;
+              const errorId = hasFieldError ? `${id}-error` : undefined;
+              const booleanField = field.type === "boolean";
+              return (
+                <Grid
+                  key={field.key}
+                  gap={1}
+                  css={{
+                    gridTemplateColumns: booleanField ? "1fr auto" : undefined,
+                    alignItems: "center",
+                  }}
+                >
+                  <Flex justify="between" align="center" gap={2}>
+                    <Flex gap={1} align="center">
+                      <Label htmlFor={id}>
+                        {field.label}
+                        {field.required ? " *" : ""}
+                      </Label>
+                      {field.key === config.slugField && (
+                        <Tooltip
+                          variant="wrapped"
+                          content={`Generated from ${config.fields.find(({ key }) => key === config.generateSlugFrom)?.label ?? config.generateSlugFrom}. You can edit it before creating the entry. It becomes the MDX filename.`}
+                        >
+                          <InfoCircleIcon
+                            tabIndex={0}
+                            aria-label="About entry slug"
+                            color={cssVar("--foreground-secondary")}
+                          />
+                        </Tooltip>
+                      )}
+                    </Flex>
+                    {!field.required && !booleanField && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <SmallIconButton
+                            type="button"
+                            aria-label={`${field.label} actions`}
+                            disabled={creating}
+                            icon={<EllipsesIcon />}
+                          />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            disabled={!Object.hasOwn(values, field.key)}
+                            onSelect={() => unsetValue(field)}
+                          >
+                            Clear value
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </Flex>
+                  {booleanField ? (
+                    <ToggleGroup
+                      id={id}
+                      type="single"
                       aria-label={field.label}
                       aria-describedby={errorId}
                       aria-invalid={hasFieldError || undefined}
-                      options={optionalBooleanOptions}
-                      value={optionalBooleanOptions.find(
-                        ({ value }) => value === selectedValue
-                      )}
-                      getValue={(
-                        option: (typeof optionalBooleanOptions)[number]
-                      ) => option.value}
-                      getLabel={(
-                        option: (typeof optionalBooleanOptions)[number]
-                      ) => option.label}
+                      value={
+                        value === true
+                          ? "true"
+                          : value === false
+                            ? "false"
+                            : "unset"
+                      }
                       disabled={creating}
-                      onChange={({ value }) =>
+                      onValueChange={(value) =>
                         value === "unset"
                           ? unsetValue(field)
                           : setValue(field, value === "true")
                       }
-                    />
-                  </Grid>
-                );
-              }
-              return (
-                <CheckboxAndLabel key={field.key}>
-                  <Checkbox
-                    id={id}
-                    checked={value === true}
-                    aria-describedby={errorId}
-                    aria-invalid={hasFieldError || undefined}
-                    disabled={creating}
-                    onCheckedChange={(checked) =>
-                      setValue(field, checked === true)
-                    }
-                  />
-                  <Label htmlFor={id}>{field.label}</Label>
-                </CheckboxAndLabel>
-              );
-            }
-            if (field.control === "textarea") {
-              return (
-                <Grid key={field.key} gap={1}>
-                  <Label htmlFor={id}>
-                    {field.label}
-                    {field.required ? " *" : ""}
-                  </Label>
-                  <Flex gap={2} align="end">
+                    >
+                      {optionalBooleanOptions
+                        .filter(
+                          ({ value }) => !field.required || value !== "unset"
+                        )
+                        .map(({ value, label }) => (
+                          <ToggleGroupButton
+                            key={value}
+                            value={value}
+                            css={{
+                              width: "auto",
+                              paddingInline: theme.spacing[3],
+                            }}
+                          >
+                            {label}
+                          </ToggleGroupButton>
+                        ))}
+                    </ToggleGroup>
+                  ) : field.control === "textarea" ? (
                     <TextArea
                       id={id}
+                      autoFocus={index === 0}
                       required={field.required}
                       aria-required={field.required}
                       aria-describedby={errorId}
@@ -369,94 +418,76 @@ export const CreateCollectionEntryDialog = ({
                       disabled={creating}
                       onChange={(value) => setValue(field, value)}
                     />
-                    {field.required === false && (
-                      <Button
-                        type="button"
-                        aria-label={`Unset ${field.label}`}
-                        disabled={
-                          creating || Object.hasOwn(values, field.key) === false
+                  ) : (
+                    <InputField
+                      id={id}
+                      autoFocus={index === 0}
+                      type={
+                        field.type === "number" || field.type === "integer"
+                          ? "number"
+                          : "text"
+                      }
+                      min={field.minimum}
+                      max={field.maximum}
+                      step={field.type === "integer" ? 1 : undefined}
+                      required={field.required}
+                      aria-required={field.required}
+                      aria-describedby={errorId}
+                      aria-invalid={hasFieldError || undefined}
+                      color={hasFieldError ? "error" : undefined}
+                      value={
+                        typeof value === "string" ? value : String(value ?? "")
+                      }
+                      disabled={creating}
+                      onChange={(event) => {
+                        if (field.key === config.slugField) {
+                          setSlugEdited(true);
                         }
-                        onClick={() => unsetValue(field)}
-                      >
-                        Unset
-                      </Button>
-                    )}
-                  </Flex>
+                        if (
+                          (field.type === "number" ||
+                            field.type === "integer") &&
+                          event.target.value === ""
+                        ) {
+                          unsetValue(field);
+                          return;
+                        }
+                        setValue(field, event.target.value);
+                      }}
+                    />
+                  )}
+                  {hasFieldError && (
+                    <Text
+                      id={errorId}
+                      role="alert"
+                      color="destructive"
+                      css={{ gridColumn: "1 / -1" }}
+                    >
+                      {error.message}
+                    </Text>
+                  )}
                 </Grid>
               );
-            }
-            return (
-              <Grid key={field.key} gap={1}>
-                <Label htmlFor={id}>
-                  {field.label}
-                  {field.required ? " *" : ""}
-                </Label>
-                <Flex gap={2} align="end">
-                  <InputField
-                    id={id}
-                    autoFocus={index === 0}
-                    type={
-                      field.type === "number" || field.type === "integer"
-                        ? "number"
-                        : "text"
-                    }
-                    min={field.minimum}
-                    max={field.maximum}
-                    step={field.type === "integer" ? 1 : undefined}
-                    required={field.required}
-                    aria-required={field.required}
-                    aria-describedby={errorId}
-                    aria-invalid={hasFieldError || undefined}
-                    value={
-                      typeof value === "string" ? value : String(value ?? "")
-                    }
-                    disabled={creating}
-                    onChange={(event) => {
-                      if (field.key === config.slugField) {
-                        setSlugEdited(true);
-                      }
-                      if (
-                        (field.type === "number" || field.type === "integer") &&
-                        event.target.value === ""
-                      ) {
-                        unsetValue(field);
-                        return;
-                      }
-                      setValue(field, event.target.value);
-                    }}
-                  />
-                  {field.required === false && (
-                    <Button
-                      type="button"
-                      aria-label={`Unset ${field.label}`}
-                      disabled={
-                        creating || Object.hasOwn(values, field.key) === false
-                      }
-                      onClick={() => unsetValue(field)}
-                    >
-                      Unset
-                    </Button>
-                  )}
-                </Flex>
-              </Grid>
-            );
-          })}
-          {error !== undefined && (
-            <Text
-              id="collection-entry-error"
-              role="alert"
-              color="destructive"
-              variant="tiny"
-            >
-              {error.message}
-            </Text>
-          )}
-          <Flex justify="end">
-            <Button type="submit" color="primary" disabled={creating}>
-              {creating ? "Creating…" : "Create entry"}
-            </Button>
+            })}
+          </Grid>
+          <Separator />
+          <Flex
+            direction="column"
+            shrink={false}
+            gap={2}
+            css={{ padding: theme.panel.padding }}
+          >
+            {error !== undefined && error.fieldKey === undefined && (
+              <Text role="alert" color="destructive">
+                {error.message}
+              </Text>
+            )}
+            <Flex justify="end">
+              <Button type="submit" color="primary" disabled={creating}>
+                {creating ? "Creating…" : "Create entry"}
+              </Button>
+            </Flex>
           </Flex>
-        </Grid>
+        </Flex>
       </DialogContent>
       <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <DialogContent aria-describedby={undefined} width={420}>
