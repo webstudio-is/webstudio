@@ -573,7 +573,7 @@ describe("build import helpers", () => {
           },
         }
       )
-    ).rejects.toThrow("Move non-entry files into a subfolder");
+    ).rejects.toThrow('Move "template.mdx" into a subfolder');
 
     expect(calls).toEqual(["files-select"]);
   });
