@@ -302,7 +302,7 @@ describe("text file assets", () => {
       {
         from: 0,
         to: 6,
-        severity: "warning",
+        severity: "error",
         source: "unresolved-template",
         message:
           'Template "Card" is not available and was skipped. Line 1, column 1.',

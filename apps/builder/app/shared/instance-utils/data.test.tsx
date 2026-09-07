@@ -8,7 +8,10 @@ import {
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { findCycles } from "@webstudio-is/project-build/runtime";
+import {
+  findCycles,
+  extractWebstudioFragment,
+} from "@webstudio-is/project-build/runtime";
 import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutation,
@@ -108,6 +111,130 @@ const createImageAsset = (id: string): Asset => ({
 });
 
 describe("data store helpers", () => {
+  test.each([
+    "move",
+    "reparent",
+    "paste",
+    "nested paste",
+    "aliased template paste",
+    "duplicate",
+    "sequence",
+  ])(
+    "rejects %s of an unsupported component into MDX before committing",
+    (operation) => {
+      setBaseStores();
+      const accordion = "@webstudio-is/sdk-components-react-radix:Accordion";
+      $instances.set(
+        new Map([
+          [
+            "body",
+            createInstance("body", "Body", [
+              { type: "id", value: "block" },
+              { type: "id", value: "accordion" },
+            ]),
+          ],
+          [
+            "block",
+            createInstance("block", blockComponent, [
+              { type: "id", value: "templates" },
+            ]),
+          ],
+          [
+            "templates",
+            createInstance("templates", blockTemplateComponent, []),
+          ],
+          ["accordion", createInstance("accordion", accordion, [])],
+        ])
+      );
+      $externalContentRoots.set(
+        new Map([
+          [
+            "root",
+            {
+              blockInstanceId: "block",
+              instanceIds: new Set(),
+              mutationRevision: 0,
+            },
+          ],
+        ])
+      );
+      if (operation === "aliased template paste") {
+        $instances.get().set("accordion-template", {
+          ...createInstance("accordion-template", accordion, []),
+          name: "FAQ",
+        });
+        $instances.get().get("templates")!.children = [
+          { type: "id", value: "accordion-template" },
+        ];
+      }
+      if (operation === "duplicate") {
+        $instances.get().get("body")!.children = [
+          { type: "id", value: "block" },
+        ];
+        $instances
+          .get()
+          .get("block")!
+          .children.push({ type: "id", value: "accordion" });
+        $externalContentRoots.get().get("root")!.instanceIds = new Set([
+          "accordion",
+        ]);
+      }
+      const before = structuredClone(getWebstudioData());
+      const move = {
+        id: "instances.move",
+        input: {
+          moves: [{ instanceId: "accordion", parentInstanceId: "block" }],
+        },
+      } satisfies RuntimeMutationOperation;
+      expect(() => {
+        if (operation === "move") {
+          executeRuntimeMutation(move);
+        } else if (operation === "reparent") {
+          executeRuntimeMutation({
+            id: "instances.reparent",
+            input: {
+              sourceInstanceSelector: ["accordion", "body"],
+              dropTarget: {
+                parentSelector: ["block", "body"],
+                position: "end",
+              },
+            },
+          });
+        } else if (
+          operation === "paste" ||
+          operation === "nested paste" ||
+          operation === "aliased template paste"
+        ) {
+          const fragment = extractWebstudioFragment(before, "accordion");
+          if (operation === "nested paste") {
+            fragment.instances.push({
+              ...createInstance("wrapper", elementComponent, fragment.children),
+              tag: "div",
+            });
+            fragment.children = [{ type: "id", value: "wrapper" }];
+          }
+          executeRuntimeMutation({
+            id: "instances.insertFragment",
+            input: {
+              parentInstanceId: "block",
+              fragment,
+            },
+          });
+        } else if (operation === "duplicate") {
+          executeRuntimeMutation({
+            id: "instances.duplicateAfterItself",
+            input: { sourceInstanceId: "accordion", parentInstanceId: "block" },
+          });
+        } else {
+          executeRuntimeMutationSequence([move]);
+        }
+      }).toThrow("MDX");
+      expect(getWebstudioData()).toEqual(before);
+      expect(serverSyncStore.popAll()).toEqual([]);
+      expect(externalContentSyncStore.popAll()).toEqual([]);
+      expect($externalContentRoots.get().get("root")?.mutationRevision).toBe(0);
+    }
+  );
   test("publishes external children only after their instances exist", () => {
     setBaseStores();
     $instances.set(

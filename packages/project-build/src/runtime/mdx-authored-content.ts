@@ -22,7 +22,6 @@ import {
 } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   elementComponent,
-  getComponentByJsxName,
   getContentBlockMdxTemplateDescriptor,
   getDefaultContentBlockTemplateName,
   getStyleDeclKey,
@@ -1265,30 +1264,15 @@ export const materializeMdxAuthoredContent = ({
         children.push({ type: "id", value: rootId });
         continue;
       }
-      const registeredComponent =
-        node.type === "template" && node.syntax === "jsx" && metas !== undefined
-          ? getComponentByJsxName({
-              name: node.name,
-              components: metas.keys(),
-            })
-          : undefined;
-      const materializedComponent = materializeMdxComponent(
-        node,
-        registeredComponent
-      );
+      const materializedComponent = materializeMdxComponent(node);
       if (materializedComponent !== undefined) {
-        const isDirectRegisteredComponent =
-          "authoredChildren" in materializedComponent;
         const createId = createMdxScopeIdGenerator({ identity, path });
         const instanceId = createId();
         const instance: Instance = {
           type: "instance",
           id: instanceId,
           component: materializedComponent.component,
-          children:
-            "authoredChildren" in materializedComponent
-              ? visit(node.children, path)
-              : materializedComponent.children,
+          children: materializedComponent.children,
         };
         fragment.instances.push(instance);
         const componentData =
@@ -1450,19 +1434,8 @@ export const materializeMdxAuthoredContent = ({
               assetId: assetReference?.assetId,
             });
           } else {
-            const declaredType = metas?.get(instance.component)?.props?.[
-              instanceProp.name
-            ]?.type;
-            const directBinding =
-              isDirectRegisteredComponent &&
-              (declaredType === "string" ||
-                declaredType === "number" ||
-                declaredType === "boolean")
-                ? parseMdxStaticProp({ prop: instanceProp, type: declaredType })
-                : undefined;
             const binding =
-              directBinding ??
-              (assetReference === undefined
+              assetReference === undefined
                 ? getMdxPropBinding({
                     capabilities: componentCapabilities,
                     instance,
@@ -1476,7 +1449,7 @@ export const materializeMdxAuthoredContent = ({
                       jsxPropName,
                     }).editable
                   ? { type: "asset" as const, value: assetReference.assetId }
-                  : undefined);
+                  : undefined;
             if (binding === undefined) {
               const eligibility = getMdxPropEligibility({
                 capabilities: componentCapabilities,
@@ -1759,6 +1732,12 @@ export const adoptMdxAuthoredContentFragment = ({
     fragment,
     provenance: {
       ...root.provenance,
+      unresolvedTemplates: root.provenance.unresolvedTemplates.map(
+        (reference) => ({
+          ...reference,
+          markerId: instanceIds.get(reference.markerId) ?? reference.markerId,
+        })
+      ),
       nodes: root.provenance.nodes.map((node) =>
         node.type === "element"
           ? {
@@ -1993,6 +1972,14 @@ export const reconcileMdxAuthoredContent = ({
   );
   const originalInstanceById = new Map(
     root.fragment.instances.map((instance) => [instance.id, instance])
+  );
+  const unresolvedById = new Map(
+    root.provenance.unresolvedTemplates
+      .filter(({ markerId }) => originalInstanceById.has(markerId))
+      .map((reference) => [reference.markerId, reference])
+  );
+  const unresolvedPaths = new Set(
+    Array.from(unresolvedById.values(), ({ path }) => pathKey(path))
   );
   const indexPropsByInstanceId = (props: readonly Prop[]) => {
     const index = new Map<Instance["id"], Prop[]>();
@@ -2294,6 +2281,20 @@ export const reconcileMdxAuthoredContent = ({
     const instance = instanceById.get(instanceId);
     if (instance === undefined) {
       throw new Error(`Authored MDX instance "${instanceId}" is missing`);
+    }
+    const unresolved = unresolvedById.get(instanceId);
+    if (unresolved !== undefined) {
+      if (serializedInstanceIds.has(instanceId)) {
+        throw new Error(`Authored MDX instance "${instanceId}" is reused`);
+      }
+      const original = originalNodeByPath.get(pathKey(unresolved.path));
+      if (original === undefined) {
+        throw new Error(
+          "Missing template placeholder has no authored MDX node"
+        );
+      }
+      serializedInstanceIds.add(instanceId);
+      return original;
     }
     const provenance = provenanceById.get(instanceId);
     if (provenance?.type === "template") {
@@ -3031,7 +3032,9 @@ export const reconcileMdxAuthoredContent = ({
       }
       const provenance = provenanceById.get(child.value);
       const authoredPath =
-        provenance?.path ?? overlaidDescendantById.get(child.value)?.path;
+        provenance?.path ??
+        overlaidDescendantById.get(child.value)?.path ??
+        unresolvedById.get(child.value)?.path;
       return {
         key:
           authoredPath === undefined
@@ -3057,7 +3060,10 @@ export const reconcileMdxAuthoredContent = ({
       const key =
         node.type === "text"
           ? `text:${index}`
-          : provenance === undefined && isOverlaidDescendant === false
+          : provenance === undefined &&
+              isOverlaidDescendant === false &&
+              (originalPath === undefined ||
+                unresolvedPaths.has(originalPath) === false)
             ? undefined
             : `node:${originalPath}`;
       if (key !== undefined && surviving.has(key)) {

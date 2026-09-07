@@ -20,6 +20,10 @@ Next is a breakdown of Content Block by mode:
 
 ## Content Block in Design mode
 
+Without an MDX source, add content directly inside the Content Block, alongside **Templates**. No Body wrapper is needed. **Templates** defines the reusable designs that editors can insert in Content mode. Adding a one-off content instance does not add it to the editor's insertion menu. Add a design to Templates only when editors should be able to insert more instances of it.
+
+Templates are not required for ordinary Markdown content. Custom components referenced by JSX in MDX must match a template in that Content Block; being registered in the Builder is not enough.
+
 Sometimes providing team members or clients the ability to edit existing content doesn’t help them accomplish everything they need.
 
 Instead, they may want to add new content without asking you.
@@ -53,32 +57,38 @@ Reusable top-level templates appear in Content mode like this. Structural and in
 <div><figure><img src="../../.gitbook/assets/templates-design-mode.png" alt="Templates in Design mode"><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template in Content mode"><figcaption><p>Template in Content mode</p></figcaption></figure></div>
 
 
-Each time they insert a template, its copy appears inside the Content Block's Body outlet, alongside any initial body content. The Templates container remains protected source material.
+Each time they insert a template, its copy appears alongside the existing content: directly inside an unconnected Content Block, or inside **MDX content** when a file is connected. The Templates container remains protected source material.
 
 ### Step 3: Add an initial setup (optional)
 
-Optionally, you can add instances inside the Content Block's Body outlet.
+Optionally, add instances directly inside the Content Block. If the block is connected to MDX, its file content appears inside **MDX content** instead.
 
 <figure><img src="../../.gitbook/assets/startingpoint-content-block.png" alt="Initial Feature instances inside a Content Block Body outlet" width="357"><figcaption><p>The Feature instances are provided as a starting point</p></figcaption></figure>
 
 
 Doing so will provide an initial setup for editors.
 
-Editors can delete children of the Body outlet. They cannot delete the designed shell, Templates container, templates, or nested instances independently.
+Editors can delete top-level content instances. In MDX-connected blocks, these are the children of **MDX content**, not the surrounding designed shell. They cannot delete the Templates container, templates, or nested instances independently.
 
 ### Store content in an MDX file
 
 Connect a `.mdx` file when the Content Block's body should live in Assets instead of the project's regular instance data. The designed shell and Templates list remain in the project. Markdown `.md` files cannot be connected to a Content Block.
 
+To insert a custom component such as Accordion into **MDX content**, first add its design to **Templates**, then insert it from the template picker. Inserting custom components directly from the Add panel into MDX content is blocked. Basic Markdown elements, images, and code blocks can still be inserted directly. Place designer-owned, one-off components outside **MDX content**; they remain in the project and are not saved to the file.
+
+Moving, pasting, or duplicating content into an MDX region also checks the destination's Templates. Unsupported components are rejected before the tree changes, including components nested inside a pasted container.
+
 #### Prepare the Content Block
 
 1. Add the Content Block and design its shell in Design mode.
-2. Place the **Body** outlet where the article body should render.
+2. After connecting a file, place the **MDX content** outlet where the article body should render.
 3. Keep exactly one direct **Templates** container. Style the standard document elements already provided inside it.
 4. Add any reusable custom content to **Templates**.
 5. Give every custom top-level template a unique instance name. Use a JSX-compatible name such as `PromotionCard` when you want component-style JSX.
 
-New Content Blocks already include a Body outlet and direct templates for every supported Markdown element, including headings, paragraphs, marks, links, images, quotes, lists, task controls, code, separators, and tables. When you connect an older Content Block without a Body outlet, Webstudio adds it automatically.
+New Content Blocks include direct templates for every supported Markdown element, including headings, paragraphs, marks, links, images, quotes, lists, task controls, code, separators, and tables. They do not include a Body outlet. Connecting an MDX file adds the outlet automatically. Existing blocks with a Body outlet remain supported without changing their saved structure.
+
+When a file is connected, the Navigator labels its Body outlet **MDX content** and shows an MDX icon, even when the region is empty. Content inside that region is saved to the file; instances outside it remain in the project. Use the region's **MDX content settings** menu and choose **Open MDX file** to edit the connected file directly.
 
 #### Create and connect the file
 
@@ -148,9 +158,13 @@ Regular document content stays Markdown and uses the matching standard templates
 </PromotionCard>
 ```
 
-The JSX name first matches the stable **Name** of a unique top-level template in the Content Block's Templates list. **Name** is a JavaScript identifier and is separate from the optional **Label** shown in the canvas. If no template has that name, Webstudio uses the exact registered component with that exported name. A new template gets its default name from its root component or HTML tag, and duplicate defaults get deterministic numeric suffixes.
+The JSX name matches the stable **Name** of a unique top-level template in the Content Block's Templates list. **Name** is a JavaScript identifier and is separate from the optional **Label** shown in the canvas. If no template has that name, the custom component is unresolved and is not rendered. Its JSX remains in the file so adding the matching template can resolve it later. A new template gets its default name from its root component or HTML tag, and duplicate defaults get deterministic numeric suffixes.
 
-In the MDX editor, type `<` to autocomplete registered components and templates connected to the file. Inside a JSX tag, autocomplete suggests its supported properties and available property values.
+In the MDX editor, type `<` to autocomplete templates connected to the file and built-in Image and CodeText components. Inside a JSX tag, autocomplete suggests its supported properties and available property values.
+
+Missing template references are marked as errors at their JSX source range. Hover the underline to read the explanation. For dynamic sources, the editor also uses currently rendered Content Blocks to find the file's templates.
+
+The Navigator shows an unresolved reference as **Missing template: Name**. Delete that item to remove its JSX, including its children, from the MDX file. Leaving the item in place preserves its source until the template is available.
 
 When two component libraries export the same name, the core component keeps the plain identifier and the namespaced component gets a stable library prefix, such as `Checkbox` and `RadixCheckbox`. Component discovery reports the exact JSX identifier to use.
 

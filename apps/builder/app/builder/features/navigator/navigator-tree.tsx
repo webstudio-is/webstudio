@@ -8,6 +8,10 @@ import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   cssVar,
   keyframes,
   ScrollArea,
@@ -28,6 +32,8 @@ import {
   ROOT_INSTANCE_ID,
   collectionComponent,
   blockBodyComponent,
+  contentBlockSourceProp,
+  getContentBlockSource,
   blockComponent,
   rootComponent,
   blockTemplateComponent,
@@ -40,6 +46,8 @@ import {
   EyeClosedIcon,
   EyeOpenIcon,
   InfoCircleIcon,
+  MarkdownEmbedIcon,
+  SettingsIcon,
 } from "@webstudio-is/icons";
 import {
   $allSelectedInstanceSelectors,
@@ -85,12 +93,81 @@ import {
   externalContentInstanceNameMessage,
   isExternalContentInstance,
   resolveExternalContentOccurrence,
+  findExternalContentRoot,
 } from "~/shared/external-content-mutations";
 import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { InstanceContextMenu } from "~/builder/shared/instance-context-menu";
+import { TextFileEditor } from "../text-file-editor/text-file-editor";
+
+const getMdxContentSource = (selector: InstanceSelector) => {
+  const instances = $instances.get();
+  if (instances.get(selector[0])?.component !== blockBodyComponent) {
+    return;
+  }
+  const blockIndex = selector.findIndex(
+    (id) => instances.get(id)?.component === blockComponent
+  );
+  if (blockIndex === -1) {
+    return;
+  }
+  const blockSelector = selector.slice(blockIndex);
+  const root =
+    Array.from($externalContentRoots.get().values()).find(
+      (root) =>
+        root.contentInstanceId === selector[0] &&
+        root.blockInstanceId === blockSelector[0]
+    ) ??
+    findExternalContentRoot(
+      $externalContentRoots.get(),
+      blockSelector[0],
+      JSON.stringify(blockSelector)
+    );
+  const source = getContentBlockSource({
+    blockInstanceId: root?.sourceBlockInstanceId ?? blockSelector[0],
+    props: $props.get().values(),
+  });
+  if (source === undefined) {
+    return;
+  }
+  const value = $propValuesByInstanceSelector
+    .get()
+    .get(getInstanceKey(blockSelector))
+    ?.get(contentBlockSourceProp);
+  return {
+    assetId:
+      source.type === "asset"
+        ? source.assetId
+        : (root?.assetId ??
+          (typeof value === "string" && value !== "" ? value : undefined)),
+  };
+};
+
+const MdxContentMenu = ({ assetId }: { assetId?: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SmallIconButton
+            aria-label="MDX content settings"
+            icon={<SettingsIcon />}
+          />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem disabled={!assetId} onSelect={() => setOpen(true)}>
+            Open MDX file
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {open && assetId && (
+        <TextFileEditor assetId={assetId} onOpenChange={setOpen} />
+      )}
+    </>
+  );
+};
 
 type TreeItemAncestor =
   | undefined
@@ -540,11 +617,13 @@ const EditableTreeNodeLabel = styled("div", {
 
 const TreeNodeContent = ({
   instance,
+  mdx = false,
   isEditing,
   isNameEditable,
   onIsEditingChange,
 }: {
   instance: Instance;
+  mdx?: boolean;
   isEditing: boolean;
   isNameEditable: boolean;
   onIsEditingChange: (isEditing: boolean) => void;
@@ -552,7 +631,7 @@ const TreeNodeContent = ({
   const editableRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string>();
 
-  const label = getInstanceLabel(instance);
+  const label = mdx ? "MDX content" : getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
     value: label,
     isEditable: isNameEditable,
@@ -581,9 +660,19 @@ const TreeNodeContent = ({
   });
 
   return (
-    <TreeNodeLabel prefix={<InstanceIcon instance={instance} />}>
+    <TreeNodeLabel
+      prefix={
+        mdx ? <MarkdownEmbedIcon /> : <InstanceIcon instance={instance} />
+      }
+    >
       <Tooltip
-        content={isNameEditable ? error : externalContentInstanceNameMessage}
+        content={
+          mdx
+            ? "Content inside this region is saved to the connected MDX file. Other instances in this Content Block are saved in the project."
+            : isNameEditable
+              ? error
+              : externalContentInstanceNameMessage
+        }
         delayDuration={0}
       >
         <EditableTreeNodeLabel
@@ -1081,6 +1170,7 @@ export const NavigatorTree = () => {
             const isAnimating = isAnimationSelected || isAnimationPinned;
 
             const meta = metas.get(item.instance.component);
+            const mdxSource = getMdxContentSource(item.selector);
 
             if (meta === undefined) {
               return;
@@ -1124,7 +1214,7 @@ export const NavigatorTree = () => {
                     isSelectedDescendant={isSelectedDescendantItem}
                     isHighlighted={hoveredKey === key || dropTargetKey === key}
                     isExpanded={item.isExpanded}
-                    isActionVisible={isAnimating}
+                    isActionVisible={isAnimating || mdxSource !== undefined}
                     onExpand={(isExpanded, all) =>
                       handleExpand(item, isExpanded, all)
                     }
@@ -1160,16 +1250,22 @@ export const NavigatorTree = () => {
                       onKeyUp: handleKeyUp,
                     }}
                     action={
-                      <ShowToggle
-                        instance={item.instance}
-                        value={show}
-                        isAnimating={isAnimating}
-                      />
+                      mdxSource ? (
+                        <MdxContentMenu assetId={mdxSource.assetId} />
+                      ) : (
+                        <ShowToggle
+                          instance={item.instance}
+                          value={show}
+                          isAnimating={isAnimating}
+                        />
+                      )
                     }
                   >
                     <TreeNodeContent
                       instance={item.instance}
+                      mdx={mdxSource !== undefined}
                       isNameEditable={
+                        mdxSource === undefined &&
                         isExternalContentInstance(
                           externalContentRoots,
                           item.instance.id
@@ -1199,6 +1295,7 @@ export const NavigatorTree = () => {
 };
 
 export const __testing__ = {
+  getMdxContentSource,
   commitNavigatorDrop,
   getFocusSelectionSkipCountAfterPointerDown,
   getBuilderDropTarget,

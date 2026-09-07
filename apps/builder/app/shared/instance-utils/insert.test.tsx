@@ -22,7 +22,12 @@ import {
 } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type { WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
-import { coreMetas, elementComponent } from "@webstudio-is/sdk";
+import {
+  blockBodyComponent,
+  blockComponent,
+  coreMetas,
+  elementComponent,
+} from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
@@ -802,6 +807,51 @@ describe("insert webstudio component at", () => {
       component: "Form",
       children: expect.any(Array),
     });
+  });
+
+  test("reports rejected MDX insertion without changing instances", async () => {
+    const instances = $instances.get();
+    instances.get("bodyId")!.children = [{ type: "id", value: "block" }];
+    instances.set("block", {
+      type: "instance",
+      id: "block",
+      component: blockComponent,
+      children: [{ type: "id", value: "mdx" }],
+    });
+    instances.set("mdx", {
+      type: "instance",
+      id: "mdx",
+      component: blockBodyComponent,
+      children: [],
+    });
+    $props.set(
+      new Map([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: "block",
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+      ])
+    );
+    const original = structuredClone(instances);
+    const notify = vi.spyOn(toast, "error");
+    try {
+      expect(
+        await insertWebstudioComponentAt("Form", {
+          parentSelector: ["mdx", "block", "bodyId"],
+          position: "end",
+        })
+      ).toBe(false);
+      expect(notify).toHaveBeenCalledOnce();
+      expect($instances.get()).toEqual(original);
+    } finally {
+      notify.mockRestore();
+    }
   });
 });
 

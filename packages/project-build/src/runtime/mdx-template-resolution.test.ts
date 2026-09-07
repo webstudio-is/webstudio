@@ -384,7 +384,7 @@ describe("resolveMdxTemplates", () => {
     ]);
   });
 
-  test("resolves templates nested inside a direct registered component", async () => {
+  test("requires a template even for registered JSX and does not render its descendants", async () => {
     const instances = createInstances();
     instances.set(
       "heading-2",
@@ -395,32 +395,33 @@ describe("resolveMdxTemplates", () => {
       value: "heading-2",
     });
     const document = await parseMdxDocument({
-      source: "<Box><h2>Nested</h2><Missing /></Box>\n",
+      source: "<Accordion><h2>Nested</h2><Missing /></Accordion>\n",
     });
 
     const result = resolveMdxTemplates({
       document,
       identity,
       instances,
-      metas: new Map([...metas, ["Box", { label: "Box" }]]),
+      metas: new Map([
+        ...metas,
+        [
+          "@webstudio-is/sdk-components-react-radix:Accordion",
+          { label: "Accordion" },
+        ],
+      ]),
     });
 
     expect(result.references).toEqual([
       expect.objectContaining({
-        type: "resolved-template",
-        path: [0, 0],
-        templateInstanceId: "heading-2",
-      }),
-      expect.objectContaining({
         type: "unresolved-template",
-        path: [0, 1],
-        templateName: "Missing",
+        path: [0],
+        templateName: "Accordion",
       }),
     ]);
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         code: "unresolved-template",
-        templateName: "Missing",
+        templateName: "Accordion",
       }),
     ]);
   });

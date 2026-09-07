@@ -95,12 +95,15 @@ export const inspectMdxAssetSource = async ({
   state,
   metas,
   projectId,
+  sourceBlockInstanceIds = [],
 }: {
   source: string;
   assetId: string;
   state: BuilderState;
   metas: Map<string, WsComponentMeta>;
   projectId: string;
+  /** Source blocks resolved by the caller's live rendering context. */
+  sourceBlockInstanceIds?: readonly string[];
 }) => {
   const validation = await validateTextAssetSource({ source, format: "mdx" });
   if (validation.format !== "mdx") {
@@ -127,10 +130,11 @@ export const inspectMdxAssetSource = async ({
     return diagnostics;
   }
   const data = getData(state);
-  for (const blockInstanceId of getMdxAssetSourceBlockInstanceIds({
-    assetId,
-    state,
-  })) {
+  const blockInstanceIds = new Set([
+    ...getMdxAssetSourceBlockInstanceIds({ assetId, state }),
+    ...sourceBlockInstanceIds,
+  ]);
+  for (const blockInstanceId of blockInstanceIds) {
     const identity = createContentBlockExternalContentIdentity({
       blockInstanceId,
       asset,

@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import {
   blockTemplateComponent,
+  blockBodyComponent,
+  blockComponent,
   collectionComponent,
   elementComponent,
   encodeDataVariableId,
@@ -115,6 +117,96 @@ const createIdFactory = () => {
   let index = 0;
   return () => `generated-${index++}`;
 };
+
+test("rejects Add-panel components inside MDX before changing state, but allows shell and unconnected content", () => {
+  const block: Instance = {
+    type: "instance",
+    id: "block",
+    component: blockComponent,
+    children: [
+      { type: "id", value: "mdx" },
+      { type: "id", value: "shell" },
+    ],
+  };
+  const state = createState(block);
+  state.instances.set("mdx", {
+    type: "instance",
+    id: "mdx",
+    component: blockBodyComponent,
+    children: [{ type: "id", value: "paragraph" }],
+  });
+  state.instances.set("paragraph", {
+    type: "instance",
+    id: "paragraph",
+    component: elementComponent,
+    tag: "p",
+    children: [],
+  });
+  state.instances.set("shell", {
+    type: "instance",
+    id: "shell",
+    component: elementComponent,
+    tag: "div",
+    children: [],
+  });
+  state.props.set("source", {
+    id: "source",
+    instanceId: "block",
+    name: "src",
+    type: "asset",
+    value: "article",
+  });
+  const original = structuredClone(state);
+  const component = "@webstudio-is/sdk-components-react-radix:Accordion";
+  for (const parentInstanceId of ["mdx", "paragraph"]) {
+    expect(() =>
+      insertComponent(
+        state,
+        { parentInstanceId, component },
+        { createId: createIdFactory() }
+      )
+    ).toThrow("template picker");
+    expect(state).toEqual(original);
+  }
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "shell", component },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "mdx", component: elementComponent, tag: "p" },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+  state.instances.set("templates", {
+    type: "instance",
+    id: "templates",
+    component: blockTemplateComponent,
+    children: [],
+  });
+  block.children = [{ type: "id", value: "templates" }];
+  state.instances = new Map(state.instances);
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "templates", component },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+  block.children.push({ type: "id", value: "mdx" });
+  state.props.delete("source");
+  expect(
+    insertComponent(
+      state,
+      { parentInstanceId: "mdx", component },
+      { createId: createIdFactory() }
+    ).result.rootInstanceIds
+  ).toHaveLength(1);
+});
 
 test("assigns a unique name when inserting into a Templates list", async () => {
   const parent: Instance = {

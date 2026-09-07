@@ -11,6 +11,7 @@ import {
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import {
+  adoptMdxAuthoredContentFragment,
   materializeMdxAuthoredContent,
   MdxAuthoredContentConflictError,
   rebaseMdxAuthoredContent,
@@ -78,7 +79,7 @@ const createCodeTextFragment = (theme = "github-light"): WebstudioFragment => ({
 });
 
 describe("MDX authored content", () => {
-  test("materializes and round-trips exact registered component JSX", async () => {
+  test("does not materialize registered JSX without a resolved template", async () => {
     const source =
       "<PromotionCard><Heading>Launch offer</Heading></PromotionCard>\n";
     const document = await parseMdxDocument({ source });
@@ -93,19 +94,13 @@ describe("MDX authored content", () => {
       metas,
     });
 
-    expect(root.fragment.instances).toEqual([
-      expect.objectContaining({ component: "Heading" }),
-      expect.objectContaining({
-        component: "PromotionCard",
-        children: [{ type: "id", value: expect.any(String) }],
-      }),
-    ]);
+    expect(root.fragment.instances).toEqual([]);
     await expect(
       serializeMdxAuthoredContent({ root, fragment: root.fragment })
     ).resolves.toBe(source);
   });
 
-  test("materializes static props on an exact registered component", async () => {
+  test("does not materialize props on registered JSX without a template", async () => {
     const source = '<Heading tag="h2">Test</Heading>\n';
     const document = await parseMdxDocument({ source });
     const root = materializeMdxAuthoredContent({
@@ -115,12 +110,8 @@ describe("MDX authored content", () => {
       metas: componentMetas,
     });
 
-    expect(root.fragment.instances).toEqual([
-      expect.objectContaining({ component: "Heading" }),
-    ]);
-    expect(root.fragment.props).toEqual([
-      expect.objectContaining({ name: "tag", type: "string", value: "h2" }),
-    ]);
+    expect(root.fragment.instances).toEqual([]);
+    expect(root.fragment.props).toEqual([]);
     await expect(
       serializeMdxAuthoredContent({ root, fragment: root.fragment })
     ).resolves.toBe(source);
@@ -1775,6 +1766,52 @@ describe("MDX authored content", () => {
       { type: "text", value: "Before" },
       { type: "id", value: "missing" },
       { type: "text", value: "After" },
+    ]);
+    expect(
+      reconcileMdxAuthoredContent({ root, fragment: root.fragment }).children
+    ).toMatchObject([
+      {
+        type: "element",
+        children:
+          document.children[0].type === "element"
+            ? document.children[0].children
+            : [],
+      },
+    ]);
+    const live = structuredClone(root.fragment);
+    for (const instance of live.instances) {
+      if (instance.id === "missing") {
+        instance.id = "live-missing";
+      }
+      instance.children = instance.children.map((child) =>
+        child.type === "id" && child.value === "missing"
+          ? { ...child, value: "live-missing" }
+          : child
+      );
+    }
+    const adopted = adoptMdxAuthoredContentFragment({ root, fragment: live });
+    expect(adopted.provenance.unresolvedTemplates[0].markerId).toBe(
+      "live-missing"
+    );
+    const next = structuredClone(adopted.fragment);
+    next.instances = next.instances.filter(({ id }) => id !== "live-missing");
+    for (const instance of next.instances) {
+      instance.children = instance.children.filter(
+        (child) => child.type !== "id" || child.value !== "live-missing"
+      );
+    }
+    const result = reconcileMdxAuthoredContent({
+      root: adopted,
+      fragment: next,
+    });
+    expect(result.children).toMatchObject([
+      {
+        type: "element",
+        children: [
+          { type: "text", value: "Before" },
+          { type: "text", value: "After" },
+        ],
+      },
     ]);
   });
 

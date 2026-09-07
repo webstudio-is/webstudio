@@ -240,7 +240,10 @@ export const getTextFileEditorDiagnostics = async ({
     return {
       from,
       to,
-      severity: diagnostic.severity,
+      severity:
+        diagnostic.code === "unresolved-template"
+          ? ("error" as const)
+          : diagnostic.severity,
       source: diagnostic.code,
       message:
         "message" in diagnostic

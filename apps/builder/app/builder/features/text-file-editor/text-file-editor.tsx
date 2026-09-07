@@ -51,6 +51,7 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import {
+  contentBlockMdxTemplateDescriptors,
   getAssetUrl,
   getComponentJsxName,
   getContentBlockTemplateName,
@@ -126,6 +127,21 @@ const getStaticMdxCompletionProps = (
     ];
   });
 
+const getMdxEditorSourceBlockInstanceIds = (assetId: string) =>
+  Array.from(
+    new Set([
+      ...getMdxAssetSourceBlockInstanceIds({
+        assetId,
+        state: readBuilderStateStores(),
+      }),
+      ...Array.from($externalContentRoots.get().values()).flatMap((root) =>
+        root.assetId === assetId
+          ? [root.sourceBlockInstanceId ?? root.blockInstanceId]
+          : []
+      ),
+    ])
+  );
+
 const getMdxCompletionComponents = ({
   assetId,
   metas,
@@ -136,6 +152,14 @@ const getMdxCompletionComponents = ({
   const components = new Map<string, MdxCompletionComponent>();
   const componentIds = Array.from(metas.keys());
   for (const [component, meta] of metas) {
+    if (
+      contentBlockMdxTemplateDescriptors.some(
+        (descriptor) =>
+          descriptor.kind === "component" && descriptor.component === component
+      ) === false
+    ) {
+      continue;
+    }
     const name = getComponentJsxName({
       component,
       components: componentIds,
@@ -167,10 +191,7 @@ const getMdxCompletionComponents = ({
     propsByInstanceId.set(prop.instanceId, props);
   }
   const templates = new Map<string, MdxCompletionComponent>();
-  for (const blockInstanceId of getMdxAssetSourceBlockInstanceIds({
-    assetId,
-    state,
-  })) {
+  for (const blockInstanceId of getMdxEditorSourceBlockInstanceIds(assetId)) {
     for (const [template] of findBlockTemplates({
       anchor: [blockInstanceId],
       instances,
@@ -687,6 +708,7 @@ export const TextFileEditor = ({
           inspectMdxAssetSource({
             source,
             assetId,
+            sourceBlockInstanceIds: getMdxEditorSourceBlockInstanceIds(assetId),
             state: readBuilderStateStores(),
             metas: registeredComponentMetas,
             projectId,

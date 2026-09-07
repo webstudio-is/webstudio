@@ -32,6 +32,7 @@ import {
   SmallIconButton,
   Text,
   Tooltip,
+  InputErrorsTooltip,
   theme,
 } from "@webstudio-is/design-system";
 import { getExpressionIdentifiers } from "@webstudio-is/expression";
@@ -179,26 +180,30 @@ const BindingPanel = ({
         </Tooltip>
       </PanelContent>
       <PanelContent as={Box} css={{ pt: 0 }}>
-        <ExpressionEditor
-          editorApiRef={editorApiRef}
-          scope={scope}
-          aliases={aliases}
-          color={
-            (touched && errorsCount > 0) || valueError !== undefined
-              ? "error"
-              : undefined
-          }
-          autoFocus={true}
-          value={expression}
-          onChange={(value) => {
-            updateExpression(value);
-            setTouched(false);
-          }}
-          onChangeComplete={() => {
-            onSave(expression, errorsCount > 0);
-            setTouched(true);
-          }}
-        />
+        <InputErrorsTooltip
+          errors={valueError === undefined ? undefined : [valueError]}
+        >
+          <ExpressionEditor
+            editorApiRef={editorApiRef}
+            scope={scope}
+            aliases={aliases}
+            color={
+              (touched && errorsCount > 0) || valueError !== undefined
+                ? "error"
+                : undefined
+            }
+            autoFocus={true}
+            value={expression}
+            onChange={(value) => {
+              updateExpression(value);
+              setTouched(false);
+            }}
+            onChangeComplete={() => {
+              onSave(expression, errorsCount > 0);
+              setTouched(true);
+            }}
+          />
+        </InputErrorsTooltip>
       </PanelContent>
     </ScrollArea>
   );

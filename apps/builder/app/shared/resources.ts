@@ -239,7 +239,11 @@ export const preloadResources = (resources: readonly ResourceRequest[]) => {
 
 const invalidateAndQueueResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
-  cache.delete(key);
+  // Asset saves refresh collection bindings without unmounting their content.
+  // Keep the last result until the replacement arrives, including an empty result.
+  if (isAssetsResourceRequest(resource) === false) {
+    cache.delete(key);
+  }
   invalidateRequestState(key);
   pending.delete(key);
   knownRequests.set(key, resource);
@@ -397,7 +401,7 @@ export const loadResourceDiagnostics = (
  * Invalidate the assets system resource.
  * Call this when assets are uploaded, deleted, or modified to refresh expressions using assets.
  */
-export const invalidateAssets = () => {
+export const invalidateAssets = (requestFetch: typeof fetch = fetch) => {
   for (const request of knownRequests.values()) {
     if (isAssetsResourceRequest(request) === false) {
       continue;
@@ -407,7 +411,7 @@ export const invalidateAssets = () => {
   abortObsoleteBatches();
   updateCache();
   updatePending();
-  startLoading();
+  startLoading(requestFetch);
 };
 
 export const computeResourceRequest = (

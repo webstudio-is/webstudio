@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
+import { userEvent } from "@vitest/browser/context";
 import {
   createStructuredQuery,
   type QueryDefinition,
@@ -480,5 +481,39 @@ describe("structured query builder", () => {
     expect(screen.getByText("Selection")).toBeTruthy();
     expect(screen.getByText("File content")).toBeTruthy();
     expect(screen.getByRole("separator")).toBeTruthy();
+  });
+
+  test("keeps a long Output menu within the viewport and scrolls to its last option", async () => {
+    const capabilities = {
+      ...selectionCapabilities,
+      fields: Array.from({ length: 100 }, (_, index) => ({
+        path: [`field${index}`],
+        label: `Field ${index}`,
+        types: ["string" as const],
+      })),
+    };
+    render(
+      <StructuredQueryBuilder
+        value={createStructuredQuery(capabilities)}
+        capabilities={capabilities}
+        onChange={() => {}}
+      />
+    );
+    await userEvent.click(screen.getByLabelText("Add output"));
+    const menu = screen.getByRole("menu");
+    await expect
+      .poll(() => menu.getBoundingClientRect().top)
+      .toBeGreaterThanOrEqual(0);
+    expect(menu.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      window.innerHeight
+    );
+    expect(menu.scrollHeight).toBeGreaterThan(menu.clientHeight);
+    await userEvent.keyboard("{End}");
+    const lastOption = screen.getByRole("menuitem", { name: "Field 99" });
+    expect(document.activeElement).toBe(lastOption);
+    await expect.poll(() => menu.scrollTop).toBeGreaterThan(0);
+    expect(lastOption.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      menu.getBoundingClientRect().bottom
+    );
   });
 });

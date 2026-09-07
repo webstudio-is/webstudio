@@ -117,6 +117,38 @@ const createFixture = () => {
 };
 
 describe("createContentBlockApplication", () => {
+  test("inspects unresolved JSX in a dynamically resolved source context", async () => {
+    const { state } = createFixture();
+    state.props?.set("src", {
+      id: "src",
+      instanceId: "block",
+      name: "src",
+      type: "expression",
+      value: "collection.data._id",
+    });
+    expect(
+      getMdxAssetSourceBlockInstanceIds({ assetId: "asset", state })
+    ).toEqual([]);
+    const diagnostics = await inspectMdxAssetSource({
+      source: "<Accordion />",
+      assetId: "asset",
+      state,
+      metas: componentMetas,
+      projectId: "project",
+      sourceBlockInstanceIds: ["block"],
+    });
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: "unresolved-template",
+        templateName: "Accordion",
+        blockInstanceId: "block",
+        sourceRange: expect.objectContaining({
+          start: expect.objectContaining({ offset: 0 }),
+          end: expect.objectContaining({ offset: 13 }),
+        }),
+      }),
+    ]);
+  });
   test("inspects an Asset in each resolvable Content Block context", async () => {
     const fixture = createFixture();
     fixture.state.dataSources?.set("selectedAsset", {

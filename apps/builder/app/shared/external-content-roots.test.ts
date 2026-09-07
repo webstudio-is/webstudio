@@ -73,6 +73,8 @@ registerContainers();
 test("places unresolved-template placeholders at their authored nesting point", async () => {
   const source =
     '<ws.element ws:tag="section">Before<ws.element ws:name="Missing" />After</ws.element>';
+  let storedSource = source;
+  const writes: string[] = [];
   const sourceAsset = {
     ...asset,
     size: new TextEncoder().encode(source).byteLength,
@@ -82,10 +84,17 @@ test("places unresolved-template placeholders at their authored nesting point", 
       readContent: async () => ({
         asset: sourceAsset,
         data: (async function* () {
-          yield new TextEncoder().encode(source);
+          yield new TextEncoder().encode(storedSource);
         })(),
       }),
-      updateContent: async () => sourceAsset,
+      updateContent: async ({ data }) => {
+        storedSource = await new Response(data).text();
+        writes.push(storedSource);
+        return {
+          ...sourceAsset,
+          size: new TextEncoder().encode(storedSource).byteLength,
+        };
+      },
     },
     authorize: () => true,
   });
@@ -155,6 +164,17 @@ test("places unresolved-template placeholders at their authored nesting point", 
       renderScope: '["block"]',
     })
   ).toEqual([{ type: "id", value: section.id }]);
+  executeRuntimeMutation({
+    id: "instances.deleteBySelector",
+    input: { instanceSelector: [missing.id, section.id, "block"] },
+  });
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+  expect(writes).toHaveLength(1);
+  expect(storedSource).toBe("<section>BeforeAfter</section>\n");
+  expect($instances.get().has(missing.id)).toBe(false);
 });
 
 test("re-resolves existing Markdown when a matching template is added", async () => {

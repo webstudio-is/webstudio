@@ -25,6 +25,61 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
+test("keeps the first and subsequent drag positions when only the title must remain visible", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      <Dialog open draggable>
+        <DialogContent width={640} height={480} aria-describedby={undefined}>
+          <DialogTitle>MDX editor</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    );
+  });
+  const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+  const title = dialog.querySelector<HTMLElement>('[draggable="true"]')!;
+  for (const top of [window.innerHeight - 150, window.innerHeight - 100]) {
+    const initial = dialog.getBoundingClientRect();
+    const dataTransfer = new DataTransfer();
+    await act(async () => {
+      title.dispatchEvent(
+        new DragEvent("dragstart", {
+          bubbles: true,
+          clientX: initial.x + 20,
+          clientY: initial.y + 20,
+          dataTransfer,
+        })
+      );
+      title.dispatchEvent(
+        new DragEvent("drag", {
+          bubbles: true,
+          clientX: initial.x + 20,
+          clientY: top + 20,
+          dataTransfer,
+        })
+      );
+      title.dispatchEvent(
+        new DragEvent("dragend", { bubbles: true, dataTransfer })
+      );
+    });
+    expect(dialog.getBoundingClientRect().top).toBe(top);
+    expect(dialog.getBoundingClientRect().height).toBe(initial.height);
+  }
+  await act(async () => {
+    root?.render(
+      <Dialog open draggable>
+        <DialogContent width={300} height={150} aria-describedby={undefined}>
+          <DialogTitle>MDX editor</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    );
+  });
+  expect(dialog.getBoundingClientRect().width).toBe(300);
+  expect(dialog.getBoundingClientRect().height).toBe(150);
+});
+
 test.each([false, true])(
   "contains Escape within the dialog (dismissal prevented: %s)",
   async (preventDismissal) => {

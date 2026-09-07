@@ -927,20 +927,15 @@ const getSession = (projectId: string) => {
 
 const extractRootFragment = ({
   contentInstanceId,
-  children: rootChildren,
-  transientInstanceIds,
+  children,
 }: {
   contentInstanceId: string;
   children: WebstudioFragment["children"];
-  transientInstanceIds: ReadonlySet<string>;
 }) => {
   const data = getWebstudioData();
   if (data.instances.has(contentInstanceId) === false) {
     throw new Error("Connected Content Block no longer exists");
   }
-  const isPersistentChild = (child: WebstudioFragment["children"][number]) =>
-    child.type !== "id" || transientInstanceIds.has(child.value) === false;
-  const children = rootChildren.filter(isPersistentChild);
   const rootIds = children.flatMap((child) =>
     child.type === "id" ? [child.value] : []
   );
@@ -951,12 +946,6 @@ const extractRootFragment = ({
   return {
     ...fragment,
     children,
-    instances: fragment.instances
-      .filter(({ id }) => transientInstanceIds.has(id) === false)
-      .map((instance) => ({
-        ...instance,
-        children: instance.children.filter(isPersistentChild),
-      })),
   };
 };
 
@@ -964,25 +953,7 @@ const extractCurrentFragment = (entry: RootEntry) =>
   extractRootFragment({
     contentInstanceId: entry.contentInstanceId,
     children: getAuthoredChildren(entry),
-    transientInstanceIds: entry.transientInstanceIds,
   });
-
-const captureInstalledFragment = (
-  entry: RootEntry,
-  fragment: WebstudioFragment
-): WebstudioFragment => {
-  const data = getWebstudioData();
-  const transientInstances = Array.from(entry.transientInstanceIds).flatMap(
-    (id) => {
-      const instance = data.instances.get(id);
-      return instance === undefined ? [] : [instance];
-    }
-  );
-  return {
-    ...fragment,
-    instances: [...fragment.instances, ...transientInstances],
-  };
-};
 
 const getInsertedTemplates = (
   entry: RootEntry,
@@ -1111,7 +1082,7 @@ subscribeExternalContentMutations((rootKeys) => {
     const insertedTemplates = getInsertedTemplates(entry, fragment);
     const authoredRoot = entry.root;
     const saveRevision = ++entry.saveRevision;
-    entry.installedFragment = captureInstalledFragment(entry, fragment);
+    entry.installedFragment = fragment;
     registerMutationRoot(entry, entry.installedFragment);
     void enqueueAssetUpdate({
       projectId: entry.projectId,
@@ -1793,7 +1764,6 @@ export const getExternalContentRootSnapshot = ({
         getWebstudioData().instances.get(
           root.contentInstanceId ?? root.blockInstanceId
         )?.children ?? [],
-      transientInstanceIds: root.transientInstanceIds ?? new Set(),
     }),
     identity: root.identity,
   };

@@ -2,6 +2,7 @@
 import { expect, test } from "vitest";
 import {
   blockComponent,
+  blockBodyComponent,
   blockTemplateComponent,
   contentBlockMdxTemplateDescriptors,
   getContentBlockMdxTemplateDescriptor,
@@ -32,6 +33,24 @@ const expectCodeTextDefaultsToStayImplicit = (
     fragment.props.filter(({ instanceId }) => instanceId === codeText?.id)
   ).toEqual([]);
 };
+
+test("creates unconnected Content Blocks with direct content and no MDX Body wrapper", () => {
+  const fragment = renderCoreTemplate(coreTemplates[blockComponent]);
+  expect(
+    fragment.instances.some(({ component }) => component === blockBodyComponent)
+  ).toBe(false);
+  const block = fragment.instances.find(
+    ({ component }) => component === blockComponent
+  )!;
+  const children = block.children.map((child) =>
+    fragment.instances.find(({ id }) => id === child.value)
+  );
+  expect(children[0]?.component).toBe(blockTemplateComponent);
+  expect(children.slice(1).map((instance) => instance?.tag)).toEqual([
+    "p",
+    "ul",
+  ]);
+});
 
 test("keeps Code Text defaults out of standalone and Content Block props", () => {
   expectCodeTextDefaultsToStayImplicit(coreTemplates.code_text);

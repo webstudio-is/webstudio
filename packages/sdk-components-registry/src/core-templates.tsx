@@ -26,7 +26,6 @@ import {
 import { componentsById } from "./components";
 
 const BlockTemplate = ws.blockTemplate;
-const BlockBody = ws.contentBlockBody;
 const blockDocument = new Parameter(contentBlockDocumentProp);
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
@@ -105,29 +104,27 @@ const blockMeta: TemplateMeta = {
         { label: "Templates" },
         <BlockTemplate>{contentBlockDefaultTemplates}</BlockTemplate>
       )}
-      <BlockBody>
-        <p>
-          The Content Block component designates regions on the page where
-          pre-styled instances can be inserted in{" "}
-          <a href="https://wstd.us/content-block">Content mode</a>.
-        </p>
-        <ul>
-          <li>
-            In Content mode, you can edit content inside this Content Block and
-            add new instances predefined in templates. Content outside Content
-            Blocks is read-only.
-          </li>
-          <li>
-            To predefine instances for insertion in Content mode, switch to
-            Design mode and add them to the Templates container.
-          </li>
-          <li>
-            To insert predefined instances in Content mode, click the + button
-            while hovering over the Content Block on the canvas and choose an
-            instance from the list.
-          </li>
-        </ul>
-      </BlockBody>
+      <p>
+        The Content Block component designates regions on the page where
+        pre-styled instances can be inserted in{" "}
+        <a href="https://wstd.us/content-block">Content mode</a>.
+      </p>
+      <ul>
+        <li>
+          In Content mode, you can edit content inside this Content Block and
+          add new instances predefined in templates. Content outside Content
+          Blocks is read-only.
+        </li>
+        <li>
+          To predefine instances for insertion in Content mode, switch to Design
+          mode and add them to the Templates container.
+        </li>
+        <li>
+          To insert predefined instances in Content mode, click the + button
+          while hovering over the Content Block on the canvas and choose an
+          instance from the list.
+        </li>
+      </ul>
     </ws.block>
   ),
 };

@@ -426,6 +426,9 @@ export const EditorContent = ({
           },
         ]),
         EditorView.lineWrapping,
+        // Read-only editors must keep keyboard focus instead of leaving
+        // destructive Builder shortcuts active after clicking their content.
+        EditorView.contentAttributes.of({ tabindex: "0" }),
         ...(ariaLabel === undefined
           ? []
           : [EditorView.contentAttributes.of({ "aria-label": ariaLabel })]),

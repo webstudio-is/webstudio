@@ -537,10 +537,7 @@ export const serializeMdxComponentFallback = ({
   };
 };
 
-export const materializeMdxComponent = (
-  node: MdxAuthoredNode,
-  registeredComponent?: Instance["component"]
-) => {
+export const materializeMdxComponent = (node: MdxAuthoredNode) => {
   if (node.type === "template") {
     if (node.syntax !== "jsx") {
       return;
@@ -549,14 +546,6 @@ export const materializeMdxComponent = (
     const component = adapter?.fromNamedMdx?.(node);
     if (component !== undefined && adapter !== undefined) {
       return { ...component, component: adapter.component };
-    }
-    if (registeredComponent !== undefined) {
-      return {
-        component: registeredComponent,
-        children: [] as Instance["children"],
-        props: materializeNamedProps(node.props),
-        authoredChildren: true as const,
-      };
     }
     return;
   }
