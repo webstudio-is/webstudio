@@ -10,7 +10,10 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/sdk";
 import { $assets, $pages, $project } from "~/shared/sync/data-stores";
 import { $selectedPageId } from "~/shared/nano-states";
-import { CreateCollectionEntryDialog } from "./create-collection-entry-dialog";
+import {
+  CreateCollectionEntryDialog,
+  type createCollectionEntryRequest,
+} from "./create-collection-entry-dialog";
 import { createAssetManagerTestRenderer } from "./test-utils";
 
 const createAsset = ({
@@ -72,66 +75,292 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("does not navigate after creating an entry", async () => {
-  const configAsset = createAsset({
-    id: "config",
-    filename: "collection",
-    format: "json",
-  });
-  const templateAsset = createAsset({
-    id: "template",
-    filename: "template",
-    format: "mdx",
-  });
-  const createdAsset = createAsset({
-    id: "created",
-    filename: "hello-world",
-    format: "mdx",
-  });
-  const configValue = JSON.parse(createDefaultCollectionConfig());
-  configValue["x-webstudio"].previewPage = "/blog/:slug";
-  const pages = createDefaultPages({ rootInstanceId: "home-root" });
-  pages.pages.set("blog", {
-    id: "blog",
-    name: "Blog post",
-    title: "Blog post",
-    path: "/blog/:slug",
-    rootInstanceId: "blog-root",
-    meta: {},
-  });
-  pages.folders.get(pages.rootFolderId)?.children.push("blog");
-  $pages.set(pages);
-  $selectedPageId.set(pages.homePageId);
+test("colors only populated entry fields, including zero and false", () => {
+  const schema = JSON.parse(createDefaultCollectionConfig());
+  schema.properties.count = { type: "number", title: "Count" };
   render(
     <CreateCollectionEntryDialog
+      open
+      onOpenChange={vi.fn()}
       collection={{
         status: "ready",
         folderId: "posts",
-        configAsset,
-        templateAsset,
-        config: parseCollectionConfig(JSON.stringify(configValue)),
-        templateProperties: {},
+        configAsset: createAsset({
+          id: "config",
+          filename: "collection",
+          format: "json",
+        }),
+        templateAsset: createAsset({
+          id: "template",
+          filename: "template",
+          format: "mdx",
+        }),
+        config: parseCollectionConfig(JSON.stringify(schema)),
+        templateProperties: { draft: false, count: 0 },
       }}
-      open
-      onOpenChange={vi.fn()}
-      createEntry={vi.fn().mockResolvedValue(createdAsset)}
     />
   );
-
   const title = document.querySelector<HTMLInputElement>(
     "#collection-entry-title"
-  );
-  if (title === null) {
-    throw new Error("Expected collection entry title field");
+  )!;
+  const getLabel = () =>
+    document.querySelector<HTMLLabelElement>(
+      'label[for="collection-entry-title"]'
+    )!;
+  const emptyClass = getLabel().className;
+  for (const key of ["draft", "count"]) {
+    expect(
+      document.querySelector(`label[for="collection-entry-${key}"]`)!.className
+    ).not.toBe(emptyClass);
   }
-  input(title, "Hello world");
-  const create = Array.from(
-    document.body.querySelectorAll<HTMLButtonElement>("button")
-  ).find((button) => button.textContent === "Create entry");
-  await act(async () => create?.click());
-
-  expect($selectedPageId.get()).toBe(pages.homePageId);
+  input(title, "A title");
+  expect(getLabel().className).not.toBe(emptyClass);
+  input(title, "");
+  expect(getLabel().className).toBe(emptyClass);
 });
+
+test.each(["tooltip", "alt-click"])(
+  "clears a populated required field via %s and still validates it",
+  async (method) => {
+    const createEntry = vi.fn();
+    render(
+      <CreateCollectionEntryDialog
+        open
+        onOpenChange={vi.fn()}
+        createEntry={createEntry}
+        collection={{
+          status: "ready",
+          folderId: "posts",
+          configAsset: createAsset({
+            id: "config",
+            filename: "collection",
+            format: "json",
+          }),
+          templateAsset: createAsset({
+            id: "template",
+            filename: "template",
+            format: "mdx",
+          }),
+          config: parseCollectionConfig(createDefaultCollectionConfig()),
+          templateProperties: { title: "Template title" },
+        }}
+      />
+    );
+    const title = document.querySelector<HTMLInputElement>(
+      "#collection-entry-title"
+    )!;
+    input(title, "New title");
+    const label = document.querySelector<HTMLLabelElement>(
+      'label[for="collection-entry-title"]'
+    )!;
+    if (method === "alt-click") {
+      await act(async () =>
+        label.dispatchEvent(
+          new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            altKey: true,
+          })
+        )
+      );
+    } else {
+      await act(async () => label.click());
+      const reset = document.querySelector<HTMLButtonElement>(
+        '[data-radix-popper-content-wrapper] button[type="button"]'
+      );
+      expect(reset).not.toBeNull();
+      await act(async () => reset?.click());
+    }
+    expect(title.value).toBe("");
+    expect(
+      document.querySelector<HTMLInputElement>("#collection-entry-slug")!.value
+    ).toBe("");
+    expect(createEntry).not.toHaveBeenCalled();
+    await act(async () =>
+      document.querySelector<HTMLFormElement>("form")!.requestSubmit()
+    );
+    expect(title).toHaveAttribute("aria-invalid", "true");
+    expect(createEntry).not.toHaveBeenCalled();
+  }
+);
+
+test.each(["text", "textarea", "boolean"])(
+  "focuses the first entry control: %s",
+  (control) => {
+    const config = {
+      ...parseCollectionConfig(createDefaultCollectionConfig()),
+      fields: [
+        {
+          key: "first",
+          label: "First",
+          type:
+            control === "boolean" ? ("boolean" as const) : ("string" as const),
+          control:
+            control === "textarea"
+              ? ("textarea" as const)
+              : control === "boolean"
+                ? ("checkbox" as const)
+                : ("text" as const),
+          required: false,
+        },
+      ],
+    };
+    render(
+      <CreateCollectionEntryDialog
+        open
+        onOpenChange={vi.fn()}
+        collection={{
+          status: "ready",
+          folderId: "posts",
+          configAsset: createAsset({
+            id: "config",
+            filename: "collection",
+            format: "json",
+          }),
+          templateAsset: createAsset({
+            id: "template",
+            filename: "template",
+            format: "mdx",
+          }),
+          config,
+          templateProperties: {},
+        }}
+      />
+    );
+    const field = document.getElementById("collection-entry-first")!;
+    expect(field).not.toBeNull();
+    expect(
+      control === "boolean"
+        ? field.contains(document.activeElement)
+        : document.activeElement === field
+    ).toBe(true);
+  }
+);
+
+test("keeps the request ID when retrying a slugless entry", async () => {
+  const schema = JSON.parse(createDefaultCollectionConfig());
+  delete schema.properties.slug;
+  schema.required = ["title"];
+  delete schema["x-webstudio"].slugField;
+  delete schema["x-webstudio"].generateSlugFrom;
+  const createEntry = vi.fn<typeof createCollectionEntryRequest>(async () => {
+    throw new Error("Response lost");
+  });
+  render(
+    <CreateCollectionEntryDialog
+      open
+      onOpenChange={vi.fn()}
+      createEntry={createEntry}
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset: createAsset({
+          id: "config",
+          filename: "collection",
+          format: "json",
+        }),
+        templateAsset: createAsset({
+          id: "template",
+          filename: "template",
+          format: "mdx",
+        }),
+        config: parseCollectionConfig(JSON.stringify(schema)),
+        templateProperties: {},
+      }}
+    />
+  );
+  input(
+    document.querySelector<HTMLInputElement>("#collection-entry-title")!,
+    "Entry"
+  );
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await act(async () =>
+      document.querySelector<HTMLFormElement>("form")!.requestSubmit()
+    );
+  }
+  expect(createEntry).toHaveBeenCalledTimes(2);
+  const requests = createEntry.mock.calls;
+  expect(requests[0][0].requestId).toEqual(expect.any(String));
+  expect(requests[1][0].requestId).toBe(requests[0][0].requestId);
+});
+
+test.each([true, false])(
+  "creates an entry without navigating (slug: %s)",
+  async (withSlug) => {
+    const configAsset = createAsset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const templateAsset = createAsset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const createdAsset = createAsset({
+      id: "created",
+      filename: "hello-world",
+      format: "mdx",
+    });
+    const configValue = JSON.parse(createDefaultCollectionConfig());
+    if (!withSlug) {
+      delete configValue["x-webstudio"].slugField;
+      delete configValue["x-webstudio"].generateSlugFrom;
+      delete configValue.properties.slug;
+      configValue.required = configValue.required.filter(
+        (key: string) => key !== "slug"
+      );
+    }
+    const createEntry = vi.fn().mockResolvedValue(createdAsset);
+    configValue["x-webstudio"].previewPage = "/blog/:slug";
+    const pages = createDefaultPages({ rootInstanceId: "home-root" });
+    pages.pages.set("blog", {
+      id: "blog",
+      name: "Blog post",
+      title: "Blog post",
+      path: "/blog/:slug",
+      rootInstanceId: "blog-root",
+      meta: {},
+    });
+    pages.folders.get(pages.rootFolderId)?.children.push("blog");
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    render(
+      <CreateCollectionEntryDialog
+        collection={{
+          status: "ready",
+          folderId: "posts",
+          configAsset,
+          templateAsset,
+          config: parseCollectionConfig(JSON.stringify(configValue)),
+          templateProperties: {},
+        }}
+        open
+        onOpenChange={vi.fn()}
+        createEntry={createEntry}
+      />
+    );
+
+    const title = document.querySelector<HTMLInputElement>(
+      "#collection-entry-title"
+    );
+    if (title === null) {
+      throw new Error("Expected collection entry title field");
+    }
+    input(title, "Hello world");
+    const create = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent === "Create entry");
+    await act(async () => create?.click());
+
+    expect($selectedPageId.get()).toBe(pages.homePageId);
+    expect(createEntry).toHaveBeenCalledOnce();
+    const values = createEntry.mock.calls[0][0].values;
+    expect(values.title).toBe("Hello world");
+    expect(Object.hasOwn(values, "slug")).toBe(withSlug);
+    expect(Object.hasOwn(values, "undefined")).toBe(false);
+  }
+);
 
 test("asks before closing a new entry with unsaved values", async () => {
   const configAsset = createAsset({
@@ -169,6 +398,8 @@ test("asks before closing a new entry with unsaved values", async () => {
 
   await act(async () => {
     document.querySelector<HTMLButtonElement>('[aria-label="Close"]')?.click();
+    // Dialog defers onOpenChange until the next frame so pending edits render.
+    await new Promise(requestAnimationFrame);
   });
 
   expect(document.body.textContent).toContain("Discard entry?");
@@ -462,23 +693,18 @@ test("explicitly clears a template-backed optional value", async () => {
     throw new Error("Expected collection entry fields");
   }
   input(title, "Hello world");
-  const summaryActions = document.querySelector<HTMLButtonElement>(
-    '[aria-label="Summary actions"]'
+  const summaryLabel = document.querySelector<HTMLLabelElement>(
+    'label[for="collection-entry-summary"]'
   );
-  if (summaryActions === null) {
-    throw new Error("Expected summary actions");
+  if (summaryLabel === null) {
+    throw new Error("Expected summary label");
   }
-  expect(summaryActions.type).toBe("button");
-  await act(async () => {
-    summaryActions.dispatchEvent(
-      new MouseEvent("pointerdown", { bubbles: true, button: 0 })
-    );
-  });
-  const clear = Array.from(
-    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
-  ).find((item) => item.textContent === "Clear value");
-  expect(clear).toBeDefined();
-  await act(async () => clear?.click());
+  await act(async () => summaryLabel.click());
+  const reset = document.querySelector<HTMLButtonElement>(
+    '[data-radix-popper-content-wrapper] button[type="button"]'
+  );
+  expect(reset).not.toBeNull();
+  await act(async () => reset?.click());
   expect(createEntry).not.toHaveBeenCalled();
   const create = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")

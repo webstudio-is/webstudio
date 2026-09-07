@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   collectionEntryFieldClearValue,
   getCollectionFieldValidationIssue,
@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/content-engine";
 import type { Asset } from "@webstudio-is/sdk";
 import {
+  PanelContent,
   Button,
   Dialog,
   DialogContent,
@@ -14,23 +15,15 @@ import {
   Flex,
   Grid,
   InputField,
-  Label,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  SmallIconButton,
+  ResettableLabel,
   ToggleGroup,
   ToggleGroupButton,
   Separator,
-  Tooltip,
-  cssVar,
   Text,
   TextArea,
   toast,
   theme,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { fetch } from "~/shared/fetch.client";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import { getWebstudioData } from "~/shared/instance-utils/data";
@@ -91,10 +84,12 @@ export const createCollectionEntryRequest = async ({
   projectId,
   folderId,
   values,
+  requestId,
 }: {
   projectId: string;
   folderId: string;
   values: Readonly<Record<string, unknown>>;
+  requestId?: string;
 }) => {
   const response = await fetch(
     `/rest/assets/folders/${encodeURIComponent(
@@ -103,7 +98,7 @@ export const createCollectionEntryRequest = async ({
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ values }),
+      body: JSON.stringify({ values, requestId }),
     }
   );
   return parseResponse(response);
@@ -127,10 +122,12 @@ export const CreateCollectionEntryDialog = ({
   createEntry?: typeof createCollectionEntryRequest;
 }) => {
   const { config } = collection;
+  const formRef = useRef<HTMLFormElement>(null);
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     createInitialValues(config.fields, collection.templateProperties)
   );
   const [slugEdited, setSlugEdited] = useState(false);
+  const requestId = useRef<string>();
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<{
     message: string;
@@ -141,6 +138,7 @@ export const CreateCollectionEntryDialog = ({
 
   useLayoutEffect(() => {
     if (open) {
+      requestId.current = crypto.randomUUID();
       setValues(
         createInitialValues(config.fields, collection.templateProperties)
       );
@@ -158,10 +156,11 @@ export const CreateCollectionEntryDialog = ({
       const next = { ...current, [field.key]: value };
       if (
         field.key === config.generateSlugFrom &&
+        config.slugField !== undefined &&
         slugEdited === false &&
         typeof value === "string"
       ) {
-        next[config.slugField] = normalizeCollectionSlug(value);
+        next[config.slugField] = normalizeCollectionSlug(value, config);
       }
       return next;
     });
@@ -169,6 +168,10 @@ export const CreateCollectionEntryDialog = ({
   };
 
   const unsetValue = (field: CollectionField) => {
+    if (field.required) {
+      setValue(field, field.type === "boolean" ? undefined : "");
+      return;
+    }
     setDirty(true);
     setValues((current) => {
       const next = { ...current };
@@ -207,16 +210,25 @@ export const CreateCollectionEntryDialog = ({
           return [[field.key, value]];
         })
       );
-      const submittedSlug = submittedValues[config.slugField];
-      if (typeof submittedSlug !== "string" || submittedSlug.trim() === "") {
-        const slugSource = submittedValues[config.generateSlugFrom];
-        if (typeof slugSource === "string") {
-          submittedValues[config.slugField] =
-            normalizeCollectionSlug(slugSource);
+      if (config.slugField !== undefined) {
+        const submittedSlug = submittedValues[config.slugField];
+        if (typeof submittedSlug !== "string" || submittedSlug.trim() === "") {
+          const slugSource =
+            config.generateSlugFrom === undefined
+              ? undefined
+              : submittedValues[config.generateSlugFrom];
+          if (typeof slugSource === "string") {
+            submittedValues[config.slugField] = normalizeCollectionSlug(
+              slugSource,
+              config
+            );
+          }
+        } else {
+          submittedValues[config.slugField] = normalizeCollectionSlug(
+            submittedSlug,
+            config
+          );
         }
-      } else {
-        submittedValues[config.slugField] =
-          normalizeCollectionSlug(submittedSlug);
       }
       const validationIssue = getCollectionFieldValidationIssue(
         config,
@@ -235,6 +247,9 @@ export const CreateCollectionEntryDialog = ({
         projectId,
         folderId: collection.folderId,
         values: submittedValues,
+        ...(config.slugField === undefined
+          ? { requestId: requestId.current }
+          : {}),
       });
       if ($project.get()?.id !== projectId) {
         throw new Error(
@@ -291,30 +306,43 @@ export const CreateCollectionEntryDialog = ({
         }}
         aria-describedby={undefined}
         onKeyDown={stopEscapePropagation}
+        onOpenAutoFocus={(event) => {
+          const input = formRef.current?.querySelector<HTMLElement>(
+            'input, textarea, [role="group"] button'
+          );
+          if (input) {
+            input.focus();
+            event.preventDefault();
+          }
+        }}
       >
         <DialogTitle>New entry</DialogTitle>
         <Flex
           as="form"
+          ref={formRef}
           direction="column"
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
             void submit();
           }}
-          css={{ minHeight: 0, maxHeight: "min(640px, calc(100vh - 96px))" }}
+          css={{ maxHeight: "min(640px, calc(100vh - 96px))" }}
         >
           <Grid
             gap={4}
             css={{
               padding: theme.spacing[9],
               overflow: "auto",
-              minHeight: 0,
               gridAutoRows: "max-content",
               alignContent: "start",
             }}
           >
-            {config.fields.map((field, index) => {
+            {config.fields.map((field) => {
               const value = values[field.key];
+              const hasValue =
+                value !== "" &&
+                value !== undefined &&
+                value !== collectionEntryFieldClearValue;
               const id = `collection-entry-${field.key}`;
               const hasFieldError = error?.fieldKey === field.key;
               const errorId = hasFieldError ? `${id}-error` : undefined;
@@ -328,46 +356,22 @@ export const CreateCollectionEntryDialog = ({
                     alignItems: "center",
                   }}
                 >
-                  <Flex justify="between" align="center" gap={2}>
-                    <Flex gap={1} align="center">
-                      <Label htmlFor={id}>
-                        {field.label}
-                        {field.required ? " *" : ""}
-                      </Label>
-                      {field.key === config.slugField && (
-                        <Tooltip
-                          variant="wrapped"
-                          content={`Generated from ${config.fields.find(({ key }) => key === config.generateSlugFrom)?.label ?? config.generateSlugFrom}. You can edit it before creating the entry. It becomes the MDX filename.`}
-                        >
-                          <InfoCircleIcon
-                            tabIndex={0}
-                            aria-label="About entry slug"
-                            color={cssVar("--foreground-secondary")}
-                          />
-                        </Tooltip>
-                      )}
-                    </Flex>
-                    {!field.required && !booleanField && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <SmallIconButton
-                            type="button"
-                            aria-label={`${field.label} actions`}
-                            disabled={creating}
-                            icon={<EllipsesIcon />}
-                          />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            disabled={!Object.hasOwn(values, field.key)}
-                            onSelect={() => unsetValue(field)}
-                          >
-                            Clear value
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </Flex>
+                  <ResettableLabel
+                    htmlFor={id}
+                    color={hasValue ? "local" : "default"}
+                    disabled={creating}
+                    onReset={hasValue ? () => unsetValue(field) : undefined}
+                    description={
+                      field.key === config.slugField
+                        ? config.generateSlugFrom === undefined
+                          ? "Enter a slug for this entry. It becomes the MDX filename."
+                          : `Generated from ${config.fields.find(({ key }) => key === config.generateSlugFrom)?.label ?? config.generateSlugFrom}. You can edit it before creating the entry. It becomes the MDX filename.`
+                        : undefined
+                    }
+                  >
+                    {field.label}
+                    {field.required ? " *" : ""}
+                  </ResettableLabel>
                   {booleanField ? (
                     <ToggleGroup
                       id={id}
@@ -409,7 +413,6 @@ export const CreateCollectionEntryDialog = ({
                   ) : field.control === "textarea" ? (
                     <TextArea
                       id={id}
-                      autoFocus={index === 0}
                       required={field.required}
                       aria-required={field.required}
                       aria-describedby={errorId}
@@ -421,7 +424,6 @@ export const CreateCollectionEntryDialog = ({
                   ) : (
                     <InputField
                       id={id}
-                      autoFocus={index === 0}
                       type={
                         field.type === "number" || field.type === "integer"
                           ? "number"
@@ -470,12 +472,7 @@ export const CreateCollectionEntryDialog = ({
             })}
           </Grid>
           <Separator />
-          <Flex
-            direction="column"
-            shrink={false}
-            gap={2}
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" shrink={false} gap={2}>
             {error !== undefined && error.fieldKey === undefined && (
               <Text role="alert" color="destructive">
                 {error.message}
@@ -486,13 +483,13 @@ export const CreateCollectionEntryDialog = ({
                 {creating ? "Creating…" : "Create entry"}
               </Button>
             </Flex>
-          </Flex>
+          </PanelContent>
         </Flex>
       </DialogContent>
       <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <DialogContent aria-describedby={undefined} width={420}>
           <DialogTitle>Discard entry?</DialogTitle>
-          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Grid} gap={3}>
             <Text>Your unsaved entry values will be lost.</Text>
             <Flex justify="end" gap={2}>
               <Button onClick={() => setConfirmDiscard(false)}>
@@ -508,7 +505,7 @@ export const CreateCollectionEntryDialog = ({
                 Discard entry
               </Button>
             </Flex>
-          </Grid>
+          </PanelContent>
         </DialogContent>
       </Dialog>
     </Dialog>

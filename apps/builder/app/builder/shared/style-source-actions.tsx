@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -148,9 +149,9 @@ export const DeleteStyleSourceDialog = ({
         }}
       >
         <DialogTitle>Delete confirmation</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>{`Delete "${styleSource?.name}" token from the project including all of its styles?`}</Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button
             autoFocus
@@ -226,7 +227,7 @@ export const RenameStyleSourceDialog = ({
         }}
       >
         <DialogTitle>Rename token</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Flex direction="column" gap="1">
             <InputField
               value={name}
@@ -242,7 +243,7 @@ export const RenameStyleSourceDialog = ({
               </Text>
             )}
           </Flex>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button color="primary" onClick={handleConfirm}>
             Rename
@@ -290,7 +291,7 @@ export const DeleteUnusedTokensDialog = () => {
         }}
       >
         <DialogTitle>Delete unused tokens</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           {unusedTokens.length === 0 ? (
             <Text>There are no unused tokens to delete.</Text>
           ) : (
@@ -314,7 +315,7 @@ export const DeleteUnusedTokensDialog = () => {
               </Text>
             </>
           )}
-        </Flex>
+        </PanelContent>
         <DialogActions>
           {unusedTokens.length > 0 && (
             <Button

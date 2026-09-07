@@ -688,6 +688,163 @@ describe("AssetThumbnail", () => {
     ).toBe(true);
   });
 
+  test.each(["context", "dropdown"])(
+    "opens conversion confirmation from the collection folder %s menu",
+    async (menu) => {
+      act(() => $authPermit.set("own"));
+      const interactions = createInteractions();
+      let convertFromContext: (() => void) | undefined;
+      interactions.onContextMenuActions = (actions) => {
+        convertFromContext = actions.convertCollection;
+      };
+      const container = renderer.render(
+        <TooltipProvider>
+          {createFolderThumbnail({
+            canManage: true,
+            interactions,
+            collection: {
+              status: "ready",
+              folderId: folder.id,
+              configAsset: {
+                ...uploadedAssetContainer.asset,
+                id: "config",
+                name: "collection.json",
+                format: "json",
+                type: "file",
+                meta: {},
+              },
+              templateAsset: {
+                ...uploadedAssetContainer.asset,
+                id: "template",
+                name: "template.mdx",
+                format: "mdx",
+                type: "file",
+                meta: {},
+              },
+              config: parseCollectionConfig(createDefaultCollectionConfig()),
+              templateProperties: {},
+            },
+          })}
+        </TooltipProvider>
+      );
+      const target = container.querySelector<HTMLElement>(
+        menu === "context"
+          ? '[aria-label="Folder Documents"]'
+          : '[aria-label="Actions for Documents"]'
+      )!;
+      act(() =>
+        target.dispatchEvent(
+          new MouseEvent(menu === "context" ? "contextmenu" : "pointerdown", {
+            bubbles: true,
+            button: menu === "context" ? 2 : 0,
+          })
+        )
+      );
+      const convert = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+      ).find((item) => item.textContent === "Convert to regular folder");
+      if (menu === "context") {
+        expect(convertFromContext).toBeDefined();
+        await act(async () => convertFromContext?.());
+      } else {
+        expect(convert).toBeDefined();
+        await act(async () => convert?.click());
+      }
+      await vi.waitFor(() =>
+        expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+      );
+      const cancel = Array.from(
+        document.querySelectorAll<HTMLButtonElement>("button")
+      ).find((button) => button.textContent === "Keep collection")!;
+      expect(cancel).toBeDefined();
+      await act(async () => cancel.click());
+      await vi.waitFor(() =>
+        expect(document.querySelector('[role="dialog"]')).toBeNull()
+      );
+    }
+  );
+
+  test.each(["collection.json", "custom-template.mdx"])(
+    "marks and protects collection file %s for owners",
+    (filename) => {
+      act(() => $authPermit.set("own"));
+      const onOpen = vi.fn();
+      const container = renderer.render(
+        <TooltipProvider>
+          {createUploadedAssetThumbnail({
+            assetContainer: {
+              status: "uploaded",
+              asset: {
+                ...uploadedAssetContainer.asset,
+                name: filename,
+                filename: undefined,
+              },
+            },
+            isCollectionFile: true,
+            isCollectionReserved: true,
+            onOpen,
+            onMove: vi.fn(),
+          })}
+        </TooltipProvider>
+      );
+      expect(
+        container.querySelector('[aria-label="Collection file"]')
+      ).not.toBeNull();
+      expect(container.querySelector('[aria-label="Unused asset"]')).toBeNull();
+      act(() =>
+        container
+          .querySelector<HTMLButtonElement>(
+            `[aria-label="Actions for ${filename}"]`
+          )
+          ?.dispatchEvent(
+            new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+          )
+      );
+      const items = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+      );
+      expect(items.length).toBeGreaterThan(0);
+      expect(
+        items.every(
+          (item) =>
+            item.getAttribute("aria-disabled") === "true" ||
+            item.textContent === "Open" ||
+            item.textContent === "Download" ||
+            item.textContent === "Settings"
+        )
+      ).toBe(true);
+      const disabledItems = items.filter(
+        (item) => item.getAttribute("aria-disabled") === "true"
+      );
+      expect(disabledItems).toHaveLength(5);
+      act(() => items.find((item) => item.textContent === "Open")?.click());
+      expect(onOpen).toHaveBeenCalledOnce();
+      openSettingsFromActionsMenu({
+        container,
+        triggerLabel: `Actions for ${filename}`,
+        settingsTitle: "Asset settings",
+      });
+      expect(
+        document.querySelector('[aria-label="Used by collection"]')
+      ).not.toBeNull();
+      expect(
+        document.querySelector("[data-asset-settings-usage-indicator]")
+      ).toBeNull();
+      expect(
+        document.querySelector<HTMLInputElement>("#asset-manager-filename")
+          ?.readOnly
+      ).toBe(true);
+      expect(
+        document.querySelector<HTMLButtonElement>('[role="combobox"]')?.disabled
+      ).toBe(true);
+      expect(
+        document.querySelector<HTMLTextAreaElement>(
+          "#asset-manager-description"
+        )?.readOnly
+      ).toBe(false);
+    }
+  );
+
   test.each([
     {
       triggerLabel: "Actions for Documents",
@@ -863,7 +1020,8 @@ describe("AssetThumbnail", () => {
       })
     );
     expect(interactions.onContextMenuActions).toHaveBeenCalledWith(
-      expect.objectContaining({ open: onOpen })
+      expect.objectContaining({ open: onOpen }),
+      undefined
     );
 
     act(() => {

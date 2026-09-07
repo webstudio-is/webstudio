@@ -3,6 +3,7 @@ import { Alert } from "./alert";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
+  PanelContent,
   Button,
   Dialog,
   DialogActions,
@@ -11,7 +12,6 @@ import {
   DialogTitle,
   Link,
   Text,
-  theme,
 } from "@webstudio-is/design-system";
 import { $isPreviewMode } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
@@ -63,7 +63,7 @@ export const UnsupportedBrowserDialog = ({
     <DialogContent width={480}>
       <DialogTitle>Unsupported browser</DialogTitle>
       <DialogDescription asChild>
-        <Text css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Text}>
           The Webstudio Builder UI currently supports any{" "}
           <Link
             href="https://en.wikipedia.org/wiki/Chromium_(web_browser)"
@@ -115,7 +115,7 @@ export const UnsupportedBrowserDialog = ({
           <br />
           The website you&apos;re building should function correctly across all
           browsers!
-        </Text>
+        </PanelContent>
       </DialogDescription>
       <DialogActions>
         <Button autoFocus onClick={onDismiss}>

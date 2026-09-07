@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Flex, Text, theme } from "@webstudio-is/design-system";
+import { PanelBanner, Button, Flex, Text } from "@webstudio-is/design-system";
 import type { ContentCollection } from "~/builder/shared/assets";
 
 type UnavailableCollection = Extract<
@@ -31,7 +31,7 @@ export const CollectionRetryButton = ({
         onCheckAgain();
       }}
     >
-      {checking ? "Checking…" : "Check again"}
+      {checking ? "Retrying…" : "Retry"}
     </Button>
   );
 };
@@ -44,21 +44,18 @@ export const CollectionUnavailableNotice = ({
   onCheckAgain: () => void;
 }) => {
   return (
-    <Flex
-      role="alert"
-      direction="column"
-      gap={2}
-      css={{ padding: theme.panel.padding }}
-    >
-      <Text color="destructive" variant="tiny">
-        {collection.message}
-      </Text>
-      <Flex>
-        <CollectionRetryButton
-          collection={collection}
-          onCheckAgain={onCheckAgain}
-        />
+    <PanelBanner role="alert" variant="error" css={{ flexShrink: 0 }}>
+      <Flex align="center" justify="between" gap={2}>
+        <Text>
+          Couldn’t load collection settings. Retry to use collection actions.
+        </Text>
+        <Flex>
+          <CollectionRetryButton
+            collection={collection}
+            onCheckAgain={onCheckAgain}
+          />
+        </Flex>
       </Flex>
-    </Flex>
+    </PanelBanner>
   );
 };

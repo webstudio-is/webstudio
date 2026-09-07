@@ -4,6 +4,7 @@ import {
 } from "@webstudio-is/css-data";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import {
+  PanelContent,
   Flex,
   Grid,
   IconButton,
@@ -50,9 +51,9 @@ const ObjectPosition = () => {
         title="Object position"
         placement="bottom-within"
         content={
-          <Flex css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Flex}>
             <PositionControl property="object-position" styleDecl={styleDecl} />
-          </Flex>
+          </PanelContent>
         }
       >
         <IconButton

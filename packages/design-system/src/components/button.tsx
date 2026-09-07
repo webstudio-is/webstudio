@@ -24,6 +24,7 @@ const colors = [
   "destructive",
   "neutral",
   "ghost",
+  "ghost-destructive",
   "neutral-destructive",
 ] as const;
 
@@ -47,6 +48,7 @@ const backgrounds: Record<ButtonColor, string> = {
   "neutral-destructive": neutralControlBackground,
   destructive: cssVar("--background-negative"),
   ghost: "transparent",
+  "ghost-destructive": "transparent",
 };
 
 const foregrounds: Record<ButtonColor, string> = {
@@ -55,10 +57,11 @@ const foregrounds: Record<ButtonColor, string> = {
   "neutral-destructive": cssVar("--foreground-negative"),
   neutral: cssVar("--foreground-primary"),
   ghost: cssVar("--foreground-primary"),
+  "ghost-destructive": cssVar("--foreground-negative"),
 };
 
 const perColorStyle = (variant: ButtonColor) => {
-  const isTransparent = variant === "ghost";
+  const isTransparent = variant === "ghost" || variant === "ghost-destructive";
   const isChromatic = variant === "primary" || variant === "destructive";
   let hoverOverlay = cssVar("--overlay-interaction-hover");
   let pressedOverlay = cssVar("--overlay-interaction-pressed");
@@ -78,11 +81,12 @@ const perColorStyle = (variant: ButtonColor) => {
         : withInteractionOverlay(backgrounds[variant], hoverOverlay),
     },
 
-    "&[data-state=auto]:focus-visible, &[data-state=focus]": {
-      color: foregrounds[variant],
-      outline: `1px solid ${cssVar("--border-focus")}`,
-      outlineOffset: "1px",
-    },
+    "&[data-state=auto]:focus-visible, &[data-state=auto][data-dialog-autofocus]:focus, &[data-state=focus]":
+      {
+        color: foregrounds[variant],
+        outline: `1px solid ${cssVar("--border-focus")}`,
+        outlineOffset: "1px",
+      },
 
     "&[data-state=auto]:active, &[data-state=pressed]": {
       color: foregrounds[variant],
@@ -117,6 +121,13 @@ export const buttonStyle = css({
   borderRadius: theme.borderRadius[4],
   whiteSpace: "nowrap",
 
+  "&[href]": {
+    cursor: "pointer",
+  },
+  "&[href][aria-disabled=true]:not([data-state=pending])": {
+    cursor: "default",
+  },
+
   variants: {
     color: {
       primary: perColorStyle("primary"),
@@ -124,6 +135,7 @@ export const buttonStyle = css({
       "neutral-destructive": perColorStyle("neutral-destructive"),
       neutral: perColorStyle("neutral"),
       ghost: perColorStyle("ghost"),
+      "ghost-destructive": perColorStyle("ghost-destructive"),
     },
   },
 
@@ -243,6 +255,7 @@ export const Button = forwardRef(
         aria-pressed={ariaPressed}
         disabled={disabled || state === "pending"}
         data-state={finalState ?? "auto"}
+        data-button-color={color ?? "neutral"}
         ref={ref}
         className={buttonStyle({ color, className, css })}
       >
@@ -294,6 +307,7 @@ export const LinkButton = forwardRef(
         {...restProps}
         aria-disabled={state === "pending" ? true : ariaDisabled}
         data-state={finalState ?? "auto"}
+        data-button-color={color ?? "neutral"}
         ref={ref}
         className={buttonStyle({ color, className, css })}
         onClick={(event) => {

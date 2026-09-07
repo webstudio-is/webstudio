@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  PanelContent,
   css,
   Flex,
   Text,
@@ -143,12 +144,12 @@ export const ProjectCard = ({
             opacity: 0,
           }}
         />
-        <Flex
+        <PanelContent
+          as={Flex}
           wrap="wrap"
           gap={1}
           css={{
             position: "absolute",
-            padding: theme.panel.padding,
             bottom: 0,
             zIndex: 1,
           }}
@@ -169,7 +170,7 @@ export const ProjectCard = ({
               );
             }
           })}
-        </Flex>
+        </PanelContent>
         {previewImageAsset ? (
           <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
         ) : (

@@ -40,6 +40,7 @@ import {
   Kbd,
   Text,
   FloatingPanel,
+  PanelContent,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons/svg";
@@ -592,17 +593,18 @@ export const EditorDialog = ({
       maximizable
       resize="both"
       content={
-        <Grid
+        <PanelContent
+          as={Grid}
           align="stretch"
           css={{
-            padding: contentPadding ? theme.panel.padding : 0,
+            padding: contentPadding ? undefined : 0,
             height: "100%",
             overflow: "hidden",
             boxSizing: "content-box",
           }}
         >
           {content}
-        </Grid>
+        </PanelContent>
       }
     >
       {children}

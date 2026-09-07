@@ -14,16 +14,23 @@ import {
 export const collectionConfigFilename = "collection.json";
 /** Pass this value to remove an optional editable property inherited from the template. */
 export const collectionEntryFieldClearValue = null;
-const collectionSlugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
-const collectionSlugRegex = new RegExp(collectionSlugPattern);
+const legacyCollectionSlugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
+// Each segment starts with a letter or number. Marks stay attached to preserve
+// scripts such as Hindi; uppercase letters, separators and symbols are excluded.
+const collectionSlugPattern =
+  "^(?!.*[\\p{Lu}\\p{Lt}])[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N}]*(?:-[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N}]*)*$(?![\\s\\S])";
+const collectionSlugPatterns = new Map([
+  [legacyCollectionSlugPattern, new RegExp(legacyCollectionSlugPattern)],
+  [collectionSlugPattern, new RegExp(collectionSlugPattern, "u")],
+]);
 const collectionSchemaDialect = "https://json-schema.org/draft/2020-12/schema";
 const maximumPropertyKeyBytes = 256;
 export const defaultCollectionTemplateFilename = "template.mdx";
 
 const collectionSettings = z.object({
   template: z.string().min(1),
-  slugField: z.string().min(1),
-  generateSlugFrom: z.string().min(1),
+  slugField: z.string().min(1).optional(),
+  generateSlugFrom: z.string().min(1).optional(),
 });
 
 export type CollectionField = Readonly<{
@@ -42,8 +49,8 @@ export type CollectionField = Readonly<{
 export type ContentCollectionConfig = Readonly<{
   schema: Record<string, unknown>;
   template: string;
-  slugField: string;
-  generateSlugFrom: string;
+  slugField?: string;
+  generateSlugFrom?: string;
   fields: readonly CollectionField[];
   validate: (value: unknown) => z.ZodSafeParseResult<unknown>;
 }>;
@@ -340,7 +347,10 @@ const compileFieldSchema = (
       );
     }
     if (Object.hasOwn(schema, "pattern")) {
-      if (schema.pattern !== collectionSlugPattern) {
+      if (
+        typeof schema.pattern !== "string" ||
+        !collectionSlugPatterns.has(schema.pattern)
+      ) {
         throw new ContentCollectionError(
           `Only Webstudio's fixed slug pattern is supported at ${getSchemaKeywordLocation(
             path,
@@ -372,15 +382,15 @@ const compileFieldSchema = (
         });
       }
       if (
-        schema.pattern === collectionSlugPattern &&
-        collectionSlugRegex.test(value) === false
+        typeof schema.pattern === "string" &&
+        collectionSlugPatterns.get(schema.pattern)?.test(value) === false
       ) {
         context.addIssue({
           input: value,
           code: "invalid_format",
           format: "regex",
-          pattern: collectionSlugPattern,
-          message: `Invalid string: must match pattern ${collectionSlugPattern}`,
+          pattern: schema.pattern,
+          message: `Invalid string: must match pattern ${schema.pattern}`,
         });
       }
     });
@@ -511,12 +521,15 @@ const getField = ({
     );
   }
   if (value.type === "string") {
-    if (declaredControl === "slug" && value.pattern !== collectionSlugPattern) {
+    const hasSlugPattern =
+      typeof value.pattern === "string" &&
+      collectionSlugPatterns.has(value.pattern);
+    if (declaredControl === "slug" && !hasSlugPattern) {
       throw new ContentCollectionError(
         `Slug control for property "${key}" must use Webstudio's fixed slug pattern`
       );
     }
-    if (value.pattern === collectionSlugPattern && declaredControl !== "slug") {
+    if (hasSlugPattern && declaredControl !== "slug") {
       throw new ContentCollectionError(
         `Webstudio's fixed slug pattern requires a slug control for property "${key}"`
       );
@@ -646,17 +659,21 @@ export const parseCollectionConfig = (
     return parsed;
   });
   const slugField = fields.find(({ key }) => key === settings.slugField);
-  if (slugField === undefined) {
-    throw new ContentCollectionError("Slug field is not defined in properties");
-  }
-  if (slugField.type !== "string") {
-    throw new ContentCollectionError("Slug field must be a string");
-  }
-  if (slugField.required === false) {
-    throw new ContentCollectionError("Slug field must be required");
-  }
-  if (slugField.control !== "slug") {
-    throw new ContentCollectionError("Slug field must use the slug control");
+  if (settings.slugField !== undefined) {
+    if (slugField === undefined) {
+      throw new ContentCollectionError(
+        "Slug field is not defined in properties"
+      );
+    }
+    if (slugField.type !== "string") {
+      throw new ContentCollectionError("Slug field must be a string");
+    }
+    if (slugField.required === false) {
+      throw new ContentCollectionError("Slug field must be required");
+    }
+    if (slugField.control !== "slug") {
+      throw new ContentCollectionError("Slug field must use the slug control");
+    }
   }
   const additionalSlugField = fields.find(
     ({ key, control }) => key !== settings.slugField && control === "slug"
@@ -669,18 +686,23 @@ export const parseCollectionConfig = (
   const slugSourceField = fields.find(
     ({ key }) => key === settings.generateSlugFrom
   );
-  if (slugSourceField === undefined) {
-    throw new ContentCollectionError(
-      "Slug source field is not defined in properties"
-    );
-  }
-  if (slugSourceField.type !== "string") {
-    throw new ContentCollectionError("Slug source field must be a string");
-  }
-  if (settings.generateSlugFrom === settings.slugField) {
-    throw new ContentCollectionError(
-      "Slug source field must be different from the slug field"
-    );
+  if (settings.generateSlugFrom !== undefined) {
+    if (settings.slugField === undefined) {
+      throw new ContentCollectionError("Slug generation requires a slug field");
+    }
+    if (slugSourceField === undefined) {
+      throw new ContentCollectionError(
+        "Slug source field is not defined in properties"
+      );
+    }
+    if (slugSourceField.type !== "string") {
+      throw new ContentCollectionError("Slug source field must be a string");
+    }
+    if (settings.generateSlugFrom === settings.slugField) {
+      throw new ContentCollectionError(
+        "Slug source field must be different from the slug field"
+      );
+    }
   }
   return {
     schema,
@@ -692,13 +714,32 @@ export const parseCollectionConfig = (
   };
 };
 
-export const normalizeCollectionSlug = (value: string) =>
-  value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+export const normalizeCollectionSlug = (
+  value: string,
+  config?: ContentCollectionConfig
+) => {
+  const properties = config?.schema.properties;
+  const field =
+    config?.slugField !== undefined && isObject(properties)
+      ? properties[config.slugField]
+      : undefined;
+  if (isObject(field) && field.pattern === legacyCollectionSlugPattern) {
+    return value
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+  return (
+    value
+      .normalize("NFC")
+      .toLowerCase()
+      .normalize("NFC")
+      .match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}]*/gu)
+      ?.join("-") ?? ""
+  );
+};
 
 const getValidationError = (
   config: ContentCollectionConfig,
@@ -974,7 +1015,10 @@ export const inspectContentCollection = async <File>({
           }
         );
       }
-      if (properties[config.slugField] !== entryFile.basename) {
+      if (
+        config.slugField !== undefined &&
+        properties[config.slugField] !== entryFile.basename
+      ) {
         throw new ContentCollectionInspectionError(
           `Collection entry "${entryFile.filename}": The slug must match the entry filename`,
           {
@@ -1000,11 +1044,13 @@ export const createCollectionEntry = async ({
   templateSource,
   values,
   existingFilenames,
+  requestId,
 }: {
   config: ContentCollectionConfig;
   templateSource: string;
   values: Readonly<Record<string, unknown>>;
   existingFilenames: readonly string[];
+  requestId?: string;
 }) => {
   const template = await parseCollectionTemplate(templateSource);
   const frontmatter = { ...template.frontmatter.properties };
@@ -1022,20 +1068,31 @@ export const createCollectionEntry = async ({
     }
     frontmatter[key] = value;
   }
-  const currentSlug = frontmatter[config.slugField];
-  if (typeof currentSlug !== "string" || currentSlug.trim() === "") {
-    const source = frontmatter[config.generateSlugFrom];
-    if (typeof source === "string") {
-      frontmatter[config.slugField] = normalizeCollectionSlug(source);
+  if (config.slugField !== undefined) {
+    const currentSlug = frontmatter[config.slugField];
+    if (typeof currentSlug !== "string" || currentSlug.trim() === "") {
+      const source =
+        config.generateSlugFrom === undefined
+          ? undefined
+          : frontmatter[config.generateSlugFrom];
+      if (typeof source === "string") {
+        frontmatter[config.slugField] = normalizeCollectionSlug(source, config);
+      }
+    } else {
+      frontmatter[config.slugField] = normalizeCollectionSlug(
+        currentSlug,
+        config
+      );
     }
-  } else {
-    frontmatter[config.slugField] = normalizeCollectionSlug(currentSlug);
   }
   const validationError = getCollectionValidationError(config, frontmatter);
   if (validationError !== undefined) {
     throw new ContentCollectionError(validationError);
   }
-  const slug = frontmatter[config.slugField];
+  const slug =
+    config.slugField === undefined
+      ? `entry-${requestId === undefined ? crypto.randomUUID() : z.uuid().parse(requestId)}`
+      : frontmatter[config.slugField];
   if (typeof slug !== "string" || slug === "") {
     throw new ContentCollectionError("Slug cannot be empty");
   }
@@ -1043,7 +1100,8 @@ export const createCollectionEntry = async ({
   if (
     existingFilenames.some(
       (existingFilename) =>
-        existingFilename.toLowerCase() === filename.toLowerCase()
+        existingFilename.normalize("NFC").toLowerCase() ===
+        filename.toLowerCase()
     )
   ) {
     throw new ContentCollectionError(
@@ -1161,7 +1219,11 @@ const serializeCollectionField = (
     result["x-webstudio"] = extension;
   }
   if (field.control === "slug") {
-    result.pattern = collectionSlugPattern;
+    result.pattern =
+      typeof original.pattern === "string" &&
+      collectionSlugPatterns.has(original.pattern)
+        ? original.pattern
+        : collectionSlugPattern;
   }
   return result;
 };
@@ -1192,9 +1254,16 @@ export const serializeCollectionConfig = ({
     ownedOriginalKeys.add(originalKey);
   }
   const template = settings?.template ?? config.template;
-  const slugField = settings?.slugField ?? config.slugField;
+  const slugField =
+    settings && Object.hasOwn(settings, "slugField")
+      ? settings.slugField
+      : config.slugField;
   const generateSlugFrom =
-    settings?.generateSlugFrom ?? config.generateSlugFrom;
+    slugField === undefined
+      ? undefined
+      : settings && Object.hasOwn(settings, "generateSlugFrom")
+        ? settings.generateSlugFrom
+        : config.generateSlugFrom;
   const serializedFields = fields.map((field) => {
     if (field.key === slugField) {
       return field.type === "string"

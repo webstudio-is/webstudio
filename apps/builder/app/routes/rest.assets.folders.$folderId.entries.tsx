@@ -13,6 +13,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 const requestSchema = z.object({
   values: z.record(z.string(), z.json()),
+  requestId: z.uuid().optional(),
 });
 
 export const loader = async () =>
@@ -26,10 +27,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   await ensureApiCsrf(request);
   try {
     const folderId = parseAssetRestIdentifier(params.folderId);
-    const { values } = requestSchema.parse(await readAssetRestJson(request));
+    const { values, requestId } = requestSchema.parse(
+      await readAssetRestJson(request)
+    );
     const asset = await (
       await createAssetRestRepository(request, "edit")
-    ).createCollectionEntry({ folderId, values });
+    ).createCollectionEntry({ folderId, values, requestId });
     return json(
       { asset },
       { status: 201, headers: privateNoStoreResponseHeaders }

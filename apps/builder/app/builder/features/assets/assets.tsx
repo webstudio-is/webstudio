@@ -1,4 +1,5 @@
 import {
+  PanelContent,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,6 @@ import {
   Separator,
   Tooltip,
   Text,
-  theme,
   toast,
 } from "@webstudio-is/design-system";
 import {
@@ -44,7 +44,10 @@ import { useImageAssetCanvasDrag } from "./use-image-asset-canvas-drag";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import { CreateTextFileDialog } from "~/builder/features/text-file-editor/create-text-file-dialog";
 import { CreateCollectionEntryDialog } from "~/builder/shared/asset-manager/create-collection-entry-dialog";
-import { CollectionSettingsDialog } from "~/builder/shared/asset-manager/collection-settings-dialog";
+import {
+  CollectionSettingsDialog,
+  ConvertCollectionDialog,
+} from "~/builder/shared/asset-manager/collection-settings-dialog";
 import {
   CollectionRetryButton,
   CollectionUnavailableNotice,
@@ -61,6 +64,8 @@ export const AssetsPanel = ({
   const [createTextFileOpen, setCreateTextFileOpen] = useState(false);
   const [collectionRefreshKey, setCollectionRefreshKey] = useState(0);
   const [collectionToConfigure, setCollectionToConfigure] = useState<string>();
+  const [collectionToConvert, setCollectionToConvert] =
+    useState<ContentCollection>();
   const [repairingCollection, setRepairingCollection] = useState(false);
   const [entryCollection, setEntryCollection] =
     useState<Extract<ContentCollection, { status: "ready" }>>();
@@ -275,62 +280,61 @@ export const AssetsPanel = ({
           </>
         }
       >
-        Assets
+        {currentCollection === undefined ? "Assets" : "Assets collection"}
       </PanelTitle>
       <Separator />
-      {currentCollection?.status === "loading" && (
-        <Flex
-          role="status"
-          align="center"
-          css={{ padding: theme.panel.padding }}
-        >
-          <Text variant="tiny">Loading collection settings…</Text>
-        </Flex>
-      )}
-      {currentCollection?.status === "invalid" && (
-        <Flex
-          role="alert"
-          direction="column"
-          gap={2}
-          css={{ padding: theme.panel.padding }}
-        >
-          <Text color="destructive" variant="tiny">
-            {invalidCollectionMessage}
-          </Text>
-          {builderRepair !== undefined && (
-            <Flex gap={2} wrap="wrap">
-              {builderRepair?.missingTemplateFilename !== undefined && (
-                <Button
-                  disabled={repairingCollection}
-                  onClick={() => void createMissingTemplate()}
-                >
-                  {repairingCollection
-                    ? "Creating…"
-                    : "Create missing template"}
-                </Button>
-              )}
-              {repairAssetToOpen !== undefined && (
-                <Button
-                  onClick={() => setOpenedTextAssetId(repairAssetToOpen.id)}
-                >
-                  Open {formatAssetName(repairAssetToOpen)}
-                </Button>
-              )}
-              <CollectionRetryButton
+      <AssetManager
+        folderNotice={
+          <>
+            {currentCollection?.status === "loading" && (
+              <PanelContent as={Flex} role="status" align="center">
+                <Text variant="tiny">Loading collection settings…</Text>
+              </PanelContent>
+            )}
+            {currentCollection?.status === "invalid" && (
+              <PanelContent as={Flex} role="alert" direction="column" gap={2}>
+                <Text color="destructive" variant="tiny">
+                  {invalidCollectionMessage}
+                </Text>
+                {builderRepair !== undefined && (
+                  <Flex gap={2} wrap="wrap">
+                    {builderRepair?.missingTemplateFilename !== undefined && (
+                      <Button
+                        disabled={repairingCollection}
+                        onClick={() => void createMissingTemplate()}
+                      >
+                        {repairingCollection
+                          ? "Creating…"
+                          : "Create missing template"}
+                      </Button>
+                    )}
+                    {repairAssetToOpen !== undefined && (
+                      <Button
+                        onClick={() =>
+                          setOpenedTextAssetId(repairAssetToOpen.id)
+                        }
+                      >
+                        Open {formatAssetName(repairAssetToOpen)}
+                      </Button>
+                    )}
+                    <CollectionRetryButton
+                      collection={currentCollection}
+                      onCheckAgain={() =>
+                        setCollectionRefreshKey((key) => key + 1)
+                      }
+                    />
+                  </Flex>
+                )}
+              </PanelContent>
+            )}
+            {currentCollection?.status === "unavailable" && (
+              <CollectionUnavailableNotice
                 collection={currentCollection}
                 onCheckAgain={() => setCollectionRefreshKey((key) => key + 1)}
               />
-            </Flex>
-          )}
-        </Flex>
-      )}
-      {currentCollection?.status === "unavailable" && (
-        <CollectionUnavailableNotice
-          collection={currentCollection}
-          onCheckAgain={() => setCollectionRefreshKey((key) => key + 1)}
-        />
-      )}
-      <AssetManager
+            )}
+          </>
+        }
         folderId={folderId}
         onFolderChange={setFolderId}
         onOpen={openAsset}
@@ -355,6 +359,14 @@ export const AssetsPanel = ({
                     : {}),
                 }),
           deleteUnusedAssets: openDeleteUnusedAssetsDialog,
+          ...(currentCollection !== undefined &&
+          canConfigureCollections &&
+          !isContentMode
+            ? {
+                convertCollection: () =>
+                  setCollectionToConvert(currentCollection),
+              }
+            : {}),
         }}
         collections={collections}
         emptyMessage={
@@ -422,6 +434,14 @@ export const AssetsPanel = ({
                 setSettingsCollection(undefined);
               }
             }}
+          />
+        )}
+      {collectionToConvert !== undefined &&
+        canConfigureCollections &&
+        !isContentMode && (
+          <ConvertCollectionDialog
+            configAsset={collectionToConvert.configAsset}
+            onClose={() => setCollectionToConvert(undefined)}
           />
         )}
     </>

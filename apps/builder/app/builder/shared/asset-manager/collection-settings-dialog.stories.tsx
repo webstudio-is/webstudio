@@ -140,3 +140,18 @@ export const Default: Story = {
     },
   },
 };
+
+export const UnconfirmedSave: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    updateContent: async () => {
+      throw Object.assign(
+        new Error("Internal asset update recovery instructions"),
+        {
+          code: "ASSET_UPDATE_COMMIT_UNCERTAIN",
+        }
+      );
+    },
+  },
+};

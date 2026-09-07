@@ -8,6 +8,7 @@ import {
   getCollectionTemplateValidationError,
   getCollectionValidationError,
   parseCollectionConfig,
+  normalizeCollectionSlug,
   serializeCollectionConfig,
 } from "./content-collection";
 
@@ -16,6 +17,176 @@ type MutableCollectionSchema = Record<string, unknown> & {
 };
 
 describe("content collections", () => {
+  test.each([
+    ["фывафыва", "фывафыва"],
+    ["Привет мир", "привет-мир"],
+    ["你好世界", "你好世界"],
+    ["日本語 の記事", "日本語-の記事"],
+    ["हिन्दी लेख", "हिन्दी-लेख"],
+    ["مرحبا بالعالم", "مرحبا-بالعالم"],
+    ["Hello 世界 Привет", "hello-世界-привет"],
+    ["Cafe\u0301", "café"],
+    ["İstanbul", "i\u0307stanbul"],
+    ["Hello / World?#%\\test", "hello-world-test"],
+    ["\u0301Hello 🚀", "hello"],
+  ])("creates a Unicode slug and filename for %s", async (title, slug) => {
+    const config = parseCollectionConfig(createDefaultCollectionConfig());
+    expect(normalizeCollectionSlug(title)).toBe(slug);
+    expect(normalizeCollectionSlug(slug)).toBe(slug);
+    const entry = await createCollectionEntry({
+      config,
+      templateSource: "Body",
+      values: { title },
+      existingFilenames: [],
+    });
+    expect(entry.filename).toBe(`${slug}.mdx`);
+    expect(entry.frontmatter.slug).toBe(slug);
+    expect(config.validate(entry.frontmatter).success).toBe(true);
+    const pattern = (
+      config.schema.properties as MutableCollectionSchema["properties"]
+    ).slug.pattern as string;
+    expect(new RegExp(pattern, "u").test(slug)).toBe(true);
+  });
+
+  test.each(["🚀🎉", "///", "\u0301"])(
+    "requires a manual slug when %s has no letters or numbers",
+    async (title) => {
+      const config = parseCollectionConfig(createDefaultCollectionConfig());
+      expect(normalizeCollectionSlug(title)).toBe("");
+      await expect(
+        createCollectionEntry({
+          config,
+          templateSource: "Body",
+          values: { title },
+          existingFilenames: [],
+        })
+      ).rejects.toThrow();
+      const entry = await createCollectionEntry({
+        config,
+        templateSource: "Body",
+        values: { title, slug: "my-entry" },
+        existingFilenames: [],
+      });
+      expect(entry.filename).toBe("my-entry.mdx");
+    }
+  );
+
+  test.each([
+    "Привет",
+    "hello/world",
+    "你好?",
+    "a\nb",
+    "hello\n",
+    "-hello",
+    "hello--world",
+    "\u0301hello",
+    "🚀",
+  ])("rejects invalid slug %s", (slug) => {
+    const config = parseCollectionConfig(createDefaultCollectionConfig());
+    expect(config.validate({ title: "Title", slug }).success).toBe(false);
+  });
+
+  test("preserves legacy slug rules when saving settings", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.slug.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
+    const legacy = parseCollectionConfig(JSON.stringify(schema));
+    expect(legacy.validate({ title: "Title", slug: "hello" }).success).toBe(
+      true
+    );
+    expect(legacy.validate({ title: "Title", slug: "你好" }).success).toBe(
+      false
+    );
+    const updated = parseCollectionConfig(
+      serializeCollectionConfig({ config: legacy, fields: legacy.fields })
+    );
+    expect(updated.validate({ title: "Title", slug: "你好" }).success).toBe(
+      false
+    );
+  });
+
+  test.each([undefined, "Café Déjà"])(
+    "generates slugs compatible with a legacy collection (manual: %s)",
+    async (slug) => {
+      const schema = JSON.parse(createDefaultCollectionConfig());
+      schema.properties.slug.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
+      const config = parseCollectionConfig(JSON.stringify(schema));
+      const entry = await createCollectionEntry({
+        config,
+        templateSource: "Body",
+        values: { title: "Café Déjà", ...(slug === undefined ? {} : { slug }) },
+        existingFilenames: [],
+      });
+      expect(entry.filename).toBe("cafe-deja.mdx");
+      expect(config.validate(entry.frontmatter).success).toBe(true);
+    }
+  );
+
+  test("rejects canonically equivalent existing filenames", async () => {
+    await expect(
+      createCollectionEntry({
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateSource: "Body",
+        values: { title: "Café" },
+        existingFilenames: ["cafe\u0301.mdx"],
+      })
+    ).rejects.toThrow();
+  });
+  test("retries slugless entries with a stable request ID", async () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    delete schema.properties.slug;
+    schema.required = ["title"];
+    delete schema["x-webstudio"].slugField;
+    delete schema["x-webstudio"].generateSlugFrom;
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const request = {
+      config,
+      templateSource: "Body",
+      values: { title: "Entry" },
+      existingFilenames: [],
+      requestId: "91f1de15-e03b-40ae-9b2f-6c19a8bbf1fa",
+    };
+    const first = await createCollectionEntry(request);
+    const retry = await createCollectionEntry(request);
+    expect(retry).toEqual(first);
+    expect(first.filename).toBe(`entry-${request.requestId}.mdx`);
+  });
+
+  test("creates entries without slug fields and keeps generated filenames out of frontmatter", async () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    delete schema["x-webstudio"].slugField;
+    delete schema["x-webstudio"].generateSlugFrom;
+    delete schema.properties.slug;
+    schema.required = schema.required.filter((key: string) => key !== "slug");
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const first = await createCollectionEntry({
+      config,
+      templateSource: "---\ndraft: true\n---\nBody",
+      values: { title: "A title" },
+      existingFilenames: [],
+    });
+    const second = await createCollectionEntry({
+      config,
+      templateSource: "---\ndraft: true\n---\nBody",
+      values: { title: "A title" },
+      existingFilenames: [first.filename],
+    });
+    expect(first.filename.endsWith(".mdx")).toBe(true);
+    expect(second.filename).not.toBe(first.filename);
+    expect(first.frontmatter).toEqual({ title: "A title", draft: true });
+  });
+
+  test("allows a manually entered slug without a generation source", async () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    delete schema["x-webstudio"].generateSlugFrom;
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const entry = await createCollectionEntry({
+      config,
+      templateSource: "",
+      values: { title: "A title", slug: "manual-slug" },
+      existingFilenames: [],
+    });
+    expect(entry.filename).toBe("manual-slug.mdx");
+  });
   test("uses collection.json as the folder entry point", () => {
     expect(collectionConfigFilename).toBe("collection.json");
     expect(
@@ -330,9 +501,9 @@ describe("content collections", () => {
     );
 
     expect(serialized.required).toContain("slug");
-    expect(serialized.properties.slug.pattern).toBe(
-      "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-    );
+    expect(
+      new RegExp(serialized.properties.slug.pattern, "u").test("你好")
+    ).toBe(true);
     expect(serialized.properties.slug["x-webstudio"]).toEqual({
       control: "slug",
     });
@@ -355,7 +526,9 @@ describe("content collections", () => {
 
     expect(nextConfig.slugField).toBe("title");
     expect(nextConfig.generateSlugFrom).toBe("slug");
-    expect(title.title.pattern).toBe("^[a-z0-9]+(?:-[a-z0-9]+)*$");
+    expect(new RegExp(title.title.pattern as string, "u").test("привет")).toBe(
+      true
+    );
     expect(title.title["x-webstudio"]).toMatchObject({ control: "slug" });
     expect(title.slug.pattern).toBeUndefined();
     expect(title.slug["x-webstudio"]).toBeUndefined();

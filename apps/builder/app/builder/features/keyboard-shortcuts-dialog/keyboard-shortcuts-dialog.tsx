@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -324,10 +325,10 @@ export const KeyboardShortcutsDialog = () => {
       >
         <DialogTitle>Keyboard shortcuts</DialogTitle>
         <ScrollArea>
-          <Grid columns={2} gap={3} css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Grid} columns={2} gap={3}>
             <Grid gap={5}>{leftCategories.map(renderCategory)}</Grid>
             <Grid gap={5}>{rightCategories.map(renderCategory)}</Grid>
-          </Grid>
+          </PanelContent>
         </ScrollArea>
       </DialogContent>
     </Dialog>

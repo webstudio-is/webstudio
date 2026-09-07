@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { toast } from "@webstudio-is/design-system";
+import { PanelContent, toast } from "@webstudio-is/design-system";
 import {
   Dialog,
   DialogActions,
@@ -65,14 +65,14 @@ export const DeleteDataVariableDialog = ({
         }}
       >
         <DialogTitle>Delete confirmation</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>
             {variable &&
               (variable.usages > 0
                 ? `Delete "${variable.name}" variable from the project? It is used in ${variable.usages} ${variable.usages === 1 ? "expression" : "expressions"}.`
                 : `Delete "${variable.name}" variable from the project?`)}
           </Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button
             autoFocus
@@ -201,7 +201,7 @@ export const RenameDataVariableDialog = ({
         }}
       >
         <DialogTitle>Rename variable</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Flex direction="column" gap="1">
             <InputField
               value={name}
@@ -217,7 +217,7 @@ export const RenameDataVariableDialog = ({
               </Text>
             )}
           </Flex>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button color="primary" onClick={handleConfirm}>
             Rename
@@ -270,7 +270,7 @@ export const DeleteUnusedDataVariablesDialog = () => {
         }}
       >
         <DialogTitle>Delete unused data variables</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           {unusedVariables.length === 0 ? (
             <Text>There are no unused data variables to delete.</Text>
           ) : (
@@ -294,7 +294,7 @@ export const DeleteUnusedDataVariablesDialog = () => {
               </Text>
             </>
           )}
-        </Flex>
+        </PanelContent>
         <DialogActions>
           {unusedVariables.length > 0 && (
             <Button

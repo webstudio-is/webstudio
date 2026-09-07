@@ -1,6 +1,7 @@
 import isEqual from "fast-deep-equal";
 import { forwardRef, useState, type ComponentProps } from "react";
 import {
+  PanelContent,
   Grid,
   theme,
   Select,
@@ -213,7 +214,7 @@ const AnimationConfig = ({
     ((value: undefined, isEphemeral: true) => void);
 }) => {
   return (
-    <Grid gap={2} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} gap={2}>
       <Grid gap={1} align="center" columns={2}>
         <FieldLabel description="Type of the timeline defines how the animation is triggered.">
           Type
@@ -326,7 +327,7 @@ const AnimationConfig = ({
           />
         </Grid>
       )}
-    </Grid>
+    </PanelContent>
   );
 };
 

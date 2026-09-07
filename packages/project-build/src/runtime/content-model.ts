@@ -1,5 +1,6 @@
 import { elementsByTag } from "@webstudio-is/html-data";
 import {
+  blockTemplateComponent,
   elementComponent,
   getHtmlTagFromInstance,
   getHtmlTagsFromProps,
@@ -193,6 +194,11 @@ const computeAllowedCategories = ({
     if (instance === undefined) {
       continue;
     }
+    // Template roots are reusable definitions, not children of the page HTML.
+    if (instance.component === blockTemplateComponent) {
+      allowedCategories = undefined;
+      continue;
+    }
     const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
     allowedCategories = getElementChildren(tag, allowedCategories);
   }
@@ -223,6 +229,12 @@ const findHtmlConstraintInstance = ({
   for (const instanceId of instanceSelector.slice(1).reverse()) {
     const ancestor = instances.get(instanceId);
     if (ancestor === undefined) {
+      continue;
+    }
+    if (ancestor.component === blockTemplateComponent) {
+      allowedCategories = undefined;
+      constraintInstance = undefined;
+      wasSatisfying = true;
       continue;
     }
     const ancestorTag = getTag({
@@ -553,7 +565,10 @@ export const isTreeSatisfyingContentModel = ({
         htmlTagsByInstanceId,
         instanceSelector: [child.value, ...instanceSelector],
         onError,
-        _allowedCategories: allowedCategories,
+        _allowedCategories:
+          instance.component === blockTemplateComponent
+            ? undefined
+            : allowedCategories,
         _allowedParentCategories: allowedParentCategories,
         _allowedAncestorCategories: allowedAncestorCategories,
       });

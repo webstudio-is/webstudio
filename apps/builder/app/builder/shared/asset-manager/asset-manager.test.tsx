@@ -1033,58 +1033,63 @@ describe("Asset Manager collection folder permissions", () => {
     }
   );
 
-  test("removes relocate and destructive actions when a selection contains a reserved file", () => {
-    const collection = createLoadingCollection("alpha");
-    const entry: Asset = {
-      ...createAsset("entry"),
-      name: "entry.mdx",
-      filename: "entry",
-      folderId: "alpha",
-      type: "file",
-      format: "mdx",
-      meta: {},
-    };
-    act(() => {
-      $authPermit.set("edit");
-      $assets.set(
-        new Map([
-          [collection.configAsset.id, collection.configAsset],
-          [entry.id, entry],
-        ])
-      );
-    });
-    const container = renderManager(true, {
-      collections: new Map([["alpha", collection]]),
-    });
-    const folderButton = container.querySelector<HTMLButtonElement>(
-      '[aria-label="Folder Alpha"]'
-    )!;
-    act(() => {
-      folderButton.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
-    });
-    const options = getOptions(container);
-    const config = options.find(({ button }) =>
-      button.textContent?.includes("collection.json")
-    )!;
-    const entryOption = options.find(({ button }) =>
-      button.textContent?.includes("entry.mdx")
-    )!;
-    act(() => config.button.focus());
-    pointerDown(entryOption.button, { ctrlKey: true });
-    openContextMenu(config.button);
+  test.each(["edit", "build", "admin", "own"] as const)(
+    "removes relocate and destructive actions when a selection contains a reserved file (%s)",
+    (permit) => {
+      const collection = createLoadingCollection("alpha");
+      const entry: Asset = {
+        ...createAsset("entry"),
+        name: "entry.mdx",
+        filename: "entry",
+        folderId: "alpha",
+        type: "file",
+        format: "mdx",
+        meta: {},
+      };
+      act(() => {
+        $authPermit.set(permit);
+        $assets.set(
+          new Map([
+            [collection.configAsset.id, collection.configAsset],
+            [entry.id, entry],
+          ])
+        );
+      });
+      const container = renderManager(true, {
+        collections: new Map([["alpha", collection]]),
+      });
+      const folderButton = container.querySelector<HTMLButtonElement>(
+        '[aria-label="Folder Alpha"]'
+      )!;
+      act(() => {
+        folderButton.dispatchEvent(
+          new MouseEvent("dblclick", { bubbles: true })
+        );
+      });
+      const options = getOptions(container);
+      const config = options.find(({ button }) =>
+        button.textContent?.includes("collection.json")
+      )!;
+      const entryOption = options.find(({ button }) =>
+        button.textContent?.includes("entry.mdx")
+      )!;
+      act(() => config.button.focus());
+      pointerDown(entryOption.button, { ctrlKey: true });
+      openContextMenu(config.button);
 
-    const labels = Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
-    ).map((item) => item.textContent);
-    expect(labels.some((label) => label?.startsWith("Cut"))).toBe(false);
-    expect(labels).not.toContain("Move");
-    expect(labels.some((label) => label?.startsWith("Copy"))).toBe(false);
-    expect(labels.some((label) => label?.startsWith("Delete"))).toBe(false);
+      const labels = Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+      ).map((item) => item.textContent);
+      expect(labels.some((label) => label?.startsWith("Cut"))).toBe(false);
+      expect(labels).not.toContain("Move");
+      expect(labels.some((label) => label?.startsWith("Copy"))).toBe(false);
+      expect(labels.some((label) => label?.startsWith("Delete"))).toBe(false);
 
-    dismissContextMenu();
-    keyDown(config.button, "x", { ctrlKey: true });
-    expect($assetManagerClipboard.get()).toBeUndefined();
-  });
+      dismissContextMenu();
+      keyDown(config.button, "x", { ctrlKey: true });
+      expect($assetManagerClipboard.get()).toBeUndefined();
+    }
+  );
 
   test("detects collection folders and protects reserved files without caller configuration", () => {
     const configAsset = createLoadingCollection("alpha").configAsset;
@@ -1128,12 +1133,25 @@ describe("Asset Manager collection folder permissions", () => {
       document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
     ).map((item) => item.textContent);
     expect(labels).not.toContain("Settings");
-    expect(labels.some((label) => label?.startsWith("Cut"))).toBe(false);
-    expect(labels).not.toContain("Move");
-    expect(labels.some((label) => label?.startsWith("Delete"))).toBe(false);
+    const disabledItems = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[role="menuitem"][aria-disabled="true"]'
+      )
+    );
+    expect(disabledItems).toHaveLength(5);
+    expect(
+      disabledItems.some((item) => item.textContent?.startsWith("Cut"))
+    ).toBe(true);
+    expect(disabledItems.some((item) => item.textContent === "Move")).toBe(
+      true
+    );
+    expect(
+      disabledItems.some((item) => item.textContent?.startsWith("Delete"))
+    ).toBe(true);
   });
 
   test("hides generic panel actions in a detected collection folder", () => {
+    const convertCollection = vi.fn();
     const configAsset = createLoadingCollection("alpha").configAsset;
     act(() => $assets.set(new Map([[configAsset.id, configAsset]])));
     const container = renderer.render(
@@ -1145,6 +1163,7 @@ describe("Asset Manager collection folder permissions", () => {
             createFile: vi.fn(),
             createFolder: vi.fn(),
             createEntry: vi.fn(),
+            convertCollection,
           }}
         />
       </TooltipProvider>
@@ -1167,6 +1186,35 @@ describe("Asset Manager collection folder permissions", () => {
     expect(labels).toContain("New entry");
     expect(labels).not.toContain("Upload asset");
     expect(labels).not.toContain("Create text file");
+    const convert = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Convert to regular folder");
+    expect(convert).toBeDefined();
+    act(() => convert?.click());
+    expect(convertCollection).toHaveBeenCalledOnce();
+  });
+
+  test("offers conversion from the parent folder before collection settings are loaded", async () => {
+    const collection = createLoadingCollection("alpha");
+    act(() => {
+      $authPermit.set("own");
+      $assets.set(
+        new Map([[collection.configAsset.id, collection.configAsset]])
+      );
+    });
+    const container = renderManager(true);
+    const folderButton = container.querySelector<HTMLElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    openContextMenu(folderButton);
+    const convert = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Convert to regular folder");
+    expect(convert).toBeDefined();
+    await act(async () => convert?.click());
+    await vi.waitFor(() =>
+      expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+    );
   });
 
   test("hides copy, duplicate, and delete for a collection ancestor from edit users", () => {

@@ -460,6 +460,7 @@ export interface AssetRepository {
   createCollectionEntry(input: {
     folderId: string;
     values: Readonly<Record<string, unknown>>;
+    requestId?: string;
   }): Promise<Asset>;
   updateCollectionConfigAndTemplateName(input: {
     folderId: string;
@@ -1144,7 +1145,7 @@ export class PostgresAssetRepository implements AssetRepository {
     if (validationError !== undefined && frontmatterChanged) {
       throw new AssetRepositoryConflictError(validationError);
     }
-    if (frontmatterChanged) {
+    if (frontmatterChanged && config.slugField !== undefined) {
       const slug = nextFrontmatter.properties[config.slugField];
       const filenameSlug = getAssetDisplayNameParts(currentAsset).basename;
       if (slug !== filenameSlug) {
@@ -1492,9 +1493,11 @@ export class PostgresAssetRepository implements AssetRepository {
   async createCollectionEntry({
     folderId,
     values,
+    requestId,
   }: {
     folderId: string;
     values: Readonly<Record<string, unknown>>;
+    requestId?: string;
   }) {
     await this.assertCanEdit();
     const [folders, assets] = await Promise.all([
@@ -1538,6 +1541,7 @@ export class PostgresAssetRepository implements AssetRepository {
     const templateAsset = inspected.templateFile.file;
     const entry = await createCollectionEntry({
       config,
+      requestId,
       templateSource: decodeUtf8(
         await this.readCollectionAssetBytes(templateAsset)
       ),
@@ -1554,7 +1558,8 @@ export class PostgresAssetRepository implements AssetRepository {
     }
     const existingAsset = siblings.find(
       (asset) =>
-        formatAssetName(asset).toLowerCase() === entry.filename.toLowerCase()
+        formatAssetName(asset).normalize("NFC").toLowerCase() ===
+        entry.filename.toLowerCase()
     );
     if (existingAsset !== undefined) {
       if (
@@ -1632,7 +1637,7 @@ export class PostgresAssetRepository implements AssetRepository {
       .filter(
         (candidate) =>
           candidate.folderId === folderId &&
-          candidate.filename?.toLowerCase() ===
+          candidate.filename?.normalize("NFC").toLowerCase() ===
             entry.filename.slice(0, -".mdx".length).toLowerCase()
       )
       .sort(

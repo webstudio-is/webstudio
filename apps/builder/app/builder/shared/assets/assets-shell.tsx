@@ -4,9 +4,11 @@ import {
   useState,
   type ComponentProps,
   type JSX,
+  type ReactNode,
   type PointerEvent,
 } from "react";
 import {
+  PanelContent,
   ContextMenu,
   ContextMenuTrigger,
   Flex,
@@ -57,6 +59,7 @@ type AssetsShellProps = {
   isEmpty: boolean;
   emptyMessage?: string;
   emptyContent?: JSX.Element;
+  contentNotice?: ReactNode;
   folderId?: string;
   contextMenu?: JSX.Element;
   onContextMenu?: ComponentProps<typeof Flex>["onContextMenu"];
@@ -113,6 +116,7 @@ export const AssetsShell = ({
   isEmpty,
   emptyMessage,
   emptyContent,
+  contentNotice,
   children,
   interactionOverlay,
   footer,
@@ -320,16 +324,10 @@ export const AssetsShell = ({
         overflow: "hidden",
         paddingBlock: theme.panel.paddingBlock,
         flex: 1,
-        minHeight: 0,
         position: "relative",
       }}
     >
-      <Flex
-        css={{ padding: theme.panel.padding }}
-        gap="2"
-        wrap="wrap"
-        shrink={false}
-      >
+      <PanelContent as={Flex} gap="2" wrap="wrap" shrink={false}>
         <SearchField
           css={{ flexGrow: 1 }}
           {...searchProps}
@@ -337,13 +335,11 @@ export const AssetsShell = ({
           placeholder="Search"
         />
         {filters}
-      </Flex>
+      </PanelContent>
       <Separator />
+      {contentNotice}
       {isEmpty ? (
-        <Flex
-          direction="column"
-          css={{ flex: 1, minHeight: 0, position: "relative" }}
-        >
+        <Flex direction="column" css={{ flex: 1, position: "relative" }}>
           {emptyContent}
           <AssetPanelState
             overlay={emptyContent !== undefined}

@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
 import { Box, styled, Text } from "@webstudio-is/design-system";
-import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
+import {
+  ListViewIcon,
+  PageIcon,
+  TextCapitalizeIcon,
+} from "@webstudio-is/icons";
 import { wsVideoLoader } from "@webstudio-is/image";
 import { UploadingAnimation } from "./uploading-animation";
 import { AssetDeleteDialog, AssetSettings } from "./asset-settings";
@@ -88,9 +92,11 @@ const StyledWebstudioVideo = styled("video", mediaPreviewStyle);
 const GenericFilePreview = ({
   ext,
   format,
+  isCollectionFile = false,
 }: {
   ext: string;
   format: string;
+  isCollectionFile?: boolean;
 }) => {
   const Icon = getFileIcon(format);
   const showExtension = Icon === PageIcon;
@@ -98,19 +104,32 @@ const GenericFilePreview = ({
   return (
     <Box css={{ position: "relative" }}>
       <Icon size={48} strokeWidth={0.5} />
-      {showExtension && (
-        <Text
-          variant="tiny"
-          color="subtle"
+      {isCollectionFile ? (
+        <Box
           css={{
             position: "absolute",
-            top: 30,
-            left: "50%",
-            transform: "translateX(-50%)",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
           }}
         >
-          {ext.toUpperCase()}
-        </Text>
+          <ListViewIcon size={16} aria-label="Collection file" />
+        </Box>
+      ) : (
+        showExtension && (
+          <Text
+            variant="tiny"
+            color="subtle"
+            css={{
+              position: "absolute",
+              top: 30,
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
+            {ext.toUpperCase()}
+          </Text>
+        )
       )}
     </Box>
   );
@@ -155,6 +174,7 @@ type AssetThumbnailProps = {
   onMove?: () => void;
   isCollectionEntry?: boolean;
   isCollectionReserved?: boolean;
+  isCollectionFile?: boolean;
   unavailableDestinationFolderIds?: ReadonlySet<string>;
 };
 
@@ -172,6 +192,7 @@ export const AssetThumbnail = ({
   onMove,
   isCollectionEntry = false,
   isCollectionReserved = false,
+  isCollectionFile = false,
   unavailableDestinationFolderIds,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
@@ -179,11 +200,11 @@ export const AssetThumbnail = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const authPermit = useStore($authPermit);
-  const collectionActionBlocked =
-    isCollectionReserved &&
-    canConfigureContentCollections(authPermit) === false;
-  const collectionActionBlockedRef = useRef(collectionActionBlocked);
-  collectionActionBlockedRef.current = collectionActionBlocked;
+  const collectionActionBlocked = isCollectionReserved;
+  const settingsBlocked =
+    isCollectionReserved && !canConfigureContentCollections(authPermit);
+  const settingsBlockedRef = useRef(settingsBlocked);
+  settingsBlockedRef.current = settingsBlocked;
   const canMutate = authPermit !== "view" && collectionActionBlocked === false;
   const canMutateRef = useRef(canMutate);
   canMutateRef.current = canMutate;
@@ -193,10 +214,10 @@ export const AssetThumbnail = ({
     if (canMutate === false) {
       setDeleteOpen(false);
     }
-    if (collectionActionBlocked) {
+    if (settingsBlocked) {
       setSettingsOpen(false);
     }
-  }, [canMutate, collectionActionBlocked]);
+  }, [canMutate, settingsBlocked]);
   const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
   const getDragItems = interactions.getDragItems;
@@ -227,54 +248,50 @@ export const AssetThumbnail = ({
       ? {}
       : {
           open: onOpen,
-          settings: collectionActionBlocked
+          settings: settingsBlocked
             ? undefined
             : () => {
-                if (collectionActionBlockedRef.current === false) {
+                if (settingsBlockedRef.current === false) {
                   setSettingsOpen(true);
                 }
               },
           ...(authPermit === "view"
             ? {}
             : {
-                ...(collectionActionBlocked
-                  ? {}
-                  : {
-                      cut: () => {
-                        if (canMutateRef.current) {
-                          clipboardActions.cut();
-                        }
-                      },
-                      copy: () => {
-                        if (canMutateRef.current) {
-                          clipboardActions.copy();
-                        }
-                      },
-                      duplicate: () => {
-                        if (
-                          canMutateRef.current &&
-                          isCollectionEntryRef.current === false
-                        ) {
-                          clipboardActions.duplicate();
-                        }
-                      },
-                    }),
-                ...(isCollectionEntry ? { duplicate: undefined } : {}),
+                cut: () => {
+                  if (canMutateRef.current) {
+                    clipboardActions.cut();
+                  }
+                },
+                copy: () => {
+                  if (canMutateRef.current) {
+                    clipboardActions.copy();
+                  }
+                },
+                duplicate: () => {
+                  if (
+                    canMutateRef.current &&
+                    isCollectionEntryRef.current === false
+                  ) {
+                    clipboardActions.duplicate();
+                  }
+                },
+                ...(isCollectionEntry && !isCollectionReserved
+                  ? { duplicate: undefined }
+                  : {}),
                 move:
-                  collectionActionBlocked || onMove === undefined
+                  onMove === undefined
                     ? undefined
                     : () => {
                         if (canMutateRef.current) {
                           onMove();
                         }
                       },
-                delete: collectionActionBlocked
-                  ? undefined
-                  : () => {
-                      if (canMutateRef.current) {
-                        setDeleteOpen(true);
-                      }
-                    },
+                delete: () => {
+                  if (canMutateRef.current) {
+                    setDeleteOpen(true);
+                  }
+                },
                 ...(asset.type === "image"
                   ? {
                       replace: () => {
@@ -302,7 +319,12 @@ export const AssetThumbnail = ({
 
   useEffect(() => {
     const element = elementRef.current;
-    if (element === null || canDrag === false || isUploading) {
+    if (
+      element === null ||
+      canDrag === false ||
+      isUploading ||
+      isCollectionReserved
+    ) {
       return;
     }
     return draggable({
@@ -321,10 +343,19 @@ export const AssetThumbnail = ({
         items: getDragItems({ type: "asset", id: asset.id }),
       }),
     });
-  }, [asset.id, canDrag, getDragItems, isUploading]);
+  }, [asset.id, canDrag, getDragItems, isUploading, isCollectionReserved]);
 
   const displayedActions =
     forcedSelection && selected ? (selectionActions ?? actions) : actions;
+  const disabledActions = isCollectionReserved
+    ? new Set<keyof AssetManagerItemActions>([
+        "cut",
+        "copy",
+        "duplicate",
+        "move",
+        "delete",
+      ])
+    : undefined;
 
   return (
     <>
@@ -338,6 +369,7 @@ export const AssetThumbnail = ({
       <AssetManagerThumbnail
         item={{ type: "asset", id: asset.id }}
         actions={displayedActions}
+        disabledActions={disabledActions}
         interactions={interactions}
         selected={selected}
         forcedSelection={forcedSelection}
@@ -370,7 +402,11 @@ export const AssetThumbnail = ({
               format={asset.format}
             />
           ) : (
-            <GenericFilePreview ext={ext} format={asset.format} />
+            <GenericFilePreview
+              ext={ext}
+              format={asset.format}
+              isCollectionFile={isCollectionFile}
+            />
           )
         }
         label={basename}
@@ -391,18 +427,21 @@ export const AssetThumbnail = ({
           assetContainer.status === "uploaded" ? (
             <AssetSettings
               asset={assetContainer.asset}
-              open={settingsOpen && collectionActionBlocked === false}
+              open={settingsOpen && settingsBlocked === false}
               onOpenChange={(open) => {
                 setSettingsOpen(open);
               }}
               onDelete={actions.delete}
               onReplace={actions.replace}
-              canRename={isCollectionEntry === false}
-              canSaveChanges={canMutateRef.current}
+              canRename={!isCollectionEntry && !isCollectionReserved}
+              canMove={!isCollectionReserved}
+              isCollectionFile={isCollectionFile}
+              canSaveChanges={authPermit !== "view" && !settingsBlocked}
               unavailableDestinationFolderIds={unavailableDestinationFolderIds}
             >
               <AssetManagerThumbnailMenu
                 actions={displayedActions}
+                disabledActions={disabledActions}
                 label={`Actions for ${formatAssetName(asset)}`}
                 onPointerDown={() => interactions.onContextMenuSelection(item)}
               />

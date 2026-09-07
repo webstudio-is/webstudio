@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
+  PanelContent,
   Flex,
   FloatingPanel,
   Grid,
-  theme,
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
@@ -28,10 +28,10 @@ const OrderPopover = () => {
       title="Order"
       placement="bottom-within"
       content={
-        <Grid
+        <PanelContent
+          as={Grid}
           css={{
             gridTemplateColumns: "4fr 6fr",
-            padding: theme.panel.padding,
           }}
           gap={2}
         >
@@ -41,7 +41,7 @@ const OrderPopover = () => {
             properties={["order"]}
           />
           <TextControl property="order" />
-        </Grid>
+        </PanelContent>
       }
     >
       <Flex>

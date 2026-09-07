@@ -9,6 +9,7 @@ import {
 import type { Extension } from "@codemirror/state";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   cssVar,
@@ -456,11 +457,7 @@ const MarkdownLinkPicker = ({
       }}
       content={
         open && (
-          <Flex
-            direction="column"
-            gap={5}
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap={5}>
             <UrlInput
               instanceId="markdown-link"
               prop={value}
@@ -490,7 +487,7 @@ const MarkdownLinkPicker = ({
                 Insert link
               </Button>
             </Flex>
-          </Flex>
+          </PanelContent>
         )
       }
     >
@@ -535,7 +532,6 @@ const MarkdownToolbar = ({
       align="center"
       gap={2}
       css={{
-        minWidth: 0,
         flex: 1,
         overflowX: "auto",
         scrollbarWidth: "none",

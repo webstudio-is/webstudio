@@ -1,5 +1,6 @@
 import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import {
+  PanelContent,
   Box,
   Button,
   Dialog,
@@ -250,13 +251,7 @@ export const ImportRedirectsDialog = ({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent css={{ width: 520, maxHeight: "80vh" }}>
         <ScrollArea>
-          <Flex
-            direction="column"
-            css={{
-              padding: theme.panel.padding,
-            }}
-            gap="3"
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             {step === "input" && (
               <InputStep
                 textContent={textContent}
@@ -284,7 +279,7 @@ export const ImportRedirectsDialog = ({
                 onMergeModeChange={setMergeMode}
               />
             )}
-          </Flex>
+          </PanelContent>
         </ScrollArea>
 
         <DialogActions>

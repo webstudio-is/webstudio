@@ -94,11 +94,15 @@ creates two files in the folder:
 
 The folder remains a normal Assets folder. The direct `collection.json` file is
 what makes Webstudio treat it as a collection and show the collection badge.
+The configuration and referenced template files also show this badge. You can
+open them or download them when permitted, but cannot cut, copy, duplicate,
+move, or delete them individually. Manage them through **Collection settings**.
+Their asset **Settings** remain available to collection designers: Name is
+read-only and Folder is disabled, while Description remains editable.
+
 Open **Collection settings → Fields** and select a field from the list.
 Edit **Label** and **Field key** together, then choose the field's **Type**.
 Set required fields and length or number limits under **Validation**.
-Use **Move field up** and **Move field down** beneath the field list to set
-the order editors see in the **New entry** form.
 Choose **Add field** to add another entry field. The configurator writes the
 schema; designers do not need to edit JSON.
 
@@ -118,12 +122,29 @@ them.
 Editors choose **New entry**, complete the generated form, and select **Create
 entry**. Webstudio creates a lowercase, dash-separated slug from the configured
 source field, which is **Title** by default.
+Slugs preserve letters and numbers from any language, including accents:
+`Привет мир` becomes `привет-мир`, and `你好世界` stays `你好世界`.
+Spaces and punctuation become separators. If the title contains only emoji or
+symbols, enter a slug manually. Existing filenames are never renamed.
+
+Collections created with the older Latin-only slug rule keep that rule and its
+matching generator, including after saving settings. Accents are removed in
+those collections (`Café` becomes `cafe`); enter a Latin-letter slug manually
+when the title cannot produce one. New collections support Unicode slugs.
+
 Editors can change the slug before creating the entry. The schema is checked
 when an entry is created and whenever its frontmatter changes. The slug becomes
 the MDX filename and cannot be changed after creation.
 
-For optional fields, use the field's actions menu and choose **Clear value**
-to omit the value, including a value supplied by the template. An empty text
+Slug fields are optional. Change the Slug field to another type
+if the collection does not need one. New entries then receive unique generated
+MDX filenames, without adding a filename field to their frontmatter. Existing
+filenames stay unchanged. For a manual slug, set **Generate from** to
+**None (manual entry)**.
+
+For optional fields, click the field label and choose **Reset value**, or
+Alt-click the label, to omit the value, including a value supplied by the
+template. An empty text
 value is different from an omitted value. Optional boolean fields offer
 **Yes**, **No**, and **Not set**. Validation errors appear beside their fields.
 
@@ -145,8 +166,9 @@ longer matches the schema and its filename slug.
 folder. Collection entries are loaded dynamically and may not have a direct
 page or component reference.
 
-Choose **Collection actions → Convert to regular folder…** in **Collection
-settings**, then confirm the conversion. This deletes only
+Choose **Convert to regular folder** in **Collection settings**, the folder's
+context or actions menu, or the empty-space context menu inside the folder.
+Confirm the conversion. This deletes only
 `collection.json`. The folder becomes a normal folder again, while its entries
 and template remain. The former template is then a regular MDX file and can
 appear in Assets query results.

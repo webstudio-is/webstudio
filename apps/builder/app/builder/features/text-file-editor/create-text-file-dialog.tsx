@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import isValidFilename from "valid-filename";
 import {
+  PanelContent,
   Button,
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import {
   InputField,
   Label,
   Text,
-  theme,
 } from "@webstudio-is/design-system";
 import {
   getFileExtension,
@@ -183,7 +183,7 @@ export const CreateTextFileDialog = ({
         }}
       >
         <DialogTitle>{title}</DialogTitle>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} gap={3}>
           <Grid gap={1}>
             <Label htmlFor="asset-text-file-name">File name</Label>
             <InputField
@@ -217,7 +217,7 @@ export const CreateTextFileDialog = ({
               {creating ? "Creating…" : "Create file"}
             </Button>
           </Flex>
-        </Grid>
+        </PanelContent>
       </DialogContent>
     </Dialog>
   );

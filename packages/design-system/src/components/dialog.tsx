@@ -620,6 +620,41 @@ const ContentContainer = forwardRef(
         onDragEndCapture={setPointerEvents("auto")}
         {...draggableProps}
         {...props}
+        onKeyDown={(event) => {
+          props.onKeyDown?.(event);
+          // Radix handles dismissal; keep the same Escape from closing a parent
+          // panel, including when the dialog refuses dismissal during a save.
+          if (event.key === "Escape") {
+            event.stopPropagation();
+          }
+        }}
+        onOpenAutoFocus={(event) => {
+          props.onOpenAutoFocus?.(event);
+          if (event.defaultPrevented) {
+            return;
+          }
+          // Primary actions include destructive confirmations. Leave Radix's
+          // normal focus order in place when no enabled action is available.
+          const actions = ref.current?.querySelectorAll<HTMLElement>(
+            '[data-button-color="primary"], [data-button-color="destructive"]'
+          );
+          for (const action of actions ?? []) {
+            if (
+              action.closest('[role="dialog"]') !== ref.current ||
+              action.matches(':disabled, [aria-disabled="true"]') ||
+              !action.checkVisibility({ checkVisibilityCSS: true })
+            ) {
+              continue;
+            }
+            action.focus();
+            if (document.activeElement === action) {
+              // Mouse-opened dialogs still need a visible initial focus target.
+              action.setAttribute("data-dialog-autofocus", "");
+              event.preventDefault();
+              return;
+            }
+          }
+        }}
         ref={mergeRefs(forwardedRef, ref, setElement)}
       >
         {children}

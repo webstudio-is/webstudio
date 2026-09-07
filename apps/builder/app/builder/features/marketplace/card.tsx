@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import {
+  PanelContent,
   Flex,
   Text,
   theme,
@@ -106,13 +107,13 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     ref
   ) => {
     return (
-      <Flex
+      <PanelContent
+        as={Flex}
         {...props}
         ref={ref}
         direction="column"
         data-state={state}
         css={{
-          padding: theme.panel.padding,
           position: "relative",
           overflow: "hidden",
           outline: "none",
@@ -131,7 +132,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           </Text>
           {suffix}
         </Flex>
-      </Flex>
+      </PanelContent>
     );
   }
 );

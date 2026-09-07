@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
+import { Grid, theme } from "@webstudio-is/design-system";
 import {
   AlertCircleIcon,
   ChevronRightIcon,
@@ -35,7 +36,10 @@ import {
   canConfigureContentCollections,
   type ContentCollection,
 } from "../assets/content-collections";
-import { CollectionSettingsDialog } from "./collection-settings-dialog";
+import {
+  CollectionSettingsDialog,
+  ConvertCollectionDialog,
+} from "./collection-settings-dialog";
 import { $authPermit, $isContentMode } from "~/shared/nano-states";
 
 const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
@@ -89,13 +93,21 @@ export const FolderThumbnail = ({
     Extract<ContentCollection, { status: "ready" }> | undefined
   >();
   const isContentMode = useStore($isContentMode);
+  const [convertingCollection, setConvertingCollection] =
+    useState<ContentCollection>();
   const authPermit = useStore($authPermit);
   const canConfigureCollections = canConfigureContentCollections(authPermit);
-  const canConfigureCollection =
+  const canConvertCollection =
     canManage &&
     isContentMode === false &&
     canConfigureCollections &&
-    collection?.status === "ready";
+    collection !== undefined;
+  const canConfigureCollection =
+    canConvertCollection && collection?.status === "ready";
+  const convertibleCollectionRef = useRef<ContentCollection>();
+  convertibleCollectionRef.current = canConvertCollection
+    ? collection
+    : undefined;
   const canManageRef = useRef(canManage);
   canManageRef.current = canManage;
   const canCopyOrDeleteRef = useRef(canCopyOrDelete);
@@ -138,6 +150,11 @@ export const FolderThumbnail = ({
       setSettingsCollection(undefined);
     }
   }, [canConfigureCollection]);
+  useEffect(() => {
+    if (!canConvertCollection) {
+      setConvertingCollection(undefined);
+    }
+  }, [canConvertCollection]);
   const actions: AssetManagerItemActions = {
     open: onOpen,
     ...(canManage
@@ -153,6 +170,16 @@ export const FolderThumbnail = ({
                   const currentCollection = configurableCollectionRef.current;
                   if (currentCollection !== undefined) {
                     setSettingsCollection(currentCollection);
+                  }
+                },
+              }
+            : {}),
+          ...(canConvertCollection
+            ? {
+                convertCollection: () => {
+                  const currentCollection = convertibleCollectionRef.current;
+                  if (currentCollection !== undefined) {
+                    setConvertingCollection(currentCollection);
                   }
                 },
               }
@@ -277,22 +304,25 @@ export const FolderThumbnail = ({
         label={folder.name}
         path={path}
         preview={
-          <div style={{ position: "relative" }}>
+          <Grid css={{ position: "relative" }}>
             <FolderIcon size={40} />
-            {collection !== undefined &&
-              (collection.status === "invalid" ? (
-                <AlertCircleIcon
-                  size={16}
-                  style={{ position: "absolute", right: -4, bottom: -2 }}
-                />
-              ) : (
-                <ListViewIcon
-                  data-collection-folder-icon=""
-                  size={16}
-                  style={{ position: "absolute", right: -4, bottom: -2 }}
-                />
-              ))}
-          </div>
+            {collection !== undefined && (
+              <Grid
+                css={{
+                  position: "absolute",
+                  inset: 0,
+                  placeItems: "center",
+                  paddingTop: theme.spacing[3],
+                }}
+              >
+                {collection.status === "invalid" ? (
+                  <AlertCircleIcon size={16} fill="currentColor" />
+                ) : (
+                  <ListViewIcon data-collection-folder-icon="" size={16} />
+                )}
+              </Grid>
+            )}
+          </Grid>
         }
         aria-label={`Folder ${folder.name}`}
         aria-description={
@@ -338,6 +368,12 @@ export const FolderThumbnail = ({
               setSettingsCollection(undefined);
             }
           }}
+        />
+      )}
+      {canConvertCollection && convertingCollection !== undefined && (
+        <ConvertCollectionDialog
+          configAsset={convertingCollection.configAsset}
+          onClose={() => setConvertingCollection(undefined)}
         />
       )}
     </>

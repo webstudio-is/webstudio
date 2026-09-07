@@ -15,6 +15,7 @@ import {
   propertySyntaxes,
 } from "@webstudio-is/css-data";
 import {
+  PanelContent,
   Flex,
   Grid,
   Label,
@@ -216,10 +217,10 @@ export const ShadowContent = ({
 
   return (
     <Flex direction="column">
-      <Grid
+      <PanelContent
+        as={Grid}
         gap="2"
         css={{
-          padding: theme.panel.padding,
           gridTemplateColumns:
             property === "box-shadow" ? "1fr 1fr" : "1fr 1fr 1fr",
         }}
@@ -323,13 +324,15 @@ export const ShadowContent = ({
             />
           </Flex>
         ) : null}
-      </Grid>
+      </PanelContent>
 
-      <Grid
+      <PanelContent
+        as={Grid}
         gap="2"
         css={{
-          padding: theme.panel.padding,
-          ...(property === "box-shadow" && { gridTemplateColumns: "3fr 1fr" }),
+          ...(property === "box-shadow" && {
+            gridTemplateColumns: "3fr 1fr",
+          }),
         }}
       >
         <Flex direction="column" gap="1">
@@ -400,15 +403,15 @@ export const ShadowContent = ({
             </ToggleGroup>
           </Flex>
         ) : null}
-      </Grid>
+      </PanelContent>
 
       {hideCodeEditor === false ? (
         <>
           <Separator css={{ gridColumn: "span 2" }} />
-          <Flex
+          <PanelContent
+            as={Flex}
             direction="column"
             css={{
-              padding: theme.panel.padding,
               gap: theme.spacing[3],
               minWidth: theme.spacing[30],
             }}
@@ -445,7 +448,7 @@ export const ShadowContent = ({
                 />
               }
             />
-          </Flex>
+          </PanelContent>
         </>
       ) : undefined}
     </Flex>

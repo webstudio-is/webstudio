@@ -1,5 +1,6 @@
 import { forwardRef, type ComponentProps } from "react";
 import {
+  PanelContent,
   Flex,
   Grid,
   EnhancedTooltip,
@@ -283,9 +284,9 @@ const TypographySectionAdvancedPopover = () => {
       title="Advanced typography"
       placement="bottom-within"
       content={
-        <Grid
+        <PanelContent
+          as={Grid}
           css={{
-            padding: theme.panel.padding,
             gap: theme.spacing[9],
             width: theme.spacing[30],
           }}
@@ -382,7 +383,7 @@ const TypographySectionAdvancedPopover = () => {
               />
             </Box>
           </Grid>
-        </Grid>
+        </PanelContent>
       }
     >
       <AdvancedOptionsButton />

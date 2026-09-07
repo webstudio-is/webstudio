@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import {
+  PanelContent,
   Button,
   Box,
   Dialog,
@@ -67,10 +68,10 @@ const ConnectSourceDialog = ({
     <DialogContent>
       <DialogTitle>Connect content source</DialogTitle>
       <DialogDescription asChild>
-        <Text css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Text}>
           Connecting this file will replace the existing Content Block content.
           The MDX file will not be changed.
-        </Text>
+        </PanelContent>
       </DialogDescription>
       {error !== undefined && (
         <Text
@@ -242,7 +243,7 @@ export const ContentBlockSourceControl = ({
             connected ? (
               <Grid columns={2} gap="2" aria-label="Content source actions">
                 <Flex align="center" gap="1">
-                  <Box css={{ flex: 1, minWidth: 0 }}>
+                  <Box css={{ flex: 1 }}>
                     <SelectAsset
                       assetId={resolvedAsset?.id}
                       title="Switch MDX file"

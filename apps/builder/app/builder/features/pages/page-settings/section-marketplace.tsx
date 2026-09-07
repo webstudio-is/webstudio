@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   cssVar,
@@ -39,7 +40,7 @@ export const MarketplaceSection = ({
   const thumbnailAsset = assets.get(values.marketplace.thumbnailAssetId);
   const thumnailFallbackAsset = assets.get(values.socialImageAssetId);
   return (
-    <Grid gap={2} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} gap={2}>
       <Grid
         flow="column"
         gap={1}
@@ -117,6 +118,6 @@ export const MarketplaceSection = ({
           </Grid>
         </Box>
       </Grid>
-    </Grid>
+    </PanelContent>
   );
 };

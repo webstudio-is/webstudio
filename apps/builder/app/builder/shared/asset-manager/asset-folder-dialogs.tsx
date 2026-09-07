@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   Checkbox,
@@ -224,7 +225,7 @@ const AssetFolderForm = ({
   };
 
   return (
-    <Grid gap={3} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} gap={3}>
       <Grid gap={1}>
         <Label htmlFor={id}>Name</Label>
         <InputField
@@ -296,7 +297,7 @@ const AssetFolderForm = ({
           {submitLabel}
         </Button>
       </Flex>
-    </Grid>
+    </PanelContent>
   );
 };
 
@@ -411,7 +412,7 @@ export const CreateAssetFolderDialog = ({
               : "Finish collection setup"}
         </DialogTitle>
         {createdCollectionFolderId !== undefined ? (
-          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Grid} gap={3}>
             <Text>
               The collection files are ready. You can configure its fields and
               entry rules now.
@@ -440,7 +441,7 @@ export const CreateAssetFolderDialog = ({
                 </Button>
               )}
             </Flex>
-          </Grid>
+          </PanelContent>
         ) : pendingCollection === undefined ? (
           <AssetFolderForm
             id="asset-folder-name"
@@ -452,7 +453,7 @@ export const CreateAssetFolderDialog = ({
             onSubmit={create}
           />
         ) : (
-          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Grid} gap={3}>
             <Text>
               {initializing
                 ? "Creating the collection template and configuration…"
@@ -481,7 +482,7 @@ export const CreateAssetFolderDialog = ({
                 {initializing ? "Setting up…" : "Retry setup"}
               </Button>
             </Flex>
-          </Grid>
+          </PanelContent>
         )}
       </DialogContent>
     </Dialog>
@@ -543,7 +544,7 @@ export const AssetFolderSettingsDialog = ({
           {confirmDelete ? "Delete folder" : "Folder settings"}
         </DialogTitle>
         {canDelete && confirmDelete ? (
-          <Box css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Box}>
             <Text>
               Delete “{folder.name}”? Everything inside this folder, including
               nested folders and assets, will be deleted.
@@ -558,7 +559,7 @@ export const AssetFolderSettingsDialog = ({
                 Delete folder
               </Button>
             </Flex>
-          </Box>
+          </PanelContent>
         ) : (
           <AssetFolderForm
             id={`asset-folder-name-${folder.id}`}
@@ -618,7 +619,7 @@ export const MoveAssetManagerItemsDialog = ({
         onKeyDown={stopEscapePropagation}
       >
         <DialogTitle>Move items</DialogTitle>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} gap={3}>
           <AssetFolderSelector
             value={folderId}
             onChange={setFolderId}
@@ -638,7 +639,7 @@ export const MoveAssetManagerItemsDialog = ({
               Move
             </Button>
           </Flex>
-        </Grid>
+        </PanelContent>
       </DialogContent>
     </Dialog>
   );

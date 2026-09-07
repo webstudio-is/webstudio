@@ -14,6 +14,7 @@ import {
   TrashIcon,
 } from "@webstudio-is/icons";
 import {
+  PanelContent,
   Box,
   Button,
   cssVar,
@@ -101,7 +102,7 @@ const BindingPanel = ({
       }}
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>
-        <Flex gap="1" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="1">
           <Text variant="labels">Variables</Text>
           <Tooltip
             variant="wrapped"
@@ -114,7 +115,7 @@ const BindingPanel = ({
               tabIndex={0}
             />
           </Tooltip>
-        </Flex>
+        </PanelContent>
         {scopeEntries.length === 0 && (
           <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
             <Text variant="labels" align="center">
@@ -157,7 +158,7 @@ const BindingPanel = ({
           </CssValueListArrowFocus>
         </ScrollAreaNative>
       </Box>
-      <Flex gap="1" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} gap="1">
         <Text variant="labels">Expression editor</Text>
         <Tooltip
           variant="wrapped"
@@ -176,8 +177,8 @@ const BindingPanel = ({
             tabIndex={0}
           />
         </Tooltip>
-      </Flex>
-      <Box css={{ padding: theme.panel.padding, pt: 0 }}>
+      </PanelContent>
+      <PanelContent as={Box} css={{ pt: 0 }}>
         <ExpressionEditor
           editorApiRef={editorApiRef}
           scope={scope}
@@ -198,7 +199,7 @@ const BindingPanel = ({
             setTouched(true);
           }}
         />
-      </Box>
+      </PanelContent>
     </ScrollArea>
   );
 };

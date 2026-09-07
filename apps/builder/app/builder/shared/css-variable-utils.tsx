@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -182,9 +183,9 @@ export const DeleteCssVariableDialog = ({
         }}
       >
         <DialogTitle>Delete confirmation</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>{`Delete CSS variable "${cssVariable?.property}" from the project?`}</Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button
             autoFocus
@@ -256,7 +257,7 @@ export const RenameCssVariableDialog = ({
         }}
       >
         <DialogTitle>Rename CSS variable</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Flex direction="column" gap="1">
             <InputField
               value={name}
@@ -272,7 +273,7 @@ export const RenameCssVariableDialog = ({
               </Text>
             )}
           </Flex>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button color="primary" onClick={handleConfirm}>
             Rename
@@ -297,7 +298,7 @@ const DeleteUnusedCssVariablesDialogContent = ({
 
   return (
     <>
-      <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} gap="3" direction="column">
         {unusedVariablesArray.length === 0 ? (
           <Text>There are no unused CSS variables to delete.</Text>
         ) : (
@@ -321,7 +322,7 @@ const DeleteUnusedCssVariablesDialogContent = ({
             </Text>
           </>
         )}
-      </Flex>
+      </PanelContent>
       <DialogActions>
         {unusedVariablesArray.length > 0 && (
           <Button

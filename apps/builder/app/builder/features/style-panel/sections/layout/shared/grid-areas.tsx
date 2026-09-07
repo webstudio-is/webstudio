@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import {
+  PanelContent,
   theme,
   Flex,
   Text,
@@ -322,7 +323,7 @@ const AreaEditor = ({
   );
 
   return (
-    <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Flex} direction="column" gap="2">
       <Grid
         css={{
           gridTemplateColumns: "60px 1fr 1fr",
@@ -428,7 +429,7 @@ const AreaEditor = ({
           Area overlaps with another area
         </Text>
       )}
-    </Flex>
+    </PanelContent>
   );
 };
 
@@ -629,13 +630,9 @@ export const GridAreas = () => {
       <CssValueListArrowFocus>
         <Flex direction="column">
           {areas.length === 0 && (
-            <Text
-              color="subtle"
-              align="center"
-              css={{ padding: theme.panel.padding }}
-            >
+            <PanelContent as={Text} color="subtle" align="center">
               No Areas
-            </Text>
+            </PanelContent>
           )}
           {areas.map((area, index) => (
             <FloatingPanel

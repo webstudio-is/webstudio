@@ -6,6 +6,7 @@ import {
   type TupleValueItem,
 } from "@webstudio-is/css-engine";
 import {
+  PanelContent,
   Flex,
   Label,
   TextArea,
@@ -121,10 +122,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
 
   return (
     <Flex direction="column">
-      <Grid
+      <PanelContent
+        as={Grid}
         gap="2"
         css={{
-          padding: theme.panel.padding,
           gridTemplateColumns: `1fr ${theme.spacing[23]}`,
           gridTemplateRows: theme.spacing[13],
         }}
@@ -242,13 +243,13 @@ export const TransitionContent = ({ index }: { index: number }) => {
             }
           }}
         />
-      </Grid>
+      </PanelContent>
 
       <Separator css={{ gridColumn: "span 2" }} />
-      <Flex
+      <PanelContent
+        as={Flex}
         direction="column"
         css={{
-          padding: theme.panel.padding,
           gap: theme.spacing[3],
           minWidth: theme.spacing[30],
         }}
@@ -290,7 +291,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
             }
           }}
         />
-      </Flex>
+      </PanelContent>
     </Flex>
   );
 };

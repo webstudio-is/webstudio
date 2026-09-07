@@ -14,6 +14,7 @@ import {
 import { flushSync } from "react-dom";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   Dialog,
@@ -129,10 +130,12 @@ type AssetManagerProps = FolderNavigationProps & {
       | "upload"
       | "deleteUnusedAssets"
       | "createEntry"
+      | "convertCollection"
     >
   >;
   collections?: ReadonlyMap<string, ContentCollection>;
   emptyMessage?: string;
+  folderNotice?: ReactNode;
 };
 
 const AssetGrid = ({
@@ -168,6 +171,7 @@ export const AssetManager = ({
   panelActions,
   collections = emptyContentCollections,
   emptyMessage,
+  folderNotice,
 }: AssetManagerProps) => {
   const assets = useStore($assets);
   const effectiveCollections = useMemo(() => {
@@ -190,6 +194,16 @@ export const AssetManager = ({
       }),
     [effectiveCollections]
   );
+  const collectionFileIds = new Set<string>();
+  for (const collection of effectiveCollections.values()) {
+    collectionFileIds.add(collection.configAsset.id);
+    if (
+      collection.status !== "loading" &&
+      collection.templateAsset !== undefined
+    ) {
+      collectionFileIds.add(collection.templateAsset.id);
+    }
+  }
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
   const project = useStore($project);
@@ -217,14 +231,14 @@ export const AssetManager = ({
       const currentAuthPermit = $authPermit.get();
       return (
         currentAuthPermit !== "view" &&
-        (canConfigureContentCollections(currentAuthPermit) ||
-          items.every(
-            (item) =>
-              (item.type !== "folder" ||
-                collectionProtectedFolderIds.has(item.id) === false) &&
-              (item.type !== "asset" ||
-                collectionReservedAssetIds.has(item.id) === false)
-          ))
+        items.every(
+          (item) =>
+            (item.type !== "folder" ||
+              canConfigureContentCollections(currentAuthPermit) ||
+              collectionProtectedFolderIds.has(item.id) === false) &&
+            (item.type !== "asset" ||
+              collectionReservedAssetIds.has(item.id) === false)
+        )
       );
     },
     [authPermit, collectionProtectedFolderIds, collectionReservedAssetIds]
@@ -237,12 +251,11 @@ export const AssetManager = ({
       const currentAuthPermit = $authPermit.get();
       return (
         currentAuthPermit !== "view" &&
-        (canConfigureContentCollections(currentAuthPermit) ||
-          items.every(
-            (item) =>
-              item.type !== "asset" ||
-              collectionReservedAssetIds.has(item.id) === false
-          ))
+        items.every(
+          (item) =>
+            item.type !== "asset" ||
+            collectionReservedAssetIds.has(item.id) === false
+        )
       );
     },
     [authPermit, collectionReservedAssetIds]
@@ -274,6 +287,7 @@ export const AssetManager = ({
   const [marqueeRect, setMarqueeRect] = useState<AssetManagerMarqueeRect>();
   const [itemContextMenu, setItemContextMenu] = useState<{
     actions?: AssetManagerItemActions;
+    disabledActions?: ReadonlySet<keyof AssetManagerItemActions>;
     instance: number;
   }>({ instance: 0 });
   const itemElements = useRef(new Map<string, HTMLElement>());
@@ -961,6 +975,7 @@ export const AssetManager = ({
     ? {
         createFolder: panelActions?.createFolder,
         createEntry: panelActions?.createEntry,
+        convertCollection: panelActions?.convertCollection,
         deleteUnusedAssets: panelActions?.deleteUnusedAssets,
       }
     : panelActions;
@@ -1064,10 +1079,14 @@ export const AssetManager = ({
   const hasPanelContextMenuActions = Object.values(
     panelContextMenuActions
   ).some((action) => action !== undefined);
-  const showItemContextMenu = (actions: AssetManagerItemActions) => {
+  const showItemContextMenu = (
+    actions: AssetManagerItemActions,
+    disabledActions?: ReadonlySet<keyof AssetManagerItemActions>
+  ) => {
     flushSync(() => {
       setItemContextMenu(({ instance }) => ({
         actions,
+        disabledActions,
         instance: instance + 1,
       }));
     });
@@ -1167,6 +1186,7 @@ export const AssetManager = ({
   return (
     <>
       <AssetsShell
+        contentNotice={folderNotice}
         filters={
           <Flex gap="2" grow>
             <AssetFilters
@@ -1240,7 +1260,7 @@ export const AssetManager = ({
               disabledActions={
                 itemContextMenu.actions === undefined
                   ? disabledPanelActions
-                  : undefined
+                  : itemContextMenu.disabledActions
               }
             />
           ) : undefined
@@ -1354,6 +1374,9 @@ export const AssetManager = ({
                   isCollectionReserved={collectionReservedAssetIds.has(
                     assetContainer.asset.id
                   )}
+                  isCollectionFile={collectionFileIds.has(
+                    assetContainer.asset.id
+                  )}
                   unavailableDestinationFolderIds={collectionFolderIds}
                   onMove={() =>
                     setPendingMoveItems([
@@ -1382,7 +1405,7 @@ export const AssetManager = ({
       >
         <DialogContent minWidth={360} aria-describedby={undefined}>
           <DialogTitle>Delete selected items</DialogTitle>
-          <Box css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Box}>
             <Text>
               Delete{" "}
               {getItemCountLabel(pendingDeleteItems?.length ?? 0, "selected")}?
@@ -1414,7 +1437,7 @@ export const AssetManager = ({
                 Delete
               </Button>
             </Flex>
-          </Box>
+          </PanelContent>
         </DialogContent>
       </Dialog>
       {pendingMoveItems !== undefined && (

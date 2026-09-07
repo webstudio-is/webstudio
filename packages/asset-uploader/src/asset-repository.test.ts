@@ -607,155 +607,194 @@ describe("PostgresAssetRepository", () => {
     );
   });
 
-  test("creates a validated collection entry from the configured template", async () => {
-    const dependencies = createDependencies();
-    const configSource = createDefaultCollectionConfig();
-    const templateSource = "---\ndraft: true\n---\n\nStarter body.\n";
-    const folder = {
-      id: "posts",
-      projectId: "project-1",
-      name: "Posts",
-      createdAt: "2026-09-02T00:00:00.000Z",
-    };
-    const configAsset = {
-      id: "config",
-      projectId: "project-1",
-      name: "config-storage.json",
-      filename: "collection",
-      folderId: folder.id,
-      type: "file" as const,
-      format: "json",
-      size: configSource.length,
-      description: null,
-      createdAt: "2026-09-02T00:00:00.000Z",
-      meta: {},
-    };
-    const templateAsset = {
-      ...configAsset,
-      id: "template",
-      name: "template-storage.mdx",
-      filename: "template",
-      format: "mdx",
-      size: templateSource.length,
-    };
-    const createdAsset = {
-      ...templateAsset,
-      id: "created",
-      name: "created-storage.mdx",
-      filename: "hello-world",
-      size: 0,
-    };
-    dependencies.loadAssetFoldersByProjectWithClient.mockResolvedValue([
-      folder,
-    ]);
-    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
-      configAsset,
-      templateAsset,
-    ]);
-    dependencies.createUploadTicket.mockResolvedValue({
-      assetId: createdAsset.id,
-      name: createdAsset.name,
-      deduplicated: false,
-    });
-    let uploadedSource = "";
-    let uploadedAsset: Asset | undefined;
-    dependencies.uploadFile.mockImplementation(async (_name, data) => {
-      uploadedSource = await new Response(data).text();
-      uploadedAsset = { ...createdAsset, size: uploadedSource.length };
-      return uploadedAsset;
-    });
-    const readFile = vi.fn(async (name: string, range) => {
-      const source =
-        name === configAsset.name
-          ? configSource
-          : name === templateAsset.name
-            ? templateSource
-            : uploadedSource;
-      const offset = range?.offset ?? 0;
-      const content =
-        range?.length === undefined
-          ? source.slice(offset)
-          : source.slice(offset, offset + range.length);
-      return {
-        data: new Blob([
-          content,
-        ]).stream() as unknown as AsyncIterable<Uint8Array>,
-        contentLength: content.length,
+  test.each([
+    ["Hello world", "hello-world", false],
+    ["Привет мир", "привет-мир", false],
+    ["你好世界", "你好世界", false],
+    ["Café", "café", false],
+    ["Slugless entry", "entry-91f1de15-e03b-40ae-9b2f-6c19a8bbf1fa", true],
+  ] as const)(
+    "creates and retries a validated collection entry: %s",
+    async (title, slug, slugless) => {
+      const dependencies = createDependencies();
+      const schema = JSON.parse(createDefaultCollectionConfig());
+      if (slugless) {
+        delete schema.properties.slug;
+        schema.required = ["title"];
+        delete schema["x-webstudio"].slugField;
+        delete schema["x-webstudio"].generateSlugFrom;
+      }
+      const configSource = JSON.stringify(schema);
+      const templateSource = "---\ndraft: true\n---\n\nStarter body.\n";
+      const folder = {
+        id: "posts",
+        projectId: "project-1",
+        name: "Posts",
+        createdAt: "2026-09-02T00:00:00.000Z",
       };
-    });
-    const repository = new PostgresAssetRepository({
-      projectId: "project-1",
-      context,
-      assetStore: { ...assetClient, readFile },
-      dependencies,
-    });
-
-    const result = await repository.createCollectionEntry({
-      folderId: folder.id,
-      values: { title: "Hello world" },
-    });
-    expect(result).toBe(uploadedAsset);
-    expect(dependencies.createUploadTicket).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filename: "hello-world.mdx",
-        displayFilename: "hello-world",
+      const configAsset = {
+        id: "config",
+        projectId: "project-1",
+        name: "config-storage.json",
+        filename: "collection",
         folderId: folder.id,
-        contentHash: expect.stringMatching(/^[0-9a-f]{64}$/),
-      }),
-      context
-    );
-    expect(uploadedSource).toContain("Starter body.");
+        type: "file" as const,
+        format: "json",
+        size: configSource.length,
+        description: null,
+        createdAt: "2026-09-02T00:00:00.000Z",
+        meta: {},
+      };
+      const templateAsset = {
+        ...configAsset,
+        id: "template",
+        name: "template-storage.mdx",
+        filename: "template",
+        format: "mdx",
+        size: templateSource.length,
+      };
+      const createdAsset = {
+        ...templateAsset,
+        id: "created",
+        name: "created-storage.mdx",
+        filename: slug,
+        size: 0,
+      };
+      dependencies.loadAssetFoldersByProjectWithClient.mockResolvedValue([
+        folder,
+      ]);
+      dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+        configAsset,
+        templateAsset,
+      ]);
+      dependencies.createUploadTicket.mockResolvedValue({
+        assetId: createdAsset.id,
+        name: createdAsset.name,
+        deduplicated: false,
+      });
+      let uploadedSource = "";
+      let uploadedAsset: Asset | undefined;
+      dependencies.uploadFile.mockImplementation(async (_name, data) => {
+        uploadedSource = await new Response(data).text();
+        uploadedAsset = {
+          ...createdAsset,
+          size: new TextEncoder().encode(uploadedSource).length,
+        };
+        return uploadedAsset;
+      });
+      const readFile = vi.fn(async (name: string, range) => {
+        const source =
+          name === configAsset.name
+            ? configSource
+            : name === templateAsset.name
+              ? templateSource
+              : uploadedSource;
+        const bytes = new TextEncoder().encode(source);
+        const offset = range?.offset ?? 0;
+        const content =
+          range?.length === undefined
+            ? bytes.slice(offset)
+            : bytes.slice(offset, offset + range.length);
+        return {
+          data: new Blob([
+            content,
+          ]).stream() as unknown as AsyncIterable<Uint8Array>,
+          contentLength: content.length,
+        };
+      });
+      const repository = new PostgresAssetRepository({
+        projectId: "project-1",
+        context,
+        assetStore: { ...assetClient, readFile },
+        dependencies,
+      });
 
-    dependencies.createUploadTicket.mockResolvedValue({
-      assetId: uploadedAsset!.id,
-      name: uploadedAsset!.name,
-      deduplicated: true,
-      asset: uploadedAsset!,
-    });
-    await expect(
-      repository.createCollectionEntry({
+      const result = await repository.createCollectionEntry({
         folderId: folder.id,
-        values: { title: "Hello world" },
-      })
-    ).resolves.toBe(uploadedAsset);
-    expect(dependencies.uploadFile).toHaveBeenCalledOnce();
+        values: { title },
+        requestId: "91f1de15-e03b-40ae-9b2f-6c19a8bbf1fa",
+      });
+      expect(result).toBe(uploadedAsset);
+      expect(dependencies.createUploadTicket).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filename: `${slug}.mdx`,
+          displayFilename: slug,
+          folderId: folder.id,
+          contentHash: expect.stringMatching(/^[0-9a-f]{64}$/),
+        }),
+        context
+      );
+      expect(uploadedSource).toContain("Starter body.");
 
-    const duplicateTemplate = {
-      ...templateAsset,
-      id: "duplicate-template",
-      name: "duplicate-template-storage.mdx",
-    };
-    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
-      configAsset,
-      templateAsset,
-      duplicateTemplate,
-    ]);
-    await expect(
-      repository.createCollectionEntry({
-        folderId: folder.id,
-        values: { title: "Another post" },
-      })
-    ).rejects.toThrow('Collection template "template.mdx" is ambiguous');
+      dependencies.createUploadTicket.mockResolvedValue({
+        assetId: uploadedAsset!.id,
+        name: uploadedAsset!.name,
+        deduplicated: true,
+        asset: uploadedAsset!,
+      });
+      await expect(
+        repository.createCollectionEntry({
+          folderId: folder.id,
+          values: { title },
+          requestId: "91f1de15-e03b-40ae-9b2f-6c19a8bbf1fa",
+        })
+      ).resolves.toBe(uploadedAsset);
+      expect(dependencies.uploadFile).toHaveBeenCalledOnce();
 
-    const duplicateConfig = {
-      ...configAsset,
-      id: "duplicate-config",
-      name: "duplicate-config-storage.json",
-    };
-    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
-      configAsset,
-      duplicateConfig,
-      templateAsset,
-    ]);
-    await expect(
-      repository.createCollectionEntry({
-        folderId: folder.id,
-        values: { title: "Another post" },
-      })
-    ).rejects.toThrow(
-      "A collection folder must contain exactly one collection.json"
-    );
-  });
+      const existingAsset = {
+        ...uploadedAsset!,
+        filename: slug.normalize("NFD"),
+      };
+      dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+        configAsset,
+        templateAsset,
+        existingAsset,
+      ]);
+      await expect(
+        repository.createCollectionEntry({
+          folderId: folder.id,
+          values: { title },
+          requestId: "91f1de15-e03b-40ae-9b2f-6c19a8bbf1fa",
+        })
+      ).resolves.toBe(existingAsset);
+
+      const duplicateTemplate = {
+        ...templateAsset,
+        id: "duplicate-template",
+        name: "duplicate-template-storage.mdx",
+      };
+      dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+        configAsset,
+        templateAsset,
+        duplicateTemplate,
+      ]);
+      await expect(
+        repository.createCollectionEntry({
+          folderId: folder.id,
+          values: { title: "Another post" },
+        })
+      ).rejects.toThrow('Collection template "template.mdx" is ambiguous');
+
+      const duplicateConfig = {
+        ...configAsset,
+        id: "duplicate-config",
+        name: "duplicate-config-storage.json",
+      };
+      dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+        configAsset,
+        duplicateConfig,
+        templateAsset,
+      ]);
+      await expect(
+        repository.createCollectionEntry({
+          folderId: folder.id,
+          values: { title: "Another post" },
+        })
+      ).rejects.toThrow(
+        "A collection folder must contain exactly one collection.json"
+      );
+    }
+  );
 
   test("removes a new entry when the collection changes during upload", async () => {
     const dependencies = createDependencies();
@@ -1647,6 +1686,66 @@ describe("PostgresAssetRepository", () => {
       })
     ).rejects.toThrow("must remain MDX files");
     expect(dependencies.updateAssetContent).toHaveBeenCalledTimes(3);
+  });
+
+  test("updates collection entries without requiring a filename slug field", async () => {
+    const dependencies = createDependencies();
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    delete schema["x-webstudio"].slugField;
+    delete schema["x-webstudio"].generateSlugFrom;
+    delete schema.properties.slug;
+    schema.required = schema.required.filter((key: string) => key !== "slug");
+    const configSource = JSON.stringify(schema);
+    const configAsset = {
+      id: "config",
+      projectId: "project-1",
+      name: "config-storage.json",
+      filename: "collection",
+      folderId: "posts",
+      type: "file" as const,
+      format: "json",
+      size: configSource.length,
+      description: null,
+      createdAt: "2026-09-02T00:00:00.000Z",
+      meta: {},
+    };
+    const entryAsset = {
+      ...configAsset,
+      id: "entry",
+      name: "entry-id.mdx",
+      filename: "entry-id",
+      format: "mdx",
+    };
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      configAsset,
+      entryAsset,
+    ]);
+    prepareAssetContentUpdate(dependencies, entryAsset);
+    const readFile = vi.fn(async (name: string) => {
+      const source =
+        name === configAsset.name
+          ? configSource
+          : "---\ntitle: Original\n---\nBody";
+      return {
+        data: new Blob([
+          source,
+        ]).stream() as unknown as AsyncIterable<Uint8Array>,
+        contentLength: source.length,
+      };
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { ...assetClient, readFile },
+      dependencies,
+    });
+    await expect(
+      repository.updateContent({
+        assetId: entryAsset.id,
+        expectedName: entryAsset.name,
+        data: new Blob(["---\ntitle: Updated\n---\nBody"]).stream(),
+      })
+    ).resolves.toBeDefined();
   });
 
   test("allows collection schema changes while existing entries are repaired", async () => {

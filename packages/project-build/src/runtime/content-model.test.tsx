@@ -17,6 +17,7 @@ import {
 } from "./content-model";
 
 const Body = createTemplateComponentFixture("Body");
+const BlockTemplate = createTemplateComponentFixture("ws:block-template");
 const Bold = createTemplateComponentFixture("Bold");
 const Box = createTemplateComponentFixture("Box");
 const CodeText = createTemplateComponentFixture("CodeText");
@@ -34,6 +35,62 @@ const VimeoSpinner = createTemplateComponentFixture("VimeoSpinner");
 const XmlNode = createTemplateComponentFixture("XmlNode");
 
 const defaultMetas = componentMetas;
+
+test.each(["body", "templates", "list-item"])(
+  "validates template HTML independently when starting at %s",
+  (start) => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body">
+        <ws.block ws:id="block">
+          <BlockTemplate ws:id="templates">
+            <ws.element ws:tag="li" ws:id="list-item">
+              <ws.element ws:tag="p">Item</ws.element>
+            </ws.element>
+          </BlockTemplate>
+        </ws.block>
+      </ws.element>
+    );
+    const selector = ["list-item", "templates", "block", "body"];
+    expect(
+      isTreeSatisfyingContentModel({
+        instances,
+        props,
+        metas: defaultMetas,
+        instanceSelector: selector.slice(selector.indexOf(start)),
+      })
+    ).toBe(true);
+  }
+);
+
+test.each(["template", "body"])(
+  "still rejects invalid list nesting in %s content",
+  (location) => {
+    const invalid = <ws.element ws:tag="li" ws:id="invalid" />;
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body">
+        <ws.block>
+          <BlockTemplate>
+            {location === "template" ? (
+              <ws.element ws:tag="li">{invalid}</ws.element>
+            ) : undefined}
+          </BlockTemplate>
+          {location === "body" ? invalid : undefined}
+        </ws.block>
+      </ws.element>
+    );
+    const errors: string[][] = [];
+    expect(
+      isTreeSatisfyingContentModel({
+        instances,
+        props,
+        metas: defaultMetas,
+        instanceSelector: ["body"],
+        onError: (_message, selector) => errors.push(selector),
+      })
+    ).toBe(false);
+    expect(errors[0][0]).toBe("invalid");
+  }
+);
 
 test("checks direct text capability without promoting the outer rich-text root", () => {
   const { instances, props } = renderData(

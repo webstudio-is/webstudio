@@ -2,6 +2,7 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import {
+  PanelContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,7 +13,6 @@ import {
   Button,
   Text,
   Flex,
-  theme,
   toast,
   Box,
   Checkbox,
@@ -87,7 +87,7 @@ const DeleteUnusedAssetsDialogContent = ({
 
   return (
     <>
-      <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} gap="3" direction="column">
         {unusedAssets.length === 0 ? (
           <DialogDescription asChild>
             <Text>There are no unused assets to delete.</Text>
@@ -137,7 +137,7 @@ const DeleteUnusedAssetsDialogContent = ({
             </ScrollArea>
           </>
         )}
-      </Flex>
+      </PanelContent>
       <DialogActions>
         {unusedAssets.length > 0 && (
           <Button

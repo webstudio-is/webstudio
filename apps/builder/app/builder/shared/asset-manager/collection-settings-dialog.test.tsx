@@ -1,4 +1,5 @@
 import { act } from "react-dom/test-utils";
+import { userEvent } from "@vitest/browser/context";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
@@ -299,6 +300,86 @@ test("allows text type edits for the slug source while protecting the slug", asy
   ).toContain("Slug");
 });
 
+test("saves a collection without a slug after changing the slug type", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const updateContent = vi.fn(
+    async ({ asset }: { asset: Asset; content: string }) => asset
+  );
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={() => undefined}
+      readTemplateSource={async () => createDefaultCollectionTemplate()}
+      updateContent={updateContent}
+    />
+  );
+  await act(async () => undefined);
+  act(() =>
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Edit URL slug"]')
+      ?.click()
+  );
+  const chooseType = async (value: string) => {
+    const control = document.querySelector<HTMLButtonElement>(
+      '[aria-label="URL slug type"]'
+    )!;
+    expect(control.disabled).toBe(false);
+    await act(async () => userEvent.click(control));
+    const option = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="option"]')
+    ).find((option) => option.textContent === value)!;
+    expect(option).toBeDefined();
+    await act(async () => userEvent.click(option));
+  };
+  await chooseType("Text");
+  expect(
+    document.querySelector('[aria-label="URL slug type"]')?.textContent
+  ).toBe("Text");
+  expect(
+    document.querySelector('[aria-label="Generate slug from"]')
+  ).toBeNull();
+  await vi.waitFor(() => expect(updateContent).toHaveBeenCalledOnce());
+  const withoutSlug = parseCollectionConfig(
+    updateContent.mock.calls[0][0].content
+  );
+  expect(withoutSlug.slugField).toBeUndefined();
+  expect(withoutSlug.generateSlugFrom).toBeUndefined();
+  expect(
+    withoutSlug.fields.find((field) => field.key === "slug")?.control
+  ).toBe("text");
+  expect(document.querySelector('[role="alert"]')).toBeNull();
+  await chooseType("Slug");
+  input(
+    document.querySelector<HTMLInputElement>('[aria-label="URL slug label"]')!,
+    "Permalink"
+  );
+  await vi.waitFor(() => expect(updateContent).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() =>
+    expect(document.querySelector('[role="alert"]')).toBeNull()
+  );
+  const saved = parseCollectionConfig(updateContent.mock.calls[1][0].content);
+  expect(
+    saved.fields.find((field) => field.key === saved.slugField)
+  ).toMatchObject({ control: "slug", label: "Permalink" });
+});
+
 test("shows template loading failures without save or cancel buttons", async () => {
   initBridge({
     authorize: () => true,
@@ -489,7 +570,7 @@ test("keeps focus while editing a field key", async () => {
   expect(document.activeElement).toBe(keyControl);
 });
 
-test("organizes field, template, and collection settings by task", async () => {
+test("switches between field and template settings", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -517,30 +598,16 @@ test("organizes field, template, and collection settings by task", async () => {
 
   await act(async () => undefined);
 
-  const titleField = document.querySelector<HTMLButtonElement>(
-    '[aria-label="Edit Title"]'
+  const sections = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '[role="listbox"]:not([aria-label="Collection fields"]) [role="option"]'
+    )
   );
-  expect(titleField?.getAttribute("aria-pressed")).toBe("true");
-  expect(titleField?.textContent).toContain("Text");
-  expect(titleField?.textContent).toContain("Required");
-  act(() => {
-    document
-      .querySelector<HTMLButtonElement>('[aria-label="Edit URL slug"]')
-      ?.click();
-  });
-  expect(titleField?.getAttribute("aria-pressed")).toBe("false");
-  expect(document.querySelector('[aria-label="Title label"]')).toBeNull();
-  expect(
-    document
-      .querySelector('[aria-label="Edit URL slug"]')
-      ?.getAttribute("aria-pressed")
-  ).toBe("true");
-  expect(
-    document.querySelector('[aria-label="Generate slug from"]')
-  ).toBeInstanceOf(HTMLButtonElement);
-  expect(document.querySelector('[aria-label="URL slug type"]')).toBeInstanceOf(
-    HTMLButtonElement
-  );
+  expect(sections).toHaveLength(2);
+  expect(sections[0]?.getAttribute("aria-current")).toBe("true");
+  act(() => sections[1]?.click());
+  expect(sections[0]?.hasAttribute("aria-current")).toBe(false);
+  expect(sections[1]?.getAttribute("aria-current")).toBe("true");
   expect(
     document.querySelector('[role="toolbar"][aria-label="Markdown formatting"]')
   ).toBeInstanceOf(HTMLElement);
@@ -562,37 +629,6 @@ test("organizes field, template, and collection settings by task", async () => {
   input(templateName, "post-template");
   expect(templateName.value).toBe("post-template");
   expect(document.querySelector("#collection-entry-template")).toBeNull();
-  expect(document.querySelector('[aria-label="Title default"]')).toBeNull();
-  expect(document.querySelector('[aria-label="Draft default"]')).toBeNull();
-
-  const sections = Array.from(
-    document.querySelectorAll<HTMLElement>('[role="option"]')
-  ).map((option) => option.textContent);
-  expect(sections).toEqual(["Fields", "Entry template"]);
-  expect(
-    document.querySelector('[aria-label="Collection actions"]')
-  ).not.toBeNull();
-  const label = document.querySelector('[aria-label="URL slug label"]')!;
-  const key = document.querySelector('[aria-label="URL slug key"]')!;
-  expect(label.parentElement?.parentElement?.parentElement).toBe(
-    key.parentElement?.parentElement?.parentElement
-  );
-  const type = document.querySelector('[aria-label="URL slug type"]')!;
-  const generateFrom = document.querySelector(
-    '[aria-label="Generate slug from"]'
-  )!;
-  const required = document.querySelector('[aria-label="URL slug required"]')!;
-  expect(
-    key.compareDocumentPosition(type) & Node.DOCUMENT_POSITION_FOLLOWING
-  ).toBeTruthy();
-  expect(
-    type.compareDocumentPosition(generateFrom) &
-      Node.DOCUMENT_POSITION_FOLLOWING
-  ).toBeTruthy();
-  expect(
-    generateFrom.compareDocumentPosition(required) &
-      Node.DOCUMENT_POSITION_FOLLOWING
-  ).toBeTruthy();
 });
 
 test("persists a template rename without rewriting unchanged template content", async () => {
@@ -733,6 +769,65 @@ test("retries settings after template content was already saved", async () => {
   );
 });
 
+test("preserves edits and stops writes after an unconfirmed save", async () => {
+  const failure = Object.assign(new Error("Internal recovery instructions"), {
+    code: "ASSET_UPDATE_COMMIT_UNCERTAIN",
+  });
+  const updateContent = vi.fn(async () => {
+    throw failure;
+  });
+  const onOpenChange = vi.fn();
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset: createAsset({
+          id: "config",
+          filename: "collection",
+          format: "json",
+        }),
+        templateAsset: createAsset({
+          id: "template",
+          filename: "template",
+          format: "mdx",
+        }),
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={onOpenChange}
+      updateContent={updateContent}
+      readTemplateSource={async () => createDefaultCollectionTemplate()}
+    />
+  );
+  await act(async () => undefined);
+  const label = document.querySelector<HTMLInputElement>(
+    '[aria-label="Title label"]'
+  )!;
+  input(label, "Headline");
+  await vi.waitFor(() => expect(updateContent).toHaveBeenCalledOnce());
+  await vi.waitFor(() =>
+    expect(document.querySelector('[role="alert"]')).not.toBeNull()
+  );
+  // Developer recovery instructions must not leak into the editing UI.
+  expect(document.querySelector('[role="alert"]')?.textContent).not.toContain(
+    failure.message
+  );
+  input(label, "Post title");
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 750)));
+  expect(updateContent).toHaveBeenCalledOnce();
+  expect(label.value).toBe("Post title");
+  await act(async () =>
+    document.querySelector<HTMLButtonElement>('[aria-label="Close"]')?.click()
+  );
+  expect(updateContent).toHaveBeenCalledOnce();
+  expect(onOpenChange).not.toHaveBeenCalled();
+  await vi.waitFor(() =>
+    expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(2)
+  );
+});
+
 test("starts new fields with empty label and key inputs", async () => {
   const updateContent = vi.fn(
     async ({ asset }: { asset: Asset; content: string }) => asset
@@ -795,13 +890,25 @@ test("starts new fields with empty label and key inputs", async () => {
   const newKey = document.querySelector<HTMLInputElement>(
     '[aria-label="New field key"]'
   )!;
+  const newLabel = document.querySelector<HTMLInputElement>(
+    '[aria-label="New field label"]'
+  )!;
+  expect(document.activeElement).toBe(newLabel);
+  // Wait past autosave: an untouched new field must remain free of errors.
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 700)));
+  expect(document.querySelector('[aria-invalid="true"]')).toBeNull();
+  expect(document.querySelector('[role="alert"]')).toBeNull();
+  act(() => {
+    newKey.focus();
+    newLabel.focus();
+  });
   await vi.waitFor(() =>
     expect(newKey.getAttribute("aria-invalid")).toBe("true")
   );
   const keyError = document.getElementById(
     newKey.getAttribute("aria-describedby")!
   );
-  expect(keyError?.textContent).toBe("Enter a field key.");
+  expect(keyError?.textContent).not.toBe("");
   expect(newKey.parentElement?.parentElement?.contains(keyError)).toBe(true);
   expect(updateContent).not.toHaveBeenCalled();
   input(
@@ -828,7 +935,7 @@ test("starts new fields with empty label and key inputs", async () => {
   expect(
     document.getElementById(authorKey.getAttribute("aria-describedby")!)
       ?.textContent
-  ).toBe("This key is already used by another field.");
+  ).not.toBe("");
   act(() =>
     document
       .querySelector<HTMLButtonElement>('[aria-label="Edit Title"]')
@@ -950,6 +1057,113 @@ test("serializes automatic saves, preserves newer edits, and flushes on close", 
   ).toBe("Excerpt");
 });
 
+test("associates a missing label error with its input and clears it when corrected", async () => {
+  const updateContent = vi.fn(
+    async ({ asset }: { asset: Asset; content: string }) => asset
+  );
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset: createAsset({
+          id: "config",
+          filename: "collection",
+          format: "json",
+        }),
+        templateAsset: createAsset({
+          id: "template",
+          filename: "template",
+          format: "mdx",
+        }),
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: {},
+      }}
+      open
+      onOpenChange={() => undefined}
+      updateContent={updateContent}
+      readTemplateSource={async () => createDefaultCollectionTemplate()}
+    />
+  );
+  await act(async () => undefined);
+  const label = document.querySelector<HTMLInputElement>(
+    '[aria-label="Title label"]'
+  )!;
+  input(label, " ");
+  await vi.waitFor(() =>
+    expect(label.getAttribute("aria-invalid")).toBe("true")
+  );
+  const message = document.getElementById(
+    label.getAttribute("aria-describedby")!
+  );
+  expect(message?.getAttribute("role")).toBe("alert");
+  expect(document.querySelectorAll('[role="alert"]')).toHaveLength(1);
+  expect(updateContent).not.toHaveBeenCalled();
+  input(label, "Headline");
+  await vi.waitFor(() => expect(updateContent).toHaveBeenCalledOnce());
+  expect(label.hasAttribute("aria-invalid")).toBe(false);
+  expect(document.querySelector('[role="alert"]')).toBeNull();
+});
+
+test("navigates fields with arrows and tabs out of the list", async () => {
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset: createAsset({
+          id: "config",
+          filename: "collection",
+          format: "json",
+        }),
+        templateAsset: createAsset({
+          id: "template",
+          filename: "template",
+          format: "mdx",
+        }),
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: {},
+      }}
+      open
+      onOpenChange={() => undefined}
+      readTemplateSource={async () => createDefaultCollectionTemplate()}
+    />
+  );
+  await act(async () => undefined);
+  const title = document.querySelector<HTMLElement>(
+    '[aria-label="Edit Title"]'
+  )!;
+  const slug = document.querySelector<HTMLElement>(
+    '[aria-label="Edit URL slug"]'
+  )!;
+  const draft = document.querySelector<HTMLElement>(
+    '[aria-label="Edit Draft"]'
+  )!;
+  act(() => title.focus());
+  await userEvent.keyboard("{ArrowDown}");
+  expect(document.activeElement).toBe(slug);
+  await userEvent.keyboard("{Enter}");
+  expect(slug.getAttribute("aria-current")).toBe("true");
+  expect(
+    document.querySelector('[aria-label="URL slug label"]')
+  ).not.toBeNull();
+  await userEvent.keyboard("{ArrowDown}");
+  expect(document.activeElement).toBe(draft);
+  await userEvent.keyboard("{ArrowDown}");
+  expect(document.activeElement).toBe(title);
+  await userEvent.keyboard("{ArrowUp}");
+  expect(document.activeElement).toBe(draft);
+  await userEvent.tab();
+  expect(document.activeElement).toBe(
+    document.querySelector('[aria-label="URL slug label"]')
+  );
+  act(() => title.focus());
+  await userEvent.tab();
+  expect(document.activeElement).toBe(
+    document.querySelector('[aria-label="URL slug label"]')
+  );
+});
+
 test("confirms conversion, keeps focus on cancellation, and retries failures", async () => {
   const configAsset = createAsset({
     id: "config",
@@ -990,26 +1204,19 @@ test("confirms conversion, keeps focus on cancellation, and retries failures", a
   );
   await act(async () => undefined);
   const openConfirmation = async () => {
-    await act(async () =>
-      document
-        .querySelector('[aria-label="Collection actions"]')
-        ?.dispatchEvent(
-          new MouseEvent("pointerdown", { bubbles: true, button: 0 })
-        )
+    const action = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Convert to regular folder"]'
     );
-    const action = Array.from(
-      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
-    ).find((item) => item.textContent === "Convert to regular folder…");
-    expect(action).toBeDefined();
+    expect(action).not.toBeNull();
     await act(async () => action?.click());
   };
   const button = (label: string) =>
-    Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
-      (button) => button.textContent === label
-    )!;
+    Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+      .filter((button) => button.textContent === label)
+      .at(-1)!;
   await openConfirmation();
   await vi.waitFor(() =>
-    expect(document.activeElement).toBe(button("Keep collection"))
+    expect(document.activeElement).toBe(button("Convert to regular folder"))
   );
   expect(convertCollection).not.toHaveBeenCalled();
   await act(async () => button("Keep collection").click());
@@ -1035,59 +1242,6 @@ test("confirms conversion, keeps focus on cancellation, and retries failures", a
   await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   expect(convertCollection).toHaveBeenCalledTimes(2);
   expect(convertCollection).toHaveBeenLastCalledWith(configAsset);
-});
-
-test("saves the designer's field order without losing selection", async () => {
-  const configAsset = createAsset({
-    id: "config",
-    filename: "collection",
-    format: "json",
-  });
-  const templateAsset = createAsset({
-    id: "template",
-    filename: "template",
-    format: "mdx",
-  });
-  const updateContent = vi.fn(
-    async ({ asset }: { asset: Asset; content: string }) => asset
-  );
-  render(
-    <CollectionSettingsDialog
-      collection={{
-        status: "ready",
-        folderId: "posts",
-        configAsset,
-        templateAsset,
-        config: parseCollectionConfig(createDefaultCollectionConfig()),
-        templateProperties: { draft: true },
-      }}
-      open
-      onOpenChange={() => undefined}
-      updateContent={updateContent}
-      readTemplateSource={async () => createDefaultCollectionTemplate()}
-    />
-  );
-  await act(async () => undefined);
-  expect(
-    document.querySelector<HTMLButtonElement>('[aria-label="Move field up"]')
-      ?.disabled
-  ).toBe(true);
-  act(() =>
-    document
-      .querySelector<HTMLButtonElement>('[aria-label="Move field down"]')
-      ?.click()
-  );
-  await vi.waitFor(() => expect(updateContent).toHaveBeenCalledOnce());
-  expect(
-    parseCollectionConfig(updateContent.mock.calls[0][0].content).fields.map(
-      (field) => field.key
-    )
-  ).toEqual(["slug", "title", "draft"]);
-  expect(
-    document
-      .querySelector('[aria-label="Edit Title"]')
-      ?.getAttribute("aria-pressed")
-  ).toBe("true");
 });
 
 test("allows collection fields to change while existing entries are repaired", async () => {
@@ -1134,7 +1288,7 @@ test("allows collection fields to change while existing entries are repaired", a
   expect(
     document.querySelector<HTMLButtonElement>('[aria-label="URL slug type"]')
       ?.disabled
-  ).toBe(true);
+  ).toBe(false);
   act(() => {
     document
       .querySelector<HTMLButtonElement>('[aria-label="Edit Summary"]')

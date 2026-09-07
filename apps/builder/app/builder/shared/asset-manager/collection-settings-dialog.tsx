@@ -9,6 +9,9 @@ import {
 } from "@webstudio-is/content-engine";
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
+  PanelContent,
+  InsetList,
+  InsetListItem,
   Button,
   Checkbox,
   CheckboxAndLabel,
@@ -18,17 +21,14 @@ import {
   DialogTitle,
   DialogTitleActions,
   DialogClose,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  SmallIconButton,
   Flex,
   Grid,
   InputField,
   Label,
   List,
   ListItem,
+  PanelBanner,
+  panelBannerIconColor,
   rawTheme,
   ScrollAreaNative,
   Select,
@@ -36,16 +36,14 @@ import {
   Text,
   Tooltip,
   cssVar,
-  selectedItemBackground,
   theme,
 } from "@webstudio-is/design-system";
 import {
-  EllipsesIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
+  AlertCircleIcon,
   InfoCircleIcon,
   PlusIcon,
   TrashIcon,
+  ListViewIcon,
 } from "@webstudio-is/icons";
 import { formatAssetName, getAssetDisplayNameParts } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
@@ -255,6 +253,91 @@ const convertCollectionToFolder = async (
   onNextTransactionComplete(invalidateAssets);
 };
 
+export const ConvertCollectionDialog = ({
+  configAsset,
+  onClose,
+  onConverted,
+  onConvertingChange,
+  hasUnsavedChanges = false,
+  convertCollection = convertCollectionToFolder,
+}: {
+  configAsset: Extract<ContentCollection, { status: "ready" }>["configAsset"];
+  onClose: () => void;
+  onConverted?: () => void;
+  onConvertingChange?: (converting: boolean) => void;
+  hasUnsavedChanges?: boolean;
+  convertCollection?: typeof convertCollectionToFolder;
+}) => {
+  const [converting, setConverting] = useState(false);
+  const convertingRef = useRef(false);
+  const [error, setError] = useState<string>();
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !convertingRef.current) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent width={420}>
+        <DialogTitle>Convert to regular folder?</DialogTitle>
+        <PanelContent as={Grid} gap={3}>
+          <DialogDescription asChild>
+            <Text>
+              Your entries and template will stay. Collection rules and the New
+              entry action will be removed.
+            </Text>
+          </DialogDescription>
+          {hasUnsavedChanges && (
+            <Text>Unsaved collection settings will not be applied.</Text>
+          )}
+          {error !== undefined && (
+            <Text role="alert" color="destructive">
+              {error}
+            </Text>
+          )}
+          <Flex justify="end" gap={2}>
+            <Button disabled={converting} onClick={onClose}>
+              Keep collection
+            </Button>
+            <Button
+              color="destructive"
+              disabled={converting}
+              onClick={async () => {
+                if (convertingRef.current) {
+                  return;
+                }
+                convertingRef.current = true;
+                setConverting(true);
+                onConvertingChange?.(true);
+                setError(undefined);
+                try {
+                  await convertCollection(configAsset);
+                  onConverted?.();
+                  onClose();
+                } catch (error) {
+                  setError(
+                    error instanceof Error
+                      ? error.message
+                      : "The collection could not be converted."
+                  );
+                } finally {
+                  convertingRef.current = false;
+                  setConverting(false);
+                  onConvertingChange?.(false);
+                }
+              }}
+            >
+              {converting ? "Converting…" : "Convert to regular folder"}
+            </Button>
+          </Flex>
+        </PanelContent>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const CollectionSettingsDialog = ({
   collection: incomingCollection,
   open,
@@ -305,12 +388,14 @@ export const CollectionSettingsDialog = ({
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState<string>();
+  const [fieldsError, setFieldsError] = useState<string>();
+  const [templateError, setTemplateError] = useState<string>();
+  const [saveUncertain, setSaveUncertain] = useState(false);
   const [showKeyErrors, setShowKeyErrors] = useState(false);
+  const [pristineInputs, setPristineInputs] = useState(new Set<string>());
+  const focusLabelRowId = useRef<string>();
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [converting, setConverting] = useState(false);
-  const convertingRef = useRef(false);
-  const keepCollectionRef = useRef<HTMLButtonElement>(null);
-  const [conversionError, setConversionError] = useState<string>();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const assets = useStore($assets);
   const templateKey = collection.templateAsset.id;
@@ -346,7 +431,12 @@ export const CollectionSettingsDialog = ({
     setSlugField(collection.config.slugField);
     setGenerateSlugFrom(collection.config.generateSlugFrom);
     setError(undefined);
+    setSaveUncertain(false);
     setShowKeyErrors(false);
+    setPristineInputs(new Set());
+    focusLabelRowId.current = undefined;
+    setFieldsError(undefined);
+    setTemplateError(undefined);
     setConfirmRemove(false);
     setConfirmDiscard(false);
   }, [incomingCollection, open]);
@@ -402,26 +492,12 @@ export const CollectionSettingsDialog = ({
       )
     );
 
-  const selectedFieldIndex = fields.findIndex(
-    ({ rowId }) => rowId === selectedFieldRowId
-  );
-  const moveSelectedField = (direction: -1 | 1) => {
-    const nextIndex = selectedFieldIndex + direction;
-    if (selectedFieldIndex < 0 || nextIndex < 0 || nextIndex >= fields.length) {
-      return;
-    }
-    setFields((current) => {
-      const next = [...current];
-      [next[selectedFieldIndex], next[nextIndex]] = [
-        next[nextIndex],
-        next[selectedFieldIndex],
-      ];
-      return next;
-    });
-  };
-
   const keyErrors = new Map<string, string>();
+  const labelErrors = new Map<string, string>();
   for (const field of fields) {
+    if (field.label.trim() === "") {
+      labelErrors.set(field.rowId, "Enter a field label.");
+    }
     const key = field.key.trim();
     if (key === "") {
       keyErrors.set(field.rowId, "Enter a field key.");
@@ -434,6 +510,17 @@ export const CollectionSettingsDialog = ({
       keyErrors.set(field.rowId, "This key is already used by another field.");
     }
   }
+
+  const touchInput = (id: string) => {
+    setPristineInputs((current) => {
+      if (!current.has(id)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+  };
 
   const draft = JSON.stringify({
     fields,
@@ -455,8 +542,9 @@ export const CollectionSettingsDialog = ({
       return;
     }
     setClosing(true);
+    setPristineInputs(new Set());
     try {
-      if (isDirty && (await save()) !== true) {
+      if (saveUncertain || (isDirty && (await save()) !== true)) {
         setConfirmDiscard(true);
         return;
       }
@@ -467,12 +555,19 @@ export const CollectionSettingsDialog = ({
   };
 
   const save = async () => {
-    if (savingRef.current || loading || templateReady === false) {
+    if (
+      saveUncertain ||
+      savingRef.current ||
+      loading ||
+      templateReady === false
+    ) {
       return;
     }
     attemptedDraft.current = draft;
     const keys = fields.map(({ key }) => key.trim());
-    if (keyErrors.size > 0) {
+    setFieldsError(undefined);
+    setTemplateError(undefined);
+    if (keyErrors.size > 0 || labelErrors.size > 0) {
       setShowKeyErrors(true);
       setError(undefined);
       return;
@@ -480,6 +575,7 @@ export const CollectionSettingsDialog = ({
     savingRef.current = true;
     setSaving(true);
     setError(undefined);
+    let errorTarget: "fields" | "template" | "dialog" = "template";
     try {
       const nextTemplateName = templateName.trim();
       const nextTemplateFilename = formatAssetName({
@@ -512,12 +608,16 @@ export const CollectionSettingsDialog = ({
           key: keys[index],
         };
       });
-      const normalizeLinkedFieldKey = (linkedKey: string) => {
+      const normalizeLinkedFieldKey = (linkedKey: string | undefined) => {
+        if (linkedKey === undefined) {
+          return;
+        }
         const fieldIndex = fields.findIndex(({ key }) => key === linkedKey);
         return fieldIndex === -1 ? linkedKey.trim() : keys[fieldIndex];
       };
       const nextSlugField = normalizeLinkedFieldKey(slugField);
       const nextGenerateSlugFrom = normalizeLinkedFieldKey(generateSlugFrom);
+      errorTarget = "fields";
       const configSource = serializeCollectionConfig({
         config: collection.config,
         fields: nextFields,
@@ -528,6 +628,7 @@ export const CollectionSettingsDialog = ({
         },
       });
       const nextConfig = parseCollectionConfig(configSource);
+      errorTarget = "template";
       const templateDocument = await parseMdxDocument({ source: template });
       const templateValidationError = getCollectionTemplateValidationError(
         nextConfig,
@@ -541,6 +642,7 @@ export const CollectionSettingsDialog = ({
       ).basename;
       const renamesTemplate = nextTemplateName !== currentTemplateName;
       const projectId = collection.configAsset.projectId;
+      errorTarget = "dialog";
       if ($project.get()?.id !== projectId) {
         throw new Error("The collection belongs to another project.");
       }
@@ -593,6 +695,27 @@ export const CollectionSettingsDialog = ({
       savedDraft.current = draft;
       return true;
     } catch (error) {
+      if (errorTarget !== "dialog") {
+        const message =
+          error instanceof Error ? error.message : "Check these settings.";
+        if (errorTarget === "fields") {
+          setFieldsError(message);
+        } else {
+          setTemplateError(message);
+        }
+        return;
+      }
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ASSET_UPDATE_COMMIT_UNCERTAIN"
+      ) {
+        setSaveUncertain(true);
+        setError(
+          "We couldn’t confirm whether your changes were saved. Your edits are still here. Keep a copy of them, then reload the page to check the saved version before editing again."
+        );
+        return;
+      }
       setError(
         error instanceof Error
           ? error.message
@@ -607,9 +730,14 @@ export const CollectionSettingsDialog = ({
   const saveRef = useRef(save);
   saveRef.current = save;
   useEffect(() => {
+    if (saveUncertain) {
+      return;
+    }
     if (templateReady && !isDirty) {
       attemptedDraft.current = undefined;
       setError(undefined);
+      setFieldsError(undefined);
+      setTemplateError(undefined);
       return;
     }
     if (
@@ -635,6 +763,7 @@ export const CollectionSettingsDialog = ({
     isDirty,
     confirmRemove,
     converting,
+    saveUncertain,
   ]);
 
   return (
@@ -655,36 +784,40 @@ export const CollectionSettingsDialog = ({
         <DialogTitle
           suffix={
             <DialogTitleActions>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SmallIconButton
-                    aria-label="Collection actions"
-                    disabled={saving || converting}
-                    icon={<EllipsesIcon />}
-                  />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setConversionError(undefined);
-                      setConfirmRemove(true);
-                    }}
-                  >
-                    Convert to regular folder…
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Tooltip content="Convert to regular folder">
+                <Button
+                  color="ghost-destructive"
+                  prefix={<ListViewIcon />}
+                  aria-label="Convert to regular folder"
+                  disabled={saving || converting || saveUncertain}
+                  onClick={() => setConfirmRemove(true)}
+                />
+              </Tooltip>
               <DialogClose />
             </DialogTitleActions>
           }
         >
           Collection settings
         </DialogTitle>
-        <Flex grow css={{ minHeight: 0 }}>
+        {error !== undefined && (
+          <PanelBanner variant="error" role="alert" css={{ flexShrink: 0 }}>
+            <Flex align="center" gap={1}>
+              <AlertCircleIcon
+                color={panelBannerIconColor}
+                fill="currentColor"
+              />
+              <Text variant="regularBold">
+                {saveUncertain
+                  ? "Saving paused"
+                  : "Collection settings need attention"}
+              </Text>
+            </Flex>
+            <Text>{error}</Text>
+          </PanelBanner>
+        )}
+        <Flex grow>
           <List asChild>
-            <Flex
-              direction="column"
-              shrink={false}
+            <InsetList
               css={{
                 width: rawTheme.spacing[26],
                 borderRight: `1px solid ${cssVar("--border-default")}`,
@@ -698,26 +831,12 @@ export const CollectionSettingsDialog = ({
                   key={id}
                   onSelect={() => setActiveSection(id)}
                 >
-                  <Flex
-                    align="center"
-                    css={{
-                      height: theme.spacing[13],
-                      paddingInline: theme.panel.paddingInline,
-                      outline: "none",
-                      "&:focus-visible, &:hover": {
-                        background: cssVar("--overlay-interaction-hover"),
-                      },
-                      "&[aria-current=true]": {
-                        background: selectedItemBackground,
-                        color: cssVar("--foreground-primary"),
-                      },
-                    }}
-                  >
+                  <InsetListItem>
                     <Text variant="labels">{label}</Text>
-                  </Flex>
+                  </InsetListItem>
                 </ListItem>
               ))}
-            </Flex>
+            </InsetList>
           </List>
           <ScrollAreaNative css={{ width: "100%", minWidth: 0 }}>
             <Grid
@@ -729,18 +848,22 @@ export const CollectionSettingsDialog = ({
               <Grid
                 css={{
                   display: activeSection === "fields" ? "grid" : "none",
-                  minHeight: 0,
                   gridTemplateRows: "auto minmax(0, 1fr)",
                 }}
               >
-                <Flex
+                <PanelContent
+                  as={Flex}
                   justify="between"
                   align="center"
                   gap={4}
-                  css={{ padding: theme.spacing[9] }}
                 >
                   <Flex gap={1} align="center">
                     <Text variant="titles">Fields</Text>
+                    {fieldsError !== undefined && (
+                      <Text role="alert" color="destructive">
+                        {fieldsError}
+                      </Text>
+                    )}
                     <Tooltip
                       variant="wrapped"
                       content="Define the information editors fill in for every entry."
@@ -759,6 +882,15 @@ export const CollectionSettingsDialog = ({
                     onClick={() => {
                       const rowId = `new:${nextRowId.current}`;
                       nextRowId.current += 1;
+                      focusLabelRowId.current = rowId;
+                      setPristineInputs(
+                        (current) =>
+                          new Set([
+                            ...current,
+                            `${rowId}:label`,
+                            `${rowId}:key`,
+                          ])
+                      );
                       setSelectedFieldRowId(rowId);
                       setFields((current) => [
                         ...current,
@@ -775,89 +907,61 @@ export const CollectionSettingsDialog = ({
                   >
                     Add field
                   </Button>
-                </Flex>
+                </PanelContent>
                 <Grid
                   css={{
                     borderTop: `1px solid ${cssVar("--border-default")}`,
                     gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)",
-                    minHeight: 0,
                   }}
                 >
-                  <Grid
-                    as="nav"
-                    aria-label="Collection fields"
-                    gap={1}
-                    css={{
-                      padding: theme.spacing[3],
-                      alignContent: "start",
-                      overflow: "auto",
-                    }}
-                  >
-                    {fields.map((field) => (
-                      <Button
-                        key={field.rowId}
-                        color="ghost"
-                        aria-label={`Edit ${field.label || "New field"}`}
-                        aria-pressed={field.rowId === selectedFieldRowId}
-                        css={{
-                          height: "auto",
-                          minHeight: theme.spacing[15],
-                          padding: theme.spacing[3],
-                          justifyContent: "stretch",
-                          textAlign: "left",
-                          background:
-                            field.rowId === selectedFieldRowId
-                              ? selectedItemBackground
-                              : undefined,
-                        }}
-                        onClick={() => setSelectedFieldRowId(field.rowId)}
-                      >
-                        <Grid gap={1} css={{ minWidth: 0 }}>
-                          <Text
-                            variant="labels"
-                            truncate
-                            color={
-                              showKeyErrors && keyErrors.has(field.rowId)
-                                ? "destructive"
-                                : undefined
-                            }
+                  <List asChild aria-label="Collection fields">
+                    <InsetList css={{ overflow: "auto" }}>
+                      {fields.map((field, index) => (
+                        <ListItem
+                          key={field.rowId}
+                          asChild
+                          index={index}
+                          current={field.rowId === selectedFieldRowId}
+                          onSelect={() => setSelectedFieldRowId(field.rowId)}
+                        >
+                          <InsetListItem
+                            aria-label={`Edit ${field.label || "New field"}`}
+                            css={{
+                              minHeight: theme.spacing[15],
+                            }}
                           >
-                            {field.label || "New field"}
-                          </Text>
-                          <Text variant="tiny" color="subtle" truncate>
-                            {getEditableType(field)}
-                            {field.required ? " · Required" : ""}
-                          </Text>
-                        </Grid>
-                      </Button>
-                    ))}
-                    <Separator />
-                    <Flex gap={1}>
-                      <Tooltip content="Move field up">
-                        <SmallIconButton
-                          aria-label="Move field up"
-                          icon={<ArrowUpIcon />}
-                          disabled={formDisabled || selectedFieldIndex <= 0}
-                          onClick={() => moveSelectedField(-1)}
-                        />
-                      </Tooltip>
-                      <Tooltip content="Move field down">
-                        <SmallIconButton
-                          aria-label="Move field down"
-                          icon={<ArrowDownIcon />}
-                          disabled={
-                            formDisabled ||
-                            selectedFieldIndex < 0 ||
-                            selectedFieldIndex === fields.length - 1
-                          }
-                          onClick={() => moveSelectedField(1)}
-                        />
-                      </Tooltip>
-                    </Flex>
-                  </Grid>
+                            <Grid gap={1} css={{ minWidth: 0 }}>
+                              <Text
+                                variant="labels"
+                                truncate
+                                color={
+                                  showKeyErrors &&
+                                  ((keyErrors.has(field.rowId) &&
+                                    !pristineInputs.has(
+                                      `${field.rowId}:key`
+                                    )) ||
+                                    (labelErrors.has(field.rowId) &&
+                                      !pristineInputs.has(
+                                        `${field.rowId}:label`
+                                      )))
+                                    ? "destructive"
+                                    : undefined
+                                }
+                              >
+                                {field.label || "New field"}
+                              </Text>
+                              <Text variant="tiny" color="subtle" truncate>
+                                {getEditableType(field)}
+                                {field.required ? " · Required" : ""}
+                              </Text>
+                            </Grid>
+                          </InsetListItem>
+                        </ListItem>
+                      ))}
+                    </InsetList>
+                  </List>
                   <Grid
                     css={{
-                      minHeight: 0,
                       overflow: "auto",
                       alignContent: "start",
                       gridAutoRows: "max-content",
@@ -872,19 +976,30 @@ export const CollectionSettingsDialog = ({
                         field.key === slugField ||
                         field.key === generateSlugFrom;
                       const requiredField = field.key === slugField;
-                      const keyError = showKeyErrors
-                        ? keyErrors.get(field.rowId)
-                        : undefined;
+                      const keyError =
+                        showKeyErrors &&
+                        !pristineInputs.has(`${field.rowId}:key`)
+                          ? keyErrors.get(field.rowId)
+                          : undefined;
                       const keyErrorId =
                         keyError === undefined
                           ? undefined
                           : `collection-field-key-error-${field.rowId}`;
                       const stringField = field.type === "string";
+                      const labelError =
+                        showKeyErrors &&
+                        !pristineInputs.has(`${field.rowId}:label`)
+                          ? labelErrors.get(field.rowId)
+                          : undefined;
+                      const labelErrorId =
+                        labelError === undefined
+                          ? undefined
+                          : `collection-field-label-error-${field.rowId}`;
                       const numberField =
                         field.type === "number" || field.type === "integer";
                       return (
                         <Grid key={field.rowId} css={{ alignContent: "start" }}>
-                          <Grid gap={3} css={{ padding: theme.spacing[9] }}>
+                          <PanelContent as={Grid} gap={3}>
                             <Grid
                               gap={3}
                               css={{
@@ -901,16 +1016,49 @@ export const CollectionSettingsDialog = ({
                                 </Label>
                                 <InputField
                                   id={`collection-field-label-${field.rowId}`}
-                                  aria-label={`${field.label || "New field"} label`}
+                                  inputRef={(element) => {
+                                    if (
+                                      element &&
+                                      focusLabelRowId.current === field.rowId
+                                    ) {
+                                      focusLabelRowId.current = undefined;
+                                      element.focus();
+                                    }
+                                  }}
+                                  aria-label={`${
+                                    field.label || "New field"
+                                  } label`}
                                   value={field.label}
+                                  aria-invalid={
+                                    labelError !== undefined || undefined
+                                  }
+                                  color={
+                                    labelError === undefined
+                                      ? undefined
+                                      : "error"
+                                  }
+                                  aria-describedby={labelErrorId}
                                   disabled={formDisabled}
-                                  onChange={(event) =>
+                                  onBlur={() =>
+                                    touchInput(`${field.rowId}:label`)
+                                  }
+                                  onChange={(event) => {
+                                    touchInput(`${field.rowId}:label`);
                                     updateField(index, {
                                       ...field,
                                       label: event.target.value,
-                                    })
-                                  }
+                                    });
+                                  }}
                                 />
+                                {labelError !== undefined && (
+                                  <Text
+                                    id={labelErrorId}
+                                    role="alert"
+                                    color="destructive"
+                                  >
+                                    {labelError}
+                                  </Text>
+                                )}
                               </Grid>
                               <Grid gap={1}>
                                 <Flex gap={1} align="center">
@@ -933,7 +1081,9 @@ export const CollectionSettingsDialog = ({
 
                                 <InputField
                                   id={`collection-field-key-${field.rowId}`}
-                                  aria-label={`${field.label || "New field"} key`}
+                                  aria-label={`${
+                                    field.label || "New field"
+                                  } key`}
                                   aria-invalid={
                                     keyError !== undefined || undefined
                                   }
@@ -943,9 +1093,13 @@ export const CollectionSettingsDialog = ({
                                   }
                                   value={field.key}
                                   disabled={formDisabled}
+                                  onBlur={() =>
+                                    touchInput(`${field.rowId}:key`)
+                                  }
                                   onChange={(event) => {
+                                    touchInput(`${field.rowId}:key`);
                                     const nextKey = event.target.value;
-                                    if (slugField === field.key) {
+                                    if (field.control === "slug") {
                                       setSlugField(nextKey);
                                     }
                                     if (generateSlugFrom === field.key) {
@@ -992,14 +1146,12 @@ export const CollectionSettingsDialog = ({
                               <Select
                                 aria-label={`${field.label} type`}
                                 options={
-                                  field.control === "slug"
-                                    ? ["Slug"]
-                                    : field.key === generateSlugFrom
-                                      ? ["Text", "Long text"]
-                                      : fieldTypes
+                                  field.key === generateSlugFrom
+                                    ? ["Text", "Long text"]
+                                    : fieldTypes
                                 }
                                 value={getEditableType(field)}
-                                disabled={formDisabled || requiredField}
+                                disabled={formDisabled}
                                 onChange={(type) => {
                                   const editableType = type as EditableType;
                                   if (editableType === "Slug") {
@@ -1023,6 +1175,10 @@ export const CollectionSettingsDialog = ({
                                     );
                                     return;
                                   }
+                                  if (field.control === "slug") {
+                                    setSlugField(undefined);
+                                    setGenerateSlugFrom(undefined);
+                                  }
                                   updateField(
                                     index,
                                     setFieldType(field, editableType)
@@ -1030,11 +1186,14 @@ export const CollectionSettingsDialog = ({
                                 }}
                               />
                             </Grid>
-                          </Grid>
+                          </PanelContent>
                           {field.control === "slug" && (
-                            <Grid
+                            <PanelContent
+                              as={Grid}
                               gap={2}
-                              css={{ padding: theme.spacing[9], paddingTop: 0 }}
+                              css={{
+                                paddingTop: 0,
+                              }}
                             >
                               <Flex gap={1} align="center">
                                 <Label>Generate from</Label>
@@ -1049,27 +1208,35 @@ export const CollectionSettingsDialog = ({
                                   />
                                 </Tooltip>
                               </Flex>
-                              <Select
+                              <Select<{ key: string; label: string }>
                                 aria-label="Generate slug from"
-                                options={fields.filter(
-                                  (candidate) =>
-                                    candidate.type === "string" &&
-                                    candidate.key !== field.key
-                                )}
-                                value={fields.find(
-                                  ({ key }) => key === generateSlugFrom
-                                )}
-                                getValue={({ key }) => key}
+                                options={[
+                                  { key: "", label: "None (manual entry)" },
+                                  ...fields.filter(
+                                    (candidate) =>
+                                      candidate.type === "string" &&
+                                      candidate.key.trim() !== "" &&
+                                      candidate.key !== field.key
+                                  ),
+                                ]}
+                                value={
+                                  fields.find(
+                                    ({ key }) => key === generateSlugFrom
+                                  ) ?? { key: "", label: "None (manual entry)" }
+                                }
+                                getValue={({ key }) => JSON.stringify(key)}
                                 getLabel={({ label, key }) =>
-                                  `${label} (${key})`
+                                  key === "" ? label : `${label} (${key})`
                                 }
                                 disabled={formDisabled}
-                                onChange={({ key }) => setGenerateSlugFrom(key)}
+                                onChange={({ key }) =>
+                                  setGenerateSlugFrom(key || undefined)
+                                }
                               />
-                            </Grid>
+                            </PanelContent>
                           )}
                           <Separator />
-                          <Grid gap={3} css={{ padding: theme.spacing[9] }}>
+                          <PanelContent as={Grid} gap={3}>
                             <Text variant="labels">Validation</Text>
                             <CheckboxAndLabel>
                               <Checkbox
@@ -1180,13 +1347,13 @@ export const CollectionSettingsDialog = ({
                                 </>
                               )}
                             </Grid>
-                          </Grid>
+                          </PanelContent>
                           {protectedField === false && (
                             <>
                               <Separator />
-                              <Flex css={{ padding: theme.spacing[9] }}>
+                              <PanelContent as={Flex}>
                                 <Button
-                                  color="ghost"
+                                  color="destructive"
                                   prefix={<TrashIcon />}
                                   aria-label={`Remove ${field.label}`}
                                   disabled={formDisabled}
@@ -1204,7 +1371,7 @@ export const CollectionSettingsDialog = ({
                                 >
                                   Remove field
                                 </Button>
-                              </Flex>
+                              </PanelContent>
                             </>
                           )}
                         </Grid>
@@ -1213,21 +1380,21 @@ export const CollectionSettingsDialog = ({
                   </Grid>
                 </Grid>
               </Grid>
-              <Grid
+              <PanelContent
+                as={Grid}
                 data-floating-panel-container
                 css={{
                   display: activeSection === "template" ? "grid" : "none",
                   gridTemplateRows: "auto auto minmax(320px, 1fr)",
                   gap: theme.spacing[3],
                   minHeight: "100%",
-                  padding: theme.spacing[5],
                 }}
               >
                 <Flex gap={1} align="center">
                   <Text variant="titles">Entry template</Text>
                   <Tooltip
                     variant="wrapped"
-                    content="Set the frontmatter defaults and starter Markdown copied into every new entry."
+                    content="Every new entry starts as a copy of this template. Add headings, placeholder text, and default field values so editors have a consistent starting point. Changes to the template only affect future entries."
                   >
                     <InfoCircleIcon
                       color={cssVar("--foreground-secondary")}
@@ -1254,112 +1421,56 @@ export const CollectionSettingsDialog = ({
                     onChange={(event) => setTemplateName(event.target.value)}
                   />
                 </Grid>
-                <MarkdownEditor
-                  asset={{
-                    ...collection.templateAsset,
-                    filename: templateName,
+                <Grid
+                  css={{
+                    gridTemplateRows: templateError ? "auto 1fr" : "1fr",
                   }}
-                  ariaLabel="Entry template Markdown"
-                  defaultPreviewOpen={false}
-                  value={template}
-                  readOnly={formDisabled || templateReady === false}
-                  languageExtensions={templateLanguageExtensions}
-                  onChange={setTemplate}
-                  onChangeComplete={setTemplate}
-                />
-              </Grid>
+                >
+                  {templateError !== undefined && (
+                    <Text role="alert" color="destructive">
+                      {templateError}
+                    </Text>
+                  )}
+                  <MarkdownEditor
+                    asset={{
+                      ...collection.templateAsset,
+                      filename: templateName,
+                    }}
+                    ariaLabel="Entry template Markdown"
+                    defaultPreviewOpen={false}
+                    value={template}
+                    readOnly={formDisabled || templateReady === false}
+                    languageExtensions={templateLanguageExtensions}
+                    onChange={setTemplate}
+                    onChangeComplete={setTemplate}
+                  />
+                </Grid>
+              </PanelContent>
             </Grid>
           </ScrollAreaNative>
         </Flex>
-        {(error !== undefined || saving) && (
-          <Flex css={{ padding: theme.panel.padding }}>
-            {error !== undefined ? (
-              <Text role="alert" color="destructive" variant="tiny">
-                {error}
-              </Text>
-            ) : (
-              <Text role="status" color="subtle" variant="tiny">
-                Saving…
-              </Text>
-            )}
-          </Flex>
+        {saving && (
+          <PanelContent as={Flex}>
+            <Text role="status" color="subtle" variant="tiny">
+              Saving…
+            </Text>
+          </PanelContent>
         )}
       </DialogContent>
-      <Dialog
-        open={confirmRemove}
-        onOpenChange={(nextOpen) => {
-          if (!convertingRef.current) {
-            setConfirmRemove(nextOpen);
-          }
-        }}
-      >
-        <DialogContent
-          width={420}
-          onOpenAutoFocus={(event) => {
-            event.preventDefault();
-            keepCollectionRef.current?.focus();
-          }}
-        >
-          <DialogTitle>Convert to regular folder?</DialogTitle>
-          <Grid gap={3} css={{ padding: theme.panel.padding }}>
-            <DialogDescription asChild>
-              <Text>
-                Your entries and template will stay. Collection rules and the
-                New entry action will be removed.
-              </Text>
-            </DialogDescription>
-            {isDirty && (
-              <Text>Unsaved collection settings will not be applied.</Text>
-            )}
-            {conversionError !== undefined && (
-              <Text role="alert" color="destructive">
-                {conversionError}
-              </Text>
-            )}
-            <Flex justify="end" gap={2}>
-              <Button
-                ref={keepCollectionRef}
-                disabled={converting}
-                onClick={() => setConfirmRemove(false)}
-              >
-                Keep collection
-              </Button>
-              <Button
-                color="destructive"
-                disabled={converting}
-                onClick={async () => {
-                  if (convertingRef.current) {
-                    return;
-                  }
-                  convertingRef.current = true;
-                  setConverting(true);
-                  setConversionError(undefined);
-                  try {
-                    await convertCollection(collectionRef.current.configAsset);
-                    setConfirmRemove(false);
-                    onOpenChange(false);
-                  } catch (error) {
-                    setConversionError(
-                      error instanceof Error
-                        ? error.message
-                        : "The collection could not be converted."
-                    );
-                  } finally {
-                    convertingRef.current = false;
-                    setConverting(false);
-                  }
-                }}
-              >
-                {converting ? "Converting…" : "Convert to regular folder"}
-              </Button>
-            </Flex>
-          </Grid>
-        </DialogContent>
-      </Dialog>
+      {confirmRemove && (
+        <ConvertCollectionDialog
+          configAsset={collectionRef.current.configAsset}
+          hasUnsavedChanges={isDirty}
+          convertCollection={convertCollection}
+          onConvertingChange={setConverting}
+          onClose={() => setConfirmRemove(false)}
+          onConverted={() => onOpenChange(false)}
+        />
+      )}
       <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <DialogContent aria-describedby={undefined} width={420}>
           <DialogTitle>Discard changes?</DialogTitle>
-          <Grid gap={3} css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Grid} gap={3}>
             <Text>
               Your unsaved collection settings and template changes will be
               lost.
@@ -1378,7 +1489,7 @@ export const CollectionSettingsDialog = ({
                 Discard changes
               </Button>
             </Flex>
-          </Grid>
+          </PanelContent>
         </DialogContent>
       </Dialog>
     </Dialog>

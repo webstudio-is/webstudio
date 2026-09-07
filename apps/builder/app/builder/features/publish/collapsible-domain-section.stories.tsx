@@ -1,4 +1,5 @@
 import {
+  PanelContent,
   Flex,
   Grid,
   Text,
@@ -484,9 +485,9 @@ export const PublishDialogLayout = () => (
         <Separator />
       </Flex>
 
-      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} direction="column" gap="2">
         <Button color="primary">Publish</Button>
-      </Flex>
+      </PanelContent>
     </Flex>
   </StorySection>
 );
@@ -504,7 +505,7 @@ export const ExportDialogLayout = () => (
         }}
       >
         <PopoverTitle>Export</PopoverTitle>
-        <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} columns={1} gap={3}>
           <Grid columns={2} gap={2} align="center">
             <Text color="main" variant="labels">
               Destination
@@ -580,7 +581,7 @@ export const ExportDialogLayout = () => (
               </Button>
             </Flex>
           </Grid>
-        </Grid>
+        </PanelContent>
       </Flex>
     </Popover>
   </StorySection>
@@ -599,7 +600,7 @@ export const ExportStaticLayout = () => (
         }}
       >
         <PopoverTitle>Export</PopoverTitle>
-        <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} columns={1} gap={3}>
           <Grid columns={2} gap={2} align="center">
             <Text color="main" variant="labels">
               Destination
@@ -620,7 +621,7 @@ export const ExportStaticLayout = () => (
               here
             </Link>
           </Text>
-        </Grid>
+        </PanelContent>
       </Flex>
     </Popover>
   </StorySection>

@@ -56,10 +56,12 @@ test("shows retry progress until collection discovery finishes", () => {
   renderer.render(<Notice />);
 
   const alert = document.querySelector<HTMLElement>("[role=alert]");
-  expect(alert?.textContent).toContain("Request timed out");
+  expect(alert).not.toBeNull();
+  // Transport diagnostics are not user-facing copy.
+  expect(alert?.textContent).not.toContain("Request timed out");
   const retry = Array.from(
     document.querySelectorAll<HTMLButtonElement>("button")
-  ).find((button) => button.textContent === "Check again");
+  ).find((button) => button.textContent === "Retry");
   if (retry === undefined) {
     throw new Error("Expected collection retry button");
   }
@@ -68,12 +70,12 @@ test("shows retry progress until collection discovery finishes", () => {
 
   expect(onCheckAgain).toHaveBeenCalledOnce();
   expect(retry).toBeDisabled();
-  expect(retry.textContent).toBe("Checking…");
+  expect(retry.textContent).toBe("Retrying…");
 
   act(finishCheck);
 
   expect(retry).toBeEnabled();
-  expect(retry.textContent).toBe("Check again");
+  expect(retry.textContent).toBe("Retry");
 });
 
 test("shows the same retry progress for an invalid collection", () => {
@@ -106,7 +108,7 @@ test("shows the same retry progress for an invalid collection", () => {
   renderer.render(<InvalidRetry />);
   const retry = Array.from(
     document.querySelectorAll<HTMLButtonElement>("button")
-  ).find((button) => button.textContent === "Check again");
+  ).find((button) => button.textContent === "Retry");
   if (retry === undefined) {
     throw new Error("Expected collection retry button");
   }
@@ -115,10 +117,10 @@ test("shows the same retry progress for an invalid collection", () => {
 
   expect(onCheckAgain).toHaveBeenCalledOnce();
   expect(retry).toBeDisabled();
-  expect(retry.textContent).toBe("Checking…");
+  expect(retry.textContent).toBe("Retrying…");
 
   act(finishCheck);
 
   expect(retry).toBeEnabled();
-  expect(retry.textContent).toBe("Check again");
+  expect(retry.textContent).toBe("Retry");
 });
