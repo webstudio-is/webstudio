@@ -33,9 +33,11 @@ import {
   type InstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
-import { getInstanceLink } from "~/shared/instance-utils/link";
+import {
+  getInstanceLink,
+  getDeepLinkedInstanceSelection,
+} from "~/shared/instance-utils/link";
 import { $instances, $pages, $project } from "~/shared/sync/data-stores";
-import { getDeepLinkedInstanceSelection } from "~/shared/instance-utils/selection";
 import {
   isComponentDetachable,
   ROOT_INSTANCE_ID,

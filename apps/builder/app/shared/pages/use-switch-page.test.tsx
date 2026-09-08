@@ -8,8 +8,11 @@ import {
 } from "@webstudio-is/template";
 import { $authToken, $builderMode } from "~/shared/nano-states";
 import { $instances, $pages, $project } from "~/shared/sync/data-stores";
-import { getInstanceLink } from "../instance-utils/link";
-import { getDeepLinkedInstanceSelection } from "../instance-utils/selection";
+import {
+  getInstanceLink,
+  getDeepLinkedInstanceSelection,
+  getInstanceSelectorFromUrl,
+} from "../instance-utils/link";
 import { __testing__ } from "./use-switch-page";
 
 afterEach(() => {
@@ -113,7 +116,7 @@ test("restores the selected shared slot occurrence from its full selector", () =
   expect(url.searchParams.get("mode")).toBe("content");
   expect(
     getDeepLinkedInstanceSelection({
-      instanceSelector: url.searchParams.get("instance")?.split(","),
+      instanceSelector: getInstanceSelectorFromUrl(url.searchParams),
       canOpenPageTemplates: true,
       pages,
       instances,

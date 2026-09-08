@@ -1,10 +1,4 @@
-import {
-  ROOT_INSTANCE_ID,
-  getAllPages,
-  isPageTemplate,
-  type Instances,
-  type Pages,
-} from "@webstudio-is/sdk";
+import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";
 import {
   areInstanceSelectorsEqual,
   isDescendantOrSelf,
@@ -230,41 +224,4 @@ export const getContextMenuSelectedInstanceSelectors = ({
     areInstanceSelectorsEqual(selector, clickedSelector)
   );
   return isClickedAlreadySelected ? selectedSelectors : [clickedSelector];
-};
-
-export const getDeepLinkedInstanceSelection = ({
-  instanceSelector,
-  canOpenPageTemplates,
-  pages,
-  instances,
-}: {
-  instanceSelector: InstanceSelector | undefined;
-  canOpenPageTemplates: boolean;
-  pages: Pages;
-  instances: Instances;
-}) => {
-  if (instanceSelector === undefined) {
-    return;
-  }
-
-  const instanceId = instanceSelector[0];
-  if (
-    instanceId === undefined ||
-    instances.has(instanceId) === false ||
-    canResolveInstanceSelector(instanceSelector, instances) === false
-  ) {
-    return;
-  }
-
-  const rootInstanceId = instanceSelector.at(-1);
-  const page = getAllPages(pages).find(
-    (page) => page.rootInstanceId === rootInstanceId
-  );
-  if (
-    page === undefined ||
-    (isPageTemplate(page) && canOpenPageTemplates === false)
-  ) {
-    return;
-  }
-  return { pageId: page.id, instanceSelector };
 };

@@ -21,10 +21,11 @@ import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
+import { canResolveInstanceSelector } from "../instance-utils/selection";
 import {
-  canResolveInstanceSelector,
   getDeepLinkedInstanceSelection,
-} from "../instance-utils/selection";
+  getInstanceSelectorFromUrl,
+} from "../instance-utils/link";
 
 const shouldNavigateToPageState = ({
   isUrlStateInitialized,
@@ -49,9 +50,6 @@ const shouldNavigateToPageState = ({
 export const __testing__ = {
   shouldNavigateToPageState,
 };
-
-const getInstanceSelectorFromUrl = (searchParams: URLSearchParams) =>
-  searchParams.get("instance")?.split(",");
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
