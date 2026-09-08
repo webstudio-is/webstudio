@@ -773,7 +773,7 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
   const openButton = page.getByRole("button", { name: "Open", exact: true });
   await openButton.click();
   await page
-    .locator(".cm-lintRange-warning")
+    .locator(".cm-lintRange-error")
     .filter({ hasText: "MissingE2ETemplate" })
     .waitFor();
   await page.keyboard.press("Escape");
