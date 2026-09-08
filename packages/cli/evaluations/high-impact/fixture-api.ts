@@ -1,6 +1,10 @@
 // Serves deterministic in-memory Webstudio project fixtures through the real
 // local API boundary used by high-impact CLI and MCP evaluations.
 import type { Server } from "node:http";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
+import { createHttpAssetContentRepository } from "@webstudio-is/content-engine/asset-content-repository";
+import { createProjectAssetContentTransport } from "@webstudio-is/http-client";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   executeAssetQuery,
   getAssetQueryWhereMetrics,
@@ -11,7 +15,14 @@ import {
 } from "@webstudio-is/content-engine";
 import { fontFormat, fontMeta } from "@webstudio-is/fonts";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
-import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
+import {
+  assetsUploadsApiUrl,
+  getAssetContentApiUrl,
+} from "@webstudio-is/sdk/runtime";
+import {
+  assetContentDescriptorHeader,
+  serializeAssetContentDescriptor,
+} from "@webstudio-is/protocol/asset-resource-api";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import React from "react";
 import type { BuilderState } from "@webstudio-is/project-build/state";
@@ -89,6 +100,7 @@ export type HighImpactFixtureApi = {
   origin: string;
   shareLink: string;
   getProject: () => EvaluationProject;
+  getAssetSource: (assetId: string) => string | undefined;
   getToolCalls: () => EvaluationToolCall[];
   close: () => Promise<void>;
 };
@@ -106,7 +118,9 @@ export const startHighImpactFixtureApi = async (
     ]);
   const { createBuilderStateFromBuildData, applyBuilderPatchTransactions } =
     stateAdapters;
-  const { executeBuilderRuntimeOperation } = runtime;
+  const { executeBuilderRuntimeOperation, createContentBlockApplication } =
+    runtime;
+  let contentBlockApplication: ReturnType<typeof createContentBlockApplication>;
   const { createLocalProjectBundleFromSessionSnapshot } = projectSession;
   const { hydrateRestorePointTransaction } = restorePoints;
   const persistedPages = createPersistedPages(fixture.project);
@@ -136,7 +150,12 @@ export const startHighImpactFixtureApi = async (
   let version = initialVersion;
   let generatedId = 0;
   const calls: EvaluationToolCall[] = [];
-  const uploadedFileContents = new Map<string, Uint8Array>();
+  const uploadedFileContents = new Map<string, Uint8Array>(
+    Object.entries(fixture.assetSources ?? {}).map(([id, source]) => [
+      id,
+      new TextEncoder().encode(source),
+    ])
+  );
   let origin = "";
   const validateFixtureAssetQuery = (query: unknown) => {
     const validation = validateAssetQuery({ query });
@@ -212,6 +231,58 @@ export const startHighImpactFixtureApi = async (
   const fixtureApi = await startRuntimeFixtureApi(
     async ({ request, response, pathname, operationPath, readInput }) => {
       let data: unknown;
+      const contentAsset = Array.from(state.assets?.values() ?? []).find(
+        (asset) => pathname === getAssetContentApiUrl(asset.id)
+      );
+      if (contentAsset !== undefined) {
+        const url = new URL(request.url ?? "", origin);
+        if (url.searchParams.get("projectId") !== projectId) {
+          response.writeHead(403);
+          response.end();
+          return;
+        }
+        if (request.method === "GET") {
+          const bytes = uploadedFileContents.get(contentAsset.id);
+          if (bytes === undefined) {
+            response.writeHead(404);
+            response.end();
+            return;
+          }
+          response.writeHead(200, {
+            "content-type": "application/octet-stream",
+            "content-length": bytes.byteLength,
+            [assetContentDescriptorHeader]:
+              serializeAssetContentDescriptor(contentAsset),
+          });
+          response.end(bytes);
+          return;
+        }
+        if (request.method === "PUT") {
+          if (url.searchParams.get("expectedName") !== contentAsset.name) {
+            response.writeHead(409, { "content-type": "application/json" });
+            response.end(JSON.stringify({ message: "Asset revision changed" }));
+            return;
+          }
+          const bytes = await readRuntimeFixtureRequestBody(request);
+          const asset = {
+            ...contentAsset,
+            name: `revision-${generatedId++}.mdx`,
+            size: bytes.byteLength,
+          };
+          uploadedFileContents.set(asset.id, bytes);
+          state = {
+            ...state,
+            assets: new Map(state.assets).set(asset.id, asset),
+          };
+          version += 1;
+          response.writeHead(200, { "content-type": "application/json" });
+          response.end(JSON.stringify({ asset }));
+          return;
+        }
+        response.writeHead(405);
+        response.end();
+        return;
+      }
       if (
         request.method === "POST" &&
         pathname.startsWith(`${assetsUploadsApiUrl}/`)
@@ -405,6 +476,7 @@ export const startHighImpactFixtureApi = async (
               createId: () => `evaluation-${generatedId++}`,
               projectId,
               projectVersion: version,
+              contentBlockApplication,
             },
           });
           if (
@@ -435,12 +507,31 @@ export const startHighImpactFixtureApi = async (
   );
   const { server } = fixtureApi;
   origin = fixtureApi.origin;
+  const contentSession = createAssetContentSession({
+    repository: createHttpAssetContentRepository({
+      projectId,
+      ...createProjectAssetContentTransport({ projectId, origin }),
+    }),
+    authorize: () => true,
+  });
+  contentBlockApplication = createContentBlockApplication({
+    projectId,
+    session: contentSession,
+    metas: componentMetas,
+  });
   return {
     server,
     origin,
     shareLink: `${origin}/builder/${projectId}?authToken=fixture-only-not-persisted`,
     getProject: () => stateToProject(state),
+    getAssetSource: (assetId) => {
+      const bytes = uploadedFileContents.get(assetId);
+      return bytes === undefined ? undefined : new TextDecoder().decode(bytes);
+    },
     getToolCalls: () => structuredClone(calls),
-    close: fixtureApi.close,
+    close: async () => {
+      contentSession.dispose();
+      await fixtureApi.close();
+    },
   };
 };

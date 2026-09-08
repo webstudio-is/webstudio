@@ -9,7 +9,10 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { createContentDatabase } from "@webstudio-is/content-engine";
+import {
+  createContentDatabase,
+  parseMarkdownDocumentSource,
+} from "@webstudio-is/content-engine";
 import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
 import {
@@ -17,6 +20,7 @@ import {
   highImpactFixtures,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
+  mdxArticleFixture,
   type HighImpactFixture,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
@@ -239,6 +243,13 @@ const runFixture = async ({
           project: fixtureApi.getProject(),
           toolCalls,
           artifacts: await collectHighImpactArtifacts(projectDirectory),
+          ...(fixture.id === mdxArticleFixture.id
+            ? {
+                mdxDocument: await parseMarkdownDocumentSource({
+                  source: fixtureApi.getAssetSource("article-file") ?? "",
+                }),
+              }
+            : {}),
           ...(fixture.id === markdownBlogFixture.id ||
           fixture.id === markdownReferencesDiscoveryFixture.id
             ? {

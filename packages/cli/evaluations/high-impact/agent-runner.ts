@@ -47,6 +47,19 @@ export type AgentEvaluationResult = {
 };
 
 const fixtureToolNames = {
+  "mdx-article-editing-v1": [
+    "meta.guide",
+    "meta.get-more-tools",
+    "inspect-instance",
+    "list-variables",
+    "connect-content-block-source",
+    "inspect-content-block-source",
+    "update-content-block-frontmatter",
+    "reload-content-block-source",
+    "update-text",
+    "bind-props",
+    "audit",
+  ],
   "authenticated-page-v1": [
     "meta.guide",
     "inspect-auth-context",

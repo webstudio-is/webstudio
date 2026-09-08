@@ -104,6 +104,10 @@ You can:
 - Cut, copy, paste, and duplicate assets or complete folder trees.
 - Rename or delete folders.
 
+Open **Folder settings** to change a folder's name or parent folder. Valid
+changes save automatically; there is no Save button. Blank names and names
+already used in the selected parent folder are not saved.
+
 Duplicating a folder copies its nested folders and assets. Deleting a folder
 deletes everything inside it, so review the confirmation before continuing.
 

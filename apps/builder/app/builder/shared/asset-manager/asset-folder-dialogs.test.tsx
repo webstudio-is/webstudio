@@ -2,7 +2,9 @@ import { useState, type ReactNode } from "react";
 import { act } from "react-dom/test-utils";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { $assetFolders, $project } from "~/shared/sync/data-stores";
+import { $assetFolders, $pages, $project } from "~/shared/sync/data-stores";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   AssetFolderSettingsDialog,
   assertCollectionSetupProject,
@@ -17,10 +19,12 @@ import {
 import { createAssetManagerTestRenderer } from "./test-utils";
 
 const renderer = createAssetManagerTestRenderer();
+registerContainers();
 const render = (children: ReactNode) =>
   renderer.render(<TooltipProvider>{children}</TooltipProvider>);
 
 beforeEach(() => {
+  $pages.set(createDefaultPages({ rootInstanceId: "root" }));
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -39,7 +43,12 @@ afterEach(() => {
   renderer.cleanup();
   $assetFolders.set(new Map());
   $project.set(undefined);
+  $pages.set(undefined);
   vi.unstubAllGlobals();
+  vi.useRealTimers();
+  serverSyncStore.popAll();
+  serverSyncStore.transactionManager.currentStack = [];
+  serverSyncStore.transactionManager.undoneStack = [];
 });
 
 test("Escape closes folder settings without closing the assets panel", () => {
@@ -77,12 +86,9 @@ test("Escape closes folder settings without closing the assets panel", () => {
   expect(onPanelClose).not.toHaveBeenCalled();
 });
 
-test.each([
-  { initialDeleteConfirmation: false, focusedAction: "Save" },
-  { initialDeleteConfirmation: true, focusedAction: "Delete folder" },
-])(
-  "focuses $focusedAction as the rightmost folder settings action",
-  ({ initialDeleteConfirmation, focusedAction }) => {
+test.each([false, true])(
+  "focuses the name or the delete confirmation (confirmation: %s)",
+  (initialDeleteConfirmation) => {
     const folder = createAssetFolderFixture({
       id: "folder",
       name: "Documents",
@@ -98,7 +104,96 @@ test.each([
       />
     );
 
-    expect(document.activeElement?.textContent).toBe(focusedAction);
+    if (initialDeleteConfirmation) {
+      expect(document.activeElement?.textContent).toBe("Delete folder");
+    } else {
+      expect(document.activeElement).toBe(
+        document.getElementById("asset-folder-name-folder")
+      );
+    }
+  }
+);
+
+test.each(["debounce", "close"])(
+  "saves a folder name without submitting and keeps settings open (%s)",
+  (saveBy) => {
+    vi.useFakeTimers();
+    const folder = createAssetFolderFixture({
+      id: "folder",
+      name: "Documents",
+    });
+    $assetFolders.set(createAssetFoldersFixture(folder));
+    $project.set({ id: folder.projectId } as never);
+    const onOpenChange = vi.fn();
+    render(
+      <AssetFolderSettingsDialog
+        folder={folder}
+        open
+        onOpenChange={onOpenChange}
+      />
+    );
+    const name = document.querySelector<HTMLInputElement>(
+      "#asset-folder-name-folder"
+    )!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )!.set!.call(name, "Renamed");
+      name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Documents");
+    act(() => {
+      if (saveBy === "debounce") {
+        vi.advanceTimersByTime(500);
+      } else {
+        renderer.cleanup();
+      }
+    });
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Renamed");
+    expect(onOpenChange).not.toHaveBeenCalled();
+  }
+);
+
+test.each(["", "Existing"])(
+  "saves a corrected folder name after rejecting an invalid value: %s",
+  (value) => {
+    vi.useFakeTimers();
+    const folder = createAssetFolderFixture({
+      id: "folder",
+      name: "Documents",
+    });
+    $assetFolders.set(
+      createAssetFoldersFixture(
+        folder,
+        createAssetFolderFixture({ id: "other", name: "Existing" })
+      )
+    );
+    $project.set({ id: folder.projectId } as never);
+    render(
+      <AssetFolderSettingsDialog folder={folder} open onOpenChange={vi.fn()} />
+    );
+    const name = document.querySelector<HTMLInputElement>(
+      "#asset-folder-name-folder"
+    )!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )!.set!.call(name, value);
+      name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    act(() => vi.advanceTimersByTime(500));
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Documents");
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )!.set!.call(name, "Corrected");
+      name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    act(() => vi.advanceTimersByTime(500));
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Corrected");
   }
 );
 

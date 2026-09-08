@@ -860,6 +860,12 @@ export class PostgresAssetRepository implements AssetRepository {
           assets: currentAssets,
           folderId: asset.folderId,
           assetStore: this.assetStore,
+          // Entry creation validates the uploaded entry, not older entries
+          // made invalid by an earlier schema edit. Manifest uploads still
+          // validate the complete folder before establishing a collection.
+          entryIdsToValidate: allowCollectionFolder
+            ? new Set([asset.id])
+            : undefined,
         });
       }
     } catch (error) {
@@ -1024,14 +1030,29 @@ export class PostgresAssetRepository implements AssetRepository {
     if (currentAsset.folderId === undefined) {
       return data;
     }
-    const isCollectionConfig =
-      formatAssetName(currentAsset) === collectionConfigFilename;
+    const currentFilename = formatAssetName(currentAsset);
+    const nextFilename =
+      extension === undefined
+        ? currentFilename
+        : `${getAssetDisplayNameParts(currentAsset).basename}.${extension.toLowerCase()}`;
+    // A revision can change the logical extension as well as its content.
+    // It must not create a manifest or bypass the New entry workflow.
+    if (
+      nextFilename !== currentFilename &&
+      nextFilename === collectionConfigFilename
+    ) {
+      throw new AssetRepositoryConflictError(
+        "Use collection setup to add collection.json"
+      );
+    }
+    const isCollectionConfig = currentFilename === collectionConfigFilename;
     if (isCollectionConfig) {
       await this.assertCanConfigureCollections();
     }
     if (
       isCollectionConfig === false &&
-      isMdxFileAsset(currentAsset) === false
+      isMdxFileAsset(currentAsset) === false &&
+      nextFilename === currentFilename
     ) {
       return data;
     }
@@ -1072,6 +1093,14 @@ export class PostgresAssetRepository implements AssetRepository {
         return data;
       }
       const filename = formatAssetName(currentAsset);
+      if (
+        nextFilename !== filename &&
+        (nextFilename === config.template || config.matchesEntry(nextFilename))
+      ) {
+        throw new AssetRepositoryConflictError(
+          "Use New entry to add files to a collection folder"
+        );
+      }
       if (filename !== config.template && !config.matchesEntry(filename)) {
         return data;
       }
@@ -1708,6 +1737,9 @@ export class PostgresAssetRepository implements AssetRepository {
         const definition = await this.validateCompletedCollectionUpload({
           asset: ticket.asset,
           allowCollectionFolder: true,
+          // Deduplication returns an existing asset owned by another request.
+          // A failed retry must never delete it.
+          cleanupOnError: false,
         });
         if (
           definition !== undefined &&

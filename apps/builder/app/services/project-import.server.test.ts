@@ -6,7 +6,10 @@ import {
 } from "@webstudio-is/protocol/fixtures";
 import { type PublishedProjectBundle } from "@webstudio-is/protocol";
 import { createAssetRows } from "@webstudio-is/asset-uploader/server";
-import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
+import {
+  ContentCollectionError,
+  createDefaultCollectionConfig,
+} from "@webstudio-is/content-engine";
 import {
   __testing__,
   importPublishedProjectBundle,
@@ -573,7 +576,7 @@ describe("build import helpers", () => {
           },
         }
       )
-    ).rejects.toThrow('Move "template.mdx" into a subfolder');
+    ).rejects.toBeInstanceOf(ContentCollectionError);
 
     expect(calls).toEqual(["files-select"]);
   });

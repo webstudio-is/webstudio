@@ -10,6 +10,10 @@ import { getFontFaces } from "@webstudio-is/fonts";
 import { mapQueryWhere } from "@webstudio-is/query-builder/runtime";
 import {
   collectionComponent,
+  blockComponent,
+  blockBodyComponent,
+  blockTemplateComponent,
+  getWritableContentBlockDocumentBinding,
   decodeDataSourceVariable,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
@@ -24,6 +28,7 @@ import {
   fontAssetsFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
+  mdxArticleFixture,
   type EvaluationInstance,
   type EvaluationProject,
   type HighImpactFixture,
@@ -68,6 +73,7 @@ export type HighImpactEvaluationInput = {
   project: EvaluationProject;
   toolCalls: EvaluationToolCall[];
   artifacts?: EvaluationArtifact[];
+  mdxDocument?: { frontmatter: Record<string, unknown>; body: string };
   contentDatabase?: {
     usedBytes: number;
     maxBytes: number;
@@ -1320,13 +1326,145 @@ const validateMarkdownBlog = (
   );
 };
 
+const validateMdxArticle = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const block = input.project.instances.find(
+    (instance) => instance.id === "article-block"
+  );
+  const source = input.project.props.find(
+    (prop) => prop.instanceId === block?.id && prop.name === "src"
+  );
+  const document = input.project.props.find(
+    (prop) =>
+      prop.instanceId === block?.id &&
+      prop.name === "document" &&
+      prop.type === "parameter"
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxDocumentVariable",
+    typeof document?.value === "string" &&
+      input.project.dataSources.some(
+        (dataSource) =>
+          dataSource.id === document.value &&
+          dataSource.type === "parameter" &&
+          dataSource.scopeInstanceId === block?.id
+      ),
+    "The document parameter must refer to a variable owned by this Content Block."
+  );
+  const headerInstanceIds = new Set(
+    (block?.children ?? []).flatMap((child) => {
+      if (child.type !== "id") {
+        return [];
+      }
+      const instance = input.project.instances.find(
+        (instance) => instance.id === child.value
+      );
+      if (
+        instance?.component === blockBodyComponent ||
+        instance?.component === blockTemplateComponent
+      ) {
+        return [];
+      }
+      return descendants(input.project, child.value).map(
+        (instance) => instance.id
+      );
+    })
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxSourceConnected",
+    block?.component === blockComponent &&
+      ((source?.type === "asset" && source.value === "article-file") ||
+        (source?.type === "expression" &&
+          typeof source.value === "string" &&
+          parseJsonExpression(source.value) === "article-file")),
+    "The article Content Block must stay connected to the supplied MDX Asset."
+  );
+  for (const [id, path] of [
+    ["article-title", ["title"]],
+    ["article-author", ["author", "name"]],
+    ["article-reading-time", ["readingTime"]],
+  ] as const) {
+    const instance = input.project.instances.find(
+      (instance) => instance.id === id
+    );
+    const binding =
+      instance?.children.length === 1 ? instance.children[0] : undefined;
+    const writable =
+      binding?.type === "expression" && typeof document?.value === "string"
+        ? getWritableContentBlockDocumentBinding({
+            binding,
+            documentDataSourceId: document.value,
+          })
+        : undefined;
+    recordCheck(
+      checks,
+      failures,
+      `${id}-editable`,
+      headerInstanceIds.has(id) &&
+        JSON.stringify(writable?.frontmatterPath) === JSON.stringify(path),
+      `${id} must use a direct writable document binding inside the designed header.`
+    );
+  }
+  recordCheck(
+    checks,
+    failures,
+    "mdxMetadataPreserved",
+    input.mdxDocument?.frontmatter.title === "Aurora trails" &&
+      JSON.stringify(input.mdxDocument.frontmatter.author) ===
+        JSON.stringify({ name: "Noor Silva" }) &&
+      input.mdxDocument.frontmatter.readingTime === 6 &&
+      input.mdxDocument.frontmatter.draft === false &&
+      Object.keys(input.mdxDocument.frontmatter).length === 4,
+    "The saved author change must preserve the other frontmatter fields."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxBodyPreserved",
+    input.mdxDocument?.body.trim() ===
+      "## Plan your route\n\nFollow the marked trail and carry a map.",
+    "Frontmatter editing must preserve the article body."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxSuffixPreserved",
+    headerInstanceIds.has("article-reading-suffix") &&
+      JSON.stringify(
+        input.project.instances.find(
+          (instance) => instance.id === "article-reading-suffix"
+        )?.children
+      ) === JSON.stringify([{ type: "text", value: " min read" }]),
+    "Keep the static suffix separate from the editable reading-time value."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "mdxSavedAndReloaded",
+    hasSuccessfulCall(input.toolCalls, "update-content-block-frontmatter") &&
+      hasSuccessfulCall(input.toolCalls, "reload-content-block-source") &&
+      hasSuccessfulCall(input.toolCalls, "inspect-content-block-source") &&
+      hasSuccessfulCall(input.toolCalls, "audit"),
+    "Save through the dedicated source operation, reload, inspect, and audit."
+  );
+};
+
 export const evaluateHighImpactOutcome = (
   input: HighImpactEvaluationInput
 ): HighImpactEvaluationResult => {
   const checks: Record<string, "passed" | "failed"> = {};
   const failures: string[] = [];
   validateCommon(input, checks, failures);
-  if (input.fixture.id === authenticatedPageFixture.id) {
+  if (input.fixture.id === mdxArticleFixture.id) {
+    validateMdxArticle(input, checks, failures);
+  } else if (input.fixture.id === authenticatedPageFixture.id) {
     validateAuth(input, checks, failures);
   } else if (input.fixture.id === fontAssetsFixture.id) {
     validateFontAssets(input, checks, failures);

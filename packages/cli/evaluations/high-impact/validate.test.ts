@@ -408,17 +408,11 @@ const designCalls: EvaluationToolCall[] = [
 ];
 
 describe("high-impact fixture validation", () => {
-  test("keeps both fixtures complete and deterministic", () => {
-    expect(highImpactFixtures.map(validateHighImpactFixture)).toEqual([
-      { valid: true, failures: [] },
-      { valid: true, failures: [] },
-      { valid: true, failures: [] },
-      { valid: true, failures: [] },
-      { valid: true, failures: [] },
-    ]);
-    expect(JSON.stringify(highImpactFixtures)).toBe(
-      JSON.stringify(highImpactFixtures)
-    );
+  test.each(highImpactFixtures)("validates page ownership in $id", (fixture) => {
+    expect(validateHighImpactFixture(fixture)).toEqual({ valid: true, failures: [] });
+    const broken = clone(fixture);
+    broken.project.instances = [];
+    expect(validateHighImpactFixture(broken).valid).toBe(false);
   });
 });
 

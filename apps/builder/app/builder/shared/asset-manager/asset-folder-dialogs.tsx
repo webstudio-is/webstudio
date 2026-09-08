@@ -43,6 +43,7 @@ import { fetch } from "~/shared/fetch.client";
 import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 
 type AssetFolderFormValues = {
   name: string;
@@ -161,12 +162,10 @@ export const createContentCollectionFolder = async ({
 
 const AssetFolderForm = ({
   id,
-  open,
   initialName,
   initialParentId,
   excludedFolderId,
   folderId,
-  autoFocusSubmit = false,
   submitLabel,
   secondaryAction,
   showCollectionOption = false,
@@ -174,13 +173,11 @@ const AssetFolderForm = ({
   onSubmit,
 }: {
   id: string;
-  open: boolean;
   initialName: string;
   initialParentId: string | undefined;
   excludedFolderId?: string;
   folderId?: string;
-  autoFocusSubmit?: boolean;
-  submitLabel: string;
+  submitLabel?: string;
   secondaryAction?: ReactNode;
   showCollectionOption?: boolean;
   onUseAsCollection?: () => void;
@@ -196,17 +193,28 @@ const AssetFolderForm = ({
       excludedFolderId === undefined ? undefined : new Set([excludedFolderId]),
     [excludedFolderId]
   );
-  const [name, setName] = useState(initialName);
-  const [parentId, setParentId] = useState(initialParentId);
-  const [useAsContentCollection, setUseAsContentCollection] = useState(false);
-
-  useLayoutEffect(() => {
-    if (open) {
-      setName(initialName);
-      setParentId(initialParentId);
-      setUseAsContentCollection(false);
+  const savedValues = useMemo(
+    () => ({ name: initialName, parentId: initialParentId }),
+    [initialName, initialParentId]
+  );
+  const draft = useDraftValue(
+    savedValues,
+    (values) =>
+      onSubmit({
+        ...values,
+        name: values.name.trim(),
+      }),
+    {
+      autoSave: folderId !== undefined,
+      shouldSave: (values) =>
+        folderId !== undefined &&
+        values.name.trim().length > 0 &&
+        hierarchy.findByName({ ...values, excludeIds: excludedFolderIds }) ===
+          undefined,
     }
-  }, [initialName, initialParentId, open]);
+  );
+  const { name, parentId } = draft.value;
+  const [useAsContentCollection, setUseAsContentCollection] = useState(false);
 
   const normalizedName = name.trim();
   const duplicate =
@@ -217,6 +225,10 @@ const AssetFolderForm = ({
     }) !== undefined;
   const canSubmit = normalizedName.length > 0 && duplicate === false;
   const submit = () => {
+    if (folderId !== undefined) {
+      draft.save();
+      return;
+    }
     if (canSubmit) {
       onSubmit({
         name: normalizedName,
@@ -232,10 +244,13 @@ const AssetFolderForm = ({
         <Label htmlFor={id}>Name</Label>
         <InputField
           id={id}
-          autoFocus={autoFocusSubmit === false}
+          autoFocus
           value={name}
           color={duplicate ? "error" : undefined}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) =>
+            draft.set({ ...draft.value, name: event.target.value })
+          }
+          onBlur={folderId === undefined ? undefined : draft.save}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               submit();
@@ -250,7 +265,8 @@ const AssetFolderForm = ({
       </Grid>
       <AssetFolderSelector
         value={parentId}
-        onChange={setParentId}
+        onChange={(parentId) => draft.set({ ...draft.value, parentId })}
+        deferChangesUntilBlur={folderId !== undefined}
         excludedFolderIds={excludedFolderIds}
         rootLabel="Parent folder"
       />
@@ -291,17 +307,20 @@ const AssetFolderForm = ({
       {onUseAsCollection !== undefined && (
         <Button onClick={onUseAsCollection}>Use as content collection</Button>
       )}
-      <Flex justify="end" gap={2}>
-        {secondaryAction}
-        <Button
-          color="primary"
-          autoFocus={autoFocusSubmit}
-          disabled={canSubmit === false}
-          onClick={submit}
-        >
-          {submitLabel}
-        </Button>
-      </Flex>
+      {(secondaryAction !== undefined || submitLabel !== undefined) && (
+        <Flex justify="end" gap={2}>
+          {secondaryAction}
+          {submitLabel !== undefined && (
+            <Button
+              color="primary"
+              disabled={canSubmit === false}
+              onClick={submit}
+            >
+              {submitLabel}
+            </Button>
+          )}
+        </Flex>
+      )}
     </PanelContent>
   );
 };
@@ -482,7 +501,6 @@ export const CreateAssetFolderDialog = ({
         ) : pendingCollection === undefined ? (
           <AssetFolderForm
             id="asset-folder-name"
-            open={open}
             initialName=""
             initialParentId={currentFolderId}
             submitLabel="Create folder"
@@ -548,20 +566,18 @@ export const AssetFolderSettingsDialog = ({
     }
   }, [canDelete, initialDeleteConfirmation, open]);
 
-  const save = (values: AssetFolderFormValues) =>
-    closeOnSuccess(
-      executeRuntimeMutation({
-        id: "assetFolders.update",
-        input: {
-          folderId: folder.id,
-          values: {
-            name: values.name,
-            parentId: values.parentId ?? null,
-          },
+  const save = (values: AssetFolderFormValues) => {
+    executeRuntimeMutation({
+      id: "assetFolders.update",
+      input: {
+        folderId: folder.id,
+        values: {
+          name: values.name,
+          parentId: values.parentId ?? null,
         },
-      }),
-      onOpenChange
-    );
+      },
+    });
+  };
 
   const remove = () =>
     closeOnSuccess(
@@ -602,13 +618,10 @@ export const AssetFolderSettingsDialog = ({
         ) : (
           <AssetFolderForm
             id={`asset-folder-name-${folder.id}`}
-            open={open}
             initialName={folder.name}
             initialParentId={folder.parentId}
             excludedFolderId={folder.id}
             folderId={folder.id}
-            autoFocusSubmit
-            submitLabel="Save"
             onSubmit={save}
             onUseAsCollection={onUseAsCollection}
             secondaryAction={

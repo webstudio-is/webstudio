@@ -6,10 +6,19 @@ import { promisify } from "node:util";
 import { describe, expect, test } from "vitest";
 import { getFontFaces } from "@webstudio-is/fonts";
 import type { FontAsset } from "@webstudio-is/sdk";
+import { createProjectAssetContentTransport } from "@webstudio-is/http-client";
+import { parseMarkdownDocumentSource } from "@webstudio-is/content-engine";
+import {
+  createHttpAssetContentRepository,
+  readAssetContentBytes,
+  AssetRevisionConflictError,
+} from "@webstudio-is/content-engine/asset-content-repository";
 import {
   authenticatedPageFixture,
   fontAssetsFixture,
   markdownBlogFixture,
+  mdxArticleFixture,
+  mdxArticleSource,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
 import {
@@ -28,6 +37,124 @@ import { evaluateHighImpactOutcome } from "./validate";
 const execFileAsync = promisify(execFile);
 
 describe("high-impact fixture API", () => {
+  test("connects, edits, and reloads the MDX article through the source CLI", async () => {
+    const api = await startHighImpactFixtureApi(mdxArticleFixture);
+    const initialProject = api.getProject();
+    const directory = await mkdtemp(join(tmpdir(), "mdx-article-fixture-api-"));
+    const projectDirectory = join(directory, "project");
+    await mkdir(projectDirectory);
+    const cli = resolve(import.meta.dirname, "../../local.js");
+    const env = {
+      ...process.env,
+      WEBSTUDIO_CONFIG_DIR: join(directory, "config"),
+    };
+    const run = async (command: string, input: Record<string, unknown>) => {
+      const result = await execFileAsync(
+        process.execPath,
+        [cli, command, JSON.stringify(input)],
+        { cwd: projectDirectory, env }
+      );
+      expect(JSON.parse(result.stdout)).toMatchObject({ ok: true });
+    };
+    try {
+      await execFileAsync(
+        process.execPath,
+        [cli, "init", "--link", api.shareLink, "--json"],
+        { cwd: projectDirectory, env }
+      );
+      const occurrence = {
+        blockInstanceId: "article-block",
+        renderScope: "page:/",
+      };
+      await run("connect-content-block-source", {
+        ...occurrence,
+        source: { type: "asset", assetId: "article-file" },
+      });
+      await run("update-content-block-frontmatter", {
+        ...occurrence,
+        properties: {
+          title: "Aurora trails",
+          author: { name: "Noor Silva" },
+          readingTime: 6,
+          draft: false,
+        },
+      });
+      await run("reload-content-block-source", occurrence);
+      await run("inspect-content-block-source", occurrence);
+      const document = await parseMarkdownDocumentSource({
+        source: api.getAssetSource("article-file")!,
+      });
+      const original = await parseMarkdownDocumentSource({
+        source: mdxArticleSource,
+      });
+      expect(document.frontmatter).toEqual({
+        ...original.frontmatter,
+        author: { name: "Noor Silva" },
+      });
+      expect(document.body).toBe(original.body);
+      const headerIds = new Set([
+        "article-title",
+        "article-author",
+        "article-reading-time",
+        "article-reading-suffix",
+      ]);
+      expect(
+        api
+          .getProject()
+          .instances.filter((instance) => headerIds.has(instance.id))
+      ).toEqual(
+        initialProject.instances.filter((instance) =>
+          headerIds.has(instance.id)
+        )
+      );
+    } finally {
+      await api.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  }, 60_000);
+  test("persists MDX source revisions and rejects stale writes through the real client", async () => {
+    const api = await startHighImpactFixtureApi(mdxArticleFixture);
+    try {
+      const projectId = "high-impact-evaluation-project";
+      const repository = createHttpAssetContentRepository({
+        projectId,
+        ...createProjectAssetContentTransport({
+          projectId,
+          origin: api.origin,
+        }),
+      });
+      const initial = await readAssetContentBytes({
+        repository,
+        assetId: "article-file",
+        maxSize: 10_000,
+      });
+      expect(new TextDecoder().decode(initial.bytes)).toBe(mdxArticleSource);
+      const source = mdxArticleSource.replace("Mira Chen", "Noor Silva");
+      const updated = await repository.updateContent({
+        assetId: "article-file",
+        expectedName: initial.asset.name,
+        data: new Blob([source]).stream(),
+      });
+      expect(updated.name).not.toBe(initial.asset.name);
+      const reloaded = await readAssetContentBytes({
+        repository,
+        assetId: "article-file",
+        maxSize: 10_000,
+      });
+      expect(new TextDecoder().decode(reloaded.bytes)).toBe(source);
+      expect(api.getAssetSource("article-file")).toBe(source);
+      await expect(
+        repository.updateContent({
+          assetId: "article-file",
+          expectedName: initial.asset.name,
+          data: new Blob(["stale overwrite"]).stream(),
+        })
+      ).rejects.toBeInstanceOf(AssetRevisionConflictError);
+      expect(api.getAssetSource("article-file")).toBe(source);
+    } finally {
+      await api.close();
+    }
+  });
   test("keeps an untouched fixture page unchanged after persistence", async () => {
     const fixtureApi = await startHighImpactFixtureApi(fontAssetsFixture);
     try {

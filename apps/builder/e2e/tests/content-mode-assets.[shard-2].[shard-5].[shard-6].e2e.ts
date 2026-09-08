@@ -256,9 +256,8 @@ test("Editor can create and reload a content collection entry", async ({
   });
   await waitForSyncStatus({ page, status: "idle" });
   await openAssetsPanel({ page });
-  await page
-    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
-    .dblclick();
+  // The last folder is remembered for this project, including across modes.
+  await page.getByTitle("collection.json").waitFor({ state: "visible" });
   await page.getByRole("button", { name: "Add asset" }).click();
   await page.getByRole("menuitem", { name: "New entry" }).click();
   const dialog = page.getByRole("dialog", { name: "New entry" });
@@ -278,9 +277,6 @@ test("Editor can create and reload a content collection entry", async ({
     mode: "content",
   });
   await openAssetsPanel({ page });
-  await page
-    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
-    .dblclick();
   await waitForAsset({ page, filename: entryFilename });
   await page.getByTitle("collection.json").waitFor({ state: "visible" });
   await page.getByTitle("template.mdx").waitFor({ state: "visible" });
