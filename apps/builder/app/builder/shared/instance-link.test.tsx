@@ -10,14 +10,15 @@ import {
 } from "@webstudio-is/template";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import {
+  $authToken,
+  $builderMode,
   $selectedPageId,
   selectInstance,
   selectInstances,
 } from "~/shared/nano-states";
 import { __testing__ as pageTesting } from "~/shared/pages/use-switch-page";
-import { InstanceContextMenu, __testing__ } from "./instance-context-menu";
+import { InstanceContextMenu } from "./instance-context-menu";
 
-const { getInstanceLink } = __testing__;
 const { getDeepLinkedInstanceSelection } = pageTesting;
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
@@ -46,74 +47,20 @@ const instanceSelector = ["target", "fragment", "slot-two", "body"];
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
+const originalUrl = window.location.href;
 let root: Root | undefined;
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
   vi.restoreAllMocks();
+  window.history.replaceState(null, "", originalUrl);
+  $authToken.set(undefined);
+  $builderMode.set("design");
   selectInstance(undefined);
   $instances.set(new Map());
   $pages.set(undefined);
   $selectedPageId.set(undefined);
-});
-
-test("copies the current selection even before browser URL state catches up", () => {
-  const link = getInstanceLink({
-    url: "https://p-project.wstd.io/?pageId=old-page&instance=old-target&authToken=share-token&mode=content&pageHash=old-anchor#old-anchor",
-    pageId: "page",
-    instanceSelector,
-  });
-  const url = new URL(link!);
-  expect(url.origin).toBe("https://p-project.wstd.io");
-  expect(Object.fromEntries(url.searchParams)).toEqual({
-    pageId: "page",
-    instance: instanceSelector.join(","),
-    authToken: "share-token",
-    mode: "content",
-  });
-  expect(url.hash).toBe("");
-  const selector = url.searchParams.get("instance")!.split(",");
-  expect(
-    getDeepLinkedInstanceSelection({
-      instanceSelector: selector,
-      canOpenPageTemplates: true,
-      pages,
-      instances,
-    })
-  ).toEqual({ pageId: "page", instanceSelector });
-  // inspect-instance uses this same runtime implementation. Its instanceId is
-  // the first entry, not the full selector or the browser's stale selection.
-  expect(
-    inspectInstance(
-      { instances },
-      {
-        instanceId: selector[0],
-        include: ["children", "ancestors"],
-      }
-    )
-  ).toMatchObject({ id: "target", component: "Box", children: [] });
-});
-
-test("includes an explicit Body selection and page id", () => {
-  const link = getInstanceLink({
-    url: "http://localhost:3000/",
-    pageId: "page",
-    instanceSelector: ["body"],
-  });
-  expect(new URL(link!).searchParams.get("instance")).toBe("body");
-  expect(new URL(link!).searchParams.get("pageId")).toBe("page");
-});
-
-test.each([
-  { pageId: undefined, instanceSelector },
-  { pageId: "page", instanceSelector: undefined },
-  { pageId: "page", instanceSelector: [] },
-  { pageId: "page", instanceSelector: [ROOT_INSTANCE_ID] },
-])("does not create an unresolvable link for %j", (selection) => {
-  expect(
-    getInstanceLink({ url: "https://p-project.wstd.io/", ...selection })
-  ).toBeUndefined();
 });
 
 const openMenu = (selectors: string[][] = [instanceSelector]) => {
@@ -170,4 +117,62 @@ test("disables copying a Global Root link", () => {
   expect(openMenu([[ROOT_INSTANCE_ID]]).hasAttribute("data-disabled")).toBe(
     true
   );
+});
+
+test("copies current state and resolves the linked Slot occurrence and MCP target", async () => {
+  window.history.replaceState(
+    null,
+    "",
+    "?pageId=old-page&instance=old-target&mode=preview&safemode=true&pageHash=old-anchor#old-anchor"
+  );
+  $authToken.set("share-token");
+  $builderMode.set("content");
+  const writeText = vi
+    .spyOn(navigator.clipboard, "writeText")
+    .mockResolvedValue();
+  const item = openMenu();
+  await act(async () => item.click());
+  expect(writeText).toHaveBeenCalledOnce();
+  const url = new URL(writeText.mock.calls[0][0]);
+  expect(url.origin).toBe(window.location.origin);
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    pageId: "page",
+    instance: instanceSelector.join(","),
+    authToken: "share-token",
+    mode: "content",
+    safemode: "true",
+  });
+  expect(url.hash).toBe("");
+  const selector = url.searchParams.get("instance")!.split(",");
+  expect(
+    getDeepLinkedInstanceSelection({
+      instanceSelector: selector,
+      canOpenPageTemplates: true,
+      pages,
+      instances,
+    })
+  ).toEqual({ pageId: "page", instanceSelector });
+  // inspect-instance uses this same runtime implementation. Its instanceId is
+  // the first entry, not the full selector or the browser's stale selection.
+  expect(
+    inspectInstance(
+      { instances },
+      {
+        instanceId: selector[0],
+        include: ["children", "ancestors"],
+      }
+    )
+  ).toMatchObject({ id: "target", component: "Box", children: [] });
+});
+
+test("copies an explicit Body selection", async () => {
+  const writeText = vi
+    .spyOn(navigator.clipboard, "writeText")
+    .mockResolvedValue();
+  const item = openMenu([["body"]]);
+  await act(async () => item.click());
+  expect(writeText).toHaveBeenCalledOnce();
+  const url = new URL(writeText.mock.calls[0][0]);
+  expect(url.searchParams.get("instance")).toBe("body");
+  expect(url.searchParams.get("pageId")).toBe("page");
 });

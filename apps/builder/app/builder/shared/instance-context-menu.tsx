@@ -19,6 +19,8 @@ import {
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { emitCommand, instanceMoveCommandMetas } from "./commands";
 import {
+  $authToken,
+  $builderMode,
   $allSelectedInstanceSelectors,
   $selectedInstancePath,
   $selectedPage,
@@ -32,6 +34,7 @@ import {
   type InstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
+import { builderPath } from "~/shared/router-utils";
 import { $instances } from "~/shared/sync/data-stores";
 import {
   isComponentDetachable,
@@ -76,6 +79,11 @@ const getMenuPermissions = ({
   const isRoot = instanceId === ROOT_INSTANCE_ID;
   const isBody = instanceId === rootInstanceId;
   const isRootOrBody = isRoot || isBody;
+  const canCopyLink =
+    selectedInstanceCount === 1 &&
+    instanceId !== undefined &&
+    !isRoot &&
+    rootInstanceId !== undefined;
   const hasActionableSelection = selectedInstancePaths.some((path) => {
     const selectedInstance = path[0]?.instance;
     const selectedInstanceId = selectedInstance?.id;
@@ -90,6 +98,7 @@ const getMenuPermissions = ({
 
   if (isContentMode) {
     return {
+      canCopyLink,
       canCopy: hasActionableSelection,
       canPaste: hasActionableSelection,
       canCut: false,
@@ -111,6 +120,7 @@ const getMenuPermissions = ({
     canMutateDesign && instancePath ? canUnwrapInstance(instancePath) : false;
 
   return {
+    canCopyLink,
     canCopy: canMutateDesign && hasActionableSelection,
     canPaste: canMutateDesign && !isRoot,
     canCut: canMutateDesign && hasActionableSelection,
@@ -127,31 +137,6 @@ const getMenuPermissions = ({
     canOpenSettings: canUseSingleSelectionActions,
     canDelete: canMutateDesign && hasActionableSelection,
   };
-};
-
-const getInstanceLink = ({
-  url,
-  pageId,
-  instanceSelector,
-}: {
-  url: string;
-  pageId: string | undefined;
-  instanceSelector: readonly string[] | undefined;
-}) => {
-  if (
-    pageId === undefined ||
-    instanceSelector === undefined ||
-    instanceSelector.length === 0 ||
-    instanceSelector[0] === ROOT_INSTANCE_ID
-  ) {
-    return;
-  }
-  const link = new URL(url);
-  link.searchParams.set("pageId", pageId);
-  link.searchParams.set("instance", instanceSelector.join(","));
-  link.searchParams.delete("pageHash");
-  link.hash = "";
-  return link.href;
 };
 
 export const MenuItems = () => {
@@ -202,21 +187,24 @@ export const MenuItems = () => {
         </ContextMenuItemRightSlot>
       </ContextMenuItem>
       <ContextMenuItem
-        disabled={
-          selectedInstanceSelectors.length !== 1 ||
-          instanceSelector === undefined ||
-          instanceSelector[0] === ROOT_INSTANCE_ID ||
-          page === undefined
-        }
+        disabled={!permissions.canCopyLink}
         onSelect={async () => {
-          const link = getInstanceLink({
-            url: window.location.href,
-            pageId: page?.id,
-            instanceSelector,
-          });
-          if (link === undefined) {
+          if (!permissions.canCopyLink) {
             return;
           }
+          const mode = $builderMode.get();
+          const link = new URL(
+            builderPath({
+              pageId: page?.id,
+              instanceSelector,
+              authToken: $authToken.get(),
+              mode: mode === "design" ? undefined : mode,
+              safemode:
+                new URLSearchParams(window.location.search).get("safemode") ===
+                "true",
+            }),
+            window.location.origin
+          ).href;
           try {
             await navigator.clipboard.writeText(link);
             toast.success("Link copied");
@@ -413,7 +401,6 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
 };
 
 export const __testing__ = {
-  getInstanceLink,
   canDeleteInContentMode,
   getMenuPermissions,
 };
