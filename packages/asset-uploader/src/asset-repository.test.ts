@@ -172,6 +172,38 @@ const prepareAssetContentUpdate = (
   });
 
 describe("PostgresAssetRepository", () => {
+  test("publication keeps entries with invalid fields but rejects broken configuration", async () => {
+    const sources = {
+      "collection.json": createDefaultCollectionConfig(),
+      "template.mdx": "---\ndraft: true\n---\n",
+      "post.mdx": "---\ntitle: ''\nslug: post\n---\nVisible article.\n",
+    };
+    const assets: Asset[] = Object.entries(sources).map(([name, source]) => ({
+      id: name,
+      projectId: "project-1",
+      folderId: "posts",
+      name,
+      type: "file",
+      format: name.endsWith(".json") ? "json" : "mdx",
+      size: source.length,
+      createdAt: "2026-09-08T00:00:00.000Z",
+      meta: {},
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: createSourceAssetClient(sources),
+      dependencies: createDependencies(),
+    });
+    await expect(
+      repository.validateCollections(assets)
+    ).resolves.toBeUndefined();
+    sources["collection.json"] = "!".repeat(sources["collection.json"].length);
+    await expect(repository.validateCollections(assets)).rejects.toThrow(
+      "invalid JSON"
+    );
+  });
+
   test.each([
     { name: "notes.txt", extension: "mdx", collection: true },
     { name: "template.txt", extension: "mdx", collection: true },
@@ -1043,7 +1075,9 @@ describe("PostgresAssetRepository", () => {
       dependencies.createUploadTicket.mockResolvedValue({
         assetId: createdAsset.id,
         name: createdAsset.name,
-        ...(deduplicated ? { deduplicated: true, asset: createdAsset } : { deduplicated: false }),
+        ...(deduplicated
+          ? { deduplicated: true, asset: createdAsset }
+          : { deduplicated: false }),
       });
       dependencies.uploadFile.mockResolvedValue(createdAsset);
       const repository = new PostgresAssetRepository({
@@ -1808,7 +1842,7 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.createUploadTicket).not.toHaveBeenCalled();
   });
 
-  test("rejects frontmatter edits that violate the collection schema", async () => {
+  test("saves invalid entry fields without allowing slug or format changes", async () => {
     const dependencies = createDependencies();
     const configAsset = {
       id: "config",
@@ -1862,7 +1896,7 @@ describe("PostgresAssetRepository", () => {
           "---\ntitle: ''\nslug: hello-world\ndraft: true\n---\n\nBody.\n",
         ]).stream(),
       })
-    ).rejects.toThrow();
+    ).resolves.toEqual(entryAsset);
     await expect(
       repository.updateContent({
         assetId: entryAsset.id,

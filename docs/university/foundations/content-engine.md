@@ -183,8 +183,9 @@ Unicode rule for those collections too. Saving collection settings replaces the
 old pattern with the reference. Existing entry content and filenames remain
 unchanged. Future rule updates do not require editing each collection's regex.
 
-Editors can change the slug before creating the entry. The schema is checked
-when an entry is created and whenever its frontmatter changes. The slug becomes
+Editors can change the slug before creating the entry. New entries must satisfy
+the schema. Existing entries report field errors without blocking incremental
+edits or publication. The slug becomes
 the MDX filename and cannot be changed after creation.
 
 Slug fields are optional. Change the Slug field to another type
@@ -200,9 +201,18 @@ value is different from an omitted value. Optional boolean fields offer
 **Yes**, **No**, and **Not set**. Validation errors appear beside their fields.
 
 Collection settings save automatically when valid. Webstudio checks the entry
-template against the new rules. Existing entries remain editable if a rule changes. Repair any
-entry that no longer matches before publishing; publication validates every
-entry and stops when an entry is invalid.
+template against the new rules. Existing entries remain editable if a rule changes.
+The open collection folder checks entry frontmatter in the background and shows
+a warning when an entry needs attention. Select an entry's error indicator to
+open its MDX file. Invalid field values are underlined; hover them for details.
+Fixing the values clears the errors. A field error does not hide the entry,
+stop the collection rendering, or block publication of unrelated changes.
+
+These checks read bounded file prefixes for direct entries in the open folder,
+with at most four reads at once. Frontmatter is cached by file revision while
+that folder remains open. Changing the schema rechecks cached values without
+downloading unchanged entries again. A failed read is reported separately from
+field errors and can be retried with **Check again**.
 
 A collection folder accepts entries, supporting assets, and subfolders. Use
 **New entry** for filenames selected by the entry patterns. Files excluded by
@@ -210,9 +220,11 @@ the patterns behave like ordinary assets: upload, create, paste, move, rename,
 and duplicate them normally. The collection configuration and template remain
 protected and do not appear in Content
 Engine query results. Keep `collection.json` valid and its referenced template
-available. Webstudio blocks collection queries and publishing when it cannot
-safely identify the reserved files, the template is invalid, or an entry no
-longer matches the schema and its filename slug.
+available. Broken collection configuration can still block collection queries
+and publishing when Webstudio cannot safely identify the reserved files.
+An invalid template still blocks entry creation and publication. Malformed YAML
+and unreadable files are not ordinary field-validation errors; those existing
+parsing and access checks still apply.
 
 **Delete unused assets** does not list the files directly inside a collection
 folder. Collection entries are loaded dynamically and may not have a direct

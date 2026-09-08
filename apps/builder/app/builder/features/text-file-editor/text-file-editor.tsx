@@ -7,6 +7,9 @@ import {
   type RefObject,
 } from "react";
 import type { Extension } from "@codemirror/state";
+import { linter } from "@codemirror/lint";
+import { getCollectionEntrySourceIssues } from "@webstudio-is/content-engine";
+import { useContentCollections } from "~/builder/shared/assets/content-collections";
 import { useStore } from "@nanostores/react";
 import {
   PanelContent,
@@ -52,6 +55,7 @@ import {
 import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   contentBlockMdxTemplateDescriptors,
+  getAssetDisplayNameParts,
   getAssetUrl,
   getComponentJsxName,
   getContentBlockTemplateName,
@@ -670,6 +674,9 @@ export const TextFileEditor = ({
   const props = useStore($props);
   const dataSources = useStore($dataSources);
   const asset = assets.get(assetId);
+  const collections = useContentCollections(asset?.folderId);
+  const collection =
+    asset?.folderId === undefined ? undefined : collections.get(asset.folderId);
   const canEdit = useStore($authPermit) !== "view" && readOnly === false;
   const [state, setState] = useState<TextFileState>({ status: "loading" });
   const [persistenceFeedback, setPersistenceFeedback] =
@@ -701,7 +708,7 @@ export const TextFileEditor = ({
         return getTextFileEditorExtensions(asset);
       }
       const projectId = asset.projectId;
-      return getTextFileEditorExtensions(
+      const extensions = getTextFileEditorExtensions(
         asset,
         [],
         async ({ source }) =>
@@ -718,12 +725,41 @@ export const TextFileEditor = ({
           metas: registeredComponentMetas,
         })
       );
+      if (
+        collection?.status === "ready" &&
+        collection.config.matchesEntry(formatAssetName(asset))
+      ) {
+        extensions.push(
+          linter(async (view) => {
+            try {
+              return (
+                await getCollectionEntrySourceIssues({
+                  config: collection.config,
+                  source: view.state.doc.toString(),
+                  basename: getAssetDisplayNameParts(asset).basename,
+                })
+              ).map(({ from, to, message }) => ({
+                from,
+                to,
+                message,
+                severity: "error" as const,
+                source: "collection-field",
+              }));
+            } catch {
+              // The Markdown linter already reports malformed frontmatter.
+              return [];
+            }
+          })
+        );
+      }
+      return extensions;
     },
     // Recreate the linter after a Content Block is materialized or refreshed so
     // contextual template and content-model diagnostics are recalculated.
     [
       asset,
       assetId,
+      collection,
       dataSources,
       externalContentRoots,
       instances,

@@ -1,5 +1,6 @@
 import {
   PanelContent,
+  PanelBanner,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -60,6 +61,7 @@ import {
   CollectionRetryButton,
   CollectionUnavailableNotice,
 } from "./collection-unavailable-notice";
+import { useCollectionEntryValidation } from "~/builder/shared/assets/use-collection-entry-validation";
 
 export const AssetsPanel = ({
   publish,
@@ -120,6 +122,7 @@ export const AssetsPanel = ({
   );
   const currentCollection =
     folderId === undefined ? undefined : collections.get(folderId);
+  const entryValidation = useCollectionEntryValidation(currentCollection);
   useEffect(() => {
     if (collectionToConfigure === undefined) {
       return;
@@ -321,8 +324,25 @@ export const AssetsPanel = ({
       </PanelTitle>
       <Separator />
       <AssetManager
+        entryIssues={entryValidation.issues}
         folderNotice={
           <>
+            {currentCollection?.status === "ready" &&
+              entryValidation.issues !== undefined &&
+              entryValidation.issues.size > 0 && (
+                <PanelBanner variant="warning" role="status">
+                  <Flex direction="column" gap={2}>
+                    <Text>
+                      {entryValidation.issues.size}{" "}
+                      {entryValidation.issues.size === 1
+                        ? "entry needs"
+                        : "entries need"}{" "}
+                      attention. Open a marked entry to inspect it.
+                    </Text>
+                    <Button onClick={entryValidation.retry}>Check again</Button>
+                  </Flex>
+                </PanelBanner>
+              )}
             {currentCollection?.status === "loading" && (
               <PanelContent as={Flex} role="status" align="center">
                 <Text variant="tiny">Loading collection settings…</Text>

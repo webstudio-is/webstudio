@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
 import { pointerSegments } from "@hyperjump/json-pointer";
+import { isMap, parseDocument } from "yaml";
+import { findMarkdownFrontmatter } from "./markdown-scanner";
 import { URLPattern } from "urlpattern-polyfill";
 import { getUtf8ByteLength } from "./byte-stream";
 import {
@@ -781,6 +783,9 @@ export const normalizeCollectionSlug = (value: string) => {
 };
 
 const getValidationFieldKey = (issue: ErrorObject): string | undefined => {
+  if (issue.keyword === "additionalProperties") {
+    return issue.params.additionalProperty;
+  }
   if (issue.keyword === "required") {
     return issue.params.missingProperty;
   }
@@ -812,6 +817,9 @@ const getValidationError = (
   if (issue.keyword === "required") {
     return `${label}: A value is required`;
   }
+  if (issue.keyword === "additionalProperties") {
+    return `${label}: This field is not defined in the collection`;
+  }
   return `${label}: ${issue.message}`;
 };
 
@@ -824,6 +832,75 @@ export const getCollectionValidationError = (
     return;
   }
   return getValidationError(config, validation.errors[0]);
+};
+
+export const getCollectionEntryValidationIssues = ({
+  config,
+  properties,
+  basename,
+}: {
+  config: ContentCollectionConfig;
+  properties: Readonly<Record<string, unknown>>;
+  basename: string;
+}) => {
+  const validation = config.validate(properties);
+  const issues = validation.errors.map((issue) => ({
+    fieldKey: getValidationFieldKey(issue),
+    message: getValidationError(config, issue),
+  }));
+  if (
+    config.slugField !== undefined &&
+    properties[config.slugField] !== basename
+  ) {
+    issues.push({
+      fieldKey: config.slugField,
+      message: "The slug must match the entry filename",
+    });
+  }
+  return issues;
+};
+
+/** Field ranges use the YAML parser, including quoted keys and multiline values. */
+export const getCollectionEntrySourceIssues = async ({
+  config,
+  source,
+  basename,
+}: {
+  config: ContentCollectionConfig;
+  source: string;
+  basename: string;
+}) => {
+  const { properties } = await extractMarkdownFrontmatter(source);
+  const bytes = new TextEncoder().encode(source);
+  const envelope = findMarkdownFrontmatter(bytes, true);
+  const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
+  const start = !envelope
+    ? 0
+    : decoder.decode(bytes.subarray(0, envelope.yamlStart)).length;
+  const document = !envelope
+    ? undefined
+    : parseDocument(
+        decoder.decode(bytes.subarray(envelope.yamlStart, envelope.yamlEnd))
+      );
+  return getCollectionEntryValidationIssues({
+    config,
+    properties,
+    basename,
+  }).map((issue) => {
+    const node =
+      document !== undefined &&
+      isMap(document.contents) &&
+      issue.fieldKey !== undefined
+        ? document.contents.get(issue.fieldKey, true)
+        : undefined;
+    const range =
+      node !== null && typeof node === "object" && "range" in node
+        ? node.range
+        : undefined;
+    const from = range ? start + range[0] : start;
+    const to = range ? start + range[1] : Math.min(source.length, from + 1);
+    return { ...issue, from, to };
+  });
 };
 
 export const getCollectionFieldValidationIssue = (

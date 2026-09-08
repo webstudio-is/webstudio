@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
-import { Box, styled, Text } from "@webstudio-is/design-system";
+import {
+  Box,
+  styled,
+  Text,
+  Tooltip,
+  IconButton,
+  cssVar,
+} from "@webstudio-is/design-system";
 import {
   ListViewIcon,
+  AlertCircleIcon,
   PageIcon,
   TextCapitalizeIcon,
 } from "@webstudio-is/icons";
@@ -161,6 +169,7 @@ const VideoPreview = ({
 };
 
 type AssetThumbnailProps = {
+  entryError?: string;
   assetContainer: AssetContainer;
   interactions: AssetManagerThumbnailInteractions;
   onChange?: (assetContainer: AssetContainer) => void;
@@ -194,6 +203,7 @@ export const AssetThumbnail = ({
   isCollectionReserved = false,
   isCollectionFile = false,
   unavailableDestinationFolderIds,
+  entryError,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -425,27 +435,44 @@ export const AssetThumbnail = ({
         }}
         header={
           assetContainer.status === "uploaded" ? (
-            <AssetSettings
-              asset={assetContainer.asset}
-              open={settingsOpen && settingsBlocked === false}
-              onOpenChange={(open) => {
-                setSettingsOpen(open);
-              }}
-              onDelete={actions.delete}
-              onReplace={actions.replace}
-              canRename={!isCollectionEntry && !isCollectionReserved}
-              canMove={!isCollectionReserved}
-              isCollectionFile={isCollectionFile}
-              canSaveChanges={authPermit !== "view" && !settingsBlocked}
-              unavailableDestinationFolderIds={unavailableDestinationFolderIds}
-            >
-              <AssetManagerThumbnailMenu
-                actions={displayedActions}
-                disabledActions={disabledActions}
-                label={`Actions for ${formatAssetName(asset)}`}
-                onPointerDown={() => interactions.onContextMenuSelection(item)}
-              />
-            </AssetSettings>
+            <>
+              {entryError !== undefined && (
+                <Tooltip content={entryError} variant="wrapped">
+                  <IconButton
+                    aria-label={`Review errors in ${formatAssetName(asset)}`}
+                    css={{ pointerEvents: "auto" }}
+                    onClick={onOpen}
+                  >
+                    <AlertCircleIcon color={cssVar("--foreground-negative")} />
+                  </IconButton>
+                </Tooltip>
+              )}
+              <AssetSettings
+                asset={assetContainer.asset}
+                open={settingsOpen && settingsBlocked === false}
+                onOpenChange={(open) => {
+                  setSettingsOpen(open);
+                }}
+                onDelete={actions.delete}
+                onReplace={actions.replace}
+                canRename={!isCollectionEntry && !isCollectionReserved}
+                canMove={!isCollectionReserved}
+                isCollectionFile={isCollectionFile}
+                canSaveChanges={authPermit !== "view" && !settingsBlocked}
+                unavailableDestinationFolderIds={
+                  unavailableDestinationFolderIds
+                }
+              >
+                <AssetManagerThumbnailMenu
+                  actions={displayedActions}
+                  disabledActions={disabledActions}
+                  label={`Actions for ${formatAssetName(asset)}`}
+                  onPointerDown={() =>
+                    interactions.onContextMenuSelection(item)
+                  }
+                />
+              </AssetSettings>
+            </>
           ) : undefined
         }
       >

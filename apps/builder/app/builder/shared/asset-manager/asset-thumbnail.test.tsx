@@ -179,6 +179,25 @@ const selectFolderOption = (label: string) => {
 };
 
 const renderer = createAssetManagerTestRenderer();
+test("opens an entry from its validation indicator without disabling the asset", () => {
+  const onOpen = vi.fn();
+  const container = renderer.render(
+    <TooltipProvider>
+      {createUploadedAssetThumbnail({
+        entryError: "Title needs a value",
+        onOpen,
+      })}
+    </TooltipProvider>
+  );
+  const indicator = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Review errors in document.pdf"]'
+  );
+  expect(indicator).not.toBeNull();
+  expect(indicator).toBeEnabled();
+  expect(getComputedStyle(indicator!).pointerEvents).toBe("auto");
+  act(() => indicator?.click());
+  expect(onOpen).toHaveBeenCalledOnce();
+});
 registerContainers();
 vi.stubGlobal(
   "ResizeObserver",

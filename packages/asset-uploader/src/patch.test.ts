@@ -547,6 +547,64 @@ const assetRow = {
 };
 
 describe("asset patch persistence", () => {
+  test("sync saves an existing entry revision while a required field still needs repair", async () => {
+    const projectId = uid();
+    const sources = {
+      "config.json": createDefaultCollectionConfig(),
+      "template.mdx": "---\ndraft: true\n---\n",
+      "old.mdx": "---\nslug: post\n---\nOld body.\n",
+      "new.mdx": "---\nslug: post\n---\nRepaired body.\n",
+    };
+    const row = (
+      assetId: string,
+      filename: string,
+      name: keyof typeof sources
+    ) => ({
+      ...assetRow,
+      assetId,
+      projectId,
+      filename,
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name,
+        format: name.endsWith("json") ? "json" : "mdx",
+        meta: "{}",
+        size: sources[name].length,
+        isDeleted: false,
+      },
+    });
+    const nextFile = row("entry", "post", "new.mdx").file;
+    let swapped = false;
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () =>
+        json([
+          row("config", "collection", "config.json"),
+          row("template", "template", "template.mdx"),
+          row("entry", "post", "old.mdx"),
+        ])
+      ),
+      db.get("File", () => json([nextFile])),
+      db.patch("File", () => json({ name: nextFile.name })),
+      db.patch("Asset", () => {
+        swapped = true;
+        return json({ id: "entry" });
+      }),
+      http.post("http://test-postgrest/rpc/swap_asset_file", () =>
+        HttpResponse.json("invalid_revision")
+      )
+    );
+    await expect(
+      patchAssets(
+        { projectId, assetStore: createSourceAssetStore(sources) },
+        [{ op: "replace", path: ["entry", "name"], value: "new.mdx" }],
+        createContext()
+      )
+    ).resolves.toBeUndefined();
+    expect(swapped).toBe(true);
+  });
+
   test("loads only requested assets", async () => {
     const projectId = uid();
     let idFilter: string | null = null;

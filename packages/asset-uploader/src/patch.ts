@@ -131,22 +131,30 @@ const validateCollectionAssetPatch = async ({
   }
 
   // The public upload and metadata APIs require the dedicated New entry flow.
-  // Versioned sync patches also carry Undo/Redo, which cannot be identified
-  // after an Asset row is deleted. Accept those state transitions only when
-  // changed entries satisfy their file-backed rules. Unchanged invalid entries
-  // must not block ordinary supporting-asset operations. Reserved-file changes
-  // still require validation of the complete collection.
+  // New, renamed, and incoming entries still require validation. Existing
+  // entries can be saved and repaired incrementally after a schema change.
   for (const folderId of collectionValidationFolderIds) {
     if (nextCollectionFolderIds.has(folderId)) {
       await validateCollectionFolder({
         assets: nextAssets,
         folderId,
         assetStore,
-        entryIdsToValidate: Array.from(collectionChangedIds).some(
-          (id) => currentReservedIds.has(id) || nextReservedIds.has(id)
-        )
-          ? undefined
-          : collectionChangedIds,
+        entryIdsToValidate: currentCollectionFolderIds.has(folderId)
+          ? new Set(
+              Array.from(collectionChangedIds).filter((id) => {
+                const previous = current.get(id);
+                const following = next.get(id);
+                return (
+                  previous === undefined ||
+                  previous.folderId !== following?.folderId ||
+                  formatAssetName(previous) !==
+                    (following === undefined
+                      ? undefined
+                      : formatAssetName(following))
+                );
+              })
+            )
+          : undefined,
       });
     }
   }

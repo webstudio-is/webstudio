@@ -8,6 +8,8 @@ import {
   getCollectionFieldValidationIssue,
   getCollectionTemplateValidationError,
   getCollectionValidationError,
+  getCollectionEntryValidationIssues,
+  getCollectionEntrySourceIssues,
   parseCollectionConfig,
   normalizeCollectionSlug,
   serializeCollectionConfig,
@@ -19,6 +21,74 @@ type MutableCollectionSchema = Record<string, unknown> & {
 };
 
 describe("content collections", () => {
+  test("reports all invalid entry fields without changing their values", () => {
+    const config = parseCollectionConfig(createDefaultCollectionConfig());
+    const properties = {
+      title: "",
+      slug: "different",
+      draft: "yes",
+      extra: true,
+    };
+    const issues = getCollectionEntryValidationIssues({
+      config,
+      properties,
+      basename: "post",
+    });
+    expect(new Set(issues.map(({ fieldKey }) => fieldKey))).toEqual(
+      new Set(["title", "slug", "draft", "extra"])
+    );
+    expect(properties).toEqual({
+      title: "",
+      slug: "different",
+      draft: "yes",
+      extra: true,
+    });
+    expect(
+      getCollectionEntryValidationIssues({
+        config,
+        properties: { title: "Post", slug: "post", draft: false },
+        basename: "post",
+      })
+    ).toEqual([]);
+  });
+
+  test.each(["\n", "\r\n"])(
+    "locates collection errors in YAML values with %j line endings",
+    async (newline) => {
+      const config = parseCollectionConfig(createDefaultCollectionConfig());
+      const source = [
+        "\uFEFF---",
+        '"title": ""',
+        "slug: post",
+        "draft: yes",
+        "---",
+        "Body",
+      ].join(newline);
+      const issues = await getCollectionEntrySourceIssues({
+        config,
+        source,
+        basename: "post",
+      });
+      expect(issues.map(({ fieldKey }) => fieldKey)).toEqual([
+        "title",
+        "draft",
+      ]);
+      expect(issues.map(({ from, to }) => source.slice(from, to))).toEqual([
+        '""',
+        "yes",
+      ]);
+      const missing = await getCollectionEntrySourceIssues({
+        config,
+        source: "Body only",
+        basename: "post",
+      });
+      expect(missing.some(({ fieldKey }) => fieldKey === "title")).toBe(true);
+      expect(missing.every(({ from, to }) => from === 0 && to === 1)).toBe(
+        true
+      );
+    }
+  );
+
   test("resolves the bundled slug reference and applies sibling constraints", () => {
     const schema = JSON.parse(createDefaultCollectionConfig());
     schema.properties.slug = {

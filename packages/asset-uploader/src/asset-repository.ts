@@ -13,7 +13,6 @@ import {
   createLiteralContentCompilationQuery,
   getContentArtifactRuntimeAssetIds,
   getAssetQueryErrorDiagnosticIssue,
-  getCollectionValidationError,
   getDocumentFormatByContentType,
   DocumentSourceCompilationAggregateError,
   isAssetQueryCoveredByCompilationPlan,
@@ -1184,17 +1183,15 @@ export class PostgresAssetRepository implements AssetRepository {
     const frontmatterChanged =
       serializeJsonDeterministically(nextFrontmatter.properties) !==
       serializeJsonDeterministically(currentFrontmatter.properties);
-    const validationError = getCollectionValidationError(
-      config,
-      nextFrontmatter.properties
-    );
-    if (validationError !== undefined && frontmatterChanged) {
-      throw new AssetRepositoryConflictError(validationError);
-    }
+    // Existing entries can be repaired incrementally. Field validation is
+    // diagnostic; only creation requires every field to satisfy the schema.
     if (frontmatterChanged && config.slugField !== undefined) {
       const slug = nextFrontmatter.properties[config.slugField];
       const filenameSlug = getAssetDisplayNameParts(currentAsset).basename;
-      if (slug !== filenameSlug) {
+      if (
+        slug !== currentFrontmatter.properties[config.slugField] &&
+        slug !== filenameSlug
+      ) {
         throw new AssetRepositoryConflictError(
           "The slug must match the entry filename"
         );
@@ -2113,6 +2110,7 @@ export class PostgresAssetRepository implements AssetRepository {
         assets,
         folderId,
         assetStore: this.assetStore,
+        validateEntries: false,
       });
     }
   }
