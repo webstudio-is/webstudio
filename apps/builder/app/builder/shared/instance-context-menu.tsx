@@ -14,6 +14,7 @@ import {
   theme,
   Kbd,
   Box,
+  toast,
 } from "@webstudio-is/design-system";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { emitCommand, instanceMoveCommandMetas } from "./commands";
@@ -128,8 +129,34 @@ const getMenuPermissions = ({
   };
 };
 
+const getInstanceLink = ({
+  url,
+  pageId,
+  instanceSelector,
+}: {
+  url: string;
+  pageId: string | undefined;
+  instanceSelector: readonly string[] | undefined;
+}) => {
+  if (
+    pageId === undefined ||
+    instanceSelector === undefined ||
+    instanceSelector.length === 0 ||
+    instanceSelector[0] === ROOT_INSTANCE_ID
+  ) {
+    return;
+  }
+  const link = new URL(url);
+  link.searchParams.set("pageId", pageId);
+  link.searchParams.set("instance", instanceSelector.join(","));
+  link.searchParams.delete("pageHash");
+  link.hash = "";
+  return link.href;
+};
+
 export const MenuItems = () => {
   const instancePath = useStore($selectedInstancePath);
+  const page = useStore($selectedPage);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
   const instances = useStore($instances);
   const propValues = useStore($propValuesByInstanceSelector);
@@ -173,6 +200,32 @@ export const MenuItems = () => {
             color={shortcutColor(permissions.canCopy)}
           />
         </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
+        disabled={
+          selectedInstanceSelectors.length !== 1 ||
+          instanceSelector === undefined ||
+          instanceSelector[0] === ROOT_INSTANCE_ID ||
+          page === undefined
+        }
+        onSelect={async () => {
+          const link = getInstanceLink({
+            url: window.location.href,
+            pageId: page?.id,
+            instanceSelector,
+          });
+          if (link === undefined) {
+            return;
+          }
+          try {
+            await navigator.clipboard.writeText(link);
+            toast.success("Link copied");
+          } catch {
+            toast.error("Could not copy link");
+          }
+        }}
+      >
+        Copy link to instance
       </ContextMenuItem>
       <ContextMenuItem
         disabled={!permissions.canPaste}
@@ -360,6 +413,7 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
 };
 
 export const __testing__ = {
+  getInstanceLink,
   canDeleteInContentMode,
   getMenuPermissions,
 };
