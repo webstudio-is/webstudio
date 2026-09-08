@@ -8,8 +8,8 @@ import {
 } from "@webstudio-is/template";
 import { $authToken, $builderMode } from "~/shared/nano-states";
 import { $instances, $pages, $project } from "~/shared/sync/data-stores";
-import { getInstanceLink } from "./instance-link";
-import { getDeepLinkedInstanceSelection } from "./instance-link-utils";
+import { getInstanceLink } from "../instance-utils/link";
+import { getDeepLinkedInstanceSelection } from "../instance-utils/selection";
 import { __testing__ } from "./use-switch-page";
 
 afterEach(() => {

@@ -6,7 +6,7 @@ import {
 } from "../nano-states";
 import { builderUrl } from "../router-utils";
 import { $instances, $pages, $project } from "../sync/data-stores";
-import { getDeepLinkedInstanceSelection } from "./instance-link-utils";
+import { getDeepLinkedInstanceSelection } from "./selection";
 
 export const getInstanceLink = (
   instanceSelector: InstanceSelector | undefined

@@ -21,8 +21,10 @@ import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
-import { canResolveInstanceSelector } from "../instance-utils/selection";
-import { getDeepLinkedInstanceSelection } from "./instance-link-utils";
+import {
+  canResolveInstanceSelector,
+  getDeepLinkedInstanceSelection,
+} from "../instance-utils/selection";
 
 const shouldNavigateToPageState = ({
   isUrlStateInitialized,

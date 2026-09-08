@@ -90,7 +90,7 @@ import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import { getInstanceLink } from "~/shared/pages/instance-link";
+import { getInstanceLink } from "~/shared/instance-utils/link";
 import {
   getRestrictedFeatures,
   type RestrictedFeature,
