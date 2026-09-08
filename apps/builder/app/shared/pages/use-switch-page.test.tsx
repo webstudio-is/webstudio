@@ -1,12 +1,20 @@
-import { expect, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
+import { cleanStores } from "nanostores";
+import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   createTemplateComponentFixture,
   renderData,
 } from "@webstudio-is/template";
-import { builderUrl } from "~/shared/router-utils";
+import { $authToken, $builderMode } from "~/shared/nano-states";
+import { $instances, $pages, $project } from "~/shared/sync/data-stores";
+import { getInstanceLink } from "./instance-link";
 import { getDeepLinkedInstanceSelection } from "./instance-link-utils";
 import { __testing__ } from "./use-switch-page";
+
+afterEach(() => {
+  cleanStores($authToken, $builderMode, $instances, $pages, $project);
+});
 
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
@@ -92,19 +100,15 @@ test("restores the selected shared slot occurrence from its full selector", () =
     </Body>
   );
 
-  const url = new URL(
-    builderUrl({
-      projectId: "090e6e14-ae50-4b2e-bd22-71733cec05bb",
-      origin: "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.wstd.dev",
-      pageId: "home-page",
-      instanceSelector: ["box", "fragment", "slot-two", "body"],
-      authToken: "share-token",
-      mode: "content",
-    })
-  );
-  expect(url.origin).toBe(
-    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.wstd.dev"
-  );
+  $pages.set(pages);
+  $instances.set(instances);
+  $project.set({ id: "090e6e14-ae50-4b2e-bd22-71733cec05bb" } as Project);
+  $authToken.set("share-token");
+  $builderMode.set("content");
+  const link = getInstanceLink(["box", "fragment", "slot-two", "body"]);
+  expect(link).toBeDefined();
+  const url = new URL(link!);
+  expect(url.hostname).toContain("p-090e6e14-ae50-4b2e-bd22-71733cec05bb");
   expect(url.searchParams.get("authToken")).toBe("share-token");
   expect(url.searchParams.get("mode")).toBe("content");
   expect(

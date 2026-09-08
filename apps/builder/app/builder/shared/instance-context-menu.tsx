@@ -19,8 +19,6 @@ import {
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { emitCommand, instanceMoveCommandMetas } from "./commands";
 import {
-  $authToken,
-  $builderMode,
   $canOpenPageTemplates,
   $allSelectedInstanceSelectors,
   $selectedInstancePath,
@@ -35,7 +33,7 @@ import {
   type InstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
-import { builderUrl } from "~/shared/router-utils";
+import { getInstanceLink } from "~/shared/pages/instance-link";
 import { $instances, $pages, $project } from "~/shared/sync/data-stores";
 import { getDeepLinkedInstanceSelection } from "~/shared/pages/instance-link-utils";
 import {
@@ -195,20 +193,10 @@ export const MenuItems = () => {
       <ContextMenuItem
         disabled={instanceSelection === undefined || project === undefined}
         onSelect={async () => {
-          if (instanceSelection === undefined || project === undefined) {
+          const link = getInstanceLink(instanceSelector);
+          if (link === undefined) {
             return;
           }
-          const mode = $builderMode.get();
-          const link = builderUrl({
-            ...instanceSelection,
-            projectId: project.id,
-            origin: window.location.origin,
-            authToken: $authToken.get(),
-            mode: mode === "design" ? undefined : mode,
-            safemode:
-              new URLSearchParams(window.location.search).get("safemode") ===
-              "true",
-          });
           try {
             await navigator.clipboard.writeText(link);
             toast.success("Link copied");
