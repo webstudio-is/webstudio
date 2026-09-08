@@ -8,6 +8,44 @@ import {
   resolveWindowsLauncherPath,
 } from "./test-utils";
 
+test.each(["npm", "pnpm"] as const)(
+  "forwards script options through %s without changing their meaning",
+  (name) => {
+    const launcher = `/opt/${name}/bin/cli.js`;
+    const scriptArgs = [
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "4321",
+      "--",
+      "literal",
+    ];
+    expect(
+      getPackageManagerInvocation(["run", "dev", "--", ...scriptArgs], {
+        nodeExecPath: "/usr/bin/node",
+        npmExecPath: launcher,
+        platform: "linux",
+        readPackageFile: (path) => {
+          if (path === `/opt/${name}/package.json`) {
+            return JSON.stringify({ name, bin: { [name]: "bin/cli.js" } });
+          }
+          throw Object.assign(new Error("missing"), { code: "ENOENT" });
+        },
+        resolveLauncherPath: (path) => path,
+      })
+    ).toEqual({
+      command: "/usr/bin/node",
+      args: [
+        launcher,
+        "run",
+        "dev",
+        ...(name === "npm" ? ["--"] : []),
+        ...scriptArgs,
+      ],
+    });
+  }
+);
+
 test("reuses the npm cli that launched webstudio for preview commands", () => {
   expect(
     getPackageManagerInvocation(["run", "build"], {

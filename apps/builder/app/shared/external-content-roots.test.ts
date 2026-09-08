@@ -2536,6 +2536,23 @@ test("materializes into normal instances and saves their synchronous mutations o
   })?.identity;
   expect(savedIdentity?.contentRef).toBe("article_v2.mdx");
   expect(savedIdentity?.revision).not.toBe(initialIdentity?.revision);
+  // An edit can arrive as soon as its predecessor is acknowledged, while
+  // asynchronous materialization of the new revision is still in flight.
+  const unsubscribe = session.subscribe((assetId, state) => {
+    if (assetId !== asset.id || state.status !== "saved") {
+      return;
+    }
+    unsubscribe();
+    executeRuntimeMutation({
+      id: "instances.setTextContent",
+      input: {
+        operation: "set",
+        instanceId: insertedId,
+        mode: "text",
+        text: "Second after acknowledged save",
+      },
+    });
+  });
   executeRuntimeMutation({
     id: "instances.setTextContent",
     input: {
@@ -2547,7 +2564,11 @@ test("materializes into normal instances and saves their synchronous mutations o
   });
   expect(serverSyncStore.popAll()).toEqual([]);
   await flushExternalContentAsset({ projectId: "project", assetId: asset.id });
-  expect(writes.at(-1)).toBe("# Updated\n\n## Second after save\n");
+  await flushExternalContentAsset({ projectId: "project", assetId: asset.id });
+  expect(requireReload).not.toHaveBeenCalled();
+  expect(writes.at(-1)).toBe(
+    "# Updated\n\n## Second after acknowledged save\n"
+  );
   expect(
     getExternalContentRootChildren({
       projectId: "project",

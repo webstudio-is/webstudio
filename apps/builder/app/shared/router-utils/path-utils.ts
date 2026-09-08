@@ -158,3 +158,20 @@ export const restResourcesLoader = ({ diagnostics = false } = {}) =>
 
 export const marketplacePath = (method: string) =>
   `/builder/marketplace/${method}`;
+
+// Editor navigation does not change the Builder data loaded by the route.
+export const areBuilderDataUrlsEqual = (currentUrl: URL, nextUrl: URL) => {
+  const current = new URL(currentUrl);
+  const next = new URL(nextUrl);
+  for (const param of [
+    "pageId",
+    "instance",
+    "instanceId",
+    "mode",
+    "pageHash",
+  ]) {
+    current.searchParams.delete(param);
+    next.searchParams.delete(param);
+  }
+  return current.href === next.href;
+};

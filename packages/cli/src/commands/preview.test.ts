@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import {
   mkdir,
   mkdtemp,
@@ -26,6 +28,79 @@ import {
   previewDefaultTemplate,
 } from "./preview";
 import { generatedFilesManifest } from "../prebuild";
+import { getPackageManagerInvocation } from "../preview-server/package-manager";
+import { resolveConfig } from "vite";
+import reactRouterConfig from "../../templates/react-router/vite.config";
+
+test("keeps generated preview caches separate when dependencies are shared", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "webstudio-preview-cache-"));
+  try {
+    const cachePaths: string[] = [];
+    for (const name of ["first", "second"]) {
+      const projectDir = join(directory, name);
+      await mkdir(projectDir);
+      await writeFile(
+        join(projectDir, "package.json"),
+        await readFile(
+          new URL("../../templates/react-router/package.json", import.meta.url)
+        )
+      );
+      await ensurePreviewDependencies(projectDir);
+      const config = await resolveConfig(
+        {
+          ...reactRouterConfig,
+          root: projectDir,
+          configFile: false,
+          plugins: [],
+        },
+        "serve"
+      );
+      await mkdir(config.cacheDir, { recursive: true });
+      cachePaths.push(await realpath(config.cacheDir));
+    }
+    expect(cachePaths[0]).not.toBe(cachePaths[1]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test.each(["build", "dev", "start"])(
+  "runs the React Router %s script with linked development dependencies",
+  async (script) => {
+    const directory = await mkdtemp(join(tmpdir(), "webstudio-preview-bin-"));
+    try {
+      await writeFile(
+        join(directory, "package.json"),
+        await readFile(
+          new URL("../../templates/react-router/package.json", import.meta.url)
+        )
+      );
+      await ensurePreviewDependencies(directory);
+      // The start script must reach the generated server module, not fail in
+      // a package-manager launcher before loading it.
+      await mkdir(join(directory, "build", "server"), { recursive: true });
+      await writeFile(
+        join(directory, "build", "server", "index.js"),
+        'import { writeFileSync } from "node:fs"; writeFileSync("started", "yes"); process.exit(0);'
+      );
+      const invocation = getPackageManagerInvocation([
+        "run",
+        script,
+        ...(script === "start" ? [] : ["--", "--help"]),
+      ]);
+      await promisify(execFile)(invocation.command, invocation.args, {
+        cwd: directory,
+        env: { ...process.env, PORT: "3000" },
+        timeout: 20_000,
+      });
+      if (script === "start") {
+        expect(await readFile(join(directory, "started"), "utf8")).toBe("yes");
+      }
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  }
+);
 
 const readWindowsPackageFile = (path: string) => {
   if (path.endsWith("node_modules\\pnpm\\package.json")) {

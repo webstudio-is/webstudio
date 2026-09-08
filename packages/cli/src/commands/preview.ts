@@ -351,6 +351,9 @@ export const ensurePreviewDependencies = async (
   if (usesDevelopmentDependencies) {
     for (const cliNodeModules of cliNodeModulesCandidates) {
       if (await hasRequiredDependencies(cliNodeModules)) {
+        // React Router scripts invoke package binaries through Node: pnpm's .bin
+        // wrappers use paths relative to the original installation and cannot
+        // be relocated through this directory link.
         await operations.symlink(
           cliNodeModules,
           previewNodeModules,

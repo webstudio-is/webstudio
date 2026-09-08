@@ -885,14 +885,21 @@ const rematerializeAsset = async (
     preservedEntry?.projectId === projectId &&
     preservedEntry.assetId === assetId
   ) {
+    // This is our own document's save acknowledgment. Advance its revision
+    // before async parsing so the next local edit does not look like a conflict.
+    const version = ++preservedEntry.openVersion;
+    preservedEntry.root = {
+      ...preservedEntry.root,
+      identity: createExternalContentIdentity(preservedEntry, sourceState),
+    };
+    registerMutationRoot(preservedEntry, preservedEntry.installedFragment);
     const result = await materialize({ entry: preservedEntry, sourceState });
-    if (roots.get(preservedEntry.key) === preservedEntry) {
+    if (
+      roots.get(preservedEntry.key) === preservedEntry &&
+      preservedEntry.openVersion === version
+    ) {
       // Preserve the synchronously edited fragment and refresh only the
       // source-owned state that does not participate in the current selection.
-      preservedEntry.root = {
-        ...preservedEntry.root,
-        identity: createExternalContentIdentity(preservedEntry, sourceState),
-      };
       preservedEntry.diagnostics = result.diagnostics;
       registerMutationRoot(preservedEntry, preservedEntry.installedFragment);
     }
