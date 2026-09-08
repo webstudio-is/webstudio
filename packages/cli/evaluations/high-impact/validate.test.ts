@@ -408,12 +408,18 @@ const designCalls: EvaluationToolCall[] = [
 ];
 
 describe("high-impact fixture validation", () => {
-  test.each(highImpactFixtures)("validates page ownership in $id", (fixture) => {
-    expect(validateHighImpactFixture(fixture)).toEqual({ valid: true, failures: [] });
-    const broken = clone(fixture);
-    broken.project.instances = [];
-    expect(validateHighImpactFixture(broken).valid).toBe(false);
-  });
+  test.each(highImpactFixtures)(
+    "validates page ownership in $id",
+    (fixture) => {
+      expect(validateHighImpactFixture(fixture)).toEqual({
+        valid: true,
+        failures: [],
+      });
+      const broken = clone(fixture);
+      broken.project.instances = [];
+      expect(validateHighImpactFixture(broken).valid).toBe(false);
+    }
+  );
 });
 
 describe("font-assets evaluation", () => {
