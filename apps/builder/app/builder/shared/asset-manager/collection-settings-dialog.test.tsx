@@ -13,7 +13,10 @@ import {
   serializeAssetContentDescriptor,
 } from "@webstudio-is/protocol/asset-resource-api";
 import type { Asset } from "@webstudio-is/sdk";
-import { __testing__ } from "~/shared/asset-content-bridge.client";
+import {
+  __testing__,
+  createAssetContentBridge,
+} from "~/shared/asset-content-bridge.client";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import {
   CollectionSettingsDialog,
@@ -99,26 +102,29 @@ const input = (element: HTMLInputElement, value: string) => {
 
 beforeEach(() => {
   $project.set({ id: "project" } as never);
-  initBridge({
-    authorize: () => true,
-    requireReload: () => undefined,
-    request: async () => {
-      const template = "---\ndraft: true\n---\n\nStart writing.\n";
-      const asset = createAsset({
-        id: "template",
-        filename: "template",
-        format: "mdx",
-      });
-      asset.size = new TextEncoder().encode(template).length;
-      return new Response(template, {
-        headers: {
-          "content-length": String(new TextEncoder().encode(template).length),
-          [assetContentDescriptorHeader]:
-            serializeAssetContentDescriptor(asset),
-        },
-      });
-    },
-  });
+  initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      authorize: () => true,
+      requireReload: () => undefined,
+      request: async () => {
+        const template = "---\ndraft: true\n---\n\nStart writing.\n";
+        const asset = createAsset({
+          id: "template",
+          filename: "template",
+          format: "mdx",
+        });
+        asset.size = new TextEncoder().encode(template).length;
+        return new Response(template, {
+          headers: {
+            "content-length": String(new TextEncoder().encode(template).length),
+            [assetContentDescriptorHeader]:
+              serializeAssetContentDescriptor(asset),
+          },
+        });
+      },
+    })
+  );
 });
 
 test("asks before discarding invalid collection settings", async () => {
@@ -381,13 +387,16 @@ test("saves a collection without a slug after changing the slug type", async () 
 });
 
 test("shows template loading failures without save or cancel buttons", async () => {
-  initBridge({
-    authorize: () => true,
-    requireReload: () => undefined,
-    request: async () => {
-      throw new Error("Template unavailable");
-    },
-  });
+  initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      authorize: () => true,
+      requireReload: () => undefined,
+      request: async () => {
+        throw new Error("Template unavailable");
+      },
+    })
+  );
   const configAsset = createAsset({
     id: "config",
     filename: "collection",

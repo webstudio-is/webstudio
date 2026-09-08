@@ -15,6 +15,7 @@ import {
 import {
   __testing__ as assetContentBridgeTesting,
   createAssetContentBridge,
+  getAssetContentBridge,
 } from "./asset-content-bridge.client";
 import {
   acquireExternalContentRoot,
@@ -1425,7 +1426,7 @@ test("rebases frontmatter edits from Content Blocks sharing one Asset", async ()
   }
 
   await Promise.all([
-    updateExternalContentFrontmatter({
+    getAssetContentBridge().updateFrontmatter({
       rootKey: firstKey,
       path: ["title"],
       value: "After",

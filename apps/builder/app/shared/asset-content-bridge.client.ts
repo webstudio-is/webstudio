@@ -7,11 +7,27 @@ type AssetContentAuthorization = Readonly<{
   operation: "read" | "write";
 }>;
 
+type FrontmatterUpdate = Readonly<{
+  rootKey: string;
+  path: readonly string[];
+  value: unknown;
+  resolvedValue?: unknown;
+}>;
+
+type FrontmatterWriter = Readonly<{
+  rootKey: string;
+  projectId: string;
+  assetId: string;
+  update: (input: FrontmatterUpdate) => Promise<void>;
+}>;
+
 export type AssetContentBridge = Readonly<{
   request: (input: string, init?: RequestInit) => Promise<Response>;
   authorize: (input: AssetContentAuthorization) => boolean;
   requireReload: (error: string) => void;
   getContentSession?: (projectId: string) => AssetContentSession;
+  registerFrontmatterWriter: (writer: FrontmatterWriter) => () => void;
+  updateFrontmatter: (input: FrontmatterUpdate) => Promise<void>;
 }>;
 
 const namespace = "__webstudio__$__assetContentBridge";
@@ -28,90 +44,117 @@ export const createAssetContentBridge = ({
   authorize: (input: AssetContentAuthorization) => boolean;
   requireReload: (error: string) => void;
   getContentSession?: (projectId: string) => AssetContentSession;
-}): AssetContentBridge => ({
-  authorize,
-  requireReload,
-  getContentSession,
-  request: async (input, init) => {
-    const url = new URL(input, origin);
-    const method = init?.method?.toUpperCase() ?? "GET";
-    const [, rest, assets, encodedAssetId, content, ...extraPath] =
-      url.pathname.split("/");
-    if (
-      url.origin !== origin ||
-      rest !== "rest" ||
-      assets !== "assets" ||
-      encodedAssetId === undefined ||
-      encodedAssetId === "" ||
-      content !== "content" ||
-      extraPath.length !== 0 ||
-      (method !== "GET" && method !== "PUT")
-    ) {
-      throw new Error("Only same-origin Asset content requests are allowed");
-    }
-    let assetId: string;
-    try {
-      assetId = decodeURIComponent(encodedAssetId);
-    } catch {
-      throw new Error("Asset content request has an invalid Asset id");
-    }
-    const projectIds = url.searchParams.getAll("projectId");
-    const expectedNames = url.searchParams.getAll("expectedName");
-    const allowedQueryNames =
-      method === "GET"
-        ? new Set(["projectId"])
-        : new Set(["projectId", "expectedName"]);
-    if (
-      projectIds.length !== 1 ||
-      projectIds[0] === "" ||
-      expectedNames.length !== (method === "PUT" ? 1 : 0) ||
-      (method === "PUT" && expectedNames[0] === "") ||
-      [...url.searchParams.keys()].some(
-        (name) => allowedQueryNames.has(name) === false
-      )
-    ) {
-      throw new Error("Asset content request has invalid parameters");
-    }
-    const operation = method === "PUT" ? "write" : "read";
-    if (
-      authorize({
-        projectId: projectIds[0],
-        assetId,
-        operation,
-      }) === false
-    ) {
-      throw new Error("Asset content request is not authorized");
-    }
-    if (method === "GET") {
-      if (init?.body != null) {
-        throw new Error("Asset content reads cannot include a body");
+}): AssetContentBridge => {
+  const frontmatterWriters = new Map<string, FrontmatterWriter>();
+  return {
+    authorize,
+    requireReload,
+    getContentSession,
+    registerFrontmatterWriter: (writer) => {
+      frontmatterWriters.set(writer.rootKey, writer);
+      return () => {
+        if (frontmatterWriters.get(writer.rootKey) === writer) {
+          frontmatterWriters.delete(writer.rootKey);
+        }
+      };
+    },
+    updateFrontmatter: async (input) => {
+      const writer = frontmatterWriters.get(input.rootKey);
+      if (writer === undefined) {
+        throw new Error("Connected Content Block is not open");
+      }
+      if (
+        !authorize({
+          projectId: writer.projectId,
+          assetId: writer.assetId,
+          operation: "write",
+        })
+      ) {
+        throw new Error("Asset content request is not authorized");
+      }
+      await writer.update(input);
+    },
+    request: async (input, init) => {
+      const url = new URL(input, origin);
+      const method = init?.method?.toUpperCase() ?? "GET";
+      const [, rest, assets, encodedAssetId, content, ...extraPath] =
+        url.pathname.split("/");
+      if (
+        url.origin !== origin ||
+        rest !== "rest" ||
+        assets !== "assets" ||
+        encodedAssetId === undefined ||
+        encodedAssetId === "" ||
+        content !== "content" ||
+        extraPath.length !== 0 ||
+        (method !== "GET" && method !== "PUT")
+      ) {
+        throw new Error("Only same-origin Asset content requests are allowed");
+      }
+      let assetId: string;
+      try {
+        assetId = decodeURIComponent(encodedAssetId);
+      } catch {
+        throw new Error("Asset content request has an invalid Asset id");
+      }
+      const projectIds = url.searchParams.getAll("projectId");
+      const expectedNames = url.searchParams.getAll("expectedName");
+      const allowedQueryNames =
+        method === "GET"
+          ? new Set(["projectId"])
+          : new Set(["projectId", "expectedName"]);
+      if (
+        projectIds.length !== 1 ||
+        projectIds[0] === "" ||
+        expectedNames.length !== (method === "PUT" ? 1 : 0) ||
+        (method === "PUT" && expectedNames[0] === "") ||
+        [...url.searchParams.keys()].some(
+          (name) => allowedQueryNames.has(name) === false
+        )
+      ) {
+        throw new Error("Asset content request has invalid parameters");
+      }
+      const operation = method === "PUT" ? "write" : "read";
+      if (
+        authorize({
+          projectId: projectIds[0],
+          assetId,
+          operation,
+        }) === false
+      ) {
+        throw new Error("Asset content request is not authorized");
+      }
+      if (method === "GET") {
+        if (init?.body != null) {
+          throw new Error("Asset content reads cannot include a body");
+        }
+        return await request(url.href, init);
+      }
+      const headers = new Headers(init?.headers);
+      if (headers.get("content-type") !== "application/octet-stream") {
+        throw new Error("Asset content writes require binary content");
+      }
+      const body = init?.body;
+      const byteLength =
+        typeof body === "string"
+          ? new TextEncoder().encode(body).byteLength
+          : body instanceof Blob
+            ? body.size
+            : body instanceof ArrayBuffer
+              ? body.byteLength
+              : ArrayBuffer.isView(body)
+                ? body.byteLength
+                : undefined;
+      if (byteLength === undefined) {
+        throw new Error("Asset content writes require a bounded body");
+      }
+      if (byteLength > contentEngineLimits.hydratedFileBytes) {
+        throw new Error("Asset content write exceeds the MDX editing limit");
       }
       return await request(url.href, init);
-    }
-    const headers = new Headers(init?.headers);
-    if (headers.get("content-type") !== "application/octet-stream") {
-      throw new Error("Asset content writes require binary content");
-    }
-    const body = init?.body;
-    const byteLength =
-      typeof body === "string"
-        ? new TextEncoder().encode(body).byteLength
-        : body instanceof Blob
-          ? body.size
-          : body instanceof ArrayBuffer
-            ? body.byteLength
-            : ArrayBuffer.isView(body)
-              ? body.byteLength
-              : undefined;
-    if (byteLength === undefined) {
-      throw new Error("Asset content writes require a bounded body");
-    }
-    if (byteLength > contentEngineLimits.hydratedFileBytes) {
-      throw new Error("Asset content write exceeds the MDX editing limit");
-    }
-    return await request(url.href, init);
-  },
-});
+    },
+  };
+};
 
 declare global {
   interface Window {

@@ -363,7 +363,7 @@ const registerMutationRoot = (
   const owned = getExternalContentFragmentOwnership(fragment);
   const templateSnapshot = getTemplateSnapshot(entry);
   const instanceSelector = parseContentBlockRenderScope(entry.renderScope);
-  entry.unregisterMutationRoot = registerExternalContentRoot(entry.key, {
+  const unregisterRoot = registerExternalContentRoot(entry.key, {
     sourceBlockInstanceId: entry.sourceBlockInstanceId,
     sourceRenderScope: entry.renderScope,
     blockInstanceId: entry.blockInstanceId,
@@ -390,6 +390,16 @@ const registerMutationRoot = (
       entry.root.document.frontmatter.properties,
     transientInstanceIds: entry.transientInstanceIds,
   });
+  const unregisterWriter = getAssetContentBridge().registerFrontmatterWriter({
+    rootKey: entry.key,
+    projectId: entry.projectId,
+    assetId: entry.assetId,
+    update: updateExternalContentFrontmatter,
+  });
+  entry.unregisterMutationRoot = () => {
+    unregisterRoot();
+    unregisterWriter();
+  };
 };
 
 const installRoot = ({
@@ -1349,7 +1359,14 @@ export const updateExternalContentFrontmatter = ({
 }) => {
   const entry = roots.get(rootKey);
   if (entry === undefined) {
-    return Promise.reject(new Error("Connected Content Block is not open"));
+    // Settings run in the Builder frame; mounted documents and their save
+    // queues belong to the canvas. Route the write to that same owner.
+    return getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path,
+      value,
+      resolvedValue,
+    });
   }
   const properties = setObjectPathValue({
     value: entry.root.document.frontmatter.properties,
