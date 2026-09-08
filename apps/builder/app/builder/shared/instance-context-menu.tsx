@@ -14,10 +14,12 @@ import {
   theme,
   Kbd,
   Box,
+  toast,
 } from "@webstudio-is/design-system";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { emitCommand, instanceMoveCommandMetas } from "./commands";
 import {
+  $canOpenPageTemplates,
   $allSelectedInstanceSelectors,
   $selectedInstancePath,
   $selectedPage,
@@ -31,7 +33,11 @@ import {
   type InstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
-import { $instances } from "~/shared/sync/data-stores";
+import {
+  getInstanceLink,
+  getDeepLinkedInstanceSelection,
+} from "~/shared/instance-utils/link";
+import { $instances, $pages, $project } from "~/shared/sync/data-stores";
 import {
   isComponentDetachable,
   ROOT_INSTANCE_ID,
@@ -130,6 +136,9 @@ const getMenuPermissions = ({
 
 export const MenuItems = () => {
   const instancePath = useStore($selectedInstancePath);
+  const pages = useStore($pages);
+  const project = useStore($project);
+  const canOpenPageTemplates = useStore($canOpenPageTemplates);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
   const instances = useStore($instances);
   const propValues = useStore($propValuesByInstanceSelector);
@@ -137,6 +146,15 @@ export const MenuItems = () => {
   const isDesignMode = useStore($isDesignMode);
 
   const instanceSelector = instancePath?.[0]?.instanceSelector;
+
+  const instanceSelection =
+    pages &&
+    getDeepLinkedInstanceSelection({
+      instanceSelector,
+      canOpenPageTemplates,
+      pages,
+      instances,
+    });
 
   const show = instanceSelector
     ? Boolean(
@@ -173,6 +191,23 @@ export const MenuItems = () => {
             color={shortcutColor(permissions.canCopy)}
           />
         </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
+        disabled={instanceSelection === undefined || project === undefined}
+        onSelect={async () => {
+          const link = getInstanceLink(instanceSelector);
+          if (link === undefined) {
+            return;
+          }
+          try {
+            await navigator.clipboard.writeText(link);
+            toast.success("Link copied");
+          } catch {
+            toast.error("Could not copy link");
+          }
+        }}
+      >
+        Copy link to instance
       </ContextMenuItem>
       <ContextMenuItem
         disabled={!permissions.canPaste}

@@ -23,6 +23,7 @@ import { createContext } from "~/shared/context.server";
 import { getPlanInfo } from "@webstudio-is/plans/index.server";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
+import { areBuilderDataUrlsEqual } from "~/shared/router-utils/path-utils";
 
 import env from "~/env/env.server";
 
@@ -327,23 +328,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   nextUrl,
   defaultShouldRevalidate,
 }) => {
-  const currentUrlCopy = new URL(currentUrl);
-  const nextUrlCopy = new URL(nextUrl);
-  // prevent revalidating data when pageId changes
-  // to not regenerate auth token and preserve canvas url
-  currentUrlCopy.searchParams.delete("pageId");
-  nextUrlCopy.searchParams.delete("pageId");
-
-  currentUrlCopy.searchParams.delete("instanceId");
-  nextUrlCopy.searchParams.delete("instanceId");
-
-  currentUrlCopy.searchParams.delete("mode");
-  nextUrlCopy.searchParams.delete("mode");
-
-  currentUrlCopy.searchParams.delete("pageHash");
-  nextUrlCopy.searchParams.delete("pageHash");
-
-  return currentUrlCopy.href === nextUrlCopy.href
+  return areBuilderDataUrlsEqual(currentUrl, nextUrl)
     ? false
     : defaultShouldRevalidate;
 };

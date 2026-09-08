@@ -48,9 +48,7 @@ import {
 } from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
-  $authToken,
   $authTokenPermissions,
-  $builderMode,
   $editingPageId,
   $permissions,
   $stagingUsername,
@@ -92,7 +90,7 @@ import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import { builderUrl } from "~/shared/router-utils";
+import { getInstanceLink } from "~/shared/instance-utils/link";
 import {
   getRestrictedFeatures,
   type RestrictedFeature,
@@ -116,12 +114,10 @@ const PrePublishAuditMessage = ({
   const { instanceId } = finding.location;
   const pages = $pages.get();
   const instances = $instances.get();
-  const project = $project.get();
 
   if (
     instanceId === undefined ||
     pages === undefined ||
-    project === undefined ||
     instances.has(instanceId) === false
   ) {
     return message;
@@ -132,14 +128,10 @@ const PrePublishAuditMessage = ({
     instances,
     instanceId
   );
-  const href = builderUrl({
-    projectId: project.id,
-    pageId: pageId === pages.homePageId ? undefined : pageId,
-    instanceSelector,
-    origin: window.location.origin,
-    authToken: $authToken.get(),
-    mode: $builderMode.get(),
-  });
+  const href = getInstanceLink(instanceSelector);
+  if (href === undefined) {
+    return message;
+  }
 
   return (
     <>
