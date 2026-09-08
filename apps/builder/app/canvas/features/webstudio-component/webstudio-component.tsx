@@ -1,3 +1,4 @@
+import { parseError } from "~/shared/error/error-parse";
 import {
   useEffect,
   forwardRef,
@@ -896,11 +897,7 @@ const WebstudioComponentCanvasInner = forwardRef<
             path: frontmatterPath,
             value,
           }).catch((error) => {
-            toast.error(
-              error instanceof Error
-                ? error.message
-                : "Unable to update MDX frontmatter"
-            );
+            toast.error(parseError(error).message);
           });
           return;
         }

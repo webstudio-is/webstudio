@@ -10,6 +10,8 @@ import {
   getCollectionValidationError,
   getCollectionEntryValidationIssues,
   getCollectionEntrySourceIssues,
+  getCollectionEntryCreationError,
+  getCollectionFieldLimitsIssue,
   parseCollectionConfig,
   normalizeCollectionSlug,
   serializeCollectionConfig,
@@ -21,6 +23,70 @@ type MutableCollectionSchema = Record<string, unknown> & {
 };
 
 describe("content collections", () => {
+  test("rejects slug limits that only allow an empty string in settings", async () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    delete schema.properties.slug.minLength;
+    schema.properties.slug.maxLength = 0;
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const slug = config.fields.find((field) => field.key === "slug")!;
+    expect(getCollectionFieldLimitsIssue(slug)?.input).toBe("maxLength");
+    expect(
+      getCollectionFieldLimitsIssue({ ...slug, minLength: 0 })?.input
+    ).toBe("maxLength");
+    expect(
+      getCollectionFieldLimitsIssue({ ...slug, control: "text" })
+    ).toBeUndefined();
+    schema.properties.slug.maxLength = 1;
+    const repaired = parseCollectionConfig(JSON.stringify(schema));
+    expect(
+      getCollectionFieldLimitsIssue(
+        repaired.fields.find((field) => field.key === "slug")!
+      )
+    ).toBeUndefined();
+    const entry = await createCollectionEntry({
+      config: repaired,
+      templateSource: "",
+      values: { title: "Post", slug: "a" },
+      existingFilenames: [],
+    });
+    expect(entry.filename).toBe("a.mdx");
+  });
+  test("requires generated-filename patterns when no slug field is configured", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    delete schema.properties.slug;
+    schema.required = ["title"];
+    delete schema["x-webstudio"].slugField;
+    delete schema["x-webstudio"].generateSlugFrom;
+    for (const entries of [["post-*.mdx"], ["*.mdx", "!entry-*.mdx"]]) {
+      schema["x-webstudio"].entries = entries;
+      const config = parseCollectionConfig(JSON.stringify(schema));
+      expect(getCollectionEntryCreationError(config)).toBeDefined();
+    }
+    schema["x-webstudio"].entries = ["entry-*.mdx"];
+    expect(
+      getCollectionEntryCreationError(
+        parseCollectionConfig(JSON.stringify(schema))
+      )
+    ).toBeUndefined();
+    expect(
+      parseCollectionConfig(JSON.stringify(schema)).matchesEntry(
+        "entry-123.mdx"
+      )
+    ).toBe(true);
+  });
+  test("rejects integer limits with no possible integer", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.count = { type: "integer", minimum: 0.2, maximum: 0.8 };
+    expect(() => parseCollectionConfig(JSON.stringify(schema))).toThrow();
+    schema.properties.count.maximum = 1;
+    expect(
+      parseCollectionConfig(JSON.stringify(schema)).validate({
+        title: "Post",
+        slug: "post",
+        count: 1,
+      }).success
+    ).toBe(true);
+  });
   test("reports all invalid entry fields without changing their values", () => {
     const config = parseCollectionConfig(createDefaultCollectionConfig());
     const properties = {

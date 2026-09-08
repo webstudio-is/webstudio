@@ -178,6 +178,14 @@ If a Content Block that already renders connected MDX temporarily has zero or mu
 
 Missing or duplicate custom templates show a source-ranged warning and a selectable placeholder in Builder. Published pages omit only the unresolved custom subtree. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
 
+Before publishing, the Publish panel warns when a missing or ambiguous custom
+template would omit content. It lists the affected files and template names.
+The server checks the prepared publication content, including discovered dynamic
+article sources and nested Content Blocks; it is not limited to the open page.
+This reuses the publication bundle loading and content scan, then resolves its
+template dependencies again to collect warnings. The warning does not block
+publishing. Repair the listed templates to include that content.
+
 Legacy files that already contain internal `ws.element` or `ws:name` syntax remain readable during migration, but Webstudio does not emit or recommend those forms. Component namespaces such as `$.*`, `radix.*`, and `animation.*` are unsupported; use the direct component identifier.
 
 Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files. A confirmed rename changes the reference name. A confirmed removal unwraps and preserves explicit authored children; a self-closing reference disappears because it has no authored children.
@@ -219,7 +227,7 @@ You can also connect multiple Content Blocks to the same MDX file. Editing the f
 
 When you copy a connected Content Block, page, template, or folder to another project, Webstudio copies the MDX file and the local files it references. The pasted Content Block points to those imported copies. If Webstudio cannot parse the MDX, it preserves the source file and reports that its dependencies could not be collected.
 
-To create another post with the same structure, duplicate the existing MDX Asset, edit the duplicate, and connect or bind the appropriate Content Block occurrence to it.
+To create another post in a collection folder, use **New entry**. For an ordinary MDX Asset outside a collection, duplicate the file and edit the duplicate. Connect or bind the appropriate Content Block occurrence to the new file.
 
 #### Disconnect the file
 

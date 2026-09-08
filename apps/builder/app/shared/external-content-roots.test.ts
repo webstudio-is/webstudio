@@ -68,6 +68,9 @@ import {
 } from "./sync/sync-stores";
 import { createSyncChangesFromBuilderPatchPayload } from "./sync/builder-patch";
 import { insertTemplateAt } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import { __testing__ as builderApiTesting } from "./builder-api";
+
+const { canAccessAssetContent } = builderApiTesting;
 
 registerContainers();
 
@@ -1691,9 +1694,11 @@ role: editor
       origin: window.location.origin,
       request: fetch,
       authorize: ({ assetId, operation }) =>
-        operation !== "write" ||
-        assetId !== authorAsset.id ||
-        allowReferenceWrite,
+        canAccessAssetContent({
+          asset: assetId === authorAsset.id ? authorAsset : asset,
+          operation,
+          canWrite: assetId !== authorAsset.id || allowReferenceWrite,
+        }),
       requireReload: vi.fn(),
       getContentSession: () => session,
     })

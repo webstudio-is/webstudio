@@ -7,7 +7,10 @@ import {
   $isContentMode,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { $instances, $props } from "~/shared/sync/data-stores";
+import { $assets, $instances, $props } from "~/shared/sync/data-stores";
+import { useContentCollections } from "~/builder/shared/assets/content-collections";
+import { getCollectionEntryValidationIssues } from "@webstudio-is/content-engine";
+import { formatAssetName, getAssetDisplayNameParts } from "@webstudio-is/sdk";
 import {
   $externalContentRoots,
   findExternalContentRootEntryBySelector,
@@ -52,6 +55,7 @@ export const useBindableControl = ({
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const externalContentRoots = useStore($externalContentRoots);
   const isContentMode = useStore($isContentMode);
+  const assets = useStore($assets);
   const bindingState = useBindingState(boundExpression?.value);
   const externalEntry =
     selectedInstanceSelector === undefined
@@ -77,15 +81,37 @@ export const useBindableControl = ({
           renderedBlockInstanceId: externalRoot?.blockInstanceId,
         })
       : undefined;
-  const isEditableFrontmatterBinding =
-    frontmatterPath !== undefined &&
-    externalRoot?.document !== undefined &&
-    getFrontmatterWriteTarget({
-      assetId: externalRoot.assetId ?? "",
-      sources: externalRoot.frontmatterSources,
-      value: externalRoot.document.frontmatter.properties,
-      path: frontmatterPath,
-    }) !== undefined;
+  const writeTarget =
+    frontmatterPath !== undefined && externalRoot?.document !== undefined
+      ? getFrontmatterWriteTarget({
+          assetId: externalRoot.assetId ?? "",
+          sources: externalRoot.frontmatterSources,
+          value: externalRoot.document.frontmatter.properties,
+          path: frontmatterPath,
+        })
+      : undefined;
+  const isEditableFrontmatterBinding = writeTarget !== undefined;
+  const targetAsset =
+    writeTarget === undefined ? undefined : assets.get(writeTarget.assetId);
+  const collections = useContentCollections(targetAsset?.folderId);
+  const collection = collections.get(targetAsset?.folderId ?? "");
+  const targetProperties =
+    writeTarget?.assetId === externalRoot?.assetId
+      ? externalRoot?.document?.frontmatter.properties
+      : externalRoot?.frontmatterSources?.find(
+          (source) => source.assetId === writeTarget?.assetId
+        )?.properties;
+  const fieldError =
+    collection?.status === "ready" &&
+    targetAsset !== undefined &&
+    targetProperties !== undefined &&
+    collection.config.matchesEntry(formatAssetName(targetAsset))
+      ? getCollectionEntryValidationIssues({
+          config: collection.config,
+          properties: targetProperties,
+          basename: getAssetDisplayNameParts(targetAsset).basename,
+        }).find((issue) => issue.fieldKey === writeTarget?.path[0])?.message
+      : undefined;
   const bound = boundExpression !== undefined;
   const expression = boundExpression?.value ?? fallbackExpression;
   const writeBoundValue =
@@ -113,6 +139,7 @@ export const useBindableControl = ({
     });
   };
   return {
+    fieldError,
     expression,
     bound,
     scope,

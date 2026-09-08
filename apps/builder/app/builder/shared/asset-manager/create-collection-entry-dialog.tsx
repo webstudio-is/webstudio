@@ -1,3 +1,4 @@
+import { CollectionEntryFields } from "./collection-entry-fields";
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   collectionEntryFieldClearValue,
@@ -14,13 +15,8 @@ import {
   DialogTitle,
   Flex,
   Grid,
-  InputField,
-  ResettableLabel,
-  ToggleGroup,
-  ToggleGroupButton,
   Separator,
   Text,
-  TextArea,
   toast,
   theme,
 } from "@webstudio-is/design-system";
@@ -47,12 +43,6 @@ const getInitialValue = (
   }
   return "";
 };
-
-const optionalBooleanOptions = [
-  { value: "unset", label: "Not set" },
-  { value: "true", label: "Yes" },
-  { value: "false", label: "No" },
-] as const;
 
 const createInitialValues = (
   fields: readonly CollectionField[],
@@ -333,139 +323,19 @@ export const CreateCollectionEntryDialog = ({
               alignContent: "start",
             }}
           >
-            {config.fields.map((field) => {
-              const value = values[field.key];
-              const hasValue =
-                value !== "" &&
-                value !== undefined &&
-                value !== collectionEntryFieldClearValue;
-              const id = `collection-entry-${field.key}`;
-              const hasFieldError = error?.fieldKey === field.key;
-              const errorId = hasFieldError ? `${id}-error` : undefined;
-              const booleanField = field.type === "boolean";
-              return (
-                <Grid
-                  key={field.key}
-                  gap={1}
-                  css={{
-                    gridTemplateColumns: booleanField ? "1fr auto" : undefined,
-                    alignItems: "center",
-                  }}
-                >
-                  <ResettableLabel
-                    htmlFor={id}
-                    color={hasValue ? "local" : "default"}
-                    disabled={creating}
-                    onReset={hasValue ? () => unsetValue(field) : undefined}
-                    description={
-                      field.key === config.slugField
-                        ? config.generateSlugFrom === undefined
-                          ? "Enter a slug for this entry. It becomes the MDX filename."
-                          : `Generated from ${config.fields.find(({ key }) => key === config.generateSlugFrom)?.label ?? config.generateSlugFrom}. You can edit it before creating the entry. It becomes the MDX filename.`
-                        : undefined
-                    }
-                  >
-                    {field.label}
-                    {field.required ? " *" : ""}
-                  </ResettableLabel>
-                  {booleanField ? (
-                    <ToggleGroup
-                      id={id}
-                      type="single"
-                      aria-label={field.label}
-                      aria-describedby={errorId}
-                      aria-invalid={hasFieldError || undefined}
-                      value={
-                        value === true
-                          ? "true"
-                          : value === false
-                            ? "false"
-                            : "unset"
-                      }
-                      disabled={creating}
-                      onValueChange={(value) =>
-                        value === "unset"
-                          ? unsetValue(field)
-                          : setValue(field, value === "true")
-                      }
-                    >
-                      {optionalBooleanOptions
-                        .filter(
-                          ({ value }) => !field.required || value !== "unset"
-                        )
-                        .map(({ value, label }) => (
-                          <ToggleGroupButton
-                            key={value}
-                            value={value}
-                            css={{
-                              width: "auto",
-                              paddingInline: theme.spacing[3],
-                            }}
-                          >
-                            {label}
-                          </ToggleGroupButton>
-                        ))}
-                    </ToggleGroup>
-                  ) : field.control === "textarea" ? (
-                    <TextArea
-                      id={id}
-                      required={field.required}
-                      aria-required={field.required}
-                      aria-describedby={errorId}
-                      aria-invalid={hasFieldError || undefined}
-                      value={typeof value === "string" ? value : ""}
-                      disabled={creating}
-                      onChange={(value) => setValue(field, value)}
-                    />
-                  ) : (
-                    <InputField
-                      id={id}
-                      type={
-                        field.type === "number" || field.type === "integer"
-                          ? "number"
-                          : "text"
-                      }
-                      min={field.minimum}
-                      max={field.maximum}
-                      step={field.type === "integer" ? 1 : undefined}
-                      required={field.required}
-                      aria-required={field.required}
-                      aria-describedby={errorId}
-                      aria-invalid={hasFieldError || undefined}
-                      color={hasFieldError ? "error" : undefined}
-                      value={
-                        typeof value === "string" ? value : String(value ?? "")
-                      }
-                      disabled={creating}
-                      onChange={(event) => {
-                        if (field.key === config.slugField) {
-                          setSlugEdited(true);
-                        }
-                        if (
-                          (field.type === "number" ||
-                            field.type === "integer") &&
-                          event.target.value === ""
-                        ) {
-                          unsetValue(field);
-                          return;
-                        }
-                        setValue(field, event.target.value);
-                      }}
-                    />
-                  )}
-                  {hasFieldError && (
-                    <Text
-                      id={errorId}
-                      role="alert"
-                      color="destructive"
-                      css={{ gridColumn: "1 / -1" }}
-                    >
-                      {error.message}
-                    </Text>
-                  )}
-                </Grid>
-              );
-            })}
+            <CollectionEntryFields
+              config={config}
+              values={values}
+              errors={error === undefined ? [] : [error]}
+              disabled={creating}
+              onChange={(field, value) => {
+                if (field.key === config.slugField) {
+                  setSlugEdited(true);
+                }
+                setValue(field, value);
+              }}
+              onReset={unsetValue}
+            />
           </Grid>
           <Separator />
           <PanelContent as={Flex} direction="column" shrink={false} gap={2}>

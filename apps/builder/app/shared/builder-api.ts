@@ -19,7 +19,7 @@ import { requireBuilderReload } from "./sync/reload-required";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
 import { $authToken } from "./nano-states";
-import { isMdxFileAsset, type Asset } from "@webstudio-is/sdk";
+import type { Asset } from "@webstudio-is/sdk";
 import { createTransactionFromBuilderPatchPayload } from "./sync/builder-patch";
 import { getWebstudioData } from "./instance-utils/data";
 import { invalidateAssets } from "./resources";
@@ -43,7 +43,9 @@ const canAccessAssetContent = ({
 }) =>
   operation === "read"
     ? isContentDocumentAsset(asset)
-    : canWrite && isMdxFileAsset(asset);
+    : canWrite &&
+      asset.type === "file" &&
+      ["md", "mdx"].includes(asset.format.toLowerCase());
 
 type ToastHandler = (message: string) => void;
 

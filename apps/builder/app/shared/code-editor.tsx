@@ -30,7 +30,7 @@ import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
-import { css } from "@webstudio-is/design-system";
+import { css, cssVar } from "@webstudio-is/design-system";
 import {
   EditorContent,
   EditorDialog,
@@ -45,6 +45,7 @@ const wrapperStyle = css({
   position: "relative",
 
   variants: {
+    color: { error: { outline: `1px solid ${cssVar("--border-negative")}` } },
     size: {
       default: getCodeEditorCssVars({ minHeight: "160px", maxHeight: "320px" }),
       small: getCodeEditorCssVars({ minHeight: "16px", maxHeight: "120px" }),
@@ -167,6 +168,7 @@ export const CodeEditor = forwardRef<
     title?: ReactNode;
     size?: "default" | "small" | "full";
     expandable?: boolean;
+    color?: "error";
   }
 >((props, ref) => {
   const {
@@ -176,6 +178,7 @@ export const CodeEditor = forwardRef<
     title,
     size,
     expandable = true,
+    color,
     ...editorContentProps
   } = props;
   const builtInExtensions = useMemo(() => {
@@ -245,7 +248,11 @@ export const CodeEditor = forwardRef<
     };
   }, []);
   return (
-    <div className={wrapperStyle({ size })} ref={ref}>
+    <div
+      className={wrapperStyle({ size, color })}
+      ref={ref}
+      aria-invalid={color === "error" || undefined}
+    >
       {expandable === false ? (
         <EditorContent {...editorContentProps} extensions={extensions} />
       ) : (

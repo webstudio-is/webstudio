@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef } from "react";
+import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   collectionConfigFilename,
@@ -17,6 +18,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { $assets, $project } from "~/shared/sync/data-stores";
+import { $authToken } from "~/shared/nano-states";
 import { createBuilderHttpAssetContentRepository } from "./builder-mdx-content-repository.client";
 
 export type ContentCollection =
@@ -313,15 +315,28 @@ const canKeepReadyCollection = (
   ) {
     return false;
   }
-  return loading.siblingAssets.every(
-    (asset) =>
+  const filenames = new Set<string>();
+  return loading.siblingAssets.every((asset) => {
+    const filename = formatAssetName(asset);
+    if (
       asset.id === current.configAsset.id ||
       asset.id === current.templateAsset.id ||
-      (formatAssetName(asset) !== collectionConfigFilename &&
-        formatAssetName(asset) !== current.config.template &&
-        (!current.config.matchesEntry(formatAssetName(asset)) ||
-          isMdxFileAsset(asset)))
-  );
+      current.config.matchesEntry(filename)
+    ) {
+      const normalized = filename.toLowerCase();
+      if (filenames.has(normalized)) {
+        return false;
+      }
+      filenames.add(normalized);
+    }
+    return (
+      asset.id === current.configAsset.id ||
+      asset.id === current.templateAsset.id ||
+      (filename !== collectionConfigFilename &&
+        filename !== current.config.template &&
+        (!current.config.matchesEntry(filename) || isMdxFileAsset(asset)))
+    );
+  });
 };
 
 const canKeepDiscoveredCollection = (
@@ -356,104 +371,92 @@ export const mergeLoadingContentCollections = ({
   return merged;
 };
 
+// Asset metadata is already synchronized into Builder. Group it once per update,
+// not once per property control. Only an active collection loads file content.
+const $loadingCollections = computed([$assets, $project], (assets, project) =>
+  createLoadingContentCollections(
+    Array.from(assets.values()).filter(
+      (asset) => asset.projectId === project?.id
+    )
+  )
+);
+const $collectionProjectId = computed($project, (project) => project?.id);
+const $collectionSession = computed(
+  [$collectionProjectId, $authToken],
+  (projectId) => {
+    const discovered = atom<ReadonlyMap<string, ContentCollection>>(new Map());
+    const collections = computed(
+      [$loadingCollections, discovered],
+      (loading, current) => mergeLoadingContentCollections({ loading, current })
+    );
+    const pending = new Map<string, { loading: LoadingContentCollection }>();
+    const load = async (folderId: string, refresh: boolean) => {
+      const loading = $loadingCollections.get().get(folderId);
+      if (projectId === undefined || loading === undefined) {
+        return;
+      }
+      if (!refresh && collections.get().get(folderId)?.status !== "loading") {
+        return;
+      }
+      const previous = pending.get(folderId);
+      if (
+        !refresh &&
+        previous !== undefined &&
+        hasSameAssetVersions(
+          previous.loading.siblingAssets,
+          loading.siblingAssets
+        )
+      ) {
+        return;
+      }
+      const request = { loading };
+      pending.set(folderId, request);
+      const result = await discoverContentCollections({
+        assets: loading.siblingAssets,
+        readSource: (asset) =>
+          readBuilderAssetSource({ projectId, assetId: asset.id }),
+      });
+      if (pending.get(folderId) !== request) {
+        return;
+      }
+      pending.delete(folderId);
+      const current = $loadingCollections.get().get(folderId);
+      if (
+        current === undefined ||
+        !hasSameAssetVersions(current.siblingAssets, loading.siblingAssets)
+      ) {
+        return;
+      }
+      const next = new Map(discovered.get());
+      // Drop removed folders rather than retaining their parsed content forever.
+      for (const id of next.keys()) {
+        if (!$loadingCollections.get().has(id)) {
+          next.delete(id);
+        }
+      }
+      for (const [id, collection] of result) {
+        next.set(id, collection);
+      }
+      discovered.set(next);
+    };
+    return { collections, load };
+  }
+);
+
 export const useContentCollections = (
   activeFolderId: string | undefined,
   refreshKey = 0
 ) => {
-  const assets = useStore($assets);
-  const project = useStore($project);
-  const assetList = useMemo(() => Array.from(assets.values()), [assets]);
-  const loadingCollections = useMemo(
-    () => createLoadingContentCollections(assetList),
-    [assetList]
-  );
-  const [discoveredCollections, setDiscoveredCollections] = useState<
-    ReadonlyMap<string, ContentCollection>
-  >(() => new Map());
-  const collections = useMemo(
-    () =>
-      mergeLoadingContentCollections({
-        current: discoveredCollections,
-        loading: loadingCollections,
-      }),
-    [discoveredCollections, loadingCollections]
-  );
-  const activeCollection =
-    activeFolderId === undefined
-      ? undefined
-      : loadingCollections.get(activeFolderId);
-  const activeCollectionVersion =
-    activeCollection !== undefined
-      ? JSON.stringify(
-          activeCollection.siblingAssets
-            .map((asset) => [
-              asset.id,
-              asset.name,
-              asset.filename,
-              asset.format,
-              asset.size,
-              asset.updatedAt,
-            ])
-            .sort(([left], [right]) =>
-              String(left).localeCompare(String(right))
-            )
-        )
-      : undefined;
-  const projectId = project?.id;
-
+  const session = useStore($collectionSession);
+  const collections = useStore(session.collections);
+  const previousRefresh = useRef(refreshKey);
   useEffect(() => {
-    let cancelled = false;
-    if (
-      projectId === undefined ||
-      activeFolderId === undefined ||
-      activeCollectionVersion === undefined
-    ) {
-      return () => {
-        cancelled = true;
-      };
+    const refresh = previousRefresh.current !== refreshKey;
+    previousRefresh.current = refreshKey;
+    if (activeFolderId !== undefined) {
+      void session.load(activeFolderId, refresh);
     }
-    const activeAssets = Array.from($assets.get().values()).filter(
-      (asset) => asset.folderId === activeFolderId
-    );
-    void discoverContentCollections({
-      assets: activeAssets,
-      readSource: async (asset) => {
-        return readBuilderAssetSource({
-          projectId,
-          assetId: asset.id,
-        });
-      },
-    }).then((result) => {
-      if (cancelled === false) {
-        setDiscoveredCollections((current) => {
-          const next = new Map(current);
-          for (const [folderId, collection] of result) {
-            const previous = current.get(folderId);
-            if (
-              previous?.status === "ready" &&
-              collection.status === "ready" &&
-              hasSameAssetVersion(
-                previous.configAsset,
-                collection.configAsset
-              ) &&
-              hasSameAssetVersion(
-                previous.templateAsset,
-                collection.templateAsset
-              )
-            ) {
-              continue;
-            }
-            next.set(folderId, collection);
-          }
-          return next;
-        });
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [activeCollectionVersion, activeFolderId, projectId, refreshKey]);
-
+  }, [session, collections, activeFolderId, refreshKey]);
   return collections;
 };
 

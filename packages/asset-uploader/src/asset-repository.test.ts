@@ -2490,7 +2490,7 @@ describe("PostgresAssetRepository", () => {
     );
   });
 
-  test("creates a collection folder with a valid template and configuration", async () => {
+  test("creates and retries a collection without changing existing invalid entries", async () => {
     const dependencies = createDependencies();
     const folder = {
       id: "posts",
@@ -2528,7 +2528,15 @@ describe("PostgresAssetRepository", () => {
       filename: "notes",
       format: "txt",
     };
-    const uploadedAssets: Asset[] = [ignoredAsset];
+    const entrySource = "---\nexcerpt: Existing content\n---\nBody\n";
+    const entryAsset: Asset = {
+      ...templateAsset,
+      id: "existing-post",
+      name: "existing-post.mdx",
+      filename: "existing-post",
+      size: entrySource.length,
+    };
+    const uploadedAssets: Asset[] = [ignoredAsset, entryAsset];
     dependencies.loadAssetFoldersByProjectWithClient.mockResolvedValue([]);
     dependencies.upsertAssetFolderWithClient.mockResolvedValue(folder);
     dependencies.loadAssetsByProjectWithClient.mockImplementation(
@@ -2558,6 +2566,7 @@ describe("PostgresAssetRepository", () => {
       assetStore: createSourceAssetClient({
         [templateAsset.name]: templateSource,
         [configAsset.name]: configSource,
+        [entryAsset.name]: entrySource,
       }),
       dependencies,
     });
@@ -2584,9 +2593,10 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.upsertAssetFolderWithClient).not.toHaveBeenCalled();
     expect(dependencies.uploadFile).not.toHaveBeenCalled();
     expect(uploadedAssets).toContainEqual(ignoredAsset);
+    expect(uploadedAssets).toContainEqual(entryAsset);
   });
 
-  test("rejects incompatible selected entries before writing collection seeds", async () => {
+  test("rejects selected files with incompatible types before writing collection seeds", async () => {
     const dependencies = createDependencies();
     const folder = {
       id: "posts",
@@ -2602,7 +2612,7 @@ describe("PostgresAssetRepository", () => {
       name: "notes.mdx",
       filename: "notes",
       type: "file",
-      format: "mdx",
+      format: "txt",
       size: source.length,
       meta: {},
       createdAt: folder.createdAt,

@@ -235,7 +235,7 @@ describe("Content Block MDX compilation", () => {
         value: "private.mdx",
       }
     );
-    const source = '{unsafe}\n\n<ws.element ws:name="Hero" />';
+    const source = '{unsafe}\n\n<ws.element ws:name="Hero" />\n\n<Missing />';
     const artifact = {
       format: "webstudio-content-database",
       version: 1,
@@ -256,10 +256,18 @@ describe("Content Block MDX compilation", () => {
       contents: { "article.mdx": source },
     } as unknown as ContentArtifactV1;
 
+    const omissions: { assetId: string; templateName: string }[] = [];
     const plan = await resolvePublishedMdxDependencyClosure({
       build,
       artifact,
+      onTemplateOmission: (issue) => omissions.push(issue),
     });
+    expect(omissions).toEqual([
+      expect.objectContaining({
+        assetId: "article.mdx",
+        templateName: "Missing",
+      }),
+    ]);
     const queryIds = plan?.queries.map(({ id }) => id);
 
     expect(queryIds).toContain("__content-block-mdx__:nested.mdx");

@@ -174,6 +174,7 @@ type AssetThumbnailProps = {
   interactions: AssetManagerThumbnailInteractions;
   onChange?: (assetContainer: AssetContainer) => void;
   onOpen?: () => void;
+  onEntrySettings?: () => void;
   selected?: boolean;
   forcedSelection?: boolean;
   folderPath?: string;
@@ -192,6 +193,7 @@ export const AssetThumbnail = ({
   interactions,
   onChange,
   onOpen,
+  onEntrySettings,
   selected,
   forcedSelection,
   folderPath,
@@ -258,6 +260,7 @@ export const AssetThumbnail = ({
       ? {}
       : {
           open: onOpen,
+          entrySettings: onEntrySettings,
           settings: settingsBlocked
             ? undefined
             : () => {
@@ -441,7 +444,7 @@ export const AssetThumbnail = ({
                   <IconButton
                     aria-label={`Review errors in ${formatAssetName(asset)}`}
                     css={{ pointerEvents: "auto" }}
-                    onClick={onOpen}
+                    onClick={onEntrySettings ?? onOpen}
                   >
                     <AlertCircleIcon color={cssVar("--foreground-negative")} />
                   </IconButton>

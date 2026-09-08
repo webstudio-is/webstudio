@@ -20,6 +20,7 @@ export type AssetManagerItemActions = Partial<
   Record<
     | "open"
     | "settings"
+    | "entrySettings"
     | "collectionSettings"
     | "useAsCollection"
     | "convertCollection"
@@ -56,6 +57,7 @@ const itemDefinitions: readonly ItemDefinition[] = [
   { name: "upload", label: "Upload asset" },
   { name: "open", label: "Open" },
   { name: "settings", label: "Settings" },
+  { name: "entrySettings", label: "Entry settings" },
   { name: "collectionSettings", label: "Collection settings" },
   { name: "useAsCollection", label: "Use as content collection" },
   {

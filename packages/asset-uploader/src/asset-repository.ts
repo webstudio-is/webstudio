@@ -1536,6 +1536,7 @@ export class PostgresAssetRepository implements AssetRepository {
       reusableSeeds.set(filename, asset);
     }
     await inspectContentCollection({
+      validateEntries: false,
       files: [
         ...siblings
           .filter((asset) => !reusableSeeds.has(formatAssetName(asset)))
@@ -1616,6 +1617,7 @@ export class PostgresAssetRepository implements AssetRepository {
       assets,
       folderId: id,
       assetStore: this.assetStore,
+      validateEntries: false,
     });
     return { folder, assets: [templateAsset, configAsset] };
   }

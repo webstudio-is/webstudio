@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { parseError } from "~/shared/error/error-parse";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
@@ -608,11 +609,7 @@ export const PropsSectionContainer = ({
           value: nextValue,
           resolvedValue: nextResolvedValue,
         }).catch((error) => {
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : "Unable to update MDX frontmatter"
-          );
+          toast.error(parseError(error).message);
         });
         return;
       }

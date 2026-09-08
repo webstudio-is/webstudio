@@ -94,11 +94,12 @@ in the same folder without changing its ID or existing content:
 - `collection.json` defines the entry fields and their rules with JSON Schema.
 - `template.mdx` supplies the starting frontmatter and body for each entry.
 
-Existing selected entries must be MDX files that satisfy the initial collection rules.
-Other files stay visible and are ignored by collection validation. Setup stops before adding
-the collection files if selected entries are incompatible or a file conflicts
-with the generated configuration or template. Choose **Configure collection**
-after setup to edit its fields and template.
+Existing selected entries must be MDX files. Setup leaves their content unchanged,
+even when fields are missing or not yet configured. The collection shows field
+errors for repair after setup. Other files stay visible and are ignored by
+collection validation. Setup stops if a selected file has an incompatible type
+or conflicts with the generated configuration or template. Choose **Configure
+collection** after setup to define the fields used by your existing entries.
 
 ### Select collection entries
 
@@ -203,8 +204,15 @@ value is different from an omitted value. Optional boolean fields offer
 Collection settings save automatically when valid. Webstudio checks the entry
 template against the new rules. Existing entries remain editable if a rule changes.
 The open collection folder checks entry frontmatter in the background and shows
-a warning when an entry needs attention. Select an entry's error indicator to
-open its MDX file. Invalid field values are underlined; hover them for details.
+a warning when an entry needs attention. Select an entry's error indicator or
+choose **Entry settings** from its menu to edit its fields using the same controls
+as **New entry**. Edits save automatically, including partial repairs. Unknown
+frontmatter properties and the MDX body are preserved. Slugs remain fixed to the
+filename; an existing mismatch has a repair action.
+
+Use **Open MDX file** to edit the body or inspect unconfigured fields. Invalid field
+values are underlined in the source editor; hover them for details. Content-mode
+text and number controls bound to these fields also show their collection errors.
 Fixing the values clears the errors. A field error does not hide the entry,
 stop the collection rendering, or block publication of unrelated changes.
 
@@ -213,6 +221,21 @@ with at most four reads at once. Frontmatter is cached by file revision while
 that folder remains open. Changing the schema rechecks cached values without
 downloading unchanged entries again. A failed read is reported separately from
 field errors and can be retried with **Check again**.
+
+The configurator rejects Integer limits that leave no possible whole number.
+Slug limits must allow at least one character, even when minimum length is unset.
+Without a Slug field, use a single `*.mdx` or `entry-*.mdx` entry pattern when
+saving collection settings. These match automatically generated filenames.
+Custom filename patterns require a Slug field. Existing configurations remain
+readable so their content can still be repaired and published.
+
+Builder shares collection configuration loading across Assets, file editors, and
+bound property controls. It groups the already-synchronized asset metadata once
+per update and downloads the active collection's configuration and template once
+for all consumers. Editing an entry does not download those unchanged files again.
+Changing the configuration or template, retrying a failed read, or changing project
+or access token refreshes this state. Entry validation still reads frontmatter as
+described above; sharing configuration does not remove those reads.
 
 A collection folder accepts entries, supporting assets, and subfolders. Use
 **New entry** for filenames selected by the entry patterns. Files excluded by

@@ -219,9 +219,15 @@ export const createPublishedBuildContentCompilationPlan = (
 export const resolvePublishedMdxDependencyClosure = async ({
   build,
   artifact,
+  onTemplateOmission,
 }: {
   build: PublishedContentDatabaseBuild;
   artifact: ContentArtifactV1;
+  onTemplateOmission?: (issue: {
+    blockInstanceId: string;
+    assetId: string;
+    templateName: string;
+  }) => void;
 }) => {
   const instances = new Map(
     getBuildValues<Instance>(build.instances).map((instance) => [
@@ -313,6 +319,12 @@ export const resolvePublishedMdxDependencyClosure = async ({
       for (const reference of resolution.references) {
         if (reference.type === "resolved-template") {
           visitTemplateSubtree(reference.templateInstanceId);
+        } else {
+          onTemplateOmission?.({
+            blockInstanceId: blockId,
+            assetId,
+            templateName: reference.templateName,
+          });
         }
       }
     }

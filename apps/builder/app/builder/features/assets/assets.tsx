@@ -62,6 +62,8 @@ import {
   CollectionUnavailableNotice,
 } from "./collection-unavailable-notice";
 import { useCollectionEntryValidation } from "~/builder/shared/assets/use-collection-entry-validation";
+import { CollectionEntrySettingsDialog } from "~/builder/shared/asset-manager/collection-entry-settings-dialog";
+import type { Asset } from "@webstudio-is/sdk";
 
 export const AssetsPanel = ({
   publish,
@@ -110,6 +112,10 @@ export const AssetsPanel = ({
   const [settingsCollection, setSettingsCollection] =
     useState<Extract<ContentCollection, { status: "ready" }>>();
   const [openedTextAssetId, setOpenedTextAssetId] = useState<string>();
+  const [entrySettings, setEntrySettings] = useState<{
+    asset: Asset;
+    collection: Extract<ContentCollection, { status: "ready" }>;
+  }>();
   const uploadRef = useRef<AssetUploadHandle>(null);
   const authPermit = useStore($authPermit);
   const isContentMode = useStore($isContentMode);
@@ -397,6 +403,13 @@ export const AssetsPanel = ({
         onConfigureCollection={configureCollection}
         createCollection={createCollection}
         onOpen={openAsset}
+        onEntrySettings={(assetId) => {
+          const asset = $assets.get().get(assetId);
+          const collection = collections.get(asset?.folderId ?? "");
+          if (asset !== undefined && collection?.status === "ready") {
+            setEntrySettings({ asset, collection });
+          }
+        }}
         canManageFolders={canManageFolders}
         panelActions={{
           ...(authPermit === "view"
@@ -476,6 +489,14 @@ export const AssetsPanel = ({
               setEntryCollection(undefined);
             }
           }}
+        />
+      )}
+      {entrySettings !== undefined && (
+        <CollectionEntrySettingsDialog
+          key={entrySettings.asset.id}
+          {...entrySettings}
+          onClose={() => setEntrySettings(undefined)}
+          onOpenFile={() => openAsset(entrySettings.asset.id)}
         />
       )}
       {settingsCollection !== undefined &&

@@ -179,25 +179,33 @@ const selectFolderOption = (label: string) => {
 };
 
 const renderer = createAssetManagerTestRenderer();
-test("opens an entry from its validation indicator without disabling the asset", () => {
-  const onOpen = vi.fn();
-  const container = renderer.render(
-    <TooltipProvider>
-      {createUploadedAssetThumbnail({
-        entryError: "Title needs a value",
-        onOpen,
-      })}
-    </TooltipProvider>
-  );
-  const indicator = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Review errors in document.pdf"]'
-  );
-  expect(indicator).not.toBeNull();
-  expect(indicator).toBeEnabled();
-  expect(getComputedStyle(indicator!).pointerEvents).toBe("auto");
-  act(() => indicator?.click());
-  expect(onOpen).toHaveBeenCalledOnce();
-});
+test.each([false, true])(
+  "opens the available entry editor from its validation indicator (settings: %s)",
+  (hasEntrySettings) => {
+    const onOpen = vi.fn();
+    const onEntrySettings = hasEntrySettings ? vi.fn() : undefined;
+    const container = renderer.render(
+      <TooltipProvider>
+        {createUploadedAssetThumbnail({
+          entryError: "Title needs a value",
+          onOpen,
+          onEntrySettings,
+        })}
+      </TooltipProvider>
+    );
+    const indicator = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Review errors in document.pdf"]'
+    );
+    expect(indicator).not.toBeNull();
+    expect(indicator).toBeEnabled();
+    expect(getComputedStyle(indicator!).pointerEvents).toBe("auto");
+    act(() => indicator?.click());
+    expect(onEntrySettings ?? onOpen).toHaveBeenCalledOnce();
+    if (hasEntrySettings) {
+      expect(onOpen).not.toHaveBeenCalled();
+    }
+  }
+);
 registerContainers();
 vi.stubGlobal(
   "ResizeObserver",

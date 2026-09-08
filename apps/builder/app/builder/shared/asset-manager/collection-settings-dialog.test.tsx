@@ -51,6 +51,45 @@ const { initBridge, clearBridge } = __testing__;
 const render = (children: ReactNode) =>
   renderer.render(<TooltipProvider>{children}</TooltipProvider>);
 
+test("marks the limit input rather than placing its error in the Fields heading", async () => {
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  render(
+    <CollectionSettingsDialog
+      open
+      onOpenChange={vi.fn()}
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+    />
+  );
+  const maximum = document.querySelector<HTMLInputElement>(
+    '[aria-label="Title maximum length"]'
+  )!;
+  await vi.waitFor(() => expect(maximum.disabled).toBe(false));
+  input(maximum, "0");
+  expect(maximum.getAttribute("aria-invalid")).toBe("true");
+  expect(
+    document
+      .querySelector('[aria-label="Title minimum length"]')
+      ?.getAttribute("aria-invalid")
+  ).not.toBe("true");
+  expect(document.querySelector('[role="alert"]')).toBeNull();
+});
+
 test("does not commit collection settings after the active project changes", async () => {
   const configAsset = createAsset({
     id: "config",

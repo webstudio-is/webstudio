@@ -124,6 +124,7 @@ type AssetManagerProps = FolderNavigationProps & {
   >;
   onChange?: (assetId: Asset["id"]) => void;
   onOpen?: (assetId: Asset["id"]) => void;
+  onEntrySettings?: (assetId: Asset["id"]) => void;
   /** acceptable file types in the `<input accept>` attribute format */
   accept?: string;
   canManageFolders?: boolean;
@@ -182,6 +183,7 @@ export const AssetManager = ({
   emptyMessage,
   folderNotice,
   entryIssues,
+  onEntrySettings,
 }: AssetManagerProps) => {
   const assets = useStore($assets);
   const effectiveCollections = useMemo(() => {
@@ -1381,6 +1383,15 @@ export const AssetManager = ({
               {filteredItems.map((assetContainer) => (
                 <AssetThumbnail
                   key={assetContainer.asset.id}
+                  onEntrySettings={
+                    onEntrySettings !== undefined &&
+                    collectionEntryAssetIds.has(assetContainer.asset.id) &&
+                    effectiveCollections.get(
+                      assetContainer.asset.folderId ?? ""
+                    )?.status === "ready"
+                      ? () => onEntrySettings(assetContainer.asset.id)
+                      : undefined
+                  }
                   entryError={entryIssues
                     ?.get(assetContainer.asset.id)
                     ?.map((issue) => issue.message)

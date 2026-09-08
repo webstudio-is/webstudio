@@ -378,6 +378,16 @@ const validateFieldSchema = (
         `minimum cannot exceed maximum at ${getSchemaLocation(path)}`
       );
     }
+    if (
+      type === "integer" &&
+      minimum !== undefined &&
+      maximum !== undefined &&
+      Math.ceil(minimum) > Math.floor(maximum)
+    ) {
+      throw new ContentCollectionError(
+        `Limits must allow at least one whole number at ${getSchemaLocation(path)}`
+      );
+    }
   }
 };
 
@@ -1290,6 +1300,19 @@ export const createDefaultCollectionConfig = () =>
 export const createDefaultCollectionTemplate = () =>
   "---\ndraft: true\n---\n\nStart writing.\n";
 
+/** Keep existing collections readable; only configuration changes need this guarantee. */
+export const getCollectionEntryCreationError = (
+  config: ContentCollectionConfig
+) => {
+  if (
+    config.slugField === undefined &&
+    (config.entries.length !== 1 ||
+      !["*.mdx", "entry-*.mdx"].includes(config.entries[0]))
+  ) {
+    return "Without a Slug field, use *.mdx or entry-*.mdx for entry patterns so generated filenames always match. Add a Slug field to use custom patterns.";
+  }
+};
+
 const serializeCollectionField = (
   field: CollectionField,
   originalValue: unknown
@@ -1454,4 +1477,37 @@ export const serializeCollectionConfig = ({
   const source = `${JSON.stringify(value, undefined, 2)}\n`;
   parseCollectionConfig(source);
   return source;
+};
+
+/** Identify the input responsible for a field's invalid limits. */
+export const getCollectionFieldLimitsIssue = (field: CollectionField) => {
+  // The referenced slug schema requires a nonempty value even when the local
+  // minLength is unset. Keep existing configurations readable for repairs.
+  if (field.control === "slug" && field.maxLength === 0) {
+    return {
+      input: "maxLength",
+      message: "A slug must allow at least one character.",
+    };
+  }
+  try {
+    validateFieldSchema(serializeCollectionField(field, undefined), [
+      "properties",
+      field.key,
+    ]);
+  } catch (error) {
+    const input =
+      field.type === "string"
+        ? field.minLength !== undefined &&
+          (!Number.isSafeInteger(field.minLength) || field.minLength < 0)
+          ? "minLength"
+          : "maxLength"
+        : field.minimum !== undefined && !Number.isFinite(field.minimum)
+          ? "minimum"
+          : "maximum";
+    return {
+      input,
+      message:
+        error instanceof Error ? error.message : "Check this field’s limits.",
+    };
+  }
 };

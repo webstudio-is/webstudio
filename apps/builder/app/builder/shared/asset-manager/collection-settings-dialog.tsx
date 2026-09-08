@@ -3,6 +3,8 @@ import isValidFilename from "valid-filename";
 import { useStore } from "@nanostores/react";
 import {
   getCollectionTemplateValidationError,
+  getCollectionFieldLimitsIssue,
+  getCollectionEntryCreationError,
   parseCollectionConfig,
   serializeCollectionConfig,
   type CollectionField,
@@ -572,6 +574,11 @@ export const CollectionSettingsDialog = ({
       setError(undefined);
       return;
     }
+    if (
+      fields.some((field) => getCollectionFieldLimitsIssue(field) !== undefined)
+    ) {
+      return;
+    }
     savingRef.current = true;
     setSaving(true);
     setError(undefined);
@@ -628,6 +635,10 @@ export const CollectionSettingsDialog = ({
         },
       });
       const nextConfig = parseCollectionConfig(configSource);
+      const creationError = getCollectionEntryCreationError(nextConfig);
+      if (creationError !== undefined) {
+        throw new Error(creationError);
+      }
       errorTarget = "template";
       const templateDocument = await parseMdxDocument({ source: template });
       const templateValidationError = getCollectionTemplateValidationError(
@@ -997,6 +1008,7 @@ export const CollectionSettingsDialog = ({
                           : `collection-field-label-error-${field.rowId}`;
                       const numberField =
                         field.type === "number" || field.type === "integer";
+                      const limitsIssue = getCollectionFieldLimitsIssue(field);
                       return (
                         <Grid key={field.rowId} css={{ alignContent: "start" }}>
                           <PanelContent as={Grid} gap={3}>
@@ -1272,38 +1284,67 @@ export const CollectionSettingsDialog = ({
                                         ? "Minimum length"
                                         : "Minimum"}
                                     </Label>
-                                    <InputField
-                                      aria-label={`${field.label} ${
-                                        stringField
-                                          ? "minimum length"
-                                          : "minimum"
-                                      }`}
-                                      type="number"
-                                      placeholder="No minimum"
-                                      min={stringField ? 0 : undefined}
-                                      value={String(
-                                        stringField
-                                          ? (field.minLength ?? "")
-                                          : (field.minimum ?? "")
-                                      )}
-                                      disabled={formDisabled}
-                                      onChange={(event) =>
-                                        updateField(index, {
-                                          ...field,
-                                          ...(stringField
-                                            ? {
-                                                minLength: optionalNumber(
-                                                  event.target.value
-                                                ),
-                                              }
-                                            : {
-                                                minimum: optionalNumber(
-                                                  event.target.value
-                                                ),
-                                              }),
-                                        })
+                                    <Tooltip
+                                      open={
+                                        limitsIssue?.input ===
+                                        (stringField ? "minLength" : "minimum")
+                                          ? undefined
+                                          : false
                                       }
-                                    />
+                                      content={
+                                        limitsIssue?.input ===
+                                        (stringField ? "minLength" : "minimum")
+                                          ? limitsIssue.message
+                                          : ""
+                                      }
+                                    >
+                                      <InputField
+                                        aria-label={`${field.label} ${
+                                          stringField
+                                            ? "minimum length"
+                                            : "minimum"
+                                        }`}
+                                        type="number"
+                                        placeholder="No minimum"
+                                        min={stringField ? 0 : undefined}
+                                        color={
+                                          limitsIssue?.input ===
+                                          (stringField
+                                            ? "minLength"
+                                            : "minimum")
+                                            ? "error"
+                                            : undefined
+                                        }
+                                        aria-invalid={
+                                          limitsIssue?.input ===
+                                            (stringField
+                                              ? "minLength"
+                                              : "minimum") || undefined
+                                        }
+                                        value={String(
+                                          stringField
+                                            ? (field.minLength ?? "")
+                                            : (field.minimum ?? "")
+                                        )}
+                                        disabled={formDisabled}
+                                        onChange={(event) =>
+                                          updateField(index, {
+                                            ...field,
+                                            ...(stringField
+                                              ? {
+                                                  minLength: optionalNumber(
+                                                    event.target.value
+                                                  ),
+                                                }
+                                              : {
+                                                  minimum: optionalNumber(
+                                                    event.target.value
+                                                  ),
+                                                }),
+                                          })
+                                        }
+                                      />
+                                    </Tooltip>
                                   </Grid>
                                   <Grid gap={1}>
                                     <Label>
@@ -1311,38 +1352,67 @@ export const CollectionSettingsDialog = ({
                                         ? "Maximum length"
                                         : "Maximum"}
                                     </Label>
-                                    <InputField
-                                      aria-label={`${field.label} ${
-                                        stringField
-                                          ? "maximum length"
-                                          : "maximum"
-                                      }`}
-                                      type="number"
-                                      placeholder="No maximum"
-                                      min={stringField ? 0 : undefined}
-                                      value={String(
-                                        stringField
-                                          ? (field.maxLength ?? "")
-                                          : (field.maximum ?? "")
-                                      )}
-                                      disabled={formDisabled}
-                                      onChange={(event) =>
-                                        updateField(index, {
-                                          ...field,
-                                          ...(stringField
-                                            ? {
-                                                maxLength: optionalNumber(
-                                                  event.target.value
-                                                ),
-                                              }
-                                            : {
-                                                maximum: optionalNumber(
-                                                  event.target.value
-                                                ),
-                                              }),
-                                        })
+                                    <Tooltip
+                                      open={
+                                        limitsIssue?.input ===
+                                        (stringField ? "maxLength" : "maximum")
+                                          ? undefined
+                                          : false
                                       }
-                                    />
+                                      content={
+                                        limitsIssue?.input ===
+                                        (stringField ? "maxLength" : "maximum")
+                                          ? limitsIssue.message
+                                          : ""
+                                      }
+                                    >
+                                      <InputField
+                                        aria-label={`${field.label} ${
+                                          stringField
+                                            ? "maximum length"
+                                            : "maximum"
+                                        }`}
+                                        type="number"
+                                        placeholder="No maximum"
+                                        min={stringField ? 0 : undefined}
+                                        color={
+                                          limitsIssue?.input ===
+                                          (stringField
+                                            ? "maxLength"
+                                            : "maximum")
+                                            ? "error"
+                                            : undefined
+                                        }
+                                        aria-invalid={
+                                          limitsIssue?.input ===
+                                            (stringField
+                                              ? "maxLength"
+                                              : "maximum") || undefined
+                                        }
+                                        value={String(
+                                          stringField
+                                            ? (field.maxLength ?? "")
+                                            : (field.maximum ?? "")
+                                        )}
+                                        disabled={formDisabled}
+                                        onChange={(event) =>
+                                          updateField(index, {
+                                            ...field,
+                                            ...(stringField
+                                              ? {
+                                                  maxLength: optionalNumber(
+                                                    event.target.value
+                                                  ),
+                                                }
+                                              : {
+                                                  maximum: optionalNumber(
+                                                    event.target.value
+                                                  ),
+                                                }),
+                                          })
+                                        }
+                                      />
+                                    </Tooltip>
                                   </Grid>
                                 </>
                               )}

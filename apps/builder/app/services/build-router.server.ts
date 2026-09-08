@@ -50,7 +50,10 @@ import {
   commitBuildTransactions,
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
-import { getContentDatabasePublishDiagnostics } from "./content-database.server";
+import {
+  getContentDatabasePublishDiagnostics,
+  getMdxTemplatePublishDiagnostics,
+} from "./content-database.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -302,9 +305,11 @@ export const buildRouter = router({
           "You don't have permission to edit this project."
         );
       }
-      return getContentDatabasePublishDiagnostics(
-        await loadProjectBundleByProjectId(input.projectId, ctx)
-      );
+      const bundle = await loadProjectBundleByProjectId(input.projectId, ctx);
+      return {
+        ...getContentDatabasePublishDiagnostics(bundle),
+        mdxOmissions: await getMdxTemplatePublishDiagnostics(bundle),
+      };
     }),
 
   checkProjectBuildPermission: procedure
