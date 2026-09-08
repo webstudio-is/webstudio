@@ -21,6 +21,7 @@ import { emitCommand, instanceMoveCommandMetas } from "./commands";
 import {
   $authToken,
   $builderMode,
+  $canOpenPageTemplates,
   $allSelectedInstanceSelectors,
   $selectedInstancePath,
   $selectedPage,
@@ -34,8 +35,9 @@ import {
   type InstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
-import { builderPath } from "~/shared/router-utils";
-import { $instances } from "~/shared/sync/data-stores";
+import { builderUrl } from "~/shared/router-utils";
+import { $instances, $pages, $project } from "~/shared/sync/data-stores";
+import { getDeepLinkedInstanceSelection } from "~/shared/pages/instance-link-utils";
 import {
   isComponentDetachable,
   ROOT_INSTANCE_ID,
@@ -79,11 +81,6 @@ const getMenuPermissions = ({
   const isRoot = instanceId === ROOT_INSTANCE_ID;
   const isBody = instanceId === rootInstanceId;
   const isRootOrBody = isRoot || isBody;
-  const canCopyLink =
-    selectedInstanceCount === 1 &&
-    instanceId !== undefined &&
-    !isRoot &&
-    rootInstanceId !== undefined;
   const hasActionableSelection = selectedInstancePaths.some((path) => {
     const selectedInstance = path[0]?.instance;
     const selectedInstanceId = selectedInstance?.id;
@@ -98,7 +95,6 @@ const getMenuPermissions = ({
 
   if (isContentMode) {
     return {
-      canCopyLink,
       canCopy: hasActionableSelection,
       canPaste: hasActionableSelection,
       canCut: false,
@@ -120,7 +116,6 @@ const getMenuPermissions = ({
     canMutateDesign && instancePath ? canUnwrapInstance(instancePath) : false;
 
   return {
-    canCopyLink,
     canCopy: canMutateDesign && hasActionableSelection,
     canPaste: canMutateDesign && !isRoot,
     canCut: canMutateDesign && hasActionableSelection,
@@ -141,7 +136,9 @@ const getMenuPermissions = ({
 
 export const MenuItems = () => {
   const instancePath = useStore($selectedInstancePath);
-  const page = useStore($selectedPage);
+  const pages = useStore($pages);
+  const project = useStore($project);
+  const canOpenPageTemplates = useStore($canOpenPageTemplates);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
   const instances = useStore($instances);
   const propValues = useStore($propValuesByInstanceSelector);
@@ -149,6 +146,15 @@ export const MenuItems = () => {
   const isDesignMode = useStore($isDesignMode);
 
   const instanceSelector = instancePath?.[0]?.instanceSelector;
+
+  const instanceSelection =
+    pages &&
+    getDeepLinkedInstanceSelection({
+      instanceSelector,
+      canOpenPageTemplates,
+      pages,
+      instances,
+    });
 
   const show = instanceSelector
     ? Boolean(
@@ -187,24 +193,22 @@ export const MenuItems = () => {
         </ContextMenuItemRightSlot>
       </ContextMenuItem>
       <ContextMenuItem
-        disabled={!permissions.canCopyLink}
+        disabled={instanceSelection === undefined || project === undefined}
         onSelect={async () => {
-          if (!permissions.canCopyLink) {
+          if (instanceSelection === undefined || project === undefined) {
             return;
           }
           const mode = $builderMode.get();
-          const link = new URL(
-            builderPath({
-              pageId: page?.id,
-              instanceSelector,
-              authToken: $authToken.get(),
-              mode: mode === "design" ? undefined : mode,
-              safemode:
-                new URLSearchParams(window.location.search).get("safemode") ===
-                "true",
-            }),
-            window.location.origin
-          ).href;
+          const link = builderUrl({
+            ...instanceSelection,
+            projectId: project.id,
+            origin: window.location.origin,
+            authToken: $authToken.get(),
+            mode: mode === "design" ? undefined : mode,
+            safemode:
+              new URLSearchParams(window.location.search).get("safemode") ===
+              "true",
+          });
           try {
             await navigator.clipboard.writeText(link);
             toast.success("Link copied");

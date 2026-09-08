@@ -4,6 +4,8 @@ import {
   createTemplateComponentFixture,
   renderData,
 } from "@webstudio-is/template";
+import { builderUrl } from "~/shared/router-utils";
+import { getDeepLinkedInstanceSelection } from "./instance-link-utils";
 import { __testing__ } from "./use-switch-page";
 
 const Body = createTemplateComponentFixture("Body");
@@ -12,8 +14,7 @@ const Fragment = createTemplateComponentFixture("Fragment");
 const Heading = createTemplateComponentFixture("Heading");
 const Slot = createTemplateComponentFixture("Slot");
 
-const { getDeepLinkedInstanceSelection, shouldNavigateToPageState } =
-  __testing__;
+const { shouldNavigateToPageState } = __testing__;
 
 test("preserves an instance deep link until URL state is initialized", () => {
   expect(
@@ -91,16 +92,31 @@ test("restores the selected shared slot occurrence from its full selector", () =
     </Body>
   );
 
+  const url = new URL(
+    builderUrl({
+      projectId: "090e6e14-ae50-4b2e-bd22-71733cec05bb",
+      origin: "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.wstd.dev",
+      pageId: "home-page",
+      instanceSelector: ["box", "fragment", "slot-two", "body"],
+      authToken: "share-token",
+      mode: "content",
+    })
+  );
+  expect(url.origin).toBe(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.wstd.dev"
+  );
+  expect(url.searchParams.get("authToken")).toBe("share-token");
+  expect(url.searchParams.get("mode")).toBe("content");
   expect(
     getDeepLinkedInstanceSelection({
-      instanceSelector: ["box", "fragment", "slot-one", "body"],
+      instanceSelector: url.searchParams.get("instance")?.split(","),
       canOpenPageTemplates: true,
       pages,
       instances,
     })
   ).toEqual({
     pageId: "home-page",
-    instanceSelector: ["box", "fragment", "slot-one", "body"],
+    instanceSelector: ["box", "fragment", "slot-two", "body"],
   });
 });
 

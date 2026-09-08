@@ -490,38 +490,3 @@ describe("getMenuPermissions", () => {
     });
   });
 });
-
-test.each([
-  { instanceId: "child", count: 1, hasPage: true, allowed: true },
-  { instanceId: "body", count: 1, hasPage: true, allowed: true },
-  { instanceId: ROOT_INSTANCE_ID, count: 1, hasPage: true, allowed: false },
-  { instanceId: "child", count: 2, hasPage: true, allowed: false },
-  { instanceId: undefined, count: 0, hasPage: true, allowed: false },
-  { instanceId: "child", count: 1, hasPage: false, allowed: false },
-])(
-  "checks link availability in every editor mode for %j",
-  ({ instanceId, count, hasPage, allowed }) => {
-    if (!hasPage) {
-      $selectedPageId.set(undefined);
-    }
-    for (const mode of ["design", "content", "preview"]) {
-      expect(
-        getMenuPermissions({
-          instancePath:
-            instanceId === undefined
-              ? undefined
-              : [
-                  {
-                    instance: createInstance(instanceId),
-                    instanceSelector: [instanceId],
-                  },
-                ],
-          selectedInstanceCount: count,
-          isDesignMode: mode === "design",
-          isContentMode: mode === "content",
-          instances: emptyInstances,
-        }).canCopyLink
-      ).toBe(allowed);
-    }
-  }
-);
