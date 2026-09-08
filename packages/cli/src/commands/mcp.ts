@@ -1795,6 +1795,22 @@ const assertSingleOpCallToolSupported = (tool: string) => {
   }
 };
 
+const getMcpDownloadAsset = async (
+  session: Pick<CliProjectSession, "ensureNamespaces">,
+  assetId: string
+) => {
+  const snapshot = await session.ensureNamespaces(["assets"]);
+  const asset = snapshot.state.assets?.get(assetId);
+  if (asset === undefined) {
+    throw new Error(`Asset not found: ${assetId}`);
+  }
+  assertTextAssetDescriptorFormats({
+    assets: [{ name: asset.name, type: asset.type, format: asset.format }],
+    pathPrefix: ["asset"],
+  });
+  return asset;
+};
+
 const createCliMcpHost = async ({
   projectRoot = cwd(),
   projectId,
@@ -1984,15 +2000,7 @@ const createCliMcpHost = async ({
       return { imported: true as const };
     },
     async downloadAsset(input) {
-      const snapshot = getLoadedProjectSessionSnapshot(session);
-      const asset = snapshot.state.assets?.get(input.assetId);
-      if (asset === undefined) {
-        throw new Error(`Asset not found: ${input.assetId}`);
-      }
-      assertTextAssetDescriptorFormats({
-        assets: [asset as unknown as Record<string, unknown>],
-        pathPrefix: ["asset"],
-      });
+      const asset = await getMcpDownloadAsset(session, input.assetId);
       const localPath = getLocalAssetPath(asset.name, input.assetsDir);
       const format = getTextAssetFormat(asset.format);
       if (format !== undefined) {
@@ -2740,6 +2748,7 @@ export const mcp = async (
 };
 
 export const __testing__ = {
+  getMcpDownloadAsset,
   createMcpStatusReporter,
   formatMcpStatusLine,
   assertSingleOpCallToolSupported,

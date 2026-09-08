@@ -98,7 +98,7 @@ import {
 } from "~/shared/external-content-mutations";
 import {
   getSelectedContentBlockDocumentBindingPath,
-  isObjectPathWritable,
+  getFrontmatterWriteTarget,
 } from "~/shared/content-block-document";
 import {
   formatContentBlockDiagnostic,
@@ -877,10 +877,12 @@ const WebstudioComponentCanvasInner = forwardRef<
             return;
           }
           if (
-            isObjectPathWritable({
+            getFrontmatterWriteTarget({
+              assetId: externalRoot.assetId ?? "",
+              sources: externalRoot.frontmatterSources,
               value: externalRoot.document.frontmatter.properties,
               path: frontmatterPath,
-            }) === false
+            }) === undefined
           ) {
             toast.error("Open the referenced file to edit this value.");
             return;

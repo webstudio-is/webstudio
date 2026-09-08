@@ -5,11 +5,13 @@ import {
   createCollectionEntry,
   createDefaultCollectionConfig,
   getCollectionFieldValidationError,
+  getCollectionFieldValidationIssue,
   getCollectionTemplateValidationError,
   getCollectionValidationError,
   parseCollectionConfig,
   normalizeCollectionSlug,
   serializeCollectionConfig,
+  inspectContentCollection,
 } from "./content-collection";
 
 type MutableCollectionSchema = Record<string, unknown> & {
@@ -17,6 +19,201 @@ type MutableCollectionSchema = Record<string, unknown> & {
 };
 
 describe("content collections", () => {
+  test("resolves the bundled slug reference and applies sibling constraints", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.slug = {
+      $ref: "https://webstudio.is/schemas/slug",
+      title: "URL slug",
+      minLength: 2,
+      maxLength: 3,
+      "x-webstudio": { control: "slug" },
+    };
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    expect(config.fields.find(({ key }) => key === "slug")).toMatchObject({
+      type: "string",
+      control: "slug",
+      minLength: 2,
+      maxLength: 3,
+    });
+    for (const slug of ["你好", "abc"]) {
+      expect(config.validate({ title: "Title", slug }).success).toBe(true);
+    }
+    for (const slug of ["a", "abcd", "A-b", "a/b", 12]) {
+      expect(config.validate({ title: "Title", slug }).success).toBe(false);
+    }
+    const saved = JSON.parse(
+      serializeCollectionConfig({ config, fields: config.fields })
+    );
+    expect(saved.properties.slug.$ref).toBe(
+      "https://webstudio.is/schemas/slug"
+    );
+    expect(saved.properties.slug).not.toHaveProperty("pattern");
+  });
+
+  test.each([
+    "https://example.com/slug",
+    "#/properties/slug",
+    "https://webstudio.is/schemas/slug#unknown",
+  ])("rejects an unknown schema reference %s", ($ref) => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.slug.$ref = $ref;
+    expect(() => parseCollectionConfig(JSON.stringify(schema))).toThrow();
+  });
+
+  test("validation preserves additional frontmatter without filling defaults or coercing types", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.additionalProperties = true;
+    schema.properties.title.default = "Default title";
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const value = { slug: "hello", extra: { nested: true } };
+    expect(config.validate(value).success).toBe(false);
+    expect(value).toEqual({ slug: "hello", extra: { nested: true } });
+    const valid = { ...value, title: "Title" };
+    expect(config.validate(valid).success).toBe(true);
+    expect(valid.extra).toEqual({ nested: true });
+    expect(config.validate({ ...valid, draft: "false" }).success).toBe(false);
+  });
+  test("maps missing and invalid values to exact field keys without losing template errors", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    const key = 'author/name~"';
+    schema.properties[key] = { type: "string", minLength: 2 };
+    schema.required.push(key);
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const base = { title: "Title", slug: "hello" };
+    expect(getCollectionFieldValidationIssue(config, base)?.fieldKey).toBe(key);
+    expect(
+      getCollectionFieldValidationIssue(config, { ...base, [key]: "a" })
+        ?.fieldKey
+    ).toBe(key);
+    expect(getCollectionTemplateValidationError(config, {})).toBeUndefined();
+    expect(
+      getCollectionTemplateValidationError(config, { [key]: "a" })
+    ).toBeDefined();
+    expect(
+      getCollectionTemplateValidationError(config, { extra: true })
+    ).toBeDefined();
+  });
+
+  test("keeps independent validators and counts Unicode code points at both length boundaries", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.title.minLength = 1;
+    schema.properties.title.maxLength = 1;
+    const short = parseCollectionConfig(JSON.stringify(schema));
+    schema.properties.title.minLength = 2;
+    schema.properties.title.maxLength = 2;
+    const long = parseCollectionConfig(JSON.stringify(schema));
+    for (let repeat = 0; repeat < 2; repeat += 1) {
+      expect(short.validate({ title: "😀", slug: "a" }).success).toBe(true);
+      expect(short.validate({ title: "😀😀", slug: "a" }).success).toBe(false);
+      expect(long.validate({ title: "😀", slug: "a" }).success).toBe(false);
+      expect(long.validate({ title: "😀😀", slug: "a" }).success).toBe(true);
+    }
+  });
+
+  test("matches current-folder filenames with URLPattern and preserves patterns in settings", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = [
+      "post-*.mdx",
+      "!post-private-*.mdx",
+      "статья*.mdx",
+    ];
+    const config = parseCollectionConfig(JSON.stringify(schema));
+    const updated = parseCollectionConfig(
+      serializeCollectionConfig({ config, fields: config.fields })
+    );
+    expect(updated.entries).toEqual(schema["x-webstudio"].entries);
+    for (const filename of [
+      "post-one.mdx",
+      "POST-TWO.MDX",
+      "post-with spaces.mdx",
+      "post-#?%.mdx",
+      "статья.mdx",
+    ]) {
+      expect(updated.matchesEntry(filename)).toBe(true);
+    }
+    for (const filename of [
+      "post-private-one.mdx",
+      "post-one.md",
+      "other.mdx",
+      "nested/post-one.mdx",
+      "collection.json",
+      "template.mdx",
+    ]) {
+      expect(updated.matchesEntry(filename)).toBe(false);
+    }
+    delete schema["x-webstudio"].entries;
+    const legacy = parseCollectionConfig(JSON.stringify(schema));
+    expect(legacy.entries).toEqual(["*.mdx"]);
+    expect(legacy.matchesEntry("other.mdx")).toBe(true);
+    expect(legacy.matchesEntry("other.md")).toBe(false);
+  });
+
+  test.each(
+    [
+      [],
+      [""],
+      ["!"],
+      ["!*.mdx"],
+      ["nested/*.mdx"],
+      ["[".repeat(257)],
+      ["("],
+      Array(65).fill("*.mdx"),
+    ].map((entries) => [entries])
+  )("rejects invalid entry pattern configuration %j", (entries) => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = entries;
+    expect(() => parseCollectionConfig(JSON.stringify(schema))).toThrow();
+  });
+
+  test("validates only selected entries and never reads ignored files", async () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["post-*.mdx"];
+    const sources = new Map([
+      ["collection.json", JSON.stringify(schema)],
+      ["template.mdx", "---\ndraft: true\n---\nBody"],
+      ["post-one.mdx", "---\ntitle: One\nslug: post-one\n---\nBody"],
+    ]);
+    const files = [
+      ...sources.keys(),
+      "notes.md",
+      "cover.png",
+      "ignored.mdx",
+    ].map((filename) => ({
+      file: filename,
+      id: filename,
+      filename,
+      basename: filename.slice(0, filename.lastIndexOf(".")),
+      isMdx: filename.endsWith(".mdx"),
+    }));
+    const result = await inspectContentCollection({
+      files,
+      readSource: async ({ filename }) => {
+        const source = sources.get(filename);
+        if (source === undefined) {
+          throw new Error(`Unexpected read: ${filename}`);
+        }
+        return source;
+      },
+    });
+    expect(result.entryFiles.map(({ filename }) => filename)).toEqual([
+      "post-one.mdx",
+    ]);
+    await expect(
+      createCollectionEntry({
+        config: result.config,
+        templateSource: sources.get("template.mdx")!,
+        values: { title: "Other", slug: "other" },
+        existingFilenames: [],
+      })
+    ).rejects.toThrow("does not match");
+    const entry = await createCollectionEntry({
+      config: result.config,
+      templateSource: sources.get("template.mdx")!,
+      values: { title: "Two", slug: "post-two" },
+      existingFilenames: [],
+    });
+    expect(entry.filename).toBe("post-two.mdx");
+  });
   test.each([
     ["фывафыва", "фывафыва"],
     ["Привет мир", "привет-мир"],
@@ -42,10 +239,6 @@ describe("content collections", () => {
     expect(entry.filename).toBe(`${slug}.mdx`);
     expect(entry.frontmatter.slug).toBe(slug);
     expect(config.validate(entry.frontmatter).success).toBe(true);
-    const pattern = (
-      config.schema.properties as MutableCollectionSchema["properties"]
-    ).slug.pattern as string;
-    expect(new RegExp(pattern, "u").test(slug)).toBe(true);
   });
 
   test.each(["🚀🎉", "///", "\u0301"])(
@@ -86,28 +279,46 @@ describe("content collections", () => {
     expect(config.validate({ title: "Title", slug }).success).toBe(false);
   });
 
-  test("preserves legacy slug rules when saving settings", () => {
-    const schema = JSON.parse(createDefaultCollectionConfig());
-    schema.properties.slug.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
-    const legacy = parseCollectionConfig(JSON.stringify(schema));
-    expect(legacy.validate({ title: "Title", slug: "hello" }).success).toBe(
-      true
-    );
-    expect(legacy.validate({ title: "Title", slug: "你好" }).success).toBe(
-      false
-    );
-    const updated = parseCollectionConfig(
-      serializeCollectionConfig({ config: legacy, fields: legacy.fields })
-    );
-    expect(updated.validate({ title: "Title", slug: "你好" }).success).toBe(
-      false
-    );
-  });
+  test.each([
+    "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    "^(?!.*[\\p{Lu}\\p{Lt}])[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N}]*(?:-[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N}]*)*$(?![\\s\\S])",
+  ])(
+    "upgrades generated slug rules to the bundled reference (%s)",
+    (pattern) => {
+      const schema = JSON.parse(createDefaultCollectionConfig());
+      delete schema.properties.slug.$ref;
+      schema.properties.slug.pattern = pattern;
+      const legacy = parseCollectionConfig(JSON.stringify(schema));
+      expect(legacy.validate({ title: "Title", slug: "hello" }).success).toBe(
+        true
+      );
+      expect(legacy.validate({ title: "Title", slug: "你好" }).success).toBe(
+        true
+      );
+      const serialized = serializeCollectionConfig({
+        config: legacy,
+        fields: legacy.fields,
+      });
+      const saved = JSON.parse(serialized);
+      expect(saved.properties.slug.$ref).toBe(
+        "https://webstudio.is/schemas/slug"
+      );
+      expect(saved.properties.slug).not.toHaveProperty("pattern");
+      const updated = parseCollectionConfig(serialized);
+      expect(
+        serializeCollectionConfig({ config: updated, fields: updated.fields })
+      ).toBe(serialized);
+      expect(updated.validate({ title: "Title", slug: "你好" }).success).toBe(
+        true
+      );
+    }
+  );
 
   test.each([undefined, "Café Déjà"])(
     "generates slugs compatible with a legacy collection (manual: %s)",
     async (slug) => {
       const schema = JSON.parse(createDefaultCollectionConfig());
+      delete schema.properties.slug.$ref;
       schema.properties.slug.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
       const config = parseCollectionConfig(JSON.stringify(schema));
       const entry = await createCollectionEntry({
@@ -116,7 +327,7 @@ describe("content collections", () => {
         values: { title: "Café Déjà", ...(slug === undefined ? {} : { slug }) },
         existingFilenames: [],
       });
-      expect(entry.filename).toBe("cafe-deja.mdx");
+      expect(entry.filename).toBe("café-déjà.mdx");
       expect(config.validate(entry.frontmatter).success).toBe(true);
     }
   );
@@ -284,7 +495,7 @@ describe("content collections", () => {
           schema.properties.title.pattern = ".*";
         },
         message:
-          "Only Webstudio's fixed slug pattern is supported at #/properties/title/pattern",
+          "Only Webstudio's slug schema reference is supported; custom patterns are not supported",
       },
     ];
 
@@ -501,8 +712,14 @@ describe("content collections", () => {
     );
 
     expect(serialized.required).toContain("slug");
+    expect(serialized.properties.slug.$ref).toBe(
+      "https://webstudio.is/schemas/slug"
+    );
     expect(
-      new RegExp(serialized.properties.slug.pattern, "u").test("你好")
+      parseCollectionConfig(JSON.stringify(serialized)).validate({
+        title: "Title",
+        slug: "你好",
+      }).success
     ).toBe(true);
     expect(serialized.properties.slug["x-webstudio"]).toEqual({
       control: "slug",
@@ -526,11 +743,13 @@ describe("content collections", () => {
 
     expect(nextConfig.slugField).toBe("title");
     expect(nextConfig.generateSlugFrom).toBe("slug");
-    expect(new RegExp(title.title.pattern as string, "u").test("привет")).toBe(
-      true
-    );
+    expect(title.title.$ref).toBe("https://webstudio.is/schemas/slug");
+    expect(
+      nextConfig.validate({ title: "привет", slug: "Text, not a slug!" })
+        .success
+    ).toBe(true);
     expect(title.title["x-webstudio"]).toMatchObject({ control: "slug" });
-    expect(title.slug.pattern).toBeUndefined();
+    expect(title.slug.$ref).toBeUndefined();
     expect(title.slug["x-webstudio"]).toBeUndefined();
     expect(
       nextConfig.fields.filter(({ control }) => control === "slug")
@@ -687,6 +906,7 @@ describe("content collections", () => {
   test("treats schema defaults as annotations instead of missing values", async () => {
     const schema = JSON.parse(createDefaultCollectionConfig());
     schema.required.push("draft");
+    schema.properties.draft.default = true;
     const config = parseCollectionConfig(JSON.stringify(schema));
     const values = {
       title: "No draft value",
@@ -790,7 +1010,7 @@ describe("content collections", () => {
       getCollectionTemplateValidationError(config, { draft: true })
     ).toBeUndefined();
     expect(getCollectionTemplateValidationError(config, { draft: "yes" })).toBe(
-      "Draft: Invalid input: expected boolean, received string"
+      "Draft: must be boolean"
     );
     expect(
       getCollectionTemplateValidationError(config, { unknown: true })
@@ -872,7 +1092,7 @@ describe("content collections", () => {
 
   test("requires exactly one canonical slug control", () => {
     const missingControl = JSON.parse(createDefaultCollectionConfig());
-    delete missingControl.properties.slug.pattern;
+    delete missingControl.properties.slug.$ref;
     delete missingControl.properties.slug["x-webstudio"];
     expect(() => parseCollectionConfig(JSON.stringify(missingControl))).toThrow(
       "Slug field must use the slug control"

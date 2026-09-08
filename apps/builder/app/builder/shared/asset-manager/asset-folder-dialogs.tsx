@@ -170,6 +170,7 @@ const AssetFolderForm = ({
   submitLabel,
   secondaryAction,
   showCollectionOption = false,
+  onUseAsCollection,
   onSubmit,
 }: {
   id: string;
@@ -182,6 +183,7 @@ const AssetFolderForm = ({
   submitLabel: string;
   secondaryAction?: ReactNode;
   showCollectionOption?: boolean;
+  onUseAsCollection?: () => void;
   onSubmit: (values: AssetFolderFormValues) => void;
 }) => {
   const folders = useStore($assetFolders);
@@ -286,6 +288,9 @@ const AssetFolderForm = ({
           />
         </Grid>
       )}
+      {onUseAsCollection !== undefined && (
+        <Button onClick={onUseAsCollection}>Use as content collection</Button>
+      )}
       <Flex justify="end" gap={2}>
         {secondaryAction}
         <Button
@@ -306,6 +311,7 @@ export const CreateAssetFolderDialog = ({
   onOpenChange,
   onConfigureCollection,
   currentFolderId,
+  existingFolder,
   canCreateContentCollection = true,
   createFolder = createAssetFolder,
   createCollection = createContentCollectionFolder,
@@ -314,6 +320,7 @@ export const CreateAssetFolderDialog = ({
   onOpenChange: (open: boolean) => void;
   onConfigureCollection?: (folderId: string) => void;
   currentFolderId: string | undefined;
+  existingFolder?: AssetFolder;
   canCreateContentCollection?: boolean;
   createFolder?: (
     values: AssetFolderFormValues
@@ -340,6 +347,10 @@ export const CreateAssetFolderDialog = ({
     setInitializing(true);
     setInitializationError(undefined);
     void (async () => {
+      assertCollectionSetupProject({
+        expectedProjectId: pending.projectId,
+        currentProjectId: $project.get()?.id,
+      });
       await createCollection({
         id: pending.folderId,
         name: pending.name,
@@ -378,8 +389,8 @@ export const CreateAssetFolderDialog = ({
       return;
     }
     const pending = {
-      folderId: createId(),
-      projectId,
+      folderId: existingFolder?.id ?? createId(),
+      projectId: existingFolder?.projectId ?? projectId,
       name: values.name,
       parentId: values.parentId,
     };
@@ -408,7 +419,9 @@ export const CreateAssetFolderDialog = ({
           {createdCollectionFolderId !== undefined
             ? "Collection created"
             : pendingCollection === undefined
-              ? "New folder"
+              ? existingFolder === undefined
+                ? "New folder"
+                : "Use as content collection"
               : "Finish collection setup"}
         </DialogTitle>
         {createdCollectionFolderId !== undefined ? (
@@ -440,6 +453,30 @@ export const CreateAssetFolderDialog = ({
                   Configure collection
                 </Button>
               )}
+            </Flex>
+          </PanelContent>
+        ) : pendingCollection === undefined && existingFolder !== undefined ? (
+          <PanelContent as={Grid} gap={3}>
+            <Text>
+              Add collection.json and template.mdx to “{existingFolder.name}” so
+              editors can create entries. Existing files stay unchanged. MDX
+              files become entries; other files are ignored by collection
+              validation.
+            </Text>
+            <Flex justify="end">
+              <Button
+                autoFocus
+                color="primary"
+                onClick={() =>
+                  create({
+                    name: existingFolder.name,
+                    parentId: existingFolder.parentId,
+                    useAsContentCollection: true,
+                  })
+                }
+              >
+                Use as content collection
+              </Button>
             </Flex>
           </PanelContent>
         ) : pendingCollection === undefined ? (
@@ -495,12 +532,14 @@ export const AssetFolderSettingsDialog = ({
   onOpenChange,
   initialDeleteConfirmation = false,
   canDelete = true,
+  onUseAsCollection,
 }: {
   folder: AssetFolder;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialDeleteConfirmation?: boolean;
   canDelete?: boolean;
+  onUseAsCollection?: () => void;
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   useLayoutEffect(() => {
@@ -571,6 +610,7 @@ export const AssetFolderSettingsDialog = ({
             autoFocusSubmit
             submitLabel="Save"
             onSubmit={save}
+            onUseAsCollection={onUseAsCollection}
             secondaryAction={
               canDelete ? (
                 <Button

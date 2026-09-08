@@ -185,56 +185,59 @@ describe("Content Block source", () => {
     ).toEqual([[shell, body]]);
   });
 
-  test("recognizes only direct document frontmatter bindings", () => {
-    const document = encodeDataSourceVariable("document-id");
-    expect(
-      getWritableContentBlockDocumentBinding({
-        binding: {
-          type: "expression",
-          value: `${document}.frontmatter.author.name`,
-          mode: "readwrite",
+  test.each([".author.name", ".author?.name"])(
+    "recognizes direct document frontmatter binding %s",
+    (suffix) => {
+      const document = encodeDataSourceVariable("document-id");
+      expect(
+        getWritableContentBlockDocumentBinding({
+          binding: {
+            type: "expression",
+            value: `${document}.frontmatter${suffix}`,
+            mode: "readwrite",
+          },
+          documentDataSourceId: "document-id",
+        })
+      ).toEqual({
+        type: "writable-content-block-document-binding",
+        expression: {
+          type: "direct-path",
+          expression: `${document}.frontmatter${suffix}`,
+          path: [document, "frontmatter", "author", "name"],
         },
-        documentDataSourceId: "document-id",
-      })
-    ).toEqual({
-      type: "writable-content-block-document-binding",
-      expression: {
-        type: "direct-path",
-        expression: `${document}.frontmatter.author.name`,
-        path: [document, "frontmatter", "author", "name"],
-      },
-      frontmatterPath: ["author", "name"],
-    });
-    expect(
-      getWritableContentBlockDocumentBinding({
-        binding: {
-          type: "expression",
-          value: `${document}.frontmatter.title ?? "Untitled"`,
-          mode: "readwrite",
-        },
-        documentDataSourceId: "document-id",
-      })
-    ).toBeUndefined();
-    expect(
-      getWritableContentBlockDocumentBinding({
-        binding: {
-          type: "expression",
-          value: `${document}.frontmatter.title`,
-        },
-        documentDataSourceId: "document-id",
-      })
-    ).toBeUndefined();
-    expect(
-      getWritableContentBlockDocumentBinding({
-        binding: {
-          type: "expression",
-          value: `${document}.frontmatter["__proto__"].polluted`,
-          mode: "readwrite",
-        },
-        documentDataSourceId: "document-id",
-      })
-    ).toBeUndefined();
-  });
+        frontmatterPath: ["author", "name"],
+      });
+      expect(
+        getWritableContentBlockDocumentBinding({
+          binding: {
+            type: "expression",
+            value: `${document}.frontmatter.title ?? "Untitled"`,
+            mode: "readwrite",
+          },
+          documentDataSourceId: "document-id",
+        })
+      ).toBeUndefined();
+      expect(
+        getWritableContentBlockDocumentBinding({
+          binding: {
+            type: "expression",
+            value: `${document}.frontmatter.title`,
+          },
+          documentDataSourceId: "document-id",
+        })
+      ).toBeUndefined();
+      expect(
+        getWritableContentBlockDocumentBinding({
+          binding: {
+            type: "expression",
+            value: `${document}.frontmatter["__proto__"].polluted`,
+            mode: "readwrite",
+          },
+          documentDataSourceId: "document-id",
+        })
+      ).toBeUndefined();
+    }
+  );
 
   test("finds direct document bindings inside a connected Content Block", () => {
     const document = encodeDataSourceVariable("document-id");

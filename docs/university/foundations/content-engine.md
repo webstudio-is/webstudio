@@ -86,11 +86,48 @@ in this guide use that ID to query only files in this folder.
 ### Make the folder a content collection
 
 Turn on **Use as content collection** when you create the `posts` folder if
-editors should be able to add articles without writing MDX frontmatter. This
-creates two files in the folder:
+editors should be able to add articles without writing MDX frontmatter. For an
+existing folder, choose **Use as content collection** from its context menu,
+actions menu, or **Folder settings**, then confirm setup. This creates two files
+in the same folder without changing its ID or existing content:
 
 - `collection.json` defines the entry fields and their rules with JSON Schema.
 - `template.mdx` supplies the starting frontmatter and body for each entry.
+
+Existing selected entries must be MDX files that satisfy the initial collection rules.
+Other files stay visible and are ignored by collection validation. Setup stops before adding
+the collection files if selected entries are incompatible or a file conflicts
+with the generated configuration or template. Choose **Configure collection**
+after setup to edit its fields and template.
+
+### Select collection entries
+
+The generated `collection.json` includes filename patterns in `x-webstudio.entries`:
+
+```json
+{
+  "x-webstudio": {
+    "template": "template.mdx",
+    "entries": ["*.mdx"]
+  }
+}
+```
+
+These use [URLPattern syntax](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API),
+not filesystem globs. Patterns match direct filenames in the current folder,
+case-insensitively; subfolders are independent. For example, use
+`["post-*.mdx", "!post-private-*.mdx"]` to select public post files. A leading
+`!` excludes a pattern; exclusions take priority over inclusions. At least one
+inclusion is required. Slashes are not allowed. The configuration and configured
+template are always excluded from entries, regardless of patterns.
+
+Omitting `entries` preserves the default `["*.mdx"]`. The setting accepts up to
+64 patterns of 256 characters each. New entry filenames must match the patterns.
+Only MDX entries are currently supported; a pattern selecting another format
+reports an error rather than treating that file as editable MDX. Files not
+selected remain visible and can still appear in ordinary Assets query results.
+
+### Configure fields and the template
 
 The folder remains a normal Assets folder. The direct `collection.json` file is
 what makes Webstudio treat it as a collection and show the collection badge.
@@ -114,8 +151,22 @@ The collection format uses a supported subset of JSON Schema draft 2020-12.
 The configurator exposes string, number, integer, boolean, and slug fields,
 along with required fields and length or value limits. Set starting values in
 the entry template frontmatter. Collection fields are flat; arrays and nested
-objects are not supported. The schema also does not support `$ref`, composition
-keywords, enums, formats, or custom regular-expression patterns. Webstudio
+objects are not supported. Slug fields reference Webstudio's bundled schema:
+
+```json
+{
+  "$ref": "https://webstudio.is/schemas/slug",
+  "title": "URL slug",
+  "maxLength": 120,
+  "x-webstudio": { "control": "slug" }
+}
+```
+
+Webstudio resolves this reference from its bundled rules, without a network
+request. Length limits alongside the reference still apply. The configurator
+writes the reference automatically; designers do not need to write a regex.
+Other references, composition keywords, enums, formats, and custom
+regular-expression patterns are not supported. Webstudio
 reports unsupported rules with their location instead of silently ignoring
 them.
 
@@ -127,10 +178,10 @@ Slugs preserve letters and numbers from any language, including accents:
 Spaces and punctuation become separators. If the title contains only emoji or
 symbols, enter a slug manually. Existing filenames are never renamed.
 
-Collections created with the older Latin-only slug rule keep that rule and its
-matching generator, including after saving settings. Accents are removed in
-those collections (`Café` becomes `cafe`); enter a Latin-letter slug manually
-when the title cannot produce one. New collections support Unicode slugs.
+Webstudio recognizes its previously generated slug patterns and uses the bundled
+Unicode rule for those collections too. Saving collection settings replaces the
+old pattern with the reference. Existing entry content and filenames remain
+unchanged. Future rule updates do not require editing each collection's regex.
 
 Editors can change the slug before creating the entry. The schema is checked
 when an entry is created and whenever its frontmatter changes. The slug becomes
@@ -153,10 +204,11 @@ template against the new rules. Existing entries remain editable if a rule chang
 entry that no longer matches before publishing; publication validates every
 entry and stops when an entry is invalid.
 
-A collection folder accepts entries and subfolders. Uploading, creating a
-generic text file, pasting, moving, or duplicating another file directly into
-the collection is disabled. Put images and other supporting files in a
-subfolder. The collection configuration and template do not appear in Content
+A collection folder accepts entries, supporting assets, and subfolders. Use
+**New entry** for filenames selected by the entry patterns. Files excluded by
+the patterns behave like ordinary assets: upload, create, paste, move, rename,
+and duplicate them normally. The collection configuration and template remain
+protected and do not appear in Content
 Engine query results. Keep `collection.json` valid and its referenced template
 available. Webstudio blocks collection queries and publishing when it cannot
 safely identify the reserved files, the template is invalid, or an entry no

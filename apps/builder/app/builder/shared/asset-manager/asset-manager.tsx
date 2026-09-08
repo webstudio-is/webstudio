@@ -95,16 +95,17 @@ import {
 import { getAssetManagerDragItems } from "./asset-manager-drag";
 import type { AssetManagerThumbnailInteractions } from "./asset-manager-thumbnail";
 import { $authPermit } from "~/shared/nano-states";
-import { MoveAssetManagerItemsDialog } from "./asset-folder-dialogs";
+import {
+  MoveAssetManagerItemsDialog,
+  type createContentCollectionFolder,
+} from "./asset-folder-dialogs";
 import {
   canConfigureContentCollections,
+  canAddAssetToContentCollection,
   createLoadingContentCollections,
   getCollectionReservedAssetIds,
   type ContentCollection,
 } from "../assets/content-collections";
-
-const acceptFolderClipboardItems = (items: readonly AssetManagerSelection[]) =>
-  items.every((item) => item.type === "folder");
 
 const emptyContentCollections: ReadonlyMap<string, ContentCollection> =
   new Map();
@@ -134,6 +135,8 @@ type AssetManagerProps = FolderNavigationProps & {
     >
   >;
   collections?: ReadonlyMap<string, ContentCollection>;
+  onConfigureCollection?: (folderId: string) => void;
+  createCollection?: typeof createContentCollectionFolder;
   emptyMessage?: string;
   folderNotice?: ReactNode;
 };
@@ -170,6 +173,8 @@ export const AssetManager = ({
   canManageFolders = false,
   panelActions,
   collections = emptyContentCollections,
+  onConfigureCollection,
+  createCollection,
   emptyMessage,
   folderNotice,
 }: AssetManagerProps) => {
@@ -206,6 +211,16 @@ export const AssetManager = ({
   }
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
+  const collectionEntryAssetIds = new Set(
+    Array.from(assets.values()).flatMap((asset) => {
+      const collection = effectiveCollections.get(asset.folderId ?? "");
+      return collection !== undefined &&
+        (collection.status !== "ready" ||
+          collection.config.matchesEntry(formatAssetName(asset)))
+        ? [asset.id]
+        : [];
+    })
+  );
   const project = useStore($project);
   const authPermit = useStore($authPermit);
   const clipboard = useStore($assetManagerClipboard);
@@ -264,13 +279,13 @@ export const AssetManager = ({
     canManageAssets: authPermit !== "view",
     canCopyOrDeleteItems,
     canRelocateItems,
-    collectionFolderIds,
+    collectionEntryAssetIds,
   });
   currentProtectionRef.current = {
     canManageAssets: authPermit !== "view",
     canCopyOrDeleteItems,
     canRelocateItems,
-    collectionFolderIds,
+    collectionEntryAssetIds,
   };
   const mimePatterns = useMemo(() => acceptToMimePatterns(accept), [accept]);
   const [internalFolderId, setInternalFolderId] = useState(folderId);
@@ -318,14 +333,24 @@ export const AssetManager = ({
       ) {
         return false;
       }
-      return canPasteAssetManagerClipboard(
-        targetFolderId,
-        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
-          ? acceptFolderClipboardItems
-          : undefined
+      return canPasteAssetManagerClipboard(targetFolderId, (items) =>
+        items.every(
+          (item) =>
+            item.type === "folder" ||
+            canAddAssetToContentCollection(
+              effectiveCollections.get(targetFolderId ?? ""),
+              assets.get(item.id)
+            )
+        )
       );
     },
-    [canCopyOrDeleteItems, canRelocateItems, clipboard, collectionFolderIds]
+    [
+      canCopyOrDeleteItems,
+      canRelocateItems,
+      clipboard,
+      effectiveCollections,
+      assets,
+    ]
   );
   const pasteClipboardToFolder = useCallback(
     (targetFolderId: string | undefined) => {
@@ -338,14 +363,24 @@ export const AssetManager = ({
       ) {
         return;
       }
-      pasteAssetManagerClipboard(
-        targetFolderId,
-        targetFolderId !== undefined && collectionFolderIds.has(targetFolderId)
-          ? acceptFolderClipboardItems
-          : undefined
+      pasteAssetManagerClipboard(targetFolderId, (items) =>
+        items.every(
+          (item) =>
+            item.type === "folder" ||
+            canAddAssetToContentCollection(
+              effectiveCollections.get(targetFolderId ?? ""),
+              assets.get(item.id)
+            )
+        )
       );
     },
-    [canCopyOrDeleteItems, canRelocateItems, clipboard, collectionFolderIds]
+    [
+      canCopyOrDeleteItems,
+      canRelocateItems,
+      clipboard,
+      effectiveCollections,
+      assets,
+    ]
   );
   const setCurrentFolderId = useCallback(
     (nextFolderId: string | undefined) => {
@@ -767,9 +802,7 @@ export const AssetManager = ({
           projectId: project.id,
         }));
   const selectionContainsCollectionEntry = normalizedShortcutSelection.some(
-    (item) =>
-      item.type === "asset" &&
-      collectionFolderIds.has(assetsById.get(item.id)?.folderId ?? "")
+    (item) => item.type === "asset" && collectionEntryAssetIds.has(item.id)
   );
   const canCopyOrDeleteSelection = canCopyOrDeleteItems(
     normalizedShortcutSelection
@@ -805,9 +838,7 @@ export const AssetManager = ({
       selections.some(
         (item) =>
           item.type === "asset" &&
-          currentProtectionRef.current.collectionFolderIds.has(
-            $assets.get().get(item.id)?.folderId ?? ""
-          )
+          currentProtectionRef.current.collectionEntryAssetIds.has(item.id)
       )
     ) {
       return;
@@ -901,9 +932,14 @@ export const AssetManager = ({
         return false;
       }
       if (
-        targetFolderId !== undefined &&
-        collectionFolderIds.has(targetFolderId) &&
-        items.some((item) => item.type === "asset")
+        items.some(
+          (item) =>
+            item.type === "asset" &&
+            !canAddAssetToContentCollection(
+              effectiveCollections.get(targetFolderId ?? ""),
+              assets.get(item.id)
+            )
+        )
       ) {
         return false;
       }
@@ -913,7 +949,7 @@ export const AssetManager = ({
         hierarchy: folderHierarchy,
       });
     },
-    [canRelocateItems, collectionFolderIds, folderHierarchy]
+    [canRelocateItems, effectiveCollections, assets, folderHierarchy]
   );
   const moveExcludedFolderIds = useMemo(() => {
     if (pendingMoveItems === undefined) {
@@ -971,14 +1007,16 @@ export const AssetManager = ({
       />
     );
 
-  const collectionPanelActions = currentFolderIsCollection
-    ? {
-        createFolder: panelActions?.createFolder,
-        createEntry: panelActions?.createEntry,
-        convertCollection: panelActions?.convertCollection,
-        deleteUnusedAssets: panelActions?.deleteUnusedAssets,
-      }
-    : panelActions;
+  const collectionPanelActions =
+    currentFolderIsCollection &&
+    effectiveCollections.get(currentFolderId!)?.status !== "ready"
+      ? {
+          createFolder: panelActions?.createFolder,
+          createEntry: panelActions?.createEntry,
+          convertCollection: panelActions?.convertCollection,
+          deleteUnusedAssets: panelActions?.deleteUnusedAssets,
+        }
+      : panelActions;
   const panelContextMenuActions: AssetManagerItemActions = {
     ...collectionPanelActions,
     ...(canManageFolders
@@ -1251,7 +1289,10 @@ export const AssetManager = ({
         onKeyDown={handleShortcut}
         autoScrollOnElementDrag={canManageFolders}
         allowFolderDrop={canManageFolders}
-        allowExternalDrop={currentFolderIsCollection === false}
+        allowExternalDrop={
+          !currentFolderIsCollection ||
+          effectiveCollections.get(currentFolderId!)?.status === "ready"
+        }
         contextMenu={
           hasPanelContextMenuActions ? (
             <AssetManagerItemContextMenuContent
@@ -1298,6 +1339,8 @@ export const AssetManager = ({
                   key={folder.id}
                   folder={folder}
                   collection={effectiveCollections.get(folder.id)}
+                  onConfigureCollection={onConfigureCollection}
+                  createCollection={createCollection}
                   interactions={thumbnailInteractions}
                   selected={isItemSelected({ type: "folder", id: folder.id })}
                   forcedSelection={forcedSelection !== undefined}
@@ -1368,8 +1411,8 @@ export const AssetManager = ({
                       })
                     )
                   }
-                  isCollectionEntry={collectionFolderIds.has(
-                    assetContainer.asset.folderId ?? ""
+                  isCollectionEntry={collectionEntryAssetIds.has(
+                    assetContainer.asset.id
                   )}
                   isCollectionReserved={collectionReservedAssetIds.has(
                     assetContainer.asset.id
@@ -1377,7 +1420,19 @@ export const AssetManager = ({
                   isCollectionFile={collectionFileIds.has(
                     assetContainer.asset.id
                   )}
-                  unavailableDestinationFolderIds={collectionFolderIds}
+                  unavailableDestinationFolderIds={
+                    new Set(
+                      Array.from(effectiveCollections)
+                        .filter(
+                          ([, collection]) =>
+                            !canAddAssetToContentCollection(
+                              collection,
+                              assetContainer.asset
+                            )
+                        )
+                        .map(([id]) => id)
+                    )
+                  }
                   onMove={() =>
                     setPendingMoveItems([
                       { type: "asset", id: assetContainer.asset.id },

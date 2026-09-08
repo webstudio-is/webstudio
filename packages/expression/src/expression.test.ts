@@ -43,6 +43,19 @@ describe("static member paths", () => {
 });
 
 describe("direct path expressions", () => {
+  test.each([
+    "document.frontmatter.author?.name",
+    "document?.frontmatter?.author?.name",
+    'document.frontmatter?.["author"].name',
+    "(document.frontmatter?.author).name",
+  ])("preserves the writable location of %s", (expression) => {
+    expect(parseDirectPathExpression(expression)).toEqual({
+      type: "direct-path",
+      expression,
+      path: ["document", "frontmatter", "author", "name"],
+    });
+  });
+
   test("distinguishes a writable location from a derived expression", () => {
     expect(parseDirectPathExpression("document.frontmatter.title")).toEqual({
       type: "direct-path",

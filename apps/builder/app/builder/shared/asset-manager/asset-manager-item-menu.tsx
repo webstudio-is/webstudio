@@ -21,6 +21,7 @@ export type AssetManagerItemActions = Partial<
     | "open"
     | "settings"
     | "collectionSettings"
+    | "useAsCollection"
     | "convertCollection"
     | "cut"
     | "copy"
@@ -56,6 +57,7 @@ const itemDefinitions: readonly ItemDefinition[] = [
   { name: "open", label: "Open" },
   { name: "settings", label: "Settings" },
   { name: "collectionSettings", label: "Collection settings" },
+  { name: "useAsCollection", label: "Use as content collection" },
   {
     name: "convertCollection",
     label: "Convert to regular folder",

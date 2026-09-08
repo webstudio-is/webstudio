@@ -1621,6 +1621,8 @@ test("replaces a mounted root when its source Asset changes", async () => {
 });
 
 test("installs MDX into the Body and recovers an invalid dependency", async () => {
+  const writes: Array<{ assetId: string; source: string }> = [];
+  let allowReferenceWrite = true;
   const source = `---
 author:
   $ref: ./author.md#frontmatter
@@ -1674,6 +1676,7 @@ role: editor
       updateContent: async ({ assetId, data }) => {
         const updatedSource = await new Response(data).text();
         const currentAsset = assetId === authorAsset.id ? authorAsset : asset;
+        writes.push({ assetId, source: updatedSource });
         return {
           ...currentAsset,
           size: new TextEncoder().encode(updatedSource).byteLength,
@@ -1687,7 +1690,10 @@ role: editor
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
-      authorize: () => true,
+      authorize: ({ assetId, operation }) =>
+        operation !== "write" ||
+        assetId !== authorAsset.id ||
+        allowReferenceWrite,
       requireReload: vi.fn(),
       getContentSession: () => session,
     })
@@ -1787,15 +1793,20 @@ role: editor
     }).map(({ id }) => id)
   ).toEqual([asset.id, authorAsset.id, avatarAsset.id]);
 
-  session.save(
-    authorAsset.id,
-    `---
-name: Ada Lovelace
-avatar:
-  $ref: ./avatar.jpg
----
-`
-  );
+  const rootKey = Array.from(getExternalContentRoots().keys())[0];
+  writes.length = 0;
+  await Promise.all([
+    getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path: ["author", "name"],
+      value: "Ada Lovelace",
+    }),
+    updateExternalContentFrontmatter({
+      rootKey,
+      path: ["author", "role"],
+      value: "Writer",
+    }),
+  ]);
   await flushExternalContentAsset({
     projectId: "project",
     assetId: authorAsset.id,
@@ -1806,9 +1817,24 @@ avatar:
   ).toEqual({
     author: {
       name: "Ada Lovelace",
+      role: "Writer",
       avatar: expect.objectContaining({ id: avatarAsset.id }),
     },
   });
+
+  expect(writes.length).toBeGreaterThan(0);
+  expect(writes.every(({ assetId }) => assetId === authorAsset.id)).toBe(true);
+  expect(session.get(asset.id)?.source).toBe(source);
+  expect(session.get(authorAsset.id)?.source).toContain("$ref: ./avatar.jpg");
+  allowReferenceWrite = false;
+  await expect(
+    getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path: ["author", "name"],
+      value: "Forbidden",
+    })
+  ).rejects.toThrow("permission");
+  expect(session.get(authorAsset.id)?.source).not.toContain("Forbidden");
 
   release();
   expect($instances.get().get("body-outlet")?.children).toEqual([]);

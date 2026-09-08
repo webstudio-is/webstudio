@@ -27,6 +27,7 @@ import type {
 import type { MdxDocument } from "@webstudio-is/content-engine/mdx";
 import { atom, type ReadableAtom } from "nanostores";
 import type { ExternalContentOwnership } from "./external-content-persistence";
+import type { FrontmatterSource } from "./content-block-document";
 
 export type ExternalContentRoot = {
   sourceBlockInstanceId?: Instance["id"];
@@ -56,6 +57,7 @@ export type ExternalContentRoot = {
   diagnostics?: readonly ContentBlockDiagnostic[];
   document?: MdxDocument;
   frontmatter?: Readonly<Record<string, unknown>>;
+  frontmatterSources?: readonly FrontmatterSource[];
   transientInstanceIds?: ReadonlySet<Instance["id"]>;
 };
 

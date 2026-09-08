@@ -10,6 +10,7 @@ import {
   discoverContentCollections,
   getCollectionReservedAssetIds,
   mergeLoadingContentCollections,
+  canAddAssetToContentCollection,
 } from "./content-collections";
 
 const asset = ({
@@ -35,6 +36,45 @@ const asset = ({
 });
 
 describe("discoverContentCollections", () => {
+  test("allows ordinary files but protects entry and setup filenames", async () => {
+    const config = asset({
+      id: "config",
+      filename: "collection",
+      format: "json",
+    });
+    const template = asset({
+      id: "template",
+      filename: "template",
+      format: "mdx",
+    });
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*.mdx", "!draft-*.mdx"];
+    const collections = await discoverContentCollections({
+      assets: [config, template],
+      readSource: async (file) =>
+        file.id === config.id
+          ? JSON.stringify(schema)
+          : "---\ndraft: true\n---\n",
+    });
+    const collection = collections.get("folder");
+    expect(collection?.status).toBe("ready");
+    for (const name of ["notes.md", "cover.png", "draft-idea.mdx"]) {
+      expect(canAddAssetToContentCollection(collection, { name })).toBe(true);
+    }
+    for (const name of ["post.mdx", "collection.json", "template.mdx"]) {
+      expect(canAddAssetToContentCollection(collection, { name })).toBe(false);
+    }
+    expect(
+      canAddAssetToContentCollection(
+        createLoadingContentCollections([config]).get("folder"),
+        { name: "cover.png" }
+      )
+    ).toBe(false);
+    expect(
+      canAddAssetToContentCollection(undefined, { name: "post.mdx" })
+    ).toBe(true);
+    expect(canAddAssetToContentCollection(collection, undefined)).toBe(false);
+  });
   test("keeps temporary collection read failures retryable", async () => {
     const config = asset({
       id: "config",
@@ -303,7 +343,7 @@ describe("discoverContentCollections", () => {
     ).toEqual(new Set([config.id, template.id]));
   });
 
-  test("reports a direct non-entry file as an invalid collection", async () => {
+  test("ignores direct non-entry files when discovering a collection", async () => {
     const config = asset({
       id: "config",
       filename: "collection",
@@ -317,14 +357,21 @@ describe("discoverContentCollections", () => {
     const image = asset({ id: "image", filename: "cover", format: "png" });
     const collections = await discoverContentCollections({
       assets: [config, template, image],
-      readSource: async () => createDefaultCollectionConfig(),
+      readSource: async (file) => {
+        if (file.id === config.id) {
+          return createDefaultCollectionConfig();
+        }
+        if (file.id === template.id) {
+          return "---\ndraft: true\n---\nBody";
+        }
+        throw new Error("Non-entry files must not be read");
+      },
     });
 
     expect(collections.get("folder")).toMatchObject({
-      status: "invalid",
-      message: 'Move "cover.png" into a subfolder',
-      repairAsset: image,
-      repairAction: "move",
+      status: "ready",
+      configAsset: config,
+      templateAsset: template,
     });
   });
 

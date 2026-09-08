@@ -1093,7 +1093,9 @@ describe("patchAssets (msw)", () => {
 
   test("validates collection moves with authoritative file metadata", async () => {
     const projectId = uid();
-    const configSource = createDefaultCollectionConfig();
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*"];
+    const configSource = JSON.stringify(schema);
     const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
     const entrySource =
       "---\ntitle: Hello world\nslug: hello-world\ndraft: true\n---\n\nBody.\n";
@@ -1165,7 +1167,7 @@ describe("patchAssets (msw)", () => {
         ],
         createContext()
       )
-    ).rejects.toThrow('Move "hello-world.txt" into a subfolder');
+    ).rejects.toThrow('Collection entry "hello-world.txt" must be an MDX file');
     expect(metadataUpdated).toBe(false);
   });
 
@@ -1466,9 +1468,74 @@ describe("patchAssets (msw)", () => {
     expect(updatedFolderId).toBeNull();
   });
 
-  test("validates collection rules before persisting an asset patch", async () => {
+  test("renames supporting assets without validating unchanged entry content", async () => {
     const projectId = uid();
     const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n";
+    const row = (
+      id: string,
+      filename: string,
+      format: string,
+      source: string
+    ) => ({
+      ...assetRow,
+      assetId: id,
+      projectId,
+      filename,
+      folderId: "posts",
+      file: {
+        ...assetRow.file,
+        name: `${id}.${format}`,
+        format,
+        size: source.length,
+      },
+    });
+    const rows = [
+      row("config", "collection", "json", configSource),
+      row("template", "template", "mdx", templateSource),
+      row("invalid", "invalid", "mdx", "missing frontmatter"),
+      row("notes", "notes", "txt", "notes"),
+    ];
+    let filename: unknown;
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json(rows)),
+      db.patch("Asset", async ({ request }) => {
+        filename = ((await request.json()) as { filename: unknown }).filename;
+        return json({ id: "notes" });
+      })
+    );
+    const assetStore = createSourceAssetStore({
+      "config.json": configSource,
+      "template.mdx": templateSource,
+      // Neither ordinary content nor unchanged entries should be read.
+    });
+    await patchAssets(
+      { projectId, assetStore },
+      [{ op: "replace", path: ["notes", "filename"], value: "renamed" }],
+      createContext()
+    );
+    expect(filename).toBe("renamed");
+    await expect(
+      patchAssets(
+        { projectId, assetStore },
+        [
+          {
+            op: "replace",
+            path: ["invalid", "filename"],
+            value: "changed-entry",
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow();
+  });
+
+  test("validates collection rules before persisting an asset patch", async () => {
+    const projectId = uid();
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*"];
+    const configSource = JSON.stringify(schema);
     const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
     const configRow = {
       ...assetRow,
@@ -1592,7 +1659,7 @@ describe("patchAssets (msw)", () => {
         ],
         createContext()
       )
-    ).rejects.toThrow('Move "notes.txt" into a subfolder');
+    ).rejects.toThrow('Collection entry "notes.txt" must be an MDX file');
     expect(inserted).toBe(false);
   });
 

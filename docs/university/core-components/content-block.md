@@ -193,7 +193,23 @@ featureImage:
   $ref: ./images/feature.png
 ```
 
-To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title`, an Image source to `document.frontmatter.featureImage.src`, and its alternative text to `document.frontmatter.featureImage.description`. This uses the image's Asset description instead of duplicating alternative text in frontmatter. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
+To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title`, an Image source to `document.frontmatter.featureImage.src`, and its alternative text to `document.frontmatter.featureImage.description`. This uses the image's Asset description instead of duplicating alternative text in frontmatter. Fields authored directly in the connected MDX file can be edited on the canvas and through supported Settings controls in Content mode; edits save back to that file. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions, JSON/body references, and resolved image metadata remain read-only.
+
+**Keep formatted values editable**
+
+Keep an editable value separate from its surrounding wording. For example, to
+display **— 5 min read**, place three inline text elements next to each other:
+
+- Fixed text: `— `.
+- A value element with its entire **Text Content** bound to `document.frontmatter.readingTime`.
+- Fixed text: ` min read`.
+
+Keep the spaces in the fixed text. Do not combine the value and wording into one
+expression: concatenation, template literals, fallbacks, and formatting calls
+produce read-only values. Keep the bound value as the only text content of its
+element. The editor can then change the reading time without changing the fixed
+wording. For dates, bind a Date Time component's date property directly and use
+its formatting settings instead of formatting the binding expression.
 
 #### Use one file in repeated or shared content
 

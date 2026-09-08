@@ -61,12 +61,14 @@ export const validateCollectionFolder = async ({
   assetStore,
   validateTemplate = true,
   validateEntries = true,
+  entryIdsToValidate,
 }: {
   assets: readonly Asset[];
   folderId: string;
   assetStore: AssetObjectReader;
   validateTemplate?: boolean;
   validateEntries?: boolean;
+  entryIdsToValidate?: ReadonlySet<string>;
 }): Promise<CollectionFolderDefinition> => {
   const siblings = getFolderAssets(assets, folderId);
   const result = await inspectContentCollection({
@@ -89,6 +91,7 @@ export const validateCollectionFolder = async ({
       ).properties,
     validateTemplate,
     validateEntries,
+    entryIdsToValidate,
   });
   return {
     configAsset: result.configFile.file,

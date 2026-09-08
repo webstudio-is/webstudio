@@ -160,7 +160,7 @@ export const CreateCollectionEntryDialog = ({
         slugEdited === false &&
         typeof value === "string"
       ) {
-        next[config.slugField] = normalizeCollectionSlug(value, config);
+        next[config.slugField] = normalizeCollectionSlug(value);
       }
       return next;
     });
@@ -218,16 +218,12 @@ export const CreateCollectionEntryDialog = ({
               ? undefined
               : submittedValues[config.generateSlugFrom];
           if (typeof slugSource === "string") {
-            submittedValues[config.slugField] = normalizeCollectionSlug(
-              slugSource,
-              config
-            );
+            submittedValues[config.slugField] =
+              normalizeCollectionSlug(slugSource);
           }
         } else {
-          submittedValues[config.slugField] = normalizeCollectionSlug(
-            submittedSlug,
-            config
-          );
+          submittedValues[config.slugField] =
+            normalizeCollectionSlug(submittedSlug);
         }
       }
       const validationIssue = getCollectionFieldValidationIssue(

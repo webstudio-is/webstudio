@@ -735,15 +735,13 @@ export class PostgresAssetRepository implements AssetRepository {
           formatAssetName(asset) === collectionConfigFilename
       );
       if (configAsset !== undefined) {
-        if (
-          displayName === collectionConfigFilename &&
-          input.contentHash !== undefined
-        ) {
+        if (displayName === collectionConfigFilename) {
+          if (input.contentHash === undefined) {
+            throw new AssetRepositoryConflictError(
+              "Collection configuration already exists"
+            );
+          }
           existingReservedAsset = configAsset;
-        } else if (displayName.endsWith(".mdx") === false) {
-          throw new AssetRepositoryConflictError(
-            "Use New entry to add files to a collection folder"
-          );
         } else {
           const config = parseCollectionConfig(
             decodeUtf8(await this.readCollectionAssetBytes(configAsset))
@@ -763,7 +761,10 @@ export class PostgresAssetRepository implements AssetRepository {
             await this.assertCanConfigureCollections();
             existingReservedAsset = templateAsset;
             isExistingTemplateRetry = true;
-          } else {
+          } else if (
+            displayName === config.template ||
+            config.matchesEntry(displayName)
+          ) {
             throw new AssetRepositoryConflictError(
               "Use New entry to add files to a collection folder"
             );
@@ -822,12 +823,15 @@ export class PostgresAssetRepository implements AssetRepository {
       ? projectAssets
       : [...projectAssets, asset];
     try {
-      const isMissingTemplateRepair = await this.assertUploadAllowed({
+      const uploadKind = await this.assertUploadAllowed({
         asset,
         assets: currentAssets,
         allowCollectionFolder,
       });
-      if (isMissingTemplateRepair && isMdxFileAsset(asset) === false) {
+      if (uploadKind === "ordinary") {
+        return;
+      }
+      if (uploadKind === "template-repair" && isMdxFileAsset(asset) === false) {
         throw new ContentCollectionError(
           "Collection templates must be MDX files"
         );
@@ -849,7 +853,7 @@ export class PostgresAssetRepository implements AssetRepository {
       }
       if (
         isCollectionFolder &&
-        (isMissingTemplateRepair === false ||
+        (uploadKind !== "template-repair" ||
           allowInvalidTemplateRepair === false)
       ) {
         return await validateCollectionFolder({
@@ -953,10 +957,13 @@ export class PostgresAssetRepository implements AssetRepository {
       displayName === collectionConfigFilename
     ) {
       await this.assertCanConfigureCollections();
-      return false;
+      return "collection" as const;
     }
-    if (allowCollectionFolder || asset.folderId === undefined) {
-      return false;
+    if (allowCollectionFolder) {
+      return "collection" as const;
+    }
+    if (asset.folderId === undefined) {
+      return "ordinary" as const;
     }
     const projectAssets =
       assets ??
@@ -970,16 +977,17 @@ export class PostgresAssetRepository implements AssetRepository {
         formatAssetName(candidate) === collectionConfigFilename
     );
     if (configAsset === undefined) {
-      return false;
-    }
-    if (displayName.endsWith(".mdx") === false) {
-      throw new AssetRepositoryConflictError(
-        "Use New entry to add files to a collection folder"
-      );
+      return "ordinary" as const;
     }
     const config = parseCollectionConfig(
       decodeUtf8(await this.readCollectionAssetBytes(configAsset))
     );
+    if (
+      displayName !== config.template &&
+      config.matchesEntry(displayName) === false
+    ) {
+      return "ordinary" as const;
+    }
     const templateExists = projectAssets.some(
       (candidate) =>
         candidate.id !== asset.id &&
@@ -988,7 +996,7 @@ export class PostgresAssetRepository implements AssetRepository {
     );
     if (displayName === config.template && templateExists === false) {
       await this.assertCanConfigureCollections();
-      return true;
+      return "template-repair" as const;
     }
     throw new AssetRepositoryConflictError(
       "Use New entry to add files to a collection folder"
@@ -1051,6 +1059,23 @@ export class PostgresAssetRepository implements AssetRepository {
     if (isCollectionConfig === false && reservedAssetIds.has(currentAsset.id)) {
       await this.assertCanConfigureCollections();
     }
+    let config;
+    if (isCollectionConfig === false) {
+      try {
+        config = parseCollectionConfig(
+          decodeUtf8(await this.readCollectionAssetBytes(configAsset))
+        );
+      } catch (error) {
+        if (error instanceof ContentCollectionError === false) {
+          throw error;
+        }
+        return data;
+      }
+      const filename = formatAssetName(currentAsset);
+      if (filename !== config.template && !config.matchesEntry(filename)) {
+        return data;
+      }
+    }
     const bytes = await readBoundedBytes(
       data,
       contentEngineLimits.hydratedFileBytes
@@ -1109,15 +1134,7 @@ export class PostgresAssetRepository implements AssetRepository {
         "Collection MDX files must remain MDX files"
       );
     }
-    let config;
-    try {
-      config = parseCollectionConfig(
-        decodeUtf8(await this.readCollectionAssetBytes(configAsset))
-      );
-    } catch (error) {
-      if (error instanceof ContentCollectionError === false) {
-        throw error;
-      }
+    if (config === undefined) {
       return nextData;
     }
     if (formatAssetName(currentAsset) === config.template) {
@@ -1227,29 +1244,49 @@ export class PostgresAssetRepository implements AssetRepository {
         values.filename !== undefined &&
         currentAsset?.folderId !== undefined &&
         values.filename !== getAssetDisplayNameParts(currentAsset).basename &&
-        isMdxFileAsset(currentAsset) &&
-        assets.some(
+        isMdxFileAsset(currentAsset)
+      ) {
+        const configAsset = assets.find(
           (asset) =>
             asset.folderId === currentAsset.folderId &&
             formatAssetName(asset) === collectionConfigFilename
-        )
-      ) {
-        throw new AssetRepositoryConflictError(
-          "Collection MDX filenames cannot be changed"
         );
+        if (configAsset !== undefined) {
+          const config = parseCollectionConfig(
+            decodeUtf8(await this.readCollectionAssetBytes(configAsset))
+          );
+          if (config.matchesEntry(formatAssetName(currentAsset))) {
+            throw new AssetRepositoryConflictError(
+              "Collection MDX filenames cannot be changed"
+            );
+          }
+        }
       }
       if (
-        typeof values.folderId === "string" &&
-        currentAsset?.folderId !== values.folderId &&
-        assets.some(
-          (asset) =>
-            asset.folderId === values.folderId &&
-            formatAssetName(asset) === collectionConfigFilename
-        )
+        nextFolderId !== undefined &&
+        (currentAsset?.folderId !== nextFolderId ||
+          (nextDisplayName !== undefined &&
+            currentAsset !== undefined &&
+            formatAssetName(currentAsset) !== nextDisplayName))
       ) {
-        throw new AssetRepositoryConflictError(
-          "Use New entry to add files to a collection folder"
+        const configAsset = assets.find(
+          (asset) =>
+            asset.folderId === nextFolderId &&
+            formatAssetName(asset) === collectionConfigFilename
         );
+        if (configAsset !== undefined && nextDisplayName !== undefined) {
+          const config = parseCollectionConfig(
+            decodeUtf8(await this.readCollectionAssetBytes(configAsset))
+          );
+          if (
+            nextDisplayName === config.template ||
+            config.matchesEntry(nextDisplayName)
+          ) {
+            throw new AssetRepositoryConflictError(
+              "Use New entry to add files to a collection folder"
+            );
+          }
+        }
       }
     }
     if (currentAsset !== undefined) {
@@ -1271,14 +1308,21 @@ export class PostgresAssetRepository implements AssetRepository {
       );
       if (
         nextAsset.folderId !== undefined &&
-        formatAssetName(nextAsset) === collectionConfigFilename &&
+        projectedAssets.some(
+          (asset) =>
+            asset.folderId === nextAsset.folderId &&
+            formatAssetName(asset) === collectionConfigFilename
+        ) &&
         (currentAsset.folderId !== nextAsset.folderId ||
-          formatAssetName(currentAsset) !== collectionConfigFilename)
+          formatAssetName(currentAsset) !== formatAssetName(nextAsset))
       ) {
         await validateCollectionFolder({
           assets: projectedAssets,
           folderId: nextAsset.folderId,
           assetStore: this.assetStore,
+          validateEntries:
+            reservedAssetIds.has(assetId) ||
+            nextDisplayName === collectionConfigFilename,
         });
       }
       if (
@@ -1435,7 +1479,67 @@ export class PostgresAssetRepository implements AssetRepository {
       );
     }
 
+    // Validate the proposed collection before creating either control file.
+    // Exact seed files can be reused after an interrupted setup; never replace
+    // an existing template or configuration with generated defaults.
+    const seedSources = new Map([
+      [defaultCollectionTemplateFilename, createDefaultCollectionTemplate()],
+      [collectionConfigFilename, createDefaultCollectionConfig()],
+    ]);
+    const existingAssets =
+      await this.dependencies.loadAssetsByProjectWithClient(
+        this.projectId,
+        this.context.postgrest.client
+      );
+    const siblings = existingAssets.filter((asset) => asset.folderId === id);
+    const reusableSeeds = new Map<string, Asset>();
+    for (const asset of siblings) {
+      const filename = formatAssetName(asset);
+      const seed = seedSources.get(filename);
+      if (seed === undefined) {
+        continue;
+      }
+      if (
+        reusableSeeds.has(filename) ||
+        decodeUtf8(await this.readCollectionAssetBytes(asset)) !== seed
+      ) {
+        throw new AssetRepositoryConflictError(
+          `Collection setup would conflict with "${filename}". Rename or move it first.`
+        );
+      }
+      reusableSeeds.set(filename, asset);
+    }
+    await inspectContentCollection({
+      files: [
+        ...siblings
+          .filter((asset) => !reusableSeeds.has(formatAssetName(asset)))
+          .map((asset) => ({
+            id: asset.id,
+            filename: formatAssetName(asset),
+            basename: getAssetDisplayNameParts(asset).basename,
+            isMdx: isMdxFileAsset(asset),
+            file: asset as Asset | undefined,
+          })),
+        ...Array.from(seedSources.keys(), (filename) => ({
+          id: filename,
+          filename,
+          basename:
+            filename === collectionConfigFilename ? "collection" : "template",
+          isMdx: filename === defaultCollectionTemplateFilename,
+          file: undefined as Asset | undefined,
+        })),
+      ],
+      readSource: async ({ file: asset, filename }) =>
+        asset === undefined
+          ? seedSources.get(filename)!
+          : decodeUtf8(await this.readCollectionAssetBytes(asset)),
+    });
+
     const createSeedAsset = async (filename: string, source: string) => {
+      const existing = reusableSeeds.get(filename);
+      if (existing !== undefined) {
+        return existing;
+      }
       const bytes = new TextEncoder().encode(source);
       const ticket = await this.createUploadTicket({
         type: "file",

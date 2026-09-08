@@ -65,6 +65,27 @@ type LoadingContentCollection = Extract<
 export const canConfigureContentCollections = (authPermit: AuthPermit) =>
   authPermit === "build" || authPermit === "admin" || authPermit === "own";
 
+export const canAddAssetToContentCollection = (
+  collection: ContentCollection | undefined,
+  asset: Pick<Asset, "name" | "filename"> | undefined
+) => {
+  if (asset === undefined) {
+    return false;
+  }
+  if (collection === undefined) {
+    return true;
+  }
+  if (collection.status !== "ready") {
+    return false;
+  }
+  const filename = formatAssetName(asset);
+  return (
+    filename !== collectionConfigFilename &&
+    filename !== collection.config.template &&
+    !collection.config.matchesEntry(filename)
+  );
+};
+
 const getErrorMessage = (error: unknown) =>
   error instanceof Error
     ? error.message
@@ -296,7 +317,10 @@ const canKeepReadyCollection = (
     (asset) =>
       asset.id === current.configAsset.id ||
       asset.id === current.templateAsset.id ||
-      isMdxFileAsset(asset)
+      (formatAssetName(asset) !== collectionConfigFilename &&
+        formatAssetName(asset) !== current.config.template &&
+        (!current.config.matchesEntry(formatAssetName(asset)) ||
+          isMdxFileAsset(asset)))
   );
 };
 

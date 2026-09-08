@@ -14,6 +14,7 @@ const userSettings = z.object({
     .partialRecord(z.enum(sidebarPanelNames), z.number())
     .default({}),
   lastDashboardSearch: z.string().default(""),
+  lastAssetFolderIds: z.record(z.string(), z.string()).default({}),
   colorScheme: z.enum(colorSchemePreferences).default("system"),
 });
 const persistedUserSettings = userSettings.omit({ colorScheme: true });

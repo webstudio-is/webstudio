@@ -93,6 +93,10 @@ can contain both assets and other folders. Open a folder to view its contents,
 and use the breadcrumbs above the asset grid to move back through the folder
 hierarchy.
 
+Assets remembers the last open folder for each project in your browser. Reopen
+the panel or reload the Builder to return to that folder. If the folder was
+deleted, the panel opens at the root instead.
+
 You can:
 
 - Drag assets and folders into another folder.

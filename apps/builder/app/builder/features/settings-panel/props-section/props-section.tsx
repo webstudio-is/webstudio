@@ -68,7 +68,7 @@ import { updateExternalContentFrontmatter } from "~/shared/external-content-root
 import {
   getSelectedContentBlockDocumentBindingPath,
   getSelectedContentBlockExpressionMode,
-  isObjectPathWritable,
+  getFrontmatterWriteTarget,
 } from "~/shared/content-block-document";
 import {
   createMdxAssetReferenceValues,
@@ -586,10 +586,12 @@ export const PropsSectionContainer = ({
           return;
         }
         if (
-          isObjectPathWritable({
+          getFrontmatterWriteTarget({
+            assetId: externalRoot.assetId ?? "",
+            sources: externalRoot.frontmatterSources,
             value: externalRoot.document.frontmatter.properties,
             path: targetPath,
-          }) === false
+          }) === undefined
         ) {
           toast.error("Open the referenced file to edit this value.");
           return;

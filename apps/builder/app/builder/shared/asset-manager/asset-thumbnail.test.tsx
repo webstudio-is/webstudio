@@ -26,6 +26,20 @@ import {
 } from "@webstudio-is/content-engine";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
+import { createContentCollectionFolder } from "./asset-folder-dialogs";
+import { AssetsPanel } from "~/builder/features/assets/assets";
+import { getSetting, setSetting } from "../client-settings";
+import { clientSettingsStorageKey } from "~/shared/color-scheme";
+import {
+  createAssetContentBridge,
+  __testing__ as bridgeTesting,
+} from "~/shared/asset-content-bridge.client";
+import {
+  assetContentDescriptorHeader,
+  serializeAssetContentDescriptor,
+} from "@webstudio-is/protocol/asset-resource-api";
+
+const { initBridge, clearBridge } = bridgeTesting;
 
 const folder = createAssetFolderFixture({ id: "folder", name: "Documents" });
 const uploadedAssetContainer: ComponentProps<
@@ -175,6 +189,7 @@ vi.stubGlobal(
   }
 );
 beforeEach(() => {
+  setSetting("lastAssetFolderIds", {});
   serverSyncStore.transactionManager.currentStack = [];
   serverSyncStore.transactionManager.undoneStack = [];
   serverSyncStore.popAll();
@@ -193,6 +208,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   renderer.cleanup();
+  setSetting("lastAssetFolderIds", {});
   $assetManagerClipboard.set(undefined);
   $assetFolders.set(new Map());
   $assets.set(new Map());
@@ -201,6 +217,199 @@ afterEach(() => {
 });
 
 describe("AssetThumbnail", () => {
+  test("restores the Assets folder on reopen and persists returning to root", () => {
+    const panel = (
+      <TooltipProvider>
+        <AssetsPanel publish={vi.fn()} onClose={vi.fn()} />
+      </TooltipProvider>
+    );
+    let container = renderer.render(panel);
+    act(() =>
+      container
+        .querySelector<HTMLElement>('[aria-label="Folder Documents"]')!
+        .dispatchEvent(new MouseEvent("dblclick", { bubbles: true }))
+    );
+    expect(getSetting("lastAssetFolderIds")).toEqual({ project: folder.id });
+    expect(
+      JSON.parse(localStorage.getItem(clientSettingsStorageKey)!)
+        .lastAssetFolderIds
+    ).toEqual({ project: folder.id });
+    renderer.cleanup();
+    container = renderer.render(panel);
+    expect(
+      container.querySelector('[aria-label="Folder Documents"]')
+    ).toBeNull();
+    const root = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Root"
+    )!;
+    act(() => root.click());
+    expect(getSetting("lastAssetFolderIds")).toEqual({});
+    renderer.cleanup();
+    container = renderer.render(panel);
+    expect(
+      container.querySelector('[aria-label="Folder Documents"]')
+    ).not.toBeNull();
+  });
+
+  test("restores folders per project and forgets deleted folders", () => {
+    setSetting("lastAssetFolderIds", { project: folder.id, other: "deleted" });
+    const panel = (
+      <TooltipProvider>
+        <AssetsPanel publish={vi.fn()} onClose={vi.fn()} />
+      </TooltipProvider>
+    );
+    const container = renderer.render(panel);
+    expect(
+      container.querySelector('[aria-label="Folder Documents"]')
+    ).toBeNull();
+    act(() => $project.set({ id: "other" } as never));
+    expect(
+      container.querySelector('[aria-label="Folder Documents"]')
+    ).not.toBeNull();
+    expect(getSetting("lastAssetFolderIds")).toEqual({ project: folder.id });
+    act(() => $project.set({ id: "project" } as never));
+    expect(
+      container.querySelector('[aria-label="Folder Documents"]')
+    ).toBeNull();
+    act(() => $assetFolders.set(new Map()));
+    expect(getSetting("lastAssetFolderIds")).toEqual({});
+  });
+  test("opens collection settings after configuring an existing folder from its menu", async () => {
+    const existingFolder = { ...folder, projectId: "project" };
+    $assetFolders.set(new Map([[folder.id, existingFolder]]));
+    const sources = [
+      createDefaultCollectionConfig(),
+      "---\ndraft: true\n---\n",
+    ];
+    const files: Asset[] = ["collection.json", "template.mdx"].map(
+      (name, index) => ({
+        id: `setup-${index}`,
+        name,
+        type: "file",
+        format: index === 0 ? "json" : "mdx",
+        projectId: "project",
+        folderId: folder.id,
+        size: sources[index].length,
+        createdAt: folder.createdAt,
+        meta: {},
+      })
+    );
+    const request: typeof fetch = async (input) => {
+      const url = new URL(String(input), location.origin);
+      if (url.pathname === "/rest/assets/collection-folders") {
+        return Response.json({ folder: existingFolder, assets: files });
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    };
+    initBridge(
+      createAssetContentBridge({
+        origin: location.origin,
+        authorize: () => true,
+        requireReload: vi.fn(),
+        request: async (input) => {
+          const id = new URL(input).pathname.split("/")[3];
+          const index = files.findIndex((file) => file.id === id);
+          if (index === -1) {
+            throw new Error("Unknown test asset");
+          }
+          return new Response(sources[index], {
+            headers: {
+              [assetContentDescriptorHeader]: serializeAssetContentDescriptor(
+                files[index]
+              ),
+              "content-length": String(files[index].size),
+            },
+          });
+        },
+      })
+    );
+    try {
+      const container = renderer.render(
+        <TooltipProvider>
+          <AssetsPanel
+            publish={vi.fn()}
+            onClose={vi.fn()}
+            createCollection={(input) =>
+              createContentCollectionFolder({ ...input, request })
+            }
+          />
+        </TooltipProvider>
+      );
+      act(() =>
+        container
+          .querySelector<HTMLButtonElement>(
+            '[aria-label="Actions for Documents"]'
+          )!
+          .dispatchEvent(
+            new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+          )
+      );
+      act(() =>
+        Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+          .find((item) => item.textContent === "Use as content collection")!
+          .click()
+      );
+      await act(async () =>
+        Array.from(document.querySelectorAll("button"))
+          .find((button) => button.textContent === "Use as content collection")!
+          .click()
+      );
+      await vi.waitFor(() =>
+        expect(
+          Array.from(document.querySelectorAll("button")).find(
+            (button) => button.textContent === "Configure collection"
+          )
+        ).toBeDefined()
+      );
+      await act(async () =>
+        Array.from(document.querySelectorAll("button"))
+          .find((button) => button.textContent === "Configure collection")!
+          .click()
+      );
+      await vi.waitFor(() => {
+        const dialog = Array.from(
+          document.querySelectorAll('[role="dialog"]')
+        ).find(
+          (element) =>
+            document.getElementById(
+              element.getAttribute("aria-labelledby") ?? ""
+            )?.textContent === "Collection settings"
+        );
+        expect(dialog).toBeDefined();
+        expect(
+          dialog!.querySelector('input[aria-label="Title label"]')
+        ).not.toBeNull();
+      });
+    } finally {
+      renderer.cleanup();
+      clearBridge();
+    }
+  });
+  test("opens collection setup from a regular folder actions menu", () => {
+    $authPermit.set("own");
+    $builderMode.set("design");
+    const container = renderer.render(
+      createFolderThumbnail({ canManage: true })
+    );
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Actions for Documents"]'
+        )!
+        .dispatchEvent(
+          new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+        )
+    );
+    const action = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Use as content collection");
+    expect(action).toBeDefined();
+    act(() => action!.click());
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.activeElement?.textContent).toBe(
+      "Use as content collection"
+    );
+  });
   test.each([
     { action: "Settings", openTitle: "Asset settings" },
     { action: "Delete", openTitle: "Delete asset?" },
@@ -615,7 +824,7 @@ describe("AssetThumbnail", () => {
     expect(templateName.value).toBe("draft-template");
   });
 
-  test("describes collection folders without advertising blocked file drops", () => {
+  test("marks collection folders with a collection icon", () => {
     const configAsset: Asset = {
       id: "config",
       projectId: "project",
@@ -657,9 +866,6 @@ describe("AssetThumbnail", () => {
 
     const thumbnail = container.querySelector(
       '[aria-label="Folder Documents"]'
-    );
-    expect(thumbnail?.getAttribute("aria-description")).toBe(
-      "Content collection. Double-click to open. Only folders can be moved here."
     );
     const collectionIcon = thumbnail?.querySelector(
       "[data-collection-folder-icon]"

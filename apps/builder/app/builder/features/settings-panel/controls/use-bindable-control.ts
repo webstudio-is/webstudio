@@ -16,7 +16,7 @@ import { updateExternalContentFrontmatter } from "~/shared/external-content-root
 import {
   getSelectedContentBlockDocumentBindingPath,
   getSelectedContentBlockExpressionMode,
-  isObjectPathWritable,
+  getFrontmatterWriteTarget,
 } from "~/shared/content-block-document";
 import { $selectedInstanceScope } from "../shared";
 import type {
@@ -80,10 +80,12 @@ export const useBindableControl = ({
   const isEditableFrontmatterBinding =
     frontmatterPath !== undefined &&
     externalRoot?.document !== undefined &&
-    isObjectPathWritable({
+    getFrontmatterWriteTarget({
+      assetId: externalRoot.assetId ?? "",
+      sources: externalRoot.frontmatterSources,
       value: externalRoot.document.frontmatter.properties,
       path: frontmatterPath,
-    });
+    }) !== undefined;
   const bound = boundExpression !== undefined;
   const expression = boundExpression?.value ?? fallbackExpression;
   const writeBoundValue =

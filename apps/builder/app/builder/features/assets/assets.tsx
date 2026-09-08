@@ -36,9 +36,17 @@ import {
   type ContentCollection,
 } from "~/builder/shared/assets";
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
-import { CreateAssetFolderDialog } from "~/builder/shared/asset-manager/asset-folder-dialogs";
+import {
+  CreateAssetFolderDialog,
+  type createContentCollectionFolder,
+} from "~/builder/shared/asset-manager/asset-folder-dialogs";
 import { $authPermit, $isContentMode } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
+import { $assets, $project } from "~/shared/sync/data-stores";
+import {
+  $settings,
+  getSetting,
+  setSetting,
+} from "~/builder/shared/client-settings";
 import type { Publish } from "~/shared/pubsub";
 import { useImageAssetCanvasDrag } from "./use-image-asset-canvas-drag";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
@@ -55,15 +63,43 @@ import {
 
 export const AssetsPanel = ({
   publish,
+  createCollection,
 }: {
   publish: Publish;
   onClose: () => void;
+  createCollection?: typeof createContentCollectionFolder;
 }) => {
-  const [folderId, setFolderId] = useState<string>();
+  const projectId = useStore($project)?.id;
+  const settings = useStore($settings);
+  const folderId =
+    projectId === undefined
+      ? undefined
+      : settings.lastAssetFolderIds[projectId];
+  const setFolderId = (folderId: string | undefined) => {
+    if (projectId === undefined) {
+      return;
+    }
+    const current = getSetting("lastAssetFolderIds");
+    if (current[projectId] === folderId) {
+      return;
+    }
+    const next = { ...current };
+    if (folderId === undefined) {
+      delete next[projectId];
+    } else {
+      next[projectId] = folderId;
+    }
+    setSetting("lastAssetFolderIds", next);
+  };
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [createTextFileOpen, setCreateTextFileOpen] = useState(false);
   const [collectionRefreshKey, setCollectionRefreshKey] = useState(0);
   const [collectionToConfigure, setCollectionToConfigure] = useState<string>();
+  const configureCollection = (folderId: string) => {
+    setFolderId(folderId);
+    setCollectionToConfigure(folderId);
+    setCollectionRefreshKey((key) => key + 1);
+  };
   const [collectionToConvert, setCollectionToConvert] =
     useState<ContentCollection>();
   const [repairingCollection, setRepairingCollection] = useState(false);
@@ -255,7 +291,8 @@ export const AssetsPanel = ({
                 </DropdownMenuTrigger>
               </Tooltip>
               <DropdownMenuContent align="end">
-                {currentCollection === undefined && (
+                {(currentCollection === undefined ||
+                  currentCollection.status === "ready") && (
                   <>
                     <DropdownMenuItem onSelect={addActions.upload}>
                       Upload
@@ -337,27 +374,28 @@ export const AssetsPanel = ({
         }
         folderId={folderId}
         onFolderChange={setFolderId}
+        onConfigureCollection={configureCollection}
+        createCollection={createCollection}
         onOpen={openAsset}
         canManageFolders={canManageFolders}
         panelActions={{
           ...(authPermit === "view"
             ? {}
-            : currentCollection === undefined
-              ? {
-                  upload: addActions.upload,
-                  createFile: addActions.createFile,
-                  ...(canManageFolders
-                    ? { createFolder: addActions.createFolder }
-                    : {}),
-                }
-              : {
-                  ...(canManageFolders
-                    ? { createFolder: addActions.createFolder }
-                    : {}),
-                  ...(currentCollection.status === "ready"
-                    ? { createEntry: addActions.createEntry }
-                    : {}),
-                }),
+            : {
+                ...(currentCollection === undefined ||
+                currentCollection.status === "ready"
+                  ? {
+                      upload: addActions.upload,
+                      createFile: addActions.createFile,
+                    }
+                  : {}),
+                ...(currentCollection?.status === "ready"
+                  ? { createEntry: addActions.createEntry }
+                  : {}),
+                ...(canManageFolders
+                  ? { createFolder: addActions.createFolder }
+                  : {}),
+              }),
           deleteUnusedAssets: openDeleteUnusedAssetsDialog,
           ...(currentCollection !== undefined &&
           canConfigureCollections &&
@@ -380,11 +418,8 @@ export const AssetsPanel = ({
       <CreateAssetFolderDialog
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
-        onConfigureCollection={(createdFolderId) => {
-          setFolderId(createdFolderId);
-          setCollectionToConfigure(createdFolderId);
-          setCollectionRefreshKey((key) => key + 1);
-        }}
+        onConfigureCollection={configureCollection}
+        createCollection={createCollection}
         currentFolderId={folderId}
         canCreateContentCollection={
           isContentMode === false && canConfigureCollections

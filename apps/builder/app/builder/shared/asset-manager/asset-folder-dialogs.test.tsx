@@ -298,6 +298,61 @@ test("creates the collection folder and seed files together", async () => {
   });
 });
 
+test("sets up a collection using the existing folder identity from settings", async () => {
+  const folder = {
+    ...createAssetFolderFixture({ id: "existing", name: "Posts" }),
+    projectId: "project",
+  };
+  $project.set({ id: "project" } as never);
+  $assetFolders.set(createAssetFoldersFixture(folder));
+  const createCollection = vi.fn<typeof createContentCollectionFolder>(
+    async () => folder
+  );
+  const createFolder = vi.fn();
+  const configure = vi.fn();
+  const Harness = () => {
+    const [setup, setSetup] = useState(false);
+    return (
+      <>
+        <AssetFolderSettingsDialog
+          folder={folder}
+          open={!setup}
+          onOpenChange={vi.fn()}
+          onUseAsCollection={() => setSetup(true)}
+        />
+        <CreateAssetFolderDialog
+          existingFolder={folder}
+          open={setup}
+          onOpenChange={vi.fn()}
+          currentFolderId={undefined}
+          createCollection={createCollection}
+          createFolder={createFolder}
+          onConfigureCollection={configure}
+        />
+      </>
+    );
+  };
+  render(<Harness />);
+  const clickAction = (name: string) => {
+    const button = Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === name
+    );
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    button!.click();
+  };
+  act(() => clickAction("Use as content collection"));
+  await act(async () => clickAction("Use as content collection"));
+  expect(createCollection).toHaveBeenCalledWith({
+    id: folder.id,
+    name: folder.name,
+    parentId: folder.parentId,
+    projectId: folder.projectId,
+  });
+  expect(createFolder).not.toHaveBeenCalled();
+  act(() => clickAction("Configure collection"));
+  expect(configure).toHaveBeenCalledWith(folder.id);
+});
+
 test("moves items to the selected folder from the folder-only dialog", () => {
   const destination = createAssetFolderFixture({
     id: "destination",

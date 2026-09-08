@@ -291,7 +291,7 @@ describe("asset runtime operations", () => {
     });
   });
 
-  test("rejects duplicating an asset into a collection folder", () => {
+  test("creates a duplicate payload in a collection folder for persistence validation", () => {
     const source = imageAsset("source", "hero.png");
     const collectionConfig: Asset = {
       id: "collection-config",
@@ -305,7 +305,7 @@ describe("asset runtime operations", () => {
       meta: {},
     };
 
-    expect(() =>
+    expect(
       duplicateAsset(
         {
           assets: new Map([
@@ -327,7 +327,20 @@ describe("asset runtime operations", () => {
         { assetId: source.id, folderId: "target" },
         { createId: () => "copy", projectId: "project" }
       )
-    ).toThrow("Use New entry to add files to a collection folder");
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "assets",
+          patches: [
+            {
+              op: "add",
+              path: ["copy"],
+              value: { folderId: "target", filename: "hero copy" },
+            },
+          ],
+        },
+      ],
+    });
   });
 
   test("lists assets with usage counts", () => {
@@ -1169,7 +1182,7 @@ describe("addAsset", () => {
     ).toThrow("Asset folder not found");
   });
 
-  test("rejects adding generic assets to a collection folder", () => {
+  test("creates asset payloads in collection folders for persistence validation", () => {
     const collectionConfig: Asset = {
       id: "collection-config",
       projectId: "project",
@@ -1182,7 +1195,7 @@ describe("addAsset", () => {
       meta: {},
     };
 
-    expect(() =>
+    expect(
       addAsset(
         {
           assets: new Map([[collectionConfig.id, collectionConfig]]),
@@ -1201,9 +1214,16 @@ describe("addAsset", () => {
         { asset: { ...assetInput, folderId: "posts" } },
         { projectId: "project" }
       )
-    ).toThrow("Use New entry to add files to a collection folder");
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "assets",
+          patches: [{ op: "add", value: { ...assetInput, folderId: "posts" } }],
+        },
+      ],
+    });
 
-    expect(() =>
+    expect(
       addAsset(
         {
           assets: new Map([[collectionConfig.id, collectionConfig]]),
@@ -1234,7 +1254,14 @@ describe("addAsset", () => {
         },
         { projectId: "project" }
       )
-    ).toThrow("Use New entry to add files to a collection folder");
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "assets",
+          patches: [{ op: "add", value: { id: "entry", folderId: "posts" } }],
+        },
+      ],
+    });
   });
 });
 
@@ -1248,7 +1275,7 @@ test("creates asset delete payload", () => {
 });
 
 describe("updateAsset", () => {
-  test("rejects renaming an entry in a collection folder", () => {
+  test("defers MDX filename pattern validation to persistence", () => {
     const entry: Asset = {
       id: "entry",
       projectId: "project",
@@ -1269,7 +1296,7 @@ describe("updateAsset", () => {
       format: "json",
     };
 
-    expect(() =>
+    expect(
       updateAsset(
         {
           assets: new Map([
@@ -1279,10 +1306,19 @@ describe("updateAsset", () => {
         },
         { assetId: entry.id, values: { filename: "renamed" } }
       )
-    ).toThrow("Collection MDX filenames cannot be changed");
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "assets",
+          patches: [
+            { op: "replace", path: ["entry", "filename"], value: "renamed" },
+          ],
+        },
+      ],
+    });
   });
 
-  test("rejects moving an asset into a collection folder", () => {
+  test("creates a move payload into a collection folder for persistence validation", () => {
     const source = imageAsset("source", "hero.png");
     const collectionConfig: Asset = {
       id: "collection-config",
@@ -1296,7 +1332,7 @@ describe("updateAsset", () => {
       meta: {},
     };
 
-    expect(() =>
+    expect(
       updateAsset(
         {
           assets: new Map([
@@ -1317,7 +1353,16 @@ describe("updateAsset", () => {
         },
         { assetId: source.id, values: { folderId: "target" } }
       )
-    ).toThrow("Use New entry to add files to a collection folder");
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "assets",
+          patches: [
+            { op: "add", path: ["source", "folderId"], value: "target" },
+          ],
+        },
+      ],
+    });
   });
 
   test("updates font metadata without discarding the other fields", () => {

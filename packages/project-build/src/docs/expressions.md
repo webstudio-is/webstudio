@@ -47,6 +47,49 @@ read-only. The mutation is rejected when the expression is not a direct path or
 does not belong to a connected Content Block document. Use the variable name
 returned by `inspect-instance`; do not assume it is `document`.
 
+For an MDX-backed article, use the query resource to select the Content Block's
+source Asset, for example `post.data.id`. Inside the block, bind article fields
+to the block's document parameter, not `post.data.properties.title` or other
+equivalent query-result values. A query binding can display the correct value
+without supporting Content-mode edits.
+
+The MDX body is editable through its source mapping. Designer-created elements
+outside that body, such as an article header, stay protected unless their text
+or supported props have writable frontmatter bindings. Containment in the
+Content Block alone is not enough. Use `update-text` with
+`expressionBindingMode:"readwrite"` for a designed heading's text, and
+`bind-props` with `binding.mode:"readwrite"` for a supported prop. These target
+persistent designed instances, not MDX-generated instances.
+
+Use direct paths for writable bindings, such as
+`document.frontmatter.title`; property access is already safe. Adding `??`
+fallbacks or formatting makes the expression read-only. Direct bindings through
+loaded Markdown or MDX `$ref` values ending in `#frontmatter` save to the
+referenced file, with its write permissions enforced. For example, editing
+`document.frontmatter.author.name` updates the shared author file, affecting
+every article using it while preserving the article's reference. JSON/body
+references and resolved image metadata remain read-only.
+
+### Keep editable values separate from formatting
+
+When a field must be editable in Content mode, do not concatenate its value
+with labels, units, or punctuation, or wrap it in a template literal, fallback,
+or formatting call. Keep the value in its own text element with one direct
+read-write binding. Put the fixed prefix and suffix in separate sibling text
+elements. Do not mix literal and expression children in the value element.
+
+For example, display reading time as three inline siblings: fixed `— `,
+an element bound to `document.frontmatter.readingTime`, and fixed ` min read`.
+Set `expressionBindingMode:"readwrite"` on the middle element with `update-text`.
+The number remains editable while the surrounding wording stays protected.
+Preserve spacing and the field's stored type. For dates, prefer a Date Time
+component with its date prop bound directly and formatting configured separately.
+
+Do not silently choose a read-only expression to achieve the requested display.
+If a required transformation has no editable presentation, explain the limitation
+and ask before making that field read-only. This does not extend the supported
+write targets or override permissions.
+
 ## Scope
 
 - Data variables are available on their scope instance and descendants.

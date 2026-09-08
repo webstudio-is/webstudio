@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
+import { pointerSegments } from "@hyperjump/json-pointer";
+import { URLPattern } from "urlpattern-polyfill";
 import { getUtf8ByteLength } from "./byte-stream";
 import {
   extractMarkdownFrontmatter,
@@ -15,20 +18,28 @@ export const collectionConfigFilename = "collection.json";
 /** Pass this value to remove an optional editable property inherited from the template. */
 export const collectionEntryFieldClearValue = null;
 const legacyCollectionSlugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
+// Keep historical patterns recognizable even when the bundled schema changes.
 // Each segment starts with a letter or number. Marks stay attached to preserve
 // scripts such as Hindi; uppercase letters, separators and symbols are excluded.
-const collectionSlugPattern =
+const legacyUnicodeCollectionSlugPattern =
   "^(?!.*[\\p{Lu}\\p{Lt}])[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N}]*(?:-[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N}]*)*$(?![\\s\\S])";
-const collectionSlugPatterns = new Map([
-  [legacyCollectionSlugPattern, new RegExp(legacyCollectionSlugPattern)],
-  [collectionSlugPattern, new RegExp(collectionSlugPattern, "u")],
-]);
+const collectionSlugSchemaId = "https://webstudio.is/schemas/slug";
+const collectionSlugSchema = {
+  $id: collectionSlugSchemaId,
+  type: "string",
+  pattern: legacyUnicodeCollectionSlugPattern,
+};
 const collectionSchemaDialect = "https://json-schema.org/draft/2020-12/schema";
 const maximumPropertyKeyBytes = 256;
 export const defaultCollectionTemplateFilename = "template.mdx";
 
 const collectionSettings = z.object({
   template: z.string().min(1),
+  entries: z
+    .array(z.string().min(1).max(256))
+    .min(1)
+    .max(64)
+    .default(["*.mdx"]),
   slugField: z.string().min(1).optional(),
   generateSlugFrom: z.string().min(1).optional(),
 });
@@ -49,10 +60,12 @@ export type CollectionField = Readonly<{
 export type ContentCollectionConfig = Readonly<{
   schema: Record<string, unknown>;
   template: string;
+  entries: readonly string[];
+  matchesEntry: (filename: string) => boolean;
   slugField?: string;
   generateSlugFrom?: string;
   fields: readonly CollectionField[];
-  validate: (value: unknown) => z.ZodSafeParseResult<unknown>;
+  validate: (value: unknown) => { success: boolean; errors: ErrorObject[] };
 }>;
 
 export class ContentCollectionError extends Error {}
@@ -116,9 +129,8 @@ const collectionFieldTypes = new Set<CollectionFieldType>([
   "boolean",
 ]);
 
-// Keep acceptance and compilation in one allowlist so a new schema keyword
-// cannot be accepted without implementing its validation semantics. x-*
-// extensions are preserved as annotations and never affect validation.
+// Limit schemas to fields the configurator can represent. Ajv owns validation
+// semantics; x-* extensions are preserved as annotations.
 const commonSchemaKeywords = new Set([
   "type",
   "title",
@@ -134,7 +146,7 @@ const commonSchemaKeywords = new Set([
 const schemaKeywordsByType: Readonly<
   Record<CollectionFieldType, ReadonlySet<string>>
 > = {
-  string: new Set(["minLength", "maxLength", "pattern"]),
+  string: new Set(["minLength", "maxLength", "$ref"]),
   number: new Set(["minimum", "maximum"]),
   integer: new Set(["minimum", "maximum"]),
   boolean: new Set(),
@@ -304,10 +316,10 @@ const getRequiredPropertyKeys = ({
   return new Set(required);
 };
 
-const compileFieldSchema = (
+const validateFieldSchema = (
   schema: Readonly<Record<string, unknown>>,
   path: readonly string[]
-): z.ZodType => {
+) => {
   const type = getFieldSchemaType(schema, path);
   const supportedTypeKeywords = schemaKeywordsByType[type];
   for (const keyword of Object.keys(schema)) {
@@ -346,54 +358,6 @@ const compileFieldSchema = (
         `minLength cannot exceed maxLength at ${getSchemaLocation(path)}`
       );
     }
-    if (Object.hasOwn(schema, "pattern")) {
-      if (
-        typeof schema.pattern !== "string" ||
-        !collectionSlugPatterns.has(schema.pattern)
-      ) {
-        throw new ContentCollectionError(
-          `Only Webstudio's fixed slug pattern is supported at ${getSchemaKeywordLocation(
-            path,
-            "pattern"
-          )}`
-        );
-      }
-    }
-    return z.string().superRefine((value, context) => {
-      const length = Array.from(value).length;
-      if (minLength !== undefined && length < minLength) {
-        context.addIssue({
-          input: value,
-          code: "too_small",
-          origin: "string",
-          minimum: minLength,
-          inclusive: true,
-          message: `Too small: expected string to have >=${minLength} characters`,
-        });
-      }
-      if (maxLength !== undefined && length > maxLength) {
-        context.addIssue({
-          input: value,
-          code: "too_big",
-          origin: "string",
-          maximum: maxLength,
-          inclusive: true,
-          message: `Too big: expected string to have <=${maxLength} characters`,
-        });
-      }
-      if (
-        typeof schema.pattern === "string" &&
-        collectionSlugPatterns.get(schema.pattern)?.test(value) === false
-      ) {
-        context.addIssue({
-          input: value,
-          code: "invalid_format",
-          format: "regex",
-          pattern: schema.pattern,
-          message: `Invalid string: must match pattern ${schema.pattern}`,
-        });
-      }
-    });
   }
 
   if (type === "number" || type === "integer") {
@@ -412,20 +376,10 @@ const compileFieldSchema = (
         `minimum cannot exceed maximum at ${getSchemaLocation(path)}`
       );
     }
-    let parser = type === "integer" ? z.number().int() : z.number();
-    if (minimum !== undefined) {
-      parser = parser.gte(minimum);
-    }
-    if (maximum !== undefined) {
-      parser = parser.lte(maximum);
-    }
-    return parser;
   }
-
-  return z.boolean();
 };
 
-const compileCollectionSchema = (
+const validateCollectionSchema = (
   schema: Readonly<Record<string, unknown>>,
   properties: Readonly<Record<string, unknown>>
 ) => {
@@ -453,8 +407,7 @@ const compileCollectionSchema = (
       "additionalProperties must be true or false at #/additionalProperties"
     );
   }
-  const required = getRequiredPropertyKeys({ schema, properties, path: [] });
-  const shape: Record<string, z.ZodType> = {};
+  getRequiredPropertyKeys({ schema, properties, path: [] });
   for (const [key, propertySchema] of Object.entries(properties)) {
     validatePropertyKey(key);
     if (isObject(propertySchema) === false) {
@@ -462,11 +415,28 @@ const compileCollectionSchema = (
         `Property "${key}" must contain a schema object`
       );
     }
-    const parser = compileFieldSchema(propertySchema, ["properties", key]);
-    shape[key] = required.has(key) ? parser : parser.optional();
+    if (Object.hasOwn(propertySchema, "$ref")) {
+      if (propertySchema.$ref !== collectionSlugSchemaId) {
+        throw new ContentCollectionError(
+          `Unsupported schema reference at #/properties/${escapeJsonPointerSegment(key)}/$ref`
+        );
+      }
+      if (
+        propertySchema.type !== undefined &&
+        propertySchema.type !== "string"
+      ) {
+        throw new ContentCollectionError(
+          `Slug reference requires a string field at #/properties/${escapeJsonPointerSegment(key)}`
+        );
+      }
+    }
+    validateFieldSchema(
+      propertySchema.$ref === collectionSlugSchemaId
+        ? { type: "string", ...propertySchema }
+        : propertySchema,
+      ["properties", key]
+    );
   }
-  const parser = z.object(shape);
-  return schema.additionalProperties === false ? parser.strict() : parser;
 };
 
 const getNonnegativeInteger = (value: unknown) =>
@@ -487,6 +457,9 @@ const getField = ({
   if (isObject(value) === false) {
     return;
   }
+  const type =
+    value.type ??
+    (value.$ref === collectionSlugSchemaId ? "string" : undefined);
   const label =
     typeof value.title === "string" && value.title.trim() !== ""
       ? value.title
@@ -500,11 +473,11 @@ const getField = ({
   const extension = isObject(rawExtension) ? rawExtension : undefined;
   const declaredControl = extension?.control;
   const supportedControls =
-    value.type === "string"
+    type === "string"
       ? new Set(["text", "textarea", "slug"])
-      : value.type === "number" || value.type === "integer"
+      : type === "number" || type === "integer"
         ? new Set(["number"])
-        : value.type === "boolean"
+        : type === "boolean"
           ? new Set(["checkbox"])
           : new Set<string>();
   if (
@@ -520,18 +493,16 @@ const getField = ({
       `Control ${control} is not supported for property "${key}"`
     );
   }
-  if (value.type === "string") {
-    const hasSlugPattern =
-      typeof value.pattern === "string" &&
-      collectionSlugPatterns.has(value.pattern);
-    if (declaredControl === "slug" && !hasSlugPattern) {
+  if (type === "string") {
+    const hasSlugReference = value.$ref === collectionSlugSchemaId;
+    if (declaredControl === "slug" && !hasSlugReference) {
       throw new ContentCollectionError(
-        `Slug control for property "${key}" must use Webstudio's fixed slug pattern`
+        `Slug control for property "${key}" must use Webstudio's slug schema reference`
       );
     }
-    if (hasSlugPattern && declaredControl !== "slug") {
+    if (hasSlugReference && declaredControl !== "slug") {
       throw new ContentCollectionError(
-        `Webstudio's fixed slug pattern requires a slug control for property "${key}"`
+        `Webstudio's slug schema reference requires a slug control for property "${key}"`
       );
     }
     const control =
@@ -551,19 +522,19 @@ const getField = ({
       maxLength: getNonnegativeInteger(value.maxLength),
     };
   }
-  if (value.type === "number" || value.type === "integer") {
+  if (type === "number" || type === "integer") {
     return {
       key,
       originalKey: key,
       label,
-      type: value.type,
+      type: type,
       control: "number",
       required,
       minimum: getFiniteNumber(value.minimum),
       maximum: getFiniteNumber(value.maximum),
     };
   }
-  if (value.type === "boolean") {
+  if (type === "boolean") {
     return {
       key,
       originalKey: key,
@@ -639,7 +610,42 @@ export const parseCollectionConfig = (
       "Only JSON Schema draft 2020-12 is supported"
     );
   }
-  const parser = compileCollectionSchema(schema, schema.properties);
+  // Upgrade only previously generated rules, never arbitrary custom patterns.
+  // This normalizes the in-memory config; the file changes only on settings save.
+  for (const [key, property] of Object.entries(schema.properties)) {
+    if (isObject(property) && Object.hasOwn(property, "pattern")) {
+      if (
+        property.pattern !== legacyCollectionSlugPattern &&
+        property.pattern !== legacyUnicodeCollectionSlugPattern
+      ) {
+        throw new ContentCollectionError(
+          `Only Webstudio's slug schema reference is supported; custom patterns are not supported at #/properties/${escapeJsonPointerSegment(key)}/pattern`
+        );
+      }
+      if (property.$ref === undefined) {
+        property.$ref = collectionSlugSchemaId;
+      }
+      delete property.pattern;
+    }
+  }
+  validateCollectionSchema(schema, schema.properties);
+  // Scope Ajv to this config so its generated-code registry cannot retain old
+  // settings forever. Only bundled references are registered; no loadSchema.
+  const validator = new Ajv2020({
+    allErrors: true,
+    strictSchema: false, // Preserve x-* annotations.
+    strictTypes: false, // A referenced schema can supply the field's type.
+    ownProperties: true,
+    schemas: [collectionSlugSchema],
+  });
+  let parser;
+  try {
+    parser = validator.compile(schema);
+  } catch (cause) {
+    throw new ContentCollectionError("Invalid collection JSON Schema", {
+      cause,
+    });
+  }
   const settingsResult = collectionSettings.safeParse(schema["x-webstudio"]);
   if (settingsResult.success === false) {
     throw new ContentCollectionError(
@@ -648,6 +654,35 @@ export const parseCollectionConfig = (
   }
   const settings = settingsResult.data;
   validateTemplatePath(settings.template);
+  const patterns = settings.entries.map((value) => {
+    const exclude = value.startsWith("!");
+    const pattern = exclude ? value.slice(1) : value;
+    if (pattern.length === 0 || pattern.includes("/")) {
+      throw new ContentCollectionError(
+        "Entry patterns must match filenames in the current folder, without slashes"
+      );
+    }
+    try {
+      return {
+        exclude,
+        pattern: new URLPattern(
+          { pathname: `/${pattern}` },
+          // Supported at runtime; urlpattern-polyfill 10.1.0 omits this overload.
+          // @ts-expect-error Incomplete upstream constructor declarations.
+          { ignoreCase: true }
+        ),
+      };
+    } catch {
+      throw new ContentCollectionError(
+        `Invalid entry filename pattern "${value}"`
+      );
+    }
+  });
+  if (patterns.every(({ exclude }) => exclude)) {
+    throw new ContentCollectionError(
+      "Entry patterns need at least one inclusion pattern"
+    );
+  }
   const required = new Set(schema.required as string[] | undefined);
   const fields = Object.entries(schema.properties).map(([key, field]) => {
     const parsed = getField({ key, value: field, required: required.has(key) });
@@ -707,30 +742,34 @@ export const parseCollectionConfig = (
   return {
     schema,
     template: settings.template,
+    entries: settings.entries,
+    matchesEntry: (filename) => {
+      if (
+        filename.includes("/") ||
+        filename === collectionConfigFilename ||
+        filename === settings.template
+      ) {
+        return false;
+      }
+      const input = { pathname: `/${encodeURIComponent(filename)}` };
+      return (
+        patterns.some(
+          ({ exclude, pattern }) => !exclude && pattern.test(input)
+        ) &&
+        !patterns.some(({ exclude, pattern }) => exclude && pattern.test(input))
+      );
+    },
     slugField: settings.slugField,
     generateSlugFrom: settings.generateSlugFrom,
     fields,
-    validate: (candidate) => parser.safeParse(candidate),
+    validate: (candidate) => ({
+      success: parser(candidate),
+      errors: parser.errors ?? [],
+    }),
   };
 };
 
-export const normalizeCollectionSlug = (
-  value: string,
-  config?: ContentCollectionConfig
-) => {
-  const properties = config?.schema.properties;
-  const field =
-    config?.slugField !== undefined && isObject(properties)
-      ? properties[config.slugField]
-      : undefined;
-  if (isObject(field) && field.pattern === legacyCollectionSlugPattern) {
-    return value
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  }
+export const normalizeCollectionSlug = (value: string) => {
   return (
     value
       .normalize("NFC")
@@ -741,24 +780,37 @@ export const normalizeCollectionSlug = (
   );
 };
 
+const getValidationFieldKey = (issue: ErrorObject): string | undefined => {
+  if (issue.keyword === "required") {
+    return issue.params.missingProperty;
+  }
+  return pointerSegments(issue.instancePath).next().value;
+};
+
 const getValidationError = (
   config: ContentCollectionConfig,
-  issue: z.core.$ZodIssue
+  issue: ErrorObject
 ) => {
-  const key = typeof issue.path[0] === "string" ? issue.path[0] : undefined;
+  const key = getValidationFieldKey(issue);
   const field = config.fields.find((candidate) => candidate.key === key);
   const label = field?.label ?? key ?? "Entry";
-  if (issue.code === "too_small" && field?.type === "string") {
-    const minimum = Number(issue.minimum);
+  if (issue.keyword === "minLength") {
+    const minimum = Number(issue.params.limit);
     return `${label} must contain at least ${minimum} ${
       minimum === 1 ? "character" : "characters"
     }`;
   }
-  if (issue.code === "too_big" && field?.type === "string") {
-    const maximum = Number(issue.maximum);
+  if (issue.keyword === "maxLength") {
+    const maximum = Number(issue.params.limit);
     return `${label} must contain at most ${maximum} ${
       maximum === 1 ? "character" : "characters"
     }`;
+  }
+  if (issue.keyword === "pattern" && field?.control === "slug") {
+    return `${label}: Use lowercase letters and numbers separated by single dashes`;
+  }
+  if (issue.keyword === "required") {
+    return `${label}: A value is required`;
   }
   return `${label}: ${issue.message}`;
 };
@@ -771,7 +823,7 @@ export const getCollectionValidationError = (
   if (validation.success) {
     return;
   }
-  return getValidationError(config, validation.error.issues[0]);
+  return getValidationError(config, validation.errors[0]);
 };
 
 export const getCollectionFieldValidationIssue = (
@@ -796,14 +848,15 @@ export const getCollectionFieldValidationIssue = (
     return;
   }
   const fieldKeys = new Set(config.fields.map(({ key }) => key));
-  const issue = validation.error.issues.find(
-    ({ path }) => typeof path[0] === "string" && fieldKeys.has(path[0])
-  );
-  if (issue === undefined || typeof issue.path[0] !== "string") {
+  const issue = validation.errors.find((issue) => {
+    const key = getValidationFieldKey(issue);
+    return key !== undefined && fieldKeys.has(key);
+  });
+  if (issue === undefined) {
     return;
   }
   return {
-    fieldKey: issue.path[0],
+    fieldKey: getValidationFieldKey(issue)!,
     message: getValidationError(config, issue),
   };
 };
@@ -821,15 +874,12 @@ export const getCollectionTemplateValidationError = (
   if (validation.success) {
     return;
   }
-  const issue = validation.error.issues.find(({ code, path }) => {
-    if (path.length === 0) {
-      return code === "unrecognized_keys";
+  const issue = validation.errors.find((issue) => {
+    if (issue.keyword === "additionalProperties") {
+      return true;
     }
-    const key = typeof path[0] === "string" ? path[0] : undefined;
-    if (key === undefined) {
-      return false;
-    }
-    return Object.hasOwn(properties, key);
+    const key = getValidationFieldKey(issue);
+    return key !== undefined && Object.hasOwn(properties, key);
   });
   return issue === undefined ? undefined : getValidationError(config, issue);
 };
@@ -860,6 +910,7 @@ export const inspectContentCollection = async <File>({
   readFrontmatter,
   validateTemplate = true,
   validateEntries = true,
+  entryIdsToValidate,
 }: {
   files: readonly ContentCollectionFile<File>[];
   readSource: (file: ContentCollectionFile<File>) => Promise<string>;
@@ -868,6 +919,7 @@ export const inspectContentCollection = async <File>({
   ) => Promise<Readonly<Record<string, unknown>>>;
   validateTemplate?: boolean;
   validateEntries?: boolean;
+  entryIdsToValidate?: ReadonlySet<string>;
 }) => {
   const configFiles = files.filter(
     (file) => file.filename === collectionConfigFilename
@@ -892,12 +944,11 @@ export const inspectContentCollection = async <File>({
       cause: error,
     });
   }
-  const forbiddenFile = files.find(
-    (file) => file.id !== configFile.id && file.isMdx === false
-  );
+  const entryFiles = files.filter((file) => config.matchesEntry(file.filename));
+  const forbiddenFile = entryFiles.find((file) => file.isMdx === false);
   if (forbiddenFile !== undefined) {
     throw new ContentCollectionInspectionError(
-      `Move "${forbiddenFile.filename}" into a subfolder`,
+      `Collection entry "${forbiddenFile.filename}" must be an MDX file. Exclude it using the entry patterns.`,
       {
         fileId: forbiddenFile.id,
         forbiddenFileId: forbiddenFile.id,
@@ -928,7 +979,7 @@ export const inspectContentCollection = async <File>({
     );
   }
   const filenames = new Set<string>();
-  for (const file of files) {
+  for (const file of [...entryFiles, configFile, templateFile]) {
     const normalizedFilename = file.filename.toLowerCase();
     if (filenames.has(normalizedFilename)) {
       throw new ContentCollectionInspectionError(
@@ -976,12 +1027,15 @@ export const inspectContentCollection = async <File>({
       );
     }
   }
-  const entryFiles = files.filter(
-    (file) => file.id !== configFile.id && file.id !== templateFile.id
-  );
   if (validateEntries) {
     for (let index = 0; index < entryFiles.length; index += 1) {
       const entryFile = entryFiles[index];
+      if (
+        entryIdsToValidate !== undefined &&
+        !entryIdsToValidate.has(entryFile.id)
+      ) {
+        continue;
+      }
       let properties: Readonly<Record<string, unknown>>;
       try {
         properties =
@@ -1076,13 +1130,10 @@ export const createCollectionEntry = async ({
           ? undefined
           : frontmatter[config.generateSlugFrom];
       if (typeof source === "string") {
-        frontmatter[config.slugField] = normalizeCollectionSlug(source, config);
+        frontmatter[config.slugField] = normalizeCollectionSlug(source);
       }
     } else {
-      frontmatter[config.slugField] = normalizeCollectionSlug(
-        currentSlug,
-        config
-      );
+      frontmatter[config.slugField] = normalizeCollectionSlug(currentSlug);
     }
   }
   const validationError = getCollectionValidationError(config, frontmatter);
@@ -1097,6 +1148,11 @@ export const createCollectionEntry = async ({
     throw new ContentCollectionError("Slug cannot be empty");
   }
   const filename = `${slug}.mdx`;
+  if (config.matchesEntry(filename) === false) {
+    throw new ContentCollectionError(
+      `The filename "${filename}" does not match the collection entry patterns`
+    );
+  }
   if (
     existingFilenames.some(
       (existingFilename) =>
@@ -1137,7 +1193,7 @@ export const createDefaultCollectionConfig = () =>
           type: "string",
           minLength: 1,
           maxLength: 120,
-          pattern: collectionSlugPattern,
+          $ref: collectionSlugSchemaId,
           "x-webstudio": { control: "slug" },
         },
         draft: { title: "Draft", type: "boolean" },
@@ -1145,6 +1201,7 @@ export const createDefaultCollectionConfig = () =>
       additionalProperties: false,
       "x-webstudio": {
         template: defaultCollectionTemplateFilename,
+        entries: ["*.mdx"],
         slugField: "slug",
         generateSlugFrom: "title",
       },
@@ -1180,6 +1237,7 @@ const serializeCollectionField = (
     "minLength",
     "maxLength",
     "pattern",
+    "$ref",
     "minimum",
     "maximum",
   ]) {
@@ -1219,11 +1277,7 @@ const serializeCollectionField = (
     result["x-webstudio"] = extension;
   }
   if (field.control === "slug") {
-    result.pattern =
-      typeof original.pattern === "string" &&
-      collectionSlugPatterns.has(original.pattern)
-        ? original.pattern
-        : collectionSlugPattern;
+    result.$ref = collectionSlugSchemaId;
   }
   return result;
 };

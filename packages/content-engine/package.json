@@ -19,6 +19,7 @@
     "@hyperjump/json-pointer": "1.1.2",
     "@webstudio-is/expression": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
+    "ajv": "8.20.0",
     "canonicalize": "3.0.0",
     "estree-util-is-identifier-name": "3.0.0",
     "hast-util-to-mdast": "9.0.0",
@@ -38,6 +39,7 @@
     "remark-parse": "10.0.2",
     "svg-tags": "1.0.0",
     "unified": "10.1.2",
+    "urlpattern-polyfill": "^10.1.0",
     "yaml": "2.9.0",
     "zod": "^4.4.3"
   },

@@ -172,6 +172,113 @@ const prepareAssetContentUpdate = (
   });
 
 describe("PostgresAssetRepository", () => {
+  test.each(["notes.txt", "notes.md", "draft-idea.mdx"])(
+    "allows ordinary asset operations for ignored %s",
+    async (filename) => {
+      const dependencies = createDependencies();
+      const schema = JSON.parse(createDefaultCollectionConfig());
+      schema["x-webstudio"].entries = ["*.mdx", "!draft-*.mdx"];
+      const configSource = JSON.stringify(schema);
+      const templateSource = "---\ndraft: true\n---\n";
+      const config: Asset = {
+        id: "config",
+        projectId: "project-1",
+        folderId: "posts",
+        name: "collection.json",
+        type: "file",
+        format: "json",
+        size: configSource.length,
+        createdAt: "2026-09-02T00:00:00.000Z",
+        meta: {},
+      };
+      const template: Asset = {
+        ...config,
+        id: "template",
+        name: "template.mdx",
+        format: "mdx",
+        size: templateSource.length,
+      };
+      const ignored: Asset = {
+        ...config,
+        id: "ignored",
+        name: filename,
+        format: filename.split(".").at(-1)!,
+        size: 5,
+      };
+      const invalidEntry: Asset = {
+        ...ignored,
+        id: "invalid-entry",
+        name: "invalid.mdx",
+        format: "mdx",
+      };
+      dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+        config,
+        template,
+        ignored,
+        invalidEntry,
+      ]);
+      const ticket = {
+        assetId: ignored.id,
+        name: ignored.name,
+        deduplicated: false as const,
+      };
+      dependencies.createUploadTicket.mockResolvedValue(ticket);
+      dependencies.uploadFile.mockResolvedValue(ignored);
+      dependencies.updateAssetMetadataWithClient.mockResolvedValue(ignored);
+      prepareAssetContentUpdate(dependencies, ignored);
+      const repository = new PostgresAssetRepository({
+        projectId: "project-1",
+        context,
+        dependencies,
+        assetStore: createSourceAssetClient({
+          [config.name]: configSource,
+          [template.name]: templateSource,
+          [ignored.name]: "notes",
+          [invalidEntry.name]: "notes",
+        }),
+      });
+      await expect(
+        repository.createUploadTicket({
+          type: "file",
+          filename,
+          folderId: "posts",
+        })
+      ).resolves.toEqual(ticket);
+      await expect(
+        repository.completeUpload({
+          name: ignored.name,
+          assetId: ignored.id,
+          data: new Blob(["notes"]).stream(),
+          assetInfoFallback: undefined,
+        })
+      ).resolves.toBe(ignored);
+      await expect(
+        repository.updateContent({
+          assetId: ignored.id,
+          expectedName: ignored.name,
+          data: new Blob(["---\ntitle: ignored\n---\n"]).stream(),
+        })
+      ).resolves.toBe(ignored);
+      await expect(
+        repository.updateMetadata(ignored.id, { filename: "draft-renamed" })
+      ).resolves.toBe(ignored);
+      if (ignored.format === "mdx") {
+        await expect(
+          repository.updateMetadata(ignored.id, { filename: "post" })
+        ).rejects.toThrow("Use New entry");
+      }
+      dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+        config,
+        template,
+        invalidEntry,
+        { ...ignored, folderId: undefined },
+      ]);
+      await expect(
+        repository.updateMetadata(ignored.id, { folderId: "posts" })
+      ).resolves.toBe(ignored);
+      expect(dependencies.deleteAssetsWithClient).not.toHaveBeenCalled();
+    }
+  );
   test("treats a root-level collection.json as an ordinary asset", async () => {
     const dependencies = createDependencies();
     const rootAsset: Asset = {
@@ -237,8 +344,9 @@ describe("PostgresAssetRepository", () => {
     ).toBe(false);
   });
 
-  test("blocks generic uploads into collection folders", async () => {
+  test("blocks generic uploads matching collection entry patterns", async () => {
     const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
     dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
       {
         id: "config",
@@ -248,7 +356,7 @@ describe("PostgresAssetRepository", () => {
         folderId: "posts",
         type: "file",
         format: "json",
-        size: 1,
+        size: configSource.length,
         description: null,
         createdAt: "2026-09-02T00:00:00.000Z",
         meta: {},
@@ -271,15 +379,23 @@ describe("PostgresAssetRepository", () => {
     await expect(
       repository.createUploadTicket({
         type: "file",
-        filename: "notes.txt",
+        filename: "notes.mdx",
         folderId: "posts",
       })
     ).rejects.toThrow("Use New entry");
+    await expect(
+      repository.createUploadTicket({
+        type: "file",
+        filename: "collection.json",
+        folderId: "posts",
+      })
+    ).rejects.toThrow("Collection configuration already exists");
     expect(dependencies.createUploadTicket).not.toHaveBeenCalled();
   });
 
   test("rejects an upload completed after its folder becomes a collection", async () => {
     const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
     const configAsset: Asset = {
       id: "config",
       projectId: "project-1",
@@ -288,7 +404,7 @@ describe("PostgresAssetRepository", () => {
       folderId: "posts",
       type: "file",
       format: "json",
-      size: 1,
+      size: configSource.length,
       description: null,
       createdAt: "2026-09-02T00:00:00.000Z",
       meta: {},
@@ -296,9 +412,9 @@ describe("PostgresAssetRepository", () => {
     const uploadedAsset: Asset = {
       ...configAsset,
       id: "notes",
-      name: "notes.txt",
+      name: "notes.mdx",
       filename: "notes",
-      format: "txt",
+      format: "mdx",
     };
     dependencies.uploadFile.mockResolvedValue(uploadedAsset);
     dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
@@ -308,7 +424,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetStore: assetClient,
+      assetStore: createSourceAssetClient({ [configAsset.name]: configSource }),
       dependencies,
     });
 
@@ -328,6 +444,7 @@ describe("PostgresAssetRepository", () => {
 
   test("preserves a collection upload error when cleanup also fails", async () => {
     const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
     const configAsset: Asset = {
       id: "config",
       projectId: "project-1",
@@ -336,7 +453,7 @@ describe("PostgresAssetRepository", () => {
       folderId: "posts",
       type: "file",
       format: "json",
-      size: 1,
+      size: configSource.length,
       description: null,
       createdAt: "2026-09-02T00:00:00.000Z",
       meta: {},
@@ -344,9 +461,9 @@ describe("PostgresAssetRepository", () => {
     const uploadedAsset: Asset = {
       ...configAsset,
       id: "notes",
-      name: "notes.txt",
+      name: "notes.mdx",
       filename: "notes",
-      format: "txt",
+      format: "mdx",
     };
     dependencies.uploadFile.mockResolvedValue(uploadedAsset);
     dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
@@ -360,7 +477,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetStore: assetClient,
+      assetStore: createSourceAssetClient({ [configAsset.name]: configSource }),
       dependencies,
     });
 
@@ -396,7 +513,7 @@ describe("PostgresAssetRepository", () => {
     };
     const reservation = {
       id: "notes",
-      name: "notes-storage.txt",
+      name: "notes-storage.mdx",
       filename: "notes",
       folderId: "posts",
       createdAt: "2026-09-03T00:00:00.000Z",
@@ -451,7 +568,7 @@ describe("PostgresAssetRepository", () => {
     };
     const completedAsset = {
       id: "notes",
-      name: "notes-storage.txt",
+      name: "notes-storage.mdx",
       filename: "notes",
       folderId: "posts",
       createdAt: "2026-09-03T00:00:00.000Z",
@@ -486,7 +603,9 @@ describe("PostgresAssetRepository", () => {
 
   test("rejects collection creation completed after a generic upload", async () => {
     const dependencies = createDependencies();
-    const configSource = createDefaultCollectionConfig();
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*"];
+    const configSource = JSON.stringify(schema);
     const configAsset: Asset = {
       id: "config",
       projectId: "project-1",
@@ -533,7 +652,7 @@ describe("PostgresAssetRepository", () => {
         assetInfoFallback: undefined,
         assetId: configAsset.id,
       })
-    ).rejects.toThrow('Move "notes.txt" into a subfolder');
+    ).rejects.toThrow('Collection entry "notes.txt" must be an MDX file');
     expect(dependencies.deleteAssetsWithClient).toHaveBeenCalledWith(
       { projectId: "project-1", ids: [configAsset.id] },
       context.postgrest.client
@@ -542,7 +661,9 @@ describe("PostgresAssetRepository", () => {
 
   test("removes invalid collection configuration restored by upload deduplication", async () => {
     const dependencies = createDependencies();
-    const configSource = createDefaultCollectionConfig();
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*"];
+    const configSource = JSON.stringify(schema);
     const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
     const configAsset: Asset = {
       id: "config",
@@ -600,7 +721,7 @@ describe("PostgresAssetRepository", () => {
         folderId: "posts",
         contentHash: "hash",
       })
-    ).rejects.toThrow('Move "notes.txt" into a subfolder');
+    ).rejects.toThrow('Collection entry "notes.txt" must be an MDX file');
     expect(dependencies.deleteAssetsWithClient).toHaveBeenCalledWith(
       { projectId: "project-1", ids: [configAsset.id] },
       context.postgrest.client
@@ -957,13 +1078,10 @@ describe("PostgresAssetRepository", () => {
       createdAt: "2026-09-02T00:00:00.000Z",
     };
     const configSource = createDefaultCollectionConfig();
-    const config = parseCollectionConfig(configSource);
-    const generatedTemplate = await createContentCollectionEntry({
-      config,
-      templateSource: "---\ndraft: true\n---\n\nStarter body.\n",
-      values: { title: "Template" },
-      existingFilenames: [],
-    });
+    const generatedTemplate = {
+      source:
+        "---\ntitle: Template\nslug: template\ndraft: true\n---\n\nStarter body.\n",
+    };
     const configAsset: Asset = {
       id: "config",
       projectId: "project-1",
@@ -1007,7 +1125,9 @@ describe("PostgresAssetRepository", () => {
         folderId: folder.id,
         values: { title: "Template" },
       })
-    ).rejects.toThrow('An entry named "template.mdx" already exists');
+    ).rejects.toThrow(
+      'The filename "template.mdx" does not match the collection entry patterns'
+    );
     expect(dependencies.createUploadTicket).not.toHaveBeenCalled();
   });
 
@@ -1813,9 +1933,11 @@ describe("PostgresAssetRepository", () => {
     ).resolves.toBe(configAsset);
   });
 
-  test("rejects collection configuration changes when the folder has non-entry files", async () => {
+  test("rejects collection patterns that select unsupported entry formats", async () => {
     const dependencies = createDependencies();
-    const configSource = createDefaultCollectionConfig();
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*"];
+    const configSource = JSON.stringify(schema);
     const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
     const configAsset: Asset = {
       id: "config",
@@ -1867,7 +1989,7 @@ describe("PostgresAssetRepository", () => {
         expectedName: configAsset.name,
         data: new Blob([configSource]).stream(),
       })
-    ).rejects.toThrow('Move "notes.txt" into a subfolder');
+    ).rejects.toThrow('Collection entry "notes.txt" must be an MDX file');
   });
 
   test("allows collection template defaults to be repaired separately", async () => {
@@ -2022,6 +2144,7 @@ describe("PostgresAssetRepository", () => {
 
   test("rejects metadata moves into a collection folder", async () => {
     const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
     const sourceAsset = {
       id: "source",
       projectId: "project-1",
@@ -2037,6 +2160,7 @@ describe("PostgresAssetRepository", () => {
       ...sourceAsset,
       id: "config",
       name: "collection.json",
+      size: configSource.length,
       folderId: "posts",
       format: "json",
     };
@@ -2054,7 +2178,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetStore: assetClient,
+      assetStore: createSourceAssetClient({ [configAsset.name]: configSource }),
       dependencies,
     });
 
@@ -2286,7 +2410,14 @@ describe("PostgresAssetRepository", () => {
       format: "json",
       size: new TextEncoder().encode(configSource).byteLength,
     };
-    const uploadedAssets: Asset[] = [];
+    const ignoredAsset: Asset = {
+      ...templateAsset,
+      id: "notes",
+      name: "notes.txt",
+      filename: "notes",
+      format: "txt",
+    };
+    const uploadedAssets: Asset[] = [ignoredAsset];
     dependencies.loadAssetFoldersByProjectWithClient.mockResolvedValue([]);
     dependencies.upsertAssetFolderWithClient.mockResolvedValue(folder);
     dependencies.loadAssetsByProjectWithClient.mockImplementation(
@@ -2331,6 +2462,55 @@ describe("PostgresAssetRepository", () => {
       context.postgrest.client
     );
     expect(dependencies.uploadFile).toHaveBeenCalledTimes(2);
+    dependencies.loadAssetFoldersByProjectWithClient.mockResolvedValue([
+      folder,
+    ]);
+    dependencies.upsertAssetFolderWithClient.mockClear();
+    dependencies.uploadFile.mockClear();
+    await expect(
+      repository.createCollectionFolder({ id: folder.id, name: folder.name })
+    ).resolves.toEqual({ folder, assets: [templateAsset, configAsset] });
+    expect(dependencies.upsertAssetFolderWithClient).not.toHaveBeenCalled();
+    expect(dependencies.uploadFile).not.toHaveBeenCalled();
+    expect(uploadedAssets).toContainEqual(ignoredAsset);
+  });
+
+  test("rejects incompatible selected entries before writing collection seeds", async () => {
+    const dependencies = createDependencies();
+    const folder = {
+      id: "posts",
+      projectId: "project-1",
+      name: "Posts",
+      createdAt: "2026-07-25T00:00:00.000Z",
+    };
+    const source = "Supporting notes";
+    const file: Asset = {
+      id: "notes",
+      projectId: folder.projectId,
+      folderId: folder.id,
+      name: "notes.mdx",
+      filename: "notes",
+      type: "file",
+      format: "mdx",
+      size: source.length,
+      meta: {},
+      createdAt: folder.createdAt,
+    };
+    dependencies.loadAssetFoldersByProjectWithClient.mockResolvedValue([
+      folder,
+    ]);
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([file]);
+    const repository = new PostgresAssetRepository({
+      projectId: folder.projectId,
+      context,
+      assetStore: createSourceAssetClient({ [file.name]: source }),
+      dependencies,
+    });
+    await expect(
+      repository.createCollectionFolder({ id: folder.id, name: folder.name })
+    ).rejects.toThrow();
+    expect(dependencies.createUploadTicket).not.toHaveBeenCalled();
+    expect(dependencies.upsertAssetFolderWithClient).not.toHaveBeenCalled();
   });
 
   test("lists and gets folders with view authorization", async () => {
@@ -6246,7 +6426,9 @@ describe("PostgresAssetRepository", () => {
 
   test("resumes saving collection settings after the template rename succeeded", async () => {
     const dependencies = createDependencies();
-    const configSource = createDefaultCollectionConfig();
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entries = ["*"];
+    const configSource = JSON.stringify(schema);
     const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
     const configAsset: Asset = {
       id: "config",
@@ -6311,7 +6493,7 @@ describe("PostgresAssetRepository", () => {
 
     await expect(
       repository.updateCollectionConfigAndTemplateName(input)
-    ).rejects.toThrow('Move "notes.txt" into a subfolder');
+    ).rejects.toThrow('Collection entry "notes.txt" must be an MDX file');
     expect(dependencies.updateAssetContent).not.toHaveBeenCalled();
     dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
       configAsset,

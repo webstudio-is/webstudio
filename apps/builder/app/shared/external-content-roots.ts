@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/content-engine/mdx";
 import {
   compileDocumentSourceGraph,
+  extractMarkdownFrontmatter,
   createDocumentSourceUrl,
   createUniqueAssetIdsByPath,
   discoverAssetValueReferences,
@@ -83,7 +84,11 @@ import {
   isRepeatedContentBlockOccurrence,
   parseContentBlockRenderScope,
 } from "./content-block-source-utils";
-import { setObjectPathValue } from "./content-block-document";
+import {
+  getFrontmatterWriteTarget,
+  setObjectPathValue,
+  type FrontmatterSource,
+} from "./content-block-document";
 
 type RootEntry = {
   key: string;
@@ -106,6 +111,7 @@ type RootEntry = {
   templateRematerialization?: Promise<void>;
   saveRevision: number;
   dependencyAssetIds: ReadonlySet<string>;
+  frontmatterSources?: readonly FrontmatterSource[];
 };
 
 type AssetQueue = {
@@ -389,6 +395,7 @@ const registerMutationRoot = (
       entry.root.resolvedFrontmatter ??
       entry.root.document.frontmatter.properties,
     transientInstanceIds: entry.transientInstanceIds,
+    frontmatterSources: entry.frontmatterSources,
   });
   const unregisterWriter = getAssetContentBridge().registerFrontmatterWriter({
     rootKey: entry.key,
@@ -598,6 +605,7 @@ const resolveExternalContentFrontmatter = async (
   entry: RootEntry,
   sourceState: AssetContentSessionState
 ) => {
+  entry.frontmatterSources = undefined;
   const data = getWebstudioData();
   const hierarchy = createAssetFolderHierarchy(data.assetFolders ?? new Map());
   const assets = Array.from(data.assets.values());
@@ -633,6 +641,7 @@ const resolveExternalContentFrontmatter = async (
   );
   const session = getSession(entry.projectId);
   const referencesByDocumentId = new Map<string, AssetValueReference[]>();
+  const frontmatterSources: FrontmatterSource[] = [];
   const getReferencedAssetIds = (documentIds: Iterable<string>) =>
     Array.from(documentIds).flatMap((id) =>
       (referencesByDocumentId.get(id) ?? []).map(({ assetId }) => assetId)
@@ -679,6 +688,14 @@ const resolveExternalContentFrontmatter = async (
       onDocumentProperties: ({ id, properties }) => {
         const sourcePath = assetPathsById.get(id);
         if (sourcePath !== undefined) {
+          const document = documentAssets.find(({ asset }) => asset.id === id);
+          if (document?.format === "markdown" || document?.format === "mdx") {
+            frontmatterSources.push({
+              assetId: id,
+              documentUrl: createDocumentSourceUrl(sourcePath),
+              properties,
+            });
+          }
           referencesByDocumentId.set(
             id,
             discoverAssetValueReferences({
@@ -742,6 +759,7 @@ const resolveExternalContentFrontmatter = async (
       };
     },
   });
+  entry.frontmatterSources = frontmatterSources;
   return properties;
 };
 
@@ -1366,6 +1384,119 @@ export const updateExternalContentFrontmatter = ({
       path,
       value,
       resolvedValue,
+    });
+  }
+  const target = getFrontmatterWriteTarget({
+    assetId: entry.assetId,
+    value: entry.root.document.frontmatter.properties,
+    path,
+    sources: entry.frontmatterSources,
+  });
+  if (target === undefined) {
+    return Promise.reject(
+      new Error("This frontmatter value cannot be edited.")
+    );
+  }
+  if (target.assetId !== entry.assetId) {
+    const sources = entry.frontmatterSources ?? [];
+    const session = getSession(entry.projectId);
+    return enqueueAssetUpdate({
+      projectId: entry.projectId,
+      assetId: target.assetId,
+      update: async (state, queuedDocument) => {
+        if (roots.get(rootKey) !== entry) {
+          throw new Error("Connected Content Block is no longer open.");
+        }
+        if (
+          !getAssetContentBridge().authorize({
+            projectId: entry.projectId,
+            assetId: target.assetId,
+            operation: "write",
+          })
+        ) {
+          throw new Error(
+            "You do not have permission to edit the referenced file."
+          );
+        }
+        const data = getWebstudioData();
+        const hierarchy = createAssetFolderHierarchy(
+          data.assetFolders ?? new Map()
+        );
+        const currentSources = await Promise.all(
+          sources.map(async (source) => {
+            const asset = data.assets.get(source.assetId);
+            const content = session.get(source.assetId);
+            if (asset === undefined || content === undefined) {
+              throw new Error(
+                "A referenced file is no longer available. Reload before editing."
+              );
+            }
+            return {
+              ...source,
+              documentUrl: createDocumentSourceUrl(
+                createCanonicalAssetPath({
+                  name: formatAssetName(asset),
+                  folderNames: hierarchy
+                    .getPath(asset.folderId)
+                    .map(({ name }) => name),
+                })
+              ),
+              properties: (
+                await extractMarkdownFrontmatter(
+                  new TextEncoder().encode(content.source)
+                )
+              ).properties,
+            };
+          })
+        );
+        const rootSource = currentSources.find(
+          (source) => source.assetId === entry.assetId
+        );
+        const currentTarget =
+          rootSource === undefined
+            ? undefined
+            : getFrontmatterWriteTarget({
+                assetId: entry.assetId,
+                value: rootSource.properties,
+                path,
+                sources: currentSources,
+              });
+        if (
+          currentTarget === undefined ||
+          currentTarget.assetId !== target.assetId ||
+          JSON.stringify(currentTarget.path) !== JSON.stringify(target.path) ||
+          JSON.stringify(currentTarget.via) !== JSON.stringify(target.via)
+        ) {
+          throw new Error(
+            "The authoring reference changed. Reload before editing."
+          );
+        }
+        const properties =
+          queuedDocument?.frontmatter.properties ??
+          (
+            await extractMarkdownFrontmatter(
+              new TextEncoder().encode(state.source)
+            )
+          ).properties;
+        const updatedProperties = setObjectPathValue({
+          value: properties,
+          path: target.path,
+          nextValue: value,
+        });
+        // Keep a concurrently edited MDX body in the shared queue. Markdown
+        // dependencies need only a frontmatter replacement, never MDX parsing.
+        if (queuedDocument !== undefined) {
+          const document = {
+            ...queuedDocument,
+            frontmatter: { properties: updatedProperties },
+          };
+          return { source: serializeMdxDocument(document), document };
+        }
+        return replaceMdxFrontmatter({
+          source: state.source,
+          properties: updatedProperties,
+        });
+      },
     });
   }
   const properties = setObjectPathValue({
