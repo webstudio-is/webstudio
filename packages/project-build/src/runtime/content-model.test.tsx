@@ -153,6 +153,20 @@ test("none category accepted by parent by tag", () => {
 });
 
 describe("description lists", () => {
+  test("does not accept an internal context marker as an HTML tag", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="dl-child" />
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(false);
+  });
+
   test.each([
     ["listId"],
     ["groupId", "listId"],
