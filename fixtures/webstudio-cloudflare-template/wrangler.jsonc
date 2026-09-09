@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // SaaS publishes Workers. This takes precedence over the Cloudflare Pages
+  // template's wrangler.toml; publish workflows provide the name and date.
+  "name": "webstudio-remix-app",
+  "compatibility_date": "2024-04-05"
+}
