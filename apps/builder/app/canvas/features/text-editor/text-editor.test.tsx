@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { userEvent } from "@vitest/browser/context";
+import { renderData, renderTemplate, ws } from "@webstudio-is/template";
 import {
   blockComponent,
   blockTemplateComponent,
@@ -84,6 +85,68 @@ afterEach(() => {
 });
 
 describe("TextEditor", () => {
+  test("saves edits to text containing a formatted link on blur", async () => {
+    const { instances } = renderData(
+      <ws.element ws:id="paragraph" ws:tag="p">
+        <ws.element ws:id="emphasis" ws:tag="em">
+          {"Before "}
+          <ws.element ws:id="link" ws:tag="a" ws:label="Link">
+            linked text
+          </ws.element>
+          {" after."}
+        </ws.element>
+      </ws.element>
+    );
+    $instances.set(instances);
+    selectInstance(["paragraph"]);
+    $textEditingInstanceSelector.set({
+      selector: ["paragraph"],
+      reason: "left",
+    });
+    const onChange = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () => {
+      root?.render(
+        <TextEditor
+          rootInstanceSelector={["paragraph"]}
+          instances={instances}
+          props={new Map()}
+          contentEditable={<ContentEditable />}
+          onChange={onChange}
+          onSelectInstance={() => {}}
+        />
+      );
+    });
+    const editable = container.querySelector<HTMLElement>(
+      "[data-lexical-editor]"
+    )!;
+    expect(editable.textContent).toBe("Before linked text after.");
+    expect(editable.querySelector("a")?.getAttribute("data-ws-id")).toBe(
+      "link"
+    );
+    await act(async () => {
+      await userEvent.type(editable, " edited");
+      editable.blur();
+    });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]?.[0]).toEqual(
+      renderTemplate(
+        <ws.element ws:id="paragraph" ws:tag="p">
+          <ws.element ws:id="emphasis" ws:tag="em">
+            {"Before "}
+            <ws.element ws:id="link" ws:tag="a" ws:label="Link">
+              linked text
+            </ws.element>
+            {" after."}
+          </ws.element>
+          {" edited"}
+        </ws.element>
+      ).instances
+    );
+  });
+
   test("focuses the editable element when initializing a new empty instance", async () => {
     const instance: Instance = {
       type: "instance",

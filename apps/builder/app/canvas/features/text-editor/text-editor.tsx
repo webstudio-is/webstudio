@@ -135,6 +135,9 @@ const BindInstanceToNodePlugin = ({
     for (const [nodeKey, instanceId] of refs) {
       // extract key from stored key:style format
       const [key] = nodeKey.split(":");
+      if (nodeKey !== key && refs.has(key)) {
+        continue;
+      }
       const element = editor.getElementByKey(key);
       if (element) {
         element.setAttribute(idAttribute, instanceId);
@@ -1673,7 +1676,12 @@ export const TextEditor = ({
               builderRuntimeContext.createId,
               transientTextNodeKeys
             );
-        const idMap = onChange(updates);
+        const idMap = onChange(
+          updates.map((instance) => ({
+            ...currentInstances.get(instance.id),
+            ...instance,
+          }))
+        );
         if (idMap !== undefined) {
           for (const [key, instanceId] of refs) {
             refs.set(key, idMap[instanceId] ?? instanceId);

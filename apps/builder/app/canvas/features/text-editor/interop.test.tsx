@@ -340,3 +340,64 @@ test.each([
     );
   }
 );
+
+test.each(["em", "strong", "span"])(
+  "preserves text and a nested link inside %s across edits",
+  async (tag) => {
+    const { instances } = renderData(
+      <ws.element ws:tag="p" ws:id="paragraph">
+        <ws.element ws:tag={tag} ws:id="wrapper">
+          {"Before "}
+          <ws.element ws:tag="a" ws:id="link">
+            linked text
+          </ws.element>
+          {" after."}
+        </ws.element>
+      </ws.element>
+    );
+    const refs: Refs = new Map();
+    const editor = createHeadlessEditor({ nodes: [LinkNode] });
+    await new Promise<void>((resolve) => {
+      editor.update(() => $convertToLexical(instances, "paragraph", refs), {
+        onUpdate: resolve,
+      });
+    });
+    expect(
+      editor.getEditorState().read(() => $getRoot().getTextContent())
+    ).toBe("Before linked text after.");
+    await new Promise<void>((resolve) => {
+      editor.update(
+        () => {
+          $getRoot()
+            .getAllTextNodes()
+            .find((node) => node.getTextContent() === "linked text")!
+            .setTextContent("edited link");
+        },
+        { onUpdate: resolve }
+      );
+    });
+    let id = 0;
+    const updates = editor
+      .getEditorState()
+      .read(() =>
+        $convertToUpdates(
+          instances.get("paragraph")!,
+          refs,
+          new Map(),
+          () => `new-${++id}`
+        )
+      );
+    const expected = renderTemplate(
+      <ws.element ws:tag="p" ws:id="paragraph">
+        <ws.element ws:tag={tag} ws:id="wrapper">
+          {"Before "}
+          <ws.element ws:tag="a" ws:id="link">
+            edited link
+          </ws.element>
+          {" after."}
+        </ws.element>
+      </ws.element>
+    ).instances;
+    expect(updates).toEqual(expected);
+  }
+);
