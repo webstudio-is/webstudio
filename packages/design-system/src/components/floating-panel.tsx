@@ -5,7 +5,7 @@ import {
   useRef,
   useLayoutEffect,
 } from "react";
-import { css, theme } from "../stitches.config";
+import { theme } from "../stitches.config";
 import {
   Dialog,
   DialogTitleActions,
@@ -129,11 +129,6 @@ type FloatingPanelProps = {
   /** When false, the panel won't close when clicking outside it. */
   closeOnInteractOutside?: boolean;
 };
-
-const contentStyle = css({
-  width: theme.sizes.sidebarWidth,
-  overflow: "auto",
-});
 
 const defaultOffset: OffsetOptions = { mainAxis: 0, crossAxis: 0 };
 
@@ -313,7 +308,7 @@ export const FloatingPanel = ({
         {children}
       </DialogTrigger>
       <DialogContent
-        className={contentStyle()}
+        css={{ width: theme.sizes.sidebarWidth, overflow: "auto" }}
         width={width}
         height={height}
         {...position}
