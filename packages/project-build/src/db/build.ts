@@ -5,7 +5,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import { getWorkspacePublishAllowance } from "@webstudio-is/project/publish-usage.server";
+import { getWorkspacePublishUsage } from "@webstudio-is/project/publish-usage.server";
 import {
   createId,
   dataSource,
@@ -424,16 +424,20 @@ export const createProductionBuild = async (
 
   const devBuild = await loadDevBuildByProjectId(context, props.projectId);
   assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
-  const { ownerId, limit } = await getWorkspacePublishAllowance(
+
+  const { count, limit } = await getWorkspacePublishUsage(
     props.projectId,
     context
   );
+  if (count >= limit) {
+    throw new Error(
+      `This workspace has reached its daily publishing limit of ${limit}. The limit resets tomorrow.`
+    );
+  }
 
   const build = await context.postgrest.client.rpc("create_production_build", {
     project_id: props.projectId,
     deployment: JSON.stringify(props.deployment),
-    daily_publish_limit: limit,
-    expected_owner_id: ownerId,
   });
   const buildId = build.data;
   if (build.error) {

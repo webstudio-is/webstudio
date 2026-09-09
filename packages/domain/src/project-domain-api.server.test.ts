@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import {
   createTestServer,
   db,
@@ -8,7 +8,6 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import { http } from "msw";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
   getProjectPublishJob,
   listProjectPublishes,
@@ -18,6 +17,11 @@ import {
 } from "./project-domain-api.server";
 
 const server = createTestServer();
+beforeEach(() =>
+  server.use(
+    db.head("Build", () => empty({ headers: { "Content-Range": "*/0" } }))
+  )
+);
 const context = testContext as unknown as AppContext;
 const postgrestUrl = "http://test-postgrest";
 
@@ -117,7 +121,7 @@ const createPublishContext = (
   ({
     ...testContext,
     authorization: { type: "user", userId: "user-1" },
-    getOwnerPlanFeatures: async () => defaultPlanFeatures,
+    getOwnerPlanFeatures: async () => ({ maxDailyPublishesPerUser: 10 }),
     deployment: {
       deploymentTrpc: {
         publish: {
@@ -148,46 +152,6 @@ const productionBuildHandler = (
       return json("build-prod");
     }
   );
-
-test.each(["saas", "static"] as const)(
-  "does not start a %s deployment when the database rejects its publish allowance",
-  async (destination) => {
-    const publish = vi.fn();
-    server.use(
-      projectHandler,
-      devBuildHandler(),
-      db.post("rpc/create_production_build", async ({ request }) => {
-        expect(await request.json()).toMatchObject({
-          daily_publish_limit: 10,
-          expected_owner_id: "user-1",
-        });
-        return json(
-          { code: "PT429", message: "Daily publishing limit reached" },
-          { status: 429 }
-        );
-      })
-    );
-    const context = createPublishContext(publish);
-    const result =
-      destination === "saas"
-        ? publishProject(
-            {
-              project: loadedProject,
-              domains: ["project.wstd.io"],
-              target: "staging",
-            },
-            context
-          )
-        : publishStaticProject(
-            { projectId: "project-1", name: "project.zip", templates: [] },
-            context
-          );
-    await expect(result).rejects.toMatchObject({
-      message: "Daily publishing limit reached",
-    });
-    expect(publish).not.toHaveBeenCalled();
-  }
-);
 
 test("publishes saas project through shared domain service", async () => {
   const publish = vi.fn().mockResolvedValue({ success: true });

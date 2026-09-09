@@ -890,24 +890,6 @@ export type Database = {
           },
         ];
       };
-      WorkspacePublishUsage: {
-        Row: {
-          day: string;
-          scopeId: string;
-          used: number;
-        };
-        Insert: {
-          day: string;
-          scopeId: string;
-          used: number;
-        };
-        Update: {
-          day?: string;
-          scopeId?: string;
-          used?: number;
-        };
-        Relationships: [];
-      };
     };
     Views: {
       ApprovedMarketplaceProduct: {
@@ -1125,12 +1107,7 @@ export type Database = {
         };
       };
       create_production_build: {
-        Args: {
-          daily_publish_limit?: number;
-          deployment: string;
-          expected_owner_id?: string;
-          project_id: string;
-        };
+        Args: { deployment: string; project_id: string };
         Returns: string;
       };
       database_cleanup: {
@@ -1172,10 +1149,6 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
-      };
-      get_workspace_publish_usage: {
-        Args: { project_id: string };
-        Returns: number;
       };
       latestBuildVirtual:
         | {

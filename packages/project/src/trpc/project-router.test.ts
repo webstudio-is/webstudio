@@ -3,6 +3,7 @@ import {
   createTestServer,
   db,
   json,
+  empty,
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import {
@@ -27,6 +28,7 @@ const createContext = (
         ...defaultPlanFeatures,
         maxWorkspaces: 20,
         maxDailyPublishesPerUser: 100,
+        seatsIncluded: 4,
       }),
     ...overrides,
   }) as unknown as AppContext;
@@ -45,21 +47,17 @@ describe("userPublishCount", () => {
         json([{ relation: "editors" }])
       ),
       db.get("Product", () => json([])),
-      db.post("rpc/get_workspace_publish_usage", async ({ request }) => {
-        expect(await request.json()).toEqual({ project_id: "proj-1" });
-        return json(42);
+      db.head("Build", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("Project.workspaceId")).toBe("eq.ws-1");
+        return empty({ headers: { "Content-Range": "*/42" } });
       })
     );
 
     const caller = createCaller(createContext());
     const result = await caller.userPublishCount({ projectId: "proj-1" });
 
-    expect(result).toEqual({
-      success: true,
-      data: 42,
-      limit: 100,
-      remaining: 58,
-    });
+    expect(result).toEqual({ success: true, data: 42, limit: 500 });
   });
 
   test("counts publishes for the caller when projectId is omitted", async () => {
@@ -74,7 +72,7 @@ describe("userPublishCount", () => {
     const caller = createCaller(createContext());
     const result = await caller.userPublishCount();
 
-    expect(result).toEqual({ success: true, data: 7, limit: 10, remaining: 3 });
+    expect(result).toEqual({ success: true, data: 7 });
   });
 
   test("uses token owner when projectId is omitted for token auth", async () => {
@@ -97,7 +95,7 @@ describe("userPublishCount", () => {
     );
     const result = await caller.userPublishCount();
 
-    expect(result).toEqual({ success: true, data: 9, limit: 10, remaining: 1 });
+    expect(result).toEqual({ success: true, data: 9 });
   });
 
   test("does not count publishes when caller cannot view the project", async () => {
@@ -106,9 +104,9 @@ describe("userPublishCount", () => {
     server.use(
       db.get("Project", () => json(null)),
       db.get("WorkspaceProjectAuthorization", () => json([])),
-      db.post("rpc/get_workspace_publish_usage", () => {
+      db.get("user_publish_count", () => {
         publishCountQueried = true;
-        return json(0);
+        return json({ count: 0 });
       })
     );
 

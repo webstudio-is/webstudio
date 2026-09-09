@@ -24,19 +24,10 @@ they are not part of the generated site.
 
 ## Daily publishing limit
 
-Projects in the same workspace share a daily publishing allowance:
-
-- **Free:** 10 publishes per day.
-- **Paid:** 100 publishes per day for the owner, plus 100 for each included
-  member seat and purchased extra seat. Unused seats count too.
-
-For example, an owner with two included seats and three extra seats gets
-600 publishes per workspace per day. The allowance resets at midnight UTC.
-
-Each cloud publish or static download job uses one publish, even if deployment
-later fails. Publishing to several domains in one job still uses one publish.
-Unpublishing does not return used publishes. Moving a project leaves its earlier
-usage in the original workspace; new publishes use the destination's allowance.
+Projects in a paid workspace share 100 publishes per day for the owner, plus
+100 for each included or purchased member seat. Unused seats count too.
+Five seats including the owner give the workspace 500 publishes per day.
+Free stays at 10 publishes per day. The count resets at midnight UTC.
 
 ## Adding a custom domain
 

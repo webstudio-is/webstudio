@@ -113,12 +113,7 @@ export const projectRouter = router({
           }
 
           const usage = await getWorkspacePublishUsage(input.projectId, ctx);
-          return {
-            success: true,
-            data: usage.count,
-            limit: usage.limit,
-            remaining: usage.remaining,
-          };
+          return { success: true, data: usage.count, limit: usage.limit };
         }
 
         const result = await ctx.postgrest.client
@@ -132,12 +127,6 @@ export const projectRouter = router({
         return {
           success: true,
           data: result.data?.count ?? 0,
-          limit: ctx.planFeatures.maxDailyPublishesPerUser,
-          remaining: Math.max(
-            0,
-            ctx.planFeatures.maxDailyPublishesPerUser -
-              (result.data?.count ?? 0)
-          ),
         };
       } catch (error) {
         return createErrorResponse(error);

@@ -457,31 +457,20 @@ const usePublishCountdown = (isPublishing: boolean) => {
   return countdown;
 };
 
-const PublishUsage = ({
-  usage,
-}: {
-  usage: ReturnType<typeof useWorkspacePublishUsage>["publishUsage"];
-}) =>
-  usage === undefined ? undefined : (
-    <Text color="subtle">
-      {usage.remaining} of {usage.limit} publishes remaining today. Resets at
-      midnight UTC.
-    </Text>
-  );
-
 const Publish = ({
   project,
-  publishUsage,
-  refreshUsage,
+  timesLeft,
+  disabled,
   refresh,
   restrictedFeatures,
 }: {
   project: Project;
-  publishUsage: ReturnType<typeof useWorkspacePublishUsage>["publishUsage"];
-  refreshUsage: () => void;
+  timesLeft: number;
+  disabled: boolean;
   refresh: () => Promise<void>;
   restrictedFeatures: Map<string, RestrictedFeature>;
 }) => {
+  const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
@@ -542,7 +531,6 @@ const Publish = ({
       domains,
       destination: "saas",
     });
-    refreshUsage();
 
     if (publishResult.success === false) {
       console.error(publishResult.error);
@@ -605,9 +593,18 @@ const Publish = ({
             };
 
       if (status === "PUBLISHED") {
-        toast.success("The project has been successfully published.", {
-          duration: 10000,
-        });
+        toast.success(
+          <>
+            The project has been successfully published.{" "}
+            {timesLeft > 0 && timesLeft <= 10 && (
+              <div>
+                You have {timesLeft} out of {maxDailyPublishesPerUser} daily
+                publications remaining. The counter resets tomorrow.
+              </div>
+            )}
+          </>,
+          { duration: 10000 }
+        );
         break;
       }
 
@@ -690,7 +687,6 @@ const Publish = ({
         </PanelBanner>
       )}
 
-      <PublishUsage usage={publishUsage} />
       <Tooltip
         content={
           isPublishInProgress
@@ -713,8 +709,9 @@ const Publish = ({
           state={showPendingState ? "pending" : undefined}
           disabled={
             hasSelectedDomains === false ||
+            disabled ||
             (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
-            publishUsage?.remaining === 0
+            userPublishCount >= maxDailyPublishesPerUser
           }
         >
           {countdown !== undefined && countdown > 0
@@ -769,7 +766,6 @@ const PublishStatic = ({
   const [_, startTransition] = useTransition();
   const [publishError, setPublishError] = useState<JSX.Element | string>();
   const [publishWarning, setPublishWarning] = useState<JSX.Element | string>();
-  const { publishUsage, refreshUsage } = useWorkspacePublishUsage();
 
   if (project == null) {
     throw new Error("Project not found");
@@ -793,7 +789,6 @@ const PublishStatic = ({
         </PanelBanner>
       )}
       {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
-      <PublishUsage usage={publishUsage} />
 
       <Tooltip
         content={isPublishInProgress ? "Preparing static site" : undefined}
@@ -802,7 +797,6 @@ const PublishStatic = ({
           type="button"
           color="primary"
           state={isPublishInProgress ? "pending" : undefined}
-          disabled={publishUsage?.remaining === 0}
           onClick={() => {
             setPublishError(undefined);
             setPublishWarning(undefined);
@@ -834,7 +828,6 @@ const PublishStatic = ({
                   destination: "static",
                   templates: [...templates],
                 });
-                refreshUsage();
 
                 if (result.success === false) {
                   toast.error(result.error);
@@ -922,32 +915,19 @@ const useCanAddDomain = () => {
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
-const useWorkspacePublishUsage = () => {
+const useUserPublishCount = () => {
   const { load, data } = trpcClient.project.userPublishCount.useQuery();
+  const { maxDailyPublishesPerUser } = useStore($permissions);
   const project = useStore($project);
   useEffect(() => {
-    if (project?.id === undefined) {
-      return;
+    if (project?.id !== undefined) {
+      load({ projectId: project.id });
     }
-    const refresh = () => load({ projectId: project.id });
-    refresh();
-    // Refresh shared usage and allow publishing again after the UTC reset.
-    const interval = setInterval(refresh, 60_000);
-    window.addEventListener("focus", refresh);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("focus", refresh);
-    };
   }, [load, project?.id]);
   return {
-    publishUsage: data?.success
-      ? { used: data.data, limit: data.limit, remaining: data.remaining }
-      : undefined,
-    refreshUsage: () => {
-      if (project?.id !== undefined) {
-        load({ projectId: project.id });
-      }
-    },
+    userPublishCount: data?.success ? data.data : 0,
+    maxDailyPublishesPerUser:
+      data?.success && "limit" in data ? data.limit : maxDailyPublishesPerUser,
   };
 };
 
@@ -974,21 +954,15 @@ const buttonLinkClass = css({
   ...textVariants.link,
 }).toString();
 
-const UpgradeBanner = ({
-  hasCustomDomains,
-  publishUsage,
-}: {
-  hasCustomDomains: boolean;
-  publishUsage: ReturnType<typeof useWorkspacePublishUsage>["publishUsage"];
-}) => {
+const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const { canAddDomain } = useCanAddDomain();
-  if (publishUsage?.remaining === 0) {
+  const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
+  if (userPublishCount >= maxDailyPublishesPerUser) {
     return (
       <PanelBanner>
         <Text variant="regularBold">
-          This workspace has reached its daily publishing limit of{" "}
-          {publishUsage.limit}. The limit resets at midnight UTC.
+          Upgrade to publish more than {maxDailyPublishesPerUser} times per day:
         </Text>
         <LinkButton
           color="primary"
@@ -1100,7 +1074,7 @@ const Content = (props: {
   }
   const projectState = "idle";
 
-  const { publishUsage, refreshUsage } = useWorkspacePublishUsage();
+  const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
 
   const hasUnpublishedDomains = project.domainsVirtual.some(
     (domain) =>
@@ -1146,10 +1120,7 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
-        <UpgradeBanner
-          hasCustomDomains={hasCustomDomains}
-          publishUsage={publishUsage}
-        />
+        <UpgradeBanner hasCustomDomains={hasCustomDomains} />
         {hasUnpublishedDomains && (
           <PanelBanner>
             <Flex align="center" gap="1">
@@ -1165,8 +1136,8 @@ const Content = (props: {
         <Publish
           project={project}
           refresh={refreshProject}
-          publishUsage={publishUsage}
-          refreshUsage={refreshUsage}
+          timesLeft={maxDailyPublishesPerUser - userPublishCount}
+          disabled={false}
           restrictedFeatures={restrictedFeatures}
         />
       </PanelContent>
@@ -1469,4 +1440,4 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   );
 };
 
-export const __testing__ = { Publish };
+undefined;
