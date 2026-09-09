@@ -79,6 +79,34 @@ const createCodeTextFragment = (theme = "github-light"): WebstudioFragment => ({
 });
 
 describe("MDX authored content", () => {
+  test("adopts a live fragment without unused resolved assets", async () => {
+    const root = materializeMdxAuthoredContent({
+      identity,
+      document: await parseMdxDocument({ source: "Before" }),
+      templateMaterialization: emptyTemplates,
+    });
+    const live = structuredClone(root.fragment);
+    root.fragment.assets.push({
+      id: "unused",
+      projectId: "project",
+      name: "author.md",
+      type: "file",
+      format: "md",
+      size: 7,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: {},
+    });
+    const adopted = adoptMdxAuthoredContentFragment({ root, fragment: live });
+    const edited = structuredClone(live);
+    edited.instances[0].children = [{ type: "text", value: "After" }];
+    expect(
+      serializeMdxDocument(
+        reconcileMdxAuthoredContent({ root: adopted, fragment: edited })
+      )
+    ).toBe("After\n");
+  });
+
   test("does not materialize registered JSX without a resolved template", async () => {
     const source =
       "<PromotionCard><Heading>Launch offer</Heading></PromotionCard>\n";
@@ -168,6 +196,10 @@ describe("MDX authored content", () => {
             jsxPropContext: htmlJsxPropContext,
             propNameMappings: [],
             ignoredJsxPropNames: [],
+            htmlTags: [
+              { instanceId: "card", tag: "section" },
+              { instanceId: "replaced-child", tag: "p" },
+            ],
           },
         ],
         diagnostics: [],
@@ -178,8 +210,12 @@ describe("MDX authored content", () => {
     expect(root.fragment.instances[0]?.children).toEqual([
       { type: "text", value: "Template default" },
     ]);
+    const adopted = adoptMdxAuthoredContentFragment({
+      root,
+      fragment: root.fragment,
+    });
     await expect(
-      serializeMdxAuthoredContent({ root, fragment: root.fragment })
+      serializeMdxAuthoredContent({ root: adopted, fragment: adopted.fragment })
     ).resolves.toBe("<Card />\n");
   });
 

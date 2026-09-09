@@ -566,7 +566,6 @@ test("Empty MDX content supports slash menu keyboard and mouse insertion", async
   const paragraphWrite = waitForAssetWrite(page, (source) =>
     source.includes("Focused paragraph")
   );
-  const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.type("Focused paragraph");
   await page.keyboard.press("Enter");
@@ -575,7 +574,6 @@ test("Empty MDX content supports slash menu keyboard and mouse insertion", async
   );
   await nextEmptyParagraphEditor.waitFor({ state: "visible" });
   await paragraphWrite;
-  await paragraphMetadataWrite;
   const emptyParagraphId =
     await nextEmptyParagraphEditor.getAttribute("data-ws-id");
   if (emptyParagraphId === null) {

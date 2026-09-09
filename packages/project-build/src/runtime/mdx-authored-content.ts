@@ -1245,13 +1245,16 @@ export const materializeMdxAuthoredContent = ({
           preservedJsxPropNames: template.preservedJsxPropNames,
           ignoredJsxPropNames: template.ignoredJsxPropNames,
           expandedInstanceIds: resolvedFragment.instances.map(({ id }) => id),
-          htmlTags:
+          htmlTags: (
             template.htmlTags ??
             resolvedFragment.instances.flatMap((instance) =>
               instance.tag === undefined
                 ? []
                 : [{ instanceId: instance.id, tag: instance.tag }]
-            ),
+            )
+          ).filter(({ instanceId }) =>
+            resolvedFragment.instances.some(({ id }) => id === instanceId)
+          ),
           overlaidDescendants,
           assetProps,
           namespaceKeys: unsupportedNamespaces.flatMap((namespace) =>
@@ -1669,7 +1672,7 @@ export const adoptMdxAuthoredContentFragment = ({
   const propIds = new Map<string, string>();
   const inheritedPropIds = new Set<string>();
   for (const node of root.provenance.nodes) {
-    if (node.type !== "template" || node.overridesTemplateChildren) {
+    if (node.type !== "template") {
       continue;
     }
     const authoredNames = new Set(
@@ -1682,8 +1685,9 @@ export const adoptMdxAuthoredContentFragment = ({
     for (const prop of root.fragment.props) {
       if (
         node.expandedInstanceIds.includes(prop.instanceId) &&
-        (prop.instanceId !== node.instanceId ||
-          authoredNames.has(prop.name) === false)
+        (prop.instanceId === node.instanceId
+          ? authoredNames.has(prop.name) === false
+          : node.overridesTemplateChildren === false)
       ) {
         inheritedPropIds.add(prop.id);
       }
@@ -1716,6 +1720,31 @@ export const adoptMdxAuthoredContentFragment = ({
 
   const namespaceKeys = new Map<string, string>();
   for (const namespace of unsupportedNamespaces) {
+    if (namespace === "assets") {
+      // Resolved frontmatter and template defaults can load assets that the
+      // rendered body never uses. Assets retain their project IDs, unlike
+      // cloned instances and styles.
+      const sourceAssets = new Map(
+        root.fragment.assets.map((asset) => [asset.id, asset])
+      );
+      const targetAssets = new Map(
+        fragment.assets.map((asset) => [asset.id, asset])
+      );
+      if (
+        fragment.assets.some(
+          (asset) => !equal(sourceAssets.get(asset.id), asset)
+        ) ||
+        fragment.props.some(
+          (prop) => prop.type === "asset" && !targetAssets.has(prop.value)
+        )
+      ) {
+        throw new Error("Live MDX fragment assets do not match its document");
+      }
+      for (const asset of root.fragment.assets) {
+        namespaceKeys.set(`assets:${asset.id}`, asset.id);
+      }
+      continue;
+    }
     const sourceRecords = root.fragment[namespace];
     const targetRecords = fragment[namespace];
     if (sourceRecords.length !== targetRecords.length) {

@@ -19,11 +19,8 @@ import { requireBuilderReload } from "./sync/reload-required";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
 import { $authToken } from "./nano-states";
-import type { Asset } from "@webstudio-is/sdk";
-import { createTransactionFromBuilderPatchPayload } from "./sync/builder-patch";
-import { getWebstudioData } from "./instance-utils/data";
-import { invalidateAssets } from "./resources";
-import { onNextTransactionComplete } from "./sync/project-queue";
+import { asset, type Asset } from "@webstudio-is/sdk";
+import { commitAssetContentUpdate } from "~/builder/shared/assets/update-asset-content";
 import { disposeExternalContentProject } from "./external-content-roots";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
@@ -339,22 +336,9 @@ export const initBuilderApi = () => {
             ) {
               return;
             }
-            createTransactionFromBuilderPatchPayload({
-              data: getWebstudioData(),
-              payload: [
-                {
-                  namespace: "assets",
-                  patches: [
-                    {
-                      op: "replace",
-                      path: [current.id],
-                      value: { ...current, ...state.asset },
-                    },
-                  ],
-                },
-              ],
-            });
-            onNextTransactionComplete(invalidateAssets);
+            commitAssetContentUpdate(
+              asset.parse({ ...current, ...state.asset })
+            );
           });
           activeContentSession = { projectId, session, active: true };
           contentSessions.set(projectId, activeContentSession);

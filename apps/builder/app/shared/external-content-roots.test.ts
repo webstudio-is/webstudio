@@ -1256,9 +1256,22 @@ test.each([
   expect(writes.at(-1)).toBe(
     '# Existing\n\n<Card title="Edited">Edited text</Card>\n'
   );
-  expect(
-    getExternalContentRoots().values().next().value?.insertedTemplates
-  ).toBeUndefined();
+  executeRuntimeMutation({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId: inserted.value,
+      mode: "text",
+      text: "Edited again",
+    },
+  });
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+  expect(writes.at(-1)).toBe(
+    '# Existing\n\n<Card title="Edited">Edited again</Card>\n'
+  );
 
   release();
   releases.splice(releases.indexOf(release), 1);

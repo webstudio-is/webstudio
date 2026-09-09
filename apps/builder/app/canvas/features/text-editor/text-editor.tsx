@@ -217,7 +217,10 @@ const isChrome = () =>
 const OnChangeOnBlurPlugin = ({
   onChange,
 }: {
-  onChange: (editorState: EditorState, reason: "blur" | "unmount") => void;
+  onChange: (
+    editorState: EditorState,
+    reason: "blur" | "window-blur" | "unmount"
+  ) => void;
 }) => {
   const [editor] = useLexicalComposerContext();
   const handleChange = useEffectEvent(onChange);
@@ -254,6 +257,21 @@ const OnChangeOnBlurPlugin = ({
     },
     [editor]
   );
+
+  useEffect(() => {
+    // Leaving the canvas iframe does not blur its active editable element.
+    // Save without ending editing so toolbar actions can keep the selection.
+    const handleWindowBlur = () => {
+      if ($textEditorContextMenu.get() !== undefined) {
+        return;
+      }
+      editor.read(() => {
+        handleChange(editor.getEditorState(), "window-blur");
+      });
+    };
+    window.addEventListener("blur", handleWindowBlur);
+    return () => window.removeEventListener("blur", handleWindowBlur);
+  }, [editor]);
 
   useEffect(() => {
     const handleBlur = () => {
@@ -1626,7 +1644,10 @@ export const TextEditor = ({
   const [newLinkKeyToInstanceId] = useState(() => new Map());
 
   const handleChange = useEffectEvent(
-    (editorState: EditorState, reason: "blur" | "unmount" | "next") => {
+    (
+      editorState: EditorState,
+      reason: "blur" | "window-blur" | "unmount" | "next"
+    ) => {
       const currentInstances = $instances.get();
       const treeRootInstance = currentInstances.get(rootInstanceSelector[0]);
       // Replacing a content block child unmounts its editor after the instance
