@@ -23,6 +23,32 @@ const pressArrow = (element: HTMLElement, key: string) => {
   });
 };
 
+test("keeps navigation labels left aligned beside their icons", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  act(() =>
+    root?.render(
+      <InsetList css={{ width: 220 }}>
+        <InsetListItem asChild>
+          <a href="#projects">
+            <svg width="16" height="16" />
+            <span>Projects</span>
+          </a>
+        </InsetListItem>
+        <InsetListItem>Settings</InsetListItem>
+      </InsetList>
+    )
+  );
+  const link = container.querySelector("a")!;
+  const icon = link.querySelector("svg")!.getBoundingClientRect();
+  const label = link.querySelector("span")!.getBoundingClientRect();
+  expect(label.left - icon.right).toBeLessThanOrEqual(8);
+  expect(getComputedStyle(container.querySelector("button")!).textAlign).toBe(
+    "left"
+  );
+});
+
 test.each(["{Enter}", " "])("activates list items with %s", async (key) => {
   const container = document.createElement("div");
   document.body.append(container);

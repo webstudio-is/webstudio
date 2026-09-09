@@ -62,6 +62,33 @@ test.each(["body", "templates", "list-item"])(
   }
 );
 
+test.each(["list", "templates", "box", "paragraph"])(
+  "does not inherit a description-list parent into a template from %s",
+  (start) => {
+    const data = renderData(
+      <ws.element ws:tag="dl" ws:id="list">
+        <ws.block ws:id="block">
+          <BlockTemplate ws:id="templates">
+            <ws.element ws:tag="div" ws:id="box">
+              <ws.element ws:tag="p" ws:id="paragraph">
+                Content
+              </ws.element>
+            </ws.element>
+          </BlockTemplate>
+        </ws.block>
+      </ws.element>
+    );
+    const selector = ["paragraph", "box", "templates", "block", "list"];
+    expect(
+      isTreeSatisfyingContentModel({
+        ...data,
+        metas: defaultMetas,
+        instanceSelector: selector.slice(selector.indexOf(start)),
+      })
+    ).toBe(true);
+  }
+);
+
 test.each(["template", "body"])(
   "still rejects invalid list nesting in %s content",
   (location) => {
@@ -207,6 +234,149 @@ test("none category accepted by parent by tag", () => {
       instanceSelector: ["bodyId"],
     })
   ).toBeTruthy();
+});
+
+describe("description lists", () => {
+  test("does not accept an internal context marker as an HTML tag", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="dl-child" />
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(false);
+  });
+
+  test.each([
+    ["listId"],
+    ["groupId", "listId"],
+    ["termId", "groupId", "listId"],
+    ["detailId", "groupId", "listId"],
+  ])("accepts div groups when validating from %j", (...instanceSelector) => {
+    const errors: string[] = [];
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="div" ws:id="groupId">
+              <ws.element ws:tag="dt" ws:id="termId">
+                Company
+              </ws.element>
+              <ws.element ws:tag="dd" ws:id="detailId">
+                XXX
+              </ws.element>
+            </ws.element>
+            <ws.element ws:tag="div">
+              <ws.element ws:tag="dt">Tax ID (NIP EU)</ws.element>
+              <ws.element ws:tag="dd">XXX</ws.element>
+            </ws.element>
+            <ws.element ws:tag="div">
+              <ws.element ws:tag="dt">Address</ws.element>
+              <ws.element ws:tag="dd">...</ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector,
+        onError: (message) => errors.push(message),
+      })
+    ).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test("accepts div groups through components without HTML tags", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <Fragment>
+              <ws.element ws:tag="div">
+                <Slot>
+                  <ws.element ws:tag="dt">Company</ws.element>
+                  <ws.element ws:tag="dd">XXX</ws.element>
+                </Slot>
+              </ws.element>
+            </Fragment>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(true);
+  });
+
+  test("rejects flow content directly inside a description-list group", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="div">
+              <ws.element ws:tag="p">Company</ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(false);
+  });
+
+  test.each(["dt", "dd"])("keeps %s restricted to description lists", (tag) => {
+    for (const [ancestor, parent] of [
+      ["div", "div"],
+      ["dl", "div"],
+      ["dl", "a"],
+      ["dl", "section"],
+    ]) {
+      const data = renderData(
+        <ws.element ws:tag={ancestor} ws:id="rootId">
+          <ws.element ws:tag={parent} ws:id="groupId">
+            <ws.element ws:tag="div" ws:id="wrapperId">
+              <ws.element ws:tag={tag} ws:id="childId">
+                XXX
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      );
+      expect(
+        isTreeSatisfyingContentModel({
+          ...data,
+          metas: defaultMetas,
+          instanceSelector: ["childId", "wrapperId", "groupId", "rootId"],
+        })
+      ).toBe(false);
+    }
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="div">
+              <ws.element ws:tag={tag}>XXX</ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(true);
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="dt">Company</ws.element>
+            <ws.element ws:tag="dd">XXX</ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(true);
+  });
 });
 
 test("none category prevents unacceptable parent", () => {

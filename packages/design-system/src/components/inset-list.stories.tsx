@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GearIcon } from "@webstudio-is/icons";
 import { Grid } from "./grid";
 import { InsetList, InsetListItem } from "./inset-list";
 import { List, ListItem } from "./primitives/list";
@@ -51,6 +52,19 @@ export const SupportingText = () => (
         </ListItem>
       </InsetList>
     </List>
+  </StorySection>
+);
+
+export const NavigationWithIcons = () => (
+  <StorySection title="Navigation with icons">
+    <InsetList css={{ width: 220 }}>
+      {items.map((item) => (
+        <InsetListItem key={item}>
+          <GearIcon />
+          <Text variant="labels">{item}</Text>
+        </InsetListItem>
+      ))}
+    </InsetList>
   </StorySection>
 );
 

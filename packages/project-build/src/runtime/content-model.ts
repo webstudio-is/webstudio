@@ -119,7 +119,8 @@ const isTagSatisfyingContentModel = ({
  */
 const getElementChildren = (
   tag: undefined | string,
-  allowedCategories: undefined | string[]
+  allowedCategories: undefined | string[],
+  parentTag: undefined | string
 ) => {
   // A transparent component without a known parent imposes no constraint.
   if (tag === undefined && allowedCategories === undefined) {
@@ -137,6 +138,10 @@ const getElementChildren = (
     elementChildren = elementChildren.flatMap((category) =>
       category === "transparent" ? inheritedCategories : category
     );
+  }
+  // A div directly under dl contains name-value groups instead of flow content.
+  if (tag === "div" && parentTag === "dl") {
+    elementChildren = ["dt", "dd", "script-supporting elements"];
   }
   // introduce custom non-interactive category to restrict nesting interactive elements
   // like button > button or a > input
@@ -187,6 +192,7 @@ const computeAllowedCategories = ({
 }) => {
   let instance: undefined | Instance;
   let allowedCategories: undefined | string[];
+  let parentTag: undefined | string;
   // skip selected instance for which these constraints are computed
   for (const instanceId of instanceSelector.slice(1).reverse()) {
     instance = instances.get(instanceId);
@@ -197,12 +203,15 @@ const computeAllowedCategories = ({
     // Template roots are reusable definitions, not children of the page HTML.
     if (instance.component === blockTemplateComponent) {
       allowedCategories = undefined;
+      parentTag = undefined;
       continue;
     }
     const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
-    allowedCategories = getElementChildren(tag, allowedCategories);
+    allowedCategories = getElementChildren(tag, allowedCategories, parentTag);
+    // Tagless components do not change the rendered HTML parent.
+    parentTag = tag ?? parentTag;
   }
-  return allowedCategories;
+  return { allowedCategories, parentTag };
 };
 
 const findHtmlConstraintInstance = ({
@@ -223,6 +232,7 @@ const findHtmlConstraintInstance = ({
   component: Instance["component"];
 }) => {
   let allowedCategories: undefined | string[];
+  let parentTag: undefined | string;
   let wasSatisfying = true;
   let constraintInstance: undefined | Instance;
 
@@ -233,6 +243,7 @@ const findHtmlConstraintInstance = ({
     }
     if (ancestor.component === blockTemplateComponent) {
       allowedCategories = undefined;
+      parentTag = undefined;
       constraintInstance = undefined;
       wasSatisfying = true;
       continue;
@@ -243,7 +254,12 @@ const findHtmlConstraintInstance = ({
       props,
       htmlTagsByInstanceId,
     });
-    allowedCategories = getElementChildren(ancestorTag, allowedCategories);
+    allowedCategories = getElementChildren(
+      ancestorTag,
+      allowedCategories,
+      parentTag
+    );
+    parentTag = ancestorTag ?? parentTag;
     const isSatisfying = isTagSatisfyingContentModel({
       tag,
       component,
@@ -429,6 +445,7 @@ export const isTreeSatisfyingContentModel = ({
   htmlTagsByInstanceId = getHtmlTagsFromProps(props),
   onError,
   _allowedCategories: allowedCategories,
+  _parentTag: parentTag,
   _allowedAncestorCategories: allowedAncestorCategories,
   _allowedParentCategories: allowedParentCategories,
 }: {
@@ -439,17 +456,20 @@ export const isTreeSatisfyingContentModel = ({
   htmlTagsByInstanceId?: HtmlTagsByInstanceId;
   onError?: (message: string, instanceSelector: InstanceSelector) => void;
   _allowedCategories?: string[];
+  _parentTag?: string;
   _allowedAncestorCategories?: string[];
   _allowedParentCategories?: string[];
 }): boolean => {
   // compute constraints only when not passed from parent
-  allowedCategories ??= computeAllowedCategories({
-    instanceSelector,
-    instances,
-    props,
-    metas,
-    htmlTagsByInstanceId,
-  });
+  if (allowedCategories === undefined) {
+    ({ allowedCategories, parentTag } = computeAllowedCategories({
+      instanceSelector,
+      instances,
+      props,
+      metas,
+      htmlTagsByInstanceId,
+    }));
+  }
   allowedParentCategories ??= getAllowedParentCategories({
     instanceSelector,
     instances,
@@ -547,7 +567,7 @@ export const isTreeSatisfyingContentModel = ({
     isSatisfying = false;
   }
   const contentModel = getComponentContentModel(metas.get(instance.component));
-  allowedCategories = getElementChildren(tag, allowedCategories);
+  allowedCategories = getElementChildren(tag, allowedCategories, parentTag);
   allowedParentCategories = contentModel.children;
   if (contentModel.descendants) {
     allowedAncestorCategories ??= [];
@@ -569,6 +589,7 @@ export const isTreeSatisfyingContentModel = ({
           instance.component === blockTemplateComponent
             ? undefined
             : allowedCategories,
+        _parentTag: tag ?? parentTag,
         _allowedParentCategories: allowedParentCategories,
         _allowedAncestorCategories: allowedAncestorCategories,
       });

@@ -15,11 +15,11 @@ export const InsetList = styled("div", {
   padding: theme.spacing[3],
 });
 
-const insetListItemStyle = css({
+const insetListItemStyle = css(buttonStyle, {
   height: "auto",
   minHeight: theme.spacing[13],
   padding: theme.spacing[3],
-  justifyContent: "stretch",
+  justifyContent: "start",
   textAlign: "left",
   overflow: "hidden",
   gap: theme.spacing[5],
@@ -52,9 +52,10 @@ export const InsetListItem = forwardRef(
         {...props}
         ref={ref}
         data-state={dataState ?? "auto"}
-        className={buttonStyle({
+        className={insetListItemStyle({
           color: "ghost",
-          className: insetListItemStyle({ className, css: cssProp }),
+          className,
+          css: cssProp,
         })}
       />
     );
