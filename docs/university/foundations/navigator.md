@@ -37,11 +37,21 @@ keeps the remaining selection intact.
 
 ### Link to a selected instance
 
-The Builder URL tracks the selected page and instance. Copy the browser URL to
-share a link that opens the same page and selects the same instance. Webstudio
-also uses these links for actions such as **Show element** in pre-publish
+Right-click an instance and choose **Copy link to instance** to copy its full
+Builder URL to the clipboard. Share the link to open the same page and select
+the same instance, including its location inside a shared Slot. Select one
+instance at a time; this action is unavailable for Global Root.
+
+The recipient needs access to the project. If you opened the Builder through a
+share link, the copied URL keeps that share link’s access token.
+
+You can also copy the browser URL, which tracks the selected page and instance.
+Webstudio also uses these links for actions such as **Show element** in pre-publish
 findings. If the instance was removed before the link is opened, the Builder
 still opens the requested page.
+
+You can give this link to an AI assistant connected to the project through
+[MCP](../mcp.md) to identify the instance you want to change.
 
 ## Renaming instances
 

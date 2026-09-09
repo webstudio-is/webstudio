@@ -16,55 +16,16 @@ import {
 import { builderPath } from "~/shared/router-utils";
 import { $selectedPage } from "../nano-states";
 import { selectPage } from "../nano-states";
-import {
-  findPageByIdOrPath,
-  getAllPages,
-  isPageTemplate,
-  type Instances,
-  type Pages,
-} from "@webstudio-is/sdk";
+import { findPageByIdOrPath, isPageTemplate } from "@webstudio-is/sdk";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { canResolveInstanceSelector } from "../instance-utils/selection";
-
-const getDeepLinkedInstanceSelection = ({
-  instanceSelector,
-  canOpenPageTemplates,
-  pages,
-  instances,
-}: {
-  instanceSelector: InstanceSelector | undefined;
-  canOpenPageTemplates: boolean;
-  pages: Pages;
-  instances: Instances;
-}) => {
-  if (instanceSelector === undefined) {
-    return;
-  }
-
-  const instanceId = instanceSelector[0];
-  if (
-    instanceId === undefined ||
-    instances.has(instanceId) === false ||
-    canResolveInstanceSelector(instanceSelector, instances) === false
-  ) {
-    return;
-  }
-
-  const rootInstanceId = instanceSelector.at(-1);
-  const page = getAllPages(pages).find(
-    (page) => page.rootInstanceId === rootInstanceId
-  );
-  if (
-    page === undefined ||
-    (isPageTemplate(page) && canOpenPageTemplates === false)
-  ) {
-    return;
-  }
-  return { pageId: page.id, instanceSelector };
-};
+import {
+  getDeepLinkedInstanceSelection,
+  getInstanceSelectorFromUrl,
+} from "../instance-utils/link";
 
 const shouldNavigateToPageState = ({
   isUrlStateInitialized,
@@ -87,12 +48,8 @@ const shouldNavigateToPageState = ({
         ) === false));
 
 export const __testing__ = {
-  getDeepLinkedInstanceSelection,
   shouldNavigateToPageState,
 };
-
-const getInstanceSelectorFromUrl = (searchParams: URLSearchParams) =>
-  searchParams.get("instance")?.split(",");
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
