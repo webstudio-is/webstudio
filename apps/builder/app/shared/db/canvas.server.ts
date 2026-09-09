@@ -19,6 +19,7 @@ import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/r
 import {
   loadAssetDataByProject,
   preparePublishedAssetData,
+  validatePublishedAssetCollections,
 } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
@@ -160,15 +161,23 @@ const loadProductionCanvasDataAndProject = async (
   };
 };
 
+const addProjectMetadataDependencies = {
+  getUserById,
+  preparePublishedAssetData,
+  validatePublishedAssetCollections,
+  createAssetClient,
+};
+
 const addProjectMetadata = async (
   data: ProjectBundle,
   project: Project,
-  context: AppContext
+  context: AppContext,
+  dependencies = addProjectMetadataDependencies
 ): Promise<PublishedProjectBundle> => {
   const user =
     project.userId === null
       ? undefined
-      : await getUserById(context, project.userId);
+      : await dependencies.getUserById(context, project.userId);
 
   const publicationBuild = {
     ...data.build,
@@ -196,10 +205,10 @@ const addProjectMetadata = async (
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
   if (assetRequirements !== undefined) {
-    const publishedAssetData = await preparePublishedAssetData({
+    const publishedAssetData = await dependencies.preparePublishedAssetData({
       projectId: project.id,
       context,
-      assetStore: createAssetClient(),
+      assetStore: dependencies.createAssetClient(),
       contentDatabaseMaxBytes: getPublishedMdxContentDatabaseMaxBytes({
         baseBytes: getContentDatabaseMaxBytes(),
         assets: data.assets,
@@ -224,6 +233,22 @@ const addProjectMetadata = async (
     });
     assetIndex = publishedAssetData.artifact;
     publishedAssets = publishedAssetData.assets;
+    publishedAssetFolders = publishedAssetData.assetFolders;
+  } else {
+    const publishedAssetData =
+      await dependencies.validatePublishedAssetCollections({
+        projectId: project.id,
+        context,
+        assetStore: dependencies.createAssetClient(),
+      });
+    const retainedFontIds = new Set(
+      data.assets
+        .filter((asset) => asset.type === "font")
+        .map((asset) => asset.id)
+    );
+    publishedAssets = publishedAssetData.assets.filter(
+      (asset) => asset.type !== "font" || retainedFontIds.has(asset.id)
+    );
     publishedAssetFolders = publishedAssetData.assetFolders;
   }
 
@@ -334,6 +359,7 @@ export const loadProjectBundleByProjectId = async (
 };
 
 export const __testing__ = {
+  addProjectMetadata,
   createLoadPublishedProjectBundleByProjectId,
   serializeProjectBundle,
 };

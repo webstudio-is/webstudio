@@ -1,3 +1,7 @@
+/**
+ * Translates parser and rendered content-model failures into source-located
+ * Content Block diagnostics that Builder and MCP consumers can display.
+ */
 import {
   createMdxSourceDiagnostics,
   type MdxAuthoredNode,

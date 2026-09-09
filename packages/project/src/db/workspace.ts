@@ -1,4 +1,5 @@
 import type { Database } from "@webstudio-is/postgrest/index.server";
+import { createId } from "@webstudio-is/sdk";
 import {
   type AppContext,
   AuthorizationError,
@@ -67,7 +68,7 @@ export const create = async (
   const result = await context.postgrest.client
     .from("Workspace")
     .insert({
-      id: crypto.randomUUID(),
+      id: createId(),
       name: trimmed,
       isDefault: false,
       userId,

@@ -367,18 +367,30 @@ const useDraggable = ({
 
     if (isMaximized === false) {
       if (x !== undefined && y !== undefined) {
+        const draggedRect = lastDragDataRef.current?.rect;
         // Get actual rendered dimensions if width/height not specified
-        const actualWidth = width ?? ref.current?.offsetWidth ?? bounds.width;
+        const actualWidth =
+          width ??
+          draggedRect?.width ??
+          ref.current?.offsetWidth ??
+          bounds.width;
         const actualHeight =
-          height ?? ref.current?.offsetHeight ?? bounds.height;
+          height ??
+          draggedRect?.height ??
+          ref.current?.offsetHeight ??
+          bounds.height;
 
         const constrained = applyBoundaries(
           x,
           y,
           actualWidth,
-          actualHeight,
+          // After dragging, keep the title reachable without snapping the
+          // entire dialog back inside the boundary.
+          draggedRect
+            ? Math.min(actualHeight, DIALOG_TITLE_HEIGHT)
+            : actualHeight,
           bounds,
-          boundaryTolerance
+          draggedRect ? undefined : boundaryTolerance
         );
 
         style.left = constrained.x;
@@ -387,7 +399,7 @@ const useDraggable = ({
           style.width = constrained.width;
         }
         if (height !== undefined) {
-          style.height = constrained.height;
+          style.height = draggedRect ? actualHeight : constrained.height;
         }
         style.right = "auto";
         style.bottom = "auto";
@@ -525,14 +537,12 @@ const useDraggable = ({
     }
     const rect = target.getBoundingClientRect();
 
-    // Apply constraints to snap to the closest valid position
-    let constrainedX = Math.max(rect.x, bounds.x);
-    constrainedX = Math.min(constrainedX, bounds.x + bounds.width - rect.width);
-    let constrainedY = Math.max(rect.y, bounds.y);
-    // Keep at least title visible at the bottom
-    constrainedY = Math.min(
-      constrainedY,
-      bounds.y + bounds.height - DIALOG_TITLE_HEIGHT
+    const { x: constrainedX, y: constrainedY } = applyBoundaries(
+      rect.x,
+      rect.y,
+      rect.width,
+      Math.min(rect.height, DIALOG_TITLE_HEIGHT),
+      bounds
     );
 
     setX(constrainedX);
@@ -620,6 +630,41 @@ const ContentContainer = forwardRef(
         onDragEndCapture={setPointerEvents("auto")}
         {...draggableProps}
         {...props}
+        onKeyDown={(event) => {
+          props.onKeyDown?.(event);
+          // Radix handles dismissal; keep the same Escape from closing a parent
+          // panel, including when the dialog refuses dismissal during a save.
+          if (event.key === "Escape") {
+            event.stopPropagation();
+          }
+        }}
+        onOpenAutoFocus={(event) => {
+          props.onOpenAutoFocus?.(event);
+          if (event.defaultPrevented) {
+            return;
+          }
+          // Primary actions include destructive confirmations. Leave Radix's
+          // normal focus order in place when no enabled action is available.
+          const actions = ref.current?.querySelectorAll<HTMLElement>(
+            '[data-button-color="primary"], [data-button-color="destructive"]'
+          );
+          for (const action of actions ?? []) {
+            if (
+              action.closest('[role="dialog"]') !== ref.current ||
+              action.matches(':disabled, [aria-disabled="true"]') ||
+              !action.checkVisibility({ checkVisibilityCSS: true })
+            ) {
+              continue;
+            }
+            action.focus();
+            if (document.activeElement === action) {
+              // Mouse-opened dialogs still need a visible initial focus target.
+              action.setAttribute("data-dialog-autofocus", "");
+              event.preventDefault();
+              return;
+            }
+          }
+        }}
         ref={mergeRefs(forwardedRef, ref, setElement)}
       >
         {children}

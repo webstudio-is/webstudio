@@ -4,6 +4,7 @@ import {
   isLocalResource,
   loadResource,
 } from "@webstudio-is/sdk/runtime";
+import { getZodValidationIssues } from "@webstudio-is/project-build/runtime";
 import { executeAssetQueries } from "~/shared/$resources/assets-query.server";
 import { getResourceKey } from "~/shared/resource-utils";
 
@@ -73,9 +74,16 @@ export const loadResourceRequestList = async (
         getResourceKey(item as ResourceRequest),
         {
           ok: false,
-          data: resource.error.format(),
-          status: 403,
-          statusText: "Resource validation error",
+          data: {
+            error: {
+              code: "INVALID_REQUEST",
+              message: "Resource request is invalid",
+              retryable: false,
+              details: { issues: getZodValidationIssues(resource.error) },
+            },
+          },
+          status: 400,
+          statusText: "Bad Request",
         },
       ];
     }

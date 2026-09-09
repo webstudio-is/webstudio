@@ -88,6 +88,7 @@ const getStandardFieldContributions = (
         { path: "metadataError", type: "object" } as const,
         { path: "metadataError.code", type: "string" } as const,
         { path: "metadataError.message", type: "string" } as const,
+        { path: "metadataError.reason", type: "string" } as const,
       ]),
 ];
 

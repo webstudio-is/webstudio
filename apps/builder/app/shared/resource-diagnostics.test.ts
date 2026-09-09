@@ -56,17 +56,54 @@ describe("resource diagnostics", () => {
     });
   });
 
-  test("strips malformed diagnostics instead of exposing them", () => {
+  test("returns every schema issue for malformed diagnostics", () => {
     const separated = separateResourceDiagnostics({
       request: assetsRequest,
       result: {
         data: { items: [] },
-        __diagnostics__: { truncated: "yes" },
+        __diagnostics__: {
+          scope: "other",
+          query: {
+            usedBytes: "large",
+            maxBytes: 500,
+            unboundedBytes: 100,
+            includedDocumentCount: 1,
+            omittedDocumentCount: 0,
+            truncated: false,
+          },
+          database: {
+            usedBytes: 500,
+            maxBytes: 500,
+            unboundedBytes: 500,
+            includedDocumentCount: 1,
+            omittedDocumentCount: 0,
+            truncated: false,
+          },
+        },
       },
     });
 
     expect(separated.result).toEqual({ data: { items: [] } });
     expect(separated.diagnostics).toBeUndefined();
+    expect(separated.diagnosticsError).toMatchObject({
+      ok: false,
+      status: 500,
+      data: {
+        error: {
+          code: "INVALID_DIAGNOSTICS_RESPONSE",
+          message: "Resource diagnostics response is invalid",
+          retryable: true,
+        },
+      },
+    });
+    expect(
+      separated.diagnosticsError?.data.error.details.issues.map(
+        ({ path }) => path
+      )
+    ).toEqual([
+      ["__diagnostics__", "scope"],
+      ["__diagnostics__", "query", "usedBytes"],
+    ]);
   });
 
   test("preserves diagnostics fields returned by ordinary APIs", () => {

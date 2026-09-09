@@ -11,12 +11,14 @@ import {
 } from "@webstudio-is/sdk";
 import {
   builderRuntimeContext,
+  BuilderRuntimeError,
   createComponentTemplateFragment,
   getFragmentContentModelWarnings,
   type FragmentContentModelWarning,
   type ConflictResolution,
   resolveComponentInsertTarget,
   resolveFragmentInsertTarget,
+  type InstanceSelector,
   type InsertTarget,
 } from "@webstudio-is/project-build/runtime";
 import {
@@ -28,7 +30,7 @@ import {
 } from "../nano-states";
 import { $instances, $project, $props } from "../sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { executeRuntimeMutation } from "./data";
+import { executeRuntimeMutation, executeRuntimeMutationSequence } from "./data";
 
 const getRootInstanceId = () => $selectedPage.get()?.rootInstanceId;
 
@@ -136,15 +138,26 @@ export const insertWebstudioComponentAt = (
   if (target === undefined) {
     return false;
   }
-  const result = executeRuntimeMutation({
-    id: "instances.insertComponent",
-    input: {
-      parentInstanceId: target.parentInstanceId,
-      component,
-      tag: target.tag,
-      insertIndex: target.insertIndex,
-    },
-  });
+  let result: ReturnType<
+    typeof executeRuntimeMutation<"instances.insertComponent">
+  >;
+  try {
+    result = executeRuntimeMutation({
+      id: "instances.insertComponent",
+      input: {
+        parentInstanceId: target.parentInstanceId,
+        component,
+        tag: target.tag,
+        insertIndex: target.insertIndex,
+      },
+    });
+  } catch (error) {
+    if (error instanceof BuilderRuntimeError) {
+      toast.error(error.message);
+      return false;
+    }
+    throw error;
+  }
   const newInstanceId = result?.result.rootInstanceIds[0];
   if (result !== undefined && newInstanceId !== undefined) {
     const parentSelector =
@@ -167,6 +180,7 @@ export const insertWebstudioFragmentAt = (
   conflictResolution?: ConflictResolution,
   options?: {
     contentMode?: boolean;
+    replaceInstanceSelector?: InstanceSelector;
     onBreakpointLimitMerge?: () => void;
     allowContentModelWarnings?: boolean;
     onContentModelWarnings?: (warnings: FragmentContentModelWarning[]) => void;
@@ -200,7 +214,7 @@ export const insertWebstudioFragmentAt = (
   if ($project.get() === undefined || target === undefined) {
     return false;
   }
-  const result = executeRuntimeMutation({
+  const insertOperation = {
     id: "instances.insertFragment",
     input: {
       parentInstanceId: target.parentInstanceId,
@@ -212,12 +226,22 @@ export const insertWebstudioFragmentAt = (
     context: {
       allowLegacyContentModelWarnings: options?.allowContentModelWarnings,
     },
-  });
-  const newInstanceId = result?.result.rootInstanceIds[0];
-  if (result !== undefined && newInstanceId !== undefined) {
+  } as const;
+  const insertionResult =
+    options?.replaceInstanceSelector === undefined
+      ? executeRuntimeMutation(insertOperation)?.result
+      : executeRuntimeMutationSequence([
+          insertOperation,
+          {
+            id: "instances.deleteBySelector",
+            input: { instanceSelector: options.replaceInstanceSelector },
+          },
+        ] as const)?.[0];
+  const newInstanceId = insertionResult?.rootInstanceIds[0];
+  if (insertionResult !== undefined && newInstanceId !== undefined) {
     const resultParentInstanceId =
-      "parentInstanceId" in result.result
-        ? result.result.parentInstanceId
+      "parentInstanceId" in insertionResult
+        ? insertionResult.parentInstanceId
         : undefined;
     const nextParentSelector =
       resultParentInstanceId === undefined ||
@@ -226,10 +250,13 @@ export const insertWebstudioFragmentAt = (
         : [resultParentInstanceId, ...target.parentSelector];
     selectInstance([newInstanceId, ...nextParentSelector]);
   }
-  if (result?.result.didMergeBreakpointsDueToLimit === true) {
+  if (insertionResult?.didMergeBreakpointsDueToLimit === true) {
     options?.onBreakpointLimitMerge?.();
   }
-  if (result !== undefined && options?.allowContentModelWarnings === true) {
+  if (
+    insertionResult !== undefined &&
+    options?.allowContentModelWarnings === true
+  ) {
     const warnings = getFragmentContentModelWarnings({
       fragment,
       metas: $registeredComponentMetas.get(),
@@ -238,7 +265,7 @@ export const insertWebstudioFragmentAt = (
       options.onContentModelWarnings?.(warnings);
     }
   }
-  return result !== undefined;
+  return insertionResult !== undefined;
 };
 
 export const getComponentTemplateData = (

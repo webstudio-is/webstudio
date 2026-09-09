@@ -1,5 +1,12 @@
-import type { Extension } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { EditorState, type Extension } from "@codemirror/state";
+import { syntaxTree } from "@codemirror/language";
+import { keymap, tooltips } from "@codemirror/view";
+import {
+  autocompletion,
+  CompletionContext,
+  completionKeymap,
+  type CompletionSource,
+} from "@codemirror/autocomplete";
 import {
   linter,
   lintGutter,
@@ -7,14 +14,20 @@ import {
   type Diagnostic,
 } from "@codemirror/lint";
 import { css } from "@codemirror/lang-css";
-import { html } from "@codemirror/lang-html";
+import {
+  html as htmlLanguage,
+  htmlCompletionSourceWith,
+  type TagSpec,
+} from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { parseJsonExpression } from "@webstudio-is/expression";
+import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
 import {
-  createMdxSourceDiagnostics,
-  parseMdxDocumentRecovering,
+  isMdxTemplateComponentName,
   type MdxSourcePoint,
+  type TextAssetSourceDiagnostic,
+  validateTextAssetSource,
 } from "@webstudio-is/content-engine/mdx";
 import {
   getAssetTextEditorLanguage,
@@ -26,9 +39,142 @@ import type { AssetContentSessionState } from "@webstudio-is/content-engine/asse
 import { formatContentBlockDiagnostic } from "~/shared/content-block-diagnostics";
 
 export type MdxPersistenceFeedback = Readonly<{
-  kind: "failed" | "conflicting";
+  kind: "failed" | "conflicting" | "invalid";
   message: string;
 }>;
+
+type TextFileSourceDiagnostic =
+  | TextAssetSourceDiagnostic
+  | ContentBlockDiagnostic;
+
+export type ValidateTextFileSource = (input: {
+  source: string;
+  format: "md" | "mdx";
+}) => Promise<readonly TextFileSourceDiagnostic[]>;
+
+const validateTextFileSource: ValidateTextFileSource = async (input) =>
+  (await validateTextAssetSource(input)).diagnostics;
+
+export type MdxCompletionComponent = Readonly<{
+  name: string;
+  props: readonly Readonly<{
+    name: string;
+    values?: readonly string[];
+  }>[];
+}>;
+
+const mdxCompletionExcludedSyntax = new Set([
+  "CodeBlock",
+  "FencedCode",
+  "InlineCode",
+  "ProcessingInstructionBlock",
+  "CommentBlock",
+  "Link",
+  "Image",
+]);
+
+/** Uses CodeMirror's HTML parser to complete constrained JSX inside MDX. */
+export const createMdxCompletionSource = (
+  components: readonly MdxCompletionComponent[]
+): CompletionSource => {
+  const validComponents = components.filter(({ name }) =>
+    isMdxTemplateComponentName(name)
+  );
+  const componentsByName = new Map(
+    validComponents.map((component) => [component.name, component] as const)
+  );
+  const extraTags = Object.fromEntries(
+    validComponents.map(({ name, props }) => [
+      name,
+      {
+        attrs: Object.fromEntries(
+          props.map((prop) => [prop.name, prop.values ?? null])
+        ),
+      } satisfies TagSpec,
+    ])
+  );
+  const htmlSupport = htmlLanguage({
+    matchClosingTags: false,
+    autoCloseTags: false,
+    extraTags,
+  });
+  const completeHtml = htmlCompletionSourceWith({ extraTags });
+  return async (context) => {
+    let node = syntaxTree(context.state).resolveInner(context.pos, -1);
+    while (node.type.isTop === false) {
+      if (mdxCompletionExcludedSyntax.has(node.name)) {
+        return null;
+      }
+      const parent = node.parent;
+      if (parent === null) {
+        break;
+      }
+      node = parent;
+    }
+    const htmlState = EditorState.create({
+      doc: context.state.doc,
+      selection: { anchor: context.pos },
+      extensions: [htmlSupport],
+    });
+    const htmlContext = new CompletionContext(
+      htmlState,
+      context.pos,
+      context.explicit
+    );
+    const result = await completeHtml(htmlContext);
+    if (result === null) {
+      return null;
+    }
+    let htmlNode = syntaxTree(htmlState).resolveInner(context.pos, -1);
+    if (htmlNode.name === "AttributeValue") {
+      return result;
+    }
+    while (htmlNode.type.isTop === false && htmlNode.name !== "OpenTag") {
+      const parent = htmlNode.parent;
+      if (parent === null) {
+        break;
+      }
+      htmlNode = parent;
+    }
+    if (htmlNode.name !== "OpenTag") {
+      return result;
+    }
+    const tagNameNode = htmlNode.getChild("TagName");
+    if (
+      tagNameNode === null ||
+      context.pos <= tagNameNode.to ||
+      context.pos < tagNameNode.from
+    ) {
+      return result;
+    }
+    const tagName = htmlState.doc.sliceString(tagNameNode.from, tagNameNode.to);
+    const componentPropNames = new Set(
+      componentsByName.get(tagName)?.props.map(({ name }) => name) ?? []
+    );
+    const options = new Map(
+      result.options.map((option) => {
+        const label =
+          option.label === "class"
+            ? "className"
+            : componentPropNames.has(option.label)
+              ? option.label
+              : (standardAttributesToReactProps[option.label] ?? option.label);
+        return [
+          label,
+          {
+            ...option,
+            label,
+            ...(option.apply === option.label ? { apply: label } : {}),
+          },
+        ] as const;
+      })
+    );
+    return {
+      ...result,
+      options: Array.from(options.values()),
+    };
+  };
+};
 
 export const getMdxPersistenceFeedback = (
   state: Pick<AssetContentSessionState, "status" | "error">
@@ -61,41 +207,50 @@ const getPointOffset = (source: string, point: MdxSourcePoint) => {
   return Math.min(offset + point.column - 1, source.length);
 };
 
-export const getMdxEditorDiagnostics = async (
-  source: string,
-  semanticDiagnostics: readonly ContentBlockDiagnostic[] = []
-): Promise<Diagnostic[]> => {
-  const result = await parseMdxDocumentRecovering({ source });
+export const getTextFileEditorDiagnostics = async ({
+  source,
+  format,
+  semanticDiagnostics = [],
+  validateSource = validateTextFileSource,
+}: {
+  source: string;
+  format: "md" | "mdx";
+  semanticDiagnostics?: readonly ContentBlockDiagnostic[];
+  validateSource?: ValidateTextFileSource;
+}): Promise<Diagnostic[]> => {
   const diagnostics = [
-    ...createMdxSourceDiagnostics(result.diagnostics).map((diagnostic) => ({
-      sourceRange: diagnostic.sourceRange,
-      severity: diagnostic.severity,
-      message: diagnostic.message,
-    })),
-    ...semanticDiagnostics.map((diagnostic) => ({
-      sourceRange: diagnostic.sourceRange,
-      severity: diagnostic.severity,
+    ...(await validateSource({ source, format })),
+    ...semanticDiagnostics,
+  ].map((diagnostic) => {
+    const from =
+      "sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+        ? getPointOffset(source, diagnostic.sourceRange.start)
+        : "line" in diagnostic &&
+            diagnostic.line !== undefined &&
+            diagnostic.column !== undefined
+          ? getPointOffset(source, {
+              line: diagnostic.line,
+              column: diagnostic.column,
+            })
+          : 0;
+    const to =
+      "sourceRange" in diagnostic && diagnostic.sourceRange !== undefined
+        ? Math.max(from, getPointOffset(source, diagnostic.sourceRange.end))
+        : Math.min(source.length, from + 1);
+    return {
+      from,
+      to,
+      severity:
+        diagnostic.code === "unresolved-template"
+          ? ("error" as const)
+          : diagnostic.severity,
+      source: diagnostic.code,
       message:
-        diagnostic.code === "invalid-mdx"
+        "message" in diagnostic
           ? diagnostic.message
           : diagnostic.code === "unsafe-mdx"
             ? diagnostic.reason
             : formatContentBlockDiagnostic(diagnostic),
-    })),
-  ].map((diagnostic) => {
-    const from =
-      diagnostic.sourceRange === undefined
-        ? 0
-        : getPointOffset(source, diagnostic.sourceRange.start);
-    const to =
-      diagnostic.sourceRange === undefined
-        ? Math.min(1, source.length)
-        : Math.max(from, getPointOffset(source, diagnostic.sourceRange.end));
-    return {
-      from,
-      to,
-      severity: diagnostic.severity,
-      message: diagnostic.message,
     };
   });
   return Array.from(
@@ -105,39 +260,71 @@ export const getMdxEditorDiagnostics = async (
   );
 };
 
-const getMdxExtensions = (
-  semanticDiagnostics: readonly ContentBlockDiagnostic[]
-): Extension[] => [
-  linter(
-    (view) =>
-      getMdxEditorDiagnostics(view.state.doc.toString(), semanticDiagnostics),
-    { delay: 300 }
-  ),
-  lintGutter(),
-  keymap.of(lintKeymap),
-];
+const getMarkdownExtensions = (
+  format: "md" | "mdx",
+  semanticDiagnostics: readonly ContentBlockDiagnostic[],
+  validateSource: ValidateTextFileSource,
+  completionComponents: readonly MdxCompletionComponent[]
+): Extension[] => {
+  const extensions: Extension[] = [
+    linter(
+      (view) =>
+        getTextFileEditorDiagnostics({
+          source: view.state.doc.toString(),
+          format,
+          semanticDiagnostics,
+          validateSource,
+        }),
+      { delay: 300 }
+    ),
+    lintGutter(),
+    keymap.of(lintKeymap),
+  ];
+  if (format === "mdx") {
+    extensions.push(
+      tooltips({ parent: document.body }),
+      autocompletion({
+        override: [createMdxCompletionSource(completionComponents)],
+        icons: false,
+      }),
+      keymap.of(completionKeymap)
+    );
+  }
+  return extensions;
+};
 
 const languageExtensions = {
   plain: [],
   css: [css()],
-  html: [html()],
+  html: [htmlLanguage()],
   javascript: [javascript()],
   json: [javascript()],
   markdown: [markdown()],
-  xml: [html()],
+  xml: [htmlLanguage()],
 } satisfies Record<AssetTextEditorLanguage, Extension[]>;
 
 export const getTextFileEditorExtensions = (
   asset: Pick<Asset, "format">,
-  semanticDiagnostics: readonly ContentBlockDiagnostic[] = []
+  semanticDiagnostics: readonly ContentBlockDiagnostic[] = [],
+  validateSource: ValidateTextFileSource = validateTextFileSource,
+  completionComponents: readonly MdxCompletionComponent[] = []
 ): Extension[] => {
   const language = getAssetTextEditorLanguage(asset);
   if (language === undefined) {
     return [];
   }
   const extensions = languageExtensions[language];
-  return asset.format.toLowerCase() === "mdx"
-    ? [...extensions, ...getMdxExtensions(semanticDiagnostics)]
+  const format = asset.format.toLowerCase();
+  return format === "md" || format === "mdx"
+    ? [
+        ...extensions,
+        ...getMarkdownExtensions(
+          format,
+          semanticDiagnostics,
+          validateSource,
+          completionComponents
+        ),
+      ]
     : extensions;
 };
 

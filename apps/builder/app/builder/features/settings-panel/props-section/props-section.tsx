@@ -1,9 +1,10 @@
-import { nanoid } from "nanoid";
 import { useState } from "react";
+import { parseError } from "~/shared/error/error-parse";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
 import {
+  createId,
   type Instance,
   type Prop,
   type Props,
@@ -68,7 +69,7 @@ import { updateExternalContentFrontmatter } from "~/shared/external-content-root
 import {
   getSelectedContentBlockDocumentBindingPath,
   getSelectedContentBlockExpressionMode,
-  isObjectPathWritable,
+  getFrontmatterWriteTarget,
 } from "~/shared/content-block-document";
 import {
   createMdxAssetReferenceValues,
@@ -378,7 +379,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
           if (isEphemeral && value !== undefined) {
             memoryInstanceProp.set(animationAction.propName, {
-              id: nanoid(),
+              id: createId("nano"),
               instanceId: props.instanceId,
               type: "animationAction",
               name: animationAction.propName,
@@ -586,10 +587,12 @@ export const PropsSectionContainer = ({
           return;
         }
         if (
-          isObjectPathWritable({
+          getFrontmatterWriteTarget({
+            assetId: externalRoot.assetId ?? "",
+            sources: externalRoot.frontmatterSources,
             value: externalRoot.document.frontmatter.properties,
             path: targetPath,
-          }) === false
+          }) === undefined
         ) {
           toast.error("Open the referenced file to edit this value.");
           return;
@@ -606,11 +609,7 @@ export const PropsSectionContainer = ({
           value: nextValue,
           resolvedValue: nextResolvedValue,
         }).catch((error) => {
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : "Unable to update MDX frontmatter"
-          );
+          toast.error(parseError(error).message);
         });
         return;
       }

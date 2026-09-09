@@ -5,6 +5,7 @@ import {
   createErrorResponse,
   getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
+import { createId } from "@webstudio-is/sdk";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { unpublishBuild } from "@webstudio-is/project-build/server";
 import { validateDomain } from "./validate";
@@ -69,7 +70,7 @@ export const create = async (
     .from("Domain")
     .upsert(
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         domain,
         status: "INITIALIZING",
       },
@@ -94,7 +95,7 @@ export const create = async (
   }
 
   const domainId = domainRow.data.id;
-  const txtRecord = crypto.randomUUID();
+  const txtRecord = createId();
 
   const result = await context.postgrest.client.from("ProjectDomain").insert({
     domainId,

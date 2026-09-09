@@ -1,6 +1,12 @@
 import { test, expect } from "vitest";
-import { $, renderTemplate, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderTemplate,
+  ws,
+} from "@webstudio-is/template";
 import { __testing__ } from "./plugin-markdown";
+
+const Image = createTemplateComponentFixture("Image");
 
 const { parse } = __testing__;
 
@@ -90,7 +96,7 @@ test("image", () => {
   expect(parse('![foo](/url "title")')).toEqual(
     renderTemplate(
       <ws.element ws:tag="p">
-        <$.Image src="/url" alt="foo" title="title" />
+        <Image src="/url" alt="foo" title="title" />
       </ws.element>
     )
   );

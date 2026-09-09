@@ -18,6 +18,7 @@ import {
   Grid,
   IconButton,
   Label,
+  PanelContent,
   SectionTitle,
   SectionTitleButton,
   SmallIconButton,
@@ -156,12 +157,7 @@ const TransformAdvancedPopover = ({
       title="Advanced transform"
       placement="bottom-within"
       content={
-        <Grid
-          gap="2"
-          css={{
-            padding: theme.panel.padding,
-          }}
-        >
+        <PanelContent as={Grid} gap="2">
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Backface visibility"
@@ -186,7 +182,7 @@ const TransformAdvancedPopover = ({
             property="perspective-origin"
             disabled={readonly}
           />
-        </Grid>
+        </PanelContent>
       }
     >
       <TransformAdvancedButton unavailable={unavailable || readonly} />
@@ -323,19 +319,14 @@ const TransformSection = ({
     <FloatingPanel
       title={humanizeString(panel)}
       content={
-        <Flex
-          direction="column"
-          css={{
-            padding: theme.panel.padding,
-          }}
-        >
+        <PanelContent as={Flex} direction="column">
           {panel === "translate" && (
             <TranslatePanelContent disabled={readonly} />
           )}
           {panel === "scale" && <ScalePanelContent disabled={readonly} />}
           {panel === "rotate" && <RotatePanelContent disabled={readonly} />}
           {panel === "skew" && <SkewPanelContent disabled={readonly} />}
-        </Flex>
+        </PanelContent>
       }
     >
       <CssValueListItem

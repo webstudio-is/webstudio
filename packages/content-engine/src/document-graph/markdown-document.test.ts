@@ -21,6 +21,17 @@ The body can contain { "$ref": "ordinary text" }.
 `;
 
 describe("Markdown document adapter", () => {
+  test("keeps the body available when frontmatter is invalid", async () => {
+    const analyzed = await analyzeMarkdownDocument({
+      source: "---\ntitle: [broken\n---\n# Visible body\n",
+      sourceDocumentId: "post",
+      documentUrl,
+    });
+
+    expect(analyzed.document.frontmatter).toEqual({});
+    expect(analyzed.document.body).toBe("# Visible body\n");
+  });
+
   test("parses source, body, frontmatter, and compiler-ready references", async () => {
     const analyzed = await analyzeMarkdownDocument({
       source,

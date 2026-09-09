@@ -269,13 +269,24 @@ export const createPreviewController = (
       } catch (error) {
         const output = serverOutput.trim();
         if (output !== "" && error instanceof Error) {
-          throw new Error(
-            formatPreviewServerStartupError({
-              message: error.message,
-              output,
-              url,
-            })
-          );
+          error.message = formatPreviewServerStartupError({
+            message: error.message,
+            output,
+            url,
+          });
+          if (output.includes("EADDRINUSE")) {
+            Object.assign(error, {
+              code: "PREVIEW_PORT_IN_USE",
+              issues: [
+                {
+                  code: "preview_port_in_use",
+                  path: [],
+                  message: "The selected preview port is already in use.",
+                  constraint: "available_preview_port",
+                },
+              ],
+            });
+          }
         }
         throw error;
       }

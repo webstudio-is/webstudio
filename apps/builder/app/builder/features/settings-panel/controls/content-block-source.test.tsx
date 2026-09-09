@@ -6,6 +6,9 @@ import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/sync/data-stores";
 import { ContentBlockSourceControl } from "./content-block-source";
+import { $builderMode } from "~/shared/nano-states";
+import { EditorView } from "@codemirror/view";
+import { userEvent } from "@vitest/browser/context";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -256,6 +259,95 @@ test("shows only a full-width bindable connect button without a source", () => {
   expect(document.body.textContent).not.toContain("Create MDX file");
 });
 
+test("validates source bindings only after a source is configured", () => {
+  const previousMode = $builderMode.get();
+  $builderMode.set("design");
+  try {
+    for (const source of [
+      undefined,
+      { type: "expression" as const, value: '\"\"' },
+      undefined,
+    ]) {
+      act(() => {
+        root.render(
+          <TooltipProvider>
+            <ContentBlockSourceControl
+              source={source}
+              readOnly={false}
+              onRequestSource={async () => ({ status: "applied" })}
+              onOpen={() => {}}
+            />
+          </TooltipProvider>
+        );
+      });
+      const binding = container.querySelector(
+        "button[data-variant] [data-variant]"
+      );
+      expect(binding).not.toBeNull();
+      expect(binding?.getAttribute("data-variant")).toBe(
+        source === undefined ? "default" : "error"
+      );
+    }
+  } finally {
+    $builderMode.set(previousMode);
+  }
+});
+
+test("marks rejected bindings on the expression input with an error tooltip", async () => {
+  const previousMode = $builderMode.get();
+  $builderMode.set("design");
+  const onRequestSource = vi.fn(async () => ({
+    status: "blocked" as const,
+    message: "Content source does not resolve to an MDX Asset",
+  }));
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <ContentBlockSourceControl
+            readOnly={false}
+            onRequestSource={onRequestSource}
+            onOpen={() => {}}
+          />
+        </TooltipProvider>
+      )
+    );
+    await act(async () =>
+      userEvent.click(container.querySelector("button[data-variant]")!)
+    );
+    await vi.waitFor(() =>
+      expect(document.querySelector(".cm-content")).not.toBeNull()
+    );
+    const editor = document.querySelector<HTMLElement>(".cm-content")!;
+    const view = EditorView.findFromDOM(editor)!;
+    await act(async () => {
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: '"not-an-asset"',
+        },
+      });
+    });
+    await act(async () => {
+      editor.blur();
+      await Promise.resolve();
+    });
+    expect(onRequestSource).toHaveBeenCalledOnce();
+    expect(editor.closest('[data-invalid="true"]')).not.toBeNull();
+    expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull();
+    expect(container.querySelector('fieldset [role="alert"]')).toBeNull();
+    await act(async () => userEvent.hover(editor));
+    await vi.waitFor(() =>
+      expect(document.querySelector('[role="tooltip"]')?.textContent).toBe(
+        "Content source does not resolve to an MDX Asset"
+      )
+    );
+  } finally {
+    $builderMode.set(previousMode);
+  }
+});
+
 test("asks for confirmation before connecting over existing content", async () => {
   const onRequestSource = vi
     .fn()
@@ -294,9 +386,7 @@ test("asks for confirmation before connecting over existing content", async () =
   expect(document.body.textContent).toContain(
     "The MDX file will not be changed."
   );
-  expect(document.body.textContent).toContain(
-    "Unexpected closing tag. Line 3, column 2."
-  );
+  expect(document.querySelector('[role="dialog"] [role="status"]')).toBeNull();
   const dialogButtons = Array.from(
     document.body.querySelectorAll<HTMLButtonElement>("button")
   )

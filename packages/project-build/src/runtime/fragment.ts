@@ -1,9 +1,9 @@
 // Fragment utilities own extracting, copying, and conflict-checking portable
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
-import { nanoid } from "nanoid";
 import { migrateCodeTextContentMutable } from "@webstudio-is/project-migrations";
 import {
+  createId,
   type Asset,
   type Breakpoints,
   type DataSource,
@@ -25,6 +25,7 @@ import {
   portalComponent,
   webstudioFragment,
 } from "@webstudio-is/sdk";
+
 import {
   findAvailableVariables,
   replaceDataSourcesInExpression,
@@ -54,6 +55,8 @@ import {
   traverseStyleValue,
 } from "./style-utils";
 import { countDataSourceAssetReferences } from "./assets";
+
+const createNanoId = () => createId("nano");
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;
@@ -609,7 +612,7 @@ export const insertWebstudioFragmentCopy = ({
   onBreakpointLimitMerge,
   metas,
   contentModeCopyableProp,
-  createId = nanoid,
+  createId = createNanoId,
   // In content mode, insertion keeps content-editable instance data, creates
   // local styles for inserted instances, and avoids data/resource records.
   contentMode = false,

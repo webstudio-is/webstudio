@@ -1,11 +1,15 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { act } from "react-dom/test-utils";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { $assetFolders } from "~/shared/sync/data-stores";
+import { $assetFolders, $pages, $project } from "~/shared/sync/data-stores";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   AssetFolderSettingsDialog,
+  assertCollectionSetupProject,
   CreateAssetFolderDialog,
+  createContentCollectionFolder,
   MoveAssetManagerItemsDialog,
 } from "./asset-folder-dialogs";
 import {
@@ -15,10 +19,12 @@ import {
 import { createAssetManagerTestRenderer } from "./test-utils";
 
 const renderer = createAssetManagerTestRenderer();
+registerContainers();
 const render = (children: ReactNode) =>
   renderer.render(<TooltipProvider>{children}</TooltipProvider>);
 
 beforeEach(() => {
+  $pages.set(createDefaultPages({ rootInstanceId: "root" }));
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -36,7 +42,13 @@ beforeEach(() => {
 afterEach(() => {
   renderer.cleanup();
   $assetFolders.set(new Map());
+  $project.set(undefined);
+  $pages.set(undefined);
   vi.unstubAllGlobals();
+  vi.useRealTimers();
+  serverSyncStore.popAll();
+  serverSyncStore.transactionManager.currentStack = [];
+  serverSyncStore.transactionManager.undoneStack = [];
 });
 
 test("Escape closes folder settings without closing the assets panel", () => {
@@ -74,12 +86,9 @@ test("Escape closes folder settings without closing the assets panel", () => {
   expect(onPanelClose).not.toHaveBeenCalled();
 });
 
-test.each([
-  { initialDeleteConfirmation: false, focusedAction: "Save" },
-  { initialDeleteConfirmation: true, focusedAction: "Delete folder" },
-])(
-  "focuses $focusedAction as the rightmost folder settings action",
-  ({ initialDeleteConfirmation, focusedAction }) => {
+test.each([false, true])(
+  "focuses the name or the delete confirmation (confirmation: %s)",
+  (initialDeleteConfirmation) => {
     const folder = createAssetFolderFixture({
       id: "folder",
       name: "Documents",
@@ -95,7 +104,96 @@ test.each([
       />
     );
 
-    expect(document.activeElement?.textContent).toBe(focusedAction);
+    if (initialDeleteConfirmation) {
+      expect(document.activeElement?.textContent).toBe("Delete folder");
+    } else {
+      expect(document.activeElement).toBe(
+        document.getElementById("asset-folder-name-folder")
+      );
+    }
+  }
+);
+
+test.each(["debounce", "close"])(
+  "saves a folder name without submitting and keeps settings open (%s)",
+  (saveBy) => {
+    vi.useFakeTimers();
+    const folder = createAssetFolderFixture({
+      id: "folder",
+      name: "Documents",
+    });
+    $assetFolders.set(createAssetFoldersFixture(folder));
+    $project.set({ id: folder.projectId } as never);
+    const onOpenChange = vi.fn();
+    render(
+      <AssetFolderSettingsDialog
+        folder={folder}
+        open
+        onOpenChange={onOpenChange}
+      />
+    );
+    const name = document.querySelector<HTMLInputElement>(
+      "#asset-folder-name-folder"
+    )!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )!.set!.call(name, "Renamed");
+      name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Documents");
+    act(() => {
+      if (saveBy === "debounce") {
+        vi.advanceTimersByTime(500);
+      } else {
+        renderer.cleanup();
+      }
+    });
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Renamed");
+    expect(onOpenChange).not.toHaveBeenCalled();
+  }
+);
+
+test.each(["", "Existing"])(
+  "saves a corrected folder name after rejecting an invalid value: %s",
+  (value) => {
+    vi.useFakeTimers();
+    const folder = createAssetFolderFixture({
+      id: "folder",
+      name: "Documents",
+    });
+    $assetFolders.set(
+      createAssetFoldersFixture(
+        folder,
+        createAssetFolderFixture({ id: "other", name: "Existing" })
+      )
+    );
+    $project.set({ id: folder.projectId } as never);
+    render(
+      <AssetFolderSettingsDialog folder={folder} open onOpenChange={vi.fn()} />
+    );
+    const name = document.querySelector<HTMLInputElement>(
+      "#asset-folder-name-folder"
+    )!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )!.set!.call(name, value);
+      name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    act(() => vi.advanceTimersByTime(500));
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Documents");
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )!.set!.call(name, "Corrected");
+      name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    act(() => vi.advanceTimersByTime(500));
+    expect($assetFolders.get().get(folder.id)?.name).toBe("Corrected");
   }
 );
 
@@ -140,6 +238,214 @@ test("focuses the folder name while the rightmost Create action is disabled", ()
       (button) => button.textContent === "Create folder"
     )?.disabled
   ).toBe(true);
+});
+
+test("hides collection creation from content editors", () => {
+  render(
+    <CreateAssetFolderDialog
+      open
+      onOpenChange={vi.fn()}
+      currentFolderId={undefined}
+      canCreateContentCollection={false}
+    />
+  );
+
+  expect(document.body.textContent).not.toContain("Use as content collection");
+});
+
+test("stops collection setup after the active project changes", () => {
+  expect(() =>
+    assertCollectionSetupProject({
+      expectedProjectId: "original-project",
+      currentProjectId: "next-project",
+    })
+  ).toThrow("project changed");
+});
+
+test("keeps an incomplete collection setup when the dialog closes", async () => {
+  $project.set({ id: "project" } as never);
+  const folder = createAssetFolderFixture({ id: "new-folder", name: "Posts" });
+  const createFolder = vi.fn();
+  const createCollection = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("The collection could not be created."))
+    .mockResolvedValue(folder);
+  const Harness = () => {
+    const [open, setOpen] = useState(true);
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>Reopen</button>
+        <CreateAssetFolderDialog
+          open={open}
+          onOpenChange={setOpen}
+          currentFolderId={undefined}
+          createFolder={createFolder}
+          createCollection={createCollection}
+        />
+      </>
+    );
+  };
+  render(<Harness />);
+
+  const name = document.querySelector<HTMLInputElement>("#asset-folder-name");
+  if (name === null) {
+    throw new Error("Expected folder name field");
+  }
+  act(() => {
+    const valueSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    valueSetter?.call(name, "Posts");
+    name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>("#asset-folder-content-collection")
+      ?.click();
+  });
+  await act(async () => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Create folder")
+      ?.click();
+  });
+  expect(document.body.textContent).toContain(
+    "The collection could not be created."
+  );
+
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Finish later")
+      ?.click();
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Reopen")
+      ?.click();
+  });
+
+  expect(document.body.textContent).toContain("Finish collection setup");
+  expect(createFolder).not.toHaveBeenCalled();
+  await act(async () => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Retry setup")
+      ?.click();
+  });
+  await vi.waitFor(() => expect(createCollection).toHaveBeenCalledTimes(2));
+  expect(createCollection.mock.calls[1]).toEqual(
+    createCollection.mock.calls[0]
+  );
+});
+
+test("creates the collection folder and seed files together", async () => {
+  $project.set({ id: "project" } as never);
+  const folder = createAssetFolderFixture({ id: "new-folder", name: "Posts" });
+  const createFolder = vi.fn();
+  const createCollection = vi.fn<typeof createContentCollectionFolder>(
+    async () => folder
+  );
+  const onConfigureCollection = vi.fn();
+  render(
+    <CreateAssetFolderDialog
+      open
+      onOpenChange={vi.fn()}
+      onConfigureCollection={onConfigureCollection}
+      currentFolderId={undefined}
+      createFolder={createFolder}
+      createCollection={createCollection}
+    />
+  );
+
+  const name = document.querySelector<HTMLInputElement>("#asset-folder-name");
+  if (name === null) {
+    throw new Error("Expected folder name field");
+  }
+  act(() => {
+    const valueSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    valueSetter?.call(name, "Posts");
+    name.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>("#asset-folder-content-collection")
+      ?.click();
+  });
+  await act(async () => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Create folder")
+      ?.click();
+  });
+
+  await vi.waitFor(() => expect(createCollection).toHaveBeenCalledOnce());
+  await vi.waitFor(() =>
+    expect(document.body.textContent).toContain("Collection created")
+  );
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Configure collection")
+      ?.click();
+  });
+  const collectionId = createCollection.mock.calls[0]?.[0].id;
+  expect(onConfigureCollection).toHaveBeenCalledWith(collectionId);
+  expect(createFolder).not.toHaveBeenCalled();
+  expect(createCollection).toHaveBeenCalledWith({
+    id: expect.any(String),
+    name: "Posts",
+    parentId: undefined,
+    projectId: "project",
+  });
+});
+
+test("sets up a collection using the existing folder identity from settings", async () => {
+  const folder = {
+    ...createAssetFolderFixture({ id: "existing", name: "Posts" }),
+    projectId: "project",
+  };
+  $project.set({ id: "project" } as never);
+  $assetFolders.set(createAssetFoldersFixture(folder));
+  const createCollection = vi.fn<typeof createContentCollectionFolder>(
+    async () => folder
+  );
+  const createFolder = vi.fn();
+  const configure = vi.fn();
+  const Harness = () => {
+    const [setup, setSetup] = useState(false);
+    return (
+      <>
+        <AssetFolderSettingsDialog
+          folder={folder}
+          open={!setup}
+          onOpenChange={vi.fn()}
+          onUseAsCollection={() => setSetup(true)}
+        />
+        <CreateAssetFolderDialog
+          existingFolder={folder}
+          open={setup}
+          onOpenChange={vi.fn()}
+          currentFolderId={undefined}
+          createCollection={createCollection}
+          createFolder={createFolder}
+          onConfigureCollection={configure}
+        />
+      </>
+    );
+  };
+  render(<Harness />);
+  const clickAction = (name: string) => {
+    const button = Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === name
+    );
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    button!.click();
+  };
+  act(() => clickAction("Use as content collection"));
+  await act(async () => clickAction("Use as content collection"));
+  expect(createCollection).toHaveBeenCalledWith({
+    id: folder.id,
+    name: folder.name,
+    parentId: folder.parentId,
+    projectId: folder.projectId,
+  });
+  expect(createFolder).not.toHaveBeenCalled();
+  act(() => clickAction("Configure collection"));
+  expect(configure).toHaveBeenCalledWith(folder.id);
 });
 
 test("moves items to the selected folder from the folder-only dialog", () => {

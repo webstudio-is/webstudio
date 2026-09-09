@@ -833,7 +833,15 @@ const QueryParameters = ({
                   icon={<PlusIcon />}
                 />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={4}>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={4}
+                css={{
+                  maxHeight:
+                    "var(--radix-dropdown-menu-content-available-height)",
+                  overflowY: "auto",
+                }}
+              >
                 {selectionParameters.map((parameter, index) => (
                   <Fragment key={parameter.key}>
                     {index > 0 && <DropdownMenuSeparator />}

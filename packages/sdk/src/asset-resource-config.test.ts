@@ -7,9 +7,11 @@ import {
   createAssetResourceRequest,
   createDefaultStructuredAssetQueryResourceConfiguration,
   createReachableAssetContentCompilationPlan,
+  createReachableAssetContentCompilationPlanResult,
   createStructuredAssetQueryResourceBody,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
+  parseStructuredAssetQueryResourceBodyResult,
 } from "./asset-resource-config";
 import { loadResource } from "./resource-loader";
 import { assetResourceLimits } from "./asset-resource-limits";
@@ -152,7 +154,51 @@ describe("asset query resource configuration", () => {
         dataSources: [],
         resources: [createResource({ body: "invalid" })],
       })
-    ).toThrow('Assets resource "posts" has an invalid query configuration');
+    ).toThrow(
+      'Assets resource "posts" has an invalid query configuration: Stored Assets query body is not a valid object expression.'
+    );
+  });
+
+  test("collects invalid reachable queries while compiling valid queries", () => {
+    const body = createStructuredAssetQueryResourceBody({
+      where: { all: [] },
+      sort: [],
+      limit: "10",
+      offset: "0",
+      output: { mode: "base", includeMetadata: true },
+      content: { mode: "none" },
+    });
+    const result = createReachableAssetContentCompilationPlanResult({
+      props: [
+        {
+          id: "valid-prop",
+          instanceId: "instance",
+          name: "valid",
+          type: "resource",
+          value: "valid",
+        },
+        {
+          id: "invalid-prop",
+          instanceId: "instance",
+          name: "invalid",
+          type: "resource",
+          value: "invalid",
+        },
+      ],
+      dataSources: [],
+      resources: [
+        createResource({ id: "valid", body }),
+        createResource({ id: "invalid", body: "invalid" }),
+      ],
+    });
+
+    expect(result.plan?.queries.map(({ id }) => id)).toEqual(["valid"]);
+    expect(result.issues).toEqual([
+      {
+        resourceId: "invalid",
+        message: "Stored Assets query body is not a valid object expression.",
+      },
+    ]);
   });
 
   test("rejects fractional pagination values", () => {
@@ -344,6 +390,38 @@ describe("asset query resource configuration", () => {
         content: { mode: "none" },
       })
     ).toThrow("Select at least one asset query output");
+  });
+
+  test("explains why a stored Assets query cannot be decoded", () => {
+    expect(parseStructuredAssetQueryResourceBodyResult("invalid")).toEqual({
+      success: false,
+      message: "Stored Assets query body is not a valid object expression.",
+    });
+    expect(
+      parseStructuredAssetQueryResourceBodyResult("({ unexpected: true })")
+    ).toEqual({
+      success: false,
+      message:
+        'Stored Assets query body has an unsupported field: "unexpected".',
+    });
+    expect(parseStructuredAssetQueryResourceBodyResult("({})")).toEqual({
+      success: false,
+      message: 'Stored Assets query body is missing the "query" field.',
+    });
+    expect(
+      parseStructuredAssetQueryResourceBodyResult(
+        "({ query: { where: 1 }, other: true })"
+      )
+    ).toEqual({
+      success: false,
+      message: 'Stored Assets query body has an unsupported field: "other".',
+    });
+    expect(
+      parseStructuredAssetQueryResourceBodyResult("({ query: { where: 1 } })")
+    ).toEqual({
+      success: false,
+      message: "Stored Assets query is invalid: Enter valid filters.",
+    });
   });
 
   test("preserves explicit output and defaults to URL and optional image dimensions", () => {

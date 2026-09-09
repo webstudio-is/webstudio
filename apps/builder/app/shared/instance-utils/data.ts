@@ -2,13 +2,22 @@
 // transaction boundaries. Put generic store reads/writes and content-mode data
 // guards here, not tree-shape mutations.
 import { toast } from "@webstudio-is/design-system";
-import { type WebstudioData, isPageTemplate } from "@webstudio-is/sdk";
+import {
+  type WebstudioData,
+  isPageTemplate,
+  blockTemplateComponent,
+  contentBlockMdxTemplateDescriptors,
+  elementComponent,
+  findTreeInstanceIds,
+  getContentBlockTemplateName,
+} from "@webstudio-is/sdk";
 import {
   BuilderRuntimeError,
   blockTemplateNameConfirmationInput,
   builderRuntimeContext,
   executeBuilderRuntimeOperation,
   createRuntimeMutationAccumulator,
+  findBlockTemplates,
   type BuilderRuntimeContext,
   type BuilderRuntimeMutation,
   type BuilderRuntimeOperationInput,
@@ -42,8 +51,19 @@ export type RuntimeMutationOperation = {
   [Id in BuilderRuntimeMutationOperationId]: {
     id: Id;
     input: BuilderRuntimeOperationInput<Id>;
+    context?: RuntimeMutationContext;
   };
 }[BuilderRuntimeMutationOperationId];
+
+type RuntimeMutationSequenceResults<
+  Operations extends readonly RuntimeMutationOperation[],
+> = {
+  [Index in keyof Operations]: Operations[Index] extends {
+    id: infer Id extends BuilderRuntimeMutationOperationId;
+  }
+    ? RuntimeMutationResult<Id>["result"]
+    : never;
+};
 
 type TemplateNameConfirmation = ReturnType<
   typeof blockTemplateNameConfirmationInput.parse
@@ -175,6 +195,83 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
   const afterData = applyBuilderPatchTransactions(data, [
     { id: "external-content-persistence-plan", payload },
   ]).state as ReturnType<typeof getWebstudioData>;
+  for (const key of affectedRootKeys) {
+    const root = roots.get(key);
+    if (root === undefined) {
+      continue;
+    }
+    const templates =
+      findBlockTemplates({
+        anchor: [root.sourceBlockInstanceId ?? root.blockInstanceId],
+        instances: afterData.instances,
+      }) ?? [];
+    const templateInstanceIds = new Set<string>();
+    const matchTemplate = (instanceId: string, templateId: string) => {
+      const instance = afterData.instances.get(instanceId);
+      const template = afterData.instances.get(templateId);
+      if (
+        instance === undefined ||
+        template === undefined ||
+        instance.component !== template.component ||
+        instance.tag !== template.tag ||
+        templateInstanceIds.has(instanceId)
+      ) {
+        return;
+      }
+      templateInstanceIds.add(instanceId);
+      instance.children.forEach((child, index) => {
+        const templateChild = template.children[index];
+        if (child.type === "id" && templateChild?.type === "id") {
+          matchTemplate(child.value, templateChild.value);
+        }
+      });
+    };
+    const content = afterData.instances.get(
+      root.contentInstanceId ?? root.blockInstanceId
+    );
+    for (const child of content?.children ?? []) {
+      if (
+        child.type !== "id" ||
+        afterData.instances.get(child.value)?.component ===
+          blockTemplateComponent
+      ) {
+        continue;
+      }
+      for (const id of findTreeInstanceIds(afterData.instances, child.value)) {
+        const instance = afterData.instances.get(id);
+        if (instance !== undefined) {
+          const matching = templates.filter(
+            ([template]) =>
+              getContentBlockTemplateName(template) ===
+              getContentBlockTemplateName(instance)
+          );
+          if (matching.length === 1) {
+            matchTemplate(id, matching[0][0].id);
+          }
+        }
+        if (
+          instance === undefined ||
+          (root.instanceIds.has(id) &&
+            data.instances.get(id)?.component === instance.component) ||
+          instance.component === elementComponent ||
+          contentBlockMdxTemplateDescriptors.some(
+            (descriptor) =>
+              descriptor.kind === "component" &&
+              descriptor.component === instance.component
+          ) ||
+          templateInstanceIds.has(id)
+        ) {
+          continue;
+        }
+        const error = new BuilderRuntimeError(
+          "BAD_REQUEST",
+          "This component is not in this Content Block’s Templates and cannot be added to MDX content. Add it to Templates first, or keep it outside MDX content."
+        );
+        toast.error(error.message);
+        throw error;
+      }
+    }
+  }
   const afterOwnership = getExternalContentOwnershipFromState({
     state: afterData,
     roots,
@@ -301,15 +398,17 @@ export const confirmPendingTemplateNameChange = () => {
   }
 };
 
-export const executeRuntimeMutationSequence = (
-  operations: readonly RuntimeMutationOperation[]
-): void => {
+export const executeRuntimeMutationSequence = <
+  const Operations extends readonly RuntimeMutationOperation[],
+>(
+  operations: Operations
+): RuntimeMutationSequenceResults<Operations> | undefined => {
   if (canCommitWebstudioData() === false) {
     return;
   }
   const accumulator = createRuntimeMutationAccumulator(getWebstudioData());
   const results: Record<string, unknown>[] = [];
-  for (const [operationIndex, { id, input }] of operations.entries()) {
+  for (const [operationIndex, { id, input, context }] of operations.entries()) {
     try {
       results.push(
         accumulator.stage(
@@ -319,7 +418,7 @@ export const executeRuntimeMutationSequence = (
               id,
               state: accumulator.state,
               input,
-              context: getRuntimeMutationContext(),
+              context: { ...getRuntimeMutationContext(), ...context },
             })
           )
         )
@@ -338,6 +437,7 @@ export const executeRuntimeMutationSequence = (
     }
   }
   commitRuntimeMutation(accumulator.complete({ results }));
+  return results as RuntimeMutationSequenceResults<Operations>;
 };
 
 export const executeRuntimeMutationAsync = async <

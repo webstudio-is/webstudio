@@ -2,6 +2,7 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import {
+  PanelContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,7 +13,6 @@ import {
   Button,
   Text,
   Flex,
-  theme,
   toast,
   Box,
   Checkbox,
@@ -20,6 +20,7 @@ import {
   Label,
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
+import { collectionConfigFilename } from "@webstudio-is/content-engine";
 import {
   $assets,
   $pages,
@@ -54,8 +55,22 @@ const DeleteUnusedAssetsDialogContent = ({
     styles,
     assets,
   });
+  const collectionFolderIds = new Set(
+    Array.from(assets.values()).flatMap((asset) =>
+      asset.folderId !== undefined &&
+      formatAssetName(asset) === collectionConfigFilename
+        ? [asset.folderId]
+        : []
+    )
+  );
   const unusedAssets: Asset[] = [];
   for (const asset of assets.values()) {
+    if (
+      asset.folderId !== undefined &&
+      collectionFolderIds.has(asset.folderId)
+    ) {
+      continue;
+    }
     const usages = usagesByAssetId.get(asset.id);
     if (usages === undefined || usages.length === 0) {
       unusedAssets.push(asset);
@@ -72,7 +87,7 @@ const DeleteUnusedAssetsDialogContent = ({
 
   return (
     <>
-      <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} gap="3" direction="column">
         {unusedAssets.length === 0 ? (
           <DialogDescription asChild>
             <Text>There are no unused assets to delete.</Text>
@@ -122,7 +137,7 @@ const DeleteUnusedAssetsDialogContent = ({
             </ScrollArea>
           </>
         )}
-      </Flex>
+      </PanelContent>
       <DialogActions>
         {unusedAssets.length > 0 && (
           <Button

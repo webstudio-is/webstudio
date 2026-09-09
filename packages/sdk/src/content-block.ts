@@ -21,6 +21,184 @@ import type { ExpressionChild, Instance, Instances } from "./schema/instances";
 import type { ExpressionBinding } from "./schema/expression";
 import type { Prop, Props } from "./schema/props";
 import { decodeDataSourceVariable } from "./expression";
+import { pascalCase } from "change-case";
+import { getComponentJsxName } from "./instances-utils";
+
+const toContentBlockTemplateIdentifier = (value: string) =>
+  pascalCase(value.normalize("NFKD").replaceAll(/\p{M}/gu, "")).replaceAll(
+    "_",
+    ""
+  ) || "Template";
+
+export type ContentBlockMdxTemplateDescriptor =
+  | Readonly<{
+      kind: "element";
+      resolutionKey: `element:${string}`;
+      label: string;
+      tag: string;
+      insertable: boolean;
+    }>
+  | Readonly<{
+      kind: "component";
+      resolutionKey: `component:${string}`;
+      label: string;
+      component: string;
+      insertable: boolean;
+    }>;
+
+const defineMdxElementTemplate = <const Tag extends string>(
+  tag: Tag,
+  label: string,
+  insertable: boolean
+) =>
+  ({
+    kind: "element",
+    resolutionKey: `element:${tag}`,
+    label,
+    tag,
+    insertable,
+  }) as const;
+
+const defineMdxComponentTemplate = <const Component extends string>(
+  component: Component,
+  label: string,
+  insertable: boolean
+) =>
+  ({
+    kind: "component",
+    resolutionKey: `component:${component}`,
+    label,
+    component,
+    insertable,
+  }) as const;
+
+/**
+ * Defines every MDX semantic that can resolve through a default Content Block
+ * template, in its default display order. Structural and inline-only semantics
+ * remain available for styling without being offered as standalone slash-menu
+ * insertions.
+ */
+export const contentBlockMdxTemplateDescriptors = [
+  defineMdxElementTemplate("p", "Paragraph", true),
+  defineMdxElementTemplate("h1", "Heading 1", true),
+  defineMdxElementTemplate("h2", "Heading 2", true),
+  defineMdxElementTemplate("h3", "Heading 3", true),
+  defineMdxElementTemplate("h4", "Heading 4", true),
+  defineMdxElementTemplate("h5", "Heading 5", true),
+  defineMdxElementTemplate("h6", "Heading 6", true),
+  defineMdxElementTemplate("ul", "Unordered List", true),
+  defineMdxElementTemplate("ol", "Ordered List", true),
+  defineMdxElementTemplate("li", "List Item", false),
+  defineMdxElementTemplate("a", "Link", true),
+  defineMdxComponentTemplate("Image", "Image", true),
+  defineMdxElementTemplate("hr", "Separator", true),
+  defineMdxElementTemplate("br", "Line Break", false),
+  defineMdxElementTemplate("blockquote", "Blockquote", true),
+  defineMdxElementTemplate("em", "Emphasis", false),
+  defineMdxElementTemplate("strong", "Strong", false),
+  defineMdxElementTemplate("del", "Strikethrough", false),
+  defineMdxElementTemplate("code", "Inline Code", false),
+  defineMdxElementTemplate("input", "Task Checkbox", false),
+  defineMdxElementTemplate("table", "Table", true),
+  defineMdxElementTemplate("thead", "Table Head", false),
+  defineMdxElementTemplate("tbody", "Table Body", false),
+  defineMdxElementTemplate("tr", "Table Row", false),
+  defineMdxElementTemplate("th", "Table Header", false),
+  defineMdxElementTemplate("td", "Table Cell", false),
+  defineMdxComponentTemplate("CodeText", "Code Block", true),
+] as const satisfies readonly ContentBlockMdxTemplateDescriptor[];
+
+export type ContentBlockMdxTemplateResolutionKey =
+  (typeof contentBlockMdxTemplateDescriptors)[number]["resolutionKey"];
+
+export const getContentBlockMdxTemplateDescriptor = (instance: {
+  component: string;
+  tag?: string;
+}): ContentBlockMdxTemplateDescriptor | undefined =>
+  contentBlockMdxTemplateDescriptors.find((descriptor) => {
+    if (descriptor.kind === "component") {
+      return descriptor.component === instance.component;
+    }
+    return descriptor.tag === instance.tag;
+  });
+
+/** Unknown, author-defined templates stay insertable. */
+export const isContentBlockMdxTemplateInsertable = (instance: {
+  component: string;
+  tag?: string;
+}) => getContentBlockMdxTemplateDescriptor(instance)?.insertable ?? true;
+
+/**
+ * Derives the canonical MDX identifier for a template that does not have a
+ * persisted name yet. Display labels never participate in this identity.
+ */
+export const getDefaultContentBlockTemplateName = (
+  instance: Pick<Instance, "component" | "tag">,
+  components?: Iterable<Instance["component"]>
+) => {
+  if (instance.component === "ws:element") {
+    return toContentBlockTemplateIdentifier(instance.tag ?? "Element");
+  }
+  const componentName =
+    components === undefined
+      ? (instance.component.split(":").at(-1) ?? "Component")
+      : getComponentJsxName({ component: instance.component, components });
+  return toContentBlockTemplateIdentifier(componentName);
+};
+
+/**
+ * Returns the stable MDX identifier for a direct Content Block template.
+ * The label fallback reads projects created before template names existed and
+ * can be removed after their authored MDX has been migrated.
+ */
+export const getContentBlockTemplateName = (
+  instance: Pick<Instance, "component" | "label" | "name" | "tag">
+) =>
+  instance.name ??
+  instance.label ??
+  getDefaultContentBlockTemplateName(instance);
+
+/** Assigns stable, unique MDX names to templates newly placed in a container. */
+export const assignUniqueBlockTemplateNamesMutable = ({
+  instanceIds,
+  parent,
+  replacedInstanceIds = [],
+  instances,
+  components,
+}: {
+  instanceIds: readonly Instance["id"][];
+  parent: Instance;
+  replacedInstanceIds?: readonly Instance["id"][];
+  instances: Instances;
+  components?: Iterable<Instance["component"]>;
+}) => {
+  if (parent.component !== blockTemplateComponent) {
+    return;
+  }
+  const ignoredIds = new Set([...instanceIds, ...replacedInstanceIds]);
+  const existingNames = new Set<string>();
+  for (const child of parent.children) {
+    const instance =
+      child.type === "id" ? instances.get(child.value) : undefined;
+    if (instance !== undefined && ignoredIds.has(instance.id) === false) {
+      existingNames.add(getContentBlockTemplateName(instance));
+    }
+  }
+  for (const instanceId of instanceIds) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      continue;
+    }
+    const uniqueName = allocateUniqueContentBlockTemplateName({
+      name:
+        instance.name ??
+        getDefaultContentBlockTemplateName(instance, components),
+      existingNames,
+    });
+    instance.name = uniqueName;
+    existingNames.add(uniqueName);
+  }
+};
 
 export const createContentBlockExternalContentIdentity = ({
   blockInstanceId,
@@ -529,12 +707,12 @@ export const allocateUniqueContentBlockTemplateName = ({
   name: string;
   existingNames: ReadonlySet<string>;
 }) => {
-  const normalizedName = name.trim();
+  const normalizedName = toContentBlockTemplateIdentifier(name);
   if (existingNames.has(normalizedName) === false) {
     return normalizedName;
   }
 
-  const suffixMatch = /^(.*) (\d+)$/.exec(normalizedName);
+  const suffixMatch = /^(.*?)(\d+)$/.exec(normalizedName);
   let baseName = normalizedName;
   let index = 2;
   if (suffixMatch !== null) {
@@ -544,7 +722,7 @@ export const allocateUniqueContentBlockTemplateName = ({
       index = suffix + 1;
     }
   }
-  let candidate = `${baseName} ${index}`;
+  let candidate = `${baseName}${index}`;
   while (existingNames.has(candidate)) {
     if (Number.isSafeInteger(index + 1) === false) {
       baseName = candidate;
@@ -552,7 +730,7 @@ export const allocateUniqueContentBlockTemplateName = ({
     } else {
       index += 1;
     }
-    candidate = `${baseName} ${index}`;
+    candidate = `${baseName}${index}`;
   }
   return candidate;
 };

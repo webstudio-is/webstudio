@@ -1,6 +1,11 @@
 import equal from "fast-deep-equal";
 import {
   blockTemplateComponent,
+  blockBodyComponent,
+  blockComponent,
+  getContentBlockSource,
+  findContentBlockBodyContainers,
+  assignUniqueBlockTemplateNamesMutable,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -69,10 +74,8 @@ import {
   getNewFragmentContentModelWarnings,
 } from "./matcher";
 import { z } from "zod";
-import {
-  assignUniqueBlockTemplateNamesMutable,
-  getBlockTemplateNameConfirmation,
-} from "./block";
+import { getBlockTemplateNameConfirmation } from "./block";
+import { hasMdxComponentAdapter } from "./mdx-component-adapters";
 
 const conflictResolutionInput = z
   .enum(["ours", "theirs", "merge"])
@@ -222,7 +225,7 @@ const getUnknownCoreComponentError = ({
     componentMetas.has(component) === false &&
     templates.has(component) === false
   ) {
-    return `Component "${component}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. To create a native HTML element, use component "ws:element" with its "tag" property, for example <ws.element ws:tag="div">...</ws.element>.`;
+    return `Component "${component}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. In structured instance data, create a native HTML element with component "ws:element" and its "tag" property.`;
   }
 };
 
@@ -344,10 +347,12 @@ const getInsertionPage = (
 };
 
 const createRecordAddPatches = <Value>({
+  namespace,
   before,
   after,
   skip = new Set(),
 }: {
+  namespace: (typeof componentInsertNamespaces)[number];
   before: Map<string, Value>;
   after: Map<string, Value>;
   skip?: Set<string>;
@@ -362,7 +367,18 @@ const createRecordAddPatches = <Value>({
       if (equal(previous, value) === false) {
         return throwBuilderRuntimeError(
           "CONFLICT",
-          `Generated record id "${id}" already exists`
+          `Generated record ID already exists in ${namespace}.`,
+          {
+            issues: [
+              {
+                code: "generated_id_conflict",
+                path: [],
+                message: `Generated record ID conflicts with an existing ${namespace} record.`,
+                constraint: `unique_generated_id:${namespace}`,
+                detail: "stage:fragment-record-insertion",
+              },
+            ],
+          }
         );
       }
       continue;
@@ -406,6 +422,7 @@ const createFragmentPayload = ({
     {
       namespace: "assets",
       patches: createRecordAddPatches({
+        namespace: "assets",
         before: before.assets,
         after: after.assets,
       }),
@@ -413,6 +430,7 @@ const createFragmentPayload = ({
     {
       namespace: "breakpoints",
       patches: createRecordAddPatches({
+        namespace: "breakpoints",
         before: before.breakpoints,
         after: after.breakpoints,
       }),
@@ -420,6 +438,7 @@ const createFragmentPayload = ({
     {
       namespace: "dataSources",
       patches: createRecordAddPatches({
+        namespace: "dataSources",
         before: before.dataSources,
         after: after.dataSources,
       }),
@@ -427,6 +446,7 @@ const createFragmentPayload = ({
     {
       namespace: "resources",
       patches: createRecordAddPatches({
+        namespace: "resources",
         before: before.resources,
         after: after.resources,
       }),
@@ -434,6 +454,7 @@ const createFragmentPayload = ({
     {
       namespace: "styleSources",
       patches: createRecordAddPatches({
+        namespace: "styleSources",
         before: before.styleSources,
         after: after.styleSources,
       }),
@@ -441,6 +462,7 @@ const createFragmentPayload = ({
     {
       namespace: "styleSourceSelections",
       patches: createRecordAddPatches({
+        namespace: "styleSourceSelections",
         before: before.styleSourceSelections,
         after: after.styleSourceSelections,
       }),
@@ -459,6 +481,7 @@ const createFragmentPayload = ({
     {
       namespace: "props",
       patches: createRecordAddPatches({
+        namespace: "props",
         before: before.props,
         after: after.props,
       }),
@@ -485,6 +508,7 @@ const createFragmentInsertPayload = ({
     after,
     instancePatches: [
       ...createRecordAddPatches({
+        namespace: "instances",
         before: before.instances,
         after: after.instances,
         skip: new Set([parent.id]),
@@ -517,6 +541,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "assets",
       patches: createRecordAddPatches({
+        namespace: "assets",
         before: before.assets,
         after: after.assets,
       }),
@@ -524,6 +549,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "breakpoints",
       patches: createRecordAddPatches({
+        namespace: "breakpoints",
         before: before.breakpoints,
         after: after.breakpoints,
       }),
@@ -531,6 +557,7 @@ const createTokenFragmentInsertPayload = ({
     {
       namespace: "styleSources",
       patches: createRecordAddPatches({
+        namespace: "styleSources",
         before: before.styleSources,
         after: after.styleSources,
       }),
@@ -568,7 +595,7 @@ const validateFragmentComponent = ({
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      'Component "ws:element" requires a non-empty tag, for example <ws.element ws:tag="section">...</ws.element>. Use a Webstudio component such as <$.Box>...</$.Box> when you do not need a specific HTML tag.'
+      'Component "ws:element" requires a non-empty tag. In JSX, use a lowercase HTML element such as <section>...</section>; in structured instance data, set component "ws:element" and tag "section".'
     );
   }
   const insertCategory = templates.get(component)?.category ?? meta?.category;
@@ -804,7 +831,19 @@ const createInsertFragmentMutation = <
     ) {
       return throwBuilderRuntimeError(
         "CONFLICT",
-        `Generated instance id "${instanceId}" already exists`
+        "Generated record ID already exists in instances.",
+        {
+          issues: [
+            {
+              code: "generated_id_conflict",
+              path: [],
+              message:
+                "Generated record ID conflicts with an existing instances record.",
+              constraint: "unique_generated_id:instances",
+              detail: "stage:fragment-instance-insertion",
+            },
+          ],
+        }
       );
     }
   }
@@ -830,6 +869,7 @@ const createInsertFragmentMutation = <
           )
         : [],
     instances: nextData.instances,
+    components: componentMetas.keys(),
   });
   const requiredTemplateNameConfirmation =
     mode === "replace" && parent.component === blockTemplateComponent
@@ -994,6 +1034,48 @@ export const insertComponent = (
   const parent = mutationState.instances.get(input.parentInstanceId);
   if (parent === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+
+  if (
+    input.component !== elementComponent &&
+    !hasMdxComponentAdapter(input.component)
+  ) {
+    const { instanceSelector } = findPageAndSelectorByInstanceId(
+      mutationState.pages,
+      mutationState.instances,
+      parent.id
+    );
+    let insideBody = false;
+    for (const id of instanceSelector) {
+      const ancestor = mutationState.instances.get(id);
+      if (ancestor?.component === blockTemplateComponent) {
+        break;
+      }
+      if (ancestor?.component === blockBodyComponent) {
+        insideBody = true;
+      }
+      if (ancestor?.component !== blockComponent) {
+        continue;
+      }
+      const source = getContentBlockSource({
+        blockInstanceId: id,
+        props: mutationState.props.values(),
+      });
+      if (
+        source !== undefined &&
+        (insideBody ||
+          findContentBlockBodyContainers({
+            blockInstance: ancestor,
+            instances: mutationState.instances,
+          }).length === 0)
+      ) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "To add this component to MDX content, add it to this Content Block’s Templates and insert it from the template picker. You can add a one-off instance outside MDX content."
+        );
+      }
+      break;
+    }
   }
 
   const templates = getComponentTemplates();

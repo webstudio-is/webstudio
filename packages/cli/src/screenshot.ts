@@ -792,26 +792,40 @@ export const captureScreenshot = async (
 const createBrowserStartupError = (
   failures: readonly { browser: BrowserCandidate; error: unknown }[],
   options: Pick<CaptureScreenshotOptions, "browser" | "browserPath">
-) =>
-  Object.assign(
+) => {
+  const diagnostic = failures.find(
+    ({ error }) =>
+      error instanceof BrowserStartupError && error.diagnostic !== undefined
+  )?.error;
+  return Object.assign(
     new BrowserStartupError(
       [
         "Unable to start any discovered Chromium-family browser.",
         ...failures.map(
           ({ browser, error }) =>
-            `- ${browser.browser} (${browser.source}): ${browser.path}: ${error instanceof Error ? error.message : String(error)}`
+            `- ${browser.browser} (${browser.source}): ${browser.path}: ${
+              error instanceof Error ? error.message : String(error)
+            }`
         ),
         ...(options.browser !== "auto" && options.browserPath === undefined
           ? [
               `Retry with browser: "auto" to let Webstudio use another installed Chromium-family browser.`,
             ]
           : []),
-      ].join("\n")
+      ].join("\n"),
+      {
+        cause: failures.at(-1)?.error,
+        diagnostic:
+          diagnostic instanceof BrowserStartupError
+            ? diagnostic.diagnostic
+            : undefined,
+      }
     ),
     {
       attempts: failures.map(({ browser }) => browser),
     }
   );
+};
 
 type BrowserStartupState = {
   failedPaths: Set<string>;

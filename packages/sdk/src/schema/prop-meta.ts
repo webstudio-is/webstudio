@@ -179,13 +179,11 @@ const json = z.object({
   defaultValue: z.unknown().optional(),
 });
 
-// we neither generate date nor support it in props panel, listed here for completeness
 const date = z.object({
   ...common,
   control: z.literal("date"),
 
-  // @todo not sure what type should be here
-  // (we don't support Date yet, added for completeness)
+  // Dates are stored as strings, not JavaScript Date objects.
   type: z.literal("string"),
   defaultValue: z.string().optional(),
 });

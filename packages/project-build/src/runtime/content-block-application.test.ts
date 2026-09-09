@@ -3,6 +3,7 @@ import {
   blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
+  getContentBlockSource,
   type Asset,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
@@ -11,6 +12,7 @@ import type { BuilderState } from "../state/builder-state";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
   createContentBlockApplication,
+  getMdxAssetSourceBlockInstanceIds,
   inspectMdxAssetSource,
 } from "./content-block-application";
 
@@ -115,6 +117,38 @@ const createFixture = () => {
 };
 
 describe("createContentBlockApplication", () => {
+  test("inspects unresolved JSX in a dynamically resolved source context", async () => {
+    const { state } = createFixture();
+    state.props?.set("src", {
+      id: "src",
+      instanceId: "block",
+      name: "src",
+      type: "expression",
+      value: "collection.data._id",
+    });
+    expect(
+      getMdxAssetSourceBlockInstanceIds({ assetId: "asset", state })
+    ).toEqual([]);
+    const diagnostics = await inspectMdxAssetSource({
+      source: "<Accordion />",
+      assetId: "asset",
+      state,
+      metas: componentMetas,
+      projectId: "project",
+      sourceBlockInstanceIds: ["block"],
+    });
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: "unresolved-template",
+        templateName: "Accordion",
+        blockInstanceId: "block",
+        sourceRange: expect.objectContaining({
+          start: expect.objectContaining({ offset: 0 }),
+          end: expect.objectContaining({ offset: 13 }),
+        }),
+      }),
+    ]);
+  });
   test("inspects an Asset in each resolvable Content Block context", async () => {
     const fixture = createFixture();
     fixture.state.dataSources?.set("selectedAsset", {
@@ -133,6 +167,13 @@ describe("createContentBlockApplication", () => {
     const connectedState = applyBuilderPatchTransactions(fixture.state, [
       { id: "connect", payload: [...connected.projectPayload] },
     ]).state;
+
+    expect(
+      getMdxAssetSourceBlockInstanceIds({
+        assetId: "asset",
+        state: connectedState,
+      })
+    ).toEqual(["block"]);
 
     await expect(
       inspectMdxAssetSource({
@@ -286,6 +327,71 @@ describe("createContentBlockApplication", () => {
     expect(inspected.source).toBe("# From file");
   });
 
+  test("resolves a supplied Assets resource result", async () => {
+    const fixture = createFixture();
+
+    const connected = await fixture.application.connect({
+      state: fixture.state,
+      blockInstanceId: "block",
+      renderScope: "page:/articles/example",
+      source: { type: "expression", value: "post.data.id" },
+      variables: { post: { data: { id: "asset" } } },
+    });
+
+    expect(connected.inspection.identity.assetId).toBe("asset");
+    expect(connected.inspection.source).toBe("# From file");
+    const connectedState = applyBuilderPatchTransactions(fixture.state, [
+      { id: "connect", payload: [...connected.projectPayload] },
+    ]).state;
+    expect(
+      getContentBlockSource({
+        blockInstanceId: "block",
+        props: connectedState.props?.values() ?? [],
+      })
+    ).toEqual({ type: "expression", value: "post.data.id" });
+  });
+
+  test("explains unresolved Assets resource expressions without exposing values", async () => {
+    const fixture = createFixture();
+    fixture.state.dataSources?.set("postDataSource", {
+      id: "postDataSource",
+      scopeInstanceId: "block",
+      name: "post",
+      type: "resource",
+      resourceId: "postResource",
+    });
+
+    const inspection = fixture.application.inspect({
+      state: fixture.state,
+      blockInstanceId: "block",
+      renderScope: "page:/articles/example",
+      source: { type: "expression", value: "post.data.id" },
+      variables: {
+        post: { data: { id: 42, token: "private-value" } },
+        options: {},
+      },
+    });
+
+    const error = await inspection.catch((error: unknown) => error);
+    expect(error).toMatchObject({
+      name: "BuilderRuntimeError",
+      code: "BAD_REQUEST",
+      issues: [
+        {
+          code: "unresolved-content-block-source",
+          path: ["source", "value"],
+          constraint: "non_empty_mdx_asset_id",
+          example: {
+            variables: { post: { data: { id: "<mdxAssetId>" } } },
+          },
+          detail:
+            'Expression result: number. Supplied variables: "post" (object with keys "data"), "options" (empty object). Project resource variables: "post". This operation does not load route data or resource results; pass concrete values in variables. renderScope only identifies the rendered occurrence.',
+        },
+      ],
+    });
+    expect(JSON.stringify(error)).not.toContain("private-value");
+  });
+
   test("previews frontmatter without mutating the Asset session", async () => {
     const fixture = createFixture();
     const connected = await fixture.application.connect({
@@ -357,6 +463,6 @@ describe("createContentBlockApplication", () => {
       confirmationToken: plan.confirmationToken,
     });
     expect(result.status).toBe("complete");
-    expect(fixture.getSource()).toContain('ws:name="New"');
+    expect(fixture.getSource()).toContain("<New />");
   });
 });

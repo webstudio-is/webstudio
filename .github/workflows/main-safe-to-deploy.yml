@@ -1,0 +1,19 @@
+name: Workflows for approved forks
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: read
+  deployments: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  approved-fork-workflows:
+    # GitHub cannot filter labeled events by label name. Gate one workflow call
+    # instead of adding skipped copies of every Main and Vercel workflow job.
+    if: github.event.label.name == 'safe-to-deploy'
+    uses: ./.github/workflows/approved-fork-workflows.yml
+    secrets: inherit

@@ -10,13 +10,14 @@ import {
 const createResult = (
   values: Partial<AgentEvaluationResult> = {}
 ): AgentEvaluationResult => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   kind: "high-impact-minimal-context-agent-evaluation-result",
   fixtureId: "authenticated-page-v1",
   outcome: "passed",
   cli: "source",
   provider: "openai",
   model: "test-model",
+  reasoningEffort: "low",
   commandSha256: "a".repeat(64),
   exitCode: 0,
   metrics: {
@@ -135,6 +136,12 @@ describe("evaluation regression comparison", () => {
     expect(
       compareEvaluationResult(
         createResult({ model: "different-model" }),
+        baseline
+      )
+    ).toMatchObject({ status: "incompatible", deltas: [], regressions: [] });
+    expect(
+      compareEvaluationResult(
+        createResult({ reasoningEffort: "medium" }),
         baseline
       )
     ).toMatchObject({ status: "incompatible", deltas: [], regressions: [] });
@@ -408,6 +415,28 @@ describe("evaluation regression comparison", () => {
       isAggregateTokenBaselineNonRegressed(
         [withTokens("authenticated-page-v1", 1_000)],
         []
+      )
+    ).toBe(true);
+    expect(
+      isAggregateTokenBaselineNonRegressed(
+        [withTokens("authenticated-page-v1", 1_000)],
+        [
+          {
+            ...withTokens("authenticated-page-v1", 1),
+            reasoningEffort: "medium",
+          },
+        ]
+      )
+    ).toBe(true);
+    expect(
+      isAggregateTokenBaselineNonRegressed(
+        [withTokens("authenticated-page-v1", 1_000)],
+        [
+          {
+            ...withTokens("authenticated-page-v1", 1),
+            schemaVersion: 2,
+          } as unknown as AgentEvaluationResult,
+        ]
       )
     ).toBe(true);
   });

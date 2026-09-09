@@ -108,6 +108,18 @@ describe("content block diagnostics", () => {
       code: "unresolved-template",
       templateName: "Hero Card",
     });
+    expect(
+      contentBlockDiagnostic.parse({
+        code: "ambiguous-template",
+        severity: "warning",
+        blockInstanceId: "block",
+        semanticKey: "element:h1",
+        templateNames: ["Primary Heading", "Alternate Heading"],
+      })
+    ).toMatchObject({
+      code: "ambiguous-template",
+      semanticKey: "element:h1",
+    });
   });
 
   test("rejects mismatched severities and payloads", () => {

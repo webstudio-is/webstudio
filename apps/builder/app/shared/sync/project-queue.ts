@@ -208,6 +208,11 @@ const pollQueue = async (signal: AbortSignal) => {
     }
 
     const { projectId, transactions } = command;
+    const completeTransactions = (success: boolean) => {
+      for (const transaction of transactions) {
+        transactionCompletion.completeTransaction(transaction.id, success);
+      }
+    };
     const details = detailsMap.get(projectId);
 
     if (details === undefined) {
@@ -220,6 +225,7 @@ const pollQueue = async (signal: AbortSignal) => {
       });
 
       $syncStatus.set({ status: "fatal", error });
+      completeTransactions(false);
 
       return;
     }
@@ -256,9 +262,7 @@ const pollQueue = async (signal: AbortSignal) => {
             details.version = result.version ?? details.version + 1;
             $committedVersion.set(details.version);
 
-            for (const transaction of transactions) {
-              transactionCompletion.completeTransaction(transaction.id, true);
-            }
+            completeTransactions(true);
 
             // stop retrying and wait next transactions
             continue polling;
@@ -286,6 +290,20 @@ const pollQueue = async (signal: AbortSignal) => {
             }
 
             $syncStatus.set({ status: "fatal", error });
+            if (result.status === "partial") {
+              for (const transaction of transactions) {
+                const matchingEntries = result.entries.filter(
+                  ({ transactionId }) => transactionId === transaction.id
+                );
+                transactionCompletion.completeTransaction(
+                  transaction.id,
+                  matchingEntries.length > 0 &&
+                    matchingEntries.every(({ status }) => status === "accepted")
+                );
+              }
+            } else {
+              completeTransactions(false);
+            }
 
             if (shouldReload === false) {
               toast.error(
@@ -305,6 +323,7 @@ const pollQueue = async (signal: AbortSignal) => {
             // Api error we don't know how to handle, as retries will not help probably
             // We should show error and break synchronization
             $syncStatus.set({ status: "fatal", error });
+            completeTransactions(false);
 
             toast.error(error, {
               id: "fatal-error",

@@ -25,7 +25,7 @@ const Component = () => {
             />
           </CheckboxIndicator>
         </Checkbox>
-        <Text data-ws-tag="span" className={`w-text`}>
+        <Text tag={"span"} className={`w-text`}>
           {"Checkbox"}
         </Text>
       </Label>

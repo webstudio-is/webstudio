@@ -22,6 +22,7 @@ import {
   type Subscription,
 } from "./polling-manager";
 import type { TopicName, TopicRegistry, SubscriptionResponse } from "./types";
+import { createId } from "@webstudio-is/sdk";
 
 // ── Channel message types ────────────────────────────────────────
 
@@ -82,7 +83,7 @@ export const createCrossTabPollingManager = (
     channelName = DEFAULT_CHANNEL_NAME,
     heartbeatInterval = HEARTBEAT_INTERVAL,
     heartbeatTimeout = HEARTBEAT_TIMEOUT,
-    tabId = crypto.randomUUID(),
+    tabId = createId(),
     createChannel = (name: string) => new BroadcastChannel(name),
     ...managerOptions
   } = options;

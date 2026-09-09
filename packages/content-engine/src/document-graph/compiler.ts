@@ -11,6 +11,7 @@ import type { SourceReferenceOccurrence } from "./reference-codec";
 export type DocumentDescriptor = Readonly<{
   id: string;
   documentUrl: string;
+  documentPath?: string;
   revision: string;
   contentRef: string;
   format?: DocumentFormat;
@@ -31,6 +32,7 @@ export class DocumentGraphCompilationError extends Error {
   readonly sourceDocumentId?: string;
   readonly referenceId?: string;
   readonly documentUrl?: string;
+  readonly documentPath?: string;
   readonly documentIds: readonly string[];
 
   constructor({
@@ -39,6 +41,7 @@ export class DocumentGraphCompilationError extends Error {
     sourceDocumentId,
     referenceId,
     documentUrl,
+    documentPath,
     documentIds = [],
     cause,
   }: {
@@ -47,6 +50,7 @@ export class DocumentGraphCompilationError extends Error {
     sourceDocumentId?: string;
     referenceId?: string;
     documentUrl?: string;
+    documentPath?: string;
     documentIds?: readonly string[];
     cause?: unknown;
   }) {
@@ -56,6 +60,7 @@ export class DocumentGraphCompilationError extends Error {
     this.sourceDocumentId = sourceDocumentId;
     this.referenceId = referenceId;
     this.documentUrl = documentUrl;
+    this.documentPath = documentPath;
     this.documentIds = Object.freeze([...documentIds]);
   }
 }

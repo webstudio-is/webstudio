@@ -1,6 +1,6 @@
 import { AnimationGroupIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
-import { animation } from "./shared/meta";
+import { getAnimationComponentId } from "./shared/component-id";
 
 export const meta: WsComponentMeta = {
   category: "animations",
@@ -12,9 +12,9 @@ export const meta: WsComponentMeta = {
     category: "instance",
     children: [
       "instance",
-      animation.AnimateText,
-      animation.StaggerAnimation,
-      animation.VideoAnimation,
+      getAnimationComponentId("AnimateText"),
+      getAnimationComponentId("StaggerAnimation"),
+      getAnimationComponentId("VideoAnimation"),
     ],
   },
   initialProps: ["action"],

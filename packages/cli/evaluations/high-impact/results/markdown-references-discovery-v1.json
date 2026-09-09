@@ -1,37 +1,38 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "kind": "high-impact-minimal-context-agent-evaluation-result",
   "fixtureId": "markdown-references-discovery-v1",
   "outcome": "passed",
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.4-mini",
-  "commandSha256": "129c4beeb0730eadd324419a95969b599a39bb2776e0d1d93920d61bbc9e182a",
+  "reasoningEffort": "medium",
+  "commandSha256": "95e4a1a263be4bd7d2884264d9aa62f2a377e6082f1a0ca3635717a0dd179eab",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 162261,
+    "durationMs": 157344,
     "tokens": {
-      "input": 335174,
-      "cachedInput": 299776,
-      "uncachedInput": 35398,
+      "input": 479244,
+      "cachedInput": 439296,
+      "uncachedInput": 39948,
       "cacheWriteInput": 0,
-      "output": 8397,
-      "reasoningOutput": 5497,
-      "total": 343571,
-      "cachedInputRate": 0.8944
+      "output": 8042,
+      "reasoningOutput": 4539,
+      "total": 487286,
+      "cachedInputRate": 0.9166
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 54701,
-      "maxResponseBytes": 54701,
-      "latestToolCount": 185,
-      "latestResponseBytes": 54701,
-      "latestInputSchemaBytes": 30201,
-      "latestDescriptionBytes": 5708
+      "totalResponseBytes": 61453,
+      "maxResponseBytes": 61453,
+      "latestToolCount": 196,
+      "latestResponseBytes": 61453,
+      "latestInputSchemaBytes": 35007,
+      "latestDescriptionBytes": 6407
     },
     "toolCalls": {
-      "total": 12,
-      "succeeded": 12,
+      "total": 20,
+      "succeeded": 20,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
@@ -40,101 +41,149 @@
       "durationsByTool": {
         "create-asset-folder": {
           "count": 1,
-          "totalMs": 48,
-          "p95Ms": 48,
-          "maxMs": 48
+          "totalMs": 38,
+          "p95Ms": 38,
+          "maxMs": 38
         },
         "create-assets-resource": {
           "count": 2,
-          "totalMs": 61,
-          "p95Ms": 42,
-          "maxMs": 42
+          "totalMs": 78,
+          "p95Ms": 59,
+          "maxMs": 59
         },
         "create-page": {
           "count": 2,
-          "totalMs": 40,
-          "p95Ms": 27,
-          "maxMs": 27
+          "totalMs": 36,
+          "p95Ms": 26,
+          "maxMs": 26
         },
         "insert-collection": {
-          "count": 2,
-          "totalMs": 119,
-          "p95Ms": 103,
-          "maxMs": 103
-        },
-        "meta.get_more_tools": {
-          "count": 1,
-          "totalMs": 14,
-          "p95Ms": 14,
-          "maxMs": 14
-        },
-        "meta.guide": {
           "count": 1,
           "totalMs": 21,
           "p95Ms": 21,
           "maxMs": 21
         },
+        "insert-fragment": {
+          "count": 3,
+          "totalMs": 96,
+          "p95Ms": 61,
+          "maxMs": 61
+        },
+        "meta.get-more-tools": {
+          "count": 1,
+          "totalMs": 3,
+          "p95Ms": 3,
+          "maxMs": 3
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalMs": 3,
+          "p95Ms": 3,
+          "maxMs": 3
+        },
+        "preview-asset-query": {
+          "count": 1,
+          "totalMs": 13,
+          "p95Ms": 13,
+          "maxMs": 13
+        },
+        "update-page": {
+          "count": 2,
+          "totalMs": 27,
+          "p95Ms": 14,
+          "maxMs": 14
+        },
         "upload-assets": {
           "count": 1,
-          "totalMs": 22,
-          "p95Ms": 22,
-          "maxMs": 22
+          "totalMs": 27,
+          "p95Ms": 27,
+          "maxMs": 27
+        },
+        "validate-asset-query": {
+          "count": 2,
+          "totalMs": 42,
+          "p95Ms": 26,
+          "maxMs": 26
         },
         "verify-page-responsive": {
-          "count": 2,
-          "totalMs": 14517,
-          "p95Ms": 12878,
-          "maxMs": 12878
+          "count": 3,
+          "totalMs": 14763,
+          "p95Ms": 11091,
+          "maxMs": 11091
         }
       },
       "responseBytesByTool": {
         "create-asset-folder": {
           "count": 1,
-          "totalBytes": 884,
-          "p95Bytes": 884,
-          "maxBytes": 884
+          "totalBytes": 942,
+          "p95Bytes": 942,
+          "maxBytes": 942
         },
         "create-assets-resource": {
           "count": 2,
-          "totalBytes": 3324,
-          "p95Bytes": 1662,
-          "maxBytes": 1662
+          "totalBytes": 4742,
+          "p95Bytes": 2371,
+          "maxBytes": 2371
         },
         "create-page": {
           "count": 2,
-          "totalBytes": 2684,
-          "p95Bytes": 1342,
-          "maxBytes": 1342
+          "totalBytes": 4104,
+          "p95Bytes": 2054,
+          "maxBytes": 2054
         },
         "insert-collection": {
-          "count": 2,
-          "totalBytes": 4518,
-          "p95Bytes": 2293,
-          "maxBytes": 2293
-        },
-        "meta.get_more_tools": {
           "count": 1,
-          "totalBytes": 19474,
-          "p95Bytes": 19474,
-          "maxBytes": 19474
+          "totalBytes": 3001,
+          "p95Bytes": 3001,
+          "maxBytes": 3001
+        },
+        "insert-fragment": {
+          "count": 3,
+          "totalBytes": 7623,
+          "p95Bytes": 2587,
+          "maxBytes": 2587
+        },
+        "meta.get-more-tools": {
+          "count": 1,
+          "totalBytes": 21813,
+          "p95Bytes": 21813,
+          "maxBytes": 21813
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 15748,
-          "p95Bytes": 15748,
-          "maxBytes": 15748
+          "totalBytes": 15856,
+          "p95Bytes": 15856,
+          "maxBytes": 15856
+        },
+        "preview-asset-query": {
+          "count": 1,
+          "totalBytes": 2619,
+          "p95Bytes": 2619,
+          "maxBytes": 2619
+        },
+        "update-page": {
+          "count": 2,
+          "totalBytes": 3968,
+          "p95Bytes": 1985,
+          "maxBytes": 1985
         },
         "upload-assets": {
           "count": 1,
-          "totalBytes": 4200,
-          "p95Bytes": 4200,
-          "maxBytes": 4200
+          "totalBytes": 4360,
+          "p95Bytes": 4360,
+          "maxBytes": 4360
+        },
+        "validate-asset-query": {
+          "count": 2,
+          "totalBytes": 2984,
+          "p95Bytes": 1492,
+          "maxBytes": 1492
         },
         "verify-page-responsive": {
-          "count": 2,
-          "totalBytes": 29404,
-          "p95Bytes": 14825,
-          "maxBytes": 14825
+          "count": 3,
+          "totalBytes": 40381,
+          "p95Bytes": 14437,
+          "maxBytes": 14437
         }
       },
       "retries": 0,
@@ -142,30 +191,38 @@
       "broadReads": 0,
       "dryRuns": 0,
       "plannedMutations": 0,
-      "committedMutations": 8,
-      "verifications": 2,
-      "totalDurationMs": 14842,
-      "p50DurationMs": 22,
-      "p95DurationMs": 12878,
-      "totalResponseBytes": 80236,
-      "p50ResponseBytes": 2225,
-      "p95ResponseBytes": 19474,
-      "maxResponseBytes": 19474,
-      "timeToFirstMutationMs": 65003,
-      "timeToFirstVerificationMs": 122016
+      "committedMutations": 12,
+      "verifications": 3,
+      "totalDurationMs": 15147,
+      "p50DurationMs": 21,
+      "p95DurationMs": 2231,
+      "totalResponseBytes": 112393,
+      "p50ResponseBytes": 2485,
+      "p95ResponseBytes": 15856,
+      "maxResponseBytes": 21813,
+      "timeToFirstMutationMs": 33283,
+      "timeToFirstVerificationMs": 102917
     }
   },
   "callSequence": [
     "meta.guide",
-    "meta.get_more_tools",
     "create-asset-folder",
-    "create-page",
-    "create-page",
     "upload-assets",
+    "create-page",
+    "create-page",
+    "validate-asset-query",
+    "validate-asset-query",
+    "preview-asset-query",
+    "meta.get-more-tools",
     "create-assets-resource",
     "create-assets-resource",
+    "insert-fragment",
     "insert-collection",
-    "insert-collection",
+    "update-page",
+    "verify-page-responsive",
+    "update-page",
+    "insert-fragment",
+    "insert-fragment",
     "verify-page-responsive",
     "verify-page-responsive"
   ],
@@ -181,11 +238,14 @@
     "blogAssetFolder": "passed",
     "blogRoutes": "passed",
     "scopedBlogResources": "passed",
+    "queryVerification": "passed",
     "listingQuery": "passed",
     "detailQuery": "passed",
     "documentGraphQueries": "passed",
+    "optimalBlogDatabase": "passed",
     "editableBlogBindings": "passed",
     "bindingVerification": "passed",
+    "detailPageSettings": "passed",
     "blogRouteEvidence": "passed",
     "usageCaptured": "passed"
   }

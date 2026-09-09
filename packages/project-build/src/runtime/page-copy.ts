@@ -6,7 +6,6 @@ import {
   resolveFragmentRootStyleConflicts,
 } from "./fragment";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
-import { nanoid } from "nanoid";
 import { z } from "zod";
 import { parseStringLiteralExpression } from "@webstudio-is/expression";
 import {
@@ -18,6 +17,7 @@ import {
   unsetExpressionVariables,
 } from "./data";
 import {
+  createId,
   findParentFolderByChildId,
   findPageByIdOrPath,
   getFolderById,
@@ -35,6 +35,7 @@ import {
   type WebstudioData,
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
+
 import type {
   ConflictResolution,
   RootStyleConflictResolution,
@@ -64,6 +65,8 @@ import {
   type PageCopyData,
   type TemplateCopyData,
 } from "./data-formats/page-transfer";
+
+const createNanoId = () => createId("nano");
 
 type CreateId = () => string;
 
@@ -285,7 +288,7 @@ const copyPageRootAndBodyMutable = ({
   conflictResolution,
   rootStyleConflictResolution,
   contentModeCopyableProp,
-  createId = nanoid,
+  createId = createNanoId,
   contentMode = false,
 }: {
   source: WebstudioData;
@@ -337,7 +340,7 @@ const copyPageFragmentsMutable = ({
   rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
-  createId = nanoid,
+  createId = createNanoId,
   contentMode = false,
 }: {
   target: WebstudioData;
@@ -553,7 +556,7 @@ export const insertPageFromTemplateMutable = ({
   metas,
   conflictResolution,
   contentModeCopyableProp,
-  createId = nanoid,
+  createId = createNanoId,
   contentMode = false,
 }: {
   templateId: PageTemplate["id"];
@@ -615,7 +618,7 @@ const copyPageMutable = ({
   projectId,
   conflictResolution,
   rootStyleConflictResolution,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   source: { data: WebstudioData; pageId: Page["id"] };
   target: { data: WebstudioData; folderId: Folder["id"] };
@@ -770,7 +773,7 @@ export const createPageDuplicatePayload = ({
   name,
   path,
   substitutions,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   build: Parameters<typeof createWebstudioDataFromBuild>[0]["build"];
   assets?: Asset[];
@@ -1336,7 +1339,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   source: {
     page: Page;
@@ -1382,7 +1385,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   rootStyleConflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   source: {
     template: PageTemplate;
@@ -1561,7 +1564,7 @@ export const insertFolderCopyFromDataMutable = ({
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   forceFolderCopySuffix = false,
-  createId = nanoid,
+  createId = createNanoId,
 }: {
   source: FolderCopyData;
   target: { data: WebstudioData; parentFolderId: Folder["id"] };

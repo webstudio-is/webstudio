@@ -22,3 +22,23 @@ test("uses the standard fatal sync state and reload flow", () => {
     error: "The MDX file changed remotely.",
   });
 });
+
+test("shows one reload confirmation when the same fatal error is reported repeatedly", () => {
+  const reload = vi.fn();
+  const confirm = vi.fn(() => false);
+  const input = {
+    error: "This file changed since it was opened.",
+    target: { confirm, location: { reload } } as never,
+  };
+
+  requireBuilderReload(input);
+  requireBuilderReload(input);
+  requireBuilderReload(input);
+
+  expect(confirm).toHaveBeenCalledOnce();
+  expect(reload).not.toHaveBeenCalled();
+  expect($syncStatus.get()).toEqual({
+    status: "fatal",
+    error: "This file changed since it was opened.",
+  });
+});

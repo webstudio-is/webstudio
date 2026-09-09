@@ -1,37 +1,38 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "kind": "high-impact-minimal-context-agent-evaluation-result",
   "fixtureId": "design-input-v1",
   "outcome": "passed",
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.4-mini",
-  "commandSha256": "942755cc0025a46d00f539f1720d60cbbb3e26498a6fc835500deda6d7c875c1",
+  "reasoningEffort": "high",
+  "commandSha256": "997153fdcf54e79769ae4d44d5e63edcf23dcfe454b605a18143503a1ef5e997",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 150790,
+    "durationMs": 478038,
     "tokens": {
-      "input": 217420,
-      "cachedInput": 186496,
-      "uncachedInput": 30924,
+      "input": 466219,
+      "cachedInput": 415488,
+      "uncachedInput": 50731,
       "cacheWriteInput": 0,
-      "output": 8186,
-      "reasoningOutput": 4893,
-      "total": 225606,
-      "cachedInputRate": 0.8578
+      "output": 31377,
+      "reasoningOutput": 20466,
+      "total": 497596,
+      "cachedInputRate": 0.8912
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 53114,
-      "maxResponseBytes": 53114,
-      "latestToolCount": 184,
-      "latestResponseBytes": 53114,
-      "latestInputSchemaBytes": 29971,
-      "latestDescriptionBytes": 4529
+      "totalResponseBytes": 61453,
+      "maxResponseBytes": 61453,
+      "latestToolCount": 196,
+      "latestResponseBytes": 61453,
+      "latestInputSchemaBytes": 35007,
+      "latestDescriptionBytes": 6407
     },
     "toolCalls": {
-      "total": 9,
-      "succeeded": 9,
+      "total": 11,
+      "succeeded": 11,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
@@ -39,108 +40,108 @@
       "issuesByPath": {},
       "durationsByTool": {
         "attach-design-token": {
-          "count": 3,
-          "totalMs": 88,
-          "p95Ms": 42,
-          "maxMs": 42
+          "count": 2,
+          "totalMs": 33,
+          "p95Ms": 23,
+          "maxMs": 23
         },
         "create-page": {
           "count": 1,
-          "totalMs": 31,
-          "p95Ms": 31,
-          "maxMs": 31
+          "totalMs": 23,
+          "p95Ms": 23,
+          "maxMs": 23
         },
         "insert-fragment-verified": {
           "count": 1,
-          "totalMs": 42,
-          "p95Ms": 42,
-          "maxMs": 42
+          "totalMs": 95,
+          "p95Ms": 95,
+          "maxMs": 95
         },
         "inspect-design-context": {
           "count": 1,
-          "totalMs": 40,
-          "p95Ms": 40,
-          "maxMs": 40
+          "totalMs": 37,
+          "p95Ms": 37,
+          "maxMs": 37
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 75,
-          "p95Ms": 75,
-          "maxMs": 75
+          "totalMs": 5,
+          "p95Ms": 5,
+          "maxMs": 5
         },
         "update-styles": {
-          "count": 1,
-          "totalMs": 59,
-          "p95Ms": 59,
-          "maxMs": 59
+          "count": 4,
+          "totalMs": 220,
+          "p95Ms": 143,
+          "maxMs": 143
         },
         "verify-page-responsive": {
           "count": 1,
-          "totalMs": 10165,
-          "p95Ms": 10165,
-          "maxMs": 10165
+          "totalMs": 12087,
+          "p95Ms": 12087,
+          "maxMs": 12087
         }
       },
       "responseBytesByTool": {
         "attach-design-token": {
-          "count": 3,
-          "totalBytes": 3900,
-          "p95Bytes": 1304,
-          "maxBytes": 1304
+          "count": 2,
+          "totalBytes": 4016,
+          "p95Bytes": 2012,
+          "maxBytes": 2012
         },
         "create-page": {
           "count": 1,
-          "totalBytes": 1342,
-          "p95Bytes": 1342,
-          "maxBytes": 1342
+          "totalBytes": 2050,
+          "p95Bytes": 2050,
+          "maxBytes": 2050
         },
         "insert-fragment-verified": {
           "count": 1,
-          "totalBytes": 2954,
-          "p95Bytes": 2954,
-          "maxBytes": 2954
+          "totalBytes": 5198,
+          "p95Bytes": 5198,
+          "maxBytes": 5198
         },
         "inspect-design-context": {
           "count": 1,
-          "totalBytes": 3082,
-          "p95Bytes": 3082,
-          "maxBytes": 3082
+          "totalBytes": 3150,
+          "p95Bytes": 3150,
+          "maxBytes": 3150
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 15130,
-          "p95Bytes": 15130,
-          "maxBytes": 15130
+          "totalBytes": 10030,
+          "p95Bytes": 10030,
+          "maxBytes": 10030
         },
         "update-styles": {
-          "count": 1,
-          "totalBytes": 2762,
-          "p95Bytes": 2762,
-          "maxBytes": 2762
+          "count": 4,
+          "totalBytes": 23452,
+          "p95Bytes": 13568,
+          "maxBytes": 13568
         },
         "verify-page-responsive": {
           "count": 1,
-          "totalBytes": 10663,
-          "p95Bytes": 10663,
-          "maxBytes": 10663
+          "totalBytes": 10697,
+          "p95Bytes": 10697,
+          "maxBytes": 10697
         }
       },
       "retries": 0,
       "focusedReads": 1,
       "broadReads": 0,
-      "dryRuns": 0,
-      "plannedMutations": 0,
+      "dryRuns": 2,
+      "plannedMutations": 2,
       "committedMutations": 6,
       "verifications": 2,
-      "totalDurationMs": 10500,
-      "p50DurationMs": 42,
-      "p95DurationMs": 10165,
-      "totalResponseBytes": 39833,
-      "p50ResponseBytes": 2762,
-      "p95ResponseBytes": 15130,
-      "maxResponseBytes": 15130,
-      "timeToFirstMutationMs": 36333,
-      "timeToFirstVerificationMs": 41878
+      "totalDurationMs": 12500,
+      "p50DurationMs": 23,
+      "p95DurationMs": 12087,
+      "totalResponseBytes": 58593,
+      "p50ResponseBytes": 3559,
+      "p95ResponseBytes": 13568,
+      "maxResponseBytes": 13568,
+      "timeToFirstMutationMs": 36104,
+      "timeToFirstVerificationMs": 159265
     }
   },
   "callSequence": [
@@ -150,7 +151,9 @@
     "insert-fragment-verified",
     "attach-design-token",
     "attach-design-token",
-    "attach-design-token",
+    "update-styles",
+    "update-styles",
+    "update-styles",
     "update-styles",
     "verify-page-responsive"
   ],

@@ -13,6 +13,20 @@ type ReferenceRow = Readonly<{
   description: string;
 }>;
 
+export const structuredAssetImageRecipe = {
+  frontmatter: {
+    featureImage: { $ref: "./assets/hero.png" },
+  },
+  outputFields: [
+    ["properties", "featureImage", "src"],
+    ["properties", "featureImage", "description"],
+  ],
+  bindings: {
+    src: "post.properties.featureImage.src",
+    alt: "post.properties.featureImage.description ?? post.properties.title",
+  },
+} as const;
+
 const formatBytes = (bytes: number) => {
   if (bytes % (1024 * 1024) === 0) {
     return `${bytes / (1024 * 1024)} MiB`;
@@ -72,15 +86,21 @@ const contentRows = [
   },
   {
     value: "full",
-    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected file is larger.`,
+    description: `Embeds the complete UTF-8 file content in the content database. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected file is larger.`,
   },
   {
     value: "range",
-    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(contentEngineLimits.hydratedRangeBytes)}.`,
+    description: `Embeds a byte range selected by \`offset\` and \`length\` in the content database. \`length\` cannot exceed ${formatBytes(
+      contentEngineLimits.hydratedRangeBytes
+    )}.`,
   },
   {
     value: "markdown-body-ref",
-    description: `Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(contentEngineLimits.hydratedFileBytes)} and cannot be set higher. The query fails if a selected source file is larger.`,
+    description: `Stores a reference to a Markdown or MDX body. Webstudio filters and paginates first, then reads only the selected bodies from Assets. \`maxBytes\` defaults to ${formatBytes(
+      contentEngineLimits.hydratedFileBytes
+    )} and cannot be set higher. The query fails if a selected source file is larger.`,
   },
 ] as const satisfies readonly ReferenceRow[];
 
@@ -95,6 +115,20 @@ const diagnosticRows = [
 ] as const;
 
 const optionalDiagnosticRows = [
+  [
+    "`queryIssues`",
+    "Structured nonfatal query warnings with a stable code and exact query path.",
+  ],
+  [
+    "`queryWarnings`",
+    "Deprecated plain-text query warnings retained for compatibility.",
+  ],
+  [
+    "`issues`",
+    "All content errors and warnings found in files matched by the current query. Each diagnostic identifies its phase, code, message, asset, path, and source location when available.",
+  ],
+  ["`issueCount`", "Total errors and warnings in `issues`."],
+  ["`issuesTruncated`", "Always `false`; retained for response compatibility."],
   [
     "`artifacts`",
     "Optional query and merged compiled artifacts used by detailed Builder diagnostics.",
@@ -156,7 +190,9 @@ const assertSameValues = ({
   const implementedValues = [...implemented].sort();
   if (JSON.stringify(documentedValues) !== JSON.stringify(implementedValues)) {
     throw new Error(
-      `${label} documentation is out of sync: documented ${documentedValues.join(", ")}; implemented ${implementedValues.join(", ")}`
+      `${label} documentation is out of sync: documented ${documentedValues.join(
+        ", "
+      )}; implemented ${implementedValues.join(", ")}`
     );
   }
 };
@@ -375,7 +411,7 @@ export const renderContentEngineReferenceMarkdown = ({
     "",
     "```yaml",
     "featureImage:",
-    "  $ref: ./assets/hero.png",
+    `  $ref: ${structuredAssetImageRecipe.frontmatter.featureImage.$ref}`,
     "```",
     "",
     "The reference declares only the relationship. The query decides which metadata enters its result and published database. A complete `properties.featureImage` selection returns the Asset Manager asset metadata together with its resolved `src`. This includes fields such as `id`, `name`, `description`, `mimeType`, `width`, and `height`; new asset metadata becomes available to references without changing the document. Select only the nested fields the page uses:",
@@ -387,14 +423,14 @@ export const renderContentEngineReferenceMarkdown = ({
     '    "includeMetadata": false,',
     '    "fields": [',
     '      ["properties", "title"],',
-    '      ["properties", "featureImage", "src"],',
-    '      ["properties", "featureImage", "description"]',
+    `      [${structuredAssetImageRecipe.outputFields[0].map((part) => JSON.stringify(part)).join(", ")}],`,
+    `      [${structuredAssetImageRecipe.outputFields[1].map((part) => JSON.stringify(part)).join(", ")}]`,
     "    ]",
     "  }",
     "}",
     "```",
     "",
-    "The selected value becomes an object. Bind an Image source to `post.properties.featureImage.src` and its alternative text to `post.properties.featureImage.description ?? post.properties.title`. A missing description therefore falls back to the article title without duplicating text in frontmatter.",
+    `The selected value becomes an object. Bind an Image source to \`${structuredAssetImageRecipe.bindings.src}\` and its alternative text to \`${structuredAssetImageRecipe.bindings.alt}\`. A missing description therefore falls back to the article title without duplicating text in frontmatter.`,
     "",
     "External URLs remain ordinary strings. Existing local path strings also keep their URL string shape, so adopting structured references does not change existing queries or bindings.",
     "",

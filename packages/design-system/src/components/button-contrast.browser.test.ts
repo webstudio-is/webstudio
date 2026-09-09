@@ -39,6 +39,70 @@ const readColor = (color: string) => {
   return Array.from(context.getImageData(0, 0, 1, 1).data);
 };
 
+test("ghost-destructive shares ghost surfaces and destructive text in both themes", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  for (const mode of ["light", "dark"]) {
+    document.documentElement.dataset.colorScheme = mode;
+    for (const state of [
+      "auto",
+      "hover",
+      "focus",
+      "pressed",
+      "pending",
+      "disabled",
+    ] as const) {
+      act(() =>
+        root?.render(
+          createElement(
+            "div",
+            null,
+            ...(
+              ["ghost", "neutral-destructive", "ghost-destructive"] as const
+            ).map((color) =>
+              createElement(
+                Button,
+                {
+                  key: color,
+                  color,
+                  state: state === "disabled" ? undefined : state,
+                  disabled: state === "disabled",
+                },
+                color
+              )
+            ),
+            createElement(
+              LinkButton,
+              {
+                color: "ghost-destructive",
+                href: "#",
+                state: state === "disabled" ? undefined : state,
+                "aria-disabled": state === "disabled",
+              },
+              "Link"
+            )
+          )
+        )
+      );
+      const [ghost, danger, combined] = Array.from(
+        container.querySelectorAll("button"),
+        (button) => getComputedStyle(button)
+      );
+      const link = getComputedStyle(container.querySelector("a")!);
+      expect(combined.backgroundColor).toBe(ghost.backgroundColor);
+      expect(combined.backgroundImage).toBe(ghost.backgroundImage);
+      expect(combined.color).toBe(danger.color);
+      expect(combined.outlineStyle).toBe(ghost.outlineStyle);
+      expect(link.backgroundColor).toBe(combined.backgroundColor);
+      expect(link.color).toBe(combined.color);
+      if (state === "auto") {
+        expect(readColor(combined.backgroundColor)[3]).toBe(0);
+      }
+    }
+  }
+});
+
 const readRenderedBackground = async (element: Element) => {
   const { base64, path } = await page
     .elementLocator(element)
@@ -279,6 +343,7 @@ test("link buttons use anchor semantics and button interaction states", async ()
   expect(link.href).toBe("https://example.com/path");
   expect(link.target).toBe("_blank");
   expect(link.dataset.state).toBe("hover");
+  expect(getComputedStyle(link).cursor).toBe("pointer");
   expect(getComputedStyle(link).backgroundImage).not.toBe("none");
 
   act(() => {

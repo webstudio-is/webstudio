@@ -1,12 +1,56 @@
-import type { Asset, AssetFolder } from "@webstudio-is/sdk";
-import { fontAssetFixtureFiles } from "./font-assets-fixture";
-import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
+// Declares high-impact agent scenarios, their allowed inputs, and structured
+// observable outcomes without embedding the expected solution in prompts.
+import {
+  blockComponent,
+  blockBodyComponent,
+  blockTemplateComponent,
+  type Asset,
+  type AssetFolder,
+  type Page,
+} from "@webstudio-is/sdk";
+import {
+  fontAssetFixtureFiles,
+  fontAssetFixtureUploadMeta,
+} from "./font-assets-fixture";
+import {
+  markdownBlogFixtureArticles,
+  markdownBlogFixtureDocuments,
+} from "./markdown-blog-fixture";
+
+export type EvaluationReasoningEffort = "low" | "medium" | "high";
+
+type EvaluationAgentInputs = {
+  assets: {
+    directory: string;
+    files: Array<{
+      name: string;
+      type: "file" | "font";
+      format: string;
+      meta: Record<string, unknown>;
+    }>;
+  };
+};
+
+type EvaluationAgentConfig = {
+  reasoningEffort: EvaluationReasoningEffort;
+  guidance: {
+    workflow:
+      | "general"
+      | "authenticated-page"
+      | "design-input"
+      | "font-assets"
+      | "markdown-blog";
+  };
+  inputs?: EvaluationAgentInputs;
+};
 
 export type EvaluationPage = {
   id: string;
   name: string;
   path: string;
   rootInstanceId: string;
+  title?: Page["title"];
+  meta?: Page["meta"];
 };
 
 export type EvaluationInstance = {
@@ -17,7 +61,7 @@ export type EvaluationInstance = {
   children: Array<
     | { type: "id"; value: string }
     | { type: "text"; value: string }
-    | { type: "expression"; value: string }
+    | { type: "expression"; value: string; mode?: "read" | "readwrite" }
   >;
 };
 
@@ -63,9 +107,12 @@ export type HighImpactFixture = {
     | "design-input-v1"
     | "font-assets-v1"
     | "markdown-blog-v1"
-    | "markdown-references-discovery-v1";
+    | "markdown-references-discovery-v1"
+    | "mdx-article-editing-v1";
   objective: string;
   project: EvaluationProject;
+  agent: EvaluationAgentConfig;
+  assetSources?: Readonly<Record<string, string>>;
 };
 
 const homePage: EvaluationPage = {
@@ -73,6 +120,8 @@ const homePage: EvaluationPage = {
   name: "Home",
   path: "",
   rootInstanceId: "home-root",
+  title: "Home",
+  meta: {},
 };
 
 const emptyProject = (): EvaluationProject => ({
@@ -106,10 +155,26 @@ const emptyProject = (): EvaluationProject => ({
   styles: [],
 });
 
+const markdownBlogAgentInputs: EvaluationAgentInputs = {
+  assets: {
+    directory: ".webstudio/assets",
+    files: markdownBlogFixtureDocuments.map(({ name, format }) => ({
+      name,
+      type: "file",
+      format,
+      meta: {},
+    })),
+  },
+};
+
 export const authenticatedPageFixture: HighImpactFixture = {
   id: "authenticated-page-v1",
   objective:
     "Add an editable /account page using the project's existing authentication convention. Cover signed-out, loading, signed-in, and failed-auth UI states, then audit and visually verify the states. Do not persist credentials or private session data.",
+  agent: {
+    reasoningEffort: "low",
+    guidance: { workflow: "authenticated-page" },
+  },
   project: {
     ...emptyProject(),
     resources: [
@@ -150,6 +215,10 @@ export const designInputFixture: HighImpactFixture & {
   id: "design-input-v1",
   objective:
     "Build an editable /summer page from the supplied desktop and mobile design reference. Preserve and reuse the existing design system, implement responsive behavior with the project's breakpoints, inspect desktop/mobile screenshots, then run a static route audit without duplicating the rendered captures.",
+  agent: {
+    reasoningEffort: "high",
+    guidance: { workflow: "design-input" },
+  },
   project: {
     ...emptyProject(),
     styleSources: [
@@ -215,19 +284,131 @@ export const designInputFixture: HighImpactFixture & {
 export const fontAssetsFixture: HighImpactFixture = {
   id: "font-assets-v1",
   objective: `Upload ${fontAssetFixtureFiles.map(({ name }) => name).join(" and ")} from .webstudio/assets as font assets, initially using family Imported Rajdhani, style normal, and weight 400. Then use update-asset exactly once on each uploaded asset to set values.meta to family Rajdhani, style normal, and weight 600. Verify both returned asset ids with verify-font-assets, run the audit, and do not change the page.`,
+  agent: {
+    reasoningEffort: "low",
+    guidance: { workflow: "font-assets" },
+    inputs: {
+      assets: {
+        directory: ".webstudio/assets",
+        files: fontAssetFixtureFiles.map(({ name, format }) => ({
+          name,
+          type: "font",
+          format,
+          meta: fontAssetFixtureUploadMeta,
+        })),
+      },
+    },
+  },
   project: emptyProject(),
 };
 
 export const markdownBlogFixture: HighImpactFixture = {
   id: "markdown-blog-v1",
-  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable, size-optimal blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default, placeholder, duplicate, preview copy, or repair replacement. Both queries must read the Markdown files directly. The overview query must be fully static and bounded, exclude drafts, sort newest first with a deterministic ID tie-breaker, select only the rendered title, slug, excerpt, publication date, and author frontmatter, and load no bodies so it can be materialized. The detail query must use only the dynamic slug, select only rendered metadata, and return one Markdown body without embedding it in the published database. The compiled database must include all articles without truncation, no embedded bodies, and only the intended materialized overview. Render the author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
+  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable, size-optimal blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, one overview Collection, and a directly bound detail Markdown Embed. Include the complete structured query in each initial resource creation; never create a default, placeholder, duplicate, preview copy, or repair replacement. Both queries must read the Markdown files directly. The overview query must be fully static and bounded, exclude drafts, sort newest first with a deterministic ID tie-breaker, select only the rendered title, slug, excerpt, publication date, and author frontmatter, and load no bodies so it can be materialized. The detail query must use only the dynamic slug, select only rendered metadata, and return one Markdown body without embedding it in the published database. The compiled database must include all articles without truncation, no embedded bodies, and only the intended materialized overview. Render the author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
+  agent: {
+    reasoningEffort: "medium",
+    guidance: { workflow: "markdown-blog" },
+    inputs: markdownBlogAgentInputs,
+  },
   project: emptyProject(),
 };
 
 export const markdownReferencesDiscoveryFixture: HighImpactFixture = {
   id: "markdown-references-discovery-v1",
   objective: `Upload the supplied ${markdownBlogFixtureArticles.map(({ name }) => name).join(", ")} Markdown articles from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Query the Markdown files directly so draft articles are excluded, posts are ordered newest first, each post displays its frontmatter author, and only the selected Markdown body is fetched from Asset storage without being embedded in the published database. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
+  agent: {
+    reasoningEffort: "medium",
+    guidance: { workflow: "markdown-blog" },
+    inputs: markdownBlogAgentInputs,
+  },
   project: emptyProject(),
+};
+
+export const mdxArticleSource = `---
+title: Aurora trails
+author:
+  name: Mira Chen
+readingTime: 6
+draft: false
+---
+
+## Plan your route
+
+Follow the marked trail and carry a map.
+`;
+
+export const mdxArticleFixture: HighImpactFixture = {
+  id: "mdx-article-editing-v1",
+  objective:
+    "Connect the existing article.mdx Asset (article-file) to the Content Block article-block on Home. Keep its designed header outside the file body. Make the header's article-title, article-author, and article-reading-time text display the file's title, author name, and reading time and remain editable in Content mode. Keep the reading-time number separate from the existing static ‘ min read’ suffix. Change the file's author name to Noor Silva, preserving all other metadata and body content. Reload the connected source and inspect the saved result, then audit the page. Discover the supported editing workflow from MCP guidance. No visual verification is requested.",
+  agent: { reasoningEffort: "medium", guidance: { workflow: "general" } },
+  assetSources: { "article-file": mdxArticleSource },
+  project: {
+    ...emptyProject(),
+    assets: [
+      {
+        id: "article-file",
+        projectId: "high-impact-evaluation-project",
+        name: "article.mdx",
+        filename: "article",
+        type: "file",
+        format: "mdx",
+        size: new TextEncoder().encode(mdxArticleSource).byteLength,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        meta: {},
+      },
+    ],
+    instances: [
+      {
+        id: "home-root",
+        component: "Body",
+        tag: "body",
+        children: [{ type: "id", value: "article-block" }],
+      },
+      {
+        id: "article-block",
+        component: blockComponent,
+        children: [
+          { type: "id", value: "article-templates" },
+          { type: "id", value: "article-title" },
+          { type: "id", value: "article-author" },
+          { type: "id", value: "article-reading-time" },
+          { type: "id", value: "article-reading-suffix" },
+          { type: "id", value: "article-body" },
+        ],
+      },
+      {
+        id: "article-templates",
+        component: blockTemplateComponent,
+        children: [],
+      },
+      { id: "article-body", component: blockBodyComponent, children: [] },
+      {
+        id: "article-title",
+        component: "Heading",
+        tag: "h1",
+        children: [{ type: "text", value: "Title" }],
+      },
+      {
+        id: "article-author",
+        component: "Text",
+        tag: "span",
+        children: [{ type: "text", value: "Author" }],
+      },
+      {
+        id: "article-reading-time",
+        component: "Text",
+        tag: "span",
+        children: [{ type: "text", value: "0" }],
+      },
+      {
+        id: "article-reading-suffix",
+        component: "Text",
+        tag: "span",
+        children: [{ type: "text", value: " min read" }],
+      },
+    ],
+  },
 };
 
 export const highImpactFixtures = [
@@ -236,6 +417,7 @@ export const highImpactFixtures = [
   fontAssetsFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
+  mdxArticleFixture,
 ] as const;
 
 export const validateHighImpactFixture = (fixture: HighImpactFixture) => {

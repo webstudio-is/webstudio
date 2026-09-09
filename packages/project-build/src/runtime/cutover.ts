@@ -199,7 +199,11 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "instance-metadata-mutations",
-    operationIds: ["instances.setTag", "instances.setLabel"] as const,
+    operationIds: [
+      "instances.setTag",
+      "instances.setLabel",
+      "instances.setName",
+    ] as const,
     callers: ["Builder settings panel", "Builder navigator"] as const,
   },
   {

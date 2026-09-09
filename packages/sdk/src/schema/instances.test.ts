@@ -52,6 +52,19 @@ test("shares instance field validation with create and filter inputs", () => {
   expect(instanceFilterInput.safeParse({ tag: "" }).success).toBe(false);
 });
 
+test("stores a template identifier independently from its display label", () => {
+  expect(
+    instance.parse({
+      type: "instance",
+      id: "card",
+      component: "Box",
+      name: "PromotionCard",
+      label: "Promotion Card",
+      children: [],
+    })
+  ).toMatchObject({ name: "PromotionCard", label: "Promotion Card" });
+});
+
 test("shares text child value validation", () => {
   expect(textChild.safeParse({ type: "text", value: "" }).success).toBe(true);
 });

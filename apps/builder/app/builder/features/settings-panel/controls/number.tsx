@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { InputField } from "@webstudio-is/design-system";
+import { InputField, Tooltip } from "@webstudio-is/design-system";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
@@ -72,25 +72,37 @@ export const NumberControl = ({
           });
         }}
         renderControl={({ readOnly }) => (
-          <InputField
-            id={id}
-            disabled={readOnly}
-            type="number"
-            value={localValue.value}
-            color={isInvalid ? "error" : undefined}
-            onChange={({ target: { valueAsNumber, value } }) => {
-              localValue.set(
-                Number.isNaN(valueAsNumber) ? value : valueAsNumber
-              );
-              setIsInvalid(false);
-            }}
-            onBlur={localValue.save}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                localValue.save();
+          <Tooltip
+            content={binding.fieldError ?? ""}
+            open={binding.fieldError === undefined ? false : undefined}
+          >
+            <InputField
+              id={id}
+              disabled={readOnly}
+              type="number"
+              value={localValue.value}
+              color={
+                isInvalid || binding.fieldError !== undefined
+                  ? "error"
+                  : undefined
               }
-            }}
-          />
+              aria-invalid={
+                isInvalid || binding.fieldError !== undefined || undefined
+              }
+              onChange={({ target: { valueAsNumber, value } }) => {
+                localValue.set(
+                  Number.isNaN(valueAsNumber) ? value : valueAsNumber
+                );
+                setIsInvalid(false);
+              }}
+              onBlur={localValue.save}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  localValue.save();
+                }
+              }}
+            />
+          </Tooltip>
         )}
       />
     </ResponsiveLayout>

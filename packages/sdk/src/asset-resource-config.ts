@@ -129,15 +129,20 @@ const createAssetContentCompilationQuery = ({
   content: configuration.content,
 });
 
-export const createReachableAssetContentCompilationPlan = ({
-  props,
-  dataSources,
-  resources,
-}: {
+type ReachableAssetContentCompilationPlanInput = {
   props: Iterable<Prop>;
   dataSources: Iterable<DataSource>;
   resources: Iterable<Resource>;
-}): ContentCompilationPlan | undefined => {
+};
+
+export const createReachableAssetContentCompilationPlanResult = ({
+  props,
+  dataSources,
+  resources,
+}: ReachableAssetContentCompilationPlanInput): {
+  plan: ContentCompilationPlan | undefined;
+  issues: readonly Readonly<{ resourceId: string; message: string }>[];
+} => {
   const reachableResourceIds = new Set<string>();
   for (const prop of props) {
     if (prop.type === "resource") {
@@ -150,6 +155,7 @@ export const createReachableAssetContentCompilationPlan = ({
     }
   }
   const queries = [];
+  const issues: Array<{ resourceId: string; message: string }> = [];
   for (const resource of resources) {
     if (
       reachableResourceIds.has(resource.id) === false ||
@@ -157,12 +163,17 @@ export const createReachableAssetContentCompilationPlan = ({
     ) {
       continue;
     }
-    const configuration = parseStructuredAssetQueryResourceBody(resource.body);
-    if (configuration === undefined) {
-      throw new Error(
-        `Assets resource ${JSON.stringify(resource.id)} has an invalid query configuration`
-      );
+    const parsedConfiguration = parseStructuredAssetQueryResourceBodyResult(
+      resource.body
+    );
+    if (parsedConfiguration.success === false) {
+      issues.push({
+        resourceId: resource.id,
+        message: parsedConfiguration.message,
+      });
+      continue;
     }
+    const configuration = parsedConfiguration.value;
     queries.push(
       createAssetContentCompilationQuery({
         resourceId: resource.id,
@@ -170,7 +181,24 @@ export const createReachableAssetContentCompilationPlan = ({
       })
     );
   }
-  return createContentCompilationPlan(queries);
+  return { plan: createContentCompilationPlan(queries), issues };
+};
+
+export const createReachableAssetContentCompilationPlan = (
+  input: ReachableAssetContentCompilationPlanInput
+): ContentCompilationPlan | undefined => {
+  const result = createReachableAssetContentCompilationPlanResult(input);
+  if (result.issues.length > 0) {
+    throw new Error(
+      result.issues
+        .map(
+          ({ resourceId, message }) =>
+            `Assets resource ${JSON.stringify(resourceId)} has an invalid query configuration: ${message}`
+        )
+        .join("\n")
+    );
+  }
+  return result.plan;
 };
 
 const assetQuerySourceCodec = createQuerySourceCodec<
@@ -184,22 +212,62 @@ export const createDefaultStructuredAssetQueryResourceConfiguration = () =>
     assetQuerySourceDefinition
   );
 
+export const parseStructuredAssetQueryResourceBodyResult = (
+  body: string | undefined
+):
+  | Readonly<{
+      success: true;
+      value: StructuredAssetQueryResourceConfiguration;
+    }>
+  | Readonly<{ success: false; message: string }> => {
+  const request = parseExpressionObject(body ?? "");
+  if (request === undefined) {
+    return {
+      success: false,
+      message: "Stored Assets query body is not a valid object expression.",
+    };
+  }
+  const unsupportedFields = [...request.keys()].filter(
+    (field) => field !== "query"
+  );
+  if (unsupportedFields.length > 0) {
+    return {
+      success: false,
+      message: `Stored Assets query body has ${
+        unsupportedFields.length === 1
+          ? "an unsupported field"
+          : "unsupported fields"
+      }: ${unsupportedFields.map((field) => JSON.stringify(field)).join(", ")}.`,
+    };
+  }
+  const query = request.get("query");
+  if (query === undefined) {
+    return {
+      success: false,
+      message: 'Stored Assets query body is missing the "query" field.',
+    };
+  }
+  const parsed = assetQuerySourceCodec.parse(query);
+  if (parsed.success === false) {
+    return {
+      success: false,
+      message: `Stored Assets query is invalid: ${parsed.message}`,
+    };
+  }
+  if (hasAssetQueryOutput(parsed.value) === false) {
+    return {
+      success: false,
+      message: "Stored Assets query is invalid: Select at least one output.",
+    };
+  }
+  return { success: true, value: parsed.value };
+};
+
 export const parseStructuredAssetQueryResourceBody = (
   body: string | undefined
 ): StructuredAssetQueryResourceConfiguration | undefined => {
-  const request = parseExpressionObject(body ?? "");
-  if (request === undefined) {
-    return;
-  }
-  const query = request.get("query");
-  if (request.size !== 1 || query === undefined) {
-    return;
-  }
-  const parsed = assetQuerySourceCodec.parse(query);
-  if (parsed.success === false || hasAssetQueryOutput(parsed.value) === false) {
-    return;
-  }
-  return parsed.value;
+  const result = parseStructuredAssetQueryResourceBodyResult(body);
+  return result.success ? result.value : undefined;
 };
 
 export const createStructuredAssetQueryResourceBody = ({

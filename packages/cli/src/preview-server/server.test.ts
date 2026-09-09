@@ -1,6 +1,7 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { syncBuiltinESMExports } from "node:module";
 import { createServer } from "node:net";
-import { tmpdir } from "node:os";
+import os, { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, vi } from "vitest";
 import {
@@ -24,6 +25,47 @@ test("allocates an available local preview port", async () => {
 
   expect(port).toBeGreaterThan(0);
   expect(port).toBeLessThanOrEqual(65_535);
+});
+
+test("allocates a preview port without discovering network interfaces", async () => {
+  const networkInterfaces = os.networkInterfaces;
+  os.networkInterfaces = () => {
+    throw new Error("uv_interface_addresses returned Unknown system error 1");
+  };
+  syncBuiltinESMExports();
+
+  try {
+    await expect(findAvailablePort("127.0.0.1")).resolves.toBeGreaterThan(0);
+  } finally {
+    os.networkInterfaces = networkInterfaces;
+    syncBuiltinESMExports();
+  }
+});
+
+test("reports when the runtime blocks local preview ports", async () => {
+  const server = createServer();
+  vi.spyOn(server, "listen").mockImplementation(() => {
+    queueMicrotask(() => {
+      server.emit(
+        "error",
+        Object.assign(new Error("bind not permitted"), { code: "EPERM" })
+      );
+    });
+    return server;
+  });
+
+  await expect(
+    findAvailablePort("127.0.0.1", () => server)
+  ).rejects.toMatchObject({
+    code: "PREVIEW_NETWORK_RESTRICTED",
+    issues: [
+      {
+        code: "network_permission_denied",
+        path: [],
+        constraint: "runtime_allows_local_tcp_bind",
+      },
+    ],
+  });
 });
 
 test("repeatedly reports an unoccupied explicit preview port as available", async () => {

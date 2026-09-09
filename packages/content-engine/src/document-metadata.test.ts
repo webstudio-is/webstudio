@@ -133,7 +133,17 @@ describe("content metadata cache", () => {
     expect(prepared.document).not.toHaveProperty("excerpt");
     expect(prepared.document.metadataError).toMatchObject({
       code: "FRONTMATTER_INVALID",
+      line: 3,
+      column: 1,
     });
+    expect(
+      prepared.document.metadataError?.message.startsWith(
+        "Map keys must be unique"
+      )
+    ).toBe(true);
+    expect(prepared.document.metadataError?.reason).toBe(
+      prepared.document.metadataError?.message
+    );
   });
 
   test("removes stale excerpts from non-Markdown cache entries", async () => {

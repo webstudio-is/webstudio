@@ -26,7 +26,7 @@ export const meta: WsComponentMeta = {
     ...props,
     datetime: {
       type: "string",
-      control: "text",
+      control: "date",
       required: false,
       contentMode: true,
     },

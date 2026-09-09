@@ -639,6 +639,7 @@ export const runtimeOutputSchemas = {
     instanceIds: stringArray,
     label: z.string(),
   }),
+  "instances.setName": looseObject({ instanceId: id, name: z.string() }),
   "styles.getDeclarations": looseObject({
     declarations: z.array(declarationSummary),
     ...outputPage,

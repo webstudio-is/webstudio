@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Button,
   cssVar,
   Tooltip,
@@ -48,9 +49,7 @@ import {
 } from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
-  $authToken,
   $authTokenPermissions,
-  $builderMode,
   $editingPageId,
   $permissions,
   $stagingUsername,
@@ -92,7 +91,7 @@ import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import { builderUrl } from "~/shared/router-utils";
+import { getInstanceLink } from "~/shared/instance-utils/link";
 import {
   getRestrictedFeatures,
   type RestrictedFeature,
@@ -116,12 +115,10 @@ const PrePublishAuditMessage = ({
   const { instanceId } = finding.location;
   const pages = $pages.get();
   const instances = $instances.get();
-  const project = $project.get();
 
   if (
     instanceId === undefined ||
     pages === undefined ||
-    project === undefined ||
     instances.has(instanceId) === false
   ) {
     return message;
@@ -132,14 +129,10 @@ const PrePublishAuditMessage = ({
     instances,
     instanceId
   );
-  const href = builderUrl({
-    projectId: project.id,
-    pageId: pageId === pages.homePageId ? undefined : pageId,
-    instanceSelector,
-    origin: window.location.origin,
-    authToken: $authToken.get(),
-    mode: $builderMode.get(),
-  });
+  const href = getInstanceLink(instanceSelector);
+  if (href === undefined) {
+    return message;
+  }
 
   return (
     <>
@@ -1116,7 +1109,7 @@ const Content = (props: {
       <Flex direction="column" justify="end" css={{ height: 0 }}>
         <Separator />
       </Flex>
-      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} direction="column" gap="2">
         <AddDomain
           projectId={props.projectId}
           refresh={refreshProject}
@@ -1147,7 +1140,7 @@ const Content = (props: {
           disabled={false}
           restrictedFeatures={restrictedFeatures}
         />
-      </Flex>
+      </PanelContent>
     </form>
   );
 };
@@ -1195,7 +1188,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("docker");
 
   return (
-    <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} columns={1} gap={3}>
       <Grid columns={1} gap={2}>
         <div />
         <Grid columns={2} gap={2} align={"center"}>
@@ -1361,7 +1354,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           </Grid>
         </Grid>
       )}
-    </Grid>
+    </PanelContent>
   );
 };
 

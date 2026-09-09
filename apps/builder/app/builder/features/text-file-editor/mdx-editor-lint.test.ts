@@ -27,6 +27,7 @@ test("decorates the exact unsupported MDX source range", async () => {
       from: 8,
       to: 18,
       severity: "warning",
+      source: "unsafe-mdx",
       message: "Executable MDX expressions are not supported",
     },
   ]);

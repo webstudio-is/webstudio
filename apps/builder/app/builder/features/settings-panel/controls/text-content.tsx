@@ -9,6 +9,7 @@ import {
   DialogTitleActions,
   Flex,
   Text,
+  Tooltip,
   toast,
 } from "@webstudio-is/design-system";
 import type { ExpressionBindingMode, Instance } from "@webstudio-is/sdk";
@@ -28,6 +29,7 @@ import { useBindableControl } from "./use-bindable-control";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { getTextContentUpdateOperation } from "./text-content-utils";
 import { useCodeTextLanguageSupport } from "./code";
+import { parseError } from "~/shared/error/error-parse";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -118,11 +120,7 @@ export const TextContent = ({
   const localValue = useDraftValue(String(displayedValue ?? ""), (value) => {
     if (child.type === "expression") {
       void binding.writeBoundValue?.(value).catch((error) => {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Unable to update MDX frontmatter"
-        );
+        toast.error(parseError(error).message);
       });
       return;
     }
@@ -181,27 +179,34 @@ export const TextContent = ({
         }
         onRemove={resetBindings}
         renderControl={({ readOnly }) => (
-          <CodeEditor
-            title={
-              <DialogTitle
-                maximizable
-                suffix={
-                  <DialogTitleActions>
-                    <DialogMaximize />
-                    <DialogClose />
-                  </DialogTitleActions>
-                }
-              >
-                <Text variant="labels">Text content</Text>
-              </DialogTitle>
-            }
-            size="small"
-            languageSupport={languageSupport}
-            readOnly={readOnly}
-            value={localValue.value}
-            onChange={localValue.set}
-            onChangeComplete={localValue.save}
-          />
+          <Tooltip
+            content={binding.fieldError ?? ""}
+            open={binding.fieldError === undefined ? false : undefined}
+          >
+            <CodeEditor
+              aria-invalid={binding.fieldError !== undefined || undefined}
+              color={binding.fieldError === undefined ? undefined : "error"}
+              title={
+                <DialogTitle
+                  maximizable
+                  suffix={
+                    <DialogTitleActions>
+                      <DialogMaximize />
+                      <DialogClose />
+                    </DialogTitleActions>
+                  }
+                >
+                  <Text variant="labels">Text content</Text>
+                </DialogTitle>
+              }
+              size="small"
+              languageSupport={languageSupport}
+              readOnly={readOnly}
+              value={localValue.value}
+              onChange={localValue.set}
+              onChangeComplete={localValue.save}
+            />
+          </Tooltip>
         )}
       />
     </VerticalLayout>

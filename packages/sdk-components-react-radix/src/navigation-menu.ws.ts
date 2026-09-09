@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import {
   propsNavigationMenu,
   propsNavigationMenuItem,
@@ -25,7 +25,10 @@ export const metaNavigationMenu: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.NavigationMenuList, radix.NavigationMenuViewport],
+    descendants: [
+      getRadixComponentId("NavigationMenuList"),
+      getRadixComponentId("NavigationMenuViewport"),
+    ],
   },
   presetStyle: {
     div,
@@ -39,7 +42,7 @@ export const metaNavigationMenuList: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.NavigationMenuItem],
+    descendants: [getRadixComponentId("NavigationMenuItem")],
   },
   presetStyle: {
     div,
@@ -50,14 +53,14 @@ export const metaNavigationMenuList: WsComponentMeta = {
 export const metaNavigationMenuItem: WsComponentMeta = {
   icon: ListItemIcon,
   label: "Menu Item",
-  indexWithinAncestor: radix.NavigationMenu,
+  indexWithinAncestor: getRadixComponentId("NavigationMenu"),
   contentModel: {
     category: "none",
     children: ["instance"],
     descendants: [
-      radix.NavigationMenuTrigger,
-      radix.NavigationMenuContent,
-      radix.NavigationMenuLink,
+      getRadixComponentId("NavigationMenuTrigger"),
+      getRadixComponentId("NavigationMenuContent"),
+      getRadixComponentId("NavigationMenuLink"),
     ],
   },
   presetStyle: {
@@ -86,7 +89,7 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
-    descendants: [radix.NavigationMenuLink],
+    descendants: [getRadixComponentId("NavigationMenuLink")],
   },
   states: [
     { label: "Open", selector: '[data-state="open"]' },

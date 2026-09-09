@@ -9,6 +9,8 @@ import { assetFolders } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { MarkdownMetadataError } from "@webstudio-is/content-engine";
+import { ByteLimitExceededError } from "@webstudio-is/content-engine/compiler";
 import {
   AssetRestRangeError,
   AssetRestPayloadTooLargeError,
@@ -31,9 +33,14 @@ describe("Assets REST responses", () => {
     [new TRPCError({ code: "FORBIDDEN" }), 403],
     [new AssetRepositoryNotFoundError("missing"), 404],
     [new AssetRepositoryConflictError("conflict"), 409],
+    [
+      new MarkdownMetadataError("FRONTMATTER_INVALID", "invalid frontmatter"),
+      409,
+    ],
     [new AssetUploadCountLimitError(50), 409],
     [new AssetRestRangeError("bad range"), 416],
     [new AssetRestPayloadTooLargeError("too large"), 413],
+    [new ByteLimitExceededError(), 413],
     [new AssetUploadSizeLimitError("post.md", 10), 413],
   ])("maps domain errors to HTTP status", async (error, status) => {
     const response = assetRestErrorResponse(error);
@@ -118,6 +125,25 @@ describe("Assets REST responses", () => {
         })
       )
     ).rejects.toBeInstanceOf(AssetRestPayloadTooLargeError);
+  });
+
+  test("accepts a larger explicit JSON limit for internal asset operations", async () => {
+    const body = JSON.stringify({
+      configSource: "x".repeat(assetResourceLimits.restMutationRequestBytes),
+    });
+
+    await expect(
+      readAssetRestJson(
+        new Request("https://example.com/rest/assets", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body,
+        }),
+        new TextEncoder().encode(body).byteLength
+      )
+    ).resolves.toEqual({
+      configSource: "x".repeat(assetResourceLimits.restMutationRequestBytes),
+    });
   });
 
   test("rejects malformed UTF-8 in JSON bodies", async () => {

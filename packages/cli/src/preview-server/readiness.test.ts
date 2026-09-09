@@ -19,6 +19,76 @@ test("waits for preview server readiness", async () => {
   expect(sleep).toHaveBeenCalledWith(5);
 });
 
+test("reports when a listening preview keeps returning server errors", async () => {
+  const fetch = vi.fn(async () => new Response("failed", { status: 500 }));
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/",
+      { timeoutMs: 1, intervalMs: 5 },
+      createDependencies({ fetch })
+    )
+  ).rejects.toMatchObject({
+    code: "PREVIEW_HTTP_ERROR",
+    issues: [
+      {
+        code: "preview_http_error",
+        path: [],
+        constraint: "http_status:500",
+      },
+    ],
+  });
+});
+
+test.each([
+  [
+    "ECONNREFUSED",
+    "preview_connection_refused",
+    "preview_accepts_http_connections",
+  ],
+  [
+    "EPERM",
+    "preview_connection_permission_denied",
+    "runtime_allows_local_tcp_connect",
+  ],
+  [
+    "UND_ERR_CONNECT_TIMEOUT",
+    "preview_connection_timeout",
+    "preview_http_request_completes",
+  ],
+  ["EHOSTUNREACH", "preview_request_failed", "preview_http_request_succeeds"],
+])(
+  "reports the preview readiness request failure for %s",
+  async (causeCode, issueCode, constraint) => {
+    const fetchError = Object.assign(new TypeError("fetch failed: secret"), {
+      cause: Object.assign(new Error("connect failed: secret"), {
+        code: causeCode,
+      }),
+    });
+    const fetch = vi.fn(async () => {
+      throw fetchError;
+    });
+
+    let readinessError: unknown;
+    try {
+      await waitForPreviewReady(
+        "http://127.0.0.1:5173/",
+        { timeoutMs: 1, intervalMs: 5 },
+        createDependencies({ fetch })
+      );
+    } catch (error) {
+      readinessError = error;
+    }
+
+    expect(readinessError).toMatchObject({
+      code: "PREVIEW_READINESS_FAILED",
+      issues: [{ code: issueCode, path: [], constraint }],
+    });
+    expect(readinessError).toBeInstanceOf(Error);
+    expect((readinessError as Error).message).not.toContain("secret");
+  }
+);
+
 test("waits until the latest preview build asset is served", async () => {
   const fetch = vi
     .fn()

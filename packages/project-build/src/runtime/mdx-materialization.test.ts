@@ -978,7 +978,7 @@ describe("materializeMdxTemplates", () => {
     classProp.value = "changed";
 
     expect(await serializeMdxAuthoredContent({ root, fragment: next })).toBe(
-      '<ws.element ws:name="Card" class="legacy" className="changed" />\n'
+      '<Card class="legacy" className="changed" />\n'
     );
   });
 
@@ -1041,7 +1041,7 @@ describe("materializeMdxTemplates", () => {
     classProp.value = "changed";
 
     expect(await serializeMdxAuthoredContent({ root, fragment: next })).toBe(
-      '<ws.element ws:name="Card" class="changed" className />\n'
+      '<Card class="changed" className />\n'
     );
   });
 

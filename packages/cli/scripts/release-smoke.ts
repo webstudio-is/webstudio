@@ -607,7 +607,22 @@ const startFixtureApi = async (
         return undefined;
       }
       let data: unknown;
-      if (operationPath === "build.loadProjectBundleByProjectId") {
+      if (operationPath === "build.loadData") {
+        const snapshot = getCurrentBuildSnapshot();
+        data = {
+          ...getCurrentSerializedBuild(),
+          ...snapshot,
+          pages: getCurrentSerializedBuild().pages,
+          dataSources: snapshot.variables,
+          assets: Array.from(state.assets?.values() ?? []),
+          assetFolders: Array.from(state.assetFolders?.values() ?? []),
+          project: {
+            id: projectId,
+            title: "Release smoke project",
+            domain: "release-smoke",
+          },
+        };
+      } else if (operationPath === "build.loadProjectBundleByProjectId") {
         data = { ...fixture.data, build: getCurrentSerializedBuild() };
       } else if (operationPath === "projects.get") {
         data = {
@@ -1643,7 +1658,7 @@ const run = async () => {
     });
     await assertLocalDryRun("local fragment insertion", "insert-fragment", {
       parentInstanceId: "home-root",
-      fragment: '<ws.element ws:tag="p">Release smoke</ws.element>',
+      fragment: "<p>Release smoke</p>",
     });
     await assertLocalDryRun("local component insertion", "insert-component", {
       parentInstanceId: "home-root",

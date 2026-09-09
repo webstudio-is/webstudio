@@ -20,6 +20,10 @@ Next is a breakdown of Content Block by mode:
 
 ## Content Block in Design mode
 
+Without an MDX source, add content directly inside the Content Block, alongside **Templates**. No Body wrapper is needed. **Templates** defines the reusable designs that editors can insert in Content mode. Adding a one-off content instance does not add it to the editor's insertion menu. Add a design to Templates only when editors should be able to insert more instances of it.
+
+Templates are not required for ordinary Markdown content. Custom components referenced by JSX in MDX must match a template in that Content Block; being registered in the Builder is not enough.
+
 Sometimes providing team members or clients the ability to edit existing content doesn’t help them accomplish everything they need.
 
 Instead, they may want to add new content without asking you.
@@ -40,42 +44,51 @@ Notice that the child of Content Block is Templates.&#x20;
 
 Drag/build the various instances you want to provide editors here.
 
+A Content Block must have exactly one direct Templates container. A missing or second Templates container makes the block invalid. Connected MDX content does not resolve or publish until you restore that structure.
+
 For example, your client wants to update the section under the hero with the latest promotion. Sometimes the promotion is for an event while other times it’s a product. You can create those two designs, add them to “Templates” within Content Block, and your client can insert instances of the desired template and edit its content.
 
 {% hint style="info" %}
 Editors don’t have access to the Style Panel, so be sure to provide fully designed templates.
 {% endhint %}
 
-Every top-level instance within Templates will appear in Content mode like this:
+Reusable top-level templates appear in Content mode like this. Structural and inline templates supplied for MDX styling, such as table cells and emphasis, do not appear as standalone insertion choices.
 
 <div><figure><img src="../../.gitbook/assets/templates-design-mode.png" alt="Templates in Design mode"><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template in Content mode"><figcaption><p>Template in Content mode</p></figcaption></figure></div>
 
 
-Each time they insert a template, its copy appears inside the Content Block's Body outlet, alongside any initial body content. The Templates container remains protected source material.
+Each time they insert a template, its copy appears alongside the existing content: directly inside an unconnected Content Block, or inside **MDX content** when a file is connected. The Templates container remains protected source material.
 
 ### Step 3: Add an initial setup (optional)
 
-Optionally, you can add instances inside the Content Block's Body outlet.
+Optionally, add instances directly inside the Content Block. If the block is connected to MDX, its file content appears inside **MDX content** instead.
 
 <figure><img src="../../.gitbook/assets/startingpoint-content-block.png" alt="Initial Feature instances inside a Content Block Body outlet" width="357"><figcaption><p>The Feature instances are provided as a starting point</p></figcaption></figure>
 
 
 Doing so will provide an initial setup for editors.
 
-Editors can delete children of the Body outlet. They cannot delete the designed shell, Templates container, templates, or nested instances independently.
+Editors can delete top-level content instances. In MDX-connected blocks, these are the children of **MDX content**, not the surrounding designed shell. They cannot delete the Templates container, templates, or nested instances independently.
 
 ### Store content in an MDX file
 
 Connect a `.mdx` file when the Content Block's body should live in Assets instead of the project's regular instance data. The designed shell and Templates list remain in the project. Markdown `.md` files cannot be connected to a Content Block.
 
+To insert a custom component such as Accordion into **MDX content**, first add its design to **Templates**, then insert it from the template picker. Inserting custom components directly from the Add panel into MDX content is blocked. Basic Markdown elements, images, and code blocks can still be inserted directly. Place designer-owned, one-off components outside **MDX content**; they remain in the project and are not saved to the file.
+
+Moving, pasting, or duplicating content into an MDX region also checks the destination's Templates. Unsupported components are rejected before the tree changes, including components nested inside a pasted container.
+
 #### Prepare the Content Block
 
 1. Add the Content Block and design its shell in Design mode.
-2. Place the **Body** outlet where the article body should render.
-3. Add any reusable custom content to **Templates**.
-4. Give every top-level template a unique instance name. MDX uses that name to find the template.
+2. After connecting a file, place the **MDX content** outlet where the article body should render.
+3. Keep exactly one direct **Templates** container. Style the standard document elements already provided inside it.
+4. Add any reusable custom content to **Templates**.
+5. Give every custom top-level template a unique instance name. Use a JSX-compatible name such as `PromotionCard` when you want component-style JSX.
 
-New Content Blocks already include a Body outlet. When you connect an older Content Block without one, Webstudio adds it automatically.
+New Content Blocks include direct templates for every supported Markdown element, including headings, paragraphs, marks, links, images, quotes, lists, task controls, code, separators, and tables. They do not include a Body outlet. Connecting an MDX file adds the outlet automatically. Existing blocks with a Body outlet remain supported without changing their saved structure.
+
+When a file is connected, the Navigator labels its Body outlet **MDX content** and shows an MDX icon, even when the region is empty. Content inside that region is saved to the file; instances outside it remain in the project. Use the region's **MDX content settings** menu and choose **Open MDX file** to edit the connected file directly.
 
 #### Create and connect the file
 
@@ -107,31 +120,128 @@ Select the connected filename to choose another file. Select **Open** to edit th
 
 Edit the connected body with the usual Content mode controls. You can change text and supported properties, insert templates, reorder content, and delete content. Canvas changes appear immediately and then save to the MDX file.
 
+While editing connected content, **Undo** and **Redo** restore source edits, including edits to referenced author files, without undoing the loading of the Content Block. This history keeps the last 20 source edits in the current project session. Reloading clears the history. If the file has changed outside that history, Webstudio does not overwrite it.
+
 Component properties in Content mode are limited to authored content, such as links, media sources and alternative text, form labels and placeholders, code, and date values. Layout, dimensions, visual themes, form wiring, and interaction settings remain available only in Design mode.
 
 If the file changes after a canvas edit starts but before it is saved, reload the Content Block before continuing. Webstudio keeps the local canvas state until reload and does not silently merge or overwrite either version.
 
 #### Write Markdown and MDX
 
-Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Webstudio writes a standard element as `<ws.element ws:tag="tag">` only when its authored properties cannot be represented by Markdown. It uses `ws:name` only to insert a uniquely named top-level template:
+An `.mdx` file supports standard Markdown and constrained JSX in one document.
+
+Write headings, paragraphs, links, lists, tables, code, images, and other standard document content as Markdown. Each node uses the uniquely matching semantic template from the Content Block when one exists. Matching uses the element tag or adapted component type, not the template's editable label. If no standard template exists, Webstudio renders the normal semantic fallback. The fallback is still a normal element or component, so its applicable component and global styles continue to work; it simply has no Content Block template styles. If more than one standard template matches, Webstudio reports a warning and uses the fallback.
+
+Use lowercase JSX when Markdown cannot express the required HTML or SVG element or attributes:
+
+```mdx
+<section aria-label="Launch details">
+  <h2>Launch offer</h2>
+</section>
+```
+
+Standard SVG elements use the same syntax:
+
+```mdx
+<svg viewBox="0 0 24 24">
+  <path d="M0 0h24v24H0z" />
+</svg>
+```
+
+Use a capitalized JSX name for a uniquely named custom template:
 
 ```mdx
 # Product update
 
-Regular document content stays Markdown.
+Regular document content stays Markdown and uses the matching standard templates.
 
-<ws.element ws:name="Promotion Card" />
+<PromotionCard tone="featured">
+  ## Launch offer
+</PromotionCard>
 ```
 
-The `ws:name` value must exactly match a unique top-level instance name in the Content Block's Templates list. Missing templates show a warning in Builder and are omitted from the published site. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
+The JSX name matches the stable **Name** of a unique top-level template in the Content Block's Templates list. **Name** is a JavaScript identifier and is separate from the optional **Label** shown in the canvas. If no template has that name, the custom component is unresolved and is not rendered. Its JSX remains in the file so adding the matching template can resolve it later. A new template gets its default name from its root component or HTML tag, and duplicate defaults get deterministic numeric suffixes.
 
-Keep template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected `ws:name` references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files.
+In the MDX editor, type `<` to autocomplete templates connected to the file and built-in Image and CodeText components. Inside a JSX tag, autocomplete suggests its supported properties and available property values.
+
+Missing template references are marked as errors at their JSX source range. Hover the underline to read the explanation. For dynamic sources, the editor also uses currently rendered Content Blocks to find the file's templates.
+
+Malformed MDX stays as an unsaved draft in the file editor. Fix the reported error before closing, or choose **Discard changes** to keep the last saved version. The saved article remains available while you repair the draft.
+
+The Navigator shows an unresolved reference as **Missing template: Name**. Delete that item to remove its JSX, including its children, from the MDX file. Leaving the item in place preserves its source until the template is available.
+
+When two component libraries export the same name, the core component keeps the plain identifier and the namespaced component gets a stable library prefix, such as `Checkbox` and `RadixCheckbox`. Component discovery reports the exact JSX identifier to use.
+
+JSX attributes accept quoted static values and bare booleans. Webstudio converts quoted values to the property's declared string, number, or boolean type when possible. Imports, exports, expressions such as `{false}`, spreads, functions, and executable JavaScript are not supported. Internal forms such as `<ws.element>`, `ws:name`, `ws:tag`, `ws:label`, and `<$.*>` are not current authoring syntax.
+
+An explicit JSX child tree that matches the designed template structure overlays its text and supported properties onto the cloned template descendants. Their template styles and structure stay intact. If the child structure does not match, the explicit children replace the template root's default children and each authored child resolves through a matching template when possible. An empty pair such as `<PromotionCard></PromotionCard>` clears the defaults, while a self-closing reference such as `<PromotionCard />` keeps them. If you edit inherited default content in Builder, Webstudio writes that content as explicit JSX children so the edit persists without changing the template.
+
+Template resolution is live. If the file already contains `<PromotionCard />` or a Markdown element that has no matching template, adding the template later updates the rendered content without rewriting the MDX file. This also applies to elements added to an explicit JSX child tree. Renaming or removing a template re-resolves the same source.
+
+If a Content Block that already renders connected MDX temporarily has zero or multiple Templates containers, Builder keeps the last valid rendered content and reports the structural error. Fixing the container structure resolves the current MDX again automatically.
+
+Missing or duplicate custom templates show a source-ranged warning and a selectable placeholder in Builder. Published pages omit only the unresolved custom subtree. Invalid or unsupported MDX remains editable; Builder reports the source location and renders the valid content it can recover.
+
+Before publishing, the Publish panel warns when a missing or ambiguous custom
+template would omit content. It lists the affected files and template names.
+The server checks the prepared publication content, including discovered dynamic
+article sources and nested Content Blocks; it is not limited to the open page.
+This reuses the publication bundle loading and content scan, then resolves its
+template dependencies again to collect warnings. The warning does not block
+publishing. Repair the listed templates to include that content.
+
+Legacy files that already contain internal `ws.element` or `ws:name` syntax remain readable during migration, but Webstudio does not emit or recommend those forms. Component namespaces such as `$.*`, `radix.*`, and `animation.*` are unsupported; use the direct component identifier.
+
+Keep custom template names stable after connecting MDX files. Webstudio prevents duplicate top-level template names. Renaming or deleting a referenced template warns that connected files will not be rewritten. If you continue, update the affected JSX references in the MDX files. An MCP-connected agent can preview and confirm that update across a selected group of files. A confirmed rename changes the reference name. A confirmed removal unwraps and preserves explicit authored children; a self-closing reference disappears because it has no authored children.
 
 #### Use frontmatter in the designed shell
 
 Edit frontmatter as YAML in the MDX file editor. Visual body edits preserve the frontmatter source, including comments and formatting.
 
-To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title` or an image source to `document.frontmatter.featureImage.src`. Direct frontmatter bindings remain part of the same MDX file and can be edited on the canvas in Content mode. Computed expressions and values supplied through another document's `$ref` remain read-only on the canvas; open the referenced file to edit referenced values.
+Store every frontmatter image as an exact `$ref` object so it resolves to structured Asset metadata:
+
+```yaml
+featureImage:
+  $ref: ./images/feature.png
+```
+
+To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title`, an Image source to `document.frontmatter.featureImage.src`, and its alternative text to `document.frontmatter.featureImage.description`. This uses the image's Asset description instead of duplicating alternative text in frontmatter. Fields authored directly in the connected MDX file can be edited on the canvas and through supported Settings controls in Content mode; edits save back to that file. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions and JSON/body references remain read-only. Image replacement is supported: a direct Image source binding with `mode:"readwrite"` lets the picker replace the frontmatter `$ref`, while shared Asset metadata is edited in Asset settings.
+
+**Check every article field**
+
+An editable MDX body does not make the whole article editable. Check the title,
+excerpt, author details, dates, reading time, hero and inline images,
+alternative text, captions, links, and custom-component content in **Content
+mode**. Include header fields outside **MDX content**. Change each value through
+its UI control, check the saved file, reload, and restore the original value.
+Do not treat editing the raw MDX file as a substitute for an editor-facing control.
+
+Replacing an article's image changes its frontmatter image `$ref`, not the
+shared Asset's resolved `.src`. With a writable direct Image source binding to
+`document.frontmatter.featureImage.src`, use **Choose source** in Content mode.
+The resolved URL itself remains read-only.
+
+To edit shared alternative text, open **Choose source**, open the image's
+actions menu, then choose **Settings** and edit **Description**. A binding to
+`document.frontmatter.featureImage.description` uses that description.
+Changing it affects every use of the Asset; replacing an article's image does
+not change the original Asset's description.
+
+**Keep formatted values editable**
+
+Keep an editable value separate from its surrounding wording. For example, to
+display **— 5 min read**, place three inline text elements next to each other:
+
+- Fixed text: `— `.
+- A value element with its entire **Text Content** bound to `document.frontmatter.readingTime`.
+- Fixed text: ` min read`.
+
+Keep the spaces in the fixed text. Do not combine the value and wording into one
+expression: concatenation, template literals, fallbacks, and formatting calls
+produce read-only values. Keep the bound value as the only text content of its
+element. The editor can then change the reading time without changing the fixed
+wording. For dates, bind a Date Time component's date property directly and use
+its formatting settings instead of formatting the binding expression.
 
 #### Use one file in repeated or shared content
 
@@ -141,13 +251,34 @@ You can also connect multiple Content Blocks to the same MDX file. Editing the f
 
 When you copy a connected Content Block, page, template, or folder to another project, Webstudio copies the MDX file and the local files it references. The pasted Content Block points to those imported copies. If Webstudio cannot parse the MDX, it preserves the source file and reports that its dependencies could not be collected.
 
-To create another post with the same structure, duplicate the existing MDX Asset, edit the duplicate, and connect or bind the appropriate Content Block occurrence to it.
+To create another post in a collection folder, use **New entry**. For an ordinary MDX Asset outside a collection, duplicate the file and edit the duplicate. Connect or bind the appropriate Content Block occurrence to the new file.
 
 #### Disconnect the file
 
 In Design mode, select the **Source** property label and choose **Reset value**. Disconnecting leaves the MDX file unchanged, removes its body from the canvas, and keeps the designed shell and Templates list with an empty Body outlet. If the source is bound inside a Collection, review the warning before confirming: resetting the shared Source property disconnects every Collection occurrence.
 
 ## Content Block in Content mode
+
+### Verify the editor experience before handoff
+
+Use this checklist when creating, migrating, or changing any Content Block,
+with or without an MDX source:
+
+1. List every value the editor must change, its UI control, and where it saves.
+   Include headers, dates, reading time, images, alternative text, links, and
+   custom-component content—not just body text.
+2. Use the appropriate control: a calendar for dates and an image picker for
+   image replacement. Keep fixed punctuation outside directly bound values.
+   Preserve existing field types and wording; a stored `4 min read` string
+   can stay one directly bound value.
+3. Edit every listed value in **Content mode**. Check its saved project data,
+   MDX, or referenced file, reload, then restore and verify the original value.
+4. Record each field as passed, failed, or not tested. A correct preview,
+   successful API edit, or one editable heading does not verify other fields.
+   Missing controls and read-only required fields mean the setup is unfinished.
+
+Templates and designer-owned layout stay protected. This protection must not
+be used to exclude content the editor was promised they could change.
 
 In [Content mode](../foundations/modes.md#content), you can edit existing content inside Content Blocks. But what if you want to add _new_ content?
 

@@ -61,6 +61,66 @@ const getGeneratedSiteIdentity = (html: string) => {
   return visit(document);
 };
 
+type PreviewProbeFailure = {
+  code: string;
+  message: string;
+  constraint: string;
+};
+
+const createPreviewReadinessError = (
+  url: string,
+  code: "PREVIEW_HTTP_ERROR" | "PREVIEW_READINESS_FAILED",
+  issue: PreviewProbeFailure
+) =>
+  Object.assign(new Error(`${issue.message} Preview URL: ${url}`), {
+    code,
+    issues: [{ ...issue, path: [] }],
+  });
+
+const getPreviewRequestFailure = (error: unknown): PreviewProbeFailure => {
+  const cause =
+    error instanceof Error && "cause" in error && error.cause !== undefined
+      ? error.cause
+      : error;
+  const code =
+    typeof cause === "object" && cause !== null && "code" in cause
+      ? cause.code
+      : undefined;
+  if (code === "ECONNREFUSED") {
+    return {
+      code: "preview_connection_refused",
+      message:
+        "The preview process is running, but it did not accept HTTP connections.",
+      constraint: "preview_accepts_http_connections",
+    };
+  }
+  if (code === "EPERM" || code === "EACCES") {
+    return {
+      code: "preview_connection_permission_denied",
+      message:
+        "The operating system denied access to the preview's local HTTP port.",
+      constraint: "runtime_allows_local_tcp_connect",
+    };
+  }
+  if (
+    code === "ETIMEDOUT" ||
+    code === "UND_ERR_CONNECT_TIMEOUT" ||
+    (error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError"))
+  ) {
+    return {
+      code: "preview_connection_timeout",
+      message: "The HTTP request to the preview server timed out.",
+      constraint: "preview_http_request_completes",
+    };
+  }
+  return {
+    code: "preview_request_failed",
+    message: "The HTTP request to the preview server failed.",
+    constraint: "preview_http_request_succeeds",
+  };
+};
+
 export const waitForPreviewReady = async (
   url: string,
   {
@@ -81,6 +141,7 @@ export const waitForPreviewReady = async (
   const deadline = Date.now() + timeoutMs;
   let sawStaleServer = false;
   let sawUnexpectedProject = false;
+  let lastProbeFailure: PreviewProbeFailure | undefined;
   while (Date.now() <= deadline) {
     if (isRunning?.() === false) {
       throw new Error(
@@ -96,6 +157,14 @@ export const waitForPreviewReady = async (
         method: "GET",
         signal: AbortSignal.timeout(attemptTimeoutMs),
       });
+      lastProbeFailure =
+        response.status >= 500
+          ? {
+              code: "preview_http_error",
+              message: `The preview server responded with HTTP ${response.status} and did not become ready.`,
+              constraint: `http_status:${response.status}`,
+            }
+          : undefined;
       if (response.status === 401 && requiredProject !== undefined) {
         const identityResponse = await dependencies.fetch(
           new URL("/__webstudio/preview.json", url),
@@ -139,8 +208,8 @@ export const waitForPreviewReady = async (
         sawUnexpectedProject ||= servesExpectedProject === false;
         sawStaleServer ||= servesLatestAssets === false;
       }
-    } catch {
-      // Server is still starting.
+    } catch (error) {
+      lastProbeFailure = getPreviewRequestFailure(error);
     }
     await dependencies.sleep(intervalMs);
   }
@@ -152,6 +221,15 @@ export const waitForPreviewReady = async (
   if (sawStaleServer) {
     throw new Error(
       `Preview server at ${url} did not serve the latest build assets. Stop the existing preview server on this port, then retry.`
+    );
+  }
+  if (lastProbeFailure !== undefined) {
+    throw createPreviewReadinessError(
+      url,
+      lastProbeFailure.code === "preview_http_error"
+        ? "PREVIEW_HTTP_ERROR"
+        : "PREVIEW_READINESS_FAILED",
+      lastProbeFailure
     );
   }
   throw new Error(`Preview server did not become ready at ${url}.`);

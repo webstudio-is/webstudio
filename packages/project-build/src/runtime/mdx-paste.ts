@@ -1,3 +1,7 @@
+/**
+ * Handles one-time insertion of pasted MDX into a Content Block by using the
+ * same template resolution and materialization rules as an MDX-backed source.
+ */
 import { parseMdxDocument } from "@webstudio-is/content-engine/mdx";
 import {
   blockComponent,
@@ -22,7 +26,10 @@ import {
 } from "./instances";
 import { materializeMdxAuthoredContent } from "./mdx-authored-content";
 import { materializeMdxTemplates } from "./mdx-materialization";
-import { resolveMdxTemplates } from "./mdx-template-resolution";
+import {
+  assertMdxTemplateStructure,
+  resolveMdxTemplates,
+} from "./mdx-template-resolution";
 import type { BuilderRuntimeMutation } from "./mutation";
 
 export const insertMdxTextInput = z.object({
@@ -114,8 +121,12 @@ export const insertMdxText = async ({
     document,
     identity,
     instances: data.instances,
+    props: data.props,
     metas: componentMetas,
   });
+  if (destinationBlock !== undefined) {
+    assertMdxTemplateStructure(resolution);
+  }
   const templateMaterialization = await materializeMdxTemplates({
     identity,
     resolution,
@@ -127,6 +138,7 @@ export const insertMdxText = async ({
     identity,
     document,
     templateMaterialization,
+    metas: componentMetas,
   });
   const mutation = insertFragment(
     state,
@@ -146,7 +158,10 @@ export const insertMdxText = async ({
       ...mutation.result,
       parentInstanceId:
         mutation.result.parentInstanceId ?? input.parentInstanceId,
-      diagnostics: [...templateMaterialization.diagnostics],
+      diagnostics: [
+        ...templateMaterialization.diagnostics,
+        ...(authored.diagnostics ?? []),
+      ],
     },
   };
 };

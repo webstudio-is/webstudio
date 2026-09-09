@@ -1,6 +1,6 @@
 import { Select, toast } from "@webstudio-is/design-system";
-import { nanoid } from "nanoid";
 import { useState } from "react";
+import { createId, type AnimationAction } from "@webstudio-is/sdk";
 import {
   $hoveredInstanceSelector,
   $registeredComponentMetas,
@@ -10,7 +10,6 @@ import { $instances } from "~/shared/sync/data-stores";
 import { getInstanceStyleDecl } from "~/builder/features/style-panel/shared/model";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { toValue } from "@webstudio-is/css-engine";
-import type { AnimationAction } from "@webstudio-is/sdk";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const initSubjects = () => {
@@ -57,7 +56,7 @@ const initSubjects = () => {
     const isTimelineExists = viewTimelineName.startsWith("--");
     const value = isTimelineExists
       ? viewTimelineName
-      : `--generated-timeline-${nanoid()}`;
+      : `--generated-timeline-${createId("nano")}`;
 
     subjects.push({
       value,

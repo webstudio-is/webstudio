@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { type Prop, type Props } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { $, expression, renderData, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  expression,
+  renderData,
+  ws,
+} from "@webstudio-is/template";
 import {
   canHaveTextContent,
   findClosestContainer,
@@ -11,7 +16,108 @@ import {
   isTreeSatisfyingContentModel,
 } from "./content-model";
 
+const Body = createTemplateComponentFixture("Body");
+const BlockTemplate = createTemplateComponentFixture("ws:block-template");
+const Bold = createTemplateComponentFixture("Bold");
+const Box = createTemplateComponentFixture("Box");
+const CodeText = createTemplateComponentFixture("CodeText");
+const Fragment = createTemplateComponentFixture("Fragment");
+const HeadSlot = createTemplateComponentFixture("HeadSlot");
+const HtmlEmbed = createTemplateComponentFixture("HtmlEmbed");
+const Image = createTemplateComponentFixture("Image");
+const Italic = createTemplateComponentFixture("Italic");
+const JsonLd = createTemplateComponentFixture("JsonLd");
+const Link = createTemplateComponentFixture("Link");
+const Paragraph = createTemplateComponentFixture("Paragraph");
+const Slot = createTemplateComponentFixture("Slot");
+const Vimeo = createTemplateComponentFixture("Vimeo");
+const VimeoSpinner = createTemplateComponentFixture("VimeoSpinner");
+const XmlNode = createTemplateComponentFixture("XmlNode");
+
 const defaultMetas = componentMetas;
+
+test.each(["body", "templates", "list-item"])(
+  "validates template HTML independently when starting at %s",
+  (start) => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body">
+        <ws.block ws:id="block">
+          <BlockTemplate ws:id="templates">
+            <ws.element ws:tag="li" ws:id="list-item">
+              <ws.element ws:tag="p">Item</ws.element>
+            </ws.element>
+          </BlockTemplate>
+        </ws.block>
+      </ws.element>
+    );
+    const selector = ["list-item", "templates", "block", "body"];
+    expect(
+      isTreeSatisfyingContentModel({
+        instances,
+        props,
+        metas: defaultMetas,
+        instanceSelector: selector.slice(selector.indexOf(start)),
+      })
+    ).toBe(true);
+  }
+);
+
+test.each(["list", "templates", "box", "paragraph"])(
+  "does not inherit a description-list parent into a template from %s",
+  (start) => {
+    const data = renderData(
+      <ws.element ws:tag="dl" ws:id="list">
+        <ws.block ws:id="block">
+          <BlockTemplate ws:id="templates">
+            <ws.element ws:tag="div" ws:id="box">
+              <ws.element ws:tag="p" ws:id="paragraph">
+                Content
+              </ws.element>
+            </ws.element>
+          </BlockTemplate>
+        </ws.block>
+      </ws.element>
+    );
+    const selector = ["paragraph", "box", "templates", "block", "list"];
+    expect(
+      isTreeSatisfyingContentModel({
+        ...data,
+        metas: defaultMetas,
+        instanceSelector: selector.slice(selector.indexOf(start)),
+      })
+    ).toBe(true);
+  }
+);
+
+test.each(["template", "body"])(
+  "still rejects invalid list nesting in %s content",
+  (location) => {
+    const invalid = <ws.element ws:tag="li" ws:id="invalid" />;
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body">
+        <ws.block>
+          <BlockTemplate>
+            {location === "template" ? (
+              <ws.element ws:tag="li">{invalid}</ws.element>
+            ) : undefined}
+          </BlockTemplate>
+          {location === "body" ? invalid : undefined}
+        </ws.block>
+      </ws.element>
+    );
+    const errors: string[][] = [];
+    expect(
+      isTreeSatisfyingContentModel({
+        instances,
+        props,
+        metas: defaultMetas,
+        instanceSelector: ["body"],
+        onError: (_message, selector) => errors.push(selector),
+      })
+    ).toBe(false);
+    expect(errors[0][0]).toBe("invalid");
+  }
+);
 
 test("checks direct text capability without promoting the outer rich-text root", () => {
   const { instances, props } = renderData(
@@ -72,11 +178,11 @@ test("support Box with ws:tag", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:tag="span">
-            <$.Box ws:tag="article"></$.Box>
-          </$.Box>
-        </$.Body>
+        <Body ws:id="bodyId">
+          <Box ws:tag="span">
+            <Box ws:tag="article"></Box>
+          </Box>
+        </Body>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -88,11 +194,11 @@ test("support legacy tag property", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box tag="span">
-            <$.Box tag="article"></$.Box>
-          </$.Box>
-        </$.Body>
+        <Body ws:id="bodyId">
+          <Box tag="span">
+            <Box tag="article"></Box>
+          </Box>
+        </Body>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -130,6 +236,149 @@ test("none category accepted by parent by tag", () => {
   ).toBeTruthy();
 });
 
+describe("description lists", () => {
+  test("does not accept an internal context marker as an HTML tag", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="dl-child" />
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(false);
+  });
+
+  test.each([
+    ["listId"],
+    ["groupId", "listId"],
+    ["termId", "groupId", "listId"],
+    ["detailId", "groupId", "listId"],
+  ])("accepts div groups when validating from %j", (...instanceSelector) => {
+    const errors: string[] = [];
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="div" ws:id="groupId">
+              <ws.element ws:tag="dt" ws:id="termId">
+                Company
+              </ws.element>
+              <ws.element ws:tag="dd" ws:id="detailId">
+                XXX
+              </ws.element>
+            </ws.element>
+            <ws.element ws:tag="div">
+              <ws.element ws:tag="dt">Tax ID (NIP EU)</ws.element>
+              <ws.element ws:tag="dd">XXX</ws.element>
+            </ws.element>
+            <ws.element ws:tag="div">
+              <ws.element ws:tag="dt">Address</ws.element>
+              <ws.element ws:tag="dd">...</ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector,
+        onError: (message) => errors.push(message),
+      })
+    ).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test("accepts div groups through components without HTML tags", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <Fragment>
+              <ws.element ws:tag="div">
+                <Slot>
+                  <ws.element ws:tag="dt">Company</ws.element>
+                  <ws.element ws:tag="dd">XXX</ws.element>
+                </Slot>
+              </ws.element>
+            </Fragment>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(true);
+  });
+
+  test("rejects flow content directly inside a description-list group", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="div">
+              <ws.element ws:tag="p">Company</ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(false);
+  });
+
+  test.each(["dt", "dd"])("keeps %s restricted to description lists", (tag) => {
+    for (const [ancestor, parent] of [
+      ["div", "div"],
+      ["dl", "div"],
+      ["dl", "a"],
+      ["dl", "section"],
+    ]) {
+      const data = renderData(
+        <ws.element ws:tag={ancestor} ws:id="rootId">
+          <ws.element ws:tag={parent} ws:id="groupId">
+            <ws.element ws:tag="div" ws:id="wrapperId">
+              <ws.element ws:tag={tag} ws:id="childId">
+                XXX
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      );
+      expect(
+        isTreeSatisfyingContentModel({
+          ...data,
+          metas: defaultMetas,
+          instanceSelector: ["childId", "wrapperId", "groupId", "rootId"],
+        })
+      ).toBe(false);
+    }
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="div">
+              <ws.element ws:tag={tag}>XXX</ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(true);
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="dl" ws:id="listId">
+            <ws.element ws:tag="dt">Company</ws.element>
+            <ws.element ws:tag="dd">XXX</ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["listId"],
+      })
+    ).toBe(true);
+  });
+});
+
 test("none category prevents unacceptable parent", () => {
   expect(
     isTreeSatisfyingContentModel({
@@ -165,11 +414,11 @@ test("slot without tag accepts transparent category", () => {
       ...renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
           <ws.element ws:tag="ul">
-            <$.Slot>
-              <$.Fragment>
+            <Slot>
+              <Fragment>
                 <ws.element ws:tag="li"></ws.element>
-              </$.Fragment>
-            </$.Slot>
+              </Fragment>
+            </Slot>
           </ws.element>
         </ws.element>
       ),
@@ -211,6 +460,31 @@ test("transparent category accepts flow", () => {
       instanceSelector: ["bodyId"],
     })
   ).toBeTruthy();
+});
+
+test("transparent root element accepts flow without allowing interactive children", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="a" ws:id="linkId">
+          <ws.element ws:tag="p"></ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["linkId"],
+    })
+  ).toBeTruthy();
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="a" ws:id="linkId">
+          <ws.element ws:tag="button"></ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["linkId"],
+    })
+  ).toBeFalsy();
 });
 
 test("phrasing category accepts element with transparent children", () => {
@@ -287,9 +561,9 @@ test("reports the ancestor that introduces a transparent constraint", () => {
       ...renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
           <ws.element ws:tag="ul" ws:id="listId">
-            <$.Slot>
+            <Slot>
               <ws.element ws:tag="div" />
-            </$.Slot>
+            </Slot>
           </ws.element>
         </ws.element>
       ),
@@ -400,11 +674,11 @@ test("prevent nesting interactive instances with slots in between", () => {
       ...renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
           <ws.element ws:tag="button">
-            <$.Slot>
-              <$.Fragment>
+            <Slot>
+              <Fragment>
                 <ws.element ws:tag="textarea"></ws.element>
-              </$.Fragment>
-            </$.Slot>
+              </Fragment>
+            </Slot>
           </ws.element>
         </ws.element>
       ),
@@ -571,9 +845,9 @@ test("support xml node with tags", () => {
     isTreeSatisfyingContentModel({
       ...renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
-          <$.XmlNode tag="url">
-            <$.XmlNode tag="loc"></$.XmlNode>
-          </$.XmlNode>
+          <XmlNode tag="url">
+            <XmlNode tag="loc"></XmlNode>
+          </XmlNode>
         </ws.element>
       ),
       metas: defaultMetas,
@@ -622,7 +896,7 @@ describe("component content model", () => {
       isTreeSatisfyingContentModel({
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
-            <$.JsonLd code='{"@context":"https://schema.org"}' />
+            <JsonLd code='{"@context":"https://schema.org"}' />
           </ws.element>
         ),
         metas: defaultMetas,
@@ -635,9 +909,9 @@ describe("component content model", () => {
     expect(
       isTreeSatisfyingContentModel({
         ...renderData(
-          <$.HeadSlot ws:id="headSlotId">
-            <$.JsonLd code='{"@context":"https://schema.org"}' />
-          </$.HeadSlot>
+          <HeadSlot ws:id="headSlotId">
+            <JsonLd code='{"@context":"https://schema.org"}' />
+          </HeadSlot>
         ),
         metas: defaultMetas,
         instanceSelector: ["headSlotId"],
@@ -650,9 +924,9 @@ describe("component content model", () => {
       isTreeSatisfyingContentModel({
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
-            <$.HtmlEmbed>
+            <HtmlEmbed>
               <ws.descendant />
-            </$.HtmlEmbed>
+            </HtmlEmbed>
           </ws.element>
         ),
         metas: defaultMetas,
@@ -663,9 +937,9 @@ describe("component content model", () => {
       isTreeSatisfyingContentModel({
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
-            <$.HtmlEmbed>
+            <HtmlEmbed>
               <ws.element ws:tag="div" />
-            </$.HtmlEmbed>
+            </HtmlEmbed>
           </ws.element>
         ),
         metas: defaultMetas,
@@ -679,9 +953,9 @@ describe("component content model", () => {
       isTreeSatisfyingContentModel({
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
-            <$.Vimeo>
-              <$.VimeoSpinner></$.VimeoSpinner>
-            </$.Vimeo>
+            <Vimeo>
+              <VimeoSpinner></VimeoSpinner>
+            </Vimeo>
           </ws.element>
         ),
         metas: defaultMetas,
@@ -692,11 +966,11 @@ describe("component content model", () => {
       isTreeSatisfyingContentModel({
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
-            <$.Vimeo>
+            <Vimeo>
               <ws.element ws:tag="div">
-                <$.VimeoSpinner></$.VimeoSpinner>
+                <VimeoSpinner></VimeoSpinner>
               </ws.element>
-            </$.Vimeo>
+            </Vimeo>
           </ws.element>
         ),
         metas: defaultMetas,
@@ -707,7 +981,7 @@ describe("component content model", () => {
       isTreeSatisfyingContentModel({
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
-            <$.VimeoSpinner></$.VimeoSpinner>
+            <VimeoSpinner></VimeoSpinner>
           </ws.element>
         ),
         metas: defaultMetas,
@@ -721,11 +995,11 @@ describe("component content model", () => {
       isTreeSatisfyingContentModel({
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
-            <$.Vimeo ws:id="vimeoId">
+            <Vimeo ws:id="vimeoId">
               <ws.element ws:tag="div" ws:id="divId">
-                <$.VimeoSpinner></$.VimeoSpinner>
+                <VimeoSpinner></VimeoSpinner>
               </ws.element>
-            </$.Vimeo>
+            </Vimeo>
           </ws.element>
         ),
         metas: defaultMetas,
@@ -738,7 +1012,7 @@ describe("component content model", () => {
 describe("rich text tree", () => {
   test("uses provided html tags index without scanning props", () => {
     const { instances } = renderData(
-      <$.Paragraph ws:id="instanceId"></$.Paragraph>
+      <Paragraph ws:id="instanceId"></Paragraph>
     );
     const props = new (class extends Map<string, Prop> {
       values(): MapIterator<Prop> {
@@ -759,11 +1033,11 @@ describe("rich text tree", () => {
 
   test("reads updated tag props from mutable props maps", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId">
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId">
           <ws.element ws:tag="article"></ws.element>
-        </$.Box>
-      </$.Body>
+        </Box>
+      </Body>
     );
 
     expect(
@@ -796,14 +1070,14 @@ describe("rich text tree", () => {
   test("check empty instance is rich text", () => {
     expect(
       isRichTextTree({
-        ...renderData(<$.Bold ws:id="instanceId"></$.Bold>),
+        ...renderData(<Bold ws:id="instanceId"></Bold>),
         metas: defaultMetas,
         instanceId: "instanceId",
       })
     ).toBeTruthy();
     expect(
       isRichTextTree({
-        ...renderData(<$.HeadSlot ws:id="instanceId"></$.HeadSlot>),
+        ...renderData(<HeadSlot ws:id="instanceId"></HeadSlot>),
         metas: defaultMetas,
         instanceId: "instanceId",
       })
@@ -813,16 +1087,14 @@ describe("rich text tree", () => {
   test("any instance with text can be edited", () => {
     expect(
       isRichTextTree({
-        ...renderData(<$.HeadSlot ws:id="instanceId">my text</$.HeadSlot>),
+        ...renderData(<HeadSlot ws:id="instanceId">my text</HeadSlot>),
         metas: defaultMetas,
         instanceId: "instanceId",
       })
     ).toBeTruthy();
     expect(
       isRichTextTree({
-        ...renderData(
-          <$.HeadSlot ws:id="instanceId">{expression``}</$.HeadSlot>
-        ),
+        ...renderData(<HeadSlot ws:id="instanceId">{expression``}</HeadSlot>),
         metas: defaultMetas,
         instanceId: "instanceId",
       })
@@ -833,9 +1105,9 @@ describe("rich text tree", () => {
     expect(
       isRichTextTree({
         ...renderData(
-          <$.Bold ws:id="instanceId">
-            <$.Italic></$.Italic>
-          </$.Bold>
+          <Bold ws:id="instanceId">
+            <Italic></Italic>
+          </Bold>
         ),
         metas: defaultMetas,
         instanceId: "instanceId",
@@ -847,9 +1119,9 @@ describe("rich text tree", () => {
     expect(
       isRichTextTree({
         ...renderData(
-          <$.Paragraph ws:id="instanceId">
-            <$.Bold>bold</$.Bold>
-          </$.Paragraph>
+          <Paragraph ws:id="instanceId">
+            <Bold>bold</Bold>
+          </Paragraph>
         ),
         metas: defaultMetas,
         instanceId: "instanceId",
@@ -858,9 +1130,9 @@ describe("rich text tree", () => {
     expect(
       isRichTextTree({
         ...renderData(
-          <$.HeadSlot ws:id="instanceId">
-            <$.Bold>bold</$.Bold>
-          </$.HeadSlot>
+          <HeadSlot ws:id="instanceId">
+            <Bold>bold</Bold>
+          </HeadSlot>
         ),
         metas: defaultMetas,
         instanceId: "instanceId",
@@ -872,9 +1144,9 @@ describe("rich text tree", () => {
     expect(
       isRichTextTree({
         ...renderData(
-          <$.Box ws:id="instanceId">
-            <$.Paragraph></$.Paragraph>
-          </$.Box>
+          <Box ws:id="instanceId">
+            <Paragraph></Paragraph>
+          </Box>
         ),
         metas: defaultMetas,
         instanceId: "instanceId",
@@ -920,9 +1192,9 @@ describe("rich text tree", () => {
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
             <ws.element ws:tag="span" ws:id="spanId">
-              <$.Link ws:id="linkId">
-                <$.Bold ws:id="boldId">link</$.Bold>
-              </$.Link>
+              <Link ws:id="linkId">
+                <Bold ws:id="boldId">link</Bold>
+              </Link>
             </ws.element>
           </ws.element>
         ),
@@ -1036,7 +1308,7 @@ describe("rich text tree", () => {
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
             <ws.element ws:tag="div" ws:id="divId">
-              <$.Image ws:id="imgId" />
+              <Image ws:id="imgId" />
             </ws.element>
           </ws.element>
         ),
@@ -1052,11 +1324,11 @@ describe("closest container", () => {
     expect(
       findClosestContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.Image ws:id="imageId" />
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <Image ws:id="imageId" />
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["imageId", "boxId", "bodyId"],
@@ -1068,11 +1340,11 @@ describe("closest container", () => {
     expect(
       findClosestContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.Box ws:id="box-with-text">text</$.Box>
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <Box ws:id="box-with-text">text</Box>
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["box-with-text", "boxId", "bodyId"],
@@ -1084,11 +1356,11 @@ describe("closest container", () => {
     expect(
       findClosestContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <Box ws:id="box-with-expr">{expression`1 + 1`}</Box>
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["box-with-expr", "boxId", "bodyId"],
@@ -1099,7 +1371,7 @@ describe("closest container", () => {
   test("allow root with text", () => {
     expect(
       findClosestContainer({
-        ...renderData(<$.Body ws:id="bodyId">text</$.Body>),
+        ...renderData(<Body ws:id="bodyId">text</Body>),
         metas: defaultMetas,
         instanceSelector: ["bodyId"],
       })
@@ -1112,11 +1384,11 @@ describe("closest non textual container", () => {
     expect(
       findClosestNonTextualContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.Image ws:id="imageId" />
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <Image ws:id="imageId" />
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["imageId", "boxId", "bodyId"],
@@ -1128,11 +1400,11 @@ describe("closest non textual container", () => {
     expect(
       findClosestNonTextualContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.CodeText ws:id="codeId" />
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <CodeText ws:id="codeId" />
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["codeId", "boxId", "bodyId"],
@@ -1144,11 +1416,11 @@ describe("closest non textual container", () => {
     expect(
       findClosestNonTextualContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.Box ws:id="box-with-text">text</$.Box>
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <Box ws:id="box-with-text">text</Box>
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["box-with-text", "boxId", "bodyId"],
@@ -1160,11 +1432,11 @@ describe("closest non textual container", () => {
     expect(
       findClosestNonTextualContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <Box ws:id="box-with-expr">{expression`1 + 1`}</Box>
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["box-with-expr", "boxId", "bodyId"],
@@ -1176,13 +1448,13 @@ describe("closest non textual container", () => {
     expect(
       findClosestNonTextualContainer({
         ...renderData(
-          <$.Body ws:id="bodyId">
-            <$.Box ws:id="boxId">
-              <$.Box ws:id="box-with-bold">
-                <$.Bold ws:id="boldId"></$.Bold>
-              </$.Box>
-            </$.Box>
-          </$.Body>
+          <Body ws:id="bodyId">
+            <Box ws:id="boxId">
+              <Box ws:id="box-with-bold">
+                <Bold ws:id="boldId"></Bold>
+              </Box>
+            </Box>
+          </Body>
         ),
         metas: defaultMetas,
         instanceSelector: ["box-with-bold", "boxId", "bodyId"],
@@ -1193,7 +1465,7 @@ describe("closest non textual container", () => {
   test("allow root with text", () => {
     expect(
       findClosestNonTextualContainer({
-        ...renderData(<$.Body ws:id="body">text</$.Body>),
+        ...renderData(<Body ws:id="body">text</Body>),
         metas: defaultMetas,
         instanceSelector: ["body"],
       })
@@ -1220,9 +1492,9 @@ describe("closest non textual container", () => {
         ...renderData(
           <ws.element ws:tag="body" ws:id="bodyId">
             <ws.element ws:tag="span" ws:id="spanId">
-              <$.Link ws:id="linkId">
-                <$.Bold ws:id="boldId">link</$.Bold>
-              </$.Link>
+              <Link ws:id="linkId">
+                <Bold ws:id="boldId">link</Bold>
+              </Link>
             </ws.element>
           </ws.element>
         ),

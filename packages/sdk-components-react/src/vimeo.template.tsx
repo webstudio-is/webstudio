@@ -1,6 +1,18 @@
+/** @jsxImportSource @webstudio-is/template */
 import { PlayIcon, SpinnerIcon } from "@webstudio-is/icons/svg";
-import { type TemplateMeta, $, css, ws } from "@webstudio-is/template";
+import {
+  type TemplateMeta,
+  css,
+  setInstanceMeta,
+} from "@webstudio-is/template";
 import { iconEmbedStyle } from "./shared/icon-embed-style";
+import {
+  HtmlEmbed,
+  Vimeo,
+  VimeoPlayButton,
+  VimeoPreviewImage,
+  VimeoSpinner,
+} from "./components";
 
 export const meta: TemplateMeta = {
   category: "media",
@@ -8,14 +20,14 @@ export const meta: TemplateMeta = {
   description:
     "Add a video to your page that is hosted on Vimeo. Paste a Vimeo URL and configure the video in the Settings tab.",
   template: (
-    <$.Vimeo
+    <Vimeo
       ws:style={css`
         position: relative;
         aspect-ratio: 640/360;
         width: 100%;
       `}
     >
-      <$.VimeoPreviewImage
+      <VimeoPreviewImage
         ws:style={css`
           position: absolute;
           object-fit: cover;
@@ -28,25 +40,26 @@ export const meta: TemplateMeta = {
         sizes="100vw"
         optimize={true}
       />
-      <$.VimeoSpinner
-        ws:label="Spinner"
-        ws:style={css`
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 70px;
-          height: 70px;
-          margin-top: -35px;
-          margin-left: -35px;
-        `}
-      >
-        <$.HtmlEmbed
-          ws:label="Spinner SVG"
-          ws:style={iconEmbedStyle}
-          code={SpinnerIcon}
-        />
-      </$.VimeoSpinner>
-      <$.VimeoPlayButton
+      {setInstanceMeta(
+        { label: "Spinner" },
+        <VimeoSpinner
+          ws:style={css`
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 70px;
+            height: 70px;
+            margin-top: -35px;
+            margin-left: -35px;
+          `}
+        >
+          {setInstanceMeta(
+            { label: "Spinner SVG" },
+            <HtmlEmbed ws:style={iconEmbedStyle} code={SpinnerIcon} />
+          )}
+        </VimeoSpinner>
+      )}
+      <VimeoPlayButton
         ws:style={css`
           position: absolute;
           width: 140px;
@@ -69,22 +82,22 @@ export const meta: TemplateMeta = {
         `}
         aria-label="Play button"
       >
-        <ws.element
-          ws:tag="div"
-          ws:label="Play Icon"
-          ws:style={css`
-            width: 60px;
-            height: 60px;
-          `}
-          aria-hidden={true}
-        >
-          <$.HtmlEmbed
-            ws:label="Play SVG"
-            ws:style={iconEmbedStyle}
-            code={PlayIcon}
-          />
-        </ws.element>
-      </$.VimeoPlayButton>
-    </$.Vimeo>
+        {setInstanceMeta(
+          { label: "Play Icon" },
+          <div
+            ws:style={css`
+              width: 60px;
+              height: 60px;
+            `}
+            aria-hidden={true}
+          >
+            {setInstanceMeta(
+              { label: "Play SVG" },
+              <HtmlEmbed ws:style={iconEmbedStyle} code={PlayIcon} />
+            )}
+          </div>
+        )}
+      </VimeoPlayButton>
+    </Vimeo>
   ),
 };

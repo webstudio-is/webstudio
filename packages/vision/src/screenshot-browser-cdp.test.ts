@@ -6,8 +6,22 @@ import {
   type BrowserScreenshotDependencies,
 } from "./browser";
 
+class FakeBrowserStderr {
+  readonly listeners: Array<(chunk: unknown) => void> = [];
+  on = (_event: string, listener: (chunk: unknown) => void) => {
+    this.listeners.push(listener);
+    return this;
+  };
+  emit = (chunk: unknown) => {
+    for (const listener of this.listeners) {
+      listener(chunk);
+    }
+  };
+}
+
 class FakeBrowserProcess {
   readonly listeners = new Map<string, Array<(value?: unknown) => void>>();
+  readonly stderr = new FakeBrowserStderr();
   kill = vi.fn((_signal?: NodeJS.Signals | number) => {
     this.emit("exit", 0);
     return true;
@@ -1155,32 +1169,52 @@ test("reports browser startup exit diagnostics without local paths", async () =>
   const dependencies = createDependencies();
   vi.mocked(dependencies.spawnBrowser).mockImplementation(() => {
     const browserProcess = new FakeBrowserProcess();
-    setTimeout(() => browserProcess.emit("exit", 21), 0);
+    setTimeout(() => {
+      browserProcess.stderr.emit(
+        "socket() failed: Operation not permitted at /Users/example/private?authToken=secret"
+      );
+      browserProcess.emit("exit", 21);
+    }, 0);
     return browserProcess as never;
   });
   vi.mocked(dependencies.readFile).mockImplementation(
     async () => await new Promise(() => undefined)
   );
+  const options = {
+    url: "https://example.com",
+    output: "/tmp/current.png",
+    width: 800,
+    height: 600,
+    browserPath: "/Users/example/Applications/Chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  let startupError: unknown;
+  try {
+    await createBrowserScreenshotSession(options, dependencies);
+  } catch (error) {
+    startupError = error;
+  }
 
-  await expect(
-    createBrowserScreenshotSession(
-      {
-        url: "https://example.com",
-        output: "/tmp/current.png",
-        width: 800,
-        height: 600,
-        browserPath: "/Users/example/Applications/Chromium",
-        waitUntil: "networkidle",
-        waitForTimeout: 0,
-        timeout: 1000,
-      },
-      dependencies
-    )
-  ).rejects.toMatchObject({
+  expect(startupError).toMatchObject({
     code: "BROWSER_STARTUP_FAILED",
     message:
-      "Browser exited before its DevTools endpoint became ready (exit code 21). Check the browser installation or provide a supported Chromium executable.",
+      "Browser exited before its DevTools endpoint became ready (exit code 21). The operating system denied browser IPC or socket access. Check the browser installation or provide a supported Chromium executable.",
+    diagnostic: {
+      stage: "browser-startup",
+      reason: "browser_ipc_permission_denied",
+    },
+    issues: [
+      {
+        code: "browser_ipc_permission_denied",
+        path: [],
+        constraint: "stage:browser-startup",
+      },
+    ],
   });
+  expect(JSON.stringify(startupError)).not.toContain("/Users/example/private");
+  expect(JSON.stringify(startupError)).not.toContain("secret");
 });
 
 test("does not restart a browser session after cleanup", async () => {

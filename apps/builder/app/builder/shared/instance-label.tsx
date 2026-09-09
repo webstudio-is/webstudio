@@ -75,6 +75,7 @@ const htmlIcons: Record<string, undefined | string> = {
 type InstanceLike = {
   component: string;
   label?: string;
+  name?: string;
   tag?: string;
 };
 
@@ -122,6 +123,9 @@ export const getInstanceLabel = (
 
   if (instanceOrInstanceId.label) {
     return instanceOrInstanceId.label;
+  }
+  if (instanceOrInstanceId.name) {
+    return humanizeString(instanceOrInstanceId.name);
   }
   if (
     instanceOrInstanceId.component === elementComponent &&

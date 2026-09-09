@@ -1,11 +1,18 @@
+/** @jsxImportSource @webstudio-is/template */
 import {
-  $,
   css,
   PlaceholderValue,
+  setInstanceMeta,
   type TemplateMeta,
 } from "@webstudio-is/template";
 import { DotIcon } from "@webstudio-is/icons/svg";
-import { radix } from "./shared/proxy";
+import { HtmlEmbed, Text } from "@webstudio-is/sdk-components-react/components";
+import {
+  Label,
+  RadioGroup,
+  RadioGroupIndicator,
+  RadioGroupItem,
+} from "./components";
 import {
   borderRadius,
   borderWidth,
@@ -25,7 +32,7 @@ const createRadioGroupItem = ({
   value: string;
   label: string;
 }) => (
-  <radix.Label
+  <Label
     // flex items-center space-x-2
     ws:style={css`
       display: flex;
@@ -33,7 +40,7 @@ const createRadioGroupItem = ({
       gap: ${spacing[2]};
     `}
   >
-    <radix.RadioGroupItem
+    <RadioGroupItem
       value={value}
       // aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background
       // focus:outline-none
@@ -56,16 +63,15 @@ const createRadioGroupItem = ({
         }
       `}
     >
-      <radix.RadioGroupIndicator>
-        <$.HtmlEmbed
-          ws:label="Indicator Icon"
-          ws:style={iconEmbedStyle}
-          code={DotIcon}
-        />
-      </radix.RadioGroupIndicator>
-    </radix.RadioGroupItem>
-    <$.Text>{new PlaceholderValue(label)}</$.Text>
-  </radix.Label>
+      <RadioGroupIndicator>
+        {setInstanceMeta(
+          { label: "Indicator Icon" },
+          <HtmlEmbed ws:style={iconEmbedStyle} code={DotIcon} />
+        )}
+      </RadioGroupIndicator>
+    </RadioGroupItem>
+    <Text>{new PlaceholderValue(label)}</Text>
+  </Label>
 );
 
 export const meta: TemplateMeta = {
@@ -74,7 +80,7 @@ export const meta: TemplateMeta = {
   description:
     "A set of checkable buttons—known as radio buttons—where no more than one of the buttons can be checked at a time.",
   template: (
-    <radix.RadioGroup
+    <RadioGroup
       // grid gap-2
       ws:style={css`
         display: flex;
@@ -85,6 +91,6 @@ export const meta: TemplateMeta = {
       {createRadioGroupItem({ value: "default", label: "Default" })}
       {createRadioGroupItem({ value: "comfortable", label: "Comfortable" })}
       {createRadioGroupItem({ value: "compact", label: "Compact" })}
-    </radix.RadioGroup>
+    </RadioGroup>
   ),
 };

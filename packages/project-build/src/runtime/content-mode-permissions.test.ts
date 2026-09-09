@@ -1554,6 +1554,72 @@ describe("content mode permissions", () => {
     ).toEqual({ success: true });
   });
 
+  test("keeps unresolved tag metadata while applying a transaction", () => {
+    const instance: Instance = {
+      type: "instance",
+      id: "dynamic-image",
+      component: "LegacyImage",
+      children: [],
+    };
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([[instance.id, instance]]),
+      metas: new Map([
+        ["LegacyImage", { presetStyle: { img: [] } }],
+        [
+          "Image",
+          {
+            presetStyle: { img: [] },
+            props: {
+              alt: {
+                type: "string",
+                control: "text",
+                required: false,
+                contentMode: true,
+              },
+            },
+          },
+        ],
+      ]),
+      props: new Map([
+        [
+          "dynamic-tag",
+          {
+            id: "dynamic-tag",
+            instanceId: instance.id,
+            name: "tag",
+            type: "expression",
+            value: '"section"',
+            mode: "read",
+          },
+        ],
+      ]),
+      styleSources,
+      contentRootIds: new Set([instance.id]),
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("props", [
+          {
+            op: "add",
+            path: ["alt-prop"],
+            value: {
+              id: "alt-prop",
+              instanceId: instance.id,
+              name: "alt",
+              type: "string",
+              value: "Alternative text",
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: 'Prop "alt-prop" is not editable in content mode.',
+    });
+  });
+
   test("validates new props against instances added in the same transaction", () => {
     const capabilities = getContentModeCapabilities({
       instances: new Map([

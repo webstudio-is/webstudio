@@ -9,8 +9,11 @@ import {
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { __testing__ } from "./canvas.server";
 
-const { createLoadPublishedProjectBundleByProjectId, serializeProjectBundle } =
-  __testing__;
+const {
+  addProjectMetadata,
+  createLoadPublishedProjectBundleByProjectId,
+  serializeProjectBundle,
+} = __testing__;
 type BundleBuild = Parameters<typeof serializeProjectBundle>[0]["build"];
 
 const createBundleBuild = (
@@ -100,6 +103,81 @@ test("keeps font assets referenced from nested style values", () => {
   });
 
   expect(bundle.assets).toEqual([fontAsset]);
+});
+
+test("validates collections when publication does not need a content index", async () => {
+  const build = createBundleBuild({
+    styles: [
+      {
+        styleSourceId: "token",
+        breakpointId: "base",
+        property: "fontFamily",
+        value: {
+          type: "layers",
+          value: [
+            {
+              type: "fontFamily",
+              value: ["UsedFont", "sans-serif"],
+            },
+          ],
+        } as unknown as StyleValue,
+      },
+    ],
+  });
+  const usedFont: Asset = {
+    id: "used-font",
+    projectId: build.projectId,
+    name: "UsedFont.woff2",
+    type: "font",
+    createdAt: "2024-01-01T00:00:00.000Z",
+    format: "woff2",
+    size: 100,
+    meta: { family: "UsedFont", style: "normal", weight: 400 },
+  };
+  const unusedFont: Asset = {
+    ...usedFont,
+    id: "unused-font",
+    name: "UnusedFont.woff2",
+    meta: { ...usedFont.meta, family: "UnusedFont" },
+  };
+  const imageAsset = createImageAssetFixture({ projectId: build.projectId });
+  const currentAssetFolders = [{ id: "current-folder" }] as never;
+  const data = serializeProjectBundle({
+    build,
+    assets: [usedFont],
+  });
+  const validatePublishedAssetCollections = vi.fn().mockResolvedValue({
+    assets: [usedFont, unusedFont, imageAsset],
+    assetFolders: currentAssetFolders,
+  });
+  const preparePublishedAssetData = vi.fn();
+  const assetStore = {} as never;
+
+  const result = await addProjectMetadata(
+    data,
+    {
+      id: "project-id",
+      userId: null,
+      domain: "example.com",
+      title: "Example",
+    } as never,
+    {} as never,
+    {
+      getUserById: vi.fn(),
+      preparePublishedAssetData,
+      validatePublishedAssetCollections,
+      createAssetClient: vi.fn(() => assetStore),
+    }
+  );
+
+  expect(validatePublishedAssetCollections).toHaveBeenCalledWith({
+    projectId: "project-id",
+    context: {},
+    assetStore,
+  });
+  expect(preparePublishedAssetData).not.toHaveBeenCalled();
+  expect(result.assets).toEqual([usedFont, imageAsset]);
+  expect(result.assetFolders).toBe(currentAssetFolders);
 });
 
 test("loads project-id bundles from the published build", async () => {

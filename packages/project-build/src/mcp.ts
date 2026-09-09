@@ -6,6 +6,8 @@ import {
 import {
   getInputJsonSchemaMetadata,
   getInputJsonSchemaProperties,
+  getFileExtension,
+  getComponentJsxName,
   inputJsonSchemaAcceptsType,
   parseComponentName,
   toInputJsonSchemaObject,
@@ -17,6 +19,11 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "@webstudio-is/expression";
+import {
+  isMdxTemplateComponentName,
+  type TextAssetSourceDiagnostic,
+} from "@webstudio-is/content-engine/mdx";
+import { validateAssetQuery } from "@webstudio-is/content-engine";
 import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
@@ -67,12 +74,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import {
-  animationComponentNamespace,
-  componentMetas,
-  radixComponentNamespace,
-} from "@webstudio-is/sdk-components-registry/metas";
-import { camelCase } from "change-case";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { readProjectBuildDoc } from "./docs";
 import type { ComponentTemplateRegistry } from "./runtime/component-template";
 import {
@@ -171,8 +173,6 @@ export type ProjectSessionScreenshotInput = ScreenshotCaptureOptions & {
   url?: string;
   baseUrl?: string;
   path?: string;
-  host?: string;
-  port?: number;
   imageDomains?: string[];
   source?: ProjectSessionPreviewSource;
   mode?: ProjectSessionPreviewMode;
@@ -249,8 +249,6 @@ export type ProjectSessionInstallOcrResult = {
 type InstallOcr = () => Promise<ProjectSessionInstallOcrResult>;
 
 export type ProjectSessionPreviewInput = {
-  host?: string;
-  port?: number;
   source?: ProjectSessionPreviewSource;
   imageDomains?: string[];
   mode?: ProjectSessionPreviewMode;
@@ -301,20 +299,7 @@ export type ProjectSessionDownloadAssetResult = {
   assetId: string;
   path: string;
   source?: string;
-  diagnostics?: readonly (
-    | ContentBlockDiagnostic
-    | Readonly<{
-        code: "invalid-mdx" | "unsafe-mdx";
-        severity: "error" | "warning";
-        message: string;
-        nodeType?: string;
-        reason?: string;
-        sourceRange?: Readonly<{
-          start: Readonly<{ line: number; column: number; offset?: number }>;
-          end: Readonly<{ line: number; column: number; offset?: number }>;
-        }>;
-      }>
-  )[];
+  diagnostics?: readonly (ContentBlockDiagnostic | TextAssetSourceDiagnostic)[];
 };
 
 type DownloadAsset = (
@@ -1028,7 +1013,95 @@ const getUnsupportedInputFieldHint = ({
   return "";
 };
 
-const assertKnownInputFields = ({
+export const getMcpTextAssetFormat = (
+  value: string
+): "md" | "mdx" | undefined => {
+  const extension = (getFileExtension(value) ?? value).toLowerCase();
+  return extension === "md" || extension === "mdx" ? extension : undefined;
+};
+
+export const getMcpTextAssetDescriptorIssues = ({
+  assets,
+  pathPrefix,
+}: {
+  assets: readonly Record<string, unknown>[];
+  pathPrefix: readonly string[];
+}): SemanticValidationIssue[] => {
+  const issues: SemanticValidationIssue[] = [];
+  for (const [index, asset] of assets.entries()) {
+    const name = typeof asset.name === "string" ? asset.name : undefined;
+    const filenameFormat =
+      name === undefined ? undefined : getFileExtension(name)?.toLowerCase();
+    const declaredFormat =
+      typeof asset.format === "string" ? asset.format.toLowerCase() : undefined;
+    const mentionsTextFormat =
+      filenameFormat === "md" ||
+      filenameFormat === "mdx" ||
+      declaredFormat === "md" ||
+      declaredFormat === "mdx";
+    const assetPath =
+      pathPrefix[0] === "asset"
+        ? [...pathPrefix]
+        : [...pathPrefix, String(index)];
+    if (
+      name !== undefined &&
+      mentionsTextFormat &&
+      declaredFormat !== undefined &&
+      declaredFormat !== filenameFormat
+    ) {
+      issues.push({
+        path: [...assetPath, "format"],
+        code: "asset_filename_format_mismatch",
+        message: `Asset filename and format must match. ${JSON.stringify(name)} has extension ${JSON.stringify(filenameFormat ?? "(none)")} but format is ${JSON.stringify(declaredFormat)}.`,
+        constraint: "asset_filename_format_mismatch",
+      });
+    }
+    if (
+      mentionsTextFormat &&
+      typeof asset.type === "string" &&
+      asset.type !== "file"
+    ) {
+      issues.push({
+        path: [...assetPath, "type"],
+        code: "markdown_asset_type_mismatch",
+        message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(asset.type)}.`,
+        constraint: "markdown_asset_type_mismatch",
+      });
+    }
+  }
+  return issues;
+};
+
+const getLocalTextAssetInputIssues = ({
+  command,
+  input,
+}: {
+  command: string;
+  input: unknown;
+}) => {
+  if (isPlainRecord(input) === false) {
+    return [];
+  }
+  if (command === "upload-asset") {
+    return isPlainRecord(input.asset)
+      ? getMcpTextAssetDescriptorIssues({
+          assets: [input.asset],
+          pathPrefix: ["asset"],
+        })
+      : [];
+  }
+  if (command === "upload-assets") {
+    return Array.isArray(input.assets)
+      ? getMcpTextAssetDescriptorIssues({
+          assets: input.assets.filter(isPlainRecord),
+          pathPrefix: ["assets"],
+        })
+      : [];
+  }
+  return [];
+};
+
+const collectUnknownInputFields = ({
   command,
   input,
   schema,
@@ -1038,30 +1111,38 @@ const assertKnownInputFields = ({
   input: unknown;
   schema: InputJsonSchema | undefined;
   path?: string[];
-}) => {
+}): Array<{ message: string; issue: SemanticValidationIssue }> => {
+  const results: Array<{ message: string; issue: SemanticValidationIssue }> =
+    [];
   if (Array.isArray(input)) {
     for (const [index, item] of input.entries()) {
-      assertKnownInputFields({
-        command,
-        input: item,
-        schema: toInputJsonSchemaObject(schema?.items),
-        path: [...path, String(index)],
-      });
+      results.push(
+        ...collectUnknownInputFields({
+          command,
+          input: item,
+          schema: toInputJsonSchemaObject(schema?.items),
+          path: [...path, String(index)],
+        })
+      );
     }
-    return;
+    return results;
   }
   if (isPlainRecord(input) === false) {
-    return;
+    return results;
   }
   const properties = getInputJsonSchemaProperties(schema);
   const additionalProperties = schema?.additionalProperties;
-  if (additionalProperties !== false) {
-    return;
-  }
   const allowedFields = Object.keys(properties ?? {});
   for (const [field, value] of Object.entries(input)) {
-    const fieldSchema = toInputJsonSchemaObject(properties?.[field]);
-    if (fieldSchema === undefined) {
+    const isKnownField =
+      properties !== undefined &&
+      Object.prototype.hasOwnProperty.call(properties, field);
+    const fieldSchema = isKnownField
+      ? toInputJsonSchemaObject(properties[field])
+      : typeof additionalProperties === "object"
+        ? toInputJsonSchemaObject(additionalProperties)
+        : undefined;
+    if (isKnownField === false && additionalProperties === false) {
       const inputPath = ["input", ...path, field].join(".");
       const expected =
         allowedFields.length === 0
@@ -1071,16 +1152,402 @@ const assertKnownInputFields = ({
       const suggestion =
         closestField === undefined ? "" : ` Did you mean ${closestField}?`;
       const hint = getUnsupportedInputFieldHint({ command, field });
-      throw new Error(
-        `${command} ${inputPath} is not supported. ${expected}${suggestion}${hint}`
+      const message = `${command} ${inputPath} is not supported. ${expected}${suggestion}${hint}`;
+      results.push({
+        message,
+        issue: {
+          code: "unknown_field",
+          path: [...path, field],
+          message,
+          constraint: "known_input_field",
+          ...(closestField === undefined ? {} : { example: closestField }),
+        },
+      });
+      continue;
+    }
+    if (fieldSchema === undefined) {
+      continue;
+    }
+    results.push(
+      ...collectUnknownInputFields({
+        command,
+        input: value,
+        schema: fieldSchema,
+        path: [...path, field],
+      })
+    );
+  }
+  return results;
+};
+
+const getJsonValueType = (value: unknown) => {
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return "integer";
+  }
+  return typeof value;
+};
+
+const collectInputSchemaIssues = ({
+  command,
+  input,
+  schema,
+  path = [],
+  depth = 0,
+}: {
+  command: string;
+  input: unknown;
+  schema: InputJsonSchema | undefined;
+  path?: string[];
+  depth?: number;
+}): SemanticValidationIssue[] => {
+  if (schema === undefined || depth > 64) {
+    return [];
+  }
+  const inputPath = ["input", ...path].join(".");
+  const issue = ({
+    code,
+    message,
+    constraint,
+    example,
+  }: {
+    code: string;
+    message: string;
+    constraint: string;
+    example?: unknown;
+  }): SemanticValidationIssue => ({
+    code,
+    path,
+    message: `${command} ${inputPath} ${message}`,
+    constraint,
+    ...(example === undefined ? {} : { example }),
+  });
+  const discriminatedSchema = resolveDiscriminatedInputSchema(schema, input);
+  if (discriminatedSchema !== schema) {
+    return collectInputSchemaIssues({
+      command,
+      input,
+      schema: discriminatedSchema,
+      path,
+      depth: depth + 1,
+    });
+  }
+  const allowedTypes =
+    schema.type === undefined
+      ? []
+      : Array.isArray(schema.type)
+        ? schema.type
+        : [schema.type];
+  if (allowedTypes.length > 0) {
+    const actualType = getJsonValueType(input);
+    const matches = allowedTypes.some(
+      (type) =>
+        type === actualType || (type === "number" && actualType === "integer")
+    );
+    if (matches === false) {
+      return [
+        issue({
+          code: "invalid_type",
+          message: `must be ${allowedTypes.join(" or ")}, not ${actualType}.`,
+          constraint: `type:${allowedTypes.join("|")}`,
+        }),
+      ];
+    }
+  }
+  if ("const" in schema && Object.is(input, schema.const) === false) {
+    return [
+      issue({
+        code: "invalid_value",
+        message: `must equal ${JSON.stringify(schema.const)}.`,
+        constraint: "const",
+        example: schema.const,
+      }),
+    ];
+  }
+  if (
+    Array.isArray(schema.enum) &&
+    schema.enum.some((value) => Object.is(value, input)) === false
+  ) {
+    return [
+      issue({
+        code: "invalid_value",
+        message: `must be one of ${schema.enum.map((value) => JSON.stringify(value)).join(", ")}.`,
+        constraint: "enum",
+        example: schema.enum[0],
+      }),
+    ];
+  }
+  const issues: SemanticValidationIssue[] = [];
+  if (typeof input === "string") {
+    if (
+      typeof schema.minLength === "number" &&
+      input.length < schema.minLength
+    ) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must contain at least ${schema.minLength} characters.`,
+          constraint: `minLength:${schema.minLength}`,
+        })
       );
     }
-    assertKnownInputFields({
-      command,
-      input: value,
-      schema: fieldSchema,
-      path: [...path, field],
-    });
+    if (
+      typeof schema.maxLength === "number" &&
+      input.length > schema.maxLength
+    ) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must contain at most ${schema.maxLength} characters.`,
+          constraint: `maxLength:${schema.maxLength}`,
+        })
+      );
+    }
+  }
+  if (typeof input === "number") {
+    if (typeof schema.minimum === "number" && input < schema.minimum) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must be at least ${schema.minimum}.`,
+          constraint: `minimum:${schema.minimum}`,
+        })
+      );
+    }
+    if (typeof schema.maximum === "number" && input > schema.maximum) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must be at most ${schema.maximum}.`,
+          constraint: `maximum:${schema.maximum}`,
+        })
+      );
+    }
+    if (
+      typeof schema.exclusiveMinimum === "number" &&
+      input <= schema.exclusiveMinimum
+    ) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must be greater than ${schema.exclusiveMinimum}.`,
+          constraint: `exclusiveMinimum:${schema.exclusiveMinimum}`,
+        })
+      );
+    }
+    if (
+      typeof schema.exclusiveMaximum === "number" &&
+      input >= schema.exclusiveMaximum
+    ) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must be less than ${schema.exclusiveMaximum}.`,
+          constraint: `exclusiveMaximum:${schema.exclusiveMaximum}`,
+        })
+      );
+    }
+  }
+  if (isPlainRecord(input)) {
+    for (const requiredField of schema.required ?? []) {
+      if (typeof requiredField !== "string" || requiredField in input) {
+        continue;
+      }
+      issues.push({
+        code: "invalid_type",
+        path: [...path, requiredField],
+        message: `${command} ${["input", ...path, requiredField].join(".")} is required.`,
+        constraint: "required",
+      });
+    }
+    const properties = getInputJsonSchemaProperties(schema);
+    for (const [field, value] of Object.entries(input)) {
+      const fieldSchema = toInputJsonSchemaObject(properties?.[field]);
+      if (fieldSchema === undefined) {
+        continue;
+      }
+      issues.push(
+        ...collectInputSchemaIssues({
+          command,
+          input: value,
+          schema: fieldSchema,
+          path: [...path, field],
+          depth: depth + 1,
+        })
+      );
+    }
+  }
+  if (Array.isArray(input)) {
+    if (typeof schema.minItems === "number" && input.length < schema.minItems) {
+      issues.push(
+        issue({
+          code: "too_small",
+          message: `must contain at least ${schema.minItems} items.`,
+          constraint: `minItems:${schema.minItems}`,
+        })
+      );
+    }
+    if (typeof schema.maxItems === "number" && input.length > schema.maxItems) {
+      issues.push(
+        issue({
+          code: "too_big",
+          message: `must contain at most ${schema.maxItems} items.`,
+          constraint: `maxItems:${schema.maxItems}`,
+        })
+      );
+    }
+    const itemSchema = toInputJsonSchemaObject(schema.items);
+    if (itemSchema !== undefined) {
+      for (const [index, value] of input.entries()) {
+        issues.push(
+          ...collectInputSchemaIssues({
+            command,
+            input: value,
+            schema: itemSchema,
+            path: [...path, String(index)],
+            depth: depth + 1,
+          })
+        );
+      }
+    }
+  }
+  for (const branch of schema.allOf ?? []) {
+    issues.push(
+      ...collectInputSchemaIssues({
+        command,
+        input,
+        schema: toInputJsonSchemaObject(branch),
+        path,
+        depth: depth + 1,
+      })
+    );
+  }
+  const oneOfBranches = (schema.oneOf ?? []).flatMap((branch) => {
+    const branchSchema = toInputJsonSchemaObject(branch);
+    return branchSchema === undefined
+      ? []
+      : [
+          collectInputSchemaIssues({
+            command,
+            input,
+            schema: branchSchema,
+            path,
+            depth: depth + 1,
+          }),
+        ];
+  });
+  if (oneOfBranches.length > 0) {
+    const matchingBranches = oneOfBranches.filter(
+      (branchIssues) => branchIssues.length === 0
+    ).length;
+    if (matchingBranches !== 1) {
+      const requiredFields = (schema.oneOf ?? []).flatMap((branch) => {
+        const branchSchema = toInputJsonSchemaObject(branch);
+        return branchSchema?.required?.length === 1 &&
+          typeof branchSchema.required[0] === "string"
+          ? [branchSchema.required[0]]
+          : [];
+      });
+      issues.push(
+        issue({
+          code: "invalid_union",
+          message:
+            requiredFields.length === oneOfBranches.length
+              ? `must provide exactly one of ${requiredFields.join(", ")}.`
+              : "must match exactly one allowed input shape.",
+          constraint:
+            requiredFields.length === oneOfBranches.length
+              ? `exactly_one_of:${requiredFields.join("|")}`
+              : "oneOf",
+        })
+      );
+    }
+  }
+  const anyOfBranches = (schema.anyOf ?? []).flatMap((branch) => {
+    const branchSchema = toInputJsonSchemaObject(branch);
+    return branchSchema === undefined
+      ? []
+      : [
+          collectInputSchemaIssues({
+            command,
+            input,
+            schema: branchSchema,
+            path,
+            depth: depth + 1,
+          }),
+        ];
+  });
+  if (
+    anyOfBranches.length > 0 &&
+    anyOfBranches.some((branchIssues) => branchIssues.length === 0) === false
+  ) {
+    issues.push(
+      ...anyOfBranches.reduce((best, current) =>
+        current.length < best.length ? current : best
+      )
+    );
+  }
+  return issues;
+};
+
+const assertKnownInputFields = (
+  options: Parameters<typeof collectUnknownInputFields>[0]
+) => {
+  const validatesAssetQuery =
+    options.command === "validate-asset-query" ||
+    options.command === "preview-asset-query";
+  const queryValidation =
+    validatesAssetQuery && isPlainRecord(options.input)
+      ? validateAssetQuery({ query: options.input.query })
+      : undefined;
+  const queryIssues = (queryValidation?.issues ?? [])
+    .filter(({ severity }) => severity === "error")
+    .map(
+      (issue): SemanticValidationIssue => ({
+        ...issue,
+        constraint: issue.code,
+      })
+    );
+  const outsideQuery = (issue: SemanticValidationIssue) =>
+    validatesAssetQuery === false || issue.path[0] !== "query";
+  const unknownFields = collectUnknownInputFields(options).filter(({ issue }) =>
+    outsideQuery(issue)
+  );
+  const localTextAssetIssues = getLocalTextAssetInputIssues(options);
+  const validatesLocalTextAssetInput =
+    options.command === "upload-asset" ||
+    options.command === "upload-assets" ||
+    options.command === "update-asset-content";
+  // The operation executor remains the source of truth for ordinary schema
+  // validation. Only validate the JSON-schema shape here when this boundary
+  // must already reject the call, so its unknown-field error does not hide
+  // simultaneous missing or wrong-type fields. Query validation is also owned
+  // here because both MCP query tools must use the shared query validator.
+  const schemaIssues =
+    unknownFields.length > 0 ||
+    queryIssues.length > 0 ||
+    validatesLocalTextAssetInput
+      ? collectInputSchemaIssues(options).filter(outsideQuery)
+      : [];
+  const issues = [
+    ...queryIssues,
+    ...schemaIssues,
+    ...localTextAssetIssues,
+    ...unknownFields.map(({ issue }) => issue),
+  ];
+  if (issues.length > 0) {
+    const messages = [
+      ...queryIssues.map(({ message }) => message),
+      ...schemaIssues.map(({ message }) => message),
+      ...localTextAssetIssues.map(({ message }) => message),
+      ...unknownFields.map(({ message }) => message),
+    ];
+    throwBuilderValidationError(messages.join("\n"), issues);
   }
 };
 
@@ -1330,18 +1797,6 @@ const screenshotInputSchema = {
       default: "iterative",
       description:
         "Iterative keeps one development server and browser alive while reloading after MCP edits. Production performs a full generated build and is intended for audits and release-like verification.",
-    },
-    host: {
-      type: "string",
-      default: "127.0.0.1",
-      description:
-        "Host used when screenshot starts or restarts the generated-site preview for a path.",
-    },
-    port: {
-      type: "number",
-      default: 5173,
-      description:
-        "Port used when screenshot starts or restarts the generated-site preview for a path.",
     },
     imageDomains: {
       type: "array",
@@ -1607,17 +2062,6 @@ const previewInputSchema = {
   description:
     "Start or refresh the generated-site preview. Iterative mode is the default for repeated MCP edit and screenshot cycles: it keeps one server alive, regenerates the current session, and uses normal page reloads without HMR. Use production mode for release-like audits.",
   properties: {
-    host: {
-      type: "string",
-      default: "127.0.0.1",
-    },
-    port: {
-      type: "number",
-      default: 0,
-      minimum: 0,
-      maximum: 65535,
-      description: "Use 0 to select an available local port automatically.",
-    },
     source: {
       type: "string",
       enum: projectSessionPreviewSources,
@@ -1686,7 +2130,7 @@ const importInputSchema = {
 const downloadAssetInputSchema = {
   ...emptyInputSchema,
   description:
-    "Download one project Asset. MDX results also include source and diagnostics.",
+    "Download one project Asset. Markdown and MDX results also include source and diagnostics.",
   properties: {
     assetId: {
       type: "string",
@@ -1956,7 +2400,7 @@ export const mcpArgumentExamples: Record<
       parentInstanceId: "parent-id",
       data: { type: "expression", value: "Posts.data.items" },
       itemFragment:
-        "<ws.element ws:tag='article'><ws.element ws:tag='h2'>{expression`collectionItem.title ?? 'Untitled'`}</ws.element></ws.element>",
+        "<article><h2>{expression`collectionItem.title ?? 'Untitled'`}</h2></article>",
     },
     {
       parentInstanceId: "parent-id",
@@ -1964,38 +2408,35 @@ export const mcpArgumentExamples: Record<
         type: "json",
         value: [{ name: "Starter" }, { name: "Pro" }],
       },
-      itemFragment:
-        "<ws.element ws:tag='div'>{expression`collectionItem.name`}</ws.element>",
+      itemFragment: "<div>{expression`collectionItem.name`}</div>",
     },
   ],
   "insert-fragment": [
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag='h2'>Northstar Product OS</ws.element><ws.element ws:tag='p'>Reusable patterns for teams.</ws.element></ws.element>",
+        "<section ws:style={css`padding: 32px; display: grid; gap: 16px;`}><h2>Northstar Product OS</h2><p>Reusable patterns for teams.</p></section>",
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<ws.element ws:tag='section' style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag='h2'>Operations Console</ws.element><ws.element ws:tag='p'>Semantic section with React-style object styles converted into editable Webstudio styles.</ws.element></ws.element>",
+        "<section style={{ padding: 32, borderRadius: 16 }}><h2>Operations Console</h2><p>Semantic section with React-style object styles converted into editable Webstudio styles.</p></section>",
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<ws.element ws:tag='section' ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Token Example</ws.element><ws.element ws:tag='button' onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</ws.element></ws.element>",
+        "<section ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><h2>Token Example</h2><button onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</button></section>",
     },
     {
       parentInstanceId: "parent-id",
-      fragment:
-        "<ws.element ws:tag='section'><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>",
+      fragment: "<section><Switch><SwitchThumb /></Switch></section>",
     },
   ],
   "insert-fragment-verified": [
     {
       parentInstanceId: "parent-id",
       pagePath: "/pricing",
-      fragment:
-        "<ws.element ws:tag='section'><ws.element ws:tag='h2'>Pricing</ws.element></ws.element>",
+      fragment: "<section><h2>Pricing</h2></section>",
     },
   ],
   "update-text": [
@@ -3362,7 +3803,7 @@ const importTool = createProjectSessionMcpTool({
 const downloadAssetTool = createProjectSessionMcpTool({
   name: "download-asset",
   description:
-    "Download one project Asset. MDX includes source and diagnostics.",
+    "Download one project Asset. Markdown and MDX include source and diagnostics.",
   inputSchema: downloadAssetInputSchema,
   outputSchema: getMcpOutputSchema({
     type: "object",
@@ -3375,11 +3816,19 @@ const downloadAssetTool = createProjectSessionMcpTool({
         items: {
           type: "object",
           properties: {
-            code: { type: "string", enum: ["invalid-mdx", "unsafe-mdx"] },
+            code: { type: "string" },
             severity: { type: "string", enum: ["error", "warning"] },
             message: { type: "string" },
             nodeType: { type: "string" },
             reason: { type: "string" },
+            assetId: { type: "string" },
+            blockInstanceId: { type: "string" },
+            contentRef: { type: "string" },
+            renderScope: { type: "string" },
+            templateName: { type: "string" },
+            propName: { type: "string" },
+            line: { type: "number" },
+            column: { type: "number" },
             sourceRange: {
               type: "object",
               properties: {
@@ -3405,7 +3854,7 @@ const downloadAssetTool = createProjectSessionMcpTool({
               required: ["start", "end"],
             },
           },
-          required: ["code", "severity", "message"],
+          required: ["code", "severity"],
         },
       },
     },
@@ -3562,6 +4011,10 @@ export const hiddenMcpOperationCommands = new Set<string>([
 
 const mcpOperationSchemaInlineSizes = new Map<string, number>([
   ["search-project", 0],
+  ["set-instance-name", 0],
+  ["migrate-content-block-template-references", 0],
+  ["edit-content-block-source", 0],
+  ["update-content-block-frontmatter", 0],
   ["insert-fragment", 1_000],
   ["create-assets-resource", 2_500],
   ["update-assets-resource", 2_500],
@@ -4057,7 +4510,7 @@ const getTemplateInput = (input: unknown) => {
 const getInsertFragmentInput = async (input: unknown) => {
   if (isPlainRecord(input) === false) {
     throw new Error(
-      'insert-fragment requires {"parentInstanceId":"...","fragment":"<ws.element ws:tag=\'section\' />"}.'
+      'insert-fragment requires {"parentInstanceId":"...","fragment":"<section />"}.'
     );
   }
   if ("parentId" in input && "parentInstanceId" in input === false) {
@@ -4080,7 +4533,7 @@ const getInsertFragmentInput = async (input: unknown) => {
   }
   if (typeof input.fragment !== "string") {
     throw new Error(
-      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<ws.element ws:tag=\'section\' />"}.'
+      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<section />"}.'
     );
   }
   const { fragment: fragmentSource, ...runtimeInput } =
@@ -4840,16 +5293,13 @@ const getComponentSummaryEntry = ({
   }
   const [parsedNamespace, exportName] = parseComponentName(component);
   const namespace = parsedNamespace ?? "global";
-  const jsxNamespace =
-    parsedNamespace === radixComponentNamespace
-      ? "radix"
-      : parsedNamespace === animationComponentNamespace
-        ? "animation"
-        : parsedNamespace === "ws"
-          ? "ws"
-          : "$";
-  const jsxExportName =
-    parsedNamespace === "ws" ? camelCase(exportName) : exportName;
+  const candidateJsxName = getComponentJsxName({
+    component,
+    components: componentMetas.keys(),
+  });
+  const jsxName = isMdxTemplateComponentName(candidateJsxName)
+    ? candidateJsxName
+    : undefined;
   const template = templateMeta?.template;
   const hasTemplate = template !== undefined;
   const instancesById = new Map(
@@ -4893,7 +5343,7 @@ const getComponentSummaryEntry = ({
     component,
     exportName,
     namespace,
-    jsxElement: `<${jsxNamespace}.${jsxExportName} />`,
+    ...(jsxName === undefined ? {} : { jsxName, jsxElement: `<${jsxName} />` }),
     label: meta.label,
     category: visibleCategory,
     contentCategory: meta.contentModel?.category,
@@ -5377,16 +5827,13 @@ const getComponentCoverageStatus = async ({
   );
   const toCoverageEntry = ({
     component,
+    jsxName,
     jsxElement,
     namespace,
     label,
-  }: {
-    component: string;
-    jsxElement: string;
-    namespace: string;
-    label?: string;
-  }) => ({
+  }: ComponentSummaryEntry) => ({
     component,
+    jsxName,
     jsxElement,
     namespace,
     label,
@@ -5486,18 +5933,12 @@ const getComponentCoverageInsertNext = async ({
     throw new Error("components.coverage-insert-next found no component.");
   }
   const insert = await executeOperation({
-    command:
-      selectedRoot === undefined ? "insert-fragment" : "insert-component",
-    input:
-      selectedRoot === undefined
-        ? {
-            parentInstanceId: partParentInstanceId,
-            fragment: await parseWebstudioJsxFragment(selected.jsxElement),
-          }
-        : {
-            parentInstanceId,
-            component: selected.component,
-          },
+    command: "insert-component",
+    input: {
+      parentInstanceId:
+        selectedRoot === undefined ? partParentInstanceId : parentInstanceId,
+      component: selected.component,
+    },
     dryRun,
   });
   const after = await getComponentCoverageStatus({
@@ -5527,7 +5968,7 @@ const getComponentCoverageInsertNext = async ({
       label: selected.label,
       jsxElement: selected.jsxElement,
       namespace: selected.namespace,
-      mode: selectedRoot === undefined ? "fragment" : "component",
+      mode: "component",
     },
     parentInstanceId:
       selectedRoot === undefined ? partParentInstanceId : parentInstanceId,
@@ -5711,7 +6152,7 @@ const insertFragmentInputFilePath = ".temp/insert-fragment.json";
 const insertFragmentInputFileExample = {
   parentInstanceId: "parent-id",
   fragment:
-    "<ws.element ws:tag='section' ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag='h2'>Section title</ws.element><ws.element ws:tag='p'>Section copy.</ws.element></ws.element>",
+    "<section ws:style={css`padding: 32px; display: grid; gap: 12px;`}><h2>Section title</h2><p>Section copy.</p></section>",
 };
 
 const getToolCatalogOverview = (tools: readonly ProjectSessionMcpTool[]) => ({
@@ -5749,7 +6190,7 @@ const getMetaIndex = (
         "Do not call every discovery tool up front. Use this meta.index response for orientation, then call at most one focused discovery tool before acting.",
       tools:
         'Use meta.get-more-tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Page through webstudio://project/tools only when broader operation discovery is necessary.',
-      insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(insertFragmentInputFileExample)} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use Webstudio components/helpers such as ws.element, radix.*, css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
+      insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(insertFragmentInputFileExample)} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use lowercase HTML elements, direct registered component identifiers, and helpers such as css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
       resources:
         "Use MCP resources/list to discover overview and full resources.",
       projectSearch:
@@ -5806,16 +6247,115 @@ const metaGoalGuides = [
       "verify-page-responsive",
     ],
     workflow: [
-      'Call meta.get-more-tools once with {"tools":["create-assets-resource"]}; the recipe below supplies the remaining inputs.',
+      "Follow recipe.executionOrder in order. Resolve documented placeholders from earlier results, and do not add calls outside that sequence.",
       'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
       'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
-      "Substitute the returned folder id in both recipe queries. Validate both, then preview the detail query with one concrete slug. Keep overview values literal and keep system.params.slug as the detail query's only dynamic value.",
+      "Substitute the returned folder id in every recipe query. Pass recipe.overviewValidationQuery and recipe.detailValidationQuery directly to validate-asset-query, then pass recipe.detailValidationQuery directly to preview-asset-query. These execution queries contain resolved JSON values. Do not copy the expression-bearing resource queries into validation or preview tools.",
+      "After both validations and the preview succeed, call recipe.toolDiscovery exactly once immediately before creating the resources. Do not call meta.get-more-tools again.",
       'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one" and bind it directly without a Collection. Do not add query defaults or create placeholder resources.',
       "Insert recipe.overviewCollection under the overview root with insert-collection, then insert recipe.detailFragment under the detail root with insert-fragment. The overview repeats posts; the detail page binds post.data directly.",
       "Apply the page settings with update-page using recipe.detailPageSettings so the article title, description, social image, and 404 status use the same post resource as the page content.",
       'After both insertions succeed, ask whether the user wants visual verification unless they explicitly requested it. If they decline, use focused reads and a static audit. If they opt in, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
+      executionOrder: [
+        { tool: "create-asset-folder", calls: 1 },
+        { tool: "upload-assets", calls: 1 },
+        { tool: "create-page", calls: 2 },
+        { tool: "validate-asset-query", calls: 2 },
+        { tool: "preview-asset-query", calls: 1 },
+        { tool: "meta.get-more-tools", calls: 1 },
+        { tool: "create-assets-resource", calls: 2 },
+        { tool: "insert-collection", calls: 1 },
+        { tool: "insert-fragment", calls: 1 },
+        { tool: "update-page", calls: 1 },
+        { tool: "verify-page-responsive", calls: 2, terminal: true },
+      ],
+      toolDiscovery: {
+        tool: "meta.get-more-tools",
+        when: "after-query-verification",
+        input: {
+          tools: ["create-assets-resource"],
+        },
+      },
+      overviewValidationQuery: {
+        result: "many",
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: "md",
+            },
+            {
+              field: ["folderId"],
+              operator: "eq",
+              value: "<blog-folder-id>",
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: true,
+            },
+          ],
+        },
+        sort: [
+          { field: ["properties", "publishedAt"], direction: "desc" },
+          { field: ["id"], direction: "asc" },
+        ],
+        limit: 20,
+        offset: 0,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "slug"],
+            ["properties", "publishedAt"],
+            ["properties", "author"],
+            ["properties", "excerpt"],
+          ],
+        },
+        content: { mode: "none" },
+      },
+      detailValidationQuery: {
+        result: "one",
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: "md",
+            },
+            {
+              field: ["folderId"],
+              operator: "eq",
+              value: "<blog-folder-id>",
+            },
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "aurora-trails",
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: true,
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "author"],
+            ["properties", "excerpt"],
+            ["properties", "featureImage", "src"],
+          ],
+        },
+        content: { mode: "markdown-body-ref" },
+      },
       overviewResource: {
         name: "Published posts",
         scopeInstanceId: "<overview-root-id>",
@@ -5898,7 +6438,7 @@ const metaGoalGuides = [
               ["properties", "title"],
               ["properties", "author"],
               ["properties", "excerpt"],
-              ["properties", "featureImage"],
+              ["properties", "featureImage", "src"],
             ],
           },
           content: { mode: "markdown-body-ref" },
@@ -5908,12 +6448,12 @@ const metaGoalGuides = [
         parentInstanceId: "<overview-root-id>",
         data: { type: "expression", value: "posts.data" },
         itemFragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">{expression`collectionItem.properties.excerpt ?? ""`}</ws.element><ws.element ws:tag="p">By {expression`collectionItem.properties.author.name`}</ws.element><ws.element ws:tag="time">{expression`collectionItem.properties.publishedAt ?? ""`}</ws.element><ws.element ws:tag="a" href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</ws.element></ws.element>',
+          '<article><h2>{expression`collectionItem.properties.title ?? "Untitled"`}</h2><p>{expression`collectionItem.properties.excerpt ?? ""`}</p><p>By {expression`collectionItem.properties.author.name`}</p><time>{expression`collectionItem.properties.publishedAt ?? ""`}</time><a href={expression`"/blog/" + collectionItem.properties.slug`}>Read article</a></article>',
       },
       detailFragment: {
         parentInstanceId: "<detail-root-id>",
         fragment:
-          '<ws.element ws:tag="article"><ws.element ws:tag="h1">{expression`post.data.properties.title ?? "Untitled"`}</ws.element><ws.element ws:tag="p">By {expression`post.data.properties.author.name ?? ""`}</ws.element><$.MarkdownEmbed code={expression`post.data.content.text ?? ""`} /></ws.element>',
+          '<article><h1>{expression`post.data.properties.title ?? "Untitled"`}</h1><p>By {expression`post.data.properties.author.name ?? ""`}</p><MarkdownEmbed code={expression`post.data.content.text`} /></article>',
       },
       detailPageSettings: {
         pageId: "<detail-page-id>",
@@ -5921,7 +6461,7 @@ const metaGoalGuides = [
           title: 'post.data.properties.title ?? "Article"',
           meta: {
             description: 'post.data.properties.excerpt ?? ""',
-            socialImageUrl: 'post.data.properties.featureImage ?? ""',
+            socialImageUrl: 'post.data.properties.featureImage.src ?? ""',
             status: "post.data ? 200 : 404",
           },
         },
@@ -5985,7 +6525,7 @@ const metaGoalGuides = [
     workflow: [
       "Find the array or object to repeat. For a scoped resource result, select the complete nested array/object, commonly below the result's data field; do not bind the response wrapper or one indexed item.",
       "Call insert-collection once with the complete iterable and one repeated-item JSX root. Use expression`collectionItem.name` and expression`collectionItemKey` inside the item fragment; the operation creates and binds private parameters atomically.",
-      "Wrap multiple repeated sibling instances in one ws.element. Do not create, replace, or delete Collection parameter records manually.",
+      "Wrap multiple repeated sibling instances in one lowercase HTML element such as <div>. Do not create, replace, or delete Collection parameter records manually.",
       "Verify that every array/object entry renders once. For repeated Radix items, bind a stable unique id or slug to required value props.",
     ],
   },
@@ -6028,7 +6568,7 @@ const metaGoalGuides = [
       "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
       "Create resources only after their scope and referenced variables exist. When reusing the discovered /api/auth/session convention, pass recipe.createResourceInput directly as the entire create-resource tool input, unchanged except for its account root id placeholder. Do not wrap it in another resource object. Keep every request field nested under resource. resource.url is the HTTP request target, not a provider call or session-state expression. Use literal wrappers only for fixed header, search-parameter, and body text.",
       "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
-      'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
+      "Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <main><section><h2>Signed-out</h2></section><section><h2>Loading</h2></section><section><h2>Signed-in</h2></section><section><h2>Failed-auth</h2></section></main>.",
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
       'Ask whether the user wants visual verification unless they explicitly requested it. If they decline, run a focused static audit and stop without preview or screenshots. If they opt in, call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
@@ -6063,7 +6603,19 @@ const metaGoalGuides = [
       "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
       "Use update-asset to correct font metadata without re-uploading the binary.",
       "After font mutations, call verify-font-assets exactly once with every changed asset id. It refreshes the asset namespace and returns the persisted metadata in one bounded verification call; do not call refresh or get-asset separately.",
+      "Finish with exactly one audit call using recipe.audit. Do not pass asset ids or other unsupported fields to audit.",
     ],
+    recipe: {
+      upload: {
+        tool: "upload-assets",
+        input: {
+          assetsDir: ".webstudio/assets",
+          assetFields: ["name", "type", "format", "meta"],
+          excludedAssetFields: ["path"],
+        },
+      },
+      audit: { tool: "audit", input: {} },
+    },
   },
   {
     id: "design-input",
@@ -6084,13 +6636,25 @@ const metaGoalGuides = [
       "Interpret the supplied design before mutating: identify page sections, responsive behavior, reusable patterns, assets, typography, color, spacing, and interaction states. Ask for missing source assets rather than inventing brand-critical content.",
       "Before the first mutation, call inspect-design-context exactly once instead of calling list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Use one list-instances call only when needed to inspect a representative existing page pattern. Do not call get-styles: the bounded design context and optional focused instance result provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
-      "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
-      "Create semantic editable structure with insert-fragment-verified using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
+      "After insertion, call attach-design-token at least once with an exact existing style source id returned by inspect-design-context. Attach it where the shared typography, color, or other token is intended. Reusing only the token's current raw value creates a disconnected local copy.",
+      "Create semantic editable structure with insert-fragment-verified using only lowercase HTML elements and literal text. Do not include inline styles or ws:style in the fragment; apply fixed CSS with update-styles after insertion. Do not improvise component names, expression syntax, or object-valued style expressions. Use assets for real imagery and text or controls for real content; do not flatten the design into one image or absolute-position every element.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
       'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before asking whether the user wants visual verification, unless they explicitly requested it. If they decline, run a focused static audit and stop without preview or screenshots. If they opt in, call verify-page-responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically, captures both viewports, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
+    recipe: {
+      insertion: { includeStyles: false },
+      tokenReuse: {
+        minimumAttachments: 1,
+        source: "inspect-design-context",
+      },
+      responsiveStyles: {
+        tool: "update-styles",
+        breakpointSource: "inspect-design-context",
+        minimumBreakpointSpecificUpdates: 1,
+      },
+    },
   },
   {
     id: "craft",
@@ -6424,14 +6988,14 @@ const designSystemWorkflowPhases: Record<
       contents: {
         parentInstanceId: "root-id",
         fragment:
-          "<ws.element ws:tag='section' ws:style={css`padding: 24px;`}><ws.element ws:tag='h2'>Design System</ws.element></ws.element>",
+          "<section ws:style={css`padding: 24px;`}><h2>Design System</h2></section>",
       },
     },
     constraints: [
       "Save inputFile.contents at inputFile.path, replacing only root-id, then use the commandPattern as-is.",
       "Keep the dry-run fragment tiny, ideally under 500 characters.",
       "Do not design the real page in this phase.",
-      "Use ws.element tags or components confirmed by components.get; do not use deprecated $.Box, $.Heading, $.Paragraph, or $.Button.",
+      "Use lowercase HTML tags or direct component identifiers confirmed by components.get; do not use legacy ws.element, $.Box, $.Heading, $.Paragraph, or $.Button syntax.",
       "Return immediately after one dry-run result.",
     ],
     expectedReturn: [
@@ -6479,7 +7043,7 @@ const designSystemWorkflowPhases: Record<
     constraints: [
       "Do not treat coverage 72/72 as completion by itself.",
       "Keep every covered component on the page while improving layout and styling.",
-      "Use styled ws.element sections/cards, update-styles, and move-instance as needed.",
+      "Use styled lowercase HTML sections/cards, update-styles, and move-instance as needed.",
       "Return a checkpoint with visual/presentation changes and final coverage.",
     ],
     expectedReturn: [
@@ -7184,6 +7748,11 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
   if (isRecord(input) === false) {
     throw new Error("screenshot input must be an object.");
   }
+  if ("host" in input || "port" in input) {
+    throw new Error(
+      "screenshot does not accept host or port. The MCP runner selects an available local address and returns its URL."
+    );
+  }
   const url =
     typeof input.url === "string" && input.url.length > 0
       ? input.url
@@ -7263,17 +7832,6 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
   if (mode !== undefined && isProjectSessionPreviewMode(mode) === false) {
     throw new Error("screenshot mode must be iterative or production.");
   }
-  const host = typeof input.host === "string" ? input.host : undefined;
-  if (host !== undefined && host.length === 0) {
-    throw new Error("screenshot host must not be empty.");
-  }
-  const port = typeof input.port === "number" ? input.port : undefined;
-  if (
-    port !== undefined &&
-    (Number.isInteger(port) === false || port <= 0 || port > 65535)
-  ) {
-    throw new Error("screenshot port must be an integer between 1 and 65535.");
-  }
   const imageDomains = input.imageDomains;
   if (
     imageDomains !== undefined &&
@@ -7295,14 +7853,12 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       throw new Error("screenshot baseUrl must be an absolute URL.");
     }
     if (
-      host !== undefined ||
-      port !== undefined ||
       source !== undefined ||
       mode !== undefined ||
       imageDomains !== undefined
     ) {
       throw new Error(
-        "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, mode, or imageDomains."
+        "screenshot baseUrl uses an existing preview/site and cannot be combined with source, mode, or imageDomains."
       );
     }
   }
@@ -7311,8 +7867,6 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     baseUrl,
     path,
     output: typeof input.output === "string" ? input.output : undefined,
-    host,
-    port,
     imageDomains,
     source,
     mode,
@@ -7454,16 +8008,10 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   if (isRecord(input) === false) {
     return {};
   }
-  const host = typeof input.host === "string" ? input.host : undefined;
-  if (host !== undefined && host.length === 0) {
-    throw new Error("preview host must not be empty.");
-  }
-  const port = typeof input.port === "number" ? input.port : undefined;
-  if (
-    port !== undefined &&
-    (Number.isInteger(port) === false || port < 0 || port > 65535)
-  ) {
-    throw new Error("preview port must be an integer between 0 and 65535.");
+  if ("host" in input || "port" in input) {
+    throw new Error(
+      "preview.start does not accept host or port. The MCP runner selects an available local address and returns its URL."
+    );
   }
   const source = input.source === undefined ? undefined : input.source;
   if (source !== undefined && isProjectSessionPreviewSource(source) === false) {
@@ -7488,8 +8036,6 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
     );
   }
   return {
-    host,
-    port,
     source,
     mode,
     imageDomains,
@@ -8143,11 +8689,16 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         } catch (error) {
           const message =
             error instanceof Error ? error.message : String(error);
+          const issues = getValidationIssues(error);
           throw Object.assign(
             new Error(
               `Screenshot capture failed: ${message}. Check preview.status, verify that the route loads, and retry with an installed browser or explicit browserPath.`
             ),
-            { code: "SCREENSHOT_CAPTURE_FAILED", cause: error }
+            {
+              code: "SCREENSHOT_CAPTURE_FAILED",
+              cause: error,
+              ...(issues === undefined ? {} : { issues }),
+            }
           );
         }
       }

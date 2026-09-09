@@ -646,12 +646,7 @@ test("Builder runs paste plugins through generic browser paste events", async ({
       "Instance text paste heading",
       "p",
     ],
-    [
-      "text/plain",
-      '<ws.element ws:tag="h2">JSX paste heading</ws.element>',
-      "JSX paste heading",
-      "h2",
-    ],
+    ["text/plain", "<h2>JSX paste heading</h2>", "JSX paste heading", "h2"],
     [
       "text/plain",
       "<section><h2>HTML paste heading</h2></section>",

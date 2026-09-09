@@ -3,7 +3,7 @@ import {
   type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
-import { Tooltip, Flex, Text } from "@webstudio-is/design-system";
+import { Tooltip, Flex, Text, cssVar } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import { RepeatedStyleSection } from "../../shared/style-section";
@@ -81,7 +81,7 @@ export const Section = () => {
                   </Flex>
                 }
               >
-                <InfoCircleIcon />
+                <InfoCircleIcon color={cssVar("--foreground-secondary")} />
               </Tooltip>
             }
           />

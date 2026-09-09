@@ -77,13 +77,193 @@ blog/
     assets/
 ```
 
-Keeping all articles in one folder makes them easy to query. Images can live
-next to the articles or in a nested folder.
+Keeping all articles in one folder makes them easy to query. Put images and
+other supporting files in a nested folder.
 
 Open the settings for the `posts` folder and copy its ID. Both Assets resources
 in this guide use that ID to query only files in this folder.
 
+### Make the folder a content collection
+
+Turn on **Use as content collection** when you create the `posts` folder if
+editors should be able to add articles without writing MDX frontmatter. For an
+existing folder, choose **Use as content collection** from its context menu,
+actions menu, or **Folder settings**, then confirm setup. This creates two files
+in the same folder without changing its ID or existing content:
+
+- `collection.json` defines the entry fields and their rules with JSON Schema.
+- `template.mdx` supplies the starting frontmatter and body for each entry.
+
+Existing selected entries must be MDX files. Setup leaves their content unchanged,
+even when fields are missing or not yet configured. The collection shows field
+errors for repair after setup. Other files stay visible and are ignored by
+collection validation. Setup stops if a selected file has an incompatible type
+or conflicts with the generated configuration or template. Choose **Configure
+collection** after setup to define the fields used by your existing entries.
+
+### Select collection entries
+
+The generated `collection.json` includes filename patterns in `x-webstudio.entries`:
+
+```json
+{
+  "x-webstudio": {
+    "template": "template.mdx",
+    "entries": ["*.mdx"]
+  }
+}
+```
+
+These use [URLPattern syntax](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API),
+not filesystem globs. Patterns match direct filenames in the current folder,
+case-insensitively; subfolders are independent. For example, use
+`["post-*.mdx", "!post-private-*.mdx"]` to select public post files. A leading
+`!` excludes a pattern; exclusions take priority over inclusions. At least one
+inclusion is required. Slashes are not allowed. The configuration and configured
+template are always excluded from entries, regardless of patterns.
+
+Omitting `entries` preserves the default `["*.mdx"]`. The setting accepts up to
+64 patterns of 256 characters each. New entry filenames must match the patterns.
+Only MDX entries are currently supported; a pattern selecting another format
+reports an error rather than treating that file as editable MDX. Files not
+selected remain visible and can still appear in ordinary Assets query results.
+
+### Configure fields and the template
+
+The folder remains a normal Assets folder. The direct `collection.json` file is
+what makes Webstudio treat it as a collection and show the collection badge.
+The configuration and referenced template files also show this badge. You can
+open them or download them when permitted, but cannot cut, copy, duplicate,
+move, or delete them individually. Manage them through **Collection settings**.
+Their asset **Settings** remain available to collection designers: Name is
+read-only and Folder is disabled, while Description remains editable.
+
+Open **Collection settings → Fields** and select a field from the list.
+Edit **Label** and **Field key** together, then choose the field's **Type**.
+Set required fields and length or number limits under **Validation**.
+Choose **Add field** to add another entry field. The configurator writes the
+schema; designers do not need to edit JSON.
+
+Use the **Entry template** tab to rename the entry template and edit its default
+frontmatter and starter content with the built-in Markdown editor. Creating
+an entry keeps you on the current page.
+
+The collection format uses a supported subset of JSON Schema draft 2020-12.
+The configurator exposes string, number, integer, boolean, and slug fields,
+along with required fields and length or value limits. Set starting values in
+the entry template frontmatter. Collection fields are flat; arrays and nested
+objects are not supported. Slug fields reference Webstudio's bundled schema:
+
+```json
+{
+  "$ref": "https://webstudio.is/schemas/slug",
+  "title": "URL slug",
+  "maxLength": 120,
+  "x-webstudio": { "control": "slug" }
+}
+```
+
+Webstudio resolves this reference from its bundled rules, without a network
+request. Length limits alongside the reference still apply. The configurator
+writes the reference automatically; designers do not need to write a regex.
+Other references, composition keywords, enums, formats, and custom
+regular-expression patterns are not supported. Webstudio
+reports unsupported rules with their location instead of silently ignoring
+them.
+
+Editors choose **New entry**, complete the generated form, and select **Create
+entry**. Webstudio creates a lowercase, dash-separated slug from the configured
+source field, which is **Title** by default.
+Slugs preserve letters and numbers from any language, including accents:
+`Привет мир` becomes `привет-мир`, and `你好世界` stays `你好世界`.
+Spaces and punctuation become separators. If the title contains only emoji or
+symbols, enter a slug manually. Existing filenames are never renamed.
+
+Webstudio recognizes its previously generated slug patterns and uses the bundled
+Unicode rule for those collections too. Saving collection settings replaces the
+old pattern with the reference. Existing entry content and filenames remain
+unchanged. Future rule updates do not require editing each collection's regex.
+
+Editors can change the slug before creating the entry. New entries must satisfy
+the schema. Existing entries report field errors without blocking incremental
+edits or publication. The slug becomes
+the MDX filename and cannot be changed after creation.
+
+Slug fields are optional. Change the Slug field to another type
+if the collection does not need one. New entries then receive unique generated
+MDX filenames, without adding a filename field to their frontmatter. Existing
+filenames stay unchanged. For a manual slug, set **Generate from** to
+**None (manual entry)**.
+
+For optional fields, click the field label and choose **Reset value**, or
+Alt-click the label, to omit the value, including a value supplied by the
+template. An empty text
+value is different from an omitted value. Optional boolean fields offer
+**Yes**, **No**, and **Not set**. Validation errors appear beside their fields.
+
+Collection settings save automatically when valid. Webstudio checks the entry
+template against the new rules. Existing entries remain editable if a rule changes.
+The open collection folder checks entry frontmatter in the background and shows
+a warning when an entry needs attention. Select an entry's error indicator or
+choose **Entry settings** from its menu to edit its fields using the same controls
+as **New entry**. Edits save automatically, including partial repairs. Unknown
+frontmatter properties and the MDX body are preserved. Slugs remain fixed to the
+filename; an existing mismatch has a repair action.
+
+Use **Open MDX file** to edit the body or inspect unconfigured fields. Invalid field
+values are underlined in the source editor; hover them for details. Content-mode
+text and number controls bound to these fields also show their collection errors.
+Fixing the values clears the errors. A field error does not hide the entry,
+stop the collection rendering, or block publication of unrelated changes.
+
+These checks read bounded file prefixes for direct entries in the open folder,
+with at most four reads at once. Frontmatter is cached by file revision while
+that folder remains open. Changing the schema rechecks cached values without
+downloading unchanged entries again. A failed read is reported separately from
+field errors and can be retried with **Check again**.
+
+The configurator rejects Integer limits that leave no possible whole number.
+Slug limits must allow at least one character, even when minimum length is unset.
+Without a Slug field, use a single `*.mdx` or `entry-*.mdx` entry pattern when
+saving collection settings. These match automatically generated filenames.
+Custom filename patterns require a Slug field. Existing configurations remain
+readable so their content can still be repaired and published.
+
+Builder shares collection configuration loading across Assets, file editors, and
+bound property controls. It groups the already-synchronized asset metadata once
+per update and downloads the active collection's configuration and template once
+for all consumers. Editing an entry does not download those unchanged files again.
+Changing the configuration or template, retrying a failed read, or changing project
+or access token refreshes this state. Entry validation still reads frontmatter as
+described above; sharing configuration does not remove those reads.
+
+A collection folder accepts entries, supporting assets, and subfolders. Use
+**New entry** for filenames selected by the entry patterns. Files excluded by
+the patterns behave like ordinary assets: upload, create, paste, move, rename,
+and duplicate them normally. The collection configuration and template remain
+protected and do not appear in Content
+Engine query results. Keep `collection.json` valid and its referenced template
+available. Broken collection configuration can still block collection queries
+and publishing when Webstudio cannot safely identify the reserved files.
+An invalid template still blocks entry creation and publication. Malformed YAML
+and unreadable files are not ordinary field-validation errors; those existing
+parsing and access checks still apply.
+
+**Delete unused assets** does not list the files directly inside a collection
+folder. Collection entries are loaded dynamically and may not have a direct
+page or component reference.
+
+Choose **Convert to regular folder** in **Collection settings**, the folder's
+context or actions menu, or the empty-space context menu inside the folder.
+Confirm the conversion. This deletes only
+`collection.json`. The folder becomes a normal folder again, while its entries
+and template remain. The former template is then a regular MDX file and can
+appear in Assets query results.
+
 ## 2. Create an article
+
+If `posts` is a content collection, choose **New entry** and fill in its form.
+Otherwise, create the file and frontmatter manually:
 
 1. Open `blog/posts` in the Assets panel.
 2. Open the add menu and choose **Create text file**.
@@ -109,7 +289,6 @@ Write the article here.
 ```
 
 <figure><img src="../../.gitbook/assets/content-engine-markdown-editor.png" alt="Markdown editor showing article frontmatter and body"><figcaption><p>An article's metadata and body in the Markdown editor</p></figcaption></figure>
-
 
 ### Frontmatter
 
@@ -147,8 +326,8 @@ Select only the referenced fields the page uses, such as
 value becomes structured data:
 
 ```js
-post.properties.featureImage.src
-post.properties.featureImage.description
+post.properties.featureImage.src;
+post.properties.featureImage.description;
 ```
 
 Bind the Image source to `post.properties.featureImage.src`. Bind its
@@ -210,7 +389,8 @@ page-level **Dynamic data**:
 5. Under **Content**, choose **Metadata only**. The overview does not render
    complete article bodies.
 6. Add these filters:
-   - `extension` **equals** `"md"`
+   - `extension` **equals** `"mdx"` for collection entries, or `"md"` for the
+     manually created Markdown files in this guide
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.draft` **does not equal** `true`
 7. Sort `properties.publishedAt` in descending order. Add `id` in ascending
@@ -218,7 +398,6 @@ page-level **Dynamic data**:
    stable order.
 
 <figure><img src="../../.gitbook/assets/content-engine-overview-query.png" alt="Assets overview query filtering Markdown files and drafts, then sorting by publication date and ID"><figcaption><p>An overview query for the Webstudio Updates project</p></figcaption></figure>
-
 
 Choosing only the fields the page renders keeps the published content data
 small. Leaving article bodies out of the overview also avoids loading every
@@ -259,13 +438,13 @@ Add another Assets resource to the page-level **Dynamic data**:
 4. Under **Result**, choose **Exactly one**.
 5. Under **Content**, choose **Markdown body reference**.
 6. Add these filters:
-   - `extension` **equals** `"md"`
+   - `extension` **equals** `"mdx"` for collection entries, or `"md"` for the
+     manually created Markdown files in this guide
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.slug` **equals** `system.params.slug`
    - `properties.draft` **does not equal** `true`
 
 <figure><img src="../../.gitbook/assets/content-engine-article-query.png" alt="Assets resource filtering one Markdown article by folder and the dynamic page slug"><figcaption><p>The article Resource uses the dynamic slug from the page URL</p></figcaption></figure>
-
 
 **Exactly one** returns the matching article directly at `post.data`. It also
 reports an error if two articles use the same slug. You do not need a
@@ -338,9 +517,10 @@ give its Assets resource the same `properties.draft does not equal true`
 filter. The metadata field does not automatically remove an article from a
 custom sitemap.
 
-To publish another article, duplicate the Markdown file and change its title,
-slug, publication date, image, and body. The existing overview and dynamic page
-will render it without another page design.
+To publish another collection article, choose **New entry**. For the manual
+workflow, duplicate the Markdown file and change its title, slug, publication
+date, image, and body. The existing overview and dynamic page will render it
+without another page design.
 
 ## Connect content with document references
 
@@ -352,10 +532,10 @@ for values inside JSON files, but it does not implement JSON Schema resolution.
 
 All supported source formats can reference the other content formats:
 
-| Source | Where references can appear | JSON target | Markdown or MDX target |
-| --- | --- | --- | --- |
-| Markdown or MDX | YAML frontmatter | Yes | Yes |
-| JSON | Anywhere in the document | Yes | Yes |
+| Source          | Where references can appear | JSON target | Markdown or MDX target |
+| --------------- | --------------------------- | ----------- | ---------------------- |
+| Markdown or MDX | YAML frontmatter            | Yes         | Yes                    |
+| JSON            | Anywhere in the document    | Yes         | Yes                    |
 
 References do not work inside a Markdown or MDX body. A `$ref` object can be
 nested in an object or array, including inside a file reached through another
@@ -375,13 +555,13 @@ relative to the file containing the reference, not the project root.
 
 The optional fragment selects which value to insert:
 
-| Reference | Value inserted at `$ref` |
-| --- | --- |
-| `../authors/ada.json` | The complete JSON value |
-| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name` |
-| `../authors/ada.md` | The complete Markdown source, including frontmatter |
-| `../authors/ada.md#frontmatter` | The Markdown frontmatter as an object |
-| `../authors/ada.md#body` | The Markdown body without frontmatter |
+| Reference                           | Value inserted at `$ref`                            |
+| ----------------------------------- | --------------------------------------------------- |
+| `../authors/ada.json`               | The complete JSON value                             |
+| `../authors/ada.json#/profile/name` | The value at JSON Pointer `/profile/name`           |
+| `../authors/ada.md`                 | The complete Markdown source, including frontmatter |
+| `../authors/ada.md#frontmatter`     | The Markdown frontmatter as an object               |
+| `../authors/ada.md#body`            | The Markdown body without frontmatter               |
 
 JSON Pointer fragments apply only to JSON files. Use `~1` for `/` and `~0` for
 `~` inside a property name. For example, `#/social~1links/0` selects the first

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { createServer } from "node:http";
 import { bundleVersion } from "@webstudio-is/protocol";
 import {
   createImageAssetFixture,
@@ -9,7 +10,7 @@ import {
 } from "@webstudio-is/protocol/fixtures";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import { resolveApiConnection } from "../api-connection";
-import { sync } from "./sync";
+import { sync, defaultSyncDependencies } from "./sync";
 import { apiCompatibilityHeaders } from "./api";
 import { materializeManagedAgents } from "../managed-agents";
 
@@ -22,6 +23,7 @@ const indicator = {
 };
 const loadProjectBundleByBuildId = vi.fn();
 const loadProjectBundleByProjectId = vi.fn();
+const loadCurrentProjectBundle = vi.fn();
 const downloadAssetFiles = vi.fn();
 const dependencies = {
   createFileIfNotExists,
@@ -29,6 +31,7 @@ const dependencies = {
   isFileExists,
   loadProjectBundleByBuildId,
   loadProjectBundleByProjectId,
+  loadCurrentProjectBundle,
   readFile,
   resolveApiConnection,
   spinner: () => indicator,
@@ -48,6 +51,7 @@ beforeEach(async () => {
   process.chdir(tempDir);
   loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle());
   loadProjectBundleByProjectId.mockResolvedValue(createProjectBundle());
+  loadCurrentProjectBundle.mockResolvedValue(createProjectBundle());
   downloadAssetFiles.mockResolvedValue(undefined);
   indicator.start.mockClear();
   indicator.message.mockClear();
@@ -227,7 +231,7 @@ test("sends linked share token when synchronizing by build id", async () => {
   });
 });
 
-test("explains unpublished project bundle errors when synchronizing linked project", async () => {
+test("syncs current editable data without requiring a published project", async () => {
   loadProjectBundleByProjectId.mockRejectedValue(
     Object.assign(new Error("Not published"), {
       data: { code: "NOT_FOUND", webstudioCode: "PROJECT_NOT_PUBLISHED" },
@@ -239,19 +243,22 @@ test("explains unpublished project bundle errors when synchronizing linked proje
     projectId: "project-id",
   }));
 
-  await expect(
-    sync({}, { ...dependencies, resolveApiConnection })
-  ).rejects.toThrow("Handled CLI error");
-
-  expect(indicator.stop).toHaveBeenCalledWith(
-    [
-      "Unable to synchronize project bundle because the project is not published.",
-      "`webstudio sync` downloads the published project bundle.",
-      "Publishing is not required for MCP editing. Do not ask the user to publish; use MCP tools against the latest editable build.",
-      "For visual verification, use `preview.start` or `webstudio preview --source session` instead.",
-    ].join("\n"),
-    2
-  );
+  const current = createProjectBundle({
+    build: { version: 438 },
+    assets: [createImageAssetFixture()],
+  });
+  loadCurrentProjectBundle.mockResolvedValue(current);
+  await sync({}, { ...dependencies, resolveApiConnection });
+  expect(loadProjectBundleByProjectId).not.toHaveBeenCalled();
+  expect(loadCurrentProjectBundle).toHaveBeenCalledWith({
+    authToken: "share-token",
+    origin: "https://example.com",
+    projectId: "project-id",
+    headers: apiCompatibilityHeaders,
+  });
+  const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
+  expect(data.build.version).toBe(438);
+  expect(data.assets).toEqual(current.assets);
 });
 
 test("explains unpublished project bundle errors when synchronizing by build id", async () => {
@@ -274,10 +281,8 @@ test("explains unpublished project bundle errors when synchronizing by build id"
 
   expect(indicator.stop).toHaveBeenCalledWith(
     [
-      "Unable to synchronize project bundle because the project is not published.",
-      "`webstudio sync` downloads the published project bundle.",
-      "Publishing is not required for MCP editing. Do not ask the user to publish; use MCP tools against the latest editable build.",
-      "For visual verification, use `preview.start` or `webstudio preview --source session` instead.",
+      "The selected build cannot be exported.",
+      "Run `webstudio sync` without --buildId to export the current saved project without publishing.",
     ].join("\n"),
     2
   );
@@ -318,4 +323,103 @@ test("throws handled error when local project config is missing", async () => {
     "Local config file is not found. Please make sure current directory is a webstudio project",
     2
   );
+});
+
+test("repeated sync preserves current build metadata and file formats without publishing", async () => {
+  const file = {
+    ...createImageAssetFixture(),
+    type: "file" as const,
+    name: "post.mdx",
+    filename: "post",
+    format: "mdx",
+    meta: {},
+  };
+  const current = createProjectBundle({
+    assets: [file],
+    build: {
+      version: 438,
+      createdAt: "2026-07-30T23:21:20.362Z",
+      updatedAt: "2026-09-01T21:44:30.648Z",
+    },
+  });
+  const maps = [
+    "breakpoints",
+    "styles",
+    "styleSources",
+    "styleSourceSelections",
+    "props",
+    "instances",
+    "dataSources",
+    "resources",
+  ] as const;
+  const rawBuild = {
+    ...current.build,
+    ...Object.fromEntries(
+      maps.map((key) => [key, current.build[key].map(([, value]) => value)])
+    ),
+    assets: current.assets,
+    assetFolders: [],
+    project: {
+      id: current.build.projectId,
+      title: current.projectTitle,
+      domain: current.projectDomain,
+    },
+  };
+  const requests: string[] = [];
+  const tokens: Array<string | string[] | undefined> = [];
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? "/", "http://localhost");
+    requests.push(url.pathname);
+    if (url.pathname === "/cgi/asset/post.mdx") {
+      response.setHeader("content-type", "text/mdx");
+      response.end("# Post");
+      return;
+    }
+    tokens.push(request.headers["x-auth-token"]);
+    response.setHeader("content-type", "application/json");
+    if (url.pathname !== "/trpc/build.loadData") {
+      response.writeHead(404);
+      response.end(JSON.stringify({ error: "unexpected endpoint" }));
+      return;
+    }
+    response.end(JSON.stringify([{ result: { data: rawBuild } }]));
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Missing test server address");
+    }
+    const connection = {
+      origin: `http://127.0.0.1:${address.port}`,
+      projectId: current.build.projectId,
+      authToken: "source-token",
+    };
+    const realDependencies = {
+      ...defaultSyncDependencies,
+      resolveApiConnection: async () => connection,
+      spinner: () => indicator,
+    };
+    await sync({}, realDependencies);
+    const first = await readFile(".webstudio/data.json", "utf8");
+    await sync({}, realDependencies);
+    expect(await readFile(".webstudio/data.json", "utf8")).toBe(first);
+    expect(JSON.parse(first)).toMatchObject({
+      build: current.build,
+      projectTitle: current.projectTitle,
+      projectDomain: current.projectDomain,
+      assets: [file],
+    });
+    expect(await readFile(".webstudio/assets/post.mdx", "utf8")).toBe("# Post");
+    expect(requests).toEqual([
+      "/trpc/build.loadData",
+      "/cgi/asset/post.mdx",
+      "/trpc/build.loadData",
+    ]);
+    expect(tokens).toEqual(["source-token", "source-token"]);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve()))
+    );
+  }
 });

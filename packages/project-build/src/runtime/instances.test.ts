@@ -53,6 +53,7 @@ import {
   moveInstances,
   replaceTextInput,
   serializeTextNodes,
+  setInstanceName,
   setInstanceLabel,
   setInstanceTag,
   setTextContent,
@@ -68,7 +69,7 @@ import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 
 const runtimeContext = { createId: () => "generated" };
 
-test("rejects duplicate names and confirms source-backed template deletion", () => {
+test("keeps template names separate from labels and confirms source-backed changes", () => {
   const block = createInstance("block", blockComponent, [
     { type: "id", value: "templates" },
   ]);
@@ -76,8 +77,12 @@ test("rejects duplicate names and confirms source-backed template deletion", () 
     { type: "id", value: "hero" },
     { type: "id", value: "card" },
   ]);
-  const hero = { ...createInstance("hero", "Box"), label: "Hero" };
-  const card = createInstance("card", "Box");
+  const hero = {
+    ...createInstance("hero", "Box"),
+    name: "Hero",
+    label: "Featured hero",
+  };
+  const card = { ...createInstance("card", "Box"), name: "Card" };
   const source: Prop = {
     id: "src",
     instanceId: block.id,
@@ -93,11 +98,17 @@ test("rejects duplicate names and confirms source-backed template deletion", () 
   ]);
 
   expect(() =>
+    setInstanceName(
+      { instances, props: new Map([[source.id, source]]) },
+      { instanceId: card.id, name: "Hero" }
+    )
+  ).toThrow("Template name must be unique");
+  expect(
     setInstanceLabel(
       { instances, props: new Map([[source.id, source]]) },
       { instanceId: card.id, label: "Hero" }
-    )
-  ).toThrow("Template name must be unique");
+    ).result
+  ).toMatchObject({ label: "Hero" });
   expect(() =>
     deleteInstances(
       {

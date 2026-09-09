@@ -12,10 +12,13 @@ export { type SlotProps, Slot } from "@radix-ui/react-slot";
 
 export * from "./components/text";
 export * from "./components/panel-title";
+export * from "./components/panel-content";
+export * from "./components/inset-list";
 export * from "./components/section-title";
 export * from "./components/separator";
 export * from "./components/button";
 export * from "./components/label";
+export * from "./components/resettable-label";
 export { styleSourceColor } from "./components/style-source-color";
 export * from "./components/select";
 export * from "./components/combobox";

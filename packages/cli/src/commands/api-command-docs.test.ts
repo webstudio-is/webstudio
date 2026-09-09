@@ -229,6 +229,32 @@ test("documents MCP examples with current tool input fields", () => {
   }
 });
 
+test("the article image recipe enables reference replacement without making shared metadata writable", () => {
+  const prefix = "MCP tool: bind-props ";
+  const bindings = useCaseScenarios
+    .flatMap(({ commands }) => commands)
+    .filter((command) => command.startsWith(prefix))
+    .flatMap((command) => JSON.parse(command.slice(prefix.length)).bindings);
+  const source = bindings.find(
+    ({ name, binding }) =>
+      name === "src" &&
+      binding.value === "document.frontmatter.featureImage.src"
+  );
+  expect(source?.binding).toEqual({
+    type: "expression",
+    value: "document.frontmatter.featureImage.src",
+    mode: "readwrite",
+  });
+  const alternativeText = bindings.find(
+    ({ instanceId, name }) => instanceId === source.instanceId && name === "alt"
+  );
+  expect(alternativeText?.binding).toEqual({
+    type: "expression",
+    value: "document.frontmatter.featureImage.description",
+    mode: "read",
+  });
+});
+
 test("does not document client-supplied generated ids for create operations", () => {
   const forbiddenGeneratedIdFieldsByCommand = new Map(
     builderRuntimeOperations.flatMap((operation) => {

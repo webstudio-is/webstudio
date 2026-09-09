@@ -1,7 +1,6 @@
 import {
-  createMdxSourceDiagnostics,
-  parseMdxDocumentRecovering,
   replaceMdxFrontmatter,
+  validateTextAssetSource,
 } from "@webstudio-is/content-engine/mdx";
 import type { AssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import {
@@ -26,6 +25,8 @@ import {
   getRequiredComponentInsertData,
 } from "./components";
 import { resolveContentBlockSourceAssetId } from "./block";
+import { computeExpression } from "./data";
+import { throwBuilderRuntimeError } from "./errors";
 import { materializeMdxSource } from "./mdx-source";
 import {
   planMdxTemplateMigration,
@@ -40,7 +41,53 @@ const getData = (state: BuilderState): Omit<WebstudioData, "pages"> => ({
     : { assetFolders: state.assetFolders }),
 });
 
+/** Finds every Content Block whose current source resolves to an MDX Asset. */
+export const getMdxAssetSourceBlockInstanceIds = ({
+  assetId,
+  state,
+}: {
+  assetId: string;
+  state: BuilderState;
+}) => {
+  const values = new Map<string, unknown>();
+  for (const dataSource of state.dataSources?.values() ?? []) {
+    if (dataSource.type === "variable") {
+      values.set(dataSource.name, dataSource.value.value);
+    }
+  }
+  return Array.from(
+    getContentBlockSources({
+      instances: state.instances?.values() ?? [],
+      props: state.props?.values() ?? [],
+    })
+  ).flatMap(([blockInstanceId, contentSource]) =>
+    resolveContentBlockSourceAssetId({ source: contentSource, values }) ===
+    assetId
+      ? [blockInstanceId]
+      : []
+  );
+};
+
 export const mdxAssetInspectionNamespaces = componentInsertReadNamespaces;
+
+const describeValueShape = (value: unknown): string => {
+  if (value === undefined) {
+    return "undefined";
+  }
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  if (typeof value === "object") {
+    const keys = Object.keys(value).slice(0, 10);
+    return keys.length === 0
+      ? "empty object"
+      : `object with keys ${keys.map((key) => JSON.stringify(key)).join(", ")}`;
+  }
+  return typeof value;
+};
 
 export const inspectMdxAssetSource = async ({
   source,
@@ -48,25 +95,33 @@ export const inspectMdxAssetSource = async ({
   state,
   metas,
   projectId,
+  sourceBlockInstanceIds = [],
 }: {
   source: string;
   assetId: string;
   state: BuilderState;
   metas: Map<string, WsComponentMeta>;
   projectId: string;
+  /** Source blocks resolved by the caller's live rendering context. */
+  sourceBlockInstanceIds?: readonly string[];
 }) => {
-  const parsed = await parseMdxDocumentRecovering({ source });
-  const sourceDiagnostics = createMdxSourceDiagnostics(parsed.diagnostics);
+  const validation = await validateTextAssetSource({ source, format: "mdx" });
+  if (validation.format !== "mdx") {
+    throw new Error("MDX source validation returned the wrong format");
+  }
+  const parsed = validation.recovery;
+  const sourceDiagnostics = validation.diagnostics;
   const diagnostics: Array<
-    | ReturnType<typeof createMdxSourceDiagnostics>[number]
-    | ContentBlockDiagnostic
+    (typeof sourceDiagnostics)[number] | ContentBlockDiagnostic
   > = [...sourceDiagnostics];
   const sourceDiagnosticKeys = new Set(
     sourceDiagnostics.map((diagnostic) =>
       JSON.stringify([
         diagnostic.code,
         diagnostic.message,
-        diagnostic.sourceRange,
+        "sourceRange" in diagnostic ? diagnostic.sourceRange : undefined,
+        "line" in diagnostic ? diagnostic.line : undefined,
+        "column" in diagnostic ? diagnostic.column : undefined,
       ])
     )
   );
@@ -75,22 +130,11 @@ export const inspectMdxAssetSource = async ({
     return diagnostics;
   }
   const data = getData(state);
-  const values = new Map<string, unknown>();
-  for (const dataSource of state.dataSources?.values() ?? []) {
-    if (dataSource.type === "variable") {
-      values.set(dataSource.name, dataSource.value.value);
-    }
-  }
-  for (const [blockInstanceId, contentSource] of getContentBlockSources({
-    instances: state.instances?.values() ?? [],
-    props: state.props?.values() ?? [],
-  })) {
-    if (
-      resolveContentBlockSourceAssetId({ source: contentSource, values }) !==
-      assetId
-    ) {
-      continue;
-    }
+  const blockInstanceIds = new Set([
+    ...getMdxAssetSourceBlockInstanceIds({ assetId, state }),
+    ...sourceBlockInstanceIds,
+  ]);
+  for (const blockInstanceId of blockInstanceIds) {
     const identity = createContentBlockExternalContentIdentity({
       blockInstanceId,
       asset,
@@ -118,7 +162,13 @@ export const inspectMdxAssetSource = async ({
             : diagnostic.reason;
         return (
           sourceDiagnosticKeys.has(
-            JSON.stringify([diagnostic.code, message, diagnostic.sourceRange])
+            JSON.stringify([
+              diagnostic.code,
+              message,
+              diagnostic.sourceRange,
+              undefined,
+              undefined,
+            ])
           ) === false
         );
       })
@@ -168,10 +218,44 @@ export const createContentBlockApplication = ({
       values.set(name, value);
     }
     const assetId = resolveContentBlockSourceAssetId({ source, values });
-    if (assetId === undefined || assetId === "") {
-      throw new Error("Content source does not resolve to an MDX Asset");
+    if (assetId !== undefined) {
+      return assetId;
     }
-    return assetId;
+    const evaluated =
+      source.type === "expression"
+        ? computeExpression(source.value, values)
+        : undefined;
+    const suppliedVariableShapes =
+      Object.entries(variables ?? {})
+        .map(
+          ([name, value]) =>
+            `${JSON.stringify(name)} (${describeValueShape(value)})`
+        )
+        .join(", ") || "none";
+    const projectResourceNames =
+      Array.from(state.dataSources?.values() ?? [])
+        .filter((dataSource) => dataSource.type === "resource")
+        .map((dataSource) => JSON.stringify(dataSource.name))
+        .join(", ") || "none";
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Content source expression does not resolve to an MDX Asset id.",
+      {
+        issues: [
+          {
+            code: "unresolved-content-block-source",
+            path: ["source", "value"],
+            message:
+              "The expression must evaluate to a non-empty MDX Asset id for one rendered occurrence.",
+            constraint: "non_empty_mdx_asset_id",
+            example: {
+              variables: { post: { data: { id: "<mdxAssetId>" } } },
+            },
+            detail: `Expression result: ${describeValueShape(evaluated)}. Supplied variables: ${suppliedVariableShapes}. Project resource variables: ${projectResourceNames}. This operation does not load route data or resource results; pass concrete values in variables. renderScope only identifies the rendered occurrence.`,
+          },
+        ],
+      }
+    );
   };
 
   const open = async ({

@@ -10,7 +10,22 @@ import {
   type Prop,
 } from "@webstudio-is/sdk";
 import { $builderMode, selectInstance } from "~/shared/nano-states";
-import { $instances, $props } from "~/shared/sync/data-stores";
+import {
+  $assets,
+  $project,
+  $instances,
+  $props,
+} from "~/shared/sync/data-stores";
+import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
+import {
+  createAssetContentBridge,
+  __testing__,
+} from "~/shared/asset-content-bridge.client";
+import {
+  assetContentDescriptorHeader,
+  serializeAssetContentDescriptor,
+} from "@webstudio-is/protocol/asset-resource-api";
+import type { Asset } from "@webstudio-is/sdk";
 import { $externalContentRoots } from "~/shared/external-content-mutations";
 import { TextControl } from "./text";
 
@@ -20,6 +35,7 @@ import { TextControl } from "./text";
 
 let container: HTMLDivElement;
 let root: Root;
+const { initBridge, clearBridge } = __testing__;
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -100,6 +116,96 @@ afterEach(() => {
   $props.set(new Map());
   $externalContentRoots.set(new Map());
   $builderMode.set("design");
+  $assets.set(new Map());
+  $project.set(undefined);
+  clearBridge();
+});
+
+test("shows a collection field error on an editable Content-mode input", async () => {
+  const files: Asset[] = ["article.mdx", "collection.json", "template.mdx"].map(
+    (name) => ({
+      id: name === "article.mdx" ? "article" : name,
+      projectId: "project",
+      name,
+      folderId: "posts",
+      type: "file",
+      format: name.endsWith("json") ? "json" : "mdx",
+      size: 1,
+      meta: {},
+      createdAt: "2026-09-08T00:00:00Z",
+    })
+  );
+  $assets.set(new Map(files.map((asset) => [asset.id, asset])));
+  $project.set({ id: "project" } as never);
+  const roots = new Map($externalContentRoots.get());
+  roots.set("root", {
+    ...roots.get("root")!,
+    assetId: "article",
+    document: {
+      children: [],
+      frontmatter: { properties: { title: "", slug: "article" } },
+    },
+  });
+  $externalContentRoots.set(roots);
+  initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      authorize: () => true,
+      requireReload: () => undefined,
+      request: async (url) => {
+        const isConfig = String(url).includes("collection.json");
+        const source = isConfig
+          ? createDefaultCollectionConfig()
+          : "---\ndraft: true\n---\n";
+        const asset = {
+          ...files[isConfig ? 1 : 2],
+          size: new TextEncoder().encode(source).length,
+        };
+        return new Response(source, {
+          headers: {
+            [assetContentDescriptorHeader]:
+              serializeAssetContentDescriptor(asset),
+          },
+        });
+      },
+    })
+  );
+  act(() =>
+    root.render(
+      <TooltipProvider>
+        <TextControl
+          instanceId="heading"
+          meta={{ type: "string", control: "text", required: false }}
+          prop={$props.get().get("title")}
+          propName="title"
+          computedValue=""
+          onChange={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+  );
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector("textarea")?.getAttribute("aria-invalid")
+    ).toBe("true")
+  );
+  expect(container.querySelector("textarea")).not.toBeDisabled();
+  act(() => {
+    const assets = new Map($assets.get());
+    assets.set("article", {
+      ...assets.get("article")!,
+      type: "file",
+      meta: {},
+      filename: "support",
+      format: "txt",
+    });
+    $assets.set(assets);
+  });
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector("textarea")?.getAttribute("aria-invalid")
+    ).toBeNull()
+  );
 });
 
 test("saves an edited direct frontmatter binding without exposing the binding", () => {

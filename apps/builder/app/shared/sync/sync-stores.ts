@@ -1,8 +1,8 @@
-import { Store } from "immerhin";
+import { Store, type Change } from "immerhin";
 import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
 import { batched } from "nanostores";
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import { $project } from "./data-stores";
 import {
   $selectedPageHash,
@@ -87,6 +87,7 @@ import {
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { $externalContentRoots } from "../external-content-mutations";
+import { $externalContentHistory } from "../external-content-history";
 
 enableMapSet();
 // safari structuredClone fix
@@ -95,6 +96,16 @@ setAutoFreeze(false);
 export const clientSyncStore = new Store();
 export const serverSyncStore = new Store();
 export const externalContentSyncStore = new Store();
+const serverSyncRevertListeners = new Set<
+  (changes: readonly Change[]) => void
+>();
+
+export const subscribeServerSyncReverts = (
+  listener: (changes: readonly Change[]) => void
+) => {
+  serverSyncRevertListeners.add(listener);
+  return () => serverSyncRevertListeners.delete(listener);
+};
 
 const serverSyncStores = {
   pages: $pages,
@@ -243,7 +254,11 @@ class SelectedPageAndInstanceSyncObject {
         ) {
           return;
         }
-        sendTransaction({ id: nanoid(), object: this.name, payload: state });
+        sendTransaction({
+          id: createId("nano"),
+          object: this.name,
+          payload: state,
+        });
       }
     );
     signal.addEventListener("abort", unsubscribe);
@@ -311,7 +326,13 @@ export const __testing__ = {
 
 export const createObjectPool = () => {
   return new SyncObjectPool([
-    new ImmerhinSyncObject("server", serverSyncStore),
+    new ImmerhinSyncObject("server", serverSyncStore, {
+      onRevert: (changes) => {
+        for (const listener of serverSyncRevertListeners) {
+          listener(changes);
+        }
+      },
+    }),
     new ImmerhinSyncObject("externalContent", externalContentSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
     new SelectedPageAndInstanceSyncObject(),
@@ -387,6 +408,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
     new NanostoresSyncObject("systemDataByPage", $systemDataByPage),
     new NanostoresSyncObject("externalContentRoots", $externalContentRoots),
+    new NanostoresSyncObject("externalContentHistory", $externalContentHistory),
   ]);
 };
 

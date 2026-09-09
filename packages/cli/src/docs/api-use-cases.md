@@ -131,7 +131,7 @@ Notes:
 
 Commands:
 
-- MCP tool: preview.start {"host":"127.0.0.1","port":5173}
+- MCP tool: preview.start {}
 - MCP tool: preview.status {}
 - MCP tool: preview.stop {}
 - MCP tool: screenshot {"path":"/","output":".webstudio/screenshots/home-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
@@ -147,6 +147,7 @@ Notes:
 
 - Enter this workflow only when the user explicitly requests visual verification or opts in after being asked. Do not start preview, screenshots, diffs, OCR, or rendered audits automatically after a mutation.
 - `preview.status` reports whether generated output is `stale`. When no preview is running, `url`, `pid`, and `mode` are omitted. When present, `renderedProjectVersion` is the last project version materialized into the preview.
+- MCP preview and path-based screenshot tools select an available loopback port and return the preview URL. Do not pass `host` or `port`.
 - A managed `screenshot` or another `preview.start` refreshes stale generated output before capture.
 
 - After opt-in, use this so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
@@ -417,7 +418,7 @@ Commands:
 
 Commands:
 
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section' ws:style={css`padding: 32px;`}><ws.element ws:tag='h2'>Product OS</ws.element><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<section ws:style={css`padding: 32px;`}><h2>Product OS</h2><Switch><SwitchThumb /></Switch></section>"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"Form"}
 
@@ -425,7 +426,7 @@ Notes:
 
 - Use MCP `insert-fragment` as the default way to author styled component trees. It converts JSX to a structured fragment before mutation.
 - Use only exact component ids returned by `components.search`, `components.get`, or `templates.get`. Never derive or guess component ids.
-- The `ws:` namespace contains specific Webstudio core components; it is not HTML-tag shorthand. Use `<ws.element ws:tag="div">` for a native `div` and `<ws.element ws:tag="form">` for a native form, never `<ws.div>` or `<ws.form>`.
+- Use lowercase HTML JSX such as `<div>` and `<form>`. The internal `ws:` namespace is not HTML-tag shorthand.
 - For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"Form"`.
 - MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
 - In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
@@ -433,7 +434,7 @@ Notes:
 - Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
 - Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
 - Plain prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
-- Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`.
+- Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<Switch><SwitchThumb /></Switch>`.
 - Webstudio applies a registered template automatically when using `insert-component`, so composed components such as Switch include required child parts and styles.
 - Use `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get` to discover known registry items, component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
 - Component/template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. They are for Builder/MCP discovery, not a published shadcn install registry yet.
@@ -450,8 +451,10 @@ Commands:
 Notes:
 
 - When a page will be handed to a Content-mode editor, wrap every region they should be able to edit in a Content Block (`ws:block`). Content-mode editors can edit text and supported props only in Content Block descendants. Content outside those blocks remains read-only, even when it looks like ordinary editable text.
-- Put reusable insertable options inside the Content Block's `ws:block-template` child. A template is source material, not editor content: editors cannot edit or delete it directly. When an editor inserts a template, its copy becomes a direct child of the Content Block and is editable.
-- Before handing off a page, verify with `inspect-instance` that the intended text, images, and links are inside a Content Block, and that templates include all required styling because Content-mode editors cannot use the Style panel.
+- Put reusable insertable options inside exactly one direct `ws:block-template` child. A missing or second template container makes the Content Block invalid. A template is source material, not editor content: editors cannot edit or delete it directly. When an editor inserts a template, its copy becomes a direct child of the Content Block and is editable.
+- Before implementation, inventory every editor-owned field and its intended control and write destination, whether or not the block uses MDX. Check that templates contain the required styling, but do not treat containment or a successful text edit as proof that the whole block is editable. Test every field through Content mode, inspect its saved project data or source file, reload, and restore the original value. Report passed, failed, or not tested for each field; missing or read-only required controls are unfinished requirements.
+- Use controls that match the content: a calendar for dates and an image picker for image replacement. Keep fixed punctuation and units out of directly bound value elements. Preserve stored types and wording: when reading time is already a complete string such as `4 min read`, bind that string directly rather than assuming it is a number.
+- For MDX-backed blocks, containment alone is not enough: the MDX body is editable through its source mapping, but the designed shell needs writable document-frontmatter bindings. Follow the binding recipe below rather than binding editable article fields to query results.
 
 ## Store Content Block content in MDX
 
@@ -472,16 +475,64 @@ Notes:
 
 - Create the local `.mdx` file under `.webstudio/assets` before calling `upload-asset`. Use the returned Asset ID when connecting it.
 - Use the Content Block source operations for connecting, switching, inspecting, editing, reloading, and disconnecting. Do not create or delete the `src` prop with generic prop tools; the source operations preserve the Body outlet and Content Block lifecycle.
-- `renderScope` is a stable key for the rendered occurrence. Use a page-based key for a direct Content Block. For a repeated Collection occurrence, use a distinct key and pass the scoped values required to resolve an expression source. For example, use `source:{"type":"expression","value":"post.assetId"}` with `variables:{"post":{"assetId":"<mdxAssetId>"}}`.
+- `renderScope` accepts any non-empty stable key for one rendered occurrence. Use a page-based key for a direct Content Block and a distinct key for each repeated Collection occurrence. It does not load a page, route parameters, or resource results. Supply the concrete scoped values needed to resolve an expression through `variables`.
+- For a result-one Assets resource, preview the concrete query, then connect its persisted expression with the previewed item supplied as `variables`, for example `source:{"type":"expression","value":"post.data.id"}` and `variables:{"post":{"data":{"id":"<mdxAssetId>"}}}`.
 - Connecting replaces existing Body content. If the result returns `requiresConfirmation:true`, report that replacement to the user and repeat the same call with `confirmReplacement:true` only after approval.
-- Prefer Markdown whenever it can represent the component and all authored properties. Use `<ws.element ws:tag="tag">` for a standard HTML element with authored properties that Markdown cannot express. Use `<ws.element ws:name="Template name">` only for a uniquely named top-level Content Block template.
-- Read the Content Block's Templates children before writing `ws:name`. The value must exactly match a unique top-level template instance name. Preserve unresolved names and report their diagnostics instead of deleting them.
-- When a template is renamed or deleted, use `migrate-content-block-template-references` to update a selected set of affected MDX files. The first call returns a plan. Report its changed-file, update, omission, and diagnostic counts, then repeat the exact request with its `confirmationToken` only after approval. A rename changes matching `ws:name` values; a removal deletes matching MDX elements. Invalid files remain unchanged and are reported in diagnostics.
+- Prefer Markdown for standard document content; it automatically uses a unique matching semantic template when one exists. Use lowercase JSX such as `<section>` or `<svg>` for HTML or SVG with authored properties that Markdown cannot express.
+- Verify that the Content Block has exactly one direct Templates container before connecting or editing MDX. Zero or multiple containers block materialization and publication.
+- Read the Content Block's Templates children before writing a custom reference. Use capitalized JSX such as `<PromotionCard />` for its stable **Name**, which is independent from the display label. A matching template wins over a built-in MDX adapter. Other registered components are unavailable until added to this Content Block's Templates. JSX attributes accept quoted static values and bare booleans; expressions such as `{false}` are unsupported. Legacy `ws.element` and `ws:name` forms are compatibility input only. Component namespaces such as `$.*`, `radix.*`, and `animation.*` are unsupported.
+- When explicit JSX children match the designed template structure, their text and supported props overlay the cloned descendants and retain template styles. A mismatched child structure replaces the root defaults, while each authored child still resolves through a matching template when possible. An explicit empty pair clears defaults, and a self-closing reference keeps them. Editing inherited default content writes it back as explicit JSX children. Template resolution is live, so adding a matching semantic or named template later updates existing MDX. Preserve unresolved names and report their diagnostics instead of deleting them.
+- When a template is renamed or deleted, use `migrate-content-block-template-references` to update a selected set of affected MDX files. The first call returns a plan. Report its changed-file, update, omission, and diagnostic counts, then repeat the exact request with its `confirmationToken` only after approval. Renames and removals update named JSX and legacy `ws:name` references, including names such as `Image` and `CodeText` when they identify templates. Rename targets must be valid PascalCase JSX identifiers. Removing a paired reference unwraps and preserves its authored children; removing a self-closing reference removes the node because it has no authored children. Invalid files remain unchanged and are reported in diagnostics.
 - `edit-content-block-source` replaces the complete MDX source. Preserve frontmatter and unrelated source when making a bounded edit.
 - `update-content-block-frontmatter` replaces the complete frontmatter mapping. Inspect the current source first and include every property that must remain.
-- Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Keep computed expressions and `$ref` values read-only.
+- Store frontmatter images as exact `$ref` objects. Bind an editable Image source to the resolved `.src` with explicit `binding.mode:"readwrite"`; use `mode:"read"` for its alt binding to `.description`. Omitting the source mode leaves the image visible but not replaceable in Content mode.
+- Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions and JSON/body references remain read-only. Image replacement is supported: a direct Image source binding with `mode:"readwrite"` lets the picker replace the frontmatter `$ref`, while shared Asset metadata is edited in Asset settings.
 - Inspect every returned diagnostic. Invalid MDX is saved rather than silently repaired; preserve the source, report the source range, and fix only the requested or invalid part.
 - If an edit in a long-lived MCP session reports a conflict after another client saved the Asset, call `reload-content-block-source`, inspect the latest source, reapply the requested change, and retry. One-shot CLI calls refresh before each operation and normally cannot reproduce a stale session. Never overwrite the newer revision blindly.
+
+## Make an MDX article header editable
+
+Use the resource only to select the connected source, for example `post.data.id`.
+Bind article values inside the Content Block to its document parameter instead
+of `post.data.properties.*`. Inspect the block's variables first; `document` is
+the default name, not a name to assume.
+
+These commands target persistent designed instances inside the connected block.
+
+Commands:
+
+- MCP tool: update-text {"instanceId":"<headingInstanceId>","childIndex":0,"text":"document.frontmatter.title","mode":"expression","expressionBindingMode":"readwrite"}
+- MCP tool: update-text {"instanceId":"<readingTimeValueInstanceId>","childIndex":0,"text":"document.frontmatter.readingTime","mode":"expression","expressionBindingMode":"readwrite"}
+- MCP tool: bind-props {"bindings":[{"instanceId":"<dateInstanceId>","name":"datetime","binding":{"type":"expression","value":"document.frontmatter.publishedAt","mode":"readwrite"}}]}
+
+Notes:
+
+- Create writable bindings explicitly; the default is read-only. Merely moving a heading or Link inside the Content Block does not make its query-bound text editable.
+- The MDX body uses its source mapping. Static designed content outside that body remains protected unless its text or supported props bind to writable frontmatter fields. Do not apply these generic instance tools to MDX-generated instances.
+- Use direct static paths. Property access is already safe. Fallbacks and formatted expressions, such as `document.frontmatter.title ?? "Untitled"`, remain read-only.
+- Keep every intended editable value in its own text element with a single direct read-write binding. For reading time, use three inline siblings: static `— `, the bound reading-time value, and static ` min read`. Preserve whitespace and the stored field type. Do not combine them into a template literal or concatenate strings, and do not put literal siblings inside the value element itself. Keep fixed wording protected in the designed shell.
+- Prefer component formatting controls, such as Date Time formatting with a directly bound date prop, over transforming the expression. Do not silently sacrifice editability for formatting or a fallback; explain unsupported cases and ask before making an intended editable field read-only.
+- A direct writable binding such as `document.frontmatter.author.name` can edit a shared author loaded through `../authors/oleg.md#frontmatter`. The edit saves to the author file and affects every article using it; preserve the article's `$ref` marker.
+- Before handoff, inventory every article-owned field, including header text, author details, dates, reading time, categories, hero and inline image sources, alternative text, captions, links, and custom-component content. For each field, inspect its binding and source, edit it through the Content-mode UI, verify the saved MDX or referenced file, reload, and restore the test value. Record passed, failed, or not tested for each field. A correct preview, a successful MCP write, and one representative text edit do not prove the whole article is editable. Do not claim completion while required fields fail or remain untested.
+- Bind the Image source directly to `document.frontmatter.featureImage.src` with `binding.mode:"readwrite"` using `bind-props`. Content mode's **Choose source** replaces the article's frontmatter image `$ref`; the resolved URL stays read-only. Verify selection, the saved reference, and reload instead of treating a missing write mode as a platform limitation. For alternative text bound to `.description`, use **Choose source → asset actions → Settings → Description** to edit shared Asset metadata. This affects every use of the Asset and is separate from replacing an article's image.
+
+## Make an article image replaceable in Content mode
+
+Use this for a persistent designed Image inside a connected Content Block,
+with `featureImage: { $ref: "./images/hero.png" }` in its MDX frontmatter.
+Read the instance ID and document variable name before adapting the example.
+
+Commands:
+
+- MCP tool: bind-props {"bindings":[{"instanceId":"<imageInstanceId>","name":"src","binding":{"type":"expression","value":"document.frontmatter.featureImage.src","mode":"readwrite"}},{"instanceId":"<imageInstanceId>","name":"alt","binding":{"type":"expression","value":"document.frontmatter.featureImage.description","mode":"read"}}]}
+
+Notes:
+
+- The source mode must be explicit: the default `read` mode displays the image but prevents Content-mode replacement. Do not bind to query-result properties or add a fallback expression.
+- **Choose source** replaces the article's `featureImage.$ref`; the disabled resolved-URL input is expected. Do not store a resolved URL string or replace the shared Asset itself.
+- Shared alternative text is a separate action: **Choose source → asset actions → Settings → Description**. Its read-only binding does not require the image source binding to be read-only.
+- If the picker is missing or disabled, inspect the source mode, document scope, loaded reference, and permissions before claiming a product limitation.
+- Verify through Content mode with an approved temporary replacement. Check the saved `$ref`, unchanged unrelated MDX and original shared Asset, reload persistence, and restoration. If that test is not authorized, report it as not tested, not passed.
 
 ## Move elements
 
@@ -1210,7 +1261,7 @@ Notes:
 
 Commands:
 
-- MCP tool: insert-collection {"parentInstanceId":"<instanceId>","data":{"type":"expression","value":"posts.data.items"},"itemFragment":"<ws.element ws:tag='article'><ws.element ws:tag='h2'>{expression`collectionItem.title`}</ws.element></ws.element>"}
+- MCP tool: insert-collection {"parentInstanceId":"<instanceId>","data":{"type":"expression","value":"posts.data.items"},"itemFragment":"<article><h2>{expression`collectionItem.title`}</h2></article>"}
 - MCP tool: inspect-instance {"instanceId":"<collectionId>","include":["props","bindings","children"]}
 
 Notes:
@@ -1275,9 +1326,9 @@ Commands:
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
 - MCP tool: list-breakpoints {}
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag='section'><ws.element ws:tag='p'>Section copy</ws.element></ws.element>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<section><p>Section copy</p></section>"}
 - MCP tool: update-styles {"updates":[{"instanceId":"<instanceId>","breakpoint":"<breakpointId-from-list-breakpoints>","property":"padding-left","value":{"type":"unit","unit":"px","value":24}}]}
-- MCP tool: preview.start {"host":"127.0.0.1","port":5173}
+- MCP tool: preview.start {}
 - MCP tool: screenshot {"path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"path":"/landing","output":"landing-mobile.png","viewport":{"width":390,"height":844},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}

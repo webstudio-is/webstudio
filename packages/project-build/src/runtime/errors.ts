@@ -11,6 +11,12 @@ export type BuilderRuntimeErrorCode =
   | "NOT_FOUND"
   | "CONFLICT";
 
+const sourcePointSchema = z.object({
+  line: z.number().int().positive(),
+  column: z.number().int().positive(),
+  offset: z.number().int().nonnegative().optional(),
+});
+
 const semanticValidationIssueSchema = z.object({
   code: z.string(),
   path: z.array(z.string()),
@@ -18,6 +24,25 @@ const semanticValidationIssueSchema = z.object({
   constraint: z.string(),
   example: z.unknown().optional(),
   detail: z.string().optional(),
+  severity: z.enum(["error", "warning"]).optional(),
+  scope: z.string().optional(),
+  phase: z.string().optional(),
+  assetId: z.string().optional(),
+  file: z.string().optional(),
+  name: z.string().optional(),
+  line: z.number().int().positive().optional(),
+  column: z.number().int().positive().optional(),
+  reference: z.string().optional(),
+  nodeType: z.string().optional(),
+  reason: z.string().optional(),
+  sourceRange: z
+    .object({ start: sourcePointSchema, end: sourcePointSchema })
+    .optional(),
+  blockInstanceId: z.string().optional(),
+  contentRef: z.string().optional(),
+  renderScope: z.string().optional(),
+  templateName: z.string().optional(),
+  propName: z.string().optional(),
 });
 const semanticValidationIssuesSchema = z.array(semanticValidationIssueSchema);
 
@@ -54,6 +79,12 @@ const sanitizeValidationIssues = (
     ...(issue.detail === undefined
       ? {}
       : { detail: sanitizeValidationDetail(issue.detail) }),
+    ...(issue.reason === undefined
+      ? {}
+      : { reason: sanitizeValidationDetail(issue.reason) }),
+    ...(issue.reference === undefined
+      ? {}
+      : { reference: sanitizeValidationDetail(issue.reference) }),
   }));
 
 type BuilderRuntimeErrorOptions = {
@@ -377,26 +408,34 @@ export const prefixValidationIssuePaths = (
       }));
 
 export const getValidationIssues = (error: unknown) => {
-  if (error instanceof BuilderRuntimeError) {
-    return error.issues === undefined
-      ? undefined
-      : sanitizeValidationIssues(error.issues);
-  }
-  if (error instanceof z.ZodError) {
-    return getZodValidationIssues(error);
-  }
-  if (typeof error === "object" && error !== null) {
-    const directIssues = "issues" in error ? error.issues : undefined;
-    const data = "data" in error ? error.data : undefined;
-    const nestedIssues =
-      typeof data === "object" && data !== null && "issues" in data
-        ? data.issues
+  const visited = new Set<unknown>();
+  let current = error;
+  while (
+    typeof current === "object" &&
+    current !== null &&
+    visited.has(current) === false
+  ) {
+    visited.add(current);
+    if (current instanceof BuilderRuntimeError) {
+      if (current.issues !== undefined) {
+        return sanitizeValidationIssues(current.issues);
+      }
+    }
+    if (current instanceof z.ZodError) {
+      return getZodValidationIssues(current);
+    }
+    const record = current as Record<string, unknown>;
+    const directIssues = record.issues;
+    const data =
+      typeof record.data === "object" && record.data !== null
+        ? (record.data as Record<string, unknown>)
         : undefined;
     const result = semanticValidationIssuesSchema.safeParse(
-      directIssues ?? nestedIssues
+      directIssues ?? data?.issues
     );
     if (result.success) {
       return sanitizeValidationIssues(result.data);
     }
+    current = record.cause ?? data?.cause;
   }
 };

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   cssVar,
@@ -491,31 +492,23 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
       placement="left-start"
       content={
         <Flex direction="column">
-          <Flex
-            direction="column"
-            gap="3"
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             <GridGeneratorSelector
               onSelect={handleSelectorSelect}
               initialColumns={columnCount}
               initialRows={rowCount}
             />
-          </Flex>
+          </PanelContent>
           <Separator />
-          <Flex
-            direction="column"
-            gap="3"
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             <GridPresetsPicker onSelect={handlePresetSelect} />
-          </Flex>
+          </PanelContent>
           <Separator />
-          <Flex css={{ padding: theme.panel.padding }}>
+          <PanelContent as={Flex}>
             <Button css={{ width: "100%" }} onClick={handleFillGrid}>
               Fill grid
             </Button>
-          </Flex>
+          </PanelContent>
         </Flex>
       }
       open={open}

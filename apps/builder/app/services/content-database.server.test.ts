@@ -6,9 +6,106 @@ import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
 } from "@webstudio-is/content-engine/compiler";
-import { getContentDatabasePublishDiagnostics } from "./content-database.server";
+import {
+  getContentDatabasePublishDiagnostics,
+  getMdxTemplatePublishDiagnostics,
+} from "./content-database.server";
 
 describe("content database publish diagnostics", () => {
+  test("reports the file and template omitted from a published page", async () => {
+    const bundle = createPublishedProjectBundleFixture();
+    const rootId = bundle.build.pages.pages[0].rootInstanceId;
+    bundle.build.instances = [
+      [
+        rootId,
+        {
+          id: rootId,
+          type: "instance",
+          component: "ws:block",
+          children: [{ type: "id", value: "templates" }],
+        },
+      ],
+      [
+        "templates",
+        {
+          id: "templates",
+          type: "instance",
+          component: "ws:block-template",
+          children: [],
+        },
+      ],
+    ];
+    bundle.build.props = [
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: rootId,
+          name: "src",
+          type: "asset",
+          value: "article",
+        },
+      ],
+    ];
+    bundle.assets = [
+      {
+        id: "article",
+        projectId: bundle.build.projectId,
+        name: "revision.mdx",
+        filename: "post",
+        type: "file",
+        format: "mdx",
+        size: 11,
+        meta: {},
+        createdAt: "2026-09-08T00:00:00Z",
+      },
+    ];
+    bundle.assetIndex = {
+      ...(await createAssetIndex({
+        projectId: bundle.build.projectId,
+        entries: [
+          createCanonicalAssetFileEntry({
+            projectId: bundle.build.projectId,
+            document: {
+              _id: "article",
+              _type: "asset.file",
+              name: "post.mdx",
+              path: "post.mdx",
+              key: "post",
+              extension: "mdx",
+              mimeType: "text/mdx",
+              size: 11,
+              revision: "revision",
+              contentRef: "article.mdx",
+              properties: {},
+            },
+          }),
+        ],
+        maxBytes: 5000,
+      })),
+      contents: { "article.mdx": "<Missing />" },
+    };
+    expect(await getMdxTemplatePublishDiagnostics(bundle)).toEqual([
+      {
+        assetId: "article",
+        filename: "post.mdx",
+        blockInstanceId: rootId,
+        templateName: "Missing",
+      },
+    ]);
+    bundle.build.instances.push([
+      "missing",
+      {
+        id: "missing",
+        type: "instance",
+        name: "Missing",
+        component: "Box",
+        children: [],
+      },
+    ]);
+    bundle.build.instances[1][1].children = [{ type: "id", value: "missing" }];
+    expect(await getMdxTemplatePublishDiagnostics(bundle)).toEqual([]);
+  });
   test("classifies affected dynamic and static resources individually", async () => {
     const resourceId = "blog-posts";
     const overviewResourceId = "blog-overview";

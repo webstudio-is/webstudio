@@ -12,6 +12,7 @@
   "dependencies": {
     "@trpc/server": "^10.45.2",
     "@webstudio-is/postgrest": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "zod": "^4.4.3"
   },

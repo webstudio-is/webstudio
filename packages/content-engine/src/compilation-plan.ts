@@ -115,13 +115,13 @@ const containsDocumentReference = (value: JsonValue): boolean => {
 };
 
 const isFieldAffectedByDocumentReference = (
-  document: AssetFileDocument,
+  document: ContentDatabaseDocument,
   field: AssetQueryFieldPath
 ) => {
   if (field[0] !== "properties") {
     return false;
   }
-  let value: JsonValue = document.properties;
+  let value: JsonValue = document.properties ?? {};
   for (const segment of field.slice(1)) {
     if (typeof getJsonReferenceMarkerValue(value) === "string") {
       return true;
@@ -151,7 +151,7 @@ const evaluateWhere = ({
   where,
   available,
 }: {
-  document: AssetFileDocument;
+  document: ContentDatabaseDocument;
   where: ContentCompilationWhere;
   available: "base" | "all";
 }): boolean | undefined => {
@@ -280,7 +280,7 @@ export const selectContentHydrationCandidates = ({
   documents,
   plan,
 }: {
-  documents: readonly AssetFileDocument[];
+  documents: readonly ContentDatabaseDocument[];
   plan: ContentCompilationPlan;
 }) => {
   const selected = new Set<string>();
@@ -483,7 +483,7 @@ const getStandardFieldPaths = (query: ContentCompilationQuery) => {
     }
   }
   if (query.content.mode !== "none") {
-    for (const field of ["mimeType", "size", "revision"] as const) {
+    for (const field of ["mimeType", "path", "size", "revision"] as const) {
       addField(fields, [field]);
     }
   }

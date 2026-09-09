@@ -1,5 +1,5 @@
-import { nanoid } from "nanoid";
 import {
+  createId,
   type Pages,
   type Folder,
   ROOT_FOLDER_ID,
@@ -19,7 +19,7 @@ export const createRootFolder = (
 export const createDefaultPages = ({
   rootInstanceId,
   systemDataSourceId,
-  homePageId = nanoid(),
+  homePageId = createId("nano"),
 }: {
   rootInstanceId: Instance["id"];
   systemDataSourceId?: DataSource["id"];

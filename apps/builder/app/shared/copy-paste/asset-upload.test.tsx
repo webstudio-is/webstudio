@@ -1,17 +1,25 @@
 import { expect, test, vi } from "vitest";
-import { $, AssetValue, renderTemplate } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  AssetValue,
+  renderTemplate,
+} from "@webstudio-is/template";
 import type { StyleDecl, WebstudioFragment } from "@webstudio-is/sdk";
 import { denormalizeSrcProps } from "./asset-upload";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 
+const Body = createTemplateComponentFixture("Body");
+const Box = createTemplateComponentFixture("Box");
+const Image = createTemplateComponentFixture("Image");
+
 test("extractSrcProps works well", async () => {
   const data = renderTemplate(
-    <$.Body ws:id="boxA">
-      <$.Image ws:id="imageA" src="https://src-a/"></$.Image>
-      <$.Box ws:id="boxB">
-        <$.Image ws:id="imageB" src="https://src-b/"></$.Image>
-      </$.Box>
-    </$.Body>
+    <Body ws:id="boxA">
+      <Image ws:id="imageA" src="https://src-a/"></Image>
+      <Box ws:id="boxB">
+        <Image ws:id="imageB" src="https://src-b/"></Image>
+      </Box>
+    </Body>
   );
 
   const src2AssetId = (src: string) => `${src}asset-id`;
@@ -30,22 +38,17 @@ test("extractSrcProps works well", async () => {
   const assetB = new AssetValue(src2AssetId("https://src-b/"));
 
   const desiredOutcome = renderTemplate(
-    <$.Body ws:id="boxA">
-      <$.Image
-        ws:id="imageA"
-        src={assetA}
-        width={assetA}
-        height={assetA}
-      ></$.Image>
-      <$.Box ws:id="boxB">
-        <$.Image
+    <Body ws:id="boxA">
+      <Image ws:id="imageA" src={assetA} width={assetA} height={assetA}></Image>
+      <Box ws:id="boxB">
+        <Image
           ws:id="imageB"
           src={assetB}
           width={assetB}
           height={assetB}
-        ></$.Image>
-      </$.Box>
-    </$.Body>
+        ></Image>
+      </Box>
+    </Body>
   );
 
   expect(denormalizedData.instances).toEqual(desiredOutcome.instances);
@@ -132,12 +135,12 @@ test("it works well with no background-images", async () => {
 
 test("upload raw inception images", async () => {
   const data = renderTemplate(
-    <$.Body ws:id="boxA">
-      <$.Image
+    <Body ws:id="boxA">
+      <Image
         ws:id="imageA"
         src="https://preview.webstudio.ai/cgi/image/dev/5036ed5c3dfce99eaac566a06bc3729620354a364357907a523f1feb2d6fb819.png?width=1024&height=1024&format=auto"
-      ></$.Image>
-    </$.Body>
+      ></Image>
+    </Body>
   );
   const uploadImages = vi.fn(async (srcs: string[]) => {
     return new Map(srcs.map((src) => [src, src]));
@@ -154,9 +157,9 @@ test("upload raw inception images", async () => {
 
 test("uses runtime id generator for generated asset size props by default", async () => {
   const data = renderTemplate(
-    <$.Body ws:id="box">
-      <$.Image ws:id="image" src="https://src/"></$.Image>
-    </$.Body>
+    <Body ws:id="box">
+      <Image ws:id="image" src="https://src/"></Image>
+    </Body>
   );
   const uploadImages = async (srcs: string[]) => {
     return new Map(srcs.map((src) => [src, "asset-id"]));

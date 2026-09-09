@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Button,
   cssVar,
   DialogClose,
@@ -80,7 +81,7 @@ const FormFields = ({
   return (
     <Grid css={{ height: "100%" }}>
       <ScrollArea>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} gap={3}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Folder name</Label>
             <InputErrorsTooltip errors={errors.name}>
@@ -132,7 +133,7 @@ const FormFields = ({
               />
             </InputErrorsTooltip>
           </Grid>
-        </Grid>
+        </PanelContent>
       </ScrollArea>
     </Grid>
   );

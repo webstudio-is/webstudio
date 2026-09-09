@@ -5,6 +5,7 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import {
+  PanelContent,
   Flex,
   theme,
   Label,
@@ -172,7 +173,7 @@ export const FilterSectionContent = ({
 
   return (
     <Flex direction="column">
-      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} direction="column" gap="2">
         <Grid
           gap="2"
           css={{
@@ -224,7 +225,7 @@ export const FilterSectionContent = ({
             />
           </Grid>
         ) : undefined}
-      </Flex>
+      </PanelContent>
 
       {filterFunction === "drop-shadow" && layer.type === "function" && (
         <ShadowContent
@@ -243,10 +244,10 @@ export const FilterSectionContent = ({
       )}
 
       <Separator css={{ gridAutoColumns: "span 2" }} />
-      <Flex
+      <PanelContent
+        as={Flex}
         direction="column"
         css={{
-          padding: theme.panel.padding,
           gap: theme.spacing[3],
           minWidth: theme.spacing[30],
         }}
@@ -282,7 +283,7 @@ export const FilterSectionContent = ({
             }
           }}
         />
-      </Flex>
+      </PanelContent>
     </Flex>
   );
 };

@@ -12,7 +12,7 @@ import { toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
-  $,
+  createTemplateComponentFixture,
   ws,
   css,
   expression,
@@ -22,7 +22,12 @@ import {
 } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type { WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
-import { coreMetas, elementComponent } from "@webstudio-is/sdk";
+import {
+  blockBodyComponent,
+  blockComponent,
+  coreMetas,
+  elementComponent,
+} from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
@@ -46,6 +51,15 @@ import { selectPage } from "../nano-states";
 import { selectInstance } from "../nano-states";
 import { $selectedPageId } from "../nano-states/pages";
 import { expectSlotsShareFragment } from "../slot-test-utils";
+
+const Body = createTemplateComponentFixture("Body");
+const Bold = createTemplateComponentFixture("Bold");
+const Box = createTemplateComponentFixture("Box");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Image = createTemplateComponentFixture("Image");
+const ListItem = createTemplateComponentFixture("ListItem");
+const Paragraph = createTemplateComponentFixture("Paragraph");
+const Slot = createTemplateComponentFixture("Slot");
 
 enableMapSet();
 registerContainers();
@@ -102,7 +116,7 @@ describe("insert webstudio element at", () => {
   });
 
   test("insert element with div tag into body", async () => {
-    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<Body ws:id="bodyId"></Body>).instances);
     await insertWebstudioElementAt({
       parentSelector: ["bodyId"],
       position: "end",
@@ -110,9 +124,9 @@ describe("insert webstudio element at", () => {
     const [_bodyId, newInstanceId] = $instances.get().keys();
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id={newInstanceId} ws:tag="div" />
-        </$.Body>
+        </Body>
       ).instances
     );
   });
@@ -120,9 +134,9 @@ describe("insert webstudio element at", () => {
   test("insert element with li tag into ul", async () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="listId" ws:tag="ul"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
     await insertWebstudioElementAt({
@@ -132,11 +146,11 @@ describe("insert webstudio element at", () => {
     const [_bodyId, _listId, newInstanceId] = $instances.get().keys();
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="listId" ws:tag="ul">
             <ws.element ws:id={newInstanceId} ws:tag="li" />
           </ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
   });
@@ -147,9 +161,9 @@ describe("insert webstudio element at", () => {
     );
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="divId" ws:tag="div"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
     selectPage("homePageId");
@@ -158,11 +172,11 @@ describe("insert webstudio element at", () => {
     const [_bodyId, _divId, newInstanceId] = $instances.get().keys();
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="divId" ws:tag="div">
             <ws.element ws:id={newInstanceId} ws:tag="div" />
           </ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
   });
@@ -173,11 +187,11 @@ describe("insert webstudio element at", () => {
     );
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slotId">
-            <$.Box ws:id="boxId"></$.Box>
-          </$.Slot>
-        </$.Body>
+        <Body ws:id="bodyId">
+          <Slot ws:id="slotId">
+            <Box ws:id="boxId"></Box>
+          </Slot>
+        </Body>
       ).instances
     );
     selectPage("homePageId");
@@ -196,14 +210,14 @@ describe("insert webstudio element at", () => {
     );
     expect(instances).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slotId">
-            <$.Fragment ws:id={fragmentId}>
-              <$.Box ws:id="boxId"></$.Box>
+        <Body ws:id="bodyId">
+          <Slot ws:id="slotId">
+            <Fragment ws:id={fragmentId}>
+              <Box ws:id="boxId"></Box>
               <ws.element ws:id={newInstanceId} ws:tag="div" />
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
   });
@@ -214,19 +228,19 @@ describe("insert webstudio element at", () => {
     );
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
     selectPage("homePageId");
@@ -253,19 +267,19 @@ describe("insert webstudio element at", () => {
   test("insert element at start of shared slot content", async () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
 
@@ -296,19 +310,19 @@ describe("insert webstudio element at", () => {
     );
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
               <ws.element ws:id="div" ws:tag="div"></ws.element>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
+            <Fragment ws:id="fragment">
               <ws.element ws:id="div" ws:tag="div"></ws.element>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
     selectPage("homePageId");
@@ -340,12 +354,12 @@ describe("insert webstudio element at", () => {
     );
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="divId" ws:tag="div">
             text
           </ws.element>
           <ws.element ws:id="spanId" ws:tag="span"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
     selectPage("homePageId");
@@ -354,13 +368,13 @@ describe("insert webstudio element at", () => {
     const [_bodyId, _divId, _spanId, newInstanceId] = $instances.get().keys();
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="divId" ws:tag="div">
             text
           </ws.element>
           <ws.element ws:id={newInstanceId} ws:tag="div" />
           <ws.element ws:id="spanId" ws:tag="span"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
   });
@@ -371,10 +385,10 @@ describe("insert webstudio element at", () => {
     );
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="imgId" ws:tag="img"></ws.element>
           <ws.element ws:id="spanId" ws:tag="span"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
     selectPage("homePageId");
@@ -383,18 +397,18 @@ describe("insert webstudio element at", () => {
     const [_bodyId, _imgId, _spanId, newInstanceId] = $instances.get().keys();
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id="imgId" ws:tag="img"></ws.element>
           <ws.element ws:id={newInstanceId} ws:tag="div" />
           <ws.element ws:id="spanId" ws:tag="span"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
   });
 
   test("reports unresolved explicit element insert target", async () => {
     const toastError = vi.spyOn(toast, "error").mockImplementation(() => "");
-    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<Body ws:id="bodyId"></Body>).instances);
 
     expect(
       await insertWebstudioElementAt({
@@ -407,7 +421,7 @@ describe("insert webstudio element at", () => {
       "Cannot insert: the target no longer exists."
     );
     expect($instances.get()).toEqual(
-      renderData(<$.Body ws:id="bodyId"></$.Body>).instances
+      renderData(<Body ws:id="bodyId"></Body>).instances
     );
     toastError.mockRestore();
   });
@@ -427,7 +441,7 @@ describe("insert webstudio fragment at", () => {
   });
 
   test("insert multiple instances", async () => {
-    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<Body ws:id="bodyId"></Body>).instances);
     await insertWebstudioFragmentAt(
       renderTemplate(
         <>
@@ -442,10 +456,10 @@ describe("insert webstudio fragment at", () => {
     );
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id={expect.any(String)} ws:tag="h1"></ws.element>
           <ws.element ws:id={expect.any(String)} ws:tag="p"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
   });
@@ -455,7 +469,7 @@ describe("insert webstudio fragment at", () => {
       createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
     );
     selectPage("homePageId");
-    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<Body ws:id="bodyId"></Body>).instances);
     const onContentModelWarnings = vi.fn();
 
     const inserted = insertWebstudioFragmentAt(
@@ -526,9 +540,9 @@ describe("insert webstudio fragment at", () => {
   test("insert fragment after insertable", async () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="boxId"></$.Box>
-        </$.Body>
+        <Body ws:id="bodyId">
+          <Box ws:id="boxId"></Box>
+        </Body>
       ).instances
     );
     await insertWebstudioFragmentAt(
@@ -540,16 +554,16 @@ describe("insert webstudio fragment at", () => {
     );
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="boxId"></$.Box>
+        <Body ws:id="bodyId">
+          <Box ws:id="boxId"></Box>
           <ws.element ws:id={expect.any(String)} ws:tag="h1"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
   });
 
   test("insert fragment inside of body when configured to place after insertable", async () => {
-    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<Body ws:id="bodyId"></Body>).instances);
     await insertWebstudioFragmentAt(
       renderTemplate(<ws.element ws:id="headingId" ws:tag="h1"></ws.element>),
       {
@@ -559,16 +573,16 @@ describe("insert webstudio fragment at", () => {
     );
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="bodyId">
+        <Body ws:id="bodyId">
           <ws.element ws:id={expect.any(String)} ws:tag="h1"></ws.element>
-        </$.Body>
+        </Body>
       ).instances
     );
   });
 
   test("reports unresolved explicit insert target", async () => {
     const toastError = vi.spyOn(toast, "error").mockImplementation(() => "");
-    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<Body ws:id="bodyId"></Body>).instances);
 
     expect(
       await insertWebstudioFragmentAt(
@@ -584,7 +598,7 @@ describe("insert webstudio fragment at", () => {
       "Cannot insert: the target no longer exists."
     );
     expect($instances.get()).toEqual(
-      renderData(<$.Body ws:id="bodyId"></$.Body>).instances
+      renderData(<Body ws:id="bodyId"></Body>).instances
     );
     toastError.mockRestore();
   });
@@ -593,19 +607,19 @@ describe("insert webstudio fragment at", () => {
     $project.set({ id: "current_project" } as Project);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
 
@@ -633,15 +647,15 @@ describe("insert webstudio fragment at", () => {
     $project.set({ id: "current_project" } as Project);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Box ws:id="box"></$.Box>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Box ws:id="box"></Box>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Box ws:id="box"></$.Box>
-          </$.Slot>
-        </$.Body>
+            <Box ws:id="box"></Box>
+          </Slot>
+        </Body>
       ).instances
     );
 
@@ -673,19 +687,19 @@ describe("insert webstudio fragment at", () => {
     $project.set({ id: "current_project" } as Project);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
 
@@ -713,23 +727,23 @@ describe("insert webstudio fragment at", () => {
     $project.set({ id: "current_project" } as Project);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
               <ws.element ws:id="div" ws:tag="div">
-                <$.Box ws:id="box"></$.Box>
+                <Box ws:id="box"></Box>
               </ws.element>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
+            <Fragment ws:id="fragment">
               <ws.element ws:id="div" ws:tag="div">
-                <$.Box ws:id="box"></$.Box>
+                <Box ws:id="box"></Box>
               </ws.element>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
 
@@ -764,7 +778,7 @@ describe("insert webstudio component at", () => {
       createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
     );
     selectPage("homePageId");
-    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<Body ws:id="bodyId"></Body>).instances);
     $styleSourceSelections.set(new Map());
     $styleSources.set(new Map());
     $breakpoints.set(new Map());
@@ -793,6 +807,51 @@ describe("insert webstudio component at", () => {
       component: "Form",
       children: expect.any(Array),
     });
+  });
+
+  test("reports rejected MDX insertion without changing instances", async () => {
+    const instances = $instances.get();
+    instances.get("bodyId")!.children = [{ type: "id", value: "block" }];
+    instances.set("block", {
+      type: "instance",
+      id: "block",
+      component: blockComponent,
+      children: [{ type: "id", value: "mdx" }],
+    });
+    instances.set("mdx", {
+      type: "instance",
+      id: "mdx",
+      component: blockBodyComponent,
+      children: [],
+    });
+    $props.set(
+      new Map([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: "block",
+            name: "src",
+            type: "asset",
+            value: "article",
+          },
+        ],
+      ])
+    );
+    const original = structuredClone(instances);
+    const notify = vi.spyOn(toast, "error");
+    try {
+      expect(
+        await insertWebstudioComponentAt("Form", {
+          parentSelector: ["mdx", "block", "bodyId"],
+          position: "end",
+        })
+      ).toBe(false);
+      expect(notify).toHaveBeenCalledOnce();
+      expect($instances.get()).toEqual(original);
+    } finally {
+      notify.mockRestore();
+    }
   });
 });
 
@@ -824,13 +883,13 @@ describe("find closest insertable", () => {
 
   test("puts in the end if closest instance is container", () => {
     const { instances } = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId">
-          <$.Paragraph ws:id="paragraphId">
-            <$.Bold ws:id="boldId"></$.Bold>
-          </$.Paragraph>
-        </$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="boxId">
+          <Paragraph ws:id="paragraphId">
+            <Bold ws:id="boldId"></Bold>
+          </Paragraph>
+        </Box>
+      </Body>
     );
     $instances.set(instances);
     selectInstance(["boxId", "bodyId"]);
@@ -842,9 +901,9 @@ describe("find closest insertable", () => {
 
   test("puts in the end of root instance", () => {
     const { instances } = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Paragraph ws:id="paragraphId"></$.Paragraph>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Paragraph ws:id="paragraphId"></Paragraph>
+      </Body>
     );
     $instances.set(instances);
     selectInstance(["bodyId"]);
@@ -855,7 +914,7 @@ describe("find closest insertable", () => {
   });
 
   test("puts in the end of root instance when page root only has text", () => {
-    const { instances } = renderData(<$.Body ws:id="bodyId">text</$.Body>);
+    const { instances } = renderData(<Body ws:id="bodyId">text</Body>);
     $instances.set(instances);
     selectInstance(["bodyId"]);
     expect(findClosestInsertable(newBoxFragment)).toEqual({
@@ -866,11 +925,11 @@ describe("find closest insertable", () => {
 
   test("finds closest container and puts after its child within selection", () => {
     const { instances } = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Paragraph ws:id="paragraphId">
-          <$.Bold ws:id="boldId"></$.Bold>
-        </$.Paragraph>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Paragraph ws:id="paragraphId">
+          <Bold ws:id="boldId"></Bold>
+        </Paragraph>
+      </Body>
     );
     $instances.set(instances);
     selectInstance(["boldId", "paragraphId", "bodyId"]);
@@ -882,11 +941,11 @@ describe("find closest insertable", () => {
 
   test("finds closest container that doesn't have an expression as a child", () => {
     const { instances } = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="box1Id"></$.Box>
-        <$.Paragraph ws:id="paragraphId">{expression`"bla"`}</$.Paragraph>
-        <$.Box ws:id="box2Id"></$.Box>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Box ws:id="box1Id"></Box>
+        <Paragraph ws:id="paragraphId">{expression`"bla"`}</Paragraph>
+        <Box ws:id="box2Id"></Box>
+      </Body>
     );
     $instances.set(instances);
     selectInstance(["paragraphId", "bodyId"]);
@@ -898,9 +957,9 @@ describe("find closest insertable", () => {
 
   test("finds closest container without textual placeholder", () => {
     const { instances } = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Paragraph ws:id="paragraphId"></$.Paragraph>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Paragraph ws:id="paragraphId"></Paragraph>
+      </Body>
     );
     $instances.set(instances);
     selectInstance(["paragraphId", "bodyId"]);
@@ -912,16 +971,16 @@ describe("find closest insertable", () => {
 
   test("finds closest container even with when parent has placeholder", () => {
     const { instances } = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Paragraph ws:id="paragraphId">
-          <$.Image ws:id="imageId"></$.Image>
-        </$.Paragraph>
-      </$.Body>
+      <Body ws:id="bodyId">
+        <Paragraph ws:id="paragraphId">
+          <Image ws:id="imageId"></Image>
+        </Paragraph>
+      </Body>
     );
     $instances.set(instances);
     selectInstance(["imageId", "paragraphId", "bodyId"]);
     expect(
-      findClosestInsertable(renderTemplate(<$.Box ws:tag="span"></$.Box>))
+      findClosestInsertable(renderTemplate(<Box ws:tag="span"></Box>))
     ).toEqual({
       parentSelector: ["paragraphId", "bodyId"],
       position: 1,
@@ -929,7 +988,7 @@ describe("find closest insertable", () => {
   });
 
   test("forbids inserting into :root", () => {
-    const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const { instances } = renderData(<Body ws:id="bodyId"></Body>);
     $instances.set(instances);
     selectInstance([":root"]);
     expect(findClosestInsertable(newBoxFragment)).toEqual(undefined);
@@ -937,11 +996,11 @@ describe("find closest insertable", () => {
 
   test("allow inserting into collection item", () => {
     const { instances } = renderData(
-      <$.Body ws:id="bodyId">
+      <Body ws:id="bodyId">
         <ws.collection ws:id="collectionId">
-          <$.Box ws:id="boxId"></$.Box>
+          <Box ws:id="boxId"></Box>
         </ws.collection>
-      </$.Body>
+      </Body>
     );
     $instances.set(instances);
     selectInstance(["collectionId[1]", "collectionId", "bodyId"]);
@@ -952,11 +1011,11 @@ describe("find closest insertable", () => {
   });
 
   test("prevents inserting list item in body when validation fails", () => {
-    const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
+    const { instances } = renderData(<Body ws:id="bodyId"></Body>);
     $instances.set(instances);
     selectInstance(["bodyId"]);
     const newListItemFragment = renderTemplate(
-      <$.ListItem ws:id="newListItemId"></$.ListItem>
+      <ListItem ws:id="newListItemId"></ListItem>
     );
     expect(findClosestInsertable(newListItemFragment)).toBeUndefined();
   });
@@ -1066,8 +1125,8 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
   test("uses conflictResolution='theirs' by default (creates new token with suffix)", async () => {
     // Existing project with a "primary" token (used by existing-box)
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box
+      <Body ws:id="body">
+        <Box
           ws:id="existing-box"
           ws:tokens={[
             token(
@@ -1077,8 +1136,8 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
               `
             ),
           ]}
-        ></$.Box>
-      </$.Body>
+        ></Box>
+      </Body>
     );
 
     // Create fragment with token that has same name but different styles
@@ -1143,8 +1202,8 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
   test("uses conflictResolution='ours' to keep existing token styles", async () => {
     // Existing project with a "primary" token (used by existing-box)
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box
+      <Body ws:id="body">
+        <Box
           ws:id="existing-box"
           ws:tokens={[
             token(
@@ -1154,8 +1213,8 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
               `
             ),
           ]}
-        ></$.Box>
-      </$.Body>
+        ></Box>
+      </Body>
     );
 
     const fragment = renderTemplate(
@@ -1216,8 +1275,8 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
   test("uses conflictResolution='merge' to merge styles (theirs overrides)", async () => {
     // Existing project with a "primary" token that has color and fontSize
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box
+      <Body ws:id="body">
+        <Box
           ws:id="existing-box"
           ws:tokens={[
             token(
@@ -1228,8 +1287,8 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
               `
             ),
           ]}
-        ></$.Box>
-      </$.Body>
+        ></Box>
+      </Body>
     );
 
     // Fragment with same "primary" token but different color and new property

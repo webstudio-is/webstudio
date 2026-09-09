@@ -5,16 +5,48 @@ import {
   createMdxCodeBlock,
   createMdxSourceDiagnostics,
   discoverMdxAssetReferences,
+  isMdxTemplateComponentName,
   MdxDocumentError,
   parseMdxDocument,
   parseMdxDocumentRecovering,
+  validateMdxDocumentSource,
   preferMarkdownSyntax,
   readMdxCodeBlock,
   replaceMdxFrontmatter,
   rewriteMdxAssetReferences,
   serializeMdxDocument,
+  validateTextAssetSource,
+  validateTextAssetSourceBytes,
   type MdxAuthoredNode,
+  type MdxDocument,
 } from "./mdx";
+import { contentEngineLimits } from "./limits";
+
+test("validates template names as PascalCase JavaScript identifiers", () => {
+  expect(isMdxTemplateComponentName("PromotionCard")).toBe(true);
+  expect(isMdxTemplateComponentName("ÉditionCard")).toBe(true);
+  expect(isMdxTemplateComponentName("Card$2")).toBe(true);
+  expect(isMdxTemplateComponentName("promotionCard")).toBe(false);
+  expect(isMdxTemplateComponentName("$Card")).toBe(false);
+  expect(isMdxTemplateComponentName("Promotion-Card")).toBe(false);
+});
+
+test("canonicalizes the legacy public template node shape", () => {
+  const document: MdxDocument = {
+    frontmatter: { properties: {} },
+    children: [
+      {
+        type: "template",
+        name: "Card",
+        props: [],
+        children: [],
+        mdxMode: "flow",
+      },
+    ],
+  };
+
+  expect(serializeMdxDocument(document)).toBe("<Card />\n");
+});
 
 test("creates and reads canonical fenced code blocks", async () => {
   const node = createMdxCodeBlock({
@@ -143,6 +175,302 @@ const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
 };
 
 describe("parseMdxDocument", () => {
+  test("parses and preserves safe named JSX template references", async () => {
+    const source = `<Card tone="quiet">\n  ## Nested heading\n</Card>\n`;
+    const document = await parseMdxDocument({ source });
+
+    expect(omitSourceRanges(document.children)).toEqual([
+      {
+        type: "template",
+        syntax: "jsx",
+        selfClosing: false,
+        name: "Card",
+        props: [{ name: "tone", value: "quiet" }],
+        children: [
+          {
+            type: "element",
+            syntax: "markdown",
+            tag: "h2",
+            props: [],
+            children: [{ type: "text", value: "Nested heading" }],
+          },
+        ],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(
+      document.children[0]?.type === "template"
+        ? document.children[0].props[0]?.sourceRange
+        : undefined
+    ).toEqual({
+      start: { line: 1, column: 7, offset: 6 },
+      end: { line: 1, column: 19, offset: 18 },
+    });
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test("parses and preserves intrinsic HTML JSX", async () => {
+    const source = `<section data-kind="hero">\n  <h2>Title</h2>\n</section>\n`;
+    const document = await parseMdxDocument({ source });
+
+    expect(omitSourceRanges(document.children)).toEqual([
+      {
+        type: "element",
+        syntax: "mdx",
+        tag: "section",
+        props: [{ name: "data-kind", value: "hero" }],
+        children: [
+          {
+            type: "element",
+            syntax: "mdx",
+            tag: "h2",
+            props: [],
+            children: [{ type: "text", value: "Title" }],
+            mdxMode: "text",
+          },
+        ],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test("parses and preserves intrinsic SVG JSX", async () => {
+    const source = `<svg viewBox="0 0 24 24">
+  <path d="M0 0h24v24H0z" />
+</svg>
+`;
+    const document = await parseMdxDocument({ source });
+
+    expect(document.children[0]).toMatchObject({
+      type: "element",
+      syntax: "mdx",
+      tag: "svg",
+      children: [
+        expect.objectContaining({
+          type: "element",
+          syntax: "mdx",
+          tag: "path",
+        }),
+      ],
+    });
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test.each(["Foo", "my-widget"])(
+    "preserves legacy generic tag %s when direct JSX would change its meaning",
+    async (tag) => {
+      const legacySource = `<ws.element ws:tag="${tag}">Text</ws.element>\n`;
+      const document = await parseMdxDocument({ source: legacySource });
+      const serialized = serializeMdxDocument(document);
+
+      expect(serialized).toBe(legacySource);
+      expect(
+        omitSourceRanges(await parseMdxDocument({ source: serialized }))
+      ).toEqual(omitSourceRanges(document));
+    }
+  );
+
+  test("preserves self-closing and explicitly empty template children", async () => {
+    const selfClosing = await parseMdxDocument({ source: "<Card />\n" });
+    const explicitlyEmpty = await parseMdxDocument({
+      source: "<Card></Card>\n",
+    });
+
+    expect(selfClosing.children[0]).toMatchObject({
+      type: "template",
+      syntax: "jsx",
+      selfClosing: true,
+      children: [],
+    });
+    expect(explicitlyEmpty.children[0]).toMatchObject({
+      type: "template",
+      syntax: "jsx",
+      selfClosing: false,
+      children: [],
+    });
+    expect(serializeMdxDocument(selfClosing)).toBe("<Card />\n");
+    expect(serializeMdxDocument(explicitlyEmpty)).toBe("<Card>\n\n</Card>\n");
+    expect(
+      (
+        await parseMdxDocument({
+          source: serializeMdxDocument(explicitlyEmpty),
+        })
+      ).children[0]
+    ).toMatchObject({ type: "template", selfClosing: false, children: [] });
+  });
+
+  test("preserves an explicitly empty inline template", async () => {
+    const source = "Before <Card></Card> after\n";
+    const document = await parseMdxDocument({ source });
+    const paragraph = document.children[0];
+
+    expect(paragraph).toMatchObject({ type: "element", tag: "p" });
+    expect(
+      paragraph?.type === "element" ? paragraph.children[1] : undefined
+    ).toMatchObject({
+      type: "template",
+      mdxMode: "text",
+      selfClosing: false,
+      children: [],
+    });
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test("keeps line-separated JSX components outside a Markdown paragraph", async () => {
+    const source =
+      '<PromotionCard>test</PromotionCard>\n<Heading tag="h1">Test</Heading>\n';
+    const document = await parseMdxDocument({ source });
+
+    expect(document.children).toMatchObject([
+      { type: "template", name: "PromotionCard" },
+      { type: "template", name: "Heading" },
+    ]);
+    expect(serializeMdxDocument(document)).toBe(
+      '<PromotionCard>test</PromotionCard>\n\n<Heading tag="h1">Test</Heading>\n'
+    );
+
+    const inlineDocument = await parseMdxDocument({
+      source: "<Badge>New</Badge> <Badge>Sale</Badge>\n",
+    });
+    expect(inlineDocument.children[0]).toMatchObject({
+      type: "element",
+      tag: "p",
+    });
+  });
+
+  test("tracks nested template closing syntax independently", async () => {
+    const document = await parseMdxDocument({
+      source: "<Card>\n  <Link />\n</Card>\n",
+    });
+    const card = document.children[0];
+
+    expect(card).toMatchObject({ type: "template", selfClosing: false });
+    expect(
+      card?.type === "template" ? card.children[0] : undefined
+    ).toMatchObject({ type: "template", selfClosing: true });
+  });
+
+  test.each([
+    "Base",
+    "Link",
+    "Meta",
+    "Noscript",
+    "Script",
+    "Style",
+    "Template",
+    "Title",
+  ])(
+    "accepts capitalized template component %s despite the intrinsic denylist",
+    async (name) => {
+      const document = await parseMdxDocument({ source: `<${name} />\n` });
+
+      expect(document.children[0]).toMatchObject({
+        type: "template",
+        syntax: "jsx",
+        selfClosing: true,
+        name,
+      });
+      expect(serializeMdxDocument(document)).toBe(`<${name} />\n`);
+      await expect(
+        parseMdxDocument({ source: `<${name.toLowerCase()} />\n` })
+      ).rejects.toMatchObject({ code: "unsafe-mdx" });
+    }
+  );
+
+  test("rejects reserved Webstudio selectors on named JSX templates", async () => {
+    await expect(
+      parseMdxDocument({ source: '<Card ws:name="Other" />\n' })
+    ).rejects.toMatchObject({
+      code: "unsafe-mdx",
+      reason: "Named MDX templates cannot use ws:name or ws:tag",
+    });
+    await expect(
+      parseMdxDocument({ source: '<Card ws:tag="section" />\n' })
+    ).rejects.toMatchObject({
+      code: "unsafe-mdx",
+      reason: "Named MDX templates cannot use ws:name or ws:tag",
+    });
+  });
+
+  test("falls back to ws.element when a JSX template name is not serializable", async () => {
+    const source = serializeMdxDocument({
+      frontmatter: { properties: {} },
+      children: [
+        {
+          type: "template",
+          syntax: "jsx",
+          selfClosing: true,
+          name: "Hero Card",
+          props: [],
+          children: [],
+          mdxMode: "flow",
+        },
+      ],
+    });
+
+    expect(source).toBe('<ws.element ws:name="Hero Card" />\n');
+    expect((await parseMdxDocument({ source })).children[0]).toMatchObject({
+      type: "template",
+      syntax: "ws-element",
+      selfClosing: true,
+      name: "Hero Card",
+    });
+  });
+
+  test("rejects reserved selectors in programmatically created named JSX", () => {
+    expect(() =>
+      serializeMdxDocument({
+        frontmatter: { properties: {} },
+        children: [
+          {
+            type: "template",
+            syntax: "jsx",
+            selfClosing: true,
+            name: "Card",
+            props: [{ name: "ws:name", value: "Other" }],
+            children: [],
+            mdxMode: "flow",
+          },
+        ],
+      })
+    ).toThrow("Named MDX templates cannot use ws:name or ws:tag");
+  });
+
+  test("preserves legacy ws.element template reference syntax", async () => {
+    const source = '<ws.element ws:name="Hero Card" />\n';
+    const document = await parseMdxDocument({ source });
+
+    expect(omitSourceRanges(document.children)).toEqual([
+      {
+        type: "template",
+        syntax: "ws-element",
+        selfClosing: true,
+        name: "Hero Card",
+        props: [],
+        children: [],
+        mdxMode: "flow",
+      },
+    ]);
+    expect(serializeMdxDocument(document)).toBe(source);
+  });
+
+  test("preserves explicitly empty legacy template children", async () => {
+    const document = await parseMdxDocument({
+      source: '<ws.element ws:name="Hero Card"></ws.element>\n',
+    });
+
+    expect(document.children[0]).toMatchObject({
+      type: "template",
+      syntax: "ws-element",
+      selfClosing: false,
+      children: [],
+    });
+    expect(serializeMdxDocument(document)).toBe(
+      '<ws.element ws:name="Hero Card">\n\n</ws.element>\n'
+    );
+  });
+
   test("parses Markdown-only input identically through Markdown and MDX", () => {
     const source = `---
 title: Shared grammar
@@ -618,7 +946,7 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
     expect(serialized.indexOf("title:")).toBeLessThan(
       serialized.indexOf("author:")
     );
-    expect(serialized).toContain('<ws.element ws:tag="section"');
+    expect(serialized).toContain('<section data-kind="hero"');
     expect(serialized).toContain('<ws.element ws:name="Hero Card"');
     expect(serialized).toContain("{/* keep this note */}");
 
@@ -687,7 +1015,7 @@ Paragraph with <ws.element ws:tag="span">inline</ws.element> content.
     expect(source).toContain("-   First\n-   Second");
     expect(source).not.toContain('<ws.element ws:tag="p"');
     expect(source).not.toContain('<ws.element ws:tag="ul"');
-    expect(source).toContain('<ws.element ws:tag="section" data-kind="hero">');
+    expect(source).toContain('<section data-kind="hero">');
     expect(source).toContain("## Title");
     expect(source).not.toContain('<ws.element ws:tag="h2"');
     expect(
@@ -900,13 +1228,9 @@ next</ws.element>
     const preferred = serializeMdxDocument(
       await preferMarkdownSyntax(document)
     );
-    expect(preferred).toContain(
-      '<ws.element ws:tag="ul">\n  <ws.element ws:tag="div">Not a list item</ws.element>\n</ws.element>'
-    );
-    expect(preferred).toContain(
-      '<ws.element ws:tag="a" href="/guide" target="_blank">Guide</ws.element>'
-    );
-    expect(preferred).toContain('<ws.element ws:tag="ol" start="007">');
+    expect(preferred).toContain("<ul>\n  <div>Not a list item</div>\n</ul>");
+    expect(preferred).toContain('<a href="/guide" target="_blank">Guide</a>');
+    expect(preferred).toContain('<ol start="007">');
   });
 
   test.each([
@@ -931,6 +1255,8 @@ next</ws.element>
       children: [
         {
           type: "template",
+          syntax: "ws-element",
+          selfClosing: true,
           name: "Card",
           props: [
             { name: "className", value: "featured" },
@@ -945,7 +1271,7 @@ next</ws.element>
     });
 
     expect(source).toBe(
-      '<ws.element ws:name="Card" className="featured" htmlFor="title" tabIndex="0" readOnly />\n'
+      '<Card className="featured" htmlFor="title" tabIndex="0" readOnly />\n'
     );
     expect(omitSourceRanges(await parseMdxDocument({ source }))).toMatchObject({
       frontmatter: { properties: {} },
@@ -976,14 +1302,14 @@ next</ws.element>
     });
   });
 
-  test("roundtrips template JSX prop names without component metadata", async () => {
+  test("canonicalizes legacy template JSX without component metadata", async () => {
     const source = '<ws.element ws:name="Card" class="featured" />\n';
     const document = await parseMdxDocument({ source });
 
-    expect(serializeMdxDocument(document)).toBe(source);
+    expect(serializeMdxDocument(document)).toBe('<Card class="featured" />\n');
   });
 
-  test("preserves template prop aliases for metadata-aware materialization", async () => {
+  test("preserves legacy template prop aliases while canonicalizing syntax", async () => {
     const source =
       '<ws.element ws:name="Card" class="legacy" className="canonical" />\n';
     const document = await parseMdxDocument({ source });
@@ -993,6 +1319,26 @@ next</ws.element>
       props: [
         { name: "class", value: "legacy" },
         { name: "className", value: "canonical" },
+      ],
+    });
+    expect(serializeMdxDocument(document)).toBe(
+      '<Card class="legacy" className="canonical" />\n'
+    );
+  });
+
+  test("preserves component JSX prop aliases for metadata-aware materialization", async () => {
+    const source =
+      '<Image class="legacy" className="canonical" alt="Example" />\n';
+    const document = await parseMdxDocument({ source });
+
+    expect(document.children[0]).toMatchObject({
+      type: "template",
+      syntax: "jsx",
+      name: "Image",
+      props: [
+        { name: "class", value: "legacy" },
+        { name: "className", value: "canonical" },
+        { name: "alt", value: "Example" },
       ],
     });
     expect(serializeMdxDocument(document)).toBe(source);
@@ -1062,8 +1408,7 @@ next</ws.element>
       '<ws.element ws:tag="div" {...props} />',
       "mdxJsxExpressionAttribute",
     ],
-    ["arbitrary components", "<Card />", "mdxJsxFlowElement"],
-    ["HTML-looking JSX", "<div>Unsafe</div>", "mdxJsxTextElement"],
+    ["unknown lowercase JSX", "<card />", "mdxJsxFlowElement"],
   ])("rejects %s", async (_name, source, nodeType) => {
     await expect(parseMdxDocument({ source })).rejects.toMatchObject({
       code: "unsafe-mdx",
@@ -1127,6 +1472,156 @@ describe("replaceMdxFrontmatter", () => {
 });
 
 describe("parseMdxDocumentRecovering", () => {
+  test("uses fatal UTF-8 decoding for byte source validation", async () => {
+    const invalidUtf8 = new Uint8Array([0xc3, 0x28]);
+
+    await expect(
+      validateTextAssetSourceBytes({ format: "md", source: invalidUtf8 })
+    ).resolves.toEqual({
+      format: "md",
+      diagnostics: [
+        {
+          code: "MARKDOWN_BODY_DECODING_FAILED",
+          severity: "error",
+          message: "Markdown content is not valid UTF-8",
+        },
+      ],
+    });
+    await expect(
+      validateTextAssetSourceBytes({ format: "mdx", source: invalidUtf8 })
+    ).resolves.toEqual({
+      format: "mdx",
+      diagnostics: [
+        {
+          code: "invalid-mdx",
+          severity: "error",
+          message: "MDX content is not valid UTF-8",
+        },
+      ],
+      recovery: {
+        status: "unrecoverable",
+        diagnostics: [
+          expect.objectContaining({
+            code: "invalid-mdx",
+            message: "MDX content is not valid UTF-8",
+          }),
+        ],
+      },
+    });
+  });
+
+  test("returns decoded source with byte source validation", async () => {
+    await expect(
+      validateTextAssetSourceBytes({
+        format: "mdx",
+        source: new TextEncoder().encode("# Valid\n"),
+      })
+    ).resolves.toMatchObject({
+      format: "mdx",
+      source: "# Valid\n",
+      diagnostics: [],
+      recovery: { status: "parsed" },
+    });
+  });
+
+  test("uses the shared text validator for Markdown file size errors", async () => {
+    await expect(
+      validateTextAssetSource({
+        format: "md",
+        source: "x".repeat(contentEngineLimits.hydratedFileBytes + 1),
+      })
+    ).resolves.toMatchObject({
+      diagnostics: [
+        {
+          code: "MARKDOWN_BODY_BYTES_EXCEEDED",
+          severity: "error",
+        },
+      ],
+    });
+  });
+
+  test("reports every recoverable problem as a warning", async () => {
+    const result = await validateMdxDocumentSource({
+      source: "---\na: 1\na: 2\nb: 1\nb: 2\n---\n\n{first()}\n\n{second()}\n",
+    });
+
+    expect(result.diagnostics).toMatchObject([
+      { severity: "warning", code: "FRONTMATTER_INVALID", line: 3 },
+      { severity: "warning", code: "FRONTMATTER_INVALID", line: 5 },
+      {
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+      },
+      {
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+      },
+    ]);
+  });
+
+  test("continues after an unsupported component to report every sibling", async () => {
+    const result = await validateMdxDocumentSource({
+      source: "{first()}\n\n<Card.Item />\n\n{second()}\n",
+    });
+
+    expect(result.diagnostics).toEqual([
+      {
+        code: "unsafe-mdx",
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+        nodeType: "mdxFlowExpression",
+        reason: "Executable MDX expressions are not supported",
+        sourceRange: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 10, offset: 9 },
+        },
+      },
+      {
+        code: "unsafe-mdx",
+        severity: "warning",
+        message:
+          "Only standard HTML and SVG elements and named template components are supported in authored MDX",
+        nodeType: "mdxJsxFlowElement",
+        reason:
+          "Only standard HTML and SVG elements and named template components are supported in authored MDX",
+        sourceRange: {
+          start: { line: 3, column: 1, offset: 11 },
+          end: { line: 3, column: 14, offset: 24 },
+        },
+      },
+      {
+        code: "unsafe-mdx",
+        severity: "warning",
+        message: "Executable MDX expressions are not supported",
+        nodeType: "mdxFlowExpression",
+        reason: "Executable MDX expressions are not supported",
+        sourceRange: {
+          start: { line: 5, column: 1, offset: 26 },
+          end: { line: 5, column: 11, offset: 36 },
+        },
+      },
+    ]);
+  });
+
+  test("reports diagnostics nested inside an unsupported component", async () => {
+    const result = await validateMdxDocumentSource({
+      source: "<Card.Item>{danger()}<Other.Item /></Card.Item>\n",
+    });
+
+    expect(result.diagnostics.map(({ message }) => message)).toEqual([
+      "Only standard HTML and SVG elements and named template components are supported in authored MDX",
+      "Executable MDX expressions are not supported",
+      "Only standard HTML and SVG elements and named template components are supported in authored MDX",
+    ]);
+    expect(
+      result.diagnostics.map((diagnostic) =>
+        "sourceRange" in diagnostic
+          ? diagnostic.sourceRange?.start.offset
+          : undefined
+      )
+    ).toEqual([0, 11, 21]);
+  });
+
   test("ignores invalid JSX properties without dropping the element", async () => {
     const source =
       '<ws.element ws:tag="a" href="/safe" onclick="alert(1)">Kept</ws.element>\n';

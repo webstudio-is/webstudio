@@ -36,7 +36,10 @@ export type AssetManagerThumbnailInteractions = {
   ) => void;
   onExitMultiselect?: () => void;
   onContextMenuSelection: (item: AssetManagerSelection) => void;
-  onContextMenuActions: (actions: AssetManagerItemActions) => void;
+  onContextMenuActions: (
+    actions: AssetManagerItemActions,
+    disabledActions?: ReadonlySet<keyof AssetManagerItemActions>
+  ) => void;
   getDragItems: (item: AssetManagerSelection) => AssetManagerSelection[];
 };
 
@@ -45,6 +48,7 @@ type AssetManagerThumbnailProps = Omit<
   "aria-pressed" | "as" | "onContextMenu" | "ref" | "selected" | "type"
 > & {
   actions: AssetManagerItemActions;
+  disabledActions?: ReadonlySet<keyof AssetManagerItemActions>;
   interactions: AssetManagerThumbnailInteractions;
   item: AssetManagerSelection;
   header?: ReactNode;
@@ -55,6 +59,7 @@ type AssetManagerThumbnailProps = Omit<
 
 export const AssetManagerThumbnail = ({
   actions,
+  disabledActions,
   interactions,
   item,
   header,
@@ -75,7 +80,7 @@ export const AssetManagerThumbnail = ({
       }
       onContextMenu={(event) => {
         interactions.onContextMenuSelection(item);
-        interactions.onContextMenuActions(actions);
+        interactions.onContextMenuActions(actions, disabledActions);
         event.currentTarget
           .querySelector<HTMLElement>("[data-asset-manager-thumbnail-button]")
           ?.focus();
@@ -133,6 +138,7 @@ export const AssetManagerThumbnail = ({
 
 type AssetManagerThumbnailMenuProps = {
   actions: AssetManagerItemActions;
+  disabledActions?: ReadonlySet<keyof AssetManagerItemActions>;
   label: string;
   onPointerDown?: () => void;
 };
@@ -140,10 +146,11 @@ type AssetManagerThumbnailMenuProps = {
 export const AssetManagerThumbnailMenu = forwardRef<
   HTMLDivElement,
   AssetManagerThumbnailMenuProps
->(({ actions, label, onPointerDown }, ref) => (
+>(({ actions, disabledActions, label, onPointerDown }, ref) => (
   <AssetThumbnailMenu ref={ref} onPointerDown={onPointerDown}>
     <AssetManagerItemActionsDropdown
       actions={actions}
+      disabledActions={disabledActions}
       triggerLabel={label}
       triggerTabIndex={-1}
     />

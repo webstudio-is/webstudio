@@ -1,7 +1,7 @@
 import { TooltipIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
-import { radix } from "./shared/meta";
+import { getRadixComponentId } from "./shared/component-id";
 import {
   propsTooltip,
   propsTooltipContent,
@@ -43,7 +43,10 @@ export const metaTooltip: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: ["instance"],
-    descendants: [radix.TooltipTrigger, radix.TooltipContent],
+    descendants: [
+      getRadixComponentId("TooltipTrigger"),
+      getRadixComponentId("TooltipContent"),
+    ],
   },
   initialProps: ["open", "delayDuration", "disableHoverableContent"],
   props: propsTooltip,

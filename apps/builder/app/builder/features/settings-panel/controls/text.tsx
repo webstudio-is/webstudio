@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { TextArea } from "@webstudio-is/design-system";
+import { TextArea, Tooltip } from "@webstudio-is/design-system";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
@@ -39,18 +39,25 @@ export const TextControl = ({
       onChangeExpression={(value) => onChange({ type: "expression", value })}
       onRemove={(value) => onChange({ type: "string", value: String(value) })}
       renderControl={({ readOnly }) => (
-        <TextArea
-          id={id}
-          disabled={readOnly}
-          autoGrow
-          value={localValue.value}
-          rows={meta.rows ?? 1}
-          // Set maxRows to 3 when meta.rows is undefined or equal to 1, otherwise set it to rows * 2
-          maxRows={Math.max(2 * (meta.rows ?? 1), 3)}
-          onChange={localValue.set}
-          onBlur={localValue.save}
-          onSubmit={localValue.save}
-        />
+        <Tooltip
+          content={binding.fieldError ?? ""}
+          open={binding.fieldError === undefined ? false : undefined}
+        >
+          <TextArea
+            color={binding.fieldError === undefined ? undefined : "error"}
+            aria-invalid={binding.fieldError !== undefined || undefined}
+            id={id}
+            disabled={readOnly}
+            autoGrow
+            value={localValue.value}
+            rows={meta.rows ?? 1}
+            // Set maxRows to 3 when meta.rows is undefined or equal to 1, otherwise set it to rows * 2
+            maxRows={Math.max(2 * (meta.rows ?? 1), 3)}
+            onChange={localValue.set}
+            onBlur={localValue.save}
+            onSubmit={localValue.save}
+          />
+        </Tooltip>
       )}
     />
   );

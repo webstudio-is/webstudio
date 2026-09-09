@@ -1,4 +1,10 @@
+/**
+ * Plans and confirms explicit batch rewrites of authored MDX references after
+ * custom templates are renamed or removed; normal template resolution does not
+ * depend on this migration.
+ */
 import {
+  isMdxTemplateComponentName,
   parseMdxDocument,
   serializeMdxDocument,
   type MdxAuthoredNode,
@@ -80,11 +86,6 @@ const updateNodes = (
       (migration.type === "rename"
         ? node.name === migration.from
         : node.name === migration.name);
-    if (node.type === "template" && matches && migration.type === "remove") {
-      omissionCount += 1;
-      changed = true;
-      continue;
-    }
     if (
       node.type === "text" ||
       node.type === "comment" ||
@@ -96,12 +97,21 @@ const updateNodes = (
     const children = updateNodes(node.children, migration);
     updateCount += children.updateCount;
     omissionCount += children.omissionCount;
+    if (node.type === "template" && matches && migration.type === "remove") {
+      // Removing a template reference removes only its wrapper. Authored
+      // children remain in place; self-closing references have none to retain.
+      omissionCount += 1;
+      changed = true;
+      nextNodes.push(...children.nodes);
+      continue;
+    }
     if (node.type === "template" && matches && migration.type === "rename") {
       updateCount += 1;
       changed = true;
       nextNodes.push({
         ...node,
         name: migration.to,
+        syntax: "jsx",
         children: children.nodes,
       });
       continue;
@@ -202,6 +212,12 @@ export const planMdxTemplateMigration = async ({
   confirmationScope?: Readonly<Record<string, unknown>>;
   confirmationTtlMs?: number;
 }): Promise<MdxTemplateMigrationPlan> => {
+  if (
+    migration.type === "rename" &&
+    isMdxTemplateComponentName(migration.to) === false
+  ) {
+    throw new Error("Renamed template must use a valid PascalCase MDX name");
+  }
   if (files.length > mdxTemplateMigrationFileLimit) {
     throw new Error("MDX template migration is limited to 100 files");
   }

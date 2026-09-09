@@ -21,15 +21,55 @@ const getErrorMessage = (error: unknown) =>
       ? error.message
       : String(error);
 
-export const getStableErrorCode = (error: unknown) => {
-  const directErrorCode =
-    typeof error === "object" && error !== null && "code" in error
-      ? (error as { code?: unknown }).code
-      : undefined;
-  const code = getApiErrorCode(error) ?? directErrorCode;
-  return typeof code === "string" && stableErrorCodePattern.test(code)
-    ? code
+const genericTransportErrorCodes = new Set([
+  "BAD_REQUEST",
+  "CONFLICT",
+  "FORBIDDEN",
+  "INTERNAL_ERROR",
+  "INTERNAL_SERVER_ERROR",
+  "MCP_RESOURCE_FAILED",
+  "MCP_TOOL_FAILED",
+  "NOT_FOUND",
+  "UNAUTHORIZED",
+  "UNKNOWN",
+]);
+
+const getStableCode = (value: unknown) =>
+  typeof value === "string" && stableErrorCodePattern.test(value)
+    ? value
     : undefined;
+
+export const getStableErrorCode = (error: unknown) => {
+  const visited = new Set<unknown>();
+  const visit = (value: unknown): string | undefined => {
+    if (typeof value !== "object" || value === null || visited.has(value)) {
+      return;
+    }
+    visited.add(value);
+    const record = value as Record<string, unknown>;
+    const data =
+      typeof record.data === "object" && record.data !== null
+        ? (record.data as Record<string, unknown>)
+        : undefined;
+    const webstudioCode =
+      getStableCode(record.webstudioCode) ?? getStableCode(data?.webstudioCode);
+    if (webstudioCode !== undefined) {
+      return webstudioCode;
+    }
+    const directCode = getStableCode(record.code);
+    if (
+      directCode !== undefined &&
+      genericTransportErrorCodes.has(directCode) === false
+    ) {
+      return directCode;
+    }
+    const nestedCode = visit(record.cause) ?? visit(data?.cause);
+    if (nestedCode !== undefined) {
+      return nestedCode;
+    }
+    return directCode ?? getApiErrorCode(value);
+  };
+  return visit(error);
 };
 
 export const isMissingApiAccessError = (error: unknown) => {

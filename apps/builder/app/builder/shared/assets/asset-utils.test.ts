@@ -1,10 +1,57 @@
 import { expect, test, describe } from "vitest";
+import type { Asset } from "@webstudio-is/sdk";
 import {
   getImageNameAndType,
   getSha256Hash,
   getFileUploadFingerprint,
+  isAssetFilenameUsed,
   uploadingFileDataToAsset,
 } from "./asset-utils";
+
+test("matches full asset filenames only in the requested folder", () => {
+  const asset: Asset = {
+    id: "guide",
+    projectId: "project",
+    name: "uploaded_hash.md",
+    filename: "guide",
+    folderId: "other",
+    type: "file",
+    format: "md",
+    size: 1,
+    createdAt: "2026-09-03T00:00:00.000Z",
+    meta: {},
+  };
+
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.md",
+      folderId: "other",
+    })
+  ).toBe(true);
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.md",
+      folderId: "docs",
+    })
+  ).toBe(false);
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.json",
+      folderId: "other",
+    })
+  ).toBe(false);
+  expect(
+    isAssetFilenameUsed({
+      assets: [asset],
+      filename: "guide.md",
+      folderId: "other",
+      excludeAssetId: asset.id,
+    })
+  ).toBe(false);
+});
 
 test("distinguishes upload fingerprints by filename and content", async () => {
   const first = new File([""], "first.md");

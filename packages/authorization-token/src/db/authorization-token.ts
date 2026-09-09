@@ -1,4 +1,5 @@
 import type { Database } from "@webstudio-is/postgrest/index.server";
+import { createId } from "@webstudio-is/sdk";
 import {
   type AppContext,
   authorizeProject,
@@ -174,7 +175,7 @@ export const create = async (
   },
   context: AppContext
 ) => {
-  const tokenId = crypto.randomUUID();
+  const tokenId = createId();
 
   // Only owner of the project can create authorization tokens
   const canCreateToken = await authorizeProject.hasProjectPermit(

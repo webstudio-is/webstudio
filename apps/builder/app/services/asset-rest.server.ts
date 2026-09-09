@@ -1,9 +1,14 @@
 import { json } from "@remix-run/server-runtime";
 import {
+  ContentCollectionError,
+  MarkdownMetadataError,
   readBoundedRequestBytes,
   RequestByteLimitError,
 } from "@webstudio-is/content-engine";
-import { decodeUtf8 } from "@webstudio-is/content-engine/compiler";
+import {
+  ByteLimitExceededError,
+  decodeUtf8,
+} from "@webstudio-is/content-engine/compiler";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
@@ -36,12 +41,12 @@ export const requireAssetRestBody = (request: Request) => {
   return request.body;
 };
 
-const readAssetRestBody = async (request: Request) => {
+const readAssetRestBody = async (
+  request: Request,
+  maximumBytes = assetResourceLimits.restMutationRequestBytes
+) => {
   try {
-    return await readBoundedRequestBytes(
-      request,
-      assetResourceLimits.restMutationRequestBytes
-    );
+    return await readBoundedRequestBytes(request, maximumBytes);
   } catch (error) {
     if (error instanceof RequestByteLimitError) {
       throw new AssetRestPayloadTooLargeError(
@@ -53,8 +58,11 @@ const readAssetRestBody = async (request: Request) => {
   }
 };
 
-export const readAssetRestJson = async (request: Request) => {
-  const bytes = await readAssetRestBody(request);
+export const readAssetRestJson = async (
+  request: Request,
+  maximumBytes = assetResourceLimits.restMutationRequestBytes
+) => {
+  const bytes = await readAssetRestBody(request, maximumBytes);
   try {
     return JSON.parse(decodeUtf8(bytes)) as unknown;
   } catch (error) {
@@ -185,6 +193,8 @@ const getAssetRestErrorStatus = (error: unknown) => {
   }
   if (
     error instanceof AssetRepositoryConflictError ||
+    error instanceof ContentCollectionError ||
+    error instanceof MarkdownMetadataError ||
     error instanceof AssetRevisionConflictError ||
     error instanceof AssetUploadCountLimitError
   ) {
@@ -203,6 +213,7 @@ const getAssetRestErrorStatus = (error: unknown) => {
   }
   if (
     error instanceof AssetRestPayloadTooLargeError ||
+    error instanceof ByteLimitExceededError ||
     error instanceof AssetUploadSizeLimitError
   ) {
     return 413;

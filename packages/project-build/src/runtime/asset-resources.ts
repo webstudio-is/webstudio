@@ -4,7 +4,7 @@ import {
   createDefaultStructuredAssetQueryResourceConfiguration,
   createStructuredAssetQueryResourceBody,
   isAssetsResource,
-  parseStructuredAssetQueryResourceBody,
+  parseStructuredAssetQueryResourceBodyResult,
   SYSTEM_VARIABLE_ID,
   type AssetQueryWhereExpression,
   type Resource,
@@ -92,7 +92,12 @@ const serializeAssetResource = ({
   resource: Resource;
   state: Pick<BuilderState, "dataSources">;
 }) => {
-  const configuration = parseStructuredAssetQueryResourceBody(resource.body);
+  const parsedConfiguration = parseStructuredAssetQueryResourceBodyResult(
+    resource.body
+  );
+  const configuration = parsedConfiguration.success
+    ? parsedConfiguration.value
+    : undefined;
   const dataSources = Array.from(state.dataSources?.values() ?? []);
   const unsetNameById = new Map(dataSources.map(({ id, name }) => [id, name]));
   unsetNameById.set(SYSTEM_VARIABLE_ID, "system");
@@ -111,7 +116,9 @@ const serializeAssetResource = ({
     ...(configuration === undefined
       ? {
           configurationError:
-            "Stored Assets query configuration could not be decoded.",
+            parsedConfiguration.success === false
+              ? parsedConfiguration.message
+              : "Stored Assets query configuration could not be decoded.",
         }
       : {
           query: {
@@ -218,13 +225,20 @@ export const updateAssetsResource = (
     return throwBuilderRuntimeError("NOT_FOUND", "Assets resource not found");
   }
   const { name, query: queryUpdate } = input.values;
-  const storedConfiguration = parseStructuredAssetQueryResourceBody(
+  const parsedConfiguration = parseStructuredAssetQueryResourceBodyResult(
     resource.body
   );
+  const storedConfiguration = parsedConfiguration.success
+    ? parsedConfiguration.value
+    : undefined;
   if (storedConfiguration === undefined && queryUpdate === undefined) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      "Stored Assets query configuration could not be decoded; replace or remove the query to repair it"
+      `${
+        parsedConfiguration.success === false
+          ? parsedConfiguration.message
+          : "Stored Assets query configuration could not be decoded."
+      } Replace or remove the query to repair it.`
     );
   }
   const currentQuery = storedConfiguration;

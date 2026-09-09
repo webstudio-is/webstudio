@@ -2,9 +2,39 @@ import { describe, expect, test } from "vitest";
 import {
   assetsResourceCreateInput,
   assetsResourceUpdateInput,
+  getAssetsResource,
 } from "./asset-resources";
 
 describe("Assets resource mutation input", () => {
+  test("returns the exact stored query decoding error", () => {
+    expect(
+      getAssetsResource(
+        {
+          resources: new Map([
+            [
+              "posts",
+              {
+                id: "posts",
+                name: "Posts",
+                control: "system" as const,
+                method: "post" as const,
+                url: '"/$resources/assets"',
+                headers: [],
+                body: "({ query: { where: 1 } })",
+              },
+            ],
+          ]),
+          dataSources: new Map(),
+        },
+        { resourceId: "posts" }
+      ).resource
+    ).toMatchObject({
+      mode: "invalid",
+      configurationError:
+        "Stored Assets query is invalid: Enter valid filters.",
+    });
+  });
+
   test("rejects unsupported field paths", () => {
     const result = assetsResourceCreateInput.safeParse({
       name: "Posts",

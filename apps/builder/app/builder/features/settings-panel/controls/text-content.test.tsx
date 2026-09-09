@@ -2,12 +2,17 @@ import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { EditorView } from "@codemirror/view";
-import { TooltipProvider } from "@webstudio-is/design-system";
+import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
-import type { Instance } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable, type Instance } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $builderMode } from "~/shared/nano-states";
-import { $instances, $pages } from "~/shared/sync/data-stores";
+import { $builderMode, selectInstance } from "~/shared/nano-states";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
+import { $externalContentRoots } from "~/shared/external-content-mutations";
+import {
+  createAssetContentBridge,
+  __testing__,
+} from "~/shared/asset-content-bridge.client";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import { TextContent } from "./text-content";
 
@@ -23,6 +28,7 @@ const rangeGetClientRects = Object.getOwnPropertyDescriptor(
   Range.prototype,
   "getClientRects"
 );
+const { initBridge, clearBridge } = __testing__;
 
 const setReadingTimeChildren = (children: Instance["children"]) => {
   $instances.set(
@@ -72,6 +78,11 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   $instances.set(new Map());
+  $props.set(new Map());
+  $externalContentRoots.set(new Map());
+  selectInstance(undefined);
+  clearBridge();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   if (rangeGetClientRects === undefined) {
     delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
@@ -81,6 +92,109 @@ afterEach(() => {
       "getClientRects",
       rangeGetClientRects
     );
+  }
+});
+
+test("shows the actual canvas-frame error when a frontmatter text edit fails", async () => {
+  const frame = document.createElement("iframe");
+  document.body.appendChild(frame);
+  try {
+    const foreignError = new (
+      frame.contentWindow as Window & typeof globalThis
+    ).Error("The authoring reference changed. Reload before editing.");
+    expect(foreignError).not.toBeInstanceOf(Error);
+    const showError = vi
+      .spyOn(toast, "error")
+      .mockImplementation(() => "test-toast");
+    const bridge = createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: () => {},
+    });
+    bridge.registerFrontmatterWriter({
+      rootKey: "root",
+      projectId: "project",
+      assetId: "article",
+      update: async () => {
+        throw foreignError;
+      },
+    });
+    initBridge(bridge);
+    setReadingTimeChildren([
+      {
+        type: "expression",
+        value: `${encodeDataSourceVariable("document")}.frontmatter.name`,
+        mode: "readwrite",
+      },
+    ]);
+    $instances.set(
+      new Map($instances.get()).set("block", {
+        id: "block",
+        type: "instance",
+        component: "ws:block",
+        children: [{ type: "id", value: "reading-time" }],
+      })
+    );
+    $props.set(
+      new Map([
+        [
+          "document",
+          {
+            id: "document",
+            instanceId: "block",
+            name: "document",
+            type: "parameter",
+            value: "document",
+          },
+        ],
+      ])
+    );
+    $props.set(
+      new Map($props.get()).set("source", {
+        id: "source",
+        instanceId: "block",
+        name: "src",
+        type: "asset",
+        value: "article",
+      })
+    );
+    $externalContentRoots.set(
+      new Map([
+        [
+          "root",
+          {
+            assetId: "article",
+            blockInstanceId: "block",
+            instanceIds: new Set(["reading-time"]),
+            mutationRevision: 0,
+            document: {
+              children: [],
+              frontmatter: { properties: { name: "Before" } },
+            },
+          },
+        ],
+      ])
+    );
+    $builderMode.set("content");
+    selectInstance(["reading-time", "block"]);
+    renderTextContent("Before");
+    const element = container.querySelector<HTMLElement>('[role="textbox"]')!;
+    const view = EditorView.findFromDOM(element)!;
+    act(() => {
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: "After" },
+      });
+    });
+    await act(async () => {
+      view.focus();
+      view.contentDOM.blur();
+    });
+    await vi.waitFor(() =>
+      expect(showError).toHaveBeenCalledWith(foreignError.message)
+    );
+  } finally {
+    frame.remove();
   }
 });
 

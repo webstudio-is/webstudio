@@ -1,3 +1,5 @@
+// Orchestrates local high-impact agent fixtures, isolated project setup,
+// content-database evidence, baseline comparison, and result persistence.
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -7,7 +9,10 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { createContentDatabase } from "@webstudio-is/content-engine";
+import {
+  createContentDatabase,
+  parseMarkdownDocumentSource,
+} from "@webstudio-is/content-engine";
 import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
 import {
@@ -15,6 +20,7 @@ import {
   highImpactFixtures,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
+  mdxArticleFixture,
   type HighImpactFixture,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
@@ -74,10 +80,13 @@ const selectFixtures = (fixtureId: string | undefined) => {
   return [fixture];
 };
 
-const compileEvaluationContentDatabase = async (projectDirectory: string) => {
-  const snapshot = await createCliProjectSessionStorage(
-    getCliProjectSessionFile(projectDirectory)
-  ).load();
+type EvaluationProjectSnapshot = Awaited<
+  ReturnType<ReturnType<typeof createCliProjectSessionStorage>["load"]>
+>;
+
+const getEvaluationContentCompilationInput = (
+  snapshot: EvaluationProjectSnapshot
+) => {
   if (snapshot === undefined) {
     throw new Error("Evaluation project session is unavailable");
   }
@@ -89,6 +98,17 @@ const compileEvaluationContentDatabase = async (projectDirectory: string) => {
   if (plan === undefined) {
     throw new Error("Evaluation blog has no reachable Assets resources");
   }
+  return { snapshot, plan };
+};
+
+export const __testing__ = { getEvaluationContentCompilationInput };
+
+const compileEvaluationContentDatabase = async (projectDirectory: string) => {
+  const loadedSnapshot = await createCliProjectSessionStorage(
+    getCliProjectSessionFile(projectDirectory)
+  ).load();
+  const { snapshot, plan } =
+    getEvaluationContentCompilationInput(loadedSnapshot);
   const { artifact } = await compileContentSource({
     source: createFileSystemContentSource({
       projectId: snapshot.projectId,
@@ -132,6 +152,7 @@ const runFixture = async ({
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
   const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.4-mini";
+  const reasoningEffort = fixture.agent.reasoningEffort;
   const directory = await mkdtemp(
     join(tmpdir(), "webstudio-high-impact-agent-")
   );
@@ -180,6 +201,8 @@ const runFixture = async ({
       "--json",
       "--model",
       shellQuote(model),
+      "--config",
+      shellQuote(`model_reasoning_effort="${reasoningEffort}"`),
       "--cd",
       shellQuote(projectDirectory),
       ...mcpConfig.flatMap((config) => ["--config", shellQuote(config)]),
@@ -203,6 +226,7 @@ const runFixture = async ({
       resultPath,
       provider: "openai",
       model,
+      reasoningEffort,
       env,
       signal,
       getToolCalls: () => toolCalls,
@@ -219,6 +243,13 @@ const runFixture = async ({
           project: fixtureApi.getProject(),
           toolCalls,
           artifacts: await collectHighImpactArtifacts(projectDirectory),
+          ...(fixture.id === mdxArticleFixture.id
+            ? {
+                mdxDocument: await parseMarkdownDocumentSource({
+                  source: fixtureApi.getAssetSource("article-file") ?? "",
+                }),
+              }
+            : {}),
           ...(fixture.id === markdownBlogFixture.id ||
           fixture.id === markdownReferencesDiscoveryFixture.id
             ? {
@@ -394,4 +425,9 @@ const run = async () => {
   }
 };
 
-await run();
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  await run();
+}

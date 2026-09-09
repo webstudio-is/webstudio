@@ -2,7 +2,12 @@ import { test, expect } from "vitest";
 import { createHeadlessEditor } from "@lexical/headless";
 import { LinkNode } from "@lexical/link";
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
-import { $, renderData, renderTemplate, ws } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  renderData,
+  renderTemplate,
+  ws,
+} from "@webstudio-is/template";
 import {
   $convertToLexical,
   $convertToPlainTextUpdate,
@@ -10,21 +15,28 @@ import {
   type Refs,
 } from "./interop";
 
+const Body = createTemplateComponentFixture("Body");
+const Bold = createTemplateComponentFixture("Bold");
+const Box = createTemplateComponentFixture("Box");
+const Italic = createTemplateComponentFixture("Italic");
+const RichTextLink = createTemplateComponentFixture("RichTextLink");
+const Span = createTemplateComponentFixture("Span");
+
 const { instances } = renderData(
-  <$.Body ws:id="bodyId">
-    <$.Box ws:id="emptyBoxId"></$.Box>
-    <$.Box ws:id="textBoxId">
+  <Body ws:id="bodyId">
+    <Box ws:id="emptyBoxId"></Box>
+    <Box ws:id="textBoxId">
       Hello{"\n"}
-      <$.Bold ws:id="boldId">
-        <$.Italic ws:id="italicId">world</$.Italic>
-      </$.Bold>
+      <Bold ws:id="boldId">
+        <Italic ws:id="italicId">world</Italic>
+      </Bold>
       {"\n"}
-      <$.Span ws:id="spanId">and</$.Span>
+      <Span ws:id="spanId">and</Span>
       {"\n"}
-      <$.RichTextLink ws:id="linkId" href="/my-url">
+      <RichTextLink ws:id="linkId" href="/my-url">
         other realms
-      </$.RichTextLink>
-    </$.Box>
+      </RichTextLink>
+    </Box>
     <ws.element ws:tag="div" ws:id="textElementId">
       Hello{"\n"}
       <ws.element ws:tag="b" ws:id="boldElementId">
@@ -41,7 +53,7 @@ const { instances } = renderData(
         other realms
       </ws.element>
     </ws.element>
-  </$.Body>
+  </Body>
 );
 
 const expectedState = {
@@ -219,11 +231,11 @@ test("convert lexical to instances uses supplied id generator for new formatting
 
   expect(updates).toEqual(
     renderTemplate(
-      <$.Box ws:id="emptyBoxId">
+      <Box ws:id="emptyBoxId">
         <ws.element ws:tag="b" ws:id="generated-bold">
           Generated
         </ws.element>
-      </$.Box>
+      </Box>
     ).instances
   );
 });
@@ -258,3 +270,134 @@ test("convert lexical formatting to plain text content", async () => {
     },
   ]);
 });
+
+test.each([
+  ["strong", "bold"],
+  ["em", "italic"],
+  ["del", "strikethrough"],
+  ["code", "code"],
+] as const)(
+  "keeps MDX %s text and formatting when editing",
+  async (tag, format) => {
+    const { instances } = renderData(
+      <ws.element ws:tag="p" ws:id="paragraph">
+        Before{" "}
+        <ws.element ws:tag={tag} ws:id="inline">
+          original
+        </ws.element>{" "}
+        after
+      </ws.element>
+    );
+    const refs: Refs = new Map();
+    const editor = createHeadlessEditor({ nodes: [LinkNode] });
+    await new Promise<void>((resolve) => {
+      editor.update(
+        () => {
+          $convertToLexical(instances, "paragraph", refs);
+        },
+        { onUpdate: resolve }
+      );
+    });
+    editor.getEditorState().read(() => {
+      expect($getRoot().getTextContent()).toBe("Before original after");
+      const text = $getRoot()
+        .getAllTextNodes()
+        .find((node) => node.getTextContent() === "original")!;
+      expect(text.hasFormat(format)).toBe(true);
+    });
+    await new Promise<void>((resolve) => {
+      editor.update(
+        () => {
+          $getRoot()
+            .getAllTextNodes()
+            .find((node) => node.getTextContent() === "original")!
+            .setTextContent("edited");
+        },
+        { onUpdate: resolve }
+      );
+    });
+    expect(
+      editor
+        .getEditorState()
+        .read(() =>
+          $convertToUpdates(
+            instances.get("paragraph")!,
+            refs,
+            new Map(),
+            () => "new"
+          )
+        )
+    ).toEqual(
+      renderTemplate(
+        <ws.element ws:tag="p" ws:id="paragraph">
+          {"Before "}
+          <ws.element ws:tag={tag} ws:id="inline">
+            edited
+          </ws.element>
+          {" after"}
+        </ws.element>
+      ).instances
+    );
+  }
+);
+
+test.each(["em", "strong", "span"])(
+  "preserves text and a nested link inside %s across edits",
+  async (tag) => {
+    const { instances } = renderData(
+      <ws.element ws:tag="p" ws:id="paragraph">
+        <ws.element ws:tag={tag} ws:id="wrapper">
+          {"Before "}
+          <ws.element ws:tag="a" ws:id="link">
+            linked text
+          </ws.element>
+          {" after."}
+        </ws.element>
+      </ws.element>
+    );
+    const refs: Refs = new Map();
+    const editor = createHeadlessEditor({ nodes: [LinkNode] });
+    await new Promise<void>((resolve) => {
+      editor.update(() => $convertToLexical(instances, "paragraph", refs), {
+        onUpdate: resolve,
+      });
+    });
+    expect(
+      editor.getEditorState().read(() => $getRoot().getTextContent())
+    ).toBe("Before linked text after.");
+    await new Promise<void>((resolve) => {
+      editor.update(
+        () => {
+          $getRoot()
+            .getAllTextNodes()
+            .find((node) => node.getTextContent() === "linked text")!
+            .setTextContent("edited link");
+        },
+        { onUpdate: resolve }
+      );
+    });
+    let id = 0;
+    const updates = editor
+      .getEditorState()
+      .read(() =>
+        $convertToUpdates(
+          instances.get("paragraph")!,
+          refs,
+          new Map(),
+          () => `new-${++id}`
+        )
+      );
+    const expected = renderTemplate(
+      <ws.element ws:tag="p" ws:id="paragraph">
+        <ws.element ws:tag={tag} ws:id="wrapper">
+          {"Before "}
+          <ws.element ws:tag="a" ws:id="link">
+            edited link
+          </ws.element>
+          {" after."}
+        </ws.element>
+      </ws.element>
+    ).instances;
+    expect(updates).toEqual(expected);
+  }
+);

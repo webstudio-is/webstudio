@@ -8,7 +8,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    "webstudio": "./src/index.ts"
+    ".": {
+      "webstudio": "./src/index.ts"
+    },
+    "./jsx-runtime": {
+      "webstudio": "./src/jsx-runtime.ts"
+    },
+    "./jsx-dev-runtime": {
+      "webstudio": "./src/jsx-dev-runtime.ts"
+    }
   },
   "sideEffects": false,
   "scripts": {
@@ -21,7 +29,6 @@
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
-    "change-case": "^5.4.4",
     "react": "18.3.0-canary-14898b6a9-20240318"
   },
   "devDependencies": {

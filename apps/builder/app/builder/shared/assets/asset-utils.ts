@@ -5,8 +5,9 @@ import type {
   VideoAsset,
   AllowedFileExtension,
 } from "@webstudio-is/sdk";
-import { nanoid } from "nanoid";
 import {
+  createId,
+  formatAssetName,
   getMimeTypeByExtension,
   getFileExtension,
   IMAGE_EXTENSIONS,
@@ -14,6 +15,29 @@ import {
   getAssetContentHash,
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
+
+export const isAssetFilenameUsed = ({
+  assets,
+  filename,
+  folderId,
+  excludeAssetId,
+}: {
+  assets: Iterable<Asset>;
+  filename: string;
+  folderId?: string;
+  excludeAssetId?: Asset["id"];
+}) => {
+  for (const asset of assets) {
+    if (
+      asset.id !== excludeAssetId &&
+      asset.folderId === folderId &&
+      formatAssetName(asset) === filename
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
 
 export const getImageNameAndType = (fileName: string) => {
   const extractedExt = getFileExtension(fileName)?.toLowerCase();
@@ -51,7 +75,7 @@ const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
   // Any image format is suitable
   const FALLBACK_URL_TYPE = "image/png";
 
-  return [FALLBACK_URL_TYPE, `${nanoid()}.png`] as const;
+  return [FALLBACK_URL_TYPE, `${createId("nano")}.png`] as const;
 };
 
 export const getSha256Hash = async (data: string) => {

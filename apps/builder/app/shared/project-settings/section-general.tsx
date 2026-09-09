@@ -120,7 +120,10 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
             variant="wrapped"
             content="Used in search results and social previews."
           >
-            <InfoCircleIcon tabIndex={0} />
+            <InfoCircleIcon
+              color={cssVar("--foreground-secondary")}
+              tabIndex={0}
+            />
           </Tooltip>
         </Flex>
         <InputField
@@ -141,7 +144,10 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
             variant="wrapped"
             content="Used as the email recipient when submitting a webhook form without an action."
           >
-            <InfoCircleIcon tabIndex={0} />
+            <InfoCircleIcon
+              color={cssVar("--foreground-secondary")}
+              tabIndex={0}
+            />
           </Tooltip>
           {allowContactEmail === false && <ProChip>Pro</ProChip>}
         </Flex>

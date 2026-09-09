@@ -10,6 +10,9 @@ export const requireBuilderReload = ({
   target?: Pick<Window, "confirm" | "location">;
   toastId?: string;
 }) => {
+  if ($syncStatus.get().status === "fatal") {
+    return;
+  }
   const shouldReload = target.confirm(error);
   if (shouldReload) {
     target.location.reload();

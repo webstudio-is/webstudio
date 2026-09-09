@@ -132,7 +132,11 @@ describe("configured Assets system resource", () => {
     });
     await expect(responses[1].json()).resolves.toMatchObject({
       ok: false,
-      error: { code: "INVALID_REQUEST" },
+      error: {
+        code: "INVALID_REQUEST",
+        message:
+          "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+      },
     });
     await expect(responses[2].json()).resolves.toMatchObject({
       ok: false,
@@ -413,6 +417,33 @@ describe("configured Assets system resource", () => {
     );
     expect(malformed.status).toBe(400);
 
+    const invalidSetup = await executeAssetQuery(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({
+          query: {
+            result: "first",
+            limit: -1,
+            output: { mode: "fields", includeMetadata: false, fields: [] },
+            content: { mode: "none" },
+          },
+        }),
+      },
+      dependencies
+    );
+    await expect(invalidSetup.json()).resolves.toMatchObject({
+      error: {
+        code: "INVALID_REQUEST",
+        details: {
+          issues: [
+            { path: ["query", "limit"] },
+            { path: ["query"] },
+            { path: ["query", "sort"] },
+          ],
+        },
+      },
+    });
+
     dependencies.previewProjectAssetQuery.mockRejectedValueOnce(
       new AssetQueryExecutionError("Invalid pagination")
     );
@@ -423,6 +454,69 @@ describe("configured Assets system resource", () => {
     expect(invalid.status).toBe(400);
     await expect(invalid.json()).resolves.toMatchObject({
       error: { code: "INVALID_REQUEST" },
+    });
+  });
+
+  test("shows sanitized internal messages only in authenticated diagnostics", async () => {
+    dependencies.previewProjectAssetQuery.mockRejectedValue(
+      new Error(
+        "Document graph failed for content/broken.md?authToken=secret-token"
+      )
+    );
+    dependencies.previewProjectAssetQueries.mockResolvedValue([
+      {
+        status: "rejected",
+        reason: new Error("Document graph failed for content/broken.md"),
+      },
+    ]);
+
+    dependencies.authorizeApiProject.mockRejectedValueOnce(
+      new Error("Private authorization dependency failed")
+    );
+    const beforeAuthorization = await executeAssetQuery(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: {} }),
+        includeDiagnostics: true,
+      },
+      dependencies
+    );
+    await expect(beforeAuthorization.json()).resolves.toMatchObject({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Asset query preview failed",
+      },
+    });
+
+    const ordinary = await executeAssetQuery(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: {} }),
+        includeDiagnostics: false,
+      },
+      dependencies
+    );
+    await expect(ordinary.json()).resolves.toMatchObject({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Asset query preview failed",
+      },
+    });
+
+    const detailed = await executeAssetQuery(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: {} }),
+        includeDiagnostics: true,
+      },
+      dependencies
+    );
+    await expect(detailed.json()).resolves.toMatchObject({
+      error: {
+        code: "INTERNAL_ERROR",
+        message:
+          "Document graph failed for content/broken.md?authToken=[redacted]",
+      },
     });
   });
 

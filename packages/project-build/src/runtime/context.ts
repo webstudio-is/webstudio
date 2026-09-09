@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { createId } from "@webstudio-is/sdk";
 import type { ContentBlockApplication } from "./content-block-application";
 
 export type BuilderRuntimeContext = {
@@ -11,5 +11,5 @@ export type BuilderRuntimeContext = {
 };
 
 export const builderRuntimeContext: BuilderRuntimeContext = {
-  createId: nanoid,
+  createId: () => createId("nano"),
 };

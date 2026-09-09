@@ -17,6 +17,7 @@ import {
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
+  PanelContent,
   cssVar,
   theme,
   Flex,
@@ -422,11 +423,11 @@ export const BackgroundContent = ({ index }: { index: number }) => {
 
   return (
     <>
-      <Flex
+      <PanelContent
+        as={Flex}
         align="center"
         gap="2"
         justify="between"
-        css={{ padding: theme.panel.padding }}
         shrink={false}
       >
         <PropertyInlineLabel
@@ -442,7 +443,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           index={index}
           cachedValues={cachedValuesRef}
         />
-      </Flex>
+      </PanelContent>
 
       <Separator />
 

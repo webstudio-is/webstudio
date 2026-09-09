@@ -14,7 +14,9 @@ export {
 } from "./markdown-errors";
 export { extractMarkdownBody, type MarkdownBody } from "./markdown-body";
 export {
+  createMarkdownFrontmatterDiagnostics,
   extractMarkdownFrontmatter,
+  type MarkdownFrontmatterDiagnostic,
   type MarkdownFrontmatter,
 } from "./frontmatter";
 

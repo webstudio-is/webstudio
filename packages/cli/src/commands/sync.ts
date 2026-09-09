@@ -2,11 +2,15 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { spinner } from "@clack/prompts";
-import { type PublishedProjectBundle } from "@webstudio-is/protocol";
+import {
+  bundleVersion,
+  publishedProjectBundle,
+  type PublishedProjectBundle,
+} from "@webstudio-is/protocol";
 import {
   getApiErrorCode,
   loadProjectBundleByBuildId,
-  loadProjectBundleByProjectId,
+  loadBuilderDataByProjectId,
   toLocalProjectBundle,
 } from "@webstudio-is/http-client";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
@@ -20,13 +24,77 @@ import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { downloadAssetFiles } from "../asset-files";
 import { resolveApiConnection } from "../api-connection";
 import { materializeManagedAgents } from "../managed-agents";
+import { serializedBuild } from "@webstudio-is/project-build/contracts";
+import {
+  createBuilderStateFromBuildData,
+  createSerializedBuilderBuildDataFromState,
+} from "@webstudio-is/project-build/state";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
+import {
+  createReachableAssetContentCompilationPlan,
+  getHomePage,
+} from "@webstudio-is/sdk";
+import { compileContentSource } from "@webstudio-is/content-engine/compiler";
+import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
+import { createFileSystemContentSource } from "../filesystem-content-source";
+import { z } from "zod";
+import {
+  breakpoint,
+  styleDecl,
+  styleSource,
+  styleSourceSelection,
+  prop,
+  instance,
+  dataSource,
+  resource,
+} from "@webstudio-is/sdk/schema";
+
+// Builder data uses arrays rather than the keyed pairs in an export bundle.
+const builderData = serializedBuild.extend({
+  breakpoints: breakpoint.array(),
+  styles: styleDecl.array(),
+  styleSources: styleSource.array(),
+  styleSourceSelections: styleSourceSelection.array(),
+  props: prop.array(),
+  instances: instance.array(),
+  dataSources: dataSource.array(),
+  resources: resource.array(),
+  assets: publishedProjectBundle.shape.assets,
+  assetFolders: publishedProjectBundle.shape.assetFolders,
+  project: z.object({ id: z.string(), title: z.string(), domain: z.string() }),
+});
+
+const loadCurrentProjectBundle = async (
+  connection: Awaited<ReturnType<typeof resolveApiConnection>>
+) => {
+  const data = builderData.parse(await loadBuilderDataByProjectId(connection));
+  if (
+    data.projectId !== connection.projectId ||
+    data.project.id !== connection.projectId
+  ) {
+    throw new Error("Source project does not match the linked project");
+  }
+  const pages = migratePages(data.pages);
+  const state = createBuilderStateFromBuildData({ ...data, pages });
+  return publishedProjectBundle.parse({
+    bundleVersion,
+    origin: connection.origin,
+    projectDomain: data.project.domain,
+    projectTitle: data.project.title,
+    page: getHomePage(pages),
+    pages: Array.from(pages.pages.values()),
+    assets: data.assets,
+    assetFolders: data.assetFolders,
+    build: { ...data, ...createSerializedBuilderBuildDataFromState(state) },
+  });
+};
 
 export type SyncDependencies = {
   createFileIfNotExists: typeof createFileIfNotExists;
   downloadAssetFiles: typeof downloadAssetFiles;
   isFileExists: typeof isFileExists;
   loadProjectBundleByBuildId: typeof loadProjectBundleByBuildId;
-  loadProjectBundleByProjectId: typeof loadProjectBundleByProjectId;
+  loadCurrentProjectBundle: typeof loadCurrentProjectBundle;
   readFile: typeof readFile;
   resolveApiConnection: typeof resolveApiConnection;
   spinner: typeof spinner;
@@ -39,7 +107,7 @@ export const defaultSyncDependencies: SyncDependencies = {
   downloadAssetFiles,
   isFileExists,
   loadProjectBundleByBuildId,
-  loadProjectBundleByProjectId,
+  loadCurrentProjectBundle,
   readFile,
   resolveApiConnection,
   spinner,
@@ -65,10 +133,8 @@ export const syncOptions = (yargs: CommonYargsArgv) =>
 type SyncOptions = Partial<StrictYargsOptionsToInterface<typeof syncOptions>>;
 
 const unpublishedProjectBundleMessage = [
-  "Unable to synchronize project bundle because the project is not published.",
-  "`webstudio sync` downloads the published project bundle.",
-  "Publishing is not required for MCP editing. Do not ask the user to publish; use MCP tools against the latest editable build.",
-  "For visual verification, use `preview.start` or `webstudio preview --source session` instead.",
+  "The selected build cannot be exported.",
+  "Run `webstudio sync` without --buildId to export the current saved project without publishing.",
 ].join("\n");
 
 const isUnpublishedProjectBundleError = (error: unknown) => {
@@ -146,7 +212,7 @@ export const sync = async (
               origin,
               headers: apiCompatibilityHeaders,
             })
-          : await dependencies.loadProjectBundleByProjectId({
+          : await dependencies.loadCurrentProjectBundle({
               projectId,
               authToken,
               origin,
@@ -182,6 +248,32 @@ export const sync = async (
         "sync"
       );
       throw new HandledCliError();
+    }
+  }
+
+  if (options.buildId === undefined) {
+    const plan = createReachableAssetContentCompilationPlan({
+      props: project.build.props.map(([, value]) => value),
+      dataSources: project.build.dataSources.map(([, value]) => value),
+      resources: project.build.resources.map(([, value]) => value),
+    });
+    if (plan !== undefined) {
+      syncing.message("Preparing local content index");
+      const { artifact } = await compileContentSource({
+        source: createFileSystemContentSource({
+          projectId: project.build.projectId,
+          assets: project.assets,
+          folders: new Map(
+            (project.assetFolders ?? []).map((folder) => [folder.id, folder])
+          ),
+        }),
+        projectId: project.build.projectId,
+        plan,
+        maxBytes: parseContentDatabaseMaxBytes(
+          process.env.CONTENT_DATABASE_MAX_BYTES
+        ),
+      });
+      project.assetIndex = artifact;
     }
   }
 

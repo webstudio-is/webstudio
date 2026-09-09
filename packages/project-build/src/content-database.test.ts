@@ -235,7 +235,76 @@ describe("Content Block MDX compilation", () => {
         value: "private.mdx",
       }
     );
-    const source = '{unsafe}\n\n<ws.element ws:name="Hero" />';
+    const source = '{unsafe}\n\n<ws.element ws:name="Hero" />\n\n<Missing />';
+    const artifact = {
+      format: "webstudio-content-database",
+      version: 1,
+      documents: [
+        {
+          _id: "article.mdx",
+          _type: "asset.file",
+          name: "article.mdx",
+          path: "article.mdx",
+          key: "article",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: source.length,
+          revision: "article-revision",
+          contentRef: "article.mdx",
+        },
+      ],
+      contents: { "article.mdx": source },
+    } as unknown as ContentArtifactV1;
+
+    const omissions: { assetId: string; templateName: string }[] = [];
+    const plan = await resolvePublishedMdxDependencyClosure({
+      build,
+      artifact,
+      onTemplateOmission: (issue) => omissions.push(issue),
+    });
+    expect(omissions).toEqual([
+      expect.objectContaining({
+        assetId: "article.mdx",
+        templateName: "Missing",
+      }),
+    ]);
+    const queryIds = plan?.queries.map(({ id }) => id);
+
+    expect(queryIds).toContain("__content-block-mdx__:nested.mdx");
+    expect(queryIds).not.toContain("__content-block-mdx__:private.mdx");
+  });
+
+  test("retains nested sources through semantic component templates", async () => {
+    const build = createBuild({});
+    build.instances[0].children = [{ type: "id", value: "templates" }];
+    build.instances.push(
+      {
+        type: "instance",
+        id: "templates",
+        component: "ws:block-template",
+        children: [{ type: "id", value: "paragraph" }],
+      },
+      {
+        type: "instance",
+        id: "paragraph",
+        component: "Paragraph",
+        children: [{ type: "id", value: "nested" }],
+      },
+      {
+        type: "instance",
+        id: "nested",
+        component: "ws:block",
+        children: [],
+      }
+    );
+    build.props.push({
+      id: "nested-source",
+      instanceId: "nested",
+      name: "src",
+      type: "asset",
+      value: "nested.mdx",
+    });
+    const source = "Authored paragraph\n";
     const artifact = {
       format: "webstudio-content-database",
       version: 1,
@@ -260,10 +329,10 @@ describe("Content Block MDX compilation", () => {
       build,
       artifact,
     });
-    const queryIds = plan?.queries.map(({ id }) => id);
 
-    expect(queryIds).toContain("__content-block-mdx__:nested.mdx");
-    expect(queryIds).not.toContain("__content-block-mdx__:private.mdx");
+    expect(plan?.queries.map(({ id }) => id)).toContain(
+      "__content-block-mdx__:nested.mdx"
+    );
   });
 
   test("keeps internal MDX retention out of Assets Resource plans", () => {
@@ -347,10 +416,26 @@ describe("Content Block MDX compilation", () => {
         }),
       });
       const artifact = {
+        documentGraph: {
+          nodes: [
+            { id: "post", revision: "r1", contentRef: "post" },
+            { id: "author", revision: "r1", contentRef: "author" },
+          ],
+          edges: [
+            {
+              sourceId: "post",
+              referenceId: "#frontmatter/author",
+              reference: {
+                documentId: "author",
+                revision: "r1",
+                representation: { type: "document" },
+              },
+            },
+          ],
+        },
         documents: [
           {
             _id: "post",
-            _type: "asset.file",
             name: "post.json",
             path: "post.json",
             key: "post",
@@ -361,7 +446,6 @@ describe("Content Block MDX compilation", () => {
           },
           {
             _id: "private-post",
-            _type: "asset.file",
             name: "private.json",
             path: "private.json",
             key: "private",
@@ -372,7 +456,6 @@ describe("Content Block MDX compilation", () => {
           },
           {
             _id: "second-post",
-            _type: "asset.file",
             name: "second.json",
             path: "second.json",
             key: "second",
@@ -402,6 +485,18 @@ describe("Content Block MDX compilation", () => {
       );
       expect(plan?.queries.map(({ id }) => id)).not.toContain(
         "__content-block-mdx__:second.mdx"
+      );
+
+      // Returning an unrelated author is safe; using that unresolved reference
+      // as the MDX source is still rejected, including inside a Collection.
+      build.props[0].value =
+        kind === "detail"
+          ? `${resourceVariable}.data.properties.author.mdx`
+          : `${itemVariable}.properties.author.mdx`;
+      expect(() =>
+        resolvePublishedMdxAssetCandidates({ build, artifact })
+      ).toThrow(
+        "Dynamic MDX source candidates through resolved document references"
       );
     }
   );

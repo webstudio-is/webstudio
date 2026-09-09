@@ -1,3 +1,7 @@
+/**
+ * Materializes MDX Assets for published builds with the same template and
+ * Asset-reference behavior used by the Builder runtime.
+ */
 import {
   parseMdxDocumentRecovering,
   type MdxDocument,
@@ -35,7 +39,10 @@ import {
   materializeMdxTemplates,
   type MdxTemplateDependency,
 } from "./mdx-materialization";
-import { resolveMdxTemplates } from "./mdx-template-resolution";
+import {
+  assertMdxTemplateStructure,
+  resolveMdxTemplates,
+} from "./mdx-template-resolution";
 import {
   createMdxContentModelDiagnostics,
   createMdxDiagnostics,
@@ -113,7 +120,7 @@ export const getUnsafeDynamicPublishedMdxDiagnostic = ({
   }
 };
 
-const publishedMdxMaterializerRevision = 1;
+const publishedMdxMaterializerRevision = 2;
 
 export const createPublishedMdxMaterializationCache = () => ({
   documents: new Map<
@@ -178,11 +185,14 @@ const createDependencyRevision = async ({
         identity,
         nestedDocuments,
         assetReferences: [...assetReferences]
-          .map(({ assetId, suffix }) => ({ assetId, suffix }))
+          .map(({ path, assetId, suffix, structured }) => ({
+            path,
+            assetId,
+            suffix,
+            structured,
+          }))
           .sort((left, right) =>
-            `${left.assetId}${left.suffix ?? ""}`.localeCompare(
-              `${right.assetId}${right.suffix ?? ""}`
-            )
+            JSON.stringify(left).localeCompare(JSON.stringify(right))
           ),
         assetDependencies: [...assetDependencies].sort((left, right) =>
           left.id.localeCompare(right.id)
@@ -409,31 +419,35 @@ export const materializePublishedMdx = async ({
         continue;
       }
       const document = parsed.document;
+      const assetReferences =
+        artifact.assetValueReferences?.[candidate._id] ?? [];
       const resolution = resolveMdxTemplates({
         document,
         identity,
         instances: data.instances,
+        props: data.props,
         metas,
       });
+      assertMdxTemplateStructure(resolution);
       const templates = await materializeMdxTemplates({
         identity,
         resolution,
         data,
         metas,
         projectId,
+        assetReferences,
       });
       const referencedTemplateNames = Array.from(
         new Set(
           resolution.references.map((reference) => reference.templateName)
         )
       );
-      const assetReferences =
-        artifact.assetValueReferences?.[candidate._id] ?? [];
       const materialized = materializeMdxAuthoredContent({
         identity,
         document,
         templateMaterialization: templates,
         assetReferences,
+        metas,
       });
       if (
         materialized.fragment.instances.length > contentEngineLimits.mdxNodes ||
@@ -447,6 +461,9 @@ export const materializePublishedMdx = async ({
         continue;
       }
       for (const diagnostic of templates.diagnostics) {
+        warnings.push({ route, diagnostic });
+      }
+      for (const diagnostic of materialized.diagnostics ?? []) {
         warnings.push({ route, diagnostic });
       }
       for (const diagnostic of createMdxContentModelDiagnostics({

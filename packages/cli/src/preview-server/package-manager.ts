@@ -197,8 +197,13 @@ export const getPackageManagerInvocation = (
   options: PreviewPackageManagerOptions = defaultPreviewServerDependencies
 ) => {
   const packageManager = resolvePreviewPackageManager(options);
+  // npm consumes this separator; pnpm forwards it to the script instead.
+  const commandArgs =
+    packageManager.name === "pnpm" && args[0] === "run" && args[2] === "--"
+      ? [...args.slice(0, 2), ...args.slice(3)]
+      : args;
   return {
     command: packageManager.command,
-    args: [...packageManager.argsPrefix, ...args],
+    args: [...packageManager.argsPrefix, ...commandArgs],
   };
 };

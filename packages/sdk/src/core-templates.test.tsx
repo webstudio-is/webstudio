@@ -1,52 +1,42 @@
 import { expect, test } from "vitest";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
-import { blockComponent } from "./core-metas";
-import { coreTemplates } from "./core-templates";
+import { contentBlockMdxTemplateDescriptors } from "./content-block";
+import { intrinsicCoreTemplates } from "./core-templates";
 
-const expectCodeTextDefaultsToStayImplicit = (
-  template: TemplateMeta | undefined
-) => {
-  if (template === undefined) {
-    throw new Error("Expected Code Text template");
-  }
-  const fragment = renderTemplate(template.template);
-  const codeText = fragment.instances.find(
-    ({ component }) => component === "CodeText"
-  );
-  expect(codeText?.children).toEqual([
-    { type: "text", value: 'const status = "ready";' },
+test("marks structural-only MDX semantics as unavailable in insertion menus", () => {
+  expect(
+    contentBlockMdxTemplateDescriptors
+      .filter(({ insertable }) => insertable === false)
+      .map(({ resolutionKey }) => resolutionKey)
+  ).toEqual([
+    "element:li",
+    "element:br",
+    "element:em",
+    "element:strong",
+    "element:del",
+    "element:code",
+    "element:input",
+    "element:thead",
+    "element:tbody",
+    "element:tr",
+    "element:th",
+    "element:td",
   ]);
-  expect(
-    fragment.props.filter(({ instanceId }) => instanceId === codeText?.id)
-  ).toEqual([]);
-};
-
-test("keeps standalone Code Text defaults out of instance props", () => {
-  expectCodeTextDefaultsToStayImplicit(
-    (coreTemplates as Record<string, TemplateMeta>).code_text
-  );
 });
 
-test("keeps Content Block Code Text defaults out of template props", () => {
-  expectCodeTextDefaultsToStayImplicit(coreTemplates[blockComponent]);
-});
-
-test("keeps the Content Block Image template representable as Markdown", () => {
-  const template = coreTemplates[blockComponent];
+test.each([
+  ["input_label", undefined],
+  ["radio", "Radio Field"],
+  ["checkbox", "Checkbox Field"],
+] as const)("keeps the %s root label", (templateName, expectedLabel) => {
+  const template = (intrinsicCoreTemplates as Record<string, TemplateMeta>)[
+    templateName
+  ];
   if (template === undefined) {
-    throw new Error("Expected Content Block template");
-  }
-  const fragment = renderTemplate(template.template);
-  const image = fragment.instances.find(
-    ({ component }) => component === "Image"
-  );
-  if (image === undefined) {
-    throw new Error("Expected Image template");
+    throw new Error(`Expected ${templateName} template`);
   }
 
-  expect(
-    fragment.styleSourceSelections.filter(
-      ({ instanceId }) => instanceId === image.id
-    )
-  ).toEqual([]);
+  const fragment = renderTemplate(template.template);
+
+  expect(fragment.instances[0]?.label).toBe(expectedLabel);
 });

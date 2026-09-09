@@ -1,5 +1,6 @@
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
+  PanelContent,
   Flex,
   Button,
   Text,
@@ -106,11 +107,7 @@ export const BreakpointsMenu = ({
           <DropdownMenuSeparator />
         )}
 
-        <Flex
-          align="center"
-          justify="center"
-          css={{ padding: theme.panel.padding }}
-        >
+        <PanelContent as={Flex} align="center" justify="center">
           <Button
             onClick={() => {
               onEditClick();
@@ -119,7 +116,7 @@ export const BreakpointsMenu = ({
           >
             Edit breakpoints
           </Button>
-        </Flex>
+        </PanelContent>
       </DropdownMenuContent>
     </DropdownMenu>
   );

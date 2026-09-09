@@ -31,13 +31,14 @@ export const Block = React.forwardRef<
     return <div>Content Block instance is undefined</div>;
   }
 
-  const templateInstance = findContentBlockTemplateContainers({
+  const templateInstances = findContentBlockTemplateContainers({
     blockInstance: instance,
     instances,
-  })[0];
-  if (templateInstance === undefined) {
-    return <div>Content Block template child is not found</div>;
+  });
+  if (templateInstances.length !== 1) {
+    return <div>Content Block must contain exactly one Templates list</div>;
   }
+  const [templateInstance] = templateInstances;
   const templateInstanceId = templateInstance.id;
 
   if (isDesignMode) {

@@ -43,15 +43,14 @@ The "href" property determines what the Link instance will lead to, such as a UR
 
 ### Target
 
-<figure><img src="../../.gitbook/assets/link-target-property.avif" alt="Link settings with the Target property options open"><figcaption></figcaption></figure>
+The `target` property controls where the link opens. Choose one of these values:
 
-You can use the "Target" property to modify a link instance's behavior and define how linked content is displayed.
+1. **`_self`**: Opens the link in the same tab. This is the default.
+2. **`_blank`**: Opens the link in a new tab or window.
+3. **`_parent`**: Opens the link in the parent browsing context. This is mainly useful inside nested frames.
+4. **`_top`**: Opens the link in the top-level browsing context, replacing any frames.
 
-1. **Self**: When you set "Target" to "Self," the linked content will open in the same window or tab. This is the default behavior for links, and it maintains the browsing context.
-2. **Blank**: If you choose "Blank," the linked content will open in a new tab or window, providing a separate browsing context.
-3. **Parent and Top**: For web pages involving nested frames, "Parent" will direct the linked content to open in the parent frame or window, maintaining the hierarchy of frames.\
-   \
-   On the other hand, selecting "Top" will open the link instance in the top-level window, replacing all frames if there are any. This is useful when you want to break out of any frames and provide a full-page experience.
+To open a link in a new tab, set **Target** to **`_blank`**.
 
 ### Prefetch
 

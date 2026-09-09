@@ -1,16 +1,21 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
   blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
+  coreMetas,
+  elementComponent,
   type Asset,
   type Instance,
+  type Prop,
 } from "@webstudio-is/sdk";
 import {
   __testing__ as assetContentBridgeTesting,
   createAssetContentBridge,
+  getAssetContentBridge,
 } from "./asset-content-bridge.client";
 import {
   acquireExternalContentRoot,
@@ -26,8 +31,16 @@ import {
   updateExternalContentAssetSource,
   updateExternalContentFrontmatter,
 } from "./external-content-roots";
-import { executeRuntimeMutation } from "./instance-utils/data";
-import { selectInstance } from "./nano-states";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "./instance-utils/data";
+import {
+  $builderMode,
+  $registeredComponentMetas,
+  selectInstance,
+  selectPage,
+} from "./nano-states";
 import {
   findExternalContentRoot,
   getExternalContentRoots,
@@ -48,16 +61,24 @@ import {
   $styles,
 } from "./sync/data-stores";
 import {
+  createObjectPool,
   externalContentSyncStore,
   registerContainers,
   serverSyncStore,
 } from "./sync/sync-stores";
+import { createSyncChangesFromBuilderPatchPayload } from "./sync/builder-patch";
+import { insertTemplateAt } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import { __testing__ as builderApiTesting } from "./builder-api";
+
+const { canAccessAssetContent } = builderApiTesting;
 
 registerContainers();
 
 test("places unresolved-template placeholders at their authored nesting point", async () => {
   const source =
     '<ws.element ws:tag="section">Before<ws.element ws:name="Missing" />After</ws.element>';
+  let storedSource = source;
+  const writes: string[] = [];
   const sourceAsset = {
     ...asset,
     size: new TextEncoder().encode(source).byteLength,
@@ -67,10 +88,17 @@ test("places unresolved-template placeholders at their authored nesting point", 
       readContent: async () => ({
         asset: sourceAsset,
         data: (async function* () {
-          yield new TextEncoder().encode(source);
+          yield new TextEncoder().encode(storedSource);
         })(),
       }),
-      updateContent: async () => sourceAsset,
+      updateContent: async ({ data }) => {
+        storedSource = await new Response(data).text();
+        writes.push(storedSource);
+        return {
+          ...sourceAsset,
+          size: new TextEncoder().encode(storedSource).byteLength,
+        };
+      },
     },
     authorize: () => true,
   });
@@ -86,7 +114,15 @@ test("places unresolved-template placeholders at their authored nesting point", 
   );
   $project.set({ id: "project", title: "Project", domain: "" } as never);
   $pages.set(createDefaultPages({ rootInstanceId: "block" }));
-  $instances.set(new Map([["block", instance("block", blockComponent, [])]]));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+    ])
+  );
   $props.set(new Map());
   $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
   $breakpoints.set(new Map());
@@ -132,6 +168,679 @@ test("places unresolved-template placeholders at their authored nesting point", 
       renderScope: '["block"]',
     })
   ).toEqual([{ type: "id", value: section.id }]);
+  executeRuntimeMutation({
+    id: "instances.deleteBySelector",
+    input: { instanceSelector: [missing.id, section.id, "block"] },
+  });
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+  expect(writes).toHaveLength(1);
+  expect(storedSource).toBe("<section>BeforeAfter</section>\n");
+  expect($instances.get().has(missing.id)).toBe(false);
+});
+
+test("re-resolves existing Markdown when a matching template is added", async () => {
+  const source = "# Existing heading\n";
+  const sourceAsset = {
+    ...asset,
+    size: new TextEncoder().encode(source).byteLength,
+  };
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: sourceAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(source);
+        })(),
+      }),
+      updateContent: async () => sourceAsset,
+    },
+    authorize: () => true,
+  });
+  sessions.push(session);
+  assetContentBridgeTesting.initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
+    })
+  );
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+    ])
+  );
+  $props.set(new Map());
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+
+  releases.push(
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: sourceAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  );
+
+  const initialHeading = getExternalContentRootChildren({
+    projectId: "project",
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  })?.[0];
+  if (initialHeading?.type !== "id") {
+    throw new Error("Expected the initial materialized heading");
+  }
+  executeRuntimeMutation({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId: initialHeading.value,
+      mode: "text",
+      text: "Edited heading",
+    },
+  });
+
+  const insertion = executeRuntimeMutation({
+    id: "instances.insertComponent",
+    input: {
+      parentInstanceId: "templates",
+      component: "ws:element",
+      tag: "h1",
+    },
+  });
+  const templateId = insertion?.result.rootInstanceIds[0];
+  if (templateId === undefined) {
+    throw new Error("Expected an inserted heading template");
+  }
+  executeRuntimeMutation({
+    id: "instances.updateProps",
+    input: {
+      updates: [
+        {
+          instanceId: templateId,
+          name: "title",
+          type: "string",
+          value: "Template applied",
+        },
+      ],
+    },
+  });
+
+  await vi.waitFor(() => {
+    const heading = getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })?.[0];
+    if (heading?.type !== "id") {
+      throw new Error("Expected the materialized heading");
+    }
+    expect($instances.get().get(heading.value)?.children).toEqual([
+      { type: "text", value: "Edited heading" },
+    ]);
+    expect(
+      Array.from($props.get().values()).find(
+        (prop) => prop.instanceId === heading.value && prop.name === "title"
+      )
+    ).toMatchObject({ type: "string", value: "Template applied" });
+  });
+
+  const templateRevisionBeforeRemoteChange =
+    getExternalContentRoots().values().next().value?.templateMutationRevision ??
+    0;
+  serverSyncStore.addTransaction(
+    "remote-template-style",
+    createSyncChangesFromBuilderPatchPayload({
+      data: getWebstudioData(),
+      payload: [
+        {
+          namespace: "styleSources",
+          patches: [
+            {
+              op: "add",
+              path: ["remote-template-style"],
+              value: { type: "local", id: "remote-template-style" },
+            },
+          ],
+        },
+        {
+          namespace: "styleSourceSelections",
+          patches: [
+            {
+              op: "add",
+              path: [templateId],
+              value: {
+                instanceId: templateId,
+                values: ["remote-template-style"],
+              },
+            },
+          ],
+        },
+        {
+          namespace: "styles",
+          patches: [
+            {
+              op: "add",
+              path: ["remote-template-style:base:color"],
+              value: {
+                breakpointId: "base",
+                styleSourceId: "remote-template-style",
+                property: "color",
+                value: { type: "keyword", value: "red" },
+              },
+            },
+          ],
+        },
+      ] satisfies BuilderPatchChange[],
+    }),
+    "remote"
+  );
+  expect(
+    getExternalContentRoots().values().next().value?.templateMutationRevision
+  ).toBe(templateRevisionBeforeRemoteChange + 1);
+
+  serverSyncStore.undo();
+  expect(
+    getExternalContentRoots().values().next().value?.templateMutationRevision
+  ).toBe(templateRevisionBeforeRemoteChange + 2);
+  serverSyncStore.redo();
+  expect(
+    getExternalContentRoots().values().next().value?.templateMutationRevision
+  ).toBe(templateRevisionBeforeRemoteChange + 3);
+
+  const rejectedPayload = createSyncChangesFromBuilderPatchPayload({
+    data: getWebstudioData(),
+    payload: [
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["remote-template-style:base:background-color"],
+            value: {
+              breakpointId: "base",
+              styleSourceId: "remote-template-style",
+              property: "background-color",
+              value: { type: "keyword", value: "black" },
+            },
+          },
+        ],
+      },
+    ] satisfies BuilderPatchChange[],
+  });
+  const objectPool = createObjectPool();
+  objectPool.applyTransaction({
+    id: "rejected-template-style",
+    object: "server",
+    payload: rejectedPayload,
+  });
+  expect(
+    getExternalContentRoots().values().next().value?.templateMutationRevision
+  ).toBe(templateRevisionBeforeRemoteChange + 4);
+  objectPool.revertTransaction({
+    id: "rejected-template-style",
+    object: "server",
+  });
+  expect(
+    getExternalContentRoots().values().next().value?.templateMutationRevision
+  ).toBe(templateRevisionBeforeRemoteChange + 5);
+
+  await vi.waitFor(() => {
+    const heading = getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })?.[0];
+    if (heading?.type !== "id") {
+      throw new Error("Expected the remotely restyled heading");
+    }
+    const selection = $styleSourceSelections.get().get(heading.value);
+    expect(selection?.values).toHaveLength(1);
+    expect(
+      Array.from($styles.get().values()).find(
+        (style) =>
+          style.styleSourceId === selection?.values[0] &&
+          style.property === "color"
+      )
+    ).toMatchObject({ value: { type: "keyword", value: "red" } });
+  });
+});
+
+test("preserves the last valid materialization while the Templates structure is invalid", async () => {
+  const source = "# Heading\n";
+  const sourceAsset = {
+    ...asset,
+    size: new TextEncoder().encode(source).byteLength,
+  };
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: sourceAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(source);
+        })(),
+      }),
+      updateContent: async () => sourceAsset,
+    },
+    authorize: () => true,
+  });
+  sessions.push(session);
+  assetContentBridgeTesting.initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
+    })
+  );
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      [
+        "templates",
+        instance("templates", blockTemplateComponent, [
+          { type: "id", value: "heading-template" },
+        ]),
+      ],
+      [
+        "heading-template",
+        {
+          ...instance("heading-template", "ws:element", []),
+          tag: "h1",
+          label: "Styled heading",
+        },
+      ],
+    ])
+  );
+  $props.set(new Map());
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+  serverSyncStore.popAll();
+  externalContentSyncStore.popAll();
+
+  releases.push(
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: sourceAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  );
+  const headingChild = getExternalContentRootChildren({
+    projectId: "project",
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  })?.[0];
+  if (headingChild?.type !== "id") {
+    throw new Error("Expected the materialized heading");
+  }
+  expect($instances.get().get(headingChild.value)?.label).toBe(
+    "Styled heading"
+  );
+
+  const duplicateTemplates = instance(
+    "duplicate-templates",
+    blockTemplateComponent,
+    []
+  );
+  const blockBeforeDuplicate = $instances.get().get("block");
+  if (blockBeforeDuplicate === undefined) {
+    throw new Error("Expected the Content Block");
+  }
+  serverSyncStore.addTransaction(
+    "add-duplicate-templates",
+    createSyncChangesFromBuilderPatchPayload({
+      data: getWebstudioData(),
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "add",
+              path: [duplicateTemplates.id],
+              value: duplicateTemplates,
+            },
+            {
+              op: "replace",
+              path: [blockBeforeDuplicate.id, "children"],
+              value: [
+                { type: "id", value: duplicateTemplates.id },
+                ...blockBeforeDuplicate.children,
+              ],
+            },
+          ],
+        },
+      ] satisfies BuilderPatchChange[],
+    }),
+    "remote"
+  );
+
+  await vi.waitFor(() =>
+    expect(
+      getExternalContentRoots().values().next().value
+        ?.templateMaterializationError
+    ).toBe("Content Block has 2 Templates containers; exactly one is required")
+  );
+  expect(
+    getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  ).toEqual([headingChild]);
+  expect($instances.get().get(headingChild.value)?.label).toBe(
+    "Styled heading"
+  );
+
+  const blockBeforeRepair = $instances.get().get("block");
+  if (blockBeforeRepair === undefined) {
+    throw new Error("Expected the invalid Content Block");
+  }
+  serverSyncStore.addTransaction(
+    "remove-duplicate-templates",
+    createSyncChangesFromBuilderPatchPayload({
+      data: getWebstudioData(),
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [blockBeforeRepair.id, "children"],
+              value: blockBeforeRepair.children.filter(
+                (child) =>
+                  child.type !== "id" || child.value !== duplicateTemplates.id
+              ),
+            },
+            { op: "remove", path: [duplicateTemplates.id] },
+          ],
+        },
+      ] satisfies BuilderPatchChange[],
+    }),
+    "remote"
+  );
+
+  await vi.waitFor(() => {
+    const root = getExternalContentRoots().values().next().value;
+    expect(root?.templateMaterializationError).toBeUndefined();
+    expect(root?.templateContainerIds).toEqual(["templates"]);
+  });
+  expect(
+    getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  ).toEqual([headingChild]);
+  expect($instances.get().get(headingChild.value)?.label).toBe(
+    "Styled heading"
+  );
+});
+
+test.each([
+  ["no Templates container", []],
+  ["multiple Templates containers", ["templates-1", "templates-2"]],
+] as const)(
+  "rejects initial acquisition with %s without registering a root",
+  async (_case, templateIds) => {
+    const source = "# Heading\n";
+    const sourceAsset = {
+      ...asset,
+      size: new TextEncoder().encode(source).byteLength,
+    };
+    const session = createAssetContentSession({
+      repository: {
+        readContent: async () => ({
+          asset: sourceAsset,
+          data: (async function* () {
+            yield new TextEncoder().encode(source);
+          })(),
+        }),
+        updateContent: async () => sourceAsset,
+      },
+      authorize: () => true,
+    });
+    sessions.push(session);
+    assetContentBridgeTesting.initBridge(
+      createAssetContentBridge({
+        origin: window.location.origin,
+        request: fetch,
+        authorize: () => true,
+        requireReload: vi.fn(),
+        getContentSession: () => session,
+      })
+    );
+    $project.set({ id: "project", title: "Project", domain: "" } as never);
+    $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+    $instances.set(
+      new Map([
+        [
+          "block",
+          instance(
+            "block",
+            blockComponent,
+            templateIds.map((id) => ({ type: "id" as const, value: id }))
+          ),
+        ],
+        ...templateIds.map(
+          (id) => [id, instance(id, blockTemplateComponent, [])] as const
+        ),
+      ])
+    );
+    $props.set(new Map());
+    $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+    $breakpoints.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $styleSources.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styles.set(new Map());
+    $projectSettings.set({ meta: {}, compiler: {} });
+
+    let release: (() => void) | undefined;
+    let acquisitionError: unknown;
+    try {
+      release = await acquireExternalContentRoot({
+        projectId: "project",
+        assetId: sourceAsset.id,
+        blockInstanceId: "block",
+        renderScope: '["block"]',
+      });
+    } catch (error) {
+      acquisitionError = error;
+    }
+
+    try {
+      expect(acquisitionError).toMatchObject({
+        name: "InvalidMdxTemplateStructureError",
+        message: expect.stringContaining("exactly one"),
+      });
+      expect(getExternalContentRoots()).toHaveLength(0);
+    } finally {
+      release?.();
+      if (getExternalContentRoots().size > 0) {
+        await disposeExternalContentProject({
+          projectId: "project",
+          session,
+        });
+      }
+    }
+  }
+);
+
+test("surfaces a failed template refresh and retries it", async () => {
+  const source = "# Heading\n";
+  const sourceAsset = {
+    ...asset,
+    size: new TextEncoder().encode(source).byteLength,
+  };
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: sourceAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(source);
+        })(),
+      }),
+      updateContent: async () => sourceAsset,
+    },
+    authorize: () => true,
+  });
+  sessions.push(session);
+  const bridge = createAssetContentBridge({
+    origin: window.location.origin,
+    request: fetch,
+    authorize: () => true,
+    requireReload: vi.fn(),
+    getContentSession: () => session,
+  });
+  assetContentBridgeTesting.initBridge(bridge);
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+    ])
+  );
+  $props.set(new Map());
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+
+  const insertion = executeRuntimeMutation({
+    id: "instances.insertComponent",
+    input: {
+      parentInstanceId: "templates",
+      component: "ws:element",
+      tag: "h1",
+    },
+  });
+  const templateId = insertion?.result.rootInstanceIds[0];
+  if (templateId === undefined) {
+    throw new Error("Expected an inserted heading template");
+  }
+
+  releases.push(
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: sourceAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  );
+  const states: Array<{ status: string; error?: Error }> = [];
+  const unsubscribe = subscribeExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+    listener: (state) => states.push(state),
+  });
+
+  assetContentBridgeTesting.clearBridge();
+  executeRuntimeMutation({
+    id: "instances.updateProps",
+    input: {
+      updates: [
+        {
+          instanceId: templateId,
+          name: "title",
+          type: "string",
+          value: "After",
+        },
+      ],
+    },
+  });
+  const templatePropId = Array.from($props.get().values()).find(
+    (prop) => prop.instanceId === templateId && prop.name === "title"
+  )?.id;
+  if (templatePropId === undefined) {
+    throw new Error("Expected the template prop");
+  }
+
+  await vi.waitFor(() => {
+    expect(states.at(-1)?.status).toBe("failed");
+    expect(states.at(-1)?.error?.message).toBeTruthy();
+  });
+  expect(
+    getExternalContentRoots()
+      .values()
+      .next()
+      .value?.templateOwnership?.props?.has(templatePropId)
+  ).toBe(false);
+
+  await expect(
+    retryExternalContentAsset({
+      projectId: "project",
+      assetId: sourceAsset.id,
+    })
+  ).rejects.toThrow("bridge");
+  expect(states.at(-1)?.status).toBe("failed");
+
+  assetContentBridgeTesting.initBridge(bridge);
+  await retryExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+
+  const heading = getExternalContentRootChildren({
+    projectId: "project",
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  })?.[0];
+  if (heading?.type !== "id") {
+    throw new Error("Expected the materialized heading");
+  }
+  expect(
+    Array.from($props.get().values()).find(
+      (prop) => prop.instanceId === heading.value && prop.name === "title"
+    )
+  ).toMatchObject({ type: "string", value: "After" });
+  expect(states.at(-1)?.status).not.toBe("failed");
+  expect(
+    getExternalContentRoots()
+      .values()
+      .next()
+      .value?.templateOwnership?.props?.has(templatePropId)
+  ).toBe(true);
+
+  unsubscribe();
 });
 
 const asset: Asset = {
@@ -157,12 +866,453 @@ const sessions: Array<ReturnType<typeof createAssetContentSession>> = [];
 
 afterEach(() => {
   assetContentBridgeTesting.clearBridge();
+  $builderMode.set("design");
   for (const release of releases.splice(0)) {
     release();
   }
   for (const session of sessions.splice(0)) {
     session.dispose();
   }
+});
+
+test("does not let initial materialization overwrite a newer template refresh", async () => {
+  const source = "# Heading\n";
+  const sourceAsset = {
+    ...asset,
+    size: new TextEncoder().encode(source).byteLength,
+  };
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: sourceAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(source);
+        })(),
+      }),
+      updateContent: async () => sourceAsset,
+    },
+    authorize: () => true,
+  });
+  sessions.push(session);
+  assetContentBridgeTesting.initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
+    })
+  );
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(createDefaultPages({ rootInstanceId: "block" }));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      [
+        "templates",
+        instance("templates", blockTemplateComponent, [
+          { type: "id", value: "heading-template" },
+        ]),
+      ],
+      [
+        "heading-template",
+        {
+          ...instance("heading-template", elementComponent, []),
+          tag: "h1",
+        },
+      ],
+    ])
+  );
+  $props.set(
+    new Map([
+      [
+        "heading-title",
+        {
+          id: "heading-title",
+          instanceId: "heading-template",
+          name: "title",
+          type: "string" as const,
+          value: "Old",
+        },
+      ],
+    ])
+  );
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+  serverSyncStore.popAll();
+  externalContentSyncStore.popAll();
+
+  let releaseFirstDigest: (() => void) | undefined;
+  const firstDigestGate = new Promise<void>((resolve) => {
+    releaseFirstDigest = resolve;
+  });
+  let notifyFirstDigest: (() => void) | undefined;
+  const firstDigestStarted = new Promise<void>((resolve) => {
+    notifyFirstDigest = resolve;
+  });
+  const digest = crypto.subtle.digest.bind(crypto.subtle);
+  let digestCalls = 0;
+  const digestSpy = vi
+    .spyOn(crypto.subtle, "digest")
+    .mockImplementation(async (...args) => {
+      digestCalls += 1;
+      if (digestCalls === 1) {
+        notifyFirstDigest?.();
+        await firstDigestGate;
+      }
+      return digest(...args);
+    });
+
+  try {
+    const opening = acquireExternalContentRoot({
+      projectId: "project",
+      assetId: sourceAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    });
+    await firstDigestStarted;
+
+    executeRuntimeMutation({
+      id: "instances.updateProps",
+      input: {
+        updates: [
+          {
+            instanceId: "heading-template",
+            name: "title",
+            type: "string",
+            value: "New",
+          },
+        ],
+      },
+    });
+
+    await vi.waitFor(() => {
+      const child = getExternalContentRootChildren({
+        projectId: "project",
+        blockInstanceId: "block",
+        renderScope: '["block"]',
+      })?.[0];
+      if (child?.type !== "id") {
+        throw new Error("Expected the refreshed heading");
+      }
+      expect(
+        Array.from($props.get().values()).find(
+          (prop) => prop.instanceId === child.value && prop.name === "title"
+        )
+      ).toMatchObject({ value: "New" });
+    });
+
+    releaseFirstDigest?.();
+    releases.push(await opening);
+
+    const child = getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })?.[0];
+    if (child?.type !== "id") {
+      throw new Error("Expected the materialized heading");
+    }
+    expect(
+      Array.from($props.get().values()).find(
+        (prop) => prop.instanceId === child.value && prop.name === "title"
+      )
+    ).toMatchObject({ value: "New" });
+  } finally {
+    releaseFirstDigest?.();
+    digestSpy.mockRestore();
+  }
+});
+
+test.each([
+  {
+    name: "keeps the selected JSX template when editing immediately after insertion",
+    verifyFirstSaveCleanup: false,
+    editAfterFirstSave: false,
+  },
+  {
+    name: "clears insertion metadata after the first queued save",
+    verifyFirstSaveCleanup: true,
+    editAfterFirstSave: false,
+  },
+  {
+    name: "saves edits to a template after its insertion metadata is cleared",
+    verifyFirstSaveCleanup: false,
+    editAfterFirstSave: true,
+  },
+])("$name", async ({ verifyFirstSaveCleanup, editAfterFirstSave }) => {
+  const initialSource = "# Existing\n";
+  const sourceAsset = {
+    ...asset,
+    size: new TextEncoder().encode(initialSource).byteLength,
+  };
+  let storedSource = initialSource;
+  const writes: string[] = [];
+  const session = createAssetContentSession({
+    repository: {
+      readContent: async () => ({
+        asset: sourceAsset,
+        data: (async function* () {
+          yield new TextEncoder().encode(storedSource);
+        })(),
+      }),
+      updateContent: async ({ data }) => {
+        storedSource = await new Response(data).text();
+        writes.push(storedSource);
+        return {
+          ...sourceAsset,
+          size: new TextEncoder().encode(storedSource).byteLength,
+        };
+      },
+    },
+    authorize: () => true,
+    debounceMilliseconds: 60_000,
+  });
+  sessions.push(session);
+  assetContentBridgeTesting.initBridge(
+    createAssetContentBridge({
+      origin: window.location.origin,
+      request: fetch,
+      authorize: () => true,
+      requireReload: vi.fn(),
+      getContentSession: () => session,
+    })
+  );
+  $project.set({ id: "project", title: "Project", domain: "" } as never);
+  $pages.set(
+    createDefaultPages({ homePageId: "home", rootInstanceId: "block" })
+  );
+  selectPage("home");
+  $instances.set(
+    new Map<Instance["id"], Instance>([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      [
+        "templates",
+        instance("templates", blockTemplateComponent, [
+          { type: "id", value: "card" },
+          { type: "id", value: "note" },
+        ]),
+      ],
+      [
+        "card",
+        {
+          ...instance("card", elementComponent, [
+            { type: "text", value: "Card default" },
+          ]),
+          tag: "p",
+          label: "Card",
+          ...(editAfterFirstSave ? { name: "Card" } : {}),
+        },
+      ],
+      [
+        "note",
+        {
+          ...instance("note", elementComponent, [
+            { type: "text", value: "Note default" },
+          ]),
+          tag: "p",
+          label: "Note",
+        },
+      ],
+    ])
+  );
+  $props.set(
+    new Map<Prop["id"], Prop>([
+      [
+        "card-kind",
+        {
+          id: "card-kind",
+          instanceId: "card",
+          name: "data-kind",
+          type: "string",
+          value: "card",
+        },
+      ],
+    ])
+  );
+  $assets.set(new Map([[sourceAsset.id, sourceAsset]]));
+  $breakpoints.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
+  $registeredComponentMetas.set(new Map(Object.entries(coreMetas)));
+  $builderMode.set("content");
+
+  const release = await acquireExternalContentRoot({
+    projectId: "project",
+    assetId: sourceAsset.id,
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  });
+  releases.push(release);
+  const heading = getExternalContentRootChildren({
+    projectId: "project",
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  })?.[0];
+  if (heading?.type !== "id") {
+    throw new Error("Expected the initial heading");
+  }
+  selectInstance([heading.value, "block"]);
+
+  await expect(
+    insertTemplateAt({
+      templateSelector: ["card", "templates", "block"],
+      anchor: [heading.value, "block"],
+      insertBefore: false,
+    })
+  ).resolves.toBe(true);
+  const inserted = getExternalContentRootChildren({
+    projectId: "project",
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  })?.[1];
+  if (inserted?.type !== "id") {
+    throw new Error("Expected the inserted Card");
+  }
+
+  if (verifyFirstSaveCleanup || editAfterFirstSave) {
+    await vi.waitFor(() =>
+      expect(
+        getExternalContentRoots().values().next().value?.insertedTemplates
+      ).toBeUndefined()
+    );
+    if (verifyFirstSaveCleanup) {
+      return;
+    }
+    await flushExternalContentAsset({
+      projectId: "project",
+      assetId: sourceAsset.id,
+    });
+    expect(
+      getExternalContentRoots().values().next().value?.persistenceError
+    ).toBeUndefined();
+    expect(storedSource).toBe("# Existing\n\n<Card />\n");
+  }
+
+  await expect(
+    insertTemplateAt({
+      templateSelector: ["note", "templates", "block"],
+      anchor: [inserted.value, "block"],
+      insertBefore: false,
+    })
+  ).resolves.toBe(true);
+  const removedBeforeSave = getExternalContentRootChildren({
+    projectId: "project",
+    blockInstanceId: "block",
+    renderScope: '["block"]',
+  })?.[2];
+  if (removedBeforeSave?.type !== "id") {
+    throw new Error("Expected the inserted Note");
+  }
+  executeRuntimeMutation({
+    id: "instances.deleteBySelector",
+    input: { instanceSelector: [removedBeforeSave.value, "block"] },
+  });
+
+  await Promise.resolve();
+  executeRuntimeMutation({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId: inserted.value,
+      mode: "text",
+      text: "Edited text",
+    },
+  });
+  executeRuntimeMutation({
+    id: "instances.updateProps",
+    input: {
+      updates: [
+        {
+          instanceId: inserted.value,
+          name: "title",
+          type: "string",
+          value: "Edited",
+        },
+      ],
+    },
+  });
+
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+  expect(writes.at(-1)).toBe(
+    '# Existing\n\n<Card title="Edited">Edited text</Card>\n'
+  );
+  executeRuntimeMutation({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId: inserted.value,
+      mode: "text",
+      text: "Edited again",
+    },
+  });
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+  expect(writes.at(-1)).toBe(
+    '# Existing\n\n<Card title="Edited">Edited again</Card>\n'
+  );
+
+  release();
+  releases.splice(releases.indexOf(release), 1);
+  releases.push(
+    await acquireExternalContentRoot({
+      projectId: "project",
+      assetId: sourceAsset.id,
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })
+  );
+  executeRuntimeMutation({
+    id: "instances.updateProps",
+    input: {
+      updates: [
+        {
+          instanceId: "card",
+          name: "data-template-version",
+          type: "string",
+          value: "two",
+        },
+      ],
+    },
+  });
+  await vi.waitFor(() => {
+    const reloaded = getExternalContentRootChildren({
+      projectId: "project",
+      blockInstanceId: "block",
+      renderScope: '["block"]',
+    })?.[1];
+    if (reloaded?.type !== "id") {
+      throw new Error("Expected the reloaded Card");
+    }
+    expect(
+      Array.from($props.get().values()).find(
+        (prop) =>
+          prop.instanceId === reloaded.value &&
+          prop.name === "data-template-version"
+      )
+    ).toMatchObject({ type: "string", value: "two" });
+  });
 });
 
 test("rejects a stale raw editor replacement behind a newer queued edit", async () => {
@@ -260,8 +1410,18 @@ test("rebases frontmatter edits from Content Blocks sharing one Asset", async ()
   $pages.set(createDefaultPages({ rootInstanceId: "block" }));
   $instances.set(
     new Map([
-      ["block", instance("block", blockComponent, [])],
-      ["block-2", instance("block-2", blockComponent, [])],
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+      [
+        "block-2",
+        instance("block-2", blockComponent, [
+          { type: "id", value: "templates-2" },
+        ]),
+      ],
+      ["templates-2", instance("templates-2", blockTemplateComponent, [])],
     ])
   );
   $props.set(new Map());
@@ -300,7 +1460,7 @@ test("rebases frontmatter edits from Content Blocks sharing one Asset", async ()
   }
 
   await Promise.all([
-    updateExternalContentFrontmatter({
+    getAssetContentBridge().updateFrontmatter({
       rootKey: firstKey,
       path: ["title"],
       value: "After",
@@ -353,7 +1513,15 @@ test("does not install an Asset load after its Content Block unmounts", async ()
   );
   $project.set({ id: "project", title: "Project", domain: "" } as never);
   $pages.set(createDefaultPages({ rootInstanceId: "block" }));
-  $instances.set(new Map([["block", instance("block", blockComponent, [])]]));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+    ])
+  );
   $props.set(new Map());
   $dataSources.set(new Map());
   $resources.set(new Map());
@@ -417,7 +1585,15 @@ test("replaces a mounted root when its source Asset changes", async () => {
   );
   $project.set({ id: "project", title: "Project", domain: "" } as never);
   $pages.set(createDefaultPages({ rootInstanceId: "block" }));
-  $instances.set(new Map([["block", instance("block", blockComponent, [])]]));
+  $instances.set(
+    new Map([
+      [
+        "block",
+        instance("block", blockComponent, [{ type: "id", value: "templates" }]),
+      ],
+      ["templates", instance("templates", blockTemplateComponent, [])],
+    ])
+  );
   $props.set(new Map());
   $assets.set(
     new Map<Asset["id"], Asset>([
@@ -479,6 +1655,8 @@ test("replaces a mounted root when its source Asset changes", async () => {
 });
 
 test("installs MDX into the Body and recovers an invalid dependency", async () => {
+  const writes: Array<{ assetId: string; source: string }> = [];
+  let allowReferenceWrite = true;
   const source = `---
 author:
   $ref: ./author.md#frontmatter
@@ -492,7 +1670,10 @@ avatar:
 ---
 `;
   const invalidAuthorSource = `---
-name: [
+name: Ada
+name: Grace
+role: author
+role: editor
 ---
 `;
   const authorAsset: Asset = {
@@ -529,6 +1710,7 @@ name: [
       updateContent: async ({ assetId, data }) => {
         const updatedSource = await new Response(data).text();
         const currentAsset = assetId === authorAsset.id ? authorAsset : asset;
+        writes.push({ assetId, source: updatedSource });
         return {
           ...currentAsset,
           size: new TextEncoder().encode(updatedSource).byteLength,
@@ -542,7 +1724,12 @@ name: [
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
-      authorize: () => true,
+      authorize: ({ assetId, operation }) =>
+        canAccessAssetContent({
+          asset: assetId === authorAsset.id ? authorAsset : asset,
+          operation,
+          canWrite: assetId !== authorAsset.id || allowReferenceWrite,
+        }),
       requireReload: vi.fn(),
       getContentSession: () => session,
     })
@@ -611,7 +1798,11 @@ name: [
   ).toEqual([
     expect.objectContaining({
       severity: "error",
-      message: expect.stringContaining("Unable to resolve frontmatter"),
+      message: expect.stringContaining("Map keys must be unique"),
+    }),
+    expect.objectContaining({
+      severity: "error",
+      message: expect.stringContaining("Map keys must be unique"),
     }),
   ]);
 
@@ -638,15 +1829,20 @@ name: [
     }).map(({ id }) => id)
   ).toEqual([asset.id, authorAsset.id, avatarAsset.id]);
 
-  session.save(
-    authorAsset.id,
-    `---
-name: Ada Lovelace
-avatar:
-  $ref: ./avatar.jpg
----
-`
-  );
+  const rootKey = Array.from(getExternalContentRoots().keys())[0];
+  writes.length = 0;
+  await Promise.all([
+    getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path: ["author", "name"],
+      value: "Ada Lovelace",
+    }),
+    updateExternalContentFrontmatter({
+      rootKey,
+      path: ["author", "role"],
+      value: "Writer",
+    }),
+  ]);
   await flushExternalContentAsset({
     projectId: "project",
     assetId: authorAsset.id,
@@ -657,9 +1853,24 @@ avatar:
   ).toEqual({
     author: {
       name: "Ada Lovelace",
+      role: "Writer",
       avatar: expect.objectContaining({ id: avatarAsset.id }),
     },
   });
+
+  expect(writes.length).toBeGreaterThan(0);
+  expect(writes.every(({ assetId }) => assetId === authorAsset.id)).toBe(true);
+  expect(session.get(asset.id)?.source).toBe(source);
+  expect(session.get(authorAsset.id)?.source).toContain("$ref: ./avatar.jpg");
+  allowReferenceWrite = false;
+  await expect(
+    getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path: ["author", "name"],
+      value: "Forbidden",
+    })
+  ).rejects.toThrow("permission");
+  expect(session.get(authorAsset.id)?.source).not.toContain("Forbidden");
 
   release();
   expect($instances.get().get("body-outlet")?.children).toEqual([]);
@@ -1356,6 +2567,23 @@ test("materializes into normal instances and saves their synchronous mutations o
   })?.identity;
   expect(savedIdentity?.contentRef).toBe("article_v2.mdx");
   expect(savedIdentity?.revision).not.toBe(initialIdentity?.revision);
+  // An edit can arrive as soon as its predecessor is acknowledged, while
+  // asynchronous materialization of the new revision is still in flight.
+  const unsubscribe = session.subscribe((assetId, state) => {
+    if (assetId !== asset.id || state.status !== "saved") {
+      return;
+    }
+    unsubscribe();
+    executeRuntimeMutation({
+      id: "instances.setTextContent",
+      input: {
+        operation: "set",
+        instanceId: insertedId,
+        mode: "text",
+        text: "Second after acknowledged save",
+      },
+    });
+  });
   executeRuntimeMutation({
     id: "instances.setTextContent",
     input: {
@@ -1367,7 +2595,11 @@ test("materializes into normal instances and saves their synchronous mutations o
   });
   expect(serverSyncStore.popAll()).toEqual([]);
   await flushExternalContentAsset({ projectId: "project", assetId: asset.id });
-  expect(writes.at(-1)).toBe("# Updated\n\n## Second after save\n");
+  await flushExternalContentAsset({ projectId: "project", assetId: asset.id });
+  expect(requireReload).not.toHaveBeenCalled();
+  expect(writes.at(-1)).toBe(
+    "# Updated\n\n## Second after acknowledged save\n"
+  );
   expect(
     getExternalContentRootChildren({
       projectId: "project",
@@ -1508,6 +2740,12 @@ test("materializes into normal instances and saves their synchronous mutations o
   await expect(
     flushExternalContentProject({ projectId: "project", session })
   ).rejects.toThrow(
+    "The MDX content source must be structurally valid before canvas edits can be saved."
+  );
+  expect(
+    findExternalContentRoot(getExternalContentRoots(), "block", '["block"]')
+      ?.persistenceError
+  ).toBe(
     "The MDX content source must be structurally valid before canvas edits can be saved."
   );
 

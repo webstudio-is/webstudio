@@ -8,6 +8,16 @@ import {
 } from "./mcp-trace-proxy";
 
 describe("bounded MCP tracing", () => {
+  test("rejects an unbounded tool name", () => {
+    expect(
+      getMcpTraceRequest({
+        id: 1,
+        method: "tools/call",
+        params: { name: "x".repeat(129) },
+      })
+    ).toBeUndefined();
+  });
+
   test("measures the bounded tools catalog payload", () => {
     expect(
       getMcpCatalogObservation({
@@ -107,6 +117,73 @@ describe("bounded MCP tracing", () => {
         },
       })
     ).not.toMatchObject({ call: { arguments: { path: expect.any(String) } } });
+  });
+
+  test("retains fingerprints instead of Markdown query and page-setting payloads", () => {
+    const queryRequest = getMcpTraceRequest({
+      id: 11,
+      method: "tools/call",
+      params: {
+        name: "validate-asset-query",
+        arguments: {
+          query: {
+            result: "one",
+            where: {
+              all: [
+                {
+                  field: ["properties", "slug"],
+                  operator: "eq",
+                  value: "system.params.slug",
+                },
+              ],
+            },
+            content: { mode: "markdown-body-ref" },
+          },
+        },
+      },
+    });
+    const pageRequest = getMcpTraceRequest(
+      {
+        id: 12,
+        method: "tools/call",
+        params: {
+          name: "update-page",
+          arguments: {
+            pageId: "detail-page",
+            values: {
+              title: 'post.data.properties.title ?? "Article"',
+              meta: {
+                description: 'post.data.properties.excerpt ?? ""',
+                socialImageUrl: 'post.data.properties.featureImage.src ?? ""',
+                status: "post.data ? 200 : 404",
+              },
+            },
+          },
+        },
+      },
+      0,
+      new Set(["update-page"])
+    );
+
+    expect(queryRequest).toMatchObject({
+      call: {
+        arguments: {
+          assetQuerySha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+          assetQueryShapeSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+        },
+      },
+    });
+    expect(pageRequest).toMatchObject({
+      call: {
+        arguments: {
+          pageSettingsSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+        },
+      },
+    });
+    const retained = JSON.stringify([queryRequest, pageRequest]);
+    expect(retained).not.toContain("system.params.slug");
+    expect(retained).not.toContain("post.data.properties");
+    expect(retained).not.toContain("detail-page");
   });
 
   test("records confirmation flow without retaining its token", () => {

@@ -116,3 +116,53 @@ test("bounds Asset content writes before forwarding them", async () => {
   ).rejects.toThrow("exceeds");
   expect(request).not.toHaveBeenCalled();
 });
+
+test("routes frontmatter writes to the mounted document owner and cleans up safely", async () => {
+  const { bridge, authorize } = createBridge();
+  const update = vi.fn(async () => {});
+  const registration = {
+    rootKey: "root",
+    projectId: "project-1",
+    assetId: "asset-1",
+    update,
+  };
+  const release = bridge.registerFrontmatterWriter(registration);
+  const input = { rootKey: "root", path: ["title"], value: "Updated" };
+  await bridge.updateFrontmatter(input);
+  expect(update).toHaveBeenCalledWith(input);
+  expect(authorize).toHaveBeenLastCalledWith({
+    projectId: "project-1",
+    assetId: "asset-1",
+    operation: "write",
+  });
+
+  const replacement = vi.fn(async () => {});
+  const releaseReplacement = bridge.registerFrontmatterWriter({
+    ...registration,
+    update: replacement,
+  });
+  release();
+  await bridge.updateFrontmatter(input);
+  expect(replacement).toHaveBeenCalledWith(input);
+  releaseReplacement();
+  await expect(bridge.updateFrontmatter(input)).rejects.toThrow("not open");
+});
+
+test("rejects unauthorized frontmatter writes before calling the document owner", async () => {
+  const { bridge } = createBridge({ authorized: false });
+  const update = vi.fn(async () => {});
+  bridge.registerFrontmatterWriter({
+    rootKey: "root",
+    projectId: "project-1",
+    assetId: "asset-1",
+    update,
+  });
+  await expect(
+    bridge.updateFrontmatter({
+      rootKey: "root",
+      path: ["title"],
+      value: "Updated",
+    })
+  ).rejects.toThrow("not authorized");
+  expect(update).not.toHaveBeenCalled();
+});

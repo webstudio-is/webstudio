@@ -1,11 +1,35 @@
+// Serves deterministic in-memory Webstudio project fixtures through the real
+// local API boundary used by high-impact CLI and MCP evaluations.
 import type { Server } from "node:http";
+import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
+import { createHttpAssetContentRepository } from "@webstudio-is/content-engine/asset-content-repository";
+import { createProjectAssetContentTransport } from "@webstudio-is/http-client";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import {
+  executeAssetQuery,
+  getAssetQueryWhereMetrics,
+  parseMarkdownDocumentSource,
+  validateAssetQuery,
+  type AssetQueryInput,
+  type ContentDatabaseDocument,
+} from "@webstudio-is/content-engine";
 import { fontFormat, fontMeta } from "@webstudio-is/fonts";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
-import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
+import {
+  assetsUploadsApiUrl,
+  getAssetContentApiUrl,
+} from "@webstudio-is/sdk/runtime";
+import {
+  assetContentDescriptorHeader,
+  serializeAssetContentDescriptor,
+} from "@webstudio-is/protocol/asset-resource-api";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import React from "react";
 import type { BuilderState } from "@webstudio-is/project-build/state";
-import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
+import {
+  createBuilderStateFreshness,
+  createBuilderBuildDataSnapshotFromState,
+} from "@webstudio-is/project-build/state";
 import type { BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
 import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contracts";
 import type { HighImpactFixture, EvaluationProject } from "./fixtures";
@@ -30,8 +54,8 @@ const createPersistedPages = (project: EvaluationProject) => ({
   rootFolderId: "root-folder",
   pages: project.pages.map((page) => ({
     ...page,
-    title: page.name,
-    meta: {},
+    title: page.title ?? page.name,
+    meta: page.meta ?? {},
   })),
   folders: [
     {
@@ -51,6 +75,8 @@ const stateToProject = (state: BuilderState): EvaluationProject => ({
     name: page.name,
     path: page.path,
     rootInstanceId: page.rootInstanceId,
+    title: page.title,
+    meta: page.meta,
   })),
   instances: Array.from(
     state.instances?.values() ?? []
@@ -77,6 +103,7 @@ export type HighImpactFixtureApi = {
   origin: string;
   shareLink: string;
   getProject: () => EvaluationProject;
+  getAssetSource: (assetId: string) => string | undefined;
   getToolCalls: () => EvaluationToolCall[];
   close: () => Promise<void>;
 };
@@ -94,7 +121,9 @@ export const startHighImpactFixtureApi = async (
     ]);
   const { createBuilderStateFromBuildData, applyBuilderPatchTransactions } =
     stateAdapters;
-  const { executeBuilderRuntimeOperation } = runtime;
+  const { executeBuilderRuntimeOperation, createContentBlockApplication } =
+    runtime;
+  let contentBlockApplication: ReturnType<typeof createContentBlockApplication>;
   const { createLocalProjectBundleFromSessionSnapshot } = projectSession;
   const { hydrateRestorePointTransaction } = restorePoints;
   const persistedPages = createPersistedPages(fixture.project);
@@ -124,10 +153,139 @@ export const startHighImpactFixtureApi = async (
   let version = initialVersion;
   let generatedId = 0;
   const calls: EvaluationToolCall[] = [];
+  const uploadedFileContents = new Map<string, Uint8Array>(
+    Object.entries(fixture.assetSources ?? {}).map(([id, source]) => [
+      id,
+      new TextEncoder().encode(source),
+    ])
+  );
   let origin = "";
+  const validateFixtureAssetQuery = (query: unknown) => {
+    const validation = validateAssetQuery({ query });
+    if (validation.success === false) {
+      throw Object.assign(new Error("Invalid fixture asset query."), {
+        code: "INVALID_INPUT",
+        issues: validation.issues,
+      });
+    }
+    return validation;
+  };
+  const loadFixtureDocuments = async () => {
+    const documents: ContentDatabaseDocument[] = [];
+    for (const asset of state.assets?.values() ?? []) {
+      if (asset.type !== "file" || asset.format !== "md") {
+        continue;
+      }
+      const content = uploadedFileContents.get(asset.id);
+      if (content === undefined) {
+        continue;
+      }
+      const document = await parseMarkdownDocumentSource({ source: content });
+      documents.push({
+        _id: asset.id,
+        _type: "asset.file",
+        name: asset.name,
+        path: asset.name,
+        key: asset.id,
+        folderId: asset.folderId,
+        extension: asset.format,
+        mimeType: "text/markdown",
+        size: asset.size,
+        createdAt: asset.createdAt,
+        revision: `fixture-${asset.id}`,
+        contentRef: asset.id,
+        properties: structuredClone(
+          document.frontmatter
+        ) as ContentDatabaseDocument["properties"],
+      });
+    }
+    return documents;
+  };
+  const readFixtureContent = async (contentRef: string) => {
+    const content = uploadedFileContents.get(contentRef);
+    if (content === undefined) {
+      throw new Error(`Fixture content not found: ${contentRef}`);
+    }
+    return {
+      data: (async function* () {
+        yield content;
+      })(),
+      contentLength: content.byteLength,
+    };
+  };
+  const runFixtureAssetQuery = async <Result>({
+    name,
+    input,
+    execute,
+  }: {
+    name: "validate-asset-query" | "preview-asset-query";
+    input: Record<string, unknown>;
+    execute: () => Promise<Result> | Result;
+  }) => {
+    const call: EvaluationToolCall = { name, arguments: input };
+    calls.push(call);
+    try {
+      return await execute();
+    } catch (error) {
+      call.isError = true;
+      throw error;
+    }
+  };
   const fixtureApi = await startRuntimeFixtureApi(
     async ({ request, response, pathname, operationPath, readInput }) => {
       let data: unknown;
+      const contentAsset = Array.from(state.assets?.values() ?? []).find(
+        (asset) => pathname === getAssetContentApiUrl(asset.id)
+      );
+      if (contentAsset !== undefined) {
+        const url = new URL(request.url ?? "", origin);
+        if (url.searchParams.get("projectId") !== projectId) {
+          response.writeHead(403);
+          response.end();
+          return;
+        }
+        if (request.method === "GET") {
+          const bytes = uploadedFileContents.get(contentAsset.id);
+          if (bytes === undefined) {
+            response.writeHead(404);
+            response.end();
+            return;
+          }
+          response.writeHead(200, {
+            "content-type": "application/octet-stream",
+            "content-length": bytes.byteLength,
+            [assetContentDescriptorHeader]:
+              serializeAssetContentDescriptor(contentAsset),
+          });
+          response.end(bytes);
+          return;
+        }
+        if (request.method === "PUT") {
+          if (url.searchParams.get("expectedName") !== contentAsset.name) {
+            response.writeHead(409, { "content-type": "application/json" });
+            response.end(JSON.stringify({ message: "Asset revision changed" }));
+            return;
+          }
+          const bytes = await readRuntimeFixtureRequestBody(request);
+          const asset = {
+            ...contentAsset,
+            name: `revision-${generatedId++}.mdx`,
+            size: bytes.byteLength,
+          };
+          uploadedFileContents.set(asset.id, bytes);
+          state = {
+            ...state,
+            assets: new Map(state.assets).set(asset.id, asset),
+          };
+          version += 1;
+          response.writeHead(200, { "content-type": "application/json" });
+          response.end(JSON.stringify({ asset }));
+          return;
+        }
+        response.writeHead(405);
+        response.end();
+        return;
+      }
       if (
         request.method === "POST" &&
         pathname.startsWith(`${assetsUploadsApiUrl}/`)
@@ -173,6 +331,7 @@ export const startHighImpactFixtureApi = async (
                 ),
               }
             : { ...assetBase, type, format: formatValue, meta: {} };
+        uploadedFileContents.set(asset.id, body);
         calls.push({
           name: "upload-asset",
           arguments: {
@@ -194,8 +353,11 @@ export const startHighImpactFixtureApi = async (
         );
         return;
       }
-      if (operationPath === "build.loadProjectBundleByProjectId") {
-        data = createLocalProjectBundleFromSessionSnapshot(
+      if (
+        operationPath === "build.loadProjectBundleByProjectId" ||
+        operationPath === "build.loadData"
+      ) {
+        const bundle = createLocalProjectBundleFromSessionSnapshot(
           {
             projectId,
             buildId,
@@ -211,6 +373,21 @@ export const startHighImpactFixtureApi = async (
           },
           { origin }
         );
+        data =
+          operationPath === "build.loadData"
+            ? {
+                ...bundle.build,
+                ...createBuilderBuildDataSnapshotFromState(state),
+                pages: bundle.build.pages,
+                assets: bundle.assets,
+                assetFolders: bundle.assetFolders,
+                project: {
+                  id: projectId,
+                  title: "High-impact evaluation",
+                  domain: "high-impact-evaluation",
+                },
+              }
+            : bundle;
       } else if (operationPath === "projects.get") {
         data = {
           id: projectId,
@@ -245,6 +422,56 @@ export const startHighImpactFixtureApi = async (
           buildId,
           version,
         });
+      } else if (operationPath === "assetQueries.validate") {
+        const input = (await readInput()) as Record<string, unknown>;
+        data = await runFixtureAssetQuery({
+          name: "validate-asset-query",
+          input,
+          execute: () => {
+            const validation = validateFixtureAssetQuery(input.query);
+            return {
+              valid: true as const,
+              referencedFieldPaths: validation.referencedFieldPaths,
+              filterCount: getAssetQueryWhereMetrics(validation.query.where)
+                .filters,
+              sortCount: validation.query.sort.length,
+              warnings: validation.warnings,
+              issues: validation.issues,
+            };
+          },
+        });
+      } else if (operationPath === "assetQueries.preview") {
+        const input = (await readInput()) as Record<string, unknown>;
+        data = await runFixtureAssetQuery({
+          name: "preview-asset-query",
+          input,
+          execute: async () => {
+            const validation = validateFixtureAssetQuery(input.query);
+            const documents = await loadFixtureDocuments();
+            const result = await executeAssetQuery({
+              query: validation.query as AssetQueryInput,
+              documents,
+              read: readFixtureContent,
+            });
+            const usedBytes = Buffer.byteLength(JSON.stringify(documents));
+            const diagnostics = {
+              usedBytes,
+              maxBytes: 512_000,
+              unboundedBytes: usedBytes,
+              includedDocumentCount: documents.length,
+              omittedDocumentCount: 0,
+              truncated: false,
+            };
+            return {
+              data: result,
+              __diagnostics__: {
+                scope: "query-preview" as const,
+                query: diagnostics,
+                database: diagnostics,
+              },
+            };
+          },
+        });
       } else if (
         operationPath === "projects.permissions" ||
         operationPath === ""
@@ -270,6 +497,7 @@ export const startHighImpactFixtureApi = async (
               createId: () => `evaluation-${generatedId++}`,
               projectId,
               projectVersion: version,
+              contentBlockApplication,
             },
           });
           if (
@@ -300,12 +528,31 @@ export const startHighImpactFixtureApi = async (
   );
   const { server } = fixtureApi;
   origin = fixtureApi.origin;
+  const contentSession = createAssetContentSession({
+    repository: createHttpAssetContentRepository({
+      projectId,
+      ...createProjectAssetContentTransport({ projectId, origin }),
+    }),
+    authorize: () => true,
+  });
+  contentBlockApplication = createContentBlockApplication({
+    projectId,
+    session: contentSession,
+    metas: componentMetas,
+  });
   return {
     server,
     origin,
     shareLink: `${origin}/builder/${projectId}?authToken=fixture-only-not-persisted`,
     getProject: () => stateToProject(state),
+    getAssetSource: (assetId) => {
+      const bytes = uploadedFileContents.get(assetId);
+      return bytes === undefined ? undefined : new TextDecoder().decode(bytes);
+    },
     getToolCalls: () => structuredClone(calls),
-    close: fixtureApi.close,
+    close: async () => {
+      contentSession.dispose();
+      await fixtureApi.close();
+    },
   };
 };

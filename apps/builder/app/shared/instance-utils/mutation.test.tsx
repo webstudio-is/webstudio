@@ -16,7 +16,12 @@ import {
   canConvertInstance,
   reparentInstanceMutable,
 } from "@webstudio-is/project-build/runtime";
-import { $, ws, expression, renderData } from "@webstudio-is/template";
+import {
+  createTemplateComponentFixture,
+  ws,
+  expression,
+  renderData,
+} from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
@@ -56,6 +61,19 @@ import type {
   DroppableTarget,
   InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
+
+const Body = createTemplateComponentFixture("Body");
+const Bold = createTemplateComponentFixture("Bold");
+const Box = createTemplateComponentFixture("Box");
+const Button = createTemplateComponentFixture("Button");
+const Fragment = createTemplateComponentFixture("Fragment");
+const Heading = createTemplateComponentFixture("Heading");
+const Paragraph = createTemplateComponentFixture("Paragraph");
+const Slot = createTemplateComponentFixture("Slot");
+const Text = createTemplateComponentFixture("Text");
+const Tooltip = createTemplateComponentFixture("Tooltip");
+const TooltipContent = createTemplateComponentFixture("TooltipContent");
+const TooltipTrigger = createTemplateComponentFixture("TooltipTrigger");
 
 enableMapSet();
 registerContainers();
@@ -127,12 +145,12 @@ describe("reparent instance", () => {
 
   test("between instances", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box">
-          <$.Text ws:id="text"></$.Text>
-        </$.Box>
-        <$.Button ws:id="button"></$.Button>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="box">
+          <Text ws:id="text"></Text>
+        </Box>
+        <Button ws:id="button"></Button>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["text", "box", "body"], {
@@ -142,22 +160,22 @@ describe("reparent instance", () => {
     const newTextId = data.instances.get("body")?.children[1].value as string;
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-          <$.Text ws:id={newTextId}></$.Text>
-          <$.Button ws:id="button"></$.Button>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+          <Text ws:id={newTextId}></Text>
+          <Button ws:id="button"></Button>
+        </Body>
       ).instances
     );
   });
 
   test("to the end", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box">
-          <$.Text ws:id="text"></$.Text>
-        </$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="box">
+          <Text ws:id="text"></Text>
+        </Box>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["text", "box", "body"], {
@@ -167,20 +185,20 @@ describe("reparent instance", () => {
     const newTextId = data.instances.get("body")?.children[1].value as string;
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-          <$.Text ws:id={newTextId}></$.Text>
-        </$.Body>
+        <Body ws:id="body">
+          <Box ws:id="box"></Box>
+          <Text ws:id={newTextId}></Text>
+        </Body>
       ).instances
     );
   });
 
   test("reparentInstance wrapper updates stores and selection", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="source"></$.Box>
-        <$.Box ws:id="target"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="source"></Box>
+        <Box ws:id="target"></Box>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $pages.set(createDefaultPages({ rootInstanceId: "body" }));
@@ -207,11 +225,11 @@ describe("reparent instance", () => {
 
   test("before itself", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Text ws:id="text"></$.Text>
-        <$.Box ws:id="box"></$.Box>
-        <$.Button ws:id="button"></$.Button>
-      </$.Body>
+      <Body ws:id="body">
+        <Text ws:id="text"></Text>
+        <Box ws:id="box"></Box>
+        <Button ws:id="button"></Button>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["box", "body"], {
@@ -220,22 +238,22 @@ describe("reparent instance", () => {
     });
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Text ws:id="text"></$.Text>
-          <$.Box ws:id="box"></$.Box>
-          <$.Button ws:id="button"></$.Button>
-        </$.Body>
+        <Body ws:id="body">
+          <Text ws:id="text"></Text>
+          <Box ws:id="box"></Box>
+          <Button ws:id="button"></Button>
+        </Body>
       ).instances
     );
   });
 
   test("after itself", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Text ws:id="text"></$.Text>
-        <$.Box ws:id="box"></$.Box>
-        <$.Button ws:id="button"></$.Button>
-      </$.Body>
+      <Body ws:id="body">
+        <Text ws:id="text"></Text>
+        <Box ws:id="box"></Box>
+        <Button ws:id="button"></Button>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["box", "body"], {
@@ -244,21 +262,21 @@ describe("reparent instance", () => {
     });
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Text ws:id="text"></$.Text>
-          <$.Box ws:id="box"></$.Box>
-          <$.Button ws:id="button"></$.Button>
-        </$.Body>
+        <Body ws:id="body">
+          <Text ws:id="text"></Text>
+          <Box ws:id="box"></Box>
+          <Button ws:id="button"></Button>
+        </Body>
       ).instances
     );
   });
 
   test("wrap with fragment when reparent into empty slot", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot"></$.Slot>
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Slot ws:id="slot"></Slot>
+        <Box ws:id="box"></Box>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["box", "body"], {
@@ -269,25 +287,25 @@ describe("reparent instance", () => {
       .value as string;
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Slot ws:id="slot">
-            <$.Fragment ws:id={newFragmentId}>
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+        <Body ws:id="body">
+          <Slot ws:id="slot">
+            <Fragment ws:id={newFragmentId}>
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
   });
 
   test("reuse existing fragment when reparent into slot", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot">
-          <$.Fragment ws:id="fragment"></$.Fragment>
-        </$.Slot>
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Slot ws:id="slot">
+          <Fragment ws:id="fragment"></Fragment>
+        </Slot>
+        <Box ws:id="box"></Box>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["box", "body"], {
@@ -296,25 +314,25 @@ describe("reparent instance", () => {
     });
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Slot ws:id="slot">
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+        <Body ws:id="body">
+          <Slot ws:id="slot">
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
   });
 
   test("reparent into legacy slot with direct children wraps content in fragment", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot">
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Slot ws:id="slot">
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Box ws:id="box"></Box>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
@@ -327,30 +345,30 @@ describe("reparent instance", () => {
     expect(fragmentId).toEqual(expect.any(String));
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Slot ws:id="slot">
-            <$.Fragment ws:id={fragmentId}>
-              <$.Heading ws:id="heading"></$.Heading>
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+        <Body ws:id="body">
+          <Slot ws:id="slot">
+            <Fragment ws:id={fragmentId}>
+              <Heading ws:id="heading"></Heading>
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
   });
 
   test("reparent into legacy shared slot content normalizes all occurrences", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Box ws:id="box"></Box>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
@@ -377,11 +395,11 @@ describe("reparent instance", () => {
 
   test("reparent into empty legacy shared slot content normalizes all occurrences", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1"></$.Slot>
-        <$.Slot ws:id="slot2"></$.Slot>
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Slot ws:id="slot1"></Slot>
+        <Slot ws:id="slot2"></Slot>
+        <Box ws:id="box"></Box>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
@@ -401,11 +419,11 @@ describe("reparent instance", () => {
 
   test("reparent into legacy shared slot content preserves text and expression children", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1"></$.Slot>
-        <$.Slot ws:id="slot2"></$.Slot>
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Slot ws:id="slot1"></Slot>
+        <Slot ws:id="slot2"></Slot>
+        <Box ws:id="box"></Box>
+      </Body>
     );
     data.instances.set(
       "slot1",
@@ -450,16 +468,16 @@ describe("reparent instance", () => {
 
   test("reparent into legacy slot does not normalize unrelated overlapping slot", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          <$.Box ws:id="box"></$.Box>
-        </$.Slot>
-        <$.Text ws:id="text"></$.Text>
-      </$.Body>
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="slot2">
+          <Box ws:id="box"></Box>
+        </Slot>
+        <Text ws:id="text"></Text>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
@@ -484,19 +502,19 @@ describe("reparent instance", () => {
 
   test("sort legacy shared slot content through visible slot drop target", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box1"></$.Box>
-          <$.Box ws:id="box2"></$.Box>
-          <$.Box ws:id="box3"></$.Box>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box1"></Box>
+          <Box ws:id="box2"></Box>
+          <Box ws:id="box3"></Box>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Box ws:id="box1"></$.Box>
-          <$.Box ws:id="box2"></$.Box>
-          <$.Box ws:id="box3"></$.Box>
-        </$.Slot>
-      </$.Body>
+          <Box ws:id="box1"></Box>
+          <Box ws:id="box2"></Box>
+          <Box ws:id="box3"></Box>
+        </Slot>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
@@ -524,17 +542,17 @@ describe("reparent instance", () => {
 
   test("reparent legacy shared slot child outside removes it from all slot occurrences", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-      </$.Body>
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -557,24 +575,24 @@ describe("reparent instance", () => {
 
   test("reparent legacy shared slot child into another slot updates both shared slots", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="sourceSlot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Text ws:id="text"></$.Text>
-        </$.Slot>
-        <$.Slot ws:id="sourceSlot2">
+      <Body ws:id="body">
+        <Slot ws:id="sourceSlot1">
+          <Box ws:id="box"></Box>
+          <Text ws:id="text"></Text>
+        </Slot>
+        <Slot ws:id="sourceSlot2">
           {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Text ws:id="text"></$.Text>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot1">
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot2">
+          <Box ws:id="box"></Box>
+          <Text ws:id="text"></Text>
+        </Slot>
+        <Slot ws:id="targetSlot1">
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="targetSlot2">
           {/* same ids */}
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-      </$.Body>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -611,19 +629,19 @@ describe("reparent instance", () => {
 
   test("reparent slot child from one instance of this slot into another", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["box", "fragment", "slot1", "body"], {
@@ -632,42 +650,42 @@ describe("reparent instance", () => {
     });
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+        <Body ws:id="body">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            <Fragment ws:id="fragment">
+              <Box ws:id="box"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
   });
 
   test("sort shared slot content through visible slot drop target", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box1"></$.Box>
-            <$.Box ws:id="box2"></$.Box>
-            <$.Box ws:id="box3"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box1"></Box>
+            <Box ws:id="box2"></Box>
+            <Box ws:id="box3"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box1"></$.Box>
-            <$.Box ws:id="box2"></$.Box>
-            <$.Box ws:id="box3"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box1"></Box>
+            <Box ws:id="box2"></Box>
+            <Box ws:id="box3"></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
@@ -691,21 +709,21 @@ describe("reparent instance", () => {
 
   test("reparent shared slot child into sibling in shared slot content", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -735,23 +753,23 @@ describe("reparent instance", () => {
 
   test("reparent nested shared slot child within shared slot content", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Heading ws:id="heading"></$.Heading>
+              <Heading ws:id="heading"></Heading>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Heading ws:id="heading"></$.Heading>
+              <Heading ws:id="heading"></Heading>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -780,20 +798,20 @@ describe("reparent instance", () => {
 
   test("reparent normal child into slot makes it shared slot content", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box"></$.Box>
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Box ws:id="box"></Box>
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -821,20 +839,20 @@ describe("reparent instance", () => {
 
   test("reparent normal child into nested shared slot container makes it shared", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box"></$.Box>
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Box ws:id="box"></Box>
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -864,30 +882,30 @@ describe("reparent instance", () => {
 
   test("reparent child from one slot into another updates both shared slot contents", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="sourceSlot1">
-          <$.Fragment ws:id="sourceFragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="sourceSlot2">
+      <Body ws:id="body">
+        <Slot ws:id="sourceSlot1">
+          <Fragment ws:id="sourceFragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="sourceSlot2">
           {/* same ids */}
-          <$.Fragment ws:id="sourceFragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot1">
-          <$.Fragment ws:id="targetFragment">
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot2">
+          <Fragment ws:id="sourceFragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="targetSlot1">
+          <Fragment ws:id="targetFragment">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="targetSlot2">
           {/* same ids */}
-          <$.Fragment ws:id="targetFragment">
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="targetFragment">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -922,30 +940,30 @@ describe("reparent instance", () => {
 
   test("reparent child from one slot into nested container in another slot", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="sourceSlot1">
-          <$.Fragment ws:id="sourceFragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="sourceSlot2">
+      <Body ws:id="body">
+        <Slot ws:id="sourceSlot1">
+          <Fragment ws:id="sourceFragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="sourceSlot2">
           {/* same ids */}
-          <$.Fragment ws:id="sourceFragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot1">
-          <$.Fragment ws:id="targetFragment">
+          <Fragment ws:id="sourceFragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="targetSlot1">
+          <Fragment ws:id="targetFragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="targetSlot2">
           {/* same ids */}
-          <$.Fragment ws:id="targetFragment">
+          <Fragment ws:id="targetFragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -981,32 +999,32 @@ describe("reparent instance", () => {
 
   test("reparent child from one slot into another preserves source siblings", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="sourceSlot1">
-          <$.Fragment ws:id="sourceFragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Text ws:id="text"></$.Text>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="sourceSlot2">
+      <Body ws:id="body">
+        <Slot ws:id="sourceSlot1">
+          <Fragment ws:id="sourceFragment">
+            <Box ws:id="box"></Box>
+            <Text ws:id="text"></Text>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="sourceSlot2">
           {/* same ids */}
-          <$.Fragment ws:id="sourceFragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Text ws:id="text"></$.Text>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot1">
-          <$.Fragment ws:id="targetFragment">
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="targetSlot2">
+          <Fragment ws:id="sourceFragment">
+            <Box ws:id="box"></Box>
+            <Text ws:id="text"></Text>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="targetSlot1">
+          <Fragment ws:id="targetFragment">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="targetSlot2">
           {/* same ids */}
-          <$.Fragment ws:id="targetFragment">
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="targetFragment">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -1062,23 +1080,23 @@ describe("reparent instance", () => {
     > = [
       () => ({
         data: renderData(
-          <$.Body ws:id="body">
-            <$.Slot ws:id="slot1">
-              <$.Fragment ws:id="fragment">
-                <$.Box ws:id="box1"></$.Box>
-                <$.Box ws:id="box2"></$.Box>
-                <$.Box ws:id="box3"></$.Box>
-              </$.Fragment>
-            </$.Slot>
-            <$.Slot ws:id="slot2">
+          <Body ws:id="body">
+            <Slot ws:id="slot1">
+              <Fragment ws:id="fragment">
+                <Box ws:id="box1"></Box>
+                <Box ws:id="box2"></Box>
+                <Box ws:id="box3"></Box>
+              </Fragment>
+            </Slot>
+            <Slot ws:id="slot2">
               {/* same ids */}
-              <$.Fragment ws:id="fragment">
-                <$.Box ws:id="box1"></$.Box>
-                <$.Box ws:id="box2"></$.Box>
-                <$.Box ws:id="box3"></$.Box>
-              </$.Fragment>
-            </$.Slot>
-          </$.Body>
+              <Fragment ws:id="fragment">
+                <Box ws:id="box1"></Box>
+                <Box ws:id="box2"></Box>
+                <Box ws:id="box3"></Box>
+              </Fragment>
+            </Slot>
+          </Body>
         ),
         sourceSelector: ["box1", "fragment", "slot1", "body"],
         dropTarget: {
@@ -1099,19 +1117,19 @@ describe("reparent instance", () => {
       }),
       () => ({
         data: renderData(
-          <$.Body ws:id="body">
-            <$.Slot ws:id="slot1">
-              <$.Box ws:id="box1"></$.Box>
-              <$.Box ws:id="box2"></$.Box>
-              <$.Box ws:id="box3"></$.Box>
-            </$.Slot>
-            <$.Slot ws:id="slot2">
+          <Body ws:id="body">
+            <Slot ws:id="slot1">
+              <Box ws:id="box1"></Box>
+              <Box ws:id="box2"></Box>
+              <Box ws:id="box3"></Box>
+            </Slot>
+            <Slot ws:id="slot2">
               {/* same ids */}
-              <$.Box ws:id="box1"></$.Box>
-              <$.Box ws:id="box2"></$.Box>
-              <$.Box ws:id="box3"></$.Box>
-            </$.Slot>
-          </$.Body>
+              <Box ws:id="box1"></Box>
+              <Box ws:id="box2"></Box>
+              <Box ws:id="box3"></Box>
+            </Slot>
+          </Body>
         ),
         sourceSelector: ["box1", "slot1", "body"],
         dropTarget: {
@@ -1132,20 +1150,20 @@ describe("reparent instance", () => {
       }),
       () => ({
         data: renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box"></$.Box>
-            <$.Slot ws:id="slot1">
-              <$.Fragment ws:id="fragment">
+          <Body ws:id="body">
+            <Box ws:id="box"></Box>
+            <Slot ws:id="slot1">
+              <Fragment ws:id="fragment">
                 <ws.element ws:tag="div" ws:id="div"></ws.element>
-              </$.Fragment>
-            </$.Slot>
-            <$.Slot ws:id="slot2">
+              </Fragment>
+            </Slot>
+            <Slot ws:id="slot2">
               {/* same ids */}
-              <$.Fragment ws:id="fragment">
+              <Fragment ws:id="fragment">
                 <ws.element ws:tag="div" ws:id="div"></ws.element>
-              </$.Fragment>
-            </$.Slot>
-          </$.Body>
+              </Fragment>
+            </Slot>
+          </Body>
         ),
         sourceSelector: ["box", "body"],
         dropTarget: {
@@ -1161,21 +1179,21 @@ describe("reparent instance", () => {
       }),
       () => ({
         data: renderData(
-          <$.Body ws:id="body">
-            <$.Slot ws:id="slot1">
-              <$.Fragment ws:id="fragment">
-                <$.Box ws:id="box"></$.Box>
-                <$.Heading ws:id="heading"></$.Heading>
-              </$.Fragment>
-            </$.Slot>
-            <$.Slot ws:id="slot2">
+          <Body ws:id="body">
+            <Slot ws:id="slot1">
+              <Fragment ws:id="fragment">
+                <Box ws:id="box"></Box>
+                <Heading ws:id="heading"></Heading>
+              </Fragment>
+            </Slot>
+            <Slot ws:id="slot2">
               {/* same ids */}
-              <$.Fragment ws:id="fragment">
-                <$.Box ws:id="box"></$.Box>
-                <$.Heading ws:id="heading"></$.Heading>
-              </$.Fragment>
-            </$.Slot>
-          </$.Body>
+              <Fragment ws:id="fragment">
+                <Box ws:id="box"></Box>
+                <Heading ws:id="heading"></Heading>
+              </Fragment>
+            </Slot>
+          </Body>
         ),
         sourceSelector: ["box", "fragment", "slot1", "body"],
         dropTarget: {
@@ -1212,20 +1230,20 @@ describe("reparent instance", () => {
 
   test("slot operation sequence preserves integrity after normalize, reparent out, and delete", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same visible content in legacy direct-child shape */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Box ws:id="outside"></$.Box>
-      </$.Body>
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Box ws:id="outside"></Box>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -1272,23 +1290,23 @@ describe("reparent instance", () => {
 
   test("reparent nested shared slot child outside removes it from all slot occurrences", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
+              <Box ws:id="box"></Box>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
+              <Box ws:id="box"></Box>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -1320,25 +1338,25 @@ describe("reparent instance", () => {
 
   test("reparent shared slot child outside preserves moved scoped data and resources", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="card">
-              <$.Box ws:id="label"></$.Box>
+              <Box ws:id="label"></Box>
             </ws.element>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="card">
-              <$.Box ws:id="label"></$.Box>
+              <Box ws:id="label"></Box>
             </ws.element>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     data.dataSources.set("cardVariable", {
       id: "cardVariable",
@@ -1450,21 +1468,21 @@ describe("reparent instance", () => {
 
   test("reparent shared slot child outside removes it from all slots and preserves siblings", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -1489,19 +1507,19 @@ describe("reparent instance", () => {
 
   test("reparent direct slot child outside updates all linked slot occurrences", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
@@ -1522,11 +1540,11 @@ describe("reparent instance", () => {
 
   test("prevent slot reparenting into own children to avoid infinite loop", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot">
-          <$.Fragment ws:id="fragment"></$.Fragment>
-        </$.Slot>
-      </$.Body>
+      <Body ws:id="body">
+        <Slot ws:id="slot">
+          <Fragment ws:id="fragment"></Fragment>
+        </Slot>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(data, ["slot", "body"], {
@@ -1535,22 +1553,22 @@ describe("reparent instance", () => {
     });
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Slot ws:id="slot">
-            <$.Fragment ws:id="fragment"></$.Fragment>
-          </$.Slot>
-        </$.Body>
+        <Body ws:id="body">
+          <Slot ws:id="slot">
+            <Fragment ws:id="fragment"></Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
   });
 
   test("from collection item", () => {
     const data = renderData(
-      <$.Body ws:id="body">
+      <Body ws:id="body">
         <ws.collection ws:id="collection">
-          <$.Box ws:id="box"></$.Box>
+          <Box ws:id="box"></Box>
         </ws.collection>
-      </$.Body>
+      </Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentTestInstanceMutable(
@@ -1560,10 +1578,10 @@ describe("reparent instance", () => {
     );
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
+        <Body ws:id="body">
           <ws.collection ws:id="collection"></ws.collection>
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+          <Box ws:id="box"></Box>
+        </Body>
       ).instances
     );
   });
@@ -1779,12 +1797,12 @@ describe("reparent instance", () => {
 
   test("move required child within same instance", () => {
     const data = renderData(
-      <$.Body ws:id="body">
-        <$.Tooltip ws:id="tooltip">
-          <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
-          <$.TooltipContent ws:id="content"></$.TooltipContent>
-        </$.Tooltip>
-      </$.Body>
+      <Body ws:id="body">
+        <Tooltip ws:id="tooltip">
+          <TooltipTrigger ws:id="trigger"></TooltipTrigger>
+          <TooltipContent ws:id="content"></TooltipContent>
+        </Tooltip>
+      </Body>
     );
     $registeredComponentMetas.set(
       new Map(Object.entries({ ...defaultMetas, ...radixMetas }))
@@ -1795,12 +1813,12 @@ describe("reparent instance", () => {
     });
     expect(data.instances).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Tooltip ws:id="tooltip">
-            <$.TooltipContent ws:id="content"></$.TooltipContent>
-            <$.TooltipTrigger ws:id={expect.any(String)}></$.TooltipTrigger>
-          </$.Tooltip>
-        </$.Body>
+        <Body ws:id="body">
+          <Tooltip ws:id="tooltip">
+            <TooltipContent ws:id="content"></TooltipContent>
+            <TooltipTrigger ws:id={expect.any(String)}></TooltipTrigger>
+          </Tooltip>
+        </Body>
       ).instances
     );
   });
@@ -1908,19 +1926,19 @@ describe("wrap in", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
               <ws.element ws:tag="div" ws:id="div"></ws.element>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
+            <Fragment ws:id="fragment">
               <ws.element ws:tag="div" ws:id="div"></ws.element>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
     selectInstance(["div", "fragment", "slot1", "bodyId"]);
@@ -1946,17 +1964,17 @@ describe("wrap in", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+            <Heading ws:id="heading"></Heading>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Slot>
-        </$.Body>
+            <Heading ws:id="heading"></Heading>
+          </Slot>
+        </Body>
       ).instances
     );
     selectInstance(["div", "slot1", "bodyId"]);
@@ -1988,21 +2006,21 @@ describe("wrap in", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
               <ws.element ws:tag="div" ws:id="div"></ws.element>
-              <$.Heading ws:id="heading"></$.Heading>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+              <Heading ws:id="heading"></Heading>
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
+            <Fragment ws:id="fragment">
               <ws.element ws:tag="div" ws:id="div"></ws.element>
-              <$.Heading ws:id="heading"></$.Heading>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+              <Heading ws:id="heading"></Heading>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
     selectInstance(["div", "fragment", "slot1", "bodyId"]);
@@ -2040,21 +2058,21 @@ describe("wrap in", () => {
       $registeredComponentMetas.set(defaultMetasMap);
       $instances.set(
         renderData(
-          <$.Body ws:id="bodyId">
-            <$.Slot ws:id="slot1">
-              <$.Fragment ws:id="fragment">
-                <$.Box ws:id="box"></$.Box>
-                <$.Heading ws:id="heading"></$.Heading>
-              </$.Fragment>
-            </$.Slot>
-            <$.Slot ws:id="slot2">
+          <Body ws:id="bodyId">
+            <Slot ws:id="slot1">
+              <Fragment ws:id="fragment">
+                <Box ws:id="box"></Box>
+                <Heading ws:id="heading"></Heading>
+              </Fragment>
+            </Slot>
+            <Slot ws:id="slot2">
               {/* same ids */}
-              <$.Fragment ws:id="fragment">
-                <$.Box ws:id="box"></$.Box>
-                <$.Heading ws:id="heading"></$.Heading>
-              </$.Fragment>
-            </$.Slot>
-          </$.Body>
+              <Fragment ws:id="fragment">
+                <Box ws:id="box"></Box>
+                <Heading ws:id="heading"></Heading>
+              </Fragment>
+            </Slot>
+          </Body>
         ).instances
       );
       selectInstance([selectedId, "fragment", "slot1", "bodyId"]);
@@ -2090,23 +2108,23 @@ describe("wrap in", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     $instances.set(
       renderData(
-        <$.Body ws:id="bodyId">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
+        <Body ws:id="bodyId">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
               <ws.element ws:tag="div" ws:id="div">
-                <$.Box ws:id="box"></$.Box>
+                <Box ws:id="box"></Box>
               </ws.element>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
+            <Fragment ws:id="fragment">
               <ws.element ws:tag="div" ws:id="div">
-                <$.Box ws:id="box"></$.Box>
+                <Box ws:id="box"></Box>
               </ws.element>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            </Fragment>
+          </Slot>
+        </Body>
       ).instances
     );
     selectInstance(["box", "div", "fragment", "slot1", "bodyId"]);
@@ -2180,9 +2198,9 @@ describe("wrap in", () => {
 describe("toggleInstanceShow", () => {
   test("creates show prop with false value when it doesn't exist", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="box"></Box>
+      </Body>
     );
     $instances.set(instances);
     $props.set(new Map());
@@ -2205,9 +2223,9 @@ describe("toggleInstanceShow", () => {
 
   test("toggles show prop from true to false", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box" ws:show={true}></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="box" ws:show={true}></Box>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2227,9 +2245,9 @@ describe("toggleInstanceShow", () => {
 
   test("toggles show prop from false to true", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box" ws:show={false}></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="box" ws:show={false}></Box>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2249,9 +2267,9 @@ describe("toggleInstanceShow", () => {
 
   test("preserves non-boolean show prop", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box" ws:show={expression`isVisible`}></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="box" ws:show={expression`isVisible`}></Box>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2266,13 +2284,13 @@ describe("toggleInstanceShow", () => {
 describe("unwrap instance", () => {
   test("unwrap command skips hidden slot fragment", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2293,19 +2311,19 @@ describe("unwrap instance", () => {
 
   test("unwrap command moves only shared slot child out of all slot occurrences", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2331,21 +2349,21 @@ describe("unwrap instance", () => {
 
   test("unwrap command moves direct shared slot child out of all slots and preserves siblings", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2387,17 +2405,17 @@ describe("unwrap instance", () => {
 
   test("unwrap command moves direct legacy shared slot child out of all slots and preserves siblings", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-      </$.Body>
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2449,23 +2467,23 @@ describe("unwrap instance", () => {
     "unwrap command moves direct shared slot child in $selectedId position out of all slots",
     ({ selectedId, remainingIds }) => {
       const { instances, props } = renderData(
-        <$.Body ws:id="body">
-          <$.Slot ws:id="slot1">
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box1"></$.Box>
-              <$.Box ws:id="box2"></$.Box>
-              <$.Box ws:id="box3"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-          <$.Slot ws:id="slot2">
+        <Body ws:id="body">
+          <Slot ws:id="slot1">
+            <Fragment ws:id="fragment">
+              <Box ws:id="box1"></Box>
+              <Box ws:id="box2"></Box>
+              <Box ws:id="box3"></Box>
+            </Fragment>
+          </Slot>
+          <Slot ws:id="slot2">
             {/* same ids */}
-            <$.Fragment ws:id="fragment">
-              <$.Box ws:id="box1"></$.Box>
-              <$.Box ws:id="box2"></$.Box>
-              <$.Box ws:id="box3"></$.Box>
-            </$.Fragment>
-          </$.Slot>
-        </$.Body>
+            <Fragment ws:id="fragment">
+              <Box ws:id="box1"></Box>
+              <Box ws:id="box2"></Box>
+              <Box ws:id="box3"></Box>
+            </Fragment>
+          </Slot>
+        </Body>
       );
       $instances.set(instances);
       $props.set(props);
@@ -2497,23 +2515,23 @@ describe("unwrap instance", () => {
 
   test("unwrap command keeps nested shared slot child in shared slot content", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
+              <Box ws:id="box"></Box>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
+              <Box ws:id="box"></Box>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2544,25 +2562,25 @@ describe("unwrap instance", () => {
 
   test("unwrap command keeps nested shared slot child with siblings in shared slot content", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
-              <$.Heading ws:id="heading"></$.Heading>
+              <Box ws:id="box"></Box>
+              <Heading ws:id="heading"></Heading>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
-              <$.Heading ws:id="heading"></$.Heading>
+              <Box ws:id="box"></Box>
+              <Heading ws:id="heading"></Heading>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2603,13 +2621,13 @@ describe("canUnwrapInstance", () => {
 
   test("returns true for unwrappable instance", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="parent">
-          <$.Box ws:id="wrapper">
-            <$.Box ws:id="child"></$.Box>
-          </$.Box>
-        </$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="parent">
+          <Box ws:id="wrapper">
+            <Box ws:id="child"></Box>
+          </Box>
+        </Box>
+      </Body>
     );
 
     $instances.set(instances);
@@ -2638,9 +2656,9 @@ describe("canUnwrapInstance", () => {
 
   test("returns false if parent is root instance", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box"></$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="box"></Box>
+      </Body>
     );
 
     $instances.set(instances);
@@ -2666,11 +2684,11 @@ describe("canUnwrapInstance", () => {
 
   test("returns false for textual instance", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Paragraph ws:id="paragraph">
-          <$.Bold ws:id="bold">text</$.Bold>
-        </$.Paragraph>
-      </$.Body>
+      <Body ws:id="body">
+        <Paragraph ws:id="paragraph">
+          <Bold ws:id="bold">text</Bold>
+        </Paragraph>
+      </Body>
     );
 
     $instances.set(instances);
@@ -2696,13 +2714,13 @@ describe("canUnwrapInstance", () => {
 
   test("returns true for Body > div > a scenario", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
+      <Body ws:id="body">
         <ws.element ws:tag="div" ws:id="div">
           <ws.element ws:tag="a" ws:id="link">
             Link text
           </ws.element>
         </ws.element>
-      </$.Body>
+      </Body>
     );
 
     $instances.set(instances);
@@ -2736,7 +2754,7 @@ describe("canConvertInstance", () => {
   test("returns true for valid conversion", () => {
     const { instances, props } = renderData(
       <ws.element ws:tag="body" ws:id="body">
-        <$.Box ws:id="box"></$.Box>
+        <Box ws:id="box"></Box>
       </ws.element>
     );
 
@@ -2774,7 +2792,7 @@ describe("canConvertInstance", () => {
   test("returns true when converting Box to Heading", () => {
     const { instances, props } = renderData(
       <ws.element ws:tag="body" ws:id="body">
-        <$.Box ws:id="box"></$.Box>
+        <Box ws:id="box"></Box>
       </ws.element>
     );
 
@@ -2793,7 +2811,7 @@ describe("canConvertInstance", () => {
   test("uses preset tag when available", () => {
     const { instances, props } = renderData(
       <ws.element ws:tag="body" ws:id="body">
-        <$.Box ws:id="box"></$.Box>
+        <Box ws:id="box"></Box>
       </ws.element>
     );
 
@@ -2817,19 +2835,19 @@ describe("convertInstance", () => {
 
   test("detach shared slot children when converting slot", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2853,21 +2871,21 @@ describe("convertInstance", () => {
 
   test("detach shared slot children with siblings when converting slot", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2896,17 +2914,17 @@ describe("convertInstance", () => {
 
   test("detach legacy shared slot children when converting slot", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-      </$.Body>
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2937,19 +2955,19 @@ describe("convertInstance", () => {
 
   test("converts shared slot child in shared slot content", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -2972,17 +2990,17 @@ describe("convertInstance", () => {
 
   test("converts legacy shared slot child in shared slot content", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-      </$.Body>
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -3010,23 +3028,23 @@ describe("convertInstance", () => {
 
   test("converts nested shared slot child in shared slot content", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
+              <Box ws:id="box"></Box>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
+              <Box ws:id="box"></Box>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -3052,25 +3070,25 @@ describe("convertInstance", () => {
 
   test("converts nested shared slot child and preserves siblings", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
-              <$.Heading ws:id="heading"></$.Heading>
+              <Box ws:id="box"></Box>
+              <Heading ws:id="heading"></Heading>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
+          <Fragment ws:id="fragment">
             <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
-              <$.Heading ws:id="heading"></$.Heading>
+              <Box ws:id="box"></Box>
+              <Heading ws:id="heading"></Heading>
             </ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -3097,21 +3115,21 @@ describe("convertInstance", () => {
 
   test("command sequence preserves shared slot content through wrap, convert, and unwrap", () => {
     const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+            <Heading ws:id="heading"></Heading>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     $props.set(props);
@@ -3168,7 +3186,7 @@ describe("convertInstance", () => {
   test("converts legacy tag to element", () => {
     const { instances, props } = renderData(
       <ws.element ws:tag="body" ws:id="bodyId">
-        <$.Box tag="article" ws:id="articleId"></$.Box>
+        <Box tag="article" ws:id="articleId"></Box>
       </ws.element>
     );
     $instances.set(instances);
@@ -3189,12 +3207,12 @@ describe("convertInstance", () => {
   test("migrates legacy properties", () => {
     const { instances, props } = renderData(
       <ws.element ws:tag="body" ws:id="bodyId">
-        <$.Box
+        <Box
           ws:tag="div"
           ws:id="divId"
           className="my-class"
           htmlFor="my-id"
-        ></$.Box>
+        ></Box>
       </ws.element>
     );
     $instances.set(instances);
@@ -3221,7 +3239,7 @@ describe("convertInstance", () => {
     $instances.set(
       renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
-          <$.Box ws:tag="article" ws:id="articleId"></$.Box>
+          <Box ws:tag="article" ws:id="articleId"></Box>
         </ws.element>
       ).instances
     );
@@ -3240,7 +3258,7 @@ describe("convertInstance", () => {
     $instances.set(
       renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
-          <$.Heading ws:id="headingId"></$.Heading>
+          <Heading ws:id="headingId"></Heading>
         </ws.element>
       ).instances
     );
@@ -3259,7 +3277,7 @@ describe("convertInstance", () => {
     $instances.set(
       renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
-          <$.Box ws:id="divId"></$.Box>
+          <Box ws:id="divId"></Box>
         </ws.element>
       ).instances
     );
@@ -3278,7 +3296,7 @@ describe("convertInstance", () => {
     $instances.set(
       renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
-          <$.Box ws:id="divId"></$.Box>
+          <Box ws:id="divId"></Box>
         </ws.element>
       ).instances
     );
@@ -3297,7 +3315,7 @@ describe("convertInstance", () => {
     $instances.set(
       renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
-          <$.Box ws:id="boxId"></$.Box>
+          <Box ws:id="boxId"></Box>
         </ws.element>
       ).instances
     );
@@ -3331,7 +3349,7 @@ describe("convertInstance", () => {
     const initialInstances = renderData(
       <ws.element ws:tag="html" ws:id="rootId">
         <ws.element ws:tag="body" ws:id="bodyId">
-          <$.Box ws:id="boxId"></$.Box>
+          <Box ws:id="boxId"></Box>
         </ws.element>
       </ws.element>
     ).instances;
@@ -3346,13 +3364,13 @@ describe("convertInstance", () => {
 describe("deleteSelectedInstance", () => {
   test("delete selected instance and select next one", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="parent">
-          <$.Box ws:id="child1"></$.Box>
-          <$.Box ws:id="child2"></$.Box>
-          <$.Box ws:id="child3"></$.Box>
-        </$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="parent">
+          <Box ws:id="child1"></Box>
+          <Box ws:id="child2"></Box>
+          <Box ws:id="child3"></Box>
+        </Box>
+      </Body>
     );
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
@@ -3369,13 +3387,13 @@ describe("deleteSelectedInstance", () => {
 
   test("delete selected instance and select previous one", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="parent">
-          <$.Box ws:id="child1"></$.Box>
-          <$.Box ws:id="child2"></$.Box>
-          <$.Box ws:id="child3"></$.Box>
-        </$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="parent">
+          <Box ws:id="child1"></Box>
+          <Box ws:id="child2"></Box>
+          <Box ws:id="child3"></Box>
+        </Box>
+      </Body>
     );
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
@@ -3392,11 +3410,11 @@ describe("deleteSelectedInstance", () => {
 
   test("delete selected instance and select parent one", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="parent">
-          <$.Box ws:id="child1"></$.Box>
-        </$.Box>
-      </$.Body>
+      <Body ws:id="body">
+        <Box ws:id="parent">
+          <Box ws:id="child1"></Box>
+        </Box>
+      </Body>
     );
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
@@ -3409,17 +3427,17 @@ describe("deleteSelectedInstance", () => {
 
   test("delete selected legacy shared slot child and select next normalized sibling", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-      </$.Body>
+          <Box ws:id="box"></Box>
+          <Heading ws:id="heading"></Heading>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
@@ -3446,19 +3464,19 @@ describe("deleteSelectedInstance", () => {
 
   test("delete last selected shared slot child and select visible slot occurrence", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
+          <Fragment ws:id="fragment">
+            <Box ws:id="box"></Box>
+          </Fragment>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
@@ -3475,15 +3493,15 @@ describe("deleteSelectedInstance", () => {
 
   test("delete last selected legacy shared slot child and select visible slot occurrence", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
+      <Body ws:id="body">
+        <Slot ws:id="slot1">
+          <Box ws:id="box"></Box>
+        </Slot>
+        <Slot ws:id="slot2">
           {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-        </$.Slot>
-      </$.Body>
+          <Box ws:id="box"></Box>
+        </Slot>
+      </Body>
     );
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });

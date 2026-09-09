@@ -1,10 +1,25 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
-import { elementComponent, type Instance, type Prop } from "@webstudio-is/sdk";
 import {
+  blockComponent,
+  blockTemplateComponent,
+  elementComponent,
+  type Instance,
+  type Prop,
+} from "@webstudio-is/sdk";
+import {
+  $externalContentRoots,
+  getAffectedExternalContentTemplateRootKeys,
   isExternalContentInstance,
   isExternalContentMutation,
+  publishExternalContentTemplateMutation,
+  registerExternalContentRoot,
+  subscribeExternalContentTemplateMutations,
 } from "./external-content-mutations";
+
+afterEach(() => {
+  $externalContentRoots.set(new Map());
+});
 
 const instance = (
   id: string,
@@ -39,8 +54,11 @@ const state = {
 
 const change = (
   namespace: BuilderPatchChange["namespace"],
-  patches: BuilderPatchChange["patches"]
-): BuilderPatchChange => ({ namespace, patches });
+  patches: BuilderPatchChange["patches"],
+  revisePatches?: BuilderPatchChange["patches"]
+): BuilderPatchChange & {
+  revisePatches?: BuilderPatchChange["patches"];
+} => ({ namespace, patches, revisePatches });
 
 describe("external content mutation detection", () => {
   const roots = new Map([
@@ -150,6 +168,364 @@ describe("external content mutation detection", () => {
       })
     ).toBe(false);
   });
+
+  test("identifies template changes separately from authored content", () => {
+    const templateState = {
+      ...state,
+      instances: new Map([
+        ...state.instances,
+        [
+          "templates",
+          {
+            type: "instance" as const,
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ] as const,
+        ["heading-template", instance("heading-template")] as const,
+      ]),
+    };
+    const templateRoots = new Map([
+      [
+        "scope",
+        {
+          ...roots.get("scope")!,
+          templateOwnership: {
+            instances: new Set(["templates", "heading-template"]),
+            styleSources: new Set(["heading-template-style"]),
+            styles: new Set(["heading-template:base:color"]),
+          },
+        },
+      ],
+    ]);
+    const payload = [
+      change("instances", [
+        {
+          op: "replace" as const,
+          path: ["templates", "children"],
+          value: [{ type: "id", value: "heading-template" }],
+        },
+      ]),
+    ];
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload,
+      })
+    ).toEqual(["scope"]);
+    expect(
+      isExternalContentMutation({ state, roots: templateRoots, payload })
+    ).toBe(false);
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload: [
+          change("instances", [
+            {
+              op: "replace",
+              path: ["block", "children"],
+              value: [{ type: "id", value: "inserted" }],
+            },
+          ]),
+        ],
+      })
+    ).toEqual([]);
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload: [
+          change("styleSourceSelections", [
+            {
+              op: "add",
+              path: ["heading-template"],
+              value: {
+                instanceId: "heading-template",
+                values: ["heading-template-style"],
+              },
+            },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload: [
+          change("styles", [
+            {
+              op: "add",
+              path: ["heading-template-style:base:background-color"],
+              value: {
+                breakpointId: "base",
+                styleSourceId: "heading-template-style",
+                property: "background-color",
+                value: { type: "keyword", value: "red" },
+              },
+            },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+  });
+
+  test("detects removal of template records added before ownership refresh", () => {
+    const templateState = {
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance" as const,
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id" as const, value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance" as const,
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [{ type: "id" as const, value: "heading-template" }],
+          },
+        ],
+        ["heading-template", instance("heading-template")],
+      ]),
+      props: new Map<string, Prop>(),
+    };
+    const templateRoots = new Map([
+      [
+        "scope",
+        {
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateOwnership: {
+            instances: new Set(["templates", "heading-template"]),
+            props: new Set<string>(),
+            styleSources: new Set(["heading-template-style"]),
+            styles: new Set<string>(),
+          },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+    const removedProp: Prop = {
+      id: "new-template-prop",
+      instanceId: "heading-template",
+      name: "title",
+      type: "string",
+      value: "Temporary",
+    };
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload: [
+          change(
+            "props",
+            [{ op: "remove", path: [removedProp.id] }],
+            [{ op: "add", path: [removedProp.id], value: removedProp }]
+          ),
+        ],
+      })
+    ).toEqual(["scope"]);
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: templateState,
+        roots: templateRoots,
+        payload: [
+          change(
+            "styles",
+            [{ op: "remove", path: ["new-template-style"] }],
+            [
+              {
+                op: "add",
+                path: ["new-template-style"],
+                value: {
+                  breakpointId: "base",
+                  styleSourceId: "heading-template-style",
+                  property: "color",
+                  value: { type: "keyword", value: "red" },
+                },
+              },
+            ]
+          ),
+        ],
+      })
+    ).toEqual(["scope"]);
+  });
+
+  test("detects adding and removing the Templates container", () => {
+    const block = {
+      type: "instance" as const,
+      id: "block",
+      component: blockComponent,
+      children: [{ type: "id" as const, value: "templates" }],
+    };
+    const templates = {
+      type: "instance" as const,
+      id: "templates",
+      component: blockTemplateComponent,
+      children: [],
+    };
+    const roots = new Map([
+      [
+        "scope",
+        {
+          sourceBlockInstanceId: "block",
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateOwnership: { instances: new Set(["templates"]) },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: {
+          instances: new Map([
+            [block.id, block],
+            [templates.id, templates],
+          ]),
+        },
+        roots,
+        payload: [
+          change("instances", [
+            { op: "replace", path: ["block", "children"], value: [] },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+
+    const rootsWithoutTemplates = new Map([
+      [
+        "scope",
+        {
+          ...roots.get("scope")!,
+          templateOwnership: { instances: new Set<string>() },
+        },
+      ],
+    ]);
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: { instances: new Map([[block.id, { ...block, children: [] }]]) },
+        roots: rootsWithoutTemplates,
+        payload: [
+          change("instances", [
+            { op: "add", path: ["templates"], value: templates },
+            {
+              op: "replace",
+              path: ["block", "children"],
+              value: [{ type: "id", value: "templates" }],
+            },
+          ]),
+        ],
+      })
+    ).toEqual(["scope"]);
+  });
+
+  test("detects remotely applied Templates container changes", () => {
+    const template = {
+      type: "instance" as const,
+      id: "templates",
+      component: blockTemplateComponent,
+      children: [],
+    };
+    const removalRoots = new Map([
+      [
+        "scope",
+        {
+          sourceBlockInstanceId: "block",
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateContainerIds: [template.id],
+          templateOwnership: { instances: new Set([template.id]) },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+    const removalPayload = [
+      change("instances", [
+        { op: "replace" as const, path: ["block", "children"], value: [] },
+        { op: "remove" as const, path: [template.id] },
+      ]),
+    ];
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: {
+          instances: new Map([
+            [
+              "block",
+              {
+                type: "instance",
+                id: "block",
+                component: blockComponent,
+                children: [],
+              },
+            ],
+          ]),
+        },
+        roots: removalRoots,
+        payload: removalPayload,
+      })
+    ).toEqual(["scope"]);
+
+    const additionRoots = new Map([
+      [
+        "scope",
+        {
+          sourceBlockInstanceId: "block",
+          blockInstanceId: "block",
+          instanceIds: new Set<string>(),
+          templateContainerIds: [],
+          templateOwnership: { instances: new Set<string>() },
+          mutationRevision: 0,
+        },
+      ],
+    ]);
+    const additionPayload = [
+      change("instances", [
+        { op: "add" as const, path: [template.id], value: template },
+        {
+          op: "replace" as const,
+          path: ["block", "children"],
+          value: [{ type: "id", value: template.id }],
+        },
+      ]),
+    ];
+
+    expect(
+      getAffectedExternalContentTemplateRootKeys({
+        state: {
+          instances: new Map([
+            [
+              "block",
+              {
+                type: "instance",
+                id: "block",
+                component: blockComponent,
+                children: [{ type: "id", value: template.id }],
+              },
+            ],
+            [template.id, template],
+          ]),
+        },
+        roots: additionRoots,
+        payload: additionPayload,
+      })
+    ).toEqual(["scope"]);
+  });
 });
 
 test("identifies only instances authored by external content", () => {
@@ -167,4 +543,97 @@ test("identifies only instances authored by external content", () => {
   expect(isExternalContentInstance(roots, "external")).toBe(true);
   expect(isExternalContentInstance(roots, "block")).toBe(false);
   expect(isExternalContentInstance(roots, "ordinary")).toBe(false);
+});
+
+test("routes template invalidation through the synchronized root revision", () => {
+  const root = {
+    blockInstanceId: "block",
+    instanceIds: new Set<string>(),
+    mutationRevision: 0,
+    templateMutationRevision: 0,
+  };
+  $externalContentRoots.set(new Map([["scope", root]]));
+  const listener = vi.fn();
+  const unsubscribe = subscribeExternalContentTemplateMutations(listener);
+
+  try {
+    $externalContentRoots.set(
+      new Map([
+        [
+          "scope",
+          {
+            ...root,
+            templateMutationRevision: 1,
+          },
+        ],
+      ])
+    );
+  } finally {
+    unsubscribe();
+  }
+
+  expect(listener).toHaveBeenCalledExactlyOnceWith(["scope"]);
+});
+
+test("publishing a template mutation advances only matching roots", () => {
+  $externalContentRoots.set(
+    new Map([
+      [
+        "current",
+        {
+          blockInstanceId: "current-block",
+          instanceIds: new Set<string>(),
+          mutationRevision: 0,
+          templateMutationRevision: 2,
+        },
+      ],
+      [
+        "other",
+        {
+          blockInstanceId: "other-block",
+          instanceIds: new Set<string>(),
+          mutationRevision: 0,
+          templateMutationRevision: 4,
+        },
+      ],
+    ])
+  );
+
+  publishExternalContentTemplateMutation(["current", "missing"]);
+
+  expect(
+    $externalContentRoots.get().get("current")?.templateMutationRevision
+  ).toBe(3);
+  expect(
+    $externalContentRoots.get().get("other")?.templateMutationRevision
+  ).toBe(4);
+});
+
+test("unregisters the current root after synchronized revisions replace it", () => {
+  const unregister = registerExternalContentRoot("scope", {
+    blockInstanceId: "block",
+    instanceIds: new Set<string>(),
+    mutationRevision: 0,
+  });
+
+  publishExternalContentTemplateMutation(["scope"]);
+  unregister();
+
+  expect($externalContentRoots.get().has("scope")).toBe(false);
+});
+
+test("does not let an older disposer unregister a replacement root", () => {
+  const root = {
+    blockInstanceId: "block",
+    instanceIds: new Set<string>(),
+    mutationRevision: 0,
+  };
+  const unregisterPrevious = registerExternalContentRoot("scope", root);
+  const unregisterCurrent = registerExternalContentRoot("scope", root);
+
+  unregisterPrevious();
+  expect($externalContentRoots.get().has("scope")).toBe(true);
+
+  unregisterCurrent();
+  expect($externalContentRoots.get().has("scope")).toBe(false);
 });
