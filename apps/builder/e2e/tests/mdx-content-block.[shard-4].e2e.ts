@@ -491,6 +491,15 @@ test("Empty MDX content supports slash menu keyboard and mouse insertion", async
     authToken: fixture.editorToken,
     mode: "content",
   });
+  const revisionPatches: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/trpc/build.patch")) {
+      const body = request.postData() ?? "";
+      if (body.includes('"namespace":"assets"')) {
+        revisionPatches.push(body);
+      }
+    }
+  });
   await insertTemplateIntoEmptyContentBlock({
     page,
     templateName: "Empty Heading Template",
@@ -607,6 +616,12 @@ test("Empty MDX content supports slash menu keyboard and mouse insertion", async
   }
   await page.mouse.click(5, 5);
   const finalSource = (await finalWrite).request().postData() ?? "";
+  await waitForSyncStatus({ page, status: "idle" });
+  if (revisionPatches.length > 0) {
+    throw new Error(
+      "Saved MDX revisions must not be persisted again by build.patch"
+    );
+  }
   const expectedContentOrder = [
     "# First heading",
     "Keyboard anchor",
