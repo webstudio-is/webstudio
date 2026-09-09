@@ -270,3 +270,73 @@ test("convert lexical formatting to plain text content", async () => {
     },
   ]);
 });
+
+test.each([
+  ["strong", "bold"],
+  ["em", "italic"],
+  ["del", "strikethrough"],
+  ["code", "code"],
+] as const)(
+  "keeps MDX %s text and formatting when editing",
+  async (tag, format) => {
+    const { instances } = renderData(
+      <ws.element ws:tag="p" ws:id="paragraph">
+        Before{" "}
+        <ws.element ws:tag={tag} ws:id="inline">
+          original
+        </ws.element>{" "}
+        after
+      </ws.element>
+    );
+    const refs: Refs = new Map();
+    const editor = createHeadlessEditor({ nodes: [LinkNode] });
+    await new Promise<void>((resolve) => {
+      editor.update(
+        () => {
+          $convertToLexical(instances, "paragraph", refs);
+        },
+        { onUpdate: resolve }
+      );
+    });
+    editor.getEditorState().read(() => {
+      expect($getRoot().getTextContent()).toBe("Before original after");
+      const text = $getRoot()
+        .getAllTextNodes()
+        .find((node) => node.getTextContent() === "original")!;
+      expect(text.hasFormat(format)).toBe(true);
+    });
+    await new Promise<void>((resolve) => {
+      editor.update(
+        () => {
+          $getRoot()
+            .getAllTextNodes()
+            .find((node) => node.getTextContent() === "original")!
+            .setTextContent("edited");
+        },
+        { onUpdate: resolve }
+      );
+    });
+    expect(
+      editor
+        .getEditorState()
+        .read(() =>
+          $convertToUpdates(
+            instances.get("paragraph")!,
+            refs,
+            new Map(),
+            () => "new"
+          )
+        )
+    ).toEqual(
+      renderTemplate(
+        <ws.element ws:tag="p" ws:id="paragraph">
+          {"Before "}
+          <ws.element ws:tag={tag} ws:id="inline">
+            edited
+          </ws.element>
+          {" after"}
+        </ws.element>
+      ).instances
+    );
+  }
+);

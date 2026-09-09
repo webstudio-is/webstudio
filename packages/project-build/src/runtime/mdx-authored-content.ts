@@ -1667,6 +1667,28 @@ export const adoptMdxAuthoredContentFragment = ({
   }
 
   const propIds = new Map<string, string>();
+  const inheritedPropIds = new Set<string>();
+  for (const node of root.provenance.nodes) {
+    if (node.type !== "template" || node.overridesTemplateChildren) {
+      continue;
+    }
+    const authoredNames = new Set(
+      node.authoredPropNames.map(
+        (name) =>
+          node.propNameMappings.find(({ jsxPropName }) => jsxPropName === name)
+            ?.instancePropName ?? name
+      )
+    );
+    for (const prop of root.fragment.props) {
+      if (
+        node.expandedInstanceIds.includes(prop.instanceId) &&
+        (prop.instanceId !== node.instanceId ||
+          authoredNames.has(prop.name) === false)
+      ) {
+        inheritedPropIds.add(prop.id);
+      }
+    }
+  }
   const unusedTargetProps = new Set(fragment.props.map(({ id }) => id));
   for (const source of root.fragment.props) {
     const targetInstanceId = instanceIds.get(source.instanceId);
@@ -1678,6 +1700,11 @@ export const adoptMdxAuthoredContentFragment = ({
         candidate.type === source.type
     );
     if (target === undefined) {
+      // Content-mode cloning omits noneditable template defaults. They remain
+      // inherited from the template, not authored overrides in the MDX file.
+      if (inheritedPropIds.has(source.id)) {
+        continue;
+      }
       throw new Error("Live MDX fragment props do not match its document");
     }
     propIds.set(source.id, target.id);

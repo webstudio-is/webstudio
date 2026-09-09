@@ -30,10 +30,12 @@ const legacyLexicalFormats = [
 ] as const;
 
 const elementLexicalFormats = [
-  ["bold", "b"],
-  ["italic", "i"],
+  ["bold", "b", "strong"],
+  ["italic", "i", "em"],
   ["superscript", "sup"],
   ["subscript", "sub"],
+  ["strikethrough", "del"],
+  ["code", "code"],
 ] as const;
 
 const $writeUpdates = (
@@ -113,9 +115,14 @@ const $writeUpdates = (
         parentUpdates = childChildren;
       }
       // convert all lexical formats
-      for (const [format, tag] of elementLexicalFormats) {
+      for (const [format, defaultTag, ...aliases] of elementLexicalFormats) {
         if (child.hasFormat(format)) {
-          const key = `${child.getKey()}:${format}`;
+          // Preserve semantic MDX tags and their template identity on edits.
+          const alias = aliases.find((tag) =>
+            refs.has(`${child.getKey()}:${tag}`)
+          );
+          const tag = alias ?? defaultTag;
+          const key = `${child.getKey()}:${alias ?? format}`;
           const id = refs.get(key) ?? createId();
           refs.set(key, id);
           const childInstance: Instance = {
@@ -238,8 +245,12 @@ const $writeLexical = (
       }
     }
     // convert all lexical formats
-    for (const [format, tag] of elementLexicalFormats) {
-      if (instance.component === elementComponent && instance.tag === tag) {
+    for (const [format, tag, ...aliases] of elementLexicalFormats) {
+      const alias = aliases.find((tag) => instance.tag === tag);
+      if (
+        instance.component === elementComponent &&
+        (instance.tag === tag || alias !== undefined)
+      ) {
         let textNode;
         if ($isTextNode(parent)) {
           textNode = parent;
@@ -248,7 +259,7 @@ const $writeLexical = (
           parent.append(textNode);
         }
         textNode.toggleFormat(format);
-        refs.set(`${textNode.getKey()}:${format}`, instance.id);
+        refs.set(`${textNode.getKey()}:${alias ?? format}`, instance.id);
         $writeLexical(textNode, instance.children, instances, refs);
       }
     }

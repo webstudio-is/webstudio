@@ -1037,12 +1037,19 @@ test.each([
   {
     name: "keeps the selected JSX template when editing immediately after insertion",
     verifyFirstSaveCleanup: false,
+    editAfterFirstSave: false,
   },
   {
     name: "clears insertion metadata after the first queued save",
     verifyFirstSaveCleanup: true,
+    editAfterFirstSave: false,
   },
-])("$name", async ({ verifyFirstSaveCleanup }) => {
+  {
+    name: "saves edits to a template after its insertion metadata is cleared",
+    verifyFirstSaveCleanup: false,
+    editAfterFirstSave: true,
+  },
+])("$name", async ({ verifyFirstSaveCleanup, editAfterFirstSave }) => {
   const initialSource = "# Existing\n";
   const sourceAsset = {
     ...asset,
@@ -1106,6 +1113,7 @@ test.each([
           ]),
           tag: "p",
           label: "Card",
+          ...(editAfterFirstSave ? { name: "Card" } : {}),
         },
       ],
       [
@@ -1178,13 +1186,23 @@ test.each([
     throw new Error("Expected the inserted Card");
   }
 
-  if (verifyFirstSaveCleanup) {
+  if (verifyFirstSaveCleanup || editAfterFirstSave) {
     await vi.waitFor(() =>
       expect(
         getExternalContentRoots().values().next().value?.insertedTemplates
       ).toBeUndefined()
     );
-    return;
+    if (verifyFirstSaveCleanup) {
+      return;
+    }
+    await flushExternalContentAsset({
+      projectId: "project",
+      assetId: sourceAsset.id,
+    });
+    expect(
+      getExternalContentRoots().values().next().value?.persistenceError
+    ).toBeUndefined();
+    expect(storedSource).toBe("# Existing\n\n<Card />\n");
   }
 
   await expect(
