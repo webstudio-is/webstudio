@@ -207,6 +207,26 @@ featureImage:
 
 To use frontmatter in the designed part of a Content Block, [bind](../foundations/variables.md) a property or text value to the Content Block's **document** variable. For example, bind a heading to `document.frontmatter.title`, an Image source to `document.frontmatter.featureImage.src`, and its alternative text to `document.frontmatter.featureImage.description`. This uses the image's Asset description instead of duplicating alternative text in frontmatter. Fields authored directly in the connected MDX file can be edited on the canvas and through supported Settings controls in Content mode; edits save back to that file. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions, JSON/body references, and resolved image metadata remain read-only.
 
+**Check every article field**
+
+An editable MDX body does not make the whole article editable. Check the title,
+excerpt, author details, dates, reading time, hero and inline images,
+alternative text, captions, links, and custom-component content in **Content
+mode**. Include header fields outside **MDX content**. Change each value through
+its UI control, check the saved file, reload, and restore the original value.
+Do not treat editing the raw MDX file as a substitute for an editor-facing control.
+
+Replacing an article's image changes its frontmatter image `$ref`, not the
+shared Asset's resolved `.src`. With a writable direct Image source binding to
+`document.frontmatter.featureImage.src`, use **Choose source** in Content mode.
+The resolved URL itself remains read-only.
+
+To edit shared alternative text, open **Choose source**, open the image's
+actions menu, then choose **Settings** and edit **Description**. A binding to
+`document.frontmatter.featureImage.description` uses that description.
+Changing it affects every use of the Asset; replacing an article's image does
+not change the original Asset's description.
+
 **Keep formatted values editable**
 
 Keep an editable value separate from its surrounding wording. For example, to
@@ -238,6 +258,27 @@ To create another post in a collection folder, use **New entry**. For an ordinar
 In Design mode, select the **Source** property label and choose **Reset value**. Disconnecting leaves the MDX file unchanged, removes its body from the canvas, and keeps the designed shell and Templates list with an empty Body outlet. If the source is bound inside a Collection, review the warning before confirming: resetting the shared Source property disconnects every Collection occurrence.
 
 ## Content Block in Content mode
+
+### Verify the editor experience before handoff
+
+Use this checklist when creating, migrating, or changing any Content Block,
+with or without an MDX source:
+
+1. List every value the editor must change, its UI control, and where it saves.
+   Include headers, dates, reading time, images, alternative text, links, and
+   custom-component content—not just body text.
+2. Use the appropriate control: a calendar for dates and an image picker for
+   image replacement. Keep fixed punctuation outside directly bound values.
+   Preserve existing field types and wording; a stored `4 min read` string
+   can stay one directly bound value.
+3. Edit every listed value in **Content mode**. Check its saved project data,
+   MDX, or referenced file, reload, then restore and verify the original value.
+4. Record each field as passed, failed, or not tested. A correct preview,
+   successful API edit, or one editable heading does not verify other fields.
+   Missing controls and read-only required fields mean the setup is unfinished.
+
+Templates and designer-owned layout stay protected. This protection must not
+be used to exclude content the editor was promised they could change.
 
 In [Content mode](../foundations/modes.md#content), you can edit existing content inside Content Blocks. But what if you want to add _new_ content?
 

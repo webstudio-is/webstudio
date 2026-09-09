@@ -70,6 +70,29 @@ referenced file, with its write permissions enforced. For example, editing
 every article using it while preserving the article's reference. JSON/body
 references and resolved image metadata remain read-only.
 
+### Verify the whole article, not just its body
+
+If the user asks for full Content-mode editing, inventory every article field,
+including the designed header, hero image source, alternative text, captions,
+author details, dates, reading time, links, and custom-component content.
+Verify each field through its Content-mode UI, inspect the saved MDX or
+referenced file, reload, then restore and verify the original value. A valid
+binding, correct preview, or successful MCP edit is not a UI-editability test.
+Report each field as passed, failed, or not tested; do not call the article
+fully editable with required fields missing or untested.
+
+For Image sources, bind `document.frontmatter.featureImage.src` with
+`binding.mode:"readwrite"` using `bind-props`. Content mode's **Choose source**
+replaces the article's frontmatter image `$ref`; the resolved URL field remains
+read-only. Test this picker and the saved reference instead of assuming that
+displaying an image proves replacement works.
+
+An alternative-text binding to the image's `.description` uses shared Asset
+metadata. Edit it through **Choose source → asset actions → Settings →
+Description**; that edit affects every use of the Asset. Image replacement
+and shared-description editing are separate actions, not reasons to leave
+required image content uneditable.
+
 ### Keep editable values separate from formatting
 
 When a field must be editable in Content mode, do not concatenate its value
