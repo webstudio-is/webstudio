@@ -348,6 +348,14 @@ model WorkspaceMember {
   @@id([workspaceId, userId])
 }
 
+model WorkspacePublishUsage {
+  scopeId String
+  day     DateTime @db.Date
+  used    Int
+
+  @@id([scopeId, day])
+}
+
 model Notification {
   id          String    @id @default(uuid())
   type        String

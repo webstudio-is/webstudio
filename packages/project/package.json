@@ -42,9 +42,9 @@
       "webstudio": "./src/db/build-patch-core.ts",
       "import": "./src/db/build-patch-core.ts"
     },
-    "./workspace.server": {
-      "webstudio": "./src/db/workspace.ts",
-      "import": "./src/db/workspace.ts"
+    "./publish-usage.server": {
+      "webstudio": "./src/db/publish-usage.ts",
+      "import": "./src/db/publish-usage.ts"
     }
   },
   "license": "AGPL-3.0-or-later",

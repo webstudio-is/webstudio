@@ -22,6 +22,22 @@ publish dialog, open the affected page, select the instance, and scroll it into
 view. Fix the problem, then publish again. Draft pages are excluded because
 they are not part of the generated site.
 
+## Daily publishing limit
+
+Projects in the same workspace share a daily publishing allowance:
+
+- **Free:** 10 publishes per day.
+- **Paid:** 100 publishes per day for the owner, plus 100 for each included
+  member seat and purchased extra seat. Unused seats count too.
+
+For example, an owner with two included seats and three extra seats gets
+600 publishes per workspace per day. The allowance resets at midnight UTC.
+
+Each cloud publish or static download job uses one publish, even if deployment
+later fails. Publishing to several domains in one job still uses one publish.
+Unpublishing does not return used publishes. Moving a project leaves its earlier
+usage in the original workspace; new publishes use the destination's allowance.
+
 ## Adding a custom domain
 
 These steps will show you how to add a custom domain to your Project.

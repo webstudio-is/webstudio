@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
   loadRawBuildById,
   loadBuildById,
@@ -375,8 +376,53 @@ describe("createBuild (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("createProductionBuild (msw)", () => {
+  test("passes the owner seat allowance to atomic build creation without a separate count", async () => {
+    server.use(
+      db.get("Project", () => json({ id: "proj-1", userId: "owner-1" })),
+      db.get("Product", () => json([])),
+      db.get("Build", () => json([buildRow])),
+      db.post("rpc/create_production_build", async ({ request }) => {
+        expect(await request.json()).toEqual({
+          project_id: "proj-1",
+          deployment: JSON.stringify({
+            destination: "static",
+            name: "site.zip",
+            assetsDomain: "project-domain",
+            templates: [],
+          }),
+          daily_publish_limit: 300,
+          expected_owner_id: "owner-1",
+        });
+        return json("build-prod");
+      })
+    );
+    const context = createContext();
+    context.getOwnerPlanFeatures = async (ownerId) => {
+      expect(ownerId).toBe("owner-1");
+      return {
+        ...defaultPlanFeatures,
+        maxDailyPublishesPerUser: 100,
+        seatsIncluded: 2,
+      };
+    };
+    await expect(
+      createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "static",
+            name: "site.zip",
+            assetsDomain: "project-domain",
+            templates: [],
+          },
+        },
+        context
+      )
+    ).resolves.toEqual({ id: "build-prod" });
+  });
+
   test("rejects a publish after the workspace allowance is used", async () => {
-    let didCreateProductionBuild = false;
+    let didCallProductionBuild = false;
     server.use(
       db.get("Project", ({ request }) => {
         const url = new URL(request.url);
@@ -386,23 +432,31 @@ describe("createProductionBuild (msw)", () => {
         return json({ workspaceId: "ws-1", userId: "owner-1" });
       }),
       db.get("Product", () => json([])),
-      db.head("Build", () =>
-        empty({ headers: { "Content-Range": "0-0/100" } })
-      ),
       db.get("Build", () => json([buildRow])),
-      db.post("rpc/create_production_build", () => {
-        didCreateProductionBuild = true;
-        return json("build-prod");
+      db.post("rpc/create_production_build", async ({ request }) => {
+        didCallProductionBuild = true;
+        expect(await request.json()).toMatchObject({
+          daily_publish_limit: 100,
+          expected_owner_id: "owner-1",
+        });
+        return json(
+          {
+            code: "PT429",
+            message:
+              "This workspace has reached its daily publishing limit of 100. The limit resets at midnight UTC.",
+          },
+          { status: 429 }
+        );
       })
     );
 
     const context = createContext();
-    context.getOwnerPlanFeatures = async () =>
-      ({
-        maxDailyPublishesPerUser: 100,
-        maxWorkspaces: 20,
-        seatsIncluded: 0,
-      }) as never;
+    context.getOwnerPlanFeatures = async () => ({
+      ...defaultPlanFeatures,
+      maxDailyPublishesPerUser: 100,
+      maxWorkspaces: 20,
+      seatsIncluded: 0,
+    });
 
     await expect(
       createProductionBuild(
@@ -418,7 +472,7 @@ describe("createProductionBuild (msw)", () => {
         context
       )
     ).rejects.toThrow("daily publishing limit of 100");
-    expect(didCreateProductionBuild).toBe(false);
+    expect(didCallProductionBuild).toBe(true);
   });
 
   test("throws when dev build has orphan resource references", async () => {

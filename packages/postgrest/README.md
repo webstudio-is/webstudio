@@ -49,3 +49,14 @@ docker run --rm --network host -v ./supabase/tests:/tests -e PGOPTIONS='--search
 # OR
 pnpm run db-test
 ```
+
+The concurrent publishing test uses separate PostgreSQL connections. Run it
+against an isolated test database with the current migrations applied and
+`psql` on your PATH:
+
+```shell
+PUBLISH_USAGE_TEST_DATABASE_URL=postgresql://postgres:pass@localhost/publish_test pnpm db-test:concurrency
+```
+
+The test creates its own records and removes them afterward. Without the
+environment variable, it is skipped.

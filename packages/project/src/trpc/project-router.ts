@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { projectTitle } from "../shared/project-schema";
 import { marketplaceApprovalStatus } from "../shared/marketplace-schema";
-import { getWorkspacePublishUsage } from "../db/workspace";
+import { getWorkspacePublishUsage } from "../db/publish-usage";
 
 export const projectRouter = router({
   rename: procedure
@@ -117,6 +117,7 @@ export const projectRouter = router({
             success: true,
             data: usage.count,
             limit: usage.limit,
+            remaining: usage.remaining,
           };
         }
 
@@ -132,6 +133,11 @@ export const projectRouter = router({
           success: true,
           data: result.data?.count ?? 0,
           limit: ctx.planFeatures.maxDailyPublishesPerUser,
+          remaining: Math.max(
+            0,
+            ctx.planFeatures.maxDailyPublishesPerUser -
+              (result.data?.count ?? 0)
+          ),
         };
       } catch (error) {
         return createErrorResponse(error);

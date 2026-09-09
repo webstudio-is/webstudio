@@ -1930,6 +1930,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@webstudio-is/plans':
+        specifier: workspace:*
+        version: link:../plans
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -2363,6 +2366,9 @@ importers:
       '@types/papaparse':
         specifier: ^5.5.2
         version: 5.5.2
+      '@webstudio-is/plans':
+        specifier: workspace:*
+        version: link:../plans
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

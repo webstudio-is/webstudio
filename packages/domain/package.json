@@ -19,6 +19,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@webstudio-is/plans": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "msw": "^2.13.2",
     "vitest": "^3.1.2"
