@@ -59,7 +59,7 @@
     "fast-glob": "^3.3.2",
     "typescript": "7.0.2",
     "vite": "^6.3.4",
-    "wrangler": "^3.63.2"
+    "wrangler": "4.130.0"
   },
   "devEngines": {
     "runtime": {
