@@ -137,6 +137,19 @@ const getElementChildren = (
       category === "transparent" ? inheritedCategories : category
     );
   }
+  // A div directly under dl contains name-value groups instead of flow content.
+  // Keep this parent marker through tagless components, but not HTML elements.
+  if (tag !== undefined) {
+    elementChildren = elementChildren.filter(
+      (category) => category !== "dl-child"
+    );
+  }
+  if (tag === "dl") {
+    elementChildren = [...elementChildren, "dl-child"];
+  }
+  if (tag === "div" && allowedCategories?.includes("dl-child")) {
+    elementChildren = ["dt", "dd", "script-supporting elements"];
+  }
   // introduce custom non-interactive category to restrict nesting interactive elements
   // like button > button or a > input
   if (
