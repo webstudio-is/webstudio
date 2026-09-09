@@ -1870,10 +1870,6 @@ const assertSupportedNamespaces = ({
       nextKeys.length !== nextKeySet.size ||
       Array.from(originalByKey.keys()).some(
         (key) => !nextKeySet.has(key) && !removableKeys.has(key)
-      ) ||
-      !equal(
-        nextKeys,
-        Array.from(originalByKey.keys()).filter((key) => nextKeySet.has(key))
       )
     ) {
       throw new Error(

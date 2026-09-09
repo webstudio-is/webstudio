@@ -120,6 +120,8 @@ Select the connected filename to choose another file. Select **Open** to edit th
 
 Edit the connected body with the usual Content mode controls. You can change text and supported properties, insert templates, reorder content, and delete content. Canvas changes appear immediately and then save to the MDX file.
 
+While editing connected content, **Undo** and **Redo** restore source edits, including edits to referenced author files, without undoing the loading of the Content Block. This history keeps the last 20 source edits in the current project session. Reloading clears the history. If the file has changed outside that history, Webstudio does not overwrite it.
+
 Component properties in Content mode are limited to authored content, such as links, media sources and alternative text, form labels and placeholders, code, and date values. Layout, dimensions, visual themes, form wiring, and interaction settings remain available only in Design mode.
 
 If the file changes after a canvas edit starts but before it is saved, reload the Content Block before continuing. Webstudio keeps the local canvas state until reload and does not silently merge or overwrite either version.
@@ -163,6 +165,8 @@ The JSX name matches the stable **Name** of a unique top-level template in the C
 In the MDX editor, type `<` to autocomplete templates connected to the file and built-in Image and CodeText components. Inside a JSX tag, autocomplete suggests its supported properties and available property values.
 
 Missing template references are marked as errors at their JSX source range. Hover the underline to read the explanation. For dynamic sources, the editor also uses currently rendered Content Blocks to find the file's templates.
+
+Malformed MDX stays as an unsaved draft in the file editor. Fix the reported error before closing, or choose **Discard changes** to keep the last saved version. The saved article remains available while you repair the draft.
 
 The Navigator shows an unresolved reference as **Missing template: Name**. Delete that item to remove its JSX, including its children, from the MDX file. Leaving the item in place preserves its source until the template is available.
 

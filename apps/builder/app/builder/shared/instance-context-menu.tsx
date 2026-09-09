@@ -30,6 +30,7 @@ import {
 } from "~/shared/nano-states";
 import {
   getInstancePath,
+  canMoveInstanceInContentMode,
   type InstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
@@ -94,12 +95,22 @@ const getMenuPermissions = ({
   });
 
   if (isContentMode) {
+    const instanceSelector = instancePath?.[0]?.instanceSelector;
+    const parentSelector = instancePath?.[1]?.instanceSelector;
     return {
       canCopy: hasActionableSelection,
       canPaste: hasActionableSelection,
       canCut: false,
       canDuplicate: false,
-      canMove: false,
+      canMove:
+        canUseSingleSelectionActions &&
+        instanceSelector !== undefined &&
+        parentSelector !== undefined &&
+        canMoveInstanceInContentMode({
+          instanceSelector,
+          parentSelector,
+          instances,
+        }),
       canHide: false,
       canRename: false,
       canWrap: false,

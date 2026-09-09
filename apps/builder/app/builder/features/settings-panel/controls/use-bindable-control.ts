@@ -139,7 +139,7 @@ export const useBindableControl = ({
     });
   };
   return {
-    fieldError,
+    fieldError: fieldError ?? externalRoot?.persistenceError,
     expression,
     bound,
     scope,

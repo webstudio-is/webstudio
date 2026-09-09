@@ -156,7 +156,13 @@ const MdxContentMenu = ({ assetId }: { assetId?: string }) => {
             icon={<SettingsIcon />}
           />
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent
+          onCloseAutoFocus={(event) => {
+            if (open) {
+              event.preventDefault();
+            }
+          }}
+        >
           <DropdownMenuItem disabled={!assetId} onSelect={() => setOpen(true)}>
             Open MDX file
           </DropdownMenuItem>
@@ -1295,6 +1301,7 @@ export const NavigatorTree = () => {
 };
 
 export const __testing__ = {
+  MdxContentMenu,
   getMdxContentSource,
   commitNavigatorDrop,
   getFocusSelectionSkipCountAfterPointerDown,

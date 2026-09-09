@@ -45,12 +45,16 @@ export type ExternalContentRoot = {
   /** Latest template ownership observed in the project stores. */
   templateOwnership?: ExternalContentOwnership;
   mutationRevision: number;
+  /** Last mutation serialized into the shared source session. */
+  savedMutationRevision?: number;
   /** Cross-realm signal that the mounted content must resolve templates again. */
   templateMutationRevision?: number;
   projectId?: string;
   assetId?: string;
   /** User-visible failure from the latest template rematerialization attempt. */
   templateMaterializationError?: string;
+  /** Save preparation failure shared with controls in the Builder frame. */
+  persistenceError?: string;
   /** Unsaved clones that retain the exact template selected by the user. */
   insertedTemplates?: ReadonlyMap<Instance["id"], MdxTemplateInsertion>;
   identity?: ContentBlockExternalContentIdentity;
@@ -256,12 +260,14 @@ export const registerExternalContentRoot = (
   const registeredRoot = {
     ...root,
     mutationRevision: current.get(key)?.mutationRevision ?? 0,
+    savedMutationRevision: current.get(key)?.savedMutationRevision ?? 0,
     templateMutationRevision:
       current.get(key)?.templateMutationRevision ??
       root.templateMutationRevision ??
       0,
     templateMaterializationError:
       current.get(key)?.templateMaterializationError,
+    persistenceError: current.get(key)?.persistenceError,
     insertedTemplates:
       current.get(key)?.insertedTemplates ?? root.insertedTemplates,
   };

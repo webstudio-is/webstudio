@@ -9,6 +9,7 @@ import {
 import type { Extension } from "@codemirror/state";
 import { linter } from "@codemirror/lint";
 import { getCollectionEntrySourceIssues } from "@webstudio-is/content-engine";
+import { validateTextAssetSource } from "@webstudio-is/content-engine/mdx";
 import { useContentCollections } from "~/builder/shared/assets/content-collections";
 import { useStore } from "@nanostores/react";
 import {
@@ -599,6 +600,7 @@ export const MarkdownEditor = ({
   asset,
   ariaLabel = "Markdown source",
   defaultPreviewOpen = true,
+  autoFocus = false,
   value,
   readOnly,
   languageExtensions = [],
@@ -608,6 +610,7 @@ export const MarkdownEditor = ({
   asset: Asset;
   ariaLabel?: string;
   defaultPreviewOpen?: boolean;
+  autoFocus?: boolean;
   value: string;
   readOnly: boolean;
   languageExtensions?: Extension[];
@@ -642,6 +645,7 @@ export const MarkdownEditor = ({
         assetContainers={assetContainers}
       >
         <CodeEditor
+          autoFocus={autoFocus}
           ariaLabel={ariaLabel}
           editorApiRef={editorApiRef}
           value={value}
@@ -687,6 +691,7 @@ export const TextFileEditor = ({
   const pendingMdxSavesRef = useRef(0);
   const saveQueueRef = useRef(Promise.resolve());
   const reportedConflictRef = useRef<string>();
+  const saveAttemptRef = useRef(0);
   const mdxSession =
     asset !== undefined &&
     isMdxFileAsset(asset) &&
@@ -859,26 +864,45 @@ export const TextFileEditor = ({
           })
       : undefined;
     return () => {
+      saveAttemptRef.current += 1;
       controller.abort();
       unsubscribe?.();
     };
   }, [assetId]);
 
-  const save = (content: string) => {
+  const save = async (content: string) => {
+    const attempt = ++saveAttemptRef.current;
     if (canEdit === false) {
-      return;
+      return true;
     }
     const currentAsset = currentAssetRef.current;
     if (currentAsset === undefined) {
       toast.error("Unable to save: asset not found");
-      return;
+      return false;
     }
     const normalized = normalizeTextFileContent(currentAsset, content);
     if ("error" in normalized) {
       toast.error(normalized.error);
-      return;
+      return false;
     }
     const normalizedContent = normalized.content;
+    if (isMdxFileAsset(currentAsset)) {
+      const { diagnostics } = await validateTextAssetSource({
+        source: normalizedContent,
+        format: "mdx",
+      });
+      if (attempt !== saveAttemptRef.current) {
+        return false;
+      }
+      const error = diagnostics.find(({ severity }) => severity === "error");
+      if (error !== undefined) {
+        setPersistenceFeedback({ kind: "invalid", message: error.message });
+        return false;
+      }
+      setPersistenceFeedback((feedback) =>
+        feedback?.kind === "invalid" ? undefined : feedback
+      );
+    }
     if (normalizedContent !== content) {
       setState({ status: "loaded", content: normalizedContent });
     }
@@ -890,7 +914,7 @@ export const TextFileEditor = ({
         currentAsset.projectId === undefined
       ) {
         toast.error("Unable to save: MDX content is not loaded");
-        return;
+        return false;
       }
       pendingMdxSavesRef.current += 1;
       void replaceExternalContentAssetSource({
@@ -916,7 +940,7 @@ export const TextFileEditor = ({
         .finally(() => {
           pendingMdxSavesRef.current -= 1;
         });
-      return;
+      return true;
     }
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
@@ -945,6 +969,7 @@ export const TextFileEditor = ({
         toast.error(error instanceof Error ? error.message : "Unable to save");
       }
     });
+    return true;
   };
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
@@ -952,10 +977,12 @@ export const TextFileEditor = ({
   let editor: ReactNode;
   if (state.status === "loaded" && asset !== undefined) {
     const onChange = (content: string) => {
+      saveAttemptRef.current += 1;
       setState({ status: "loaded", content });
     };
     editor = isMarkdown ? (
       <MarkdownEditor
+        autoFocus
         asset={asset}
         value={state.content}
         readOnly={canEdit === false}
@@ -965,6 +992,7 @@ export const TextFileEditor = ({
       />
     ) : (
       <CodeEditor
+        autoFocus
         value={state.content}
         languageExtensions={languageExtensions}
         size="full"
@@ -986,7 +1014,12 @@ export const TextFileEditor = ({
       open
       onOpenChange={(open) => {
         if (open === false && state.status === "loaded") {
-          save(state.content);
+          void save(state.content).then((saved) => {
+            if (saved) {
+              onOpenChange(false);
+            }
+          });
+          return;
         }
         onOpenChange(open);
       }}
@@ -1022,9 +1055,20 @@ export const TextFileEditor = ({
                   align="center"
                   css={{ padding: rawTheme.spacing[5] }}
                 >
-                  <Text role="alert" color="destructive" variant="tiny">
+                  <Text role="alert" color="destructive">
                     {persistenceFeedback.message}
                   </Text>
+                  {persistenceFeedback.kind === "invalid" && (
+                    <Button
+                      color="ghost"
+                      onClick={() => {
+                        saveAttemptRef.current += 1;
+                        onOpenChange(false);
+                      }}
+                    >
+                      Discard changes
+                    </Button>
+                  )}
                   {persistenceFeedback.kind === "failed" &&
                     mdxSession !== undefined && (
                       <Button

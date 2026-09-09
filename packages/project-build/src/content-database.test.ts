@@ -416,10 +416,26 @@ describe("Content Block MDX compilation", () => {
         }),
       });
       const artifact = {
+        documentGraph: {
+          nodes: [
+            { id: "post", revision: "r1", contentRef: "post" },
+            { id: "author", revision: "r1", contentRef: "author" },
+          ],
+          edges: [
+            {
+              sourceId: "post",
+              referenceId: "#frontmatter/author",
+              reference: {
+                documentId: "author",
+                revision: "r1",
+                representation: { type: "document" },
+              },
+            },
+          ],
+        },
         documents: [
           {
             _id: "post",
-            _type: "asset.file",
             name: "post.json",
             path: "post.json",
             key: "post",
@@ -430,7 +446,6 @@ describe("Content Block MDX compilation", () => {
           },
           {
             _id: "private-post",
-            _type: "asset.file",
             name: "private.json",
             path: "private.json",
             key: "private",
@@ -441,7 +456,6 @@ describe("Content Block MDX compilation", () => {
           },
           {
             _id: "second-post",
-            _type: "asset.file",
             name: "second.json",
             path: "second.json",
             key: "second",
@@ -471,6 +485,18 @@ describe("Content Block MDX compilation", () => {
       );
       expect(plan?.queries.map(({ id }) => id)).not.toContain(
         "__content-block-mdx__:second.mdx"
+      );
+
+      // Returning an unrelated author is safe; using that unresolved reference
+      // as the MDX source is still rejected, including inside a Collection.
+      build.props[0].value =
+        kind === "detail"
+          ? `${resourceVariable}.data.properties.author.mdx`
+          : `${itemVariable}.properties.author.mdx`;
+      expect(() =>
+        resolvePublishedMdxAssetCandidates({ build, artifact })
+      ).toThrow(
+        "Dynamic MDX source candidates through resolved document references"
       );
     }
   );

@@ -3,6 +3,10 @@
  * instances: materialization, persistence, template refresh, and cleanup.
  */
 import {
+  $externalContentHistory,
+  recordExternalContentHistory,
+} from "./external-content-history";
+import {
   createCanonicalAssetPath,
   createMarkdownFrontmatterDiagnostics,
   parseMdxDocumentRecovering,
@@ -116,6 +120,7 @@ type RootEntry = {
 
 type AssetQueue = {
   projectId: string;
+  assetId: string;
   pendingSnapshots: number;
   serialization: Promise<void>;
   failedUpdate?: AssetUpdate;
@@ -134,7 +139,7 @@ type PreparedAssetUpdate =
   | string
   | Readonly<{
       source: string;
-      document: MdxDocument;
+      document?: MdxDocument;
       afterSave?: () => void;
     }>
   | undefined;
@@ -235,6 +240,7 @@ const getAssetQueue = (projectId: string, assetId: string) => {
   if (queue === undefined) {
     queue = {
       projectId,
+      assetId,
       pendingSnapshots: 0,
       serialization: Promise.resolve(),
       listeners: new Set(),
@@ -259,6 +265,23 @@ const parseAssetSource = (
 };
 
 const publishAssetQueueError = (queue: AssetQueue) => {
+  const current = getExternalContentRoots();
+  const next = new Map(current);
+  const persistenceError = queue.error?.message;
+  let changed = false;
+  for (const [key, root] of current) {
+    if (
+      root.projectId === queue.projectId &&
+      root.assetId === queue.assetId &&
+      root.persistenceError !== persistenceError
+    ) {
+      next.set(key, { ...root, persistenceError });
+      changed = true;
+    }
+  }
+  if (changed) {
+    $externalContentRoots.set(next);
+  }
   for (const listener of queue.listeners) {
     listener(queue.error);
   }
@@ -1021,11 +1044,13 @@ const enqueueAssetUpdate = ({
   assetId,
   update,
   preservedRootKey,
+  recordHistory = true,
 }: {
   projectId: string;
   assetId: string;
   update: AssetUpdate;
   preservedRootKey?: string;
+  recordHistory?: boolean;
 }) => {
   const queue = getAssetQueue(projectId, assetId);
   const session = getSession(projectId);
@@ -1049,10 +1074,18 @@ const enqueueAssetUpdate = ({
     }
     const source = typeof prepared === "string" ? prepared : prepared.source;
     queue.latestDocument =
-      typeof prepared === "string"
+      typeof prepared === "string" || prepared.document === undefined
         ? undefined
         : { source, document: prepared.document };
     session.save(assetId, source);
+    if (recordHistory) {
+      recordExternalContentHistory({
+        projectId,
+        assetId,
+        before: state.source,
+        after: source,
+      });
+    }
     if (typeof prepared !== "string") {
       prepared.afterSave?.();
     }
@@ -1099,6 +1132,112 @@ const enqueueAssetUpdate = ({
   return tracked;
 };
 
+const applyExternalContentHistory = async ({
+  projectId,
+  direction,
+}: {
+  projectId: string;
+  direction: "undo" | "redo";
+}) => {
+  await new Promise<void>((resolve, reject) => {
+    const finish = (error?: Error) => {
+      clearTimeout(timeout);
+      unsubscribe();
+      if (error === undefined) {
+        resolve();
+      } else {
+        reject(error);
+      }
+    };
+    const check = () => {
+      const pending = Array.from(getExternalContentRoots().values()).filter(
+        (root) =>
+          root.projectId === projectId &&
+          root.mutationRevision > (root.savedMutationRevision ?? 0)
+      );
+      const failed = pending.find(
+        (root) => root.persistenceError !== undefined
+      );
+      if (failed !== undefined) {
+        finish(new Error(failed.persistenceError));
+      } else if (pending.length === 0) {
+        finish();
+      }
+    };
+    const timeout = setTimeout(
+      () =>
+        finish(
+          new Error(
+            "Wait for the article changes to finish saving, then try again."
+          )
+        ),
+      10000
+    );
+    const unsubscribe = $externalContentRoots.listen(check);
+    check();
+  });
+  const history = $externalContentHistory.get().get(projectId);
+  if (history === undefined) {
+    return;
+  }
+  const editIndex = direction === "undo" ? history.index - 1 : history.index;
+  const edit = history.edits[editIndex];
+  if (edit === undefined) {
+    return;
+  }
+  const { assetId } = edit;
+  await getSession(projectId).open(assetId);
+  return enqueueAssetUpdate({
+    projectId,
+    assetId,
+    recordHistory: false,
+    update: (state) => {
+      const current = $externalContentHistory.get().get(projectId);
+      if (
+        current?.index !== history.index ||
+        current.edits[editIndex]?.id !== edit.id ||
+        (direction === "undo" ? edit.after : edit.before) !== state.source
+      ) {
+        throw new MdxAuthoredContentConflictError(
+          "The article changed since this edit. Reload it before continuing."
+        );
+      }
+      return {
+        source: direction === "undo" ? edit.before : edit.after,
+        afterSave: () => {
+          $externalContentHistory.set(
+            new Map($externalContentHistory.get()).set(projectId, {
+              ...history,
+              index: history.index + (direction === "undo" ? -1 : 1),
+            })
+          );
+        },
+      };
+    },
+  });
+};
+
+const contentHistoryTraversals = new Map<string, Promise<void>>();
+
+export const traverseExternalContentHistory = (
+  input: Parameters<typeof applyExternalContentHistory>[0]
+) => {
+  const pending =
+    contentHistoryTraversals.get(input.projectId) ?? Promise.resolve();
+  const next = pending
+    .catch(() => {})
+    .then(() => applyExternalContentHistory(input));
+  contentHistoryTraversals.set(input.projectId, next);
+  void next
+    .finally(() => {
+      if (contentHistoryTraversals.get(input.projectId) === next) {
+        contentHistoryTraversals.delete(input.projectId);
+      }
+    })
+    .catch(() => {});
+  return next;
+};
+
 subscribeExternalContentMutations((rootKeys) => {
   for (const key of rootKeys) {
     const entry = roots.get(key);
@@ -1116,6 +1255,8 @@ subscribeExternalContentMutations((rootKeys) => {
     });
     const insertedTemplates = getInsertedTemplates(entry, fragment);
     const authoredRoot = entry.root;
+    const mutationRevision =
+      getExternalContentRoots().get(key)?.mutationRevision ?? 0;
     const saveRevision = ++entry.saveRevision;
     entry.installedFragment = fragment;
     registerMutationRoot(entry, entry.installedFragment);
@@ -1212,7 +1353,23 @@ subscribeExternalContentMutations((rootKeys) => {
             }),
         };
       },
-    }).catch(() => {});
+    })
+      .then(() => {
+        const current = getExternalContentRoots();
+        const root = current.get(key);
+        if (root !== undefined && roots.get(key) === entry) {
+          $externalContentRoots.set(
+            new Map(current).set(key, {
+              ...root,
+              savedMutationRevision: Math.max(
+                root.savedMutationRevision ?? 0,
+                mutationRevision
+              ),
+            })
+          );
+        }
+      })
+      .catch(() => {});
   }
 });
 
@@ -1848,8 +2005,20 @@ export const subscribeExternalContentAsset = ({
   const session = getSession(projectId);
   const queue = getAssetQueue(projectId, assetId);
   const publish = (state: AssetContentSessionState) => {
+    const persistenceError = Array.from(
+      getExternalContentRoots().values()
+    ).find(
+      (root) =>
+        root.projectId === projectId &&
+        root.assetId === assetId &&
+        root.persistenceError !== undefined
+    )?.persistenceError;
     const error =
-      queue.error ?? getTemplateMaterializationError(projectId, assetId);
+      queue.error ??
+      (persistenceError === undefined
+        ? undefined
+        : new Error(persistenceError)) ??
+      getTemplateMaterializationError(projectId, assetId);
     listener(
       error === undefined ? state : { ...state, status: "failed", error }
     );
@@ -2041,6 +2210,9 @@ export const disposeExternalContentProject = async ({
     }
   }
   subscribedSessions.delete(session);
+  const history = new Map($externalContentHistory.get());
+  history.delete(projectId);
+  $externalContentHistory.set(history);
   return true;
 };
 

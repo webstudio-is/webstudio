@@ -2711,6 +2711,12 @@ test("materializes into normal instances and saves their synchronous mutations o
   ).rejects.toThrow(
     "The MDX content source must be structurally valid before canvas edits can be saved."
   );
+  expect(
+    findExternalContentRoot(getExternalContentRoots(), "block", '["block"]')
+      ?.persistenceError
+  ).toBe(
+    "The MDX content source must be structurally valid before canvas edits can be saved."
+  );
 
   session.save(asset.id, "# Repaired");
   await session.flush(asset.id);
