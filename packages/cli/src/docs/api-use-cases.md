@@ -485,8 +485,8 @@ Notes:
 - When a template is renamed or deleted, use `migrate-content-block-template-references` to update a selected set of affected MDX files. The first call returns a plan. Report its changed-file, update, omission, and diagnostic counts, then repeat the exact request with its `confirmationToken` only after approval. Renames and removals update named JSX and legacy `ws:name` references, including names such as `Image` and `CodeText` when they identify templates. Rename targets must be valid PascalCase JSX identifiers. Removing a paired reference unwraps and preserves its authored children; removing a self-closing reference removes the node because it has no authored children. Invalid files remain unchanged and are reported in diagnostics.
 - `edit-content-block-source` replaces the complete MDX source. Preserve frontmatter and unrelated source when making a bounded edit.
 - `update-content-block-frontmatter` replaces the complete frontmatter mapping. Inspect the current source first and include every property that must remain.
-- Store frontmatter images as exact `$ref` objects. Bind an Image source to the resolved `.src` field and its alt property to `.description` so the Asset description supplies alternative text.
-- Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions, JSON/body references, and resolved image metadata remain read-only.
+- Store frontmatter images as exact `$ref` objects. Bind an editable Image source to the resolved `.src` with explicit `binding.mode:"readwrite"`; use `mode:"read"` for its alt binding to `.description`. Omitting the source mode leaves the image visible but not replaceable in Content mode.
+- Use `update-content-block-frontmatter` for MCP frontmatter edits. MDX-rendered elements are not persistent instance targets for generic `bind-props` or `update-text` calls. Preserve existing `mode:"readwrite"` bindings when encountered; they are valid only for exact direct paths into the connected document's frontmatter. Direct bindings through a loaded Markdown or MDX `$ref` ending in `#frontmatter` save to the referenced file, with its write permissions enforced. Shared-record edits affect every document using that record. Computed expressions and JSON/body references remain read-only. Image replacement is supported: a direct Image source binding with `mode:"readwrite"` lets the picker replace the frontmatter `$ref`, while shared Asset metadata is edited in Asset settings.
 - Inspect every returned diagnostic. Invalid MDX is saved rather than silently repaired; preserve the source, report the source range, and fix only the requested or invalid part.
 - If an edit in a long-lived MCP session reports a conflict after another client saved the Asset, call `reload-content-block-source`, inspect the latest source, reapply the requested change, and retry. One-shot CLI calls refresh before each operation and normally cannot reproduce a stale session. Never overwrite the newer revision blindly.
 
@@ -515,6 +515,24 @@ Notes:
 - A direct writable binding such as `document.frontmatter.author.name` can edit a shared author loaded through `../authors/oleg.md#frontmatter`. The edit saves to the author file and affects every article using it; preserve the article's `$ref` marker.
 - Before handoff, inventory every article-owned field, including header text, author details, dates, reading time, categories, hero and inline image sources, alternative text, captions, links, and custom-component content. For each field, inspect its binding and source, edit it through the Content-mode UI, verify the saved MDX or referenced file, reload, and restore the test value. Record passed, failed, or not tested for each field. A correct preview, a successful MCP write, and one representative text edit do not prove the whole article is editable. Do not claim completion while required fields fail or remain untested.
 - Bind the Image source directly to `document.frontmatter.featureImage.src` with `binding.mode:"readwrite"` using `bind-props`. Content mode's **Choose source** replaces the article's frontmatter image `$ref`; the resolved URL stays read-only. Verify selection, the saved reference, and reload instead of treating a missing write mode as a platform limitation. For alternative text bound to `.description`, use **Choose source → asset actions → Settings → Description** to edit shared Asset metadata. This affects every use of the Asset and is separate from replacing an article's image.
+
+## Make an article image replaceable in Content mode
+
+Use this for a persistent designed Image inside a connected Content Block,
+with `featureImage: { $ref: "./images/hero.png" }` in its MDX frontmatter.
+Read the instance ID and document variable name before adapting the example.
+
+Commands:
+
+- MCP tool: bind-props {"bindings":[{"instanceId":"<imageInstanceId>","name":"src","binding":{"type":"expression","value":"document.frontmatter.featureImage.src","mode":"readwrite"}},{"instanceId":"<imageInstanceId>","name":"alt","binding":{"type":"expression","value":"document.frontmatter.featureImage.description","mode":"read"}}]}
+
+Notes:
+
+- The source mode must be explicit: the default `read` mode displays the image but prevents Content-mode replacement. Do not bind to query-result properties or add a fallback expression.
+- **Choose source** replaces the article's `featureImage.$ref`; the disabled resolved-URL input is expected. Do not store a resolved URL string or replace the shared Asset itself.
+- Shared alternative text is a separate action: **Choose source → asset actions → Settings → Description**. Its read-only binding does not require the image source binding to be read-only.
+- If the picker is missing or disabled, inspect the source mode, document scope, loaded reference, and permissions before claiming a product limitation.
+- Verify through Content mode with an approved temporary replacement. Check the saved `$ref`, unchanged unrelated MDX and original shared Asset, reload persistence, and restoration. If that test is not authorized, report it as not tested, not passed.
 
 ## Move elements
 

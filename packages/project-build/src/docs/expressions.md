@@ -68,7 +68,51 @@ loaded Markdown or MDX `$ref` values ending in `#frontmatter` save to the
 referenced file, with its write permissions enforced. For example, editing
 `document.frontmatter.author.name` updates the shared author file, affecting
 every article using it while preserving the article's reference. JSON/body
-references and resolved image metadata remain read-only.
+references remain read-only. Image replacement is a supported reference write,
+not a write to shared resolved metadata; use the image recipe below.
+
+### Make an article image replaceable
+
+For `featureImage: { $ref: "./images/hero.png" }`, bind the designed Image's
+`src` to `document.frontmatter.featureImage.src` with explicit `mode:"readwrite"`.
+The default `read` mode renders the image but does not let the Content-mode
+editor replace it. A disabled resolved-URL input is expected; the active
+**Choose source** picker is the replacement control.
+
+Use `bind-props` with the actual Image instance ID and document variable name:
+
+```json
+{
+  "bindings": [
+    {
+      "instanceId": "<imageInstanceId>",
+      "name": "src",
+      "binding": {
+        "type": "expression",
+        "value": "document.frontmatter.featureImage.src",
+        "mode": "readwrite"
+      }
+    },
+    {
+      "instanceId": "<imageInstanceId>",
+      "name": "alt",
+      "binding": {
+        "type": "expression",
+        "value": "document.frontmatter.featureImage.description",
+        "mode": "read"
+      }
+    }
+  ]
+}
+```
+
+The picker saves a new `$ref` in the article. It must not save a resolved URL
+string or modify the original shared Asset. Shared alternative text uses
+**Choose source → asset actions → Settings → Description** instead.
+
+If the picker is absent or disabled, first inspect the source binding's mode,
+document scope, loaded `$ref`, and permissions. Do not infer that replacement
+is unsupported from a correctly rendered image or the disabled URL input.
 
 ### Verify the whole article, not just its body
 
@@ -81,17 +125,11 @@ binding, correct preview, or successful MCP edit is not a UI-editability test.
 Report each field as passed, failed, or not tested; do not call the article
 fully editable with required fields missing or untested.
 
-For Image sources, bind `document.frontmatter.featureImage.src` with
-`binding.mode:"readwrite"` using `bind-props`. Content mode's **Choose source**
-replaces the article's frontmatter image `$ref`; the resolved URL field remains
-read-only. Test this picker and the saved reference instead of assuming that
-displaying an image proves replacement works.
-
-An alternative-text binding to the image's `.description` uses shared Asset
-metadata. Edit it through **Choose source → asset actions → Settings →
-Description**; that edit affects every use of the Asset. Image replacement
-and shared-description editing are separate actions, not reasons to leave
-required image content uneditable.
+For images, use the recipe above and verify the picker, changed `$ref`, reload,
+and restoration with an approved temporary replacement. Confirm unrelated MDX
+and the original shared Asset remain unchanged. A metadata edit or a disabled
+URL input does not test image replacement. If the replacement test is not
+authorized, record it as not tested rather than passed.
 
 ### Keep editable values separate from formatting
 
