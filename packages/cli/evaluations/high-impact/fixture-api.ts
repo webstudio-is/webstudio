@@ -26,7 +26,10 @@ import {
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import React from "react";
 import type { BuilderState } from "@webstudio-is/project-build/state";
-import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
+import {
+  createBuilderStateFreshness,
+  createBuilderBuildDataSnapshotFromState,
+} from "@webstudio-is/project-build/state";
 import type { BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
 import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contracts";
 import type { HighImpactFixture, EvaluationProject } from "./fixtures";
@@ -350,8 +353,11 @@ export const startHighImpactFixtureApi = async (
         );
         return;
       }
-      if (operationPath === "build.loadProjectBundleByProjectId") {
-        data = createLocalProjectBundleFromSessionSnapshot(
+      if (
+        operationPath === "build.loadProjectBundleByProjectId" ||
+        operationPath === "build.loadData"
+      ) {
+        const bundle = createLocalProjectBundleFromSessionSnapshot(
           {
             projectId,
             buildId,
@@ -367,6 +373,21 @@ export const startHighImpactFixtureApi = async (
           },
           { origin }
         );
+        data =
+          operationPath === "build.loadData"
+            ? {
+                ...bundle.build,
+                ...createBuilderBuildDataSnapshotFromState(state),
+                pages: bundle.build.pages,
+                assets: bundle.assets,
+                assetFolders: bundle.assetFolders,
+                project: {
+                  id: projectId,
+                  title: "High-impact evaluation",
+                  domain: "high-impact-evaluation",
+                },
+              }
+            : bundle;
       } else if (operationPath === "projects.get") {
         data = {
           id: projectId,

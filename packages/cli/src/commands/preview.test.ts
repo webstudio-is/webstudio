@@ -234,7 +234,7 @@ test("prepares preview by syncing missing data and generating the app template",
     downloadAssetFiles: vi.fn(async () => undefined),
     isFileExists: vi.fn(async () => true),
     loadProjectBundleByBuildId: vi.fn(),
-    loadProjectBundleByProjectId: vi.fn(async () =>
+    loadCurrentProjectBundle: vi.fn(async () =>
       createPublishedProjectBundleFixture()
     ),
     readFile: vi.fn(),
@@ -266,7 +266,7 @@ test("prepares preview by syncing missing data and generating the app template",
     ensureDependencies: vi.fn(async () => undefined),
   });
 
-  expect(syncDependencies.loadProjectBundleByProjectId).toHaveBeenCalled();
+  expect(syncDependencies.loadCurrentProjectBundle).toHaveBeenCalled();
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
     template: ["react-router"],
