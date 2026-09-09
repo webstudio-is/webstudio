@@ -927,7 +927,10 @@ const useUserPublishCount = () => {
   }, [load, project?.id]);
   return {
     userPublishCount: data?.success ? data.data : 0,
-    maxDailyPublishesPerUser,
+    maxDailyPublishesPerUser:
+      data?.success && data.limit !== undefined
+        ? data.limit
+        : maxDailyPublishesPerUser,
   };
 };
 

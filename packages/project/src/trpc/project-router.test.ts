@@ -3,6 +3,7 @@ import {
   createTestServer,
   db,
   json,
+  empty,
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import {
@@ -38,22 +39,23 @@ describe("userPublishCount", () => {
         if (url.searchParams.has("userId")) {
           return json(null);
         }
-        return json({ userId: "owner-1" });
+        return json({ userId: "owner-1", workspaceId: "ws-1" });
       }),
       db.get("WorkspaceProjectAuthorization", () =>
         json([{ relation: "editors" }])
       ),
-      db.get("user_publish_count", ({ request }) => {
+      db.get("Product", () => json([])),
+      db.head("Build", ({ request }) => {
         const url = new URL(request.url);
-        expect(url.searchParams.get("user_id")).toBe("eq.owner-1");
-        return json({ count: 42 });
+        expect(url.searchParams.get("Project.workspaceId")).toBe("eq.ws-1");
+        return empty({ headers: { "Content-Range": "0-0/42" } });
       })
     );
 
     const caller = createCaller(createContext());
     const result = await caller.userPublishCount({ projectId: "proj-1" });
 
-    expect(result).toEqual({ success: true, data: 42 });
+    expect(result).toEqual({ success: true, data: 42, limit: 100 });
   });
 
   test("counts publishes for the caller when projectId is omitted", async () => {
@@ -68,7 +70,7 @@ describe("userPublishCount", () => {
     const caller = createCaller(createContext());
     const result = await caller.userPublishCount();
 
-    expect(result).toEqual({ success: true, data: 7 });
+    expect(result).toEqual({ success: true, data: 7, limit: 10 });
   });
 
   test("uses token owner when projectId is omitted for token auth", async () => {
@@ -91,7 +93,7 @@ describe("userPublishCount", () => {
     );
     const result = await caller.userPublishCount();
 
-    expect(result).toEqual({ success: true, data: 9 });
+    expect(result).toEqual({ success: true, data: 9, limit: 10 });
   });
 
   test("does not count publishes when caller cannot view the project", async () => {

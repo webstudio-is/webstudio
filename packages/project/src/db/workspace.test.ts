@@ -21,6 +21,8 @@ import {
   moveProject,
   transferProject,
   findSharedWorkspacesByOwnerEmail,
+  getWorkspaceDailyPublishLimit,
+  getWorkspacePublishUsage,
 } from "./workspace";
 
 const server = createTestServer();
@@ -85,6 +87,53 @@ describe("create (msw)", () => {
       createContext()
     );
     expect(result.name).toBe("My Workspace");
+  });
+});
+
+describe("workspace publish usage", () => {
+  test("keeps the plan limit when the plan does not include workspaces", () => {
+    expect(getWorkspaceDailyPublishLimit(defaultPlanFeatures, 0)).toBe(10);
+  });
+
+  test("counts included and unused extra seats", () => {
+    expect(
+      getWorkspaceDailyPublishLimit(
+        {
+          ...defaultPlanFeatures,
+          maxWorkspaces: 20,
+          seatsIncluded: 2,
+        },
+        3
+      )
+    ).toBe(600);
+  });
+
+  test("counts publishes from every project in the workspace", async () => {
+    server.use(
+      db.get("Project", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("id")).toBe("eq.proj-1");
+        return json({ workspaceId: "ws-1", userId: "owner-1" });
+      }),
+      db.get("Product", () => json([])),
+      db.head("Build", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("Project.workspaceId")).toBe("eq.ws-1");
+        return empty({ headers: { "Content-Range": "0-0/250" } });
+      })
+    );
+
+    const context = createContext();
+    context.getOwnerPlanFeatures = async () => ({
+      ...defaultPlanFeatures,
+      maxWorkspaces: 20,
+      seatsIncluded: 2,
+    });
+
+    await expect(getWorkspacePublishUsage("proj-1", context)).resolves.toEqual({
+      count: 250,
+      limit: 300,
+    });
   });
 });
 

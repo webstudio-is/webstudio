@@ -5,6 +5,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
+import { assertWorkspacePublishAllowed } from "@webstudio-is/project/workspace.server";
 import {
   createId,
   dataSource,
@@ -423,6 +424,7 @@ export const createProductionBuild = async (
 
   const devBuild = await loadDevBuildByProjectId(context, props.projectId);
   assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
+  await assertWorkspacePublishAllowed(props.projectId, context);
 
   const build = await context.postgrest.client.rpc("create_production_build", {
     project_id: props.projectId,

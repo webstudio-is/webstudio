@@ -6,10 +6,10 @@ import {
   AuthorizationError,
   authorizeProject,
   createErrorResponse,
-  getProjectOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import { projectTitle } from "../shared/project-schema";
 import { marketplaceApprovalStatus } from "../shared/marketplace-schema";
+import { getWorkspacePublishUsage } from "../db/workspace";
 
 export const projectRouter = router({
   rename: procedure
@@ -100,8 +100,6 @@ export const projectRouter = router({
             ? ctx.authorization.userId
             : ctx.authorization.ownerId;
 
-        let ownerId = userId;
-
         if (input?.projectId !== undefined) {
           const canView = await authorizeProject.hasProjectPermit(
             { projectId: input.projectId, permit: "view" },
@@ -114,13 +112,18 @@ export const projectRouter = router({
             );
           }
 
-          ownerId = await getProjectOwnerId(input.projectId, ctx);
+          const usage = await getWorkspacePublishUsage(input.projectId, ctx);
+          return {
+            success: true,
+            data: usage.count,
+            limit: usage.limit,
+          };
         }
 
         const result = await ctx.postgrest.client
           .from("user_publish_count")
           .select("count")
-          .eq("user_id", ownerId)
+          .eq("user_id", userId)
           .maybeSingle();
         if (result.error) {
           throw result.error;
@@ -128,6 +131,7 @@ export const projectRouter = router({
         return {
           success: true,
           data: result.data?.count ?? 0,
+          limit: ctx.planFeatures.maxDailyPublishesPerUser,
         };
       } catch (error) {
         return createErrorResponse(error);

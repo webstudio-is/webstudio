@@ -375,6 +375,52 @@ describe("createBuild (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("createProductionBuild (msw)", () => {
+  test("rejects a publish after the workspace allowance is used", async () => {
+    let didCreateProductionBuild = false;
+    server.use(
+      db.get("Project", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("userId")) {
+          return json({ id: "proj-1" });
+        }
+        return json({ workspaceId: "ws-1", userId: "owner-1" });
+      }),
+      db.get("Product", () => json([])),
+      db.head("Build", () =>
+        empty({ headers: { "Content-Range": "0-0/100" } })
+      ),
+      db.get("Build", () => json([buildRow])),
+      db.post("rpc/create_production_build", () => {
+        didCreateProductionBuild = true;
+        return json("build-prod");
+      })
+    );
+
+    const context = createContext();
+    context.getOwnerPlanFeatures = async () =>
+      ({
+        maxDailyPublishesPerUser: 100,
+        maxWorkspaces: 20,
+        seatsIncluded: 0,
+      }) as never;
+
+    await expect(
+      createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "saas",
+            domains: ["project-domain"],
+            assetsDomain: "project-domain",
+            excludeWstdDomainFromSearch: false,
+          },
+        },
+        context
+      )
+    ).rejects.toThrow("daily publishing limit of 100");
+    expect(didCreateProductionBuild).toBe(false);
+  });
+
   test("throws when dev build has orphan resource references", async () => {
     let didCreateProductionBuild = false;
     server.use(
