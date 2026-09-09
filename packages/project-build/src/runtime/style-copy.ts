@@ -700,7 +700,14 @@ export const insertLocalStyleSourcesWithNewIds = ({
     }
     styleSourceSelections.set(targetInstanceId, {
       instanceId: targetInstanceId,
-      values: newStyleSourceIds,
+      // Global root is shared by every page, so importing a fragment must
+      // preserve its existing tokens and their cascade order.
+      values:
+        contentMode === false && instanceId === ROOT_INSTANCE_ID
+          ? Array.from(
+              new Set([...existingStyleSourceIds, ...newStyleSourceIds])
+            )
+          : newStyleSourceIds,
     });
   }
 
