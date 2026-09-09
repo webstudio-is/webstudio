@@ -183,6 +183,9 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
   page,
   context,
 }) => {
+  // This full lifecycle repeatedly reloads Builder across two roles. CI can
+  // exhaust the default two-minute budget at the final reload assertion.
+  test.setTimeout(180_000);
   const fixture = await createContentModeProject({
     context: context,
     email: "mdx-content-source-e2e@webstudio.test",
