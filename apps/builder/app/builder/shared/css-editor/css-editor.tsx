@@ -11,6 +11,7 @@ import {
 } from "react";
 import { matchSorter } from "match-sorter";
 import {
+  PanelContent,
   Box,
   Flex,
   Label,
@@ -543,9 +544,9 @@ export const CssEditor = ({
   return (
     <Box css={{ isolation: "isolate" }}>
       {showSearch && (
-        <Box
+        <PanelContent
+          as={Box}
           css={{
-            padding: theme.panel.padding,
             position: "sticky",
             top: 0,
             background: cssVar("--background-primary"),
@@ -557,7 +558,7 @@ export const CssEditor = ({
             onChange={handleSearch}
             onAbort={handleAbortSearch}
           />
-        </Box>
+        </PanelContent>
       )}
       <CssEditorContextMenu
         onPaste={handleInsertStyles}

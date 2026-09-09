@@ -12,6 +12,10 @@ import {
 import {
   createAssetFolderRows,
   createAssetRows,
+  formatAsset,
+  getCollectionFolderIds,
+  validateCollectionFolder,
+  type AssetObjectReader,
 } from "@webstudio-is/asset-uploader/server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
@@ -44,6 +48,7 @@ import {
   type Resource,
   type StyleSource,
 } from "@webstudio-is/sdk";
+import { createAssetClient } from "~/shared/asset-client";
 
 const toMap = <Key extends string, Value>(entries: [Key, Value][]) =>
   new Map<Key, Value>(entries);
@@ -131,7 +136,6 @@ const getImportedPreviewImageAssetId = (data: ProjectBundle) => {
 
 const assertImportedAssetNames = (assets: Asset[]) => {
   const assetIds = new Set<string>();
-  const assetNames = new Set<string>();
 
   for (const asset of assets) {
     if (asset.id === "") {
@@ -143,11 +147,7 @@ const assertImportedAssetNames = (assets: Asset[]) => {
     if (isAssetFileName(asset.name) === false) {
       throw new Error(`Imported asset name is invalid: ${asset.name}`);
     }
-    if (assetNames.has(asset.name)) {
-      throw new Error(`Imported asset name is duplicated: ${asset.name}`);
-    }
     assetIds.add(asset.id);
-    assetNames.add(asset.name);
   }
 };
 
@@ -170,7 +170,7 @@ const normalizeImportedAssetFolderData = (
   });
 };
 
-const assertImportedAssetFilesUploaded = async ({
+const loadImportedAssetFiles = async ({
   assets,
   ctx,
   projectId,
@@ -180,12 +180,12 @@ const assertImportedAssetFilesUploaded = async ({
   projectId: string;
 }) => {
   if (assets.length === 0) {
-    return;
+    return { assets, fileNames: new Set<string>() };
   }
 
   const files = await ctx.postgrest.client
     .from("File")
-    .select("name")
+    .select("name, format, description, size, createdAt, updatedAt, meta")
     .eq("status", "UPLOADED")
     .eq("uploaderProjectId", projectId)
     .in(
@@ -197,11 +197,11 @@ const assertImportedAssetFilesUploaded = async ({
     throw files.error;
   }
 
-  const existingFileNames = new Set(
-    (files.data ?? []).map((file) => file.name)
+  const filesByName = new Map(
+    (files.data ?? []).map((file) => [file.name, file])
   );
   const missingAssets = assets.filter(
-    (asset) => existingFileNames.has(asset.name) === false
+    (asset) => filesByName.has(asset.name) === false
   );
   if (missingAssets.length > 0) {
     throw new Error(
@@ -211,14 +211,56 @@ const assertImportedAssetFilesUploaded = async ({
     );
   }
 
-  if (existingFileNames.size > 0) {
-    const visibleFiles = await ctx.postgrest.client
-      .from("File")
-      .update({ isDeleted: false })
-      .in("name", Array.from(existingFileNames));
-    if (visibleFiles.error) {
-      throw visibleFiles.error;
-    }
+  return {
+    assets: assets.map((asset) => {
+      const file = filesByName.get(asset.name);
+      if (file === undefined) {
+        throw new Error(`Imported asset file is missing: ${asset.name}`);
+      }
+      return formatAsset({
+        assetId: asset.id,
+        projectId,
+        filename: asset.filename ?? null,
+        description: asset.description ?? null,
+        folderId: asset.folderId,
+        file,
+      });
+    }),
+    fileNames: new Set(filesByName.keys()),
+  };
+};
+
+const restoreImportedAssetFiles = async ({
+  fileNames,
+  ctx,
+  projectId,
+}: {
+  fileNames: ReadonlySet<string>;
+  ctx: AppContext;
+  projectId: string;
+}) => {
+  if (fileNames.size === 0) {
+    return;
+  }
+  const visibleFiles = await ctx.postgrest.client
+    .from("File")
+    .update({ isDeleted: false })
+    .eq("uploaderProjectId", projectId)
+    .in("name", Array.from(fileNames));
+  if (visibleFiles.error) {
+    throw visibleFiles.error;
+  }
+};
+
+const validateImportedCollections = async ({
+  assets,
+  assetStore,
+}: {
+  assets: readonly Asset[];
+  assetStore: AssetObjectReader;
+}) => {
+  for (const folderId of getCollectionFolderIds(assets)) {
+    await validateCollectionFolder({ assets, folderId, assetStore });
   }
 };
 
@@ -311,6 +353,7 @@ export const importPublishedProjectBundle = async (
   dependencies: {
     hasProjectPermit: typeof authorizeProject.hasProjectPermit;
     loadDevBuildByProjectId: typeof loadDevBuildByProjectId;
+    assetStore?: AssetObjectReader;
   } = {
     hasProjectPermit: authorizeProject.hasProjectPermit,
     loadDevBuildByProjectId,
@@ -330,15 +373,22 @@ export const importPublishedProjectBundle = async (
   const nextVersion = build.version + 1;
 
   assertImportedAssets(data.assets);
-  const { assets: importedAssets, folders: importedAssetFolders } =
+  const { assets: normalizedAssets, folders: importedAssetFolders } =
     normalizeImportedAssetFolderData(data.assetFolders ?? [], data.assets);
 
-  await assertImportedAssetFilesUploaded({
-    assets: importedAssets,
-    ctx,
-    projectId,
-  });
-
+  const { assets: importedAssets, fileNames: importedFileNames } =
+    await loadImportedAssetFiles({
+      assets: normalizedAssets,
+      ctx,
+      projectId,
+    });
+  const collectionFolderIds = getCollectionFolderIds(importedAssets);
+  if (collectionFolderIds.size > 0) {
+    await validateImportedCollections({
+      assets: importedAssets,
+      assetStore: dependencies.assetStore ?? createAssetClient(),
+    });
+  }
   const buildUpdate = createBuildImportUpdate({
     data,
     lastTransactionId: createId(),
@@ -368,6 +418,12 @@ export const importPublishedProjectBundle = async (
     projectId,
   });
 
+  await restoreImportedAssetFiles({
+    fileNames: importedFileNames,
+    ctx,
+    projectId,
+  });
+
   await updateProjectPreviewImage({
     assetId: getImportedPreviewImageAssetId(data),
     ctx,
@@ -385,5 +441,7 @@ export const __testing__ = {
   assertImportedAssetNames,
   assertImportedAssets,
   normalizeImportedAssetFolderData,
-  assertImportedAssetFilesUploaded,
+  loadImportedAssetFiles,
+  restoreImportedAssetFiles,
+  validateImportedCollections,
 };

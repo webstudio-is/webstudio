@@ -4,6 +4,7 @@ import {
   getSelectedContentBlockExpressionMode,
   isObjectPathWritable,
   setObjectPathValue,
+  getFrontmatterWriteTarget,
 } from "./content-block-document";
 import {
   blockComponent,
@@ -15,6 +16,109 @@ import {
 } from "@webstudio-is/sdk";
 
 describe("Content Block document bindings", () => {
+  test("follows loaded Markdown frontmatter references without changing their markers", () => {
+    const article = { author: { $ref: "./author.md#frontmatter" } };
+    const author = {
+      name: "Ada",
+      editor: { $ref: "./editor.mdx#frontmatter" },
+    };
+    const sources = [
+      {
+        assetId: "article",
+        documentUrl: "https://content.test/article.mdx",
+        properties: article,
+      },
+      {
+        assetId: "author",
+        documentUrl: "https://content.test/author.md",
+        properties: author,
+      },
+      {
+        assetId: "editor",
+        documentUrl: "https://content.test/editor.mdx",
+        properties: { name: "Grace" },
+      },
+    ];
+    const input = { assetId: "article", value: article, sources };
+    expect(
+      getFrontmatterWriteTarget({ ...input, path: ["author", "name"] })
+    ).toEqual({
+      assetId: "author",
+      path: ["name"],
+      via: ["article", "author"],
+    });
+    expect(
+      getFrontmatterWriteTarget({
+        ...input,
+        path: ["author", "editor", "name"],
+      })
+    ).toEqual({
+      assetId: "editor",
+      path: ["name"],
+      via: ["article", "author", "editor"],
+    });
+    expect(getFrontmatterWriteTarget({ ...input, path: ["author"] })).toEqual({
+      assetId: "article",
+      path: ["author"],
+      via: ["article"],
+    });
+    expect(article).toEqual({ author: { $ref: "./author.md#frontmatter" } });
+    for (const reference of [
+      "./missing.md#frontmatter",
+      "./article.mdx#frontmatter",
+      "./author.md#body",
+      "./image.png",
+      "https://other.test/author.md#frontmatter",
+    ]) {
+      const properties = { author: { $ref: reference } };
+      expect(
+        getFrontmatterWriteTarget({
+          assetId: "article",
+          value: properties,
+          path: ["author", "name"],
+          sources: [
+            {
+              assetId: "article",
+              documentUrl: "https://content.test/article.mdx",
+              properties,
+            },
+          ],
+        })
+      ).toBeUndefined();
+    }
+    expect(
+      getFrontmatterWriteTarget({
+        assetId: "article",
+        value: {},
+        path: ["__proto__", "polluted"],
+      })
+    ).toBeUndefined();
+    const properties = { author: { $ref: "./author.md#frontmatter" } };
+    expect(
+      getFrontmatterWriteTarget({
+        assetId: "article",
+        value: properties,
+        path: ["author", "name"],
+        sources: [
+          {
+            assetId: "article",
+            documentUrl: "https://content.test/article.mdx",
+            properties,
+          },
+          {
+            assetId: "one",
+            documentUrl: "https://content.test/author.md",
+            properties: {},
+          },
+          {
+            assetId: "two",
+            documentUrl: "https://content.test/author.md",
+            properties: {},
+          },
+        ],
+      })
+    ).toBeUndefined();
+  });
   test("uses the selected external root instead of an enclosing Content Block", () => {
     const instances = new Map<string, Instance>([
       [
@@ -217,6 +321,12 @@ describe("Content Block document bindings", () => {
       getSelectedContentBlockExpressionMode({
         ...context,
         expression: `${document}.frontmatter.title`,
+      })
+    ).toBe("readwrite");
+    expect(
+      getSelectedContentBlockExpressionMode({
+        ...context,
+        expression: `${document}.frontmatter.author?.name`,
       })
     ).toBe("readwrite");
     expect(

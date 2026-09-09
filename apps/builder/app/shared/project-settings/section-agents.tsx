@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { Flex, Grid, Text, Tooltip } from "@webstudio-is/design-system";
+import { Flex, Grid, Text, Tooltip, cssVar } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { CodeEditor } from "~/shared/code-editor";
 import { $projectSettings } from "~/shared/sync/data-stores";
@@ -25,7 +25,10 @@ export const SectionAgents = () => {
           variant="wrapped"
           content="Give AI coding agents project-specific guidance. When you sync the project locally, Webstudio writes these instructions to a managed AGENTS.md in the project root. An existing user-owned AGENTS.md is never overwritten."
         >
-          <InfoCircleIcon tabIndex={0} />
+          <InfoCircleIcon
+            color={cssVar("--foreground-secondary")}
+            tabIndex={0}
+          />
         </Tooltip>
       </Flex>
       <Grid gap={1} css={{ ...sectionSpacing, minHeight: 0 }}>

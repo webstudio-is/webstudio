@@ -32,6 +32,21 @@ describe("createTransactionCompletionStore", () => {
     expect(callback).toHaveBeenCalledOnce();
   });
 
+  test("subscribes only to the current transaction when one exists", () => {
+    const store = createTransactionCompletionStore();
+    const callback = vi.fn();
+
+    store.$lastTransactionId.set("tx-current");
+    store.onNextTransactionComplete(callback);
+    store.$lastTransactionId.set("tx-next");
+
+    store.completeTransaction("tx-current", true);
+    expect(callback).toHaveBeenCalledOnce();
+
+    store.completeTransaction("tx-next", true);
+    expect(callback).toHaveBeenCalledOnce();
+  });
+
   test("removes stale callbacks after timeout", () => {
     vi.useFakeTimers();
     const store = createTransactionCompletionStore();

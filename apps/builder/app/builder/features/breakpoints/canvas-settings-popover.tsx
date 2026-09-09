@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   theme,
   Flex,
   Label,
@@ -50,7 +51,7 @@ export const CanvasSettingsPopover = () => {
         align="start"
         css={{ width: theme.spacing[30] }}
       >
-        <Flex css={{ padding: theme.panel.padding }} gap="3">
+        <PanelContent as={Flex} gap="3">
           <WidthInput min={minCanvasWidth} />
           <Flex align="center" gap="2">
             <Label>Scale</Label>
@@ -60,7 +61,7 @@ export const CanvasSettingsPopover = () => {
               readOnly
             />
           </Flex>
-        </Flex>
+        </PanelContent>
       </PopoverContent>
     </Popover>
   );

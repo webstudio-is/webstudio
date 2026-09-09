@@ -10,6 +10,7 @@ import {
   listComponentCatalogAvailableComponents,
 } from "@webstudio-is/project-build/runtime";
 import {
+  PanelContent,
   theme,
   Flex,
   ComponentCard,
@@ -172,13 +173,13 @@ export const ComponentsPanel = ({
       <PanelTitle>Components</PanelTitle>
       <Separator />
 
-      <Box css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Box}>
         <SearchField
           {...searchFieldProps}
           autoFocus
           placeholder="Find components"
         />
-      </Box>
+      </PanelContent>
       <Separator />
 
       <ScrollArea ref={draggableContainerRef}>

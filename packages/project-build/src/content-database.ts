@@ -5,6 +5,8 @@ import {
   createDocumentGraph,
   createLiteralContentCompilationQuery,
   getDocumentGraphQueryRootIds,
+  isDocumentGraphFieldAffected,
+  type DocumentGraph,
   hasDynamicContentCompilationValues,
   type AssetQueryInput,
   type ContentCompilationPlan,
@@ -12,7 +14,7 @@ import {
   defaultAssetResourceOutputSelection,
   getAssetQueryFieldValue,
   selectContentHydrationCandidates,
-  type AssetFileDocument,
+  type ContentDatabaseDocument,
 } from "@webstudio-is/content-engine";
 import {
   blockComponent,
@@ -219,9 +221,15 @@ export const createPublishedBuildContentCompilationPlan = (
 export const resolvePublishedMdxDependencyClosure = async ({
   build,
   artifact,
+  onTemplateOmission,
 }: {
   build: PublishedContentDatabaseBuild;
   artifact: ContentArtifactV1;
+  onTemplateOmission?: (issue: {
+    blockInstanceId: string;
+    assetId: string;
+    templateName: string;
+  }) => void;
 }) => {
   const instances = new Map(
     getBuildValues<Instance>(build.instances).map((instance) => [
@@ -313,6 +321,12 @@ export const resolvePublishedMdxDependencyClosure = async ({
       for (const reference of resolution.references) {
         if (reference.type === "resolved-template") {
           visitTemplateSubtree(reference.templateInstanceId);
+        } else {
+          onTemplateOmission?.({
+            blockInstanceId: blockId,
+            assetId,
+            templateName: reference.templateName,
+          });
         }
       }
     }
@@ -332,7 +346,8 @@ export const resolvePublishedMdxDependencyClosure = async ({
 
 const candidateDocumentKey = Symbol("candidate-document");
 type CandidateDocument = Readonly<{
-  [candidateDocumentKey]: AssetFileDocument;
+  [candidateDocumentKey]: ContentDatabaseDocument;
+  graph?: DocumentGraph;
 }>;
 
 const isCandidateDocument = (value: unknown): value is CandidateDocument =>
@@ -343,6 +358,19 @@ const getValueAtPath = (
   path: readonly string[]
 ): unknown => {
   if (isCandidateDocument(value)) {
+    if (
+      path[0] === "properties" &&
+      value.graph !== undefined &&
+      isDocumentGraphFieldAffected({
+        graph: value.graph,
+        sourceId: value[candidateDocumentKey]._id,
+        field: ["properties", ...path.slice(1)],
+      })
+    ) {
+      throw new Error(
+        "Dynamic MDX source candidates through resolved document references are not supported safely for publication"
+      );
+    }
     return path.length === 0
       ? value[candidateDocumentKey]._id
       : getAssetQueryFieldValue(value[candidateDocumentKey], [...path]);
@@ -396,9 +424,9 @@ export const resolvePublishedMdxAssetCandidates = ({
     artifact?.documentGraph === undefined
       ? undefined
       : createDocumentGraph(artifact.documentGraph);
-  const documents = (artifact?.documents ?? []).filter(
-    (document): document is AssetFileDocument => document._type === "asset.file"
-  );
+  // Compiled documents are projected file records; metadata such as _type
+  // can be omitted by the resource's output selection.
+  const documents = artifact?.documents ?? [];
 
   const evaluateDataSource = (
     dataSourceId: string,
@@ -436,8 +464,16 @@ export const resolvePublishedMdxAssetCandidates = ({
       }
       if (documentGraph !== undefined) {
         if (
-          getDocumentGraphQueryRootIds({ graph: documentGraph, query }).length >
-          0
+          getDocumentGraphQueryRootIds({
+            graph: documentGraph,
+            // Only filtering and sorting affect candidate membership here.
+            // Check the field used by src when it is read below, not every
+            // unrelated reference included in the resource output.
+            query: {
+              ...query,
+              output: { mode: "fields", fields: [], includeMetadata: false },
+            },
+          }).length > 0
         ) {
           throw new Error(
             "Dynamic MDX source candidates through resolved document references are not supported safely for publication"
@@ -463,8 +499,12 @@ export const resolvePublishedMdxAssetCandidates = ({
           fieldPath.length === 0
             ? ({
                 [candidateDocumentKey]: document,
+                graph: documentGraph,
               } satisfies CandidateDocument)
-            : getAssetQueryFieldValue(document, [...fieldPath])
+            : getValueAtPath(
+                { [candidateDocumentKey]: document, graph: documentGraph },
+                fieldPath
+              )
         );
     }
     const collection = instances.get(dataSource.scopeInstanceId ?? "");

@@ -9,6 +9,7 @@ import {
   $resourcePerformanceCache,
   $resourcesCache,
   getResourceKey,
+  invalidateAssets,
   loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
@@ -142,6 +143,57 @@ test("reloads an invalidated cached request", async () => {
   expect(secondFetch).toHaveBeenCalledOnce();
   expect($resourcesCache.get().get(key)).toEqual({ data: "second" });
 });
+
+test.each(["updated", "empty", "failed"])(
+  "keeps Assets visible during refresh until the %s response settles",
+  async (outcome) => {
+    const request: ResourceRequest = {
+      name: "assets",
+      method: "post",
+      url: "/$resources/assets",
+      searchParams: [],
+      headers: [],
+      body: { query: {} },
+    };
+    const key = getResourceKey(request);
+    const original = { data: [{ _id: "article", title: "Before" }] };
+    queueResources([request]);
+    await loadResources(async () => Response.json([[key, original]]));
+    const values: unknown[] = [];
+    const unsubscribe = $resourcesCache.listen((cache) =>
+      values.push(cache.get(key))
+    );
+    let respond: (response: Response) => void = () => {};
+    const requestFetch = vi.fn<typeof globalThis.fetch>(
+      () =>
+        new Promise((resolve) => {
+          respond = resolve;
+        })
+    );
+    try {
+      invalidateAssets(requestFetch);
+      expect(requestFetch).toHaveBeenCalledOnce();
+      expect($pendingResourceKeys.get().has(key)).toBe(true);
+      expect($resourcesCache.get().get(key)).toEqual(original);
+      const updated = {
+        data: outcome === "empty" ? [] : [{ _id: "article", title: "After" }],
+      };
+      respond(
+        outcome === "failed"
+          ? new Response(null, { status: 503 })
+          : Response.json([[key, updated]])
+      );
+      await vi.waitFor(() => expect($hasPendingResources.get()).toBe(false));
+      expect($resourcesCache.get().get(key)).toEqual(
+        outcome === "failed" ? original : updated
+      );
+      expect(values).not.toContain(undefined);
+    } finally {
+      unsubscribe();
+      respond(Response.json([]));
+    }
+  }
+);
 
 test("replaces an invalidated in-flight request without caching stale data", async () => {
   vi.useFakeTimers();

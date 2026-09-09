@@ -6,8 +6,14 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import type { Extension } from "@codemirror/state";
+import { linter } from "@codemirror/lint";
+import { getCollectionEntrySourceIssues } from "@webstudio-is/content-engine";
+import { validateTextAssetSource } from "@webstudio-is/content-engine/mdx";
+import { useContentCollections } from "~/builder/shared/assets/content-collections";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   cssVar,
@@ -49,6 +55,8 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import {
+  contentBlockMdxTemplateDescriptors,
+  getAssetDisplayNameParts,
   getAssetUrl,
   getComponentJsxName,
   getContentBlockTemplateName,
@@ -124,6 +132,21 @@ const getStaticMdxCompletionProps = (
     ];
   });
 
+const getMdxEditorSourceBlockInstanceIds = (assetId: string) =>
+  Array.from(
+    new Set([
+      ...getMdxAssetSourceBlockInstanceIds({
+        assetId,
+        state: readBuilderStateStores(),
+      }),
+      ...Array.from($externalContentRoots.get().values()).flatMap((root) =>
+        root.assetId === assetId
+          ? [root.sourceBlockInstanceId ?? root.blockInstanceId]
+          : []
+      ),
+    ])
+  );
+
 const getMdxCompletionComponents = ({
   assetId,
   metas,
@@ -134,6 +157,14 @@ const getMdxCompletionComponents = ({
   const components = new Map<string, MdxCompletionComponent>();
   const componentIds = Array.from(metas.keys());
   for (const [component, meta] of metas) {
+    if (
+      contentBlockMdxTemplateDescriptors.some(
+        (descriptor) =>
+          descriptor.kind === "component" && descriptor.component === component
+      ) === false
+    ) {
+      continue;
+    }
     const name = getComponentJsxName({
       component,
       components: componentIds,
@@ -165,10 +196,7 @@ const getMdxCompletionComponents = ({
     propsByInstanceId.set(prop.instanceId, props);
   }
   const templates = new Map<string, MdxCompletionComponent>();
-  for (const blockInstanceId of getMdxAssetSourceBlockInstanceIds({
-    assetId,
-    state,
-  })) {
+  for (const blockInstanceId of getMdxEditorSourceBlockInstanceIds(assetId)) {
     for (const [template] of findBlockTemplates({
       anchor: [blockInstanceId],
       instances,
@@ -455,11 +483,7 @@ const MarkdownLinkPicker = ({
       }}
       content={
         open && (
-          <Flex
-            direction="column"
-            gap={5}
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap={5}>
             <UrlInput
               instanceId="markdown-link"
               prop={value}
@@ -489,7 +513,7 @@ const MarkdownLinkPicker = ({
                 Insert link
               </Button>
             </Flex>
-          </Flex>
+          </PanelContent>
         )
       }
     >
@@ -534,7 +558,6 @@ const MarkdownToolbar = ({
       align="center"
       gap={2}
       css={{
-        minWidth: 0,
         flex: 1,
         overflowX: "auto",
         scrollbarWidth: "none",
@@ -573,34 +596,102 @@ const MarkdownToolbar = ({
   </Flex>
 );
 
+export const MarkdownEditor = ({
+  asset,
+  ariaLabel = "Markdown source",
+  defaultPreviewOpen = true,
+  autoFocus = false,
+  value,
+  readOnly,
+  languageExtensions = [],
+  onChange,
+  onChangeComplete,
+}: {
+  asset: Asset;
+  ariaLabel?: string;
+  defaultPreviewOpen?: boolean;
+  autoFocus?: boolean;
+  value: string;
+  readOnly: boolean;
+  languageExtensions?: Extension[];
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
+}) => {
+  const assetFolders = useStore($assetFolders);
+  const { assetContainers } = useAssets();
+  const [previewOpen, setPreviewOpen] = useState(defaultPreviewOpen);
+  const editorApiRef = useRef<EditorApi>();
+
+  return (
+    <Box
+      css={{
+        display: "grid",
+        gridTemplateRows: "auto minmax(0, 1fr)",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <MarkdownToolbar
+        editorApiRef={editorApiRef}
+        disabled={readOnly}
+        previewOpen={previewOpen}
+        onPreviewOpenChange={setPreviewOpen}
+      />
+      <MarkdownSplitView
+        open={previewOpen}
+        source={value}
+        sourceAsset={asset}
+        folders={assetFolders}
+        assetContainers={assetContainers}
+      >
+        <CodeEditor
+          autoFocus={autoFocus}
+          ariaLabel={ariaLabel}
+          editorApiRef={editorApiRef}
+          value={value}
+          languageExtensions={languageExtensions}
+          size="full"
+          expandable={false}
+          chromeless
+          readOnly={readOnly}
+          onChange={onChange}
+          onChangeComplete={onChangeComplete}
+        />
+      </MarkdownSplitView>
+    </Box>
+  );
+};
+
 export const TextFileEditor = ({
   assetId,
   onOpenChange,
+  readOnly = false,
 }: {
   assetId: string;
   onOpenChange: (open: boolean) => void;
+  readOnly?: boolean;
 }) => {
   const assets = useStore($assets);
-  const assetFolders = useStore($assetFolders);
   const externalContentRoots = useStore($externalContentRoots);
   const registeredComponentMetas = useStore($registeredComponentMetas);
   const instances = useStore($instances);
   const props = useStore($props);
   const dataSources = useStore($dataSources);
   const asset = assets.get(assetId);
-  const { assetContainers } = useAssets();
-  const canEdit = useStore($authPermit) !== "view";
+  const collections = useContentCollections(asset?.folderId);
+  const collection =
+    asset?.folderId === undefined ? undefined : collections.get(asset.folderId);
+  const canEdit = useStore($authPermit) !== "view" && readOnly === false;
   const [state, setState] = useState<TextFileState>({ status: "loading" });
   const [persistenceFeedback, setPersistenceFeedback] =
     useState<MdxPersistenceFeedback>();
-  const [previewOpen, setPreviewOpen] = useState(true);
   const currentAssetRef = useRef<Asset>();
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const pendingMdxSavesRef = useRef(0);
   const saveQueueRef = useRef(Promise.resolve());
-  const editorApiRef = useRef<EditorApi>();
   const reportedConflictRef = useRef<string>();
+  const saveAttemptRef = useRef(0);
   const mdxSession =
     asset !== undefined &&
     isMdxFileAsset(asset) &&
@@ -622,13 +713,14 @@ export const TextFileEditor = ({
         return getTextFileEditorExtensions(asset);
       }
       const projectId = asset.projectId;
-      return getTextFileEditorExtensions(
+      const extensions = getTextFileEditorExtensions(
         asset,
         [],
         async ({ source }) =>
           inspectMdxAssetSource({
             source,
             assetId,
+            sourceBlockInstanceIds: getMdxEditorSourceBlockInstanceIds(assetId),
             state: readBuilderStateStores(),
             metas: registeredComponentMetas,
             projectId,
@@ -638,12 +730,41 @@ export const TextFileEditor = ({
           metas: registeredComponentMetas,
         })
       );
+      if (
+        collection?.status === "ready" &&
+        collection.config.matchesEntry(formatAssetName(asset))
+      ) {
+        extensions.push(
+          linter(async (view) => {
+            try {
+              return (
+                await getCollectionEntrySourceIssues({
+                  config: collection.config,
+                  source: view.state.doc.toString(),
+                  basename: getAssetDisplayNameParts(asset).basename,
+                })
+              ).map(({ from, to, message }) => ({
+                from,
+                to,
+                message,
+                severity: "error" as const,
+                source: "collection-field",
+              }));
+            } catch {
+              // The Markdown linter already reports malformed frontmatter.
+              return [];
+            }
+          })
+        );
+      }
+      return extensions;
     },
     // Recreate the linter after a Content Block is materialized or refreshed so
     // contextual template and content-model diagnostics are recalculated.
     [
       asset,
       assetId,
+      collection,
       dataSources,
       externalContentRoots,
       instances,
@@ -743,26 +864,45 @@ export const TextFileEditor = ({
           })
       : undefined;
     return () => {
+      saveAttemptRef.current += 1;
       controller.abort();
       unsubscribe?.();
     };
   }, [assetId]);
 
-  const save = (content: string) => {
+  const save = async (content: string) => {
+    const attempt = ++saveAttemptRef.current;
     if (canEdit === false) {
-      return;
+      return true;
     }
     const currentAsset = currentAssetRef.current;
     if (currentAsset === undefined) {
       toast.error("Unable to save: asset not found");
-      return;
+      return false;
     }
     const normalized = normalizeTextFileContent(currentAsset, content);
     if ("error" in normalized) {
       toast.error(normalized.error);
-      return;
+      return false;
     }
     const normalizedContent = normalized.content;
+    if (isMdxFileAsset(currentAsset)) {
+      const { diagnostics } = await validateTextAssetSource({
+        source: normalizedContent,
+        format: "mdx",
+      });
+      if (attempt !== saveAttemptRef.current) {
+        return false;
+      }
+      const error = diagnostics.find(({ severity }) => severity === "error");
+      if (error !== undefined) {
+        setPersistenceFeedback({ kind: "invalid", message: error.message });
+        return false;
+      }
+      setPersistenceFeedback((feedback) =>
+        feedback?.kind === "invalid" ? undefined : feedback
+      );
+    }
     if (normalizedContent !== content) {
       setState({ status: "loaded", content: normalizedContent });
     }
@@ -774,7 +914,7 @@ export const TextFileEditor = ({
         currentAsset.projectId === undefined
       ) {
         toast.error("Unable to save: MDX content is not loaded");
-        return;
+        return false;
       }
       pendingMdxSavesRef.current += 1;
       void replaceExternalContentAssetSource({
@@ -800,7 +940,7 @@ export const TextFileEditor = ({
         .finally(() => {
           pendingMdxSavesRef.current -= 1;
         });
-      return;
+      return true;
     }
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
@@ -829,24 +969,37 @@ export const TextFileEditor = ({
         toast.error(error instanceof Error ? error.message : "Unable to save");
       }
     });
+    return true;
   };
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
   const isMarkdown = asset !== undefined && isMarkdownAsset(asset);
   let editor: ReactNode;
   if (state.status === "loaded" && asset !== undefined) {
-    editor = (
+    const onChange = (content: string) => {
+      saveAttemptRef.current += 1;
+      setState({ status: "loaded", content });
+    };
+    editor = isMarkdown ? (
+      <MarkdownEditor
+        autoFocus
+        asset={asset}
+        value={state.content}
+        readOnly={canEdit === false}
+        languageExtensions={languageExtensions}
+        onChange={onChange}
+        onChangeComplete={save}
+      />
+    ) : (
       <CodeEditor
-        editorApiRef={editorApiRef}
+        autoFocus
         value={state.content}
         languageExtensions={languageExtensions}
         size="full"
         expandable={false}
         chromeless
         readOnly={canEdit === false}
-        onChange={(content) => {
-          setState({ status: "loaded", content });
-        }}
+        onChange={onChange}
         onChangeComplete={save}
       />
     );
@@ -861,7 +1014,12 @@ export const TextFileEditor = ({
       open
       onOpenChange={(open) => {
         if (open === false && state.status === "loaded") {
-          save(state.content);
+          void save(state.content).then((saved) => {
+            if (saved) {
+              onOpenChange(false);
+            }
+          });
+          return;
         }
         onOpenChange(open);
       }}
@@ -884,11 +1042,10 @@ export const TextFileEditor = ({
             <Box
               css={{
                 display: "grid",
-                gridTemplateRows: isMarkdown
-                  ? persistenceFeedback === undefined
-                    ? "auto minmax(0, 1fr)"
-                    : "auto auto minmax(0, 1fr)"
-                  : "minmax(0, 1fr)",
+                gridTemplateRows:
+                  persistenceFeedback === undefined
+                    ? "minmax(0, 1fr)"
+                    : "auto minmax(0, 1fr)",
                 height: "100%",
               }}
             >
@@ -898,9 +1055,20 @@ export const TextFileEditor = ({
                   align="center"
                   css={{ padding: rawTheme.spacing[5] }}
                 >
-                  <Text role="alert" color="destructive" variant="tiny">
+                  <Text role="alert" color="destructive">
                     {persistenceFeedback.message}
                   </Text>
+                  {persistenceFeedback.kind === "invalid" && (
+                    <Button
+                      color="ghost"
+                      onClick={() => {
+                        saveAttemptRef.current += 1;
+                        onOpenChange(false);
+                      }}
+                    >
+                      Discard changes
+                    </Button>
+                  )}
                   {persistenceFeedback.kind === "failed" &&
                     mdxSession !== undefined && (
                       <Button
@@ -925,27 +1093,7 @@ export const TextFileEditor = ({
                     )}
                 </Flex>
               )}
-              {isMarkdown && (
-                <MarkdownToolbar
-                  editorApiRef={editorApiRef}
-                  disabled={canEdit === false}
-                  previewOpen={previewOpen}
-                  onPreviewOpenChange={setPreviewOpen}
-                />
-              )}
-              {isMarkdown ? (
-                <MarkdownSplitView
-                  open={previewOpen}
-                  source={state.content}
-                  sourceAsset={asset}
-                  folders={assetFolders}
-                  assetContainers={assetContainers}
-                >
-                  {editor}
-                </MarkdownSplitView>
-              ) : (
-                editor
-              )}
+              {editor}
             </Box>
           )}
         </Box>

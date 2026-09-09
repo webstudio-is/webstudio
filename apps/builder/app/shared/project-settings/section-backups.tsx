@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { useEffect, useState } from "react";
 import {
+  PanelContent,
   Grid,
   Text,
   Button,
@@ -11,7 +12,6 @@ import {
   DialogContent,
   DialogClose,
   Flex,
-  theme,
   toast,
   PanelBanner,
   Link,
@@ -100,11 +100,7 @@ export const SectionBackups = ({
         </DialogTrigger>
         <DialogContent width={320}>
           <DialogTitle>Restore published version</DialogTitle>
-          <Flex
-            direction="column"
-            css={{ padding: theme.panel.padding }}
-            gap={2}
-          >
+          <PanelContent as={Flex} direction="column" gap={2}>
             <Text>
               Are you sure you want to restore the project to its published
               version?
@@ -125,7 +121,7 @@ export const SectionBackups = ({
                 </Button>
               </DialogClose>
             </Flex>
-          </Flex>
+          </PanelContent>
         </DialogContent>
       </Dialog>
       {canRestoreBackups === false && (

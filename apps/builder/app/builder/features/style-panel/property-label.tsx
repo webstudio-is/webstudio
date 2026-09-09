@@ -9,7 +9,7 @@ import {
   cssVar,
   Flex,
   Kbd,
-  Label,
+  ResettableLabel,
   SectionTitleLabel,
   Text,
   theme,
@@ -73,7 +73,7 @@ export const PropertyInfo = ({
   link?: string;
   description: ReactNode;
   styles: ComputedStyleDecl[];
-  onReset: () => void;
+  onReset?: () => void;
   resetType?: "reset" | "delete";
 }) => {
   const readonly = useReadonly();
@@ -187,7 +187,7 @@ export const PropertyInfo = ({
           </Flex>
         </Flex>
       )}
-      {resettable && readonly === false && (
+      {resettable && readonly === false && onReset && (
         <Button
           color="neutral-destructive"
           prefix={
@@ -239,7 +239,7 @@ export const PropertyLabel = ({
   const styles = useComputedStyles(properties);
   const readonly = useReadonly();
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
-  const [isOpen, setIsOpen] = useState(false);
+
   const resetProperty = () => {
     if (readonly) {
       return;
@@ -252,47 +252,29 @@ export const PropertyLabel = ({
   };
 
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        triggerProps={{
-          onClick: (event) => {
-            if (readonly) {
-              return;
-            }
-            if (event.altKey) {
-              event.preventDefault();
-              // If not, when mixed with ToogleGroupControl.
-              // The will trigger the reset of the toggle group.
-              // And resets all of the properties in the toggle group.
-              event.stopPropagation();
-              resetProperty();
-              return;
-            }
-            setIsOpen(true);
-          },
-        }}
-        content={
-          <PropertyInfo
-            title={label}
-            description={description}
-            styles={styles}
-            onReset={() => {
-              resetProperty();
-              setIsOpen(false);
-            }}
-            link={propertiesData[properties[0]]?.mdnUrl}
-          />
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <Label color={styleValueSourceColor} truncate disabled={disabled}>
-            {label}
-          </Label>
-        </Flex>
-      </Tooltip>
-    </Flex>
+    <ResettableLabel
+      disabled={disabled}
+      color={styleValueSourceColor}
+      onReset={
+        styles.some(
+          ({ source }) =>
+            source.name === "local" || source.name === "overwritten"
+        )
+          ? resetProperty
+          : undefined
+      }
+      resetDisabled={readonly}
+      content={
+        <PropertyInfo
+          title={label}
+          description={description}
+          styles={styles}
+          link={propertiesData[properties[0]]?.mdnUrl}
+        />
+      }
+    >
+      {label}
+    </ResettableLabel>
   );
 };
 
@@ -308,7 +290,7 @@ export const PropertySectionLabel = ({
   const styles = useComputedStyles(properties);
   const readonly = useReadonly();
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
-  const [isOpen, setIsOpen] = useState(false);
+
   const resetProperty = () => {
     if (readonly) {
       return;
@@ -321,45 +303,29 @@ export const PropertySectionLabel = ({
   };
 
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
-        triggerProps={{
-          onClick: (event) => {
-            if (readonly) {
-              return;
-            }
-            if (event.altKey) {
-              event.preventDefault();
-              resetProperty();
-              return;
-            }
-            setIsOpen(true);
-          },
-        }}
-        content={
-          <PropertyInfo
-            title={label}
-            description={description}
-            styles={styles}
-            onReset={() => {
-              resetProperty();
-              setIsOpen(false);
-            }}
-            link={propertiesData[properties[0]]?.mdnUrl}
-          />
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <SectionTitleLabel color={styleValueSourceColor}>
-            {label}
-          </SectionTitleLabel>
-        </Flex>
-      </Tooltip>
-    </Flex>
+    <ResettableLabel
+      asChild
+      color={styleValueSourceColor}
+      onReset={
+        styles.some(
+          ({ source }) =>
+            source.name === "local" || source.name === "overwritten"
+        )
+          ? resetProperty
+          : undefined
+      }
+      resetDisabled={readonly}
+      content={
+        <PropertyInfo
+          title={label}
+          description={description}
+          styles={styles}
+          link={propertiesData[properties[0]]?.mdnUrl}
+        />
+      }
+    >
+      <SectionTitleLabel>{label}</SectionTitleLabel>
+    </ResettableLabel>
   );
 };
 
@@ -382,47 +348,28 @@ export const PropertyInlineLabel = ({
   properties?: [CssProperty, ...CssProperty[]];
   disabled?: boolean;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   return (
-    <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        // prevent closing tooltip on content click
-        onPointerDown={(event) => event.preventDefault()}
-        triggerProps={{
-          onClick: () => setIsOpen(true),
-        }}
-        content={
-          <>
-            <Flex
-              direction="column"
-              gap="2"
-              css={{ maxWidth: theme.spacing[28] }}
+    <ResettableLabel
+      disabled={disabled}
+      content={
+        <>
+          <Text variant="titles">{title ?? label}</Text>
+          {properties && (
+            <Text
+              variant="monoBold"
+              color="moreSubtle"
+              userSelect="text"
+              css={{ whiteSpace: "break-spaces", cursor: "text" }}
             >
-              <Text variant="titles">{title ?? label}</Text>
-              {properties && (
-                <Text
-                  variant="monoBold"
-                  color="moreSubtle"
-                  userSelect="text"
-                  css={{ whiteSpace: "break-spaces", cursor: "text" }}
-                >
-                  {properties.join("\n")}
-                </Text>
-              )}
-              <Text>{description}</Text>
-            </Flex>
-          </>
-        }
-      >
-        <Flex shrink gap={1} align="center">
-          <Label color="default" disabled={disabled} truncate>
-            {label}
-          </Label>
-        </Flex>
-      </Tooltip>
-    </Flex>
+              {properties.join("\n")}
+            </Text>
+          )}
+          <Text>{description}</Text>
+        </>
+      }
+    >
+      {label}
+    </ResettableLabel>
   );
 };
 

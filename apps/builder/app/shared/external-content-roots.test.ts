@@ -15,6 +15,7 @@ import {
 import {
   __testing__ as assetContentBridgeTesting,
   createAssetContentBridge,
+  getAssetContentBridge,
 } from "./asset-content-bridge.client";
 import {
   acquireExternalContentRoot,
@@ -67,12 +68,17 @@ import {
 } from "./sync/sync-stores";
 import { createSyncChangesFromBuilderPatchPayload } from "./sync/builder-patch";
 import { insertTemplateAt } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import { __testing__ as builderApiTesting } from "./builder-api";
+
+const { canAccessAssetContent } = builderApiTesting;
 
 registerContainers();
 
 test("places unresolved-template placeholders at their authored nesting point", async () => {
   const source =
     '<ws.element ws:tag="section">Before<ws.element ws:name="Missing" />After</ws.element>';
+  let storedSource = source;
+  const writes: string[] = [];
   const sourceAsset = {
     ...asset,
     size: new TextEncoder().encode(source).byteLength,
@@ -82,10 +88,17 @@ test("places unresolved-template placeholders at their authored nesting point", 
       readContent: async () => ({
         asset: sourceAsset,
         data: (async function* () {
-          yield new TextEncoder().encode(source);
+          yield new TextEncoder().encode(storedSource);
         })(),
       }),
-      updateContent: async () => sourceAsset,
+      updateContent: async ({ data }) => {
+        storedSource = await new Response(data).text();
+        writes.push(storedSource);
+        return {
+          ...sourceAsset,
+          size: new TextEncoder().encode(storedSource).byteLength,
+        };
+      },
     },
     authorize: () => true,
   });
@@ -155,6 +168,17 @@ test("places unresolved-template placeholders at their authored nesting point", 
       renderScope: '["block"]',
     })
   ).toEqual([{ type: "id", value: section.id }]);
+  executeRuntimeMutation({
+    id: "instances.deleteBySelector",
+    input: { instanceSelector: [missing.id, section.id, "block"] },
+  });
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+  expect(writes).toHaveLength(1);
+  expect(storedSource).toBe("<section>BeforeAfter</section>\n");
+  expect($instances.get().has(missing.id)).toBe(false);
 });
 
 test("re-resolves existing Markdown when a matching template is added", async () => {
@@ -1013,12 +1037,19 @@ test.each([
   {
     name: "keeps the selected JSX template when editing immediately after insertion",
     verifyFirstSaveCleanup: false,
+    editAfterFirstSave: false,
   },
   {
     name: "clears insertion metadata after the first queued save",
     verifyFirstSaveCleanup: true,
+    editAfterFirstSave: false,
   },
-])("$name", async ({ verifyFirstSaveCleanup }) => {
+  {
+    name: "saves edits to a template after its insertion metadata is cleared",
+    verifyFirstSaveCleanup: false,
+    editAfterFirstSave: true,
+  },
+])("$name", async ({ verifyFirstSaveCleanup, editAfterFirstSave }) => {
   const initialSource = "# Existing\n";
   const sourceAsset = {
     ...asset,
@@ -1082,6 +1113,7 @@ test.each([
           ]),
           tag: "p",
           label: "Card",
+          ...(editAfterFirstSave ? { name: "Card" } : {}),
         },
       ],
       [
@@ -1154,13 +1186,23 @@ test.each([
     throw new Error("Expected the inserted Card");
   }
 
-  if (verifyFirstSaveCleanup) {
+  if (verifyFirstSaveCleanup || editAfterFirstSave) {
     await vi.waitFor(() =>
       expect(
         getExternalContentRoots().values().next().value?.insertedTemplates
       ).toBeUndefined()
     );
-    return;
+    if (verifyFirstSaveCleanup) {
+      return;
+    }
+    await flushExternalContentAsset({
+      projectId: "project",
+      assetId: sourceAsset.id,
+    });
+    expect(
+      getExternalContentRoots().values().next().value?.persistenceError
+    ).toBeUndefined();
+    expect(storedSource).toBe("# Existing\n\n<Card />\n");
   }
 
   await expect(
@@ -1214,9 +1256,22 @@ test.each([
   expect(writes.at(-1)).toBe(
     '# Existing\n\n<Card title="Edited">Edited text</Card>\n'
   );
-  expect(
-    getExternalContentRoots().values().next().value?.insertedTemplates
-  ).toBeUndefined();
+  executeRuntimeMutation({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId: inserted.value,
+      mode: "text",
+      text: "Edited again",
+    },
+  });
+  await flushExternalContentAsset({
+    projectId: "project",
+    assetId: sourceAsset.id,
+  });
+  expect(writes.at(-1)).toBe(
+    '# Existing\n\n<Card title="Edited">Edited again</Card>\n'
+  );
 
   release();
   releases.splice(releases.indexOf(release), 1);
@@ -1405,7 +1460,7 @@ test("rebases frontmatter edits from Content Blocks sharing one Asset", async ()
   }
 
   await Promise.all([
-    updateExternalContentFrontmatter({
+    getAssetContentBridge().updateFrontmatter({
       rootKey: firstKey,
       path: ["title"],
       value: "After",
@@ -1600,6 +1655,8 @@ test("replaces a mounted root when its source Asset changes", async () => {
 });
 
 test("installs MDX into the Body and recovers an invalid dependency", async () => {
+  const writes: Array<{ assetId: string; source: string }> = [];
+  let allowReferenceWrite = true;
   const source = `---
 author:
   $ref: ./author.md#frontmatter
@@ -1653,6 +1710,7 @@ role: editor
       updateContent: async ({ assetId, data }) => {
         const updatedSource = await new Response(data).text();
         const currentAsset = assetId === authorAsset.id ? authorAsset : asset;
+        writes.push({ assetId, source: updatedSource });
         return {
           ...currentAsset,
           size: new TextEncoder().encode(updatedSource).byteLength,
@@ -1666,7 +1724,12 @@ role: editor
     createAssetContentBridge({
       origin: window.location.origin,
       request: fetch,
-      authorize: () => true,
+      authorize: ({ assetId, operation }) =>
+        canAccessAssetContent({
+          asset: assetId === authorAsset.id ? authorAsset : asset,
+          operation,
+          canWrite: assetId !== authorAsset.id || allowReferenceWrite,
+        }),
       requireReload: vi.fn(),
       getContentSession: () => session,
     })
@@ -1766,15 +1829,20 @@ role: editor
     }).map(({ id }) => id)
   ).toEqual([asset.id, authorAsset.id, avatarAsset.id]);
 
-  session.save(
-    authorAsset.id,
-    `---
-name: Ada Lovelace
-avatar:
-  $ref: ./avatar.jpg
----
-`
-  );
+  const rootKey = Array.from(getExternalContentRoots().keys())[0];
+  writes.length = 0;
+  await Promise.all([
+    getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path: ["author", "name"],
+      value: "Ada Lovelace",
+    }),
+    updateExternalContentFrontmatter({
+      rootKey,
+      path: ["author", "role"],
+      value: "Writer",
+    }),
+  ]);
   await flushExternalContentAsset({
     projectId: "project",
     assetId: authorAsset.id,
@@ -1785,9 +1853,24 @@ avatar:
   ).toEqual({
     author: {
       name: "Ada Lovelace",
+      role: "Writer",
       avatar: expect.objectContaining({ id: avatarAsset.id }),
     },
   });
+
+  expect(writes.length).toBeGreaterThan(0);
+  expect(writes.every(({ assetId }) => assetId === authorAsset.id)).toBe(true);
+  expect(session.get(asset.id)?.source).toBe(source);
+  expect(session.get(authorAsset.id)?.source).toContain("$ref: ./avatar.jpg");
+  allowReferenceWrite = false;
+  await expect(
+    getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path: ["author", "name"],
+      value: "Forbidden",
+    })
+  ).rejects.toThrow("permission");
+  expect(session.get(authorAsset.id)?.source).not.toContain("Forbidden");
 
   release();
   expect($instances.get().get("body-outlet")?.children).toEqual([]);
@@ -2484,6 +2567,23 @@ test("materializes into normal instances and saves their synchronous mutations o
   })?.identity;
   expect(savedIdentity?.contentRef).toBe("article_v2.mdx");
   expect(savedIdentity?.revision).not.toBe(initialIdentity?.revision);
+  // An edit can arrive as soon as its predecessor is acknowledged, while
+  // asynchronous materialization of the new revision is still in flight.
+  const unsubscribe = session.subscribe((assetId, state) => {
+    if (assetId !== asset.id || state.status !== "saved") {
+      return;
+    }
+    unsubscribe();
+    executeRuntimeMutation({
+      id: "instances.setTextContent",
+      input: {
+        operation: "set",
+        instanceId: insertedId,
+        mode: "text",
+        text: "Second after acknowledged save",
+      },
+    });
+  });
   executeRuntimeMutation({
     id: "instances.setTextContent",
     input: {
@@ -2495,7 +2595,11 @@ test("materializes into normal instances and saves their synchronous mutations o
   });
   expect(serverSyncStore.popAll()).toEqual([]);
   await flushExternalContentAsset({ projectId: "project", assetId: asset.id });
-  expect(writes.at(-1)).toBe("# Updated\n\n## Second after save\n");
+  await flushExternalContentAsset({ projectId: "project", assetId: asset.id });
+  expect(requireReload).not.toHaveBeenCalled();
+  expect(writes.at(-1)).toBe(
+    "# Updated\n\n## Second after acknowledged save\n"
+  );
   expect(
     getExternalContentRootChildren({
       projectId: "project",
@@ -2636,6 +2740,12 @@ test("materializes into normal instances and saves their synchronous mutations o
   await expect(
     flushExternalContentProject({ projectId: "project", session })
   ).rejects.toThrow(
+    "The MDX content source must be structurally valid before canvas edits can be saved."
+  );
+  expect(
+    findExternalContentRoot(getExternalContentRoots(), "block", '["block"]')
+      ?.persistenceError
+  ).toBe(
     "The MDX content source must be structurally valid before canvas edits can be saved."
   );
 

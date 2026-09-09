@@ -1,6 +1,10 @@
 import equal from "fast-deep-equal";
 import {
   blockTemplateComponent,
+  blockBodyComponent,
+  blockComponent,
+  getContentBlockSource,
+  findContentBlockBodyContainers,
   assignUniqueBlockTemplateNamesMutable,
   elementComponent,
   instanceComponent,
@@ -71,6 +75,7 @@ import {
 } from "./matcher";
 import { z } from "zod";
 import { getBlockTemplateNameConfirmation } from "./block";
+import { hasMdxComponentAdapter } from "./mdx-component-adapters";
 
 const conflictResolutionInput = z
   .enum(["ours", "theirs", "merge"])
@@ -1029,6 +1034,48 @@ export const insertComponent = (
   const parent = mutationState.instances.get(input.parentInstanceId);
   if (parent === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+
+  if (
+    input.component !== elementComponent &&
+    !hasMdxComponentAdapter(input.component)
+  ) {
+    const { instanceSelector } = findPageAndSelectorByInstanceId(
+      mutationState.pages,
+      mutationState.instances,
+      parent.id
+    );
+    let insideBody = false;
+    for (const id of instanceSelector) {
+      const ancestor = mutationState.instances.get(id);
+      if (ancestor?.component === blockTemplateComponent) {
+        break;
+      }
+      if (ancestor?.component === blockBodyComponent) {
+        insideBody = true;
+      }
+      if (ancestor?.component !== blockComponent) {
+        continue;
+      }
+      const source = getContentBlockSource({
+        blockInstanceId: id,
+        props: mutationState.props.values(),
+      });
+      if (
+        source !== undefined &&
+        (insideBody ||
+          findContentBlockBodyContainers({
+            blockInstance: ancestor,
+            instances: mutationState.instances,
+          }).length === 0)
+      ) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "To add this component to MDX content, add it to this Content Block’s Templates and insert it from the template picker. You can add a one-off instance outside MDX content."
+        );
+      }
+      break;
+    }
   }
 
   const templates = getComponentTemplates();

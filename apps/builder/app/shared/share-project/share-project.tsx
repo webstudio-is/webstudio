@@ -11,6 +11,7 @@ import { shallowEqual } from "shallow-equal";
 import { type Role, roleLabels } from "@webstudio-is/project";
 import { roleDescriptions } from "~/shared/permissions";
 import {
+  PanelContent,
   Box,
   Button,
   css,
@@ -47,12 +48,7 @@ import { useIds } from "../form-utils";
 import type { BuilderMode } from "../nano-states";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
-  <Flex
-    direction="column"
-    css={{ padding: theme.panel.padding }}
-    gap="1"
-    {...props}
-  />
+  <PanelContent as={Flex} direction="column" gap="1" {...props} />
 );
 
 const UpgradeLink = () => (
@@ -471,7 +467,6 @@ const itemStyle = css({
   display: "flex",
   alignItems: "center",
   gap: theme.spacing[3],
-  padding: theme.panel.padding,
   backgroundColor: cssVar("--background-primary"),
 });
 
@@ -531,7 +526,8 @@ const SharedLinkItem = ({
   };
 
   return (
-    <Box
+    <PanelContent
+      as={Box}
       className={itemStyle()}
       role="group"
       aria-label={`Share link ${currentLink.name}`}
@@ -555,7 +551,7 @@ const SharedLinkItem = ({
         onDelete={onDelete}
         allowAdditionalPermissions={allowAdditionalPermissions}
       />
-    </Box>
+    </PanelContent>
   );
 };
 
@@ -619,7 +615,7 @@ export const ShareProject = ({
   ));
 
   const create = (
-    <Box className={itemStyle({ css: { py: theme.spacing["7"] } })}>
+    <PanelContent as={Box} className={itemStyle()}>
       <Button
         state={isPending ? "pending" : undefined}
         prefix={
@@ -631,7 +627,7 @@ export const ShareProject = ({
       >
         {links.length === 0 ? "Share a custom link" : "Add another link"}
       </Button>
-    </Box>
+    </PanelContent>
   );
 
   return (

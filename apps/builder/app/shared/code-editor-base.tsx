@@ -40,6 +40,7 @@ import {
   Kbd,
   Text,
   FloatingPanel,
+  PanelContent,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons/svg";
@@ -308,6 +309,7 @@ export const getTemplateInsertion = ({
 
 type EditorContentProps = {
   editorApiRef?: RefObject<undefined | EditorApi>;
+  ariaLabel?: string;
   extensions?: Extension[];
   readOnly?: boolean;
   autoFocus?: boolean;
@@ -321,6 +323,7 @@ type EditorContentProps = {
 
 export const EditorContent = ({
   editorApiRef,
+  ariaLabel,
   extensions = [],
   readOnly = false,
   autoFocus = false,
@@ -423,6 +426,12 @@ export const EditorContent = ({
           },
         ]),
         EditorView.lineWrapping,
+        // Read-only editors must keep keyboard focus instead of leaving
+        // destructive Builder shortcuts active after clicking their content.
+        EditorView.contentAttributes.of({ tabindex: "0" }),
+        ...(ariaLabel === undefined
+          ? []
+          : [EditorView.contentAttributes.of({ "aria-label": ariaLabel })]),
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
         // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L57-L70
@@ -450,7 +459,7 @@ export const EditorContent = ({
         }),
       ]),
     });
-  }, [readOnly, extensions]);
+  }, [ariaLabel, readOnly, extensions]);
 
   // update editor with react value
   // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L158-L169
@@ -587,17 +596,18 @@ export const EditorDialog = ({
       maximizable
       resize="both"
       content={
-        <Grid
+        <PanelContent
+          as={Grid}
           align="stretch"
           css={{
-            padding: contentPadding ? theme.panel.padding : 0,
+            padding: contentPadding ? undefined : 0,
             height: "100%",
             overflow: "hidden",
             boxSizing: "content-box",
           }}
         >
           {content}
-        </Grid>
+        </PanelContent>
       }
     >
       {children}

@@ -28,6 +28,8 @@ export const inputFieldTypes = [
   "url",
   "number",
   "search",
+  "date",
+  "datetime-local",
 ] as const;
 
 export const inputFieldColors = ["placeholder", "set", "error"] as const;

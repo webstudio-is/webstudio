@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import {
+  PanelContent,
   theme,
   Flex,
   Text,
@@ -153,7 +154,7 @@ const TrackItem = ({
       placement="bottom-within"
       title={`Edit ${trackType}`}
       content={
-        <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} direction="column" gap="2">
           {isMinmax ? (
             <Grid columns={2} gap="2">
               <Flex direction="column" gap="1">
@@ -228,7 +229,7 @@ const TrackItem = ({
             />
             <Label htmlFor={`minmax-${id}`}>Use min/max</Label>
           </Flex>
-        </Flex>
+        </PanelContent>
       }
       open={isEditing}
       onOpenChange={onEditingChange}
@@ -409,13 +410,9 @@ const TrackEditor = ({
       <CssValueListArrowFocus dragItemId={dragItemId}>
         <Flex direction="column" ref={sortableRefCallback}>
           {tracks.length === 0 && (
-            <Text
-              color="subtle"
-              align="center"
-              css={{ padding: theme.panel.padding }}
-            >
+            <PanelContent as={Text} color="subtle" align="center">
               No {trackType}
-            </Text>
+            </PanelContent>
           )}
           {tracks.map((track, index) => {
             const id = String(index);

@@ -105,9 +105,8 @@ test("Asset can be dragged into a folder", async ({ page, context }) => {
     authToken: fixture.builderToken,
   });
   await openAssetsPanel({ page });
-  await page
-    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
-    .dblclick();
+  // Reopening Assets restores Images rather than returning to the root.
+  await page.getByRole("button", { name: "Back", exact: true }).waitFor();
   await page.getByTitle(assetTitle).waitFor();
   await waitForSyncStatus({ page, status: "idle" });
 });

@@ -48,6 +48,7 @@ import {
   TextArea,
   Tooltip,
   theme,
+  cssVar,
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
@@ -123,7 +124,10 @@ export const UrlField = ({
           variant="wrapped"
           disableHoverableContent={true}
         >
-          <InfoCircleIcon tabIndex={0} />
+          <InfoCircleIcon
+            color={cssVar("--foreground-secondary")}
+            tabIndex={0}
+          />
         </Tooltip>
       </Label>
       <input type="hidden" readOnly={true} name="url" value={value} />

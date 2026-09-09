@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import {
+  PanelContent,
   Button,
   Box,
   Dialog,
@@ -42,24 +43,17 @@ type ContentBlockSourceActionResult =
       diagnostics?: readonly ContentBlockDiagnostic[];
     }>;
 
-type PendingSource = Readonly<{
-  source: ContentBlockSource;
-  diagnostics: readonly ContentBlockDiagnostic[];
-}>;
-
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
 const ConnectSourceDialog = ({
   disabled,
   error,
-  diagnostics,
   onClose,
   onConfirm,
 }: {
   disabled: boolean;
   error?: string;
-  diagnostics: readonly ContentBlockDiagnostic[];
   onClose: () => void;
   onConfirm: () => void;
 }) => (
@@ -67,10 +61,10 @@ const ConnectSourceDialog = ({
     <DialogContent>
       <DialogTitle>Connect content source</DialogTitle>
       <DialogDescription asChild>
-        <Text css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Text}>
           Connecting this file will replace the existing Content Block content.
           The MDX file will not be changed.
-        </Text>
+        </PanelContent>
       </DialogDescription>
       {error !== undefined && (
         <Text
@@ -85,17 +79,6 @@ const ConnectSourceDialog = ({
           {error}
         </Text>
       )}
-      {diagnostics.map((diagnostic) => (
-        <Text
-          key={JSON.stringify(diagnostic)}
-          role="status"
-          color="subtle"
-          variant="tiny"
-          css={{ paddingInline: theme.panel.paddingInline }}
-        >
-          {formatContentBlockDiagnostic(diagnostic)}
-        </Text>
-      ))}
       <DialogActions>
         <Button disabled={disabled} onClick={onConfirm}>
           Connect
@@ -145,10 +128,11 @@ export const ContentBlockSourceControl = ({
   }) => Promise<ContentBlockSourceActionResult>;
   onOpen: (assetId: string) => void;
 }) => {
-  const [pendingSource, setPendingSource] = useState<PendingSource>();
+  const [pendingSource, setPendingSource] = useState<ContentBlockSource>();
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [localError, setLocalError] = useState<string>();
+  const [bindingError, setBindingError] = useState<string>();
   const isDisabled = disabled || loading || busy;
   const isSourceMutationDisabled = readOnly || isDisabled;
   const connected = source !== undefined;
@@ -174,6 +158,7 @@ export const ContentBlockSourceControl = ({
     busyRef.current = true;
     setBusy(true);
     setLocalError(undefined);
+    setBindingError(undefined);
     return true;
   };
 
@@ -189,25 +174,24 @@ export const ContentBlockSourceControl = ({
     if (readOnly || beginOperation() === false) {
       return;
     }
+    const setRequestError =
+      requestedSource.type === "expression" ? setBindingError : setLocalError;
     try {
       const result = await onRequestSource({
         source: requestedSource,
         confirmed,
       });
       if (result.status === "requires-confirmation") {
-        setPendingSource({
-          source: requestedSource,
-          diagnostics: result.diagnostics ?? [],
-        });
+        setPendingSource(requestedSource);
         return;
       }
       if (result.status === "blocked" || result.status === "partial") {
-        setLocalError(result.message);
+        setRequestError(result.message);
         return;
       }
       setPendingSource(undefined);
     } catch (error) {
-      setLocalError(getErrorMessage(error, "Unable to change source"));
+      setRequestError(getErrorMessage(error, "Unable to change source"));
     } finally {
       finishOperation();
     }
@@ -221,9 +205,10 @@ export const ContentBlockSourceControl = ({
           showBinding={readOnly === false}
           value={resolvedAsset?.id}
           validate={(value) =>
-            typeof value === "string" && value !== ""
+            bindingError ??
+            (!connected || (typeof value === "string" && value !== "")
               ? undefined
-              : "Content source must resolve to an Asset ID"
+              : "Content source must resolve to an Asset ID")
           }
           onChangeValue={(value) => {
             if (typeof value === "string" && value !== "") {
@@ -242,7 +227,7 @@ export const ContentBlockSourceControl = ({
             connected ? (
               <Grid columns={2} gap="2" aria-label="Content source actions">
                 <Flex align="center" gap="1">
-                  <Box css={{ flex: 1, minWidth: 0 }}>
+                  <Box css={{ flex: 1 }}>
                     <SelectAsset
                       assetId={resolvedAsset?.id}
                       title="Switch MDX file"
@@ -364,9 +349,8 @@ export const ContentBlockSourceControl = ({
           <ConnectSourceDialog
             disabled={isSourceMutationDisabled}
             error={localError ?? error}
-            diagnostics={pendingSource.diagnostics}
             onClose={() => setPendingSource(undefined)}
-            onConfirm={() => void requestSource(pendingSource.source, true)}
+            onConfirm={() => void requestSource(pendingSource, true)}
           />
         )}
       </Grid>

@@ -2,6 +2,7 @@ import { useRevalidator, useSearchParams } from "react-router-dom";
 import { useState, type ComponentProps } from "react";
 import { createId } from "@webstudio-is/sdk";
 import {
+  PanelContent,
   Text,
   theme,
   Dialog,
@@ -59,9 +60,9 @@ const DeleteConfirmationDialog = ({
       }}
     >
       <DialogContent>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>{question}</Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <DialogClose>
             <Button
@@ -252,7 +253,7 @@ const TagEdit = ({
         onComplete();
       }}
     >
-      <Grid css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Grid}>
         <InputField
           autoFocus
           defaultValue={tag.label}
@@ -260,7 +261,7 @@ const TagEdit = ({
           placeholder="My tag"
           minLength={1}
         />
-      </Grid>
+      </PanelContent>
       <DialogActions>
         <Button color="primary" type="submit">
           {isExisting ? "Update tag" : "Create tag"}

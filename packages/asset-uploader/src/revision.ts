@@ -106,12 +106,17 @@ export const updateAssetContent = async (
     expectedName,
     extension,
     data,
+    prepareData,
   }: {
     assetId: Asset["id"];
     projectId: string;
     expectedName: string;
     extension?: string;
     data: ReadableStream<Uint8Array>;
+    prepareData?: (input: {
+      asset: Asset;
+      data: ReadableStream<Uint8Array>;
+    }) => Promise<ReadableStream<Uint8Array>>;
   },
   assetClient: AssetObjectStore,
   context: AppContext
@@ -146,6 +151,17 @@ export const updateAssetContent = async (
     throw new Error("The new extension must be an editable text file format");
   }
 
+  const asset = formatAsset({
+    assetId: currentAsset.id,
+    projectId: currentAsset.projectId,
+    filename: currentAsset.filename,
+    description: currentAsset.description,
+    folderId: currentAsset.folderId,
+    file: currentAsset.file,
+  });
+  const preparedData =
+    prepareData === undefined ? data : await prepareData({ asset, data });
+
   const revisionName = createUniqueAssetFilename(
     getRevisionFilename({
       name: currentAsset.name,
@@ -165,7 +181,7 @@ export const updateAssetContent = async (
 
   const file = await uploadFileData(
     revisionName,
-    data,
+    preparedData,
     assetClient,
     context,
     undefined,

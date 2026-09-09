@@ -1,4 +1,5 @@
 import { TextControl } from "./text";
+import { DateControl } from "./date";
 import { CodeControl } from "./code";
 import { NumberControl } from "./number";
 import { CheckControl } from "./check";
@@ -57,6 +58,10 @@ export const renderControl = ({
 
   if (meta.control === "text") {
     return <TextControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (meta.control === "date") {
+    return <DateControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   if (meta.control === "resource") {

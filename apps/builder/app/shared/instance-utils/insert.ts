@@ -11,6 +11,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   builderRuntimeContext,
+  BuilderRuntimeError,
   createComponentTemplateFragment,
   getFragmentContentModelWarnings,
   type FragmentContentModelWarning,
@@ -137,15 +138,26 @@ export const insertWebstudioComponentAt = (
   if (target === undefined) {
     return false;
   }
-  const result = executeRuntimeMutation({
-    id: "instances.insertComponent",
-    input: {
-      parentInstanceId: target.parentInstanceId,
-      component,
-      tag: target.tag,
-      insertIndex: target.insertIndex,
-    },
-  });
+  let result: ReturnType<
+    typeof executeRuntimeMutation<"instances.insertComponent">
+  >;
+  try {
+    result = executeRuntimeMutation({
+      id: "instances.insertComponent",
+      input: {
+        parentInstanceId: target.parentInstanceId,
+        component,
+        tag: target.tag,
+        insertIndex: target.insertIndex,
+      },
+    });
+  } catch (error) {
+    if (error instanceof BuilderRuntimeError) {
+      toast.error(error.message);
+      return false;
+    }
+    throw error;
+  }
   const newInstanceId = result?.result.rootInstanceIds[0];
   if (result !== undefined && newInstanceId !== undefined) {
     const parentSelector =

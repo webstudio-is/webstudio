@@ -27,6 +27,20 @@ Use Time for:
 
 ## Properties
 
+### Edit the date in Settings
+
+The **Date Time** control uses a calendar input for date-only values and a
+date/time input for timestamps. Timestamps with a time-zone offset are edited
+in UTC; the tooltip identifies this separately from the display time zone.
+Opening or focusing the control does not rewrite the stored value. Existing
+values that cannot be represented by the date input remain available as text
+so they can be repaired.
+
+For an editable article, bind **Date Time** directly to the Content Block's
+document frontmatter field. Content-mode changes then save back to that file.
+Configure date formatting separately; formatting the binding expression makes
+it read-only.
+
 Some commonly used properties (see the Settings panel for all available options):
 
 ### Core Properties

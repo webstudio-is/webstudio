@@ -6,6 +6,7 @@ import {
   type Ref,
 } from "react";
 import {
+  PanelContent,
   cssVar,
   Flex,
   Grid,
@@ -39,9 +40,9 @@ export const RequestDiagnosticsContent = ({
 }) => (
   <ScrollAreaNative css={{ height: "100%", overflow: "auto" }}>
     {padded ? (
-      <Flex direction="column" gap={3} css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} direction="column" gap={3}>
         {children}
-      </Flex>
+      </PanelContent>
     ) : (
       children
     )}
@@ -97,7 +98,11 @@ export const RequestDiagnosticsRow = ({
       <Text color="moreSubtle">{label}</Text>
       {description !== undefined && (
         <Tooltip variant="wrapped" content={description}>
-          <InfoCircleIcon data-diagnostics-info tabIndex={0} />
+          <InfoCircleIcon
+            color={cssVar("--foreground-secondary")}
+            data-diagnostics-info
+            tabIndex={0}
+          />
         </Tooltip>
       )}
     </DiagnosticsLabel>

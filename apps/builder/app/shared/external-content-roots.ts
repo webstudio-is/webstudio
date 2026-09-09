@@ -3,6 +3,10 @@
  * instances: materialization, persistence, template refresh, and cleanup.
  */
 import {
+  $externalContentHistory,
+  recordExternalContentHistory,
+} from "./external-content-history";
+import {
   createCanonicalAssetPath,
   createMarkdownFrontmatterDiagnostics,
   parseMdxDocumentRecovering,
@@ -12,6 +16,7 @@ import {
 } from "@webstudio-is/content-engine/mdx";
 import {
   compileDocumentSourceGraph,
+  extractMarkdownFrontmatter,
   createDocumentSourceUrl,
   createUniqueAssetIdsByPath,
   discoverAssetValueReferences,
@@ -83,7 +88,11 @@ import {
   isRepeatedContentBlockOccurrence,
   parseContentBlockRenderScope,
 } from "./content-block-source-utils";
-import { setObjectPathValue } from "./content-block-document";
+import {
+  getFrontmatterWriteTarget,
+  setObjectPathValue,
+  type FrontmatterSource,
+} from "./content-block-document";
 
 type RootEntry = {
   key: string;
@@ -106,10 +115,12 @@ type RootEntry = {
   templateRematerialization?: Promise<void>;
   saveRevision: number;
   dependencyAssetIds: ReadonlySet<string>;
+  frontmatterSources?: readonly FrontmatterSource[];
 };
 
 type AssetQueue = {
   projectId: string;
+  assetId: string;
   pendingSnapshots: number;
   serialization: Promise<void>;
   failedUpdate?: AssetUpdate;
@@ -128,7 +139,7 @@ type PreparedAssetUpdate =
   | string
   | Readonly<{
       source: string;
-      document: MdxDocument;
+      document?: MdxDocument;
       afterSave?: () => void;
     }>
   | undefined;
@@ -229,6 +240,7 @@ const getAssetQueue = (projectId: string, assetId: string) => {
   if (queue === undefined) {
     queue = {
       projectId,
+      assetId,
       pendingSnapshots: 0,
       serialization: Promise.resolve(),
       listeners: new Set(),
@@ -253,6 +265,23 @@ const parseAssetSource = (
 };
 
 const publishAssetQueueError = (queue: AssetQueue) => {
+  const current = getExternalContentRoots();
+  const next = new Map(current);
+  const persistenceError = queue.error?.message;
+  let changed = false;
+  for (const [key, root] of current) {
+    if (
+      root.projectId === queue.projectId &&
+      root.assetId === queue.assetId &&
+      root.persistenceError !== persistenceError
+    ) {
+      next.set(key, { ...root, persistenceError });
+      changed = true;
+    }
+  }
+  if (changed) {
+    $externalContentRoots.set(next);
+  }
   for (const listener of queue.listeners) {
     listener(queue.error);
   }
@@ -363,7 +392,7 @@ const registerMutationRoot = (
   const owned = getExternalContentFragmentOwnership(fragment);
   const templateSnapshot = getTemplateSnapshot(entry);
   const instanceSelector = parseContentBlockRenderScope(entry.renderScope);
-  entry.unregisterMutationRoot = registerExternalContentRoot(entry.key, {
+  const unregisterRoot = registerExternalContentRoot(entry.key, {
     sourceBlockInstanceId: entry.sourceBlockInstanceId,
     sourceRenderScope: entry.renderScope,
     blockInstanceId: entry.blockInstanceId,
@@ -389,7 +418,18 @@ const registerMutationRoot = (
       entry.root.resolvedFrontmatter ??
       entry.root.document.frontmatter.properties,
     transientInstanceIds: entry.transientInstanceIds,
+    frontmatterSources: entry.frontmatterSources,
   });
+  const unregisterWriter = getAssetContentBridge().registerFrontmatterWriter({
+    rootKey: entry.key,
+    projectId: entry.projectId,
+    assetId: entry.assetId,
+    update: updateExternalContentFrontmatter,
+  });
+  entry.unregisterMutationRoot = () => {
+    unregisterRoot();
+    unregisterWriter();
+  };
 };
 
 const installRoot = ({
@@ -588,6 +628,7 @@ const resolveExternalContentFrontmatter = async (
   entry: RootEntry,
   sourceState: AssetContentSessionState
 ) => {
+  entry.frontmatterSources = undefined;
   const data = getWebstudioData();
   const hierarchy = createAssetFolderHierarchy(data.assetFolders ?? new Map());
   const assets = Array.from(data.assets.values());
@@ -623,6 +664,7 @@ const resolveExternalContentFrontmatter = async (
   );
   const session = getSession(entry.projectId);
   const referencesByDocumentId = new Map<string, AssetValueReference[]>();
+  const frontmatterSources: FrontmatterSource[] = [];
   const getReferencedAssetIds = (documentIds: Iterable<string>) =>
     Array.from(documentIds).flatMap((id) =>
       (referencesByDocumentId.get(id) ?? []).map(({ assetId }) => assetId)
@@ -669,6 +711,14 @@ const resolveExternalContentFrontmatter = async (
       onDocumentProperties: ({ id, properties }) => {
         const sourcePath = assetPathsById.get(id);
         if (sourcePath !== undefined) {
+          const document = documentAssets.find(({ asset }) => asset.id === id);
+          if (document?.format === "markdown" || document?.format === "mdx") {
+            frontmatterSources.push({
+              assetId: id,
+              documentUrl: createDocumentSourceUrl(sourcePath),
+              properties,
+            });
+          }
           referencesByDocumentId.set(
             id,
             discoverAssetValueReferences({
@@ -732,6 +782,7 @@ const resolveExternalContentFrontmatter = async (
       };
     },
   });
+  entry.frontmatterSources = frontmatterSources;
   return properties;
 };
 
@@ -857,14 +908,21 @@ const rematerializeAsset = async (
     preservedEntry?.projectId === projectId &&
     preservedEntry.assetId === assetId
   ) {
+    // This is our own document's save acknowledgment. Advance its revision
+    // before async parsing so the next local edit does not look like a conflict.
+    const version = ++preservedEntry.openVersion;
+    preservedEntry.root = {
+      ...preservedEntry.root,
+      identity: createExternalContentIdentity(preservedEntry, sourceState),
+    };
+    registerMutationRoot(preservedEntry, preservedEntry.installedFragment);
     const result = await materialize({ entry: preservedEntry, sourceState });
-    if (roots.get(preservedEntry.key) === preservedEntry) {
+    if (
+      roots.get(preservedEntry.key) === preservedEntry &&
+      preservedEntry.openVersion === version
+    ) {
       // Preserve the synchronously edited fragment and refresh only the
       // source-owned state that does not participate in the current selection.
-      preservedEntry.root = {
-        ...preservedEntry.root,
-        identity: createExternalContentIdentity(preservedEntry, sourceState),
-      };
       preservedEntry.diagnostics = result.diagnostics;
       registerMutationRoot(preservedEntry, preservedEntry.installedFragment);
     }
@@ -927,20 +985,15 @@ const getSession = (projectId: string) => {
 
 const extractRootFragment = ({
   contentInstanceId,
-  children: rootChildren,
-  transientInstanceIds,
+  children,
 }: {
   contentInstanceId: string;
   children: WebstudioFragment["children"];
-  transientInstanceIds: ReadonlySet<string>;
 }) => {
   const data = getWebstudioData();
   if (data.instances.has(contentInstanceId) === false) {
     throw new Error("Connected Content Block no longer exists");
   }
-  const isPersistentChild = (child: WebstudioFragment["children"][number]) =>
-    child.type !== "id" || transientInstanceIds.has(child.value) === false;
-  const children = rootChildren.filter(isPersistentChild);
   const rootIds = children.flatMap((child) =>
     child.type === "id" ? [child.value] : []
   );
@@ -951,12 +1004,6 @@ const extractRootFragment = ({
   return {
     ...fragment,
     children,
-    instances: fragment.instances
-      .filter(({ id }) => transientInstanceIds.has(id) === false)
-      .map((instance) => ({
-        ...instance,
-        children: instance.children.filter(isPersistentChild),
-      })),
   };
 };
 
@@ -964,25 +1011,7 @@ const extractCurrentFragment = (entry: RootEntry) =>
   extractRootFragment({
     contentInstanceId: entry.contentInstanceId,
     children: getAuthoredChildren(entry),
-    transientInstanceIds: entry.transientInstanceIds,
   });
-
-const captureInstalledFragment = (
-  entry: RootEntry,
-  fragment: WebstudioFragment
-): WebstudioFragment => {
-  const data = getWebstudioData();
-  const transientInstances = Array.from(entry.transientInstanceIds).flatMap(
-    (id) => {
-      const instance = data.instances.get(id);
-      return instance === undefined ? [] : [instance];
-    }
-  );
-  return {
-    ...fragment,
-    instances: [...fragment.instances, ...transientInstances],
-  };
-};
 
 const getInsertedTemplates = (
   entry: RootEntry,
@@ -1015,11 +1044,13 @@ const enqueueAssetUpdate = ({
   assetId,
   update,
   preservedRootKey,
+  recordHistory = true,
 }: {
   projectId: string;
   assetId: string;
   update: AssetUpdate;
   preservedRootKey?: string;
+  recordHistory?: boolean;
 }) => {
   const queue = getAssetQueue(projectId, assetId);
   const session = getSession(projectId);
@@ -1043,10 +1074,18 @@ const enqueueAssetUpdate = ({
     }
     const source = typeof prepared === "string" ? prepared : prepared.source;
     queue.latestDocument =
-      typeof prepared === "string"
+      typeof prepared === "string" || prepared.document === undefined
         ? undefined
         : { source, document: prepared.document };
     session.save(assetId, source);
+    if (recordHistory) {
+      recordExternalContentHistory({
+        projectId,
+        assetId,
+        before: state.source,
+        after: source,
+      });
+    }
     if (typeof prepared !== "string") {
       prepared.afterSave?.();
     }
@@ -1093,6 +1132,112 @@ const enqueueAssetUpdate = ({
   return tracked;
 };
 
+const applyExternalContentHistory = async ({
+  projectId,
+  direction,
+}: {
+  projectId: string;
+  direction: "undo" | "redo";
+}) => {
+  await new Promise<void>((resolve, reject) => {
+    const finish = (error?: Error) => {
+      clearTimeout(timeout);
+      unsubscribe();
+      if (error === undefined) {
+        resolve();
+      } else {
+        reject(error);
+      }
+    };
+    const check = () => {
+      const pending = Array.from(getExternalContentRoots().values()).filter(
+        (root) =>
+          root.projectId === projectId &&
+          root.mutationRevision > (root.savedMutationRevision ?? 0)
+      );
+      const failed = pending.find(
+        (root) => root.persistenceError !== undefined
+      );
+      if (failed !== undefined) {
+        finish(new Error(failed.persistenceError));
+      } else if (pending.length === 0) {
+        finish();
+      }
+    };
+    const timeout = setTimeout(
+      () =>
+        finish(
+          new Error(
+            "Wait for the article changes to finish saving, then try again."
+          )
+        ),
+      10000
+    );
+    const unsubscribe = $externalContentRoots.listen(check);
+    check();
+  });
+  const history = $externalContentHistory.get().get(projectId);
+  if (history === undefined) {
+    return;
+  }
+  const editIndex = direction === "undo" ? history.index - 1 : history.index;
+  const edit = history.edits[editIndex];
+  if (edit === undefined) {
+    return;
+  }
+  const { assetId } = edit;
+  await getSession(projectId).open(assetId);
+  return enqueueAssetUpdate({
+    projectId,
+    assetId,
+    recordHistory: false,
+    update: (state) => {
+      const current = $externalContentHistory.get().get(projectId);
+      if (
+        current?.index !== history.index ||
+        current.edits[editIndex]?.id !== edit.id ||
+        (direction === "undo" ? edit.after : edit.before) !== state.source
+      ) {
+        throw new MdxAuthoredContentConflictError(
+          "The article changed since this edit. Reload it before continuing."
+        );
+      }
+      return {
+        source: direction === "undo" ? edit.before : edit.after,
+        afterSave: () => {
+          $externalContentHistory.set(
+            new Map($externalContentHistory.get()).set(projectId, {
+              ...history,
+              index: history.index + (direction === "undo" ? -1 : 1),
+            })
+          );
+        },
+      };
+    },
+  });
+};
+
+const contentHistoryTraversals = new Map<string, Promise<void>>();
+
+export const traverseExternalContentHistory = (
+  input: Parameters<typeof applyExternalContentHistory>[0]
+) => {
+  const pending =
+    contentHistoryTraversals.get(input.projectId) ?? Promise.resolve();
+  const next = pending
+    .catch(() => {})
+    .then(() => applyExternalContentHistory(input));
+  contentHistoryTraversals.set(input.projectId, next);
+  void next
+    .finally(() => {
+      if (contentHistoryTraversals.get(input.projectId) === next) {
+        contentHistoryTraversals.delete(input.projectId);
+      }
+    })
+    .catch(() => {});
+  return next;
+};
+
 subscribeExternalContentMutations((rootKeys) => {
   for (const key of rootKeys) {
     const entry = roots.get(key);
@@ -1110,8 +1255,10 @@ subscribeExternalContentMutations((rootKeys) => {
     });
     const insertedTemplates = getInsertedTemplates(entry, fragment);
     const authoredRoot = entry.root;
+    const mutationRevision =
+      getExternalContentRoots().get(key)?.mutationRevision ?? 0;
     const saveRevision = ++entry.saveRevision;
-    entry.installedFragment = captureInstalledFragment(entry, fragment);
+    entry.installedFragment = fragment;
     registerMutationRoot(entry, entry.installedFragment);
     void enqueueAssetUpdate({
       projectId: entry.projectId,
@@ -1206,7 +1353,23 @@ subscribeExternalContentMutations((rootKeys) => {
             }),
         };
       },
-    }).catch(() => {});
+    })
+      .then(() => {
+        const current = getExternalContentRoots();
+        const root = current.get(key);
+        if (root !== undefined && roots.get(key) === entry) {
+          $externalContentRoots.set(
+            new Map(current).set(key, {
+              ...root,
+              savedMutationRevision: Math.max(
+                root.savedMutationRevision ?? 0,
+                mutationRevision
+              ),
+            })
+          );
+        }
+      })
+      .catch(() => {});
   }
 });
 
@@ -1378,7 +1541,127 @@ export const updateExternalContentFrontmatter = ({
 }) => {
   const entry = roots.get(rootKey);
   if (entry === undefined) {
-    return Promise.reject(new Error("Connected Content Block is not open"));
+    // Settings run in the Builder frame; mounted documents and their save
+    // queues belong to the canvas. Route the write to that same owner.
+    return getAssetContentBridge().updateFrontmatter({
+      rootKey,
+      path,
+      value,
+      resolvedValue,
+    });
+  }
+  const target = getFrontmatterWriteTarget({
+    assetId: entry.assetId,
+    value: entry.root.document.frontmatter.properties,
+    path,
+    sources: entry.frontmatterSources,
+  });
+  if (target === undefined) {
+    return Promise.reject(
+      new Error("This frontmatter value cannot be edited.")
+    );
+  }
+  if (target.assetId !== entry.assetId) {
+    const sources = entry.frontmatterSources ?? [];
+    const session = getSession(entry.projectId);
+    return enqueueAssetUpdate({
+      projectId: entry.projectId,
+      assetId: target.assetId,
+      update: async (state, queuedDocument) => {
+        if (roots.get(rootKey) !== entry) {
+          throw new Error("Connected Content Block is no longer open.");
+        }
+        if (
+          !getAssetContentBridge().authorize({
+            projectId: entry.projectId,
+            assetId: target.assetId,
+            operation: "write",
+          })
+        ) {
+          throw new Error(
+            "You do not have permission to edit the referenced file."
+          );
+        }
+        const data = getWebstudioData();
+        const hierarchy = createAssetFolderHierarchy(
+          data.assetFolders ?? new Map()
+        );
+        const currentSources = await Promise.all(
+          sources.map(async (source) => {
+            const asset = data.assets.get(source.assetId);
+            const content = session.get(source.assetId);
+            if (asset === undefined || content === undefined) {
+              throw new Error(
+                "A referenced file is no longer available. Reload before editing."
+              );
+            }
+            return {
+              ...source,
+              documentUrl: createDocumentSourceUrl(
+                createCanonicalAssetPath({
+                  name: formatAssetName(asset),
+                  folderNames: hierarchy
+                    .getPath(asset.folderId)
+                    .map(({ name }) => name),
+                })
+              ),
+              properties: (
+                await extractMarkdownFrontmatter(
+                  new TextEncoder().encode(content.source)
+                )
+              ).properties,
+            };
+          })
+        );
+        const rootSource = currentSources.find(
+          (source) => source.assetId === entry.assetId
+        );
+        const currentTarget =
+          rootSource === undefined
+            ? undefined
+            : getFrontmatterWriteTarget({
+                assetId: entry.assetId,
+                value: rootSource.properties,
+                path,
+                sources: currentSources,
+              });
+        if (
+          currentTarget === undefined ||
+          currentTarget.assetId !== target.assetId ||
+          JSON.stringify(currentTarget.path) !== JSON.stringify(target.path) ||
+          JSON.stringify(currentTarget.via) !== JSON.stringify(target.via)
+        ) {
+          throw new Error(
+            "The authoring reference changed. Reload before editing."
+          );
+        }
+        const properties =
+          queuedDocument?.frontmatter.properties ??
+          (
+            await extractMarkdownFrontmatter(
+              new TextEncoder().encode(state.source)
+            )
+          ).properties;
+        const updatedProperties = setObjectPathValue({
+          value: properties,
+          path: target.path,
+          nextValue: value,
+        });
+        // Keep a concurrently edited MDX body in the shared queue. Markdown
+        // dependencies need only a frontmatter replacement, never MDX parsing.
+        if (queuedDocument !== undefined) {
+          const document = {
+            ...queuedDocument,
+            frontmatter: { properties: updatedProperties },
+          };
+          return { source: serializeMdxDocument(document), document };
+        }
+        return replaceMdxFrontmatter({
+          source: state.source,
+          properties: updatedProperties,
+        });
+      },
+    });
   }
   const properties = setObjectPathValue({
     value: entry.root.document.frontmatter.properties,
@@ -1722,8 +2005,20 @@ export const subscribeExternalContentAsset = ({
   const session = getSession(projectId);
   const queue = getAssetQueue(projectId, assetId);
   const publish = (state: AssetContentSessionState) => {
+    const persistenceError = Array.from(
+      getExternalContentRoots().values()
+    ).find(
+      (root) =>
+        root.projectId === projectId &&
+        root.assetId === assetId &&
+        root.persistenceError !== undefined
+    )?.persistenceError;
     const error =
-      queue.error ?? getTemplateMaterializationError(projectId, assetId);
+      queue.error ??
+      (persistenceError === undefined
+        ? undefined
+        : new Error(persistenceError)) ??
+      getTemplateMaterializationError(projectId, assetId);
     listener(
       error === undefined ? state : { ...state, status: "failed", error }
     );
@@ -1793,7 +2088,6 @@ export const getExternalContentRootSnapshot = ({
         getWebstudioData().instances.get(
           root.contentInstanceId ?? root.blockInstanceId
         )?.children ?? [],
-      transientInstanceIds: root.transientInstanceIds ?? new Set(),
     }),
     identity: root.identity,
   };
@@ -1916,6 +2210,9 @@ export const disposeExternalContentProject = async ({
     }
   }
   subscribedSessions.delete(session);
+  const history = new Map($externalContentHistory.get());
+  history.delete(projectId);
+  $externalContentHistory.set(history);
   return true;
 };
 

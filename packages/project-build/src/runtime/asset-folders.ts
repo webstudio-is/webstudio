@@ -4,10 +4,12 @@ import {
   assetFolderName,
   assetFolders,
   createAssetFolderHierarchy,
+  formatAssetName,
   type Asset,
   type AssetFolder,
   type AssetFolders,
 } from "@webstudio-is/sdk";
+import { collectionConfigFilename } from "@webstudio-is/content-engine";
 import type { BuilderState } from "../state/builder-state";
 import {
   appendOptionalPropertyPatch,
@@ -208,8 +210,15 @@ export const duplicateAssetFolder = (
     });
   }
 
-  const displayFilenames = new Set(
-    Array.from(state.assets?.values() ?? [], getAssetDisplayFilename)
+  const duplicatedLogicalFilenames = new Map<string, Set<string>>();
+  const collectionFolderIds = new Set(
+    Array.from(state.assets?.values() ?? []).flatMap((asset) =>
+      asset.folderId !== undefined &&
+      sourceFolderIds.has(asset.folderId) &&
+      formatAssetName(asset) === collectionConfigFilename
+        ? [asset.folderId]
+        : []
+    )
   );
   const duplicatedAssets: Asset[] = [];
   for (const asset of state.assets?.values() ?? []) {
@@ -219,17 +228,31 @@ export const duplicateAssetFolder = (
     ) {
       continue;
     }
-    const filename = createCopyName(
-      getAssetDisplayFilename(asset),
-      (candidate) => displayFilenames.has(candidate)
-    );
-    displayFilenames.add(filename);
-    duplicatedAssets.push({
+    const displayFilename = getAssetDisplayFilename(asset);
+    const targetFolderId = duplicatedIds.get(asset.folderId)!;
+    let logicalFilenames = duplicatedLogicalFilenames.get(targetFolderId);
+    if (logicalFilenames === undefined) {
+      logicalFilenames = new Set();
+      duplicatedLogicalFilenames.set(targetFolderId, logicalFilenames);
+    }
+    // Collection filenames are part of the folder protocol. In particular,
+    // renaming collection.json would silently turn the copied folder into an
+    // ordinary folder, while renaming an entry would break its slug identity.
+    const filename = collectionFolderIds.has(asset.folderId)
+      ? displayFilename
+      : createCopyName(displayFilename, (candidate) =>
+          logicalFilenames.has(
+            formatAssetName({ ...asset, filename: candidate })
+          )
+        );
+    const duplicatedAsset = {
       ...asset,
       id: context.createId(),
       filename,
-      folderId: duplicatedIds.get(asset.folderId),
-    });
+      folderId: targetFolderId,
+    };
+    logicalFilenames.add(formatAssetName(duplicatedAsset));
+    duplicatedAssets.push(duplicatedAsset);
   }
 
   const nextFolders = new Map(folders);

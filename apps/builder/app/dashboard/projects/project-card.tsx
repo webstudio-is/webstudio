@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  PanelContent,
   css,
   Flex,
   Text,
@@ -26,7 +27,10 @@ import type { User } from "~/shared/db/user.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 
-const infoIconStyle = css({ flexShrink: 0, opacity: 0.8 });
+const infoIconStyle = css({
+  flexShrink: 0,
+  color: cssVar("--foreground-secondary"),
+});
 const prefetchImageBackground = declareCssVar(
   "--project-card-prefetch-image-background"
 );
@@ -140,12 +144,12 @@ export const ProjectCard = ({
             opacity: 0,
           }}
         />
-        <Flex
+        <PanelContent
+          as={Flex}
           wrap="wrap"
           gap={1}
           css={{
             position: "absolute",
-            padding: theme.panel.padding,
             bottom: 0,
             zIndex: 1,
           }}
@@ -166,7 +170,7 @@ export const ProjectCard = ({
               );
             }
           })}
-        </Flex>
+        </PanelContent>
         {previewImageAsset ? (
           <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
         ) : (

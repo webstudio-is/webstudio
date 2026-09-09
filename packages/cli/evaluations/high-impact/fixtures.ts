@@ -1,6 +1,13 @@
 // Declares high-impact agent scenarios, their allowed inputs, and structured
 // observable outcomes without embedding the expected solution in prompts.
-import type { Asset, AssetFolder, Page } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  blockBodyComponent,
+  blockTemplateComponent,
+  type Asset,
+  type AssetFolder,
+  type Page,
+} from "@webstudio-is/sdk";
 import {
   fontAssetFixtureFiles,
   fontAssetFixtureUploadMeta,
@@ -28,6 +35,7 @@ type EvaluationAgentConfig = {
   reasoningEffort: EvaluationReasoningEffort;
   guidance: {
     workflow:
+      | "general"
       | "authenticated-page"
       | "design-input"
       | "font-assets"
@@ -53,7 +61,7 @@ export type EvaluationInstance = {
   children: Array<
     | { type: "id"; value: string }
     | { type: "text"; value: string }
-    | { type: "expression"; value: string }
+    | { type: "expression"; value: string; mode?: "read" | "readwrite" }
   >;
 };
 
@@ -99,10 +107,12 @@ export type HighImpactFixture = {
     | "design-input-v1"
     | "font-assets-v1"
     | "markdown-blog-v1"
-    | "markdown-references-discovery-v1";
+    | "markdown-references-discovery-v1"
+    | "mdx-article-editing-v1";
   objective: string;
   project: EvaluationProject;
   agent: EvaluationAgentConfig;
+  assetSources?: Readonly<Record<string, string>>;
 };
 
 const homePage: EvaluationPage = {
@@ -314,12 +324,100 @@ export const markdownReferencesDiscoveryFixture: HighImpactFixture = {
   project: emptyProject(),
 };
 
+export const mdxArticleSource = `---
+title: Aurora trails
+author:
+  name: Mira Chen
+readingTime: 6
+draft: false
+---
+
+## Plan your route
+
+Follow the marked trail and carry a map.
+`;
+
+export const mdxArticleFixture: HighImpactFixture = {
+  id: "mdx-article-editing-v1",
+  objective:
+    "Connect the existing article.mdx Asset (article-file) to the Content Block article-block on Home. Keep its designed header outside the file body. Make the header's article-title, article-author, and article-reading-time text display the file's title, author name, and reading time and remain editable in Content mode. Keep the reading-time number separate from the existing static ‘ min read’ suffix. Change the file's author name to Noor Silva, preserving all other metadata and body content. Reload the connected source and inspect the saved result, then audit the page. Discover the supported editing workflow from MCP guidance. No visual verification is requested.",
+  agent: { reasoningEffort: "medium", guidance: { workflow: "general" } },
+  assetSources: { "article-file": mdxArticleSource },
+  project: {
+    ...emptyProject(),
+    assets: [
+      {
+        id: "article-file",
+        projectId: "high-impact-evaluation-project",
+        name: "article.mdx",
+        filename: "article",
+        type: "file",
+        format: "mdx",
+        size: new TextEncoder().encode(mdxArticleSource).byteLength,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        meta: {},
+      },
+    ],
+    instances: [
+      {
+        id: "home-root",
+        component: "Body",
+        tag: "body",
+        children: [{ type: "id", value: "article-block" }],
+      },
+      {
+        id: "article-block",
+        component: blockComponent,
+        children: [
+          { type: "id", value: "article-templates" },
+          { type: "id", value: "article-title" },
+          { type: "id", value: "article-author" },
+          { type: "id", value: "article-reading-time" },
+          { type: "id", value: "article-reading-suffix" },
+          { type: "id", value: "article-body" },
+        ],
+      },
+      {
+        id: "article-templates",
+        component: blockTemplateComponent,
+        children: [],
+      },
+      { id: "article-body", component: blockBodyComponent, children: [] },
+      {
+        id: "article-title",
+        component: "Heading",
+        tag: "h1",
+        children: [{ type: "text", value: "Title" }],
+      },
+      {
+        id: "article-author",
+        component: "Text",
+        tag: "span",
+        children: [{ type: "text", value: "Author" }],
+      },
+      {
+        id: "article-reading-time",
+        component: "Text",
+        tag: "span",
+        children: [{ type: "text", value: "0" }],
+      },
+      {
+        id: "article-reading-suffix",
+        component: "Text",
+        tag: "span",
+        children: [{ type: "text", value: " min read" }],
+      },
+    ],
+  },
+};
+
 export const highImpactFixtures = [
   authenticatedPageFixture,
   designInputFixture,
   fontAssetsFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
+  mdxArticleFixture,
 ] as const;
 
 export const validateHighImpactFixture = (fixture: HighImpactFixture) => {

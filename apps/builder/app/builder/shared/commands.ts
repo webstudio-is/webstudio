@@ -36,8 +36,10 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   externalContentInstanceNameMessage,
   getExternalContentRoots,
+  findExternalContentRootEntryBySelector,
   isExternalContentInstance,
 } from "~/shared/external-content-mutations";
+import { traverseExternalContentHistory } from "~/shared/external-content-roots";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -175,6 +177,35 @@ const guardDesignOrContentModeCommand = ({
 
 const hasMultiInstanceSelection = () =>
   $allSelectedInstanceSelectors.get().length > 1;
+
+const traverseSelectedContentHistory = (direction: "undo" | "redo") => {
+  const selector = $selectedInstancePath.get()?.[0]?.instanceSelector;
+  if (selector === undefined) {
+    return false;
+  }
+  const roots = getExternalContentRoots();
+  const root = findExternalContentRootEntryBySelector(roots, selector)?.[1];
+  if (
+    root?.projectId === undefined ||
+    root.assetId === undefined ||
+    ($isContentMode.get() === false &&
+      isExternalContentInstance(roots, selector[0]) === false &&
+      root.contentInstanceId !== selector[0])
+  ) {
+    return false;
+  }
+  void traverseExternalContentHistory({
+    projectId: root.projectId,
+    direction,
+  }).catch((error) => {
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Unable to restore the article edit."
+    );
+  });
+  return true;
+};
 
 const copyPageActionTarget = () => {
   if ($isDesignMode.get() === false) {
@@ -1157,7 +1188,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+z", "ctrl+z"],
       disableOnInputLikeControls: true,
       handler: () => {
-        serverSyncStore.undo();
+        if (traverseSelectedContentHistory("undo") === false) {
+          serverSyncStore.undo();
+        }
       },
     },
     {
@@ -1168,7 +1201,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
       disableOnInputLikeControls: true,
       handler: () => {
-        serverSyncStore.redo();
+        if (traverseSelectedContentHistory("redo") === false) {
+          serverSyncStore.redo();
+        }
       },
     },
 

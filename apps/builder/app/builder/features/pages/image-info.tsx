@@ -1,4 +1,5 @@
 import {
+  PanelContent,
   cssVar,
   IconButton,
   Text,
@@ -43,9 +44,10 @@ export const ImageInfo = ({
           pr: theme.spacing[5],
         }}
       >
-        <Grid
+        <PanelContent
+          as={Grid}
           columns={1}
-          css={{ padding: theme.panel.padding, width: theme.spacing[34] }}
+          css={{ width: theme.spacing[34] }}
           gap={2}
           align={"center"}
         >
@@ -73,7 +75,7 @@ export const ImageInfo = ({
               </Text>
             </Flex>
           </Grid>
-        </Grid>
+        </PanelContent>
       </Grid>
       <IconButton onClick={onDelete} disabled={disabled}>
         <TrashIcon />

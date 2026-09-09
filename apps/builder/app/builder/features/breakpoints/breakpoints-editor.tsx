@@ -1,6 +1,7 @@
 import { Fragment, useState, useMemo } from "react";
 import { createId, type Breakpoint } from "@webstudio-is/sdk";
 import {
+  PanelContent,
   theme,
   Flex,
   PanelTitle,
@@ -318,14 +319,14 @@ export const BreakpointsEditor = ({
               {allBreakpoints.map((breakpoint, index, all) => {
                 return (
                   <Fragment key={breakpoint.id}>
-                    <Box css={{ p: theme.panel.padding }}>
+                    <PanelContent as={Box}>
                       <BreakpointEditorItem
                         breakpoint={breakpoint}
                         onChangeComplete={handleChangeComplete}
                         onDelete={onDelete}
                         autoFocus={index === 0}
                       />
-                    </Box>
+                    </PanelContent>
                     {index < all.length - 1 && <PopoverSeparator />}
                   </Fragment>
                 );

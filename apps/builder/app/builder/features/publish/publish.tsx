@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Button,
   cssVar,
   Tooltip,
@@ -1108,7 +1109,7 @@ const Content = (props: {
       <Flex direction="column" justify="end" css={{ height: 0 }}>
         <Separator />
       </Flex>
-      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} direction="column" gap="2">
         <AddDomain
           projectId={props.projectId}
           refresh={refreshProject}
@@ -1139,7 +1140,7 @@ const Content = (props: {
           disabled={false}
           restrictedFeatures={restrictedFeatures}
         />
-      </Flex>
+      </PanelContent>
     </form>
   );
 };
@@ -1187,7 +1188,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("docker");
 
   return (
-    <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} columns={1} gap={3}>
       <Grid columns={1} gap={2}>
         <div />
         <Grid columns={2} gap={2} align={"center"}>
@@ -1353,7 +1354,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
           </Grid>
         </Grid>
       )}
-    </Grid>
+    </PanelContent>
   );
 };
 

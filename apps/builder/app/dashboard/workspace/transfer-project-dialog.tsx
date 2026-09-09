@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRevalidator, useSearchParams } from "@remix-run/react";
 import {
+  PanelContent,
   Button,
   Flex,
   Label,
@@ -230,11 +231,7 @@ export const TransferProjectDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <Flex direction="column" css={{ width: theme.spacing[32] }}>
-          <Flex
-            direction="column"
-            gap="3"
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             <DialogDescription asChild>
               <Text as="p">
                 Move &ldquo;{title}&rdquo; to another workspace, or transfer it
@@ -263,7 +260,7 @@ export const TransferProjectDialog = ({
                 </Text>
               ) : undefined}
             </Flex>
-          </Flex>
+          </PanelContent>
 
           <div className={orSeparatorStyle()}>
             <Text color="subtle" variant="tiny">
@@ -271,11 +268,7 @@ export const TransferProjectDialog = ({
             </Text>
           </div>
 
-          <Flex
-            direction="column"
-            gap="3"
-            css={{ padding: theme.panel.padding }}
-          >
+          <PanelContent as={Flex} direction="column" gap="3">
             <Flex direction="column" gap="1">
               <Label htmlFor="transfer-email">Recipient</Label>
               <SearchField
@@ -303,7 +296,7 @@ export const TransferProjectDialog = ({
                 selector above to move it.
               </Text>
             )}
-          </Flex>
+          </PanelContent>
         </Flex>
 
         <DialogTitle>Transfer project</DialogTitle>

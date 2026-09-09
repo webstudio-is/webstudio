@@ -25,6 +25,7 @@ import {
 } from "./mcp";
 
 const {
+  getMcpDownloadAsset,
   assertSingleOpCallToolSupported,
   applyMcpRunOptions,
   createMcpResourceErrorPayload,
@@ -1446,6 +1447,34 @@ test("returns complete prepared diagnostics after an Asset write", async () => {
     },
   });
 });
+
+test.each(["png", "woff2", "md", "mdx"])(
+  "loads persisted %s assets for downloads without a prior asset query",
+  async (format) => {
+    const asset = {
+      id: "asset-id",
+      projectId: "project-id",
+      name: `asset.${format}`,
+      type: format === "png" ? "image" : format === "woff2" ? "font" : "file",
+      format,
+      size: 42,
+      createdAt: "2026-09-07T00:00:00.000Z",
+      updatedAt: "2026-09-07T00:00:00.000Z",
+    };
+    const ensureNamespaces = vi.fn(async () => ({
+      state: { assets: new Map([[asset.id, asset]]) },
+    }));
+    const session = {
+      snapshot: { state: {} },
+      ensureNamespaces,
+    } as unknown as Parameters<typeof getMcpDownloadAsset>[0];
+
+    await expect(getMcpDownloadAsset(session, asset.id)).resolves.toEqual(
+      asset
+    );
+    expect(ensureNamespaces).toHaveBeenCalledWith(["assets"]);
+  }
+);
 
 test("rejects invalid UTF-8 downloads with the asset identity", async () => {
   await expect(

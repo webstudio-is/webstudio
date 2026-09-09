@@ -1,4 +1,5 @@
 import {
+  PanelContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -7,7 +8,6 @@ import {
   Flex,
   Text,
   Button,
-  theme,
 } from "@webstudio-is/design-system";
 import type { Page, Folder, PageTemplate } from "@webstudio-is/sdk";
 import { getPageDisplayName } from "./page-utils";
@@ -34,13 +34,13 @@ export const DeletePageConfirmationDialog = ({
     >
       <DialogContent>
         <DialogTitle>Delete page</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>{`Are you sure you want to delete "${getPageDisplayName(page)}"?`}</Text>
           <Text>
             You can undo it even if you delete the page as long as you don't
             reload.
           </Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button
             autoFocus
@@ -82,9 +82,9 @@ export const DeleteFolderConfirmationDialog = ({
     >
       <DialogContent>
         <DialogTitle>Delete confirmation</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button
             autoFocus
@@ -126,13 +126,13 @@ export const DeleteTemplateConfirmationDialog = ({
     >
       <DialogContent>
         <DialogTitle>Delete template</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} gap="3" direction="column">
           <Text>{`Are you sure you want to delete the template "${template.name}"?`}</Text>
           <Text>
             You can undo it even if you delete the template as long as you don't
             reload.
           </Text>
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button
             autoFocus

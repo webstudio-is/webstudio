@@ -7,7 +7,6 @@ import {
   Text,
   TooltipProvider,
   Toaster,
-  css,
   theme,
   PanelBanner,
   Link,
@@ -16,7 +15,8 @@ import {
   Grid,
   IconButton,
   cssVar,
-  selectedItemBackground,
+  InsetList,
+  InsetListItem,
 } from "@webstudio-is/design-system";
 import { BodyIcon } from "@webstudio-is/icons";
 import {
@@ -90,24 +90,6 @@ const CloneProject = ({
   }
 };
 
-const sidebarLinkStyle = css({
-  all: "unset",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  gap: theme.spacing[5],
-  height: theme.spacing[13],
-  paddingInline: theme.panel.paddingInline,
-  outline: "none",
-  "&:focus-visible, &:hover": {
-    background: cssVar("--overlay-interaction-hover"),
-  },
-  "&[aria-current=page]": {
-    background: selectedItemBackground,
-    color: cssVar("--foreground-primary"),
-  },
-});
-
 const NavigationItems = ({
   items,
 }: {
@@ -124,7 +106,7 @@ const NavigationItems = ({
 
   return (
     <List asChild>
-      <Box>
+      <InsetList>
         {items.map((item, index) => {
           const to =
             workspaceId && item.target === undefined
@@ -133,21 +115,18 @@ const NavigationItems = ({
 
           return (
             <ListItem asChild index={index} key={index}>
-              <NavLink
-                to={to}
-                end
-                target={item.target}
-                className={sidebarLinkStyle()}
-              >
-                {item.prefix}
-                <Text variant="labels" color="main">
-                  {item.children}
-                </Text>
-              </NavLink>
+              <InsetListItem asChild>
+                <NavLink to={to} end target={item.target}>
+                  {item.prefix}
+                  <Text variant="labels" color="main">
+                    {item.children}
+                  </Text>
+                </NavLink>
+              </InsetListItem>
             </ListItem>
           );
         })}
-      </Box>
+      </InsetList>
     </List>
   );
 };

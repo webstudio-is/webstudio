@@ -607,7 +607,22 @@ const startFixtureApi = async (
         return undefined;
       }
       let data: unknown;
-      if (operationPath === "build.loadProjectBundleByProjectId") {
+      if (operationPath === "build.loadData") {
+        const snapshot = getCurrentBuildSnapshot();
+        data = {
+          ...getCurrentSerializedBuild(),
+          ...snapshot,
+          pages: getCurrentSerializedBuild().pages,
+          dataSources: snapshot.variables,
+          assets: Array.from(state.assets?.values() ?? []),
+          assetFolders: Array.from(state.assetFolders?.values() ?? []),
+          project: {
+            id: projectId,
+            title: "Release smoke project",
+            domain: "release-smoke",
+          },
+        };
+      } else if (operationPath === "build.loadProjectBundleByProjectId") {
         data = { ...fixture.data, build: getCurrentSerializedBuild() };
       } else if (operationPath === "projects.get") {
         data = {

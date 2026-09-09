@@ -3,9 +3,9 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "react-router build",
-    "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "build": "node ./node_modules/@react-router/dev/bin.js build",
+    "dev": "node ./node_modules/@react-router/dev/bin.js dev",
+    "start": "node ./node_modules/@react-router/serve/bin.js ./build/server/index.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

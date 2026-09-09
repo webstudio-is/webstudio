@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ShieldIcon } from "@webstudio-is/icons";
 import {
+  PanelContent,
   Popover,
   cssVar,
   PopoverTrigger,
@@ -34,11 +35,11 @@ export const SafeModeButton = () => {
         </IconButton>
       </PopoverTrigger>
       <PopoverContent>
-        <Flex
+        <PanelContent
+          as={Flex}
           direction="column"
           gap="2"
           css={{
-            padding: theme.panel.padding,
             width: theme.spacing[30],
           }}
         >
@@ -51,7 +52,7 @@ export const SafeModeButton = () => {
           <Button color="destructive" onClick={handleExitSafeMode}>
             Exit safe mode
           </Button>
-        </Flex>
+        </PanelContent>
       </PopoverContent>
     </Popover>
   );

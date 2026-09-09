@@ -87,6 +87,7 @@ import {
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { $externalContentRoots } from "../external-content-mutations";
+import { $externalContentHistory } from "../external-content-history";
 
 enableMapSet();
 // safari structuredClone fix
@@ -407,6 +408,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
     new NanostoresSyncObject("systemDataByPage", $systemDataByPage),
     new NanostoresSyncObject("externalContentRoots", $externalContentRoots),
+    new NanostoresSyncObject("externalContentHistory", $externalContentHistory),
   ]);
 };
 

@@ -7,8 +7,11 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
+  Checkbox,
+  CheckboxAndLabel,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -18,21 +21,34 @@ import {
   Label,
   SmallIconButton,
   Text,
+  toast,
   theme,
 } from "@webstudio-is/design-system";
 import {
+  createId,
   createAssetFolderHierarchy,
+  type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
 import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
-import { $assetFolders } from "~/shared/sync/data-stores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
+import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "~/shared/instance-utils/data";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { AssetFolderSelector } from "./asset-folder-selector";
+import { fetch } from "~/shared/fetch.client";
+import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
+import { onNextTransactionComplete } from "~/shared/sync/project-queue";
+import { invalidateAssets } from "~/shared/resources";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 
 type AssetFolderFormValues = {
   name: string;
   parentId: string | undefined;
+  useAsContentCollection?: boolean;
 };
 
 const closeOnSuccess = (
@@ -50,27 +66,121 @@ const stopEscapePropagation = (event: KeyboardEvent) => {
   }
 };
 
+export const assertCollectionSetupProject = ({
+  expectedProjectId,
+  currentProjectId,
+}: {
+  expectedProjectId: string;
+  currentProjectId: string | undefined;
+}) => {
+  if (currentProjectId !== expectedProjectId) {
+    throw new Error(
+      "The project changed before collection setup finished. Return to the original project to retry."
+    );
+  }
+};
+
+const createAssetFolder = (values: AssetFolderFormValues) => {
+  const result = executeRuntimeMutation({
+    id: "assetFolders.create",
+    input: { name: values.name, parentId: values.parentId },
+  });
+  if (result === undefined) {
+    return;
+  }
+  return result.result;
+};
+
+export const createContentCollectionFolder = async ({
+  id,
+  name,
+  parentId,
+  projectId,
+  request = fetch,
+}: {
+  id: string;
+  name: string;
+  parentId: string | undefined;
+  projectId: string;
+  request?: typeof fetch;
+}) => {
+  const response = await request(
+    `/rest/assets/collection-folders?projectId=${encodeURIComponent(projectId)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, name, parentId }),
+    }
+  );
+  const payload = (await response.json()) as
+    | { folder: AssetFolder; assets: Asset[] }
+    | { errors?: string };
+  if (response.ok === false || "folder" in payload === false) {
+    throw new Error(
+      "errors" in payload && typeof payload.errors === "string"
+        ? payload.errors
+        : "The collection could not be created."
+    );
+  }
+  assertCollectionSetupProject({
+    expectedProjectId: projectId,
+    currentProjectId: $project.get()?.id,
+  });
+  const changes: BuilderPatchChange[] = [];
+  if ($assetFolders.get().has(payload.folder.id) === false) {
+    changes.push({
+      namespace: "assetFolders",
+      patches: [
+        { op: "add", path: [payload.folder.id], value: payload.folder },
+      ],
+    });
+  }
+  const newAssets = payload.assets.filter(
+    (asset) => $assets.get().has(asset.id) === false
+  );
+  if (newAssets.length > 0) {
+    changes.push({
+      namespace: "assets",
+      patches: newAssets.map((asset) => ({
+        op: "add",
+        path: [asset.id],
+        value: asset,
+      })),
+    });
+  }
+  if (changes.length === 0) {
+    invalidateAssets();
+  } else {
+    createTransactionFromBuilderPatchPayload({
+      data: getWebstudioData(),
+      payload: changes,
+    });
+    onNextTransactionComplete(invalidateAssets);
+  }
+  return payload.folder;
+};
+
 const AssetFolderForm = ({
   id,
-  open,
   initialName,
   initialParentId,
   excludedFolderId,
   folderId,
-  autoFocusSubmit = false,
   submitLabel,
   secondaryAction,
+  showCollectionOption = false,
+  onUseAsCollection,
   onSubmit,
 }: {
   id: string;
-  open: boolean;
   initialName: string;
   initialParentId: string | undefined;
   excludedFolderId?: string;
   folderId?: string;
-  autoFocusSubmit?: boolean;
-  submitLabel: string;
+  submitLabel?: string;
   secondaryAction?: ReactNode;
+  showCollectionOption?: boolean;
+  onUseAsCollection?: () => void;
   onSubmit: (values: AssetFolderFormValues) => void;
 }) => {
   const folders = useStore($assetFolders);
@@ -83,15 +193,28 @@ const AssetFolderForm = ({
       excludedFolderId === undefined ? undefined : new Set([excludedFolderId]),
     [excludedFolderId]
   );
-  const [name, setName] = useState(initialName);
-  const [parentId, setParentId] = useState(initialParentId);
-
-  useLayoutEffect(() => {
-    if (open) {
-      setName(initialName);
-      setParentId(initialParentId);
+  const savedValues = useMemo(
+    () => ({ name: initialName, parentId: initialParentId }),
+    [initialName, initialParentId]
+  );
+  const draft = useDraftValue(
+    savedValues,
+    (values) =>
+      onSubmit({
+        ...values,
+        name: values.name.trim(),
+      }),
+    {
+      autoSave: folderId !== undefined,
+      shouldSave: (values) =>
+        folderId !== undefined &&
+        values.name.trim().length > 0 &&
+        hierarchy.findByName({ ...values, excludeIds: excludedFolderIds }) ===
+          undefined,
     }
-  }, [initialName, initialParentId, open]);
+  );
+  const { name, parentId } = draft.value;
+  const [useAsContentCollection, setUseAsContentCollection] = useState(false);
 
   const normalizedName = name.trim();
   const duplicate =
@@ -102,21 +225,32 @@ const AssetFolderForm = ({
     }) !== undefined;
   const canSubmit = normalizedName.length > 0 && duplicate === false;
   const submit = () => {
+    if (folderId !== undefined) {
+      draft.save();
+      return;
+    }
     if (canSubmit) {
-      onSubmit({ name: normalizedName, parentId });
+      onSubmit({
+        name: normalizedName,
+        parentId,
+        ...(showCollectionOption ? { useAsContentCollection } : {}),
+      });
     }
   };
 
   return (
-    <Grid gap={3} css={{ padding: theme.panel.padding }}>
+    <PanelContent as={Grid} gap={3}>
       <Grid gap={1}>
         <Label htmlFor={id}>Name</Label>
         <InputField
           id={id}
-          autoFocus={autoFocusSubmit === false}
+          autoFocus
           value={name}
           color={duplicate ? "error" : undefined}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) =>
+            draft.set({ ...draft.value, name: event.target.value })
+          }
+          onBlur={folderId === undefined ? undefined : draft.save}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               submit();
@@ -131,10 +265,25 @@ const AssetFolderForm = ({
       </Grid>
       <AssetFolderSelector
         value={parentId}
-        onChange={setParentId}
+        onChange={(parentId) => draft.set({ ...draft.value, parentId })}
+        deferChangesUntilBlur={folderId !== undefined}
         excludedFolderIds={excludedFolderIds}
         rootLabel="Parent folder"
       />
+      {showCollectionOption && (
+        <CheckboxAndLabel>
+          <Checkbox
+            id="asset-folder-content-collection"
+            checked={useAsContentCollection}
+            onCheckedChange={(checked) =>
+              setUseAsContentCollection(checked === true)
+            }
+          />
+          <Label htmlFor="asset-folder-content-collection">
+            Use as content collection
+          </Label>
+        </CheckboxAndLabel>
+      )}
       {folderId !== undefined && (
         <Grid gap={1}>
           <Label htmlFor={`asset-folder-id-${folderId}`}>ID</Label>
@@ -155,55 +304,241 @@ const AssetFolderForm = ({
           />
         </Grid>
       )}
-      <Flex justify="end" gap={2}>
-        {secondaryAction}
-        <Button
-          color="primary"
-          autoFocus={autoFocusSubmit}
-          disabled={canSubmit === false}
-          onClick={submit}
-        >
-          {submitLabel}
-        </Button>
-      </Flex>
-    </Grid>
+      {onUseAsCollection !== undefined && (
+        <Button onClick={onUseAsCollection}>Use as content collection</Button>
+      )}
+      {(secondaryAction !== undefined || submitLabel !== undefined) && (
+        <Flex justify="end" gap={2}>
+          {secondaryAction}
+          {submitLabel !== undefined && (
+            <Button
+              color="primary"
+              disabled={canSubmit === false}
+              onClick={submit}
+            >
+              {submitLabel}
+            </Button>
+          )}
+        </Flex>
+      )}
+    </PanelContent>
   );
 };
 
 export const CreateAssetFolderDialog = ({
   open,
   onOpenChange,
+  onConfigureCollection,
   currentFolderId,
+  existingFolder,
+  canCreateContentCollection = true,
+  createFolder = createAssetFolder,
+  createCollection = createContentCollectionFolder,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConfigureCollection?: (folderId: string) => void;
   currentFolderId: string | undefined;
+  existingFolder?: AssetFolder;
+  canCreateContentCollection?: boolean;
+  createFolder?: (
+    values: AssetFolderFormValues
+  ) => { folderId: string } | undefined;
+  createCollection?: typeof createContentCollectionFolder;
 }) => {
-  const create = (values: AssetFolderFormValues) =>
-    closeOnSuccess(
-      executeRuntimeMutation({
-        id: "assetFolders.create",
-        input: values,
-      }),
-      onOpenChange
-    );
+  const [pendingCollection, setPendingCollection] = useState<{
+    folderId: string;
+    projectId: string;
+    name: string;
+    parentId: string | undefined;
+  }>();
+  const [initializing, setInitializing] = useState(false);
+  const [initializationError, setInitializationError] = useState<string>();
+  const [createdCollectionFolderId, setCreatedCollectionFolderId] =
+    useState<string>();
+
+  const finishCollectionSetup = (pending: {
+    folderId: string;
+    projectId: string;
+    name: string;
+    parentId: string | undefined;
+  }) => {
+    setInitializing(true);
+    setInitializationError(undefined);
+    void (async () => {
+      assertCollectionSetupProject({
+        expectedProjectId: pending.projectId,
+        currentProjectId: $project.get()?.id,
+      });
+      await createCollection({
+        id: pending.folderId,
+        name: pending.name,
+        parentId: pending.parentId,
+        projectId: pending.projectId,
+      });
+    })()
+      .then(() => {
+        setPendingCollection(undefined);
+        setCreatedCollectionFolderId(pending.folderId);
+        toast.success("Collection folder created.");
+      })
+      .catch((error) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "The collection could not be created.";
+        setInitializationError(message);
+        toast.error(message);
+      })
+      .finally(() => setInitializing(false));
+  };
+
+  const create = (values: AssetFolderFormValues) => {
+    const projectId = $project.get()?.id;
+    if (projectId === undefined) {
+      toast.error("Project not found");
+      return;
+    }
+    if (values.useAsContentCollection !== true) {
+      const result = createFolder(values);
+      if (result === undefined) {
+        return;
+      }
+      onOpenChange(false);
+      return;
+    }
+    const pending = {
+      folderId: existingFolder?.id ?? createId(),
+      projectId: existingFolder?.projectId ?? projectId,
+      name: values.name,
+      parentId: values.parentId,
+    };
+    setPendingCollection(pending);
+    finishCollectionSetup(pending);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (initializing === false) {
+          if (nextOpen === false) {
+            setCreatedCollectionFolderId(undefined);
+          }
+          onOpenChange(nextOpen);
+        }
+      }}
+    >
       <DialogContent
-        minWidth={360}
+        css={{ width: "min(420px, calc(100vw - 32px))" }}
         aria-describedby={undefined}
         onKeyDown={stopEscapePropagation}
       >
-        <DialogTitle>New folder</DialogTitle>
-        <AssetFolderForm
-          id="asset-folder-name"
-          open={open}
-          initialName=""
-          initialParentId={currentFolderId}
-          submitLabel="Create folder"
-          onSubmit={create}
-        />
+        <DialogTitle>
+          {createdCollectionFolderId !== undefined
+            ? "Collection created"
+            : pendingCollection === undefined
+              ? existingFolder === undefined
+                ? "New folder"
+                : "Use as content collection"
+              : "Finish collection setup"}
+        </DialogTitle>
+        {createdCollectionFolderId !== undefined ? (
+          <PanelContent as={Grid} gap={3}>
+            <Text>
+              The collection files are ready. You can configure its fields and
+              entry rules now.
+            </Text>
+            <Flex justify="end" gap={2}>
+              <Button
+                autoFocus={onConfigureCollection === undefined}
+                onClick={() => {
+                  setCreatedCollectionFolderId(undefined);
+                  onOpenChange(false);
+                }}
+              >
+                Done
+              </Button>
+              {onConfigureCollection !== undefined && (
+                <Button
+                  autoFocus
+                  color="primary"
+                  onClick={() => {
+                    setCreatedCollectionFolderId(undefined);
+                    onOpenChange(false);
+                    onConfigureCollection(createdCollectionFolderId);
+                  }}
+                >
+                  Configure collection
+                </Button>
+              )}
+            </Flex>
+          </PanelContent>
+        ) : pendingCollection === undefined && existingFolder !== undefined ? (
+          <PanelContent as={Grid} gap={3}>
+            <Text>
+              Add collection.json and template.mdx to “{existingFolder.name}” so
+              editors can create entries. Existing files stay unchanged. MDX
+              files become entries; other files are ignored by collection
+              validation.
+            </Text>
+            <Flex justify="end">
+              <Button
+                autoFocus
+                color="primary"
+                onClick={() =>
+                  create({
+                    name: existingFolder.name,
+                    parentId: existingFolder.parentId,
+                    useAsContentCollection: true,
+                  })
+                }
+              >
+                Use as content collection
+              </Button>
+            </Flex>
+          </PanelContent>
+        ) : pendingCollection === undefined ? (
+          <AssetFolderForm
+            id="asset-folder-name"
+            initialName=""
+            initialParentId={currentFolderId}
+            submitLabel="Create folder"
+            showCollectionOption={canCreateContentCollection}
+            onSubmit={create}
+          />
+        ) : (
+          <PanelContent as={Grid} gap={3}>
+            <Text>
+              {initializing
+                ? "Creating the collection template and configuration…"
+                : "The folder was created, but its collection files are incomplete."}
+            </Text>
+            {initializationError !== undefined && (
+              <Text role="alert" color="destructive" variant="tiny">
+                {initializationError}
+              </Text>
+            )}
+            <Flex justify="end" gap={2} wrap="wrap">
+              {initializing === false && (
+                <Button
+                  onClick={() => {
+                    onOpenChange(false);
+                  }}
+                >
+                  Finish later
+                </Button>
+              )}
+              <Button
+                color="primary"
+                disabled={initializing}
+                onClick={() => finishCollectionSetup(pendingCollection)}
+              >
+                {initializing ? "Setting up…" : "Retry setup"}
+              </Button>
+            </Flex>
+          </PanelContent>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -214,33 +549,35 @@ export const AssetFolderSettingsDialog = ({
   open,
   onOpenChange,
   initialDeleteConfirmation = false,
+  canDelete = true,
+  onUseAsCollection,
 }: {
   folder: AssetFolder;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialDeleteConfirmation?: boolean;
+  canDelete?: boolean;
+  onUseAsCollection?: () => void;
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   useLayoutEffect(() => {
     if (open) {
-      setConfirmDelete(initialDeleteConfirmation);
+      setConfirmDelete(canDelete && initialDeleteConfirmation);
     }
-  }, [initialDeleteConfirmation, open]);
+  }, [canDelete, initialDeleteConfirmation, open]);
 
-  const save = (values: AssetFolderFormValues) =>
-    closeOnSuccess(
-      executeRuntimeMutation({
-        id: "assetFolders.update",
-        input: {
-          folderId: folder.id,
-          values: {
-            name: values.name,
-            parentId: values.parentId ?? null,
-          },
+  const save = (values: AssetFolderFormValues) => {
+    executeRuntimeMutation({
+      id: "assetFolders.update",
+      input: {
+        folderId: folder.id,
+        values: {
+          name: values.name,
+          parentId: values.parentId ?? null,
         },
-      }),
-      onOpenChange
-    );
+      },
+    });
+  };
 
   const remove = () =>
     closeOnSuccess(
@@ -261,8 +598,8 @@ export const AssetFolderSettingsDialog = ({
         <DialogTitle>
           {confirmDelete ? "Delete folder" : "Folder settings"}
         </DialogTitle>
-        {confirmDelete ? (
-          <Box css={{ padding: theme.panel.padding }}>
+        {canDelete && confirmDelete ? (
+          <PanelContent as={Box}>
             <Text>
               Delete “{folder.name}”? Everything inside this folder, including
               nested folders and assets, will be deleted.
@@ -277,26 +614,26 @@ export const AssetFolderSettingsDialog = ({
                 Delete folder
               </Button>
             </Flex>
-          </Box>
+          </PanelContent>
         ) : (
           <AssetFolderForm
             id={`asset-folder-name-${folder.id}`}
-            open={open}
             initialName={folder.name}
             initialParentId={folder.parentId}
             excludedFolderId={folder.id}
             folderId={folder.id}
-            autoFocusSubmit
-            submitLabel="Save"
             onSubmit={save}
+            onUseAsCollection={onUseAsCollection}
             secondaryAction={
-              <Button
-                color="destructive"
-                prefix={<TrashIcon />}
-                onClick={() => setConfirmDelete(true)}
-              >
-                Delete
-              </Button>
+              canDelete ? (
+                <Button
+                  color="destructive"
+                  prefix={<TrashIcon />}
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  Delete
+                </Button>
+              ) : undefined
             }
           />
         )}
@@ -335,7 +672,7 @@ export const MoveAssetManagerItemsDialog = ({
         onKeyDown={stopEscapePropagation}
       >
         <DialogTitle>Move items</DialogTitle>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} gap={3}>
           <AssetFolderSelector
             value={folderId}
             onChange={setFolderId}
@@ -355,7 +692,7 @@ export const MoveAssetManagerItemsDialog = ({
               Move
             </Button>
           </Flex>
-        </Grid>
+        </PanelContent>
       </DialogContent>
     </Dialog>
   );

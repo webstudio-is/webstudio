@@ -3,6 +3,7 @@ import {
   blockBodyComponent,
   blockComponent,
   elementComponent,
+  contentBlockSourceProp,
 } from "@webstudio-is/sdk";
 import { $flatTree, __testing__ } from "./navigator-tree";
 import {
@@ -11,10 +12,11 @@ import {
   $selectedPageId,
   selectInstances,
 } from "~/shared/nano-states";
-import { $instances, $pages } from "~/shared/sync/data-stores";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import { $externalContentRoots } from "~/shared/external-content-mutations";
 
 const {
+  getMdxContentSource,
   commitNavigatorDrop,
   getFocusSelectionSkipCountAfterPointerDown,
   getBuilderDropTarget,
@@ -25,6 +27,102 @@ const {
   shouldClearNavigatorMultiSelectionOnEscape,
   shouldSelectOnPointerDown,
 } = __testing__;
+
+test("identifies only the connected MDX Body, including an empty Body", () => {
+  const previousRoots = $externalContentRoots.get();
+  $instances.set(
+    new Map([
+      [
+        "block",
+        {
+          id: "block",
+          type: "instance",
+          component: blockComponent,
+          children: [
+            { type: "id", value: "body" },
+            { type: "id", value: "shell" },
+          ],
+        },
+      ],
+      [
+        "body",
+        {
+          id: "body",
+          type: "instance",
+          component: blockBodyComponent,
+          children: [],
+        },
+      ],
+      [
+        "shell",
+        {
+          id: "shell",
+          type: "instance",
+          component: elementComponent,
+          tag: "div",
+          children: [],
+        },
+      ],
+    ])
+  );
+  $props.set(new Map());
+  expect(getMdxContentSource(["body", "block"])).toBeUndefined();
+  $props.set(
+    new Map([
+      [
+        "source",
+        {
+          id: "source",
+          instanceId: "block",
+          name: contentBlockSourceProp,
+          type: "asset",
+          value: "article",
+        },
+      ],
+    ])
+  );
+  try {
+    expect(getMdxContentSource(["body", "block"])).toEqual({
+      assetId: "article",
+    });
+    expect(getMdxContentSource(["shell", "block"])).toBeUndefined();
+    expect(getMdxContentSource(["block"])).toBeUndefined();
+    $props.set(
+      new Map([
+        [
+          "source",
+          {
+            id: "source",
+            instanceId: "block",
+            name: contentBlockSourceProp,
+            type: "expression",
+            value: "collection.data._id",
+          },
+        ],
+      ])
+    );
+    $externalContentRoots.set(
+      new Map([
+        [
+          "root",
+          {
+            blockInstanceId: "block",
+            contentInstanceId: "body",
+            assetId: "article",
+            instanceIds: new Set(),
+            mutationRevision: 0,
+          },
+        ],
+      ])
+    );
+    expect(getMdxContentSource(["body", "block"])).toEqual({
+      assetId: "article",
+    });
+  } finally {
+    $props.set(new Map());
+    $externalContentRoots.set(previousRoots);
+  }
+});
 
 const createTreeItem = ({
   parentComponent = "Box",

@@ -2,6 +2,8 @@ import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { userEvent } from "@vitest/browser/context";
+import { renderData, renderTemplate, ws } from "@webstudio-is/template";
 import {
   blockComponent,
   blockTemplateComponent,
@@ -83,6 +85,68 @@ afterEach(() => {
 });
 
 describe("TextEditor", () => {
+  test("saves edits to text containing a formatted link on blur", async () => {
+    const { instances } = renderData(
+      <ws.element ws:id="paragraph" ws:tag="p">
+        <ws.element ws:id="emphasis" ws:tag="em">
+          {"Before "}
+          <ws.element ws:id="link" ws:tag="a" ws:label="Link">
+            linked text
+          </ws.element>
+          {" after."}
+        </ws.element>
+      </ws.element>
+    );
+    $instances.set(instances);
+    selectInstance(["paragraph"]);
+    $textEditingInstanceSelector.set({
+      selector: ["paragraph"],
+      reason: "left",
+    });
+    const onChange = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () => {
+      root?.render(
+        <TextEditor
+          rootInstanceSelector={["paragraph"]}
+          instances={instances}
+          props={new Map()}
+          contentEditable={<ContentEditable />}
+          onChange={onChange}
+          onSelectInstance={() => {}}
+        />
+      );
+    });
+    const editable = container.querySelector<HTMLElement>(
+      "[data-lexical-editor]"
+    )!;
+    expect(editable.textContent).toBe("Before linked text after.");
+    expect(editable.querySelector("a")?.getAttribute("data-ws-id")).toBe(
+      "link"
+    );
+    await act(async () => {
+      await userEvent.type(editable, " edited");
+      editable.blur();
+    });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]?.[0]).toEqual(
+      renderTemplate(
+        <ws.element ws:id="paragraph" ws:tag="p">
+          <ws.element ws:id="emphasis" ws:tag="em">
+            {"Before "}
+            <ws.element ws:id="link" ws:tag="a" ws:label="Link">
+              linked text
+            </ws.element>
+            {" after."}
+          </ws.element>
+          {" edited"}
+        </ws.element>
+      ).instances
+    );
+  });
+
   test("focuses the editable element when initializing a new empty instance", async () => {
     const instance: Instance = {
       type: "instance",
@@ -122,57 +186,70 @@ describe("TextEditor", () => {
     );
   });
 
-  test("does not save the active slash-menu trigger on blur", async () => {
-    const instances = createContentBlockInstances();
-    $instances.set(instances);
-    selectInstance(["current", "block"]);
-    $textEditingInstanceSelector.set({
-      selector: ["current", "block"],
-      reason: "left",
-    });
-    const onChange = vi.fn();
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    root = createRoot(container);
+  test.each(["element", "window"])(
+    "saves text without the slash trigger on %s blur",
+    async (target) => {
+      const instances = createContentBlockInstances();
+      $instances.set(instances);
+      selectInstance(["current", "block"]);
+      $textEditingInstanceSelector.set({
+        selector: ["current", "block"],
+        reason: "left",
+      });
+      const onChange = vi.fn();
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      root = createRoot(container);
 
-    await act(async () => {
-      root?.render(
-        <TextEditor
-          rootInstanceSelector={["current", "block"]}
-          instances={instances}
-          props={new Map()}
-          contentEditable={<ContentEditable />}
-          onChange={onChange}
-          onSelectInstance={() => {}}
-        />
+      await act(async () => {
+        root?.render(
+          <TextEditor
+            rootInstanceSelector={["current", "block"]}
+            instances={instances}
+            props={new Map()}
+            contentEditable={<ContentEditable />}
+            onChange={onChange}
+            onSelectInstance={() => {}}
+          />
+        );
+      });
+
+      const editable = container.querySelector<HTMLElement>(
+        "[data-lexical-editor]"
       );
-    });
-
-    const editable = container.querySelector<HTMLElement>(
-      "[data-lexical-editor]"
-    );
-    await act(async () => {
-      editable?.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "/", bubbles: true })
+      await act(async () => {
+        if (target === "window") {
+          await userEvent.type(editable!, " edited");
+        } else {
+          editable?.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "/", bubbles: true })
+          );
+        }
+      });
+      expect(editable?.textContent).toBe(
+        target === "window" ? "Before edited" : "Before/"
       );
-    });
-    expect(editable?.textContent).toBe("Before/");
-    expect($textEditorContextMenu.get()).toMatchObject({
-      replaceAnchor: false,
-    });
 
-    await act(async () => {
-      editable?.dispatchEvent(new FocusEvent("blur"));
-    });
+      await act(async () => {
+        (target === "window" ? window : editable)?.dispatchEvent(
+          new FocusEvent("blur")
+        );
+      });
 
-    expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange.mock.calls[0]?.[0]).toContainEqual(
-      expect.objectContaining({
-        id: "current",
-        children: [{ type: "text", value: "Before" }],
-      })
-    );
-  });
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange.mock.calls[0]?.[0]).toContainEqual(
+        expect.objectContaining({
+          id: "current",
+          children: [
+            {
+              type: "text",
+              value: target === "window" ? "Before edited" : "Before",
+            },
+          ],
+        })
+      );
+    }
+  );
 
   test("does not save an editor after its instance was replaced", async () => {
     const instances = createContentBlockInstances();

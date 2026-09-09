@@ -482,26 +482,20 @@ export const parseStringLiteralExpression = (expression: string) => {
   }
 };
 
-const getStaticMemberPath = (
-  node: Expression,
-  allowOptional = true
-): string[] | undefined => {
+const getStaticMemberPath = (node: Expression): string[] | undefined => {
   if (node.type === "Identifier") {
     return [node.name];
   }
-  if (node.type === "ChainExpression") {
-    return allowOptional
-      ? getStaticMemberPath(node.expression, allowOptional)
-      : undefined;
-  }
   if (
-    node.type !== "MemberExpression" ||
-    node.object.type === "Super" ||
-    (allowOptional === false && node.optional)
+    node.type === "ChainExpression" ||
+    node.type === "ParenthesizedExpression"
   ) {
+    return getStaticMemberPath(node.expression);
+  }
+  if (node.type !== "MemberExpression" || node.object.type === "Super") {
     return;
   }
-  const objectPath = getStaticMemberPath(node.object, allowOptional);
+  const objectPath = getStaticMemberPath(node.object);
   if (objectPath === undefined) {
     return;
   }
@@ -534,7 +528,7 @@ export const parseDirectPathExpression = (
 ): DirectPathExpression | undefined => {
   try {
     const node = parseCompleteExpression(expression);
-    const path = getStaticMemberPath(node, false);
+    const path = getStaticMemberPath(node);
     if (path === undefined || path.length === 0) {
       return;
     }

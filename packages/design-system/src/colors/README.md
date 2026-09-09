@@ -167,8 +167,10 @@ are rejected.
 
 ## Fixed brand artwork
 
-`webstudioBrand` exports fixed Webstudio identity gradients and effects that do
-not follow the user-selectable theme. It contains only brand-specific artwork.
+`webstudioBrand` exports Webstudio identity gradients and effects with fixed
+brand hues and geometry. The background derives its neutral base and highlight
+from `--background-primary`, so the same gradient follows light, dark, and
+custom themes without a separate override. It contains only brand-specific artwork.
 Generic surfaces, content, borders, and overlays must use semantic colors or
 derive a local composition from them instead of being added to the brand API.
 

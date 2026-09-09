@@ -13,7 +13,8 @@ import {
   Text,
   rawTheme,
   cssVar,
-  selectedItemBackground,
+  InsetList,
+  InsetListItem,
 } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
 import {
@@ -83,9 +84,7 @@ export const ProjectSettingsDialog = ({
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           <Flex grow>
             <List asChild>
-              <Flex
-                direction="column"
-                shrink={false}
+              <InsetList
                 css={{
                   width: leftPanelWidth,
                   borderRight: `1px solid  ${cssVar("--border-default")}`,
@@ -102,30 +101,15 @@ export const ProjectSettingsDialog = ({
                         onSectionChange?.(name);
                       }}
                     >
-                      <Flex
-                        css={{
-                          position: "relative",
-                          height: theme.spacing[13],
-                          paddingInline: theme.panel.paddingInline,
-                          outline: "none",
-                          "&:focus-visible, &:hover": {
-                            background: cssVar("--overlay-interaction-hover"),
-                          },
-                          "&[aria-current=true]": {
-                            background: selectedItemBackground,
-                            color: cssVar("--foreground-primary"),
-                          },
-                        }}
-                        align="center"
-                      >
+                      <InsetListItem>
                         <Text variant="labels" truncate>
                           {sectionLabels.get(name) ?? titleCase(name)}
                         </Text>
-                      </Flex>
+                      </InsetListItem>
                     </ListItem>
                   );
                 })}
-              </Flex>
+              </InsetList>
             </List>
             <ScrollAreaNative css={{ width: "100%" }}>
               {status === "loading" ? (

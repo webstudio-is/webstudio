@@ -10,7 +10,6 @@ import type {
 import {
   findContentBlockTemplateContainers,
   getContentBlockTemplateName,
-  getComponentByJsxName,
   getHtmlTagsFromProps,
   type ContentBlockDiagnostic,
   type ContentBlockExternalContentIdentity,
@@ -266,16 +265,6 @@ export const resolveMdxTemplates = ({
             continue;
           }
           if (standard?.key.startsWith("component:") === true) {
-            continue;
-          }
-          if (
-            node.syntax === "jsx" &&
-            getComponentByJsxName({
-              name: node.name,
-              components: metas.keys(),
-            }) !== undefined
-          ) {
-            visit(node.children, path);
             continue;
           }
           references.push({

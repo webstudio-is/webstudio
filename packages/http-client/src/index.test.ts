@@ -2183,148 +2183,193 @@ test("imports project bundle through staged upload", async () => {
   expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
 });
 
-test("imports project bundle with assets and retries missing asset uploads", async () => {
-  const asset = createImageAssetFixture({ name: "image.png" });
-  const bundle = createPublishedProjectBundleFixture({ assets: [asset] });
-  const calls: string[] = [];
-  const uploadUrls: string[] = [];
-  const uploadOffsets = new Map<string, number>();
-  let importAttempts = 0;
-  let uploadAttempts = 0;
-
-  const server = createServer(async (request, response) => {
-    const url = new URL(request.url ?? "/", "http://localhost");
-    calls.push(`${request.method} ${url.pathname}`);
-
-    if (
-      request.method === "GET" &&
-      url.pathname === "/trpc/build.checkProjectBuildPermission"
-    ) {
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify([{ result: { data: undefined } }]));
-      return;
-    }
-
-    if (
-      request.method === "POST" &&
-      url.pathname === "/rest/assets/uploads/image.png"
-    ) {
-      uploadAttempts += 1;
-      uploadUrls.push(url.href);
-      await readRequestBody(request);
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(
-        JSON.stringify({
-          uploadedAssets: [
-            createImageAssetFixture({
-              id: `server-generated-asset-${uploadAttempts}`,
-              name: "image_destination.png",
-            }),
-          ],
-          deduplicated: false,
-        })
-      );
-      return;
-    }
-
-    if (request.method === "POST" && url.pathname === stagedUploadPath) {
-      response.writeHead(201, {
-        Location: `http://${request.headers.host}${stagedUploadPath}/upload-id-${importAttempts}`,
-        "Tus-Resumable": "1.0.0",
-      });
-      response.end();
-      return;
-    }
-
-    if (
-      request.method === "PATCH" &&
-      url.pathname.startsWith(`${stagedUploadPath}/upload-id-`)
-    ) {
-      const chunk = await readRequestBody(request);
-      const offset = (uploadOffsets.get(url.pathname) ?? 0) + chunk.byteLength;
-      uploadOffsets.set(url.pathname, offset);
-      response.writeHead(204, {
-        "Tus-Resumable": "1.0.0",
-        "Upload-Offset": String(offset),
-      });
-      response.end();
-      return;
-    }
-
-    if (
-      request.method === "POST" &&
-      url.pathname === "/trpc/build.importProjectBundle"
-    ) {
-      importAttempts += 1;
-      await readRequestBody(request);
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(
-        JSON.stringify([
-          importAttempts === 1
-            ? {
-                error: {
-                  message: "Imported asset files are missing: image.png",
-                  code: -32603,
-                  data: { code: "INTERNAL_SERVER_ERROR" },
-                },
-              }
-            : { result: { data: { version: 2 } } },
-        ])
-      );
-      return;
-    }
-
-    response.writeHead(404);
-    response.end();
-  });
-
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
-
-  const importAttemptMessages: string[] = [];
-  const missingAssetMessages: string[] = [];
-  const uploadAssetMessages: string[] = [];
-
-  try {
-    const address = server.address();
-    if (address === null || typeof address === "string") {
-      throw new Error("Server address is unavailable");
-    }
-
-    await expect(
-      importProjectBundleWithAssets({
-        authToken: "token",
-        origin: `http://127.0.0.1:${address.port}`,
-        projectId: "project-id",
-        data: bundle,
-        readAssetData: async () => new Blob(["asset"]),
-        onImportAttempt: () => importAttemptMessages.push("attempt"),
-        onMissingAssets: (assets) =>
-          missingAssetMessages.push(
-            assets.map((asset) => asset.name).join(",")
-          ),
-        onUploadAssets: (assets) =>
-          uploadAssetMessages.push(assets.map((asset) => asset.name).join(",")),
-      })
-    ).resolves.toEqual({ version: 2 });
-  } finally {
-    await new Promise<void>((resolve, reject) => {
-      server.close((error) => (error ? reject(error) : resolve()));
+test.each([undefined, "source-folder"])(
+  "imports assets from folder %s and preserves their final placement",
+  async (folderId) => {
+    const asset = createImageAssetFixture({ name: "image.png", folderId });
+    const assetFolders =
+      folderId === undefined
+        ? []
+        : [
+            {
+              id: folderId,
+              name: "Images",
+              projectId: "source-project",
+              createdAt: "2026-09-09T00:00:00.000Z",
+            },
+          ];
+    const bundle = createPublishedProjectBundleFixture({
+      assets: [asset],
+      assetFolders,
     });
-  }
+    const uploadChunks = new Map<string, Buffer[]>();
+    const readAssets: unknown[] = [];
+    const calls: string[] = [];
+    const uploadUrls: string[] = [];
+    const uploadOffsets = new Map<string, number>();
+    let importAttempts = 0;
+    let uploadAttempts = 0;
 
-  expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
-  expect(importAttempts).toBe(2);
-  expect(uploadAttempts).toBe(1);
-  expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
-    true
-  );
-  expect(uploadOffsets.size).toBe(2);
-  expect(importAttemptMessages).toEqual(["attempt", "attempt"]);
-  expect(missingAssetMessages).toEqual([]);
-  expect(uploadAssetMessages).toEqual(["image.png"]);
-});
+    const server = createServer(async (request, response) => {
+      const url = new URL(request.url ?? "/", "http://localhost");
+      calls.push(`${request.method} ${url.pathname}`);
+
+      if (
+        request.method === "GET" &&
+        url.pathname === "/trpc/build.checkProjectBuildPermission"
+      ) {
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(JSON.stringify([{ result: { data: undefined } }]));
+        return;
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/rest/assets/uploads/image.png"
+      ) {
+        uploadAttempts += 1;
+        uploadUrls.push(url.href);
+        await readRequestBody(request);
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify({
+            uploadedAssets: [
+              createImageAssetFixture({
+                id: `server-generated-asset-${uploadAttempts}`,
+                name: "image_destination.png",
+              }),
+            ],
+            deduplicated: false,
+          })
+        );
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === stagedUploadPath) {
+        response.writeHead(201, {
+          Location: `http://${request.headers.host}${stagedUploadPath}/upload-id-${importAttempts}`,
+          "Tus-Resumable": "1.0.0",
+        });
+        response.end();
+        return;
+      }
+
+      if (
+        request.method === "PATCH" &&
+        url.pathname.startsWith(`${stagedUploadPath}/upload-id-`)
+      ) {
+        const chunk = await readRequestBody(request);
+        const chunks = uploadChunks.get(url.pathname) ?? [];
+        chunks.push(chunk);
+        uploadChunks.set(url.pathname, chunks);
+        const offset =
+          (uploadOffsets.get(url.pathname) ?? 0) + chunk.byteLength;
+        uploadOffsets.set(url.pathname, offset);
+        response.writeHead(204, {
+          "Tus-Resumable": "1.0.0",
+          "Upload-Offset": String(offset),
+        });
+        response.end();
+        return;
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/trpc/build.importProjectBundle"
+      ) {
+        importAttempts += 1;
+        await readRequestBody(request);
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify([
+            importAttempts === 1
+              ? {
+                  error: {
+                    message: "Imported asset files are missing: image.png",
+                    code: -32603,
+                    data: { code: "INTERNAL_SERVER_ERROR" },
+                  },
+                }
+              : { result: { data: { version: 2 } } },
+          ])
+        );
+        return;
+      }
+
+      response.writeHead(404);
+      response.end();
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    const importAttemptMessages: string[] = [];
+    const missingAssetMessages: string[] = [];
+    const uploadAssetMessages: string[] = [];
+
+    try {
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        throw new Error("Server address is unavailable");
+      }
+
+      await expect(
+        importProjectBundleWithAssets({
+          authToken: "token",
+          origin: `http://127.0.0.1:${address.port}`,
+          projectId: "project-id",
+          data: bundle,
+          readAssetData: async (asset) => {
+            readAssets.push(asset);
+            return new Blob(["asset"]);
+          },
+          onImportAttempt: () => importAttemptMessages.push("attempt"),
+          onMissingAssets: (assets) =>
+            missingAssetMessages.push(
+              assets.map((asset) => asset.name).join(",")
+            ),
+          onUploadAssets: (assets) =>
+            uploadAssetMessages.push(
+              assets.map((asset) => asset.name).join(",")
+            ),
+        })
+      ).resolves.toEqual({ version: 2 });
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
+
+    expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
+    expect(importAttempts).toBe(2);
+    expect(uploadAttempts).toBe(1);
+    expect(
+      uploadUrls.map((url) => new URL(url).searchParams.get("folderId"))
+    ).toEqual([null]);
+    expect(readAssets).toHaveLength(1);
+    expect(readAssets[0]).toBe(asset);
+    expect(bundle.assets[0]).toEqual(asset);
+    const importedBundles = Array.from(uploadChunks.values(), (chunks) =>
+      JSON.parse(Buffer.concat(chunks).toString("utf8"))
+    );
+    expect(importedBundles.map((bundle) => bundle.assetFolders)).toEqual([
+      assetFolders,
+      assetFolders,
+    ]);
+    expect(importedBundles.map((bundle) => bundle.assets)).toEqual([
+      [asset],
+      [{ ...asset, name: "image_destination.png" }],
+    ]);
+    expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
+      true
+    );
+    expect(uploadOffsets.size).toBe(2);
+    expect(importAttemptMessages).toEqual(["attempt", "attempt"]);
+    expect(missingAssetMessages).toEqual([]);
+    expect(uploadAssetMessages).toEqual(["image.png"]);
+  }
+);
 
 test("rejects project bundles over the import size limit", async () => {
   let requestCount = 0;

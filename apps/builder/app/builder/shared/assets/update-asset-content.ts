@@ -3,10 +3,10 @@ import { updateProjectAssetContent } from "@webstudio-is/http-client";
 import { fetch } from "~/shared/fetch.client";
 import { $authToken } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
-import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
+import { createSyncChangesFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { getWebstudioData } from "~/shared/instance-utils/data";
 import { invalidateAssets } from "~/shared/resources";
-import { onNextTransactionComplete } from "~/shared/sync/project-queue";
+import { externalContentSyncStore } from "~/shared/sync/sync-stores";
 
 type UpdateAssetContentDependencies = {
   requestContentUpdate: typeof updateProjectAssetContent;
@@ -28,6 +28,9 @@ export const createUpdateAssetContent =
     if (projectId === undefined) {
       throw new Error("Project not found");
     }
+    if (asset.projectId !== projectId) {
+      throw new Error("The file belongs to another project.");
+    }
 
     const origin = window.location.origin;
     const { asset: updatedAsset } = await dependencies.requestContentUpdate({
@@ -41,15 +44,21 @@ export const createUpdateAssetContent =
       request: fetch,
       requestOrigin: origin,
     });
+    if ($project.get()?.id !== projectId) {
+      throw new Error(
+        "The file was updated in the previous project. Return to that project to view it."
+      );
+    }
 
     dependencies.commitUpdatedAsset(updatedAsset);
     return updatedAsset;
   };
 
-export const updateAssetContent = createUpdateAssetContent({
-  requestContentUpdate: updateProjectAssetContent,
-  commitUpdatedAsset: (updatedAsset) => {
-    createTransactionFromBuilderPatchPayload({
+export const commitAssetContentUpdate = (updatedAsset: Asset) => {
+  // The content endpoint already saved this revision. Share it with the canvas
+  // without a second server write that could restore an older revision.
+  externalContentSyncStore.createTransactionFromChanges(
+    createSyncChangesFromBuilderPatchPayload({
       data: getWebstudioData(),
       payload: [
         {
@@ -63,7 +72,12 @@ export const updateAssetContent = createUpdateAssetContent({
           ],
         },
       ],
-    });
-    onNextTransactionComplete(invalidateAssets);
-  },
+    })
+  );
+  invalidateAssets();
+};
+
+export const updateAssetContent = createUpdateAssetContent({
+  requestContentUpdate: updateProjectAssetContent,
+  commitUpdatedAsset: commitAssetContentUpdate,
 });

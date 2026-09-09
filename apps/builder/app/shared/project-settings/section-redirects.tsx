@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Box,
   Button,
   Combobox,
@@ -271,13 +272,13 @@ export const SectionRedirects = () => {
         >
           <DialogContent>
             <DialogTitle>Delete all redirects</DialogTitle>
-            <Flex css={{ padding: theme.panel.padding }}>
+            <PanelContent as={Flex}>
               <Text>
                 Are you sure you want to delete all {redirects.length} redirect
                 {redirects.length !== 1 ? "s" : ""}? This action cannot be
                 undone.
               </Text>
-            </Flex>
+            </PanelContent>
             <DialogActions>
               <Button color="destructive" onClick={handleDeleteAll}>
                 Delete all

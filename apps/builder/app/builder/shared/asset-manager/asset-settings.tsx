@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { Asset, Instance } from "@webstudio-is/sdk";
 import {
+  PanelContent,
   Box,
   Button,
   css,
@@ -45,6 +46,7 @@ import {
   DimensionsIcon,
   DownloadIcon,
   InfoCircleIcon,
+  ListViewIcon,
   PageIcon,
   RefreshCcwIcon,
   TrashIcon,
@@ -55,7 +57,7 @@ import {
   $editingPageId,
   $permissions,
 } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import { $styleSourceSelections } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $styles } from "~/shared/sync/data-stores";
@@ -66,6 +68,7 @@ import { $selectedPageId } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { deleteAssets, updateAssetContent } from "~/builder/shared/assets";
 import { normalizeTextFileConversion } from "~/builder/features/text-file-editor/text-file-utils";
+import { isAssetFilenameUsed } from "~/builder/shared/assets/asset-utils";
 import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
@@ -266,12 +269,13 @@ const AssetUsageIndicator = styled(Box, {
 
 const useLocalValue = <Type extends string>(
   savedValue: Type,
-  onSave: (value: Type) => void
+  onSave: (value: Type) => void,
+  canSave: () => boolean
 ) => {
   const [localValue, setLocalValue] = useState(savedValue);
 
   const save = () => {
-    if (localValue !== savedValue) {
+    if (canSave() && localValue !== savedValue) {
       // To synchronize with setState immediately followed by save
       onSave(localValue);
     }
@@ -312,19 +316,37 @@ const AssetSettingsContent = ({
   onDelete,
   onReplace,
   focusName,
+  canRename,
+  canMove,
+  isCollectionFile,
+  canSaveChanges,
+  canPersistChanges,
+  unavailableDestinationFolderIds,
 }: {
   asset: Asset;
   usages: AssetUsage[];
   onDelete?: () => void;
   onReplace?: () => void;
   focusName: boolean;
+  canRename: boolean;
+  canMove: boolean;
+  isCollectionFile: boolean;
+  canSaveChanges: boolean;
+  canPersistChanges: (expectedAssetName?: string) => boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
 }) => {
   const { canDownloadAssets } = useStore($permissions);
   const { size, meta, id } = asset;
   const { ext } = getAssetDisplayNameParts(asset);
   const [filenameError, setFilenameError] = useState<string>();
+  const permissionsRef = useRef({ canRename, canMove });
+  permissionsRef.current = { canRename, canMove };
   const saveFilename = async (newFilename: string) => {
+    if (!permissionsRef.current.canRename || canPersistChanges() === false) {
+      return;
+    }
     const assetId = asset.id;
+    let expectedAssetName = asset.name;
     if (!isValidFilename(newFilename)) {
       setFilenameError("Invalid filename");
       return;
@@ -338,14 +360,16 @@ const AssetSettingsContent = ({
       return;
     }
 
-    for (const candidate of $assets.get().values()) {
-      if (
-        candidate.id !== assetId &&
-        formatAssetName(candidate) === newFilename
-      ) {
-        setFilenameError("Filename already used");
-        return;
-      }
+    if (
+      isAssetFilenameUsed({
+        assets: $assets.get().values(),
+        filename: newFilename,
+        folderId: currentAsset.folderId,
+        excludeAssetId: assetId,
+      })
+    ) {
+      setFilenameError("Filename already used");
+      return;
     }
 
     if (extension.toLowerCase() !== currentExtension.toLowerCase()) {
@@ -372,11 +396,18 @@ const AssetSettingsContent = ({
           setFilenameError(normalized.error);
           return;
         }
-        await updateAssetContent({
+        if (
+          !permissionsRef.current.canRename ||
+          canPersistChanges() === false
+        ) {
+          return;
+        }
+        const updatedAsset = await updateAssetContent({
           asset: currentAsset,
           content: normalized.content,
           extension,
         });
+        expectedAssetName = updatedAsset.name;
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unable to rename file";
@@ -386,6 +417,12 @@ const AssetSettingsContent = ({
       }
     }
 
+    if (
+      !permissionsRef.current.canRename ||
+      canPersistChanges(expectedAssetName) === false
+    ) {
+      return;
+    }
     executeRuntimeMutation({
       id: "assets.update",
       input: {
@@ -396,7 +433,8 @@ const AssetSettingsContent = ({
   };
   const [filename, setFilename] = useLocalValue(
     formatAssetName(asset),
-    (newFilename) => void saveFilename(newFilename)
+    (newFilename) => void saveFilename(newFilename),
+    canPersistChanges
   );
   const [description, setDescription] = useLocalValue(
     asset.description ?? "",
@@ -409,11 +447,16 @@ const AssetSettingsContent = ({
           values: { description: newDescription },
         },
       });
-    }
+    },
+    canPersistChanges
   );
 
-  const moveToFolder = (newFolderId: string | undefined) =>
+  const moveToFolder = (newFolderId: string | undefined) => {
+    if (!permissionsRef.current.canMove || canPersistChanges() === false) {
+      return;
+    }
     moveAssetManagerItems([{ type: "asset", id: asset.id }], newFolderId);
+  };
 
   const authPermit = useStore($authPermit);
   let downloadError: undefined | string;
@@ -432,7 +475,7 @@ const AssetSettingsContent = ({
 
   return (
     <>
-      <Box css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Box}>
         <Grid
           columns={2}
           css={{ gridTemplateColumns: "auto auto" }}
@@ -472,17 +515,25 @@ const AssetSettingsContent = ({
                 alignItems: "center",
               }}
             >
-              <AssetUsageIndicator data-asset-settings-usage-indicator="" />
+              {isCollectionFile ? (
+                <ListViewIcon aria-label="Used by collection" />
+              ) : (
+                <AssetUsageIndicator data-asset-settings-usage-indicator="" />
+              )}
             </Flex>
-            <Text variant="labels">{usages.length} uses</Text>
+            <Text variant="labels">
+              {isCollectionFile
+                ? "Used by collection"
+                : `${usages.length} uses`}
+            </Text>
           </Flex>
         </Grid>
-      </Box>
+      </PanelContent>
 
-      <Grid
+      <PanelContent
+        as={Grid}
         columns={2}
         css={{
-          padding: theme.panel.padding,
           gridTemplateColumns: "auto 1fr",
           columnGap: theme.spacing[5],
           rowGap: theme.spacing[3],
@@ -500,9 +551,9 @@ const AssetSettingsContent = ({
             </Text>
           </>
         )}
-      </Grid>
+      </PanelContent>
 
-      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+      <PanelContent as={Grid} css={{ gap: 4 }}>
         <Label htmlFor="asset-manager-filename">Name</Label>
         <InputErrorsTooltip
           errors={filenameError ? [filenameError] : undefined}
@@ -510,7 +561,11 @@ const AssetSettingsContent = ({
           <InputField
             id="asset-manager-filename"
             autoFocus={focusName}
-            readOnly={authPermit === "view"}
+            readOnly={
+              authPermit === "view" ||
+              canRename === false ||
+              canSaveChanges === false
+            }
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -519,19 +574,22 @@ const AssetSettingsContent = ({
             }}
           />
         </InputErrorsTooltip>
-      </Grid>
+      </PanelContent>
 
-      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+      <PanelContent as={Grid} css={{ gap: 4 }}>
         <AssetFolderSelector
           value={asset.folderId}
           onChange={moveToFolder}
+          unavailableDestinationFolderIds={unavailableDestinationFolderIds}
           rootLabel="Folder"
-          disabled={authPermit === "view"}
+          disabled={
+            authPermit === "view" || !canMove || canSaveChanges === false
+          }
           deferChangesUntilBlur
         />
-      </Grid>
+      </PanelContent>
 
-      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+      <PanelContent as={Grid} css={{ gap: 4 }}>
         <Label
           htmlFor="asset-manager-description"
           css={{ display: "flex", alignItems: "center", gap: 4 }}
@@ -541,12 +599,12 @@ const AssetSettingsContent = ({
             variant="wrapped"
             content="The description is used as the default “alt” text for the image."
           >
-            <InfoCircleIcon />
+            <InfoCircleIcon color={cssVar("--foreground-secondary")} />
           </Tooltip>
         </Label>
         <TextArea
           id="asset-manager-description"
-          readOnly={authPermit === "view"}
+          readOnly={authPermit === "view" || canSaveChanges === false}
           placeholder='Enter "alt" text'
           rows={1}
           maxRows={6}
@@ -554,9 +612,9 @@ const AssetSettingsContent = ({
           value={description}
           onChange={setDescription}
         />
-      </Grid>
+      </PanelContent>
 
-      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+      <PanelContent as={Grid} css={{ gap: 4 }}>
         <Label htmlFor="asset-manager-id">ID</Label>
         <InputField
           id="asset-manager-id"
@@ -570,25 +628,9 @@ const AssetSettingsContent = ({
             </Flex>
           }
         />
-      </Grid>
+      </PanelContent>
 
-      <Flex justify="between" css={{ padding: theme.panel.padding }}>
-        {authPermit === "view" ? (
-          <Tooltip side="bottom" content="View mode. You can't delete assets.">
-            <Button disabled color="destructive" prefix={<TrashIcon />}>
-              Delete
-            </Button>
-          </Tooltip>
-        ) : usages.length === 0 ? (
-          <Button color="destructive" onClick={onDelete} prefix={<TrashIcon />}>
-            Delete
-          </Button>
-        ) : (
-          <Button color="primary" onClick={onDelete}>
-            Review & delete
-          </Button>
-        )}
-
+      <PanelContent as={Flex} justify="between">
         <Flex gap="1">
           {isImage && (
             <>
@@ -625,7 +667,29 @@ const AssetSettingsContent = ({
             </Tooltip>
           )}
         </Flex>
-      </Flex>
+        {authPermit === "view" || isCollectionFile ? (
+          <Tooltip
+            side="bottom"
+            content={
+              isCollectionFile
+                ? "This file is required by the collection."
+                : "View mode. You can't delete assets."
+            }
+          >
+            <Button disabled color="destructive" prefix={<TrashIcon />}>
+              Delete
+            </Button>
+          </Tooltip>
+        ) : usages.length === 0 ? (
+          <Button color="destructive" onClick={onDelete} prefix={<TrashIcon />}>
+            Delete
+          </Button>
+        ) : (
+          <Button color="primary" onClick={onDelete}>
+            Review & delete
+          </Button>
+        )}
+      </PanelContent>
     </>
   );
 };
@@ -645,7 +709,7 @@ export const AssetDeleteDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent minWidth={360} aria-describedby={undefined}>
         <DialogTitle>Delete asset?</DialogTitle>
-        <Box css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Box}>
           <Text>Delete “{formatAssetName(asset)}”?</Text>
           {usages.length > 0 && (
             <>
@@ -665,7 +729,7 @@ export const AssetDeleteDialog = ({
               Delete
             </Button>
           </Flex>
-        </Box>
+        </PanelContent>
       </DialogContent>
     </Dialog>
   );
@@ -678,6 +742,11 @@ export const AssetSettings = ({
   onDelete,
   onReplace,
   focusName = false,
+  canRename = true,
+  canMove = true,
+  isCollectionFile = false,
+  canSaveChanges = true,
+  unavailableDestinationFolderIds,
   children,
 }: {
   asset: Asset;
@@ -686,8 +755,27 @@ export const AssetSettings = ({
   onDelete?: () => void;
   onReplace?: () => void;
   focusName?: boolean;
+  canRename?: boolean;
+  canMove?: boolean;
+  isCollectionFile?: boolean;
+  canSaveChanges?: boolean;
+  unavailableDestinationFolderIds?: ReadonlySet<string>;
   children: ReactNode;
 }) => {
+  const canSaveChangesRef = useRef(canSaveChanges);
+  canSaveChangesRef.current = canSaveChanges;
+  const canPersistChanges = (expectedAssetName = asset.name) => {
+    if (canSaveChangesRef.current === false || $authPermit.get() === "view") {
+      return false;
+    }
+    const currentProject = $project.get();
+    const currentAsset = $assets.get().get(asset.id);
+    return (
+      currentProject?.id === asset.projectId &&
+      currentAsset?.projectId === asset.projectId &&
+      currentAsset.name === expectedAssetName
+    );
+  };
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
   const deleteAsset =
@@ -706,7 +794,7 @@ export const AssetSettings = ({
         };
   return (
     <Popover modal open={open} onOpenChange={onOpenChange}>
-      {usages.length === 0 && (
+      {usages.length === 0 && !isCollectionFile && (
         <AssetUsageIndicator
           role="img"
           aria-label="Unused asset"
@@ -722,6 +810,12 @@ export const AssetSettings = ({
           onDelete={deleteAsset}
           onReplace={replaceAsset}
           focusName={focusName}
+          canRename={canRename}
+          canMove={canMove}
+          isCollectionFile={isCollectionFile}
+          canSaveChanges={canSaveChanges}
+          canPersistChanges={canPersistChanges}
+          unavailableDestinationFolderIds={unavailableDestinationFolderIds}
         />
       </PopoverContent>
     </Popover>

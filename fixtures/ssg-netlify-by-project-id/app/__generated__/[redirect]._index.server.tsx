@@ -43,5 +43,5 @@ export const getRemixParams = ({ ...params }: Params): Params => {
 }
 
 
-      export const contactEmail = "hello@webstudio.is";
+      export const contactEmail = undefined;
     

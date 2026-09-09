@@ -2,6 +2,7 @@ import { useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   theme,
   Box,
   Card,
@@ -171,12 +172,12 @@ export const StylePanel = () => {
 
   return (
     <ReadonlyProvider value={readonly}>
-      <Box css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Box}>
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
           Style sources
         </Text>
         <StyleSourcesSection />
-      </Box>
+      </PanelContent>
       <Separator />
       <ScrollArea>
         <CollapsibleProvider

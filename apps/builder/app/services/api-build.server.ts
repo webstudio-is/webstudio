@@ -15,6 +15,7 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { assertApiProjectPermit } from "./api-permits.server";
 import { throwApiError } from "./api-errors.server";
+import { createAssetClient } from "~/shared/asset-client";
 
 export const loadBuildByProjectVersion = async (
   ctx: AppContext,
@@ -162,6 +163,7 @@ export const commitBuildTransactions = async ({
       projectId,
       clientVersion,
       transactions,
+      assetStore: createAssetClient(),
     },
     ctx
   );

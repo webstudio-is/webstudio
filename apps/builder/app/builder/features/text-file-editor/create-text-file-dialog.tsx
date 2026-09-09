@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import isValidFilename from "valid-filename";
 import {
+  PanelContent,
   Button,
   Dialog,
   DialogContent,
@@ -10,25 +11,29 @@ import {
   InputField,
   Label,
   Text,
-  theme,
 } from "@webstudio-is/design-system";
 import {
-  formatAssetName,
   getFileExtension,
   getMimeTypeByExtension,
   isTextFileAsset,
   type Asset,
 } from "@webstudio-is/sdk";
+import { collectionConfigFilename } from "@webstudio-is/content-engine";
 import { $assets } from "~/shared/sync/data-stores";
 import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
+import { isAssetFilenameUsed } from "~/builder/shared/assets/asset-utils";
 
 export const getTextFileNameError = ({
   name,
   assets,
+  folderId,
+  canCreateCollectionConfig = false,
   allowedExtensions,
 }: {
   name: string;
   assets: Iterable<Asset>;
+  folderId?: string;
+  canCreateCollectionConfig?: boolean;
   allowedExtensions?: readonly string[];
 }) => {
   if (isValidFilename(name) === false) {
@@ -44,10 +49,15 @@ export const getTextFileNameError = ({
   ) {
     return "Use a supported editable text extension.";
   }
-  for (const asset of assets) {
-    if (formatAssetName(asset) === name) {
-      return "A file with this name already exists.";
-    }
+  if (
+    folderId !== undefined &&
+    canCreateCollectionConfig === false &&
+    name === collectionConfigFilename
+  ) {
+    return "You don't have permission to create a content collection.";
+  }
+  if (isAssetFilenameUsed({ assets, filename: name, folderId })) {
+    return "A file with this name already exists.";
   }
 };
 
@@ -90,6 +100,7 @@ export const CreateTextFileDialog = ({
   allowedExtensions,
   title = "New text file",
   disabled = false,
+  canCreateCollectionConfig = false,
   onOpenChange,
   onCreated,
 }: {
@@ -99,6 +110,7 @@ export const CreateTextFileDialog = ({
   allowedExtensions?: readonly string[];
   title?: string;
   disabled?: boolean;
+  canCreateCollectionConfig?: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (assetId: string) => void;
 }) => {
@@ -124,6 +136,8 @@ export const CreateTextFileDialog = ({
     const validationError = getTextFileNameError({
       name: normalizedName,
       assets: $assets.get().values(),
+      folderId,
+      canCreateCollectionConfig,
       allowedExtensions,
     });
     setError(validationError);
@@ -169,7 +183,7 @@ export const CreateTextFileDialog = ({
         }}
       >
         <DialogTitle>{title}</DialogTitle>
-        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Grid} gap={3}>
           <Grid gap={1}>
             <Label htmlFor="asset-text-file-name">File name</Label>
             <InputField
@@ -203,7 +217,7 @@ export const CreateTextFileDialog = ({
               {creating ? "Creating…" : "Create file"}
             </Button>
           </Flex>
-        </Grid>
+        </PanelContent>
       </DialogContent>
     </Dialog>
   );

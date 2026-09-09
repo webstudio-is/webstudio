@@ -39,7 +39,7 @@ import type { AssetContentSessionState } from "@webstudio-is/content-engine/asse
 import { formatContentBlockDiagnostic } from "~/shared/content-block-diagnostics";
 
 export type MdxPersistenceFeedback = Readonly<{
-  kind: "failed" | "conflicting";
+  kind: "failed" | "conflicting" | "invalid";
   message: string;
 }>;
 
@@ -240,7 +240,10 @@ export const getTextFileEditorDiagnostics = async ({
     return {
       from,
       to,
-      severity: diagnostic.severity,
+      severity:
+        diagnostic.code === "unresolved-template"
+          ? ("error" as const)
+          : diagnostic.severity,
       source: diagnostic.code,
       message:
         "message" in diagnostic

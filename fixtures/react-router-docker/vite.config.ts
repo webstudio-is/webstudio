@@ -5,6 +5,8 @@ const sourceConditions =
   process.env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED === "1" ? ["webstudio"] : [];
 
 export default defineConfig({
+  // Local previews share node_modules, but must not share optimizer state.
+  cacheDir: ".react-router/vite",
   plugins: [reactRouter()],
   server: {
     hmr: process.env.WEBSTUDIO_PREVIEW_HMR === "disabled" ? false : undefined,

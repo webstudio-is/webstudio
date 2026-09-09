@@ -93,12 +93,20 @@ can contain both assets and other folders. Open a folder to view its contents,
 and use the breadcrumbs above the asset grid to move back through the folder
 hierarchy.
 
+Assets remembers the last open folder for each project in your browser. Reopen
+the panel or reload the Builder to return to that folder. If the folder was
+deleted, the panel opens at the root instead.
+
 You can:
 
 - Drag assets and folders into another folder.
 - Use **Move** to choose a destination without dragging.
 - Cut, copy, paste, and duplicate assets or complete folder trees.
 - Rename or delete folders.
+
+Open **Folder settings** to change a folder's name or parent folder. Valid
+changes save automatically; there is no Save button. Blank names and names
+already used in the selected parent folder are not saved.
 
 Duplicating a folder copies its nested folders and assets. Deleting a folder
 deletes everything inside it, so review the confirmation before continuing.

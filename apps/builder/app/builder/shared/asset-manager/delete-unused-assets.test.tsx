@@ -43,6 +43,27 @@ const createAsset = (id: string): Asset => ({
   createdAt: "2026-01-01T00:00:00.000Z",
 });
 
+const createFileAsset = ({
+  id,
+  name,
+  folderId,
+}: {
+  id: string;
+  name: string;
+  folderId: string;
+}): Asset => ({
+  id,
+  projectId: "project",
+  name,
+  filename: name.slice(0, name.lastIndexOf(".")),
+  format: name.slice(name.lastIndexOf(".") + 1),
+  size: 1,
+  type: "file",
+  meta: {},
+  folderId,
+  createdAt: "2026-01-01T00:00:00.000Z",
+});
+
 beforeEach(() => {
   vi.stubGlobal(
     "ResizeObserver",
@@ -199,4 +220,45 @@ test("does not delete a selected asset that becomes used while open", () => {
 
   expect($assets.get().has("first")).toBe(true);
   expect($assets.get().has("second")).toBe(true);
+});
+
+test("does not offer collection files as unused assets", () => {
+  const config = createFileAsset({
+    id: "collection-config",
+    name: "collection.json",
+    folderId: "posts",
+  });
+  const template = createFileAsset({
+    id: "collection-template",
+    name: "template.mdx",
+    folderId: "posts",
+  });
+  const entry = createFileAsset({
+    id: "collection-entry",
+    name: "hello-world.mdx",
+    folderId: "posts",
+  });
+  act(() => {
+    $assets.set(
+      new Map([
+        ...$assets.get(),
+        [config.id, config],
+        [template.id, template],
+        [entry.id, entry],
+      ])
+    );
+    openDeleteUnusedAssetsDialog();
+  });
+  renderer.render(
+    <TooltipProvider>
+      <DeleteUnusedAssetsDialog />
+    </TooltipProvider>
+  );
+
+  expect(document.querySelector("#unused-asset-first")).not.toBeNull();
+  expect(document.querySelector("#unused-asset-collection-config")).toBeNull();
+  expect(
+    document.querySelector("#unused-asset-collection-template")
+  ).toBeNull();
+  expect(document.querySelector("#unused-asset-collection-entry")).toBeNull();
 });

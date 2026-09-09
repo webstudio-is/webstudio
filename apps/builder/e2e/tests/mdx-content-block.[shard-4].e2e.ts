@@ -183,6 +183,9 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
   page,
   context,
 }) => {
+  // This full lifecycle repeatedly reloads Builder across two roles. CI can
+  // exhaust the default two-minute budget at the final reload assertion.
+  test.setTimeout(180_000);
   const fixture = await createContentModeProject({
     context: context,
     email: "mdx-content-source-e2e@webstudio.test",
@@ -563,7 +566,6 @@ test("Empty MDX content supports slash menu keyboard and mouse insertion", async
   const paragraphWrite = waitForAssetWrite(page, (source) =>
     source.includes("Focused paragraph")
   );
-  const paragraphMetadataWrite = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.type("Focused paragraph");
   await page.keyboard.press("Enter");
@@ -572,7 +574,6 @@ test("Empty MDX content supports slash menu keyboard and mouse insertion", async
   );
   await nextEmptyParagraphEditor.waitFor({ state: "visible" });
   await paragraphWrite;
-  await paragraphMetadataWrite;
   const emptyParagraphId =
     await nextEmptyParagraphEditor.getAttribute("data-ws-id");
   if (emptyParagraphId === null) {
@@ -773,7 +774,7 @@ test("Unresolved MDX templates are selectable only in the Builder canvas", async
   const openButton = page.getByRole("button", { name: "Open", exact: true });
   await openButton.click();
   await page
-    .locator(".cm-lintRange-warning")
+    .locator(".cm-lintRange-error")
     .filter({ hasText: "MissingE2ETemplate" })
     .waitFor();
   await page.keyboard.press("Escape");

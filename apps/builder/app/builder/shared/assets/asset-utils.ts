@@ -7,6 +7,7 @@ import type {
 } from "@webstudio-is/sdk";
 import {
   createId,
+  formatAssetName,
   getMimeTypeByExtension,
   getFileExtension,
   IMAGE_EXTENSIONS,
@@ -14,6 +15,29 @@ import {
   getAssetContentHash,
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
+
+export const isAssetFilenameUsed = ({
+  assets,
+  filename,
+  folderId,
+  excludeAssetId,
+}: {
+  assets: Iterable<Asset>;
+  filename: string;
+  folderId?: string;
+  excludeAssetId?: Asset["id"];
+}) => {
+  for (const asset of assets) {
+    if (
+      asset.id !== excludeAssetId &&
+      asset.folderId === folderId &&
+      formatAssetName(asset) === filename
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
 
 export const getImageNameAndType = (fileName: string) => {
   const extractedExt = getFileExtension(fileName)?.toLowerCase();

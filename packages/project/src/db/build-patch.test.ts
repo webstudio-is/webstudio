@@ -257,6 +257,11 @@ describe("patchBuild", () => {
         buildId: "build-1",
         projectId: "project-1",
         clientVersion: 3,
+        assetStore: {
+          readFile: async () => {
+            throw new Error("Unexpected asset content read");
+          },
+        },
         transactions: [
           transaction({
             payload: [

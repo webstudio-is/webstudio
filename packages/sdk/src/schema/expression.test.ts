@@ -54,6 +54,6 @@ describe("expression binding mode", () => {
         value: "document?.frontmatter.title",
         mode: "readwrite",
       }).success
-    ).toBe(false);
+    ).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  PanelContent,
   Button,
   Dialog,
   DialogActions,
@@ -8,7 +9,6 @@ import {
   DialogTitle,
   Flex,
   Text,
-  theme,
 } from "@webstudio-is/design-system";
 import { DialogRadioOptions } from "./dialog-radio-options";
 
@@ -47,7 +47,7 @@ export const ConflictResolutionDialog = <Resolution extends string>({
   >
     <DialogContent css={{ minWidth: "40ch" }}>
       <DialogTitle>{title}</DialogTitle>
-      <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+      <PanelContent as={Flex} direction="column" gap="2">
         <DialogDescription asChild>
           <Text as="p">{description}</Text>
         </DialogDescription>
@@ -62,7 +62,7 @@ export const ConflictResolutionDialog = <Resolution extends string>({
             {details}
           </Text>
         </Flex>
-      </Flex>
+      </PanelContent>
       <DialogActions>
         <Button autoFocus color="primary" onClick={onResolve}>
           Continue

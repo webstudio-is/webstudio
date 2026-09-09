@@ -1,6 +1,7 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
+  PanelContent,
   Button,
   Dialog,
   DialogActions,
@@ -8,7 +9,6 @@ import {
   DialogDescription,
   DialogTitle,
   Flex,
-  theme,
 } from "@webstudio-is/design-system";
 import { DialogRadioOptions } from "./dialog-radio-options";
 
@@ -78,7 +78,7 @@ export const DesignTokenImportDialog = () => {
     >
       <DialogContent css={{ minWidth: "40ch" }}>
         <DialogTitle>Import tokens</DialogTitle>
-        <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+        <PanelContent as={Flex} direction="column" gap="2">
           <DialogDescription>
             Choose how these tokens should be represented in Webstudio.
           </DialogDescription>
@@ -91,7 +91,7 @@ export const DesignTokenImportDialog = () => {
               }
             }}
           />
-        </Flex>
+        </PanelContent>
         <DialogActions>
           <Button autoFocus color="primary" onClick={() => finish(target)}>
             Import

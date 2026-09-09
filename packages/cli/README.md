@@ -113,9 +113,9 @@ Once the project is linked, use the **`sync`** command to sync it with the cloud
 webstudio sync
 ```
 
-Make sure to publish the project in Webstudio Cloud before running the **`sync`** command in your local Webstudio project.
+Sync downloads the current saved Builder project and its asset files, then prepares the local content index. Publishing is not required.
 
-`sync` is only for downloading a published project export. It is not part of the MCP editing workflow.
+Use the export with `webstudio build` or `webstudio import --to "<target-share-link>"`. Sync is not required for MCP editing.
 
 ### build
 

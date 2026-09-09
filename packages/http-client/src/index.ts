@@ -1271,6 +1271,11 @@ export const getProjectInfo = projectQuery(
   getPublicApiOperationPath("inspect")
 );
 
+export const loadBuilderDataByProjectId = (params: AuthProjectParams) =>
+  createAuthTrpcClient(params).query("build.loadData", {
+    projectId: params.projectId,
+  });
+
 export const getProjectPermissions = projectQuery(
   getPublicApiOperationPath("permissions")
 );
@@ -2418,10 +2423,19 @@ export const importProjectBundleWithAssets = async (
       } else {
         params.onMissingAssets?.(missingAssets);
       }
+      const originalAssetsById = new Map(
+        missingAssets.map((asset) => [asset.id, asset])
+      );
       const uploadedAssets = await uploadAssets({
         ...params,
-        assets: missingAssets,
-        readAssetData,
+        // Source folders do not exist in the destination yet. The final
+        // bundle import creates them and restores the original assignments.
+        assets: missingAssets.map((asset) => ({
+          ...asset,
+          folderId: undefined,
+        })),
+        readAssetData: (asset) =>
+          readAssetData(originalAssetsById.get(asset.id)!),
       });
       if (uploadedAssets.length !== missingAssets.length) {
         throw new Error(
