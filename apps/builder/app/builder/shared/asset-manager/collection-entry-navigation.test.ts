@@ -37,14 +37,14 @@ describe("getCollectionEntryCanvasTarget", () => {
     ).toEqual({ pageId: "article", params: { slug: "hello-world" } });
   });
 
-  test("opens a configured static page without parameters", () => {
+  test("does not offer a static page that cannot identify an entry", () => {
     expect(
       getCollectionEntryCanvasTarget({
         entryPageId: "article",
         entryBasename: "hello-world",
         pages: createPages("/blog"),
       })
-    ).toEqual({ pageId: "article", params: {} });
+    ).toBeUndefined();
   });
 
   test("does not offer navigation for missing or ambiguous pages", () => {

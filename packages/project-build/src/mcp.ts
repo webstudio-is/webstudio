@@ -23,10 +23,7 @@ import {
   isMdxTemplateComponentName,
   type TextAssetSourceDiagnostic,
 } from "@webstudio-is/content-engine/mdx";
-import {
-  createDefaultCollectionConfig,
-  validateAssetQuery,
-} from "@webstudio-is/content-engine";
+import { validateAssetQuery } from "@webstudio-is/content-engine";
 import { distance as getLevenshteinDistance } from "fastest-levenshtein";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
@@ -6217,6 +6214,7 @@ const getMetaIndex = (
       "Operate on the configured project only.",
       "Read ids before writing.",
       "Prefer semantic tools over apply-patch.",
+      "When creating or editing collection.json, add a useful JSON Schema description to every frontmatter property. Descriptions become field help for editors, so explain what to enter instead of repeating the field label.",
       valuesVsBindingsRule,
       "Use status/refresh when cached data may be stale.",
       guidance?.visualVerificationRule,
@@ -6252,7 +6250,6 @@ const metaGoalGuides = [
     workflow: [
       "Follow recipe.executionOrder in order. Resolve documented placeholders from earlier results, and do not add calls outside that sequence.",
       'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
-      "When the user asks for a content collection, create collection.json from recipe.collectionSchema and add a useful JSON Schema description to every property you introduce. Descriptions become field help for editors, so explain what to enter instead of repeating the label.",
       'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
       "Substitute the returned folder id in every recipe query. Pass recipe.overviewValidationQuery and recipe.detailValidationQuery directly to validate-asset-query, then pass recipe.detailValidationQuery directly to preview-asset-query. These execution queries contain resolved JSON values. Do not copy the expression-bearing resource queries into validation or preview tools.",
       "After both validations and the preview succeed, call recipe.toolDiscovery exactly once immediately before creating the resources. Do not call meta.get-more-tools again.",
@@ -6262,7 +6259,6 @@ const metaGoalGuides = [
       'After both insertions succeed, ask whether the user wants visual verification unless they explicitly requested it. If they decline, use focused reads and a static audit. If they opt in, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
-      collectionSchema: JSON.parse(createDefaultCollectionConfig()),
       executionOrder: [
         { tool: "create-asset-folder", calls: 1 },
         { tool: "upload-assets", calls: 1 },

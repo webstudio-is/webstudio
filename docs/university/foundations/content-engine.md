@@ -150,8 +150,8 @@ Use the **Entry template** tab to rename the entry template and edit its default
 frontmatter and starter content with the built-in Markdown editor. Creating
 an entry keeps you on the current page.
 
-Use the **Entry page** tab to choose the page that displays collection entries.
-The page can be static or have one URL parameter, such as `/blog/:slug`.
+Use the **Entry page** tab to choose the dynamic page that displays collection
+entries. The page must have one URL parameter, such as `/blog/:slug`.
 This enables **Open on canvas** in an entry's menu and in **Entry settings**;
 Webstudio fills the page parameter with the entry filename. It does not navigate
 automatically when an editor creates an entry.

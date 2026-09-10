@@ -16,12 +16,11 @@ export const getCollectionEntryCanvasTarget = ({
   const parameters = tokenizePathnamePattern(
     getPagePath(entryPageId, pages)
   ).filter((token) => token.type === "param");
-  if (parameters.length > 1) {
+  if (parameters.length !== 1) {
     return;
   }
   return {
     pageId: entryPageId,
-    params:
-      parameters.length === 0 ? {} : { [parameters[0].name]: entryBasename },
+    params: { [parameters[0].name]: entryBasename },
   };
 };

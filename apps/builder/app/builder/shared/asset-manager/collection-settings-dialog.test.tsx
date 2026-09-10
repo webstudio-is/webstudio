@@ -13,11 +13,12 @@ import {
   serializeAssetContentDescriptor,
 } from "@webstudio-is/protocol/asset-resource-api";
 import type { Asset } from "@webstudio-is/sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   __testing__,
   createAssetContentBridge,
 } from "~/shared/asset-content-bridge.client";
-import { $assets, $project } from "~/shared/sync/data-stores";
+import { $assets, $pages, $project } from "~/shared/sync/data-stores";
 import {
   CollectionSettingsDialog,
   updateCollectionConfigAndTemplateName,
@@ -274,6 +275,7 @@ afterEach(() => {
   clearBridge();
   $assets.set(new Map());
   $project.set(undefined);
+  $pages.set(undefined);
 });
 
 test("allows text type edits for the slug source while protecting the slug", async () => {
@@ -681,6 +683,69 @@ test("switches between field, template, and entry page settings", async () => {
   expect(document.querySelector('[aria-label="Entry page"]')).toBeInstanceOf(
     HTMLButtonElement
   );
+});
+
+test("saves the page used to open entries on the canvas", async () => {
+  const pages = createDefaultPages({ rootInstanceId: "root" });
+  pages.pages.set("article", {
+    id: "article",
+    name: "Article",
+    path: "/blog/:slug",
+    title: "Article",
+    rootInstanceId: "article-root",
+    meta: {},
+  });
+  pages.folders.get(pages.rootFolderId)?.children.push("article");
+  $pages.set(pages);
+  const configAsset = createAsset({
+    id: "config",
+    filename: "collection",
+    format: "json",
+  });
+  const templateAsset = createAsset({
+    id: "template",
+    filename: "template",
+    format: "mdx",
+  });
+  const updateContent = vi.fn(
+    async ({ asset }: { asset: Asset; content: string }) => asset
+  );
+  render(
+    <CollectionSettingsDialog
+      collection={{
+        status: "ready",
+        folderId: "posts",
+        configAsset,
+        templateAsset,
+        config: parseCollectionConfig(createDefaultCollectionConfig()),
+        templateProperties: { draft: true },
+      }}
+      open
+      onOpenChange={() => undefined}
+      readTemplateSource={async () => createDefaultCollectionTemplate()}
+      updateContent={updateContent}
+    />
+  );
+  await act(async () => undefined);
+  const sections = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '[role="listbox"]:not([aria-label="Collection fields"]) [role="option"]'
+    )
+  );
+  act(() => sections[2]?.click());
+  const pageControl = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Entry page"]'
+  )!;
+  await act(async () => userEvent.click(pageControl));
+  const article = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((option) => option.textContent?.startsWith("Article · /blog/:slug"));
+  expect(article).toBeDefined();
+  await act(async () => userEvent.click(article!));
+  await vi.waitFor(() => expect(updateContent).toHaveBeenCalledOnce());
+  expect(
+    parseCollectionConfig(updateContent.mock.calls[0][0].content).entryPageId
+  ).toBe("article");
 });
 
 test("persists a template rename without rewriting unchanged template content", async () => {

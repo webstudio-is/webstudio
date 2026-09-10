@@ -1298,7 +1298,8 @@ export const createDefaultCollectionConfig = () =>
         },
         draft: {
           title: "Draft",
-          description: "Hide this entry from published collection lists.",
+          description:
+            "Mark this entry so collection queries can exclude it from published lists.",
           type: "boolean",
         },
       },

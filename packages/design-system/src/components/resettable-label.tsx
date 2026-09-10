@@ -22,7 +22,7 @@ export const ResettableLabel = ({
   ...props
 }: Omit<ComponentProps<typeof Label>, "onReset" | "content"> & {
   description?: ReactNode;
-  /** Replaces the default tooltip heading and description, not its reset action. */
+  /** Replaces the description content, not the reset action. */
   content?: ReactNode;
   onReset?: () => void;
   resetDisabled?: boolean;

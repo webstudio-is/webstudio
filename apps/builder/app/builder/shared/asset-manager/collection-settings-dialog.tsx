@@ -1579,17 +1579,23 @@ export const CollectionSettingsDialog = ({
                   gap: theme.spacing[3],
                 }}
               >
-                <Grid gap={1}>
+                <Flex gap={1} align="center">
                   <Text variant="titles">Entry page</Text>
-                  <Text color="subtle">
-                    Choose the page that displays entries from this collection.
-                    Editors can then open an entry on the canvas from its menu
-                    or settings.
-                  </Text>
-                </Grid>
+                  <Tooltip
+                    variant="wrapped"
+                    content="Choose the dynamic page that displays entries from this collection. Editors can then open an entry on the canvas from its menu or settings. The page must have one URL parameter."
+                  >
+                    <InfoCircleIcon
+                      color={cssVar("--foreground-secondary")}
+                      tabIndex={0}
+                      aria-label="About entry page"
+                    />
+                  </Tooltip>
+                </Flex>
                 <Grid gap={1} css={{ maxWidth: 400 }}>
                   <ResettableLabel
                     htmlFor="collection-entry-page"
+                    resetDisabled={formDisabled}
                     onReset={
                       entryPageId === undefined
                         ? undefined
