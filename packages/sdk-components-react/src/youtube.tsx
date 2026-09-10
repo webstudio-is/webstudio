@@ -7,9 +7,13 @@ import {
   useContext,
   type ContextType,
   useRef,
+  Children,
+  isValidElement,
+  type ReactNode,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { VideoContext, requestFullscreen } from "./shared/video";
+import { VimeoPreviewImage } from "./vimeo-preview-image";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -152,6 +156,12 @@ type YouTubePlayerOptions = {
   /** The YouTube video URL or ID */
   url?: string;
   showPreview?: boolean;
+  /**
+   * Opens connections to the YouTube player and thumbnail origins before playback.
+   * Disable this for consent-based click-to-load embeds.
+   * @default true
+   */
+  preconnect?: boolean;
   /**
    * The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.
    * https://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode
@@ -331,18 +341,22 @@ const getVideoUrl = (
   return url.toString();
 };
 
+const warmedOrigins = new Set<string>();
+
 const preconnect = (url: string) => {
+  if (warmedOrigins.has(url)) {
+    return;
+  }
   const link = document.createElement("link");
   link.rel = "preconnect";
   link.href = url;
   link.crossOrigin = "true";
   document.head.appendChild(link);
+  warmedOrigins.add(url);
 };
 
-let warmed = false;
-
-const warmConnections = (videoUrl: string) => {
-  if (warmed || window.matchMedia("(hover: none)").matches) {
+const warmConnections = (videoUrl: string, includePreviewImage: boolean) => {
+  if (window.matchMedia("(hover: none)").matches) {
     return;
   }
 
@@ -354,9 +368,27 @@ const warmConnections = (videoUrl: string) => {
     // Ignore invalid URL
   }
 
-  preconnect(IMAGE_CDN);
-  warmed = true;
+  if (includePreviewImage) {
+    preconnect(IMAGE_CDN);
+  }
 };
+
+const hasCustomPreviewImage = (children: ReactNode): boolean =>
+  Children.toArray(children).some((child) => {
+    if (
+      isValidElement<{ src?: unknown; children?: ReactNode }>(child) === false
+    ) {
+      return false;
+    }
+    if (
+      child.type === VimeoPreviewImage &&
+      child.props.src !== undefined &&
+      child.props.src !== ""
+    ) {
+      return true;
+    }
+    return hasCustomPreviewImage(child.props.children);
+  });
 
 const getPreviewImageUrl = (videoId: string) => {
   return new URL(`${IMAGE_CDN}/vi/${videoId}/maxresdefault.jpg`);
@@ -375,7 +407,7 @@ const EmptyState = () => {
 
 type PlayerProps = Pick<
   YouTubePlayerOptions,
-  "loading" | "autoplay" | "showPreview" | "inline"
+  "loading" | "autoplay" | "showPreview" | "inline" | "preconnect"
 > & {
   videoUrl: string;
   title: string | undefined;
@@ -396,6 +428,7 @@ const Player = ({
   inline,
   renderer,
   showPreview,
+  preconnect: shouldPreconnect,
   onStatusChange,
   onPreviewImageUrlChange,
 }: PlayerProps) => {
@@ -409,10 +442,10 @@ const Player = ({
   }, [autoplay, status, renderer, onStatusChange]);
 
   useEffect(() => {
-    if (renderer !== "canvas") {
-      warmConnections(videoUrl);
+    if (renderer !== "canvas" && shouldPreconnect) {
+      warmConnections(videoUrl, showPreview === true);
     }
-  }, [renderer, videoUrl]);
+  }, [renderer, shouldPreconnect, showPreview, videoUrl]);
 
   useEffect(() => {
     const videoId = getVideoId(videoUrl);
@@ -480,6 +513,7 @@ export const YouTube = forwardRef<Ref, Props>(
       loading = "lazy",
       autoplay,
       showPreview,
+      preconnect: preconnectConnections,
       showAnnotations,
       showCaptions,
       showControls,
@@ -495,6 +529,9 @@ export const YouTube = forwardRef<Ref, Props>(
     const [status, setStatus] = useState<PlayerStatus>("initial");
     const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
     const { renderer } = useContext(ReactSdkContext);
+    const useYouTubePreview =
+      showPreview === true && hasCustomPreviewImage(children) === false;
+    const shouldPreconnect = preconnectConnections ?? true;
 
     const videoUrlOrigin =
       (privacyEnhancedMode ?? true)
@@ -542,7 +579,8 @@ export const YouTube = forwardRef<Ref, Props>(
                 previewImageUrl={previewImageUrl}
                 loading={loading}
                 inline={inline}
-                showPreview={showPreview}
+                showPreview={useYouTubePreview}
+                preconnect={shouldPreconnect}
                 renderer={renderer}
                 status={status}
                 onStatusChange={setStatus}
