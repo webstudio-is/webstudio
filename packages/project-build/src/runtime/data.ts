@@ -1750,7 +1750,7 @@ export const resourceCreateInput = z
       .string()
       .optional()
       .describe(
-        `Instance that exposes the resource as render-time data. Use ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
+        `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
       ),
     dataSourceName: z.string().optional(),
     exposeAsDataSource: exposeAsDataSourceInput,
@@ -1778,7 +1778,7 @@ export const resourceUpdateInput = z.object({
     .string()
     .optional()
     .describe(
-      `Instance that exposes the resource as render-time data. Use ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
+      `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
     ),
   exposeAsDataSource: exposeAsDataSourceInput,
 });

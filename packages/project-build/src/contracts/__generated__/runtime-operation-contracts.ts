@@ -44574,7 +44574,7 @@ export const runtimeOperationContractData = [
                   type: "string",
                   enum: ["ours", "theirs", "merge"],
                   description:
-                    'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
+                    'For token name conflicts: "ours" keeps existing styles, "theirs" uses incoming styles, and "merge" combines both.',
                 },
                 contentMode: {
                   description:
@@ -54769,7 +54769,7 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs", "merge"],
           description:
-            'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
+            'For token name conflicts: "ours" keeps existing styles, "theirs" uses incoming styles, and "merge" combines both.',
         },
         mode: {
           type: "string",
@@ -60674,7 +60674,7 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs", "merge"],
           description:
-            'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
+            'For token name conflicts: "ours" keeps existing styles, "theirs" uses incoming styles, and "merge" combines both.',
         },
         contentMode: {
           description:
@@ -74230,8 +74230,7 @@ export const runtimeOperationContractData = [
         },
         scopeInstanceId: {
           type: "string",
-          description:
-            'Instance that exposes the Assets resource. Use ":root" for Global Root.',
+          description: 'Scope instance ID, or ":root" for Global Root.',
         },
         dataSourceName: {
           type: "string",
@@ -74804,8 +74803,7 @@ export const runtimeOperationContractData = [
           required: [],
         },
         scopeInstanceId: {
-          description:
-            'New scope for the Assets resource. Use ":root" for Global Root.',
+          description: 'Scope instance ID, or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75177,8 +75175,7 @@ export const runtimeOperationContractData = [
           required: ["name", "method", "url", "headers"],
         },
         scopeInstanceId: {
-          description:
-            'Instance that exposes the resource as render-time data. Use ":root" for Global Root.',
+          description: 'Scope instance ID, or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75438,8 +75435,7 @@ export const runtimeOperationContractData = [
           type: "string",
         },
         scopeInstanceId: {
-          description:
-            'Instance that exposes the resource as render-time data. Use ":root" for Global Root.',
+          description: 'Scope instance ID, or ":root" for Global Root.',
           type: "string",
         },
         exposeAsDataSource: {

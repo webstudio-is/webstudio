@@ -38,7 +38,7 @@ export const assetsResourceCreateInput = z.object({
   scopeInstanceId: z
     .string()
     .describe(
-      `Instance that exposes the Assets resource. Use ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
+      `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
     ),
   dataSourceName: z.string().optional(),
 });
@@ -57,7 +57,7 @@ export const assetsResourceUpdateInput = z.object({
     .string()
     .optional()
     .describe(
-      `New scope for the Assets resource. Use ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
+      `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
     ),
   dataSourceName: z.string().optional(),
 });
