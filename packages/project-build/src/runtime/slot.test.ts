@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { Instance, WebstudioData } from "@webstudio-is/sdk";
+import {
+  blockTemplateComponent,
+  type Instance,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
 import { applyBuilderPatchTransactions } from "../state/patch";
 import {
   attachSharedSlot,
@@ -78,6 +82,33 @@ describe("runtime slot utilities", () => {
     expect(updated?.get("target")?.children).toEqual([
       { type: "id", value: "attached" },
     ]);
+  });
+
+  test("rejects a shared Slot inside Content Block Templates", () => {
+    const instances = new Map([
+      [
+        "source",
+        instance("source", "Slot", [{ type: "id", value: "fragment" }]),
+      ],
+      ["fragment", instance("fragment", "Fragment")],
+      [
+        "templates",
+        instance("templates", blockTemplateComponent, [
+          { type: "id", value: "template-section" },
+        ]),
+      ],
+      ["template-section", instance("template-section", "Box")],
+    ]);
+
+    expect(() =>
+      attachSharedSlot(
+        { instances, props: new Map() },
+        { sourceSlotId: "source", parentInstanceId: "template-section" },
+        { createId: () => "attached" }
+      )
+    ).toThrow(
+      "Shared Slots cannot be used inside Content Block Templates. Duplicate the Slot content into a regular template instead."
+    );
   });
 
   test("attaches a shared slot inside another slot content fragment", () => {

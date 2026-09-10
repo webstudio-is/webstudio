@@ -249,6 +249,44 @@ describe("project audit and analysis", () => {
     ).toThrow(/cursor does not match/i);
   });
 
+  test("skips unsafe unused Asset findings for connected Content Blocks", () => {
+    const instances = new Map<string, Instance>(state.instances);
+    instances.set("content-block", {
+      type: "instance",
+      id: "content-block",
+      component: "ws:block",
+      children: [],
+    });
+    const props = new Map<string, Prop>(state.props);
+    props.set("content-block-source", {
+      id: "content-block-source",
+      instanceId: "content-block",
+      name: "src",
+      type: "asset",
+      value: "article-mdx",
+    });
+
+    const result = audit(
+      { ...state, instances, props },
+      { scopes: ["assets"], verbose: true, limit: 200 },
+      { projectVersion: 1 }
+    );
+
+    expect(result.findings).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "unused-asset" }),
+      ])
+    );
+    expect(result.skippedChecks).toContainEqual({
+      scope: "assets",
+      checkId: "content-asset-dependencies",
+      reason: "missing-build-data",
+      message:
+        "Unused Asset findings are skipped because connected Content Blocks can reference MDX files and nested Assets that are not visible in editable project data.",
+      location: {},
+    });
+  });
+
   test("returns one finding for a CSS variable declared at multiple breakpoints", () => {
     const styles = new Map<string, StyleDecl>(state.styles);
     styles.set("local:base::--unused", {

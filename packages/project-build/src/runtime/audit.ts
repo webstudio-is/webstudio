@@ -1,4 +1,5 @@
 import { isLiteralExpression } from "@webstudio-is/expression";
+import { blockComponent, getContentBlockSource } from "@webstudio-is/sdk";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
@@ -120,7 +121,7 @@ const auditScopeDescription = [
   "accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/.",
   "security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener.",
   "seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide.",
-  "assets info: unused-asset. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder.",
+  "assets info: unused-asset. When connected Content Blocks may hide MDX and nested Asset dependencies, unused-asset is skipped instead of returning unsafe false positives. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder.",
   "styles warnings: style-on-dom-transparent-component, invalid-style-state-selector, and orphan-style-breakpoint; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens.",
   "performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css.",
   "craft is an opt-in, read-only compatibility check and is excluded when scopes are omitted. Documentation: https://docs.webstudio.is/university/craft.",
@@ -1213,6 +1214,30 @@ const getSkippedChecks = (
       }
     }
   }
+  if (
+    scopes.includes("assets") &&
+    state.instances !== undefined &&
+    state.props !== undefined
+  ) {
+    const hasConnectedContentBlock = Array.from(state.instances.values()).some(
+      (instance) =>
+        instance.component === blockComponent &&
+        getContentBlockSource({
+          blockInstanceId: instance.id,
+          props: state.props?.values() ?? [],
+        }) !== undefined
+    );
+    if (hasConnectedContentBlock) {
+      checks.push({
+        scope: "assets",
+        checkId: "content-asset-dependencies",
+        reason: "missing-build-data",
+        message:
+          "Unused Asset findings are skipped because connected Content Blocks can reference MDX files and nested Assets that are not visible in editable project data.",
+        location: {},
+      });
+    }
+  }
   return checks.sort(
     (left, right) =>
       left.scope.localeCompare(right.scope) ||
@@ -1277,6 +1302,7 @@ export function audit(
     pageId: selectedPage?.id,
     verbose: input.verbose === true,
   });
+  const skippedChecks = getSkippedChecks(state, normalizedInput, scopes);
   const standardScopes = scopes.filter((scope) => scope !== "craft");
   const raw =
     standardScopes.length === 0
@@ -1287,10 +1313,19 @@ export function audit(
           pagePath: normalizedInput.pagePath,
           limit: Number.MAX_SAFE_INTEGER,
         });
+  const skipsUnusedAssetFindings =
+    scopes.includes("assets") &&
+    skippedChecks.some(
+      ({ checkId }) => checkId === "content-asset-dependencies"
+    );
   const craftAnalysis = scopes.includes("craft")
     ? analyzeCraftProfile(state)
     : undefined;
   const normalizedFindings = [...raw.matches, ...(craftAnalysis?.matches ?? [])]
+    .filter(
+      (match) =>
+        skipsUnusedAssetFindings === false || match.issue !== "unused-asset"
+    )
     .map(canonicalizeAuditMatchPagePaths)
     .map(normalizeAuditFinding)
     .sort(
@@ -1363,7 +1398,6 @@ export function audit(
       ),
     };
   }
-  const skippedChecks = getSkippedChecks(state, normalizedInput, scopes);
   const manualChecks = [
     ...(scopes.some((scope) =>
       ["accessibility", "styles", "performance"].includes(scope)

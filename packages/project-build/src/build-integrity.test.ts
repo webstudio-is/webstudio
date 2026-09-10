@@ -23,6 +23,43 @@ const resource: Resource = {
 };
 
 describe("getBuildIntegrityIssues", () => {
+  test("rejects a shared Slot inside Content Block Templates", () => {
+    const issues = getBuildIntegrityIssues({
+      dataSources: [],
+      props: [],
+      resources: [],
+      instances: [
+        {
+          type: "instance",
+          id: "templates",
+          component: "ws:block-template",
+          children: [{ type: "id", value: "slot" }],
+        },
+        {
+          type: "instance",
+          id: "slot",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [],
+        },
+      ],
+    });
+
+    expect(issues).toContainEqual({
+      type: "slotInContentBlockTemplates",
+      instanceId: "slot",
+      templatesInstanceId: "templates",
+    });
+    expect(formatBuildIntegrityIssue(issues[0])).toBe(
+      'Shared Slot "slot" is inside Content Block Templates "templates". Duplicate the Slot content into a regular template instead.'
+    );
+  });
+
   test("reports invalid Content Block source references", () => {
     const block: Instance = {
       type: "instance",

@@ -1,6 +1,9 @@
 import {
+  blockTemplateComponent,
+  findTreeInstanceIds,
   formatContentBlockSourceIntegrityIssue,
   getContentBlockSourceIntegrityIssues,
+  portalComponent,
   type Asset,
   type ContentBlockSourceIntegrityIssue,
   type DataSource,
@@ -24,6 +27,11 @@ export type BuildIntegrityIssue =
       propName: string;
       resourceId: string;
     }
+  | {
+      type: "slotInContentBlockTemplates";
+      instanceId: string;
+      templatesInstanceId: string;
+    }
   | ContentBlockSourceIntegrityIssue;
 
 export const getBuildIntegrityIssues = ({
@@ -40,13 +48,31 @@ export const getBuildIntegrityIssues = ({
   assets?: Iterable<Asset>;
 }): BuildIntegrityIssue[] => {
   const propsList = Array.from(props);
+  const instancesList = Array.from(instances);
   const issues: BuildIntegrityIssue[] = [
     ...getContentBlockSourceIntegrityIssues({
-      instances,
+      instances: instancesList,
       props: propsList,
       assets,
     }),
   ];
+  const instancesById = new Map(
+    instancesList.map((instance) => [instance.id, instance])
+  );
+  for (const templates of instancesList) {
+    if (templates.component !== blockTemplateComponent) {
+      continue;
+    }
+    for (const instanceId of findTreeInstanceIds(instancesById, templates.id)) {
+      if (instancesById.get(instanceId)?.component === portalComponent) {
+        issues.push({
+          type: "slotInContentBlockTemplates",
+          instanceId,
+          templatesInstanceId: templates.id,
+        });
+      }
+    }
+  }
   const resourceIds = new Set<string>();
 
   for (const resource of resources) {
@@ -86,6 +112,9 @@ export const getBuildIntegrityIssues = ({
 export const formatBuildIntegrityIssue = (
   issue: BuildIntegrityIssue
 ): string => {
+  if (issue.type === "slotInContentBlockTemplates") {
+    return `Shared Slot "${issue.instanceId}" is inside Content Block Templates "${issue.templatesInstanceId}". Duplicate the Slot content into a regular template instead.`;
+  }
   if (issue.type !== "missingResource") {
     return formatContentBlockSourceIntegrityIssue(issue);
   }
