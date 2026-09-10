@@ -6,10 +6,13 @@ import {
   AuthorizationError,
   authorizeProject,
   createErrorResponse,
+  getPlanFeaturesByOwnerId,
+  getProjectOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
+import { getExtraPaidSeats } from "@webstudio-is/plans/index.server";
 import { projectTitle } from "../shared/project-schema";
 import { marketplaceApprovalStatus } from "../shared/marketplace-schema";
-import { getWorkspacePublishUsage } from "../db/publish-usage";
 
 export const projectRouter = router({
   rename: procedure
@@ -100,6 +103,9 @@ export const projectRouter = router({
             ? ctx.authorization.userId
             : ctx.authorization.ownerId;
 
+        let ownerId = userId;
+        let limit: number | undefined;
+
         if (input?.projectId !== undefined) {
           const canView = await authorizeProject.hasProjectPermit(
             { projectId: input.projectId, permit: "view" },
@@ -112,22 +118,28 @@ export const projectRouter = router({
             );
           }
 
-          const usage = await getWorkspacePublishUsage(input.projectId, ctx);
-          return { success: true, data: usage.count, limit: usage.limit };
+          ownerId = await getProjectOwnerId(input.projectId, ctx);
+          const plan = await getPlanFeaturesByOwnerId(ownerId, ctx);
+          limit = plan.maxDailyPublishesPerUser;
+          if (limit > defaultPlanFeatures.maxDailyPublishesPerUser) {
+            const extraSeats = await getExtraPaidSeats(ownerId, ctx);
+            limit *= 1 + plan.seatsIncluded + (extraSeats ?? 0);
+          }
         }
 
         const result = await ctx.postgrest.client
           .from("user_publish_count")
           .select("count")
-          .eq("user_id", userId)
+          .eq("user_id", ownerId)
           .maybeSingle();
         if (result.error) {
           throw result.error;
         }
-        return {
-          success: true,
-          data: result.data?.count ?? 0,
-        };
+        const count = result.data?.count ?? 0;
+        if (limit === undefined) {
+          return { success: true, data: count };
+        }
+        return { success: true, data: count, limit };
       } catch (error) {
         return createErrorResponse(error);
       }

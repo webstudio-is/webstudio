@@ -3,7 +3,6 @@ import {
   createTestServer,
   db,
   json,
-  empty,
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import {
@@ -41,16 +40,16 @@ describe("userPublishCount", () => {
         if (url.searchParams.has("userId")) {
           return json(null);
         }
-        return json({ userId: "owner-1", workspaceId: "ws-1" });
+        return json({ userId: "owner-1" });
       }),
       db.get("WorkspaceProjectAuthorization", () =>
         json([{ relation: "editors" }])
       ),
       db.get("Product", () => json([])),
-      db.head("Build", ({ request }) => {
+      db.get("user_publish_count", ({ request }) => {
         const url = new URL(request.url);
-        expect(url.searchParams.get("Project.workspaceId")).toBe("eq.ws-1");
-        return empty({ headers: { "Content-Range": "*/42" } });
+        expect(url.searchParams.get("user_id")).toBe("eq.owner-1");
+        return json({ count: 42 });
       })
     );
 

@@ -38,10 +38,6 @@
     "./index.server": {
       "webstudio": "./src/index.server.ts"
     },
-    "./publish-usage.server": {
-      "webstudio": "./src/db/publish-usage.ts",
-      "import": "./src/db/publish-usage.ts"
-    },
     "./build-patch-core.server": {
       "webstudio": "./src/db/build-patch-core.ts",
       "import": "./src/db/build-patch-core.ts"

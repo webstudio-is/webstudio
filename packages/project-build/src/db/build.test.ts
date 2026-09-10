@@ -28,10 +28,7 @@ const createContext = (userId = "user-1"): AppContext =>
   ({
     ...testContext,
     authorization: { type: "user", userId },
-    getOwnerPlanFeatures: async () => ({
-      maxDailyPublishesPerUser: 100,
-      seatsIncluded: 4,
-    }),
+    getOwnerPlanFeatures: async () => ({}),
   }) as unknown as AppContext;
 
 /** hasProjectPermit: return the row when userId param is in the query */
@@ -378,65 +375,6 @@ describe("createBuild (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("createProductionBuild (msw)", () => {
-  test.each(["user", "token"] as const)(
-    "applies the five-seat workspace limit to %s publishing",
-    async (type) => {
-      let count = 499;
-      let buildsCreated = 0;
-      const projectId = uid();
-      server.use(
-        db.get("Project", () =>
-          json({ id: projectId, userId: "owner", workspaceId: "workspace" })
-        ),
-        db.get("AuthorizationToken", () =>
-          json({
-            token: "share-link",
-            projectId,
-            relation: "editors",
-            canPublish: true,
-          })
-        ),
-        db.get("Product", () => json([])),
-        db.get("Build", () => json([{ ...buildRow, projectId }])),
-        db.head("Build", ({ request }) => {
-          expect(
-            new URL(request.url).searchParams.get("Project.workspaceId")
-          ).toBe("eq.workspace");
-          return empty({ headers: { "Content-Range": `*/${count}` } });
-        }),
-        db.post("rpc/create_production_build", () => {
-          buildsCreated += 1;
-          return json("published");
-        })
-      );
-      const context = createContext();
-      if (type === "token") {
-        context.authorization = {
-          type: "token",
-          authToken: "share-link",
-          ownerId: "owner",
-        };
-      }
-      const input = {
-        projectId,
-        deployment: {
-          destination: "saas" as const,
-          domains: ["project-domain"],
-          assetsDomain: "project-domain",
-          excludeWstdDomainFromSearch: false,
-        },
-      };
-      await expect(createProductionBuild(input, context)).resolves.toEqual({
-        id: "published",
-      });
-      count = 500;
-      await expect(createProductionBuild(input, context)).rejects.toThrow(
-        "daily publishing limit of 500"
-      );
-      expect(buildsCreated).toBe(1);
-    }
-  );
-
   test("throws when dev build has orphan resource references", async () => {
     let didCreateProductionBuild = false;
     server.use(

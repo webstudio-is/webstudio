@@ -22,13 +22,6 @@ publish dialog, open the affected page, select the instance, and scroll it into
 view. Fix the problem, then publish again. Draft pages are excluded because
 they are not part of the generated site.
 
-## Daily publishing limit
-
-Projects in a paid workspace share 100 publishes per day for the owner, plus
-100 for each included or purchased member seat. Unused seats count too.
-Five seats including the owner give the workspace 500 publishes per day.
-Free stays at 10 publishes per day. The count resets at midnight UTC.
-
 ## Adding a custom domain
 
 These steps will show you how to add a custom domain to your Project.

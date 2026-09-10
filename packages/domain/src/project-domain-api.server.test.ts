@@ -1,4 +1,4 @@
-import { beforeEach, expect, test, vi } from "vitest";
+import { expect, test, vi } from "vitest";
 import {
   createTestServer,
   db,
@@ -17,11 +17,6 @@ import {
 } from "./project-domain-api.server";
 
 const server = createTestServer();
-beforeEach(() =>
-  server.use(
-    db.head("Build", () => empty({ headers: { "Content-Range": "*/0" } }))
-  )
-);
 const context = testContext as unknown as AppContext;
 const postgrestUrl = "http://test-postgrest";
 
@@ -121,7 +116,6 @@ const createPublishContext = (
   ({
     ...testContext,
     authorization: { type: "user", userId: "user-1" },
-    getOwnerPlanFeatures: async () => ({ maxDailyPublishesPerUser: 10 }),
     deployment: {
       deploymentTrpc: {
         publish: {
