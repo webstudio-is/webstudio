@@ -9,7 +9,6 @@ import {
   type AssetQueryWhereExpression,
   type Resource,
   type StructuredAssetQueryWhereBinding,
-  ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import { mapQueryWhere } from "@webstudio-is/query-builder/runtime";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
@@ -19,6 +18,8 @@ import type { BuilderRuntimeContext } from "./context";
 import {
   createResource,
   normalizeResourceExpressionInput,
+  optionalResourceScopeInstanceIdInput,
+  resourceScopeInstanceIdInput,
   unsetExpressionVariables,
   updateResource,
 } from "./data";
@@ -35,11 +36,7 @@ export const assetsResourceGetInput = z.object({ resourceId: z.string() });
 export const assetsResourceCreateInput = z.object({
   name: z.string().min(1),
   query: assetQueryResourceConfigurationInput.optional(),
-  scopeInstanceId: z
-    .string()
-    .describe(
-      `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
-    ),
+  scopeInstanceId: resourceScopeInstanceIdInput,
   dataSourceName: z.string().optional(),
 });
 
@@ -53,12 +50,7 @@ export const assetsResourceUpdateInput = z.object({
     .refine((values) => Object.keys(values).length > 0, {
       error: "At least one Assets resource value is required.",
     }),
-  scopeInstanceId: z
-    .string()
-    .optional()
-    .describe(
-      `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
-    ),
+  scopeInstanceId: optionalResourceScopeInstanceIdInput,
   dataSourceName: z.string().optional(),
 });
 

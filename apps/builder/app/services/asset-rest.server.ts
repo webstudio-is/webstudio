@@ -21,6 +21,7 @@ import type { ProjectPermit } from "@webstudio-is/trpc-interface/index.server";
 import { assetFolderIssue } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
+import { assetDescriptionEncoding } from "@webstudio-is/protocol/asset-resource-api";
 import { ZodError } from "zod";
 import { createAssetClient } from "~/shared/asset-client";
 import { parseError } from "~/shared/error/error-parse";
@@ -130,7 +131,7 @@ export const parseAssetRestDescription = (
   }
   let description = value;
   if (encoding !== undefined && encoding !== null) {
-    if (encoding !== "base64url") {
+    if (encoding !== assetDescriptionEncoding) {
       throw new AssetRestRequestError(
         "Assets API description encoding is invalid"
       );

@@ -12,7 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { VideoContext, requestFullscreen } from "./shared/video";
+import { preconnect, VideoContext, requestFullscreen } from "./shared/video";
 import { VimeoPreviewImage } from "./vimeo-preview-image";
 
 /**
@@ -339,20 +339,6 @@ const getVideoUrl = (
   });
 
   return url.toString();
-};
-
-const warmedOrigins = new Set<string>();
-
-const preconnect = (url: string) => {
-  if (warmedOrigins.has(url)) {
-    return;
-  }
-  const link = document.createElement("link");
-  link.rel = "preconnect";
-  link.href = url;
-  link.crossOrigin = "true";
-  document.head.appendChild(link);
-  warmedOrigins.add(url);
 };
 
 const warmConnections = (videoUrl: string, includePreviewImage: boolean) => {

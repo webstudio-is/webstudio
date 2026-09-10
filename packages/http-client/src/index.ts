@@ -9,6 +9,9 @@ import {
 import {
   assetContentDescriptor,
   assetContentDescriptorHeader,
+  assetDescriptionEncoding,
+  assetDescriptionEncodingHeader,
+  assetDescriptionHeader,
   parseAssetContentDescriptor,
   type AssetFolderUpdateRequest,
   type AssetMetadataUpdate,
@@ -463,12 +466,12 @@ export const uploadAsset = async (
       headers: createHeaders({
         ...headers,
         "x-auth-token": authToken,
-        "x-webstudio-asset-description":
+        [assetDescriptionHeader]:
           description === undefined
             ? undefined
             : encodeAssetDescriptionHeader(description),
-        "x-webstudio-asset-description-encoding":
-          description === undefined ? undefined : "base64url",
+        [assetDescriptionEncodingHeader]:
+          description === undefined ? undefined : assetDescriptionEncoding,
         "x-webstudio-asset-meta": JSON.stringify(upload.asset.meta),
         "content-type": "application/octet-stream",
       }),

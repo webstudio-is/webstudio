@@ -7,6 +7,8 @@ import {
 } from "@webstudio-is/asset-uploader/server";
 import { isAssetFileName } from "@webstudio-is/protocol";
 import {
+  assetDescriptionEncodingHeader,
+  assetDescriptionHeader,
   assetResourceApiOperations,
   type AssetUploadResult,
 } from "@webstudio-is/protocol/asset-resource-api";
@@ -115,8 +117,8 @@ export const action = async (props: ActionFunctionArgs) => {
           ? undefined
           : parseAssetRestIdentifier(folderIdValue);
       const description = parseAssetRestDescription(
-        request.headers.get("x-webstudio-asset-description"),
-        request.headers.get("x-webstudio-asset-description-encoding")
+        request.headers.get(assetDescriptionHeader),
+        request.headers.get(assetDescriptionEncodingHeader)
       );
       if (assetType === undefined) {
         throw new AssetRestRequestError("Asset type is invalid");

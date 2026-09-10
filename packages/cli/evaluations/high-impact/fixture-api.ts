@@ -20,6 +20,9 @@ import {
   getAssetContentApiUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
+  assetDescriptionEncoding,
+  assetDescriptionEncodingHeader,
+  assetDescriptionHeader,
   assetContentDescriptorHeader,
   serializeAssetContentDescriptor,
 } from "@webstudio-is/protocol/asset-resource-api";
@@ -53,7 +56,7 @@ const decodeAssetDescriptionHeader = (value: unknown, encoding: unknown) => {
   if (encoding === undefined) {
     return value;
   }
-  if (encoding !== "base64url") {
+  if (encoding !== assetDescriptionEncoding) {
     throw new Error("Invalid asset description encoding.");
   }
   return Buffer.from(value, "base64url").toString("utf8");
@@ -320,8 +323,8 @@ export const startHighImpactFixtureApi = async (
           throw new Error("Invalid asset upload request.");
         }
         const description = decodeAssetDescriptionHeader(
-          request.headers["x-webstudio-asset-description"],
-          request.headers["x-webstudio-asset-description-encoding"]
+          request.headers[assetDescriptionHeader],
+          request.headers[assetDescriptionEncodingHeader]
         );
         const folderId = url.searchParams.get("folderId") ?? undefined;
         const assetBase = {

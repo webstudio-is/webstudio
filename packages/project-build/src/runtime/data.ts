@@ -1741,17 +1741,21 @@ const exposeAsDataSourceInput = z
     "Expose the resource as render-time data. Scoped GET resources default to true; write resources default to false."
   );
 
+const resourceScopeInstanceIdDescription = `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`;
+export const resourceScopeInstanceIdInput = z
+  .string()
+  .describe(resourceScopeInstanceIdDescription);
+export const optionalResourceScopeInstanceIdInput = z
+  .string()
+  .optional()
+  .describe(resourceScopeInstanceIdDescription);
+
 export const resourceCreateInput = z
   .object({
     resourceId: runtimeGeneratedIdInput,
     resource: resourceFieldsInput,
     dataSourceId: runtimeGeneratedIdInput,
-    scopeInstanceId: z
-      .string()
-      .optional()
-      .describe(
-        `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
-      ),
+    scopeInstanceId: optionalResourceScopeInstanceIdInput,
     dataSourceName: z.string().optional(),
     exposeAsDataSource: exposeAsDataSourceInput,
   })
@@ -1774,12 +1778,7 @@ export const resourceUpdateInput = z.object({
   resourceId: z.string(),
   values: resourceFieldsUpdateInput,
   dataSourceName: z.string().optional(),
-  scopeInstanceId: z
-    .string()
-    .optional()
-    .describe(
-      `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
-    ),
+  scopeInstanceId: optionalResourceScopeInstanceIdInput,
   exposeAsDataSource: exposeAsDataSourceInput,
 });
 
