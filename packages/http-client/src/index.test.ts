@@ -1567,6 +1567,18 @@ test("reports retry diagnostics and permits an isolated retry after a partial ba
   const uploadedAsset = createImageAssetFixture({ name: "uploaded.jpg" });
   const retriedAsset = createImageAssetFixture({ name: "retried.jpg" });
   let retriedAssetAttempts = 0;
+  const response = (asset?: typeof uploadedAsset) =>
+    new Response(
+      JSON.stringify(
+        asset === undefined
+          ? { errors: "Internal Assets API error" }
+          : { uploadedAssets: [asset], deduplicated: false }
+      ),
+      {
+        status: asset === undefined ? 500 : 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: URL | RequestInfo) => {
@@ -1574,30 +1586,10 @@ test("reports retry diagnostics and permits an isolated retry after a partial ba
         new URL(request.toString()).pathname.split("/").at(-1) ?? ""
       );
       if (name === "uploaded.jpg") {
-        return new Response(
-          JSON.stringify({
-            uploadedAssets: [uploadedAsset],
-            deduplicated: false,
-          }),
-          { headers: { "content-type": "application/json" } }
-        );
+        return response(uploadedAsset);
       }
       retriedAssetAttempts += 1;
-      return retriedAssetAttempts <= 2
-        ? new Response(
-            JSON.stringify({ errors: "Internal Assets API error" }),
-            {
-              status: 500,
-              headers: { "content-type": "application/json" },
-            }
-          )
-        : new Response(
-            JSON.stringify({
-              uploadedAssets: [retriedAsset],
-              deduplicated: false,
-            }),
-            { headers: { "content-type": "application/json" } }
-          );
+      return response(retriedAssetAttempts <= 2 ? undefined : retriedAsset);
     })
   );
   const descriptor = {
