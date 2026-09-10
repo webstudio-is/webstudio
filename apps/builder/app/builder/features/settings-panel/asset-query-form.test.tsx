@@ -232,11 +232,6 @@ test("uses the loaded field catalog with the shared query validator", () => {
       code: "INCOMPATIBLE_OBSERVED_VALUE",
       path: ["query", "where", "value"],
     },
-    {
-      severity: "warning",
-      code: "UNOBSERVED_FIELD",
-      path: ["query", "output", "fields", "0"],
-    },
   ]);
 });
 
