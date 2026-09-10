@@ -6214,7 +6214,7 @@ const getMetaIndex = (
       "Operate on the configured project only.",
       "Read ids before writing.",
       "Prefer semantic tools over apply-patch.",
-      "When creating or editing collection.json, add a useful JSON Schema description to every frontmatter property. Descriptions become field help for editors, so explain what to enter instead of repeating the field label.",
+      "For every collection.json frontmatter property, add a JSON Schema description that tells editors what to enter instead of repeating its label.",
       valuesVsBindingsRule,
       "Use status/refresh when cached data may be stale.",
       guidance?.visualVerificationRule,

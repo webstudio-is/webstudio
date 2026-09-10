@@ -483,6 +483,13 @@ const getField = ({
     typeof value.description === "string" && value.description.trim() !== ""
       ? value.description
       : undefined;
+  const shared = {
+    key,
+    originalKey: key,
+    label,
+    description,
+    required,
+  };
   const rawExtension = value["x-webstudio"];
   if (Object.hasOwn(value, "x-webstudio") && isObject(rawExtension) === false) {
     throw new ContentCollectionError(
@@ -531,39 +538,27 @@ const getField = ({
         ? declaredControl
         : "text";
     return {
-      key,
-      originalKey: key,
-      label,
-      description,
+      ...shared,
       type: "string",
       control,
-      required,
       minLength: getNonnegativeInteger(value.minLength),
       maxLength: getNonnegativeInteger(value.maxLength),
     };
   }
   if (type === "number" || type === "integer") {
     return {
-      key,
-      originalKey: key,
-      label,
-      description,
+      ...shared,
       type: type,
       control: "number",
-      required,
       minimum: getFiniteNumber(value.minimum),
       maximum: getFiniteNumber(value.maximum),
     };
   }
   if (type === "boolean") {
     return {
-      key,
-      originalKey: key,
-      label,
-      description,
+      ...shared,
       type: "boolean",
       control: "checkbox",
-      required,
     };
   }
 };

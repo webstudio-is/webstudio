@@ -244,26 +244,23 @@ export const AssetsPanel = ({
       setEntrySettings({ asset, collection });
     }
   };
-  const getEntryCanvasTarget = (
-    asset: Asset,
-    collection: Extract<ContentCollection, { status: "ready" }>
-  ) =>
-    getCollectionEntryCanvasTarget({
+  const getEntryOpenOnCanvas = (asset: Asset) => {
+    const collection = collections.get(asset.folderId ?? "");
+    if (collection?.status !== "ready") {
+      return;
+    }
+    const target = getCollectionEntryCanvasTarget({
       entryPageId: collection.config.entryPageId,
       entryBasename: getAssetDisplayNameParts(asset).basename,
       pages,
     });
-  const openEntryOnCanvas = (
-    asset: Asset,
-    collection: Extract<ContentCollection, { status: "ready" }>
-  ) => {
-    const target = getEntryCanvasTarget(asset, collection);
-    if (target === undefined) {
-      return;
+    if (target !== undefined) {
+      return () => {
+        setEntrySettings(undefined);
+        selectPage(target.pageId);
+        updateCurrentSystem({ params: target.params });
+      };
     }
-    setEntrySettings(undefined);
-    selectPage(target.pageId);
-    updateCurrentSystem({ params: target.params });
   };
   useImageAssetCanvasDrag(publish);
   return (
@@ -454,21 +451,7 @@ export const AssetsPanel = ({
         createCollection={createCollection}
         onOpen={openAsset}
         onEntrySettings={openEntrySettings}
-        onEntryOpenOnCanvas={
-          currentCollection?.status === "ready" &&
-          getCollectionEntryCanvasTarget({
-            entryPageId: currentCollection.config.entryPageId,
-            entryBasename: "entry",
-            pages,
-          }) !== undefined
-            ? (assetId) => {
-                const asset = $assets.get().get(assetId);
-                if (asset !== undefined) {
-                  openEntryOnCanvas(asset, currentCollection);
-                }
-              }
-            : undefined
-        }
+        getEntryOpenOnCanvas={getEntryOpenOnCanvas}
         canManageFolders={canManageFolders}
         panelActions={{
           ...(authPermit === "view"
@@ -556,18 +539,7 @@ export const AssetsPanel = ({
           {...entrySettings}
           onClose={() => setEntrySettings(undefined)}
           onOpenFile={() => openAsset(entrySettings.asset.id)}
-          onOpenCanvas={
-            getEntryCanvasTarget(
-              entrySettings.asset,
-              entrySettings.collection
-            ) === undefined
-              ? undefined
-              : () =>
-                  openEntryOnCanvas(
-                    entrySettings.asset,
-                    entrySettings.collection
-                  )
-          }
+          onOpenCanvas={getEntryOpenOnCanvas(entrySettings.asset)}
         />
       )}
       {settingsCollection !== undefined &&

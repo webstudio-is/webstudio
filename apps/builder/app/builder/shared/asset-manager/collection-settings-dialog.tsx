@@ -717,7 +717,8 @@ export const CollectionSettingsDialog = ({
         };
         currentTemplateAssetRef.current = updated.templateAsset;
       } else if (
-        JSON.stringify(nextConfig) !== JSON.stringify(collection.config)
+        JSON.stringify(nextConfig.schema) !==
+        JSON.stringify(collection.config.schema)
       ) {
         const configAsset = await updateContent({
           asset: collection.configAsset,
@@ -1182,10 +1183,7 @@ export const CollectionSettingsDialog = ({
                                 onChange={(event) =>
                                   updateField(index, {
                                     ...field,
-                                    description:
-                                      event.target.value === ""
-                                        ? undefined
-                                        : event.target.value,
+                                    description: event.target.value,
                                   })
                                 }
                               />

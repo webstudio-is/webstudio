@@ -1,30 +1,20 @@
 import { describe, expect, test } from "vitest";
-import type { Pages } from "@webstudio-is/sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import { getCollectionEntryCanvasTarget } from "./collection-entry-navigation";
 
-const createPages = (path: string): Pages =>
-  ({
+const createPages = (path: string) => {
+  const pages = createDefaultPages({ rootInstanceId: "root" });
+  pages.pages.set("article", {
+    id: "article",
+    path,
+    name: "Article",
+    title: "Article",
+    rootInstanceId: "article-root",
     meta: {},
-    homePageId: "home",
-    rootFolderId: "root",
-    pages: new Map([
-      [
-        "article",
-        {
-          id: "article",
-          path,
-          name: "Article",
-          title: "Article",
-          rootInstanceId: "root-instance",
-          meta: {},
-        },
-      ],
-    ]),
-    folders: new Map([
-      ["root", { id: "root", name: "Root", slug: "", children: ["article"] }],
-    ]),
-    templates: new Map(),
-  }) as Pages;
+  });
+  pages.folders.get(pages.rootFolderId)?.children.push("article");
+  return pages;
+};
 
 describe("getCollectionEntryCanvasTarget", () => {
   test("opens the configured dynamic page with the entry filename", () => {
@@ -47,26 +37,16 @@ describe("getCollectionEntryCanvasTarget", () => {
     ).toBeUndefined();
   });
 
-  test("does not offer navigation for missing or ambiguous pages", () => {
+  test.each([
+    [undefined, "/blog/:slug"],
+    ["missing", "/blog/:slug"],
+    ["article", "/:category/:slug"],
+  ])("does not offer navigation for page %s at %s", (entryPageId, path) => {
     expect(
       getCollectionEntryCanvasTarget({
-        entryPageId: undefined,
+        entryPageId,
         entryBasename: "hello-world",
-        pages: createPages("/blog/:slug"),
-      })
-    ).toBeUndefined();
-    expect(
-      getCollectionEntryCanvasTarget({
-        entryPageId: "missing",
-        entryBasename: "hello-world",
-        pages: createPages("/blog/:slug"),
-      })
-    ).toBeUndefined();
-    expect(
-      getCollectionEntryCanvasTarget({
-        entryPageId: "article",
-        entryBasename: "hello-world",
-        pages: createPages("/:category/:slug"),
+        pages: createPages(path),
       })
     ).toBeUndefined();
   });
