@@ -143,7 +143,7 @@ export const parseAssetRestDescription = (
       ) {
         throw new Error("Invalid base64url");
       }
-      description = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      description = decodeUtf8(bytes);
     } catch (cause) {
       throw new AssetRestRequestError(
         "Assets API description encoding is invalid",

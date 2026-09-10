@@ -46,6 +46,19 @@ const projectId = "high-impact-evaluation-project";
 const buildId = "high-impact-evaluation-build";
 const initialVersion = 1;
 
+const decodeAssetDescriptionHeader = (value: unknown, encoding: unknown) => {
+  if (typeof value !== "string") {
+    return null;
+  }
+  if (encoding === undefined) {
+    return value;
+  }
+  if (encoding !== "base64url") {
+    throw new Error("Invalid asset description encoding.");
+  }
+  return Buffer.from(value, "base64url").toString("utf8");
+};
+
 const createPersistedPages = (project: EvaluationProject) => ({
   meta: { siteName: "High-impact evaluation", contactEmail: "" },
   compiler: { atomicStyles: true },
@@ -306,14 +319,17 @@ export const startHighImpactFixtureApi = async (
         ) {
           throw new Error("Invalid asset upload request.");
         }
-        const description = request.headers["x-webstudio-asset-description"];
+        const description = decodeAssetDescriptionHeader(
+          request.headers["x-webstudio-asset-description"],
+          request.headers["x-webstudio-asset-description-encoding"]
+        );
         const folderId = url.searchParams.get("folderId") ?? undefined;
         const assetBase = {
           id: `evaluation-asset-${generatedId++}`,
           projectId,
           name,
           filename: getFileNameParts(name).basename,
-          description: typeof description === "string" ? description : null,
+          description,
           size: body.byteLength,
           ...(folderId === undefined ? {} : { folderId }),
           createdAt: "2026-01-01T00:00:00.000Z",
