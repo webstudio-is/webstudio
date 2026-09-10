@@ -1,5 +1,5 @@
 import { isLiteralExpression } from "@webstudio-is/expression";
-import { blockComponent, getContentBlockSource } from "@webstudio-is/sdk";
+import { getContentBlockSources } from "@webstudio-is/sdk";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
@@ -1214,20 +1214,13 @@ const getSkippedChecks = (
       }
     }
   }
-  if (
-    scopes.includes("assets") &&
-    state.instances !== undefined &&
-    state.props !== undefined
-  ) {
-    const hasConnectedContentBlock = Array.from(state.instances.values()).some(
-      (instance) =>
-        instance.component === blockComponent &&
-        getContentBlockSource({
-          blockInstanceId: instance.id,
-          props: state.props?.values() ?? [],
-        }) !== undefined
-    );
-    if (hasConnectedContentBlock) {
+  if (scopes.includes("assets")) {
+    if (
+      getContentBlockSources({
+        instances: state.instances?.values() ?? [],
+        props: state.props?.values() ?? [],
+      }).size > 0
+    ) {
       checks.push({
         scope: "assets",
         checkId: "content-asset-dependencies",
@@ -1313,11 +1306,9 @@ export function audit(
           pagePath: normalizedInput.pagePath,
           limit: Number.MAX_SAFE_INTEGER,
         });
-  const skipsUnusedAssetFindings =
-    scopes.includes("assets") &&
-    skippedChecks.some(
-      ({ checkId }) => checkId === "content-asset-dependencies"
-    );
+  const skipsUnusedAssetFindings = skippedChecks.some(
+    ({ checkId }) => checkId === "content-asset-dependencies"
+  );
   const craftAnalysis = scopes.includes("craft")
     ? analyzeCraftProfile(state)
     : undefined;

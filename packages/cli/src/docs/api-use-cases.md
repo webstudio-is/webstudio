@@ -1151,7 +1151,6 @@ Commands:
 Notes:
 
 - With no scopes, `audit` checks accessibility, security, SEO, performance settings, unused assets, ineffective Collection styles, non-GET resources exposed as render-time data, and unused or duplicate style data.
-- A connected Content Block can reference MDX files and nested Assets whose contents are unavailable to the static project audit. In that case, `unused-asset` is skipped and reported in `skippedChecks` instead of returning unsafe cleanup candidates. Use `verbose:true` to inspect the reason.
 - Craft is opt-in and read-only. Run `audit` with `scopes:["craft"]` to detect whether the project is not using Craft, partially compatible, or compatible with the versioned Craft 1.2 profile. `profileStatuses` includes the University-doc provenance and the smallest safe next action. The audit never installs Craft or changes a non-Craft project.
 - The `performance` scope reports disabled atomic CSS generation. A rendered audit also measures broken, eager below-fold, and oversized images, browser-marked render-blocking resources, and legacy font formats.
 - Rendered image and resource metrics run only when the selected scopes include `performance`; responsive layout dimensions remain available whenever `rendered:true` is requested.

@@ -2,12 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { VimeoPreviewImage } from "./vimeo-preview-image";
 import { YouTube } from "./youtube";
-
-const PLAYER_ORIGIN = "https://www.youtube-nocookie.com";
-const ORIGINAL_PLAYER_ORIGIN = "https://www.youtube.com";
-const IMAGE_ORIGIN = "https://img.youtube.com";
 
 const sdkContext = {
   assetBaseUrl: "/assets/",
@@ -19,10 +14,10 @@ const sdkContext = {
   renderer: "preview" as const,
 };
 
-const findPreconnect = (origin: string) =>
+const getPreconnectOrigins = () =>
   Array.from(
     document.head.querySelectorAll<HTMLLinkElement>('link[rel="preconnect"]')
-  ).find((link) => new URL(link.href).origin === origin) ?? null;
+  ).map((link) => new URL(link.href).origin);
 
 const renderYouTube = (props: ComponentProps<typeof YouTube>) => (
   <ReactSdkContext.Provider value={sdkContext}>
@@ -35,7 +30,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test("preconnect can be disabled and only warms origins that are used", async () => {
+test("preconnect is consent-aware and only warms the player", async () => {
   vi.spyOn(window, "matchMedia").mockImplementation(
     () => ({ matches: false }) as MediaQueryList
   );
@@ -49,34 +44,25 @@ test("preconnect can be disabled and only warms origins that are used", async ()
   );
 
   await Promise.resolve();
-  expect(findPreconnect(PLAYER_ORIGIN)).toBeNull();
-  expect(findPreconnect(ORIGINAL_PLAYER_ORIGIN)).toBeNull();
-  expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
-
-  rerender(renderYouTube({ showPreview: false }));
-
-  await Promise.resolve();
-  expect(findPreconnect(PLAYER_ORIGIN)).toBeNull();
-  expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
+  expect(getPreconnectOrigins()).toEqual([]);
 
   rerender(renderYouTube({ privacyEnhancedMode: false, showPreview: false }));
 
   await waitFor(() =>
-    expect(findPreconnect(ORIGINAL_PLAYER_ORIGIN)).not.toBeNull()
+    expect(getPreconnectOrigins()).toContain("https://www.youtube.com")
   );
-  expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
+  expect(getPreconnectOrigins()).not.toContain("https://img.youtube.com");
 
   rerender(
     renderYouTube({
       preconnect: true,
       showPreview: true,
-      children: <VimeoPreviewImage src="/custom-preview.jpg" />,
+      children: <div>Custom preview</div>,
     })
   );
 
-  await Promise.resolve();
-  expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
-
-  await waitFor(() => expect(findPreconnect(PLAYER_ORIGIN)).not.toBeNull());
-  expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
+  await waitFor(() =>
+    expect(getPreconnectOrigins()).toContain("https://www.youtube-nocookie.com")
+  );
+  expect(getPreconnectOrigins()).not.toContain("https://img.youtube.com");
 });

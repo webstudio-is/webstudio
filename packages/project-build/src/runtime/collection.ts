@@ -33,7 +33,7 @@ const collectionDataInput = z.discriminatedUnion("type", [
 export const conflictResolutionInput = z
   .enum(["ours", "theirs", "merge"])
   .describe(
-    'For token name conflicts: "ours" keeps existing styles, "theirs" uses incoming styles, and "merge" combines both.'
+    'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.'
   );
 
 export const insertCollectionInput = z.object({

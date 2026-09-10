@@ -219,9 +219,18 @@ export const listDataVariables = (
 
 export const dataVariableValueInput = dataSourceVariableValue;
 
+const resourceScopeInstanceIdDescription = `Instance ID or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`;
+export const resourceScopeInstanceIdInput = z
+  .string()
+  .describe(resourceScopeInstanceIdDescription);
+export const optionalResourceScopeInstanceIdInput = z
+  .string()
+  .optional()
+  .describe(resourceScopeInstanceIdDescription);
+
 export const dataVariableCreateInput = z.object({
   dataSourceId: runtimeGeneratedIdInput,
-  scopeInstanceId: z.string(),
+  scopeInstanceId: resourceScopeInstanceIdInput,
   name: z.string().min(1),
   value: dataVariableValueInput,
 });
@@ -229,7 +238,7 @@ export const dataVariableCreateInput = z.object({
 export const dataVariableUpdateInput = z.object({
   dataSourceId: z.string(),
   values: z.object({
-    scopeInstanceId: z.string().optional(),
+    scopeInstanceId: optionalResourceScopeInstanceIdInput,
     name: z.string().min(1).optional(),
     value: dataVariableValueInput.optional(),
   }),
@@ -1740,15 +1749,6 @@ const exposeAsDataSourceInput = z
   .describe(
     "Expose the resource as render-time data. Scoped GET resources default to true; write resources default to false."
   );
-
-const resourceScopeInstanceIdDescription = `Scope instance ID, or ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`;
-export const resourceScopeInstanceIdInput = z
-  .string()
-  .describe(resourceScopeInstanceIdDescription);
-export const optionalResourceScopeInstanceIdInput = z
-  .string()
-  .optional()
-  .describe(resourceScopeInstanceIdDescription);
 
 export const resourceCreateInput = z
   .object({

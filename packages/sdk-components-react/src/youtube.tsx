@@ -153,7 +153,7 @@ type YouTubePlayerOptions = {
   url?: string;
   showPreview?: boolean;
   /**
-   * Opens connections to the YouTube player and thumbnail origins before playback.
+   * Opens a connection to the YouTube player before playback.
    * Disable this for consent-based click-to-load embeds.
    * Defaults to false in Privacy Enhanced Mode and true otherwise.
    */
@@ -368,7 +368,7 @@ const EmptyState = () => {
 
 type PlayerProps = Pick<
   YouTubePlayerOptions,
-  "loading" | "autoplay" | "showPreview" | "inline" | "preconnect"
+  "loading" | "autoplay" | "showPreview" | "inline"
 > & {
   videoUrl: string;
   title: string | undefined;
@@ -389,7 +389,6 @@ const Player = ({
   inline,
   renderer,
   showPreview,
-  preconnect: shouldPreconnect,
   onStatusChange,
   onPreviewImageUrlChange,
 }: PlayerProps) => {
@@ -401,12 +400,6 @@ const Player = ({
       onStatusChange("loading");
     }
   }, [autoplay, status, renderer, onStatusChange]);
-
-  useEffect(() => {
-    if (renderer !== "canvas" && shouldPreconnect) {
-      warmConnections(videoUrl);
-    }
-  }, [renderer, shouldPreconnect, videoUrl]);
 
   useEffect(() => {
     const videoId = getVideoId(videoUrl);
@@ -514,6 +507,12 @@ export const YouTube = forwardRef<Ref, Props>(
       videoUrlOrigin
     );
 
+    useEffect(() => {
+      if (renderer !== "canvas" && shouldPreconnect && videoUrl) {
+        warmConnections(videoUrl);
+      }
+    }, [renderer, shouldPreconnect, videoUrl]);
+
     return (
       <VideoContext.Provider
         value={{
@@ -540,7 +539,6 @@ export const YouTube = forwardRef<Ref, Props>(
                 loading={loading}
                 inline={inline}
                 showPreview={showPreview}
-                preconnect={shouldPreconnect}
                 renderer={renderer}
                 status={status}
                 onStatusChange={setStatus}

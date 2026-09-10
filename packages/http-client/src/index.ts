@@ -377,17 +377,11 @@ type AssetUploadBatchResult =
   | { status: "rejected"; asset: Asset; index: number; error: unknown }
   | { status: "ambiguous"; asset: Asset; index: number; error: unknown };
 
-const encodeAssetDescriptionHeader = (value: string) => {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary)
+const encodeAssetDescriptionHeader = (value: string) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(value)))
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replaceAll("=", "");
-};
 
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);

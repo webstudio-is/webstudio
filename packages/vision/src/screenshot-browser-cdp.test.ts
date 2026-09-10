@@ -636,7 +636,10 @@ test("preserves a successful capture when Windows profile cleanup stays busy", a
     viewportWidth: 800,
     viewportHeight: 600,
   });
-  expect(dependencies.rm).toHaveBeenCalledTimes(4);
+  expect(dependencies.rm).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({ maxRetries: 3, retryDelay: 50 })
+  );
   expect(browserProcess.kill).toHaveBeenCalledOnce();
 });
 

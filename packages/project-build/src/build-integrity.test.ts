@@ -39,12 +39,6 @@ describe("getBuildIntegrityIssues", () => {
           type: "instance",
           id: "slot",
           component: "Slot",
-          children: [{ type: "id", value: "fragment" }],
-        },
-        {
-          type: "instance",
-          id: "fragment",
-          component: "Fragment",
           children: [],
         },
       ],

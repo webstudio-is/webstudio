@@ -1368,24 +1368,17 @@ const removeBrowserProfile = async (
   userDataDir: string,
   dependencies: Pick<BrowserScreenshotDependencies, "rm">
 ) => {
-  const maxAttempts = 4;
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    try {
-      await dependencies.rm(userDataDir, { recursive: true, force: true });
-      return;
-    } catch (error) {
-      const code =
-        typeof error === "object" && error !== null && "code" in error
-          ? error.code
-          : undefined;
-      if (
-        attempt === maxAttempts - 1 ||
-        (code !== "EBUSY" && code !== "EPERM" && code !== "ENOTEMPTY")
-      ) {
-        return;
-      }
-      await delay(50 * 2 ** attempt);
-    }
+  try {
+    await dependencies.rm(userDataDir, { recursive: true, force: true });
+  } catch {
+    await dependencies
+      .rm(userDataDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 3,
+        retryDelay: 50,
+      })
+      .catch(() => undefined);
   }
 };
 

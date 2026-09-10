@@ -44574,7 +44574,7 @@ export const runtimeOperationContractData = [
                   type: "string",
                   enum: ["ours", "theirs", "merge"],
                   description:
-                    'For token name conflicts: "ours" keeps existing styles, "theirs" uses incoming styles, and "merge" combines both.',
+                    'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
                 },
                 contentMode: {
                   description:
@@ -54769,7 +54769,7 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs", "merge"],
           description:
-            'For token name conflicts: "ours" keeps existing styles, "theirs" uses incoming styles, and "merge" combines both.',
+            'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
         },
         mode: {
           type: "string",
@@ -60674,7 +60674,7 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs", "merge"],
           description:
-            'For token name conflicts: "ours" keeps existing styles, "theirs" uses incoming styles, and "merge" combines both.',
+            'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
         },
         contentMode: {
           description:
@@ -72720,6 +72720,7 @@ export const runtimeOperationContractData = [
       properties: {
         scopeInstanceId: {
           type: "string",
+          description: 'Instance ID or ":root" for Global Root.',
         },
         name: {
           type: "string",
@@ -72824,6 +72825,7 @@ export const runtimeOperationContractData = [
           type: "object",
           properties: {
             scopeInstanceId: {
+              description: 'Instance ID or ":root" for Global Root.',
               type: "string",
             },
             name: {
@@ -74230,7 +74232,7 @@ export const runtimeOperationContractData = [
         },
         scopeInstanceId: {
           type: "string",
-          description: 'Scope instance ID, or ":root" for Global Root.',
+          description: 'Instance ID or ":root" for Global Root.',
         },
         dataSourceName: {
           type: "string",
@@ -74803,7 +74805,7 @@ export const runtimeOperationContractData = [
           required: [],
         },
         scopeInstanceId: {
-          description: 'Scope instance ID, or ":root" for Global Root.',
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75175,7 +75177,7 @@ export const runtimeOperationContractData = [
           required: ["name", "method", "url", "headers"],
         },
         scopeInstanceId: {
-          description: 'Scope instance ID, or ":root" for Global Root.',
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75435,7 +75437,7 @@ export const runtimeOperationContractData = [
           type: "string",
         },
         scopeInstanceId: {
-          description: 'Scope instance ID, or ":root" for Global Root.',
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         exposeAsDataSource: {

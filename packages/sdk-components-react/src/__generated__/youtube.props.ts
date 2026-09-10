@@ -118,7 +118,7 @@ export const props: Record<string, PropMeta> = {
   },
   preconnect: {
     description:
-      "Opens connections to the YouTube player and thumbnail origins before playback.\nDisable this for consent-based click-to-load embeds.\nDefaults to false in Privacy Enhanced Mode and true otherwise.",
+      "Opens a connection to the YouTube player before playback.\nDisable this for consent-based click-to-load embeds.\nDefaults to false in Privacy Enhanced Mode and true otherwise.",
     required: false,
     control: "boolean",
     type: "boolean",
