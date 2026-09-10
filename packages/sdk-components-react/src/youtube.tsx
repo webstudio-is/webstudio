@@ -382,8 +382,8 @@ const hasCustomPreviewImage = (children: ReactNode): boolean =>
     }
     if (
       child.type === VimeoPreviewImage &&
-      child.props.src !== undefined &&
-      child.props.src !== ""
+      typeof child.props.src === "string" &&
+      child.props.src.length > 0
     ) {
       return true;
     }

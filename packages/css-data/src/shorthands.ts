@@ -83,20 +83,23 @@ const splitByOperator = (node: CssNode, operator: string) => {
     .map((list) => createValueNode(list));
 };
 
-const isCustomIdentifier = (value: CssNode | undefined) => {
+const excludedGridLineIdentifiers = new Set([
+  ...cssWideKeywords,
+  "auto",
+  "span",
+  "default",
+]);
+
+const isGridLineCustomIdentifier = (value: CssNode | undefined) => {
   if (value === undefined) {
     return false;
   }
   const children = getValueList(value);
   const child = children[0];
-  const name = child?.type === "Identifier" ? child.name.toLowerCase() : "";
   return (
     children.length === 1 &&
     child?.type === "Identifier" &&
-    name !== "auto" &&
-    name !== "span" &&
-    name !== "default" &&
-    cssWideKeywords.has(name) === false
+    excludedGridLineIdentifiers.has(child.name.toLowerCase()) === false
   );
 };
 
@@ -1333,12 +1336,14 @@ const expandShorthand = function* (property: string, value: CssNode) {
       const auto = createIdentifier("auto");
       const resolvedRowStart = rowStart ?? auto;
       const resolvedColumnStart =
-        columnStart ?? (isCustomIdentifier(rowStart) ? rowStart : auto);
+        columnStart ?? (isGridLineCustomIdentifier(rowStart) ? rowStart : auto);
       const resolvedRowEnd =
-        rowEnd ?? (isCustomIdentifier(rowStart) ? rowStart : auto);
+        rowEnd ?? (isGridLineCustomIdentifier(rowStart) ? rowStart : auto);
       const resolvedColumnEnd =
         columnEnd ??
-        (isCustomIdentifier(resolvedColumnStart) ? resolvedColumnStart : auto);
+        (isGridLineCustomIdentifier(resolvedColumnStart)
+          ? resolvedColumnStart
+          : auto);
       yield ["grid-row-start", resolvedRowStart] as const;
       yield ["grid-column-start", resolvedColumnStart] as const;
       yield ["grid-row-end", resolvedRowEnd] as const;

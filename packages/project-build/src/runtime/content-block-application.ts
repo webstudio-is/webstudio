@@ -42,6 +42,18 @@ const getData = (state: BuilderState): Omit<WebstudioData, "pages"> => ({
     : { assetFolders: state.assetFolders }),
 });
 
+const bindContentBlockSource = (
+  state: BuilderState,
+  blockInstanceId: string,
+  source: ContentBlockSource
+): ContentBlockSource =>
+  source.type === "expression"
+    ? {
+        ...source,
+        value: bindExpressionInput(state, blockInstanceId, source.value),
+      }
+    : source;
+
 /** Finds every Content Block whose current source resolves to an MDX Asset. */
 export const getMdxAssetSourceBlockInstanceIds = ({
   assetId,
@@ -382,18 +394,11 @@ export const createContentBlockApplication = ({
       source,
       variables,
     });
-    const persistedSource =
-      source.type === "expression"
-        ? {
-            ...source,
-            value: bindExpressionInput(state, blockInstanceId, source.value),
-          }
-        : source;
     return {
       ...prepareContentBlockConnect({
         state,
         blockInstanceId,
-        source: persistedSource,
+        source: bindContentBlockSource(state, blockInstanceId, source),
       }),
       inspection,
     };
@@ -413,18 +418,11 @@ export const createContentBlockApplication = ({
       source,
       variables,
     });
-    const persistedSource =
-      source.type === "expression"
-        ? {
-            ...source,
-            value: bindExpressionInput(state, blockInstanceId, source.value),
-          }
-        : source;
     return {
       ...prepareContentBlockSwitch({
         state,
         blockInstanceId,
-        source: persistedSource,
+        source: bindContentBlockSource(state, blockInstanceId, source),
       }),
       inspection,
     };
