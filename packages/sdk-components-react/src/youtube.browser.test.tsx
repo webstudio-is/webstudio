@@ -5,6 +5,7 @@ import { VimeoPreviewImage } from "./vimeo-preview-image";
 import { YouTube } from "./youtube";
 
 const PLAYER_ORIGIN = "https://www.youtube-nocookie.com";
+const ORIGINAL_PLAYER_ORIGIN = "https://www.youtube.com";
 const IMAGE_ORIGIN = "https://img.youtube.com";
 
 const sdkContext = {
@@ -37,7 +38,22 @@ test("preconnect can be disabled and only warms origins that are used", async ()
       <YouTube
         url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         preconnect={false}
+        privacyEnhancedMode={false}
         showPreview
+      />
+    </ReactSdkContext.Provider>
+  );
+
+  await Promise.resolve();
+  expect(findPreconnect(PLAYER_ORIGIN)).toBeNull();
+  expect(findPreconnect(ORIGINAL_PLAYER_ORIGIN)).toBeNull();
+  expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
+
+  rerender(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <YouTube
+        url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        showPreview={false}
       />
     </ReactSdkContext.Provider>
   );
@@ -50,12 +66,15 @@ test("preconnect can be disabled and only warms origins that are used", async ()
     <ReactSdkContext.Provider value={sdkContext}>
       <YouTube
         url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        privacyEnhancedMode={false}
         showPreview={false}
       />
     </ReactSdkContext.Provider>
   );
 
-  await waitFor(() => expect(findPreconnect(PLAYER_ORIGIN)).not.toBeNull());
+  await waitFor(() =>
+    expect(findPreconnect(ORIGINAL_PLAYER_ORIGIN)).not.toBeNull()
+  );
   expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
 
   rerender(

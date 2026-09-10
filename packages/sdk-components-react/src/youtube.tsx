@@ -159,7 +159,7 @@ type YouTubePlayerOptions = {
   /**
    * Opens connections to the YouTube player and thumbnail origins before playback.
    * Disable this for consent-based click-to-load embeds.
-   * @default true
+   * Defaults to false in Privacy Enhanced Mode and true otherwise.
    */
   preconnect?: boolean;
   /**
@@ -531,7 +531,8 @@ export const YouTube = forwardRef<Ref, Props>(
     const { renderer } = useContext(ReactSdkContext);
     const useYouTubePreview =
       showPreview === true && hasCustomPreviewImage(children) === false;
-    const shouldPreconnect = preconnectConnections ?? true;
+    const shouldPreconnect =
+      preconnectConnections ?? privacyEnhancedMode === false;
 
     const videoUrlOrigin =
       (privacyEnhancedMode ?? true)
