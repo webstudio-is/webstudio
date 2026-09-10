@@ -7,13 +7,9 @@ import {
   useContext,
   type ContextType,
   useRef,
-  Children,
-  isValidElement,
-  type ReactNode,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { preconnect, VideoContext, requestFullscreen } from "./shared/video";
-import { VimeoPreviewImage } from "./vimeo-preview-image";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -341,7 +337,7 @@ const getVideoUrl = (
   return url.toString();
 };
 
-const warmConnections = (videoUrl: string, includePreviewImage: boolean) => {
+const warmConnections = (videoUrl: string) => {
   if (window.matchMedia("(hover: none)").matches) {
     return;
   }
@@ -353,28 +349,7 @@ const warmConnections = (videoUrl: string, includePreviewImage: boolean) => {
   } catch {
     // Ignore invalid URL
   }
-
-  if (includePreviewImage) {
-    preconnect(IMAGE_CDN);
-  }
 };
-
-const hasCustomPreviewImage = (children: ReactNode): boolean =>
-  Children.toArray(children).some((child) => {
-    if (
-      isValidElement<{ src?: unknown; children?: ReactNode }>(child) === false
-    ) {
-      return false;
-    }
-    if (
-      child.type === VimeoPreviewImage &&
-      typeof child.props.src === "string" &&
-      child.props.src.length > 0
-    ) {
-      return true;
-    }
-    return hasCustomPreviewImage(child.props.children);
-  });
 
 const getPreviewImageUrl = (videoId: string) => {
   return new URL(`${IMAGE_CDN}/vi/${videoId}/maxresdefault.jpg`);
@@ -429,9 +404,9 @@ const Player = ({
 
   useEffect(() => {
     if (renderer !== "canvas" && shouldPreconnect) {
-      warmConnections(videoUrl, showPreview === true);
+      warmConnections(videoUrl);
     }
-  }, [renderer, shouldPreconnect, showPreview, videoUrl]);
+  }, [renderer, shouldPreconnect, videoUrl]);
 
   useEffect(() => {
     const videoId = getVideoId(videoUrl);
@@ -515,8 +490,6 @@ export const YouTube = forwardRef<Ref, Props>(
     const [status, setStatus] = useState<PlayerStatus>("initial");
     const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
     const { renderer } = useContext(ReactSdkContext);
-    const useYouTubePreview =
-      showPreview === true && hasCustomPreviewImage(children) === false;
     const shouldPreconnect =
       preconnectConnections ?? privacyEnhancedMode === false;
 
@@ -566,7 +539,7 @@ export const YouTube = forwardRef<Ref, Props>(
                 previewImageUrl={previewImageUrl}
                 loading={loading}
                 inline={inline}
-                showPreview={useYouTubePreview}
+                showPreview={showPreview}
                 preconnect={shouldPreconnect}
                 renderer={renderer}
                 status={status}

@@ -77,7 +77,6 @@ test("preconnect can be disabled and only warms origins that are used", async ()
   await Promise.resolve();
   expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
 
-  rerender(renderYouTube({ preconnect: true, showPreview: true }));
-
-  await waitFor(() => expect(findPreconnect(IMAGE_ORIGIN)).not.toBeNull());
+  await waitFor(() => expect(findPreconnect(PLAYER_ORIGIN)).not.toBeNull());
+  expect(findPreconnect(IMAGE_ORIGIN)).toBeNull();
 });
