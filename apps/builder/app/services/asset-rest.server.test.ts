@@ -198,6 +198,21 @@ describe("Assets REST responses", () => {
     );
   });
 
+  test("decodes UTF-8 asset descriptions carried in ASCII-safe headers", () => {
+    expect(
+      parseAssetRestDescription("QmFsa29uIG1pdCByb3RlbiBXw6RuZGVu", "base64url")
+    ).toBe("Balkon mit roten Wänden");
+    expect(parseAssetRestDescription("Legacy description")).toBe(
+      "Legacy description"
+    );
+    expect(() => parseAssetRestDescription("description", "unknown")).toThrow(
+      AssetRestRequestError
+    );
+    expect(() => parseAssetRestDescription("***", "base64url")).toThrow(
+      AssetRestRequestError
+    );
+  });
+
   test("parses bounded multipart forms and rejects oversized forms", async () => {
     const form = new FormData();
     form.set("projectId", "project-1");

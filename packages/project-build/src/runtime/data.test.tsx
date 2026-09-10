@@ -2674,6 +2674,69 @@ describe("resource patch helpers", () => {
     ).toThrow("Scope instance not found");
   });
 
+  test("creates and updates render data scoped to Global Root", () => {
+    const state = createResourceState();
+    const ids = ["resource-id", "data-source-id"];
+    const created = createResource(
+      state,
+      {
+        resource: resourceFieldsInput.parse({
+          name: "Navigation",
+          method: "get",
+          url: "https://example.com/navigation",
+          headers: [],
+        }),
+        scopeInstanceId: ROOT_INSTANCE_ID,
+      },
+      { createId: () => ids.shift() ?? "unexpected-id" }
+    );
+
+    expect(created.result).toMatchObject({
+      resourceId: "resource-id",
+      dataSourceId: "data-source-id",
+    });
+    expect(created.payload).toContainEqual({
+      namespace: "dataSources",
+      patches: [
+        expect.objectContaining({
+          value: expect.objectContaining({
+            scopeInstanceId: ROOT_INSTANCE_ID,
+            resourceId: "resource-id",
+          }),
+        }),
+      ],
+    });
+
+    state.resources.set("resource-id", {
+      ...resource,
+      id: "resource-id",
+      name: "Navigation",
+    });
+    state.dataSources.set("data-source-id", {
+      id: "data-source-id",
+      scopeInstanceId: ROOT_INSTANCE_ID,
+      name: "navigation",
+      type: "resource",
+      resourceId: "resource-id",
+    });
+    const updated = updateResource(
+      state,
+      {
+        resourceId: "resource-id",
+        values: { name: "Main navigation" },
+      },
+      { createId: () => "unexpected-id" }
+    );
+
+    expect(updated.result).toMatchObject({
+      resourceId: "resource-id",
+      dataSourceId: "data-source-id",
+    });
+    expect(updated.payload).toContainEqual(
+      expect.objectContaining({ namespace: "resources" })
+    );
+  });
+
   test("does not invalidate resources when text replacement finds no matches", () => {
     const result = replaceResourceText(
       { resources: new Map([[resource.id, resource]]) },

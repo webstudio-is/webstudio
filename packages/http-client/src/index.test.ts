@@ -1149,7 +1149,7 @@ test("uploads assets as binary requests", async () => {
         type: "image",
         name: "image.png",
         filename: "image.png",
-        description: "Campaign photo",
+        description: "Balkon mit roten Wänden",
         folderId: "campaign",
         format: "png",
         size: 3,
@@ -1170,8 +1170,11 @@ test("uploads assets as binary requests", async () => {
   expect(init.headers).toBeInstanceOf(Headers);
   expect((init.headers as Headers).get("x-auth-token")).toBe("token");
   expect((init.headers as Headers).get("x-webstudio-asset-description")).toBe(
-    "Campaign photo"
+    "QmFsa29uIG1pdCByb3RlbiBXw6RuZGVu"
   );
+  expect(
+    (init.headers as Headers).get("x-webstudio-asset-description-encoding")
+  ).toBe("base64url");
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
   );

@@ -966,16 +966,28 @@ test("expand grid-area", () => {
     ["grid-row-start", "a"],
     ["grid-column-start", "b"],
     ["grid-row-end", "c"],
-    ["grid-column-end", "auto"],
+    ["grid-column-end", "b"],
   ]);
   expect(expandShorthands([["grid-area", "a / b"]])).toEqual([
     ["grid-row-start", "a"],
     ["grid-column-start", "b"],
-    ["grid-row-end", "auto"],
-    ["grid-column-end", "auto"],
+    ["grid-row-end", "a"],
+    ["grid-column-end", "b"],
   ]);
   expect(expandShorthands([["grid-area", "a"]])).toEqual([
     ["grid-row-start", "a"],
+    ["grid-column-start", "a"],
+    ["grid-row-end", "a"],
+    ["grid-column-end", "a"],
+  ]);
+  expect(expandShorthands([["grid-area", "1 / area"]])).toEqual([
+    ["grid-row-start", "1"],
+    ["grid-column-start", "area"],
+    ["grid-row-end", "auto"],
+    ["grid-column-end", "area"],
+  ]);
+  expect(expandShorthands([["grid-area", "1"]])).toEqual([
+    ["grid-row-start", "1"],
     ["grid-column-start", "auto"],
     ["grid-row-end", "auto"],
     ["grid-column-end", "auto"],

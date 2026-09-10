@@ -1364,6 +1364,24 @@ const stopBrowserProcess = async ({
   ).catch(() => undefined);
 };
 
+const removeBrowserProfile = async (
+  userDataDir: string,
+  dependencies: Pick<BrowserScreenshotDependencies, "rm">
+) => {
+  try {
+    await dependencies.rm(userDataDir, { recursive: true, force: true });
+  } catch {
+    await dependencies
+      .rm(userDataDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 3,
+        retryDelay: 50,
+      })
+      .catch(() => undefined);
+  }
+};
+
 const startBrowserRuntimeOnce = async (
   options: BrowserScreenshotOptions,
   dependencies: BrowserScreenshotDependencies
@@ -1385,9 +1403,7 @@ const startBrowserRuntimeOnce = async (
       })
     );
   } catch (error) {
-    await dependencies
-      .rm(userDataDir, { recursive: true, force: true })
-      .catch(() => undefined);
+    await removeBrowserProfile(userDataDir, dependencies);
     throw error;
   }
   let startupOutput = "";
@@ -1451,10 +1467,7 @@ const startBrowserRuntimeOnce = async (
             running,
             gracePeriodMs: 2000,
           });
-          await dependencies.rm(userDataDir, {
-            recursive: true,
-            force: true,
-          });
+          await removeBrowserProfile(userDataDir, dependencies);
         })();
         await closePromise;
       },
@@ -1467,9 +1480,7 @@ const startBrowserRuntimeOnce = async (
       running,
       gracePeriodMs: Math.min(startupTimeout, 2000),
     });
-    await dependencies
-      .rm(userDataDir, { recursive: true, force: true })
-      .catch(() => undefined);
+    await removeBrowserProfile(userDataDir, dependencies);
     throw error;
   }
 };

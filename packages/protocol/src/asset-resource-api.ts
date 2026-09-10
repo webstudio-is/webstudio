@@ -37,6 +37,10 @@ const assetFolderItemApiPath = `${assetsFoldersApiUrl}/{folderId}`;
 
 export const assetContentDescriptorHeader =
   "x-webstudio-asset-content-descriptor";
+export const assetDescriptionHeader = "x-webstudio-asset-description";
+export const assetDescriptionEncodingHeader =
+  "x-webstudio-asset-description-encoding";
+export const assetDescriptionEncoding = "base64url";
 
 export const assetContentDescriptor = z.object({
   id: z.string(),
@@ -1030,14 +1034,19 @@ export const createAssetResourceOpenApi = ({
               schema: { type: "boolean", default: false },
             },
             {
-              name: "x-webstudio-asset-description",
+              name: assetDescriptionHeader,
               in: "header",
               required: false,
-              description: "Asset description",
-              schema: {
-                type: "string",
-                maxLength: assetResourceLimits.assetDescriptionCharacters,
-              },
+              description: `Asset description, encoded according to ${assetDescriptionEncodingHeader}`,
+              schema: { type: "string" },
+            },
+            {
+              name: assetDescriptionEncodingHeader,
+              in: "header",
+              required: false,
+              description:
+                "Encoding used for the Asset description header. Omit for legacy ASCII descriptions.",
+              schema: { type: "string", enum: [assetDescriptionEncoding] },
             },
             {
               name: "x-webstudio-asset-meta",

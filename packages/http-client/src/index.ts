@@ -9,6 +9,9 @@ import {
 import {
   assetContentDescriptor,
   assetContentDescriptorHeader,
+  assetDescriptionEncoding,
+  assetDescriptionEncodingHeader,
+  assetDescriptionHeader,
   parseAssetContentDescriptor,
   type AssetFolderUpdateRequest,
   type AssetMetadataUpdate,
@@ -374,6 +377,12 @@ type AssetUploadBatchResult =
   | { status: "rejected"; asset: Asset; index: number; error: unknown }
   | { status: "ambiguous"; asset: Asset; index: number; error: unknown };
 
+const encodeAssetDescriptionHeader = (value: string) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(value)))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -436,6 +445,7 @@ export const uploadAsset = async (
   }
 ): Promise<Asset[]> => {
   const { authToken, headers, origin, projectId, upload } = params;
+  const description = upload.asset.description ?? undefined;
   const result = await requestAssetRestJson<AssetUploadResult>(
     fetchJsonResponse,
     getAssetUploadUrl({
@@ -450,7 +460,12 @@ export const uploadAsset = async (
       headers: createHeaders({
         ...headers,
         "x-auth-token": authToken,
-        "x-webstudio-asset-description": upload.asset.description ?? undefined,
+        [assetDescriptionHeader]:
+          description === undefined
+            ? undefined
+            : encodeAssetDescriptionHeader(description),
+        [assetDescriptionEncodingHeader]:
+          description === undefined ? undefined : assetDescriptionEncoding,
         "x-webstudio-asset-meta": JSON.stringify(upload.asset.meta),
         "content-type": "application/octet-stream",
       }),

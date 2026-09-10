@@ -10,6 +10,7 @@ const initialProps: Array<keyof ComponentProps<typeof YouTube>> = [
   "className",
   "url",
   "privacyEnhancedMode",
+  "preconnect",
   "title",
   "loading",
   "showPreview",

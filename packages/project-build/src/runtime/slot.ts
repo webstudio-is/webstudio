@@ -1,4 +1,6 @@
 import {
+  blockTemplateComponent,
+  findParentInstanceReference,
   findTreeInstanceIds,
   portalComponent,
   type Instance,
@@ -183,6 +185,22 @@ const assertValidSlotPlacement = ({
   }
 };
 
+const isInsideContentBlockTemplates = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  const visited = new Set<Instance["id"]>();
+  let instance = instances.get(instanceId);
+  while (instance !== undefined && visited.has(instance.id) === false) {
+    if (instance.component === blockTemplateComponent) {
+      return true;
+    }
+    visited.add(instance.id);
+    instance = findParentInstanceReference(instances, instance.id)?.instance;
+  }
+  return false;
+};
+
 export const attachSharedSlot = (
   state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof attachSharedSlotInput>,
@@ -221,6 +239,12 @@ export const attachSharedSlot = (
     const parent = draft.instances.get(parentSelector[0]);
     if (parent === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Target parent not found");
+    }
+    if (isInsideContentBlockTemplates(draft.instances, parent.id)) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Shared Slots cannot be used inside Content Block Templates. Duplicate the Slot content into a regular template instead."
+      );
     }
     if (findTreeInstanceIds(draft.instances, fragmentId).has(parent.id)) {
       return throwBuilderRuntimeError(

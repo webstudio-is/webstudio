@@ -17,6 +17,7 @@ import {
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
+  preconnect,
   requestFullscreen,
   VideoContext,
   type PlayerStatus,
@@ -130,16 +131,6 @@ const getVideoUrl = (options: VimeoOptions) => {
   return url.toString();
 };
 
-const preconnect = (url: string) => {
-  const link = document.createElement("link");
-  link.rel = "preconnect";
-  link.href = url;
-  link.crossOrigin = "true";
-  document.head.appendChild(link);
-};
-
-let warmed = false;
-
 // Host that Vimeo uses to serve JS needed by player
 const PLAYER_CDN = "https://f.vimeocdn.com";
 // The iframe document comes from player.vimeo.com
@@ -148,10 +139,6 @@ const IFRAME_CDN = "https://player.vimeo.com";
 const IMAGE_CDN = "https://i.vimeocdn.com";
 
 const warmConnections = () => {
-  if (warmed) {
-    return;
-  }
-
   if (window.matchMedia("(hover: none)").matches) {
     // Useless on touch devices
     return;
@@ -160,7 +147,6 @@ const warmConnections = () => {
   preconnect(PLAYER_CDN);
   preconnect(IFRAME_CDN);
   preconnect(IMAGE_CDN);
-  warmed = true;
 };
 
 const getVideoId = (url: string) => {
