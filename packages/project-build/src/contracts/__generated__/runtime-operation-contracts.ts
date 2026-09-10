@@ -54765,6 +54765,12 @@ export const runtimeOperationContractData = [
           description:
             "One structured repeated-item fragment. Descendant expressions may reference collectionItem and collectionItemKey.",
         },
+        conflictResolution: {
+          type: "string",
+          enum: ["ours", "theirs", "merge"],
+          description:
+            'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
+        },
         mode: {
           type: "string",
           enum: ["append", "prepend", "replace"],
@@ -74224,6 +74230,8 @@ export const runtimeOperationContractData = [
         },
         scopeInstanceId: {
           type: "string",
+          description:
+            'Instance that exposes the Assets resource. Use ":root" for Global Root.',
         },
         dataSourceName: {
           type: "string",
@@ -74796,6 +74804,8 @@ export const runtimeOperationContractData = [
           required: [],
         },
         scopeInstanceId: {
+          description:
+            'New scope for the Assets resource. Use ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75167,6 +75177,8 @@ export const runtimeOperationContractData = [
           required: ["name", "method", "url", "headers"],
         },
         scopeInstanceId: {
+          description:
+            'Instance that exposes the resource as render-time data. Use ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75426,6 +75438,8 @@ export const runtimeOperationContractData = [
           type: "string",
         },
         scopeInstanceId: {
+          description:
+            'Instance that exposes the resource as render-time data. Use ":root" for Global Root.',
           type: "string",
         },
         exposeAsDataSource: {

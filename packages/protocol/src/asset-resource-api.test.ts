@@ -320,6 +320,7 @@ describe("Assets OpenAPI description", () => {
       "height",
       "force",
       "x-webstudio-asset-description",
+      "x-webstudio-asset-description-encoding",
       "x-webstudio-asset-meta",
     ]);
     expect(uploadContent.parameters[0].schema.maxLength).toBe(

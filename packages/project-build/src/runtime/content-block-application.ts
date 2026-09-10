@@ -25,7 +25,8 @@ import {
   getRequiredComponentInsertData,
 } from "./components";
 import { resolveContentBlockSourceAssetId } from "./block";
-import { computeExpression } from "./data";
+import { computeExpression, findAvailableVariables } from "./data";
+import { bindExpressionInput } from "./expression-scope";
 import { throwBuilderRuntimeError } from "./errors";
 import { materializeMdxSource } from "./mdx-source";
 import {
@@ -53,6 +54,7 @@ export const getMdxAssetSourceBlockInstanceIds = ({
   for (const dataSource of state.dataSources?.values() ?? []) {
     if (dataSource.type === "variable") {
       values.set(dataSource.name, dataSource.value.value);
+      values.set(dataSource.id, dataSource.value.value);
     }
   }
   return Array.from(
@@ -195,10 +197,12 @@ export const createContentBlockApplication = ({
   const resolveSource = ({
     source,
     state,
+    blockInstanceId,
     variables,
   }: {
     source: ContentBlockSource;
     state: BuilderState;
+    blockInstanceId: string;
     variables?: Readonly<Record<string, unknown>>;
   }) => {
     const resolved = resolveSourceAssetId?.({ source, state, variables });
@@ -208,14 +212,25 @@ export const createContentBlockApplication = ({
       }
       return resolved;
     }
-    const values = new Map<string, unknown>();
-    for (const dataSource of state.dataSources?.values() ?? []) {
-      if (dataSource.type === "variable") {
+    const values = new Map<string, unknown>(Object.entries(variables ?? {}));
+    const availableVariables =
+      state.instances === undefined || state.dataSources === undefined
+        ? []
+        : findAvailableVariables({
+            startingInstanceId: blockInstanceId,
+            instances: state.instances,
+            dataSources: state.dataSources,
+          });
+    for (const dataSource of availableVariables) {
+      const supplied =
+        variables !== undefined &&
+        Object.prototype.hasOwnProperty.call(variables, dataSource.name);
+      if (supplied) {
+        values.set(dataSource.id, variables?.[dataSource.name]);
+      } else if (dataSource.type === "variable") {
         values.set(dataSource.name, dataSource.value.value);
+        values.set(dataSource.id, dataSource.value.value);
       }
-    }
-    for (const [name, value] of Object.entries(variables ?? {})) {
-      values.set(name, value);
     }
     const assetId = resolveContentBlockSourceAssetId({ source, values });
     if (assetId !== undefined) {
@@ -274,6 +289,7 @@ export const createContentBlockApplication = ({
     const assetId = resolveSource({
       source,
       state,
+      blockInstanceId,
       variables,
     });
     const sessionState = await session.open(assetId);
@@ -366,11 +382,18 @@ export const createContentBlockApplication = ({
       source,
       variables,
     });
+    const persistedSource =
+      source.type === "expression"
+        ? {
+            ...source,
+            value: bindExpressionInput(state, blockInstanceId, source.value),
+          }
+        : source;
     return {
       ...prepareContentBlockConnect({
         state,
         blockInstanceId,
-        source,
+        source: persistedSource,
       }),
       inspection,
     };
@@ -390,11 +413,18 @@ export const createContentBlockApplication = ({
       source,
       variables,
     });
+    const persistedSource =
+      source.type === "expression"
+        ? {
+            ...source,
+            value: bindExpressionInput(state, blockInstanceId, source.value),
+          }
+        : source;
     return {
       ...prepareContentBlockSwitch({
         state,
         blockInstanceId,
-        source,
+        source: persistedSource,
       }),
       inspection,
     };

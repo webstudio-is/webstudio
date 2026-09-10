@@ -1746,7 +1746,12 @@ export const resourceCreateInput = z
     resourceId: runtimeGeneratedIdInput,
     resource: resourceFieldsInput,
     dataSourceId: runtimeGeneratedIdInput,
-    scopeInstanceId: z.string().optional(),
+    scopeInstanceId: z
+      .string()
+      .optional()
+      .describe(
+        `Instance that exposes the resource as render-time data. Use ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
+      ),
     dataSourceName: z.string().optional(),
     exposeAsDataSource: exposeAsDataSourceInput,
   })
@@ -1769,7 +1774,12 @@ export const resourceUpdateInput = z.object({
   resourceId: z.string(),
   values: resourceFieldsUpdateInput,
   dataSourceName: z.string().optional(),
-  scopeInstanceId: z.string().optional(),
+  scopeInstanceId: z
+    .string()
+    .optional()
+    .describe(
+      `Instance that exposes the resource as render-time data. Use ${JSON.stringify(ROOT_INSTANCE_ID)} for Global Root.`
+    ),
   exposeAsDataSource: exposeAsDataSourceInput,
 });
 
@@ -2596,6 +2606,7 @@ export const createResource = (
     (resourceInput.method === "get" && input.scopeInstanceId !== undefined);
   if (
     exposeAsDataSource &&
+    input.scopeInstanceId !== ROOT_INSTANCE_ID &&
     build.instances.some(
       (instance) => instance.id === input.scopeInstanceId
     ) === false
@@ -2730,6 +2741,7 @@ export const updateResource = (
   }
   if (
     exposeAsDataSource &&
+    scopeInstanceId !== ROOT_INSTANCE_ID &&
     build.instances.some((instance) => instance.id === scopeInstanceId) ===
       false
   ) {

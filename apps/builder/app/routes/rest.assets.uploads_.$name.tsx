@@ -115,7 +115,8 @@ export const action = async (props: ActionFunctionArgs) => {
           ? undefined
           : parseAssetRestIdentifier(folderIdValue);
       const description = parseAssetRestDescription(
-        request.headers.get("x-webstudio-asset-description")
+        request.headers.get("x-webstudio-asset-description"),
+        request.headers.get("x-webstudio-asset-description-encoding")
       );
       if (assetType === undefined) {
         throw new AssetRestRequestError("Asset type is invalid");

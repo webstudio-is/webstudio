@@ -121,15 +121,40 @@ export const parseAssetRestFilename = (value: string | undefined | null) =>
     name: "filename",
   });
 
-export const parseAssetRestDescription = (value: string | undefined | null) => {
-  if (
-    value !== undefined &&
-    value !== null &&
-    value.length > assetResourceLimits.assetDescriptionCharacters
-  ) {
+export const parseAssetRestDescription = (
+  value: string | undefined | null,
+  encoding?: string | null
+) => {
+  if (value === undefined || value === null) {
+    return;
+  }
+  let description = value;
+  if (encoding !== undefined && encoding !== null) {
+    if (encoding !== "base64url") {
+      throw new AssetRestRequestError(
+        "Assets API description encoding is invalid"
+      );
+    }
+    try {
+      const bytes = Buffer.from(value, "base64url");
+      if (
+        /^[A-Za-z0-9_-]*$/.test(value) === false ||
+        bytes.toString("base64url") !== value
+      ) {
+        throw new Error("Invalid base64url");
+      }
+      description = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch (cause) {
+      throw new AssetRestRequestError(
+        "Assets API description encoding is invalid",
+        { cause }
+      );
+    }
+  }
+  if (description.length > assetResourceLimits.assetDescriptionCharacters) {
     throw new AssetRestRequestError("Assets API description is invalid");
   }
-  return value ?? undefined;
+  return description;
 };
 
 export const parseAssetRestMetadataHeader = (

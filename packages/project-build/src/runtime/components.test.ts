@@ -538,6 +538,64 @@ test("binds semantic Collection data to an HTTP resource result", async () => {
   });
 });
 
+test("requires and honors Collection item token conflict resolution", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  for (const styleSource of existingFragment.styleSources) {
+    state.styleSources.set(styleSource.id, styleSource);
+  }
+  for (const style of existingFragment.styles) {
+    state.styles.set(getStyleDeclKey(style), style);
+  }
+  for (const breakpoint of existingFragment.breakpoints) {
+    state.breakpoints.set(breakpoint.id, breakpoint);
+  }
+  const itemFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="article" ws:tokens={[token("brand", css\`color: red;\`)]}>Item</ws.element>`
+  );
+
+  expect(() =>
+    insertCollection(
+      state,
+      {
+        parentInstanceId: parent.id,
+        data: { type: "json", value: [] },
+        itemFragment,
+      },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow(/explicit conflictResolution.*brand/);
+
+  const mutation = insertCollection(
+    state,
+    {
+      parentInstanceId: parent.id,
+      data: { type: "json", value: [] },
+      itemFragment,
+      conflictResolution: "ours",
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(
+    getAddedValues<{ type: string; name: string }>(
+      mutation,
+      "styleSources"
+    ).filter((styleSource) => styleSource.type === "token")
+  ).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toContainEqual(
+    expect.objectContaining({ values: [existingFragment.styleSources[0]?.id] })
+  );
+});
+
 test("binds object Collection keys to the generated itemKey parameter", async () => {
   const parent = createParent();
   const mutation = insertCollection(

@@ -1033,11 +1033,17 @@ export const createAssetResourceOpenApi = ({
               name: "x-webstudio-asset-description",
               in: "header",
               required: false,
-              description: "Asset description",
-              schema: {
-                type: "string",
-                maxLength: assetResourceLimits.assetDescriptionCharacters,
-              },
+              description:
+                "Asset description, encoded according to x-webstudio-asset-description-encoding",
+              schema: { type: "string" },
+            },
+            {
+              name: "x-webstudio-asset-description-encoding",
+              in: "header",
+              required: false,
+              description:
+                "Encoding used for the Asset description header. Omit for legacy ASCII descriptions.",
+              schema: { type: "string", enum: ["base64url"] },
             },
             {
               name: "x-webstudio-asset-meta",

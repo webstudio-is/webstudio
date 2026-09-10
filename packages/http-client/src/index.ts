@@ -374,6 +374,18 @@ type AssetUploadBatchResult =
   | { status: "rejected"; asset: Asset; index: number; error: unknown }
   | { status: "ambiguous"; asset: Asset; index: number; error: unknown };
 
+const encodeAssetDescriptionHeader = (value: string) => {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary)
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+};
+
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -436,6 +448,7 @@ export const uploadAsset = async (
   }
 ): Promise<Asset[]> => {
   const { authToken, headers, origin, projectId, upload } = params;
+  const description = upload.asset.description ?? undefined;
   const result = await requestAssetRestJson<AssetUploadResult>(
     fetchJsonResponse,
     getAssetUploadUrl({
@@ -450,7 +463,12 @@ export const uploadAsset = async (
       headers: createHeaders({
         ...headers,
         "x-auth-token": authToken,
-        "x-webstudio-asset-description": upload.asset.description ?? undefined,
+        "x-webstudio-asset-description":
+          description === undefined
+            ? undefined
+            : encodeAssetDescriptionHeader(description),
+        "x-webstudio-asset-description-encoding":
+          description === undefined ? undefined : "base64url",
         "x-webstudio-asset-meta": JSON.stringify(upload.asset.meta),
         "content-type": "application/octet-stream",
       }),

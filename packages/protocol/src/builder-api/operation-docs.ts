@@ -629,7 +629,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-assets-resource",
     description:
-      'Create a scoped Assets resource. Omit query to use the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown or MDX body; it resolves from storage and is never embedded in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
+      'Create a scoped Assets resource. Use scopeInstanceId ":root" for Global Root data available across pages and Slots. Omit query to use the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown or MDX body; it resolves from storage and is never embedded in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }. Preview concrete queries and inspect size diagnostics before saving.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -638,7 +638,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      'Update an Assets resource. Set query to null to restore the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown or MDX body; it resolves from storage and is never embedded in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
+      'Update an Assets resource. Use scopeInstanceId ":root" for Global Root data available across pages and Slots. Set query to null to restore the minimal default query. Use result many for collections and result one for unique detail routes; first and last require sorting. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false, and using content mode none. Use markdown-body-ref for a directly queried Markdown or MDX body; it resolves from storage and is never embedded in the content database. A structured document may instead select a field such as { "$ref": "./article.md#body" }.',
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",
@@ -669,7 +669,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-resource",
     description:
-      "Create a resource. Add --scope-instance and --data-source-name only when the resource should be exposed as read data; for form/action resources, create it unscoped and bind a prop with bind-props.",
+      'Create a resource. Add --scope-instance and --data-source-name only when the resource should be exposed as read data; use --scope-instance ":root" for Global Root data available across pages and Slots. For form/action resources, create it unscoped and bind a prop with bind-props.',
     requiredOptions: ["name", "method", "url", "json"],
     examples: [
       'webstudio create-resource --name Posts --method get --url "\\"https://api.example.com/posts\\"" --json',
@@ -681,7 +681,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-resource",
     description:
-      "Update resource request fields such as method, url expression, headers, search params, body, or control.",
+      'Update resource request fields such as method, url expression, headers, search params, body, or control. Use scopeInstanceId ":root" for Global Root render data.',
     requiredOptions: ["resource", "json"],
     examples: [
       'webstudio update-resource --resource resource-id --url "\\"https://api.example.com/posts\\"" --json',
