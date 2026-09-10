@@ -618,7 +618,7 @@ test("keeps focus while editing a field key", async () => {
   expect(document.activeElement).toBe(keyControl);
 });
 
-test("switches between field and template settings", async () => {
+test("switches between field, template, and entry page settings", async () => {
   const configAsset = createAsset({
     id: "config",
     filename: "collection",
@@ -651,7 +651,7 @@ test("switches between field and template settings", async () => {
       '[role="listbox"]:not([aria-label="Collection fields"]) [role="option"]'
     )
   );
-  expect(sections).toHaveLength(2);
+  expect(sections).toHaveLength(3);
   expect(sections[0]?.getAttribute("aria-current")).toBe("true");
   act(() => sections[1]?.click());
   expect(sections[0]?.hasAttribute("aria-current")).toBe(false);
@@ -677,6 +677,10 @@ test("switches between field and template settings", async () => {
   input(templateName, "post-template");
   expect(templateName.value).toBe("post-template");
   expect(document.querySelector("#collection-entry-template")).toBeNull();
+  act(() => sections[2]?.click());
+  expect(document.querySelector('[aria-label="Entry page"]')).toBeInstanceOf(
+    HTMLButtonElement
+  );
 });
 
 test("persists a template rename without rewriting unchanged template content", async () => {

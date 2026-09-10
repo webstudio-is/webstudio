@@ -4794,6 +4794,7 @@ describe("project session mcp adapter", () => {
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: expect.objectContaining({
+          collectionSchema: expect.any(Object),
           executionOrder: [
             { tool: "create-asset-folder", calls: 1 },
             { tool: "upload-assets", calls: 1 },
@@ -4887,6 +4888,26 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    const collectionSchema = (
+      markdownBlogGuide.structuredContent.data as {
+        recipe: {
+          collectionSchema: {
+            properties: Record<string, { description?: unknown }>;
+          };
+        };
+      }
+    ).recipe.collectionSchema;
+    expect(Object.keys(collectionSchema.properties)).toEqual([
+      "title",
+      "slug",
+      "draft",
+    ]);
+    expect(
+      Object.values(collectionSchema.properties).every(
+        ({ description }) =>
+          typeof description === "string" && description.length > 0
+      )
+    ).toBe(true);
     const markdownBlogRecipe = (
       markdownBlogGuide.structuredContent.data as {
         recipe: {

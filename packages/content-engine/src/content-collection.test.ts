@@ -545,7 +545,7 @@ describe("content collections", () => {
     });
   });
 
-  test("ignores and removes the obsolete dynamic preview setting", () => {
+  test("ignores and removes the obsolete automatic preview setting", () => {
     const schema = JSON.parse(createDefaultCollectionConfig());
     schema["x-webstudio"].previewPage = "blog-post";
     const config = parseCollectionConfig(JSON.stringify(schema));
@@ -556,6 +556,19 @@ describe("content collections", () => {
         "x-webstudio"
       ]
     ).not.toHaveProperty("previewPage");
+  });
+
+  test("preserves the optional entry page used by explicit canvas navigation", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema["x-webstudio"].entryPageId = "article-page";
+    const config = parseCollectionConfig(JSON.stringify(schema));
+
+    expect(config.entryPageId).toBe("article-page");
+    expect(
+      JSON.parse(serializeCollectionConfig({ config, fields: config.fields }))[
+        "x-webstudio"
+      ].entryPageId
+    ).toBe("article-page");
   });
 
   test("requires a separate field for automatic slug generation", () => {
@@ -592,6 +605,28 @@ describe("content collections", () => {
       "x-webstudio": { help: "Start with a capital letter" },
     });
     expect(serialized["x-webstudio"].customSetting).toBe("keep");
+  });
+
+  test("exposes and edits field descriptions through the collection model", () => {
+    const schema = JSON.parse(createDefaultCollectionConfig());
+    schema.properties.title.description = "The article headline.";
+    const config = parseCollectionConfig(JSON.stringify(schema));
+
+    expect(config.fields.find(({ key }) => key === "title")?.description).toBe(
+      "The article headline."
+    );
+
+    const fields = config.fields.map((field) =>
+      field.key === "title"
+        ? { ...field, description: "A concise article headline." }
+        : field
+    );
+    const serialized = JSON.parse(
+      serializeCollectionConfig({ config, fields })
+    );
+    expect(serialized.properties.title.description).toBe(
+      "A concise article headline."
+    );
   });
 
   test("rejects JSON Schema semantics outside the supported subset", () => {

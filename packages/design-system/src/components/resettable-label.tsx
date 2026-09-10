@@ -34,6 +34,8 @@ export const ResettableLabel = ({
   const labelRef = useRef<HTMLLabelElement>(null);
   const resetRef = useRef<HTMLButtonElement>(null);
   const movingFocus = useRef(false);
+  const pointerOverLabel = useRef(false);
+  const openedByClick = useRef(false);
   const canReset = onReset !== undefined && !resetDisabled && !disabled;
   const reset = () => {
     if (!canReset) {
@@ -68,6 +70,9 @@ export const ResettableLabel = ({
           if (!nextOpen && movingFocus.current) {
             return;
           }
+          if (!nextOpen && openedByClick.current && pointerOverLabel.current) {
+            return;
+          }
           setOpen(nextOpen);
         }}
         onEscapeKeyDown={() => {
@@ -80,12 +85,7 @@ export const ResettableLabel = ({
             gap="2"
             css={{ maxWidth: theme.spacing[28] }}
           >
-            {content ?? (
-              <>
-                <Text variant="titles">{children}</Text>
-                {description && <Text>{description}</Text>}
-              </>
-            )}
+            {content ?? (description && <Text>{description}</Text>)}
             {onReset && (
               <Button
                 ref={resetRef}
@@ -113,6 +113,15 @@ export const ResettableLabel = ({
           tag={props.htmlFor ? "label" : "button"}
           role="button"
           tabIndex={props.tabIndex ?? 0}
+          onPointerEnter={(event) => {
+            props.onPointerEnter?.(event);
+            pointerOverLabel.current = true;
+          }}
+          onPointerLeave={(event) => {
+            props.onPointerLeave?.(event);
+            pointerOverLabel.current = false;
+            openedByClick.current = false;
+          }}
           onClick={(event) => {
             props.onClick?.(event);
             if (event.defaultPrevented) {
@@ -124,6 +133,7 @@ export const ResettableLabel = ({
               reset();
               return;
             }
+            openedByClick.current = true;
             setOpen(true);
           }}
           onKeyDown={(event) => {

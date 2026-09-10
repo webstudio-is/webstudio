@@ -19,6 +19,8 @@ import { EllipsesIcon } from "@webstudio-is/icons";
 export type AssetManagerItemActions = Partial<
   Record<
     | "open"
+    | "editFile"
+    | "openOnCanvas"
     | "settings"
     | "entrySettings"
     | "collectionSettings"
@@ -56,6 +58,8 @@ const itemDefinitions: readonly ItemDefinition[] = [
   { name: "createFile", label: "Create text file" },
   { name: "upload", label: "Upload asset" },
   { name: "open", label: "Open" },
+  { name: "editFile", label: "Edit file" },
+  { name: "openOnCanvas", label: "Open on canvas" },
   { name: "settings", label: "Settings" },
   { name: "entrySettings", label: "Entry settings" },
   { name: "collectionSettings", label: "Collection settings" },

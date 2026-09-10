@@ -139,7 +139,9 @@ Their asset **Settings** remain available to collection designers: Name is
 read-only and Folder is disabled, while Description remains editable.
 
 Open **Collection settings → Fields** and select a field from the list.
-Edit **Label** and **Field key** together, then choose the field's **Type**.
+Edit **Label** and **Field key** together, add a **Description** that tells
+editors what to enter, then choose the field's **Type**. The description appears
+as help in entry forms without repeating the field label.
 Set required fields and length or number limits under **Validation**.
 Choose **Add field** to add another entry field. The configurator writes the
 schema; designers do not need to edit JSON.
@@ -147,6 +149,12 @@ schema; designers do not need to edit JSON.
 Use the **Entry template** tab to rename the entry template and edit its default
 frontmatter and starter content with the built-in Markdown editor. Creating
 an entry keeps you on the current page.
+
+Use the **Entry page** tab to choose the page that displays collection entries.
+The page can be static or have one URL parameter, such as `/blog/:slug`.
+This enables **Open on canvas** in an entry's menu and in **Entry settings**;
+Webstudio fills the page parameter with the entry filename. It does not navigate
+automatically when an editor creates an entry.
 
 The collection format uses a supported subset of JSON Schema draft 2020-12.
 The configurator exposes string, number, integer, boolean, and slug fields,
@@ -158,6 +166,7 @@ objects are not supported. Slug fields reference Webstudio's bundled schema:
 {
   "$ref": "https://webstudio.is/schemas/slug",
   "title": "URL slug",
+  "description": "The URL-safe name used in this entry's web address.",
   "maxLength": 120,
   "x-webstudio": { "control": "slug" }
 }
@@ -204,17 +213,19 @@ value is different from an omitted value. Optional boolean fields offer
 Collection settings save automatically when valid. Webstudio checks the entry
 template against the new rules. Existing entries remain editable if a rule changes.
 The open collection folder checks entry frontmatter in the background and shows
-a warning when an entry needs attention. Select an entry's error indicator or
-choose **Entry settings** from its menu to edit its fields using the same controls
-as **New entry**. Edits save automatically, including partial repairs. Unknown
-frontmatter properties and the MDX body are preserved. Slugs remain fixed to the
-filename; an existing mismatch has a repair action.
+a warning when an entry needs attention. Choose **Review first entry**, select
+an entry's error indicator, or choose **Entry settings** from its menu to edit
+its fields using the same controls as **New entry**. Edits save automatically,
+including partial repairs. Unknown frontmatter properties and the MDX body are
+preserved. Slugs remain fixed to the filename; an existing mismatch has a repair
+action.
 
-Use **Open MDX file** to edit the body or inspect unconfigured fields. Invalid field
-values are underlined in the source editor; hover them for details. Content-mode
-text and number controls bound to these fields also show their collection errors.
-Fixing the values clears the errors. A field error does not hide the entry,
-stop the collection rendering, or block publication of unrelated changes.
+Use **Edit file** to edit the body or inspect unconfigured fields. Use **Open on
+canvas** to edit the configured entry page visually. Invalid field values are
+underlined in the source editor; hover them for details. Content-mode text and
+number controls bound to these fields also show their collection errors. Fixing
+the values clears the errors. A field error does not hide the entry, stop the
+collection rendering, or block publication of unrelated changes.
 
 These checks read bounded file prefixes for direct entries in the open folder,
 with at most four reads at once. Frontmatter is cached by file revision while

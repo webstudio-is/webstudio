@@ -125,6 +125,7 @@ type AssetManagerProps = FolderNavigationProps & {
   onChange?: (assetId: Asset["id"]) => void;
   onOpen?: (assetId: Asset["id"]) => void;
   onEntrySettings?: (assetId: Asset["id"]) => void;
+  onEntryOpenOnCanvas?: (assetId: Asset["id"]) => void;
   /** acceptable file types in the `<input accept>` attribute format */
   accept?: string;
   canManageFolders?: boolean;
@@ -184,6 +185,7 @@ export const AssetManager = ({
   folderNotice,
   entryIssues,
   onEntrySettings,
+  onEntryOpenOnCanvas,
 }: AssetManagerProps) => {
   const assets = useStore($assets);
   const effectiveCollections = useMemo(() => {
@@ -1390,6 +1392,15 @@ export const AssetManager = ({
                       assetContainer.asset.folderId ?? ""
                     )?.status === "ready"
                       ? () => onEntrySettings(assetContainer.asset.id)
+                      : undefined
+                  }
+                  onEntryOpenOnCanvas={
+                    onEntryOpenOnCanvas !== undefined &&
+                    collectionEntryAssetIds.has(assetContainer.asset.id) &&
+                    effectiveCollections.get(
+                      assetContainer.asset.folderId ?? ""
+                    )?.status === "ready"
+                      ? () => onEntryOpenOnCanvas(assetContainer.asset.id)
                       : undefined
                   }
                   entryError={entryIssues

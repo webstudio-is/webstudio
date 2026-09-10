@@ -175,6 +175,7 @@ type AssetThumbnailProps = {
   onChange?: (assetContainer: AssetContainer) => void;
   onOpen?: () => void;
   onEntrySettings?: () => void;
+  onEntryOpenOnCanvas?: () => void;
   selected?: boolean;
   forcedSelection?: boolean;
   folderPath?: string;
@@ -194,6 +195,7 @@ export const AssetThumbnail = ({
   onChange,
   onOpen,
   onEntrySettings,
+  onEntryOpenOnCanvas,
   selected,
   forcedSelection,
   folderPath,
@@ -259,7 +261,9 @@ export const AssetThumbnail = ({
     assetContainer.status === "uploading"
       ? {}
       : {
-          open: onOpen,
+          ...(isCollectionEntry
+            ? { editFile: onOpen, openOnCanvas: onEntryOpenOnCanvas }
+            : { open: onOpen }),
           entrySettings: onEntrySettings,
           settings: settingsBlocked
             ? undefined

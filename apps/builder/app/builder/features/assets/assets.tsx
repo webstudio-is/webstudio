@@ -24,6 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   formatAssetName,
+  getAssetDisplayNameParts,
   getAssetUrl,
   isTextFileAsset,
 } from "@webstudio-is/sdk";
@@ -42,7 +43,7 @@ import {
   type createContentCollectionFolder,
 } from "~/builder/shared/asset-manager/asset-folder-dialogs";
 import { $authPermit, $isContentMode } from "~/shared/nano-states";
-import { $assets, $project } from "~/shared/sync/data-stores";
+import { $assets, $pages, $project } from "~/shared/sync/data-stores";
 import {
   $settings,
   getSetting,
@@ -64,6 +65,9 @@ import {
 import { useCollectionEntryValidation } from "~/builder/shared/assets/use-collection-entry-validation";
 import { CollectionEntrySettingsDialog } from "~/builder/shared/asset-manager/collection-entry-settings-dialog";
 import type { Asset } from "@webstudio-is/sdk";
+import { selectPage } from "~/shared/nano-states/pages";
+import { updateCurrentSystem } from "~/shared/system";
+import { getCollectionEntryCanvasTarget } from "~/builder/shared/asset-manager/collection-entry-navigation";
 
 export const AssetsPanel = ({
   publish,
@@ -74,6 +78,7 @@ export const AssetsPanel = ({
   createCollection?: typeof createContentCollectionFolder;
 }) => {
   const projectId = useStore($project)?.id;
+  const pages = useStore($pages);
   const settings = useStore($settings);
   const folderId =
     projectId === undefined
@@ -232,6 +237,34 @@ export const AssetsPanel = ({
       "noopener,noreferrer"
     );
   };
+  const openEntrySettings = (assetId: string) => {
+    const asset = $assets.get().get(assetId);
+    const collection = collections.get(asset?.folderId ?? "");
+    if (asset !== undefined && collection?.status === "ready") {
+      setEntrySettings({ asset, collection });
+    }
+  };
+  const getEntryCanvasTarget = (
+    asset: Asset,
+    collection: Extract<ContentCollection, { status: "ready" }>
+  ) =>
+    getCollectionEntryCanvasTarget({
+      entryPageId: collection.config.entryPageId,
+      entryBasename: getAssetDisplayNameParts(asset).basename,
+      pages,
+    });
+  const openEntryOnCanvas = (
+    asset: Asset,
+    collection: Extract<ContentCollection, { status: "ready" }>
+  ) => {
+    const target = getEntryCanvasTarget(asset, collection);
+    if (target === undefined) {
+      return;
+    }
+    setEntrySettings(undefined);
+    selectPage(target.pageId);
+    updateCurrentSystem({ params: target.params });
+  };
   useImageAssetCanvasDrag(publish);
   return (
     <>
@@ -341,11 +374,28 @@ export const AssetsPanel = ({
                     <Text>
                       {entryValidation.issues.size}{" "}
                       {entryValidation.issues.size === 1
-                        ? "entry needs"
-                        : "entries need"}{" "}
-                      attention. Open a marked entry to inspect it.
+                        ? "entry has"
+                        : "entries have"}{" "}
+                      fields that do not match this collection. Review Entry
+                      settings to see and fix each field.
                     </Text>
-                    <Button onClick={entryValidation.retry}>Check again</Button>
+                    <Flex gap={2} wrap="wrap">
+                      <Button
+                        onClick={() => {
+                          const firstAssetId = entryValidation.issues
+                            ?.keys()
+                            .next().value;
+                          if (firstAssetId !== undefined) {
+                            openEntrySettings(firstAssetId);
+                          }
+                        }}
+                      >
+                        Review first entry
+                      </Button>
+                      <Button onClick={entryValidation.retry}>
+                        Check again
+                      </Button>
+                    </Flex>
                   </Flex>
                 </PanelBanner>
               )}
@@ -403,13 +453,22 @@ export const AssetsPanel = ({
         onConfigureCollection={configureCollection}
         createCollection={createCollection}
         onOpen={openAsset}
-        onEntrySettings={(assetId) => {
-          const asset = $assets.get().get(assetId);
-          const collection = collections.get(asset?.folderId ?? "");
-          if (asset !== undefined && collection?.status === "ready") {
-            setEntrySettings({ asset, collection });
-          }
-        }}
+        onEntrySettings={openEntrySettings}
+        onEntryOpenOnCanvas={
+          currentCollection?.status === "ready" &&
+          getCollectionEntryCanvasTarget({
+            entryPageId: currentCollection.config.entryPageId,
+            entryBasename: "entry",
+            pages,
+          }) !== undefined
+            ? (assetId) => {
+                const asset = $assets.get().get(assetId);
+                if (asset !== undefined) {
+                  openEntryOnCanvas(asset, currentCollection);
+                }
+              }
+            : undefined
+        }
         canManageFolders={canManageFolders}
         panelActions={{
           ...(authPermit === "view"
@@ -497,6 +556,18 @@ export const AssetsPanel = ({
           {...entrySettings}
           onClose={() => setEntrySettings(undefined)}
           onOpenFile={() => openAsset(entrySettings.asset.id)}
+          onOpenCanvas={
+            getEntryCanvasTarget(
+              entrySettings.asset,
+              entrySettings.collection
+            ) === undefined
+              ? undefined
+              : () =>
+                  openEntryOnCanvas(
+                    entrySettings.asset,
+                    entrySettings.collection
+                  )
+          }
         />
       )}
       {settingsCollection !== undefined &&

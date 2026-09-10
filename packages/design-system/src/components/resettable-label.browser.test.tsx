@@ -179,3 +179,44 @@ test.each([true, false])(
     expect(reset.disabled).toBe(disabled);
   }
 );
+
+test("click opens immediately and keeps the tooltip open while the label stays hovered", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider delayDuration={500}>
+        <ResettableLabel description="Shown to editors">
+          Summary
+        </ResettableLabel>
+      </TooltipProvider>
+    )
+  );
+  const label = container.querySelector<HTMLElement>('[role="button"]')!;
+  await act(async () => userEvent.hover(label));
+  await act(async () => userEvent.click(label));
+  expect(document.querySelector('[role="tooltip"]')).not.toBeNull();
+
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 600)));
+  expect(document.querySelector('[role="tooltip"]')).not.toBeNull();
+});
+
+test("shows a description without repeating the property label", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider delayDuration={0}>
+        <ResettableLabel description="Shown to editors">
+          Summary
+        </ResettableLabel>
+      </TooltipProvider>
+    )
+  );
+  const label = container.querySelector<HTMLElement>('[role="button"]')!;
+  await act(async () => userEvent.hover(label));
+  const tooltip = document.querySelector('[role="tooltip"]')!;
+  expect(tooltip.textContent).toBe("Shown to editors");
+});

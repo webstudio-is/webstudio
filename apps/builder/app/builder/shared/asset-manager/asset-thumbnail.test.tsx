@@ -206,6 +206,38 @@ test.each([false, true])(
     }
   }
 );
+
+test("uses entry-specific edit and canvas actions", () => {
+  const onOpen = vi.fn();
+  const onEntryOpenOnCanvas = vi.fn();
+  const container = renderer.render(
+    <TooltipProvider>
+      {createUploadedAssetThumbnail({
+        isCollectionEntry: true,
+        onOpen,
+        onEntryOpenOnCanvas,
+      })}
+    </TooltipProvider>
+  );
+  act(() => {
+    container
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Actions for document.pdf"]'
+      )
+      ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+  });
+  const menuItems = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  );
+  expect(menuItems.map((item) => item.textContent)).toEqual(
+    expect.arrayContaining(["Edit file", "Open on canvas"])
+  );
+  expect(menuItems.map((item) => item.textContent)).not.toContain("Open");
+  act(() =>
+    menuItems.find((item) => item.textContent === "Open on canvas")?.click()
+  );
+  expect(onEntryOpenOnCanvas).toHaveBeenCalledOnce();
+});
 registerContainers();
 vi.stubGlobal(
   "ResizeObserver",
