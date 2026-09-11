@@ -104,7 +104,7 @@ const maxConcurrentAssetMetadataPostgrestRequests = Math.ceil(
 // longer than Asset ids, so a fixed item count cannot provide the same bound.
 const maxPostgrestInFilterCharacters = 4 * 1024;
 
-const chunkPostgrestInValues = (values: Iterable<string>) => {
+export const chunkPostgrestFileNames = (values: Iterable<string>) => {
   const chunks: string[][] = [];
   let chunk: string[] = [];
   for (const value of new Set(values)) {
@@ -139,7 +139,7 @@ const loadUploadedFilesByNames = async ({
   names: Iterable<string>;
   client: Client;
 }) => {
-  const chunks = chunkPostgrestInValues(names);
+  const chunks = chunkPostgrestFileNames(names);
   return (
     await mapBounded(
       chunks,
@@ -165,7 +165,7 @@ const restoreUploadedFilesByNames = async ({
   client: Client;
 }) => {
   await mapBounded(
-    chunkPostgrestInValues(names),
+    chunkPostgrestFileNames(names),
     maxConcurrentAssetMetadataPostgrestRequests,
     async (chunk) => {
       const restoredFiles = await client
