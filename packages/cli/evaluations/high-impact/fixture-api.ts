@@ -20,6 +20,9 @@ import {
   getAssetContentApiUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
+  assetDescriptionEncoding,
+  assetDescriptionEncodingHeader,
+  assetDescriptionHeader,
   assetContentDescriptorHeader,
   serializeAssetContentDescriptor,
 } from "@webstudio-is/protocol/asset-resource-api";
@@ -306,14 +309,21 @@ export const startHighImpactFixtureApi = async (
         ) {
           throw new Error("Invalid asset upload request.");
         }
-        const description = request.headers["x-webstudio-asset-description"];
+        const descriptionHeader = request.headers[assetDescriptionHeader];
+        const description =
+          typeof descriptionHeader !== "string"
+            ? null
+            : request.headers[assetDescriptionEncodingHeader] ===
+                assetDescriptionEncoding
+              ? Buffer.from(descriptionHeader, "base64url").toString("utf8")
+              : descriptionHeader;
         const folderId = url.searchParams.get("folderId") ?? undefined;
         const assetBase = {
           id: `evaluation-asset-${generatedId++}`,
           projectId,
           name,
           filename: getFileNameParts(name).basename,
-          description: typeof description === "string" ? description : null,
+          description,
           size: body.byteLength,
           ...(folderId === undefined ? {} : { folderId }),
           createdAt: "2026-01-01T00:00:00.000Z",

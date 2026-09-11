@@ -26,6 +26,8 @@ const createContext = (
       Promise.resolve({
         ...defaultPlanFeatures,
         maxWorkspaces: 20,
+        maxDailyPublishesPerUser: 100,
+        seatsIncluded: 4,
       }),
     ...overrides,
   }) as unknown as AppContext;
@@ -43,6 +45,7 @@ describe("userPublishCount", () => {
       db.get("WorkspaceProjectAuthorization", () =>
         json([{ relation: "editors" }])
       ),
+      db.get("Product", () => json([])),
       db.get("user_publish_count", ({ request }) => {
         const url = new URL(request.url);
         expect(url.searchParams.get("user_id")).toBe("eq.owner-1");
@@ -53,7 +56,7 @@ describe("userPublishCount", () => {
     const caller = createCaller(createContext());
     const result = await caller.userPublishCount({ projectId: "proj-1" });
 
-    expect(result).toEqual({ success: true, data: 42 });
+    expect(result).toEqual({ success: true, data: 42, limit: 500 });
   });
 
   test("counts publishes for the caller when projectId is omitted", async () => {

@@ -32,6 +32,7 @@ import {
   PanelBanner,
   panelBannerIconColor,
   rawTheme,
+  ResettableLabel,
   ScrollAreaNative,
   Select,
   Separator,
@@ -47,9 +48,13 @@ import {
   TrashIcon,
   ListViewIcon,
 } from "@webstudio-is/icons";
-import { formatAssetName, getAssetDisplayNameParts } from "@webstudio-is/sdk";
+import {
+  formatAssetName,
+  getAllPages,
+  getAssetDisplayNameParts,
+} from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
-import { $assets, $project } from "~/shared/sync/data-stores";
+import { $assets, $pages, $project } from "~/shared/sync/data-stores";
 import {
   executeRuntimeMutationAsync,
   getWebstudioData,
@@ -66,6 +71,7 @@ import {
 } from "../assets/content-collections";
 import { MarkdownEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import { getTextFileEditorExtensions } from "~/builder/features/text-file-editor/text-file-utils";
+import { getCollectionEntryPage } from "./collection-entry-navigation";
 
 type EditableType =
   | "Text"
@@ -75,13 +81,14 @@ type EditableType =
   | "Whole number"
   | "Boolean";
 type EditableCollectionField = CollectionField & { rowId: string };
-type SettingsSection = "fields" | "template";
+type SettingsSection = "fields" | "template" | "entryPage";
 const settingsSections: readonly {
   id: SettingsSection;
   label: string;
 }[] = [
   { id: "fields", label: "Fields" },
   { id: "template", label: "Entry template" },
+  { id: "entryPage", label: "Entry page" },
 ];
 const fieldTypes: readonly EditableType[] = [
   "Text",
@@ -124,6 +131,7 @@ const setFieldType = (
     key: field.key,
     originalKey: field.originalKey,
     label: field.label,
+    description: field.description,
     required: field.required,
   };
   if (type === "Boolean") {
@@ -386,6 +394,7 @@ export const CollectionSettingsDialog = ({
   const [generateSlugFrom, setGenerateSlugFrom] = useState(
     collection.config.generateSlugFrom
   );
+  const [entryPageId, setEntryPageId] = useState(collection.config.entryPageId);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -400,6 +409,22 @@ export const CollectionSettingsDialog = ({
   const [converting, setConverting] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const assets = useStore($assets);
+  const pages = useStore($pages);
+  const entryPageOptions = useMemo(
+    () =>
+      pages === undefined
+        ? []
+        : getAllPages(pages).flatMap((page) => {
+            const entryPage = getCollectionEntryPage({
+              entryPageId: page.id,
+              pages,
+            });
+            return entryPage === undefined
+              ? []
+              : [{ id: page.id, label: `${page.name} · ${entryPage.path}` }];
+          }),
+    [pages]
+  );
   const templateKey = collection.templateAsset.id;
   const templateReady = loadedTemplateKey === templateKey;
   const formDisabled = loading || closing || converting;
@@ -432,6 +457,7 @@ export const CollectionSettingsDialog = ({
     currentTemplateAssetRef.current = collection.templateAsset;
     setSlugField(collection.config.slugField);
     setGenerateSlugFrom(collection.config.generateSlugFrom);
+    setEntryPageId(collection.config.entryPageId);
     setError(undefined);
     setSaveUncertain(false);
     setShowKeyErrors(false);
@@ -530,6 +556,7 @@ export const CollectionSettingsDialog = ({
     templateName,
     slugField,
     generateSlugFrom,
+    entryPageId,
   });
   const initialDraft = JSON.stringify({
     fields: persistedFields.current,
@@ -537,6 +564,7 @@ export const CollectionSettingsDialog = ({
     templateName: getAssetDisplayNameParts(collection.templateAsset).basename,
     slugField: collection.config.slugField,
     generateSlugFrom: collection.config.generateSlugFrom,
+    entryPageId: collection.config.entryPageId,
   });
   const isDirty = draft !== (savedDraft.current ?? initialDraft);
   const requestClose = async () => {
@@ -632,6 +660,7 @@ export const CollectionSettingsDialog = ({
           template: nextTemplateFilename,
           slugField: nextSlugField,
           generateSlugFrom: nextGenerateSlugFrom,
+          entryPageId,
         },
       });
       const nextConfig = parseCollectionConfig(configSource);
@@ -1136,6 +1165,26 @@ export const CollectionSettingsDialog = ({
                               </Grid>
                             </Grid>
                             <Grid gap={1}>
+                              <Label
+                                htmlFor={`collection-field-description-${field.rowId}`}
+                              >
+                                Description
+                              </Label>
+                              <InputField
+                                id={`collection-field-description-${field.rowId}`}
+                                aria-label={`${field.label || "New field"} description`}
+                                placeholder="Help editors understand what to enter"
+                                value={field.description ?? ""}
+                                disabled={formDisabled}
+                                onChange={(event) =>
+                                  updateField(index, {
+                                    ...field,
+                                    description: event.target.value,
+                                  })
+                                }
+                              />
+                            </Grid>
+                            <Grid gap={1}>
                               <Flex gap={1} align="center">
                                 <Label>Type</Label>
                                 {protectedField && (
@@ -1514,6 +1563,63 @@ export const CollectionSettingsDialog = ({
                     onChange={setTemplate}
                     onChangeComplete={setTemplate}
                   />
+                </Grid>
+              </PanelContent>
+              <PanelContent
+                as={Grid}
+                css={{
+                  display: activeSection === "entryPage" ? "grid" : "none",
+                  alignContent: "start",
+                  gap: theme.spacing[3],
+                }}
+              >
+                <Flex gap={1} align="center">
+                  <Text variant="titles">Entry page</Text>
+                  <Tooltip
+                    variant="wrapped"
+                    content="Choose the dynamic page that displays entries from this collection. Editors can then open an entry on the canvas from its menu or settings. The page must have one URL parameter."
+                  >
+                    <InfoCircleIcon
+                      color={cssVar("--foreground-secondary")}
+                      tabIndex={0}
+                      aria-label="About entry page"
+                    />
+                  </Tooltip>
+                </Flex>
+                <Grid gap={1} css={{ maxWidth: 400 }}>
+                  <ResettableLabel
+                    htmlFor="collection-entry-page"
+                    resetDisabled={formDisabled}
+                    onReset={
+                      entryPageId === undefined
+                        ? undefined
+                        : () => setEntryPageId(undefined)
+                    }
+                  >
+                    Page
+                  </ResettableLabel>
+                  <Select
+                    id="collection-entry-page"
+                    aria-label="Entry page"
+                    options={entryPageOptions}
+                    value={entryPageOptions.find(
+                      (option) => option.id === entryPageId
+                    )}
+                    placeholder="No entry page"
+                    getValue={(option) => option.id}
+                    getLabel={(option) => option.label}
+                    disabled={formDisabled || pages === undefined}
+                    onChange={(option) => setEntryPageId(option.id)}
+                  />
+                  {entryPageId !== undefined &&
+                    entryPageOptions.some(
+                      (option) => option.id === entryPageId
+                    ) === false && (
+                      <Text color="destructive" role="alert">
+                        The configured page no longer exists or has more than
+                        one URL parameter. Choose another page.
+                      </Text>
+                    )}
                 </Grid>
               </PanelContent>
             </Grid>

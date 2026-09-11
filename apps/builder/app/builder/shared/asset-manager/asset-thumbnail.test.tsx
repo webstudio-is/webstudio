@@ -206,6 +206,72 @@ test.each([false, true])(
     }
   }
 );
+
+test("uses entry-specific edit and canvas actions", () => {
+  const onOpen = vi.fn();
+  const onEntryOpenOnCanvas = vi.fn();
+  const container = renderer.render(
+    <TooltipProvider>
+      {createUploadedAssetThumbnail({
+        isCollectionEntry: true,
+        onOpen,
+        onEntryOpenOnCanvas,
+      })}
+    </TooltipProvider>
+  );
+  act(() => {
+    container
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Actions for document.pdf"]'
+      )
+      ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+  });
+  const menuItems = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  );
+  expect(menuItems.map((item) => item.textContent)).toEqual(
+    expect.arrayContaining(["Edit file", "Open on canvas"])
+  );
+  expect(menuItems.map((item) => item.textContent)).not.toContain("Open");
+  act(() =>
+    menuItems.find((item) => item.textContent === "Open on canvas")?.click()
+  );
+  expect(onEntryOpenOnCanvas).toHaveBeenCalledOnce();
+});
+
+test("shows unavailable canvas navigation instead of hiding it", async () => {
+  const container = renderer.render(
+    <TooltipProvider delayDuration={0}>
+      {createUploadedAssetThumbnail({
+        isCollectionEntry: true,
+        onOpen: vi.fn(),
+      })}
+    </TooltipProvider>
+  );
+  act(() => {
+    container
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Actions for document.pdf"]'
+      )
+      ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+  });
+  const openOnCanvas = document.body.querySelector<HTMLElement>(
+    '[role="menuitem"][aria-label^="Open on canvas."]'
+  );
+  expect(openOnCanvas).not.toBeNull();
+  expect(openOnCanvas).toHaveAttribute("data-disabled");
+  expect(openOnCanvas?.querySelector("svg")).not.toBeNull();
+  act(() => {
+    openOnCanvas?.dispatchEvent(
+      new PointerEvent("pointermove", { bubbles: true, pointerType: "mouse" })
+    );
+  });
+  await vi.waitFor(() =>
+    expect(document.body.querySelector('[role="tooltip"]')).toHaveTextContent(
+      "Choose a dynamic Entry page with one URL parameter in Collection settings."
+    )
+  );
+});
 registerContainers();
 vi.stubGlobal(
   "ResizeObserver",
@@ -928,7 +994,9 @@ describe("AssetThumbnail", () => {
       const interactions = createInteractions();
       let convertFromContext: (() => void) | undefined;
       interactions.onContextMenuActions = (actions) => {
-        convertFromContext = actions.convertCollection;
+        if (typeof actions.convertCollection === "function") {
+          convertFromContext = actions.convertCollection;
+        }
       };
       const container = renderer.render(
         <TooltipProvider>

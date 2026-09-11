@@ -3,6 +3,7 @@ import {
   blockBodyComponent,
   blockComponent,
   blockTemplateComponent,
+  encodeDataSourceVariable,
   getContentBlockSource,
   type Asset,
 } from "@webstudio-is/sdk";
@@ -151,8 +152,8 @@ describe("createContentBlockApplication", () => {
   });
   test("inspects an Asset in each resolvable Content Block context", async () => {
     const fixture = createFixture();
-    fixture.state.dataSources?.set("selectedAsset", {
-      id: "selectedAsset",
+    fixture.state.dataSources?.set("selectedAssetId", {
+      id: "selectedAssetId",
       scopeInstanceId: "block",
       name: "selectedAsset",
       type: "variable",
@@ -329,6 +330,13 @@ describe("createContentBlockApplication", () => {
 
   test("resolves a supplied Assets resource result", async () => {
     const fixture = createFixture();
+    fixture.state.dataSources?.set("postDataSource", {
+      id: "postDataSource",
+      scopeInstanceId: "block",
+      name: "post",
+      type: "resource",
+      resourceId: "postResource",
+    });
 
     const connected = await fixture.application.connect({
       state: fixture.state,
@@ -348,7 +356,21 @@ describe("createContentBlockApplication", () => {
         blockInstanceId: "block",
         props: connectedState.props?.values() ?? [],
       })
-    ).toEqual({ type: "expression", value: "post.data.id" });
+    ).toEqual({
+      type: "expression",
+      value: `${encodeDataSourceVariable("postDataSource")}.data.id`,
+    });
+    await expect(
+      fixture.application.inspect({
+        state: connectedState,
+        blockInstanceId: "block",
+        renderScope: "page:/articles/example",
+        variables: { post: { data: { id: "asset" } } },
+      })
+    ).resolves.toMatchObject({
+      identity: { assetId: "asset" },
+      source: "# From file",
+    });
   });
 
   test("explains unresolved Assets resource expressions without exposing values", async () => {

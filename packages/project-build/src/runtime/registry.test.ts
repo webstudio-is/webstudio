@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   getInputJsonSchemaMetadata,
+  ROOT_INSTANCE_ID,
   toInputJsonSchemaObject,
   type Assets,
   type InputJsonSchema,
@@ -34,6 +35,7 @@ import { listFonts } from "./fonts";
 import { listAssets } from "./assets";
 import { bindProps, deleteProps, updateProps } from "./props";
 import type { BuilderState } from "../state/builder-state";
+import { applyBuilderPatchTransactions } from "../state/patch";
 import type { SemanticValidationIssue } from "./errors";
 import {
   context,
@@ -42,6 +44,7 @@ import {
 } from "./runtime.test-fixtures";
 import { createResourceCollectionIntegrationFixture } from "./runtime-ui.test-fixture";
 import type { ContentBlockApplication } from "./content-block-application";
+import type { BuilderRuntimeMutation } from "./mutation";
 
 const hasDirectInputProperty = (
   schema: InputJsonSchema | undefined,
@@ -1979,6 +1982,58 @@ describe("builder runtime read families", () => {
     expect(
       JSON.stringify((repaired as { payload: unknown }).payload)
     ).toContain('\\"/$resources/assets\\"');
+  });
+
+  test("creates and updates an Assets resource scoped to Global Root", () => {
+    const created = executeBuilderRuntimeOperation({
+      id: "assetsResources.create",
+      state,
+      input: {
+        name: "Global assets",
+        scopeInstanceId: ROOT_INSTANCE_ID,
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["global-assets-resource", "global-assets-data-source"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+
+    expect(created).toMatchObject({
+      result: {
+        resourceId: "global-assets-resource",
+        dataSourceId: "global-assets-data-source",
+      },
+    });
+    const createdState = applyBuilderPatchTransactions(state, [
+      {
+        id: "create-global-assets-resource",
+        payload: (created as BuilderRuntimeMutation).payload,
+      },
+    ]).state;
+    expect(createdState.dataSources?.get("global-assets-data-source")).toEqual(
+      expect.objectContaining({ scopeInstanceId: ROOT_INSTANCE_ID })
+    );
+
+    const updated = executeBuilderRuntimeOperation({
+      id: "assetsResources.update",
+      state: createdState,
+      input: {
+        resourceId: "global-assets-resource",
+        values: { name: "Updated global assets" },
+      },
+      context,
+    });
+
+    expect(updated).toMatchObject({
+      kind: "mutation",
+      result: {
+        resourceId: "global-assets-resource",
+        dataSourceId: "global-assets-data-source",
+      },
+    });
   });
 
   test("replaces bounded fixed resource URLs without changing expressions", () => {

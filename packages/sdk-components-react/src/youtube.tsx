@@ -9,7 +9,7 @@ import {
   useRef,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { VideoContext, requestFullscreen } from "./shared/video";
+import { preconnect, VideoContext, requestFullscreen } from "./shared/video";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -152,6 +152,12 @@ type YouTubePlayerOptions = {
   /** The YouTube video URL or ID */
   url?: string;
   showPreview?: boolean;
+  /**
+   * Opens a connection to the YouTube player before playback.
+   * Disable this for consent-based click-to-load embeds.
+   * Defaults to false in Privacy Enhanced Mode and true otherwise.
+   */
+  preconnect?: boolean;
   /**
    * The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.
    * https://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode
@@ -331,18 +337,8 @@ const getVideoUrl = (
   return url.toString();
 };
 
-const preconnect = (url: string) => {
-  const link = document.createElement("link");
-  link.rel = "preconnect";
-  link.href = url;
-  link.crossOrigin = "true";
-  document.head.appendChild(link);
-};
-
-let warmed = false;
-
 const warmConnections = (videoUrl: string) => {
-  if (warmed || window.matchMedia("(hover: none)").matches) {
+  if (window.matchMedia("(hover: none)").matches) {
     return;
   }
 
@@ -353,9 +349,6 @@ const warmConnections = (videoUrl: string) => {
   } catch {
     // Ignore invalid URL
   }
-
-  preconnect(IMAGE_CDN);
-  warmed = true;
 };
 
 const getPreviewImageUrl = (videoId: string) => {
@@ -407,12 +400,6 @@ const Player = ({
       onStatusChange("loading");
     }
   }, [autoplay, status, renderer, onStatusChange]);
-
-  useEffect(() => {
-    if (renderer !== "canvas") {
-      warmConnections(videoUrl);
-    }
-  }, [renderer, videoUrl]);
 
   useEffect(() => {
     const videoId = getVideoId(videoUrl);
@@ -480,6 +467,7 @@ export const YouTube = forwardRef<Ref, Props>(
       loading = "lazy",
       autoplay,
       showPreview,
+      preconnect: preconnectConnections,
       showAnnotations,
       showCaptions,
       showControls,
@@ -495,6 +483,8 @@ export const YouTube = forwardRef<Ref, Props>(
     const [status, setStatus] = useState<PlayerStatus>("initial");
     const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
     const { renderer } = useContext(ReactSdkContext);
+    const shouldPreconnect =
+      preconnectConnections ?? privacyEnhancedMode === false;
 
     const videoUrlOrigin =
       (privacyEnhancedMode ?? true)
@@ -516,6 +506,12 @@ export const YouTube = forwardRef<Ref, Props>(
       },
       videoUrlOrigin
     );
+
+    useEffect(() => {
+      if (renderer !== "canvas" && shouldPreconnect && videoUrl) {
+        warmConnections(videoUrl);
+      }
+    }, [renderer, shouldPreconnect, videoUrl]);
 
     return (
       <VideoContext.Provider

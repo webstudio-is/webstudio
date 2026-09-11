@@ -1149,7 +1149,7 @@ test("uploads assets as binary requests", async () => {
         type: "image",
         name: "image.png",
         filename: "image.png",
-        description: "Campaign photo",
+        description: "Balkon mit roten Wänden",
         folderId: "campaign",
         format: "png",
         size: 3,
@@ -1170,8 +1170,11 @@ test("uploads assets as binary requests", async () => {
   expect(init.headers).toBeInstanceOf(Headers);
   expect((init.headers as Headers).get("x-auth-token")).toBe("token");
   expect((init.headers as Headers).get("x-webstudio-asset-description")).toBe(
-    "Campaign photo"
+    "QmFsa29uIG1pdCByb3RlbiBXw6RuZGVu"
   );
+  expect(
+    (init.headers as Headers).get("x-webstudio-asset-description-encoding")
+  ).toBe("base64url");
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
   );
@@ -1362,6 +1365,7 @@ test("uploads assets with one retry and aggregated failures", async () => {
           assetName === "image.png" ? "Temporary failure" : "Upload failed",
       }),
       {
+        status: 500,
         headers: { "content-type": "application/json" },
       }
     );
@@ -1374,7 +1378,14 @@ test("uploads assets with one retry and aggregated failures", async () => {
       ...apiParams,
       readAssetData: async (asset) => new Blob([asset.name]),
     })
-  ).rejects.toThrow("Failed to upload assets: other.png: Upload failed");
+  ).rejects.toMatchObject({
+    message: expect.stringContaining(
+      'Asset "other.png" failed after 2 attempts'
+    ),
+    webstudioCode: "ASSET_UPLOAD_RETRY_EXHAUSTED",
+    retryable: true,
+    status: 500,
+  });
 
   expect(fetch).toHaveBeenCalledTimes(4);
 });
@@ -1552,53 +1563,71 @@ test("uploads project asset descriptors with local data readers", async () => {
   expect(videoUrl.searchParams.get("height")).toBe("1080");
 });
 
-test("reports successful and failed project asset uploads separately", async () => {
-  const uploadedAsset = createImageAssetFixture({ name: "uploaded.png" });
+test("reports retry diagnostics and permits an isolated retry after a partial batch failure", async () => {
+  const uploadedAsset = createImageAssetFixture({ name: "uploaded.jpg" });
+  const retriedAsset = createImageAssetFixture({ name: "retried.jpg" });
+  let retriedAssetAttempts = 0;
+  const response = (asset?: typeof uploadedAsset) =>
+    new Response(
+      JSON.stringify(
+        asset === undefined
+          ? { errors: "Internal Assets API error" }
+          : { uploadedAssets: [asset], deduplicated: false }
+      ),
+      {
+        status: asset === undefined ? 500 : 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: URL | RequestInfo) => {
       const name = decodeURIComponent(
         new URL(request.toString()).pathname.split("/").at(-1) ?? ""
       );
-      if (name === "uploaded.png") {
-        return new Response(
-          JSON.stringify({
-            uploadedAssets: [uploadedAsset],
-            deduplicated: false,
-          }),
-          { headers: { "content-type": "application/json" } }
-        );
+      if (name === "uploaded.jpg") {
+        return response(uploadedAsset);
       }
-      return new Response(JSON.stringify({ errors: "Upload failed" }), {
-        headers: { "content-type": "application/json" },
-      });
+      retriedAssetAttempts += 1;
+      return response(retriedAssetAttempts <= 2 ? undefined : retriedAsset);
     })
   );
+  const descriptor = {
+    name: "retried.jpg",
+    type: "image" as const,
+    format: "jpg",
+    meta: { width: 10, height: 20 },
+  };
 
   await expect(
     uploadProjectAssets({
       ...apiParams,
-      assets: [
-        {
-          name: "uploaded.png",
-          type: "image",
-          format: "png",
-          meta: { width: 10, height: 20 },
-        },
-        {
-          name: "failed.png",
-          type: "image",
-          format: "png",
-          meta: { width: 10, height: 20 },
-        },
-      ],
+      assets: [{ ...descriptor, name: "uploaded.jpg" }, descriptor],
       readAssetData: async (asset) => new Blob([asset.name]),
     })
   ).resolves.toEqual({
     uploaded: [uploadedAsset],
-    failed: [{ index: 1, name: "failed.png", error: "Upload failed" }],
+    failed: [
+      {
+        index: 1,
+        name: "retried.jpg",
+        error: expect.stringContaining("failed after 2 attempts (HTTP 500)"),
+        code: "ASSET_UPLOAD_RETRY_EXHAUSTED",
+        retryable: true,
+        status: 500,
+      },
+    ],
     ambiguous: [],
   });
+
+  await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: descriptor,
+      readAssetData: async () => new Blob([descriptor.name]),
+    })
+  ).resolves.toEqual({ uploaded: [retriedAsset] });
+  expect(retriedAssetAttempts).toBe(3);
 });
 
 test("does not retry a forced upload after an ambiguous server failure", async () => {

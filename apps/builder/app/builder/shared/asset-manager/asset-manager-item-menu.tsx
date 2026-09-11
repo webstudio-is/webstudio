@@ -13,49 +13,26 @@ import {
   Kbd,
   SmallIconButton,
   theme,
+  Tooltip,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon } from "@webstudio-is/icons";
-
-export type AssetManagerItemActions = Partial<
-  Record<
-    | "open"
-    | "settings"
-    | "entrySettings"
-    | "collectionSettings"
-    | "useAsCollection"
-    | "convertCollection"
-    | "cut"
-    | "copy"
-    | "paste"
-    | "duplicate"
-    | "move"
-    | "download"
-    | "replace"
-    | "createFolder"
-    | "createEntry"
-    | "createFile"
-    | "upload"
-    | "deleteUnusedAssets"
-    | "delete",
-    () => void
-  >
->;
-export type AssetManagerItemActionName = keyof AssetManagerItemActions;
+import { EllipsesIcon, InfoCircleIcon } from "@webstudio-is/icons";
 
 type ItemDefinition = {
-  name: keyof AssetManagerItemActions;
+  name: string;
   label: string;
   shortcut?: readonly string[];
   separatorBefore?: boolean;
   destructive?: boolean;
 };
 
-const itemDefinitions: readonly ItemDefinition[] = [
+const itemDefinitions = [
   { name: "createEntry", label: "New entry" },
   { name: "createFolder", label: "Create folder" },
   { name: "createFile", label: "Create text file" },
   { name: "upload", label: "Upload asset" },
   { name: "open", label: "Open" },
+  { name: "editFile", label: "Edit file" },
+  { name: "openOnCanvas", label: "Open on canvas" },
   { name: "settings", label: "Settings" },
   { name: "entrySettings", label: "Entry settings" },
   { name: "collectionSettings", label: "Collection settings" },
@@ -89,7 +66,23 @@ const itemDefinitions: readonly ItemDefinition[] = [
     separatorBefore: true,
     destructive: true,
   },
-] as const;
+] as const satisfies readonly ItemDefinition[];
+
+export type AssetManagerItemActionName =
+  (typeof itemDefinitions)[number]["name"];
+export type AssetManagerItemActions = Partial<
+  Record<
+    AssetManagerItemActionName,
+    (() => void) | { disabledDescription: string }
+  >
+>;
+
+type AssetManagerItemMenuItem = ItemDefinition & {
+  name: AssetManagerItemActionName;
+  action: (() => void) | undefined;
+  disabled: boolean;
+  disabledDescription: string | undefined;
+};
 
 const menuContentStyle = { minWidth: 120 };
 const shortcutStyle = { paddingLeft: theme.spacing[5] };
@@ -101,18 +94,25 @@ export const getAssetManagerItemMenuItems = (
   }: {
     disabledActions?: ReadonlySet<AssetManagerItemActionName>;
   } = {}
-) =>
-  itemDefinitions.flatMap((definition) =>
-    actions[definition.name] === undefined
-      ? []
-      : [
-          {
-            ...definition,
-            action: actions[definition.name],
-            disabled: disabledActions?.has(definition.name) ?? false,
-          },
-        ]
-  );
+): AssetManagerItemMenuItem[] =>
+  itemDefinitions.flatMap((definition) => {
+    const value = actions[definition.name];
+    if (value === undefined) {
+      return [];
+    }
+    const action = typeof value === "function" ? value : undefined;
+    return [
+      {
+        ...definition,
+        action,
+        disabled:
+          action === undefined ||
+          (disabledActions?.has(definition.name) ?? false),
+        disabledDescription:
+          typeof value === "function" ? undefined : value.disabledDescription,
+      },
+    ];
+  });
 
 const AssetManagerItemMenuItems = ({
   actions,
@@ -130,25 +130,37 @@ const AssetManagerItemMenuItems = ({
       : DropdownMenuItemRightSlot;
   const Separator =
     variant === "context" ? ContextMenuSeparator : DropdownMenuSeparator;
-  return getAssetManagerItemMenuItems(actions, {
-    disabledActions,
-  }).map((item, index) => (
-    <Fragment key={item.name}>
-      {item.separatorBefore && index > 0 && <Separator />}
-      <Item
-        disabled={item.disabled}
-        destructive={item.destructive}
-        onSelect={item.action}
-      >
-        {item.label}
-        {item.shortcut !== undefined && (
-          <ItemRightSlot css={shortcutStyle}>
-            <Kbd value={item.shortcut} />
-          </ItemRightSlot>
-        )}
-      </Item>
-    </Fragment>
-  ));
+  return getAssetManagerItemMenuItems(actions, { disabledActions }).map(
+    (item, index) => (
+      <Fragment key={item.name}>
+        {item.separatorBefore && index > 0 && <Separator />}
+        <Tooltip variant="wrapped" content={item.disabledDescription}>
+          <Item
+            disabled={item.disabled}
+            destructive={item.destructive}
+            onSelect={item.action}
+            aria-label={
+              item.disabledDescription === undefined
+                ? undefined
+                : `${item.label}. ${item.disabledDescription}`
+            }
+          >
+            {item.label}
+            {item.shortcut !== undefined && (
+              <ItemRightSlot css={shortcutStyle}>
+                <Kbd value={item.shortcut} />
+              </ItemRightSlot>
+            )}
+            {item.disabledDescription !== undefined && (
+              <ItemRightSlot css={{ paddingLeft: theme.spacing[3] }}>
+                <InfoCircleIcon />
+              </ItemRightSlot>
+            )}
+          </Item>
+        </Tooltip>
+      </Fragment>
+    )
+  );
 };
 
 export const AssetManagerItemContextMenuContent = ({

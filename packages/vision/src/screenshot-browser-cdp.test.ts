@@ -609,6 +609,40 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
   });
 });
 
+test("preserves a successful capture when Windows profile cleanup stays busy", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  const socket = new FakeWebSocket();
+  const cleanupError = Object.assign(new Error("profile journal is busy"), {
+    code: "EBUSY",
+  });
+  const dependencies = createDependencies({ browserProcess, socket });
+  vi.mocked(dependencies.rm).mockRejectedValue(cleanupError);
+
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 1000,
+      },
+      dependencies
+    )
+  ).resolves.toMatchObject({
+    viewportWidth: 800,
+    viewportHeight: 600,
+  });
+  expect(dependencies.rm).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({ maxRetries: 3, retryDelay: 50 })
+  );
+  expect(browserProcess.kill).toHaveBeenCalledOnce();
+});
+
 test("ignores lifecycle readiness from child frames", async () => {
   const socket = new FakeWebSocket(200, undefined, undefined, undefined, [
     "child",

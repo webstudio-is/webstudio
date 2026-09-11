@@ -38160,7 +38160,7 @@ export const runtimeOperationContractData = [
       properties: {
         scopes: {
           description:
-            "Audit scopes. Omit to run all standard scopes; Craft remains opt-in. accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/. security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener. seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. assets info: unused-asset. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder. styles warnings: style-on-dom-transparent-component, invalid-style-state-selector, and orphan-style-breakpoint; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens. performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css. craft is an opt-in, read-only compatibility check and is excluded when scopes are omitted. Documentation: https://docs.webstudio.is/university/craft.",
+            "Audit scopes. Omit to run all standard scopes; Craft remains opt-in. accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/. security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener. seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. assets info: unused-asset. When connected Content Blocks may hide MDX and nested Asset dependencies, unused-asset is skipped instead of returning unsafe false positives. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder. styles warnings: style-on-dom-transparent-component, invalid-style-state-selector, and orphan-style-breakpoint; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens. performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css. craft is an opt-in, read-only compatibility check and is excluded when scopes are omitted. Documentation: https://docs.webstudio.is/university/craft.",
           minItems: 1,
           type: "array",
           items: {
@@ -44574,7 +44574,7 @@ export const runtimeOperationContractData = [
                   type: "string",
                   enum: ["ours", "theirs", "merge"],
                   description:
-                    'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
+                    'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
                 },
                 contentMode: {
                   description:
@@ -54765,6 +54765,12 @@ export const runtimeOperationContractData = [
           description:
             "One structured repeated-item fragment. Descendant expressions may reference collectionItem and collectionItemKey.",
         },
+        conflictResolution: {
+          type: "string",
+          enum: ["ours", "theirs", "merge"],
+          description:
+            'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
+        },
         mode: {
           type: "string",
           enum: ["append", "prepend", "replace"],
@@ -60668,7 +60674,7 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs", "merge"],
           description:
-            'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.',
+            'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.',
         },
         contentMode: {
           description:
@@ -72714,6 +72720,7 @@ export const runtimeOperationContractData = [
       properties: {
         scopeInstanceId: {
           type: "string",
+          description: 'Instance ID or ":root" for Global Root.',
         },
         name: {
           type: "string",
@@ -72818,6 +72825,7 @@ export const runtimeOperationContractData = [
           type: "object",
           properties: {
             scopeInstanceId: {
+              description: 'Instance ID or ":root" for Global Root.',
               type: "string",
             },
             name: {
@@ -74224,6 +74232,7 @@ export const runtimeOperationContractData = [
         },
         scopeInstanceId: {
           type: "string",
+          description: 'Instance ID or ":root" for Global Root.',
         },
         dataSourceName: {
           type: "string",
@@ -74796,6 +74805,7 @@ export const runtimeOperationContractData = [
           required: [],
         },
         scopeInstanceId: {
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75167,6 +75177,7 @@ export const runtimeOperationContractData = [
           required: ["name", "method", "url", "headers"],
         },
         scopeInstanceId: {
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         dataSourceName: {
@@ -75426,6 +75437,7 @@ export const runtimeOperationContractData = [
           type: "string",
         },
         scopeInstanceId: {
+          description: 'Instance ID or ":root" for Global Root.',
           type: "string",
         },
         exposeAsDataSource: {

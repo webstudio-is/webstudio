@@ -9,6 +9,9 @@ import {
 import {
   assetContentDescriptor,
   assetContentDescriptorHeader,
+  assetDescriptionEncoding,
+  assetDescriptionEncodingHeader,
+  assetDescriptionHeader,
   parseAssetContentDescriptor,
   type AssetFolderUpdateRequest,
   type AssetMetadataUpdate,
@@ -374,6 +377,12 @@ type AssetUploadBatchResult =
   | { status: "rejected"; asset: Asset; index: number; error: unknown }
   | { status: "ambiguous"; asset: Asset; index: number; error: unknown };
 
+const encodeAssetDescriptionHeader = (value: string) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(value)))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -385,13 +394,40 @@ const getErrorStatus = (error: unknown) =>
     ? error.status
     : undefined;
 
-const retryOnce = async <Result>(task: () => Promise<Result>) => {
+const retryOnce = async <Result>(task: () => Promise<Result>, delayMs = 0) => {
   try {
     return await task();
   } catch {
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
     return await task();
   }
 };
+
+const isRetryableAssetUploadError = (error: unknown) => {
+  const status = getErrorStatus(error);
+  return (
+    status === undefined || status === 408 || status === 429 || status >= 500
+  );
+};
+
+const assetUploadRetryExhaustedCode = "ASSET_UPLOAD_RETRY_EXHAUSTED";
+
+class AssetUploadRetryError extends Error {
+  readonly webstudioCode = assetUploadRetryExhaustedCode;
+  readonly retryable = true;
+  readonly status: number | undefined;
+
+  constructor(assetName: string, cause: unknown) {
+    const status = getErrorStatus(cause);
+    super(
+      `Asset "${assetName}" failed after 2 attempts${status === undefined ? "" : ` (HTTP ${status})`}. Retry this file by itself. If it still fails, verify that it opens and matches its declared format, then report ${assetUploadRetryExhaustedCode} and the HTTP status.`,
+      { cause }
+    );
+    this.status = status;
+  }
+}
 
 const getBinaryAssetDataHash = async (data: BinaryAssetData) => {
   return getAssetContentHash(
@@ -436,6 +472,7 @@ export const uploadAsset = async (
   }
 ): Promise<Asset[]> => {
   const { authToken, headers, origin, projectId, upload } = params;
+  const description = upload.asset.description ?? undefined;
   const result = await requestAssetRestJson<AssetUploadResult>(
     fetchJsonResponse,
     getAssetUploadUrl({
@@ -450,7 +487,12 @@ export const uploadAsset = async (
       headers: createHeaders({
         ...headers,
         "x-auth-token": authToken,
-        "x-webstudio-asset-description": upload.asset.description ?? undefined,
+        [assetDescriptionHeader]:
+          description === undefined
+            ? undefined
+            : encodeAssetDescriptionHeader(description),
+        [assetDescriptionEncodingHeader]:
+          description === undefined ? undefined : assetDescriptionEncoding,
         "x-webstudio-asset-meta": JSON.stringify(upload.asset.meta),
         "content-type": "application/octet-stream",
       }),
@@ -525,9 +567,13 @@ const uploadAssetsSettled = async (
             });
           };
           const uploadedAssets =
-            force === true ? await upload() : await retryOnce(upload);
+            force === true ? await upload() : await retryOnce(upload, 100);
           results[index] = { status: "fulfilled", uploadedAssets };
-        } catch (error) {
+        } catch (cause) {
+          const error =
+            force !== true && isRetryableAssetUploadError(cause)
+              ? new AssetUploadRetryError(asset.name, cause)
+              : cause;
           const status = getErrorStatus(error);
           results[index] = {
             status:
@@ -570,6 +616,12 @@ export const uploadAssets = async (
       : []
   );
   if (failed.length > 0) {
+    if (
+      failed.length === 1 &&
+      failed[0]?.error instanceof AssetUploadRetryError
+    ) {
+      throw failed[0].error;
+    }
     throw new Error(
       `Failed to upload assets: ${failed
         .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
@@ -693,6 +745,15 @@ export const uploadProjectAssets = async (
               index: result.index,
               name: result.asset.name,
               error: formatError(result.error),
+              ...(result.error instanceof AssetUploadRetryError
+                ? {
+                    code: result.error.webstudioCode,
+                    retryable: result.error.retryable,
+                    ...(result.error.status === undefined
+                      ? {}
+                      : { status: result.error.status }),
+                  }
+                : {}),
             },
           ]
         : []

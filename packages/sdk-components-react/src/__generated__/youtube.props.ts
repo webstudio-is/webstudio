@@ -116,6 +116,13 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
+  preconnect: {
+    description:
+      "Opens a connection to the YouTube player before playback.\nDisable this for consent-based click-to-load embeds.\nDefaults to false in Privacy Enhanced Mode and true otherwise.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+  },
   privacyEnhancedMode: {
     description:
       "The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.\nhttps://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode",

@@ -268,6 +268,7 @@ describe("high-impact fixture API", () => {
             name,
             type: "font",
             format,
+            description: "Schriftgröße",
             meta: fontAssetFixtureUploadMeta,
           },
         });
@@ -280,6 +281,9 @@ describe("high-impact fixture API", () => {
         expect.objectContaining({ name: "upload-asset" }),
       ]);
       expect(fixtureApi.getProject().assets).toHaveLength(2);
+      expect(
+        fixtureApi.getProject().assets.map((asset) => asset.description)
+      ).toEqual(["Schriftgröße", "Schriftgröße"]);
 
       for (const asset of fixtureApi.getProject().assets) {
         await run("update-asset", {

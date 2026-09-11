@@ -66,15 +66,7 @@ export const CollectionEntryFields = ({
               disabled || (readOnlySlug && field.key === config.slugField)
             }
             onReset={hasValue ? () => onReset(field) : undefined}
-            description={
-              field.key === config.slugField
-                ? readOnlySlug
-                  ? "The slug identifies this entry’s filename and cannot be renamed."
-                  : config.generateSlugFrom === undefined
-                    ? "Enter a slug for this entry. It becomes the MDX filename."
-                    : `Generated from ${config.fields.find(({ key }) => key === config.generateSlugFrom)?.label ?? config.generateSlugFrom}. You can edit it before creating the entry. It becomes the MDX filename.`
-                : undefined
-            }
+            description={field.description}
           >
             {field.label}
             {field.required ? " *" : ""}

@@ -71,6 +71,21 @@ const createState = (
   assets: new Map(),
 });
 
+const addFragmentStyles = (
+  state: WebstudioData,
+  fragment: Awaited<ReturnType<typeof parseWebstudioJsxFragment>>
+) => {
+  for (const styleSource of fragment.styleSources) {
+    state.styleSources.set(styleSource.id, styleSource);
+  }
+  for (const style of fragment.styles) {
+    state.styles.set(getStyleDeclKey(style), style);
+  }
+  for (const breakpoint of fragment.breakpoints) {
+    state.breakpoints.set(breakpoint.id, breakpoint);
+  }
+};
+
 const createTemplateState = ({
   root,
   parent,
@@ -536,6 +551,56 @@ test("binds semantic Collection data to an HTTP resource result", async () => {
     type: "expression",
     value: `${encodeDataVariableId("posts")}?.data?.items`,
   });
+});
+
+test("requires and honors Collection item token conflict resolution", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+  const itemFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="article" ws:tokens={[token("brand", css\`color: red;\`)]}>Item</ws.element>`
+  );
+
+  expect(() =>
+    insertCollection(
+      state,
+      {
+        parentInstanceId: parent.id,
+        data: { type: "json", value: [] },
+        itemFragment,
+      },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow(/explicit conflictResolution.*brand/);
+
+  const mutation = insertCollection(
+    state,
+    {
+      parentInstanceId: parent.id,
+      data: { type: "json", value: [] },
+      itemFragment,
+      conflictResolution: "ours",
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(
+    getAddedValues<{ type: string; name: string }>(
+      mutation,
+      "styleSources"
+    ).filter((styleSource) => styleSource.type === "token")
+  ).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toContainEqual(
+    expect.objectContaining({ values: [existingFragment.styleSources[0]?.id] })
+  );
 });
 
 test("binds object Collection keys to the generated itemKey parameter", async () => {
@@ -1204,15 +1269,7 @@ test("honors fragment token conflict resolution", async () => {
   const existingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
   );
-  for (const styleSource of existingFragment.styleSources) {
-    state.styleSources.set(styleSource.id, styleSource);
-  }
-  for (const style of existingFragment.styles) {
-    state.styles.set(getStyleDeclKey(style), style);
-  }
-  for (const breakpoint of existingFragment.breakpoints) {
-    state.breakpoints.set(breakpoint.id, breakpoint);
-  }
+  addFragmentStyles(state, existingFragment);
 
   const mutation = await insertFragment(
     state,
@@ -1261,15 +1318,7 @@ test("requires an explicit fragment token conflict resolution", async () => {
   const existingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
   );
-  for (const styleSource of existingFragment.styleSources) {
-    state.styleSources.set(styleSource.id, styleSource);
-  }
-  for (const style of existingFragment.styles) {
-    state.styles.set(getStyleDeclKey(style), style);
-  }
-  for (const breakpoint of existingFragment.breakpoints) {
-    state.breakpoints.set(breakpoint.id, breakpoint);
-  }
+  addFragmentStyles(state, existingFragment);
   const conflictingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
   );
@@ -1332,15 +1381,7 @@ test("merges fragment token conflicts by replacing existing token styles", async
   const existingFragment = await parseWebstudioJsxFragment(
     `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue; font-size: 16px;\`)]} />`
   );
-  for (const styleSource of existingFragment.styleSources) {
-    state.styleSources.set(styleSource.id, styleSource);
-  }
-  for (const style of existingFragment.styles) {
-    state.styles.set(getStyleDeclKey(style), style);
-  }
-  for (const breakpoint of existingFragment.breakpoints) {
-    state.breakpoints.set(breakpoint.id, breakpoint);
-  }
+  addFragmentStyles(state, existingFragment);
 
   const mutation = await insertFragment(
     state,

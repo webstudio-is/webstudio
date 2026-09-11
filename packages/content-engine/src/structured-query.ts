@@ -352,20 +352,9 @@ export const validateAssetQuery = ({
     }
   }
   if (query.output.mode === "fields") {
-    for (const [index, fieldPath] of query.output.fields.entries()) {
+    for (const fieldPath of query.output.fields) {
       const catalogPath = getCatalogPath(fieldPath);
       referencedFieldPaths.set(catalogPath, fieldPath);
-      if (
-        fieldPath[0] === "properties" &&
-        catalog !== undefined &&
-        getCatalogField(catalog, catalogPath) === undefined
-      ) {
-        addWarning(
-          "UNOBSERVED_FIELD",
-          ["query", "output", "fields", String(index)],
-          `Asset field ${catalogPath} is not currently observed`
-        );
-      }
     }
   }
   const uniqueIssues = [

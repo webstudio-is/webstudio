@@ -44,12 +44,14 @@ const collectionSettings = z.object({
     .default(["*.mdx"]),
   slugField: z.string().min(1).optional(),
   generateSlugFrom: z.string().min(1).optional(),
+  entryPageId: z.string().min(1).optional(),
 });
 
 export type CollectionField = Readonly<{
   key: string;
   originalKey?: string;
   label: string;
+  description?: string;
   type: "string" | "number" | "integer" | "boolean";
   control: "text" | "textarea" | "slug" | "number" | "checkbox";
   required: boolean;
@@ -66,6 +68,7 @@ export type ContentCollectionConfig = Readonly<{
   matchesEntry: (filename: string) => boolean;
   slugField?: string;
   generateSlugFrom?: string;
+  entryPageId?: string;
   fields: readonly CollectionField[];
   validate: (value: unknown) => { success: boolean; errors: ErrorObject[] };
 }>;
@@ -476,6 +479,17 @@ const getField = ({
     typeof value.title === "string" && value.title.trim() !== ""
       ? value.title
       : key;
+  const description =
+    typeof value.description === "string" && value.description.trim() !== ""
+      ? value.description
+      : undefined;
+  const shared = {
+    key,
+    originalKey: key,
+    label,
+    description,
+    required,
+  };
   const rawExtension = value["x-webstudio"];
   if (Object.hasOwn(value, "x-webstudio") && isObject(rawExtension) === false) {
     throw new ContentCollectionError(
@@ -524,36 +538,27 @@ const getField = ({
         ? declaredControl
         : "text";
     return {
-      key,
-      originalKey: key,
-      label,
+      ...shared,
       type: "string",
       control,
-      required,
       minLength: getNonnegativeInteger(value.minLength),
       maxLength: getNonnegativeInteger(value.maxLength),
     };
   }
   if (type === "number" || type === "integer") {
     return {
-      key,
-      originalKey: key,
-      label,
+      ...shared,
       type: type,
       control: "number",
-      required,
       minimum: getFiniteNumber(value.minimum),
       maximum: getFiniteNumber(value.maximum),
     };
   }
   if (type === "boolean") {
     return {
-      key,
-      originalKey: key,
-      label,
+      ...shared,
       type: "boolean",
       control: "checkbox",
-      required,
     };
   }
 };
@@ -773,6 +778,7 @@ export const parseCollectionConfig = (
     },
     slugField: settings.slugField,
     generateSlugFrom: settings.generateSlugFrom,
+    entryPageId: settings.entryPageId,
     fields,
     validate: (candidate) => ({
       success: parser(candidate),
@@ -1271,19 +1277,26 @@ export const createDefaultCollectionConfig = () =>
       properties: {
         title: {
           title: "Title",
+          description: "The entry title shown to readers.",
           type: "string",
           minLength: 1,
           maxLength: 120,
         },
         slug: {
           title: "URL slug",
+          description: "The URL-safe name used in this entry's web address.",
           type: "string",
           minLength: 1,
           maxLength: 120,
           $ref: collectionSlugSchemaId,
           "x-webstudio": { control: "slug" },
         },
-        draft: { title: "Draft", type: "boolean" },
+        draft: {
+          title: "Draft",
+          description:
+            "Mark this entry so collection queries can exclude it from published lists.",
+          type: "boolean",
+        },
       },
       additionalProperties: false,
       "x-webstudio": {
@@ -1326,6 +1339,11 @@ const serializeCollectionField = (
     typeof original.title === "string" && original.title.trim() !== "";
   if (hasExplicitLabel || field.label !== field.key) {
     result.title = field.label;
+  }
+  if (field.description === undefined || field.description.trim() === "") {
+    delete result.description;
+  } else {
+    result.description = field.description;
   }
   for (const keyword of [
     "properties",
@@ -1393,6 +1411,7 @@ export const serializeCollectionConfig = ({
     template?: string;
     slugField?: string;
     generateSlugFrom?: string;
+    entryPageId?: string;
   };
 }) => {
   const ownedOriginalKeys = new Set<string>();
@@ -1418,6 +1437,10 @@ export const serializeCollectionConfig = ({
       : settings && Object.hasOwn(settings, "generateSlugFrom")
         ? settings.generateSlugFrom
         : config.generateSlugFrom;
+  const entryPageId =
+    settings && Object.hasOwn(settings, "entryPageId")
+      ? settings.entryPageId
+      : config.entryPageId;
   const serializedFields = fields.map((field) => {
     if (field.key === slugField) {
       return field.type === "string"
@@ -1472,6 +1495,7 @@ export const serializeCollectionConfig = ({
       template,
       slugField,
       generateSlugFrom,
+      entryPageId,
     },
   };
   const source = `${JSON.stringify(value, undefined, 2)}\n`;

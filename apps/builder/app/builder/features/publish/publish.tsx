@@ -470,8 +470,7 @@ const Publish = ({
   refresh: () => Promise<void>;
   restrictedFeatures: Map<string, RestrictedFeature>;
 }) => {
-  const { maxDailyPublishesPerUser } = useStore($permissions);
-  const { userPublishCount } = useUserPublishCount();
+  const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
@@ -927,7 +926,8 @@ const useUserPublishCount = () => {
   }, [load, project?.id]);
   return {
     userPublishCount: data?.success ? data.data : 0,
-    maxDailyPublishesPerUser,
+    maxDailyPublishesPerUser:
+      data?.success && "limit" in data ? data.limit : maxDailyPublishesPerUser,
   };
 };
 

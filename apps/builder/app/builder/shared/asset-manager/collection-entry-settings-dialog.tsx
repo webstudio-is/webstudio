@@ -18,7 +18,9 @@ import {
   Grid,
   PanelContent,
   Text,
+  Tooltip,
 } from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { $authPermit } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
 import {
@@ -28,12 +30,14 @@ import {
 import { updateAssetContent } from "../assets/update-asset-content";
 import { CollectionEntryFields } from "./collection-entry-fields";
 import { replaceMdxFrontmatter } from "@webstudio-is/content-engine/mdx";
+import { collectionEntryCanvasUnavailableMessage } from "./collection-entry-navigation";
 
 export const CollectionEntrySettingsDialog = ({
   asset,
   collection,
   onClose,
   onOpenFile,
+  onOpenCanvas,
   readSource = readBuilderAssetSource,
   updateContent = updateAssetContent,
 }: {
@@ -41,6 +45,7 @@ export const CollectionEntrySettingsDialog = ({
   collection: Extract<ContentCollection, { status: "ready" }>;
   onClose: () => void;
   onOpenFile: () => void;
+  onOpenCanvas?: () => void;
   readSource?: typeof readBuilderAssetSource;
   updateContent?: typeof updateAssetContent;
 }) => {
@@ -178,13 +183,11 @@ export const CollectionEntrySettingsDialog = ({
     const timeout = setTimeout(() => void saveRef.current(), 600);
     return () => clearTimeout(timeout);
   }, [draft, dirty, saving]);
-  const close = async (openFile = false) => {
+  const close = async (afterClose?: () => void) => {
     setClosing(true);
     if (await save()) {
       onClose();
-      if (openFile) {
-        onOpenFile();
-      }
+      afterClose?.();
     } else if (!savingRef.current) {
       setDiscard(true);
     }
@@ -210,14 +213,13 @@ export const CollectionEntrySettingsDialog = ({
         }}
       >
         <DialogContent width={560} aria-describedby={undefined}>
-          <DialogTitle>Entry settings</DialogTitle>
+          <DialogTitle>Entry settings — {formatAssetName(asset)}</DialogTitle>
           <PanelContent
             as={Grid}
             ref={formRef}
             gap={3}
             css={{ maxHeight: "70vh", overflow: "auto" }}
           >
-            <Text color="subtle">{formatAssetName(asset)}</Text>
             {error !== undefined && (
               <Text role="alert" color="destructive">
                 {error}
@@ -278,9 +280,34 @@ export const CollectionEntrySettingsDialog = ({
                 ))}
               </Grid>
             )}
-            <Button disabled={saving} onClick={() => void close(true)}>
-              Open MDX file
-            </Button>
+            <Grid columns={2} gap={2}>
+              <Button disabled={saving} onClick={() => void close(onOpenFile)}>
+                Edit file
+              </Button>
+              <Tooltip
+                variant="wrapped"
+                content={
+                  onOpenCanvas === undefined
+                    ? collectionEntryCanvasUnavailableMessage
+                    : undefined
+                }
+              >
+                <Button
+                  disabled={saving}
+                  aria-disabled={saving || onOpenCanvas === undefined}
+                  suffix={
+                    onOpenCanvas === undefined ? <InfoCircleIcon /> : undefined
+                  }
+                  onClick={() => {
+                    if (onOpenCanvas !== undefined) {
+                      void close(onOpenCanvas);
+                    }
+                  }}
+                >
+                  Open on canvas
+                </Button>
+              </Tooltip>
+            </Grid>
             {loaded !== undefined &&
               error !== undefined &&
               !uncertain.current && (

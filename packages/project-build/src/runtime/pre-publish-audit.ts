@@ -113,7 +113,9 @@ const checkBuildIntegrity: PrePublishAuditCheck = ({
     ruleId:
       issue.type === "missingResource"
         ? "resource-integrity"
-        : "content-block-source-integrity",
+        : issue.type === "slotInContentBlockTemplates"
+          ? "content-block-template-integrity"
+          : "content-block-source-integrity",
     severity: "error",
     message: formatBuildIntegrityIssue(issue),
     location: {
@@ -124,16 +126,18 @@ const checkBuildIntegrity: PrePublishAuditCheck = ({
               : { propId: issue.propId }),
             resourceId: issue.resourceId,
           }
-        : {
-            instanceId: issue.blockInstanceId,
-            ...(issue.type === "duplicateContentBlockSource"
-              ? { propId: issue.propIds[0] }
-              : { propId: issue.propId }),
-            ...(issue.type === "missingContentBlockSourceAsset" ||
-            issue.type === "incompatibleContentBlockSourceAsset"
-              ? { assetId: issue.assetId }
-              : {}),
-          }),
+        : issue.type === "slotInContentBlockTemplates"
+          ? { instanceId: issue.instanceId }
+          : {
+              instanceId: issue.blockInstanceId,
+              ...(issue.type === "duplicateContentBlockSource"
+                ? { propId: issue.propIds[0] }
+                : { propId: issue.propId }),
+              ...(issue.type === "missingContentBlockSourceAsset" ||
+              issue.type === "incompatibleContentBlockSourceAsset"
+                ? { assetId: issue.assetId }
+                : {}),
+            }),
     },
   }));
 

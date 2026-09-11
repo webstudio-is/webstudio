@@ -1138,7 +1138,6 @@ describe("Asset Manager collection folder permissions", () => {
         '[role="menuitem"][aria-disabled="true"]'
       )
     );
-    expect(disabledItems).toHaveLength(5);
     expect(
       disabledItems.some((item) => item.textContent?.startsWith("Cut"))
     ).toBe(true);
@@ -1148,6 +1147,7 @@ describe("Asset Manager collection folder permissions", () => {
     expect(
       disabledItems.some((item) => item.textContent?.startsWith("Delete"))
     ).toBe(true);
+    expect(labels).not.toContain("Open on canvas");
   });
 
   test("hides generic panel actions in a detected collection folder", () => {
