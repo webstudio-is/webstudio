@@ -41,10 +41,7 @@ import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
-import {
-  type AssetManagerItemActionDescriptions,
-  type AssetManagerItemActions,
-} from "./asset-manager-item-menu";
+import { type AssetManagerItemActions } from "./asset-manager-item-menu";
 import { collectionEntryCanvasUnavailableMessage } from "./collection-entry-navigation";
 import {
   AssetManagerThumbnail,
@@ -56,6 +53,9 @@ const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
 const CATEGORY_ICON_MAP: Partial<Record<MimeCategory, IconComponent>> = {
   font: TextCapitalizeIcon,
+};
+const unavailableOpenOnCanvas = {
+  disabledDescription: collectionEntryCanvasUnavailableMessage,
 };
 
 const getFileIcon = (format: string): IconComponent => {
@@ -270,7 +270,10 @@ export const AssetThumbnail = ({
                 editFile: onOpen,
                 ...(isCollectionReserved
                   ? {}
-                  : { openOnCanvas: onEntryOpenOnCanvas }),
+                  : {
+                      openOnCanvas:
+                        onEntryOpenOnCanvas ?? unavailableOpenOnCanvas,
+                    }),
               }
             : { open: onOpen }),
           entrySettings: onEntrySettings,
@@ -373,23 +376,15 @@ export const AssetThumbnail = ({
 
   const displayedActions =
     forcedSelection && selected ? (selectionActions ?? actions) : actions;
-  const disabledActions = new Set<keyof AssetManagerItemActions>(
-    isCollectionReserved ? ["cut", "copy", "duplicate", "move", "delete"] : []
-  );
-  let disabledActionDescriptions:
-    | AssetManagerItemActionDescriptions
-    | undefined;
-  if (
-    displayedActions === actions &&
-    isCollectionEntry &&
-    !isCollectionReserved &&
-    onEntryOpenOnCanvas === undefined
-  ) {
-    disabledActionDescriptions = {
-      openOnCanvas: collectionEntryCanvasUnavailableMessage,
-    };
-  }
-
+  const disabledActions = isCollectionReserved
+    ? new Set<keyof AssetManagerItemActions>([
+        "cut",
+        "copy",
+        "duplicate",
+        "move",
+        "delete",
+      ])
+    : undefined;
   return (
     <>
       <input
@@ -402,10 +397,7 @@ export const AssetThumbnail = ({
       <AssetManagerThumbnail
         item={{ type: "asset", id: asset.id }}
         actions={displayedActions}
-        disabledActions={
-          disabledActions.size === 0 ? undefined : disabledActions
-        }
-        disabledActionDescriptions={disabledActionDescriptions}
+        disabledActions={disabledActions}
         interactions={interactions}
         selected={selected}
         forcedSelection={forcedSelection}
@@ -479,8 +471,16 @@ export const AssetThumbnail = ({
                 onOpenChange={(open) => {
                   setSettingsOpen(open);
                 }}
-                onDelete={actions.delete}
-                onReplace={actions.replace}
+                onDelete={
+                  typeof actions.delete === "function"
+                    ? actions.delete
+                    : undefined
+                }
+                onReplace={
+                  typeof actions.replace === "function"
+                    ? actions.replace
+                    : undefined
+                }
                 canRename={!isCollectionEntry && !isCollectionReserved}
                 canMove={!isCollectionReserved}
                 isCollectionFile={isCollectionFile}
@@ -491,10 +491,7 @@ export const AssetThumbnail = ({
               >
                 <AssetManagerThumbnailMenu
                   actions={displayedActions}
-                  disabledActions={
-                    disabledActions.size === 0 ? undefined : disabledActions
-                  }
-                  disabledActionDescriptions={disabledActionDescriptions}
+                  disabledActions={disabledActions}
                   label={`Actions for ${formatAssetName(asset)}`}
                   onPointerDown={() =>
                     interactions.onContextMenuSelection(item)

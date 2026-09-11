@@ -69,7 +69,6 @@ import {
 } from "./asset-manager-clipboard";
 import {
   AssetManagerItemContextMenuContent,
-  type AssetManagerItemActionDescriptions,
   type AssetManagerItemActions,
 } from "./asset-manager-item-menu";
 import {
@@ -313,7 +312,6 @@ export const AssetManager = ({
   const [itemContextMenu, setItemContextMenu] = useState<{
     actions?: AssetManagerItemActions;
     disabledActions?: ReadonlySet<keyof AssetManagerItemActions>;
-    disabledActionDescriptions?: AssetManagerItemActionDescriptions;
     instance: number;
   }>({ instance: 0 });
   const itemElements = useRef(new Map<string, HTMLElement>());
@@ -1130,14 +1128,12 @@ export const AssetManager = ({
   ).some((action) => action !== undefined);
   const showItemContextMenu = (
     actions: AssetManagerItemActions,
-    disabledActions?: ReadonlySet<keyof AssetManagerItemActions>,
-    disabledActionDescriptions?: AssetManagerItemActionDescriptions
+    disabledActions?: ReadonlySet<keyof AssetManagerItemActions>
   ) => {
     flushSync(() => {
       setItemContextMenu(({ instance }) => ({
         actions,
         disabledActions,
-        disabledActionDescriptions,
         instance: instance + 1,
       }));
     });
@@ -1315,11 +1311,6 @@ export const AssetManager = ({
                 itemContextMenu.actions === undefined
                   ? disabledPanelActions
                   : itemContextMenu.disabledActions
-              }
-              disabledActionDescriptions={
-                itemContextMenu.actions === undefined
-                  ? undefined
-                  : itemContextMenu.disabledActionDescriptions
               }
             />
           ) : undefined

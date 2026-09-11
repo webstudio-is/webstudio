@@ -50,8 +50,8 @@ import {
 } from "@webstudio-is/icons";
 import {
   formatAssetName,
+  getAllPages,
   getAssetDisplayNameParts,
-  getPagePath,
 } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { $assets, $pages, $project } from "~/shared/sync/data-stores";
@@ -71,7 +71,7 @@ import {
 } from "../assets/content-collections";
 import { MarkdownEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import { getTextFileEditorExtensions } from "~/builder/features/text-file-editor/text-file-utils";
-import { getCollectionEntryCanvasTarget } from "./collection-entry-navigation";
+import { getCollectionEntryPage } from "./collection-entry-navigation";
 
 type EditableType =
   | "Text"
@@ -414,19 +414,15 @@ export const CollectionSettingsDialog = ({
     () =>
       pages === undefined
         ? []
-        : Array.from(pages.pages.values())
-            .filter(
-              (page) =>
-                getCollectionEntryCanvasTarget({
-                  entryPageId: page.id,
-                  entryBasename: "entry",
-                  pages,
-                }) !== undefined
-            )
-            .map((page) => ({
-              id: page.id,
-              label: `${page.name} · ${getPagePath(page.id, pages)}`,
-            })),
+        : getAllPages(pages).flatMap((page) => {
+            const entryPage = getCollectionEntryPage({
+              entryPageId: page.id,
+              pages,
+            });
+            return entryPage === undefined
+              ? []
+              : [{ id: page.id, label: `${page.name} · ${entryPage.path}` }];
+          }),
     [pages]
   );
   const templateKey = collection.templateAsset.id;

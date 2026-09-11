@@ -4,6 +4,26 @@ import { tokenizePathnamePattern } from "@webstudio-is/project-build/runtime";
 export const collectionEntryCanvasUnavailableMessage =
   "Choose a dynamic Entry page with one URL parameter in Collection settings.";
 
+export const getCollectionEntryPage = ({
+  entryPageId,
+  pages,
+}: {
+  entryPageId: string | undefined;
+  pages: Pages | undefined;
+}) => {
+  if (entryPageId === undefined || pages?.pages.has(entryPageId) !== true) {
+    return;
+  }
+  const path = getPagePath(entryPageId, pages);
+  const parameters = tokenizePathnamePattern(path).filter(
+    (token) => token.type === "param"
+  );
+  if (parameters.length !== 1) {
+    return;
+  }
+  return { id: entryPageId, parameter: parameters[0].name, path };
+};
+
 export const getCollectionEntryCanvasTarget = ({
   entryPageId,
   entryBasename,
@@ -13,17 +33,12 @@ export const getCollectionEntryCanvasTarget = ({
   entryBasename: string;
   pages: Pages | undefined;
 }) => {
-  if (entryPageId === undefined || pages?.pages.has(entryPageId) !== true) {
-    return;
-  }
-  const parameters = tokenizePathnamePattern(
-    getPagePath(entryPageId, pages)
-  ).filter((token) => token.type === "param");
-  if (parameters.length !== 1) {
+  const page = getCollectionEntryPage({ entryPageId, pages });
+  if (page === undefined) {
     return;
   }
   return {
-    pageId: entryPageId,
-    params: { [parameters[0].name]: entryBasename },
+    pageId: page.id,
+    params: { [page.parameter]: entryBasename },
   };
 };

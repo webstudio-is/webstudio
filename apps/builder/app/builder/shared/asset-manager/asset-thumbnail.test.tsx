@@ -994,7 +994,9 @@ describe("AssetThumbnail", () => {
       const interactions = createInteractions();
       let convertFromContext: (() => void) | undefined;
       interactions.onContextMenuActions = (actions) => {
-        convertFromContext = actions.convertCollection;
+        if (typeof actions.convertCollection === "function") {
+          convertFromContext = actions.convertCollection;
+        }
       };
       const container = renderer.render(
         <TooltipProvider>
@@ -1320,7 +1322,6 @@ describe("AssetThumbnail", () => {
     );
     expect(interactions.onContextMenuActions).toHaveBeenCalledWith(
       expect.objectContaining({ open: onOpen }),
-      undefined,
       undefined
     );
 

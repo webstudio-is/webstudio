@@ -88,14 +88,11 @@ test("keeps unavailable panel actions visible but disabled", () => {
 });
 
 test("keeps an unavailable action visible with its explanation", () => {
-  const items = getAssetManagerItemMenuItems(
-    {},
-    {
-      disabledActionDescriptions: {
-        openOnCanvas: "Choose an Entry page in Collection settings.",
-      },
-    }
-  );
+  const items = getAssetManagerItemMenuItems({
+    openOnCanvas: {
+      disabledDescription: "Choose an Entry page in Collection settings.",
+    },
+  });
 
   expect(items).toMatchObject([
     {

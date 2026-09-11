@@ -34,7 +34,6 @@ export const ResettableLabel = ({
   const labelRef = useRef<HTMLLabelElement>(null);
   const resetRef = useRef<HTMLButtonElement>(null);
   const movingFocus = useRef(false);
-  const pointerOverLabel = useRef(false);
   const openedByClick = useRef(false);
   const canReset = onReset !== undefined && !resetDisabled && !disabled;
   const reset = () => {
@@ -70,7 +69,11 @@ export const ResettableLabel = ({
           if (!nextOpen && movingFocus.current) {
             return;
           }
-          if (!nextOpen && openedByClick.current && pointerOverLabel.current) {
+          if (
+            !nextOpen &&
+            openedByClick.current &&
+            labelRef.current?.matches(":hover")
+          ) {
             return;
           }
           setOpen(nextOpen);
@@ -113,13 +116,8 @@ export const ResettableLabel = ({
           tag={props.htmlFor ? "label" : "button"}
           role="button"
           tabIndex={props.tabIndex ?? 0}
-          onPointerEnter={(event) => {
-            props.onPointerEnter?.(event);
-            pointerOverLabel.current = true;
-          }}
           onPointerLeave={(event) => {
             props.onPointerLeave?.(event);
-            pointerOverLabel.current = false;
             openedByClick.current = false;
           }}
           onClick={(event) => {
