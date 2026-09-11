@@ -44,6 +44,7 @@ import type {
 } from "./component-insert-contract";
 import {
   createCollectionFragment,
+  conflictResolutionInput,
   insertCollectionInput,
   type InsertCollectionResult,
 } from "./collection";
@@ -76,12 +77,6 @@ import {
 import { z } from "zod";
 import { getBlockTemplateNameConfirmation } from "./block";
 import { hasMdxComponentAdapter } from "./mdx-component-adapters";
-
-const conflictResolutionInput = z
-  .enum(["ours", "theirs", "merge"])
-  .describe(
-    'How to resolve incoming design tokens that share a name with an existing token. "ours" keeps the existing token styles and id, "theirs" uses incoming styles, and "merge" combines both.'
-  );
 
 export const insertComponentInput = z.object({
   parentInstanceId: z.string(),
@@ -1025,6 +1020,29 @@ const createInsertFragmentMutation = <
   });
 };
 
+const requireFragmentTokenConflictResolution = ({
+  fragment,
+  targetData,
+  conflictResolution,
+}: {
+  fragment: WebstudioFragment;
+  targetData: ReturnType<typeof getRequiredComponentInsertState>;
+  conflictResolution?: ConflictResolution;
+}) => {
+  if (conflictResolution !== undefined) {
+    return;
+  }
+  const conflicts = detectFragmentTokenConflicts({ fragment, targetData });
+  if (conflicts.length > 0) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      `Design token conflicts require an explicit conflictResolution (ours, theirs, or merge): ${conflicts
+        .map(({ tokenName }) => tokenName)
+        .join(", ")}`
+    );
+  }
+};
+
 export const insertComponent = (
   state: ComponentInsertState,
   input: z.infer<typeof insertComponentInput>,
@@ -1176,6 +1194,11 @@ export const insertCollection = (
     input,
     templates,
   });
+  requireFragmentTokenConflictResolution({
+    fragment: collection.fragment,
+    targetData: mutationState,
+    conflictResolution: input.conflictResolution,
+  });
   const getMappedId = (ids: Map<string, string>, sourceId: string) => {
     const id = ids.get(sourceId);
     if (id === undefined) {
@@ -1195,6 +1218,7 @@ export const insertCollection = (
     templates,
     mode: input.mode,
     insertIndex: input.insertIndex,
+    conflictResolution: input.conflictResolution,
     additionalAvailableVariables: collection.parameterDataSources,
     getResultDetails: ({ newInstanceIds, newDataSourceIds }) => ({
       collectionInstanceId: getMappedId(
@@ -1265,20 +1289,11 @@ export const insertFragment = (
   if (htmlEmbedError !== undefined) {
     return throwBuilderRuntimeError("BAD_REQUEST", htmlEmbedError.message);
   }
-  if (input.conflictResolution === undefined) {
-    const conflicts = detectFragmentTokenConflicts({
-      fragment: input.fragment,
-      targetData: getRequiredComponentInsertState(state),
-    });
-    if (conflicts.length > 0) {
-      return throwBuilderRuntimeError(
-        "CONFLICT",
-        `Design token conflicts require an explicit conflictResolution (ours, theirs, or merge): ${conflicts
-          .map(({ tokenName }) => tokenName)
-          .join(", ")}`
-      );
-    }
-  }
+  requireFragmentTokenConflictResolution({
+    fragment: input.fragment,
+    targetData: getRequiredComponentInsertState(state),
+    conflictResolution: input.conflictResolution,
+  });
   if (input.fragment.children.length === 0) {
     return createInsertTokenFragmentMutation({
       state,

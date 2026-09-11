@@ -30,6 +30,12 @@ const collectionDataInput = z.discriminatedUnion("type", [
   }),
 ]);
 
+export const conflictResolutionInput = z
+  .enum(["ours", "theirs", "merge"])
+  .describe(
+    'Token conflicts: "ours" keeps, "theirs" replaces, and "merge" combines styles.'
+  );
+
 export const insertCollectionInput = z.object({
   parentInstanceId: z.string(),
   data: collectionDataInput.describe(
@@ -38,6 +44,7 @@ export const insertCollectionInput = z.object({
   itemFragment: webstudioFragmentMutationInput.describe(
     "One structured repeated-item fragment. Descendant expressions may reference collectionItem and collectionItemKey."
   ),
+  conflictResolution: conflictResolutionInput.optional(),
   mode: instanceInsertModeInput.optional(),
   insertIndex: insertIndexInput.optional(),
 });
