@@ -161,6 +161,20 @@ Rules:
 
 Use a connected `.mdx` Asset when editors should change a Content Block body visually while the document remains stored as a file.
 
+### Connect a collection to its entry page
+
+When MDX files belong to a content collection, connect the collection to its dynamic entry page explicitly. Read the page ID after finding or creating the page, verify that its path has exactly one URL parameter, and store the ID at `x-webstudio.entryPageId` in `collection.json`. Do not assume Webstudio infers the page from its path, Assets query, or Content Block source. Preserve the rest of `collection.json`, and verify **Open on canvas** from both an entry asset menu and **Entry settings** before handoff. If no compatible page exists, leave the field unset and report that entry navigation still needs configuration.
+
+```json
+{
+  "x-webstudio": {
+    "template": "template.mdx",
+    "entries": ["*.mdx"],
+    "entryPageId": "<dynamic-entry-page-id>"
+  }
+}
+```
+
 1. Create the `.mdx` file under `.webstudio/assets`, then upload it and keep the returned Asset ID.
 2. Inspect the Content Block and verify that it has exactly one direct Templates container. Every custom template referenced from MDX needs a unique top-level instance name. A missing or second Templates container blocks connected MDX materialization and publication.
 3. Connect the Asset with `connect-content-block-source`. Use a stable page-based `renderScope` for a direct occurrence.
