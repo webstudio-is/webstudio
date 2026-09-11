@@ -16,6 +16,7 @@ import {
 } from "./asset-thumbnail-card";
 import {
   AssetManagerItemActionsDropdown,
+  type AssetManagerItemActionDescriptions,
   type AssetManagerItemActions,
 } from "./asset-manager-item-menu";
 import type { AssetManagerSelection } from "./asset-manager-selection";
@@ -38,7 +39,8 @@ export type AssetManagerThumbnailInteractions = {
   onContextMenuSelection: (item: AssetManagerSelection) => void;
   onContextMenuActions: (
     actions: AssetManagerItemActions,
-    disabledActions?: ReadonlySet<keyof AssetManagerItemActions>
+    disabledActions?: ReadonlySet<keyof AssetManagerItemActions>,
+    disabledActionDescriptions?: AssetManagerItemActionDescriptions
   ) => void;
   getDragItems: (item: AssetManagerSelection) => AssetManagerSelection[];
 };
@@ -49,6 +51,7 @@ type AssetManagerThumbnailProps = Omit<
 > & {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<keyof AssetManagerItemActions>;
+  disabledActionDescriptions?: AssetManagerItemActionDescriptions;
   interactions: AssetManagerThumbnailInteractions;
   item: AssetManagerSelection;
   header?: ReactNode;
@@ -60,6 +63,7 @@ type AssetManagerThumbnailProps = Omit<
 export const AssetManagerThumbnail = ({
   actions,
   disabledActions,
+  disabledActionDescriptions,
   interactions,
   item,
   header,
@@ -80,7 +84,11 @@ export const AssetManagerThumbnail = ({
       }
       onContextMenu={(event) => {
         interactions.onContextMenuSelection(item);
-        interactions.onContextMenuActions(actions, disabledActions);
+        interactions.onContextMenuActions(
+          actions,
+          disabledActions,
+          disabledActionDescriptions
+        );
         event.currentTarget
           .querySelector<HTMLElement>("[data-asset-manager-thumbnail-button]")
           ?.focus();
@@ -139,6 +147,7 @@ export const AssetManagerThumbnail = ({
 type AssetManagerThumbnailMenuProps = {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<keyof AssetManagerItemActions>;
+  disabledActionDescriptions?: AssetManagerItemActionDescriptions;
   label: string;
   onPointerDown?: () => void;
 };
@@ -146,14 +155,26 @@ type AssetManagerThumbnailMenuProps = {
 export const AssetManagerThumbnailMenu = forwardRef<
   HTMLDivElement,
   AssetManagerThumbnailMenuProps
->(({ actions, disabledActions, label, onPointerDown }, ref) => (
-  <AssetThumbnailMenu ref={ref} onPointerDown={onPointerDown}>
-    <AssetManagerItemActionsDropdown
-      actions={actions}
-      disabledActions={disabledActions}
-      triggerLabel={label}
-      triggerTabIndex={-1}
-    />
-  </AssetThumbnailMenu>
-));
+>(
+  (
+    {
+      actions,
+      disabledActions,
+      disabledActionDescriptions,
+      label,
+      onPointerDown,
+    },
+    ref
+  ) => (
+    <AssetThumbnailMenu ref={ref} onPointerDown={onPointerDown}>
+      <AssetManagerItemActionsDropdown
+        actions={actions}
+        disabledActions={disabledActions}
+        disabledActionDescriptions={disabledActionDescriptions}
+        triggerLabel={label}
+        triggerTabIndex={-1}
+      />
+    </AssetThumbnailMenu>
+  )
+);
 AssetManagerThumbnailMenu.displayName = "AssetManagerThumbnailMenu";

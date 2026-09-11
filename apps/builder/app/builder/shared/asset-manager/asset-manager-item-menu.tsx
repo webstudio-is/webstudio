@@ -13,8 +13,9 @@ import {
   Kbd,
   SmallIconButton,
   theme,
+  Tooltip,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon } from "@webstudio-is/icons";
+import { EllipsesIcon, InfoCircleIcon } from "@webstudio-is/icons";
 
 export type AssetManagerItemActions = Partial<
   Record<
@@ -43,6 +44,9 @@ export type AssetManagerItemActions = Partial<
   >
 >;
 export type AssetManagerItemActionName = keyof AssetManagerItemActions;
+export type AssetManagerItemActionDescriptions = Partial<
+  Record<AssetManagerItemActionName, string>
+>;
 
 type ItemDefinition = {
   name: keyof AssetManagerItemActions;
@@ -102,29 +106,38 @@ export const getAssetManagerItemMenuItems = (
   actions: AssetManagerItemActions,
   {
     disabledActions,
+    disabledActionDescriptions,
   }: {
     disabledActions?: ReadonlySet<AssetManagerItemActionName>;
+    disabledActionDescriptions?: AssetManagerItemActionDescriptions;
   } = {}
 ) =>
-  itemDefinitions.flatMap((definition) =>
-    actions[definition.name] === undefined
+  itemDefinitions.flatMap((definition) => {
+    const action = actions[definition.name];
+    const disabledDescription = disabledActionDescriptions?.[definition.name];
+    return action === undefined && disabledDescription === undefined
       ? []
       : [
           {
             ...definition,
-            action: actions[definition.name],
-            disabled: disabledActions?.has(definition.name) ?? false,
+            action,
+            disabled:
+              action === undefined ||
+              (disabledActions?.has(definition.name) ?? false),
+            disabledDescription,
           },
-        ]
-  );
+        ];
+  });
 
 const AssetManagerItemMenuItems = ({
   actions,
   disabledActions,
+  disabledActionDescriptions,
   variant,
 }: {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
+  disabledActionDescriptions?: AssetManagerItemActionDescriptions;
   variant: "context" | "dropdown";
 }) => {
   const Item = variant === "context" ? ContextMenuItem : DropdownMenuItem;
@@ -136,21 +149,34 @@ const AssetManagerItemMenuItems = ({
     variant === "context" ? ContextMenuSeparator : DropdownMenuSeparator;
   return getAssetManagerItemMenuItems(actions, {
     disabledActions,
+    disabledActionDescriptions,
   }).map((item, index) => (
     <Fragment key={item.name}>
       {item.separatorBefore && index > 0 && <Separator />}
-      <Item
-        disabled={item.disabled}
-        destructive={item.destructive}
-        onSelect={item.action}
-      >
-        {item.label}
-        {item.shortcut !== undefined && (
-          <ItemRightSlot css={shortcutStyle}>
-            <Kbd value={item.shortcut} />
-          </ItemRightSlot>
-        )}
-      </Item>
+      <Tooltip variant="wrapped" content={item.disabledDescription}>
+        <Item
+          disabled={item.disabled}
+          destructive={item.destructive}
+          onSelect={item.action}
+          aria-label={
+            item.disabledDescription === undefined
+              ? undefined
+              : `${item.label}. ${item.disabledDescription}`
+          }
+        >
+          {item.label}
+          {item.shortcut !== undefined && (
+            <ItemRightSlot css={shortcutStyle}>
+              <Kbd value={item.shortcut} />
+            </ItemRightSlot>
+          )}
+          {item.disabledDescription !== undefined && (
+            <ItemRightSlot css={{ paddingLeft: theme.spacing[3] }}>
+              <InfoCircleIcon />
+            </ItemRightSlot>
+          )}
+        </Item>
+      </Tooltip>
     </Fragment>
   ));
 };
@@ -158,14 +184,17 @@ const AssetManagerItemMenuItems = ({
 export const AssetManagerItemContextMenuContent = ({
   actions,
   disabledActions,
+  disabledActionDescriptions,
 }: {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
+  disabledActionDescriptions?: AssetManagerItemActionDescriptions;
 }) => (
   <ContextMenuContent css={menuContentStyle}>
     <AssetManagerItemMenuItems
       actions={actions}
       disabledActions={disabledActions}
+      disabledActionDescriptions={disabledActionDescriptions}
       variant="context"
     />
   </ContextMenuContent>
@@ -174,11 +203,13 @@ export const AssetManagerItemContextMenuContent = ({
 export const AssetManagerItemActionsDropdown = ({
   actions,
   disabledActions,
+  disabledActionDescriptions,
   triggerLabel = "Actions",
   triggerTabIndex,
 }: {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
+  disabledActionDescriptions?: AssetManagerItemActionDescriptions;
   triggerLabel?: string;
   triggerTabIndex?: number;
 }) => (
@@ -194,6 +225,7 @@ export const AssetManagerItemActionsDropdown = ({
       <AssetManagerItemMenuItems
         actions={actions}
         disabledActions={disabledActions}
+        disabledActionDescriptions={disabledActionDescriptions}
         variant="dropdown"
       />
     </DropdownMenuContent>

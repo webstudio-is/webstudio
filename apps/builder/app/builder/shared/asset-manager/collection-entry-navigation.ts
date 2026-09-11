@@ -1,6 +1,9 @@
 import { getPagePath, type Pages } from "@webstudio-is/sdk";
 import { tokenizePathnamePattern } from "@webstudio-is/project-build/runtime";
 
+export const collectionEntryCanvasUnavailableMessage =
+  "Choose a dynamic Entry page with one URL parameter in Collection settings.";
+
 export const getCollectionEntryCanvasTarget = ({
   entryPageId,
   entryBasename,

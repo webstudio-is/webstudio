@@ -238,6 +238,40 @@ test("uses entry-specific edit and canvas actions", () => {
   );
   expect(onEntryOpenOnCanvas).toHaveBeenCalledOnce();
 });
+
+test("shows unavailable canvas navigation instead of hiding it", async () => {
+  const container = renderer.render(
+    <TooltipProvider delayDuration={0}>
+      {createUploadedAssetThumbnail({
+        isCollectionEntry: true,
+        onOpen: vi.fn(),
+      })}
+    </TooltipProvider>
+  );
+  act(() => {
+    container
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Actions for document.pdf"]'
+      )
+      ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+  });
+  const openOnCanvas = document.body.querySelector<HTMLElement>(
+    '[role="menuitem"][aria-label^="Open on canvas."]'
+  );
+  expect(openOnCanvas).not.toBeNull();
+  expect(openOnCanvas).toHaveAttribute("data-disabled");
+  expect(openOnCanvas?.querySelector("svg")).not.toBeNull();
+  act(() => {
+    openOnCanvas?.dispatchEvent(
+      new PointerEvent("pointermove", { bubbles: true, pointerType: "mouse" })
+    );
+  });
+  await vi.waitFor(() =>
+    expect(document.body.querySelector('[role="tooltip"]')).toHaveTextContent(
+      "Choose a dynamic Entry page with one URL parameter in Collection settings."
+    )
+  );
+});
 registerContainers();
 vi.stubGlobal(
   "ResizeObserver",
@@ -1286,6 +1320,7 @@ describe("AssetThumbnail", () => {
     );
     expect(interactions.onContextMenuActions).toHaveBeenCalledWith(
       expect.objectContaining({ open: onOpen }),
+      undefined,
       undefined
     );
 

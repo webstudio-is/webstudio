@@ -18,7 +18,9 @@ import {
   Grid,
   PanelContent,
   Text,
+  Tooltip,
 } from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { $authPermit } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
 import {
@@ -28,6 +30,7 @@ import {
 import { updateAssetContent } from "../assets/update-asset-content";
 import { CollectionEntryFields } from "./collection-entry-fields";
 import { replaceMdxFrontmatter } from "@webstudio-is/content-engine/mdx";
+import { collectionEntryCanvasUnavailableMessage } from "./collection-entry-navigation";
 
 export const CollectionEntrySettingsDialog = ({
   asset,
@@ -277,18 +280,33 @@ export const CollectionEntrySettingsDialog = ({
                 ))}
               </Grid>
             )}
-            <Grid columns={onOpenCanvas === undefined ? 1 : 2} gap={2}>
+            <Grid columns={2} gap={2}>
               <Button disabled={saving} onClick={() => void close(onOpenFile)}>
                 Edit file
               </Button>
-              {onOpenCanvas !== undefined && (
+              <Tooltip
+                variant="wrapped"
+                content={
+                  onOpenCanvas === undefined
+                    ? collectionEntryCanvasUnavailableMessage
+                    : undefined
+                }
+              >
                 <Button
                   disabled={saving}
-                  onClick={() => void close(onOpenCanvas)}
+                  aria-disabled={saving || onOpenCanvas === undefined}
+                  suffix={
+                    onOpenCanvas === undefined ? <InfoCircleIcon /> : undefined
+                  }
+                  onClick={() => {
+                    if (onOpenCanvas !== undefined) {
+                      void close(onOpenCanvas);
+                    }
+                  }}
                 >
                   Open on canvas
                 </Button>
-              )}
+              </Tooltip>
             </Grid>
             {loaded !== undefined &&
               error !== undefined &&

@@ -272,3 +272,37 @@ test("identifies the entry in the title and opens its configured canvas page", a
   expect(onClose).toHaveBeenCalledOnce();
   expect(onOpenCanvas).toHaveBeenCalledOnce();
 });
+
+test("shows disabled canvas navigation when no entry page is configured", async () => {
+  $assets.set(new Map([[asset.id, asset]]));
+  renderer.render(
+    <TooltipProvider>
+      <CollectionEntrySettingsDialog
+        asset={asset}
+        collection={{
+          status: "ready",
+          folderId: "posts",
+          configAsset: asset,
+          templateAsset: asset,
+          templateProperties: {},
+          config: parseCollectionConfig(createDefaultCollectionConfig()),
+        }}
+        readSource={async () => "---\ntitle: Post\nslug: post\n---\nBody"}
+        updateContent={vi.fn()}
+        onClose={vi.fn()}
+        onOpenFile={vi.fn()}
+      />
+    </TooltipProvider>
+  );
+  await vi.waitFor(() =>
+    expect(
+      document.querySelector<HTMLInputElement>("#collection-entry-title")?.value
+    ).toBe("Post")
+  );
+  const openOnCanvas = Array.from(document.querySelectorAll("button")).find(
+    (button) => button.textContent === "Open on canvas"
+  );
+  expect(openOnCanvas).toBeDefined();
+  expect(openOnCanvas).toHaveAttribute("aria-disabled", "true");
+  expect(openOnCanvas?.querySelector("svg")).not.toBeNull();
+});

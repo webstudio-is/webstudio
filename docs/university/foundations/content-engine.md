@@ -152,9 +152,10 @@ an entry keeps you on the current page.
 
 Use the **Entry page** tab to choose the dynamic page that displays collection
 entries. The page must have one URL parameter, such as `/blog/:slug`.
-This enables **Open on canvas** in an entry's menu and in **Entry settings**;
-Webstudio fills the page parameter with the entry filename. It does not navigate
-automatically when an editor creates an entry.
+Webstudio fills the page parameter with the entry filename when you choose
+**Open on canvas** from an entry's menu or **Entry settings**. The action stays
+visible but disabled until the collection has a compatible entry page; its help
+points back to this setting. Creating an entry does not navigate automatically.
 
 The collection format uses a supported subset of JSON Schema draft 2020-12.
 The configurator exposes string, number, integer, boolean, and slug fields,

@@ -86,3 +86,22 @@ test("keeps unavailable panel actions visible but disabled", () => {
 
   expect(items).toMatchObject([{ name: "paste", disabled: true }]);
 });
+
+test("keeps an unavailable action visible with its explanation", () => {
+  const items = getAssetManagerItemMenuItems(
+    {},
+    {
+      disabledActionDescriptions: {
+        openOnCanvas: "Choose an Entry page in Collection settings.",
+      },
+    }
+  );
+
+  expect(items).toMatchObject([
+    {
+      name: "openOnCanvas",
+      disabled: true,
+      disabledDescription: "Choose an Entry page in Collection settings.",
+    },
+  ]);
+});

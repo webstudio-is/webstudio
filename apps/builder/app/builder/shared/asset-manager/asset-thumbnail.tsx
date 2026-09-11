@@ -41,7 +41,11 @@ import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
-import { type AssetManagerItemActions } from "./asset-manager-item-menu";
+import {
+  type AssetManagerItemActionDescriptions,
+  type AssetManagerItemActions,
+} from "./asset-manager-item-menu";
+import { collectionEntryCanvasUnavailableMessage } from "./collection-entry-navigation";
 import {
   AssetManagerThumbnail,
   AssetManagerThumbnailMenu,
@@ -262,7 +266,10 @@ export const AssetThumbnail = ({
       ? {}
       : {
           ...(isCollectionEntry
-            ? { editFile: onOpen, openOnCanvas: onEntryOpenOnCanvas }
+            ? {
+                editFile: onOpen,
+                openOnCanvas: onEntryOpenOnCanvas,
+              }
             : { open: onOpen }),
           entrySettings: onEntrySettings,
           settings: settingsBlocked
@@ -364,15 +371,21 @@ export const AssetThumbnail = ({
 
   const displayedActions =
     forcedSelection && selected ? (selectionActions ?? actions) : actions;
-  const disabledActions = isCollectionReserved
-    ? new Set<keyof AssetManagerItemActions>([
-        "cut",
-        "copy",
-        "duplicate",
-        "move",
-        "delete",
-      ])
-    : undefined;
+  const disabledActions = new Set<keyof AssetManagerItemActions>(
+    isCollectionReserved ? ["cut", "copy", "duplicate", "move", "delete"] : []
+  );
+  let disabledActionDescriptions:
+    | AssetManagerItemActionDescriptions
+    | undefined;
+  if (
+    displayedActions === actions &&
+    isCollectionEntry &&
+    onEntryOpenOnCanvas === undefined
+  ) {
+    disabledActionDescriptions = {
+      openOnCanvas: collectionEntryCanvasUnavailableMessage,
+    };
+  }
 
   return (
     <>
@@ -386,7 +399,10 @@ export const AssetThumbnail = ({
       <AssetManagerThumbnail
         item={{ type: "asset", id: asset.id }}
         actions={displayedActions}
-        disabledActions={disabledActions}
+        disabledActions={
+          disabledActions.size === 0 ? undefined : disabledActions
+        }
+        disabledActionDescriptions={disabledActionDescriptions}
         interactions={interactions}
         selected={selected}
         forcedSelection={forcedSelection}
@@ -472,7 +488,10 @@ export const AssetThumbnail = ({
               >
                 <AssetManagerThumbnailMenu
                   actions={displayedActions}
-                  disabledActions={disabledActions}
+                  disabledActions={
+                    disabledActions.size === 0 ? undefined : disabledActions
+                  }
+                  disabledActionDescriptions={disabledActionDescriptions}
                   label={`Actions for ${formatAssetName(asset)}`}
                   onPointerDown={() =>
                     interactions.onContextMenuSelection(item)
