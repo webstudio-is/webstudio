@@ -77,6 +77,13 @@ export type AssetManagerItemActions = Partial<
   >
 >;
 
+type AssetManagerItemMenuItem = ItemDefinition & {
+  name: AssetManagerItemActionName;
+  action: (() => void) | undefined;
+  disabled: boolean;
+  disabledDescription: string | undefined;
+};
+
 const menuContentStyle = { minWidth: 120 };
 const shortcutStyle = { paddingLeft: theme.spacing[5] };
 
@@ -87,7 +94,7 @@ export const getAssetManagerItemMenuItems = (
   }: {
     disabledActions?: ReadonlySet<AssetManagerItemActionName>;
   } = {}
-) =>
+): AssetManagerItemMenuItem[] =>
   itemDefinitions.flatMap((definition) => {
     const value = actions[definition.name];
     if (value === undefined) {
