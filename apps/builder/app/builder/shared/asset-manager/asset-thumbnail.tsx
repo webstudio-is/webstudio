@@ -42,6 +42,7 @@ import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
 import { type AssetManagerItemActions } from "./asset-manager-item-menu";
+import { collectionEntryCanvasUnavailableMessage } from "./collection-entry-navigation";
 import {
   AssetManagerThumbnail,
   AssetManagerThumbnailMenu,
@@ -52,6 +53,9 @@ const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
 const CATEGORY_ICON_MAP: Partial<Record<MimeCategory, IconComponent>> = {
   font: TextCapitalizeIcon,
+};
+const unavailableOpenOnCanvas = {
+  disabledDescription: collectionEntryCanvasUnavailableMessage,
 };
 
 const getFileIcon = (format: string): IconComponent => {
@@ -175,6 +179,7 @@ type AssetThumbnailProps = {
   onChange?: (assetContainer: AssetContainer) => void;
   onOpen?: () => void;
   onEntrySettings?: () => void;
+  onEntryOpenOnCanvas?: () => void;
   selected?: boolean;
   forcedSelection?: boolean;
   folderPath?: string;
@@ -194,6 +199,7 @@ export const AssetThumbnail = ({
   onChange,
   onOpen,
   onEntrySettings,
+  onEntryOpenOnCanvas,
   selected,
   forcedSelection,
   folderPath,
@@ -259,7 +265,17 @@ export const AssetThumbnail = ({
     assetContainer.status === "uploading"
       ? {}
       : {
-          open: onOpen,
+          ...(isCollectionEntry
+            ? {
+                editFile: onOpen,
+                ...(isCollectionReserved
+                  ? {}
+                  : {
+                      openOnCanvas:
+                        onEntryOpenOnCanvas ?? unavailableOpenOnCanvas,
+                    }),
+              }
+            : { open: onOpen }),
           entrySettings: onEntrySettings,
           settings: settingsBlocked
             ? undefined
@@ -369,7 +385,6 @@ export const AssetThumbnail = ({
         "delete",
       ])
     : undefined;
-
   return (
     <>
       <input
@@ -456,8 +471,16 @@ export const AssetThumbnail = ({
                 onOpenChange={(open) => {
                   setSettingsOpen(open);
                 }}
-                onDelete={actions.delete}
-                onReplace={actions.replace}
+                onDelete={
+                  typeof actions.delete === "function"
+                    ? actions.delete
+                    : undefined
+                }
+                onReplace={
+                  typeof actions.replace === "function"
+                    ? actions.replace
+                    : undefined
+                }
                 canRename={!isCollectionEntry && !isCollectionReserved}
                 canMove={!isCollectionReserved}
                 isCollectionFile={isCollectionFile}

@@ -6214,6 +6214,8 @@ const getMetaIndex = (
       "Operate on the configured project only.",
       "Read ids before writing.",
       "Prefer semantic tools over apply-patch.",
+      "For every collection.json frontmatter property, add a JSON Schema description that tells editors what to enter instead of repeating its label.",
+      "When a content collection has a dynamic entry page, read that page's id and store it as x-webstudio.entryPageId in collection.json. The page must have exactly one URL parameter. Webstudio does not infer this link from the page path or Assets query. Before handoff, verify Open on canvas from both an entry menu and Entry settings.",
       valuesVsBindingsRule,
       "Use status/refresh when cached data may be stale.",
       guidance?.visualVerificationRule,

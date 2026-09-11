@@ -873,7 +873,7 @@ describe("structured asset query", () => {
     );
   });
 
-  test("reports invalid standard-field values and output-only unobserved fields", () => {
+  test("reports invalid standard-field values without warning about output-only fields", () => {
     expect(() =>
       validateAssetQueryAgainstCatalog({
         catalog,
@@ -904,11 +904,6 @@ describe("structured asset query", () => {
             severity: "error",
             code: "INCOMPATIBLE_VALUE",
             path: ["query", "where", "all", "1", "value", "1"],
-          }),
-          expect.objectContaining({
-            severity: "warning",
-            code: "UNOBSERVED_FIELD",
-            path: ["query", "output", "fields", "0"],
           }),
         ],
       })

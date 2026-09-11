@@ -73,7 +73,7 @@ export const checkCollectionEntries = async ({
         issues.set(asset.id, [
           {
             message:
-              "This entry could not be checked. Open the file to inspect it or retry the check.",
+              "This entry could not be checked. Open Entry settings to inspect it or retry the check.",
           },
         ]);
       }

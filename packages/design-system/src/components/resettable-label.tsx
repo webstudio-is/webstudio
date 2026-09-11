@@ -22,7 +22,7 @@ export const ResettableLabel = ({
   ...props
 }: Omit<ComponentProps<typeof Label>, "onReset" | "content"> & {
   description?: ReactNode;
-  /** Replaces the default tooltip heading and description, not its reset action. */
+  /** Replaces the description content, not the reset action. */
   content?: ReactNode;
   onReset?: () => void;
   resetDisabled?: boolean;
@@ -34,6 +34,7 @@ export const ResettableLabel = ({
   const labelRef = useRef<HTMLLabelElement>(null);
   const resetRef = useRef<HTMLButtonElement>(null);
   const movingFocus = useRef(false);
+  const openedByClick = useRef(false);
   const canReset = onReset !== undefined && !resetDisabled && !disabled;
   const reset = () => {
     if (!canReset) {
@@ -68,6 +69,13 @@ export const ResettableLabel = ({
           if (!nextOpen && movingFocus.current) {
             return;
           }
+          if (
+            !nextOpen &&
+            openedByClick.current &&
+            labelRef.current?.matches(":hover")
+          ) {
+            return;
+          }
           setOpen(nextOpen);
         }}
         onEscapeKeyDown={() => {
@@ -80,12 +88,7 @@ export const ResettableLabel = ({
             gap="2"
             css={{ maxWidth: theme.spacing[28] }}
           >
-            {content ?? (
-              <>
-                <Text variant="titles">{children}</Text>
-                {description && <Text>{description}</Text>}
-              </>
-            )}
+            {content ?? (description && <Text>{description}</Text>)}
             {onReset && (
               <Button
                 ref={resetRef}
@@ -113,6 +116,10 @@ export const ResettableLabel = ({
           tag={props.htmlFor ? "label" : "button"}
           role="button"
           tabIndex={props.tabIndex ?? 0}
+          onPointerLeave={(event) => {
+            props.onPointerLeave?.(event);
+            openedByClick.current = false;
+          }}
           onClick={(event) => {
             props.onClick?.(event);
             if (event.defaultPrevented) {
@@ -124,6 +131,7 @@ export const ResettableLabel = ({
               reset();
               return;
             }
+            openedByClick.current = true;
             setOpen(true);
           }}
           onKeyDown={(event) => {

@@ -545,17 +545,19 @@ describe("content collections", () => {
     });
   });
 
-  test("ignores and removes the obsolete dynamic preview setting", () => {
+  test("replaces the obsolete automatic preview setting with explicit entry navigation", () => {
     const schema = JSON.parse(createDefaultCollectionConfig());
     schema["x-webstudio"].previewPage = "blog-post";
+    schema["x-webstudio"].entryPageId = "article-page";
     const config = parseCollectionConfig(JSON.stringify(schema));
 
     expect(config).not.toHaveProperty("previewPage");
-    expect(
-      JSON.parse(serializeCollectionConfig({ config, fields: config.fields }))[
-        "x-webstudio"
-      ]
-    ).not.toHaveProperty("previewPage");
+    expect(config.entryPageId).toBe("article-page");
+    const settings = JSON.parse(
+      serializeCollectionConfig({ config, fields: config.fields })
+    )["x-webstudio"];
+    expect(settings).not.toHaveProperty("previewPage");
+    expect(settings.entryPageId).toBe("article-page");
   });
 
   test("requires a separate field for automatic slug generation", () => {
@@ -579,8 +581,17 @@ describe("content collections", () => {
     };
     schema["x-webstudio"].customSetting = "keep";
     const config = parseCollectionConfig(JSON.stringify(schema));
+    expect(
+      config.fields.find(({ key }) => key === "summary")?.description
+    ).toBe("Shown in external schema tools");
     const fields = config.fields.map((field) =>
-      field.key === "summary" ? { ...field, key: "excerpt" } : field
+      field.key === "summary"
+        ? {
+            ...field,
+            key: "excerpt",
+            description: "A concise article summary.",
+          }
+        : field
     );
 
     const serialized = JSON.parse(
@@ -588,7 +599,7 @@ describe("content collections", () => {
     );
 
     expect(serialized.properties.excerpt).toMatchObject({
-      description: "Shown in external schema tools",
+      description: "A concise article summary.",
       "x-webstudio": { help: "Start with a capital letter" },
     });
     expect(serialized["x-webstudio"].customSetting).toBe("keep");
