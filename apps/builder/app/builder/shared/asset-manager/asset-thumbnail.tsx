@@ -268,7 +268,9 @@ export const AssetThumbnail = ({
           ...(isCollectionEntry
             ? {
                 editFile: onOpen,
-                openOnCanvas: onEntryOpenOnCanvas,
+                ...(isCollectionReserved
+                  ? {}
+                  : { openOnCanvas: onEntryOpenOnCanvas }),
               }
             : { open: onOpen }),
           entrySettings: onEntrySettings,
@@ -380,6 +382,7 @@ export const AssetThumbnail = ({
   if (
     displayedActions === actions &&
     isCollectionEntry &&
+    !isCollectionReserved &&
     onEntryOpenOnCanvas === undefined
   ) {
     disabledActionDescriptions = {
