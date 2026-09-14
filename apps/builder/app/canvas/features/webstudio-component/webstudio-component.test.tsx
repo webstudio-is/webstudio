@@ -1,7 +1,28 @@
 import { describe, test, expect } from "vitest";
 import { __testing__ } from "./webstudio-component";
 
-const { computeComponentKey, getPreviewCurrentUrl } = __testing__;
+const { computeComponentKey, getPreviewCurrentUrl, getCanvasOnlyProps } =
+  __testing__;
+
+describe("getCanvasOnlyProps", () => {
+  test.each([
+    [undefined, "settled", true],
+    [false, "settled", true],
+    [true, "settled", false],
+    [false, "pending", false],
+  ] as const)(
+    "sets HtmlEmbed script execution for safeMode=%p and resources=%p",
+    (isSafeMode, resourcesState, executeScripts) => {
+      expect(
+        getCanvasOnlyProps("HtmlEmbed", isSafeMode, resourcesState)
+      ).toEqual({ $ws$executeScripts: executeScripts });
+    }
+  );
+
+  test("does not pass the private prop to other components", () => {
+    expect(getCanvasOnlyProps("Button", false, "settled")).toEqual({});
+  });
+});
 
 describe("computeComponentKey - key generation logic", () => {
   test("prioritizes assetId over other props", () => {

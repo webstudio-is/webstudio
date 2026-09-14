@@ -70,7 +70,6 @@ import { builderApi } from "~/shared/builder-api";
 import { useDebounceEffect } from "@webstudio-is/design-system";
 import { subscribeInstanceContextMenu } from "./instance-context-menu";
 import { startPointerTracking } from "~/shared/awareness";
-import { CanvasHtmlEmbed } from "./html-embed";
 
 registerContainers();
 
@@ -123,6 +122,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
     () => [...breakpointsMap.values()].sort(compareMedia),
     [breakpointsMap]
   );
+
   return useMemo(() => {
     return (
       <ReactSdkContext.Provider
@@ -252,11 +252,6 @@ export const Canvas = () => {
     for (const library of canvasComponentLibraries) {
       registerComponentLibrary(library);
     }
-    registerComponentLibrary({
-      components: { HtmlEmbed: CanvasHtmlEmbed },
-      metas: {},
-      templates: {},
-    });
   });
 
   useMount(initCanvasApi);

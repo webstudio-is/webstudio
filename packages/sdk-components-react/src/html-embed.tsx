@@ -218,15 +218,22 @@ type HtmlEmbedProps = {
   executeScriptOnCanvas?: boolean;
   clientOnly?: boolean;
   className?: string;
+  $ws$executeScripts?: boolean;
   // avoid builder passing it to dom
   children?: never;
 };
 
 export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
-    const { code, executeScriptOnCanvas, clientOnly, children, ...rest } =
-      props;
-    const { renderer, isSafeMode } = useContext(ReactSdkContext);
+    const {
+      code,
+      executeScriptOnCanvas,
+      clientOnly,
+      children,
+      $ws$executeScripts = true,
+      ...rest
+    } = props;
+    const { renderer } = useContext(ReactSdkContext);
 
     const isServer = useIsServer();
 
@@ -252,8 +259,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
     }
     // We are or on canvas | preview | published site after client routing
 
-    // In safe mode, never execute scripts regardless of other settings
-    if (isSafeMode) {
+    if ($ws$executeScripts === false) {
       return (
         <ClientOnly>
           <ClientEmbedWithNonExecutableScripts

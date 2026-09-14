@@ -6,6 +6,7 @@ import {
   useRef,
   useLayoutEffect,
   useMemo,
+  useContext,
   Fragment,
   type ReactNode,
   type JSX,
@@ -106,6 +107,19 @@ import {
   takeNewContentBlockDiagnostics,
 } from "~/shared/content-block-diagnostics";
 import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-source-utils";
+import { $resourcesState } from "~/shared/resources";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+
+const getCanvasOnlyProps = (
+  component: string,
+  isSafeMode: boolean | undefined,
+  resourcesState: "pending" | "settled"
+) =>
+  component === "HtmlEmbed"
+    ? {
+        $ws$executeScripts: isSafeMode !== true && resourcesState === "settled",
+      }
+    : {};
 
 const computeComponentKey = (props: Record<string, unknown>) => {
   const assetId = props.$webstudio$canvasOnly$assetId;
@@ -140,7 +154,11 @@ const getPreviewCurrentUrl = (
   return currentUrl;
 };
 
-export const __testing__ = { computeComponentKey, getPreviewCurrentUrl };
+export const __testing__ = {
+  computeComponentKey,
+  getPreviewCurrentUrl,
+  getCanvasOnlyProps,
+};
 
 const PreviewLinkCurrentUrlProvider = ({
   children,
@@ -667,6 +685,8 @@ const WebstudioComponentCanvasInner = forwardRef<
   const allProps = useStore($props);
   const externalContentRoots = useStore($externalContentRoots);
   const metas = useStore($registeredComponentMetas);
+  const resourcesState = useStore($resourcesState);
+  const { isSafeMode } = useContext(ReactSdkContext);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
 
@@ -775,6 +795,7 @@ const WebstudioComponentCanvasInner = forwardRef<
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
     ...mergedProps,
+    ...getCanvasOnlyProps(instance.component, isSafeMode, resourcesState),
     // current props should override bypassed from parent
     // important for data-ws-* props
     tabIndex: 0,
@@ -965,6 +986,8 @@ const WebstudioComponentPreviewInner = forwardRef<
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instances = useStore($instances);
+  const resourcesState = useStore($resourcesState);
+  const { isSafeMode } = useContext(ReactSdkContext);
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
   const props: {
@@ -973,6 +996,7 @@ const WebstudioComponentPreviewInner = forwardRef<
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
     ...mergeProps(restProps, instanceProps, "merge"),
+    ...getCanvasOnlyProps(instance.component, isSafeMode, resourcesState),
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
     [selectorIdAttribute]: instanceSelector.join(","),
