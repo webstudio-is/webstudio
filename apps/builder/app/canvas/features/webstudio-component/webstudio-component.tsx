@@ -110,11 +110,15 @@ import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-sou
 import { $resourcesState } from "~/shared/resources";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
-const getCanvasOnlyProps = (
-  component: string,
-  isSafeMode: boolean | undefined,
-  resourcesState: "pending" | "settled"
-) =>
+const getHtmlEmbedCanvasProps = ({
+  component,
+  isSafeMode,
+  resourcesState,
+}: {
+  component: string;
+  isSafeMode: boolean | undefined;
+  resourcesState: "pending" | "settled";
+}) =>
   component === "HtmlEmbed"
     ? {
         $ws$executeScripts: isSafeMode !== true && resourcesState === "settled",
@@ -157,7 +161,7 @@ const getPreviewCurrentUrl = (
 export const __testing__ = {
   computeComponentKey,
   getPreviewCurrentUrl,
-  getCanvasOnlyProps,
+  getHtmlEmbedCanvasProps,
 };
 
 const PreviewLinkCurrentUrlProvider = ({
@@ -795,7 +799,11 @@ const WebstudioComponentCanvasInner = forwardRef<
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
     ...mergedProps,
-    ...getCanvasOnlyProps(instance.component, isSafeMode, resourcesState),
+    ...getHtmlEmbedCanvasProps({
+      component: instance.component,
+      isSafeMode,
+      resourcesState,
+    }),
     // current props should override bypassed from parent
     // important for data-ws-* props
     tabIndex: 0,
@@ -996,7 +1004,11 @@ const WebstudioComponentPreviewInner = forwardRef<
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
     ...mergeProps(restProps, instanceProps, "merge"),
-    ...getCanvasOnlyProps(instance.component, isSafeMode, resourcesState),
+    ...getHtmlEmbedCanvasProps({
+      component: instance.component,
+      isSafeMode,
+      resourcesState,
+    }),
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
     [selectorIdAttribute]: instanceSelector.join(","),
