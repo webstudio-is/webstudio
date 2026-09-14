@@ -16,6 +16,7 @@ const App = (props: {
   clientOnly?: boolean;
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
+  $ws$executeScripts?: boolean;
 }) => {
   const [page, switchPage] = React.useReducer((n) => (n + 1) % 2, 0);
   const [refresh, setRefresh] = React.useReducer((n) => n + 1, 0);
@@ -41,6 +42,7 @@ const App = (props: {
           code={code}
           clientOnly={props.clientOnly}
           executeScriptOnCanvas={props.executeScriptOnCanvas}
+          $ws$executeScripts={props.$ws$executeScripts}
         />
         <button type="button" onClick={switchPage}>
           page:{page}
@@ -160,6 +162,27 @@ describe("Published site", () => {
  * On canvas renderer, scripts are not executed on the server side.
  */
 describe("Builder renderer= canvas | preview", () => {
+  test.each(["canvas", "preview"] as const)(
+    "waits for resources to settle before executing scripts in %s",
+    async (renderer) => {
+      const props = {
+        renderer,
+        executeScriptOnCanvas: true,
+        $ws$executeScripts: false,
+      };
+      const { rerender } = render(<App {...props} />);
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
+
+      rerender(<App {...props} $ws$executeScripts={true} />);
+      await Promise.resolve();
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
+    }
+  );
+
   /**
    * On canvas if renderer is canvas, and executeScriptOnCanvas=false
    * scripts postprocessing are not applied independently of clientOnly value.
@@ -335,8 +358,7 @@ describe("Builder renderer= canvas | preview", () => {
   });
 
   /**
-   * Test safe mode: when isSafeMode is true, scripts should never execute
-   * regardless of executeScriptOnCanvas setting or renderer mode.
+   * Disabled script execution takes precedence over canvas settings and renderer mode.
    */
   test.each(
     cartesian(
@@ -359,7 +381,6 @@ describe("Builder renderer= canvas | preview", () => {
               assetBaseUrl: "",
               imageLoader: () => "",
               renderer: renderer as "canvas" | "preview",
-              isSafeMode: true,
               resources: {},
               breakpoints: [],
               onError: console.error,
@@ -369,6 +390,7 @@ describe("Builder renderer= canvas | preview", () => {
               code={code}
               clientOnly={clientOnly}
               executeScriptOnCanvas={executeScriptOnCanvas}
+              $ws$executeScripts={false}
             />
           </ReactSdkContext.Provider>
         );
@@ -381,7 +403,7 @@ describe("Builder renderer= canvas | preview", () => {
       render(ui, { container });
       await Promise.resolve();
 
-      // In safe mode, scripts should not be processed (no SCRIPT_PROCESSED_TEST_ID)
+      // Scripts should not be processed (no SCRIPT_PROCESSED_TEST_ID)
       expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
       expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
       expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
