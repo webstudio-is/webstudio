@@ -534,50 +534,76 @@ test("uses junctions for generated preview dependencies on windows", async () =>
   );
 });
 
-test("installs isolated generated dependencies when the cli does not ship them", async () => {
-  let installed = false;
-  const execFile = vi.fn(async () => {
-    installed = true;
-    return { stdout: "", stderr: "" };
-  });
-  const writeFile = vi.fn(async () => undefined);
+test.each([
+  {
+    name: "npm" as const,
+    command: "npm",
+    path: "/usr/bin",
+    args: expect.arrayContaining(["install", "--legacy-peer-deps"]),
+  },
+  {
+    name: "pnpm" as const,
+    command: "/usr/local/bin/pnpm",
+    path: "/usr/local/bin:/usr/bin",
+    args: [
+      "install",
+      "--no-lockfile",
+      "--loglevel=error",
+      "--ignore-workspace",
+    ],
+  },
+])(
+  "installs isolated generated dependencies with $name",
+  async ({ name, command, path, args }) => {
+    let installed = false;
+    const execFile = vi.fn(async () => {
+      installed = true;
+      return { stdout: "", stderr: "" };
+    });
+    const writeFile = vi.fn(async () => undefined);
 
-  await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
-    access: vi.fn(async (path) => {
-      if (installed && path.startsWith("/tmp/project/.webstudio/preview")) {
-        return;
-      }
-      throw Object.assign(new Error("missing"), { code: "ENOENT" });
-    }),
-    execFile,
-    lstat: vi.fn(async () => {
-      throw Object.assign(new Error("missing"), { code: "ENOENT" });
-    }),
-    readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
-    writeFile,
-    nodeExecPath: "/opt/webstudio-node/bin/node",
-    npmExecPath: undefined,
-    platform: "linux",
-    env: { PATH: "/usr/bin" },
-  });
-
-  expect(execFile).toHaveBeenCalledWith(
-    "npm",
-    expect.arrayContaining(["install", "--legacy-peer-deps"]),
-    expect.objectContaining({
-      cwd: "/tmp/project/.webstudio/preview",
-      env: expect.objectContaining({
-        PATH: "/opt/webstudio-node/bin:/usr/bin",
-        npm_config_cache: "/tmp/project/.webstudio/preview/.npm-cache",
+    await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
+      access: vi.fn(async (path) => {
+        if (installed && path.startsWith("/tmp/project/.webstudio/preview")) {
+          return;
+        }
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
       }),
-      timeout: 120_000,
-    })
-  );
-  expect(writeFile).toHaveBeenCalledWith(
-    "/tmp/project/.webstudio/preview/node_modules/.webstudio-preview-dependencies",
-    expect.stringMatching(/^[a-f0-9]{64}$/)
-  );
-});
+      execFile,
+      lstat: vi.fn(async () => {
+        throw Object.assign(new Error("missing"), { code: "ENOENT" });
+      }),
+      readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
+      writeFile,
+      nodeExecPath: "/opt/webstudio-node/bin/node",
+      npmExecPath: undefined,
+      platform: "linux",
+      env: { PATH: path },
+      which: (candidate) => (candidate === name ? command : undefined),
+    });
+
+    expect(execFile).toHaveBeenCalledWith(
+      command,
+      args,
+      expect.objectContaining({
+        cwd: "/tmp/project/.webstudio/preview",
+        timeout: 120_000,
+        ...(name === "npm"
+          ? {
+              env: expect.objectContaining({
+                PATH: "/opt/webstudio-node/bin:/usr/bin",
+                npm_config_cache: "/tmp/project/.webstudio/preview/.npm-cache",
+              }),
+            }
+          : {}),
+      })
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      "/tmp/project/.webstudio/preview/node_modules/.webstudio-preview-dependencies",
+      expect.stringMatching(/^[a-f0-9]{64}$/)
+    );
+  }
+);
 
 test("replaces a parent workspace dependency link for published previews", async () => {
   const parentDir = await mkdtemp(
