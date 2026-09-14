@@ -17,11 +17,15 @@ const App = (props: {
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
   $ws$executeScripts?: boolean;
+  assetUrls?: Record<string, string>;
+  code?: string;
 }) => {
   const [page, switchPage] = React.useReducer((n) => (n + 1) % 2, 0);
   const [refresh, setRefresh] = React.useReducer((n) => n + 1, 0);
 
-  const code = `
+  const code =
+    props.code ??
+    `
     <script data-testid="${SCRIPT_TEST_ID}" data-page="${page}">console.log('hello')</script>
     <div data-testid="${FRAGMENT_DIV_ID}">hello</div>
   `;
@@ -30,6 +34,7 @@ const App = (props: {
     <ReactSdkContext.Provider
       value={{
         assetBaseUrl: "",
+        assetUrls: props.assetUrls,
         imageLoader: () => "",
         renderer: props.renderer,
         resources: {},
@@ -63,6 +68,32 @@ beforeEach(() => {
 });
 
 describe("Published site", () => {
+  test("resolves root-relative asset paths during server rendering", () => {
+    const html = ReactDOMServer.renderToString(
+      <App
+        code={`
+          <script src="/test.js?version=1#ready"></script>
+          <link rel="stylesheet" href="/styles/site.css">
+          <img src="/Hero image.png">
+          <img src="/not-an-asset.png">
+        `}
+        assetUrls={{
+          "/test.js": "/assets/test_hash.js",
+          "/styles/site.css": "/assets/site_hash.css",
+          "/Hero%20image.png":
+            "https://assets.example/hero_hash.png?format=raw",
+        }}
+      />
+    );
+
+    expect(html).toContain('src="/assets/test_hash.js?version=1#ready"');
+    expect(html).toContain('href="/assets/site_hash.css"');
+    expect(html).toContain(
+      'src="https://assets.example/hero_hash.png?format=raw"'
+    );
+    expect(html).toContain('src="/not-an-asset.png"');
+  });
+
   /**
    * Tests the behavior of script tags in an SSR context for a published site with `clientOnly` set to false:
    * - SSR: Renders script tags in HTML embeds directly, without modification, on the server side, on hydration and on refresh.
@@ -162,6 +193,34 @@ describe("Published site", () => {
  * On canvas renderer, scripts are not executed on the server side.
  */
 describe("Builder renderer= canvas | preview", () => {
+  test("resolves root-relative asset paths for canvas markup", () => {
+    const { container } = render(
+      <App
+        renderer="canvas"
+        code={`
+          <script src="/test.js"></script>
+          <link rel="stylesheet" href="/site.css">
+          <img src="/hero.png">
+        `}
+        assetUrls={{
+          "/test.js": "/cgi/asset/test_hash.js",
+          "/site.css": "/cgi/asset/site_hash.css",
+          "/hero.png": "/cgi/asset/hero_hash.png",
+        }}
+      />
+    );
+
+    expect(container.querySelector("script")?.getAttribute("src")).toBe(
+      "/cgi/asset/test_hash.js"
+    );
+    expect(container.querySelector("link")?.getAttribute("href")).toBe(
+      "/cgi/asset/site_hash.css"
+    );
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "/cgi/asset/hero_hash.png"
+    );
+  });
+
   test.each(["canvas", "preview"] as const)(
     "waits for resources to settle before executing scripts in %s",
     async (renderer) => {

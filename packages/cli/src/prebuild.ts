@@ -69,6 +69,7 @@ import {
   getUnsafeDynamicPublishedMdxDiagnostic,
   materializePublishedMdx,
   getZodValidationIssues,
+  createAssetUrlMap,
 } from "@webstudio-is/project-build/runtime";
 import {
   createPublishedBuildContentCompilationPlan,
@@ -1095,6 +1096,16 @@ export const prebuild = async (options: {
   }
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
+  const getPublishedAssetUrl = (asset: Asset) => {
+    const runtimeAsset = toAssetReferenceRuntimeData(
+      asset,
+      "https://placeholder.local"
+    );
+    return siteData.build.deployment?.destination === "saas" &&
+      options.assets === false
+      ? runtimeAsset.url
+      : `${assetBaseUrl}${asset.name}`;
+  };
   const runtimeAssetsById = Object.fromEntries(
     siteData.assets.map((asset) => {
       const runtimeAsset = toAssetReferenceRuntimeData(
@@ -1108,15 +1119,18 @@ export const prebuild = async (options: {
           contentRef: asset.name,
           // SaaS serves project assets through its storage-backed proxy.
           // Generated projects with downloaded assets serve them locally.
-          url:
-            siteData.build.deployment?.destination === "saas" &&
-            options.assets === false
-              ? new URL(runtimeAsset.url, siteData.origin).href
-              : `${assetBaseUrl}${asset.name}`,
+          url: getPublishedAssetUrl(asset),
         },
       ];
     })
   );
+  const assetUrls = createAssetUrlMap({
+    assets: siteData.assets,
+    assetFolders: new Map(
+      (siteData.assetFolders ?? []).map((folder) => [folder.id, folder])
+    ),
+    getUrl: getPublishedAssetUrl,
+  });
   const publishedInstances = new Map(siteData.build.instances);
   const publishedProps = new Map(siteData.build.props);
   const publishedStyleSources = new Map(siteData.build.styleSources);
@@ -1825,6 +1839,7 @@ export const prebuild = async (options: {
     join(generatedDir, "$resources.assets.ts"),
     `
     export const assets = ${JSON.stringify(runtimeAssetsById, null, 2)};
+    export const assetUrls = ${JSON.stringify(assetUrls, null, 2)};
     `
   );
 
