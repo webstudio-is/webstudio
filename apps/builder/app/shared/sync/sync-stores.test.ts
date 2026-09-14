@@ -10,6 +10,7 @@ import {
 } from "../nano-states";
 import { __testing__, createObjectPool } from "./sync-stores";
 import { $instances } from "./data-stores";
+import { $resourceLoadingState } from "../resources";
 
 const { SelectedPageAndInstanceSyncObject } = __testing__;
 const subscriptionControllers: AbortController[] = [];
@@ -62,6 +63,7 @@ afterEach(() => {
   $allSelectedInstanceSelectors.set([]);
   $selectedInstanceOutlines.set([]);
   $instances.set(new Map());
+  $resourceLoadingState.set("loading");
 });
 
 describe("SelectedPageAndInstanceSyncObject", () => {
@@ -358,6 +360,18 @@ describe("SelectedPageAndInstanceSyncObject", () => {
 });
 
 describe("createObjectPool", () => {
+  test("syncs resource readiness to the canvas", () => {
+    const objectPool = createObjectPool();
+
+    objectPool.applyTransaction({
+      id: "resources-loaded",
+      object: "resourceLoadingState",
+      payload: "loaded",
+    });
+
+    expect($resourceLoadingState.get()).toBe("loaded");
+  });
+
   test("syncs selected instance outlines for builder canvas overlay", () => {
     const objectPool = createObjectPool();
 

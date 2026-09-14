@@ -7,6 +7,7 @@ import {
   $resourceDiagnosticsCache,
   $resourceDiagnosticsErrorCache,
   $resourcePerformanceCache,
+  $resourceLoadingState,
   $resourcesCache,
   getResourceKey,
   invalidateAssets,
@@ -68,10 +69,17 @@ test("dispatches resources synchronously", async () => {
 
   preloadResources([request]);
   expect(getLoaderState()).toEqual({ queueSize: 0, pendingSize: 1 });
+  expect($resourceLoadingState.get()).toBe("loading");
   await vi.waitFor(() => {
     expect($hasPendingResources.get()).toBe(false);
   });
+  expect($resourceLoadingState.get()).toBe("loaded");
   error.mockRestore();
+});
+
+test("marks an empty resource set as loaded", () => {
+  queueResources([]);
+  expect($resourceLoadingState.get()).toBe("loaded");
 });
 
 test("batches all resources from one computation", async () => {

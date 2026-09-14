@@ -19,6 +19,10 @@ export type Params = {
    */
   isSafeMode?: boolean;
   /**
+   * Delays executable HTML Embed scripts until client-rendered data has settled.
+   */
+  scriptsReady?: boolean;
+  /**
    * Base url or base path for any asset with ending slash.
    * Used to load assets like fonts or images in styles
    * Concatinated with "name".
@@ -46,6 +50,7 @@ export const ReactSdkContext = createContext<
   assetBaseUrl: "/",
   imageLoader: ({ src }) => src,
   videoLoader: ({ src }) => src,
+  scriptsReady: true,
   resources: {},
   breakpoints: [],
   onError: (error) => {

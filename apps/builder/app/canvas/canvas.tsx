@@ -70,6 +70,7 @@ import { builderApi } from "~/shared/builder-api";
 import { useDebounceEffect } from "@webstudio-is/design-system";
 import { subscribeInstanceContextMenu } from "./instance-context-menu";
 import { startPointerTracking } from "~/shared/awareness";
+import { $resourceLoadingState } from "~/shared/resources";
 
 registerContainers();
 
@@ -101,7 +102,11 @@ const handleError = (error: unknown) => {
   console.error(error);
 };
 
-const useElementsTree = (components: Components, instances: Instances) => {
+const useElementsTree = (
+  components: Components,
+  instances: Instances,
+  scriptsReady: boolean
+) => {
   const isSafeMode = builderApi.isSafeMode();
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
@@ -133,6 +138,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
           imageLoader: wsImageLoader,
           videoLoader: wsVideoLoader,
           resources: {},
+          scriptsReady,
           breakpoints,
           // error reporting
           onError: handleError,
@@ -156,6 +162,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
     isPreviewMode,
     breakpoints,
     isSafeMode,
+    scriptsReady,
   ]);
 };
 
@@ -297,7 +304,12 @@ export const Canvas = () => {
 
   const components = useStore($registeredComponents);
   const instances = useStore($instances);
-  const elements = useElementsTree(components, instances);
+  const resourceLoadingState = useStore($resourceLoadingState);
+  const elements = useElementsTree(
+    components,
+    instances,
+    resourceLoadingState === "loaded"
+  );
 
   const [isInitialized, setInitialized] = useState(false);
   useEffect(() => {

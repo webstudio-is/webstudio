@@ -316,6 +316,51 @@ describe("Builder renderer= canvas | preview", () => {
     expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID_2)).toBeTruthy();
   });
 
+  test("canvas scripts wait for resources and can access rendered DOM without an event", async () => {
+    const targetTestId = "script-target";
+    const code = `
+      <script data-testid="${SCRIPT_TEST_ID}">
+        document.currentScript.dataset.targetText = document.querySelector('[data-testid="${targetTestId}"]').textContent;
+      </script>
+    `;
+
+    const ResourceApp = () => {
+      const [scriptsReady, setScriptsReady] = React.useState(false);
+      return (
+        <ReactSdkContext.Provider
+          value={{
+            assetBaseUrl: "",
+            imageLoader: () => "",
+            renderer: "canvas",
+            resources: {},
+            breakpoints: [],
+            onError: console.error,
+            scriptsReady,
+          }}
+        >
+          <div data-testid={targetTestId}>
+            {scriptsReady ? "Resource content" : "Loading"}
+          </div>
+          <HtmlEmbed code={code} executeScriptOnCanvas={true} />
+          <button type="button" onClick={() => setScriptsReady(true)}>
+            Resolve resource
+          </button>
+        </ReactSdkContext.Provider>
+      );
+    };
+
+    render(<ResourceApp />);
+    await Promise.resolve();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
+
+    fireEvent.click(screen.getByText("Resolve resource"));
+    await Promise.resolve();
+
+    expect(
+      screen.getByTestId(SCRIPT_PROCESSED_TEST_ID).dataset.targetText
+    ).toBe("Resource content");
+  });
+
   test.each(["", "   "])("Placeholder is shown if code is %p", async (code) => {
     const AppWithCode = () => {
       return <HtmlEmbed code={code} executeScriptOnCanvas={true} />;

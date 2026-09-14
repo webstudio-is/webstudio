@@ -134,6 +134,10 @@ type ChildProps = {
   className?: string;
 };
 
+type ClientEmbedProps = ChildProps & {
+  scriptsReady: boolean;
+};
+
 const Placeholder = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   return (
@@ -166,8 +170,8 @@ const ClientOnly = (props: { children: ReactNode }) => {
  * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
  * Also executes scripts on the published site when `clientOnly` is true.
  */
-const ClientEmbed = (props: ChildProps) => {
-  const { code, innerRef, ...rest } = props;
+const ClientEmbed = (props: ClientEmbedProps) => {
+  const { code, innerRef, scriptsReady, ...rest } = props;
   const containerRef = useRef<HTMLDivElement>(null);
   const executeScripts = useRef(true);
 
@@ -179,13 +183,16 @@ const ClientEmbed = (props: ChildProps) => {
   );
 
   useEffect(() => {
+    if (scriptsReady === false) {
+      return;
+    }
     const container = containerRef.current;
 
     if (container && executeScripts.current) {
       executeScripts.current = false;
       execute(container);
     }
-  }, []);
+  }, [scriptsReady]);
 
   return (
     <div
@@ -226,7 +233,11 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
     const { code, executeScriptOnCanvas, clientOnly, children, ...rest } =
       props;
-    const { renderer, isSafeMode } = useContext(ReactSdkContext);
+    const {
+      renderer,
+      isSafeMode,
+      scriptsReady = true,
+    } = useContext(ReactSdkContext);
 
     const isServer = useIsServer();
 
@@ -246,7 +257,12 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
 
       return (
         <ClientOnly>
-          <ClientEmbed innerRef={ref} code={code} {...rest} />
+          <ClientEmbed
+            innerRef={ref}
+            code={code}
+            scriptsReady={scriptsReady}
+            {...rest}
+          />
         </ClientOnly>
       );
     }
@@ -285,6 +301,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
           key={code}
           innerRef={ref}
           code={code}
+          scriptsReady={scriptsReady}
           {...rest}
         />
       </ClientOnly>
