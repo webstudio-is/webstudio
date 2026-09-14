@@ -30,6 +30,8 @@ export type Params = {
    * https://assets.webstudio.is/
    */
   assetBaseUrl: string;
+  /** Runtime URLs keyed by their root-relative path in the Assets panel. */
+  assetUrls?: Readonly<Record<string, string>>;
 };
 
 export const ReactSdkContext = createContext<
