@@ -20,7 +20,7 @@ const assetAttributes = new Map<string, readonly string[]>([
 
 const resolveAssetUrl = (
   value: string,
-  assetUrls: Readonly<Record<string, string>>
+  assetUrlsByPath: Readonly<Record<string, string>>
 ) => {
   if (value.startsWith("/") === false || value.startsWith("//")) {
     return;
@@ -34,7 +34,7 @@ const resolveAssetUrl = (
     return;
   }
 
-  const assetUrl = assetUrls[reference.pathname];
+  const assetUrl = assetUrlsByPath[reference.pathname];
   if (assetUrl === undefined) {
     return;
   }
@@ -56,13 +56,13 @@ type HtmlNode = DefaultTreeAdapterMap["childNode"];
 
 export const resolveHtmlEmbedAssetUrls = (
   code: string,
-  assetUrls: Readonly<Record<string, string>> | undefined
+  assetUrlsByPath: Readonly<Record<string, string>> | undefined
 ) => {
-  if (assetUrls === undefined) {
+  if (assetUrlsByPath === undefined) {
     return code;
   }
   let hasAssets = false;
-  for (const _path in assetUrls) {
+  for (const _path in assetUrlsByPath) {
     hasAssets = true;
     break;
   }
@@ -81,7 +81,7 @@ export const resolveHtmlEmbedAssetUrls = (
           if (attributeNames.includes(attribute.name) === false) {
             continue;
           }
-          const resolved = resolveAssetUrl(attribute.value, assetUrls);
+          const resolved = resolveAssetUrl(attribute.value, assetUrlsByPath);
           if (resolved !== undefined) {
             attribute.value = resolved;
             changed = true;

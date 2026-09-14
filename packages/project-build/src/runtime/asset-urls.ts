@@ -1,3 +1,4 @@
+import { createUniqueAssetIdsByPath } from "@webstudio-is/content-engine";
 import { createCanonicalAssetPath } from "@webstudio-is/content-engine/mdx";
 import {
   createAssetFolderHierarchy,
@@ -6,7 +7,7 @@ import {
   type AssetFolders,
 } from "@webstudio-is/sdk";
 
-export const createAssetUrlMap = ({
+export const createAssetUrlsByPath = ({
   assets,
   assetFolders,
   getUrl,
@@ -16,22 +17,24 @@ export const createAssetUrlMap = ({
   getUrl: (asset: Asset) => string;
 }) => {
   const hierarchy = createAssetFolderHierarchy(assetFolders);
-  const entries = Array.from(assets, (asset) => {
-    const path = `/${createCanonicalAssetPath({
-      folderNames: hierarchy
-        .getPath(asset.folderId)
-        .map((folder) => folder.name),
-      name: formatAssetName(asset),
-    })}`;
-    return { path, url: getUrl(asset) };
-  });
-  const pathCounts = new Map<string, number>();
-  for (const { path } of entries) {
-    pathCounts.set(path, (pathCounts.get(path) ?? 0) + 1);
-  }
+  const urlsById = new Map<string, string>();
+  const assetIdsByPath = createUniqueAssetIdsByPath(
+    Array.from(assets, (asset) => {
+      urlsById.set(asset.id, getUrl(asset));
+      return {
+        id: asset.id,
+        path: createCanonicalAssetPath({
+          folderNames: hierarchy
+            .getPath(asset.folderId)
+            .map((folder) => folder.name),
+          name: formatAssetName(asset),
+        }),
+      };
+    })
+  );
   return Object.fromEntries(
-    entries.flatMap(({ path, url }) =>
-      pathCounts.get(path) === 1 ? [[path, url]] : []
-    )
+    Array.from(assetIdsByPath, ([path, assetId]) => {
+      return [`/${path}`, urlsById.get(assetId)!];
+    })
   );
 };

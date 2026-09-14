@@ -17,7 +17,7 @@ const App = (props: {
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
   $ws$executeScripts?: boolean;
-  assetUrls?: Record<string, string>;
+  assetUrlsByPath?: Record<string, string>;
   code?: string;
 }) => {
   const [page, switchPage] = React.useReducer((n) => (n + 1) % 2, 0);
@@ -34,7 +34,7 @@ const App = (props: {
     <ReactSdkContext.Provider
       value={{
         assetBaseUrl: "",
-        assetUrls: props.assetUrls,
+        assetUrlsByPath: props.assetUrlsByPath,
         imageLoader: () => "",
         renderer: props.renderer,
         resources: {},
@@ -77,7 +77,7 @@ describe("Published site", () => {
           <img src="/Hero image.png">
           <img src="/not-an-asset.png">
         `}
-        assetUrls={{
+        assetUrlsByPath={{
           "/test.js": "/assets/test_hash.js",
           "/styles/site.css": "/assets/site_hash.css",
           "/Hero%20image.png":
@@ -202,7 +202,7 @@ describe("Builder renderer= canvas | preview", () => {
           <link rel="stylesheet" href="/site.css">
           <img src="/hero.png">
         `}
-        assetUrls={{
+        assetUrlsByPath={{
           "/test.js": "/cgi/asset/test_hash.js",
           "/site.css": "/cgi/asset/site_hash.css",
           "/hero.png": "/cgi/asset/hero_hash.png",

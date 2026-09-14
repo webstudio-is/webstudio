@@ -9,7 +9,7 @@ import {
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import { type Instances, toRuntimeAsset } from "@webstudio-is/sdk";
-import { createAssetUrlMap } from "@webstudio-is/project-build/runtime";
+import { createAssetUrlsByPath } from "@webstudio-is/project-build/runtime";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
@@ -125,9 +125,9 @@ const useElementsTree = (components: Components, instances: Instances) => {
     () => [...breakpointsMap.values()].sort(compareMedia),
     [breakpointsMap]
   );
-  const assetUrls = useMemo(
+  const assetUrlsByPath = useMemo(
     () =>
-      createAssetUrlMap({
+      createAssetUrlsByPath({
         assets: assets.values(),
         assetFolders,
         getUrl: (asset) => toRuntimeAsset(asset, "https://webstudio.local").url,
@@ -142,7 +142,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
           renderer: isPreviewMode ? "preview" : "canvas",
           isSafeMode,
           assetBaseUrl,
-          assetUrls,
+          assetUrlsByPath,
           imageLoader: wsImageLoader,
           videoLoader: wsVideoLoader,
           resources: {},
@@ -169,7 +169,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
     isPreviewMode,
     breakpoints,
     isSafeMode,
-    assetUrls,
+    assetUrlsByPath,
   ]);
 };
 

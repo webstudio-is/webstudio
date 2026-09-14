@@ -234,14 +234,14 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       $ws$executeScripts = true,
       ...rest
     } = props;
-    const { renderer, assetUrls } = useContext(ReactSdkContext);
+    const { renderer, assetUrlsByPath } = useContext(ReactSdkContext);
 
     const isServer = useIsServer();
 
     const [ssrRendered] = useState(isServer);
     const resolvedCode = useMemo(
-      () => resolveHtmlEmbedAssetUrls(String(code ?? ""), assetUrls),
-      [assetUrls, code]
+      () => resolveHtmlEmbedAssetUrls(String(code ?? ""), assetUrlsByPath),
+      [assetUrlsByPath, code]
     );
 
     // - code can be actually undefined when prop is not provided
