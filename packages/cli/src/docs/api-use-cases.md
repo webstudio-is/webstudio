@@ -161,7 +161,7 @@ Notes:
 - The screenshot timeout bounds browser capture after the preview is ready. A timeout returns `SCREENSHOT_TIMEOUT`, resets the reusable browser session, and releases the shared preview lifecycle for cleanup.
 - Preview installs generated app dependencies under `.webstudio/preview` and reuses them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-- When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.
+- When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it uses npm when available and otherwise falls back to pnpm.
 - Unless `npm_config_cache` is already configured, npm uses the writable `.webstudio/preview/.npm-cache` directory.
 - For npm cache permission errors, unset `npm_config_cache` to use the preview-local cache, then retry. No cache deletion is required.
 - If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
