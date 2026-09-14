@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Asset, AssetFolders } from "@webstudio-is/sdk";
-import { createAssetUrlMap } from "./asset-urls";
+import { createAssetUrlsByPath } from "./asset-urls";
 
 const asset = ({
   id,
@@ -50,7 +50,7 @@ test("creates runtime URLs keyed by root-relative asset paths", () => {
   ];
 
   expect(
-    createAssetUrlMap({
+    createAssetUrlsByPath({
       assets,
       assetFolders: folders,
       getUrl: (item) => `/cgi/asset/${item.name}`,
@@ -68,7 +68,7 @@ test("omits ambiguous asset paths", () => {
   ];
 
   expect(
-    createAssetUrlMap({
+    createAssetUrlsByPath({
       assets,
       assetFolders: new Map(),
       getUrl: (item) => `/assets/${item.name}`,

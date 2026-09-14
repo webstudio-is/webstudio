@@ -69,7 +69,7 @@ import {
   getUnsafeDynamicPublishedMdxDiagnostic,
   materializePublishedMdx,
   getZodValidationIssues,
-  createAssetUrlMap,
+  createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
 import {
   createPublishedBuildContentCompilationPlan,
@@ -1124,7 +1124,7 @@ export const prebuild = async (options: {
       ];
     })
   );
-  const assetUrls = createAssetUrlMap({
+  const assetUrlsByPath = createAssetUrlsByPath({
     assets: siteData.assets,
     assetFolders: new Map(
       (siteData.assetFolders ?? []).map((folder) => [folder.id, folder])
@@ -1839,7 +1839,7 @@ export const prebuild = async (options: {
     join(generatedDir, "$resources.assets.ts"),
     `
     export const assets = ${JSON.stringify(runtimeAssetsById, null, 2)};
-    export const assetUrls = ${JSON.stringify(assetUrls, null, 2)};
+    export const assetUrlsByPath = ${JSON.stringify(assetUrlsByPath, null, 2)};
     `
   );
 

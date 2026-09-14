@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/react-sdk/runtime";
 import { LinkCurrentUrlContext } from "@webstudio-is/sdk-components-react";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
-import { assetUrls } from "__ASSETS__";
+import { assetUrlsByPath } from "__ASSETS__";
 import { Page, breakpoints, siteName } from "__CLIENT__";
 
 const getPageKey = (url: string) => {
@@ -33,7 +33,7 @@ const PageComponent = ({ data }: { data: PageContext["data"] }) => {
     () => ({
       imageLoader,
       assetBaseUrl,
-      assetUrls,
+      assetUrlsByPath,
       resources,
       breakpoints,
       onError: console.error,

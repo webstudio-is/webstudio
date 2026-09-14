@@ -1879,13 +1879,13 @@ sitemap.map((page) => page.path);`
       "utf8"
     );
     expect(assetsModule).toContain('"url": "/assets/audio.mp3"');
-    expect(assetsModule).toContain("export const assetUrls");
+    expect(assetsModule).toContain("export const assetUrlsByPath");
     expect(assetsModule).toContain('"/audio.mp3": "/assets/audio.mp3"');
     expect(assetsModule).not.toContain("/cgi/");
 
     const route = await readFile("app/routes/_index.tsx", "utf8");
-    expect(route).toContain("assetUrls");
-    expect(route).toContain("assetUrls,");
+    expect(route).toContain("assetUrlsByPath");
+    expect(route).toContain("assetUrlsByPath,");
   });
 
   test("scaffolds generated files and stores redirects as data", async () => {

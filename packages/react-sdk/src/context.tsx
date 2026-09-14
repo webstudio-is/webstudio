@@ -31,7 +31,7 @@ export type Params = {
    */
   assetBaseUrl: string;
   /** Runtime URLs keyed by their root-relative path in the Assets panel. */
-  assetUrls?: Readonly<Record<string, string>>;
+  assetUrlsByPath?: Readonly<Record<string, string>>;
 };
 
 export const ReactSdkContext = createContext<
