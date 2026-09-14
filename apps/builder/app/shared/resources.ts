@@ -81,12 +81,12 @@ const cacheResourceMetadata = ({
 };
 
 export const $pendingResourceKeys = atom<ReadonlySet<string>>(new Set());
-export const $resourceLoadingState = atom<"loading" | "loaded">("loading");
+export const $resourcesState = atom<"pending" | "settled">("pending");
 
 const updatePending = () => {
   $pendingResourceKeys.set(new Set([...queue.keys(), ...pending.keys()]));
-  $resourceLoadingState.set(
-    queue.size === 0 && pending.size === 0 ? "loaded" : "loading"
+  $resourcesState.set(
+    queue.size === 0 && pending.size === 0 ? "settled" : "pending"
   );
 };
 
@@ -234,7 +234,7 @@ const queueResources = (resources: readonly ResourceRequest[]) => {
   for (const resource of resources) {
     preloadResource(resource);
   }
-  // Marks an empty or fully cached request set as loaded too.
+  // Marks an empty or fully cached request set as settled too.
   updatePending();
 };
 

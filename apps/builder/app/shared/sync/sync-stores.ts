@@ -81,7 +81,7 @@ import {
 import { $selectedPageId } from "../nano-states/pages";
 import { areSelectorListsEqual } from "../instance-utils/selection";
 import { $systemDataByPage } from "../system";
-import { $resourceLoadingState, $resourcesCache } from "../resources";
+import { $resourcesCache, $resourcesState } from "../resources";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
@@ -342,7 +342,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("project", $project),
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourcesCache", $resourcesCache),
-    new NanostoresSyncObject("resourceLoadingState", $resourceLoadingState),
+    new NanostoresSyncObject("resourcesState", $resourcesState),
     new NanostoresSyncObject("selectedPageHash", $selectedPageHash),
     new NanostoresSyncObject("selectedInstanceSizes", $selectedInstanceSizes),
     new NanostoresSyncObject(

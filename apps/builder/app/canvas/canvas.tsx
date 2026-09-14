@@ -9,7 +9,7 @@ import {
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import { type Instances } from "@webstudio-is/sdk";
-import type { Components } from "@webstudio-is/react-sdk";
+import type { AnyComponent, Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
@@ -70,7 +70,7 @@ import { builderApi } from "~/shared/builder-api";
 import { useDebounceEffect } from "@webstudio-is/design-system";
 import { subscribeInstanceContextMenu } from "./instance-context-menu";
 import { startPointerTracking } from "~/shared/awareness";
-import { $resourceLoadingState } from "~/shared/resources";
+import { CanvasHtmlEmbed } from "./html-embed";
 
 registerContainers();
 
@@ -102,11 +102,7 @@ const handleError = (error: unknown) => {
   console.error(error);
 };
 
-const useElementsTree = (
-  components: Components,
-  instances: Instances,
-  scriptsReady: boolean
-) => {
+const useElementsTree = (components: Components, instances: Instances) => {
   const isSafeMode = builderApi.isSafeMode();
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
@@ -127,6 +123,11 @@ const useElementsTree = (
     () => [...breakpointsMap.values()].sort(compareMedia),
     [breakpointsMap]
   );
+  const canvasComponents = useMemo(() => {
+    const nextComponents = new Map(components);
+    nextComponents.set("HtmlEmbed", CanvasHtmlEmbed as unknown as AnyComponent);
+    return nextComponents;
+  }, [components]);
 
   return useMemo(() => {
     return (
@@ -138,7 +139,6 @@ const useElementsTree = (
           imageLoader: wsImageLoader,
           videoLoader: wsVideoLoader,
           resources: {},
-          scriptsReady,
           breakpoints,
           // error reporting
           onError: handleError,
@@ -151,18 +151,17 @@ const useElementsTree = (
           Component: isPreviewMode
             ? WebstudioComponentPreview
             : WebstudioComponentCanvas,
-          components,
+          components: canvasComponents,
         })}
       </ReactSdkContext.Provider>
     );
   }, [
     instances,
     rootInstanceId,
-    components,
+    canvasComponents,
     isPreviewMode,
     breakpoints,
     isSafeMode,
-    scriptsReady,
   ]);
 };
 
@@ -304,12 +303,7 @@ export const Canvas = () => {
 
   const components = useStore($registeredComponents);
   const instances = useStore($instances);
-  const resourceLoadingState = useStore($resourceLoadingState);
-  const elements = useElementsTree(
-    components,
-    instances,
-    resourceLoadingState === "loaded"
-  );
+  const elements = useElementsTree(components, instances);
 
   const [isInitialized, setInitialized] = useState(false);
   useEffect(() => {
