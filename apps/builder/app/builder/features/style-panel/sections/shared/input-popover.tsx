@@ -54,6 +54,7 @@ const Input = ({
       intermediateValue={intermediateValue}
       getOptions={() => $availableUnitVariables.get()}
       fieldSizing="content"
+      autoFocus
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         const activeProperties = getActiveProperties();
