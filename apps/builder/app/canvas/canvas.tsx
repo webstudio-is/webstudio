@@ -9,7 +9,7 @@ import {
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import { type Instances } from "@webstudio-is/sdk";
-import type { AnyComponent, Components } from "@webstudio-is/react-sdk";
+import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
@@ -123,12 +123,6 @@ const useElementsTree = (components: Components, instances: Instances) => {
     () => [...breakpointsMap.values()].sort(compareMedia),
     [breakpointsMap]
   );
-  const canvasComponents = useMemo(() => {
-    const nextComponents = new Map(components);
-    nextComponents.set("HtmlEmbed", CanvasHtmlEmbed as unknown as AnyComponent);
-    return nextComponents;
-  }, [components]);
-
   return useMemo(() => {
     return (
       <ReactSdkContext.Provider
@@ -151,14 +145,14 @@ const useElementsTree = (components: Components, instances: Instances) => {
           Component: isPreviewMode
             ? WebstudioComponentPreview
             : WebstudioComponentCanvas,
-          components: canvasComponents,
+          components,
         })}
       </ReactSdkContext.Provider>
     );
   }, [
     instances,
     rootInstanceId,
-    canvasComponents,
+    components,
     isPreviewMode,
     breakpoints,
     isSafeMode,
@@ -258,6 +252,11 @@ export const Canvas = () => {
     for (const library of canvasComponentLibraries) {
       registerComponentLibrary(library);
     }
+    registerComponentLibrary({
+      components: { HtmlEmbed: CanvasHtmlEmbed },
+      metas: {},
+      templates: {},
+    });
   });
 
   useMount(initCanvasApi);
