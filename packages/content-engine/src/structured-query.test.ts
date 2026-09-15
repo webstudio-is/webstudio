@@ -2,17 +2,20 @@ import { describe, expect, test, vi } from "vitest";
 import {
   assetQuery,
   type AssetFileDocument,
+  type AssetQueryFilter,
   type BuilderAssetFieldCatalog,
 } from "./schema";
 import {
   executeAssetQuery,
   executeAssetQueries,
   getAssetQueryFieldValue,
+  matchesAssetQueryFilter,
   supportsAssetQueryContent,
   validateAssetQuery,
   validateAssetQueryAgainstCatalog,
 } from "./structured-query";
 import { contentEngineLimits } from "./limits";
+import { createCanonicalAssetPath } from "./asset-path";
 
 const document = ({
   id,
@@ -116,6 +119,110 @@ const runtimeAssets = Object.fromEntries(
 );
 
 describe("structured asset query", () => {
+  test.each([
+    ["eq", "Tutorial posts/Article #1? & 100%.mdx", ["significant"]],
+    [
+      "eq",
+      "Tutorial%20posts/Article%20%231%3F%20%26%20100%25.mdx",
+      ["significant"],
+    ],
+    ["ne", "Tutorial posts/Article #1? & 100%.mdx", ["percent", "slash"]],
+    [
+      "in",
+      ["missing.mdx", "Tutorial posts/Article #1? & 100%.mdx"],
+      ["significant"],
+    ],
+    ["contains", "Article #1? & 100%", ["significant"]],
+    ["startsWith", "Tutorial posts/", ["significant"]],
+    ["endsWith", "Article #1? & 100%.mdx", ["significant"]],
+    ["eq", "%2520/Literal%2520value.mdx", ["percent"]],
+    ["eq", "Folder%2Fname/file.mdx", ["slash"]],
+  ] as const)(
+    "normalizes path operands for %s filters",
+    async (operator, filterValue, expectedIds) => {
+      const pathDocuments = [
+        {
+          ...documents[0],
+          _id: "significant",
+          path: createCanonicalAssetPath({
+            folderNames: ["Tutorial posts"],
+            name: "Article #1? & 100%.mdx",
+          }),
+        },
+        {
+          ...documents[1],
+          _id: "percent",
+          path: createCanonicalAssetPath({
+            folderNames: ["%20"],
+            name: "Literal%20value.mdx",
+          }),
+        },
+        {
+          ...documents[2],
+          _id: "slash",
+          path: createCanonicalAssetPath({
+            folderNames: ["Folder/name"],
+            name: "file.mdx",
+          }),
+        },
+      ];
+      const result = await executeAssetQuery({
+        documents: pathDocuments,
+        query: assetQuery.parse({
+          where: {
+            field: ["path"],
+            operator,
+            value: filterValue,
+          },
+          sort: [{ field: ["id"], direction: "asc" }],
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "none" },
+        }),
+      });
+
+      if ("items" in result === false) {
+        throw new Error("Expected a many-result path query");
+      }
+      expect(result.items.map(({ id }) => id)).toEqual(expectedIds);
+    }
+  );
+
+  test("preserves visible dot fragments in path string filters", () => {
+    const hiddenDocument = {
+      ...documents[0],
+      path: createCanonicalAssetPath({
+        folderNames: [],
+        name: ".hidden.mdx",
+      }),
+    };
+    const dotFolderDocument = {
+      ...documents[1],
+      path: createCanonicalAssetPath({ folderNames: ["."], name: "file" }),
+    };
+    const visibleDotFilter: AssetQueryFilter = {
+      field: ["path"],
+      operator: "startsWith",
+      value: ".",
+    };
+
+    expect(matchesAssetQueryFilter(hiddenDocument, visibleDotFilter)).toBe(
+      true
+    );
+    expect(matchesAssetQueryFilter(dotFolderDocument, visibleDotFilter)).toBe(
+      true
+    );
+    expect(
+      matchesAssetQueryFilter(hiddenDocument, {
+        ...visibleDotFilter,
+        value: "%2E",
+      })
+    ).toBe(false);
+  });
+
   test("returns direct items for single-result modes", async () => {
     const empty = await executeAssetQuery({
       documents,

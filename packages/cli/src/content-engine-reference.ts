@@ -366,6 +366,7 @@ export const renderContentEngineReferenceMarkdown = ({
     operatorsTable,
     "",
     "The field catalog determines which operators fit a schemaless `properties` field. `exists` and `isEmpty` take a boolean. `in` takes an array. Other operators take one JSON value.",
+    "When filtering `path`, enter the visible folder and file names, such as `Tutorial posts/article.mdx`; Webstudio handles canonical URL encoding. Existing encoded path filters remain supported.",
     "",
     heading(1, "Saved values and preview values"),
     "",
