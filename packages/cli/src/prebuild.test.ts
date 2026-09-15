@@ -1879,7 +1879,13 @@ sitemap.map((page) => page.path);`
       "utf8"
     );
     expect(assetsModule).toContain('"url": "/assets/audio.mp3"');
+    expect(assetsModule).toContain("export const assetUrlsByPath");
+    expect(assetsModule).toContain('"/audio.mp3": "/assets/audio.mp3"');
     expect(assetsModule).not.toContain("/cgi/");
+
+    const route = await readFile("app/routes/_index.tsx", "utf8");
+    expect(route).toContain("assetUrlsByPath");
+    expect(route).toContain("assetUrlsByPath,");
   });
 
   test("scaffolds generated files and stores redirects as data", async () => {
@@ -2365,7 +2371,7 @@ sitemap.map((page) => page.path);`
     ).rejects.toThrow("ENOENT");
   });
 
-  test("loads deferred SaaS document content from the asset proxy", async () => {
+  test("keeps deferred SaaS asset proxy URLs deployment-relative", async () => {
     const index = await createAssetIndex({
       projectId: "project-1",
       entries: [
@@ -2391,6 +2397,7 @@ sitemap.map((page) => page.path);`
     });
     const siteData = {
       ...baseSiteData,
+      origin: "https://p-project-1.apps.webstudio.is",
       assetIndex: index,
       build: {
         ...baseSiteData.build,
@@ -2429,10 +2436,21 @@ sitemap.map((page) => page.path);`
       "app/__generated__/$resources.asset-query-runtime.ts",
       "utf8"
     );
-    expect(runtimeModule).toContain(
-      '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
+    expect(runtimeModule).toContain('"url":"/cgi/asset/post.md?format=raw"');
+    expect(runtimeModule).not.toContain(
+      "https://p-project-1.apps.webstudio.is/cgi/asset/"
     );
     expect(runtimeModule).not.toContain('"url":"/assets/post.md"');
+    const assetsModule = await readFile(
+      "app/__generated__/$resources.assets.ts",
+      "utf8"
+    );
+    expect(assetsModule).toContain(
+      '"/post.md": "/cgi/asset/post.md?format=raw"'
+    );
+    expect(assetsModule).not.toContain(
+      "https://p-project-1.apps.webstudio.is/cgi/asset/"
+    );
 
     await mkdir(".webstudio/assets", { recursive: true });
     await writeFile(".webstudio/assets/post.md", "# Post\n", "utf8");
@@ -2450,6 +2468,11 @@ sitemap.map((page) => page.path);`
     expect(materializedRuntimeModule).not.toContain(
       '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
     );
+    const materializedAssetsModule = await readFile(
+      "app/__generated__/$resources.assets.ts",
+      "utf8"
+    );
+    expect(materializedAssetsModule).toContain('"/post.md": "/assets/post.md"');
   });
 
   test("uses pass-through images in the base react-router template", async () => {
