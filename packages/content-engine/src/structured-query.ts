@@ -47,6 +47,7 @@ import {
   type AssetRuntimeData,
   type AssetValueReferences,
 } from "./asset-value-references";
+import { normalizeAssetPathQueryValue } from "./asset-path";
 
 export type { AssetRuntimeData } from "./asset-value-references";
 
@@ -446,6 +447,21 @@ const compareFilterValues = (left: unknown, right: unknown) => {
   }
 };
 
+const getAssetQueryFilterValues = (
+  filter: AssetQueryFilter,
+  value: unknown
+) => {
+  if (
+    filter.field.length !== 1 ||
+    filter.field[0] !== "path" ||
+    typeof value !== "string"
+  ) {
+    return [value];
+  }
+  const normalized = normalizeAssetPathQueryValue(value);
+  return normalized === value ? [value] : [value, normalized];
+};
+
 export const matchesAssetQueryFilter = (
   document: ContentDatabaseDocument,
   filter: AssetQueryFilter,
@@ -458,20 +474,30 @@ export const matchesAssetQueryFilter = (
   if (filter.operator === "isEmpty") {
     return isEmpty(value) === filter.value;
   }
+  const filterValues = getAssetQueryFilterValues(filter, filter.value);
   if (filter.operator === "eq") {
-    return areJsonValuesEqual(value, filter.value);
-  }
-  if (filter.operator === "ne") {
-    return areJsonValuesEqual(value, filter.value) === false;
-  }
-  if (filter.operator === "in") {
-    return filter.value.some((candidate) =>
+    return filterValues.some((candidate) =>
       areJsonValuesEqual(value, candidate)
     );
   }
+  if (filter.operator === "ne") {
+    return filterValues.every(
+      (candidate) => areJsonValuesEqual(value, candidate) === false
+    );
+  }
+  if (filter.operator === "in") {
+    return filter.value.some((candidate) =>
+      getAssetQueryFilterValues(filter, candidate).some((filterCandidate) =>
+        areJsonValuesEqual(value, filterCandidate)
+      )
+    );
+  }
   if (filter.operator === "contains") {
-    if (typeof value === "string" && typeof filter.value === "string") {
-      return value.includes(filter.value);
+    if (typeof value === "string") {
+      return filterValues.some(
+        (candidate) =>
+          typeof candidate === "string" && value.includes(candidate)
+      );
     }
     return (
       Array.isArray(value) &&
@@ -481,18 +507,25 @@ export const matchesAssetQueryFilter = (
   if (filter.operator === "startsWith") {
     return (
       typeof value === "string" &&
-      typeof filter.value === "string" &&
-      value.startsWith(filter.value)
+      filterValues.some(
+        (candidate) =>
+          typeof candidate === "string" && value.startsWith(candidate)
+      )
     );
   }
   if (filter.operator === "endsWith") {
     return (
       typeof value === "string" &&
-      typeof filter.value === "string" &&
-      value.endsWith(filter.value)
+      filterValues.some(
+        (candidate) =>
+          typeof candidate === "string" && value.endsWith(candidate)
+      )
     );
   }
-  const compared = compareFilterValues(value, filter.value);
+  const compared = compareFilterValues(
+    value,
+    filterValues[filterValues.length - 1]
+  );
   if (compared === undefined) {
     return false;
   }
