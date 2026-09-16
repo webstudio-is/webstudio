@@ -8,13 +8,24 @@ import type { Asset } from "@webstudio-is/sdk";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { PostgresAssetRepository } from "./asset-repository";
 import type { AssetObjectStore } from "./client";
+import { createContentCompilationCache } from "./content-compilation-cache";
 import { getCollectionReservedAssetIds } from "./collection-persistence";
 import { loadAssetDataByProject } from "./db";
+
+// Publication diagnostics and the subsequent publish commonly compile the
+// same immutable source revision in separate repository instances. Keep the
+// bounded compilation cache at module scope so warm server processes can
+// reuse that work.
+const publicationCompilationCache = createContentCompilationCache();
 
 const defaultDependencies = {
   createRepository: (
     options: ConstructorParameters<typeof PostgresAssetRepository>[0]
-  ) => new PostgresAssetRepository(options),
+  ) =>
+    new PostgresAssetRepository({
+      ...options,
+      compilationCache: publicationCompilationCache,
+    }),
   loadAssetDataByProject,
 };
 
@@ -58,15 +69,14 @@ const prepareStablePublishedAssetData = async <Result>({
     );
     await validateCollections(assetDataBefore.assets);
     const result = await prepare();
-    const omittedCollectionAssetIds = await getOmittedCollectionAssetIds({
-      assets: assetDataBefore.assets,
-      assetStore,
-      context,
-    });
-    const assetDataAfter = await dependencies.loadAssetDataByProject(
-      projectId,
-      context
-    );
+    const [omittedCollectionAssetIds, assetDataAfter] = await Promise.all([
+      getOmittedCollectionAssetIds({
+        assets: assetDataBefore.assets,
+        assetStore,
+        context,
+      }),
+      dependencies.loadAssetDataByProject(projectId, context),
+    ]);
     if (
       serializeJsonDeterministically(assetDataBefore) ===
       serializeJsonDeterministically(assetDataAfter)

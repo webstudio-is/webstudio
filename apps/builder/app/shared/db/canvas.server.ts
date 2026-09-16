@@ -166,13 +166,21 @@ const addProjectMetadataDependencies = {
   preparePublishedAssetData,
   validatePublishedAssetCollections,
   createAssetClient,
+  resolvePublishedMdxDependencyClosure,
+};
+
+type MdxTemplateOmission = {
+  blockInstanceId: string;
+  assetId: string;
+  templateName: string;
 };
 
 const addProjectMetadata = async (
   data: ProjectBundle,
   project: Project,
   context: AppContext,
-  dependencies = addProjectMetadataDependencies
+  dependencies = addProjectMetadataDependencies,
+  onMdxTemplateOmissions?: (omissions: MdxTemplateOmission[]) => void
 ): Promise<PublishedProjectBundle> => {
   const user =
     project.userId === null
@@ -223,11 +231,19 @@ const addProjectMetadata = async (
         ? {
             resolvePlan: async (
               artifact: NonNullable<PublishedProjectBundle["assetIndex"]>
-            ) =>
-              (await resolvePublishedMdxDependencyClosure({
-                build: publicationBuild,
-                artifact,
-              }))!,
+            ) => {
+              const omissions: MdxTemplateOmission[] = [];
+              const resolvedPlan =
+                await dependencies.resolvePublishedMdxDependencyClosure({
+                  build: publicationBuild,
+                  artifact,
+                  onTemplateOmission: (issue) => omissions.push(issue),
+                });
+              // resolvePlan is run once more against the final artifact, so
+              // the latest callback value is the final diagnostics result.
+              onMdxTemplateOmissions?.(omissions);
+              return resolvedPlan!;
+            },
           }
         : {}),
     });
@@ -342,7 +358,10 @@ export const loadProjectBundleByBuildId = async (
 
 export const loadProjectBundleByProjectId = async (
   projectId: string,
-  context: AppContext
+  context: AppContext,
+  options?: {
+    onMdxTemplateOmissions?: (omissions: MdxTemplateOmission[]) => void;
+  }
 ): Promise<PublishedProjectBundle> => {
   const project = await loadById(projectId, context);
   if (project === null) {
@@ -354,7 +373,9 @@ export const loadProjectBundleByProjectId = async (
       context
     ),
     project,
-    context
+    context,
+    addProjectMetadataDependencies,
+    options?.onMdxTemplateOmissions
   );
 };
 

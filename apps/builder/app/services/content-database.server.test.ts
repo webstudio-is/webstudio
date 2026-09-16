@@ -7,11 +7,44 @@ import {
   createCanonicalAssetFileEntry,
 } from "@webstudio-is/content-engine/compiler";
 import {
+  formatMdxTemplatePublishDiagnostics,
   getContentDatabasePublishDiagnostics,
   getMdxTemplatePublishDiagnostics,
 } from "./content-database.server";
 
 describe("content database publish diagnostics", () => {
+  test("formats and deduplicates omissions captured during compilation", () => {
+    const bundle = createPublishedProjectBundleFixture({
+      assets: [
+        {
+          id: "article",
+          projectId: "project",
+          name: "revision.mdx",
+          filename: "post",
+          type: "file",
+          format: "mdx",
+          size: 11,
+          meta: {},
+          createdAt: "2026-09-08T00:00:00Z",
+        },
+      ],
+    });
+    const issue = {
+      assetId: "article",
+      blockInstanceId: "block",
+      templateName: "Missing",
+    };
+
+    expect(formatMdxTemplatePublishDiagnostics(bundle, [issue, issue])).toEqual(
+      [
+        {
+          ...issue,
+          filename: "post.mdx",
+        },
+      ]
+    );
+  });
+
   test("reports the file and template omitted from a published page", async () => {
     const bundle = createPublishedProjectBundleFixture();
     const rootId = bundle.build.pages.pages[0].rootInstanceId;
