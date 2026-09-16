@@ -1268,7 +1268,8 @@ export const pageSettingsUpdateInput = z.object({
         thumbnailAssetId: z.string(),
       }),
     })
-    .partial(),
+    .partial()
+    .strict(),
 });
 
 export const pageSavePathInHistoryInput = z.object({

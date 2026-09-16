@@ -3,6 +3,32 @@ import type { ResourceRequest } from "./schema/resources";
 import { serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
+const RESOURCE_ERROR_DETAIL_LIMIT = 2000;
+
+const formatResourceErrorDetail = (data: unknown) => {
+  let detail = "";
+  if (typeof data === "string") {
+    detail = data;
+  } else if (
+    typeof data === "object" &&
+    data !== null &&
+    Array.isArray(data) === false
+  ) {
+    const record = data as Record<string, unknown>;
+    const structuredDetail: Record<string, unknown> = {};
+    for (const key of ["code", "message", "issues"]) {
+      if (record[key] !== undefined) {
+        structuredDetail[key] = record[key];
+      }
+    }
+    if (Object.keys(structuredDetail).length > 0) {
+      detail = JSON.stringify(structuredDetail, undefined, 2);
+    }
+  }
+  return detail.length > RESOURCE_ERROR_DETAIL_LIMIT
+    ? `${detail.slice(0, RESOURCE_ERROR_DETAIL_LIMIT)}\n…truncated`
+    : detail;
+};
 
 /**
  * Prevents fetch cycles by prefixing local resources.
@@ -294,7 +320,10 @@ export const loadResource = async (
     }
 
     if (!response.ok) {
-      console.error(`Failed to load resource request: ${response.status}`);
+      const detail = formatResourceErrorDetail(data);
+      console.error(
+        `Failed to load resource request: ${response.status}${detail === "" ? "" : `\n${detail}`}`
+      );
     }
 
     const result = {

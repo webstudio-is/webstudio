@@ -235,6 +235,16 @@ const getExpressionNodeValueKind = (
   if (node.type === "TemplateLiteral") {
     return "string";
   }
+  if (node.type === "BinaryExpression" && node.operator === "+") {
+    const leftKind =
+      node.left.type === "PrivateIdentifier"
+        ? "unknown"
+        : getExpressionNodeValueKind(node.left, variableValues);
+    const rightKind = getExpressionNodeValueKind(node.right, variableValues);
+    if (leftKind === "string" || rightKind === "string") {
+      return "string";
+    }
+  }
   if (
     node.type === "ChainExpression" ||
     node.type === "ParenthesizedExpression"

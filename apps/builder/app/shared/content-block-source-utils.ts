@@ -5,11 +5,7 @@ import {
   type Instances,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
-
-type VariableValuesByRenderScope = ReadonlyMap<
-  string,
-  ReadonlyMap<string, unknown>
->;
+import { getInstanceVariableValues } from "./instance-utils/variable-values";
 
 export const parseContentBlockRenderScope = (renderScope: string) => {
   try {
@@ -26,18 +22,6 @@ export const parseContentBlockRenderScope = (renderScope: string) => {
   }
 };
 
-export const getContentBlockOccurrenceVariableValues = ({
-  instanceSelector,
-  variableValuesByRenderScope,
-}: {
-  instanceSelector: InstanceSelector;
-  variableValuesByRenderScope: VariableValuesByRenderScope;
-}) =>
-  variableValuesByRenderScope.get(JSON.stringify(instanceSelector)) ??
-  variableValuesByRenderScope.get(
-    JSON.stringify([...instanceSelector, ROOT_INSTANCE_ID])
-  );
-
 export const resolveContentBlockOccurrenceAssetId = ({
   source,
   instanceSelector,
@@ -45,14 +29,17 @@ export const resolveContentBlockOccurrenceAssetId = ({
 }: {
   source: ContentBlockSource;
   instanceSelector: InstanceSelector;
-  variableValuesByRenderScope: VariableValuesByRenderScope;
+  variableValuesByRenderScope: ReadonlyMap<
+    string,
+    ReadonlyMap<string, unknown>
+  >;
 }) =>
   resolveContentBlockSourceAssetId({
     source,
-    values: getContentBlockOccurrenceVariableValues({
-      instanceSelector,
+    values: getInstanceVariableValues(
       variableValuesByRenderScope,
-    }),
+      instanceSelector
+    ),
   });
 
 export const isRepeatedContentBlockOccurrence = ({

@@ -30,6 +30,8 @@ import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
 import {
   formatValidationErrorMessage,
+  getZodValidationIssues,
+  prefixValidationIssuePaths,
   type SemanticValidationIssue,
 } from "@webstudio-is/project-build/runtime";
 import {
@@ -44,6 +46,7 @@ import {
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { assetQueryRequest } from "@webstudio-is/content-engine";
 import { assetType, getFileExtension } from "@webstudio-is/sdk";
+import { fontMetaUpdate } from "@webstudio-is/fonts";
 import { resolveApiConnection } from "../api-connection";
 import {
   getCliErrorIssues,
@@ -217,7 +220,7 @@ const getTextAssetFormat = (value: string): "md" | "mdx" | undefined => {
   return extension === "md" || extension === "mdx" ? extension : undefined;
 };
 
-const getTextAssetDescriptorIssues = ({
+const getAssetDescriptorIssues = ({
   assets,
   pathPrefix,
 }: {
@@ -320,6 +323,17 @@ const getTextAssetDescriptorIssues = ({
         })
       );
     }
+    if (asset.type === "font" && isPlainRecord(asset.meta)) {
+      const fontMetaResult = fontMetaUpdate.safeParse(asset.meta);
+      if (fontMetaResult.success === false) {
+        issues.push(
+          ...prefixValidationIssuePaths(
+            getZodValidationIssues(fontMetaResult.error),
+            [...assetPath, "meta"]
+          )
+        );
+      }
+    }
     const name = typeof asset.name === "string" ? asset.name : "";
     const filenameFormat = getFileExtension(name)?.toLowerCase();
     const declaredFormat =
@@ -366,7 +380,7 @@ const assertTextAssetDescriptorFormats = ({
   assets: unknown[];
   pathPrefix: string[];
 }) => {
-  const issues = getTextAssetDescriptorIssues({ assets, pathPrefix });
+  const issues = getAssetDescriptorIssues({ assets, pathPrefix });
   if (issues.length > 0) {
     throw Object.assign(
       new Error("Markdown and MDX Asset descriptors are invalid."),
@@ -428,7 +442,7 @@ const getMcpUploadAssetInput = (input: unknown) => {
             message: "assetsDir must be a string.",
           }),
         ]),
-    ...getTextAssetDescriptorIssues({
+    ...getAssetDescriptorIssues({
       assets: [input.asset],
       pathPrefix: ["asset"],
     }),
@@ -485,7 +499,7 @@ const getMcpUploadAssetsInput = (input: unknown) => {
             message: "assetsDir must be a string.",
           }),
         ]),
-    ...getTextAssetDescriptorIssues({ assets, pathPrefix: ["assets"] }),
+    ...getAssetDescriptorIssues({ assets, pathPrefix: ["assets"] }),
   ]);
   if (assets.every(hasAssetName) === false) {
     throw new Error("Unreachable invalid Asset descriptors");

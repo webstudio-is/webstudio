@@ -104,6 +104,25 @@ test("duplicates an instance after itself", () => {
   ]);
 });
 
+test("duplicates an instance into another parent", () => {
+  const data = createData();
+  data.instances.set("target", createInstance("target"));
+  const ids = ["source-copy", "child-copy"];
+
+  const newRootInstanceId = duplicateInstanceAfterItselfMutable({
+    data,
+    sourceInstanceId: "source",
+    parentInstanceId: "target",
+    projectId: "project-id",
+    createId: () => ids.shift() ?? "missing",
+  });
+
+  expect(newRootInstanceId).toBe("source-copy");
+  expect(data.instances.get("target")?.children).toEqual([
+    { type: "id", value: "source-copy" },
+  ]);
+});
+
 test("preserves legacy HtmlEmbed code when duplicating an instance", () => {
   const data = createData();
   data.instances.set("source", {

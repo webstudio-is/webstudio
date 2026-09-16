@@ -8060,14 +8060,11 @@ describe("project session mcp adapter", () => {
         listedTools.tools.find(({ name }) => name === "list-pages")
       ).not.toHaveProperty("_meta");
       expect(
-        listedTools.tools.find(({ name }) => name === "delete-instance")
-      ).not.toHaveProperty("description");
-      expect(
-        listedTools.tools.find(({ name }) => name === "meta.guide")?.description
-      ).toBeTypeOf("string");
-      expect(
-        listedTools.tools.find(({ name }) => name === "list-pages")?.description
-      ).toBeTypeOf("string");
+        listedTools.tools.filter(
+          ({ description }) =>
+            typeof description !== "string" || description.trim() === ""
+        )
+      ).toEqual([]);
       expect(
         JSON.stringify(
           listedTools.tools.find(({ name }) => name === "list-pages")

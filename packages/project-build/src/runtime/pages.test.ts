@@ -68,6 +68,7 @@ import {
   pageTemplateSettingsInput,
   pageTextContentSettingsInput,
   pageSettingsDefaultValues,
+  pageSettingsUpdateInput,
   reparentOrphans,
   reparentOrphansMutable,
   savePagePathInHistory,
@@ -2180,6 +2181,15 @@ describe("updatePage", () => {
 });
 
 describe("updatePageMarketplace", () => {
+  test("rejects update-page fields that page settings does not accept", () => {
+    expect(
+      pageSettingsUpdateInput.safeParse({
+        pageId: "page",
+        values: { meta: { description: '"Description"' } },
+      }).success
+    ).toBe(false);
+  });
+
   test("updates settings, marketplace, and home page in one mutation", () => {
     const pages = createPages();
     const result = updatePageSettings(

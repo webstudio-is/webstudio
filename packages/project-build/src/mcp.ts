@@ -7426,11 +7426,6 @@ const sdkDetailedInputToolNames = new Set([
   "workflow.next",
 ]);
 
-const sdkDescribedToolNames = new Set([
-  ...sdkDetailedInputToolNames,
-  ...metaGoalGuides.flatMap(({ tools }) => tools),
-]);
-
 const getSdkToolAnnotations = (tool: ProjectSessionMcpTool) => {
   const readOnly = isReadOnlyProjectSessionMcpTool(tool);
   const annotations: NonNullable<SdkTool["annotations"]> = {
@@ -7443,18 +7438,11 @@ const getSdkToolAnnotations = (tool: ProjectSessionMcpTool) => {
   return Object.keys(annotations).length === 0 ? undefined : annotations;
 };
 
-// Keep output contracts, complete input guidance, and Webstudio operation
-// metadata for local validation, generated documentation, and focused
-// discovery. The startup instructions and described discovery tools route
-// models to meta.guide, which returns descriptions for the relevant operation
-// set. Do not resend descriptions for every operation in every MCP handshake.
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
   const annotations = getSdkToolAnnotations(tool);
   return {
     name: tool.name,
-    ...(sdkDescribedToolNames.has(tool.name)
-      ? { description: tool.description }
-      : {}),
+    description: tool.description,
     inputSchema: getSdkInputSchema(
       tool.inputSchema,
       sdkDetailedInputToolNames.has(tool.name)
