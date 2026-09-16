@@ -10,11 +10,23 @@ truth, including their filenames, folders, metadata, and relative links. You
 can move the same files between projects or use them outside Webstudio without
 exporting them from a database first.
 
+It brings Content mode to file-based sites without requiring an external CMS
+or a runtime content database on the published site. Use it to:
+
+- Query file fields and render hundreds of pages from one visual design.
+- Edit complete MDX articles on the canvas with changes saved back to the file.
+- Give editors pre-styled Markdown elements and custom interactive components.
+- Create and edit structured entries through forms generated from a collection schema.
+- Build or change the same setup with Webstudio MCP while keeping every setting
+  available in the visual interface.
+
 This guide creates a blog overview at `/blog` and one dynamic article page at
 `/blog/:slug`.
 
 To see the finished setup first, start with the
 [Markdown Blog marketplace template](https://webstudio.is/marketplace/templates/markdown-blog).
+
+{% embed url="https://youtu.be/Sn-fhVajpgU" %}
 
 <figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
@@ -25,7 +37,7 @@ the site and remain portable as Markdown, MDX, or JSON.
 
 Good fits include:
 
-- Small blogs with text and images.
+- Blogs with hundreds of text-and-image articles, within the limits below.
 - Portfolios, team directories, resource libraries, and case studies.
 - Small product catalogues with infrequently changed display data. Keep orders,
   inventory, and payments in an ecommerce system.
@@ -639,6 +651,7 @@ reference cycles fail instead of returning partial data.
 
 - [Content Engine reference](content-engine-reference.md) – Check query fields, modes, diagnostics, references, and limits
 - [Assets](assets.md) – Create, edit, organize, and reference project files
+- [Content Block](../core-components/content-block.md) – Design and visually edit MDX articles
 - [Data variables](variables.md) – Define resources and understand their scope
 - [Collection](../core-components/collection.md) – Render article lists
 - [Markdown Embed](../core-components/markdown-embed.md) – Render and style an article body
