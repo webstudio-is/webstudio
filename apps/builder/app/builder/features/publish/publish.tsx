@@ -105,6 +105,7 @@ import {
 import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
 import { showPublishWarning } from "./publish-warning";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
+import { getPrePublishErrorMessage } from "./publish-error";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -658,10 +659,7 @@ const Publish = ({
           setWarning: setPublishWarning,
         });
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Content database validation failed";
+        const message = getPrePublishErrorMessage(error);
         toast.error(message);
         setPublishError(message);
         return;
