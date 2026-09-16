@@ -39,4 +39,8 @@
     "contentRef": "147-1478573_cat-icon-png-black-cat-png-icon.png_ZJ6-qJjk1RlFzuYwyCXdp.jpeg"
   }
 };
+    export const assetUrlsByPath = {
+  "/iconly_svg_converted-converted.svg": "/assets/iconly_svg_converted-converted_zMaMiAAutUl8XrITgz7d1.svg",
+  "/147-1478573_cat-icon-png-black-cat-png-icon.png.jpeg": "/assets/147-1478573_cat-icon-png-black-cat-png-icon.png_ZJ6-qJjk1RlFzuYwyCXdp.jpeg"
+};
     
