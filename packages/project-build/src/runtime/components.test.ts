@@ -254,6 +254,58 @@ test("assigns a unique name when inserting into a Templates list", async () => {
   );
 });
 
+test("replaces only the child at an explicit insert index", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: "Box",
+    children: [
+      { type: "id", value: "first" },
+      { type: "id", value: "second" },
+    ],
+  };
+  const state = createState(parent);
+  state.instances.set("first", {
+    type: "instance",
+    id: "first",
+    component: "Box",
+    children: [],
+  });
+  state.instances.set("second", {
+    type: "instance",
+    id: "second",
+    component: "Text",
+    children: [{ type: "text", value: "Keep me" }],
+  });
+  const fragment = await parseWebstudioJsxFragment("<Box />");
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment,
+      mode: "replace",
+      insertIndex: 0,
+    },
+    { createId: createIdFactory() }
+  );
+
+  expect(mutation.result.removedInstanceIds).toEqual(["first"]);
+  expect(
+    mutation.payload
+      .find(({ namespace }) => namespace === "instances")
+      ?.patches.filter(
+        ({ op, path }) =>
+          op === "remove" && path[0] === "parent" && path[1] === "children"
+      )
+  ).toEqual([{ op: "remove", path: ["parent", "children", 0] }]);
+  expect(
+    mutation.payload
+      .flatMap(({ patches }) => patches)
+      .some(({ op, path }) => op === "remove" && path.includes("second"))
+  ).toBe(false);
+});
+
 test("uses the public collision-safe component identifier as the template name", async () => {
   const parent: Instance = {
     type: "instance",

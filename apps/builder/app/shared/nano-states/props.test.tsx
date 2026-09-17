@@ -924,6 +924,41 @@ test("compute instance text content bound to expression", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
+test("does not collapse mixed expression and element children into text", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [{ type: "id", value: "mixed" }],
+      },
+      {
+        id: "mixed",
+        type: "instance",
+        component: "Box",
+        children: [
+          { type: "expression", value: '"Hello"' },
+          { type: "id", value: "sibling" },
+        ],
+      },
+      {
+        id: "sibling",
+        type: "instance",
+        component: "Text",
+        children: [{ type: "text", value: "world" }],
+      },
+    ])
+  );
+  selectPageRoot("body");
+
+  expect(
+    $propValuesByInstanceSelector.get().get(getInstanceKey(["mixed", "body"]))
+  ).toEqual(new Map());
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
 test("use page system values in props", () => {
   const systemParameter = new Parameter("system");
   const data = renderData(
@@ -1139,6 +1174,41 @@ test("compute item values for collection", () => {
       )
       ?.get(itemParameterId)
   ).toEqual("orange");
+});
+
+test("keeps explicitly referenced outer collection items in nested scope", () => {
+  const outerItem = new Parameter("item");
+  const innerItem = new Parameter("item");
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <ws.collection ws:id="outerId" data={["outer"]} item={outerItem}>
+        <ws.collection ws:id="innerId" data={["inner"]} item={innerItem}>
+          <Box ws:id="boxId" />
+        </ws.collection>
+      </ws.collection>
+    </Body>
+  );
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  const [outerItemId, innerItemId] = data.dataSources.keys();
+  selectPageRoot("bodyId");
+
+  const values = $variableValuesByInstanceSelector
+    .get()
+    .get(
+      getInstanceKey([
+        "boxId",
+        "innerId[0]",
+        "innerId",
+        "outerId[0]",
+        "outerId",
+        "bodyId",
+        ROOT_INSTANCE_ID,
+      ])
+    );
+  expect(values?.get(outerItemId)).toBe("outer");
+  expect(values?.get(innerItemId)).toBe("inner");
 });
 
 test("compute item values for collection with object data", () => {
@@ -1482,7 +1552,7 @@ test("provide global system variable value", () => {
   );
 });
 
-test("mask variables with the same name in nested scope", () => {
+test("keeps shadowed variables addressable by id in nested scope", () => {
   const bodyVariable = new Variable("myVariable", "body");
   const boxVariable = new Variable("myVariable", "box");
   const data = renderData(
@@ -1513,6 +1583,7 @@ test("mask variables with the same name in nested scope", () => {
         getInstanceKey(["boxId", "bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [SYSTEM_VARIABLE_ID, initialSystem],
+          [bodyVariableId, "body"],
           [boxVariableId, "box"],
         ]),
       ],

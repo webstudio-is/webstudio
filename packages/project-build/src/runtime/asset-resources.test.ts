@@ -1,9 +1,74 @@
 import { describe, expect, test } from "vitest";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import {
+  createDefaultStructuredAssetQueryResourceConfiguration,
+  createStructuredAssetQueryResourceBody,
+} from "@webstudio-is/sdk";
 import {
   assetsResourceCreateInput,
   assetsResourceUpdateInput,
+  createAssetsResource,
   getAssetsResource,
+  updateAssetsResource,
 } from "./asset-resources";
+
+const filterQuery = (value: string) => ({
+  where: {
+    all: [{ field: ["folderId"], operator: "eq" as const, value }],
+  },
+});
+
+const createState = (includeFolderVariable = false) => ({
+  pages: createDefaultPages({ rootInstanceId: "body" }),
+  instances: new Map(),
+  props: new Map(),
+  dataSources: new Map([
+    [
+      "posts-data",
+      {
+        id: "posts-data",
+        type: "resource" as const,
+        name: "posts",
+        resourceId: "posts",
+        scopeInstanceId: ":root",
+      },
+    ],
+    ...(includeFolderVariable
+      ? ([
+          [
+            "folder-id",
+            {
+              id: "folder-id",
+              type: "variable" as const,
+              name: "folderId",
+              value: { type: "string" as const, value: "folder" },
+              scopeInstanceId: ":root",
+            },
+          ],
+        ] as const)
+      : []),
+  ]),
+  resources: new Map([
+    [
+      "posts",
+      {
+        id: "posts",
+        name: "Posts",
+        control: "system" as const,
+        method: "post" as const,
+        url: '"/$resources/assets"',
+        headers: [],
+        body: createStructuredAssetQueryResourceBody(
+          createDefaultStructuredAssetQueryResourceConfiguration()
+        ),
+      },
+    ],
+  ]),
+  breakpoints: new Map(),
+  styleSources: new Map(),
+  styleSourceSelections: new Map(),
+  styles: new Map(),
+});
 
 describe("Assets resource mutation input", () => {
   test("returns the exact stored query decoding error", () => {
@@ -138,6 +203,49 @@ describe("Assets resource mutation input", () => {
       ).toBe(false);
     }
   );
+
+  test("rejects filter expressions that reference unavailable variables", () => {
+    expect(() =>
+      createAssetsResource(
+        createState(),
+        assetsResourceCreateInput.parse({
+          name: "Posts",
+          scopeInstanceId: ":root",
+          query: filterQuery("folderId"),
+        }),
+        { createId: () => "unused" }
+      )
+    ).toThrow('unavailable variable "folderId"');
+  });
+
+  test("accepts filter expressions that reference scoped variables", () => {
+    expect(() =>
+      createAssetsResource(
+        createState(true),
+        assetsResourceCreateInput.parse({
+          name: "Posts",
+          scopeInstanceId: ":root",
+          query: filterQuery("folderId"),
+        }),
+        { createId: () => "unused" }
+      )
+    ).not.toThrow();
+  });
+
+  test("rejects unavailable filter variables when updating", () => {
+    expect(() =>
+      updateAssetsResource(
+        createState(),
+        assetsResourceUpdateInput.parse({
+          resourceId: "posts",
+          values: {
+            query: filterQuery("folderId"),
+          },
+        }),
+        { createId: () => "unused" }
+      )
+    ).toThrow('unavailable variable "folderId"');
+  });
 
   test("keeps omitted query update fields absent for patch merging", () => {
     expect(

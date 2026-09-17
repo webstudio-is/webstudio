@@ -7,7 +7,11 @@ import {
 } from "react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
+import { renderText as renderTextValue } from "@webstudio-is/react-sdk/runtime";
+import {
+  computeExpression,
+  type InstanceSelector,
+} from "@webstudio-is/project-build/runtime";
 
 export type WebstudioComponentProps = {
   instance: Instance;
@@ -63,6 +67,7 @@ export const createInstanceChildrenElements = ({
   children,
   Component,
   components,
+  variableValues = new Map(),
 }: {
   instances: Instances;
   instanceSelector: InstanceSelector;
@@ -71,13 +76,15 @@ export const createInstanceChildrenElements = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  variableValues?: ReadonlyMap<string, unknown>;
 }) => {
   const elements = children.map((child) => {
     if (child.type === "text") {
       return renderText(child.value);
     }
     if (child.type === "expression") {
-      return;
+      const value = computeExpression(child.value, variableValues);
+      return renderText(String(renderTextValue(value)));
     }
     if (child.type === "id") {
       return createInstanceElement({

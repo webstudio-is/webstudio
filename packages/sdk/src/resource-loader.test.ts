@@ -232,6 +232,52 @@ describe("loadResource", () => {
     });
   });
 
+  test("logs the response body when a resource request fails", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: "INVALID_REQUEST",
+          issues: [{ path: ["query", "where"] }],
+        }),
+        { status: 400 }
+      )
+    );
+
+    await loadResource(mockFetch, {
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [],
+      method: "get",
+      headers: [],
+    });
+
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('"code": "INVALID_REQUEST"')
+    );
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('"path": [\n        "query",\n        "where"')
+    );
+  });
+
+  test("bounds resource error diagnostics", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch.mockResolvedValue(
+      new Response("x".repeat(3000), { status: 500 })
+    );
+
+    await loadResource(mockFetch, {
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [],
+      method: "get",
+      headers: [],
+    });
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("…truncated"));
+    expect(error.mock.calls[0]?.[0]).not.toContain("x".repeat(2001));
+  });
+
   test("exposes Assets query results as an ID-keyed resource value", async () => {
     mockFetch.mockResolvedValue(
       new Response(

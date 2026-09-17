@@ -5225,6 +5225,7 @@ export const runtimeOperationContractData = [
               required: ["include", "category", "thumbnailAssetId"],
             },
           },
+          additionalProperties: false,
           required: [],
         },
       },
@@ -66846,6 +66847,8 @@ export const runtimeOperationContractData = [
               },
               name: {
                 type: "string",
+                description:
+                  'Prop name. A bound "style" prop must evaluate to an object such as { color: themeColor }, never a CSS declaration string.',
               },
               binding: {
                 oneOf: [

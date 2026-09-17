@@ -278,6 +278,34 @@ describe("prop input creators", () => {
     ).toThrow();
   });
 
+  test("rejects definitely non-object expressions bound to the style prop", () => {
+    for (const value of [
+      '"color: " + themeColor',
+      "42",
+      "true",
+      "null",
+      "[]",
+    ]) {
+      expect(() =>
+        propBindingInput.parse({
+          instanceId: "instance-id",
+          name: "style",
+          binding: { type: "expression", value },
+        })
+      ).toThrow("must evaluate to an object");
+    }
+    expect(() =>
+      propBindingInput.parse({
+        instanceId: "instance-id",
+        name: "style",
+        binding: {
+          type: "expression",
+          value: "{ color: themeColor }",
+        },
+      })
+    ).not.toThrow();
+  });
+
   test("reports malformed prop update batch items by index", () => {
     const result = propUpdatesInput.safeParse({
       updates: [

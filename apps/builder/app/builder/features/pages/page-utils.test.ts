@@ -267,48 +267,28 @@ test("page root scope should provide page system variable value", () => {
   expect($pageRootScope.get()).toEqual({
     aliases: new Map([["$ws$dataSource$systemId", "system"]]),
     scope: {
-      $ws$dataSource$systemId: {
-        origin: "https://undefined.wstd.work",
-        params: {},
-        pathname: "/",
-        search: {},
-      },
+      $ws$dataSource$systemId: initialSystem,
     },
     variableValues: new Map([
-      [
-        "systemId",
-        {
-          params: {},
-          pathname: "/",
-          search: {},
-          origin: "https://undefined.wstd.work",
-        },
-      ],
+      [SYSTEM_VARIABLE_ID, initialSystem],
+      ["systemId", initialSystem],
     ]),
   });
-  updateCurrentSystem({
+  const updatedSystem = {
+    ...initialSystem,
     params: { slug: "my-post" },
+  };
+  updateCurrentSystem({
+    params: updatedSystem.params,
   });
   expect($pageRootScope.get()).toEqual({
     aliases: new Map([["$ws$dataSource$systemId", "system"]]),
     scope: {
-      $ws$dataSource$systemId: {
-        params: { slug: "my-post" },
-        pathname: "/",
-        search: {},
-        origin: "https://undefined.wstd.work",
-      },
+      $ws$dataSource$systemId: updatedSystem,
     },
     variableValues: new Map([
-      [
-        "systemId",
-        {
-          params: { slug: "my-post" },
-          pathname: "/",
-          search: {},
-          origin: "https://undefined.wstd.work",
-        },
-      ],
+      [SYSTEM_VARIABLE_ID, updatedSystem],
+      ["systemId", updatedSystem],
     ]),
   });
 });

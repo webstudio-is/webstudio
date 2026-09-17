@@ -208,7 +208,7 @@ const $resourceVariableValues = computed(
  * values of all variables without computing scope specifics like collections
  * simplified version of variable values by instance selector
  */
-const $unscopedVariableValues = computed(
+export const $unscopedVariableValues = computed(
   [
     $dataSources,
     $dataSourceVariables,
@@ -404,7 +404,7 @@ export const $propValuesByInstanceSelector = computed(
         if (child.type === "text" && instance.children.length === 1) {
           propValues.set(textContentAttribute, child.value);
         }
-        if (child.type === "expression") {
+        if (child.type === "expression" && instance.children.length === 1) {
           const value = computeExpression(child.value, variableValues);
           if (value !== undefined) {
             propValues.set(textContentAttribute, value);
@@ -489,11 +489,9 @@ export const $variableValuesByInstanceSelector = computed(
 
     const collectVariables = (
       instanceSelector: InstanceSelector,
-      parentVariableValues = new Map<string, unknown>(),
-      parentVariableNames = new Map<DataSource["name"], DataSource["id"]>()
+      parentVariableValues = new Map<string, unknown>()
     ) => {
       const [instanceId] = instanceSelector;
-      const variableNames = new Map(parentVariableNames);
       const variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
         getInstanceKey(instanceSelector),
@@ -502,15 +500,10 @@ export const $variableValuesByInstanceSelector = computed(
       const variables = variablesByInstanceId.get(instanceId);
       // set global system value
       if (instanceId === ROOT_INSTANCE_ID) {
-        variableNames.set("system", SYSTEM_VARIABLE_ID);
         variableValues.set(SYSTEM_VARIABLE_ID, system);
       }
       if (variables) {
         for (const variable of variables) {
-          // delete previous variable with the same name
-          // because it is masked and no longer available
-          variableValues.delete(variableNames.get(variable.name) ?? "");
-          variableNames.set(variable.name, variable.id);
           if (variable.type === "variable") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value ?? variable.value.value);
@@ -538,18 +531,16 @@ export const $variableValuesByInstanceSelector = computed(
           }
         }
       }
-      return { variableValues, variableNames };
+      return variableValues;
     };
 
     const traverseInstances = (
       instanceSelector: InstanceSelector,
-      parentVariableValues = new Map<string, unknown>(),
-      parentVariableNames = new Map<DataSource["name"], DataSource["id"]>()
+      parentVariableValues = new Map<string, unknown>()
     ) => {
-      let { variableValues, variableNames } = collectVariables(
+      let variableValues = collectVariables(
         instanceSelector,
-        parentVariableValues,
-        parentVariableNames
+        parentVariableValues
       );
 
       const [instanceId] = instanceSelector;
@@ -631,26 +622,17 @@ export const $variableValuesByInstanceSelector = computed(
       if (instance.component === portalComponent) {
         // allow accessing global variables in slots
         variableValues = globalVariableValues;
-        variableNames = globalVariableNames;
       }
       for (const child of instance.children) {
         if (child.type === "id") {
-          traverseInstances(
-            [child.value, ...instanceSelector],
-            variableValues,
-            variableNames
-          );
+          traverseInstances([child.value, ...instanceSelector], variableValues);
         }
       }
     };
-    const {
-      variableValues: globalVariableValues,
-      variableNames: globalVariableNames,
-    } = collectVariables([ROOT_INSTANCE_ID]);
+    const globalVariableValues = collectVariables([ROOT_INSTANCE_ID]);
     traverseInstances(
       [page.rootInstanceId, ROOT_INSTANCE_ID],
-      globalVariableValues,
-      globalVariableNames
+      globalVariableValues
     );
     return variableValuesByInstanceSelector;
   }

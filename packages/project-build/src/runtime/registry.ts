@@ -1567,21 +1567,39 @@ export const builderRuntimeOperations = [
         props.bindProps(
           state,
           {
-            bindings: input.bindings.map((binding) =>
-              binding.binding.type === "expression"
-                ? {
-                    ...binding,
-                    binding: {
-                      ...binding.binding,
-                      value: bindExpressionInput(
+            bindings: input.bindings.map((binding) => {
+              if (binding.binding.type === "expression") {
+                return {
+                  ...binding,
+                  binding: {
+                    ...binding.binding,
+                    value: bindExpressionInput(
+                      state,
+                      binding.instanceId,
+                      binding.binding.value
+                    ),
+                  },
+                };
+              }
+              if (binding.binding.type === "action") {
+                return {
+                  ...binding,
+                  binding: {
+                    ...binding.binding,
+                    value: binding.binding.value.map((action) => ({
+                      ...action,
+                      code: bindExpressionInput(
                         state,
                         binding.instanceId,
-                        binding.binding.value
+                        action.code,
+                        action.args
                       ),
-                    },
-                  }
-                : binding
-            ),
+                    })),
+                  },
+                };
+              }
+              return binding;
+            }),
           },
           context
         ),

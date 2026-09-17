@@ -1196,6 +1196,57 @@ test("adapts MCP upload assets input to public API upload input", () => {
   expect(input).toHaveProperty("readAssetData", expect.any(Function));
 });
 
+test("validates font metadata before uploading", () => {
+  expect(() =>
+    getMcpOperationInput("upload-asset", {
+      asset: {
+        name: "variable.woff2",
+        type: "font",
+        format: "woff2",
+        meta: { family: "Inter", style: "normal", weight: 400 },
+      },
+    })
+  ).not.toThrow();
+
+  let error: unknown;
+  try {
+    getMcpOperationInput("upload-assets", {
+      assets: [
+        {
+          name: "variable.woff2",
+          type: "font",
+          format: "woff2",
+          meta: {
+            family: "Inter",
+            style: "normal",
+            weight: "100 900",
+            subset: "latin",
+          },
+        },
+      ],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(createMcpSingleOpCallErrorPayload({ error, elapsedMs: 1 })).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: expect.stringContaining("Asset operation input is invalid."),
+      issues: expect.arrayContaining([
+        expect.objectContaining({
+          path: ["assets", "0", "meta", "weight"],
+        }),
+        expect.objectContaining({
+          path: ["assets", "0", "meta", "subset"],
+        }),
+      ]),
+    },
+    meta: { elapsedMs: 1 },
+  });
+});
+
 test("rejects every Markdown and MDX upload filename/format mismatch", () => {
   let error: unknown;
   try {

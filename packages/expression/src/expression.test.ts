@@ -545,6 +545,7 @@ describe("expression value kinds", () => {
     ["{}", "object"],
     ['"text"', "string"],
     ["`text`", "string"],
+    ['"text" + value', "string"],
     ['"text" /* trailing comment */', "string"],
     ["value +", "unknown"],
     ['"text" trailing', "unknown"],

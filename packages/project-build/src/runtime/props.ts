@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
+import { getExpressionValueKind } from "@webstudio-is/expression";
 import {
   blockComponent,
   contentBlockSourceProp,
@@ -307,7 +308,11 @@ export const propBindingInput = z
   .object({
     propId: runtimeGeneratedIdInput,
     instanceId: z.string(),
-    name: z.string(),
+    name: z
+      .string()
+      .describe(
+        'Prop name. A bound "style" prop must evaluate to an object such as { color: themeColor }, never a CSS declaration string.'
+      ),
     binding: z.discriminatedUnion("type", [
       ...dataPropBindingInput.options,
       actionPropBindingInput,
@@ -324,6 +329,20 @@ export const propBindingInput = z
       }),
       ["binding", "value"]
     );
+    if (
+      value.name === "style" &&
+      value.binding.type === "expression" &&
+      !["object", "unknown"].includes(
+        getExpressionValueKind({ expression: value.binding.value })
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["binding", "value"],
+        message:
+          'A bound "style" prop must evaluate to an object keyed by style properties, for example { color: themeColor }.',
+      });
+    }
   });
 
 export const propUpdatesInput = z.object({
