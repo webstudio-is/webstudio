@@ -1,5 +1,6 @@
 import { AlertIcon } from "@webstudio-is/icons/svg";
 import { descendantComponent, type WsComponentMeta } from "@webstudio-is/sdk";
+import { div } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/alert.props";
 
 export const meta: WsComponentMeta = {
@@ -9,6 +10,7 @@ export const meta: WsComponentMeta = {
     category: "instance",
     children: ["instance", descendantComponent],
   },
+  presetStyle: { div },
   states: [
     { label: "Note", selector: '[data-state="note"]' },
     { label: "Tip", selector: '[data-state="tip"]' },

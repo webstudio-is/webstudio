@@ -4,6 +4,10 @@ import { Alert } from "./alert";
 import { meta } from "./alert.ws";
 
 describe("Alert", () => {
+  test("is stylable in the Builder", () => {
+    expect(meta.presetStyle).toBeDefined();
+  });
+
   test("exposes variants as property-driven style states", () => {
     expect(meta.initialProps).toContain("variant");
     expect(meta.states).toEqual([
