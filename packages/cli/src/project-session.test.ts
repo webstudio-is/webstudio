@@ -129,6 +129,16 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   );
   expect(serialized).not.toContain(sensitiveKey);
   expect(JSON.parse(serialized).issues[0].path).toEqual(["updates", "0"]);
+
+  const rootSecret = JSON.stringify(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        { path: [sensitiveKey], code: "unrecognized", constraint: "known key" },
+      ],
+    })
+  );
+  expect(rootSecret).not.toContain(sensitiveKey);
 });
 
 test("scopes project session files for explicitly selected projects", () => {

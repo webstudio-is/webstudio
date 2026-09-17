@@ -187,6 +187,22 @@ export const getCliProjectRestorePointsFile = (
     "restore-points.json"
   );
 const compatibilityVersion = "cli-project-session-v1";
+const issueReportPathRoots = new Set([
+  "assets",
+  "dataSources",
+  "fragment",
+  "input",
+  "instances",
+  "pages",
+  "props",
+  "query",
+  "resources",
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
+  "updates",
+  "values",
+]);
 
 const createCliProjectSessionCompatibility = (
   connection: ApiConnection
@@ -274,7 +290,7 @@ export const createIssueReportFailure = (
               (segment, index) =>
                 index < 2 &&
                 (index === 0
-                  ? /^[a-z][a-zA-Z0-9]*$/.test(segment)
+                  ? issueReportPathRoots.has(segment)
                   : /^\d+$/.test(segment))
             ),
             code: issue.code,
