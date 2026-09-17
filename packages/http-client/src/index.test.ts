@@ -53,6 +53,7 @@ import {
   getPublishJob,
   getApiCompatibilityMessage,
   getApiErrorCode,
+  getErrorStatus,
   getBuildSnapshot,
   getPage,
   getPageByPath,
@@ -198,17 +199,7 @@ test("reports non-json api responses", async () => {
     });
   } catch (error) {
     message = error instanceof Error ? error.message : String(error);
-    status =
-      typeof error === "object" && error !== null && "status" in error
-        ? error.status
-        : typeof error === "object" &&
-            error !== null &&
-            "cause" in error &&
-            typeof error.cause === "object" &&
-            error.cause !== null &&
-            "status" in error.cause
-          ? error.cause.status
-          : undefined;
+    status = getErrorStatus(error);
   }
 
   expect(status).toBe(413);

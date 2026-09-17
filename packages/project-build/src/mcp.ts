@@ -9214,13 +9214,19 @@ export const createProjectSessionMcpServer = async <
   toolNameFormat = "canonical",
   toolHeartbeatIntervalMs = 10_000,
   onToolFailure,
+  onToolSuccess,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
   onInitialized?: (clientName: string | undefined) => void;
   toolNameFormat?: "canonical" | "underscores";
   toolHeartbeatIntervalMs?: number;
-  onToolFailure?: (canonicalTool: string, error: unknown) => void;
+  onToolFailure?: (
+    canonicalTool: string,
+    error: unknown,
+    elapsedMs: number
+  ) => void;
+  onToolSuccess?: (canonicalTool: string) => void;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -9357,13 +9363,16 @@ export const createProjectSessionMcpServer = async <
         dryRun,
         signal: extra.signal,
       });
-      sendLog("info", `tool ${name} succeeded in ${Date.now() - startedAt}ms`);
+      const elapsedMs = Date.now() - startedAt;
+      onToolSuccess?.(canonicalName ?? "unknown");
+      sendLog("info", `tool ${name} succeeded in ${elapsedMs}ms`);
       return result;
     } catch (error) {
-      onToolFailure?.(canonicalName ?? "unknown", error);
+      const elapsedMs = Date.now() - startedAt;
+      onToolFailure?.(canonicalName ?? "unknown", error, elapsedMs);
       sendLog(
         "error",
-        `tool ${name} failed in ${Date.now() - startedAt}ms: ${
+        `tool ${name} failed in ${elapsedMs}ms: ${
           error instanceof Error ? error.message : String(error)
         }`
       );

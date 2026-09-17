@@ -37,6 +37,16 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
           `- API contract: ${runtime.apiContractVersion}`,
           `- Bundle contract: ${runtime.bundleVersion ?? "unknown"}`,
         ]),
+    ...(runtime?.session === undefined
+      ? []
+      : [
+          `- Session namespace issues: stale=${runtime.session.staleNamespaces.join(",") || "none"}; missing=${runtime.session.missingNamespaces.join(",") || "none"}; invalidated=${runtime.session.invalidatedNamespaces.join(",") || "none"}`,
+        ]),
+    ...(runtime?.preview === undefined
+      ? []
+      : [
+          `- Preview: stale=${runtime.preview.stale}; rendered=${runtime.preview.hasRenderedVersion}; version matches session=${runtime.preview.renderedVersionMatchesSession ?? "unknown"}`,
+        ]),
   ].join("\n");
 
 const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
@@ -50,6 +60,12 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     "",
     `- Tool: \`${failure.tool}\``,
     `- Error code: \`${failure.code}\``,
+    ...(failure.httpStatus === undefined
+      ? []
+      : [`- HTTP status: \`${failure.httpStatus}\``]),
+    ...(failure.elapsedMs === undefined
+      ? []
+      : [`- Duration: \`${failure.elapsedMs}ms\``]),
     ...(issues.length === 0
       ? []
       : [

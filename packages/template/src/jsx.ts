@@ -885,7 +885,8 @@ export const renderTemplate = (
       (sel) => sel.instanceId === instanceId
     );
     if (existingSelection) {
-      existingSelection.values.push(...tokenIds);
+      // Tokens provide defaults; instance-local styles must win in the cascade.
+      existingSelection.values.unshift(...tokenIds);
     } else {
       styleSourceSelections.push({
         instanceId,

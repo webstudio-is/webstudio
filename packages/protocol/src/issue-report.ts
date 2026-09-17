@@ -50,7 +50,25 @@ const issueReportRecentFailure = z
   .object({
     tool: z.string().trim().min(1).max(160),
     code: z.string().trim().min(1).max(160),
+    httpStatus: z.number().int().min(100).max(599).optional(),
+    elapsedMs: z.number().int().nonnegative().optional(),
     issues: z.array(issueReportFailureIssue).max(30).optional(),
+  })
+  .strict();
+
+const issueReportSession = z
+  .object({
+    staleNamespaces: z.array(z.string().max(100)).max(50),
+    missingNamespaces: z.array(z.string().max(100)).max(50),
+    invalidatedNamespaces: z.array(z.string().max(100)).max(50),
+  })
+  .strict();
+
+const issueReportPreview = z
+  .object({
+    stale: z.boolean(),
+    hasRenderedVersion: z.boolean(),
+    renderedVersionMatchesSession: z.boolean().optional(),
   })
   .strict();
 
@@ -65,6 +83,8 @@ const issueReportRuntime = z
     apiContractVersion: z.string().trim().min(1).max(100),
     bundleVersion: z.string().trim().min(1).max(100).optional(),
     recentFailure: issueReportRecentFailure.optional(),
+    session: issueReportSession.optional(),
+    preview: issueReportPreview.optional(),
   })
   .strict()
   .describe(

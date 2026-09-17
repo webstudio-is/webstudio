@@ -45,11 +45,11 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
     },
   };
 
-  expect(addIssueReportRuntime("report-issue", report, runtime)).toEqual({
+  expect(addIssueReportRuntime("report-issue", report, () => runtime)).toEqual({
     ...report,
     runtime,
   });
-  expect(addIssueReportRuntime("audit", report, runtime)).toBe(report);
+  expect(addIssueReportRuntime("audit", report, () => runtime)).toBe(report);
 });
 
 test("keeps only anonymous structured fields from the latest tool failure", () => {
@@ -71,7 +71,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     code: "PROJECT_BUNDLE_INVALID",
     issues: [
       {
-        path: [],
+        path: ["assets", "0"],
         code: "invalid_value",
         constraint: "one of supported asset types",
       },
@@ -106,12 +106,26 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     code: "INVALID_INPUT",
     issues: [
       {
-        path: [],
+        path: ["fragment"],
         code: "invalid_webstudio_jsx",
         constraint: "valid_webstudio_jsx_syntax",
       },
     ],
   });
+
+  expect(
+    createIssueReportFailure("select-instance", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["instanceId"],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    }).issues?.[0].path
+  ).toEqual(["instanceId"]);
 
   const sensitiveKey = "customer-secret-key";
   const serialized = JSON.stringify(
@@ -128,7 +142,48 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     })
   );
   expect(serialized).not.toContain(sensitiveKey);
-  expect(JSON.parse(serialized).issues[0].path).toEqual([]);
+  expect(JSON.parse(serialized).issues[0].path).toEqual(["updates", "0"]);
+
+  const rootSecret = JSON.stringify(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        { path: [sensitiveKey], code: "unrecognized", constraint: "known key" },
+      ],
+    })
+  );
+  expect(rootSecret).not.toContain(sensitiveKey);
+
+  expect(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: [sensitiveKey, "0"],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    }).issues?.[0].path
+  ).toEqual([]);
+});
+
+test("captures failure timing and HTTP status", () => {
+  expect(
+    createIssueReportFailure(
+      "preview-asset-query",
+      new Error("Request failed", {
+        cause: Object.assign(new Error("Gateway timeout"), { status: 504 }),
+      }),
+      17_000
+    )
+  ).toEqual({
+    tool: "preview-asset-query",
+    code: "MCP_TOOL_FAILED",
+    httpStatus: 504,
+    elapsedMs: 17_000,
+  });
 });
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -982,6 +1037,9 @@ describe("cli project session transport", () => {
   test("keeps configured project id for default server operation transport", async () => {
     let requestBody = "";
     let requestUrl = "";
+    const issueReportRuntime = vi.fn(() => {
+      throw new Error("issue report runtime should be lazy");
+    });
     const fetch = vi.fn(async (request: URL | RequestInfo) => {
       if (request instanceof Request) {
         requestUrl = request.url;
@@ -1011,6 +1069,7 @@ describe("cli project session transport", () => {
         origin: "https://example.com",
         authToken: "token",
       },
+      issueReportRuntime,
     });
 
     await transport.executeServerOperation?.({
@@ -1021,6 +1080,7 @@ describe("cli project session transport", () => {
     const requestText = `${requestUrl}\n${requestBody}`;
     expect(requestText).toContain("project-1");
     expect(requestText).not.toContain("other-project");
+    expect(issueReportRuntime).not.toHaveBeenCalled();
   });
 
   test("adds anonymous runtime metadata to issue report requests", async () => {

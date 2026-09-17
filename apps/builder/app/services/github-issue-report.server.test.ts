@@ -30,6 +30,8 @@ const report: IssueReportInput = {
     recentFailure: {
       tool: "preview.start",
       code: "PROJECT_BUNDLE_INVALID",
+      httpStatus: 504,
+      elapsedMs: 17_000,
       issues: [
         {
           path: ["assets", "0", "type"],
@@ -37,6 +39,16 @@ const report: IssueReportInput = {
           constraint: 'one of "font"|"image"|"video"|"file"',
         },
       ],
+    },
+    session: {
+      staleNamespaces: ["styles"],
+      missingNamespaces: ["instances"],
+      invalidatedNamespaces: [],
+    },
+    preview: {
+      stale: true,
+      hasRenderedVersion: true,
+      renderedVersionMatchesSession: false,
     },
   },
   report: {
@@ -71,6 +83,10 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("## Captured failure diagnostics");
     expect(body).toContain("- Tool: `preview.start`");
     expect(body).toContain("- Error code: `PROJECT_BUNDLE_INVALID`");
+    expect(body).toContain("- HTTP status: `504`");
+    expect(body).toContain("- Duration: `17000ms`");
+    expect(body).toContain("stale=styles");
+    expect(body).toContain("version matches session=false");
     expect(body).toContain(
       '- `assets.0.type`: `invalid_value` (one of "font"|"image"|"video"|"file")'
     );

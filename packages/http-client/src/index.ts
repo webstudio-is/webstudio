@@ -386,13 +386,27 @@ const encodeAssetDescriptionHeader = (value: string) =>
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
-const getErrorStatus = (error: unknown) =>
-  typeof error === "object" &&
-  error !== null &&
-  "status" in error &&
-  typeof error.status === "number"
-    ? error.status
-    : undefined;
+export const getErrorStatus = (error: unknown) => {
+  const visited = new Set<unknown>();
+  let current = error;
+  while (
+    typeof current === "object" &&
+    current !== null &&
+    visited.has(current) === false
+  ) {
+    visited.add(current);
+    const record = current as Record<string, unknown>;
+    const data =
+      typeof record.data === "object" && record.data !== null
+        ? (record.data as Record<string, unknown>)
+        : undefined;
+    const status = record.status ?? data?.status;
+    if (typeof status === "number") {
+      return status;
+    }
+    current = record.cause ?? data?.cause;
+  }
+};
 
 const retryOnce = async <Result>(task: () => Promise<Result>, delayMs = 0) => {
   try {
