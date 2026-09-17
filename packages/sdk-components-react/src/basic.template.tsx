@@ -40,16 +40,14 @@ import {
 const sampleImage =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'%3E%3Crect width='640' height='360' fill='%23eef2ff'/%3E%3Cpath d='M96 264l120-120 88 88 56-56 184 184H96z' fill='%2394a3b8'/%3E%3Ccircle cx='456' cy='112' r='44' fill='%23f59e0b'/%3E%3C/svg%3E";
 
-export const createAlertTemplate = (key?: string) => (
-  <AlertComponent key={key} variant="note">
-    <Paragraph>{new PlaceholderValue("Add helpful context here.")}</Paragraph>
-  </AlertComponent>
-);
-
 export const Alert: TemplateMeta = {
   category: "typography",
   description: "Highlight information that deserves extra attention.",
-  template: createAlertTemplate(),
+  template: (
+    <AlertComponent variant="note">
+      <Paragraph>{new PlaceholderValue("Add helpful context here.")}</Paragraph>
+    </AlertComponent>
+  ),
 };
 
 const BlockquoteTemplate: TemplateMeta = {
