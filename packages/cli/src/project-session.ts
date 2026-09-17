@@ -281,7 +281,7 @@ export const createIssueReportFailure = (
   elapsedMs?: number
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
-  const httpStatus = (error as { status?: unknown })?.status;
+  const httpStatus = httpClient.getErrorStatus(error);
   const issues =
     errorCode === undefined
       ? undefined

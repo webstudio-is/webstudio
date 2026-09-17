@@ -16,10 +16,13 @@ import {
   isReadOnlyProjectSessionMcpToolCall,
 } from "@webstudio-is/project-build/mcp";
 import {
-  builderNamespaces,
   getProjectBasicAuthCredentials,
   type BuilderNamespace,
 } from "@webstudio-is/project-build/contracts";
+import {
+  getBuilderStateNamespacesByStatus,
+  type BuilderStateNamespaceStatus,
+} from "@webstudio-is/project-build/state";
 import { diffPngFiles } from "@webstudio-is/vision/diff";
 import {
   publicApiOperationRequiresServerSupport,
@@ -1862,25 +1865,30 @@ const createCliMcpHost = async ({
     projectRoot,
     sessionProjectId: projectId,
     issueReportRuntime: () => {
-      const snapshot = getLoadedProjectSessionSnapshot(session);
-      const namespacesByStatus = (status: string) =>
-        builderNamespaces.filter(
-          (namespace) =>
-            (snapshot.freshness[namespace]?.status ?? "missing") === status
-        );
+      const snapshot = session.snapshot;
       const previewStatus = previewFreshness.status();
+      const namespacesByStatus =
+        snapshot === undefined
+          ? undefined
+          : (status: BuilderStateNamespaceStatus) =>
+              getBuilderStateNamespacesByStatus(snapshot.freshness, status);
       return createIssueReportRuntime(recentFailure, {
-        session: {
-          freshNamespaces: namespacesByStatus("fresh"),
-          staleNamespaces: namespacesByStatus("stale"),
-          missingNamespaces: namespacesByStatus("missing"),
-          invalidatedNamespaces: namespacesByStatus("invalidated"),
-        },
+        ...(namespacesByStatus === undefined
+          ? {}
+          : {
+              session: {
+                freshNamespaces: namespacesByStatus("fresh"),
+                staleNamespaces: namespacesByStatus("stale"),
+                missingNamespaces: namespacesByStatus("missing"),
+                invalidatedNamespaces: namespacesByStatus("invalidated"),
+              },
+            }),
         preview: {
           stale: previewStatus.stale,
           hasRenderedVersion:
             previewStatus.renderedProjectVersion !== undefined,
-          ...(previewStatus.renderedProjectVersion === undefined
+          ...(previewStatus.renderedProjectVersion === undefined ||
+          snapshot === undefined
             ? {}
             : {
                 renderedVersionMatchesSession:
@@ -2180,7 +2188,13 @@ const createCliMcpHost = async ({
       error: unknown,
       elapsedMs: number
     ) {
-      recentFailure = createIssueReportFailure(canonicalTool, error, elapsedMs);
+      if (canonicalTool !== "report-issue") {
+        recentFailure = createIssueReportFailure(
+          canonicalTool,
+          error,
+          elapsedMs
+        );
+      }
     },
     recordToolSuccess(canonicalTool: string) {
       if (canonicalTool !== "report-issue" && recentFailure !== undefined) {

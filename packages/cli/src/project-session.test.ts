@@ -162,7 +162,9 @@ test("captures bounded failure timing and HTTP status", () => {
   expect(
     createIssueReportFailure(
       "preview-asset-query",
-      Object.assign(new Error("Gateway timeout"), { status: 504 }),
+      new Error("Request failed", {
+        cause: Object.assign(new Error("Gateway timeout"), { status: 504 }),
+      }),
       17_000
     )
   ).toEqual({

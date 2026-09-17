@@ -111,6 +111,15 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("- Node.js: unknown");
   });
 
+  test("does not invent unavailable failure diagnostics", () => {
+    const legacyReport = structuredClone(report);
+    delete legacyReport.runtime?.recentFailure?.subsequentSuccesses;
+
+    expect(formatIssueReport(legacyReport)).not.toContain(
+      "Successful tools after failure"
+    );
+  });
+
   test("discovers the repository installation before creating its token", async () => {
     const requests: Array<{ url: URL; init?: RequestInit }> = [];
     const request: typeof fetch = async (input, init) => {

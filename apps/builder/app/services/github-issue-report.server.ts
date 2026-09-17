@@ -66,7 +66,9 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     ...(failure.duration === undefined
       ? []
       : [`- Duration: \`${failure.duration}\``]),
-    `- Successful tools after failure: ${failure.subsequentSuccesses ?? 0}`,
+    ...(failure.subsequentSuccesses === undefined
+      ? []
+      : [`- Successful tools after failure: ${failure.subsequentSuccesses}`]),
     ...(issues.length === 0
       ? []
       : [
