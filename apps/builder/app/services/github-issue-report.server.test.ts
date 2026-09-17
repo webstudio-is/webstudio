@@ -120,6 +120,15 @@ describe("GitHub issue reports", () => {
     );
   });
 
+  test("marks a saturated success count as a lower bound", () => {
+    const saturatedReport = structuredClone(report);
+    saturatedReport.runtime!.recentFailure!.subsequentSuccesses = 100;
+
+    expect(formatIssueReport(saturatedReport)).toContain(
+      "- Successful tools after failure: 100+"
+    );
+  });
+
   test("discovers the repository installation before creating its token", async () => {
     const requests: Array<{ url: URL; init?: RequestInit }> = [];
     const request: typeof fetch = async (input, init) => {

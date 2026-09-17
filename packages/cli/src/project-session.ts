@@ -189,11 +189,8 @@ export const getCliProjectRestorePointsFile = (
 const compatibilityVersion = "cli-project-session-v1";
 const issueReportPathRoots = new Set([
   ...builderNamespaces,
-  "fragment",
+  ...publicApiOperations.flatMap((operation) => operation.inputFields),
   "input",
-  "query",
-  "updates",
-  "values",
 ]);
 
 const createCliProjectSessionCompatibility = (
@@ -288,9 +285,9 @@ export const createIssueReportFailure = (
       : getValidationIssues(error)
           ?.slice(0, 30)
           .map((issue) => ({
-            // Keep only the namespace and array index. Leaf keys may contain
-            // project data, while the prefix is enough to locate the failing
-            // input shape (for example `updates[0]` or `assets[0]`).
+            // Keep only a known namespace/input field and array index. Leaf
+            // keys may contain project data, while this prefix is enough to
+            // locate the failing input shape (for example `updates[0]`).
             path: issueReportPathRoots.has(issue.path[0] ?? "")
               ? [
                   issue.path[0],

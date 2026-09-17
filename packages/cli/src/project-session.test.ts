@@ -116,6 +116,20 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     ],
   });
 
+  expect(
+    createIssueReportFailure("select-instance", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["instanceId"],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    }).issues?.[0].path
+  ).toEqual(["instanceId"]);
+
   const sensitiveKey = "customer-secret-key";
   const serialized = JSON.stringify(
     createIssueReportFailure("update-styles", {
