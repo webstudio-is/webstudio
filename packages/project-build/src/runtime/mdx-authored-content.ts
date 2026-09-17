@@ -55,7 +55,6 @@ import {
   normalizeMdxComponentProps,
   serializeMdxComponent,
   serializeMdxComponentFallback,
-  usesMdxComponentAuthoredChildren,
 } from "./mdx-component-adapters";
 import {
   parseMdxStaticProp,
@@ -1136,15 +1135,7 @@ export const materializeMdxAuthoredContent = ({
                   return false;
                 }
               } else if (adapted !== undefined) {
-                instance.children =
-                  adapted.children === "authored"
-                    ? visit(
-                        authored.child.type === "element"
-                          ? authored.child.children
-                          : [],
-                        authored.path
-                      )
-                    : adapted.children;
+                instance.children = adapted.children;
               }
               nextInstanceChildren.push(instanceChild);
             }
@@ -1284,10 +1275,7 @@ export const materializeMdxAuthoredContent = ({
           type: "instance",
           id: instanceId,
           component: materializedComponent.component,
-          children:
-            materializedComponent.children === "authored"
-              ? visit(node.children, path)
-              : materializedComponent.children,
+          children: materializedComponent.children,
         };
         fragment.instances.push(instance);
         const componentData =
@@ -2862,23 +2850,6 @@ export const reconcileMdxAuthoredContent = ({
                 return next === undefined ? [] : [next];
               })
               .concat(...editableAuthoredComponentPropsByName.values());
-    let authoredComponentChildren: readonly MdxAuthoredNode[] | undefined;
-    if (
-      usesMdxComponentAuthoredChildren(instance.component) &&
-      originalComponentNode !== undefined &&
-      originalComponentNode.type !== "text" &&
-      originalComponentNode.type !== "comment" &&
-      originalComponentNode.type !== "opaque"
-    ) {
-      active.add(instanceId);
-      authoredComponentChildren = reconcileChildren({
-        original: originalComponentNode.children,
-        children: instance.children,
-        mode: "flow",
-        active,
-      });
-      active.delete(instanceId);
-    }
     const preferComponentReference =
       instance.children.length === 0 &&
       instanceProps.length === 0 &&
@@ -2914,7 +2885,6 @@ export const reconcileMdxAuthoredContent = ({
             props: authoredComponentProps,
             instanceProps,
             original: originalComponentNode,
-            authoredChildren: authoredComponentChildren,
           });
     const serializedComponent =
       componentNode ??

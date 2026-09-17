@@ -176,7 +176,7 @@ const forceGenericMdx = (node: MdxAuthoredNode): MdxAuthoredNode => {
 
 describe("parseMdxDocument", () => {
   test.each(["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"] as const)(
-    "maps GitHub %s alerts to authored alert metadata",
+    "maps GitHub %s alerts to Alert templates",
     async (type) => {
       const document = await parseMdxDocument({
         source: `> [!${type}]\n> Alert with **strong** text.\n`,
@@ -184,11 +184,12 @@ describe("parseMdxDocument", () => {
 
       expect(omitSourceRanges(document.children)).toEqual([
         {
-          type: "element",
-          syntax: "markdown",
-          tag: "blockquote",
-          props: [],
-          markdownAlert: type,
+          type: "template",
+          syntax: "jsx",
+          selfClosing: false,
+          name: "Alert",
+          props: [{ name: "variant", value: type.toLowerCase() }],
+          mdxMode: "flow",
           children: [
             {
               type: "element",
@@ -213,12 +214,12 @@ describe("parseMdxDocument", () => {
     }
   );
 
-  test("preserves GitHub alert syntax through MDX serialization", async () => {
+  test("serializes GitHub alerts as standard Alert templates", async () => {
     const source = `> [!WARNING]\n> First paragraph.\n>\n> - One\n> - Two\n`;
     const document = await parseMdxDocument({ source });
 
     expect(serializeMdxDocument(document)).toBe(
-      "> [!WARNING]\n> First paragraph.\n>\n> -   One\n> -   Two\n"
+      '<Alert variant="warning">\n  First paragraph.\n\n  -   One\n  -   Two\n</Alert>\n'
     );
   });
 

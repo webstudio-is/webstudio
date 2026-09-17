@@ -176,7 +176,7 @@ Use GitHub-style alert syntax for notes, tips, important information, warnings, 
 > Explain what readers should be careful about.
 ```
 
-Write `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, or `CAUTION` in uppercase at the start of a blockquote. Each alert becomes an [Alert component](alert.md) in the Content Block. Change its **Variant** property to switch the alert type; Webstudio writes the corresponding uppercase marker when canvas edits save back to the `.mdx` file.
+Write `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, or `CAUTION` in uppercase at the start of a blockquote. Each alert becomes an [Alert component](alert.md) in the Content Block. When Webstudio writes the file after a canvas edit, it uses the equivalent `<Alert variant="...">` JSX.
 
 In the MDX editor, type `<` to autocomplete templates connected to the file and built-in Image and CodeText components. Inside a JSX tag, autocomplete suggests its supported properties and available property values.
 

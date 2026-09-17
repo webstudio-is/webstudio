@@ -44,10 +44,7 @@ import {
   serializeMdxDocument,
 } from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
-import {
-  getMarkdownAlertMarker,
-  type MarkdownAlertType,
-} from "./markdown-alerts";
+import { getMarkdownAlertMarker } from "./markdown-alerts";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -97,7 +94,6 @@ export type MdxAuthoredNode =
       tag: string;
       props: readonly MdxAuthoredProp[];
       children: readonly MdxAuthoredNode[];
-      markdownAlert?: MarkdownAlertType;
       markdownListItem?: MdxMarkdownListItem;
       preserveTextWhitespace?: true;
       sourceRange?: MdxSourceRange;
@@ -1353,9 +1349,14 @@ const transformMarkdownAlerts = (
       ...children.slice(1),
     ];
     return {
-      ...node,
-      markdownAlert: marker.type,
+      type: "template",
+      syntax: "jsx",
+      selfClosing: false,
+      name: "Alert",
+      props: [{ name: "variant", value: marker.type.toLowerCase() }],
       children: bodyChildren,
+      mdxMode: "flow",
+      sourceRange: node.sourceRange,
     };
   });
 

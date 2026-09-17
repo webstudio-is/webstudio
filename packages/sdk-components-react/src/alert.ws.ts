@@ -20,13 +20,9 @@ export const meta: WsComponentMeta = {
   props: {
     ...props,
     variant: {
+      ...props.variant,
       label: "Variant",
-      required: false,
-      control: "select",
-      type: "string",
       contentMode: true,
-      defaultValue: "note",
-      options: ["note", "tip", "important", "warning", "caution"],
     },
   },
 };

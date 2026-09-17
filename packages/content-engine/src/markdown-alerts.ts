@@ -1,27 +1,15 @@
-export const markdownAlertVariants = {
-  note: "NOTE",
-  tip: "TIP",
-  important: "IMPORTANT",
-  warning: "WARNING",
-  caution: "CAUTION",
-} as const;
+export const markdownAlertTypes = [
+  "NOTE",
+  "TIP",
+  "IMPORTANT",
+  "WARNING",
+  "CAUTION",
+] as const;
 
-export type MarkdownAlertVariant = keyof typeof markdownAlertVariants;
-
-export const markdownAlertTypes = Object.fromEntries(
-  Object.entries(markdownAlertVariants).map(([variant, type]) => [
-    type,
-    variant,
-  ])
-) as Record<
-  (typeof markdownAlertVariants)[MarkdownAlertVariant],
-  MarkdownAlertVariant
->;
-
-export type MarkdownAlertType = keyof typeof markdownAlertTypes;
+export type MarkdownAlertType = (typeof markdownAlertTypes)[number];
 
 export const getMarkdownAlertMarker = (value: string) => {
-  for (const type of Object.keys(markdownAlertTypes) as MarkdownAlertType[]) {
+  for (const type of markdownAlertTypes) {
     const marker = `[!${type}]`;
     if (value === marker) {
       return { type, length: marker.length };

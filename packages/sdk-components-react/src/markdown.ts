@@ -17,7 +17,6 @@ import type { ImageLoader } from "@webstudio-is/image";
 import {
   getMarkdownAlertMarker,
   markdownAlertTypes,
-  type MarkdownAlertType,
 } from "@webstudio-is/content-engine/markdown-alerts";
 import { getSdkImageProps, type SdkImageProps } from "./image-utils";
 
@@ -215,23 +214,10 @@ const createGfmHtmlExtension = () => {
   return extension;
 };
 
-const setAttribute = (
-  element: DefaultTreeAdapterMap["element"],
-  name: string,
-  value: string
-) => {
-  const attribute = element.attrs.find((item) => item.name === name);
-  if (attribute === undefined) {
-    element.attrs.push({ name, value });
-    return;
-  }
-  attribute.value = value;
-};
-
 const transformMarkdownAlerts = (html: string) => {
-  const hasAlertMarker = (
-    Object.keys(markdownAlertTypes) as MarkdownAlertType[]
-  ).some((type) => html.includes(`[!${type}]`));
+  const hasAlertMarker = markdownAlertTypes.some((type) =>
+    html.includes(`[!${type}]`)
+  );
   if (hasAlertMarker === false) {
     return html;
   }
@@ -244,24 +230,23 @@ const transformMarkdownAlerts = (html: string) => {
       defaultTreeAdapter.isElementNode(node) &&
       node.tagName === "blockquote"
     ) {
-      const firstElement = node.childNodes.find((child) =>
+      const paragraph = node.childNodes.find((child) =>
         defaultTreeAdapter.isElementNode(child)
       );
-      const paragraph =
-        firstElement?.tagName === "p" ? firstElement : undefined;
       const markerNode = paragraph?.childNodes[0];
       if (
-        paragraph !== undefined &&
+        paragraph?.tagName === "p" &&
         markerNode !== undefined &&
         defaultTreeAdapter.isTextNode(markerNode)
       ) {
         const marker = getMarkdownAlertMarker(markerNode.value);
         if (marker !== undefined) {
-          const state = markdownAlertTypes[marker.type];
           node.tagName = "div";
           node.nodeName = "div";
-          setAttribute(node, "role", "note");
-          setAttribute(node, "data-state", state);
+          node.attrs.push(
+            { name: "role", value: "note" },
+            { name: "data-state", value: marker.type.toLowerCase() }
+          );
 
           markerNode.value = markerNode.value.slice(marker.length);
           if (markerNode.value === "" && paragraph.childNodes.length === 1) {

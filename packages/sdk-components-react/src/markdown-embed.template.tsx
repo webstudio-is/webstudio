@@ -80,12 +80,7 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="Link" selector=" a" />
       <ws.descendant ws:label="Image" selector=" img" />
       <ws.descendant ws:label="Blockquote" selector=" blockquote" />
-      <ws.descendant
-        ws:label="Alert"
-        selector={
-          ' :where([data-state="note"], [data-state="tip"], [data-state="important"], [data-state="warning"], [data-state="caution"])'
-        }
-      />
+      <ws.descendant ws:label="Alert" selector=" [data-state]" />
       <ws.descendant ws:label="Note alert" selector={' [data-state="note"]'} />
       <ws.descendant ws:label="Tip alert" selector={' [data-state="tip"]'} />
       <ws.descendant
