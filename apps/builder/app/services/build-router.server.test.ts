@@ -8,6 +8,7 @@ import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-com
 const {
   assertCliBundleVersion,
   createImportProjectBundleHandler,
+  loadContentDatabasePublishDiagnostics,
   prepareProjectBundleForClient,
 } = __testing__;
 
@@ -91,6 +92,49 @@ describe("build router project bundle compatibility", () => {
 });
 
 describe("content database publish diagnostics", () => {
+  test("uses MDX omissions collected while preparing the publication artifact", async () => {
+    const bundle = createPublishedProjectBundleFixture();
+    bundle.assets = [
+      {
+        id: "article",
+        projectId: bundle.build.projectId,
+        name: "article-storage.mdx",
+        filename: "article",
+        type: "file",
+        format: "mdx",
+        size: 1,
+        meta: {},
+        createdAt: "2026-09-17T00:00:00.000Z",
+      },
+    ];
+    const loadProjectBundle = vi.fn(async (_projectId, _ctx, options) => {
+      options.onMdxTemplateOmissions([
+        {
+          assetId: "article",
+          blockInstanceId: "content-block",
+          templateName: "Missing",
+        },
+      ]);
+      return bundle;
+    });
+
+    await expect(
+      loadContentDatabasePublishDiagnostics("project-id", {} as never, {
+        loadProjectBundleByProjectId: loadProjectBundle as never,
+      })
+    ).resolves.toMatchObject({
+      mdxOmissions: [
+        {
+          assetId: "article",
+          blockInstanceId: "content-block",
+          filename: "article.mdx",
+          templateName: "Missing",
+        },
+      ],
+    });
+    expect(loadProjectBundle).toHaveBeenCalledOnce();
+  });
+
   test("uses the same edit permit as publishing", async () => {
     const hasProjectPermit = vi
       .spyOn(authorizeProject, "hasProjectPermit")

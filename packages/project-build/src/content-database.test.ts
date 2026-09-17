@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
+import { parseMdxDocumentRecovering } from "@webstudio-is/content-engine/mdx";
 import {
   createStructuredAssetQueryResourceBody,
   encodeDataVariableId,
@@ -11,6 +12,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   createBuildContentCompilationPlan,
+  createPublishedMdxDependencyClosureResolver,
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
   getPublishedMdxContentDatabaseMaxBytes,
@@ -72,6 +74,59 @@ const createBuild = ({
 });
 
 describe("Content Block MDX compilation", () => {
+  test("reuses parsed MDX while a publication plan converges", async () => {
+    const source = "# Article\n\nBody";
+    const artifact = {
+      format: "webstudio-content-database",
+      version: 1,
+      documents: [
+        {
+          _id: "article.mdx",
+          _type: "asset.file",
+          name: "article.mdx",
+          path: "article.mdx",
+          key: "article",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: source.length,
+          revision: "article-revision",
+          contentRef: "article.mdx",
+        },
+      ],
+      contents: { "article.mdx": source },
+    } as unknown as ContentArtifactV1;
+    const parseDocument = vi.fn(parseMdxDocumentRecovering);
+    const resolve = createPublishedMdxDependencyClosureResolver({
+      parseMdxDocumentRecovering: parseDocument,
+    });
+    const build = createBuild({});
+    build.instances[0].children = [{ type: "id", value: "templates" }];
+    build.instances.push({
+      type: "instance",
+      id: "templates",
+      component: "ws:block-template",
+      children: [],
+    });
+
+    await resolve({ build, artifact });
+    await resolve({ build, artifact });
+
+    expect(parseDocument).toHaveBeenCalledOnce();
+
+    await resolve({
+      build,
+      artifact: {
+        ...artifact,
+        documents: artifact.documents.map((document) => ({
+          ...document,
+          revision: "article-revision-2",
+        })),
+      },
+    });
+
+    expect(parseDocument).toHaveBeenCalledTimes(2);
+  });
+
   test("adds a separately bounded MDX body budget", () => {
     expect(
       getPublishedMdxContentDatabaseMaxBytes({

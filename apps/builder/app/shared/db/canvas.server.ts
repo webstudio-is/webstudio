@@ -9,11 +9,12 @@ import {
 } from "@webstudio-is/project-build/server";
 import {
   createBuildContentCompilationPlan,
+  createPublishedMdxDependencyClosureResolver,
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
   getPublishedMdxContentDatabaseMaxBytes,
-  resolvePublishedMdxDependencyClosure,
   resolvePublishedMdxAssetCandidates,
+  type PublishedMdxTemplateOmission,
 } from "@webstudio-is/project-build";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
@@ -172,7 +173,12 @@ const addProjectMetadata = async (
   data: ProjectBundle,
   project: Project,
   context: AppContext,
-  dependencies = addProjectMetadataDependencies
+  dependencies = addProjectMetadataDependencies,
+  options: {
+    onMdxTemplateOmissions?: (
+      issues: readonly PublishedMdxTemplateOmission[]
+    ) => void;
+  } = {}
 ): Promise<PublishedProjectBundle> => {
   const user =
     project.userId === null
@@ -204,7 +210,10 @@ const addProjectMetadata = async (
   let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
+  let mdxTemplateOmissions: PublishedMdxTemplateOmission[] = [];
   if (assetRequirements !== undefined) {
+    const resolveMdxDependencies =
+      createPublishedMdxDependencyClosureResolver();
     const publishedAssetData = await dependencies.preparePublishedAssetData({
       projectId: project.id,
       context,
@@ -223,11 +232,16 @@ const addProjectMetadata = async (
         ? {
             resolvePlan: async (
               artifact: NonNullable<PublishedProjectBundle["assetIndex"]>
-            ) =>
-              (await resolvePublishedMdxDependencyClosure({
+            ) => {
+              const nextOmissions: PublishedMdxTemplateOmission[] = [];
+              const plan = await resolveMdxDependencies({
                 build: publicationBuild,
                 artifact,
-              }))!,
+                onTemplateOmission: (issue) => nextOmissions.push(issue),
+              });
+              mdxTemplateOmissions = nextOmissions;
+              return plan!;
+            },
           }
         : {}),
     });
@@ -251,6 +265,8 @@ const addProjectMetadata = async (
     );
     publishedAssetFolders = publishedAssetData.assetFolders;
   }
+
+  options.onMdxTemplateOmissions?.(mdxTemplateOmissions);
 
   return {
     ...data,
@@ -342,7 +358,12 @@ export const loadProjectBundleByBuildId = async (
 
 export const loadProjectBundleByProjectId = async (
   projectId: string,
-  context: AppContext
+  context: AppContext,
+  options: {
+    onMdxTemplateOmissions?: (
+      issues: readonly PublishedMdxTemplateOmission[]
+    ) => void;
+  } = {}
 ): Promise<PublishedProjectBundle> => {
   const project = await loadById(projectId, context);
   if (project === null) {
@@ -354,7 +375,9 @@ export const loadProjectBundleByProjectId = async (
       context
     ),
     project,
-    context
+    context,
+    addProjectMetadataDependencies,
+    options
   );
 };
 
