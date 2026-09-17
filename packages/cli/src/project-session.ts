@@ -309,7 +309,6 @@ export const createIssueReportFailure = (
     ...(elapsedMs === undefined
       ? {}
       : { duration: getIssueReportDuration(elapsedMs) }),
-    subsequentSuccesses: 0,
     ...(issues === undefined || issues.length === 0 ? {} : { issues }),
   };
 };
@@ -317,12 +316,12 @@ export const createIssueReportFailure = (
 export const addIssueReportRuntime = (
   command: PublicApiCommand,
   input: unknown,
-  runtime: IssueReportRuntime = createIssueReportRuntime()
+  getRuntime: () => IssueReportRuntime = createIssueReportRuntime
 ) => {
   if (command !== "report-issue" || isPlainRecord(input) === false) {
     return input;
   }
-  return { ...input, runtime };
+  return { ...input, runtime: getRuntime() };
 };
 
 const executePublicServerOperation = async ({
@@ -348,17 +347,13 @@ const executePublicServerOperation = async ({
       `Public API operation "${operationId}" has no http-client function.`
     );
   }
-  const requestInput =
-    operation.command === "report-issue"
-      ? addIssueReportRuntime(
-          operation.command,
-          input,
-          issueReportRuntime?.() ?? createIssueReportRuntime()
-        )
-      : input;
   return await client({
     ...connection,
-    ...(requestInput as Record<string, unknown>),
+    ...(addIssueReportRuntime(
+      operation.command,
+      input,
+      issueReportRuntime
+    ) as Record<string, unknown>),
     projectId: connection.projectId,
   });
 };

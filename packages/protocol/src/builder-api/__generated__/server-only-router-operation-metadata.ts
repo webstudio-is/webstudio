@@ -215,11 +215,6 @@ export const serverOnlyRouterOperationMetadata = {
                   type: "string",
                   enum: ["under-1s", "1-10s", "10-30s", "over-30s"],
                 },
-                subsequentSuccesses: {
-                  type: "integer",
-                  minimum: 0,
-                  maximum: 100,
-                },
                 issues: {
                   maxItems: 30,
                   type: "array",
@@ -256,14 +251,6 @@ export const serverOnlyRouterOperationMetadata = {
             session: {
               type: "object",
               properties: {
-                freshNamespaces: {
-                  maxItems: 50,
-                  type: "array",
-                  items: {
-                    type: "string",
-                    maxLength: 100,
-                  },
-                },
                 staleNamespaces: {
                   maxItems: 50,
                   type: "array",
@@ -290,7 +277,6 @@ export const serverOnlyRouterOperationMetadata = {
                 },
               },
               required: [
-                "freshNamespaces",
                 "staleNamespaces",
                 "missingNamespaces",
                 "invalidatedNamespaces",

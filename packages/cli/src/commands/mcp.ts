@@ -1867,6 +1867,7 @@ const createCliMcpHost = async ({
     issueReportRuntime: () => {
       const snapshot = session.snapshot;
       const previewStatus = previewFreshness.status();
+      const renderedProjectVersion = previewStatus.renderedProjectVersion;
       const namespacesByStatus =
         snapshot === undefined
           ? undefined
@@ -1877,7 +1878,6 @@ const createCliMcpHost = async ({
           ? {}
           : {
               session: {
-                freshNamespaces: namespacesByStatus("fresh"),
                 staleNamespaces: namespacesByStatus("stale"),
                 missingNamespaces: namespacesByStatus("missing"),
                 invalidatedNamespaces: namespacesByStatus("invalidated"),
@@ -1885,14 +1885,12 @@ const createCliMcpHost = async ({
             }),
         preview: {
           stale: previewStatus.stale,
-          hasRenderedVersion:
-            previewStatus.renderedProjectVersion !== undefined,
-          ...(previewStatus.renderedProjectVersion === undefined ||
-          snapshot === undefined
+          hasRenderedVersion: renderedProjectVersion !== undefined,
+          ...(renderedProjectVersion === undefined || snapshot === undefined
             ? {}
             : {
                 renderedVersionMatchesSession:
-                  previewStatus.renderedProjectVersion === snapshot.version,
+                  renderedProjectVersion === snapshot.version,
               }),
         },
       });
@@ -2197,11 +2195,8 @@ const createCliMcpHost = async ({
       }
     },
     recordToolSuccess(canonicalTool: string) {
-      if (canonicalTool !== "report-issue" && recentFailure !== undefined) {
-        recentFailure.subsequentSuccesses = Math.min(
-          100,
-          (recentFailure.subsequentSuccesses ?? 0) + 1
-        );
+      if (canonicalTool !== "report-issue") {
+        recentFailure = undefined;
       }
     },
     reportLog(message: string) {

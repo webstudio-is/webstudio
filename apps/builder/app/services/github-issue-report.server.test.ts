@@ -32,7 +32,6 @@ const report: IssueReportInput = {
       code: "PROJECT_BUNDLE_INVALID",
       httpStatus: 504,
       duration: "10-30s",
-      subsequentSuccesses: 2,
       issues: [
         {
           path: ["assets", "0", "type"],
@@ -42,7 +41,6 @@ const report: IssueReportInput = {
       ],
     },
     session: {
-      freshNamespaces: ["pages"],
       staleNamespaces: ["styles"],
       missingNamespaces: ["instances"],
       invalidatedNamespaces: [],
@@ -87,7 +85,6 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("- Error code: `PROJECT_BUNDLE_INVALID`");
     expect(body).toContain("- HTTP status: `504`");
     expect(body).toContain("- Duration: `10-30s`");
-    expect(body).toContain("- Successful tools after failure: 2");
     expect(body).toContain("stale=styles");
     expect(body).toContain("version matches session=false");
     expect(body).toContain(
@@ -109,24 +106,6 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("## Technical runtime");
     expect(body).toContain("- CLI: unknown");
     expect(body).toContain("- Node.js: unknown");
-  });
-
-  test("does not invent unavailable failure diagnostics", () => {
-    const legacyReport = structuredClone(report);
-    delete legacyReport.runtime?.recentFailure?.subsequentSuccesses;
-
-    expect(formatIssueReport(legacyReport)).not.toContain(
-      "Successful tools after failure"
-    );
-  });
-
-  test("marks a saturated success count as a lower bound", () => {
-    const saturatedReport = structuredClone(report);
-    saturatedReport.runtime!.recentFailure!.subsequentSuccesses = 100;
-
-    expect(formatIssueReport(saturatedReport)).toContain(
-      "- Successful tools after failure: 100+"
-    );
   });
 
   test("discovers the repository installation before creating its token", async () => {

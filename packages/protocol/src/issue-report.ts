@@ -52,14 +52,12 @@ const issueReportRecentFailure = z
     code: z.string().trim().min(1).max(160),
     httpStatus: z.number().int().min(100).max(599).optional(),
     duration: z.enum(["under-1s", "1-10s", "10-30s", "over-30s"]).optional(),
-    subsequentSuccesses: z.number().int().min(0).max(100).optional(),
     issues: z.array(issueReportFailureIssue).max(30).optional(),
   })
   .strict();
 
 const issueReportSession = z
   .object({
-    freshNamespaces: z.array(z.string().max(100)).max(50),
     staleNamespaces: z.array(z.string().max(100)).max(50),
     missingNamespaces: z.array(z.string().max(100)).max(50),
     invalidatedNamespaces: z.array(z.string().max(100)).max(50),

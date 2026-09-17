@@ -40,7 +40,7 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
     ...(runtime?.session === undefined
       ? []
       : [
-          `- Session namespaces: fresh=${runtime.session.freshNamespaces.join(",") || "none"}; stale=${runtime.session.staleNamespaces.join(",") || "none"}; missing=${runtime.session.missingNamespaces.join(",") || "none"}; invalidated=${runtime.session.invalidatedNamespaces.join(",") || "none"}`,
+          `- Session namespace issues: stale=${runtime.session.staleNamespaces.join(",") || "none"}; missing=${runtime.session.missingNamespaces.join(",") || "none"}; invalidated=${runtime.session.invalidatedNamespaces.join(",") || "none"}`,
         ]),
     ...(runtime?.preview === undefined
       ? []
@@ -66,11 +66,6 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     ...(failure.duration === undefined
       ? []
       : [`- Duration: \`${failure.duration}\``]),
-    ...(failure.subsequentSuccesses === undefined
-      ? []
-      : [
-          `- Successful tools after failure: ${failure.subsequentSuccesses === 100 ? "100+" : failure.subsequentSuccesses}`,
-        ]),
     ...(issues.length === 0
       ? []
       : [

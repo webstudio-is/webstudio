@@ -45,11 +45,11 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
     },
   };
 
-  expect(addIssueReportRuntime("report-issue", report, runtime)).toEqual({
+  expect(addIssueReportRuntime("report-issue", report, () => runtime)).toEqual({
     ...report,
     runtime,
   });
-  expect(addIssueReportRuntime("audit", report, runtime)).toBe(report);
+  expect(addIssueReportRuntime("audit", report, () => runtime)).toBe(report);
 });
 
 test("keeps only anonymous structured fields from the latest tool failure", () => {
@@ -69,7 +69,6 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   expect(createIssueReportFailure("preview.start", error)).toEqual({
     tool: "preview.start",
     code: "PROJECT_BUNDLE_INVALID",
-    subsequentSuccesses: 0,
     issues: [
       {
         path: ["assets", "0"],
@@ -87,7 +86,6 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual({
     tool: "unknown",
     code: "MCP_TOOL_FAILED",
-    subsequentSuccesses: 0,
   });
 
   expect(
@@ -106,7 +104,6 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual({
     tool: "insert-fragment",
     code: "INVALID_INPUT",
-    subsequentSuccesses: 0,
     issues: [
       {
         path: ["fragment"],
@@ -186,7 +183,6 @@ test("captures bounded failure timing and HTTP status", () => {
     code: "MCP_TOOL_FAILED",
     httpStatus: 504,
     duration: "10-30s",
-    subsequentSuccesses: 0,
   });
 });
 
