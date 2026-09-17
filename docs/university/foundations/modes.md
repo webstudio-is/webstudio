@@ -38,6 +38,8 @@ In Content mode, the following actions can be performed:
 - Add and edit links within text inside Content Blocks
 - Upload and change images inside Content Blocks when their props are available in Content mode
 - Insert instances of templates to designer-specified regions called [Content Blocks](../core-components/content-block.md)
+- Edit MDX article fields and bodies inside connected Content Blocks, with changes saved back to the source file
+- Create and edit entries in [content collection folders](content-engine.md#make-the-folder-a-content-collection)
 - Create pages from existing [Page templates](page-templates.md), if the designer provided them
 - Edit safe page settings: page name, static path, title, description, search visibility, language, social image, and custom metadata
 - Publish the site (optional [permission](share-links.md#types-of-share-links))
@@ -56,6 +58,7 @@ Here’s what you need to know:
 - Users on the Pro tier can create a [Share link](share-links.md) with “Content” permission
 - Editors can perform [these actions](modes.md#allowed-actions)
 - You can create templates that editors can insert with [Content Blocks](../core-components/content-block.md)
+- You can connect MDX files to Content Blocks and configure collection folders so editors can create and edit complete articles visually
 - You can create [Page templates](page-templates.md) that editors can use to create new pages
 - Editors can update safe page metadata, but dynamic routes, redirects, authentication, document type, and status-code logic remain under designer control
 
@@ -93,6 +96,8 @@ Here’s what you need to know:
 - The designer must include [Content Blocks](../core-components/content-block.md#content-block-in-content-mode) for content you need to change. These are the regions where you can edit content and add templates the designer provided. See [Content Block](../core-components/content-block.md) for more information.
 
   <figure><img src="../../.gitbook/assets/add-content.png" alt="Adding a template"><figcaption></figcaption></figure>
+
+- In a [content collection](content-engine.md#make-the-folder-a-content-collection), choose **New entry** to create an article with the form provided by the designer. Use **Entry settings** to edit its fields, **Edit file** to edit its source, or **Open on canvas** to edit the complete article on its configured dynamic page.
 
 - If the designer provided [Page templates](page-templates.md), you can create new pages from them and edit page details like name, path, SEO title, description, language, social image, and custom metadata.
 

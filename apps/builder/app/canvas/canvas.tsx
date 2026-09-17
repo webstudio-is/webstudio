@@ -8,7 +8,8 @@ import {
 } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
-import { type Instances } from "@webstudio-is/sdk";
+import { type Instances, toRuntimeAsset } from "@webstudio-is/sdk";
+import { createAssetUrlsByPath } from "@webstudio-is/project-build/runtime";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
@@ -41,7 +42,7 @@ import {
   subscribeModifierKeys,
   assetBaseUrl,
 } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
+import { $assetFolders, $assets } from "~/shared/sync/data-stores";
 import { $pages, $instances, $breakpoints } from "~/shared/sync/data-stores";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
@@ -106,6 +107,8 @@ const useElementsTree = (components: Components, instances: Instances) => {
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
   const breakpointsMap = useStore($breakpoints);
+  const assets = useStore($assets);
+  const assetFolders = useStore($assetFolders);
   const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
@@ -122,6 +125,15 @@ const useElementsTree = (components: Components, instances: Instances) => {
     () => [...breakpointsMap.values()].sort(compareMedia),
     [breakpointsMap]
   );
+  const assetUrlsByPath = useMemo(
+    () =>
+      createAssetUrlsByPath({
+        assets: assets.values(),
+        assetFolders,
+        getUrl: (asset) => toRuntimeAsset(asset, "https://webstudio.local").url,
+      }),
+    [assetFolders, assets]
+  );
 
   return useMemo(() => {
     return (
@@ -130,6 +142,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
           renderer: isPreviewMode ? "preview" : "canvas",
           isSafeMode,
           assetBaseUrl,
+          assetUrlsByPath,
           imageLoader: wsImageLoader,
           videoLoader: wsVideoLoader,
           resources: {},
@@ -156,6 +169,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
     isPreviewMode,
     breakpoints,
     isSafeMode,
+    assetUrlsByPath,
   ]);
 };
 

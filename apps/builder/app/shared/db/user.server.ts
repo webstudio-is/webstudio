@@ -44,7 +44,8 @@ const genericCreateAccount = async (
     username: string;
     image: string;
     provider: string;
-  }
+  },
+  syncProfile = false
 ): Promise<User> => {
   const dbUser = await context.postgrest.client
     .from("User")
@@ -53,6 +54,33 @@ const genericCreateAccount = async (
     .single();
 
   if (dbUser.error == null) {
+    let user = dbUser.data;
+
+    if (
+      syncProfile &&
+      (user.username !== userData.username ||
+        user.image !== userData.image ||
+        user.provider !== userData.provider)
+    ) {
+      const updatedUser = await context.postgrest.client
+        .from("User")
+        .update({
+          username: userData.username,
+          image: userData.image,
+          provider: userData.provider,
+        })
+        .eq("id", user.id)
+        .select()
+        .single();
+
+      if (updatedUser.error) {
+        console.error(updatedUser.error);
+        throw new Error("Failed to update user profile");
+      }
+
+      user = updatedUser.data;
+    }
+
     // Ensure the user has a default workspace — it may be missing if
     // the original workspace insert failed after user creation.
     const existingWorkspace = await context.postgrest.client
@@ -78,7 +106,7 @@ const genericCreateAccount = async (
       }
     }
 
-    return formatUser(dbUser.data);
+    return formatUser(user);
   }
 
   // https://github.com/PostgREST/postgrest/blob/bfbd033c6e9f38cfbc8b1cfe19ee009a9379e3dd/docs/references/errors.rst#L234
@@ -132,7 +160,7 @@ export const createOrLoginWithOAuth = async (
     image: (profile.photos ?? [])[0]?.value,
     provider: profile.provider,
   };
-  const newUser = await genericCreateAccount(context, userData);
+  const newUser = await genericCreateAccount(context, userData, true);
   return newUser;
 };
 

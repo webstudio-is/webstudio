@@ -285,3 +285,30 @@ test("uses npm-cli when windows npm launcher metadata is unavailable", () => {
     ],
   });
 });
+
+test("uses pnpm when npm is unavailable", () => {
+  expect(
+    getPackageManagerInvocation(["run", "dev", "--", "--host", "127.0.0.1"], {
+      npmExecPath: undefined,
+      platform: "linux",
+      which: (command) =>
+        command === "pnpm" ? "/usr/local/bin/pnpm" : undefined,
+    })
+  ).toEqual({
+    command: "/usr/local/bin/pnpm",
+    args: ["run", "dev", "--host", "127.0.0.1"],
+  });
+});
+
+test("prefers npm when npm and pnpm are available", () => {
+  expect(
+    getPackageManagerInvocation(["run", "build"], {
+      npmExecPath: undefined,
+      platform: "linux",
+      which: (command) => `/usr/local/bin/${command}`,
+    })
+  ).toEqual({
+    command: "npm",
+    args: ["run", "build"],
+  });
+});

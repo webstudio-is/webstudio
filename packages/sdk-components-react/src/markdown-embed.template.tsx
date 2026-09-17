@@ -2,6 +2,7 @@
 import { type TemplateMeta, ws } from "@webstudio-is/template";
 import { imagePlaceholderDataUrl } from "@webstudio-is/image";
 import { MarkdownEmbed } from "./markdown-embed";
+import { markdownAlertStyle } from "./shared/markdown-alert-style";
 
 const markdownSample = `
 # Styling Markdown with Markdown Embed
@@ -38,6 +39,21 @@ Any elements that were not used above are used below.
 
 > Capture attention with a powerful quote.
 
+> [!NOTE]
+> Add helpful context without interrupting the main content.
+
+> [!TIP]
+> Share a useful suggestion.
+
+> [!IMPORTANT]
+> Highlight essential information.
+
+> [!WARNING]
+> Point out something readers should be careful about.
+
+> [!CAUTION]
+> Explain a potential negative consequence.
+
 Using \`console.log("Hello World");\` will log to the console.
 
 | Header 1   | Header 2   | Header 3   |
@@ -65,6 +81,25 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="Link" selector=" a" />
       <ws.descendant ws:label="Image" selector=" img" />
       <ws.descendant ws:label="Blockquote" selector=" blockquote" />
+      <ws.descendant
+        ws:label="Alert"
+        selector=" [data-state]"
+        ws:style={markdownAlertStyle}
+      />
+      <ws.descendant ws:label="Note alert" selector={' [data-state="note"]'} />
+      <ws.descendant ws:label="Tip alert" selector={' [data-state="tip"]'} />
+      <ws.descendant
+        ws:label="Important alert"
+        selector={' [data-state="important"]'}
+      />
+      <ws.descendant
+        ws:label="Warning alert"
+        selector={' [data-state="warning"]'}
+      />
+      <ws.descendant
+        ws:label="Caution alert"
+        selector={' [data-state="caution"]'}
+      />
       <ws.descendant ws:label="Code Text" selector=" code" />
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />
       <ws.descendant ws:label="List Item" selector=" li" />

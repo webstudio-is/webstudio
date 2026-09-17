@@ -151,33 +151,42 @@ export const preparePublishedAssetData = async (
       context,
       assetStore,
       validateCollections: (assets) => repository.validateCollections(assets),
-      prepare: async () => {
-        let artifact = await repository.prepareIndex(plan);
-        if (resolvePlan !== undefined) {
-          let resolvedPlan = await resolvePlan(artifact);
-          for (
-            let dependencyPass = 0;
-            dependencyPass < 20;
-            dependencyPass += 1
-          ) {
-            artifact = await repository.prepareIndex(resolvedPlan);
-            const validatedPlan = await resolvePlan(artifact);
+      prepare: async () =>
+        await repository.withIndexPreparationSession(async (prepareIndex) => {
+          // Keep hydrated bytes local to one stability attempt. Dependency
+          // convergence can reuse them, while a retry starts from a clean cache.
+          let artifact = await prepareIndex(plan);
+          if (resolvePlan !== undefined) {
+            let resolvedPlan = await resolvePlan(artifact);
             if (
-              serializeJsonDeterministically(resolvedPlan) ===
-              serializeJsonDeterministically(validatedPlan)
+              serializeJsonDeterministically(plan) ===
+              serializeJsonDeterministically(resolvedPlan)
             ) {
-              break;
+              return artifact;
             }
-            if (dependencyPass === 19) {
-              throw new Error(
-                "Dynamic MDX dependency closure exceeds the safe publication depth"
-              );
+            for (
+              let dependencyPass = 0;
+              dependencyPass < 20;
+              dependencyPass += 1
+            ) {
+              artifact = await prepareIndex(resolvedPlan);
+              const validatedPlan = await resolvePlan(artifact);
+              if (
+                serializeJsonDeterministically(resolvedPlan) ===
+                serializeJsonDeterministically(validatedPlan)
+              ) {
+                break;
+              }
+              if (dependencyPass === 19) {
+                throw new Error(
+                  "Dynamic MDX dependency closure exceeds the safe publication depth"
+                );
+              }
+              resolvedPlan = validatedPlan;
             }
-            resolvedPlan = validatedPlan;
           }
-        }
-        return artifact;
-      },
+          return artifact;
+        }),
       dependencies,
     }
   );

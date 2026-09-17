@@ -131,4 +131,13 @@
     "contentRef": "_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
   }
 };
+    export const assetUrlsByPath = {
+  "/e-mail-39993.mp3": "/assets/e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
+  "/cabinsketch-bold.ttf": "/assets/cabinsketch-bold_TLCbytfxf8ENHwZ6ze3Jj.ttf",
+  "/webm-example.webm": "/assets/webm-example_2r_6VmRBjhAy3ldaqz0gk.webm",
+  "/cat_silhouette.png": "/assets/cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png",
+  "/small-avif-kitty.webp": "/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
+  "/video_QamtUWsD-ShifhzZLoNIv.mp4": "/assets/video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4",
+  "/_937084ed-a798-49fe-8664-df93a2af605e.jpeg": "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
+};
     

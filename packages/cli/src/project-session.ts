@@ -187,6 +187,11 @@ export const getCliProjectRestorePointsFile = (
     "restore-points.json"
   );
 const compatibilityVersion = "cli-project-session-v1";
+const issueReportPathRoots = new Set([
+  ...builderNamespaces,
+  ...publicApiOperations.flatMap((operation) => operation.inputFields),
+  "input",
+]);
 
 const createCliProjectSessionCompatibility = (
   connection: ApiConnection
@@ -243,7 +248,8 @@ const publicOperationById = new Map(
 );
 
 export const createIssueReportRuntime = (
-  recentFailure?: IssueReportRecentFailure
+  recentFailure?: IssueReportRecentFailure,
+  diagnostics?: Pick<IssueReportRuntime, "session" | "preview">
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
@@ -254,26 +260,44 @@ export const createIssueReportRuntime = (
   apiContractVersion: publicApiContractVersion,
   bundleVersion,
   recentFailure,
+  ...diagnostics,
 });
 
 export const createIssueReportFailure = (
   canonicalTool: string,
-  error: unknown
+  error: unknown,
+  elapsedMs?: number
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
+  const httpStatus = httpClient.getErrorStatus(error);
   const issues =
     errorCode === undefined
       ? undefined
       : getValidationIssues(error)
           ?.slice(0, 30)
           .map((issue) => ({
-            path: [],
+            // Keep only a known namespace/input field and array index. Leaf
+            // keys may contain project data, while this prefix is enough to
+            // locate the failing input shape (for example `updates[0]`).
+            path: issueReportPathRoots.has(issue.path[0] ?? "")
+              ? [
+                  issue.path[0],
+                  ...(/^\d+$/.test(issue.path[1] ?? "") ? [issue.path[1]] : []),
+                ]
+              : [],
             code: issue.code,
             constraint: issue.constraint,
           }));
   return {
     tool: canonicalTool,
     code: errorCode ?? "MCP_TOOL_FAILED",
+    ...(typeof httpStatus === "number" &&
+    Number.isInteger(httpStatus) &&
+    httpStatus >= 100 &&
+    httpStatus <= 599
+      ? { httpStatus }
+      : {}),
+    ...(elapsedMs === undefined ? {} : { elapsedMs }),
     ...(issues === undefined || issues.length === 0 ? {} : { issues }),
   };
 };
@@ -281,12 +305,12 @@ export const createIssueReportFailure = (
 export const addIssueReportRuntime = (
   command: PublicApiCommand,
   input: unknown,
-  runtime: IssueReportRuntime = createIssueReportRuntime()
+  getRuntime: () => IssueReportRuntime = createIssueReportRuntime
 ) => {
   if (command !== "report-issue" || isPlainRecord(input) === false) {
     return input;
   }
-  return { ...input, runtime };
+  return { ...input, runtime: getRuntime() };
 };
 
 const executePublicServerOperation = async ({
@@ -317,7 +341,7 @@ const executePublicServerOperation = async ({
     ...(addIssueReportRuntime(
       operation.command,
       input,
-      issueReportRuntime?.() ?? createIssueReportRuntime()
+      issueReportRuntime
     ) as Record<string, unknown>),
     projectId: connection.projectId,
   });

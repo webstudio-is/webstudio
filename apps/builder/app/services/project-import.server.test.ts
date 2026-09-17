@@ -111,7 +111,9 @@ const createPostgrestClient = (
     existingFileNames?: string[];
     existingFiles?: ReturnType<typeof createFileRow>[];
     fileFilters?: [string, string][];
+    selectedFileNameBatches?: string[][];
     restoredFileFilters?: [string, string][];
+    restoredFileNameBatches?: string[][];
     insertedFolders?: Array<{ id: string; projectId: string }>;
     buildUpdateCount?: number;
   } = {}
@@ -123,19 +125,22 @@ const createPostgrestClient = (
           options.fileFilters?.push([column, value]);
           return selectFiles;
         },
-        in: async () => {
+        in: async (_column: string, names: string[]) => {
           calls.push("files-select");
+          options.selectedFileNameBatches?.push(names);
+          const requestedNames = new Set(names);
+          const existingFiles =
+            options.existingFiles ??
+            (options.existingFileNames ?? []).map((name) =>
+              createFileRow({
+                name,
+                format: name.split(".").at(-1) ?? "",
+                size: 1,
+                meta: name.endsWith(".png") ? { width: 1, height: 1 } : {},
+              })
+            );
           return {
-            data:
-              options.existingFiles ??
-              (options.existingFileNames ?? []).map((name) =>
-                createFileRow({
-                  name,
-                  format: name.split(".").at(-1) ?? "",
-                  size: 1,
-                  meta: name.endsWith(".png") ? { width: 1, height: 1 } : {},
-                })
-              ),
+            data: existingFiles.filter((file) => requestedNames.has(file.name)),
             error: undefined,
           };
         },
@@ -148,8 +153,9 @@ const createPostgrestClient = (
               options.restoredFileFilters?.push([column, value]);
               return restoreFiles;
             },
-            in: async () => {
+            in: async (_column: string, names: string[]) => {
               calls.push("files-restore");
+              options.restoredFileNameBatches?.push(names);
               return { error: undefined };
             },
           };
@@ -710,6 +716,45 @@ describe("build import helpers", () => {
     expect(restoredFileFilters).toEqual([
       ["uploaderProjectId", "target-project"],
     ]);
+  });
+
+  test("chunks imported file lookups and restores by bounded filter size", async () => {
+    const fileNames = Array.from(
+      { length: 12 },
+      (_, index) => `${String(index).padStart(2, "0")}-${"a".repeat(490)}.png`
+    );
+    const assets = fileNames.map((name, index) => ({
+      ...createData().assets[0],
+      id: `asset-${index}`,
+      name,
+    }));
+    const selectedFileNameBatches: string[][] = [];
+    const restoredFileNameBatches: string[][] = [];
+
+    await importPublishedProjectBundle(
+      {
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient([], {
+              existingFileNames: fileNames,
+              selectedFileNameBatches,
+              restoredFileNameBatches,
+            }),
+          },
+        } as never,
+        data: createData({ assets }),
+        projectId: "target-project",
+      },
+      {
+        hasProjectPermit,
+        loadDevBuildByProjectId,
+      }
+    );
+
+    expect(selectedFileNameBatches.length).toBeGreaterThan(1);
+    expect(restoredFileNameBatches.length).toBeGreaterThan(1);
+    expect(new Set(selectedFileNameBatches.flat())).toEqual(new Set(fileNames));
+    expect(new Set(restoredFileNameBatches.flat())).toEqual(new Set(fileNames));
   });
 
   test("rejects imported asset names with path separators", () => {

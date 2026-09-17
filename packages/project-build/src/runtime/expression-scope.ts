@@ -5,7 +5,8 @@ import { getExpressionWarnings } from "./expression-validation";
 export const bindExpressionInput = (
   state: Pick<BuilderState, "instances" | "dataSources">,
   instanceId: string,
-  expression: string
+  expression: string,
+  excludeVariableNames?: Iterable<string>
 ) => {
   if (state.instances === undefined || state.dataSources === undefined) {
     return expression;
@@ -15,6 +16,7 @@ export const bindExpressionInput = (
     instanceId,
     instances: state.instances,
     dataSources: state.dataSources,
+    excludeVariableNames,
   });
 };
 

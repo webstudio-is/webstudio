@@ -12,6 +12,7 @@ import {
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { executeDomEvents, patchDomEvents } from "./html-embed-patchers";
+import { resolveHtmlEmbedAssetUrls } from "./html-embed-assets";
 
 const scriptTestIdPrefix = "client-";
 
@@ -218,19 +219,30 @@ type HtmlEmbedProps = {
   executeScriptOnCanvas?: boolean;
   clientOnly?: boolean;
   className?: string;
+  $ws$executeScripts?: boolean;
   // avoid builder passing it to dom
   children?: never;
 };
 
 export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
-    const { code, executeScriptOnCanvas, clientOnly, children, ...rest } =
-      props;
-    const { renderer, isSafeMode } = useContext(ReactSdkContext);
+    const {
+      code,
+      executeScriptOnCanvas,
+      clientOnly,
+      children,
+      $ws$executeScripts = true,
+      ...rest
+    } = props;
+    const { renderer, assetUrlsByPath } = useContext(ReactSdkContext);
 
     const isServer = useIsServer();
 
     const [ssrRendered] = useState(isServer);
+    const resolvedCode = useMemo(
+      () => resolveHtmlEmbedAssetUrls(String(code ?? ""), assetUrlsByPath),
+      [assetUrlsByPath, code]
+    );
 
     // - code can be actually undefined when prop is not provided
     // - cast code to string in case non-string value is computed from expression
@@ -241,24 +253,23 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
     if (ssrRendered) {
       // We are on published site, on server rendering or after hydration
       if (clientOnly !== true) {
-        return <ServerEmbed innerRef={ref} code={code} {...rest} />;
+        return <ServerEmbed innerRef={ref} code={resolvedCode} {...rest} />;
       }
 
       return (
         <ClientOnly>
-          <ClientEmbed innerRef={ref} code={code} {...rest} />
+          <ClientEmbed innerRef={ref} code={resolvedCode} {...rest} />
         </ClientOnly>
       );
     }
     // We are or on canvas | preview | published site after client routing
 
-    // In safe mode, never execute scripts regardless of other settings
-    if (isSafeMode) {
+    if ($ws$executeScripts === false) {
       return (
         <ClientOnly>
           <ClientEmbedWithNonExecutableScripts
             innerRef={ref}
-            code={code}
+            code={resolvedCode}
             {...rest}
           />
         </ClientOnly>
@@ -271,7 +282,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
         <ClientOnly>
           <ClientEmbedWithNonExecutableScripts
             innerRef={ref}
-            code={code}
+            code={resolvedCode}
             {...rest}
           />
         </ClientOnly>
@@ -282,9 +293,9 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       <ClientOnly>
         <ClientEmbed
           // Use key={code} to allow scripts to be reexecuted when code has changed
-          key={code}
+          key={resolvedCode}
           innerRef={ref}
-          code={code}
+          code={resolvedCode}
           {...rest}
         />
       </ClientOnly>

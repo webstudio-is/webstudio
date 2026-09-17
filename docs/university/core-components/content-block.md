@@ -78,6 +78,10 @@ To insert a custom component such as Accordion into **MDX content**, first add i
 
 Moving, pasting, or duplicating content into an MDX region also checks the destination's Templates. Unsupported components are rejected before the tree changes, including components nested inside a pasted container.
 
+Shared Slots cannot be used inside Content Block Templates. Duplicate the Slot
+content into a regular template instead so each inserted MDX instance owns an
+editable copy.
+
 #### Prepare the Content Block
 
 1. Add the Content Block and design its shell in Design mode.
@@ -161,6 +165,18 @@ Regular document content stays Markdown and uses the matching standard templates
 ```
 
 The JSX name matches the stable **Name** of a unique top-level template in the Content Block's Templates list. **Name** is a JavaScript identifier and is separate from the optional **Label** shown in the canvas. If no template has that name, the custom component is unresolved and is not rendered. Its JSX remains in the file so adding the matching template can resolve it later. A new template gets its default name from its root component or HTML tag, and duplicate defaults get deterministic numeric suffixes.
+
+Use GitHub-style alert syntax for notes, tips, important information, warnings, and cautions:
+
+```mdx
+> [!NOTE]
+> Add helpful context here.
+
+> [!WARNING]
+> Explain what readers should be careful about.
+```
+
+Write `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, or `CAUTION` in uppercase at the start of a blockquote. Each alert becomes an [Alert component](alert.md) in the Content Block. When Webstudio writes the file after a canvas edit, it uses the equivalent `<Alert variant="...">` JSX.
 
 In the MDX editor, type `<` to autocomplete templates connected to the file and built-in Image and CodeText components. Inside a JSX tag, autocomplete suggests its supported properties and available property values.
 
@@ -331,6 +347,8 @@ Beyond adding new content, you can edit the existing content inside the Content 
 
 ## Related
 
+- [Content Engine](../foundations/content-engine.md) – Build file-based sites with visually editable MDX articles
 - [Slot](slot.md) – Reusable component slots
+- [Alert](alert.md) – Highlight notes, warnings, and other callouts
 - [Modes](../foundations/modes.md) – Builder modes including Content mode
 - [Collection](collection.md) – Iterate over dynamic data

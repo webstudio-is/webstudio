@@ -102,7 +102,8 @@ export const duplicateInstanceAfterItselfMutable = ({
     sourceInstanceId
   );
   if (indexWithinChildren === -1) {
-    return;
+    parentInstance.children.push({ type: "id", value: newRootInstanceId });
+    return newRootInstanceId;
   }
   parentInstance.children.splice(indexWithinChildren + 1, 0, {
     type: "id",

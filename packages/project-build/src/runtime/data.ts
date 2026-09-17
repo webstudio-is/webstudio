@@ -569,7 +569,7 @@ const getDataSourcesByScopeInstanceId = (dataSources: DataSources) => {
   return dataSourcesByScopeInstanceId;
 };
 
-const findMaskedVariablesByInstanceId = ({
+const findVariablesByInstanceId = ({
   startingInstanceId,
   parentInstanceById,
   instances,
@@ -589,8 +589,11 @@ const findMaskedVariablesByInstanceId = ({
     currentId = parentInstanceById.get(currentId);
   }
   instanceIdsPath.push(ROOT_INSTANCE_ID);
-  const maskedVariables = new Map<DataSource["name"], DataSource["id"]>();
-  maskedVariables.set("system", SYSTEM_VARIABLE_ID);
+  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
+  const availableDataSourceIds = new Set<DataSource["id"]>([
+    SYSTEM_VARIABLE_ID,
+  ]);
+  maskedIdByName.set("system", SYSTEM_VARIABLE_ID);
   for (const instanceId of instanceIdsPath.reverse()) {
     const instance = instances.get(instanceId);
     const scopedDataSources = dataSourcesByScopeInstanceId.get(instanceId);
@@ -605,10 +608,11 @@ const findMaskedVariablesByInstanceId = ({
       ) {
         continue;
       }
-      maskedVariables.set(dataSource.name, dataSource.id);
+      maskedIdByName.set(dataSource.name, dataSource.id);
+      availableDataSourceIds.add(dataSource.id);
     }
   }
-  return maskedVariables;
+  return { maskedIdByName, availableDataSourceIds };
 };
 
 export const findAvailableVariables = ({
@@ -620,7 +624,7 @@ export const findAvailableVariables = ({
   instances: Instances;
   dataSources: DataSources;
 }) => {
-  const maskedVariables = findMaskedVariablesByInstanceId({
+  const { maskedIdByName } = findVariablesByInstanceId({
     startingInstanceId,
     parentInstanceById: getParentInstanceById(instances),
     instances,
@@ -628,7 +632,7 @@ export const findAvailableVariables = ({
     dataSourcesByScopeInstanceId: getDataSourcesByScopeInstanceId(dataSources),
   });
   const availableVariables: DataSource[] = [];
-  for (const dataSourceId of maskedVariables.values()) {
+  for (const dataSourceId of maskedIdByName.values()) {
     const dataSource = dataSources.get(dataSourceId);
     if (dataSource) {
       availableVariables.push(dataSource);
@@ -645,23 +649,27 @@ export const bindExpressionToInstanceScope = ({
   instanceId,
   instances,
   dataSources,
+  excludeVariableNames = [],
 }: {
   expression: string;
   instanceId: Instance["id"];
   instances: Instances;
   dataSources: DataSources;
+  excludeVariableNames?: Iterable<string>;
 }) => {
-  const maskedIdByName = findMaskedVariablesByInstanceId({
+  const { maskedIdByName, availableDataSourceIds } = findVariablesByInstanceId({
     startingInstanceId: instanceId,
     parentInstanceById: getParentInstanceById(instances),
     instances,
     dataSources,
   });
+  for (const name of excludeVariableNames) {
+    maskedIdByName.delete(name);
+  }
   const boundExpression = restoreExpressionVariables({
     expression,
     maskedIdByName,
   });
-  const availableDataSourceIds = new Set(maskedIdByName.values());
   for (const identifier of getExpressionIdentifiers(boundExpression)) {
     const dataSourceId = decodeDataVariableId(identifier);
     if (
@@ -1024,7 +1032,7 @@ export const rebindTreeVariablesMutable = ({
     dataSources,
     resources,
     update: (expression, instanceId, args) => {
-      const maskedVariables = findMaskedVariablesByInstanceId({
+      const { maskedIdByName: maskedVariables } = findVariablesByInstanceId({
         startingInstanceId: instanceId,
         parentInstanceById,
         instances,
@@ -1090,7 +1098,7 @@ export const deleteVariableMutable = (
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   unsetNameById.set(dataSource.id, dataSource.name);
   const startingInstanceId = dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID;
-  const maskedIdByName = findMaskedVariablesByInstanceId({
+  const { maskedIdByName } = findVariablesByInstanceId({
     startingInstanceId,
     parentInstanceById: getParentInstanceById(data.instances),
     instances: data.instances,
@@ -2728,7 +2736,7 @@ export const updateResource = (
   const scopeInstanceId = input.scopeInstanceId ?? dataSource?.scopeInstanceId;
   const exposeAsDataSource =
     input.exposeAsDataSource ??
-    (values.method !== undefined && nextResource.method !== "get"
+    (resource.method !== nextResource.method && nextResource.method !== "get"
       ? false
       : dataSource !== undefined ||
         (nextResource.method === "get" && scopeInstanceId !== undefined));

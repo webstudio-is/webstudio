@@ -1,5 +1,6 @@
 import { readFileSync, realpathSync } from "node:fs";
 import { posix, win32 } from "node:path";
+import which from "which";
 import { defaultPreviewServerDependencies } from "./dependencies";
 
 type PreviewPackageManagerOptions = {
@@ -8,6 +9,7 @@ type PreviewPackageManagerOptions = {
   platform?: typeof process.platform;
   readPackageFile?: (path: string) => string;
   resolveLauncherPath?: (path: string) => string;
+  which?: (command: "npm" | "pnpm") => string | undefined;
 };
 
 type PreviewPackageManager = {
@@ -189,7 +191,16 @@ export const resolvePreviewPackageManager = (
       ],
     };
   }
-  return { name: "npm", command: "npm", argsPrefix: [] };
+  const whichCommand =
+    options.which ??
+    ((command) => which.sync(command, { nothrow: true }) ?? undefined);
+  if (whichCommand("npm") !== undefined) {
+    return { name: "npm", command: "npm", argsPrefix: [] };
+  }
+  const pnpmPath = whichCommand("pnpm");
+  return pnpmPath === undefined
+    ? { name: "npm", command: "npm", argsPrefix: [] }
+    : { name: "pnpm", command: pnpmPath, argsPrefix: [] };
 };
 
 export const getPackageManagerInvocation = (

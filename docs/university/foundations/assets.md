@@ -111,6 +111,20 @@ already used in the selected parent folder are not saved.
 Duplicating a folder copies its nested folders and assets. Deleting a folder
 deletes everything inside it, so review the confirmation before continuing.
 
+### Use a folder as a content collection
+
+Turn on **Use as content collection** when creating a folder, or choose it from
+an existing folder's menu, when editors should create structured MDX entries
+without writing frontmatter by hand. Webstudio adds `collection.json`, which
+defines the entry fields, and an MDX entry template. The folder remains a
+regular Assets folder.
+
+Use **Configure collection** to define the form fields, starting content, and
+the dynamic entry page. Editors can then choose **New entry**, update fields in
+**Entry settings**, edit the source through **Edit file**, or choose **Open on
+canvas** to edit the complete article visually. See [Content Engine](content-engine.md#make-the-folder-a-content-collection)
+for collection setup, validation, and publishing behavior.
+
 ### Select and update multiple items
 
 Select multiple assets and folders to move, copy, cut, duplicate, or delete

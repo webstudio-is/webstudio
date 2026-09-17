@@ -24,6 +24,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   computeExpression,
   computeExpressionWithinScope,
+  bindExpressionToInstanceScope,
   createDataVariable,
   dataVariableCreateInput,
   createDataVariableCreatePayload,
@@ -1508,6 +1509,31 @@ test("prevent rebinding with nested collection item", () => {
       mode: "read",
     },
   ]);
+});
+
+test("binds an explicitly referenced shadowed collection item", () => {
+  const outerItem = new Parameter("item");
+  const innerItem = new Parameter("item");
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <ws.collection ws:id="outerId" data={[]} item={outerItem}>
+        <ws.collection ws:id="innerId" data={[]} item={innerItem}>
+          <Box ws:id="boxId" />
+        </ws.collection>
+      </ws.collection>
+    </Body>
+  );
+  const [outerItemId] = data.dataSources.keys();
+  const expression = encodeDataVariableId(outerItemId);
+
+  expect(
+    bindExpressionToInstanceScope({
+      expression,
+      instanceId: "boxId",
+      instances: data.instances,
+      dataSources: data.dataSources,
+    })
+  ).toBe(expression);
 });
 
 test("delete variable and unset it in expressions", () => {
@@ -3439,7 +3465,7 @@ describe("resource patch helpers", () => {
     });
   });
 
-  test("preserves explicit write-resource exposure during unrelated updates", () => {
+  test("preserves explicit write-resource exposure during a full update", () => {
     const state = createResourceState();
     state.instances.set("body", {
       type: "instance",
@@ -3460,7 +3486,15 @@ describe("resource patch helpers", () => {
       state,
       {
         resourceId: "resource",
-        values: { name: "Renamed" },
+        values: {
+          name: resource.name,
+          control: resource.control,
+          method: "post",
+          url: resource.url,
+          searchParams: resource.searchParams,
+          headers: resource.headers,
+          body: resource.body,
+        },
       },
       { createId: () => "unused-id" }
     );

@@ -14,6 +14,7 @@ import {
   createAssetRows,
   formatAsset,
   getCollectionFolderIds,
+  chunkPostgrestFileNames,
   validateCollectionFolder,
   type AssetObjectReader,
 } from "@webstudio-is/asset-uploader/server";
@@ -183,23 +184,26 @@ const loadImportedAssetFiles = async ({
     return { assets, fileNames: new Set<string>() };
   }
 
-  const files = await ctx.postgrest.client
-    .from("File")
-    .select("name, format, description, size, createdAt, updatedAt, meta")
-    .eq("status", "UPLOADED")
-    .eq("uploaderProjectId", projectId)
-    .in(
-      "name",
-      assets.map((asset) => asset.name)
-    );
-
-  if (files.error) {
-    throw files.error;
+  const filesByName = new Map<
+    string,
+    Parameters<typeof formatAsset>[0]["file"]
+  >();
+  for (const names of chunkPostgrestFileNames(
+    assets.map((asset) => asset.name)
+  )) {
+    const files = await ctx.postgrest.client
+      .from("File")
+      .select("name, format, description, size, createdAt, updatedAt, meta")
+      .eq("status", "UPLOADED")
+      .eq("uploaderProjectId", projectId)
+      .in("name", names);
+    if (files.error) {
+      throw files.error;
+    }
+    for (const file of files.data ?? []) {
+      filesByName.set(file.name, file);
+    }
   }
-
-  const filesByName = new Map(
-    (files.data ?? []).map((file) => [file.name, file])
-  );
   const missingAssets = assets.filter(
     (asset) => filesByName.has(asset.name) === false
   );
@@ -242,13 +246,15 @@ const restoreImportedAssetFiles = async ({
   if (fileNames.size === 0) {
     return;
   }
-  const visibleFiles = await ctx.postgrest.client
-    .from("File")
-    .update({ isDeleted: false })
-    .eq("uploaderProjectId", projectId)
-    .in("name", Array.from(fileNames));
-  if (visibleFiles.error) {
-    throw visibleFiles.error;
+  for (const names of chunkPostgrestFileNames(fileNames)) {
+    const visibleFiles = await ctx.postgrest.client
+      .from("File")
+      .update({ isDeleted: false })
+      .eq("uploaderProjectId", projectId)
+      .in("name", names);
+    if (visibleFiles.error) {
+      throw visibleFiles.error;
+    }
   }
 };
 

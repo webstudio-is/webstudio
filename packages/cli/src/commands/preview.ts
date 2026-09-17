@@ -106,7 +106,7 @@ export const previewOptions = (yargs: CommonYargsArgv) =>
         "Preview builds the generated app and starts its production server.",
         "Preview dependencies are isolated under .webstudio/preview and reused across regenerations.",
         "Do not add generated-preview dependencies to the repository root package.json or pnpm-lock.yaml.",
-        "When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it defaults to npm.",
+        "When launcher metadata is available, Preview reuses a supported npm or pnpm launcher. Without launcher metadata, it uses npm when available and otherwise falls back to pnpm.",
         "Unless npm_config_cache is already configured, npm uses a writable cache inside .webstudio/preview.",
         "For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry.",
         "If dependency installation fails, check the reported package-manager path and network configuration, then reinstall or update the Webstudio CLI if the problem persists.",
@@ -179,6 +179,7 @@ type PreviewDependencyOperations = {
   readFile: (path: string, encoding: "utf8") => Promise<string>;
   readPackageFile?: (path: string) => string;
   resolveLauncherPath?: (path: string) => string;
+  which?: (command: "npm" | "pnpm") => string | undefined;
   rm: (
     path: string,
     options: { recursive: true; force: true }

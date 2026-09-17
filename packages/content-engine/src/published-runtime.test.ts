@@ -13,6 +13,7 @@ import {
   createPublishedAssetResourceFetch as createPublishedRuntime,
 } from "./published-runtime";
 import { createDocumentGraph } from "./document-graph";
+import { createCanonicalAssetPath } from "./asset-path";
 
 const revision = `sha256:${"a".repeat(64)}`;
 const document: AssetFileDocument = {
@@ -163,6 +164,69 @@ describe("published asset resource runtime", () => {
     expect(networkFetch).not.toHaveBeenCalled();
     expect(fallback).not.toHaveBeenCalled();
     expect(onDocumentGraphEvent).not.toHaveBeenCalled();
+  });
+
+  test("matches visible asset paths in local and published runtimes", async () => {
+    const canonicalDocument = {
+      ...document,
+      path: createCanonicalAssetPath({
+        folderNames: ["Tutorial posts"],
+        name: "post.md",
+      }),
+    };
+    const index = await createAssetIndex({
+      projectId: "project-1",
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: canonicalDocument,
+        }),
+      ],
+    });
+    const query = assetQuery.parse({
+      where: {
+        field: ["path"],
+        operator: "startsWith",
+        value: "Tutorial posts/",
+      },
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["id"], ["path"]],
+      },
+      content: { mode: "none" },
+    });
+    const localResult = await createContentDatabase({ artifact: index }).query({
+      query,
+    });
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "build-path-filter",
+      artifact: index,
+      runtimeAssets,
+    });
+    const publishedResponse = await runtimeFetch(
+      new Request("https://site.example/$resources/assets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query }),
+      })
+    );
+
+    if (publishedResponse === undefined) {
+      throw new Error("Published Assets runtime did not handle the request");
+    }
+    expect(publishedResponse.status).toBe(200);
+    await expect(publishedResponse.json()).resolves.toEqual(localResult);
+    expect(localResult).toMatchObject({
+      items: [
+        {
+          id: "post-1",
+          path: "Tutorial%20posts/post.md",
+        },
+      ],
+      totalCount: 1,
+    });
   });
 
   test("assembles equivalent graph results in local, SSG, SSR, and published runtimes", async () => {

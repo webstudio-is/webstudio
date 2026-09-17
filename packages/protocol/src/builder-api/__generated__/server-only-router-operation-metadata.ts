@@ -206,6 +206,16 @@ export const serverOnlyRouterOperationMetadata = {
                   minLength: 1,
                   maxLength: 160,
                 },
+                httpStatus: {
+                  type: "integer",
+                  minimum: 100,
+                  maximum: 599,
+                },
+                elapsedMs: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
                 issues: {
                   maxItems: 30,
                   type: "array",
@@ -237,6 +247,57 @@ export const serverOnlyRouterOperationMetadata = {
                 },
               },
               required: ["tool", "code"],
+              additionalProperties: false,
+            },
+            session: {
+              type: "object",
+              properties: {
+                staleNamespaces: {
+                  maxItems: 50,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    maxLength: 100,
+                  },
+                },
+                missingNamespaces: {
+                  maxItems: 50,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    maxLength: 100,
+                  },
+                },
+                invalidatedNamespaces: {
+                  maxItems: 50,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    maxLength: 100,
+                  },
+                },
+              },
+              required: [
+                "staleNamespaces",
+                "missingNamespaces",
+                "invalidatedNamespaces",
+              ],
+              additionalProperties: false,
+            },
+            preview: {
+              type: "object",
+              properties: {
+                stale: {
+                  type: "boolean",
+                },
+                hasRenderedVersion: {
+                  type: "boolean",
+                },
+                renderedVersionMatchesSession: {
+                  type: "boolean",
+                },
+              },
+              required: ["stale", "hasRenderedVersion"],
               additionalProperties: false,
             },
           },

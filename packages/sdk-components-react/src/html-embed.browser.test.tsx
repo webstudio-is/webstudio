@@ -16,11 +16,16 @@ const App = (props: {
   clientOnly?: boolean;
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
+  $ws$executeScripts?: boolean;
+  assetUrlsByPath?: Record<string, string>;
+  code?: string;
 }) => {
   const [page, switchPage] = React.useReducer((n) => (n + 1) % 2, 0);
   const [refresh, setRefresh] = React.useReducer((n) => n + 1, 0);
 
-  const code = `
+  const code =
+    props.code ??
+    `
     <script data-testid="${SCRIPT_TEST_ID}" data-page="${page}">console.log('hello')</script>
     <div data-testid="${FRAGMENT_DIV_ID}">hello</div>
   `;
@@ -29,6 +34,7 @@ const App = (props: {
     <ReactSdkContext.Provider
       value={{
         assetBaseUrl: "",
+        assetUrlsByPath: props.assetUrlsByPath,
         imageLoader: () => "",
         renderer: props.renderer,
         resources: {},
@@ -41,6 +47,7 @@ const App = (props: {
           code={code}
           clientOnly={props.clientOnly}
           executeScriptOnCanvas={props.executeScriptOnCanvas}
+          $ws$executeScripts={props.$ws$executeScripts}
         />
         <button type="button" onClick={switchPage}>
           page:{page}
@@ -61,6 +68,32 @@ beforeEach(() => {
 });
 
 describe("Published site", () => {
+  test("resolves root-relative asset paths during server rendering", () => {
+    const html = ReactDOMServer.renderToString(
+      <App
+        code={`
+          <script src="/test.js?version=1#ready"></script>
+          <link rel="stylesheet" href="/styles/site.css">
+          <img src="/Hero image.png">
+          <img src="/not-an-asset.png">
+        `}
+        assetUrlsByPath={{
+          "/test.js": "/assets/test_hash.js",
+          "/styles/site.css": "/assets/site_hash.css",
+          "/Hero%20image.png":
+            "https://assets.example/hero_hash.png?format=raw",
+        }}
+      />
+    );
+
+    expect(html).toContain('src="/assets/test_hash.js?version=1#ready"');
+    expect(html).toContain('href="/assets/site_hash.css"');
+    expect(html).toContain(
+      'src="https://assets.example/hero_hash.png?format=raw"'
+    );
+    expect(html).toContain('src="/not-an-asset.png"');
+  });
+
   /**
    * Tests the behavior of script tags in an SSR context for a published site with `clientOnly` set to false:
    * - SSR: Renders script tags in HTML embeds directly, without modification, on the server side, on hydration and on refresh.
@@ -160,6 +193,55 @@ describe("Published site", () => {
  * On canvas renderer, scripts are not executed on the server side.
  */
 describe("Builder renderer= canvas | preview", () => {
+  test("resolves root-relative asset paths for canvas markup", () => {
+    const { container } = render(
+      <App
+        renderer="canvas"
+        code={`
+          <script src="/test.js"></script>
+          <link rel="stylesheet" href="/site.css">
+          <img src="/hero.png">
+        `}
+        assetUrlsByPath={{
+          "/test.js": "/cgi/asset/test_hash.js",
+          "/site.css": "/cgi/asset/site_hash.css",
+          "/hero.png": "/cgi/asset/hero_hash.png",
+        }}
+      />
+    );
+
+    expect(container.querySelector("script")?.getAttribute("src")).toBe(
+      "/cgi/asset/test_hash.js"
+    );
+    expect(container.querySelector("link")?.getAttribute("href")).toBe(
+      "/cgi/asset/site_hash.css"
+    );
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "/cgi/asset/hero_hash.png"
+    );
+  });
+
+  test.each(["canvas", "preview"] as const)(
+    "waits for resources to settle before executing scripts in %s",
+    async (renderer) => {
+      const props = {
+        renderer,
+        executeScriptOnCanvas: true,
+        $ws$executeScripts: false,
+      };
+      const { rerender } = render(<App {...props} />);
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
+
+      rerender(<App {...props} $ws$executeScripts={true} />);
+      await Promise.resolve();
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeTruthy();
+    }
+  );
+
   /**
    * On canvas if renderer is canvas, and executeScriptOnCanvas=false
    * scripts postprocessing are not applied independently of clientOnly value.
@@ -335,8 +417,7 @@ describe("Builder renderer= canvas | preview", () => {
   });
 
   /**
-   * Test safe mode: when isSafeMode is true, scripts should never execute
-   * regardless of executeScriptOnCanvas setting or renderer mode.
+   * Disabled script execution takes precedence over canvas settings and renderer mode.
    */
   test.each(
     cartesian(
@@ -359,7 +440,6 @@ describe("Builder renderer= canvas | preview", () => {
               assetBaseUrl: "",
               imageLoader: () => "",
               renderer: renderer as "canvas" | "preview",
-              isSafeMode: true,
               resources: {},
               breakpoints: [],
               onError: console.error,
@@ -369,6 +449,7 @@ describe("Builder renderer= canvas | preview", () => {
               code={code}
               clientOnly={clientOnly}
               executeScriptOnCanvas={executeScriptOnCanvas}
+              $ws$executeScripts={false}
             />
           </ReactSdkContext.Provider>
         );
@@ -381,7 +462,7 @@ describe("Builder renderer= canvas | preview", () => {
       render(ui, { container });
       await Promise.resolve();
 
-      // In safe mode, scripts should not be processed (no SCRIPT_PROCESSED_TEST_ID)
+      // Scripts should not be processed (no SCRIPT_PROCESSED_TEST_ID)
       expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
       expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
       expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();

@@ -789,7 +789,7 @@ const createInsertFragmentMutation = <
   const parentChildren = parent.children ?? [];
   const insertIndex =
     mode === "replace"
-      ? 0
+      ? (explicitInsertIndex ?? 0)
       : mode === "prepend"
         ? 0
         : (explicitInsertIndex ?? parentChildren.length);
@@ -799,6 +799,20 @@ const createInsertFragmentMutation = <
       "Insert index is outside parent children"
     );
   }
+  if (
+    mode === "replace" &&
+    explicitInsertIndex !== undefined &&
+    insertIndex === parentChildren.length
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Replace index is outside parent children"
+    );
+  }
+  const replacedChildren =
+    mode === "replace" && explicitInsertIndex !== undefined
+      ? parentChildren.slice(insertIndex, insertIndex + 1)
+      : parentChildren;
 
   const { newInstanceIds, newDataSourceIds, didMergeBreakpointsDueToLimit } =
     insertWebstudioFragmentCopy({
@@ -859,7 +873,7 @@ const createInsertFragmentMutation = <
     parent,
     replacedInstanceIds:
       mode === "replace"
-        ? parentChildren.flatMap((child) =>
+        ? replacedChildren.flatMap((child) =>
             child.type === "id" ? [child.value] : []
           )
         : [],
@@ -869,7 +883,7 @@ const createInsertFragmentMutation = <
   const requiredTemplateNameConfirmation =
     mode === "replace" && parent.component === blockTemplateComponent
       ? getBlockTemplateNameConfirmation({
-          changes: parentChildren.flatMap((child, index) => {
+          changes: replacedChildren.flatMap((child, index) => {
             if (child.type !== "id") {
               return [];
             }
@@ -898,7 +912,13 @@ const createInsertFragmentMutation = <
       ...parent,
       children:
         mode === "replace"
-          ? insertedChildren
+          ? explicitInsertIndex === undefined
+            ? insertedChildren
+            : [
+                ...parentChildren.slice(0, insertIndex),
+                ...insertedChildren,
+                ...parentChildren.slice(insertIndex + 1),
+              ]
           : [
               ...parentChildren.slice(0, insertIndex),
               ...insertedChildren,
@@ -1002,6 +1022,10 @@ const createInsertFragmentMutation = <
       styleSources: mutationState.styleSources.values(),
       styleSourceSelections: mutationState.styleSourceSelections.values(),
       styles: mutationState.styles.values(),
+      replaceIndex:
+        mode === "replace" && explicitInsertIndex !== undefined
+          ? insertIndex
+          : undefined,
     });
   const insertPayload = createFragmentInsertPayload({
     before: mutationState,

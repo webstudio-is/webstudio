@@ -8060,14 +8060,11 @@ describe("project session mcp adapter", () => {
         listedTools.tools.find(({ name }) => name === "list-pages")
       ).not.toHaveProperty("_meta");
       expect(
-        listedTools.tools.find(({ name }) => name === "delete-instance")
-      ).not.toHaveProperty("description");
-      expect(
-        listedTools.tools.find(({ name }) => name === "meta.guide")?.description
-      ).toBeTypeOf("string");
-      expect(
-        listedTools.tools.find(({ name }) => name === "list-pages")?.description
-      ).toBeTypeOf("string");
+        listedTools.tools.filter(
+          ({ description }) =>
+            typeof description !== "string" || description.trim() === ""
+        )
+      ).toEqual([]);
       expect(
         JSON.stringify(
           listedTools.tools.find(({ name }) => name === "list-pages")
@@ -8369,6 +8366,7 @@ describe("project session mcp adapter", () => {
   });
 
   test("sends sparse protocol-native tool lifecycle logging", async () => {
+    const onToolSuccess = vi.fn();
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -8378,6 +8376,7 @@ describe("project session mcp adapter", () => {
           result: [{ id: "home" }],
         })
       ),
+      onToolSuccess,
     });
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
@@ -8414,6 +8413,7 @@ describe("project session mcp adapter", () => {
           },
         ])
       );
+      expect(onToolSuccess).toHaveBeenCalledWith("list-pages");
     } finally {
       await client.close();
       await server.close();
@@ -8833,7 +8833,11 @@ describe("project session mcp adapter", () => {
           },
         })
       );
-      expect(onToolFailure).toHaveBeenCalledWith("list-pages", error);
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "list-pages",
+        error,
+        expect.any(Number)
+      );
 
       await client.callTool({
         name: "customer/project",

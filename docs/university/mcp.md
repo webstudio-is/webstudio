@@ -2075,6 +2075,7 @@ Put conditions under `where.all` when every condition must match, or under `wher
 | `isEmpty` | is empty | `string`, `object`, `array` |
 
 The field catalog determines which operators fit a schemaless `properties` field. `exists` and `isEmpty` take a boolean. `in` takes an array. Other operators take one JSON value.
+When filtering `path`, enter the visible folder and file names, such as `Tutorial posts/article.mdx`; Webstudio handles canonical URL encoding. Existing encoded path filters remain supported.
 
 ### Saved values and preview values
 

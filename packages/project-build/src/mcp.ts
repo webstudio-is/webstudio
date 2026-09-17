@@ -7426,11 +7426,6 @@ const sdkDetailedInputToolNames = new Set([
   "workflow.next",
 ]);
 
-const sdkDescribedToolNames = new Set([
-  ...sdkDetailedInputToolNames,
-  ...metaGoalGuides.flatMap(({ tools }) => tools),
-]);
-
 const getSdkToolAnnotations = (tool: ProjectSessionMcpTool) => {
   const readOnly = isReadOnlyProjectSessionMcpTool(tool);
   const annotations: NonNullable<SdkTool["annotations"]> = {
@@ -7443,18 +7438,11 @@ const getSdkToolAnnotations = (tool: ProjectSessionMcpTool) => {
   return Object.keys(annotations).length === 0 ? undefined : annotations;
 };
 
-// Keep output contracts, complete input guidance, and Webstudio operation
-// metadata for local validation, generated documentation, and focused
-// discovery. The startup instructions and described discovery tools route
-// models to meta.guide, which returns descriptions for the relevant operation
-// set. Do not resend descriptions for every operation in every MCP handshake.
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
   const annotations = getSdkToolAnnotations(tool);
   return {
     name: tool.name,
-    ...(sdkDescribedToolNames.has(tool.name)
-      ? { description: tool.description }
-      : {}),
+    description: tool.description,
     inputSchema: getSdkInputSchema(
       tool.inputSchema,
       sdkDetailedInputToolNames.has(tool.name)
@@ -9226,13 +9214,19 @@ export const createProjectSessionMcpServer = async <
   toolNameFormat = "canonical",
   toolHeartbeatIntervalMs = 10_000,
   onToolFailure,
+  onToolSuccess,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
   onInitialized?: (clientName: string | undefined) => void;
   toolNameFormat?: "canonical" | "underscores";
   toolHeartbeatIntervalMs?: number;
-  onToolFailure?: (canonicalTool: string, error: unknown) => void;
+  onToolFailure?: (
+    canonicalTool: string,
+    error: unknown,
+    elapsedMs: number
+  ) => void;
+  onToolSuccess?: (canonicalTool: string) => void;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -9369,13 +9363,16 @@ export const createProjectSessionMcpServer = async <
         dryRun,
         signal: extra.signal,
       });
-      sendLog("info", `tool ${name} succeeded in ${Date.now() - startedAt}ms`);
+      const elapsedMs = Date.now() - startedAt;
+      onToolSuccess?.(canonicalName ?? "unknown");
+      sendLog("info", `tool ${name} succeeded in ${elapsedMs}ms`);
       return result;
     } catch (error) {
-      onToolFailure?.(canonicalName ?? "unknown", error);
+      const elapsedMs = Date.now() - startedAt;
+      onToolFailure?.(canonicalName ?? "unknown", error, elapsedMs);
       sendLog(
         "error",
-        `tool ${name} failed in ${Date.now() - startedAt}ms: ${
+        `tool ${name} failed in ${elapsedMs}ms: ${
           error instanceof Error ? error.message : String(error)
         }`
       );

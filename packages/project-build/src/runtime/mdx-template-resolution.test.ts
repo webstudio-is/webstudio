@@ -48,6 +48,9 @@ Next line.
 
 > Blockquote
 
+> [!NOTE]
+> Alert
+
 - [x] Task item
 - List item
 

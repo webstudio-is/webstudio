@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";
 import {
-  getContentBlockOccurrenceVariableValues,
   isRepeatedContentBlockOccurrence,
   parseContentBlockRenderScope,
   resolveContentBlockOccurrenceAssetId,
@@ -18,18 +17,11 @@ describe("Content Block occurrence source", () => {
     expect(parseContentBlockRenderScope('["block",1]')).toBeUndefined();
   });
 
-  test("resolves the same direct and root-qualified variable scopes", () => {
+  test("resolves a root-qualified variable scope", () => {
     const values = new Map([["asset", "article"]]);
-    const direct = new Map([[JSON.stringify(selector), values]]);
     const rootQualified = new Map([
       [JSON.stringify([...selector, ROOT_INSTANCE_ID]), values],
     ]);
-    expect(
-      getContentBlockOccurrenceVariableValues({
-        instanceSelector: selector,
-        variableValuesByRenderScope: direct,
-      })
-    ).toBe(values);
     expect(
       resolveContentBlockOccurrenceAssetId({
         source: { type: "expression", value: "asset" },

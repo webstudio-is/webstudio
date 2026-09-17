@@ -4557,6 +4557,73 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(2);
   });
 
+  test("reuses content bytes only within an index preparation session", async () => {
+    const dependencies = createDependencies();
+    const createEntry = (revision: string) => ({
+      projectId: "project-1",
+      assetId: "asset-1",
+      revision,
+      document: {
+        _id: "asset-1",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision,
+        contentRef: "post.md",
+        properties: {},
+      },
+    });
+    const initialEntry = createEntry("revision-1");
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      initialEntry,
+    ]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn(async () => ({
+      data: new Blob(["# Article "]).stream(),
+      contentLength: 10,
+    }));
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+    const firstPlan = createCompilationPlan({
+      where: { all: [] },
+      sort: [],
+      limit: 1,
+      content: { mode: "full" },
+    });
+    const secondPlan = createCompilationPlan({
+      where: { all: [] },
+      sort: [{ field: ["id"], direction: "asc" }],
+      limit: 1,
+      content: { mode: "full" },
+    });
+
+    await repository.withIndexPreparationSession(async (prepareIndex) => {
+      await prepareIndex(firstPlan);
+      await prepareIndex(secondPlan);
+      expect(readFile).toHaveBeenCalledOnce();
+
+      const updatedEntry = createEntry("revision-2");
+      dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+        updatedEntry,
+      ]);
+      await prepareIndex(secondPlan);
+      expect(readFile).toHaveBeenCalledTimes(2);
+    });
+
+    await repository.withIndexPreparationSession(async (prepareIndex) => {
+      await prepareIndex(firstPlan);
+    });
+    expect(readFile).toHaveBeenCalledTimes(3);
+  });
+
   test("keeps only required properties and excerpts in a prepared index", async () => {
     const dependencies = createDependencies();
     const entries = [

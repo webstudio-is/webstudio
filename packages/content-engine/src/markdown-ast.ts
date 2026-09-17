@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import remarkMdx, { type Options as RemarkMdxOptions } from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
+import { remarkGithubAlerts } from "./remark-github-alerts";
 
 export type SyntaxTreeNode = {
   type: string;
@@ -26,7 +27,11 @@ export const getSyntaxTreeChildren = (node: SyntaxTreeNode) => {
 };
 
 const createMarkdownAstParser = () =>
-  unified().use(remarkParse).use(remarkFrontmatter, ["yaml"]).use(remarkGfm);
+  unified()
+    .use(remarkParse)
+    .use(remarkFrontmatter, ["yaml"])
+    .use(remarkGfm)
+    .use(remarkGithubAlerts);
 
 const markdownAstParser = createMarkdownAstParser();
 // Match standalone Webstudio JSX. remark-mdx 2 exposes obsolete types but
@@ -46,7 +51,7 @@ const mdxAstParser = createMarkdownAstParser().use(remarkMdx, mdxOptions);
 export const parseMarkdownAst = (
   source: string,
   syntax: "markdown" | "mdx" = "markdown"
-): SyntaxTreeNode =>
-  (syntax === "mdx" ? mdxAstParser : markdownAstParser).parse(
-    source
-  ) as SyntaxTreeNode;
+): SyntaxTreeNode => {
+  const parser = syntax === "mdx" ? mdxAstParser : markdownAstParser;
+  return parser.runSync(parser.parse(source)) as SyntaxTreeNode;
+};
