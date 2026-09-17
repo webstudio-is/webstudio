@@ -23,6 +23,7 @@ import {
   CodeText,
   HtmlEmbed,
 } from "@webstudio-is/sdk-components-react/components";
+import { createAlertTemplate } from "@webstudio-is/sdk-components-react/templates";
 import { componentsById } from "./components";
 
 const BlockTemplate = ws.blockTemplate;
@@ -65,6 +66,16 @@ const createContentBlockMdxTemplate = (
       `Content Block component template "${descriptor.component}" is not registered`
     );
   }
+  const template =
+    descriptor.component === "Alert"
+      ? createAlertTemplate(descriptor.resolutionKey)
+      : createElement(
+          component as ElementType,
+          { key: descriptor.resolutionKey },
+          descriptor.component === "CodeText"
+            ? 'const status = "ready";'
+            : undefined
+        );
   return setTemplateMeta(
     {
       name: getDefaultContentBlockTemplateName({
@@ -72,13 +83,7 @@ const createContentBlockMdxTemplate = (
       }),
       label: descriptor.label,
     },
-    createElement(
-      component as ElementType,
-      { key: descriptor.resolutionKey },
-      descriptor.component === "CodeText"
-        ? 'const status = "ready";'
-        : undefined
-    )
+    template
   );
 };
 

@@ -2,7 +2,7 @@
 import { type TemplateMeta, ws } from "@webstudio-is/template";
 import { imagePlaceholderDataUrl } from "@webstudio-is/image";
 import { MarkdownEmbed } from "./markdown-embed";
-import { alertStyle } from "./shared/alert-style";
+import { markdownAlertStyle } from "./shared/markdown-alert-style";
 
 const markdownSample = `
 # Styling Markdown with Markdown Embed
@@ -84,7 +84,7 @@ export const meta: TemplateMeta = {
       <ws.descendant
         ws:label="Alert"
         selector=" [data-state]"
-        ws:style={alertStyle}
+        ws:style={markdownAlertStyle}
       />
       <ws.descendant ws:label="Note alert" selector={' [data-state="note"]'} />
       <ws.descendant ws:label="Tip alert" selector={' [data-state="tip"]'} />

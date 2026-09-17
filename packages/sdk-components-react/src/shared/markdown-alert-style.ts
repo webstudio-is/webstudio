@@ -1,6 +1,6 @@
 import { css } from "@webstudio-is/template";
 
-export const alertStyle = css`
+export const markdownAlertStyle = css`
   padding: 16px;
   border-radius: 8px;
   &[data-state="note"] {

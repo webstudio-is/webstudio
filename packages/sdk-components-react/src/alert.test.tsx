@@ -8,6 +8,20 @@ describe("Alert", () => {
     expect(meta.presetStyle).toBeDefined();
   });
 
+  test("provides a light background for every variant", () => {
+    expect(
+      meta.presetStyle?.div
+        ?.filter(({ property }) => property === "background-color")
+        .map(({ state }) => state)
+    ).toEqual([
+      '[data-state="note"]',
+      '[data-state="tip"]',
+      '[data-state="important"]',
+      '[data-state="warning"]',
+      '[data-state="caution"]',
+    ]);
+  });
+
   test("exposes variants as property-driven style states", () => {
     expect(meta.initialProps).toContain("variant");
     expect(meta.states).toEqual([
