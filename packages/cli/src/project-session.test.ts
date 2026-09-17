@@ -1025,6 +1025,9 @@ describe("cli project session transport", () => {
   test("keeps configured project id for default server operation transport", async () => {
     let requestBody = "";
     let requestUrl = "";
+    const issueReportRuntime = vi.fn(() => {
+      throw new Error("issue report runtime should be lazy");
+    });
     const fetch = vi.fn(async (request: URL | RequestInfo) => {
       if (request instanceof Request) {
         requestUrl = request.url;
@@ -1054,6 +1057,7 @@ describe("cli project session transport", () => {
         origin: "https://example.com",
         authToken: "token",
       },
+      issueReportRuntime,
     });
 
     await transport.executeServerOperation?.({
@@ -1064,6 +1068,7 @@ describe("cli project session transport", () => {
     const requestText = `${requestUrl}\n${requestBody}`;
     expect(requestText).toContain("project-1");
     expect(requestText).not.toContain("other-project");
+    expect(issueReportRuntime).not.toHaveBeenCalled();
   });
 
   test("adds anonymous runtime metadata to issue report requests", async () => {

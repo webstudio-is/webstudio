@@ -351,13 +351,17 @@ const executePublicServerOperation = async ({
       `Public API operation "${operationId}" has no http-client function.`
     );
   }
+  const requestInput =
+    operation.command === "report-issue"
+      ? addIssueReportRuntime(
+          operation.command,
+          input,
+          issueReportRuntime?.() ?? createIssueReportRuntime()
+        )
+      : input;
   return await client({
     ...connection,
-    ...(addIssueReportRuntime(
-      operation.command,
-      input,
-      issueReportRuntime?.() ?? createIssueReportRuntime()
-    ) as Record<string, unknown>),
+    ...(requestInput as Record<string, unknown>),
     projectId: connection.projectId,
   });
 };
