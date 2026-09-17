@@ -2142,6 +2142,25 @@ export class PostgresAssetRepository implements AssetRepository {
     return await this.prepareIndexAfterAuthorization(requirements, true);
   }
 
+  /** Shares bounded revision-keyed bytes only for the duration of operation. */
+  async withIndexPreparationSession<Result>(
+    operation: (
+      prepareIndex: (
+        requirements?: ContentCompilationPlan
+      ) => Promise<ContentArtifactV1>
+    ) => Promise<Result>
+  ) {
+    const contentBytesCache = new RequestContentBytesCache();
+    return await operation(async (requirements?: ContentCompilationPlan) => {
+      await this.assertCanBuild();
+      return await this.prepareIndexAfterAuthorization(
+        requirements,
+        true,
+        contentBytesCache
+      );
+    });
+  }
+
   private async prepareIndexAfterAuthorization(
     requirements: ContentCompilationPlan | undefined,
     strict: boolean,

@@ -217,19 +217,30 @@ export const createPublishedBuildContentCompilationPlan = (
   ]);
 };
 
-/** Expands publication reachability through only the templates referenced by MDX. */
-export const resolvePublishedMdxDependencyClosure = async ({
+export type PublishedMdxTemplateOmission = {
+  blockInstanceId: string;
+  assetId: string;
+  templateName: string;
+};
+
+type ResolvePublishedMdxDependencyClosureOptions = {
+  build: PublishedContentDatabaseBuild;
+  artifact: ContentArtifactV1;
+  onTemplateOmission?: (issue: PublishedMdxTemplateOmission) => void;
+};
+
+const resolvePublishedMdxDependencyClosureWithParser = async ({
   build,
   artifact,
   onTemplateOmission,
-}: {
-  build: PublishedContentDatabaseBuild;
-  artifact: ContentArtifactV1;
-  onTemplateOmission?: (issue: {
-    blockInstanceId: string;
+  parseDocument,
+}: ResolvePublishedMdxDependencyClosureOptions & {
+  parseDocument: (input: {
     assetId: string;
-    templateName: string;
-  }) => void;
+    revision: string;
+    contentRef: string;
+    source: string;
+  }) => ReturnType<typeof parseMdxDocumentRecovering>;
 }) => {
   const instances = new Map(
     getBuildValues<Instance>(build.instances).map((instance) => [
@@ -298,7 +309,12 @@ export const resolvePublishedMdxDependencyClosure = async ({
       ) {
         continue;
       }
-      const parsed = await parseMdxDocumentRecovering({ source: sourceText });
+      const parsed = await parseDocument({
+        assetId,
+        revision: documentEntry.revision,
+        contentRef: documentEntry.contentRef,
+        source: sourceText,
+      });
       if (parsed.status === "unrecoverable") {
         continue;
       }
@@ -343,6 +359,38 @@ export const resolvePublishedMdxDependencyClosure = async ({
     reachableIds
   );
 };
+
+/**
+ * Creates a request-scoped resolver that reuses parsed MDX while a publication
+ * plan converges. Revisions make the cache safe when asset stability retries
+ * observe changed content.
+ */
+export const createPublishedMdxDependencyClosureResolver = (
+  dependencies = { parseMdxDocumentRecovering }
+) => {
+  const parsedDocuments = new Map<
+    string,
+    ReturnType<typeof parseMdxDocumentRecovering>
+  >();
+  return async (options: ResolvePublishedMdxDependencyClosureOptions) =>
+    await resolvePublishedMdxDependencyClosureWithParser({
+      ...options,
+      parseDocument: ({ assetId, revision, contentRef, source }) => {
+        const key = JSON.stringify([assetId, revision, contentRef]);
+        let parsed = parsedDocuments.get(key);
+        if (parsed === undefined) {
+          parsed = dependencies.parseMdxDocumentRecovering({ source });
+          parsedDocuments.set(key, parsed);
+        }
+        return parsed;
+      },
+    });
+};
+
+/** Expands publication reachability through only the templates referenced by MDX. */
+export const resolvePublishedMdxDependencyClosure = async (
+  options: ResolvePublishedMdxDependencyClosureOptions
+) => await createPublishedMdxDependencyClosureResolver()(options);
 
 const candidateDocumentKey = Symbol("candidate-document");
 type CandidateDocument = Readonly<{

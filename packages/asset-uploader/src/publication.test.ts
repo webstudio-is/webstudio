@@ -64,6 +64,13 @@ const createCollectionFixture = () => {
   return { assetData, assetStore };
 };
 
+const withIndexPreparationSession =
+  (prepareIndex: (...args: never[]) => Promise<unknown>) =>
+  async <Result>(
+    operation: (prepare: typeof prepareIndex) => Promise<Result>
+  ) =>
+    await operation(prepareIndex);
+
 describe("published asset data", () => {
   test("omits collection configuration and templates from public validation output", async () => {
     const { assetData, assetStore } = createCollectionFixture();
@@ -102,7 +109,11 @@ describe("published asset data", () => {
     const prepareIndex = vi.fn().mockResolvedValue(artifact);
     const validateCollections = vi.fn();
     const dependencies = {
-      createRepository: vi.fn(() => ({ prepareIndex, validateCollections })),
+      createRepository: vi.fn(() => ({
+        prepareIndex,
+        validateCollections,
+        withIndexPreparationSession: withIndexPreparationSession(prepareIndex),
+      })),
       loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
     };
 
@@ -237,6 +248,7 @@ describe("published asset data", () => {
       createRepository: vi.fn(() => ({
         prepareIndex,
         validateCollections: vi.fn(),
+        withIndexPreparationSession: withIndexPreparationSession(prepareIndex),
       })),
       loadAssetDataByProject,
     };
@@ -281,6 +293,7 @@ describe("published asset data", () => {
       assetFolders: [],
     };
     const prepareIndex = vi.fn().mockResolvedValue(artifact);
+    const withSession = vi.fn(withIndexPreparationSession(prepareIndex));
     const loadAssetDataByProject = vi
       .fn()
       .mockResolvedValueOnce(initialAssetData)
@@ -302,6 +315,7 @@ describe("published asset data", () => {
           createRepository: vi.fn(() => ({
             prepareIndex,
             validateCollections: vi.fn(),
+            withIndexPreparationSession: withSession,
           })),
           loadAssetDataByProject,
         } as never
@@ -309,6 +323,7 @@ describe("published asset data", () => {
     ).resolves.toMatchObject({ assets: changedAssetData.assets });
 
     expect(prepareIndex).toHaveBeenCalledTimes(2);
+    expect(withSession).toHaveBeenCalledTimes(2);
     expect(loadAssetDataByProject).toHaveBeenCalledTimes(4);
   });
 
@@ -342,6 +357,8 @@ describe("published asset data", () => {
         createRepository: vi.fn(() => ({
           prepareIndex,
           validateCollections: vi.fn(),
+          withIndexPreparationSession:
+            withIndexPreparationSession(prepareIndex),
         })),
         loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
       } as never
@@ -353,5 +370,38 @@ describe("published asset data", () => {
       [preliminaryArtifact],
       [finalArtifact],
     ]);
+  });
+
+  test("keeps the initial artifact when its dependency plan is already stable", async () => {
+    const artifact = { documents: [{ _id: "article.mdx" }] } as never;
+    const plan = { queries: [{ id: "mdx:article" }] } as never;
+    const prepareIndex = vi.fn().mockResolvedValue(artifact);
+    const resolvePlan = vi.fn(() => plan);
+    const assetData = { assets: [], assetFolders: [] };
+
+    const result = await preparePublishedAssetData(
+      {
+        projectId: "project-1",
+        context: {} as never,
+        assetStore: {} as never,
+        contentDatabaseMaxBytes: 512_000,
+        plan,
+        retainedAssetIds: [],
+        resolvePlan,
+      },
+      {
+        createRepository: vi.fn(() => ({
+          prepareIndex,
+          validateCollections: vi.fn(),
+          withIndexPreparationSession:
+            withIndexPreparationSession(prepareIndex),
+        })),
+        loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
+      } as never
+    );
+
+    expect(result.artifact).toBe(artifact);
+    expect(prepareIndex).toHaveBeenCalledOnce();
+    expect(resolvePlan).toHaveBeenCalledOnce();
   });
 });
