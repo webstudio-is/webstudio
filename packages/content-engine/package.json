@@ -10,7 +10,7 @@
   "scripts": {
     "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
     "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
-    "build": "rm -rf lib && esbuild src/index.ts src/asset-content-repository.ts src/asset-content-session.ts src/compiler.ts src/jsx-attributes.ts src/limits.ts src/markdown-alerts.ts src/markdown-assets.ts src/markdown-references.ts src/mdx.ts src/published-runtime.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/asset-content-repository.ts src/asset-content-session.ts src/compiler.ts src/jsx-attributes.ts src/limits.ts src/markdown-assets.ts src/markdown-references.ts src/mdx.ts src/published-runtime.ts src/remark-github-alerts.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -98,11 +98,11 @@
       "import": "./lib/markdown-assets.js",
       "default": "./src/markdown-assets.ts"
     },
-    "./markdown-alerts": {
-      "webstudio": "./src/markdown-alerts.ts",
-      "types": "./lib/types/markdown-alerts.d.ts",
-      "import": "./lib/markdown-alerts.js",
-      "default": "./src/markdown-alerts.ts"
+    "./remark-github-alerts": {
+      "webstudio": "./src/remark-github-alerts.ts",
+      "types": "./lib/types/remark-github-alerts.d.ts",
+      "import": "./lib/remark-github-alerts.js",
+      "default": "./src/remark-github-alerts.ts"
     },
     "./markdown-references": {
       "webstudio": "./src/markdown-references.ts",

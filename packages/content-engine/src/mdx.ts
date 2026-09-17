@@ -44,7 +44,7 @@ import {
   serializeMdxDocument,
 } from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
-import { getMarkdownAlertMarker } from "./markdown-alerts";
+import { getGithubAlertType } from "./remark-github-alerts";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -800,6 +800,15 @@ const mapListItem: Handler = (state, value, parent) => {
   return result;
 };
 
+const mapGithubAlert: Handler = (state, value) => {
+  const result = defaultHandlers.blockquote(state, value);
+  const type = getGithubAlertType(value);
+  if (type !== undefined && isSyntaxTreeNode(result)) {
+    setHastData(result, { githubAlert: type });
+  }
+  return result;
+};
+
 const preserveWhitespace =
   (handler: Handler): Handler =>
   (state, value, parent) => {
@@ -842,6 +851,7 @@ const rejectUnsupportedNode: Handler = (_state, value) => {
 };
 
 const mdxHandlers: Handlers = {
+  blockquote: mapGithubAlert,
   code: preserveWhitespace(defaultHandlers.code),
   html: rejectUnsupportedNode,
   inlineCode: preserveWhitespace(defaultHandlers.inlineCode),
@@ -935,6 +945,7 @@ const createMarkdownHastForMdx = (root: SyntaxTreeNode) => {
   const hast = toHast(root as Parameters<typeof toHast>[0], {
     allowDangerousHtml: true,
     handlers: {
+      blockquote: mapGithubAlert,
       code: mdxHandlers.code,
       inlineCode: mdxHandlers.inlineCode,
       listItem: mdxHandlers.listItem,
@@ -1100,6 +1111,8 @@ const getMarkdownListItem = (
   };
 };
 
+const findHastGithubAlert = (node: SyntaxTreeNode) => getGithubAlertType(node);
+
 const preservesTextWhitespace = (node: SyntaxTreeNode) =>
   isRecord(node.data) && node.data.preserveTextWhitespace === true
     ? true
@@ -1207,6 +1220,7 @@ const mapHastNode = (
     );
   }
   const authoredMdxMode = findHastMdxMode(node);
+  const githubAlert = findHastGithubAlert(node);
   const templateName = findHastTemplateName(node);
   const templateProps =
     templateName === undefined ? undefined : findHastTemplateProps(node);
@@ -1239,6 +1253,18 @@ const mapHastNode = (
       props,
       children: mapHastChildren(node, options),
       mdxMode: getHastMdxMode(node),
+      sourceRange: toSourceRange(node.position),
+    };
+  }
+  if (githubAlert !== undefined) {
+    return {
+      type: "template",
+      syntax: "jsx",
+      selfClosing: false,
+      name: "Alert",
+      props: [{ name: "variant", value: githubAlert.toLowerCase() }],
+      children: mapHastChildren(node, options),
+      mdxMode: "flow",
       sourceRange: toSourceRange(node.position),
     };
   }
@@ -1292,73 +1318,10 @@ const mapAuthoredChildren = (
   if (isSyntaxTreeNode(hast) === false || hast.type !== "root") {
     return throwUnsafeNode(root, "MDX did not produce an HTML document");
   }
-  return transformMarkdownAlerts(
-    mapHastChildren(hast, {
-      shouldOmitUnsafePart: options.shouldOmitUnsafePart,
-    })
-  );
-};
-
-const transformMarkdownAlerts = (
-  nodes: readonly MdxAuthoredNode[]
-): MdxAuthoredNode[] =>
-  nodes.map((node) => {
-    if (
-      node.type === "text" ||
-      node.type === "comment" ||
-      node.type === "opaque"
-    ) {
-      return node;
-    }
-    const children = transformMarkdownAlerts(node.children);
-    if (
-      node.type !== "element" ||
-      node.syntax !== "markdown" ||
-      node.tag !== "blockquote"
-    ) {
-      return { ...node, children };
-    }
-    const paragraph = children[0];
-    if (
-      paragraph?.type !== "element" ||
-      paragraph.syntax !== "markdown" ||
-      paragraph.tag !== "p"
-    ) {
-      return { ...node, children };
-    }
-    const markerNode = paragraph.children[0];
-    if (markerNode?.type !== "text") {
-      return { ...node, children };
-    }
-    const marker = getMarkdownAlertMarker(markerNode.value);
-    if (marker === undefined) {
-      return { ...node, children };
-    }
-
-    const remainingMarkerText = markerNode.value.slice(marker.length);
-    const remainingParagraphChildren = [
-      ...(remainingMarkerText === ""
-        ? []
-        : [{ ...markerNode, value: remainingMarkerText }]),
-      ...paragraph.children.slice(1),
-    ];
-    const bodyChildren = [
-      ...(remainingParagraphChildren.length === 0
-        ? []
-        : [{ ...paragraph, children: remainingParagraphChildren }]),
-      ...children.slice(1),
-    ];
-    return {
-      type: "template",
-      syntax: "jsx",
-      selfClosing: false,
-      name: "Alert",
-      props: [{ name: "variant", value: marker.type.toLowerCase() }],
-      children: bodyChildren,
-      mdxMode: "flow",
-      sourceRange: node.sourceRange,
-    };
+  return mapHastChildren(hast, {
+    shouldOmitUnsafePart: options.shouldOmitUnsafePart,
   });
+};
 
 const validateMdxSourceBytes = ({
   source,

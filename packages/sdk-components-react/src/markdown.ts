@@ -1,35 +1,56 @@
-import { micromark } from "micromark";
-import { gfm, gfmHtml } from "micromark-extension-gfm";
+import { toHtml } from "hast-util-to-html";
+import { gfmFromMarkdown } from "mdast-util-gfm";
 import { frontmatter } from "micromark-extension-frontmatter";
+import { gfm } from "micromark-extension-gfm";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { frontmatterFromMarkdown } from "mdast-util-frontmatter";
+import { toHast } from "mdast-util-to-hast";
 import { toString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
-import type { HtmlExtension } from "micromark-util-types";
-import {
-  defaultTreeAdapter,
-  parseFragment,
-  serialize,
-  type DefaultTreeAdapterMap,
-} from "parse5";
 import sanitizeHtml from "sanitize-html";
 import type { ImageLoader } from "@webstudio-is/image";
 import {
-  getMarkdownAlertMarker,
-  markdownAlertTypes,
-} from "@webstudio-is/content-engine/markdown-alerts";
+  getGithubAlertType,
+  transformGithubAlerts,
+} from "@webstudio-is/content-engine/remark-github-alerts";
 import { getSdkImageProps, type SdkImageProps } from "./image-utils";
 
-const getHeadingIds = (markdown: string) => {
+const parseMarkdown = (markdown: string) => {
+  const tree = fromMarkdown(markdown, {
+    extensions: [frontmatter(["yaml"]), gfm()],
+    mdastExtensions: [frontmatterFromMarkdown(["yaml"]), gfmFromMarkdown()],
+  });
+  transformGithubAlerts(tree);
   const slugger = new GithubSlugger();
-  const ids: string[] = [];
   const visit = (node: unknown) => {
     if (typeof node !== "object" || node === null) {
       return;
     }
     if ("type" in node && node.type === "heading") {
       const text = toString(node as Parameters<typeof toString>[0]);
-      ids.push(slugger.slug(text) || slugger.slug("heading"));
+      const data =
+        "data" in node && typeof node.data === "object" ? node.data : {};
+      Object.assign(node, {
+        data: {
+          ...data,
+          hProperties: { id: slugger.slug(text) || slugger.slug("heading") },
+        },
+      });
+    }
+    const alertType = getGithubAlertType(node);
+    if (alertType !== undefined) {
+      const data =
+        "data" in node && typeof node.data === "object" ? node.data : {};
+      Object.assign(node, {
+        data: {
+          ...data,
+          hName: "div",
+          hProperties: {
+            role: "note",
+            "data-state": alertType.toLowerCase(),
+          },
+        },
+      });
     }
     if ("children" in node && Array.isArray(node.children)) {
       for (const child of node.children) {
@@ -37,43 +58,8 @@ const getHeadingIds = (markdown: string) => {
       }
     }
   };
-  visit(
-    fromMarkdown(markdown, {
-      extensions: [frontmatter(["yaml"])],
-      mdastExtensions: [frontmatterFromMarkdown(["yaml"])],
-    })
-  );
-  return ids;
-};
-
-const createHeadingIdsHtmlExtension = (
-  headingIds: readonly string[]
-): HtmlExtension => {
-  let headingIndex = 0;
-  const takeHeadingId = () => headingIds[headingIndex++] ?? "heading";
-  return {
-    exit: {
-      atxHeadingSequence(token) {
-        if (this.getData("headingRank") !== undefined) {
-          return;
-        }
-        const rank = this.sliceSerialize(token).length;
-        this.setData("headingRank", rank);
-        this.lineEndingIfNeeded();
-        this.tag(`<h${rank} id="${this.encode(takeHeadingId())}">`);
-      },
-      setextHeading() {
-        const value = this.resume();
-        const rank = this.getData("headingRank");
-        this.lineEndingIfNeeded();
-        this.tag(`<h${rank} id="${this.encode(takeHeadingId())}">`);
-        this.raw(value);
-        this.tag(`</h${rank}>`);
-        this.setData("slurpAllLineEndings");
-        this.setData("headingRank");
-      },
-    },
-  };
+  visit(tree);
+  return tree;
 };
 
 const sanitizeMarkdownHtml = (
@@ -204,70 +190,6 @@ const createImageTransformer =
     return { tagName, attribs: transformedAttributes };
   };
 
-const createGfmHtmlExtension = () => {
-  const extension = gfmHtml();
-  // GFM tag filtering escapes embedded HTML before our stricter sanitizer can
-  // inspect it. Remove only those handlers and keep every other GFM renderer;
-  // sanitizeMarkdownHtml remains the security boundary for embedded markup.
-  delete extension.exit?.htmlFlowData;
-  delete extension.exit?.htmlTextData;
-  return extension;
-};
-
-const transformMarkdownAlerts = (html: string) => {
-  const hasAlertMarker = markdownAlertTypes.some((type) =>
-    html.includes(`[!${type}]`)
-  );
-  if (hasAlertMarker === false) {
-    return html;
-  }
-
-  const fragment = parseFragment(html);
-  let transformed = false;
-
-  const visit = (node: DefaultTreeAdapterMap["node"]) => {
-    if (
-      defaultTreeAdapter.isElementNode(node) &&
-      node.tagName === "blockquote"
-    ) {
-      const paragraph = node.childNodes.find((child) =>
-        defaultTreeAdapter.isElementNode(child)
-      );
-      const markerNode = paragraph?.childNodes[0];
-      if (
-        paragraph?.tagName === "p" &&
-        markerNode !== undefined &&
-        defaultTreeAdapter.isTextNode(markerNode)
-      ) {
-        const marker = getMarkdownAlertMarker(markerNode.value);
-        if (marker !== undefined) {
-          node.tagName = "div";
-          node.nodeName = "div";
-          node.attrs.push(
-            { name: "role", value: "note" },
-            { name: "data-state", value: marker.type.toLowerCase() }
-          );
-
-          markerNode.value = markerNode.value.slice(marker.length);
-          if (markerNode.value === "" && paragraph.childNodes.length === 1) {
-            defaultTreeAdapter.detachNode(paragraph);
-          }
-          transformed = true;
-        }
-      }
-    }
-
-    if ("childNodes" in node) {
-      for (const child of node.childNodes) {
-        visit(child);
-      }
-    }
-  };
-
-  visit(fragment);
-  return transformed ? serialize(fragment) : html;
-};
-
 /** Shared safe renderer used by both the authoring preview and published component. */
 export const renderMarkdownHtml = (
   markdown: string,
@@ -281,18 +203,10 @@ export const renderMarkdownHtml = (
     renderer?: "canvas" | "preview";
   } = {}
 ) => {
+  const tree = parseMarkdown(markdown);
+  const hast = toHast(tree, { allowDangerousHtml: true });
   const html = sanitizeMarkdownHtml(
-    transformMarkdownAlerts(
-      micromark(markdown, {
-        allowDangerousHtml: true,
-        allowDangerousProtocol: true,
-        extensions: [frontmatter(["yaml"]), gfm()],
-        htmlExtensions: [
-          createGfmHtmlExtension(),
-          createHeadingIdsHtmlExtension(getHeadingIds(markdown)),
-        ],
-      })
-    ),
+    hast === undefined ? "" : toHtml(hast, { allowDangerousHtml: true }),
     { allowBlobImages }
   );
 
