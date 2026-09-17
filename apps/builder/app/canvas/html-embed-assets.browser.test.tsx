@@ -25,21 +25,47 @@ afterEach(() => {
 });
 
 test("resolves an asset-panel path through the Builder SDK context", async () => {
-  const script = {
-    id: "script",
-    projectId: "project",
-    name: "test_hash.js",
-    filename: "test",
-    folderId: "scripts",
-    type: "file",
-    size: 1,
-    format: "js",
-    createdAt: "2026-01-01T00:00:00.000Z",
-    description: null,
-    meta: {},
-  } as Asset;
+  const assets = [
+    {
+      id: "script",
+      projectId: "project",
+      name: "test_hash.js",
+      filename: "test",
+      folderId: "scripts",
+      type: "file",
+      size: 1,
+      format: "js",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: {},
+    },
+    {
+      id: "stylesheet",
+      projectId: "project",
+      name: "site_hash.css",
+      filename: "site",
+      type: "file",
+      size: 1,
+      format: "css",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: {},
+    },
+    {
+      id: "image",
+      projectId: "project",
+      name: "hero_hash.png",
+      filename: "hero",
+      type: "image",
+      size: 1,
+      format: "png",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: { width: 100, height: 100 },
+    },
+  ] as Asset[];
   const assetUrlsByPath = createAssetUrlsByPath({
-    assets: [script],
+    assets,
     assetFolders: new Map([
       [
         "scripts",
@@ -70,7 +96,11 @@ test("resolves an asset-panel path through the Builder SDK context", async () =>
         }}
       >
         <HtmlEmbed
-          code={'<script src="/Custom scripts/test.js"></script>'}
+          code={`
+            <script src="/Custom scripts/test.js"></script>
+            <link rel="stylesheet" href="/site.css">
+            <img src="/hero.png">
+          `}
           $ws$executeScripts={false}
         />
       </ReactSdkContext.Provider>
@@ -79,8 +109,16 @@ test("resolves an asset-panel path through the Builder SDK context", async () =>
 
   expect(assetUrlsByPath).toEqual({
     "/Custom%20scripts/test.js": "/cgi/asset/test_hash.js?format=raw",
+    "/site.css": "/cgi/asset/site_hash.css?format=raw",
+    "/hero.png": "/cgi/image/hero_hash.png?format=raw",
   });
   expect(container.querySelector("script")?.getAttribute("src")).toBe(
     "/cgi/asset/test_hash.js?format=raw"
+  );
+  expect(container.querySelector("link")?.getAttribute("href")).toBe(
+    "/cgi/asset/site_hash.css?format=raw"
+  );
+  expect(container.querySelector("img")?.getAttribute("src")).toBe(
+    "/cgi/image/hero_hash.png?format=raw"
   );
 });
