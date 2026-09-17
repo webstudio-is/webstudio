@@ -267,7 +267,16 @@ export const createIssueReportFailure = (
       : getValidationIssues(error)
           ?.slice(0, 30)
           .map((issue) => ({
-            path: [],
+            // Keep only the namespace and array index. Leaf keys may contain
+            // project data, while the prefix is enough to locate the failing
+            // input shape (for example `updates[0]` or `assets[0]`).
+            path: issue.path.filter(
+              (segment, index) =>
+                index < 2 &&
+                (index === 0
+                  ? /^[a-z][a-zA-Z0-9]*$/.test(segment)
+                  : /^\d+$/.test(segment))
+            ),
             code: issue.code,
             constraint: issue.constraint,
           }));

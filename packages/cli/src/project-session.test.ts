@@ -71,7 +71,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     code: "PROJECT_BUNDLE_INVALID",
     issues: [
       {
-        path: [],
+        path: ["assets", "0"],
         code: "invalid_value",
         constraint: "one of supported asset types",
       },
@@ -106,7 +106,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     code: "INVALID_INPUT",
     issues: [
       {
-        path: [],
+        path: ["fragment"],
         code: "invalid_webstudio_jsx",
         constraint: "valid_webstudio_jsx_syntax",
       },
@@ -128,7 +128,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     })
   );
   expect(serialized).not.toContain(sensitiveKey);
-  expect(JSON.parse(serialized).issues[0].path).toEqual([]);
+  expect(JSON.parse(serialized).issues[0].path).toEqual(["updates", "0"]);
 });
 
 test("scopes project session files for explicitly selected projects", () => {
