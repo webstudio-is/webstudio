@@ -10,6 +10,11 @@ truth, including their filenames, folders, metadata, and relative links. You
 can move the same files between projects or use them outside Webstudio without
 exporting them from a database first.
 
+MDX is a widely used file format that combines Markdown with JSX. In Webstudio,
+it lets designers pre-style every article element while editors write directly
+on the canvas with a Notion-style interface. Editors can also work in the MDX
+source, and AI agents can work through Webstudio MCP.
+
 It brings Content mode to file-based sites without requiring an external CMS
 or a runtime content database on the published site. Use it to:
 
@@ -25,6 +30,9 @@ This guide creates a blog overview at `/blog` and one dynamic article page at
 
 To see the finished setup first, start with the
 [Markdown Blog marketplace template](https://webstudio.is/marketplace/templates/markdown-blog).
+
+Watch the complete workflow, from the first MDX file to visual editing and
+structured collection entries:
 
 {% embed url="https://youtu.be/Sn-fhVajpgU" %}
 
@@ -63,17 +71,18 @@ using it for a content-heavy project.
 ## Build it with MCP
 
 An AI agent can complete this entire workflow through
-[Webstudio MCP](../mcp.md). It can create the folders and Markdown files, upload
-images, build both pages, configure the Assets resources, add the Collection,
-bind the article directly, set the page metadata, and check the rendered result
-with vision. Everything remains editable in the visual editor.
+[Webstudio MCP](../mcp.md). It can create the folders and MDX files, upload
+images, build both pages, configure the Assets resources, connect a Content
+Block, add the content collection, set the page metadata, and check the rendered
+result with vision. Everything remains editable in the visual editor.
 
 Give the agent an editable project share link when it asks for one, then make a
 request such as:
 
-> Use Webstudio CLI to build a blog with the Content Engine. Store the articles
-> as Markdown files, create `/blog` and `/blog/:slug`, exclude drafts, and check
-> both pages on desktop and mobile.
+> Install Webstudio CLI and use MCP to build a blog with the Content Engine.
+> Store complete articles in MDX files, create `/blog` and `/blog/:slug`, make
+> every article field editable in Content mode, let editors create entries with
+> a collection form, exclude drafts, and check both pages on desktop and mobile.
 
 The remaining steps explain the same workflow when you want to build or inspect
 it manually.
@@ -96,6 +105,10 @@ Open the settings for the `posts` folder and copy its ID. Both Assets resources
 in this guide use that ID to query only files in this folder.
 
 ### Make the folder a content collection
+
+This step is optional. The Assets queries and dynamic page work without a
+collection. Add one when editors should create and update entries through forms
+instead of editing MDX frontmatter by hand.
 
 Turn on **Use as content collection** when you create the `posts` folder if
 editors should be able to add articles without writing MDX frontmatter. For an
@@ -167,7 +180,8 @@ entries. The page must have one URL parameter, such as `/blog/:slug`.
 Webstudio fills the page parameter with the entry filename when you choose
 **Open on canvas** from an entry's menu or **Entry settings**. The action stays
 visible but disabled until the collection has a compatible entry page; its help
-points back to this setting. Creating an entry does not navigate automatically.
+points back to this setting. If the page does not exist yet, finish step 5 and
+then return to this setting. Creating an entry does not navigate automatically.
 
 The collection format uses a supported subset of JSON Schema draft 2020-12.
 The configurator exposes string, number, integer, boolean, and slug fields,
@@ -240,11 +254,8 @@ number controls bound to these fields also show their collection errors. Fixing
 the values clears the errors. A field error does not hide the entry, stop the
 collection rendering, or block publication of unrelated changes.
 
-These checks read bounded file prefixes for direct entries in the open folder,
-with at most four reads at once. Frontmatter is cached by file revision while
-that folder remains open. Changing the schema rechecks cached values without
-downloading unchanged entries again. A failed read is reported separately from
-field errors and can be retried with **Check again**.
+A failed read is reported separately from field errors and can be retried with
+**Check again**.
 
 The configurator rejects Integer limits that leave no possible whole number.
 Slug limits must allow at least one character, even when minimum length is unset.
@@ -252,14 +263,6 @@ Without a Slug field, use a single `*.mdx` or `entry-*.mdx` entry pattern when
 saving collection settings. These match automatically generated filenames.
 Custom filename patterns require a Slug field. Existing configurations remain
 readable so their content can still be repaired and published.
-
-Builder shares collection configuration loading across Assets, file editors, and
-bound property controls. It groups the already-synchronized asset metadata once
-per update and downloads the active collection's configuration and template once
-for all consumers. Editing an entry does not download those unchanged files again.
-Changing the configuration or template, retrying a failed read, or changing project
-or access token refreshes this state. Entry validation still reads frontmatter as
-described above; sharing configuration does not remove those reads.
 
 A collection folder accepts entries, supporting assets, and subfolders. Use
 **New entry** for filenames selected by the entry patterns. Files excluded by
@@ -287,11 +290,11 @@ appear in Assets query results.
 ## 2. Create an article
 
 If `posts` is a content collection, choose **New entry** and fill in its form.
-Otherwise, create the file and frontmatter manually:
+Otherwise, create the MDX file and frontmatter manually:
 
 1. Open `blog/posts` in the Assets panel.
 2. Open the add menu and choose **Create text file**.
-3. Name the file `hello-world.md`.
+3. Name the file `hello-world.mdx`.
 4. Add the article metadata between the two `---` lines, followed by the
    article body:
 
@@ -413,8 +416,7 @@ page-level **Dynamic data**:
 5. Under **Content**, choose **Metadata only**. The overview does not render
    complete article bodies.
 6. Add these filters:
-   - `extension` **equals** `"mdx"` for collection entries, or `"md"` for the
-     manually created Markdown files in this guide
+   - `extension` **equals** `"mdx"`
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.draft` **does not equal** `true`
 7. Sort `properties.publishedAt` in descending order. Add `id` in ascending
@@ -460,10 +462,10 @@ Add another Assets resource to the page-level **Dynamic data**:
    `properties.featureImage.src`, `properties.featureImage.description`, and
    `properties.author`.
 4. Under **Result**, choose **Exactly one**.
-5. Under **Content**, choose **Markdown body reference**.
+5. Under **Content**, choose **Metadata only**. The Content Block loads the
+   matching MDX file directly.
 6. Add these filters:
-   - `extension` **equals** `"mdx"` for collection entries, or `"md"` for the
-     manually created Markdown files in this guide
+   - `extension` **equals** `"mdx"`
    - `folder id` **equals** the quoted `posts` folder ID
    - `properties.slug` **equals** `system.params.slug`
    - `properties.draft` **does not equal** `true`
@@ -474,24 +476,42 @@ Add another Assets resource to the page-level **Dynamic data**:
 reports an error if two articles use the same slug. You do not need a
 Collection on the article page.
 
-**Markdown body reference** keeps article bodies out of the published content
-database. Webstudio first finds the matching article, then loads only that
-Markdown body from Assets.
+**Metadata only** keeps article bodies out of the published content database.
+The resource finds the matching article and returns its Asset ID. The Content
+Block then loads that MDX file directly.
+
+If `posts` is a content collection, return to **Collection settings → Entry
+page** and select this dynamic page. This enables **Open on canvas** for its
+entries.
 
 ## 6. Bind the article
 
-Bind the article components directly to `post.data`:
+Add a [Content Block](../core-components/content-block.md#store-content-in-an-mdx-file)
+and bind its **Source** to `post.data.id`. Every Assets query result includes its
+Asset ID, even when file metadata is disabled. The Content Block loads the
+matching article and adds an **MDX content** region for its body.
 
-- Heading: `post.data.properties.title`
-- Author: `post.data.properties.author`
-- Image source: `post.data.properties.featureImage.src`
-- Image alternative text:
-  `post.data.properties.featureImage.description ?? post.data.properties.title`
-- Markdown Embed code: `post.data.content.text`
+Build the complete article inside the Content Block:
 
-Add a [Markdown Embed](../core-components/markdown-embed.md) for the body. Style
-its nested headings, paragraphs, links, lists, and images once; the styles apply
-to every article.
+- Bind the heading directly to `document.frontmatter.title`.
+- Bind the author directly to `document.frontmatter.author`.
+- Bind the Image source directly to
+  `document.frontmatter.featureImage.src` and make the binding writable.
+- Bind the Image alternative text to
+  `document.frontmatter.featureImage.description`.
+- Place the **MDX content** region where the article body should render.
+- Style the standard Markdown elements in **Templates**, then add any custom
+  interactive elements editors should be able to insert.
+
+Keep each editable value directly bound to one frontmatter field. Computed
+expressions remain read-only. Put fixed wording in separate text elements and
+use a Date Time component for dates so Content mode shows the appropriate
+controls.
+
+Editors can now change the title, author, images, dates, body, links, and custom
+interactive elements directly on the canvas. These changes save back to the MDX
+file. Verify every article-owned value in Content mode before handing the site
+to an editor.
 
 In Page Settings, bind the fields needed for search and sharing:
 
@@ -502,29 +522,13 @@ In Page Settings, bind the fields needed for search and sharing:
 
 The status expression returns a real 404 when no article matches the URL.
 
-### Edit the complete article in Content mode
+### Render a read-only Markdown body
 
-The setup above uses a `.md` file and Markdown Embed when the article body is
-edited in the file editor. Use an `.mdx` file connected to a
-[Content Block](../core-components/content-block.md#store-content-in-an-mdx-file)
-when an editor should change the article visually in Content mode.
-
-1. Name the article files with the `.mdx` extension and change the resource's
-   `extension` filter from `md` to `mdx`.
-2. Change the article resource's **Content** setting to **Metadata only**. The
-   Content Block loads the selected file directly, so the resource does not
-   need to return its body.
-3. Replace the Markdown Embed with a Content Block and place its **Body** outlet
-   where the article body should render.
-4. Bind the Content Block's **Source** to `post.data.id`. Every Assets query
-   result includes its Asset ID, even when file metadata is disabled.
-5. Move the article title, image, excerpt, and other designed fields inside the
-   Content Block shell. Bind them directly to values such as
-   `document.frontmatter.title` and `document.frontmatter.featureImage.src`.
-
-Editors can now change the MDX body and directly bound frontmatter values on
-the canvas. Computed frontmatter expressions and values reached through a
-document `$ref` remain read-only; edit their source file instead.
+Use a `.md` file and [Markdown Embed](../core-components/markdown-embed.md) only
+when the article body does not need visual editing. Set the article resource's
+`extension` filter to `md` and **Content** to **Markdown body reference**, then
+bind the Markdown Embed code to `post.data.content.text`. Style its nested
+document elements once for every article.
 
 ## 7. Publish the article
 
@@ -542,7 +546,7 @@ filter. The metadata field does not automatically remove an article from a
 custom sitemap.
 
 To publish another collection article, choose **New entry**. For the manual
-workflow, duplicate the Markdown file and change its title, slug, publication
+workflow, duplicate the MDX file and change its title, slug, publication
 date, image, and body. The existing overview and dynamic page will render it
 without another page design.
 
