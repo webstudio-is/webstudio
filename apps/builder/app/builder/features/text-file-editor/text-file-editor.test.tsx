@@ -125,6 +125,7 @@ test("does not suggest registered custom components without templates", () => {
     metas: componentMetas,
   });
   expect(completions.map(({ name }) => name).sort()).toEqual([
+    "Alert",
     "CodeText",
     "Image",
   ]);

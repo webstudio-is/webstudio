@@ -1,6 +1,6 @@
 /** @jsxImportSource @webstudio-is/template */
 /** Assembles core templates that depend on registered React components. */
-import { createElement, type ElementType } from "react";
+import { createElement, type ElementType, type ReactNode } from "react";
 import { Webstudio1cIcon } from "@webstudio-is/icons/svg";
 import {
   blockComponent,
@@ -14,6 +14,7 @@ import { intrinsicCoreTemplates } from "@webstudio-is/sdk/core-templates";
 import {
   css,
   Parameter,
+  PlaceholderValue,
   setInstanceMeta,
   setTemplateMeta,
   type TemplateMeta,
@@ -22,6 +23,7 @@ import {
 import {
   CodeText,
   HtmlEmbed,
+  Paragraph,
 } from "@webstudio-is/sdk-components-react/components";
 import { componentsById } from "./components";
 
@@ -65,6 +67,18 @@ const createContentBlockMdxTemplate = (
       `Content Block component template "${descriptor.component}" is not registered`
     );
   }
+  const children =
+    descriptor.component === "CodeText"
+      ? 'const status = "ready";'
+      : descriptor.component === "Alert"
+        ? createElement(
+            Paragraph,
+            undefined,
+            new PlaceholderValue(
+              "Add helpful context here."
+            ) as unknown as ReactNode
+          )
+        : undefined;
   return setTemplateMeta(
     {
       name: getDefaultContentBlockTemplateName({
@@ -75,9 +89,7 @@ const createContentBlockMdxTemplate = (
     createElement(
       component as ElementType,
       { key: descriptor.resolutionKey },
-      descriptor.component === "CodeText"
-        ? 'const status = "ready";'
-        : undefined
+      children
     )
   );
 };

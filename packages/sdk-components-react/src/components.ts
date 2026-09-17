@@ -2,6 +2,7 @@ export { Slot } from "./slot";
 export { Fragment } from "./fragment";
 export { HtmlEmbed } from "./html-embed";
 export { MarkdownEmbed } from "./markdown-embed";
+export { Alert } from "./alert";
 export { Body } from "./body";
 export { Box } from "./box";
 export { Text } from "./text";

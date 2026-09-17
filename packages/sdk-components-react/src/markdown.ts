@@ -1,25 +1,56 @@
-import { micromark } from "micromark";
-import { gfm, gfmHtml } from "micromark-extension-gfm";
+import { toHtml } from "hast-util-to-html";
+import { gfmFromMarkdown } from "mdast-util-gfm";
 import { frontmatter } from "micromark-extension-frontmatter";
+import { gfm } from "micromark-extension-gfm";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { frontmatterFromMarkdown } from "mdast-util-frontmatter";
+import { toHast } from "mdast-util-to-hast";
 import { toString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
-import type { HtmlExtension } from "micromark-util-types";
 import sanitizeHtml from "sanitize-html";
 import type { ImageLoader } from "@webstudio-is/image";
+import {
+  getGithubAlertType,
+  transformGithubAlerts,
+} from "@webstudio-is/content-engine/remark-github-alerts";
 import { getSdkImageProps, type SdkImageProps } from "./image-utils";
 
-const getHeadingIds = (markdown: string) => {
+const parseMarkdown = (markdown: string) => {
+  const tree = fromMarkdown(markdown, {
+    extensions: [frontmatter(["yaml"]), gfm()],
+    mdastExtensions: [frontmatterFromMarkdown(["yaml"]), gfmFromMarkdown()],
+  });
+  transformGithubAlerts(tree);
   const slugger = new GithubSlugger();
-  const ids: string[] = [];
   const visit = (node: unknown) => {
     if (typeof node !== "object" || node === null) {
       return;
     }
     if ("type" in node && node.type === "heading") {
       const text = toString(node as Parameters<typeof toString>[0]);
-      ids.push(slugger.slug(text) || slugger.slug("heading"));
+      const data =
+        "data" in node && typeof node.data === "object" ? node.data : {};
+      Object.assign(node, {
+        data: {
+          ...data,
+          hProperties: { id: slugger.slug(text) || slugger.slug("heading") },
+        },
+      });
+    }
+    const alertType = getGithubAlertType(node);
+    if (alertType !== undefined) {
+      const data =
+        "data" in node && typeof node.data === "object" ? node.data : {};
+      Object.assign(node, {
+        data: {
+          ...data,
+          hName: "div",
+          hProperties: {
+            role: "note",
+            "data-state": alertType.toLowerCase(),
+          },
+        },
+      });
     }
     if ("children" in node && Array.isArray(node.children)) {
       for (const child of node.children) {
@@ -27,43 +58,8 @@ const getHeadingIds = (markdown: string) => {
       }
     }
   };
-  visit(
-    fromMarkdown(markdown, {
-      extensions: [frontmatter(["yaml"])],
-      mdastExtensions: [frontmatterFromMarkdown(["yaml"])],
-    })
-  );
-  return ids;
-};
-
-const createHeadingIdsHtmlExtension = (
-  headingIds: readonly string[]
-): HtmlExtension => {
-  let headingIndex = 0;
-  const takeHeadingId = () => headingIds[headingIndex++] ?? "heading";
-  return {
-    exit: {
-      atxHeadingSequence(token) {
-        if (this.getData("headingRank") !== undefined) {
-          return;
-        }
-        const rank = this.sliceSerialize(token).length;
-        this.setData("headingRank", rank);
-        this.lineEndingIfNeeded();
-        this.tag(`<h${rank} id="${this.encode(takeHeadingId())}">`);
-      },
-      setextHeading() {
-        const value = this.resume();
-        const rank = this.getData("headingRank");
-        this.lineEndingIfNeeded();
-        this.tag(`<h${rank} id="${this.encode(takeHeadingId())}">`);
-        this.raw(value);
-        this.tag(`</h${rank}>`);
-        this.setData("slurpAllLineEndings");
-        this.setData("headingRank");
-      },
-    },
-  };
+  visit(tree);
+  return tree;
 };
 
 const sanitizeMarkdownHtml = (
@@ -194,16 +190,6 @@ const createImageTransformer =
     return { tagName, attribs: transformedAttributes };
   };
 
-const createGfmHtmlExtension = () => {
-  const extension = gfmHtml();
-  // GFM tag filtering escapes embedded HTML before our stricter sanitizer can
-  // inspect it. Remove only those handlers and keep every other GFM renderer;
-  // sanitizeMarkdownHtml remains the security boundary for embedded markup.
-  delete extension.exit?.htmlFlowData;
-  delete extension.exit?.htmlTextData;
-  return extension;
-};
-
 /** Shared safe renderer used by both the authoring preview and published component. */
 export const renderMarkdownHtml = (
   markdown: string,
@@ -217,16 +203,10 @@ export const renderMarkdownHtml = (
     renderer?: "canvas" | "preview";
   } = {}
 ) => {
+  const tree = parseMarkdown(markdown);
+  const hast = toHast(tree, { allowDangerousHtml: true });
   const html = sanitizeMarkdownHtml(
-    micromark(markdown, {
-      allowDangerousHtml: true,
-      allowDangerousProtocol: true,
-      extensions: [frontmatter(["yaml"]), gfm()],
-      htmlExtensions: [
-        createGfmHtmlExtension(),
-        createHeadingIdsHtmlExtension(getHeadingIds(markdown)),
-      ],
-    }),
+    hast === undefined ? "" : toHtml(hast, { allowDangerousHtml: true }),
     { allowBlobImages }
   );
 

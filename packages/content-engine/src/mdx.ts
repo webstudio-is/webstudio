@@ -44,6 +44,10 @@ import {
   serializeMdxDocument,
 } from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
+import {
+  getGithubAlertType,
+  githubAlertHastHandler,
+} from "./remark-github-alerts";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -841,6 +845,7 @@ const rejectUnsupportedNode: Handler = (_state, value) => {
 };
 
 const mdxHandlers: Handlers = {
+  blockquote: githubAlertHastHandler,
   code: preserveWhitespace(defaultHandlers.code),
   html: rejectUnsupportedNode,
   inlineCode: preserveWhitespace(defaultHandlers.inlineCode),
@@ -934,6 +939,7 @@ const createMarkdownHastForMdx = (root: SyntaxTreeNode) => {
   const hast = toHast(root as Parameters<typeof toHast>[0], {
     allowDangerousHtml: true,
     handlers: {
+      blockquote: githubAlertHastHandler,
       code: mdxHandlers.code,
       inlineCode: mdxHandlers.inlineCode,
       listItem: mdxHandlers.listItem,
@@ -1206,6 +1212,7 @@ const mapHastNode = (
     );
   }
   const authoredMdxMode = findHastMdxMode(node);
+  const githubAlert = getGithubAlertType(node);
   const templateName = findHastTemplateName(node);
   const templateProps =
     templateName === undefined ? undefined : findHastTemplateProps(node);
@@ -1238,6 +1245,18 @@ const mapHastNode = (
       props,
       children: mapHastChildren(node, options),
       mdxMode: getHastMdxMode(node),
+      sourceRange: toSourceRange(node.position),
+    };
+  }
+  if (githubAlert !== undefined) {
+    return {
+      type: "template",
+      syntax: "jsx",
+      selfClosing: false,
+      name: "Alert",
+      props: [{ name: "variant", value: githubAlert.toLowerCase() }],
+      children: mapHastChildren(node, options),
+      mdxMode: "flow",
       sourceRange: toSourceRange(node.position),
     };
   }

@@ -72,7 +72,7 @@ test("renders named MDX heading components with their authored tag", async () =>
     origin: "https://builder.example",
   });
 
-  expect(html).toBe("<h1>h1</h1>\n");
+  expect(html).toBe("<h1>h1</h1>");
 });
 
 test("shows a placeholder for an empty component without a visible preview", async () => {

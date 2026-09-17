@@ -72,6 +72,30 @@ test("keeps the Content Block Image template free of local styles", () => {
   ).toEqual([]);
 });
 
+test("gives the Content Block Alert template sample text", () => {
+  const fragment = renderCoreTemplate(coreTemplates[blockComponent]);
+  const instances = new Map(
+    fragment.instances.map((instance) => [instance.id, instance])
+  );
+  const alert = fragment.instances.find(
+    ({ component }) => component === "Alert"
+  );
+  const paragraphChild = alert?.children[0];
+  const paragraph =
+    paragraphChild?.type === "id"
+      ? instances.get(paragraphChild.value)
+      : undefined;
+
+  expect(paragraph?.component).toBe("Paragraph");
+  expect(paragraph?.children).toEqual([
+    {
+      type: "text",
+      value: "Add helpful context here.",
+      placeholder: true,
+    },
+  ]);
+});
+
 test("generates ordered semantic defaults from their descriptors", () => {
   const fragment = renderCoreTemplate(coreTemplates[blockComponent]);
   const instances = new Map(

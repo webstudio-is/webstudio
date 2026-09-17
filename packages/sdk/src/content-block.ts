@@ -91,6 +91,7 @@ export const contentBlockMdxTemplateDescriptors = [
   defineMdxElementTemplate("li", "List Item", false),
   defineMdxElementTemplate("a", "Link", true),
   defineMdxComponentTemplate("Image", "Image", true),
+  defineMdxComponentTemplate("Alert", "Alert", true),
   defineMdxElementTemplate("hr", "Separator", true),
   defineMdxElementTemplate("br", "Line Break", false),
   defineMdxElementTemplate("blockquote", "Blockquote", true),
