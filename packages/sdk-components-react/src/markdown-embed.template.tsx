@@ -86,20 +86,6 @@ export const meta: TemplateMeta = {
         selector=" [data-state]"
         ws:style={markdownAlertStyle}
       />
-      <ws.descendant ws:label="Note alert" selector={' [data-state="note"]'} />
-      <ws.descendant ws:label="Tip alert" selector={' [data-state="tip"]'} />
-      <ws.descendant
-        ws:label="Important alert"
-        selector={' [data-state="important"]'}
-      />
-      <ws.descendant
-        ws:label="Warning alert"
-        selector={' [data-state="warning"]'}
-      />
-      <ws.descendant
-        ws:label="Caution alert"
-        selector={' [data-state="caution"]'}
-      />
       <ws.descendant ws:label="Code Text" selector=" code" />
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />
       <ws.descendant ws:label="List Item" selector=" li" />
