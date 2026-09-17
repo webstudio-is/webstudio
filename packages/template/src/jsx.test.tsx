@@ -768,9 +768,9 @@ test("combine local styles with tokens", () => {
     { id: "body:ws:style", type: "local" },
     { id: "0", type: "token", name: "primary" },
   ]);
-  // Selection should have both local style source and token
+  // Tokens provide defaults and local styles override them.
   expect(styleSourceSelections).toEqual([
-    { instanceId: "body", values: ["body:ws:style", "0"] },
+    { instanceId: "body", values: ["0", "body:ws:style"] },
   ]);
   expect(styles).toHaveLength(2);
 });
