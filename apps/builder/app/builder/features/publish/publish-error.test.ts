@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { TRPCClientError } from "@trpc/client";
 import { TrpcHttpError } from "~/shared/trpc/trpc-http-error";
 import {
   getPrePublishErrorMessage,
@@ -7,11 +8,13 @@ import {
 
 describe("getPrePublishErrorMessage", () => {
   test("describes a gateway timeout in terms of the publish flow", () => {
-    const error = new TrpcHttpError(
-      new Response("<!DOCTYPE html>", {
-        status: 504,
-        headers: { "content-type": "text/html" },
-      })
+    const error = TRPCClientError.from(
+      new TrpcHttpError(
+        new Response("<!DOCTYPE html>", {
+          status: 504,
+          headers: { "content-type": "text/html" },
+        })
+      )
     );
 
     expect(getPrePublishErrorMessage(error)).toBe(prePublishTimeoutMessage);

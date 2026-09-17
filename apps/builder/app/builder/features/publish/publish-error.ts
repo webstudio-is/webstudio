@@ -3,11 +3,21 @@ import { TrpcHttpError } from "~/shared/trpc/trpc-http-error";
 export const prePublishTimeoutMessage =
   "Pre-publish checks timed out. Publishing was not started. Please try again.";
 
+const findTrpcHttpError = (error: unknown) => {
+  if (error instanceof TrpcHttpError) {
+    return error;
+  }
+  if (error instanceof Error && error.cause instanceof TrpcHttpError) {
+    return error.cause;
+  }
+};
+
 export const getPrePublishErrorMessage = (error: unknown) => {
+  const httpError = findTrpcHttpError(error);
   if (
-    error instanceof TrpcHttpError &&
-    (error.status === 504 ||
-      error.platformError === "FUNCTION_INVOCATION_TIMEOUT")
+    httpError !== undefined &&
+    (httpError.status === 504 ||
+      httpError.platformError === "FUNCTION_INVOCATION_TIMEOUT")
   ) {
     return prePublishTimeoutMessage;
   }
