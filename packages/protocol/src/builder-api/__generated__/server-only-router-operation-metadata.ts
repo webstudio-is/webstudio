@@ -211,9 +211,10 @@ export const serverOnlyRouterOperationMetadata = {
                   minimum: 100,
                   maximum: 599,
                 },
-                duration: {
-                  type: "string",
-                  enum: ["under-1s", "1-10s", "10-30s", "over-30s"],
+                elapsedMs: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
                 },
                 issues: {
                   maxItems: 30,

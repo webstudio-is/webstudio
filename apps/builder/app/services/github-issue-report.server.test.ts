@@ -31,7 +31,7 @@ const report: IssueReportInput = {
       tool: "preview.start",
       code: "PROJECT_BUNDLE_INVALID",
       httpStatus: 504,
-      duration: "10-30s",
+      elapsedMs: 17_000,
       issues: [
         {
           path: ["assets", "0", "type"],
@@ -84,7 +84,7 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("- Tool: `preview.start`");
     expect(body).toContain("- Error code: `PROJECT_BUNDLE_INVALID`");
     expect(body).toContain("- HTTP status: `504`");
-    expect(body).toContain("- Duration: `10-30s`");
+    expect(body).toContain("- Duration: `17000ms`");
     expect(body).toContain("stale=styles");
     expect(body).toContain("version matches session=false");
     expect(body).toContain(

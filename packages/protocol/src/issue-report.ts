@@ -51,7 +51,7 @@ const issueReportRecentFailure = z
     tool: z.string().trim().min(1).max(160),
     code: z.string().trim().min(1).max(160),
     httpStatus: z.number().int().min(100).max(599).optional(),
-    duration: z.enum(["under-1s", "1-10s", "10-30s", "over-30s"]).optional(),
+    elapsedMs: z.number().int().nonnegative().optional(),
     issues: z.array(issueReportFailureIssue).max(30).optional(),
   })
   .strict();

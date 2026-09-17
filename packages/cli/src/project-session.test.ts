@@ -169,7 +169,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual([]);
 });
 
-test("captures bounded failure timing and HTTP status", () => {
+test("captures failure timing and HTTP status", () => {
   expect(
     createIssueReportFailure(
       "preview-asset-query",
@@ -182,7 +182,7 @@ test("captures bounded failure timing and HTTP status", () => {
     tool: "preview-asset-query",
     code: "MCP_TOOL_FAILED",
     httpStatus: 504,
-    duration: "10-30s",
+    elapsedMs: 17_000,
   });
 });
 

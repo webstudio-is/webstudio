@@ -263,15 +263,6 @@ export const createIssueReportRuntime = (
   ...diagnostics,
 });
 
-const getIssueReportDuration = (elapsedMs: number) =>
-  elapsedMs < 1_000
-    ? ("under-1s" as const)
-    : elapsedMs < 10_000
-      ? ("1-10s" as const)
-      : elapsedMs < 30_000
-        ? ("10-30s" as const)
-        : ("over-30s" as const);
-
 export const createIssueReportFailure = (
   canonicalTool: string,
   error: unknown,
@@ -306,9 +297,7 @@ export const createIssueReportFailure = (
     httpStatus <= 599
       ? { httpStatus }
       : {}),
-    ...(elapsedMs === undefined
-      ? {}
-      : { duration: getIssueReportDuration(elapsedMs) }),
+    ...(elapsedMs === undefined ? {} : { elapsedMs }),
     ...(issues === undefined || issues.length === 0 ? {} : { issues }),
   };
 };

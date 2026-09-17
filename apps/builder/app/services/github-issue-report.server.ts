@@ -63,9 +63,9 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     ...(failure.httpStatus === undefined
       ? []
       : [`- HTTP status: \`${failure.httpStatus}\``]),
-    ...(failure.duration === undefined
+    ...(failure.elapsedMs === undefined
       ? []
-      : [`- Duration: \`${failure.duration}\``]),
+      : [`- Duration: \`${failure.elapsedMs}ms\``]),
     ...(issues.length === 0
       ? []
       : [
