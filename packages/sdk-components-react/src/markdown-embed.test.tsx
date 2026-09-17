@@ -111,17 +111,13 @@ Hello, world!
   test.each(["note", "tip", "important", "warning", "caution"])(
     "renders a GitHub-style %s alert",
     (type) => {
-      const title = `${type[0].toUpperCase()}${type.slice(1)}`;
       const html = renderToStaticMarkup(
         <MarkdownEmbed
           code={`> [!${type.toUpperCase()}]\n> **Highlighted** content with a [link](https://example.com).\n>\n> - First item\n> - Second item\n>\n> [Unsafe](javascript:alert("unsafe"))`}
         />
       );
 
-      expect(html).toContain(
-        `<div class="markdown-alert markdown-alert-${type}" role="note" data-variant="${type}">`
-      );
-      expect(html).toContain(`<p class="markdown-alert-title">${title}</p>`);
+      expect(html).toContain(`<div role="note" data-state="${type}">`);
       expect(html).toContain(
         '<p><strong>Highlighted</strong> content with a <a href="https://example.com">link</a>.</p>'
       );
@@ -139,7 +135,7 @@ Hello, world!
     );
 
     expect(html.match(/<blockquote>/g)).toHaveLength(4);
-    expect(html).not.toContain("markdown-alert");
+    expect(html).not.toContain("data-state");
     expect(html).toContain("[!INFO]");
     expect(html).toContain("Prefix [!NOTE]");
     expect(html).toContain("[!note]");

@@ -19,8 +19,8 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
+  markdownAlertTypes,
   markdownAlertVariants,
-  type MarkdownAlertType,
   type MarkdownAlertVariant,
 } from "@webstudio-is/content-engine/markdown-alerts";
 
@@ -370,12 +370,13 @@ const alertAdapter: MdxComponentAdapter = {
       return;
     }
     const variant = values.get("variant") ?? "note";
-    if (Object.hasOwn(markdownAlertVariants, variant) === false) {
+    const type = markdownAlertVariants[variant as MarkdownAlertVariant];
+    if (type === undefined) {
       return;
     }
     return {
       ...original,
-      markdownAlert: variant.toUpperCase() as MarkdownAlertType,
+      markdownAlert: type,
       children: authoredChildren,
     };
   },
@@ -393,7 +394,7 @@ const alertAdapter: MdxComponentAdapter = {
         {
           prop: {
             name: "variant",
-            value: node.markdownAlert.toLowerCase() as MarkdownAlertVariant,
+            value: markdownAlertTypes[node.markdownAlert],
           },
         },
       ],

@@ -8,7 +8,6 @@ import GithubSlugger from "github-slugger";
 import type { HtmlExtension } from "micromark-util-types";
 import {
   defaultTreeAdapter,
-  html as parse5Html,
   parseFragment,
   serialize,
   type DefaultTreeAdapterMap,
@@ -258,33 +257,11 @@ const transformMarkdownAlerts = (html: string) => {
       ) {
         const marker = getMarkdownAlertMarker(markerNode.value);
         if (marker !== undefined) {
-          const title = markdownAlertTypes[marker.type];
-          const type = marker.type.toLowerCase();
-          const existingClass = node.attrs.find(
-            (attribute) => attribute.name === "class"
-          )?.value;
+          const state = markdownAlertTypes[marker.type];
           node.tagName = "div";
           node.nodeName = "div";
-          setAttribute(
-            node,
-            "class",
-            [existingClass, "markdown-alert", `markdown-alert-${type}`]
-              .filter(Boolean)
-              .join(" ")
-          );
           setAttribute(node, "role", "note");
-          setAttribute(node, "data-variant", type);
-
-          const titleParagraph = defaultTreeAdapter.createElement(
-            "p",
-            parse5Html.NS.HTML,
-            [{ name: "class", value: "markdown-alert-title" }]
-          );
-          defaultTreeAdapter.appendChild(
-            titleParagraph,
-            defaultTreeAdapter.createTextNode(title)
-          );
-          defaultTreeAdapter.insertBefore(node, titleParagraph, paragraph);
+          setAttribute(node, "data-state", state);
 
           markerNode.value = markerNode.value.slice(marker.length);
           if (markerNode.value === "" && paragraph.childNodes.length === 1) {

@@ -10,15 +10,15 @@ Use Alert for information that deserves extra attention without interrupting the
 
 Add Alert from **Components > Text**, then edit its paragraph or add other content inside it.
 
-Choose **Variant** under **Properties & attributes** to set the alert to **Note**, **Tip**, **Important**, **Warning**, or **Caution**. The variant changes the visible title and exposes a matching class such as `markdown-alert-warning` for styling.
+Choose **Variant** under **Properties & attributes** to set the alert to **Note**, **Tip**, **Important**, **Warning**, or **Caution**.
 
 ## Styling
 
-Style the Alert instance for its container appearance. Select its **Alert title** descendant to style the generated title independently from the authored content.
+Style the Alert instance for its container appearance. The selected variant produces the corresponding component state, so you can style **Note**, **Tip**, **Important**, **Warning**, and **Caution** independently in the states menu.
 
 Alerts created from GitHub-style syntax in a Content Block `.mdx` file become Alert component instances. Changing the instance's **Variant** property updates the alert marker when Webstudio saves the MDX source.
 
-Markdown Embed supports the same variants and markup contract, so styles based on the `markdown-alert` classes can be applied consistently.
+Markdown Embed supports the same variants and rendered `data-state` values.
 
 ## Related
 

@@ -1,6 +1,5 @@
 /** @jsxImportSource @webstudio-is/template */
 import {
-  ws,
   css,
   PlaceholderValue,
   setInstanceMeta,
@@ -46,7 +45,6 @@ export const Alert: TemplateMeta = {
   description: "Highlight information that deserves extra attention.",
   template: (
     <AlertComponent variant="note">
-      <ws.descendant ws:label="Alert title" selector=" .markdown-alert-title" />
       <Paragraph>{new PlaceholderValue("Add helpful context here.")}</Paragraph>
     </AlertComponent>
   ),

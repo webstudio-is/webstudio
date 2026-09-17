@@ -9,6 +9,13 @@ export const meta: WsComponentMeta = {
     category: "instance",
     children: ["instance", descendantComponent],
   },
+  states: [
+    { label: "Note", selector: '[data-state="note"]' },
+    { label: "Tip", selector: '[data-state="tip"]' },
+    { label: "Important", selector: '[data-state="important"]' },
+    { label: "Warning", selector: '[data-state="warning"]' },
+    { label: "Caution", selector: '[data-state="caution"]' },
+  ],
   initialProps: ["variant", "id", "class"],
   props: {
     ...props,

@@ -80,21 +80,25 @@ export const meta: TemplateMeta = {
       <ws.descendant ws:label="Link" selector=" a" />
       <ws.descendant ws:label="Image" selector=" img" />
       <ws.descendant ws:label="Blockquote" selector=" blockquote" />
-      <ws.descendant ws:label="Alert" selector=" .markdown-alert" />
-      <ws.descendant ws:label="Alert title" selector=" .markdown-alert-title" />
-      <ws.descendant ws:label="Note alert" selector=" .markdown-alert-note" />
-      <ws.descendant ws:label="Tip alert" selector=" .markdown-alert-tip" />
+      <ws.descendant
+        ws:label="Alert"
+        selector={
+          ' :where([data-state="note"], [data-state="tip"], [data-state="important"], [data-state="warning"], [data-state="caution"])'
+        }
+      />
+      <ws.descendant ws:label="Note alert" selector={' [data-state="note"]'} />
+      <ws.descendant ws:label="Tip alert" selector={' [data-state="tip"]'} />
       <ws.descendant
         ws:label="Important alert"
-        selector=" .markdown-alert-important"
+        selector={' [data-state="important"]'}
       />
       <ws.descendant
         ws:label="Warning alert"
-        selector=" .markdown-alert-warning"
+        selector={' [data-state="warning"]'}
       />
       <ws.descendant
         ws:label="Caution alert"
-        selector=" .markdown-alert-caution"
+        selector={' [data-state="caution"]'}
       />
       <ws.descendant ws:label="Code Text" selector=" code" />
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />

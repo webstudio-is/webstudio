@@ -18,20 +18,11 @@ export const Alert = forwardRef<ElementRef<typeof defaultTag>, Props>(
     return (
       <div
         {...props}
-        className={[
-          className,
-          "markdown-alert",
-          `markdown-alert-${normalizedVariant}`,
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className={className}
         role={role}
-        data-variant={normalizedVariant}
+        data-state={normalizedVariant}
         ref={ref}
       >
-        <p className="markdown-alert-title">
-          {markdownAlertVariants[normalizedVariant]}
-        </p>
         {children}
       </div>
     );
