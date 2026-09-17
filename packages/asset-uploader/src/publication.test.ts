@@ -371,4 +371,37 @@ describe("published asset data", () => {
       [finalArtifact],
     ]);
   });
+
+  test("keeps the initial artifact when its dependency plan is already stable", async () => {
+    const artifact = { documents: [{ _id: "article.mdx" }] } as never;
+    const plan = { queries: [{ id: "mdx:article" }] } as never;
+    const prepareIndex = vi.fn().mockResolvedValue(artifact);
+    const resolvePlan = vi.fn(() => plan);
+    const assetData = { assets: [], assetFolders: [] };
+
+    const result = await preparePublishedAssetData(
+      {
+        projectId: "project-1",
+        context: {} as never,
+        assetStore: {} as never,
+        contentDatabaseMaxBytes: 512_000,
+        plan,
+        retainedAssetIds: [],
+        resolvePlan,
+      },
+      {
+        createRepository: vi.fn(() => ({
+          prepareIndex,
+          validateCollections: vi.fn(),
+          withIndexPreparationSession:
+            withIndexPreparationSession(prepareIndex),
+        })),
+        loadAssetDataByProject: vi.fn().mockResolvedValue(assetData),
+      } as never
+    );
+
+    expect(result.artifact).toBe(artifact);
+    expect(prepareIndex).toHaveBeenCalledOnce();
+    expect(resolvePlan).toHaveBeenCalledOnce();
+  });
 });

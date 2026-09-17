@@ -158,6 +158,12 @@ export const preparePublishedAssetData = async (
           let artifact = await prepareIndex(plan);
           if (resolvePlan !== undefined) {
             let resolvedPlan = await resolvePlan(artifact);
+            if (
+              serializeJsonDeterministically(plan) ===
+              serializeJsonDeterministically(resolvedPlan)
+            ) {
+              return artifact;
+            }
             for (
               let dependencyPass = 0;
               dependencyPass < 20;
