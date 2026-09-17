@@ -188,18 +188,10 @@ export const getCliProjectRestorePointsFile = (
   );
 const compatibilityVersion = "cli-project-session-v1";
 const issueReportPathRoots = new Set([
-  "assets",
-  "dataSources",
+  ...builderNamespaces,
   "fragment",
   "input",
-  "instances",
-  "pages",
-  "props",
   "query",
-  "resources",
-  "styles",
-  "styleSources",
-  "styleSourceSelections",
   "updates",
   "values",
 ]);
@@ -259,7 +251,8 @@ const publicOperationById = new Map(
 );
 
 export const createIssueReportRuntime = (
-  recentFailure?: IssueReportRecentFailure
+  recentFailure?: IssueReportRecentFailure,
+  diagnostics?: Pick<IssueReportRuntime, "session" | "preview">
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
@@ -270,13 +263,25 @@ export const createIssueReportRuntime = (
   apiContractVersion: publicApiContractVersion,
   bundleVersion,
   recentFailure,
+  ...diagnostics,
 });
+
+const getIssueReportDuration = (elapsedMs: number) =>
+  elapsedMs < 1_000
+    ? ("under-1s" as const)
+    : elapsedMs < 10_000
+      ? ("1-10s" as const)
+      : elapsedMs < 30_000
+        ? ("10-30s" as const)
+        : ("over-30s" as const);
 
 export const createIssueReportFailure = (
   canonicalTool: string,
-  error: unknown
+  error: unknown,
+  elapsedMs?: number
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
+  const httpStatus = (error as { status?: unknown })?.status;
   const issues =
     errorCode === undefined
       ? undefined
@@ -286,19 +291,28 @@ export const createIssueReportFailure = (
             // Keep only the namespace and array index. Leaf keys may contain
             // project data, while the prefix is enough to locate the failing
             // input shape (for example `updates[0]` or `assets[0]`).
-            path: issue.path.filter(
-              (segment, index) =>
-                index < 2 &&
-                (index === 0
-                  ? issueReportPathRoots.has(segment)
-                  : /^\d+$/.test(segment))
-            ),
+            path: issueReportPathRoots.has(issue.path[0] ?? "")
+              ? [
+                  issue.path[0],
+                  ...(/^\d+$/.test(issue.path[1] ?? "") ? [issue.path[1]] : []),
+                ]
+              : [],
             code: issue.code,
             constraint: issue.constraint,
           }));
   return {
     tool: canonicalTool,
     code: errorCode ?? "MCP_TOOL_FAILED",
+    ...(typeof httpStatus === "number" &&
+    Number.isInteger(httpStatus) &&
+    httpStatus >= 100 &&
+    httpStatus <= 599
+      ? { httpStatus }
+      : {}),
+    ...(elapsedMs === undefined
+      ? {}
+      : { duration: getIssueReportDuration(elapsedMs) }),
+    subsequentSuccesses: 0,
     ...(issues === undefined || issues.length === 0 ? {} : { issues }),
   };
 };

@@ -8830,7 +8830,11 @@ describe("project session mcp adapter", () => {
           },
         })
       );
-      expect(onToolFailure).toHaveBeenCalledWith("list-pages", error);
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "list-pages",
+        error,
+        expect.any(Number)
+      );
 
       await client.callTool({
         name: "customer/project",

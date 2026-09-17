@@ -16,6 +16,7 @@ import {
   isReadOnlyProjectSessionMcpToolCall,
 } from "@webstudio-is/project-build/mcp";
 import {
+  builderNamespaces,
   getProjectBasicAuthCredentials,
   type BuilderNamespace,
 } from "@webstudio-is/project-build/contracts";
@@ -1860,7 +1861,34 @@ const createCliMcpHost = async ({
     connection: apiConnection,
     projectRoot,
     sessionProjectId: projectId,
-    issueReportRuntime: () => createIssueReportRuntime(recentFailure),
+    issueReportRuntime: () => {
+      const snapshot = getLoadedProjectSessionSnapshot(session);
+      const namespacesByStatus = (status: string) =>
+        builderNamespaces.filter(
+          (namespace) =>
+            (snapshot.freshness[namespace]?.status ?? "missing") === status
+        );
+      const previewStatus = previewFreshness.status();
+      return createIssueReportRuntime(recentFailure, {
+        session: {
+          freshNamespaces: namespacesByStatus("fresh"),
+          staleNamespaces: namespacesByStatus("stale"),
+          missingNamespaces: namespacesByStatus("missing"),
+          invalidatedNamespaces: namespacesByStatus("invalidated"),
+        },
+        preview: {
+          stale: previewStatus.stale,
+          hasRenderedVersion:
+            previewStatus.renderedProjectVersion !== undefined,
+          ...(previewStatus.renderedProjectVersion === undefined
+            ? {}
+            : {
+                renderedVersionMatchesSession:
+                  previewStatus.renderedProjectVersion === snapshot.version,
+              }),
+        },
+      });
+    },
   });
   const restorePointStorage = createCliProjectRestorePointStorage(
     getCliProjectRestorePointsFile(projectRoot, projectId)
@@ -2147,8 +2175,20 @@ const createCliMcpHost = async ({
     host,
     apiContract,
     toolCount: operations.length,
-    recordToolFailure(canonicalTool: string, error: unknown) {
-      recentFailure = createIssueReportFailure(canonicalTool, error);
+    recordToolFailure(
+      canonicalTool: string,
+      error: unknown,
+      elapsedMs: number
+    ) {
+      recentFailure = createIssueReportFailure(canonicalTool, error, elapsedMs);
+    },
+    recordToolSuccess(canonicalTool: string) {
+      if (canonicalTool !== "report-issue" && recentFailure !== undefined) {
+        recentFailure.subsequentSuccesses = Math.min(
+          100,
+          (recentFailure.subsequentSuccesses ?? 0) + 1
+        );
+      }
     },
     reportLog(message: string) {
       if (message.startsWith("ready with ")) {
@@ -2732,6 +2772,7 @@ export const mcp = async (
     toolCount,
     reportLog,
     recordToolFailure,
+    recordToolSuccess,
     apiContract,
     dispose,
   } = await createCliMcpHost({
@@ -2750,6 +2791,7 @@ export const mcp = async (
     toolNameFormat: options.toolNameFormat,
     getErrorCode: getStableErrorCode,
     onToolFailure: recordToolFailure,
+    onToolSuccess: recordToolSuccess,
     reportLog: (_level, message) => {
       reportLog(message);
     },

@@ -37,6 +37,16 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
           `- API contract: ${runtime.apiContractVersion}`,
           `- Bundle contract: ${runtime.bundleVersion ?? "unknown"}`,
         ]),
+    ...(runtime?.session === undefined
+      ? []
+      : [
+          `- Session namespaces: fresh=${runtime.session.freshNamespaces.join(",") || "none"}; stale=${runtime.session.staleNamespaces.join(",") || "none"}; missing=${runtime.session.missingNamespaces.join(",") || "none"}; invalidated=${runtime.session.invalidatedNamespaces.join(",") || "none"}`,
+        ]),
+    ...(runtime?.preview === undefined
+      ? []
+      : [
+          `- Preview: stale=${runtime.preview.stale}; rendered=${runtime.preview.hasRenderedVersion}; version matches session=${runtime.preview.renderedVersionMatchesSession ?? "unknown"}`,
+        ]),
   ].join("\n");
 
 const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
@@ -50,6 +60,13 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     "",
     `- Tool: \`${failure.tool}\``,
     `- Error code: \`${failure.code}\``,
+    ...(failure.httpStatus === undefined
+      ? []
+      : [`- HTTP status: \`${failure.httpStatus}\``]),
+    ...(failure.duration === undefined
+      ? []
+      : [`- Duration: \`${failure.duration}\``]),
+    `- Successful tools after failure: ${failure.subsequentSuccesses ?? 0}`,
     ...(issues.length === 0
       ? []
       : [

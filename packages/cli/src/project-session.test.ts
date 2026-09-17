@@ -69,6 +69,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   expect(createIssueReportFailure("preview.start", error)).toEqual({
     tool: "preview.start",
     code: "PROJECT_BUNDLE_INVALID",
+    subsequentSuccesses: 0,
     issues: [
       {
         path: ["assets", "0"],
@@ -86,6 +87,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual({
     tool: "unknown",
     code: "MCP_TOOL_FAILED",
+    subsequentSuccesses: 0,
   });
 
   expect(
@@ -104,6 +106,7 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual({
     tool: "insert-fragment",
     code: "INVALID_INPUT",
+    subsequentSuccesses: 0,
     issues: [
       {
         path: ["fragment"],
@@ -139,6 +142,36 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
     })
   );
   expect(rootSecret).not.toContain(sensitiveKey);
+
+  expect(
+    createIssueReportFailure("update-styles", {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: [sensitiveKey, "0"],
+          code: "invalid_type",
+          message: "Expected string",
+          constraint: "type:string",
+        },
+      ],
+    }).issues?.[0].path
+  ).toEqual([]);
+});
+
+test("captures bounded failure timing and HTTP status", () => {
+  expect(
+    createIssueReportFailure(
+      "preview-asset-query",
+      Object.assign(new Error("Gateway timeout"), { status: 504 }),
+      17_000
+    )
+  ).toEqual({
+    tool: "preview-asset-query",
+    code: "MCP_TOOL_FAILED",
+    httpStatus: 504,
+    duration: "10-30s",
+    subsequentSuccesses: 0,
+  });
 });
 
 test("scopes project session files for explicitly selected projects", () => {
