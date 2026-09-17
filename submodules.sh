@@ -19,7 +19,9 @@ git submodule foreach '
   if git ls-remote --exit-code --heads origin "$SUBMODULE_BRANCH" > /dev/null; then
     git checkout "$SUBMODULE_BRANCH" && git pull origin "$SUBMODULE_BRANCH"
   else
-    # Fallback to "main" if the branch does not exist
-    git checkout "main" && git pull origin "main"
+    # Keep the commit recorded by the superproject when no matching branch exists.
+    # Checking out main here changes the submodule gitlink and makes otherwise
+    # clean workflows (for example fixture tests) appear to have modifications.
+    echo "Branch \"$SUBMODULE_BRANCH\" does not exist; keeping the recorded submodule commit"
   fi
 '
