@@ -1,12 +1,14 @@
+import { decodeNamedCharacterReference } from "decode-named-character-reference";
+
 const assetAttributes = new Map<string, ReadonlySet<string>>([
   ["audio", new Set(["src"])],
   ["embed", new Set(["src"])],
-  ["img", new Set(["src"])],
+  ["img", new Set(["src", "srcset"])],
   ["input", new Set(["src"])],
   ["link", new Set(["href"])],
   ["object", new Set(["data"])],
   ["script", new Set(["src"])],
-  ["source", new Set(["src"])],
+  ["source", new Set(["src", "srcset"])],
   ["track", new Set(["src"])],
   ["video", new Set(["src", "poster"])],
 ]);
@@ -15,6 +17,8 @@ const rawTextElements = new Set([
   "iframe",
   "noembed",
   "noframes",
+  "noscript",
+  "plaintext",
   "script",
   "style",
   "textarea",
@@ -27,38 +31,126 @@ const isWhitespace = (character: string | undefined) =>
 const isTagNameCharacter = (character: string | undefined) =>
   character !== undefined && /[A-Za-z0-9:-]/.test(character);
 
+const decodeHtmlCharacterReferences = (value: string) =>
+  value.replace(
+    /&(#(?:\d+|x[\da-f]+)|[a-z][\da-z]+);/gi,
+    (reference, name: string) => {
+      if (name[0] !== "#") {
+        return decodeNamedCharacterReference(name) || reference;
+      }
+      const isHex = name[1]?.toLowerCase() === "x";
+      const radix = isHex ? 16 : 10;
+      const codePoint = Number.parseInt(name.slice(isHex ? 2 : 1), radix);
+      if (
+        Number.isNaN(codePoint) ||
+        codePoint === 0 ||
+        codePoint > 0x10ffff ||
+        (codePoint >= 0xd800 && codePoint <= 0xdfff)
+      ) {
+        return "�";
+      }
+      return String.fromCodePoint(codePoint);
+    }
+  );
+
+const encodeAssetPathSegment = (segment: string) => {
+  const encoded = encodeURIComponent(segment);
+  if (encoded === ".") {
+    return "%2E";
+  }
+  if (encoded === "..") {
+    return "%2E%2E";
+  }
+  return encoded;
+};
+
+const normalizeAssetPath = (path: string) =>
+  path
+    .split("/")
+    .map((segment) => {
+      try {
+        return encodeAssetPathSegment(decodeURIComponent(segment));
+      } catch {
+        return encodeAssetPathSegment(segment);
+      }
+    })
+    .join("/");
+
 const resolveAssetUrl = (
   value: string,
   assetUrlsByPath: Readonly<Record<string, string>>
 ) => {
+  value = decodeHtmlCharacterReferences(value);
   if (value.startsWith("/") === false || value.startsWith("//")) {
     return;
   }
 
   const base = "https://webstudio.invalid";
-  let reference: URL;
-  try {
-    reference = new URL(value, base);
-  } catch {
-    return;
-  }
-
-  const assetUrl = assetUrlsByPath[reference.pathname];
+  const hashIndex = value.indexOf("#");
+  const beforeHash = hashIndex === -1 ? value : value.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : value.slice(hashIndex);
+  const searchIndex = beforeHash.indexOf("?");
+  const pathname =
+    searchIndex === -1 ? beforeHash : beforeHash.slice(0, searchIndex);
+  const search = searchIndex === -1 ? "" : beforeHash.slice(searchIndex);
+  const assetUrl = assetUrlsByPath[normalizeAssetPath(pathname)];
   if (assetUrl === undefined) {
     return;
   }
 
   const isAbsolute = URL.canParse(assetUrl);
   const resolved = new URL(assetUrl, base);
-  for (const [name, value] of reference.searchParams) {
+  for (const [name, value] of new URLSearchParams(search)) {
     resolved.searchParams.append(name, value);
   }
-  if (reference.hash !== "") {
-    resolved.hash = reference.hash;
+  if (hash !== "") {
+    resolved.hash = hash;
   }
   return isAbsolute
     ? resolved.href
     : `${resolved.pathname}${resolved.search}${resolved.hash}`;
+};
+
+const resolveSrcset = (
+  value: string,
+  assetUrlsByPath: Readonly<Record<string, string>>
+) => {
+  const replacements: Replacement[] = [];
+  let index = 0;
+  while (index < value.length) {
+    while (
+      index < value.length &&
+      (isWhitespace(value[index]) || value[index] === ",")
+    ) {
+      index += 1;
+    }
+    const urlStart = index;
+    while (index < value.length && isWhitespace(value[index]) === false) {
+      index += 1;
+    }
+    let urlEnd = index;
+    while (urlEnd > urlStart && value[urlEnd - 1] === ",") {
+      urlEnd -= 1;
+    }
+    const resolved = resolveAssetUrl(
+      value.slice(urlStart, urlEnd),
+      assetUrlsByPath
+    );
+    if (resolved !== undefined) {
+      replacements.push({ start: urlStart, end: urlEnd, value: resolved });
+    }
+    while (index < value.length && value[index] !== ",") {
+      index += 1;
+    }
+  }
+  if (replacements.length === 0) {
+    return;
+  }
+  let resolved = value;
+  for (const replacement of replacements.toReversed()) {
+    resolved = `${resolved.slice(0, replacement.start)}${replacement.value}${resolved.slice(replacement.end)}`;
+  }
+  return resolved;
 };
 
 type Replacement = { start: number; end: number; value: string };
@@ -151,16 +243,37 @@ const collectAttributeReplacements = ({
       index += 1;
     }
     if (attributeNames.has(name)) {
-      const value = resolveAssetUrl(
-        code.slice(valueStart, valueEnd),
-        assetUrlsByPath
-      );
+      const attributeValue = code.slice(valueStart, valueEnd);
+      const value =
+        name === "srcset"
+          ? resolveSrcset(attributeValue, assetUrlsByPath)
+          : resolveAssetUrl(attributeValue, assetUrlsByPath);
       if (value !== undefined) {
         replacements.push({ start: valueStart, end: valueEnd, value });
       }
     }
   }
   return replacements;
+};
+
+const findRawTextEnd = (code: string, tagName: string, start: number) => {
+  if (tagName === "plaintext") {
+    return code.length;
+  }
+  const lowerCode = code.toLowerCase();
+  let index = start;
+  while (index < code.length) {
+    const closingTag = lowerCode.indexOf(`</${tagName}`, index);
+    if (closingTag === -1) {
+      return code.length;
+    }
+    const afterName = code[closingTag + tagName.length + 2];
+    if (afterName === ">" || afterName === "/" || isWhitespace(afterName)) {
+      return closingTag;
+    }
+    index = closingTag + tagName.length + 2;
+  }
+  return code.length;
 };
 
 export const resolveHtmlEmbedAssetUrls = (
@@ -175,7 +288,6 @@ export const resolveHtmlEmbedAssetUrls = (
   }
 
   const replacements: Replacement[] = [];
-  const lowerCode = code.toLowerCase();
   let index = 0;
   while (index < code.length) {
     const tagStart = code.indexOf("<", index);
@@ -220,8 +332,7 @@ export const resolveHtmlEmbedAssetUrls = (
     }
     index = tagEnd + 1;
     if (rawTextElements.has(tagName)) {
-      const closingTag = lowerCode.indexOf(`</${tagName}`, index);
-      index = closingTag === -1 ? code.length : closingTag;
+      index = findRawTextEnd(code, tagName, index);
     }
   }
 
