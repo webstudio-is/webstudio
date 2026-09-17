@@ -1,23 +1,17 @@
-import { TrpcHttpError } from "~/shared/trpc/trpc-http-error";
+import { TRPCClientError } from "@trpc/client";
 
 export const prePublishTimeoutMessage =
   "Pre-publish checks timed out. Publishing was not started. Please try again.";
 
-const findTrpcHttpError = (error: unknown) => {
-  if (error instanceof TrpcHttpError) {
-    return error;
-  }
-  if (error instanceof Error && error.cause instanceof TrpcHttpError) {
-    return error.cause;
-  }
-};
-
 export const getPrePublishErrorMessage = (error: unknown) => {
-  const httpError = findTrpcHttpError(error);
+  const response =
+    error instanceof TRPCClientError && error.meta?.response instanceof Response
+      ? error.meta.response
+      : undefined;
   if (
-    httpError !== undefined &&
-    (httpError.status === 504 ||
-      httpError.platformError === "FUNCTION_INVOCATION_TIMEOUT")
+    response !== undefined &&
+    (response.status === 504 ||
+      response.headers.get("x-vercel-error") === "FUNCTION_INVOCATION_TIMEOUT")
   ) {
     return prePublishTimeoutMessage;
   }

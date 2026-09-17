@@ -167,7 +167,6 @@ test("validates collections when publication does not need a content index", asy
       preparePublishedAssetData,
       validatePublishedAssetCollections,
       createAssetClient: vi.fn(() => assetStore),
-      resolvePublishedMdxDependencyClosure: vi.fn(),
     }
   );
 

@@ -51,9 +51,8 @@ import {
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
 import {
-  formatMdxTemplatePublishDiagnostics,
   getContentDatabasePublishDiagnostics,
-  type MdxTemplateOmission,
+  getMdxTemplatePublishDiagnostics,
 } from "./content-database.server";
 
 const projectBundleInput = z.object({
@@ -306,18 +305,10 @@ export const buildRouter = router({
           "You don't have permission to edit this project."
         );
       }
-      let mdxTemplateOmissions: MdxTemplateOmission[] = [];
-      const bundle = await loadProjectBundleByProjectId(input.projectId, ctx, {
-        onMdxTemplateOmissions: (omissions) => {
-          mdxTemplateOmissions = omissions;
-        },
-      });
+      const bundle = await loadProjectBundleByProjectId(input.projectId, ctx);
       return {
         ...getContentDatabasePublishDiagnostics(bundle),
-        mdxOmissions: formatMdxTemplatePublishDiagnostics(
-          bundle,
-          mdxTemplateOmissions
-        ),
+        mdxOmissions: await getMdxTemplatePublishDiagnostics(bundle),
       };
     }),
 

@@ -11,13 +11,6 @@ import type {
 import { createRecursiveProxy } from "@trpc/server/shared";
 import { useMemo, useState } from "react";
 import { fetch } from "~/shared/fetch.client";
-import { ensureTrpcJsonResponse } from "./trpc-http-error";
-
-const trpcFetch: typeof fetch = async (requestInfo, requestInit) => {
-  const response = await fetch(requestInfo, requestInit);
-  ensureTrpcJsonResponse(response);
-  return response;
-};
 
 export const createNativeClient = (
   headers?: Record<string, string | undefined>
@@ -25,7 +18,7 @@ export const createNativeClient = (
   createTRPCProxyClient<AppRouter>({
     links: [
       httpBatchLink({
-        fetch: trpcFetch,
+        fetch,
         headers: () => headers ?? {},
         url: "/trpc",
       }),
