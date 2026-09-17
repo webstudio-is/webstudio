@@ -44,7 +44,10 @@ import {
   serializeMdxDocument,
 } from "./mdx-serialization";
 import { MarkdownMetadataError } from "./markdown-errors";
-import { getGithubAlertType } from "./remark-github-alerts";
+import {
+  getGithubAlertType,
+  githubAlertHastHandler,
+} from "./remark-github-alerts";
 
 export type MdxSourcePoint = Readonly<{
   line: number;
@@ -800,15 +803,6 @@ const mapListItem: Handler = (state, value, parent) => {
   return result;
 };
 
-const mapGithubAlert: Handler = (state, value) => {
-  const result = defaultHandlers.blockquote(state, value);
-  const type = getGithubAlertType(value);
-  if (type !== undefined && isSyntaxTreeNode(result)) {
-    setHastData(result, { githubAlert: type });
-  }
-  return result;
-};
-
 const preserveWhitespace =
   (handler: Handler): Handler =>
   (state, value, parent) => {
@@ -851,7 +845,7 @@ const rejectUnsupportedNode: Handler = (_state, value) => {
 };
 
 const mdxHandlers: Handlers = {
-  blockquote: mapGithubAlert,
+  blockquote: githubAlertHastHandler,
   code: preserveWhitespace(defaultHandlers.code),
   html: rejectUnsupportedNode,
   inlineCode: preserveWhitespace(defaultHandlers.inlineCode),
@@ -945,7 +939,7 @@ const createMarkdownHastForMdx = (root: SyntaxTreeNode) => {
   const hast = toHast(root as Parameters<typeof toHast>[0], {
     allowDangerousHtml: true,
     handlers: {
-      blockquote: mapGithubAlert,
+      blockquote: githubAlertHastHandler,
       code: mdxHandlers.code,
       inlineCode: mdxHandlers.inlineCode,
       listItem: mdxHandlers.listItem,
@@ -1111,8 +1105,6 @@ const getMarkdownListItem = (
   };
 };
 
-const findHastGithubAlert = (node: SyntaxTreeNode) => getGithubAlertType(node);
-
 const preservesTextWhitespace = (node: SyntaxTreeNode) =>
   isRecord(node.data) && node.data.preserveTextWhitespace === true
     ? true
@@ -1220,7 +1212,7 @@ const mapHastNode = (
     );
   }
   const authoredMdxMode = findHastMdxMode(node);
-  const githubAlert = findHastGithubAlert(node);
+  const githubAlert = getGithubAlertType(node);
   const templateName = findHastTemplateName(node);
   const templateProps =
     templateName === undefined ? undefined : findHastTemplateProps(node);

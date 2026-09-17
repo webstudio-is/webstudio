@@ -1,3 +1,5 @@
+import { defaultHandlers, type Handler } from "mdast-util-to-hast";
+
 type MarkdownNode = {
   type: string;
   value?: unknown;
@@ -78,3 +80,12 @@ export const transformGithubAlerts = (tree: unknown) => {
 };
 
 export const remarkGithubAlerts = () => transformGithubAlerts;
+
+export const githubAlertHastHandler: Handler = (state, node) => {
+  const result = defaultHandlers.blockquote(state, node);
+  const type = getGithubAlertType(node);
+  if (type !== undefined) {
+    result.data = { ...result.data, githubAlert: type };
+  }
+  return result;
+};
