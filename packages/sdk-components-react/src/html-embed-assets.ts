@@ -32,26 +32,30 @@ const isTagNameCharacter = (character: string | undefined) =>
   character !== undefined && /[A-Za-z0-9:-]/.test(character);
 
 const decodeHtmlCharacterReferences = (value: string) =>
-  value.replace(
-    /&(#(?:\d+|x[\da-f]+)|[a-z][\da-z]+);/gi,
-    (reference, name: string) => {
-      if (name[0] !== "#") {
-        return decodeNamedCharacterReference(name) || reference;
+  value
+    .replace(
+      /&(#(?:\d+|x[\da-f]+)|[a-z][\da-z]+);/gi,
+      (reference, name: string) => {
+        if (name[0] !== "#") {
+          return decodeNamedCharacterReference(name) || reference;
+        }
+        const isHex = name[1]?.toLowerCase() === "x";
+        const radix = isHex ? 16 : 10;
+        const codePoint = Number.parseInt(name.slice(isHex ? 2 : 1), radix);
+        if (
+          Number.isNaN(codePoint) ||
+          codePoint === 0 ||
+          codePoint > 0x10ffff ||
+          (codePoint >= 0xd800 && codePoint <= 0xdfff)
+        ) {
+          return "�";
+        }
+        return String.fromCodePoint(codePoint);
       }
-      const isHex = name[1]?.toLowerCase() === "x";
-      const radix = isHex ? 16 : 10;
-      const codePoint = Number.parseInt(name.slice(isHex ? 2 : 1), radix);
-      if (
-        Number.isNaN(codePoint) ||
-        codePoint === 0 ||
-        codePoint > 0x10ffff ||
-        (codePoint >= 0xd800 && codePoint <= 0xdfff)
-      ) {
-        return "�";
-      }
-      return String.fromCodePoint(codePoint);
-    }
-  );
+    )
+    // `amp` is one of the legacy named references HTML permits without a
+    // semicolon, except before an alphanumeric character or equals sign.
+    .replace(/&amp(?=$|[^=\da-z])/gi, "&");
 
 const encodeAssetPathSegment = (segment: string) => {
   const encoded = encodeURIComponent(segment);
@@ -132,12 +136,16 @@ const resolveSrcset = (
     while (urlEnd > urlStart && value[urlEnd - 1] === ",") {
       urlEnd -= 1;
     }
+    const hasTrailingComma = urlEnd < index;
     const resolved = resolveAssetUrl(
       value.slice(urlStart, urlEnd),
       assetUrlsByPath
     );
     if (resolved !== undefined) {
       replacements.push({ start: urlStart, end: urlEnd, value: resolved });
+    }
+    if (hasTrailingComma) {
+      continue;
     }
     while (index < value.length && value[index] !== ",") {
       index += 1;
