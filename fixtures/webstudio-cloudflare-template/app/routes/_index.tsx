@@ -46,6 +46,7 @@ import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
 import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";
+import { assetUrlsByPath } from "../__generated__/$resources.assets";
 
 const authenticateProductionRequest = (request: Request) => {
   const host =
@@ -356,6 +357,7 @@ const Outlet = () => {
   const sdkContext = useMemo(
     () => ({
       ...constants,
+      assetUrlsByPath,
       resources,
       breakpoints,
       onError: console.error,

@@ -72,6 +72,7 @@ declare module "__SITEMAP__" {
 declare module "__ASSETS__" {
   import type { RuntimeAsset } from "@webstudio-is/sdk";
   export const assets: Record<string, RuntimeAsset>;
+  export const assetUrlsByPath: Record<string, string>;
 }
 
 declare module "__REDIRECT__" {

@@ -86,6 +86,7 @@
     "@webstudio-is/sdk": "workspace:*",
     "await-interaction-response": "^0.0.2",
     "colord": "^2.9.3",
+    "decode-named-character-reference": "1.0.2",
     "github-slugger": "2.0.0",
     "hast-util-to-jsx-runtime": "^2.3.6",
     "mdast-util-from-markdown": "2.0.3",
