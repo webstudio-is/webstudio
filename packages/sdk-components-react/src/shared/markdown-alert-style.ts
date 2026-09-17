@@ -7,15 +7,15 @@ export const markdownAlertStyle = css`
     background-color: #eff6ff;
   }
   &[data-state="tip"] {
-    background-color: #ecfeff;
+    background-color: #ecfdf5;
   }
   &[data-state="important"] {
     background-color: #eef2ff;
   }
   &[data-state="warning"] {
-    background-color: #f5f3ff;
+    background-color: #fef3c7;
   }
   &[data-state="caution"] {
-    background-color: #faf5ff;
+    background-color: #fee2e2;
   }
 `;

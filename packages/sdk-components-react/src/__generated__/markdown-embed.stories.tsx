@@ -42,7 +42,7 @@ const Story = {
     padding: 16px
   }
   .w-alert [data-state][data-state="caution"] {
-    background-color: #faf5ff
+    background-color: #fee2e2
   }
   .w-alert [data-state][data-state="important"] {
     background-color: #eef2ff
@@ -51,10 +51,10 @@ const Story = {
     background-color: #eff6ff
   }
   .w-alert [data-state][data-state="tip"] {
-    background-color: #ecfeff
+    background-color: #ecfdf5
   }
   .w-alert [data-state][data-state="warning"] {
-    background-color: #f5f3ff
+    background-color: #fef3c7
   }
 }
       `}

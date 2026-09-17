@@ -51,7 +51,7 @@ const presetStyle = {
     {
       property: "background-color",
       state: '[data-state="tip"]',
-      value: { type: "rgb", r: 236, g: 254, b: 255, alpha: 1 },
+      value: { type: "rgb", r: 236, g: 253, b: 245, alpha: 1 },
     },
     {
       property: "background-color",
@@ -61,12 +61,12 @@ const presetStyle = {
     {
       property: "background-color",
       state: '[data-state="warning"]',
-      value: { type: "rgb", r: 245, g: 243, b: 255, alpha: 1 },
+      value: { type: "rgb", r: 254, g: 243, b: 199, alpha: 1 },
     },
     {
       property: "background-color",
       state: '[data-state="caution"]',
-      value: { type: "rgb", r: 250, g: 245, b: 255, alpha: 1 },
+      value: { type: "rgb", r: 254, g: 226, b: 226, alpha: 1 },
     },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
