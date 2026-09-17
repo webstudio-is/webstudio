@@ -52,8 +52,9 @@ import {
 import { assertApiProjectPermit } from "./api-permits.server";
 import {
   getContentDatabasePublishDiagnostics,
-  getMdxTemplatePublishDiagnostics,
+  formatMdxTemplatePublishDiagnostics,
 } from "./content-database.server";
+import type { PublishedMdxTemplateOmission } from "@webstudio-is/project-build";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -103,6 +104,30 @@ const prepareProjectBundleForClient = async (
               bundle.build.projectSettings
             ),
     },
+  };
+};
+
+const loadContentDatabasePublishDiagnostics = async (
+  projectId: string,
+  ctx: AppContext,
+  dependencies = { loadProjectBundleByProjectId }
+) => {
+  let mdxTemplateOmissions: readonly PublishedMdxTemplateOmission[] = [];
+  const bundle = await dependencies.loadProjectBundleByProjectId(
+    projectId,
+    ctx,
+    {
+      onMdxTemplateOmissions: (issues) => {
+        mdxTemplateOmissions = issues;
+      },
+    }
+  );
+  return {
+    ...getContentDatabasePublishDiagnostics(bundle),
+    mdxOmissions: formatMdxTemplatePublishDiagnostics(
+      bundle,
+      mdxTemplateOmissions
+    ),
   };
 };
 
@@ -305,11 +330,7 @@ export const buildRouter = router({
           "You don't have permission to edit this project."
         );
       }
-      const bundle = await loadProjectBundleByProjectId(input.projectId, ctx);
-      return {
-        ...getContentDatabasePublishDiagnostics(bundle),
-        mdxOmissions: await getMdxTemplatePublishDiagnostics(bundle),
-      };
+      return await loadContentDatabasePublishDiagnostics(input.projectId, ctx);
     }),
 
   checkProjectBuildPermission: procedure
@@ -439,5 +460,6 @@ export const buildRouter = router({
 export const __testing__ = {
   createImportProjectBundleHandler,
   assertCliBundleVersion,
+  loadContentDatabasePublishDiagnostics,
   prepareProjectBundleForClient,
 };
