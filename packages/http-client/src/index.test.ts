@@ -91,6 +91,7 @@ import {
   loadProjectBundleByProjectId,
   moveInstance,
   publish,
+  validatePublish,
   readProjectAssetContent,
   parseBuildPatchTransactions,
   parseBuilderUrl,
@@ -772,6 +773,11 @@ test("wraps project api trpc calls in named functions", async () => {
       scopeInstanceId: "body-id",
     });
     await listPublishes(params);
+    await validatePublish({
+      ...params,
+      target: "production",
+      domains: ["example.com"],
+    });
     await publish({
       ...params,
       target: "production",
@@ -1007,6 +1013,7 @@ test("wraps project api trpc calls in named functions", async () => {
     expectRequest("/trpc/api.variables.list"),
     expectRequest("/trpc/api.resources.list"),
     expectRequest("/trpc/api.publish.list"),
+    expectRequest("/trpc/api.publish.validate"),
     expectBodyRequest(
       "/trpc/api.publish.create",
       '"idempotencyKey":"publish-key"'

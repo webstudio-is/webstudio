@@ -497,7 +497,9 @@ const apiCommandsByArea = {
   publishAndDomains: cliCommandMetadata
     .filter(
       ({ cliCommand }) =>
-        cliCommand.startsWith("publish ") || cliCommand.startsWith("domains ")
+        cliCommand === "validate-publish" ||
+        cliCommand.startsWith("publish ") ||
+        cliCommand.startsWith("domains ")
     )
     .map(({ cliCommand }) => cliCommand),
   pagesAndSettings: cliCommandMetadata
