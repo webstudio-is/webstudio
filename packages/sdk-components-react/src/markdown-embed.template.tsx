@@ -42,18 +42,6 @@ Any elements that were not used above are used below.
 > [!NOTE]
 > Add helpful context without interrupting the main content.
 
-> [!TIP]
-> Share a useful suggestion.
-
-> [!IMPORTANT]
-> Highlight essential information.
-
-> [!WARNING]
-> Point out something readers should be careful about.
-
-> [!CAUTION]
-> Explain a potential negative consequence.
-
 Using \`console.log("Hello World");\` will log to the console.
 
 | Header 1   | Header 2   | Header 3   |
