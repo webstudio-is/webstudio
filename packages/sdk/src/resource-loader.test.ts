@@ -91,6 +91,126 @@ test("resolves request resources after their dependency documents", async () => 
   ]);
 });
 
+test("runs independent resources concurrently while keeping dependency chains serial", async () => {
+  const independentIds = Array.from(
+    { length: 19 },
+    (_, index) => `independent-${index}`
+  );
+  const initialRequestIds = new Set(["chain-first", ...independentIds]);
+  const requestedUrls: string[] = [];
+  let active = 0;
+  let maximumActive = 0;
+  let initialRequestCount = 0;
+  let releaseInitialRequests = () => {};
+  const initialRequestsReleased = new Promise<void>((resolve) => {
+    releaseInitialRequests = resolve;
+  });
+  let resolveInitialRequestsStarted = () => {};
+  const initialRequestsStarted = new Promise<void>((resolve) => {
+    resolveInitialRequestsStarted = resolve;
+  });
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    const requestId = url.split("/").at(-1);
+    if (requestId !== undefined && initialRequestIds.has(requestId)) {
+      initialRequestCount += 1;
+      if (initialRequestCount === initialRequestIds.size) {
+        resolveInitialRequestsStarted();
+      }
+      await initialRequestsReleased;
+    }
+    const response =
+      requestId === "chain-first"
+        ? Response.json({ id: "chain-document" })
+        : Response.json({ requestId });
+    active -= 1;
+    return response;
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "chain-first",
+        outputName: "Chain first",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Chain first",
+          method: "get",
+          url: "https://example.com/chain-first",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "chain-second",
+        outputName: "Chain second",
+        dependencies: ["chain-first"],
+        createRequest: (documents) => ({
+          name: "Chain second",
+          method: "get",
+          url: `https://example.com/chain-second/${
+            (documents.get("chain-first") as { data: { id: string } }).data.id
+          }`,
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "chain-third",
+        outputName: "Chain third",
+        dependencies: ["chain-second"],
+        createRequest: () => ({
+          name: "Chain third",
+          method: "get",
+          url: "https://example.com/chain-third",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      ...independentIds.map((id) => ({
+        id,
+        outputName: id,
+        dependencies: [],
+        createRequest: () => ({
+          name: id,
+          method: "get" as const,
+          url: `https://example.com/${id}`,
+          searchParams: [],
+          headers: [],
+        }),
+      })),
+    ],
+    rootIds: ["chain-third", ...independentIds],
+  };
+
+  const resultPromise = loadResources(fetch, graph);
+  await initialRequestsStarted;
+
+  expect(initialRequestCount).toBe(20);
+  expect(maximumActive).toBe(20);
+  expect(requestedUrls).not.toContain(
+    "https://example.com/chain-second/chain-document"
+  );
+
+  releaseInitialRequests();
+  const result = await resultPromise;
+
+  expect(fetch).toHaveBeenCalledTimes(22);
+  const chainSecondIndex = requestedUrls.indexOf(
+    "https://example.com/chain-second/chain-document"
+  );
+  const chainThirdIndex = requestedUrls.indexOf(
+    "https://example.com/chain-third"
+  );
+  expect(chainSecondIndex).toBeGreaterThanOrEqual(20);
+  expect(chainThirdIndex).toBeGreaterThan(chainSecondIndex);
+  expect(result["Chain third"]).toMatchObject({
+    data: { requestId: "chain-third" },
+  });
+});
+
 test.each(["legacy map", "request graph"] as const)(
   "bounds concurrent resource requests from a %s",
   async (inputType) => {

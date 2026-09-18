@@ -2,6 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import {
   encodeDataSourceVariable,
   type DataSources,
+  type Resource,
   type ResourceRequest,
   type Resources,
 } from "@webstudio-is/sdk";
@@ -14,7 +15,9 @@ import {
   $resourcePerformanceCache,
   $resourcesState,
   $resourcesCache,
+  computeResourceRequestAsync,
   computeResourceRequestPlan,
+  computeResourceRequestPlanAsync,
   getResourceKey,
   invalidateAssets,
   loadResourceDiagnostics,
@@ -151,6 +154,109 @@ test("unlocks reachable resource requests as dependency documents are cached", (
   expect(ready.requests.map(({ name }) => name)).toEqual(["Author", "Posts"]);
   expect(ready.requests[1].url).toBe("https://example.com/authors/1/posts");
   expect(ready.requests.some(({ name }) => name === "Unused")).toBe(false);
+});
+
+test("computes resource request fields from promise-valued variables", async () => {
+  let resolveValue: (value: string) => void = () => {};
+  const value = new Promise<string>((resolve) => {
+    resolveValue = resolve;
+  });
+  const resource: Resource = {
+    id: "resource",
+    name: "Resource",
+    method: "get",
+    url: encodeDataSourceVariable("url"),
+    searchParams: [{ name: "page", value: encodeDataSourceVariable("page") }],
+    headers: [{ name: "x-token", value: encodeDataSourceVariable("token") }],
+    body: encodeDataSourceVariable("body"),
+  };
+  const requestPromise = computeResourceRequestAsync(
+    resource,
+    new Map<string, unknown>([
+      ["url", value],
+      ["page", "2"],
+      ["token", "secret"],
+      ["body", { ok: true }],
+    ])
+  );
+  resolveValue("https://example.com/items");
+
+  await expect(requestPromise).resolves.toEqual({
+    name: "Resource",
+    method: "get",
+    url: "https://example.com/items",
+    searchParams: [{ name: "page", value: "2" }],
+    headers: [{ name: "x-token", value: "secret" }],
+    body: { ok: true },
+  });
+});
+
+test("computes async resource plans with dependency documents", async () => {
+  const authorVariable = encodeDataSourceVariable("authorDataSource");
+  const resources: Resources = new Map([
+    [
+      "authorResource",
+      {
+        id: "authorResource",
+        name: "Author",
+        method: "get",
+        url: '"https://example.com/authors/1"',
+        headers: [],
+      },
+    ],
+    [
+      "postsResource",
+      {
+        id: "postsResource",
+        name: "Posts",
+        method: "get",
+        url: `"https://example.com/authors/" + ${authorVariable}.data.id + "/posts"`,
+        headers: [],
+      },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "authorDataSource",
+      {
+        type: "resource",
+        id: "authorDataSource",
+        name: "Author",
+        resourceId: "authorResource",
+      },
+    ],
+    [
+      "postsDataSource",
+      {
+        type: "resource",
+        id: "postsDataSource",
+        name: "Posts",
+        resourceId: "postsResource",
+      },
+    ],
+  ]);
+  const authorRequest = computeResourceRequestPlan({
+    rootResourceIds: ["authorResource"],
+    resources,
+    dataSources,
+    values: new Map(),
+    resourceCache: new Map(),
+  }).requests[0];
+  const resourceCache = new Map([
+    [getResourceKey(authorRequest), Promise.resolve({ data: { id: 1 } })],
+  ]);
+
+  const result = await computeResourceRequestPlanAsync({
+    rootResourceIds: ["postsResource"],
+    resources,
+    dataSources,
+    values: new Map(),
+    resourceCache,
+  });
+
+  expect(result.requests.map(({ name }) => name)).toEqual(["Author", "Posts"]);
+  expect(result.requests[1]?.url).toBe("https://example.com/authors/1/posts");
+  expect(result.documents.get("postsResource")).toBeUndefined();
 });
 
 test("dispatches resources synchronously", async () => {

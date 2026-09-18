@@ -12,7 +12,10 @@ import {
   resourceLoadConcurrency,
 } from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
+import {
+  computeExpression,
+  computeExpressionAsync,
+} from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
@@ -462,6 +465,71 @@ export const computeResourceRequest = (
   return request;
 };
 
+export const computeResourceRequestAsync = async (
+  resource: Resource,
+  values: ReadonlyMap<DataSource["id"], unknown>
+): Promise<ResourceRequest> => {
+  const [url, searchParams, headers, body] = await Promise.all([
+    computeExpressionAsync(resource.url, values),
+    Promise.all(
+      (resource.searchParams ?? []).map(async ({ name, value }) => ({
+        name,
+        value: await computeExpressionAsync(value, values),
+      }))
+    ),
+    Promise.all(
+      resource.headers.map(async ({ name, value }) => ({
+        name,
+        value: await computeExpressionAsync(value, values),
+      }))
+    ),
+    resource.body === undefined
+      ? undefined
+      : computeExpressionAsync(resource.body, values),
+  ]);
+  const request: ResourceRequest = {
+    name: resource.name,
+    method: resource.method,
+    url,
+    searchParams,
+    headers,
+  };
+  if (resource.body !== undefined) {
+    request.body = body;
+  }
+  return request;
+};
+
+const getDataSourcesByResourceId = (dataSources: DataSources) => {
+  const dataSourcesByResourceId = new Map<Resource["id"], DataSource[]>();
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type !== "resource") {
+      continue;
+    }
+    const entries = dataSourcesByResourceId.get(dataSource.resourceId) ?? [];
+    entries.push(dataSource);
+    dataSourcesByResourceId.set(dataSource.resourceId, entries);
+  }
+  return dataSourcesByResourceId;
+};
+
+const getResourceDependencyIds = ({
+  resource,
+  dataSources,
+}: {
+  resource: Resource;
+  dataSources: DataSources;
+}) => {
+  const dependencyIds = new Set<Resource["id"]>();
+  for (const dataSourceId of getResourceDataSourceIds(resource)) {
+    const dataSource = dataSources.get(dataSourceId);
+    if (dataSource?.type === "resource") {
+      dependencyIds.add(dataSource.resourceId);
+    }
+  }
+  return dependencyIds;
+};
+
 export const computeResourceRequestPlan = ({
   rootResourceIds,
   resources,
@@ -479,15 +547,7 @@ export const computeResourceRequestPlan = ({
   const documents = new Map<Resource["id"], unknown>();
   const requests = new Map<Resource["id"], ResourceRequest>();
   const state = new Map<Resource["id"], "visiting" | "resolved" | "waiting">();
-  const dataSourcesByResourceId = new Map<Resource["id"], DataSource[]>();
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type !== "resource") {
-      continue;
-    }
-    const entries = dataSourcesByResourceId.get(dataSource.resourceId) ?? [];
-    entries.push(dataSource);
-    dataSourcesByResourceId.set(dataSource.resourceId, entries);
-  }
+  const dataSourcesByResourceId = getDataSourcesByResourceId(dataSources);
 
   const visit = (resourceId: Resource["id"]): boolean => {
     const resourceState = state.get(resourceId);
@@ -503,12 +563,11 @@ export const computeResourceRequestPlan = ({
       return false;
     }
     state.set(resourceId, "visiting");
-    for (const dataSourceId of getResourceDataSourceIds(resource)) {
-      const dataSource = dataSources.get(dataSourceId);
-      if (dataSource?.type !== "resource") {
-        continue;
-      }
-      if (visit(dataSource.resourceId) === false) {
+    for (const dependencyId of getResourceDependencyIds({
+      resource,
+      dataSources,
+    })) {
+      if (visit(dependencyId) === false) {
         state.set(resourceId, "waiting");
         return false;
       }
@@ -532,6 +591,83 @@ export const computeResourceRequestPlan = ({
   for (const resourceId of rootResourceIds) {
     visit(resourceId);
   }
+  return {
+    requests: Array.from(requests.values()),
+    documents,
+  };
+};
+
+export const computeResourceRequestPlanAsync = async ({
+  rootResourceIds,
+  resources,
+  dataSources,
+  values,
+  resourceCache,
+}: {
+  rootResourceIds: Iterable<Resource["id"]>;
+  resources: Resources;
+  dataSources: DataSources;
+  values: ReadonlyMap<DataSource["id"], unknown>;
+  resourceCache: ReadonlyMap<string, unknown>;
+}) => {
+  const resolvedValues = new Map(values);
+  const documents = new Map<Resource["id"], unknown>();
+  const requests = new Map<Resource["id"], ResourceRequest>();
+  const pending = new Map<Resource["id"], Promise<boolean>>();
+  const dataSourcesByResourceId = getDataSourcesByResourceId(dataSources);
+
+  const visit = (
+    resourceId: Resource["id"],
+    ancestors: ReadonlySet<Resource["id"]> = new Set()
+  ): Promise<boolean> => {
+    if (ancestors.has(resourceId)) {
+      return Promise.resolve(false);
+    }
+    const previous = pending.get(resourceId);
+    if (previous !== undefined) {
+      return previous;
+    }
+    const nextAncestors = new Set(ancestors).add(resourceId);
+    const resolution = Promise.resolve().then(async () => {
+      const resource = resources.get(resourceId);
+      if (resource === undefined) {
+        return false;
+      }
+      const dependencyIds = getResourceDependencyIds({
+        resource,
+        dataSources,
+      });
+      const dependenciesResolved = await Promise.all(
+        [...dependencyIds].map((dependencyId) =>
+          visit(dependencyId, nextAncestors)
+        )
+      );
+      if (dependenciesResolved.some((resolved) => resolved === false)) {
+        return false;
+      }
+      const request = await computeResourceRequestAsync(
+        resource,
+        resolvedValues
+      );
+      requests.set(resourceId, request);
+      const key = getResourceKey(request);
+      if (resourceCache.has(key) === false) {
+        return false;
+      }
+      const document = resourceCache.get(key);
+      documents.set(resourceId, document);
+      for (const dataSource of dataSourcesByResourceId.get(resourceId) ?? []) {
+        resolvedValues.set(dataSource.id, document);
+      }
+      return true;
+    });
+    pending.set(resourceId, resolution);
+    return resolution;
+  };
+
+  await Promise.all(
+    [...new Set(rootResourceIds)].map((resourceId) => visit(resourceId))
+  );
   return {
     requests: Array.from(requests.values()),
     documents,
