@@ -537,11 +537,7 @@ export const uploadAssets = async <T extends File | URL>(
 
   const uniqueFilesData = [...uniqueFilesDataByFingerprint.values()];
 
-  const uploadTickets = new Map<
-    UploadingFileData["fingerprintId"],
-    UploadTicket
-  >();
-  const ticketedFilesData: UploadingFileData[] = [];
+  const assetIdsByUploadKey = new Map<string, string>();
   for (const fileData of uniqueFilesData) {
     try {
       const ticket = await createUploadTicket({
@@ -557,7 +553,10 @@ export const uploadAssets = async <T extends File | URL>(
       });
       fileData.assetId = ticket.assetId;
       fileData.uploadName = ticket.name;
-      uploadTickets.set(getUploadDeduplicationKey(fileData), ticket);
+      assetIdsByUploadKey.set(
+        getUploadDeduplicationKey(fileData),
+        ticket.assetId
+      );
       if (ticket.deduplicated) {
         URL.revokeObjectURL(fileData.objectURL);
         safeSetAsset(
@@ -568,16 +567,15 @@ export const uploadAssets = async <T extends File | URL>(
         toast.info("Asset already exists");
         continue;
       }
-      ticketedFilesData.push(fileData);
+      // Complete each upload before reserving the next one. The server waits
+      // for an UPLOADING content match when deduplicating identical files.
+      addUploadingFilesData([fileData]);
+      await processUpload([fileData], projectId, authToken, options.dimensions);
     } catch (error) {
       URL.revokeObjectURL(fileData.objectURL);
       toast.error(error instanceof Error ? error.message : String(error));
     }
   }
-
-  addUploadingFilesData(ticketedFilesData);
-
-  processUpload(ticketedFilesData, projectId, authToken, options.dimensions);
 
   const res = new Map();
 
@@ -598,10 +596,10 @@ export const uploadAssets = async <T extends File | URL>(
           fileData.url === fileOrUrl.href)
     );
 
+    const uploadKey = getUploadDeduplicationKey(filesData[i]);
     const uploadedAssetId =
-      uploadTickets.get(getUploadDeduplicationKey(filesData[i]))?.assetId ??
-      existingUploadsByFingerprint.get(getUploadDeduplicationKey(filesData[i]))
-        ?.assetId;
+      assetIdsByUploadKey.get(uploadKey) ??
+      existingUploadsByFingerprint.get(uploadKey)?.assetId;
     if (uploadedAssetId !== undefined) {
       res.set(filesOrUrls[i], uploadedAssetId);
     }
