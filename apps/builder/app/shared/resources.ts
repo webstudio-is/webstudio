@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import {
-  getResourceDataSourceIds,
+  getResourceDependencyIds,
   type DataSource,
   type DataSources,
   type Resource,
@@ -13,8 +13,8 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
 import {
-  computeExpression,
   computeExpressionAsync,
+  type ResolveExpressionDataSource,
 } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
@@ -442,50 +442,43 @@ export const invalidateAssets = (requestFetch: typeof fetch = fetch) => {
   startLoading(requestFetch);
 };
 
-export const computeResourceRequest = (
+export const computeResourceRequest = async (
   resource: Resource,
-  values: Map<DataSource["id"], unknown>
-): ResourceRequest => {
-  const request: ResourceRequest = {
-    name: resource.name,
-    method: resource.method,
-    url: computeExpression(resource.url, values),
-    searchParams: (resource.searchParams ?? []).map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
-    headers: resource.headers.map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
-  };
-  if (resource.body !== undefined) {
-    request.body = computeExpression(resource.body, values);
-  }
-  return request;
-};
-
-export const computeResourceRequestAsync = async (
-  resource: Resource,
-  values: ReadonlyMap<DataSource["id"], unknown>
+  values: ReadonlyMap<DataSource["id"], unknown>,
+  resolveDataSource?: ResolveExpressionDataSource
 ): Promise<ResourceRequest> => {
+  const resolvedDataSources = new Map<DataSource["id"], unknown>();
+  const resolve = (dataSourceId: DataSource["id"], value: unknown) => {
+    if (values.has(dataSourceId)) {
+      return values.get(dataSourceId);
+    }
+    if (resolvedDataSources.has(dataSourceId)) {
+      return resolvedDataSources.get(dataSourceId);
+    }
+    const resolved =
+      resolveDataSource === undefined
+        ? value
+        : resolveDataSource(dataSourceId, value);
+    resolvedDataSources.set(dataSourceId, resolved);
+    return resolved;
+  };
   const [url, searchParams, headers, body] = await Promise.all([
-    computeExpressionAsync(resource.url, values),
+    computeExpressionAsync(resource.url, values, resolve),
     Promise.all(
       (resource.searchParams ?? []).map(async ({ name, value }) => ({
         name,
-        value: await computeExpressionAsync(value, values),
+        value: await computeExpressionAsync(value, values, resolve),
       }))
     ),
     Promise.all(
       resource.headers.map(async ({ name, value }) => ({
         name,
-        value: await computeExpressionAsync(value, values),
+        value: await computeExpressionAsync(value, values, resolve),
       }))
     ),
     resource.body === undefined
       ? undefined
-      : computeExpressionAsync(resource.body, values),
+      : computeExpressionAsync(resource.body, values, resolve),
   ]);
   const request: ResourceRequest = {
     name: resource.name,
@@ -511,23 +504,6 @@ const getDataSourcesByResourceId = (dataSources: DataSources) => {
     dataSourcesByResourceId.set(dataSource.resourceId, entries);
   }
   return dataSourcesByResourceId;
-};
-
-const getResourceDependencyIds = ({
-  resource,
-  dataSources,
-}: {
-  resource: Resource;
-  dataSources: DataSources;
-}) => {
-  const dependencyIds = new Set<Resource["id"]>();
-  for (const dataSourceId of getResourceDataSourceIds(resource)) {
-    const dataSource = dataSources.get(dataSourceId);
-    if (dataSource?.type === "resource") {
-      dependencyIds.add(dataSource.resourceId);
-    }
-  }
-  return dependencyIds;
 };
 
 export type ResourceRequestPlan = Readonly<{
@@ -583,10 +559,7 @@ export const computeResourceRequestPlanAsync = async ({
       if (dependenciesResolved.some((resolved) => resolved === false)) {
         return false;
       }
-      const request = await computeResourceRequestAsync(
-        resource,
-        resolvedValues
-      );
+      const request = await computeResourceRequest(resource, resolvedValues);
       requests.set(resourceId, request);
       const key = getResourceKey(request);
       if (resourceCache.has(key) === false) {

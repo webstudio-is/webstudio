@@ -15,7 +15,7 @@ import {
   $resourcePerformanceCache,
   $resourcesState,
   $resourcesCache,
-  computeResourceRequestAsync,
+  computeResourceRequest,
   computeResourceRequestPlanAsync,
   getResourceKey,
   invalidateAssets,
@@ -169,7 +169,7 @@ test("computes resource request fields from promise-valued variables", async () 
     headers: [{ name: "x-token", value: encodeDataSourceVariable("token") }],
     body: encodeDataSourceVariable("body"),
   };
-  const requestPromise = computeResourceRequestAsync(
+  const requestPromise = computeResourceRequest(
     resource,
     new Map<string, unknown>([
       ["url", value],
@@ -188,6 +188,53 @@ test("computes resource request fields from promise-valued variables", async () 
     headers: [{ name: "x-token", value: "secret" }],
     body: { ok: true },
   });
+});
+
+test("resolves missing request dependencies once and reuses provided values", async () => {
+  const remoteVariable = encodeDataSourceVariable("remote");
+  const resource: Resource = {
+    id: "resource",
+    name: "Resource",
+    method: "get",
+    url: `${remoteVariable}.url`,
+    searchParams: [{ name: "id", value: `${remoteVariable}.id` }],
+    headers: [{ name: "x-title", value: `${remoteVariable}.title` }],
+  };
+  const resolveDataSource = vi.fn(async () => ({
+    url: "https://example.com/items",
+    id: 42,
+    title: "Remote item",
+  }));
+
+  await expect(
+    computeResourceRequest(resource, new Map(), resolveDataSource)
+  ).resolves.toEqual({
+    name: "Resource",
+    method: "get",
+    url: "https://example.com/items",
+    searchParams: [{ name: "id", value: 42 }],
+    headers: [{ name: "x-title", value: "Remote item" }],
+  });
+  expect(resolveDataSource).toHaveBeenCalledOnce();
+
+  const providedValue = { url: "https://example.com/provided" };
+  const providedResolver = vi.fn();
+  await expect(
+    computeResourceRequest(
+      { ...resource, url: `${remoteVariable}.url` },
+      new Map([["remote", providedValue]]),
+      providedResolver
+    )
+  ).resolves.toMatchObject({ url: "https://example.com/provided" });
+  expect(providedResolver).not.toHaveBeenCalled();
+
+  await expect(
+    computeResourceRequest(
+      { ...resource, url: remoteVariable },
+      new Map(),
+      () => null
+    )
+  ).resolves.toMatchObject({ url: null });
 });
 
 test("computes async resource plans with dependency documents", async () => {
@@ -234,7 +281,7 @@ test("computes async resource plans with dependency documents", async () => {
       },
     ],
   ]);
-  const authorRequest = await computeResourceRequestAsync(
+  const authorRequest = await computeResourceRequest(
     resources.get("authorResource") as Resource,
     new Map()
   );

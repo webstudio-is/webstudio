@@ -35,6 +35,23 @@ export const getResourceDataSourceIds = (resource: Resource) => {
   ]);
 };
 
+export const getResourceDependencyIds = ({
+  resource,
+  dataSources,
+}: {
+  resource: Resource;
+  dataSources: DataSources;
+}) => {
+  const dependencyIds = new Set<Resource["id"]>();
+  for (const dataSourceId of getResourceDataSourceIds(resource)) {
+    const dataSource = dataSources.get(dataSourceId);
+    if (dataSource?.type === "resource") {
+      dependencyIds.add(dataSource.resourceId);
+    }
+  }
+  return dependencyIds;
+};
+
 export const getPageResourceRootIds = ({
   page,
   instances,
@@ -114,13 +131,12 @@ export const getTransitiveResourceIds = ({
     if (resource === undefined) {
       return;
     }
-    for (const dataSourceId of getResourceDataSourceIds(resource)) {
-      const dataSource = dataSources.get(dataSourceId);
-      if (dataSource?.type !== "resource") {
-        continue;
-      }
-      dependencies.add(dataSource.resourceId);
-      visit(dataSource.resourceId);
+    for (const dependencyId of getResourceDependencyIds({
+      resource,
+      dataSources,
+    })) {
+      dependencies.add(dependencyId);
+      visit(dependencyId);
     }
   };
   visit(resourceId);
