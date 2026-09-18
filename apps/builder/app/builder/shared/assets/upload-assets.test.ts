@@ -598,6 +598,25 @@ describe("upload-assets", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:1");
   });
 
+  test("keeps identical content with the same filename in different folders", async () => {
+    const filesData = await getFilesData(
+      "image",
+      [
+        new File(["same"], "image.png", { type: "image/png" }),
+        new File(["same"], "image.png", { type: "image/png" }),
+      ],
+      "folder-a",
+      (file) => `blob:${file instanceof File ? file.name : "unknown"}`
+    );
+    filesData[1].folderId = "folder-b";
+    const revokeObjectURL = vi.fn();
+
+    const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
+
+    expect(uniqueFilesData.size).toBe(2);
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
+
   test("releases object URLs discarded during deduplication", async () => {
     const url = new URL("https://example.com/image.png");
     const filesData = await getFilesData("image", [url, url]);
