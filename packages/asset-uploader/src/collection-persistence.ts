@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/content-engine";
 import {
   decodeUtf8,
+  mapBounded,
   readBoundedBytes,
 } from "@webstudio-is/content-engine/compiler";
 import {
@@ -142,39 +143,43 @@ export const getCollectionReservedAssetIds = async ({
   assetStore: AssetObjectReader;
   folderIds?: ReadonlySet<string>;
 }) => {
-  const reservedIds = new Set<string>();
-  for (const folderId of getCollectionFolderIds(assets)) {
-    if (folderIds !== undefined && folderIds.has(folderId) === false) {
-      continue;
-    }
-    const siblings = getFolderAssets(assets, folderId);
-    const configAssets = siblings.filter(
-      (asset) => formatAssetName(asset) === collectionConfigFilename
-    );
-    for (const configAsset of configAssets) {
-      reservedIds.add(configAsset.id);
-    }
-    if (configAssets.length !== 1) {
-      for (const asset of siblings.filter(isMdxFileAsset)) {
-        reservedIds.add(asset.id);
+  const folderReservedIds = await mapBounded(
+    [...getCollectionFolderIds(assets)].filter(
+      (folderId) => folderIds === undefined || folderIds.has(folderId)
+    ),
+    contentEngineLimits.concurrentContentReads,
+    async (folderId) => {
+      const reservedIds = new Set<string>();
+      const siblings = getFolderAssets(assets, folderId);
+      const configAssets = siblings.filter(
+        (asset) => formatAssetName(asset) === collectionConfigFilename
+      );
+      for (const configAsset of configAssets) {
+        reservedIds.add(configAsset.id);
       }
-      continue;
-    }
-    const templateName = await readConfiguredTemplateName(
-      configAssets[0],
-      assetStore
-    );
-    if (templateName === undefined) {
-      for (const asset of siblings.filter(isMdxFileAsset)) {
-        reservedIds.add(asset.id);
+      if (configAssets.length !== 1) {
+        for (const asset of siblings.filter(isMdxFileAsset)) {
+          reservedIds.add(asset.id);
+        }
+        return reservedIds;
       }
-      continue;
-    }
-    for (const asset of siblings) {
-      if (formatAssetName(asset) === templateName && isMdxFileAsset(asset)) {
-        reservedIds.add(asset.id);
+      const templateName = await readConfiguredTemplateName(
+        configAssets[0],
+        assetStore
+      );
+      if (templateName === undefined) {
+        for (const asset of siblings.filter(isMdxFileAsset)) {
+          reservedIds.add(asset.id);
+        }
+        return reservedIds;
       }
+      for (const asset of siblings) {
+        if (formatAssetName(asset) === templateName && isMdxFileAsset(asset)) {
+          reservedIds.add(asset.id);
+        }
+      }
+      return reservedIds;
     }
-  }
-  return reservedIds;
+  );
+  return new Set(folderReservedIds.flatMap((ids) => [...ids]));
 };

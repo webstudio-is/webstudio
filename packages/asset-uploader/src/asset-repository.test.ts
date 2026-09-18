@@ -204,6 +204,75 @@ describe("PostgresAssetRepository", () => {
     );
   });
 
+  test("validates independent collection folders concurrently", async () => {
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const assets: Asset[] = [];
+    const sources = new Map<string, string>();
+    for (let index = 0; index < 9; index += 1) {
+      const folderId = `collection-${index}`;
+      const configName = `config-${index}.json`;
+      const templateName = `template-${index}.mdx`;
+      assets.push(
+        {
+          id: configName,
+          projectId: "project-1",
+          name: configName,
+          filename: "collection",
+          folderId,
+          type: "file",
+          format: "json",
+          size: configSource.length,
+          description: null,
+          createdAt: "2026-09-03T00:00:00.000Z",
+          meta: {},
+        },
+        {
+          id: templateName,
+          projectId: "project-1",
+          name: templateName,
+          filename: "template",
+          folderId,
+          type: "file",
+          format: "mdx",
+          size: templateSource.length,
+          description: null,
+          createdAt: "2026-09-03T00:00:00.000Z",
+          meta: {},
+        }
+      );
+      sources.set(configName, configSource);
+      sources.set(templateName, templateSource);
+    }
+    let activeReads = 0;
+    let maximumActiveReads = 0;
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async (name) => {
+          const source = sources.get(name);
+          if (source === undefined) {
+            throw new Error(`Unexpected read: ${name}`);
+          }
+          activeReads += 1;
+          maximumActiveReads = Math.max(maximumActiveReads, activeReads);
+          await new Promise((resolve) => setTimeout(resolve, 1));
+          activeReads -= 1;
+          return {
+            data: new Blob([source]).stream(),
+            contentLength: source.length,
+          };
+        },
+      },
+      dependencies: createDependencies(),
+    });
+
+    await repository.validateCollections(assets);
+
+    expect(maximumActiveReads).toBeGreaterThan(1);
+  });
+
   test.each([
     { name: "notes.txt", extension: "mdx", collection: true },
     { name: "template.txt", extension: "mdx", collection: true },
@@ -3427,6 +3496,77 @@ describe("PostgresAssetRepository", () => {
     ).rejects.toThrow(
       "A collection folder must contain exactly one collection.json"
     );
+  });
+
+  test("inspects independent collection folders concurrently", async () => {
+    const dependencies = createDependencies();
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\nTemplate\n";
+    const entries: CanonicalAssetFileEntry[] = [];
+    const sources = new Map<string, string>();
+    for (let index = 0; index < 9; index += 1) {
+      const folderId = `collection-${index}`;
+      for (const [name, mimeType, source] of [
+        ["collection.json", "application/json", configSource],
+        ["template.mdx", "text/mdx", templateSource],
+      ] as const) {
+        const id = `${folderId}-${name}`;
+        entries.push({
+          projectId: "project-1",
+          assetId: id,
+          revision: `revision-${id}`,
+          document: {
+            _id: id,
+            _type: "asset.file",
+            name,
+            path: `${folderId}/${name}`,
+            key: name.slice(0, name.lastIndexOf(".")),
+            extension: name.slice(name.lastIndexOf(".") + 1),
+            folderId,
+            mimeType,
+            size: source.length,
+            revision: `revision-${id}`,
+            contentRef: id,
+            properties: {},
+          },
+        });
+        sources.set(id, source);
+      }
+    }
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockResolvedValue({} as never);
+    let activeReads = 0;
+    let maximumActiveReads = 0;
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: async (name) => {
+          const source = sources.get(name);
+          if (source === undefined) {
+            throw new Error(`Unexpected read: ${name}`);
+          }
+          activeReads += 1;
+          maximumActiveReads = Math.max(maximumActiveReads, activeReads);
+          await new Promise((resolve) => setTimeout(resolve, 1));
+          activeReads -= 1;
+          return {
+            data: new Blob([source]).stream(),
+            contentLength: source.length,
+          };
+        },
+      },
+      dependencies,
+    });
+
+    await repository.prepareIndex(
+      createCompilationPlan({
+        where: { all: [] },
+        output: { mode: "base", includeMetadata: true },
+      })
+    );
+
+    expect(maximumActiveReads).toBeGreaterThan(1);
   });
 
   test("rejects a truncated collection config while preparing an index", async () => {
