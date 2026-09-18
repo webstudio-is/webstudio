@@ -514,11 +514,72 @@ export const computeExpression = (
   }
 };
 
+export type ResolveExpressionDataSource = (
+  dataSourceId: DataSource["id"],
+  value: unknown
+) => unknown | PromiseLike<unknown>;
+
+const resolveExpressionVariables = async ({
+  expression,
+  variables,
+  resolveDataSource,
+}: {
+  expression: string;
+  variables: ReadonlyMap<DataSource["id"], unknown>;
+  resolveDataSource: ResolveExpressionDataSource;
+}) => {
+  const dataSourceIds = new Set<DataSource["id"]>();
+  for (const identifier of getExpressionIdentifiers(expression)) {
+    const dataSourceId = decodeDataVariableId(identifier);
+    if (dataSourceId !== undefined) {
+      dataSourceIds.add(dataSourceId);
+    }
+  }
+  const resolved = new Map(variables);
+  await Promise.all(
+    [...dataSourceIds].map(async (dataSourceId) => {
+      resolved.set(
+        dataSourceId,
+        await resolveDataSource(dataSourceId, variables.get(dataSourceId))
+      );
+    })
+  );
+  return resolved;
+};
+
+export const computeExpressionAsync = async (
+  expression: string,
+  variables: ReadonlyMap<DataSource["id"], unknown>,
+  resolveDataSource: ResolveExpressionDataSource = (_dataSourceId, value) =>
+    value
+) =>
+  computeExpression(
+    expression,
+    await resolveExpressionVariables({
+      expression,
+      variables,
+      resolveDataSource,
+    })
+  );
+
 export const computeStringExpression = (
   expression: string,
   variables: ReadonlyMap<DataSource["name"], unknown>
 ) => {
   const value = computeExpression(expression, variables);
+  return typeof value === "string" && value !== "" ? value : undefined;
+};
+
+export const computeStringExpressionAsync = async (
+  expression: string,
+  variables: ReadonlyMap<DataSource["id"], unknown>,
+  resolveDataSource?: ResolveExpressionDataSource
+) => {
+  const value = await computeExpressionAsync(
+    expression,
+    variables,
+    resolveDataSource
+  );
   return typeof value === "string" && value !== "" ? value : undefined;
 };
 
@@ -537,6 +598,24 @@ export const computeExpressionWithinScope = (
     }
   }
   return computeExpression(expression, variables);
+};
+
+export const computeExpressionWithinScopeAsync = async (
+  expression: string,
+  scope: Record<string, unknown>,
+  resolveDataSource?: ResolveExpressionDataSource
+) => {
+  if (expression.trim() === "") {
+    return;
+  }
+  const variables = new Map<DataSource["id"], unknown>();
+  for (const [name, value] of Object.entries(scope)) {
+    const decodedName = decodeDataVariableId(name);
+    if (decodedName !== undefined) {
+      variables.set(decodedName, value);
+    }
+  }
+  return computeExpressionAsync(expression, variables, resolveDataSource);
 };
 
 const getParentInstanceById = (instances: Instances) => {

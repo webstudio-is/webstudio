@@ -23,6 +23,9 @@ import {
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   computeExpression,
+  computeExpressionAsync,
+  computeExpressionWithinScopeAsync,
+  computeStringExpressionAsync,
   computeExpressionWithinScope,
   bindExpressionToInstanceScope,
   createDataVariable,
@@ -1011,6 +1014,62 @@ test("compute expression with decoded ids", () => {
   expect(
     computeExpression("$ws$dataSource$myId", new Map([["myId", "value"]]))
   ).toEqual("value");
+});
+
+test("compute expression asynchronously resolves only referenced data sources", async () => {
+  const resolveDataSource = vi.fn(async (id: string, value: unknown) => {
+    if (id === "remoteId") {
+      return { data: { title: "Remote title" } };
+    }
+    return value;
+  });
+
+  await expect(
+    computeExpressionAsync(
+      `${encodeDataVariableId("remoteId")}.data.title`,
+      new Map([
+        ["remoteId", undefined],
+        ["unusedId", undefined],
+      ]),
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+  expect(resolveDataSource).toHaveBeenCalledOnce();
+  expect(resolveDataSource).toHaveBeenCalledWith("remoteId", undefined);
+});
+
+test("compute expression asynchronously propagates resolver failures", async () => {
+  const failure = new Error("offline");
+
+  await expect(
+    computeExpressionAsync(
+      encodeDataVariableId("remoteId"),
+      new Map(),
+      async () => {
+        throw failure;
+      }
+    )
+  ).rejects.toBe(failure);
+});
+
+test("compute string and scoped expressions asynchronously", async () => {
+  const resolveDataSource = async (id: string) =>
+    id === "remoteId" ? "Remote title" : undefined;
+
+  await expect(
+    computeStringExpressionAsync(
+      encodeDataVariableId("remoteId"),
+      new Map(),
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+  await expect(
+    computeExpressionWithinScopeAsync(
+      encodeDataVariableId("remoteId"),
+      { [encodeDataVariableId("remoteId")]: undefined },
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
 });
 
 test("compute expression with decoded names", () => {
