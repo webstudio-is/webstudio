@@ -2193,17 +2193,18 @@ sitemap.map((page) => page.path);`
     );
   });
 
-  test("generates one dynamic SSR blog route with an embedded content database", async () => {
+  test("hydrates a synced MDX asset into a dynamic SSR content database", async () => {
     const source = "# Published post\n";
-    const index = await createTestAssetIndex(
-      {
-        ...indexedDocument,
-        path: "blog/post.md",
-        size: new TextEncoder().encode(source).byteLength,
-        properties: { slug: "post" },
-      },
-      { "post.md": source }
-    );
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      name: "post.mdx",
+      path: "blog/post.mdx",
+      extension: "mdx",
+      mimeType: "text/mdx",
+      contentRef: "post.mdx",
+      size: new TextEncoder().encode(source).byteLength,
+      properties: { slug: "post" },
+    });
     const siteData = {
       ...createSiteData({
         pages: [
@@ -2225,35 +2226,48 @@ sitemap.map((page) => page.path);`
           },
         ],
       }),
-      assets: ["post.md", "draft.md"].map((name) => ({
-        id: name,
-        projectId: "project-id",
-        name,
-        type: "file" as const,
-        format: "md",
-        size: source.length,
-        meta: {},
-        description: "",
-        createdAt: "2024-01-01T00:00:00.000Z",
-      })),
+      assets: [
+        {
+          id: "post-1",
+          projectId: "project-id",
+          name: "post.mdx",
+          type: "file" as const,
+          format: "mdx",
+          size: source.length,
+          meta: {},
+          description: "",
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+        {
+          id: "draft",
+          projectId: "project-id",
+          name: "draft.mdx",
+          type: "file" as const,
+          format: "mdx",
+          size: source.length,
+          meta: {},
+          description: "",
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+      ],
       assetIndex: index,
     };
     await writeSiteData(
       siteData as unknown as ReturnType<typeof createSiteData>
     );
     await mkdir(".webstudio/assets", { recursive: true });
-    await writeFile(".webstudio/assets/post.md", source, "utf8");
-    await writeFile(".webstudio/assets/draft.md", "draft secret", "utf8");
+    await writeFile(".webstudio/assets/post.mdx", source, "utf8");
+    await writeFile(".webstudio/assets/draft.mdx", "draft secret", "utf8");
 
     await prebuild({ assets: true, template: ["react-router"] });
 
     await expect(
       readFile("app/routes/[blog].$slug._index.tsx", "utf8")
     ).resolves.toContain("createGeneratedAssetResourceFetch");
-    await expect(readFile("public/assets/post.md", "utf8")).resolves.toBe(
+    await expect(readFile("public/assets/post.mdx", "utf8")).resolves.toBe(
       source
     );
-    await expect(readFile("public/assets/draft.md", "utf8")).resolves.toBe(
+    await expect(readFile("public/assets/draft.mdx", "utf8")).resolves.toBe(
       "draft secret"
     );
     const manifest = await readFile(

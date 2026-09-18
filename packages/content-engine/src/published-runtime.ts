@@ -3,6 +3,7 @@ import {
   type AssetResourceQueryFailure,
 } from "./schema";
 import { sha256Hex } from "./canonical-json";
+import { encodeUtf8 } from "./byte-stream";
 import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
@@ -108,37 +109,52 @@ export const createPublishedAssetResourceFetch = ({
 const createPublishedDocumentLoader = ({
   baseUrl,
   runtimeAssets,
+  embeddedContents,
   fetchDocument,
   cache,
   onEvent,
 }: {
   baseUrl: string | URL;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  embeddedContents?: Readonly<Record<string, string>>;
   fetchDocument: typeof fetch;
   cache: DocumentSourceCache;
   onEvent?: DocumentGraphRuntimeObserver;
-}) =>
-  createCachedDocumentSourceLoader({
+}) => {
+  const httpLoader = createHttpDocumentSourceLoader({
+    fetch: fetchDocument,
+    getRequest: (node) => {
+      const asset = runtimeAssets[node.id];
+      if (asset === undefined) {
+        throw new Error(`Published document URL is unavailable for ${node.id}`);
+      }
+      return new URL(asset.url, baseUrl);
+    },
+    getMetadata: ({ node }) => ({
+      format: node.format,
+      revision: node.revision,
+    }),
+    onEvent,
+  });
+
+  return createCachedDocumentSourceLoader({
     cache,
     onEvent,
-    load: createHttpDocumentSourceLoader({
-      fetch: fetchDocument,
-      getRequest: (node) => {
-        const asset = runtimeAssets[node.id];
-        if (asset === undefined) {
-          throw new Error(
-            `Published document URL is unavailable for ${node.id}`
-          );
-        }
-        return new URL(asset.url, baseUrl);
-      },
-      getMetadata: ({ node }) => ({
-        format: node.format,
-        revision: node.revision,
-      }),
-      onEvent,
-    }),
+    load: async (node, options) => {
+      const format = node.format;
+      const content =
+        format === undefined ? undefined : embeddedContents?.[node.contentRef];
+      if (content !== undefined && format !== undefined) {
+        return {
+          format,
+          revision: node.revision,
+          source: encodeUtf8(content),
+        };
+      }
+      return await httpLoader(node, options);
+    },
   });
+};
 
 const validateRuntimeAssets = ({
   artifact,
@@ -202,6 +218,7 @@ const createPublishedAssetResourceHandler = ({
   const loadDocument = createPublishedDocumentLoader({
     baseUrl,
     runtimeAssets,
+    embeddedContents: artifact.contents,
     fetchDocument,
     cache: documentCache,
     onEvent: onDocumentGraphEvent,
