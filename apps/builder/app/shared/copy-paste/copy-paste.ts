@@ -81,7 +81,7 @@ export type Plugin = {
   name: string;
   mimeType: string;
   onCopy?: () => undefined | string | Promise<undefined | string>;
-  onCut?: () => undefined | string;
+  onCut?: () => undefined | string | Promise<undefined | string>;
   onPaste?: (data: string) => PasteResult | Promise<PasteResult>;
 };
 
@@ -166,7 +166,12 @@ const initPlugins = ({
       if (data instanceof Promise) {
         event.preventDefault();
         void data
-          .then((value) => writeClipboardText(value))
+          .then((value) => {
+            if (value !== undefined) {
+              event.clipboardData?.setData(mimeType, value);
+            }
+            return writeClipboardText(value);
+          })
           .catch(() =>
             builderApi.toast.error(
               "Could not prepare the selected content for copying."
@@ -189,6 +194,22 @@ const initPlugins = ({
     }
     for (const { mimeType, onCut } of plugins) {
       const data = onCut?.();
+      if (data instanceof Promise) {
+        event.preventDefault();
+        void data
+          .then((value) => {
+            if (value !== undefined) {
+              event.clipboardData?.setData(mimeType, value);
+            }
+            return writeClipboardText(value);
+          })
+          .catch(() => {
+            builderApi.toast.error(
+              "Could not prepare the selected content for copying."
+            );
+          });
+        break;
+      }
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();
@@ -281,6 +302,18 @@ export const initCopyPasteForContentEditMode = ({
       return;
     }
     const data = instanceText.onCopy?.();
+    if (data instanceof Promise) {
+      event.preventDefault();
+      void data
+        .then((value) => {
+          if (value !== undefined) {
+            event.clipboardData?.setData(instanceText.mimeType, value);
+          }
+          return writeClipboardText(value);
+        })
+        .catch(() => undefined);
+      return;
+    }
     if (data) {
       event.preventDefault();
       event.clipboardData?.setData(instanceText.mimeType, data);

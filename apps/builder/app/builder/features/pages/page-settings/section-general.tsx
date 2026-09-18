@@ -20,14 +20,13 @@ import { isLiteralExpression } from "@webstudio-is/expression";
 import { documentTypes, type Pages } from "@webstudio-is/sdk";
 import { HomeIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { $permissions } from "~/shared/nano-states";
 import { $pageRootScope } from "../page-utils";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
 } from "@webstudio-is/project-build/runtime";
-import { computePageSettingsText, type OnChange } from "./shared";
+import { usePageSettingsText, type OnChange } from "./shared";
 
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
@@ -151,7 +150,7 @@ const StatusField = ({
       </Flex>
       <BindableExpressionControl
         expression={value ?? ""}
-        value={String(computeExpression(value, variableValues) ?? "")}
+        value={usePageSettingsText(value, variableValues)}
         bound={value !== undefined && isLiteralExpression(value) === false}
         showBinding={showBindingControls}
         scope={scope}
@@ -243,7 +242,7 @@ const RedirectField = ({
 
       <BindableExpressionControl
         expression={value ?? ""}
-        value={computePageSettingsText(value, variableValues)}
+        value={usePageSettingsText(value, variableValues)}
         bound={value !== undefined && isLiteralExpression(value) === false}
         showBinding={showBindingControls}
         scope={scope}

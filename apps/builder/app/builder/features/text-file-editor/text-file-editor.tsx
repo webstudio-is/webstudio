@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -67,6 +66,7 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
+import { useAsyncValue } from "~/shared/use-async-value";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
 import {
   $assetFolders,
@@ -132,13 +132,13 @@ const getStaticMdxCompletionProps = (
     ];
   });
 
-const getMdxEditorSourceBlockInstanceIds = (assetId: string) =>
+const getMdxEditorSourceBlockInstanceIds = async (assetId: string) =>
   Array.from(
     new Set([
-      ...getMdxAssetSourceBlockInstanceIds({
+      ...(await getMdxAssetSourceBlockInstanceIds({
         assetId,
         state: readBuilderStateStores(),
-      }),
+      })),
       ...Array.from($externalContentRoots.get().values()).flatMap((root) =>
         root.assetId === assetId
           ? [root.sourceBlockInstanceId ?? root.blockInstanceId]
@@ -147,13 +147,13 @@ const getMdxEditorSourceBlockInstanceIds = (assetId: string) =>
     ])
   );
 
-const getMdxCompletionComponents = ({
+const getMdxCompletionComponents = async ({
   assetId,
   metas,
 }: {
   assetId: string;
   metas: Map<string, WsComponentMeta>;
-}): MdxCompletionComponent[] => {
+}): Promise<MdxCompletionComponent[]> => {
   const components = new Map<string, MdxCompletionComponent>();
   const componentIds = Array.from(metas.keys());
   for (const [component, meta] of metas) {
@@ -196,7 +196,9 @@ const getMdxCompletionComponents = ({
     propsByInstanceId.set(prop.instanceId, props);
   }
   const templates = new Map<string, MdxCompletionComponent>();
-  for (const blockInstanceId of getMdxEditorSourceBlockInstanceIds(assetId)) {
+  for (const blockInstanceId of await getMdxEditorSourceBlockInstanceIds(
+    assetId
+  )) {
     for (const [template] of findBlockTemplates({
       anchor: [blockInstanceId],
       instances,
@@ -698,8 +700,8 @@ export const TextFileEditor = ({
     asset.projectId !== undefined
       ? getAssetContentBridge().getContentSession?.(asset.projectId)
       : undefined;
-  const languageExtensions = useMemo(
-    () => {
+  const languageExtensions = useAsyncValue(
+    async () => {
       // The state reader below is intentionally refreshed when its external
       // Content Block context or template definitions change.
       void externalContentRoots;
@@ -720,12 +722,13 @@ export const TextFileEditor = ({
           inspectMdxAssetSource({
             source,
             assetId,
-            sourceBlockInstanceIds: getMdxEditorSourceBlockInstanceIds(assetId),
+            sourceBlockInstanceIds:
+              await getMdxEditorSourceBlockInstanceIds(assetId),
             state: readBuilderStateStores(),
             metas: registeredComponentMetas,
             projectId,
           }),
-        getMdxCompletionComponents({
+        await getMdxCompletionComponents({
           assetId,
           metas: registeredComponentMetas,
         })
@@ -770,7 +773,8 @@ export const TextFileEditor = ({
       instances,
       props,
       registeredComponentMetas,
-    ]
+    ],
+    []
   );
 
   useEffect(() => {

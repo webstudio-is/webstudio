@@ -1499,7 +1499,7 @@ export const computePageSettingsPath = (
     .replace(/\/+/g, "/");
 };
 
-export const validatePageSettingsGeneralSection = ({
+export const validatePageSettingsGeneralSection = async ({
   pages,
   pageId,
   values,
@@ -1509,12 +1509,16 @@ export const validatePageSettingsGeneralSection = ({
   pageId: undefined | Page["id"];
   values: PageSettingsValues;
   variableValues: Map<string, unknown>;
-}): PageSettingsErrors => {
+}): Promise<PageSettingsErrors> => {
+  const [status, redirect] = await Promise.all([
+    computeExpression(values.status ?? `undefined`, variableValues),
+    computeExpression(values.redirect, variableValues),
+  ]);
   const computedValues = {
     name: values.name,
     path: values.path,
-    status: computeExpression(values.status ?? `undefined`, variableValues),
-    redirect: computeExpression(values.redirect, variableValues),
+    status,
+    redirect,
     documentType: values.documentType,
   };
 
@@ -1585,63 +1589,71 @@ export const validatePageSettingsAuthSection = (
   return { auth: authErrors };
 };
 
-export const validatePageSettingsSearchSection = (
+export const validatePageSettingsSearchSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
+): Promise<PageSettingsErrors> => {
+  const [title, description, excludePageFromSearch, language] =
+    await Promise.all([
+      computeExpression(values.title, variableValues),
+      computeExpression(values.description, variableValues),
+      computeExpression(values.excludePageFromSearch, variableValues),
+      computeExpression(values.language, variableValues),
+    ]);
   const parsedResult = pageSearchSettingsInput.safeParse({
-    title:
-      computeExpression(values.title, variableValues) ??
-      "exclude from validation",
-    description: computeExpression(values.description, variableValues),
-    excludePageFromSearch: computeExpression(
-      values.excludePageFromSearch,
-      variableValues
-    ),
-    language: computeExpression(values.language, variableValues),
+    title: title ?? "exclude from validation",
+    description,
+    excludePageFromSearch,
+    language,
   });
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettingsSocialImageSection = (
+export const validatePageSettingsSocialImageSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
+): Promise<PageSettingsErrors> => {
+  const socialImageUrl = await computeExpression(
+    values.socialImageUrl,
+    variableValues
+  );
   const parsedResult = pageSocialImageSettingsInput.safeParse({
-    socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
+    socialImageUrl,
   });
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettingsCustomMetadataSection = (
+export const validatePageSettingsCustomMetadataSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
-  const parsedResult = pageCustomMetadataSettingsInput.safeParse({
-    customMetas: values.customMetas.map((item) => ({
+): Promise<PageSettingsErrors> => {
+  const customMetas = await Promise.all(
+    values.customMetas.map(async (item) => ({
       property: item.property,
-      content: computeExpression(item.content, variableValues),
-    })),
+      content: await computeExpression(item.content, variableValues),
+    }))
+  );
+  const parsedResult = pageCustomMetadataSettingsInput.safeParse({
+    customMetas,
   });
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettingsTextContentSection = (
+export const validatePageSettingsTextContentSection = async (
   values: PageSettingsValues,
   variableValues: Map<string, unknown>
-): PageSettingsErrors => {
+): Promise<PageSettingsErrors> => {
   if (values.documentType !== "text") {
     return {};
   }
 
-  const parsedResult = pageTextContentSettingsInput.safeParse({
-    content: computeExpression(values.content, variableValues),
-  });
+  const content = await computeExpression(values.content, variableValues);
+  const parsedResult = pageTextContentSettingsInput.safeParse({ content });
 
   return parsedResult.success ? {} : parsedResult.error.flatten().fieldErrors;
 };
 
-export const validatePageSettings = ({
+export const validatePageSettings = async ({
   pages,
   pageId,
   values,
@@ -1651,7 +1663,7 @@ export const validatePageSettings = ({
   pageId: undefined | Page["id"];
   values: PageSettingsValues;
   variableValues: Map<string, unknown>;
-}): PageSettingsErrors => {
+}): Promise<PageSettingsErrors> => {
   const errors: PageSettingsErrors = {};
   const sectionErrors = [
     validatePageSettingsGeneralSection({
@@ -1660,7 +1672,7 @@ export const validatePageSettings = ({
       values,
       variableValues,
     }),
-    validatePageSettingsAuthSection(values),
+    Promise.resolve(validatePageSettingsAuthSection(values)),
   ];
   if (values.documentType === "html") {
     sectionErrors.push(
@@ -1674,7 +1686,8 @@ export const validatePageSettings = ({
       validatePageSettingsTextContentSection(values, variableValues)
     );
   }
-  for (const sectionError of sectionErrors) {
+  const resolvedSectionErrors = await Promise.all(sectionErrors);
+  for (const sectionError of resolvedSectionErrors) {
     if (sectionError.auth) {
       errors.auth = { ...errors.auth, ...sectionError.auth };
     }

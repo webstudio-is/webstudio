@@ -16,7 +16,6 @@ import {
   nameToPath,
   pageSettingsDefaultValues,
   pageTemplateSettingsInput,
-  validatePageSettings,
   type PageSettingsErrors,
   type PageSettingsValues,
 } from "@webstudio-is/project-build/runtime";
@@ -32,6 +31,7 @@ import {
   updatePage,
   FormFields,
   PageSettingsPanel,
+  usePageSettingsErrors,
 } from "./page-settings/page-settings";
 import type { OnChange } from "./page-settings/shared";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
@@ -405,7 +405,7 @@ export const CreatePageFromTemplateSettings = ({
   );
   const [values, setValues] = useState<PageSettingsValues>(initialValues);
 
-  const errors = validatePageSettings({
+  const errors = usePageSettingsErrors({
     pages,
     pageId: undefined,
     values,

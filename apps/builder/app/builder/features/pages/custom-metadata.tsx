@@ -16,6 +16,7 @@ import { isLiteralExpression } from "@webstudio-is/expression";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { $pageRootScope } from "./page-utils";
+import { useAsyncValue } from "~/shared/use-async-value";
 
 type Meta = {
   property: string;
@@ -41,7 +42,11 @@ const MetadataItem = (props: {
   const contentId = useId();
   const { variableValues, scope, aliases } = useStore($pageRootScope);
 
-  const content = computeExpression(props.content, variableValues);
+  const content = useAsyncValue(
+    () => computeExpression(props.content, variableValues),
+    [props.content, variableValues],
+    undefined
+  );
 
   return (
     <Grid

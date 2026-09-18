@@ -104,6 +104,11 @@ test.each(["Backspace", "Delete"])(
     } as const satisfies QueryDefinition<string, string>;
 
     const container = renderQueryBuilder({ value, capabilities });
+    await vi.waitFor(() =>
+      expect(container.querySelector(".cm-content")?.textContent).toBe(
+        '"/blog/article"'
+      )
+    );
     const editor = container.querySelector(".cm-content");
     const source = Array.from(container.querySelectorAll(".cm-content")).at(-1);
 
@@ -139,7 +144,7 @@ test.each(["Backspace", "Delete"])(
   }
 );
 
-test("shows an evaluated value for a bound number input", () => {
+test("shows an evaluated value for a bound number input", async () => {
   const capabilities = {
     version: 1,
     fields: [],
@@ -170,6 +175,8 @@ test("shows an evaluated value for a bound number input", () => {
   const input = container.querySelector<HTMLInputElement>(
     'input[aria-label="Limit"]'
   );
+
+  await vi.waitFor(() => expect(input?.value).toBe("20"));
 
   expect(input?.value).toBe("20");
   expect(input?.step).toBe("1");

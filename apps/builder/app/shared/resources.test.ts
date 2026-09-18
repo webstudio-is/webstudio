@@ -16,7 +16,7 @@ import {
   $resourcesState,
   $resourcesCache,
   computeResourceRequest,
-  computeResourceRequestPlanAsync,
+  computeResourceRequestPlan,
   getResourceKey,
   invalidateAssets,
   loadResourceDiagnostics,
@@ -130,7 +130,7 @@ test("unlocks reachable resource requests as dependency documents are cached", a
   ]);
   const resourceCache = new Map<string, unknown>();
 
-  const waiting = await computeResourceRequestPlanAsync({
+  const waiting = await computeResourceRequestPlan({
     rootResourceIds: ["postsResource"],
     resources,
     dataSources,
@@ -142,7 +142,7 @@ test("unlocks reachable resource requests as dependency documents are cached", a
 
   const authorRequest = waiting.requests[0];
   resourceCache.set(getResourceKey(authorRequest), { data: { id: 1 } });
-  const ready = await computeResourceRequestPlanAsync({
+  const ready = await computeResourceRequestPlan({
     rootResourceIds: ["postsResource"],
     resources,
     dataSources,
@@ -289,7 +289,7 @@ test("computes async resource plans with dependency documents", async () => {
     [getResourceKey(authorRequest), Promise.resolve({ data: { id: 1 } })],
   ]);
 
-  const result = await computeResourceRequestPlanAsync({
+  const result = await computeResourceRequestPlan({
     rootResourceIds: ["postsResource"],
     resources,
     dataSources,

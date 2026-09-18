@@ -487,7 +487,7 @@ export const replaceDataSourcesInExpression = (
   }
 };
 
-export const computeExpression = (
+const evaluateExpression = (
   expression: string,
   variables: ReadonlyMap<DataSource["name"], unknown>
 ) => {
@@ -547,13 +547,13 @@ const resolveExpressionVariables = async ({
   return resolved;
 };
 
-export const computeExpressionAsync = async (
+export const computeExpression = async (
   expression: string,
   variables: ReadonlyMap<DataSource["id"], unknown>,
   resolveDataSource: ResolveExpressionDataSource = (_dataSourceId, value) =>
     value
 ) =>
-  computeExpression(
+  evaluateExpression(
     expression,
     await resolveExpressionVariables({
       expression,
@@ -562,20 +562,12 @@ export const computeExpressionAsync = async (
     })
   );
 
-export const computeStringExpression = (
-  expression: string,
-  variables: ReadonlyMap<DataSource["name"], unknown>
-) => {
-  const value = computeExpression(expression, variables);
-  return typeof value === "string" && value !== "" ? value : undefined;
-};
-
-export const computeStringExpressionAsync = async (
+export const computeStringExpression = async (
   expression: string,
   variables: ReadonlyMap<DataSource["id"], unknown>,
   resolveDataSource?: ResolveExpressionDataSource
 ) => {
-  const value = await computeExpressionAsync(
+  const value = await computeExpression(
     expression,
     variables,
     resolveDataSource
@@ -583,24 +575,7 @@ export const computeStringExpressionAsync = async (
   return typeof value === "string" && value !== "" ? value : undefined;
 };
 
-export const computeExpressionWithinScope = (
-  expression: string,
-  scope: Record<string, unknown>
-) => {
-  if (expression.trim() === "") {
-    return;
-  }
-  const variables = new Map<DataSource["name"], unknown>();
-  for (const [name, value] of Object.entries(scope)) {
-    const decodedName = decodeDataSourceVariable(name);
-    if (decodedName !== undefined) {
-      variables.set(decodedName, value);
-    }
-  }
-  return computeExpression(expression, variables);
-};
-
-export const computeExpressionWithinScopeAsync = async (
+export const computeExpressionWithinScope = async (
   expression: string,
   scope: Record<string, unknown>,
   resolveDataSource?: ResolveExpressionDataSource
@@ -610,12 +585,12 @@ export const computeExpressionWithinScopeAsync = async (
   }
   const variables = new Map<DataSource["id"], unknown>();
   for (const [name, value] of Object.entries(scope)) {
-    const decodedName = decodeDataVariableId(name);
-    if (decodedName !== undefined) {
-      variables.set(decodedName, value);
+    const dataSourceId = decodeDataVariableId(name);
+    if (dataSourceId !== undefined) {
+      variables.set(dataSourceId, value);
     }
   }
-  return computeExpressionAsync(expression, variables, resolveDataSource);
+  return computeExpression(expression, variables, resolveDataSource);
 };
 
 const getParentInstanceById = (instances: Instances) => {
@@ -2012,11 +1987,11 @@ export const createResourceFieldsFromResource = (
   body: resource.body,
 });
 
-export const validateResourceUrlExpression = (
+export const validateResourceUrlExpression = async (
   expression: string,
   scope: Record<string, unknown>
 ) => {
-  const value = computeExpressionWithinScope(expression, scope);
+  const value = await computeExpressionWithinScope(expression, scope);
   if (typeof value !== "string") {
     return "URL expects a string";
   }
@@ -2033,7 +2008,7 @@ export const validateResourceUrlExpression = (
 
 export type ResourceBodyInputType = undefined | "text" | "json";
 
-export const validateResourceBodyExpression = (
+export const validateResourceBodyExpression = async (
   expression: string,
   bodyType: ResourceBodyInputType,
   scope: Record<string, unknown>
@@ -2041,7 +2016,7 @@ export const validateResourceBodyExpression = (
   if (expression === "") {
     return "";
   }
-  const value = computeExpressionWithinScope(expression, scope);
+  const value = await computeExpressionWithinScope(expression, scope);
   if (bodyType === "json") {
     return typeof value === "object" && value !== null
       ? ""

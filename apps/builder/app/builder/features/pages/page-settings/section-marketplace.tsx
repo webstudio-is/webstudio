@@ -16,7 +16,7 @@ import { $assets } from "~/shared/sync/data-stores";
 import { Card } from "../../marketplace/card";
 import { ImageInfo } from "../image-info";
 import type { PageSettingsValues } from "@webstudio-is/project-build/runtime";
-import { computePageSettingsText, type OnChange } from "./shared";
+import { usePageSettingsText, type OnChange } from "./shared";
 
 export const MarketplaceSection = ({
   values,
@@ -31,7 +31,7 @@ export const MarketplaceSection = ({
     ({ property }) => property === "ws:category"
   );
   // @todo remove after all stores are migrated
-  const categoryFallback = computePageSettingsText(
+  const categoryFallback = usePageSettingsText(
     categoryMeta?.content ?? `""`,
     new Map()
   );

@@ -2,19 +2,21 @@ import { expect, test } from "vitest";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import { evaluateExpressionWithinScope } from "./binding-popover";
 
-test("evaluateExpressionWithinScope works", () => {
+test("evaluateExpressionWithinScope works", async () => {
   const variableName = "jsonVariable";
   const encVariableName = encodeDataSourceVariable(variableName);
   const variableValue = 1;
 
-  expect(
+  await expect(
     evaluateExpressionWithinScope(`${encVariableName} + ${encVariableName}`, {
       [encVariableName]: variableValue,
     })
-  ).toEqual(2);
+  ).resolves.toEqual(2);
 });
 
-test("evaluateExpressionWithinScope treats empty expression as undefined", () => {
-  expect(evaluateExpressionWithinScope("", {})).toBeUndefined();
-  expect(evaluateExpressionWithinScope("  ", {})).toBeUndefined();
+test("evaluateExpressionWithinScope treats empty expression as undefined", async () => {
+  await expect(evaluateExpressionWithinScope("", {})).resolves.toBeUndefined();
+  await expect(
+    evaluateExpressionWithinScope("  ", {})
+  ).resolves.toBeUndefined();
 });

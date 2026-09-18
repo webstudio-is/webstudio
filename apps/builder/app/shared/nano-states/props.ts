@@ -39,7 +39,7 @@ import { $currentSystem } from "../system";
 import {
   $resourcesCache,
   type ResourceRequestPlan,
-  computeResourceRequestPlanAsync,
+  computeResourceRequestPlan,
   preloadResources,
 } from "../resources";
 import {
@@ -345,7 +345,7 @@ export const $unscopedVariableValues = computed(
  * essential to support collections which provide different values in each item
  * for same variables
  */
-export const $propValuesByInstanceSelector = computed(
+const $propValuesInput = computed(
   [
     $instances,
     $props,
@@ -365,138 +365,176 @@ export const $propValuesByInstanceSelector = computed(
     assets,
     uploadingFilesDataStore,
     externalContentRoots
-  ) => {
-    // already includes global variables
-    const variableValues = new Map<string, unknown>(unscopedVariableValues);
+  ) => ({
+    instances,
+    props,
+    page,
+    unscopedVariableValues,
+    pages,
+    assets,
+    uploadingFilesDataStore,
+    externalContentRoots,
+  })
+);
 
-    let propsList = Array.from(props.values());
+const computePropValues = async ({
+  instances,
+  props,
+  page,
+  unscopedVariableValues,
+  pages,
+  assets,
+  uploadingFilesDataStore,
+  externalContentRoots,
+}: ReturnType<typeof $propValuesInput.get>) => {
+  // already includes global variables
+  const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
-    // ignore asset and page props when params is not provided
-    if (pages) {
-      const uploadingImageAssets = uploadingFilesDataStore
-        .map(uploadingFileDataToAsset)
-        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
-        .filter((asset): asset is ImageAsset => asset.type === "image");
+  let propsList = Array.from(props.values());
 
-      // use whole props list to let access hash props from other pages and instances
-      propsList = normalizeProps({
-        props: propsList,
-        assetBaseUrl,
-        assets,
-        uploadingImageAssets,
-        pages,
-        source: "canvas",
-      });
-    }
-    // collect props and group by instances
-    const propsByInstanceId = mapGroupBy(propsList, (prop) => prop.instanceId);
+  // ignore asset and page props when params is not provided
+  if (pages) {
+    const uploadingImageAssets = uploadingFilesDataStore
+      .map(uploadingFileDataToAsset)
+      .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
+      .filter((asset): asset is ImageAsset => asset.type === "image");
 
-    // traverse instances tree and compute props within each instance
-    const propValuesByInstanceSelector = new Map<
-      Instance["id"],
-      Map<Prop["name"], unknown>
-    >();
-    if (page === undefined) {
-      return propValuesByInstanceSelector;
-    }
-    const traverseInstances = (instanceSelector: InstanceSelector) => {
-      const [instanceId] = instanceSelector;
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
-        return;
-      }
+    // use whole props list to let access hash props from other pages and instances
+    propsList = normalizeProps({
+      props: propsList,
+      assetBaseUrl,
+      assets,
+      uploadingImageAssets,
+      pages,
+      source: "canvas",
+    });
+  }
+  // collect props and group by instances
+  const propsByInstanceId = mapGroupBy(propsList, (prop) => prop.instanceId);
 
-      const propValues = new Map<Prop["name"], unknown>();
-      const props = propsByInstanceId.get(instanceId);
-      const parameters = new Map<Prop["name"], DataSource["id"]>();
-
-      if (props) {
-        for (const prop of props) {
-          // at this point asset and page either already converted to string
-          // or can be ignored
-          if (prop.type === "asset" || prop.type === "page") {
-            continue;
-          }
-          if (prop.type === "expression") {
-            const value = computeExpression(prop.value, variableValues);
-            if (value !== undefined) {
-              propValues.set(prop.name, value);
-            }
-            continue;
-          }
-          if (prop.type === "action") {
-            const action = getAction(prop, variableValues);
-            if (typeof action === "function") {
-              propValues.set(prop.name, action);
-            }
-            continue;
-          }
-          if (prop.type === "parameter") {
-            parameters.set(prop.name, prop.value);
-            continue;
-          }
-          propValues.set(prop.name, prop.value);
-        }
-      }
-
-      setContentBlockDocumentValue({
-        instance,
-        instanceSelector,
-        parameters,
-        propsByInstanceId,
-        variableValues,
-        externalContentRoots,
-      });
-
-      propValuesByInstanceSelector.set(
-        getInstanceKey(instanceSelector),
-        propValues
-      );
-
-      if (instance.component === collectionComponent) {
-        const originalData = propValues.get("data");
-        const itemVariableId = parameters.get("item");
-        const itemKeyVariableId = parameters.get("itemKey");
-        if (originalData) {
-          for (const [key, value] of getCollectionEntries(originalData)) {
-            if (itemVariableId !== undefined) {
-              variableValues.set(itemVariableId, value);
-            }
-            if (itemKeyVariableId !== undefined) {
-              variableValues.set(itemKeyVariableId, key);
-            }
-            for (const child of instance.children) {
-              if (child.type === "id") {
-                const indexId = getIndexedInstanceId(instanceId, key);
-                traverseInstances([child.value, indexId, ...instanceSelector]);
-              }
-            }
-          }
-        }
-        return;
-      }
-      for (const child of instance.children) {
-        // plain text can be edited from props panel
-        if (child.type === "text" && instance.children.length === 1) {
-          propValues.set(textContentAttribute, child.value);
-        }
-        if (child.type === "expression" && instance.children.length === 1) {
-          const value = computeExpression(child.value, variableValues);
-          if (value !== undefined) {
-            propValues.set(textContentAttribute, value);
-          }
-        }
-        if (child.type === "id") {
-          traverseInstances([child.value, ...instanceSelector]);
-        }
-      }
-    };
-
-    traverseInstances([page.rootInstanceId]);
-
+  // traverse instances tree and compute props within each instance
+  const propValuesByInstanceSelector = new Map<
+    Instance["id"],
+    Map<Prop["name"], unknown>
+  >();
+  if (page === undefined) {
     return propValuesByInstanceSelector;
   }
+  const traverseInstances = async (instanceSelector: InstanceSelector) => {
+    const [instanceId] = instanceSelector;
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+
+    const propValues = new Map<Prop["name"], unknown>();
+    const props = propsByInstanceId.get(instanceId);
+    const parameters = new Map<Prop["name"], DataSource["id"]>();
+
+    if (props) {
+      for (const prop of props) {
+        // at this point asset and page either already converted to string
+        // or can be ignored
+        if (prop.type === "asset" || prop.type === "page") {
+          continue;
+        }
+        if (prop.type === "expression") {
+          const value = await computeExpression(prop.value, variableValues);
+          if (value !== undefined) {
+            propValues.set(prop.name, value);
+          }
+          continue;
+        }
+        if (prop.type === "action") {
+          const action = getAction(prop, variableValues);
+          if (typeof action === "function") {
+            propValues.set(prop.name, action);
+          }
+          continue;
+        }
+        if (prop.type === "parameter") {
+          parameters.set(prop.name, prop.value);
+          continue;
+        }
+        propValues.set(prop.name, prop.value);
+      }
+    }
+
+    setContentBlockDocumentValue({
+      instance,
+      instanceSelector,
+      parameters,
+      propsByInstanceId,
+      variableValues,
+      externalContentRoots,
+    });
+
+    propValuesByInstanceSelector.set(
+      getInstanceKey(instanceSelector),
+      propValues
+    );
+
+    if (instance.component === collectionComponent) {
+      const originalData = propValues.get("data");
+      const itemVariableId = parameters.get("item");
+      const itemKeyVariableId = parameters.get("itemKey");
+      if (originalData) {
+        for (const [key, value] of getCollectionEntries(originalData)) {
+          if (itemVariableId !== undefined) {
+            variableValues.set(itemVariableId, value);
+          }
+          if (itemKeyVariableId !== undefined) {
+            variableValues.set(itemKeyVariableId, key);
+          }
+          for (const child of instance.children) {
+            if (child.type === "id") {
+              const indexId = getIndexedInstanceId(instanceId, key);
+              await traverseInstances([
+                child.value,
+                indexId,
+                ...instanceSelector,
+              ]);
+            }
+          }
+        }
+      }
+      return;
+    }
+    for (const child of instance.children) {
+      // plain text can be edited from props panel
+      if (child.type === "text" && instance.children.length === 1) {
+        propValues.set(textContentAttribute, child.value);
+      }
+      if (child.type === "expression" && instance.children.length === 1) {
+        const value = await computeExpression(child.value, variableValues);
+        if (value !== undefined) {
+          propValues.set(textContentAttribute, value);
+        }
+      }
+      if (child.type === "id") {
+        await traverseInstances([child.value, ...instanceSelector]);
+      }
+    }
+  };
+
+  await traverseInstances([page.rootInstanceId]);
+
+  return propValuesByInstanceSelector;
+};
+
+export const $propValuesByInstanceSelector = atom(
+  new Map<string, Map<Prop["name"], unknown>>()
 );
+
+let propValuesRevision = 0;
+$propValuesInput.subscribe((input) => {
+  const revision = ++propValuesRevision;
+  void computePropValues(input).then((values) => {
+    if (revision === propValuesRevision) {
+      $propValuesByInstanceSelector.set(values);
+    }
+  });
+});
 
 export const $propValuesByInstanceSelectorWithMemoryProps = computed(
   [$propValuesByInstanceSelector, $memoryProps, $isPreviewMode],
@@ -519,7 +557,7 @@ export const $propValuesByInstanceSelectorWithMemoryProps = computed(
   }
 );
 
-export const $variableValuesByInstanceSelector = computed(
+const $variableValuesInput = computed(
   [
     $instances,
     $props,
@@ -539,169 +577,206 @@ export const $variableValuesByInstanceSelector = computed(
     resourceRequestPlan,
     system,
     externalContentRoots
-  ) => {
-    const propsByInstanceId = mapGroupBy(
-      props.values(),
-      (prop) => prop.instanceId
-    );
+  ) => ({
+    instances,
+    props,
+    page,
+    dataSources,
+    dataSourceVariables,
+    resourceRequestPlan,
+    system,
+    externalContentRoots,
+  })
+);
 
-    const variablesByInstanceId = mapGroupBy(
-      dataSources.values(),
-      (dataSource) => dataSource.scopeInstanceId
-    );
+const computeVariableValues = async ({
+  instances,
+  props,
+  page,
+  dataSources,
+  dataSourceVariables,
+  resourceRequestPlan,
+  system,
+  externalContentRoots,
+}: ReturnType<typeof $variableValuesInput.get>) => {
+  const propsByInstanceId = mapGroupBy(
+    props.values(),
+    (prop) => prop.instanceId
+  );
 
-    // traverse instances tree and compute props within each instance
-    const variableValuesByInstanceSelector = new Map<
-      Instance["id"],
-      Map<Prop["name"], unknown>
-    >();
-    if (page === undefined) {
-      return variableValuesByInstanceSelector;
-    }
+  const variablesByInstanceId = mapGroupBy(
+    dataSources.values(),
+    (dataSource) => dataSource.scopeInstanceId
+  );
 
-    const collectVariables = (
-      instanceSelector: InstanceSelector,
-      parentVariableValues = new Map<string, unknown>()
-    ) => {
-      const [instanceId] = instanceSelector;
-      const variableValues = new Map<string, unknown>(parentVariableValues);
-      variableValuesByInstanceSelector.set(
-        getInstanceKey(instanceSelector),
-        variableValues
-      );
-      const variables = variablesByInstanceId.get(instanceId);
-      // set global system value
-      if (instanceId === ROOT_INSTANCE_ID) {
-        variableValues.set(SYSTEM_VARIABLE_ID, system);
-      }
-      if (variables) {
-        for (const variable of variables) {
-          if (variable.type === "variable") {
-            const value = dataSourceVariables.get(variable.id);
-            variableValues.set(variable.id, value ?? variable.value.value);
-          }
-          if (variable.type === "parameter") {
-            const value = dataSourceVariables.get(variable.id);
-            variableValues.set(variable.id, value);
-            // set page system value
-            if (variable.id === page.systemDataSourceId) {
-              variableValues.set(variable.id, system);
-            }
-          }
-          if (variable.type === "resource") {
-            variableValues.set(
-              variable.id,
-              resourceRequestPlan.documents.get(variable.resourceId)
-            );
-          }
-        }
-      }
-      return variableValues;
-    };
-
-    const traverseInstances = (
-      instanceSelector: InstanceSelector,
-      parentVariableValues = new Map<string, unknown>()
-    ) => {
-      let variableValues = collectVariables(
-        instanceSelector,
-        parentVariableValues
-      );
-
-      const [instanceId] = instanceSelector;
-      const propValues = new Map<Prop["name"], unknown>();
-      const props = propsByInstanceId.get(instanceId);
-      const parameters = new Map<Prop["name"], DataSource["id"]>();
-      if (props) {
-        for (const prop of props) {
-          if (
-            prop.type === "asset" ||
-            prop.type === "page" ||
-            prop.type === "action"
-          ) {
-            continue;
-          }
-          if (prop.type === "expression") {
-            const value = computeExpression(prop.value, variableValues);
-            if (value !== undefined) {
-              propValues.set(prop.name, value);
-            }
-            continue;
-          }
-          if (prop.type === "parameter") {
-            parameters.set(prop.name, prop.value);
-            continue;
-          }
-          propValues.set(prop.name, prop.value);
-        }
-      }
-
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
-        return;
-      }
-
-      setContentBlockDocumentValue({
-        instance,
-        instanceSelector,
-        parameters,
-        propsByInstanceId,
-        variableValues,
-        externalContentRoots,
-      });
-
-      if (instance.component === collectionComponent) {
-        const originalData = propValues.get("data");
-        const itemVariableId = parameters.get("item");
-        const itemKeyVariableId = parameters.get("itemKey");
-        // prevent accessing item from collection
-        if (itemVariableId !== undefined) {
-          variableValues.delete(itemVariableId);
-        }
-        if (itemKeyVariableId !== undefined) {
-          variableValues.delete(itemKeyVariableId);
-        }
-        if (originalData) {
-          for (const [key, value] of getCollectionEntries(originalData)) {
-            const itemVariableValues = new Map(variableValues);
-            if (itemVariableId !== undefined) {
-              itemVariableValues.set(itemVariableId, value);
-            }
-            if (itemKeyVariableId !== undefined) {
-              itemVariableValues.set(itemKeyVariableId, key);
-            }
-            for (const child of instance.children) {
-              if (child.type === "id") {
-                const indexId = getIndexedInstanceId(instanceId, key);
-                traverseInstances(
-                  [child.value, indexId, ...instanceSelector],
-                  itemVariableValues
-                );
-              }
-            }
-          }
-        }
-        return;
-      }
-      // reset values for slot children to let slots behave as isolated components
-      if (instance.component === portalComponent) {
-        // allow accessing global variables in slots
-        variableValues = globalVariableValues;
-      }
-      for (const child of instance.children) {
-        if (child.type === "id") {
-          traverseInstances([child.value, ...instanceSelector], variableValues);
-        }
-      }
-    };
-    const globalVariableValues = collectVariables([ROOT_INSTANCE_ID]);
-    traverseInstances(
-      [page.rootInstanceId, ROOT_INSTANCE_ID],
-      globalVariableValues
-    );
+  // traverse instances tree and compute props within each instance
+  const variableValuesByInstanceSelector = new Map<
+    Instance["id"],
+    Map<Prop["name"], unknown>
+  >();
+  if (page === undefined) {
     return variableValuesByInstanceSelector;
   }
+
+  const collectVariables = (
+    instanceSelector: InstanceSelector,
+    parentVariableValues = new Map<string, unknown>()
+  ) => {
+    const [instanceId] = instanceSelector;
+    const variableValues = new Map<string, unknown>(parentVariableValues);
+    variableValuesByInstanceSelector.set(
+      getInstanceKey(instanceSelector),
+      variableValues
+    );
+    const variables = variablesByInstanceId.get(instanceId);
+    // set global system value
+    if (instanceId === ROOT_INSTANCE_ID) {
+      variableValues.set(SYSTEM_VARIABLE_ID, system);
+    }
+    if (variables) {
+      for (const variable of variables) {
+        if (variable.type === "variable") {
+          const value = dataSourceVariables.get(variable.id);
+          variableValues.set(variable.id, value ?? variable.value.value);
+        }
+        if (variable.type === "parameter") {
+          const value = dataSourceVariables.get(variable.id);
+          variableValues.set(variable.id, value);
+          // set page system value
+          if (variable.id === page.systemDataSourceId) {
+            variableValues.set(variable.id, system);
+          }
+        }
+        if (variable.type === "resource") {
+          variableValues.set(
+            variable.id,
+            resourceRequestPlan.documents.get(variable.resourceId)
+          );
+        }
+      }
+    }
+    return variableValues;
+  };
+
+  const traverseInstances = async (
+    instanceSelector: InstanceSelector,
+    parentVariableValues = new Map<string, unknown>()
+  ) => {
+    let variableValues = collectVariables(
+      instanceSelector,
+      parentVariableValues
+    );
+
+    const [instanceId] = instanceSelector;
+    const propValues = new Map<Prop["name"], unknown>();
+    const props = propsByInstanceId.get(instanceId);
+    const parameters = new Map<Prop["name"], DataSource["id"]>();
+    if (props) {
+      for (const prop of props) {
+        if (
+          prop.type === "asset" ||
+          prop.type === "page" ||
+          prop.type === "action"
+        ) {
+          continue;
+        }
+        if (prop.type === "expression") {
+          const value = await computeExpression(prop.value, variableValues);
+          if (value !== undefined) {
+            propValues.set(prop.name, value);
+          }
+          continue;
+        }
+        if (prop.type === "parameter") {
+          parameters.set(prop.name, prop.value);
+          continue;
+        }
+        propValues.set(prop.name, prop.value);
+      }
+    }
+
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+
+    setContentBlockDocumentValue({
+      instance,
+      instanceSelector,
+      parameters,
+      propsByInstanceId,
+      variableValues,
+      externalContentRoots,
+    });
+
+    if (instance.component === collectionComponent) {
+      const originalData = propValues.get("data");
+      const itemVariableId = parameters.get("item");
+      const itemKeyVariableId = parameters.get("itemKey");
+      // prevent accessing item from collection
+      if (itemVariableId !== undefined) {
+        variableValues.delete(itemVariableId);
+      }
+      if (itemKeyVariableId !== undefined) {
+        variableValues.delete(itemKeyVariableId);
+      }
+      if (originalData) {
+        for (const [key, value] of getCollectionEntries(originalData)) {
+          const itemVariableValues = new Map(variableValues);
+          if (itemVariableId !== undefined) {
+            itemVariableValues.set(itemVariableId, value);
+          }
+          if (itemKeyVariableId !== undefined) {
+            itemVariableValues.set(itemKeyVariableId, key);
+          }
+          for (const child of instance.children) {
+            if (child.type === "id") {
+              const indexId = getIndexedInstanceId(instanceId, key);
+              await traverseInstances(
+                [child.value, indexId, ...instanceSelector],
+                itemVariableValues
+              );
+            }
+          }
+        }
+      }
+      return;
+    }
+    // reset values for slot children to let slots behave as isolated components
+    if (instance.component === portalComponent) {
+      // allow accessing global variables in slots
+      variableValues = globalVariableValues;
+    }
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        await traverseInstances(
+          [child.value, ...instanceSelector],
+          variableValues
+        );
+      }
+    }
+  };
+  const globalVariableValues = collectVariables([ROOT_INSTANCE_ID]);
+  await traverseInstances(
+    [page.rootInstanceId, ROOT_INSTANCE_ID],
+    globalVariableValues
+  );
+  return variableValuesByInstanceSelector;
+};
+
+export const $variableValuesByInstanceSelector = atom(
+  new Map<string, Map<string, unknown>>()
 );
+
+let variableValuesRevision = 0;
+$variableValuesInput.subscribe((input) => {
+  const revision = ++variableValuesRevision;
+  void computeVariableValues(input).then((values) => {
+    if (revision === variableValuesRevision) {
+      $variableValuesByInstanceSelector.set(values);
+    }
+  });
+});
 
 /** Recompute the async resource plan when its inputs change. */
 export const subscribeResourceRequestPlan = (
@@ -712,7 +787,7 @@ export const subscribeResourceRequestPlan = (
   let revision = 0;
   const unsubscribe = $resourceRequestPlanInput.subscribe((input) => {
     const currentRevision = ++revision;
-    void computeResourceRequestPlanAsync(input)
+    void computeResourceRequestPlan(input)
       .then((resourceRequestPlan) => {
         if (active && currentRevision === revision) {
           $resourceRequestPlan.set(resourceRequestPlan);

@@ -29,6 +29,7 @@ import {
 import { computeExpressionWithinScope } from "@webstudio-is/project-build/runtime";
 import { Text, theme } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
+import { useAsyncValue } from "~/shared/use-async-value";
 import { BindableQueryBuilder } from "~/builder/shared/query-builder";
 import { fetch as builderFetch } from "~/shared/fetch.client";
 import { CenteredPanelMessage, Row } from "./shared";
@@ -173,7 +174,7 @@ const getAssetQueryCatalog = (
   };
 };
 
-const getAssetQueryConfigurationValidation = ({
+const getAssetQueryConfigurationValidation = async ({
   configuration,
   scope,
   definition,
@@ -181,7 +182,7 @@ const getAssetQueryConfigurationValidation = ({
   configuration: StructuredAssetQueryResourceConfiguration;
   scope: Record<string, unknown>;
   definition?: AssetQueryDefinition;
-}): { body?: string; issues: readonly AssetQuerySetupIssue[] } => {
+}): Promise<{ body?: string; issues: readonly AssetQuerySetupIssue[] }> => {
   const issues: AssetQuerySetupIssue[] = [];
   const invalidExpressionPaths = new Set<string>();
   const invalidExpressionPathValues: string[][] = [];
@@ -189,7 +190,7 @@ const getAssetQueryConfigurationValidation = ({
     invalidExpressionPaths.add(JSON.stringify(path));
     invalidExpressionPathValues.push(path);
   };
-  const evaluateExpression = (source: string, path: string[]) => {
+  const evaluateExpression = async (source: string, path: string[]) => {
     if (isQueryExpression(source) === false) {
       markInvalidExpression(path);
       issues.push(
@@ -202,7 +203,7 @@ const getAssetQueryConfigurationValidation = ({
       return;
     }
     try {
-      return computeExpressionWithinScope(source, scope);
+      return await computeExpressionWithinScope(source, scope);
     } catch (error) {
       markInvalidExpression(path);
       issues.push(
@@ -216,38 +217,48 @@ const getAssetQueryConfigurationValidation = ({
       );
     }
   };
-  const evaluateWhere = (
+  const evaluateWhere = async (
     where: StructuredAssetQueryResourceConfiguration["where"],
     path: string[]
-  ): unknown => {
+  ): Promise<unknown> => {
     if ("field" in where) {
       return {
         ...where,
-        value: evaluateExpression(where.value, [...path, "value"]),
+        value: await evaluateExpression(where.value, [...path, "value"]),
       };
     }
     if ("all" in where) {
       return {
-        all: where.all.map((child, index) =>
-          evaluateWhere(child, [...path, "all", String(index)])
+        all: await Promise.all(
+          where.all.map((child, index) =>
+            evaluateWhere(child, [...path, "all", String(index)])
+          )
         ),
       };
     }
     return {
-      any: where.any.map((child, index) =>
-        evaluateWhere(child, [...path, "any", String(index)])
+      any: await Promise.all(
+        where.any.map((child, index) =>
+          evaluateWhere(child, [...path, "any", String(index)])
+        )
       ),
     };
   };
 
   const query = {
     result: configuration.result,
-    where: evaluateWhere(configuration.where, ["query", "where"]),
+    where: await evaluateWhere(configuration.where, ["query", "where"]),
     sort: configuration.sort,
     ...(configuration.result === "many"
       ? {
-          limit: evaluateExpression(configuration.limit, ["query", "limit"]),
-          offset: evaluateExpression(configuration.offset, ["query", "offset"]),
+          limit: await evaluateExpression(configuration.limit, [
+            "query",
+            "limit",
+          ]),
+          offset: await evaluateExpression(configuration.offset, [
+            "query",
+            "offset",
+          ]),
         }
       : {}),
     output: configuration.output,
@@ -361,14 +372,15 @@ export const AssetQueryForm = ({
       result: configuration.result,
     });
   }, [baseDefinition, configuration.result, configuredPaths]);
-  const configurationValidation = useMemo(
+  const configurationValidation = useAsyncValue(
     () =>
       getAssetQueryConfigurationValidation({
         configuration,
         scope,
         definition: baseDefinition,
       }),
-    [baseDefinition, configuration, scope]
+    [baseDefinition, configuration, scope],
+    { issues: [] }
   );
   const configurationIssues =
     storedConfigurationError === undefined

@@ -51,15 +51,25 @@ export const ContentBlockSourceSection = ({
     () => parseContentBlockRenderScope(renderScope),
     [renderScope]
   );
-  const resolvedAssetId = useMemo(() => {
+  const [resolvedAssetId, setResolvedAssetId] = useState<string>();
+  useEffect(() => {
+    let active = true;
     if (source === undefined || instanceSelector === undefined) {
+      setResolvedAssetId(undefined);
       return;
     }
-    return resolveContentBlockOccurrenceAssetId({
+    void resolveContentBlockOccurrenceAssetId({
       source,
       instanceSelector,
       variableValuesByRenderScope: variableValues,
+    }).then((assetId) => {
+      if (active) {
+        setResolvedAssetId(assetId);
+      }
     });
+    return () => {
+      active = false;
+    };
   }, [instanceSelector, source, variableValues]);
   const resolvedAsset =
     resolvedAssetId === undefined ? undefined : assets.get(resolvedAssetId);

@@ -30,6 +30,7 @@ import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover"
 import { getTextContentUpdateOperation } from "./text-content-utils";
 import { useCodeTextLanguageSupport } from "./code";
 import { parseError } from "~/shared/error/error-parse";
+import { useAsyncValue } from "~/shared/use-async-value";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -69,26 +70,27 @@ export const TextContent = ({
       executeRuntimeMutation(operation);
     }
   };
-  const resetBindings = (evaluatedValue: unknown) => {
+  const resetBindings = async (evaluatedValue: unknown) => {
     if (instance === undefined || target === undefined) {
       return;
     }
-    const replacements = instance.children.flatMap((child, childIndex) => {
-      if (child.type !== "expression") {
-        return [];
-      }
-      const value =
-        childIndex === target.childIndex
-          ? evaluatedValue
-          : evaluateExpressionWithinScope(child.value, binding.scope);
-      return [
-        {
-          childIndex,
-          expression: child.value,
-          text: String(value),
-        },
-      ];
-    });
+    const replacements = (
+      await Promise.all(
+        instance.children.map(async (child, childIndex) => {
+          if (child.type !== "expression") {
+            return;
+          }
+          const value =
+            childIndex === target.childIndex
+              ? evaluatedValue
+              : await evaluateExpressionWithinScope(child.value, binding.scope);
+          return { childIndex, expression: child.value, text: String(value) };
+        })
+      )
+    ).filter(
+      (replacement): replacement is NonNullable<typeof replacement> =>
+        replacement !== undefined
+    );
     executeRuntimeMutation({
       id: "instances.setTextContent",
       input: {
@@ -106,13 +108,18 @@ export const TextContent = ({
     boundExpression: child.type === "expression" ? child : undefined,
     fallbackExpression: expression,
   });
+  const evaluatedChildValue = useAsyncValue(
+    () =>
+      child.type === "expression"
+        ? evaluateExpressionWithinScope(child.value, binding.scope)
+        : Promise.resolve(undefined),
+    [binding.scope, child],
+    undefined
+  );
   let displayedValue = computedValue;
   if (hasMixedContent && child.type === "expression") {
     try {
-      displayedValue = evaluateExpressionWithinScope(
-        child.value,
-        binding.scope
-      );
+      displayedValue = evaluatedChildValue;
     } catch {
       displayedValue = undefined;
     }
