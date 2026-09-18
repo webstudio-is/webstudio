@@ -4,6 +4,7 @@ import {
   getPageResourceRootIds,
   getResourceCycleDataSourceIds,
   getResourceDataSourceIds,
+  getResourceDependencyIds,
   getTransitiveResourceIds,
 } from "./resource-dependencies";
 
@@ -39,6 +40,40 @@ test("ignores malformed legacy resource expressions", () => {
       headers: [],
     })
   ).toEqual(new Set());
+});
+
+test("finds direct resource dependencies", () => {
+  const resource: Resource = {
+    id: "resource",
+    name: "Resource",
+    method: "get",
+    url: "$ws$dataSource$firstDataSource.data.id",
+    headers: [],
+  };
+  const dataSources = new Map([
+    [
+      "firstDataSource",
+      {
+        type: "resource" as const,
+        id: "firstDataSource",
+        name: "First",
+        resourceId: "firstResource",
+      },
+    ],
+    [
+      "variableDataSource",
+      {
+        type: "variable" as const,
+        id: "variableDataSource",
+        name: "Variable",
+        value: { type: "string" as const, value: "value" },
+      },
+    ],
+  ]);
+
+  expect(getResourceDependencyIds({ resource, dataSources })).toEqual(
+    new Set(["firstResource"])
+  );
 });
 
 test("does not load a resource used only by ignored custom metadata", () => {
