@@ -167,14 +167,18 @@ const getUniqueFilesData = (
 ) => {
   const uniqueFilesData = new Map<string, UploadingFileData>();
   for (const fileData of filesData) {
-    if (uniqueFilesData.has(fileData.fingerprintId)) {
+    const key = getUploadDeduplicationKey(fileData);
+    if (uniqueFilesData.has(key)) {
       revokeObjectURL(fileData.objectURL);
       continue;
     }
-    uniqueFilesData.set(fileData.fingerprintId, fileData);
+    uniqueFilesData.set(key, fileData);
   }
   return uniqueFilesData;
 };
+
+const getUploadDeduplicationKey = (fileData: UploadingFileData) =>
+  `${fileData.folderId ?? "root"}:${fileData.fingerprintId}`;
 
 export const waitForAssetUpload = (assetId: string): Promise<Asset> => {
   const existingAsset = $assets.get().get(assetId);
@@ -509,7 +513,7 @@ export const uploadAssets = async <T extends File | URL>(
   const existingUploadsByFingerprint = new Map(
     $uploadingFilesDataStore
       .get()
-      .map((fileData) => [fileData.fingerprintId, fileData])
+      .map((fileData) => [getUploadDeduplicationKey(fileData), fileData])
   );
 
   for (const [
@@ -553,7 +557,7 @@ export const uploadAssets = async <T extends File | URL>(
       });
       fileData.assetId = ticket.assetId;
       fileData.uploadName = ticket.name;
-      uploadTickets.set(fileData.fingerprintId, ticket);
+      uploadTickets.set(getUploadDeduplicationKey(fileData), ticket);
       if (ticket.deduplicated) {
         URL.revokeObjectURL(fileData.objectURL);
         safeSetAsset(
@@ -595,8 +599,9 @@ export const uploadAssets = async <T extends File | URL>(
     );
 
     const uploadedAssetId =
-      uploadTickets.get(filesData[i].fingerprintId)?.assetId ??
-      existingUploadsByFingerprint.get(filesData[i].fingerprintId)?.assetId;
+      uploadTickets.get(getUploadDeduplicationKey(filesData[i]))?.assetId ??
+      existingUploadsByFingerprint.get(getUploadDeduplicationKey(filesData[i]))
+        ?.assetId;
     if (uploadedAssetId !== undefined) {
       res.set(filesOrUrls[i], uploadedAssetId);
     }
