@@ -461,18 +461,24 @@ const usePublishCountdown = (isPublishing: boolean) => {
   return countdown;
 };
 
+type ValidationState = "idle" | "pending" | "passed";
+
 const Publish = ({
   project,
   timesLeft,
   disabled,
   refresh,
   restrictedFeatures,
+  validationState,
+  onValidationStateChange,
 }: {
   project: Project;
   timesLeft: number;
   disabled: boolean;
   refresh: () => Promise<void>;
   restrictedFeatures: Map<string, RestrictedFeature>;
+  validationState: ValidationState;
+  onValidationStateChange: (state: ValidationState) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
@@ -482,12 +488,13 @@ const Publish = ({
     undefined | JSX.Element | string
   >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
-  const [isValidating, setIsValidating] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
     useState(false);
+  const previousDomainsKey = useRef<string>();
   const countdown = usePublishCountdown(isPublishing);
+  const isValidating = validationState === "pending";
 
   useEffect(() => {
     const form = buttonRef.current?.closest("form");
@@ -501,6 +508,15 @@ const Publish = ({
       const domainsSelected = formData
         .getAll(domainToPublishName)
         .map((domain) => domain.toString());
+      const domainsKey = domainsSelected.join("\u0000");
+
+      if (
+        previousDomainsKey.current !== undefined &&
+        previousDomainsKey.current !== domainsKey
+      ) {
+        onValidationStateChange("idle");
+      }
+      previousDomainsKey.current = domainsKey;
 
       setHasSelectedDomains(domainsSelected.length > 0);
 
@@ -528,7 +544,7 @@ const Publish = ({
     return () => {
       observer.disconnect();
     };
-  }, [project.domain]);
+  }, [onValidationStateChange, project.domain]);
 
   const publish = async (domains: string[]) => {
     const publishResult = await nativeClient.domain.publish.mutate({
@@ -684,21 +700,21 @@ const Publish = ({
     }
 
     startTransition(async () => {
-      setIsValidating(true);
+      onValidationStateChange("pending");
       try {
         const passed = await validate({ waitForContentDiagnostics: true });
+        onValidationStateChange(passed ? "passed" : "idle");
         if (!passed) {
           return;
         }
-        toast.success("Validation passed. Publishing is ready.", {
+        toast.success("Validation passed. Ready to publish.", {
           duration: Number.POSITIVE_INFINITY,
         });
       } catch (error) {
+        onValidationStateChange("idle");
         const message = getPrePublishErrorMessage(error);
         toast.error(message);
         setPublishError(message);
-      } finally {
-        setIsValidating(false);
       }
     });
   };
@@ -755,9 +771,13 @@ const Publish = ({
       <Flex gap={2} justify="end">
         <Button
           type="button"
-          color="primary"
+          color="positive"
           state={isValidating ? "pending" : undefined}
           disabled={disabled || isPublishInProgress || isValidating}
+          css={{ flex: 1 }}
+          prefix={
+            validationState === "passed" ? <CheckCircleIcon /> : undefined
+          }
           onClick={() => {
             const form = getForm();
             if (form) {
@@ -765,7 +785,7 @@ const Publish = ({
             }
           }}
         >
-          Validate
+          {validationState === "passed" ? "Validated" : "Validate"}
         </Button>
         <Tooltip
           content={
@@ -787,9 +807,11 @@ const Publish = ({
             }}
             color="primary"
             state={showPendingState ? "pending" : undefined}
+            css={{ flex: 1 }}
             disabled={
               hasSelectedDomains === false ||
               disabled ||
+              isValidating ||
               (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
               userPublishCount >= maxDailyPublishesPerUser
             }
@@ -1144,6 +1166,8 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
+  validationState: ValidationState;
+  onValidationStateChange: (state: ValidationState) => void;
 }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
@@ -1220,6 +1244,8 @@ const Content = (props: {
           timesLeft={maxDailyPublishesPerUser - userPublishCount}
           disabled={false}
           restrictedFeatures={restrictedFeatures}
+          validationState={props.validationState}
+          onValidationStateChange={props.onValidationStateChange}
         />
       </PanelContent>
     </form>
@@ -1449,6 +1475,8 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
+  const [validationState, setValidationState] =
+    useState<ValidationState>("idle");
 
   const tooltipContent = isPublishEnabled
     ? undefined
@@ -1513,7 +1541,12 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             >
               Publish
             </PopoverTitle>
-            <Content projectId={projectId} onExportClick={handleExportClick} />
+            <Content
+              projectId={projectId}
+              onExportClick={handleExportClick}
+              validationState={validationState}
+              onValidationStateChange={setValidationState}
+            />
           </>
         )}
       </PopoverContent>

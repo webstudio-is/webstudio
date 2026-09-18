@@ -486,7 +486,14 @@ export const PublishDialogLayout = () => (
       </Flex>
 
       <PanelContent as={Flex} direction="column" gap="2">
-        <Button color="primary">Publish</Button>
+        <Flex gap={2}>
+          <Button color="positive" css={{ flex: 1 }}>
+            Validate
+          </Button>
+          <Button color="primary" css={{ flex: 1 }}>
+            Publish
+          </Button>
+        </Flex>
       </PanelContent>
     </Flex>
   </StorySection>
