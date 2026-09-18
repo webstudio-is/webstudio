@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { setEnv } from "@webstudio-is/feature-flags";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
@@ -37,7 +37,12 @@ import {
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { $selectedPageId } from "~/shared/nano-states";
 import { updateCurrentSystem } from "~/shared/system";
-import { $resourcesCache, getResourceKey } from "~/shared/resources";
+import {
+  $resourcesCache,
+  computeResourceRequest,
+  getResourceKey,
+} from "~/shared/resources";
+import { subscribeResourceRequestPlan } from "~/shared/nano-states/props";
 
 setEnv("*");
 registerContainers();
@@ -129,7 +134,7 @@ const createPages = () => {
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
 
-test("page root scope should rely on selected page", () => {
+test("page root scope should rely on selected page", async () => {
   const pages = createDefaultPages({
     rootInstanceId: "homeRootId",
     homePageId: "homePageId",
@@ -162,97 +167,99 @@ test("page root scope should rely on selected page", () => {
       },
     ])
   );
-  expect($pageRootScope.get()).toEqual({
-    aliases: new Map([
-      ["$ws$system", "system"],
-      ["$ws$dataSource$2", "page variable"],
-    ]),
-    scope: {
-      $ws$system: initialSystem,
-      $ws$dataSource$2: "",
-    },
-    variableValues: new Map<string, unknown>([
-      [SYSTEM_VARIABLE_ID, initialSystem],
-      ["2", ""],
-    ]),
-  });
+  await vi.waitFor(() =>
+    expect($pageRootScope.get()).toEqual({
+      aliases: new Map([
+        ["$ws$system", "system"],
+        ["$ws$dataSource$2", "page variable"],
+      ]),
+      scope: {
+        $ws$system: initialSystem,
+        $ws$dataSource$2: "",
+      },
+      variableValues: new Map<string, unknown>([
+        [SYSTEM_VARIABLE_ID, initialSystem],
+        ["2", ""],
+      ]),
+    })
+  );
 });
 
-test("page root scope should use a resource value consumed by the page", () => {
-  const pages = createDefaultPages({
-    rootInstanceId: "homeRootId",
-    homePageId: "homePageId",
-  });
-  const homePage = pages.pages.get("homePageId");
-  if (homePage === undefined) {
-    throw new Error("Home page is missing");
+test("page root scope should use a resource value consumed by the page", async () => {
+  const unsubscribeResourceRequestPlan = subscribeResourceRequestPlan(() => {});
+  try {
+    const pages = createDefaultPages({
+      rootInstanceId: "homeRootId",
+      homePageId: "homePageId",
+    });
+    const homePage = pages.pages.get("homePageId");
+    if (homePage === undefined) {
+      throw new Error("Home page is missing");
+    }
+    pages.pages.set("homePageId", {
+      ...homePage,
+      title: "$ws$dataSource$resourceVariableId",
+    });
+    $pages.set(pages);
+    $selectedPageId.set("homePageId");
+    $dataSources.set(
+      toMap([
+        {
+          id: "valueVariableId",
+          scopeInstanceId: "homeRootId",
+          name: "value variable",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+        {
+          id: "resourceVariableId",
+          scopeInstanceId: "homeRootId",
+          name: "resource variable",
+          type: "resource",
+          resourceId: "resourceId",
+        },
+      ])
+    );
+    $dataSourceVariables.set(
+      new Map([["valueVariableId", "value variable value"]])
+    );
+    const resource = {
+      id: "resourceId",
+      name: "my-resource",
+      url: `""`,
+      method: "get",
+      headers: [],
+    } satisfies Resource;
+    $resources.set(toMap([resource]));
+    const resourceKey = getResourceKey(
+      await computeResourceRequest(resource, new Map())
+    );
+    $resourcesCache.set(new Map([[resourceKey, "resource variable value"]]));
+    await vi.waitFor(() =>
+      expect($pageRootScope.get()).toEqual({
+        aliases: new Map([
+          ["$ws$system", "system"],
+          ["$ws$dataSource$valueVariableId", "value variable"],
+          ["$ws$dataSource$resourceVariableId", "resource variable"],
+        ]),
+        scope: {
+          $ws$system: initialSystem,
+          $ws$dataSource$resourceVariableId: "resource variable value",
+          $ws$dataSource$valueVariableId: "value variable value",
+        },
+        variableValues: new Map<string, unknown>([
+          [SYSTEM_VARIABLE_ID, initialSystem],
+          ["valueVariableId", "value variable value"],
+          ["resourceVariableId", "resource variable value"],
+        ]),
+      })
+    );
+  } finally {
+    unsubscribeResourceRequestPlan();
   }
-  pages.pages.set("homePageId", {
-    ...homePage,
-    title: "$ws$dataSource$resourceVariableId",
-  });
-  $pages.set(pages);
-  $selectedPageId.set("homePageId");
-  $dataSources.set(
-    toMap([
-      {
-        id: "valueVariableId",
-        scopeInstanceId: "homeRootId",
-        name: "value variable",
-        type: "variable",
-        value: { type: "string", value: "" },
-      },
-      {
-        id: "resourceVariableId",
-        scopeInstanceId: "homeRootId",
-        name: "resource variable",
-        type: "resource",
-        resourceId: "resourceId",
-      },
-    ])
-  );
-  $dataSourceVariables.set(
-    new Map([["valueVariableId", "value variable value"]])
-  );
-  const resourceKey = getResourceKey({
-    name: "my-resource",
-    url: "",
-    searchParams: [],
-    method: "get",
-    headers: [],
-  });
-  $resources.set(
-    toMap<Resource>([
-      {
-        id: "resourceId",
-        name: "my-resource",
-        url: `""`,
-        method: "get",
-        headers: [],
-      },
-    ])
-  );
-  $resourcesCache.set(new Map([[resourceKey, "resource variable value"]]));
-  expect($pageRootScope.get()).toEqual({
-    aliases: new Map([
-      ["$ws$system", "system"],
-      ["$ws$dataSource$valueVariableId", "value variable"],
-      ["$ws$dataSource$resourceVariableId", "resource variable"],
-    ]),
-    scope: {
-      $ws$system: initialSystem,
-      $ws$dataSource$resourceVariableId: "resource variable value",
-      $ws$dataSource$valueVariableId: "value variable value",
-    },
-    variableValues: new Map<string, unknown>([
-      [SYSTEM_VARIABLE_ID, initialSystem],
-      ["valueVariableId", "value variable value"],
-      ["resourceVariableId", "resource variable value"],
-    ]),
-  });
 });
 
-test("page root scope should provide page system variable value", () => {
+test("page root scope should provide page system variable value", async () => {
   $pages.set(
     createDefaultPages({
       rootInstanceId: "homeRootId",
@@ -271,16 +278,18 @@ test("page root scope should provide page system variable value", () => {
       },
     ])
   );
-  expect($pageRootScope.get()).toEqual({
-    aliases: new Map([["$ws$dataSource$systemId", "system"]]),
-    scope: {
-      $ws$dataSource$systemId: initialSystem,
-    },
-    variableValues: new Map([
-      [SYSTEM_VARIABLE_ID, initialSystem],
-      ["systemId", initialSystem],
-    ]),
-  });
+  await vi.waitFor(() =>
+    expect($pageRootScope.get()).toEqual({
+      aliases: new Map([["$ws$dataSource$systemId", "system"]]),
+      scope: {
+        $ws$dataSource$systemId: initialSystem,
+      },
+      variableValues: new Map([
+        [SYSTEM_VARIABLE_ID, initialSystem],
+        ["systemId", initialSystem],
+      ]),
+    })
+  );
   const updatedSystem = {
     ...initialSystem,
     params: { slug: "my-post" },
@@ -288,16 +297,18 @@ test("page root scope should provide page system variable value", () => {
   updateCurrentSystem({
     params: updatedSystem.params,
   });
-  expect($pageRootScope.get()).toEqual({
-    aliases: new Map([["$ws$dataSource$systemId", "system"]]),
-    scope: {
-      $ws$dataSource$systemId: updatedSystem,
-    },
-    variableValues: new Map([
-      [SYSTEM_VARIABLE_ID, updatedSystem],
-      ["systemId", updatedSystem],
-    ]),
-  });
+  await vi.waitFor(() =>
+    expect($pageRootScope.get()).toEqual({
+      aliases: new Map([["$ws$dataSource$systemId", "system"]]),
+      scope: {
+        $ws$dataSource$systemId: updatedSystem,
+      },
+      variableValues: new Map([
+        [SYSTEM_VARIABLE_ID, updatedSystem],
+        ["systemId", updatedSystem],
+      ]),
+    })
+  );
 });
 
 describe("isFolder", () => {

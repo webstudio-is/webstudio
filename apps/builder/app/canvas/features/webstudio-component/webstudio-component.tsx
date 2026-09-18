@@ -6,6 +6,7 @@ import {
   useRef,
   useLayoutEffect,
   useMemo,
+  useState,
   useContext,
   Fragment,
   type ReactNode,
@@ -553,15 +554,25 @@ const ExternalContentRootLoader = ({
       }),
     [allProps, instance.id]
   );
-  const sourceAssetId = useMemo(() => {
+  const [sourceAssetId, setSourceAssetId] = useState<string>();
+  useEffect(() => {
+    let active = true;
     if (source === undefined) {
+      setSourceAssetId(undefined);
       return;
     }
-    return resolveContentBlockOccurrenceAssetId({
+    void resolveContentBlockOccurrenceAssetId({
       source,
       instanceSelector,
       variableValuesByRenderScope: variableValues,
+    }).then((assetId) => {
+      if (active) {
+        setSourceAssetId(assetId);
+      }
     });
+    return () => {
+      active = false;
+    };
   }, [instanceSelector, source, variableValues]);
 
   const diagnosticsSnapshot = findExternalContentRoot(

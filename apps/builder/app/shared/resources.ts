@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
 import {
-  computeExpressionAsync,
+  computeExpression,
   type ResolveExpressionDataSource,
 } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
@@ -463,22 +463,22 @@ export const computeResourceRequest = async (
     return resolved;
   };
   const [url, searchParams, headers, body] = await Promise.all([
-    computeExpressionAsync(resource.url, values, resolve),
+    computeExpression(resource.url, values, resolve),
     Promise.all(
       (resource.searchParams ?? []).map(async ({ name, value }) => ({
         name,
-        value: await computeExpressionAsync(value, values, resolve),
+        value: await computeExpression(value, values, resolve),
       }))
     ),
     Promise.all(
       resource.headers.map(async ({ name, value }) => ({
         name,
-        value: await computeExpressionAsync(value, values, resolve),
+        value: await computeExpression(value, values, resolve),
       }))
     ),
     resource.body === undefined
       ? undefined
-      : computeExpressionAsync(resource.body, values, resolve),
+      : computeExpression(resource.body, values, resolve),
   ]);
   const request: ResourceRequest = {
     name: resource.name,
@@ -511,7 +511,7 @@ export type ResourceRequestPlan = Readonly<{
   documents: ReadonlyMap<Resource["id"], unknown>;
 }>;
 
-export const computeResourceRequestPlanAsync = async ({
+export const computeResourceRequestPlan = async ({
   rootResourceIds,
   resources,
   dataSources,

@@ -2,6 +2,7 @@ import { useStore } from "@nanostores/react";
 import { getPagePath } from "@webstudio-is/sdk";
 import type { PageSettingsValues } from "@webstudio-is/project-build/runtime";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
+import { useAsyncValue } from "~/shared/use-async-value";
 import {
   compilePathnamePattern,
   tokenizePathnamePattern,
@@ -19,11 +20,15 @@ export type OnChange = (
   }[keyof PageSettingsValues]
 ) => void;
 
-export const computePageSettingsText = (
+export const usePageSettingsText = (
   expression: string,
   variables: Map<string, unknown>
 ) => {
-  const value = computeExpression(expression, variables);
+  const value = useAsyncValue(
+    () => computeExpression(expression, variables),
+    [expression, variables],
+    undefined
+  );
   return value === undefined || value === null ? "" : String(value);
 };
 

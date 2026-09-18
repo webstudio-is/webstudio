@@ -17,21 +17,21 @@ describe("Content Block occurrence source", () => {
     expect(parseContentBlockRenderScope('["block",1]')).toBeUndefined();
   });
 
-  test("resolves a root-qualified variable scope", () => {
+  test("resolves a root-qualified variable scope", async () => {
     const values = new Map([["asset", "article"]]);
     const rootQualified = new Map([
       [JSON.stringify([...selector, ROOT_INSTANCE_ID]), values],
     ]);
-    expect(
+    await expect(
       resolveContentBlockOccurrenceAssetId({
         source: { type: "expression", value: "asset" },
         instanceSelector: selector,
         variableValuesByRenderScope: rootQualified,
       })
-    ).toBe("article");
+    ).resolves.toBe("article");
   });
 
-  test("resolves each bound Collection occurrence independently", () => {
+  test("resolves each bound Collection occurrence independently", async () => {
     const first = ["block", "collection[first]", "collection", "body"];
     const second = ["block", "collection[second]", "collection", "body"];
     const values = new Map([
@@ -39,15 +39,17 @@ describe("Content Block occurrence source", () => {
       [JSON.stringify(second), new Map([["asset", "b.mdx"]])],
     ]);
 
-    expect(
-      [first, second].map((instanceSelector) =>
-        resolveContentBlockOccurrenceAssetId({
-          source: { type: "expression", value: "asset" },
-          instanceSelector,
-          variableValuesByRenderScope: values,
-        })
+    await expect(
+      Promise.all(
+        [first, second].map((instanceSelector) =>
+          resolveContentBlockOccurrenceAssetId({
+            source: { type: "expression", value: "asset" },
+            instanceSelector,
+            variableValuesByRenderScope: values,
+          })
+        )
       )
-    ).toEqual(["a.mdx", "b.mdx"]);
+    ).resolves.toEqual(["a.mdx", "b.mdx"]);
   });
 
   test("detects repeated selectors consistently", () => {

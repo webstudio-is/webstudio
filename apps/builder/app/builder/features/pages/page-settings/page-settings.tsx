@@ -1,7 +1,8 @@
-import { useState, useEffect, type JSX } from "react";
+import { useState, useEffect, useRef, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type Page,
+  type Pages,
   findPageByIdOrPath,
   getPageDraftabilityError,
   isPageDraft,
@@ -295,6 +296,34 @@ export const FormFields = ({
   );
 };
 
+export const usePageSettingsErrors = ({
+  pages,
+  pageId,
+  values,
+  variableValues,
+}: {
+  pages: Pages | undefined;
+  pageId: Page["id"] | undefined;
+  values: PageSettingsValues;
+  variableValues: Map<string, unknown>;
+}) => {
+  const [errors, setErrors] = useState<PageSettingsErrors>({});
+  useEffect(() => {
+    let active = true;
+    void validatePageSettings({ pages, pageId, values, variableValues }).then(
+      (nextErrors) => {
+        if (active) {
+          setErrors(nextErrors);
+        }
+      }
+    );
+    return () => {
+      active = false;
+    };
+  }, [pageId, pages, values, variableValues]);
+  return errors;
+};
+
 export const NewPageSettings = ({
   onSuccess,
 }: {
@@ -310,7 +339,7 @@ export const NewPageSettings = ({
   });
   const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
   const { variableValues } = useStore($pageRootScope);
-  const errors = validatePageSettings({
+  const errors = usePageSettingsErrors({
     pages,
     pageId: undefined,
     values,
@@ -439,7 +468,7 @@ export const PageSettings = ({
     }) === undefined;
 
   const [refreshDebounce, setRefreshDebounce] = useState(0);
-  let errors: PageSettingsErrors = {};
+  const errorsRef = useRef<PageSettingsErrors>({});
   const {
     value: unsavedValues,
     set: setUnsavedValues,
@@ -451,7 +480,7 @@ export const PageSettings = ({
     },
     {
       resetOnSave: true,
-      shouldSave: () => Object.keys(errors).length === 0,
+      shouldSave: () => Object.keys(errorsRef.current).length === 0,
     }
   );
 
@@ -480,7 +509,12 @@ export const PageSettings = ({
   };
 
   const { variableValues } = useStore($pageRootScope);
-  errors = validatePageSettings({ pages, pageId, values, variableValues });
+  const errors = usePageSettingsErrors({
+    pages,
+    pageId,
+    values,
+    variableValues,
+  });
   if (unsavedValues.path !== undefined) {
     addContentModePathError({
       errors,
@@ -488,6 +522,7 @@ export const PageSettings = ({
       path: unsavedValues.path,
     });
   }
+  errorsRef.current = errors;
 
   useEffect(() => {
     // we can't flush immediately as setState haven't propagated at that time

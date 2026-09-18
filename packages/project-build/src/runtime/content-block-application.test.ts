@@ -127,9 +127,9 @@ describe("createContentBlockApplication", () => {
       type: "expression",
       value: "collection.data._id",
     });
-    expect(
+    await expect(
       getMdxAssetSourceBlockInstanceIds({ assetId: "asset", state })
-    ).toEqual([]);
+    ).resolves.toEqual([]);
     const diagnostics = await inspectMdxAssetSource({
       source: "<Accordion />",
       assetId: "asset",
@@ -169,12 +169,12 @@ describe("createContentBlockApplication", () => {
       { id: "connect", payload: [...connected.projectPayload] },
     ]).state;
 
-    expect(
+    await expect(
       getMdxAssetSourceBlockInstanceIds({
         assetId: "asset",
         state: connectedState,
       })
-    ).toEqual(["block"]);
+    ).resolves.toEqual(["block"]);
 
     await expect(
       inspectMdxAssetSource({

@@ -27,6 +27,7 @@ import {
 import {
   generateObjectExpression,
   isLiteralExpression,
+  parseStringLiteralExpression,
   parseExpressionObject,
 } from "@webstudio-is/expression";
 import {
@@ -72,6 +73,7 @@ import {
 } from "~/shared/code-editor-base";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { invalidateAssets } from "~/shared/resources";
+import { useAsyncValue } from "~/shared/use-async-value";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
   createResourceFieldsFromFormData,
@@ -110,9 +112,16 @@ export const UrlField = ({
   // revalidate and hide error message
   // until validity is checks again
   useEffect(() => {
-    ref.current?.setCustomValidity(validateResourceUrlExpression(value, scope));
+    void validateResourceUrlExpression(value, scope).then((error) => {
+      ref.current?.setCustomValidity(error);
+    });
     setError("");
   }, [value, scope]);
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(value, scope),
+    [scope, value],
+    undefined
+  );
   return (
     <Grid gap={1}>
       <Label
@@ -134,7 +143,7 @@ export const UrlField = ({
       <input type="hidden" readOnly={true} name="url" value={value} />
       <BindableExpressionControl
         expression={value}
-        value={String(evaluateExpressionWithinScope(value, scope))}
+        value={String(evaluatedValue ?? "")}
         bound={isLiteralExpression(value) === false}
         scope={scope}
         aliases={aliases}
@@ -228,7 +237,11 @@ const ExpressionNameValuePair = ({
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
 }) => {
-  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(value, scope),
+    [scope, value],
+    undefined
+  );
   const isValueString = typeof evaluatedValue === "string";
   return (
     <Grid
@@ -562,13 +575,20 @@ const BodyField = ({
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    bodyRef.current?.setCustomValidity(
-      validateResourceBodyExpression(value, bodyType, scope)
+    void validateResourceBodyExpression(value, bodyType, scope).then(
+      (error) => {
+        bodyRef.current?.setCustomValidity(error);
+      }
     );
     setBodyError("");
   }, [value, bodyType, scope]);
-  const updateBody = (newBody: string) => {
-    const evaluatedValue = evaluateExpressionWithinScope(newBody, scope);
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(value, scope),
+    [scope, value],
+    undefined
+  );
+  const updateBody = async (newBody: string) => {
+    const evaluatedValue = await evaluateExpressionWithinScope(newBody, scope);
     // automatically add Content-Type: application/json header
     // when value is object
     const isBodyObject =
@@ -579,12 +599,8 @@ const BodyField = ({
     bodyType === "json"
       ? isBodyLiteral
         ? value
-        : (JSON.stringify(
-            evaluateExpressionWithinScope(value, scope),
-            null,
-            2
-          ) ?? "")
-      : String(evaluateExpressionWithinScope(value, scope) ?? "");
+        : (JSON.stringify(evaluatedValue, null, 2) ?? "")
+      : String(evaluatedValue ?? "");
 
   return (
     <Grid gap={1}>
@@ -677,7 +693,7 @@ const parseHeaders = (headers: Resource["headers"]) => {
   const newHeaders = headers.filter((header) => {
     // cast raw expression result to string
     const value = String(
-      evaluateExpressionWithinScope(header.value, {})
+      parseStringLiteralExpression(header.value) ?? ""
     ).toLowerCase();
     if (isCacheControl(header.name)) {
       // move simple header like Cache-Control: max-age=10 to dedicated input
@@ -1050,9 +1066,7 @@ export const GraphqlResourceForm = forwardRef<
   );
   const queryId = useId();
   const [query, setQuery] = useState(
-    () =>
-      evaluateExpressionWithinScope(bodyExpressions.get("query") ?? "", {}) ??
-      ""
+    () => parseStringLiteralExpression(bodyExpressions.get("query") ?? "") ?? ""
   );
   const [variables, setVariables] = useState(
     () => bodyExpressions.get("variables") ?? "{}"
@@ -1062,15 +1076,19 @@ export const GraphqlResourceForm = forwardRef<
   );
   const [variablesError, setVariablesError] = useState("");
   const variablesRef = useRef<HTMLInputElement>(null);
+  const evaluatedVariables = useAsyncValue(
+    () => evaluateExpressionWithinScope(variables, scope),
+    [scope, variables],
+    undefined
+  );
   useEffect(() => {
-    const evaluatedValue = evaluateExpressionWithinScope(variables, scope);
     variablesRef.current?.setCustomValidity(
-      typeof evaluatedValue === "object" && evaluatedValue !== null
+      typeof evaluatedVariables === "object" && evaluatedVariables !== null
         ? ""
         : "Expected valid JSON object in GraphQL variables"
     );
     setVariablesError("");
-  }, [variables, scope]);
+  }, [evaluatedVariables]);
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
@@ -1194,11 +1212,7 @@ export const GraphqlResourceForm = forwardRef<
             value={
               isVariablesLiteral
                 ? variables
-                : (JSON.stringify(
-                    evaluateExpressionWithinScope(variables, scope),
-                    null,
-                    2
-                  ) ?? "")
+                : (JSON.stringify(evaluatedVariables, null, 2) ?? "")
             }
             bound={isVariablesLiteral === false}
             scope={scope}

@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { act } from "react-dom/test-utils";
+import { createRoot } from "react-dom/client";
 import { expect, test } from "vitest";
 import type { Instance } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
@@ -8,7 +9,7 @@ import {
   type WebstudioComponentProps,
 } from "./elements";
 
-test("renders expression and instance siblings in order", () => {
+test("renders expression and instance siblings in order", async () => {
   const instances = new Map<string, Instance>([
     [
       "child",
@@ -38,7 +39,14 @@ test("renders expression and instance siblings in order", () => {
     variableValues: new Map([["name", "world"]]),
   });
 
-  expect(renderToStaticMarkup(<>{children}</>)).toBe(
-    "Hello world<span>child</span>"
-  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  await act(async () => {
+    root.render(<>{children}</>);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
+  expect(container.innerHTML).toBe("Hello world<span>child</span>");
+  root.unmount();
+  container.remove();
 });

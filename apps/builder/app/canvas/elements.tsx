@@ -12,6 +12,7 @@ import {
   computeExpression,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
+import { useAsyncValue } from "~/shared/use-async-value";
 
 export type WebstudioComponentProps = {
   instance: Instance;
@@ -61,6 +62,21 @@ const renderText = (text: string): Array<JSX.Element> => {
   ));
 };
 
+const AsyncTextExpression = ({
+  expression,
+  variableValues,
+}: {
+  expression: string;
+  variableValues: ReadonlyMap<string, unknown>;
+}) => {
+  const value = useAsyncValue(
+    () => computeExpression(expression, variableValues),
+    [expression, variableValues],
+    undefined
+  );
+  return renderText(String(renderTextValue(value)));
+};
+
 export const createInstanceChildrenElements = ({
   instances,
   instanceSelector,
@@ -83,8 +99,13 @@ export const createInstanceChildrenElements = ({
       return renderText(child.value);
     }
     if (child.type === "expression") {
-      const value = computeExpression(child.value, variableValues);
-      return renderText(String(renderTextValue(value)));
+      return (
+        <AsyncTextExpression
+          key={child.value}
+          expression={child.value}
+          variableValues={variableValues}
+        />
+      );
     }
     if (child.type === "id") {
       return createInstanceElement({

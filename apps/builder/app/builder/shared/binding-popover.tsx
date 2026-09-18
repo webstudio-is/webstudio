@@ -48,8 +48,9 @@ import {
   type EditorApi,
 } from "./expression-editor";
 import { normalizeEditorValue } from "~/shared/code-editor-base";
+import { useAsyncValue } from "~/shared/use-async-value";
 
-export const evaluateExpressionWithinScope = (
+export const evaluateExpressionWithinScope = async (
   expression: string,
   scope: Record<string, unknown>
 ) => computeExpressionWithinScope(expression, scope);
@@ -340,15 +341,16 @@ export const BindingPopover = ({
   const hasUnsavedChange = useRef<boolean>(false);
   const preventedClosing = useRef<boolean>(false);
   const isDesignMode = useStore($isDesignMode);
-
+  const normalizedValue = normalizeEditorValue(value);
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(normalizedValue, scope),
+    [normalizedValue, scope],
+    undefined
+  );
+  const valueError = validate?.(evaluatedValue);
   if (!isDesignMode) {
     return;
   }
-
-  const normalizedValue = normalizeEditorValue(value);
-  const valueError = validate?.(
-    evaluateExpressionWithinScope(normalizedValue, scope)
-  );
   return (
     <FloatingPanel
       placement="left-start"
@@ -379,16 +381,17 @@ export const BindingPopover = ({
                     prefix={<TrashIcon />}
                     color="ghost"
                     disabled={variant === "default" || onRemove === undefined}
-                    onClick={(event) => {
+                    onClick={async (event) => {
                       event.preventDefault();
                       if (onRemove === undefined) {
                         return;
                       }
                       // inline variables and close dialog
-                      const evaluatedValue = evaluateExpressionWithinScope(
-                        normalizedValue,
-                        scope
-                      );
+                      const evaluatedValue =
+                        await evaluateExpressionWithinScope(
+                          normalizedValue,
+                          scope
+                        );
 
                       onRemove(evaluatedValue);
                       preventedClosing.current = false;

@@ -32,23 +32,23 @@ const createInstance = (
 });
 
 describe("block tree helpers", () => {
-  test("resolves direct sources without expression values", () => {
-    expect(
+  test("resolves direct sources without expression values", async () => {
+    await expect(
       resolveContentBlockSourceAssetId({
         source: { type: "asset", assetId: "post" },
       })
-    ).toBe("post");
-    expect(
+    ).resolves.toBe("post");
+    await expect(
       resolveContentBlockSourceAssetId({
         source: { type: "expression", value: "post" },
       })
-    ).toBeUndefined();
-    expect(
+    ).resolves.toBeUndefined();
+    await expect(
       resolveContentBlockSourceAssetId({
         source: { type: "expression", value: "post" },
         values: new Map([["post", "post-asset"]]),
       })
-    ).toBe("post-asset");
+    ).resolves.toBe("post-asset");
   });
 
   test("finds block and block child selectors from nested anchors", () => {
