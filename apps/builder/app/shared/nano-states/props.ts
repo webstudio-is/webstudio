@@ -1,4 +1,4 @@
-import { computed } from "nanostores";
+import { atom, computed } from "nanostores";
 import type {
   DataSource,
   Instance,
@@ -38,7 +38,7 @@ import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { $currentSystem } from "../system";
 import {
   $resourcesCache,
-  computeResourceRequestPlan,
+  type ResourceRequestPlan,
   computeResourceRequestPlanAsync,
   preloadResources,
 } from "../resources";
@@ -288,10 +288,13 @@ const $resourceRequestPlanInput = computed(
     })
 );
 
-const $resourceRequestPlan = computed($resourceRequestPlanInput, (input) =>
-  computeResourceRequestPlan({
-    ...input,
-  })
+const createEmptyResourceRequestPlan = (): ResourceRequestPlan => ({
+  requests: [],
+  documents: new Map(),
+});
+
+const $resourceRequestPlan = atom<ResourceRequestPlan>(
+  createEmptyResourceRequestPlan()
 );
 
 /**
@@ -700,17 +703,11 @@ export const $variableValuesByInstanceSelector = computed(
   }
 );
 
-const $computedResourceRequests = computed(
-  $resourceRequestPlan,
-  (resourceRequestPlan) => resourceRequestPlan.requests
-);
-
-/**
- * subscribe to all resources changes
- * load them with currently available variable values
- * and store in cache
- */
-export const subscribeResources = () => {
+/** Recompute the async resource plan when its inputs change. */
+export const subscribeResourceRequestPlan = (
+  onPlan: (plan: ResourceRequestPlan) => void
+) => {
+  $resourceRequestPlan.set(createEmptyResourceRequestPlan());
   let active = true;
   let revision = 0;
   const unsubscribe = $resourceRequestPlanInput.subscribe((input) => {
@@ -718,7 +715,8 @@ export const subscribeResources = () => {
     void computeResourceRequestPlanAsync(input)
       .then((resourceRequestPlan) => {
         if (active && currentRevision === revision) {
-          preloadResources(resourceRequestPlan.requests);
+          $resourceRequestPlan.set(resourceRequestPlan);
+          onPlan(resourceRequestPlan);
         }
       })
       .catch((error: unknown) => {
@@ -731,7 +729,12 @@ export const subscribeResources = () => {
     active = false;
     revision += 1;
     unsubscribe();
+    $resourceRequestPlan.set(createEmptyResourceRequestPlan());
   };
 };
 
-export const __testing__ = { $computedResourceRequests };
+/** Recompute the plan and preload the requests it produces. */
+export const subscribeResources = () =>
+  subscribeResourceRequestPlan(({ requests }) => {
+    preloadResources(requests);
+  });

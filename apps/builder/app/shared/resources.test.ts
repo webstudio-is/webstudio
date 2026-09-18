@@ -16,7 +16,6 @@ import {
   $resourcesState,
   $resourcesCache,
   computeResourceRequestAsync,
-  computeResourceRequestPlan,
   computeResourceRequestPlanAsync,
   getResourceKey,
   invalidateAssets,
@@ -66,7 +65,7 @@ test("removes obsolete queued requests but keeps cached results", () => {
   unlisten();
 });
 
-test("unlocks reachable resource requests as dependency documents are cached", () => {
+test("unlocks reachable resource requests as dependency documents are cached", async () => {
   const authorVariable = encodeDataSourceVariable("authorDataSource");
   const resources: Resources = new Map([
     [
@@ -131,7 +130,7 @@ test("unlocks reachable resource requests as dependency documents are cached", (
   ]);
   const resourceCache = new Map<string, unknown>();
 
-  const waiting = computeResourceRequestPlan({
+  const waiting = await computeResourceRequestPlanAsync({
     rootResourceIds: ["postsResource"],
     resources,
     dataSources,
@@ -143,7 +142,7 @@ test("unlocks reachable resource requests as dependency documents are cached", (
 
   const authorRequest = waiting.requests[0];
   resourceCache.set(getResourceKey(authorRequest), { data: { id: 1 } });
-  const ready = computeResourceRequestPlan({
+  const ready = await computeResourceRequestPlanAsync({
     rootResourceIds: ["postsResource"],
     resources,
     dataSources,
@@ -235,13 +234,10 @@ test("computes async resource plans with dependency documents", async () => {
       },
     ],
   ]);
-  const authorRequest = computeResourceRequestPlan({
-    rootResourceIds: ["authorResource"],
-    resources,
-    dataSources,
-    values: new Map(),
-    resourceCache: new Map(),
-  }).requests[0];
+  const authorRequest = await computeResourceRequestAsync(
+    resources.get("authorResource") as Resource,
+    new Map()
+  );
   const resourceCache = new Map([
     [getResourceKey(authorRequest), Promise.resolve({ data: { id: 1 } })],
   ]);
