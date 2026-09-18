@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { cleanStores } from "nanostores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
@@ -23,9 +23,9 @@ import {
   $resources,
 } from "../sync/data-stores";
 import {
-  __testing__,
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
+  subscribeResourceRequestPlan,
 } from "./props";
 import { $dataSourceVariables } from "./variables";
 import { $selectedPageId } from "./pages";
@@ -49,8 +49,6 @@ const Box = createTemplateComponentFixture("Box");
 const Fragment = createTemplateComponentFixture("Fragment");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
-
-const { $computedResourceRequests } = __testing__;
 
 const initialSystem = {
   origin: "https://undefined.wstd.work",
@@ -87,6 +85,9 @@ const selectPageRoot = (
   $selectedPageId.set(defaultPages.homePageId);
 };
 
+let unsubscribeResourceRequestPlan: (() => void) | undefined;
+let resourceRequests: readonly { name: string }[] = [];
+
 beforeEach(() => {
   $instances.set(new Map());
   $props.set(new Map());
@@ -95,6 +96,16 @@ beforeEach(() => {
   $dataSourceVariables.set(new Map());
   $resourcesCache.set(new Map());
   $externalContentRoots.set(new Map());
+  resourceRequests = [];
+  unsubscribeResourceRequestPlan = subscribeResourceRequestPlan((plan) => {
+    resourceRequests = plan.requests;
+  });
+});
+
+afterEach(() => {
+  unsubscribeResourceRequestPlan?.();
+  unsubscribeResourceRequestPlan = undefined;
+  resourceRequests = [];
 });
 
 test("provides occurrence frontmatter to a repeated Content Block", () => {
@@ -216,7 +227,7 @@ test("does not reuse frontmatter from a previous Collection occurrence", () => {
   ).toBe(false);
 });
 
-test("does not preload resources in statically hidden subtrees", () => {
+test("does not preload resources in statically hidden subtrees", async () => {
   $instances.set(
     toMap([
       {
@@ -318,12 +329,15 @@ test("does not preload resources in statically hidden subtrees", () => {
     )
   );
 
-  expect(
-    $computedResourceRequests.get().map((request) => request.name)
-  ).toEqual(["visible", "dynamic"]);
+  await vi.waitFor(() => {
+    expect(resourceRequests.map((request) => request.name)).toEqual([
+      "visible",
+      "dynamic",
+    ]);
+  });
 });
 
-test("preloads resources consumed by copied expressions", () => {
+test("preloads resources consumed by copied expressions", async () => {
   const dataSourceId = "copied-resource-data-source";
   $instances.set(
     toMap([
@@ -364,9 +378,11 @@ test("preloads resources consumed by copied expressions", () => {
     ])
   );
 
-  expect(
-    $computedResourceRequests.get().map((request) => request.name)
-  ).toEqual(["Current date"]);
+  await vi.waitFor(() => {
+    expect(resourceRequests.map((request) => request.name)).toEqual([
+      "Current date",
+    ]);
+  });
 });
 
 test("collect prop values", () => {
@@ -836,7 +852,7 @@ test("access parameter value from variables values", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
-test("compute props bound to resource variables", () => {
+test("compute props bound to resource variables", async () => {
   $instances.set(
     toMap([{ id: "body", type: "instance", component: "Body", children: [] }])
   );
@@ -882,14 +898,16 @@ test("compute props bound to resource variables", () => {
       },
     ])
   );
-  expect($propValuesByInstanceSelector.get()).toEqual(
-    new Map([
-      [
-        getInstanceKey(["body"]),
-        new Map<string, unknown>([["resource", "my-value"]]),
-      ],
-    ])
-  );
+  await vi.waitFor(() => {
+    expect($propValuesByInstanceSelector.get()).toEqual(
+      new Map([
+        [
+          getInstanceKey(["body"]),
+          new Map<string, unknown>([["resource", "my-value"]]),
+        ],
+      ])
+    );
+  });
 
   cleanStores($propValuesByInstanceSelector);
 });
@@ -1446,7 +1464,7 @@ test("compute inherited item values inside collection without item parameter", (
   });
 });
 
-test("compute resource variable values", () => {
+test("compute resource variable values", async () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
     method: "get",
@@ -1470,12 +1488,14 @@ test("compute resource variable values", () => {
     searchParams: [],
   });
   $resourcesCache.set(new Map([[key, "my-value"]]));
-  expect(
-    $variableValuesByInstanceSelector
-      .get()
-      .get(getInstanceKey(["bodyId", ROOT_INSTANCE_ID]))
-      ?.get(resourceVariableId)
-  ).toEqual("my-value");
+  await vi.waitFor(() => {
+    expect(
+      $variableValuesByInstanceSelector
+        .get()
+        .get(getInstanceKey(["bodyId", ROOT_INSTANCE_ID]))
+        ?.get(resourceVariableId)
+    ).toEqual("my-value");
+  });
 });
 
 test("stop variables lookup outside of slots", () => {
