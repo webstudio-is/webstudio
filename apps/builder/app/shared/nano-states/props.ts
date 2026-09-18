@@ -1,5 +1,11 @@
 import { computed } from "nanostores";
-import type { DataSource, Instance, Prop, ImageAsset } from "@webstudio-is/sdk";
+import type {
+  DataSource,
+  Instance,
+  Prop,
+  ImageAsset,
+  Resource,
+} from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
@@ -33,6 +39,7 @@ import { $currentSystem } from "../system";
 import {
   $resourcesCache,
   computeResourceRequestPlan,
+  computeResourceRequestPlanAsync,
   preloadResources,
 } from "../resources";
 import {
@@ -198,7 +205,68 @@ const $resourceVariableValues = computed(
   }
 );
 
-const $resourceRequestPlan = computed(
+type ResourceRequestPlanInput = {
+  rootResourceIds: Iterable<Resource["id"]>;
+  resources: ReturnType<typeof $resources.get>;
+  dataSources: ReturnType<typeof $dataSources.get>;
+  values: ReturnType<typeof $resourceVariableValues.get>;
+  resourceCache: ReturnType<typeof $resourcesCache.get>;
+};
+
+const getResourceRequestPlanInput = ({
+  page,
+  instances,
+  props,
+  dataSources,
+  resources,
+  values,
+  resourceCache,
+}: {
+  page: ReturnType<typeof $selectedPage.get>;
+  instances: ReturnType<typeof $instances.get>;
+  props: ReturnType<typeof $props.get>;
+  dataSources: ReturnType<typeof $dataSources.get>;
+  resources: ReturnType<typeof $resources.get>;
+  values: ReturnType<typeof $resourceVariableValues.get>;
+  resourceCache: ReturnType<typeof $resourcesCache.get>;
+}): ResourceRequestPlanInput => {
+  if (page === undefined) {
+    return {
+      rootResourceIds: [],
+      resources,
+      dataSources,
+      values,
+      resourceCache,
+    };
+  }
+  const instanceIds = findTreeInstanceIdsExcludingStaticHidden({
+    instances,
+    props,
+    rootInstanceId: page.rootInstanceId,
+  });
+  const visibleInstances = new Map<Instance["id"], Instance>();
+  for (const instanceId of instanceIds) {
+    const instance = instances.get(instanceId);
+    if (instance !== undefined) {
+      visibleInstances.set(instanceId, instance);
+    }
+  }
+  const rootResourceIds = getPageResourceRootIds({
+    page,
+    instances: visibleInstances,
+    props,
+    dataSources,
+  });
+  return {
+    rootResourceIds,
+    resources,
+    dataSources,
+    values,
+    resourceCache,
+  };
+};
+
+const $resourceRequestPlanInput = computed(
   [
     $selectedPage,
     $instances,
@@ -208,42 +276,22 @@ const $resourceRequestPlan = computed(
     $resourceVariableValues,
     $resourcesCache,
   ],
-  (page, instances, props, dataSources, resources, values, resourceCache) => {
-    if (page === undefined) {
-      return computeResourceRequestPlan({
-        rootResourceIds: [],
-        resources,
-        dataSources,
-        values,
-        resourceCache,
-      });
-    }
-    const instanceIds = findTreeInstanceIdsExcludingStaticHidden({
+  (page, instances, props, dataSources, resources, values, resourceCache) =>
+    getResourceRequestPlanInput({
+      page,
       instances,
       props,
-      rootInstanceId: page.rootInstanceId,
-    });
-    const visibleInstances = new Map<Instance["id"], Instance>();
-    for (const instanceId of instanceIds) {
-      const instance = instances.get(instanceId);
-      if (instance !== undefined) {
-        visibleInstances.set(instanceId, instance);
-      }
-    }
-    const rootResourceIds = getPageResourceRootIds({
-      page,
-      instances: visibleInstances,
-      props,
       dataSources,
-    });
-    return computeResourceRequestPlan({
-      rootResourceIds,
       resources,
-      dataSources,
       values,
       resourceCache,
-    });
-  }
+    })
+);
+
+const $resourceRequestPlan = computed($resourceRequestPlanInput, (input) =>
+  computeResourceRequestPlan({
+    ...input,
+  })
 );
 
 /**
@@ -663,9 +711,27 @@ const $computedResourceRequests = computed(
  * and store in cache
  */
 export const subscribeResources = () => {
-  return $computedResourceRequests.subscribe((computedResourceRequests) => {
-    preloadResources(computedResourceRequests);
+  let active = true;
+  let revision = 0;
+  const unsubscribe = $resourceRequestPlanInput.subscribe((input) => {
+    const currentRevision = ++revision;
+    void computeResourceRequestPlanAsync(input)
+      .then((resourceRequestPlan) => {
+        if (active && currentRevision === revision) {
+          preloadResources(resourceRequestPlan.requests);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active && currentRevision === revision) {
+          console.error("Failed to compute resource requests", error);
+        }
+      });
   });
+  return () => {
+    active = false;
+    revision += 1;
+    unsubscribe();
+  };
 };
 
 export const __testing__ = { $computedResourceRequests };

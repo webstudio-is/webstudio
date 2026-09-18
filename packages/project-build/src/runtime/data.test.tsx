@@ -1038,6 +1038,40 @@ test("compute expression asynchronously resolves only referenced data sources", 
   expect(resolveDataSource).toHaveBeenCalledWith("remoteId", undefined);
 });
 
+test("compute expression asynchronously resolves independent data sources in parallel", async () => {
+  let finishFirst: (value: number) => void = () => {};
+  let finishSecond: (value: number) => void = () => {};
+  let active = 0;
+  let maximumActive = 0;
+  const resolveDataSource = vi.fn((id: string) => {
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    return new Promise<number>((resolve) => {
+      const finish = (value: number) => {
+        active -= 1;
+        resolve(value);
+      };
+      if (id === "firstId") {
+        finishFirst = finish;
+      } else {
+        finishSecond = finish;
+      }
+    });
+  });
+
+  const result = computeExpressionAsync(
+    `${encodeDataVariableId("firstId")} + ${encodeDataVariableId("secondId")}`,
+    new Map(),
+    resolveDataSource
+  );
+  expect(resolveDataSource).toHaveBeenCalledTimes(2);
+  expect(maximumActive).toBe(2);
+  finishFirst(1);
+  finishSecond(2);
+
+  await expect(result).resolves.toBe(3);
+});
+
 test("compute expression asynchronously propagates resolver failures", async () => {
   const failure = new Error("offline");
 
