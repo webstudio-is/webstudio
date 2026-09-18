@@ -1,9 +1,75 @@
 import { describe, expect, test } from "vitest";
 import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
 import type { Asset } from "@webstudio-is/sdk";
-import { validateCollectionFolder } from "./collection-persistence";
+import {
+  getCollectionReservedAssetIds,
+  validateCollectionFolder,
+} from "./collection-persistence";
 
 describe("collection persistence", () => {
+  test("reads independent collection folders concurrently", async () => {
+    const configSource = createDefaultCollectionConfig();
+    const templateSource = "---\ndraft: true\n---\n\nStart writing.\n";
+    const assets: Asset[] = [];
+    const sources = new Map<string, string>();
+    for (let index = 0; index < 9; index += 1) {
+      const folderId = `collection-${index}`;
+      const configName = `config-${index}.json`;
+      const templateName = `template-${index}.mdx`;
+      assets.push(
+        {
+          id: configName,
+          projectId: "project-1",
+          name: configName,
+          filename: "collection",
+          folderId,
+          type: "file",
+          format: "json",
+          size: configSource.length,
+          description: null,
+          createdAt: "2026-09-03T00:00:00.000Z",
+          meta: {},
+        },
+        {
+          id: templateName,
+          projectId: "project-1",
+          name: templateName,
+          filename: "template",
+          folderId,
+          type: "file",
+          format: "mdx",
+          size: templateSource.length,
+          description: null,
+          createdAt: "2026-09-03T00:00:00.000Z",
+          meta: {},
+        }
+      );
+      sources.set(configName, configSource);
+      sources.set(templateName, templateSource);
+    }
+    let activeReads = 0;
+    let maximumActiveReads = 0;
+    const assetStore = {
+      readFile: async (name: string) => {
+        const source = sources.get(name);
+        if (source === undefined) {
+          throw new Error(`Unexpected read: ${name}`);
+        }
+        activeReads += 1;
+        maximumActiveReads = Math.max(maximumActiveReads, activeReads);
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        activeReads -= 1;
+        return {
+          data: new Blob([source]).stream(),
+          contentLength: source.length,
+        };
+      },
+    };
+
+    await getCollectionReservedAssetIds({ assets, assetStore });
+    expect(maximumActiveReads).toBeGreaterThan(1);
+  });
+
   test("rejects a truncated collection config read", async () => {
     const source = createDefaultCollectionConfig();
     const configAsset: Asset = {
