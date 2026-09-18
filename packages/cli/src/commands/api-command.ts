@@ -1132,6 +1132,9 @@ export const publishCommandOptions = (yargs: CommonYargsArgv) =>
       describe: "Optional idempotency key for retrying the same publish",
     });
 
+export const validatePublishCommandOptions = (yargs: CommonYargsArgv) =>
+  publishDomainsOption(publishTargetOption(apiCommandOptions(yargs)));
+
 export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs).option("job", {
     type: "string",
@@ -2963,6 +2966,18 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       idempotencyKey: options.idempotencyKey,
     };
     return runProjectSessionCommand("publish", input, connection, dependencies);
+  },
+  "validate-publish": async (options, connection, dependencies) => {
+    const input = {
+      target: publishTargetValue(options.target),
+      domains: listStringOption(options.domain),
+    };
+    return runProjectSessionCommand(
+      "validate-publish",
+      input,
+      connection,
+      dependencies
+    );
   },
   "list-publishes": async (options, connection, dependencies) =>
     runProjectSessionCommand(

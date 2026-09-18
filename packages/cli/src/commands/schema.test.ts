@@ -149,7 +149,7 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(216_000);
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(217_000);
   expect(
     JSON.stringify(
       expectedTools.find(({ name }) => name === "insert-page-transfer-item")
@@ -166,6 +166,11 @@ test("prints compact mcp tool summaries as json by default", () => {
         name: "insert-fragment",
         operationId: "instances.insertFragment",
         method: "mutation",
+      }),
+      expect.objectContaining({
+        name: "validate-publish",
+        operationId: "publish.validate",
+        method: "query",
       }),
       expect.objectContaining({
         name: "screenshot.diff",

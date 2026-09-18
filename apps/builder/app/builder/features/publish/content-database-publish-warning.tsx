@@ -3,24 +3,30 @@ import { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
 import { showPublishWarning } from "./publish-warning";
 
-export const showContentDatabasePublishWarning = async ({
+type ContentDatabasePublishDiagnostics = Awaited<
+  ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
+>;
+
+type LoadContentDatabasePublishDiagnostics = (input: {
+  projectId: Project["id"];
+}) => Promise<ContentDatabasePublishDiagnostics>;
+
+const getContentDatabasePublishWarning = async ({
   projectId,
-  setWarning,
+  loadDiagnostics = (input) =>
+    nativeClient.build.contentDatabasePublishDiagnostics.query(input),
 }: {
   projectId: Project["id"];
-  setWarning: (warning: JSX.Element) => void;
+  loadDiagnostics?: LoadContentDatabasePublishDiagnostics;
 }) => {
-  const diagnostics =
-    await nativeClient.build.contentDatabasePublishDiagnostics.query({
-      projectId,
-    });
+  const diagnostics = await loadDiagnostics({ projectId });
   const databaseWarning =
     diagnostics.stats?.truncated &&
     diagnostics.stats.omissionReason !== undefined;
   if (!databaseWarning && diagnostics.mdxOmissions.length === 0) {
     return;
   }
-  const message = (
+  return (
     <>
       {diagnostics.mdxOmissions.length > 0 && (
         <div>
@@ -53,5 +59,27 @@ export const showContentDatabasePublishWarning = async ({
         )}
     </>
   );
-  showPublishWarning({ message, setWarning });
 };
+
+export const showContentDatabasePublishWarning = ({
+  projectId,
+  setWarning,
+  loadDiagnostics,
+}: {
+  projectId: Project["id"];
+  setWarning: (warning: JSX.Element) => void;
+  loadDiagnostics?: LoadContentDatabasePublishDiagnostics;
+}) => {
+  void getContentDatabasePublishWarning({ projectId, loadDiagnostics }).then(
+    (warning) => {
+      if (warning !== undefined) {
+        showPublishWarning({ message: warning, setWarning });
+      }
+    },
+    () => {
+      // Content warnings are advisory and must not block publishing.
+    }
+  );
+};
+
+export { getContentDatabasePublishWarning };

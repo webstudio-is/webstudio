@@ -102,7 +102,10 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
-import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
+import {
+  getContentDatabasePublishWarning,
+  showContentDatabasePublishWarning,
+} from "./content-database-publish-warning";
 import { showPublishWarning } from "./publish-warning";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPrePublishErrorMessage } from "./publish-error";
@@ -479,6 +482,7 @@ const Publish = ({
     undefined | JSX.Element | string
   >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
+  const [isValidating, setIsValidating] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
@@ -621,15 +625,91 @@ const Publish = ({
     }
   };
 
+  const validate = async ({
+    waitForContentDiagnostics,
+  }: {
+    waitForContentDiagnostics: boolean;
+  }): Promise<boolean> => {
+    await nativeClient.build.checkProjectBuildPermission.query({
+      projectId: project.id,
+    });
+    await flushExternalContentProject({ projectId: project.id });
+
+    const { error: auditError, warning: auditWarning } =
+      getPrePublishAuditMessages();
+    if (auditError !== undefined) {
+      toast.error(auditError);
+      setPublishError(auditError);
+      return false;
+    }
+    if (auditWarning !== undefined) {
+      showPublishWarning({
+        message: auditWarning,
+        setWarning: setPublishWarning,
+      });
+    }
+
+    if (waitForContentDiagnostics) {
+      const contentWarning = await getContentDatabasePublishWarning({
+        projectId: project.id,
+      });
+      if (contentWarning !== undefined) {
+        showPublishWarning({
+          message: contentWarning,
+          setWarning: setPublishWarning,
+        });
+      }
+      return true;
+    }
+
+    showContentDatabasePublishWarning({
+      projectId: project.id,
+      setWarning: setPublishWarning,
+    });
+    return true;
+  };
+
+  const getDomainsFromForm = (formData: FormData) =>
+    formData
+      .getAll(domainToPublishName)
+      .map((domainEntry) => domainEntry.toString());
+
+  const handleValidate = (formData: FormData) => {
+    setPublishError(undefined);
+    setPublishWarning(undefined);
+    const domains = getDomainsFromForm(formData);
+    if (domains.length === 0) {
+      toast.error("Please select at least one domain to publish");
+      return;
+    }
+
+    startTransition(async () => {
+      setIsValidating(true);
+      try {
+        const passed = await validate({ waitForContentDiagnostics: true });
+        if (!passed) {
+          return;
+        }
+        toast.success("Validation passed. Publishing is ready.", {
+          duration: Number.POSITIVE_INFINITY,
+        });
+      } catch (error) {
+        const message = getPrePublishErrorMessage(error);
+        toast.error(message);
+        setPublishError(message);
+      } finally {
+        setIsValidating(false);
+      }
+    });
+  };
+
   const handlePublish = (formData: FormData) => {
     setPublishError(undefined);
     setPublishWarning(undefined);
 
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
-    const domains = formData
-      .getAll(domainToPublishName)
-      .map((domainEntry) => domainEntry.toString());
+    const domains = getDomainsFromForm(formData);
 
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
@@ -640,24 +720,10 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        await flushExternalContentProject({ projectId: project.id });
-        const { error: auditError, warning: auditWarning } =
-          getPrePublishAuditMessages();
-        if (auditError !== undefined) {
-          toast.error(auditError);
-          setPublishError(auditError);
+        const passed = await validate({ waitForContentDiagnostics: false });
+        if (!passed) {
           return;
         }
-        if (auditWarning !== undefined) {
-          showPublishWarning({
-            message: auditWarning,
-            setWarning: setPublishWarning,
-          });
-        }
-        await showContentDatabasePublishWarning({
-          projectId: project.id,
-          setWarning: setPublishWarning,
-        });
       } catch (error) {
         const message = getPrePublishErrorMessage(error);
         toast.error(message);
@@ -675,6 +741,7 @@ const Publish = ({
   const isPublishInProgress = isPublishing || hasPendingState;
   const showPendingState =
     isPublishInProgress && (countdown === undefined || countdown === 0);
+  const getForm = () => buttonRef.current?.closest("form");
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
@@ -685,38 +752,54 @@ const Publish = ({
         </PanelBanner>
       )}
 
-      <Tooltip
-        content={
-          isPublishInProgress
-            ? "Publish process in progress"
-            : hasSelectedDomains
-              ? undefined
-              : "Select at least one domain to publish"
-        }
-      >
+      <Flex gap={2} justify="end">
         <Button
-          ref={buttonRef}
           type="button"
+          color="primary"
+          state={isValidating ? "pending" : undefined}
+          disabled={disabled || isPublishInProgress || isValidating}
           onClick={() => {
-            const form = buttonRef.current?.closest("form");
+            const form = getForm();
             if (form) {
-              handlePublish(new FormData(form));
+              handleValidate(new FormData(form));
             }
           }}
-          color="primary"
-          state={showPendingState ? "pending" : undefined}
-          disabled={
-            hasSelectedDomains === false ||
-            disabled ||
-            (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
-            userPublishCount >= maxDailyPublishesPerUser
+        >
+          Validate
+        </Button>
+        <Tooltip
+          content={
+            isPublishInProgress
+              ? "Publish process in progress"
+              : hasSelectedDomains
+                ? undefined
+                : "Select at least one domain to publish"
           }
         >
-          {countdown !== undefined && countdown > 0
-            ? `Publishing (${countdown}s)`
-            : "Publish"}
-        </Button>
-      </Tooltip>
+          <Button
+            ref={buttonRef}
+            type="button"
+            onClick={() => {
+              const form = getForm();
+              if (form) {
+                handlePublish(new FormData(form));
+              }
+            }}
+            color="primary"
+            state={showPendingState ? "pending" : undefined}
+            disabled={
+              hasSelectedDomains === false ||
+              disabled ||
+              (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
+              userPublishCount >= maxDailyPublishesPerUser
+            }
+          >
+            {countdown !== undefined && countdown > 0
+              ? `Publishing (${countdown}s)`
+              : "Publish"}
+          </Button>
+        </Tooltip>
+      </Flex>
     </Flex>
   );
 };
@@ -816,7 +899,7 @@ const PublishStatic = ({
               try {
                 setIsPendingOptimistic(true);
 
-                await showContentDatabasePublishWarning({
+                showContentDatabasePublishWarning({
                   projectId,
                   setWarning: setPublishWarning,
                 });

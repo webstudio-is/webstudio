@@ -93,6 +93,7 @@ import {
 import { createAssetClient } from "../shared/asset-client";
 import { previewProjectAssetQuery } from "./asset-query-preview.server";
 import { publishConfiguredIssueReport } from "./github-issue-report.server";
+import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -1055,6 +1056,31 @@ export const apiRouter = router({
   }),
 
   publish: router({
+    validate: projectQuery(
+      projectIdInput.extend({
+        target: z.enum(["staging", "production"]),
+        domains: z.array(z.string()).optional(),
+      }),
+      "edit",
+      async ({ auth, ctx, input }) => {
+        const project = await loadById(input.projectId, ctx);
+        const domains =
+          input.domains ?? getDefaultPublishDomains(project, input.target);
+        assertApiPublishDomains({ auth, domains, project });
+        const diagnostics = await loadContentDatabasePublishDiagnostics(
+          input.projectId,
+          ctx
+        );
+        return {
+          valid: true,
+          target: input.target,
+          domains,
+          diagnostics,
+        };
+      },
+      { command: "validate-publish", client: "validatePublish" }
+    ),
+
     list: projectQuery(
       paginatedProjectInput,
       "view",
