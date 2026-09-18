@@ -118,7 +118,11 @@ import {
 } from "./fs-utils";
 import { htmlToJsx } from "./html-to-jsx";
 import { compareMedia } from "@webstudio-is/css-engine";
-import { LOCAL_ASSETS_DIR, materializeAssetFiles } from "./asset-files";
+import {
+  getLocalAssetPath,
+  LOCAL_ASSETS_DIR,
+  materializeAssetFiles,
+} from "./asset-files";
 import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
@@ -155,6 +159,54 @@ type SiteDataByPage = {
     pages: Array<Page>;
     publishedContentBlocks?: ReadonlyMap<string, PublishedContentBlock>;
   };
+};
+
+const hydrateLocalMdxContents = async ({
+  artifact,
+  assets,
+  assetsDirectory,
+}: {
+  artifact: ContentArtifactV1;
+  assets: readonly Asset[];
+  assetsDirectory: string;
+}): Promise<ContentArtifactV1> => {
+  const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
+  const missingContents = await Promise.all(
+    artifact.documents
+      .filter(
+        (document) =>
+          document.extension === "mdx" &&
+          document.contentRef !== undefined &&
+          artifact.contents?.[document.contentRef] === undefined
+      )
+      .map(async (document) => {
+        const asset = assetsById.get(document._id);
+        if (asset === undefined) {
+          return;
+        }
+        const content = await readFile(
+          getLocalAssetPath(asset.name, assetsDirectory),
+          "utf8"
+        ).catch(() => undefined);
+        return content === undefined
+          ? undefined
+          : ([document.contentRef, content] as const);
+      })
+  );
+  const contents = Object.fromEntries(
+    missingContents.filter(
+      (entry): entry is readonly [string, string] => entry !== undefined
+    )
+  );
+  return Object.keys(contents).length === 0
+    ? artifact
+    : {
+        ...artifact,
+        contents: {
+          ...artifact.contents,
+          ...contents,
+        },
+      };
 };
 
 const getBoundSystemRouteParameter = (expression: string) => {
@@ -960,10 +1012,18 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const publicationBuild = { ...siteData.build, pages };
-  const verifiedAssetIndex =
+  let verifiedAssetIndex =
     siteData.assetIndex === undefined
       ? undefined
       : await verifyContentArtifact(siteData.assetIndex);
+  if (verifiedAssetIndex !== undefined) {
+    verifiedAssetIndex = await hydrateLocalMdxContents({
+      artifact: verifiedAssetIndex,
+      assets: siteData.assets,
+      assetsDirectory:
+        options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR),
+    });
+  }
   let dynamicMdxCandidates: ReadonlyMap<string, readonly string[]> | undefined;
   if (hasDynamicPublishedMdxSources(publicationBuild)) {
     dynamicMdxCandidates =

@@ -403,6 +403,31 @@ describe("published asset resource runtime", () => {
     await expect(ssgResponse?.json()).resolves.toMatchObject(localResult);
     expect(fetchDocument).toHaveBeenCalledTimes(2);
 
+    const embeddedDocumentFetch = vi.fn(async () => {
+      throw new Error("embedded documents must not be fetched");
+    });
+    const embeddedFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "graph-embedded-build",
+      artifact: {
+        ...artifact,
+        contents: {
+          "storage:author": "---\nname: Ada\nrole: Writer\n---\nBio\n",
+        },
+      },
+      runtimeAssets: {
+        post: { url: "/assets/post.json", contentRef: "storage:post" },
+        author: { url: "/assets/author.md", contentRef: "storage:author" },
+      },
+      fetchDocument: embeddedDocumentFetch,
+    });
+    const embeddedResponse = await embeddedFetch(
+      "/$resources/assets",
+      requestInit()
+    );
+    await expect(embeddedResponse?.json()).resolves.toMatchObject(localResult);
+    expect(embeddedDocumentFetch).not.toHaveBeenCalled();
+
     const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "graph-build",
       artifact,
