@@ -133,6 +133,7 @@ export const AssetsShell = ({
   accept,
 }: AssetsShellProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
+  const externalFilesRef = useRef<File[]>([]);
   const listViewportRef = useRef<HTMLDivElement | null>(null);
   const [monitorState, setMonitorState] =
     useState<ExternalMonitorDragState>(IDLE);
@@ -219,7 +220,11 @@ export const AssetsShell = ({
           setMonitorState(IDLE);
           setDropTargetState(IDLE);
 
-          const droppedItemsPromise = readDroppedAssetItems(source.items);
+          // The external adapter may expose the native DataTransferItemList.
+          // Snapshot it before awaiting so all dropped files are retained.
+          const droppedItemsPromise = readDroppedAssetItems(
+            Array.from(source.items)
+          );
           const droppedUrlsPromise = Promise.all(
             source.items
               .filter((item) => item.type === "text/uri-list")
@@ -235,6 +240,10 @@ export const AssetsShell = ({
               droppedItemsPromise,
               droppedUrlsPromise,
             ]);
+            const droppedFiles = [
+              ...externalFilesRef.current,
+              ...droppedItems.files,
+            ].filter((file, index, files) => files.indexOf(file) === index);
             let didCreateFolder = false;
             const fileGroups = allowFolderDrop
               ? await createDroppedAssetFolderStructure({
@@ -287,7 +296,7 @@ export const AssetsShell = ({
             }
 
             uploadDroppedFiles({
-              files: droppedItems.files,
+              files: droppedFiles,
               type,
               accept,
               folderId,
@@ -318,6 +327,9 @@ export const AssetsShell = ({
       }}
       onPointerDown={(event) => onPointerDown?.(event, listViewportRef.current)}
       onContextMenu={onContextMenu}
+      onDropCapture={(event) => {
+        externalFilesRef.current = Array.from(event.dataTransfer?.files ?? []);
+      }}
       onKeyDown={onKeyDown}
       direction="column"
       css={{
