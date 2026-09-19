@@ -111,6 +111,8 @@ Bind a Resource request field to another Resource variable when one request need
 
 Webstudio fetches the dependency first and evaluates the dependent request after the dependency data is available. A Resource cannot depend on itself or on another Resource that already depends on it. Collection item and component parameter variables are not available in Resource request fields.
 
+When a Form uses a Resource action, Webstudio fetches that action's dependencies when the form is submitted, not when the page loads.
+
 #### Caching
 
 You may be wondering whether every visit to your blog results in an API call to your CMS or if the content is cached in Webstudio.

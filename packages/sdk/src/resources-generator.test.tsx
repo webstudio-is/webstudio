@@ -71,7 +71,7 @@ test("generate resources loader", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -288,7 +288,7 @@ test("generate variable and use in resources loader", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -348,6 +348,58 @@ test("generate dependency-gated resource request factories", () => {
   expect(generated).toContain(
     'dependencies: ["firstResource"], createRequest: Second'
   );
+});
+
+test("generates action resources as on-demand graph roots with dependencies", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "authorDataSource",
+        scopeInstanceId: "body",
+        type: "resource",
+        name: "Author",
+        resourceId: "authorResource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "authorResource",
+        name: "Author",
+        method: "get",
+        url: '"https://example.com/author"',
+        headers: [],
+      },
+      {
+        id: "submitResource",
+        name: "Submit",
+        method: "post",
+        url: '"https://example.com/submit/" + $ws$dataSource$authorDataSource.data.id',
+        headers: [],
+      },
+    ]),
+    props: toMap([
+      {
+        id: "submitAction",
+        instanceId: "body",
+        name: "Submit",
+        type: "resource",
+        value: "submitResource",
+      },
+    ]),
+  });
+
+  expect(generated).toContain(
+    'const Author_1 = documents.get("authorResource")'
+  );
+  expect(generated).toContain(
+    'dependencies: ["authorResource"], createRequest: Submit'
+  );
+  expect(generated).toContain(
+    '["Submit", { id: "submitResource", outputName: "Submit" }]'
+  );
+  expect(generated).toContain("rootIds: [\n    ]");
 });
 
 test("generates lazy roots only for resource expressions in the page tree", () => {
@@ -482,7 +534,7 @@ test("generate page system variable and use in resources loader", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -536,7 +588,7 @@ test("generate global system variable and use in resources loader", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -564,7 +616,7 @@ test("generate empty resources loader", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -635,7 +687,7 @@ test("generate resource loader with search params", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -671,7 +723,7 @@ test("prevent generating unused variables", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -709,7 +761,7 @@ test("prevent generating unused system variable", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -717,7 +769,7 @@ test("prevent generating unused system variable", () => {
   `);
 });
 
-test("generate action resource without loading a stale data source", () => {
+test("generates action resources as lazy roots without loading stale data", () => {
   expect(
     generateResources({
       scope: createScope(),
@@ -757,24 +809,27 @@ test("generate action resource without loading a stale data source", () => {
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
     export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
-      const resourceName: ResourceRequest = {
-        name: "resourceName",
-        url: "https://my-url.com",
-        searchParams: [
-        ],
-        method: "post",
-        headers: [
-        ],
+      const resourceName = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {
+        return {
+          name: "resourceName",
+          url: "https://my-url.com",
+          searchParams: [
+          ],
+          method: "post",
+          headers: [
+          ],
+        }
       }
       const _data: ResourceRequestGraph = {
         resources: [
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
         ],
         rootIds: [
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
-        ["resourceName", resourceName],
+      const _action = new Map<string, { id: string; outputName: string }>([
+        ["resourceName", { id: "resourceId", outputName: "resourceName" }],
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -810,7 +865,7 @@ test("skip missing resource referenced by data source", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }
@@ -846,7 +901,7 @@ test("skip missing resource referenced by action prop", () => {
         ],
       }
       const _contentData = new Map<string, ResourceRequest>()
-      const _action = new Map<string, ResourceRequest>([
+      const _action = new Map<string, { id: string; outputName: string }>([
       ])
       return { data: _data, action: _action, contentData: _contentData }
     }

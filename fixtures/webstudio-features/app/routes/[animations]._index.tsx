@@ -275,9 +275,10 @@ export const action = async ({
     };
 
     const resourceName = formData.get(formIdFieldName);
-    let resource =
+    const generatedResources = getResources({ system });
+    const actionResource =
       typeof resourceName === "string"
-        ? getResources({ system }).action.get(resourceName)
+        ? generatedResources.action.get(resourceName)
         : undefined;
 
     const formBotValue = formData.get(formBotFieldName);
@@ -306,25 +307,47 @@ export const action = async ({
     formData.delete(formIdFieldName);
     formData.delete(formBotFieldName);
 
-    if (resource) {
-      resource.body = Object.fromEntries(formData);
-    } else {
+    let result: Awaited<ReturnType<typeof loadResource>>;
+    if (actionResource === undefined) {
       if (contactEmail === undefined) {
         throw new Error("Contact email not found");
       }
-
-      resource = context.getDefaultActionResource?.({
+      const resource = context.getDefaultActionResource?.({
         url,
         projectId,
         contactEmail,
         formData,
       });
+      if (resource === undefined) {
+        throw Error("Resource not found");
+      }
+      result = await loadResource(fetch, resource);
+    } else {
+      const actionFetch = await createGeneratedAssetResourceFetch({
+        request,
+        context,
+        fallback: customFetch,
+      });
+      const results = await loadResources(
+        actionFetch,
+        {
+          ...generatedResources.data,
+          rootIds: [actionResource.id],
+        },
+        url,
+        {
+          requestOverrides: new Map([
+            [actionResource.id, { body: Object.fromEntries(formData) }],
+          ]),
+        }
+      );
+      const actionResult = results[actionResource.outputName];
+      if (actionResult === undefined) {
+        throw Error("Resource not found");
+      }
+      result = actionResult as Awaited<ReturnType<typeof loadResource>>;
     }
-
-    if (resource === undefined) {
-      throw Error("Resource not found");
-    }
-    const { ok, statusText } = await loadResource(fetch, resource);
+    const { ok, statusText } = result;
     if (ok) {
       return { success: true };
     }

@@ -26,7 +26,7 @@ export const getResources = (_props: { system: System; resources?: Record<string
     ],
   }
   const _contentData = new Map<string, ResourceRequest>()
-  const _action = new Map<string, ResourceRequest>([
+  const _action = new Map<string, { id: string; outputName: string }>([
   ])
   return { data: _data, action: _action, contentData: _contentData }
 }

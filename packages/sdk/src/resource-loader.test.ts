@@ -91,6 +91,69 @@ test("resolves request resources after their dependency documents", async () => 
   ]);
 });
 
+test("applies action request overrides after resolving remote dependencies", async () => {
+  const requests: Array<{ url: string; body: string | null }> = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const url = String(input);
+    requests.push({ url, body: (init?.body as string | undefined) ?? null });
+    return url.endsWith("/author")
+      ? Response.json({ id: "author-123" })
+      : Response.json({ ok: true });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "author",
+        outputName: "Author",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Author",
+          method: "get",
+          url: "https://example.com/author",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "submit",
+        outputName: "Submit",
+        dependencies: ["author"],
+        createRequest: (documents) => ({
+          name: "Submit",
+          method: "post",
+          url: `https://example.com/submit/${(documents.get("author") as { data: { id: string } }).data.id}`,
+          searchParams: [],
+          headers: [],
+          body: { stale: true },
+        }),
+      },
+    ],
+    rootIds: ["submit"],
+  };
+
+  await expect(
+    loadResources(fetch, graph, undefined, {
+      requestOverrides: new Map([
+        ["submit", { body: { email: "ada@example.com" } }],
+      ]),
+    })
+  ).resolves.toEqual({
+    Submit: {
+      data: { ok: true },
+      ok: true,
+      status: 200,
+      statusText: "",
+    },
+  });
+  expect(requests).toEqual([
+    { url: "https://example.com/author", body: null },
+    {
+      url: "https://example.com/submit/author-123",
+      body: JSON.stringify({ email: "ada@example.com" }),
+    },
+  ]);
+});
+
 test("runs independent resources concurrently while keeping dependency chains serial", async () => {
   const independentIds = Array.from(
     { length: 19 },

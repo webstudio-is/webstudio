@@ -86,6 +86,10 @@ export type ResourceLoadOptions = {
   timeoutMs?: number;
 };
 
+export type ResourceGraphLoadOptions = ResourceLoadOptions & {
+  requestOverrides?: ReadonlyMap<string, Partial<ResourceRequest>>;
+};
+
 export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
@@ -401,7 +405,7 @@ export const loadResources = async (
   customFetch: typeof fetch,
   requests: Map<string, ResourceRequest> | ResourceRequestGraph,
   baseUrl?: string | URL,
-  options?: ResourceLoadOptions
+  options?: ResourceGraphLoadOptions
 ) => {
   const isLegacyMap = requests instanceof Map;
   const graph: ResourceRequestGraph = isLegacyMap
@@ -418,11 +422,18 @@ export const loadResources = async (
   const resources: Resource<unknown>[] = graph.resources.map((resource) => ({
     id: resource.id,
     dependencies: resource.dependencies,
-    resolve: ({ documents, signal }) =>
-      loadResource(customFetch, resource.createRequest(documents), baseUrl, {
-        ...options,
+    resolve: ({ documents, signal }) => {
+      const { requestOverrides, ...loadOptions } = options ?? {};
+      const request = resource.createRequest(documents);
+      const resolvedRequest = {
+        ...request,
+        ...requestOverrides?.get(resource.id),
+      };
+      return loadResource(customFetch, resolvedRequest, baseUrl, {
+        ...loadOptions,
         signal: signal ?? options?.signal,
-      }),
+      });
+    },
   }));
   const resolved = await resolveResourceGraph({
     resources,
