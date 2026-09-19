@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { fontMeta } from "@webstudio-is/fonts";
-import { assetType } from "./schema/assets";
+import { asset, assetType } from "./schema/assets";
 import {
   ALLOWED_FILE_TYPES,
   getMimeTypeByExtension,
@@ -38,6 +38,22 @@ test("hashes asset content with SHA-256", async () => {
   ).resolves.toBe(
     "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
   );
+});
+
+test("rejects a font format stored as a generic file", () => {
+  expect(
+    asset.safeParse({
+      id: "font-1",
+      projectId: "project-1",
+      size: 100,
+      name: "font.woff2",
+      description: null,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      format: "woff2",
+      meta: {},
+      type: "file",
+    }).success
+  ).toBe(false);
 });
 
 describe("getFileExtension", () => {

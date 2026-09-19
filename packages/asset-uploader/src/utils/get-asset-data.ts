@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { imageMeta as parseImageMeta } from "image-meta";
-import { type FontMeta, fontMeta } from "@webstudio-is/fonts";
+import {
+  FONT_FORMATS,
+  type FontFormat,
+  type FontMeta,
+  fontMeta,
+} from "@webstudio-is/fonts";
 import {
   type AssetType,
   type ImageMeta,
@@ -42,13 +47,15 @@ export const applyAssetDataOverride = (
   if (meta === undefined) {
     throw new Error("Asset metadata override is invalid");
   }
+  const format =
+    type === "font" ? detected.format : (override?.format ?? detected.format);
+  if (type !== "font" && FONT_FORMATS.has(format as FontFormat)) {
+    throw new Error("Font format requires valid font metadata");
+  }
 
   return {
     ...detected,
-    format:
-      "family" in detected.meta
-        ? detected.format
-        : (override?.format ?? detected.format),
+    format,
     meta,
   };
 };
@@ -107,8 +114,19 @@ export const getAssetData = async (
     };
   }
 
-  // Validate file name and get extension
+  // The persisted asset type is derived from its detected format. Parse font
+  // extensions as fonts even when a caller labels the upload as a generic file,
+  // otherwise the upload could persist `{}` metadata that cannot be loaded as a
+  // font later.
   const { extension } = validateFileName(options.name);
+  if (FONT_FORMATS.has(extension as FontFormat)) {
+    const { format, ...meta } = getFontData(options.data, options.name);
+    return {
+      size: options.size,
+      format,
+      meta,
+    };
+  }
 
   return {
     size: options.size,
