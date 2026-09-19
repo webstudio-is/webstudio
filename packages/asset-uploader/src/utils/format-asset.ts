@@ -30,7 +30,14 @@ export const formatAsset = ({
   };
 }): Asset => {
   const isFont = FONT_FORMATS.has(file.format as FontFormat);
-  const parsedMeta = JSON.parse(file.meta);
+  let parsedMeta: unknown;
+  try {
+    parsedMeta = JSON.parse(file.meta);
+  } catch {
+    // Treat invalid persisted metadata as an untyped file instead of making
+    // the entire project fail to load.
+    parsedMeta = undefined;
+  }
   const base = {
     id: assetId,
     name: file.name,
@@ -44,46 +51,42 @@ export const formatAsset = ({
   };
 
   if (isFont) {
-    return {
-      ...base,
-      type: "font",
-      format: file.format as FontFormat,
-      meta: fontMeta.parse(parsedMeta),
-    };
+    const result = fontMeta.safeParse(parsedMeta);
+    if (result.success) {
+      return {
+        ...base,
+        type: "font",
+        format: file.format as FontFormat,
+        meta: result.data,
+      };
+    }
   }
 
   // Detect actual asset type based on file extension
   const detectedType = detectAssetType(file.name);
 
-  // Check if it's an image by verifying both metadata AND file extension
-  // Videos also have width/height but should not be treated as images
-  const isImage =
-    detectedType === "image" &&
-    parsedMeta &&
-    typeof parsedMeta.width === "number" &&
-    typeof parsedMeta.height === "number";
-  const isVideo =
-    detectedType === "video" &&
-    parsedMeta &&
-    typeof parsedMeta.width === "number" &&
-    typeof parsedMeta.height === "number";
-
-  if (isImage) {
-    return {
-      ...base,
-      type: "image",
-      format: file.format,
-      meta: imageMeta.parse(parsedMeta),
-    };
+  if (detectedType === "image") {
+    const result = imageMeta.safeParse(parsedMeta);
+    if (result.success) {
+      return {
+        ...base,
+        type: "image",
+        format: file.format,
+        meta: result.data,
+      };
+    }
   }
 
-  if (isVideo) {
-    return {
-      ...base,
-      type: "video",
-      format: file.format,
-      meta: videoMeta.parse(parsedMeta),
-    };
+  if (detectedType === "video") {
+    const result = videoMeta.safeParse(parsedMeta);
+    if (result.success) {
+      return {
+        ...base,
+        type: "video",
+        format: file.format,
+        meta: result.data,
+      };
+    }
   }
 
   // Default to file type for everything else

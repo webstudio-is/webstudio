@@ -44,6 +44,27 @@ describe("formatAsset", () => {
     });
   });
 
+  test("keeps assets with invalid JSON metadata from breaking project loads", () => {
+    const result = formatAsset({
+      ...baseParams,
+      file: {
+        name: "Inter-Regular.woff2",
+        format: "woff2",
+        description: null,
+        size: 50000,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
+        meta: "{invalid json",
+      },
+    });
+
+    expect(result).toMatchObject({
+      type: "file",
+      format: "woff2",
+      meta: {},
+    });
+  });
+
   test("formats image asset with width and height correctly", () => {
     const result = formatAsset({
       ...baseParams,
