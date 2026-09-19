@@ -91,7 +91,7 @@ import {
   loadProjectBundleByProjectId,
   moveInstance,
   publish,
-  validatePublish,
+  checkPublishReadiness,
   readProjectAssetContent,
   parseBuildPatchTransactions,
   parseBuilderUrl,
@@ -773,7 +773,7 @@ test("wraps project api trpc calls in named functions", async () => {
       scopeInstanceId: "body-id",
     });
     await listPublishes(params);
-    await validatePublish({
+    await checkPublishReadiness({
       ...params,
       target: "production",
       domains: ["example.com"],

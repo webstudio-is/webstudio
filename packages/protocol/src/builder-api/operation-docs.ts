@@ -695,13 +695,13 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio delete-resource --resource resource-id --json"],
   },
   {
-    command: "validate-publish",
+    command: "check-publish-readiness",
     description:
-      "Check publish permissions, selected domains, and content diagnostics without starting a publish",
+      "Check publish access, selected domains, and content diagnostics without starting a publish. Use audit for project-wide quality checks.",
     requiredOptions: ["target", "json"],
     examples: [
-      "webstudio validate-publish --target production --json",
-      'MCP tool: validate-publish {"target":"production"}',
+      "webstudio check-publish-readiness --target production --json",
+      'MCP tool: check-publish-readiness {"target":"production"}',
     ],
   },
   {

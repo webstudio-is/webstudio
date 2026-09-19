@@ -106,6 +106,7 @@ import {
   getContentDatabasePublishWarning,
   showContentDatabasePublishWarning,
 } from "./content-database-publish-warning";
+import { PublishActions, type PublishValidationState } from "./publish-actions";
 import { showPublishWarning } from "./publish-warning";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPrePublishErrorMessage } from "./publish-error";
@@ -461,8 +462,6 @@ const usePublishCountdown = (isPublishing: boolean) => {
   return countdown;
 };
 
-type ValidationState = "idle" | "pending" | "passed";
-
 const Publish = ({
   project,
   timesLeft,
@@ -477,8 +476,8 @@ const Publish = ({
   disabled: boolean;
   refresh: () => Promise<void>;
   restrictedFeatures: Map<string, RestrictedFeature>;
-  validationState: ValidationState;
-  onValidationStateChange: (state: ValidationState) => void;
+  validationState: PublishValidationState;
+  onValidationStateChange: (state: PublishValidationState) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
@@ -494,7 +493,6 @@ const Publish = ({
     useState(false);
   const previousDomainsKey = useRef<string>();
   const countdown = usePublishCountdown(isPublishing);
-  const isValidating = validationState === "pending";
 
   useEffect(() => {
     const form = buttonRef.current?.closest("form");
@@ -641,11 +639,7 @@ const Publish = ({
     }
   };
 
-  const validate = async ({
-    waitForContentDiagnostics,
-  }: {
-    waitForContentDiagnostics: boolean;
-  }): Promise<boolean> => {
+  const runPrePublishChecks = async (): Promise<boolean> => {
     await nativeClient.build.checkProjectBuildPermission.query({
       projectId: project.id,
     });
@@ -665,23 +659,6 @@ const Publish = ({
       });
     }
 
-    if (waitForContentDiagnostics) {
-      const contentWarning = await getContentDatabasePublishWarning({
-        projectId: project.id,
-      });
-      if (contentWarning !== undefined) {
-        showPublishWarning({
-          message: contentWarning,
-          setWarning: setPublishWarning,
-        });
-      }
-      return true;
-    }
-
-    showContentDatabasePublishWarning({
-      projectId: project.id,
-      setWarning: setPublishWarning,
-    });
     return true;
   };
 
@@ -702,11 +679,23 @@ const Publish = ({
     startTransition(async () => {
       onValidationStateChange("pending");
       try {
-        const passed = await validate({ waitForContentDiagnostics: true });
-        onValidationStateChange(passed ? "passed" : "idle");
+        const passed = await runPrePublishChecks();
         if (!passed) {
+          onValidationStateChange("idle");
           return;
         }
+        const diagnostics =
+          await nativeClient.build.contentDatabasePublishDiagnostics.query({
+            projectId: project.id,
+          });
+        const contentWarning = getContentDatabasePublishWarning(diagnostics);
+        if (contentWarning !== undefined) {
+          showPublishWarning({
+            message: contentWarning,
+            setWarning: setPublishWarning,
+          });
+        }
+        onValidationStateChange("passed");
         toast.success("Validation passed. Ready to publish.", {
           duration: Number.POSITIVE_INFINITY,
         });
@@ -736,7 +725,7 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        const passed = await validate({ waitForContentDiagnostics: false });
+        const passed = await runPrePublishChecks();
         if (!passed) {
           return;
         }
@@ -746,6 +735,12 @@ const Publish = ({
         setPublishError(message);
         return;
       }
+      showContentDatabasePublishWarning({
+        diagnostics: nativeClient.build.contentDatabasePublishDiagnostics.query(
+          { projectId: project.id }
+        ),
+        setWarning: setPublishWarning,
+      });
       await publish(domains);
     });
   };
@@ -768,60 +763,37 @@ const Publish = ({
         </PanelBanner>
       )}
 
-      <Flex gap={2} justify="end">
-        <Button
-          type="button"
-          color="positive"
-          state={isValidating ? "pending" : undefined}
-          disabled={disabled || isPublishInProgress || isValidating}
-          css={{ flex: 1 }}
-          prefix={
-            validationState === "passed" ? <CheckCircleIcon /> : undefined
+      <PublishActions
+        publishButtonRef={buttonRef}
+        validationState={validationState}
+        validateDisabled={disabled || isPublishInProgress}
+        publishDisabled={
+          hasSelectedDomains === false ||
+          disabled ||
+          (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
+          userPublishCount >= maxDailyPublishesPerUser
+        }
+        publishPending={showPendingState}
+        publishInProgress={isPublishInProgress}
+        hasSelectedDomains={hasSelectedDomains}
+        publishLabel={
+          countdown !== undefined && countdown > 0
+            ? `Publishing (${countdown}s)`
+            : "Publish"
+        }
+        onValidate={() => {
+          const form = getForm();
+          if (form) {
+            handleValidate(new FormData(form));
           }
-          onClick={() => {
-            const form = getForm();
-            if (form) {
-              handleValidate(new FormData(form));
-            }
-          }}
-        >
-          {validationState === "passed" ? "Validated" : "Validate"}
-        </Button>
-        <Tooltip
-          content={
-            isPublishInProgress
-              ? "Publish process in progress"
-              : hasSelectedDomains
-                ? undefined
-                : "Select at least one domain to publish"
+        }}
+        onPublish={() => {
+          const form = getForm();
+          if (form) {
+            handlePublish(new FormData(form));
           }
-        >
-          <Button
-            ref={buttonRef}
-            type="button"
-            onClick={() => {
-              const form = getForm();
-              if (form) {
-                handlePublish(new FormData(form));
-              }
-            }}
-            color="primary"
-            state={showPendingState ? "pending" : undefined}
-            css={{ flex: 1 }}
-            disabled={
-              hasSelectedDomains === false ||
-              disabled ||
-              isValidating ||
-              (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
-              userPublishCount >= maxDailyPublishesPerUser
-            }
-          >
-            {countdown !== undefined && countdown > 0
-              ? `Publishing (${countdown}s)`
-              : "Publish"}
-          </Button>
-        </Tooltip>
-      </Flex>
+        }}
+      />
     </Flex>
   );
 };
@@ -922,7 +894,10 @@ const PublishStatic = ({
                 setIsPendingOptimistic(true);
 
                 showContentDatabasePublishWarning({
-                  projectId,
+                  diagnostics:
+                    nativeClient.build.contentDatabasePublishDiagnostics.query({
+                      projectId,
+                    }),
                   setWarning: setPublishWarning,
                 });
 
@@ -1166,8 +1141,8 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
-  validationState: ValidationState;
-  onValidationStateChange: (state: ValidationState) => void;
+  validationState: PublishValidationState;
+  onValidationStateChange: (state: PublishValidationState) => void;
 }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
@@ -1476,7 +1451,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
   const [validationState, setValidationState] =
-    useState<ValidationState>("idle");
+    useState<PublishValidationState>("idle");
 
   const tooltipContent = isPublishEnabled
     ? undefined

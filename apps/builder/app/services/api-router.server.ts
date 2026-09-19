@@ -1078,7 +1078,7 @@ export const apiRouter = router({
           diagnostics,
         };
       },
-      { command: "validate-publish", client: "validatePublish" }
+      { command: "check-publish-readiness", client: "checkPublishReadiness" }
     ),
 
     list: projectQuery(

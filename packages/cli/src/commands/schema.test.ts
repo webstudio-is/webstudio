@@ -168,7 +168,7 @@ test("prints compact mcp tool summaries as json by default", () => {
         method: "mutation",
       }),
       expect.objectContaining({
-        name: "validate-publish",
+        name: "check-publish-readiness",
         operationId: "publish.validate",
         method: "query",
       }),

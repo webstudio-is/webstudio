@@ -1,5 +1,4 @@
-import type { Project } from "@webstudio-is/project";
-import { nativeClient } from "~/shared/trpc/trpc-client";
+import type { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
 import { showPublishWarning } from "./publish-warning";
 
@@ -7,19 +6,9 @@ type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
 >;
 
-type LoadContentDatabasePublishDiagnostics = (input: {
-  projectId: Project["id"];
-}) => Promise<ContentDatabasePublishDiagnostics>;
-
-const getContentDatabasePublishWarning = async ({
-  projectId,
-  loadDiagnostics = (input) =>
-    nativeClient.build.contentDatabasePublishDiagnostics.query(input),
-}: {
-  projectId: Project["id"];
-  loadDiagnostics?: LoadContentDatabasePublishDiagnostics;
-}) => {
-  const diagnostics = await loadDiagnostics({ projectId });
+export const getContentDatabasePublishWarning = (
+  diagnostics: ContentDatabasePublishDiagnostics
+) => {
   const databaseWarning =
     diagnostics.stats?.truncated &&
     diagnostics.stats.omissionReason !== undefined;
@@ -62,24 +51,20 @@ const getContentDatabasePublishWarning = async ({
 };
 
 export const showContentDatabasePublishWarning = ({
-  projectId,
+  diagnostics,
   setWarning,
-  loadDiagnostics,
 }: {
-  projectId: Project["id"];
+  diagnostics: Promise<ContentDatabasePublishDiagnostics>;
   setWarning: (warning: JSX.Element) => void;
-  loadDiagnostics?: LoadContentDatabasePublishDiagnostics;
 }) => {
-  void getContentDatabasePublishWarning({ projectId, loadDiagnostics }).then(
-    (warning) => {
+  void diagnostics
+    .then((diagnostics) => {
+      const warning = getContentDatabasePublishWarning(diagnostics);
       if (warning !== undefined) {
         showPublishWarning({ message: warning, setWarning });
       }
-    },
-    () => {
+    })
+    .catch(() => {
       // Content warnings are advisory and must not block publishing.
-    }
-  );
+    });
 };
-
-export { getContentDatabasePublishWarning };

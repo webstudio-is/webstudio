@@ -1,55 +1,69 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test, vi } from "vitest";
-import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
+import {
+  getContentDatabasePublishWarning,
+  showContentDatabasePublishWarning,
+} from "./content-database-publish-warning";
 
-describe("showContentDatabasePublishWarning", () => {
-  test("starts diagnostics without making publishing wait for them", () => {
-    const loadDiagnostics = vi.fn(() => new Promise<never>(() => {}));
+const mdxDiagnostics = (count: number) => ({
+  stats: undefined,
+  affectedResources: [],
+  mdxOmissions: Array.from({ length: count }, (_, index) => ({
+    assetId: `asset-${index}`,
+    blockInstanceId: `block-${index}`,
+    filename: `post-${index}.mdx`,
+    templateName: `Post ${index}`,
+  })),
+});
 
-    const result = showContentDatabasePublishWarning({
-      projectId: "project-id",
-      setWarning: vi.fn(),
-      loadDiagnostics,
-    });
-
-    expect(result).toBeUndefined();
-    expect(loadDiagnostics).toHaveBeenCalledWith({ projectId: "project-id" });
+describe("content database publish warning", () => {
+  test("returns no warning when diagnostics are clean", () => {
+    expect(getContentDatabasePublishWarning(mdxDiagnostics(0))).toBeUndefined();
   });
 
-  test("does not surface a diagnostics failure as a publish failure", async () => {
-    const loadDiagnostics = vi.fn().mockRejectedValue(new Error("timed out"));
-    const setWarning = vi.fn();
+  test("lists ten omitted templates and reports the remaining count", () => {
+    const warning = getContentDatabasePublishWarning(mdxDiagnostics(11));
+    const markup = renderToStaticMarkup(warning);
 
+    expect(markup).toContain("post-0.mdx: Post 0");
+    expect(markup).toContain("post-9.mdx: Post 9");
+    expect(markup).not.toContain("post-10.mdx");
+    expect(markup).toContain("And 1 more template references.");
+  });
+
+  test("does not wait for advisory diagnostics", () => {
+    const diagnostics = new Promise<never>(() => {});
+
+    expect(
+      showContentDatabasePublishWarning({
+        diagnostics,
+        setWarning: vi.fn(),
+      })
+    ).toBeUndefined();
+  });
+
+  test("shows a warning when diagnostics finish", async () => {
+    const setWarning = vi.fn();
     showContentDatabasePublishWarning({
-      projectId: "project-id",
+      diagnostics: Promise.resolve(mdxDiagnostics(1)),
       setWarning,
-      loadDiagnostics,
     });
 
-    await vi.waitFor(() => expect(loadDiagnostics).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await vi.waitFor(() => expect(setWarning).toHaveBeenCalledOnce());
+    expect(renderToStaticMarkup(setWarning.mock.calls[0][0])).toContain(
+      "post-0.mdx: Post 0"
+    );
+  });
+
+  test("swallows an advisory diagnostics failure", async () => {
+    const setWarning = vi.fn();
+    showContentDatabasePublishWarning({
+      diagnostics: Promise.reject(new Error("diagnostics unavailable")),
+      setWarning,
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
     expect(setWarning).not.toHaveBeenCalled();
-  });
-
-  test("still shows completed diagnostics warnings", async () => {
-    const setWarning = vi.fn();
-
-    showContentDatabasePublishWarning({
-      projectId: "project-id",
-      setWarning,
-      loadDiagnostics: async () => ({
-        stats: undefined,
-        affectedResources: [],
-        mdxOmissions: [
-          {
-            assetId: "asset-id",
-            blockInstanceId: "block-id",
-            filename: "post.mdx",
-            templateName: "Post",
-          },
-        ],
-      }),
-    });
-
-    await vi.waitFor(() => expect(setWarning).toHaveBeenCalledTimes(1));
   });
 });

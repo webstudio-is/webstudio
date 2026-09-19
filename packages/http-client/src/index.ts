@@ -2234,12 +2234,12 @@ export const listPublishes = projectQueryInput<
   AuthProjectParams & PaginatedQueryInput
 >("list-publishes");
 
-export const validatePublish = projectQueryInput<
+export const checkPublishReadiness = projectQueryInput<
   AuthProjectParams & {
     target: "staging" | "production";
     domains?: string[];
   }
->("validate-publish");
+>("check-publish-readiness");
 
 export const publish = projectMutationInput<
   AuthProjectParams & {
