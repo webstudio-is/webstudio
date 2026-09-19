@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import { asset } from "@webstudio-is/sdk";
 import { formatAsset } from "./format-asset";
 
 describe("formatAsset", () => {
@@ -60,9 +61,10 @@ describe("formatAsset", () => {
 
     expect(result).toMatchObject({
       type: "file",
-      format: "woff2",
+      format: "unknown",
       meta: {},
     });
+    expect(asset.safeParse(result).success).toBe(true);
   });
 
   test("formats image asset with width and height correctly", () => {

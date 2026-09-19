@@ -43,73 +43,6 @@ const getBaseAsset = ({
   updatedAt: file.updatedAt,
 });
 
-const formatInvalidFontAsFile = (input: FormatAssetInput): Asset => ({
-  ...getBaseAsset(input),
-  type: "file",
-  format: "unknown",
-  meta: {},
-});
-
-export const formatAsset = (input: FormatAssetInput): Asset => {
-  const { file } = input;
-  const isFont = FONT_FORMATS.has(file.format as FontFormat);
-  let parsedMeta: unknown;
-  try {
-    parsedMeta = JSON.parse(file.meta);
-  } catch {
-    // Treat invalid persisted metadata as untyped instead of breaking the load.
-    parsedMeta = undefined;
-  }
-  const base = getBaseAsset(input);
-
-  if (isFont) {
-    const result = fontMeta.safeParse(parsedMeta);
-    if (result.success) {
-      return {
-        ...base,
-        type: "font",
-        format: file.format as FontFormat,
-        meta: result.data,
-      };
-    }
-  }
-
-  // Detect actual asset type based on file extension
-  const detectedType = detectAssetType(file.name);
-
-  if (detectedType === "image") {
-    const result = imageMeta.safeParse(parsedMeta);
-    if (result.success) {
-      return {
-        ...base,
-        type: "image",
-        format: file.format,
-        meta: result.data,
-      };
-    }
-  }
-
-  if (detectedType === "video") {
-    const result = videoMeta.safeParse(parsedMeta);
-    if (result.success) {
-      return {
-        ...base,
-        type: "video",
-        format: file.format,
-        meta: result.data,
-      };
-    }
-  }
-
-  // Default to file type for everything else
-  return {
-    ...base,
-    type: "file",
-    format: file.format,
-    meta: {},
-  };
-};
-
 type FontMetaIssueSummary = { code: string; path: string[] };
 
 const summarizeFontMetaIssues = (
@@ -121,28 +54,83 @@ const summarizeFontMetaIssues = (
       : [{ code: issue.code, path: issue.path.map(String) }]
   );
 
-export const formatAssetForRead = (
+const formatAssetWithDiagnostics = (
   input: FormatAssetInput
 ): { asset: Asset; fontMetaIssues?: FontMetaIssueSummary[] } => {
-  if (FONT_FORMATS.has(input.file.format as FontFormat)) {
-    let parsedMeta: unknown;
-    try {
-      parsedMeta = JSON.parse(input.file.meta);
-    } catch {
+  const { file } = input;
+  const isFont = FONT_FORMATS.has(file.format as FontFormat);
+  const base = getBaseAsset(input);
+  let parsedMeta: unknown;
+  let fontMetaIssues: FontMetaIssueSummary[] | undefined;
+  try {
+    parsedMeta = JSON.parse(file.meta);
+  } catch {
+    // Treat invalid persisted metadata as untyped instead of breaking the load.
+    if (isFont) {
+      fontMetaIssues = [{ code: "invalid_json", path: [] }];
+    }
+  }
+
+  if (isFont && fontMetaIssues === undefined) {
+    const result = fontMeta.safeParse(parsedMeta);
+    if (result.success) {
       return {
-        asset: formatInvalidFontAsFile(input),
-        fontMetaIssues: [{ code: "invalid_json", path: [] }],
+        asset: {
+          ...base,
+          type: "font",
+          format: file.format as FontFormat,
+          meta: result.data,
+        },
       };
     }
+    fontMetaIssues = summarizeFontMetaIssues(result.error.issues);
+  }
 
-    const result = fontMeta.safeParse(parsedMeta);
-    if (result.success === false) {
+  // Detect actual asset type based on file extension
+  const detectedType = detectAssetType(file.name);
+
+  if (detectedType === "image") {
+    const result = imageMeta.safeParse(parsedMeta);
+    if (result.success) {
       return {
-        asset: formatInvalidFontAsFile(input),
-        fontMetaIssues: summarizeFontMetaIssues(result.error.issues),
+        asset: {
+          ...base,
+          type: "image",
+          format: file.format,
+          meta: result.data,
+        },
       };
     }
   }
 
-  return { asset: formatAsset(input) };
+  if (detectedType === "video") {
+    const result = videoMeta.safeParse(parsedMeta);
+    if (result.success) {
+      return {
+        asset: {
+          ...base,
+          type: "video",
+          format: file.format,
+          meta: result.data,
+        },
+      };
+    }
+  }
+
+  // Font formats require font metadata, so use an unknown format when falling
+  // back to a generic file to keep the asset valid against the SDK schema.
+  return {
+    asset: {
+      ...base,
+      type: "file",
+      format: isFont ? "unknown" : file.format,
+      meta: {},
+    },
+    ...(fontMetaIssues === undefined ? {} : { fontMetaIssues }),
+  };
 };
+
+export const formatAsset = (input: FormatAssetInput): Asset =>
+  formatAssetWithDiagnostics(input).asset;
+
+export const formatAssetForRead = formatAssetWithDiagnostics;
