@@ -4,6 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
+import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import * as projectBuild from "@webstudio-is/project-build/server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
@@ -23,6 +24,7 @@ import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/com
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import * as assetQueryPreview from "./asset-query-preview.server";
+import * as db from "~/shared/db";
 import {
   getApiRouterProcedures,
   getProcedureInputSchemaMetadata,
@@ -857,6 +859,61 @@ describe("api router permits", () => {
         project,
       })
     ).not.toThrow();
+  });
+
+  test("validates publish permissions and content diagnostics without publishing", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors", canPublish: true })
+    );
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      domain: "project.wstd.dev",
+    } as never);
+    const loadBundle = vi
+      .spyOn(db, "loadProjectBundleByProjectId")
+      .mockResolvedValue(createPublishedProjectBundleFixture());
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.publish.validate({
+        projectId: "project-1",
+        target: "staging",
+        domains: ["project.wstd.dev"],
+      })
+    ).resolves.toMatchObject({
+      valid: true,
+      target: "staging",
+      domains: ["project.wstd.dev"],
+      diagnostics: { mdxOmissions: [] },
+    });
+    expect(loadBundle).toHaveBeenCalledWith(
+      "project-1",
+      expect.anything(),
+      expect.objectContaining({
+        onMdxTemplateOmissions: expect.any(Function),
+      })
+    );
+  });
+
+  test("does not run publish diagnostics when the selected domains are forbidden", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "builders", canPublish: false })
+    );
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      domain: "project.wstd.dev",
+    } as never);
+    const loadBundle = vi.spyOn(db, "loadProjectBundleByProjectId");
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.publish.validate({
+        projectId: "project-1",
+        target: "production",
+        domains: ["custom.example.com"],
+      })
+    ).rejects.toThrow("Authorization token does not have publish permission");
+    expect(loadBundle).not.toHaveBeenCalled();
   });
 
   test("allows editor api tokens to commit content-mode payloads only", () => {

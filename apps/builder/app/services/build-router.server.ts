@@ -33,7 +33,6 @@ import { removeAgentInstructionsFromProjectSettings } from "@webstudio-is/projec
 import { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
 import {
   loadProjectBundleByBuildId,
-  loadProjectBundleByProjectId,
   loadPublishedProjectBundleByProjectId,
 } from "~/shared/db";
 import {
@@ -50,11 +49,7 @@ import {
   commitBuildTransactions,
 } from "./api-build.server";
 import { assertApiProjectPermit } from "./api-permits.server";
-import {
-  getContentDatabasePublishDiagnostics,
-  formatMdxTemplatePublishDiagnostics,
-} from "./content-database.server";
-import type { PublishedMdxTemplateOmission } from "@webstudio-is/project-build";
+import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -104,30 +99,6 @@ const prepareProjectBundleForClient = async (
               bundle.build.projectSettings
             ),
     },
-  };
-};
-
-const loadContentDatabasePublishDiagnostics = async (
-  projectId: string,
-  ctx: AppContext,
-  dependencies = { loadProjectBundleByProjectId }
-) => {
-  let mdxTemplateOmissions: readonly PublishedMdxTemplateOmission[] = [];
-  const bundle = await dependencies.loadProjectBundleByProjectId(
-    projectId,
-    ctx,
-    {
-      onMdxTemplateOmissions: (issues) => {
-        mdxTemplateOmissions = issues;
-      },
-    }
-  );
-  return {
-    ...getContentDatabasePublishDiagnostics(bundle),
-    mdxOmissions: formatMdxTemplatePublishDiagnostics(
-      bundle,
-      mdxTemplateOmissions
-    ),
   };
 };
 
