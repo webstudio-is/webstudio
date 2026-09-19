@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type JSX } from "react";
+import { useState, useEffect, useMemo, useRef, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type Page,
@@ -501,12 +501,15 @@ export const PageSettings = ({
     }
   };
 
-  const values: PageSettingsValues = {
-    ...(page
-      ? getPageSettingsValues({ page, pages, isHomePage })
-      : pageSettingsDefaultValues),
-    ...unsavedValues,
-  };
+  const values = useMemo<PageSettingsValues>(
+    () => ({
+      ...(page
+        ? getPageSettingsValues({ page, pages, isHomePage })
+        : pageSettingsDefaultValues),
+      ...unsavedValues,
+    }),
+    [page, pages, isHomePage, unsavedValues]
+  );
 
   const { variableValues } = useStore($pageRootScope);
   const errors = usePageSettingsErrors({
