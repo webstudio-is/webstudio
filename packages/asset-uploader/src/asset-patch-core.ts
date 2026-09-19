@@ -2,7 +2,7 @@ import { asset as assetSchema, type Asset, assets } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import type { Client, Database } from "@webstudio-is/postgrest/index.server";
 import { mapBounded } from "@webstudio-is/content-engine/compiler";
-import { formatAsset } from "./utils/format-asset";
+import { formatAsset, formatAssetForRead } from "./utils/format-asset";
 import {
   applyValidatedMapPatches,
   assertPostgrestSuccess,
@@ -346,6 +346,11 @@ export const loadAssetsByProjectWithClient = async (
     assertPostgrestSuccess(response);
 
     const result: Asset[] = [];
+    const invalidFontMetadata: Array<{
+      assetId: string;
+      format: string;
+      issues: Array<{ code: string; path: string[] }>;
+    }> = [];
     for (const {
       assetId,
       projectId,
@@ -355,17 +360,32 @@ export const loadAssetsByProjectWithClient = async (
       file,
     } of response.data ?? []) {
       if (file) {
-        result.push(
-          formatAsset({
+        const formatted = formatAssetForRead({
+          assetId,
+          projectId,
+          filename,
+          description,
+          folderId,
+          file,
+        });
+        result.push(formatted.asset);
+        if (formatted.fontMetaIssues !== undefined) {
+          invalidFontMetadata.push({
             assetId,
-            projectId,
-            filename,
-            description,
-            folderId,
-            file,
-          })
-        );
+            format: file.format,
+            issues: formatted.fontMetaIssues,
+          });
+        }
       }
+    }
+    if (invalidFontMetadata.length > 0) {
+      console.error(
+        "Invalid stored font metadata; loading affected assets as files",
+        {
+          projectId,
+          assets: invalidFontMetadata,
+        }
+      );
     }
     return result;
   };

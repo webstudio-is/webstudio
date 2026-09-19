@@ -1,7 +1,35 @@
 import { describe, expect, test } from "vitest";
-import { applyAssetDataOverride } from "./get-asset-data";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { applyAssetDataOverride, getAssetData } from "./get-asset-data";
+
+const require = createRequire(import.meta.url);
 
 describe("asset data overrides", () => {
+  test("parses font extensions as fonts even when declared as generic files", async () => {
+    const data = readFileSync(
+      require.resolve("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+    );
+
+    const detected = await getAssetData({
+      type: "file",
+      name: "inter-latin-wght-normal.woff2",
+      size: data.byteLength,
+      data,
+    });
+
+    expect(applyAssetDataOverride(detected)).toMatchObject({
+      format: "woff2",
+      meta: {
+        family: "Inter",
+        style: "normal",
+        variationAxes: {
+          wght: { min: 100, default: 400, max: 900 },
+        },
+      },
+    });
+  });
+
   test("merges partial font metadata over detected metadata", () => {
     expect(
       applyAssetDataOverride(
@@ -95,5 +123,14 @@ describe("asset data overrides", () => {
         { meta: { familyName: "Poppins" } }
       )
     ).toThrow("metadata override is invalid");
+  });
+
+  test("rejects overriding a generic file format to a font format", () => {
+    expect(() =>
+      applyAssetDataOverride(
+        { size: 100, format: "txt", meta: {} },
+        { format: "woff2" }
+      )
+    ).toThrow("Font format requires valid font metadata");
   });
 });
