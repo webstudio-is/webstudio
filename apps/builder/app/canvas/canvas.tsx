@@ -36,6 +36,7 @@ import {
   registerComponentLibrary,
   $registeredComponents,
   subscribeComponentHooks,
+  subscribeResourceRequestPlan,
   $isPreviewMode,
   $isDesignMode,
   $isContentMode,
@@ -275,6 +276,10 @@ export const Canvas = () => {
   }, []);
 
   useEffect(subscribeStyles, []);
+
+  // The canvas runs in a separate frame and needs its own resource documents
+  // from the cache synchronized by the Builder.
+  useEffect(() => subscribeResourceRequestPlan(() => {}), []);
 
   useEffect(subscribeComponentHooks, []);
 
