@@ -5,15 +5,9 @@ import {
   videoMeta,
   detectAssetType,
 } from "@webstudio-is/sdk";
+import { z } from "zod";
 
-export const formatAsset = ({
-  assetId,
-  projectId,
-  filename,
-  description,
-  folderId,
-  file,
-}: {
+type FormatAssetInput = {
   assetId: string;
   projectId: string;
   filename: string | null;
@@ -28,27 +22,45 @@ export const formatAsset = ({
     updatedAt: string;
     meta: string;
   };
-}): Asset => {
+};
+
+const getBaseAsset = ({
+  assetId,
+  projectId,
+  filename,
+  description,
+  folderId,
+  file,
+}: FormatAssetInput) => ({
+  id: assetId,
+  name: file.name,
+  projectId,
+  filename: filename ?? undefined,
+  description: description ?? undefined,
+  folderId: folderId ?? undefined,
+  size: file.size,
+  createdAt: file.createdAt,
+  updatedAt: file.updatedAt,
+});
+
+const formatInvalidFontAsFile = (input: FormatAssetInput): Asset => ({
+  ...getBaseAsset(input),
+  type: "file",
+  format: "unknown",
+  meta: {},
+});
+
+export const formatAsset = (input: FormatAssetInput): Asset => {
+  const { file } = input;
   const isFont = FONT_FORMATS.has(file.format as FontFormat);
   let parsedMeta: unknown;
   try {
     parsedMeta = JSON.parse(file.meta);
   } catch {
-    // Treat invalid persisted metadata as an untyped file instead of making
-    // the entire project fail to load.
+    // Treat invalid persisted metadata as untyped instead of breaking the load.
     parsedMeta = undefined;
   }
-  const base = {
-    id: assetId,
-    name: file.name,
-    projectId,
-    filename: filename ?? undefined,
-    description: description ?? undefined,
-    folderId: folderId ?? undefined,
-    size: file.size,
-    createdAt: file.createdAt,
-    updatedAt: file.updatedAt,
-  };
+  const base = getBaseAsset(input);
 
   if (isFont) {
     const result = fontMeta.safeParse(parsedMeta);
@@ -96,4 +108,41 @@ export const formatAsset = ({
     format: file.format,
     meta: {},
   };
+};
+
+type FontMetaIssueSummary = { code: string; path: string[] };
+
+const summarizeFontMetaIssues = (
+  issues: z.ZodIssue[]
+): FontMetaIssueSummary[] =>
+  issues.flatMap((issue) =>
+    issue.code === "invalid_union"
+      ? summarizeFontMetaIssues(issue.errors.flat())
+      : [{ code: issue.code, path: issue.path.map(String) }]
+  );
+
+export const formatAssetForRead = (
+  input: FormatAssetInput
+): { asset: Asset; fontMetaIssues?: FontMetaIssueSummary[] } => {
+  if (FONT_FORMATS.has(input.file.format as FontFormat)) {
+    let parsedMeta: unknown;
+    try {
+      parsedMeta = JSON.parse(input.file.meta);
+    } catch {
+      return {
+        asset: formatInvalidFontAsFile(input),
+        fontMetaIssues: [{ code: "invalid_json", path: [] }],
+      };
+    }
+
+    const result = fontMeta.safeParse(parsedMeta);
+    if (result.success === false) {
+      return {
+        asset: formatInvalidFontAsFile(input),
+        fontMetaIssues: summarizeFontMetaIssues(result.error.issues),
+      };
+    }
+  }
+
+  return { asset: formatAsset(input) };
 };
