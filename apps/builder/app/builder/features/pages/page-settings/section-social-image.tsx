@@ -18,7 +18,7 @@ import { isLiteralExpression } from "@webstudio-is/expression";
 import { $pageRootScope } from "../page-utils";
 import { ImageInfo } from "../image-info";
 import { SocialPreview } from "../social-preview";
-import { computePageSettingsText, usePageUrl, type OnChange } from "./shared";
+import { usePageSettingsText, usePageUrl, type OnChange } from "./shared";
 
 export const SocialImageSection = ({
   values,
@@ -37,16 +37,13 @@ export const SocialImageSection = ({
   const assets = useStore($assets);
   const socialImageAsset = assets.get(values.socialImageAssetId);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
-  const socialImageUrl = computePageSettingsText(
+  const socialImageUrl = usePageSettingsText(
     values.socialImageUrl,
     variableValues
   );
   const pageUrl = usePageUrl(values);
-  const title = computePageSettingsText(values.title, variableValues);
-  const description = computePageSettingsText(
-    values.description,
-    variableValues
-  );
+  const title = usePageSettingsText(values.title, variableValues);
+  const description = usePageSettingsText(values.description, variableValues);
   return (
     <Grid gap={2}>
       <Text color="subtle">

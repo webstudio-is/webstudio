@@ -71,10 +71,10 @@ import {
 const invalidPasteDataMessage =
   "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid.";
 
-const getTreeData = (
+const getTreeData = async (
   instanceSelector: InstanceSelector,
   { showToast = true }: { showToast?: boolean } = {}
-): InstanceTransferData | undefined => {
+): Promise<InstanceTransferData | undefined> => {
   const instances = $instances.get();
   const [targetInstanceId] = instanceSelector;
   const instance = instances.get(targetInstanceId);
@@ -144,7 +144,7 @@ const getTreeData = (
     });
     const resolvedAssetId =
       source?.type === "expression"
-        ? resolveContentBlockOccurrenceAssetId({
+        ? await resolveContentBlockOccurrenceAssetId({
             source,
             instanceSelector,
             variableValuesByRenderScope:
@@ -501,24 +501,26 @@ const handlePasteInstance = async (clipboardData: string) => {
   });
 };
 
-const handleCopyInstance = () => {
+const handleCopyInstanceAsync = async () => {
   const selectedInstanceSelectors = $allSelectedInstanceSelectors.get();
   if (selectedInstanceSelectors.length === 0) {
     return;
   }
   if (selectedInstanceSelectors.length === 1) {
-    const data = getTreeData(selectedInstanceSelectors[0]);
+    const data = await getTreeData(selectedInstanceSelectors[0]);
     if (data === undefined) {
       return;
     }
     return stringify(data);
   }
 
-  const selectedData = selectedInstanceSelectors
-    .map((instanceSelector) =>
-      getTreeData(instanceSelector, { showToast: false })
+  const selectedData = (
+    await Promise.all(
+      selectedInstanceSelectors.map((instanceSelector) =>
+        getTreeData(instanceSelector, { showToast: false })
+      )
     )
-    .filter((data): data is InstanceTransferData => data !== undefined);
+  ).filter((data): data is InstanceTransferData => data !== undefined);
   if (selectedData.length === 0) {
     return;
   }
@@ -528,30 +530,34 @@ const handleCopyInstance = () => {
   return stringifyMultiRootSelection(selectedData);
 };
 
-const handleCutInstance = () => {
+const handleCutInstanceAsync = async () => {
   const selectedInstanceSelectors = $allSelectedInstanceSelectors.get();
   if (selectedInstanceSelectors.length > 1) {
     const instances = $instances.get();
-    const selectedPaths = selectedInstanceSelectors
-      .map((instanceSelector) => {
-        const data = getTreeData(instanceSelector, { showToast: false });
-        const instancePath =
-          data === undefined
-            ? undefined
-            : getInstancePath(data.instanceSelector, instances);
-        if (data === undefined || instancePath === undefined) {
-          return;
-        }
-        return { data, instancePath };
-      })
-      .filter(
-        (
-          item
-        ): item is {
-          data: InstanceTransferData;
-          instancePath: NonNullable<ReturnType<typeof getInstancePath>>;
-        } => item !== undefined
-      );
+    const selectedPaths = (
+      await Promise.all(
+        selectedInstanceSelectors.map(async (instanceSelector) => {
+          const data = await getTreeData(instanceSelector, {
+            showToast: false,
+          });
+          const instancePath =
+            data === undefined
+              ? undefined
+              : getInstancePath(data.instanceSelector, instances);
+          if (data === undefined || instancePath === undefined) {
+            return;
+          }
+          return { data, instancePath };
+        })
+      )
+    ).filter(
+      (
+        item
+      ): item is {
+        data: InstanceTransferData;
+        instancePath: NonNullable<ReturnType<typeof getInstancePath>>;
+      } => item !== undefined
+    );
     if (selectedPaths.length === 0) {
       return;
     }
@@ -577,7 +583,7 @@ const handleCutInstance = () => {
   if (instancePath.length === 1) {
     return;
   }
-  const data = getTreeData(instancePath[0].instanceSelector);
+  const data = await getTreeData(instancePath[0].instanceSelector);
   if (data === undefined) {
     return;
   }
@@ -587,6 +593,17 @@ const handleCutInstance = () => {
   }
   return stringify(data);
 };
+
+const handleCopyInstance = () =>
+  $allSelectedInstanceSelectors.get().length === 0
+    ? undefined
+    : handleCopyInstanceAsync();
+
+const handleCutInstance = () =>
+  $allSelectedInstanceSelectors.get().length === 0 &&
+  $selectedInstancePath.get() === undefined
+    ? undefined
+    : handleCutInstanceAsync();
 
 export const instanceText = {
   name: "instance-text",

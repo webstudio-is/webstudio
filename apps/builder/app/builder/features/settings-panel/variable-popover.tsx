@@ -690,11 +690,49 @@ const VariablePreview = ({
   );
   const resourcePerformanceCache = useStore($resourcePerformanceCache);
   const resourceScope = useResourceScope({ variable });
+  const [resolvedResourceRequest, setResolvedResourceRequest] = useState<
+    ResourceRequest | undefined
+  >(() => resourceRequest.safeParse(variableValue).data);
+  useEffect(() => {
+    const parsedResourceRequest = resourceRequest.safeParse(variableValue).data;
+    if (parsedResourceRequest !== undefined) {
+      setResolvedResourceRequest(parsedResourceRequest);
+      return;
+    }
+    if (variable?.type !== "resource") {
+      setResolvedResourceRequest(undefined);
+      return;
+    }
+    const resource = resources.get(variable.resourceId);
+    if (resource === undefined) {
+      setResolvedResourceRequest(undefined);
+      return;
+    }
+    let active = true;
+    setResolvedResourceRequest(undefined);
+    void computeResourceRequest(resource, resourceScope.variableValues)
+      .then((request) => {
+        if (active) {
+          setResolvedResourceRequest(request);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setResolvedResourceRequest(undefined);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [resources, resourceScope.variableValues, variable, variableValue]);
+  const parsedResourceRequest = resourceRequest.safeParse(variableValue).data;
+  const computedResourceRequest =
+    parsedResourceRequest ??
+    (variable?.type === "resource" ? resolvedResourceRequest : undefined);
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
   let resourcePerformance: ResourcePerformance | undefined;
   let resourceDiagnosticsError: unknown;
-  let computedResourceRequest: ResourceRequest | undefined;
   let computedResourceKey: string | undefined;
   if (variableType === "string" || variableType === "boolean") {
     computedValue = variableValue;
@@ -708,20 +746,8 @@ const VariablePreview = ({
   } else if (variableType === "parameter") {
     computedValue = variable ? variableValues.get(variable.id) : undefined;
   } else {
-    // try to load current resource or saved one
-    let parsedResourceRequest = resourceRequest.safeParse(variableValue).data;
-    if (!parsedResourceRequest && variable?.type === "resource") {
-      const resource = resources.get(variable.resourceId);
-      if (resource) {
-        parsedResourceRequest = computeResourceRequest(
-          resource,
-          resourceScope.variableValues
-        );
-      }
-    }
-    if (parsedResourceRequest) {
-      computedResourceRequest = parsedResourceRequest;
-      const resourceKey = getResourceKey(parsedResourceRequest);
+    if (computedResourceRequest) {
+      const resourceKey = getResourceKey(computedResourceRequest);
       computedResourceKey = resourceKey;
       computedValue = resourcesCache.get(resourceKey);
       resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
@@ -897,7 +923,7 @@ const VariablePopoverContent = ({
 
   const resourceScope = useResourceScope({ variable });
 
-  const reloadData = () => {
+  const reloadData = async () => {
     const formData = getReloadableResourceFormData(formRef.current);
     if (formData === undefined) {
       return;
@@ -906,7 +932,7 @@ const VariablePopoverContent = ({
       id: variable?.id ?? "new",
       formData,
     });
-    const resourceRequest = computeResourceRequest(
+    const resourceRequest = await computeResourceRequest(
       resource,
       resourceScope.variableValues
     );
@@ -914,13 +940,13 @@ const VariablePopoverContent = ({
     setValue(resourceRequest);
   };
 
-  const copyAsCurl = () => {
+  const copyAsCurl = async () => {
     const formData = new FormData(formRef.current ?? undefined);
     const resource = createResourceValueFromFormData({
       id: variable?.id ?? "new",
       formData,
     });
-    const resourceRequest = computeResourceRequest(
+    const resourceRequest = await computeResourceRequest(
       resource,
       resourceScope.variableValues
     );

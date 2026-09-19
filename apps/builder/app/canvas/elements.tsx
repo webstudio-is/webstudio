@@ -1,10 +1,12 @@
 import {
   Fragment,
+  useMemo,
   type ForwardRefExoticComponent,
   type JSX,
   type RefAttributes,
   type RefObject,
 } from "react";
+import { useStore } from "@nanostores/react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import { renderText as renderTextValue } from "@webstudio-is/react-sdk/runtime";
@@ -12,6 +14,12 @@ import {
   computeExpression,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
+import {
+  $unscopedVariableValues,
+  $variableValuesByInstanceSelector,
+} from "~/shared/nano-states";
+import { getInstanceVariableValues } from "~/shared/instance-utils/variable-values";
+import { useAsyncValue } from "~/shared/use-async-value";
 
 export type WebstudioComponentProps = {
   instance: Instance;
@@ -61,13 +69,40 @@ const renderText = (text: string): Array<JSX.Element> => {
   ));
 };
 
+const AsyncTextExpression = ({
+  expression,
+  instanceSelector,
+}: {
+  expression: string;
+  instanceSelector: InstanceSelector;
+}) => {
+  const variableValuesByInstanceSelector = useStore(
+    $variableValuesByInstanceSelector
+  );
+  const unscopedVariableValues = useStore($unscopedVariableValues);
+  const variableValues = useMemo(
+    () =>
+      getInstanceVariableValues(
+        variableValuesByInstanceSelector,
+        instanceSelector,
+        unscopedVariableValues
+      ) ?? new Map(),
+    [variableValuesByInstanceSelector, instanceSelector, unscopedVariableValues]
+  );
+  const value = useAsyncValue(
+    () => computeExpression(expression, variableValues),
+    [expression, variableValues],
+    undefined
+  );
+  return renderText(String(renderTextValue(value)));
+};
+
 export const createInstanceChildrenElements = ({
   instances,
   instanceSelector,
   children,
   Component,
   components,
-  variableValues = new Map(),
 }: {
   instances: Instances;
   instanceSelector: InstanceSelector;
@@ -76,15 +111,19 @@ export const createInstanceChildrenElements = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
-  variableValues?: ReadonlyMap<string, unknown>;
 }) => {
   const elements = children.map((child) => {
     if (child.type === "text") {
       return renderText(child.value);
     }
     if (child.type === "expression") {
-      const value = computeExpression(child.value, variableValues);
-      return renderText(String(renderTextValue(value)));
+      return (
+        <AsyncTextExpression
+          key={child.value}
+          expression={child.value}
+          instanceSelector={instanceSelector}
+        />
+      );
     }
     if (child.type === "id") {
       return createInstanceElement({

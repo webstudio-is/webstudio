@@ -25,7 +25,7 @@ afterEach(() => {
 
 test.each(["direct", "dynamic"])(
   "derives MDX completions from template names for a %s source",
-  (sourceType) => {
+  async (sourceType) => {
     const instances = new Map<string, Instance>([
       [
         "block",
@@ -106,7 +106,7 @@ test.each(["direct", "dynamic"])(
       );
     }
 
-    const completions = getMdxCompletionComponents({
+    const completions = await getMdxCompletionComponents({
       assetId: "article",
       metas: new Map(Object.entries(coreMetas)),
     });
@@ -119,8 +119,8 @@ test.each(["direct", "dynamic"])(
   }
 );
 
-test("does not suggest registered custom components without templates", () => {
-  const completions = getMdxCompletionComponents({
+test("does not suggest registered custom components without templates", async () => {
+  const completions = await getMdxCompletionComponents({
     assetId: "article",
     metas: componentMetas,
   });

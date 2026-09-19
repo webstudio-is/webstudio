@@ -59,7 +59,7 @@ export const createContentBlockSourceController = ({
   resolveExpressionAssetId: (
     expression: string,
     renderScope: string
-  ) => string | undefined;
+  ) => string | undefined | PromiseLike<string | undefined>;
   flushAsset: (assetId: string) => Promise<unknown>;
   updateAssetSource: (
     assetId: string,
@@ -251,7 +251,7 @@ export const createBuilderContentBlockSourceController = ({
     openAsset: (assetId) => openExternalContentAsset({ projectId, assetId }),
     reloadAsset: (assetId, expectedName) =>
       reloadExternalContentAsset({ projectId, assetId, expectedName }),
-    resolveExpressionAssetId: (expression, scope) => {
+    resolveExpressionAssetId: async (expression, scope) => {
       const instanceSelector = parseContentBlockRenderScope(scope);
       return instanceSelector === undefined
         ? undefined

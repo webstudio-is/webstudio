@@ -1,8 +1,21 @@
 import { atom, computed } from "nanostores";
-import type { DataSource, Resource, ResourceRequest } from "@webstudio-is/sdk";
-import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
+import {
+  getResourceDependencyIds,
+  type DataSource,
+  type DataSources,
+  type Resource,
+  type ResourceRequest,
+  type Resources,
+} from "@webstudio-is/sdk";
+import {
+  isAssetsResourceRequest,
+  resourceLoadConcurrency,
+} from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
+import {
+  computeExpression,
+  type ResolveExpressionDataSource,
+} from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
@@ -11,8 +24,6 @@ import {
   separateResourceDiagnostics,
   type ResourcePerformance,
 } from "./resource-diagnostics";
-
-const MAX_PENDING_RESOURCES = 5;
 
 type InFlightResourceBatch = {
   controller: AbortController;
@@ -95,8 +106,16 @@ export const $hasPendingResources = computed(
   (pendingResourceKeys) => pendingResourceKeys.size > 0
 );
 
+const getInFlightResourceCount = () => {
+  let count = 0;
+  for (const batch of inFlightBatches) {
+    count += batch.versions.size;
+  }
+  return count;
+};
+
 const loadResources = async (requestFetch: typeof fetch = fetch) => {
-  const availableSlots = MAX_PENDING_RESOURCES - pending.size;
+  const availableSlots = resourceLoadConcurrency - getInFlightResourceCount();
   if (availableSlots <= 0) {
     return;
   }
@@ -169,7 +188,10 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 };
 
 const startLoading = (requestFetch: typeof fetch = fetch) => {
-  if (pending.size >= MAX_PENDING_RESOURCES || queue.size === 0) {
+  if (
+    getInFlightResourceCount() >= resourceLoadConcurrency ||
+    queue.size === 0
+  ) {
     return;
   }
   void loadResources(requestFetch);
@@ -420,27 +442,147 @@ export const invalidateAssets = (requestFetch: typeof fetch = fetch) => {
   startLoading(requestFetch);
 };
 
-export const computeResourceRequest = (
+export const computeResourceRequest = async (
   resource: Resource,
-  values: Map<DataSource["id"], unknown>
-): ResourceRequest => {
+  values: ReadonlyMap<DataSource["id"], unknown>,
+  resolveDataSource?: ResolveExpressionDataSource
+): Promise<ResourceRequest> => {
+  const resolvedDataSources = new Map<DataSource["id"], unknown>();
+  const resolve = (dataSourceId: DataSource["id"], value: unknown) => {
+    if (values.has(dataSourceId)) {
+      return values.get(dataSourceId);
+    }
+    if (resolvedDataSources.has(dataSourceId)) {
+      return resolvedDataSources.get(dataSourceId);
+    }
+    const resolved =
+      resolveDataSource === undefined
+        ? value
+        : resolveDataSource(dataSourceId, value);
+    resolvedDataSources.set(dataSourceId, resolved);
+    return resolved;
+  };
+  const [url, searchParams, headers, body] = await Promise.all([
+    computeExpression(resource.url, values, resolve),
+    Promise.all(
+      (resource.searchParams ?? []).map(async ({ name, value }) => ({
+        name,
+        value: await computeExpression(value, values, resolve),
+      }))
+    ),
+    Promise.all(
+      resource.headers.map(async ({ name, value }) => ({
+        name,
+        value: await computeExpression(value, values, resolve),
+      }))
+    ),
+    resource.body === undefined
+      ? undefined
+      : computeExpression(resource.body, values, resolve),
+  ]);
   const request: ResourceRequest = {
     name: resource.name,
     method: resource.method,
-    url: computeExpression(resource.url, values),
-    searchParams: (resource.searchParams ?? []).map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
-    headers: resource.headers.map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
+    url,
+    searchParams,
+    headers,
   };
   if (resource.body !== undefined) {
-    request.body = computeExpression(resource.body, values);
+    request.body = body;
   }
   return request;
+};
+
+const getDataSourcesByResourceId = (dataSources: DataSources) => {
+  const dataSourcesByResourceId = new Map<Resource["id"], DataSource[]>();
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type !== "resource") {
+      continue;
+    }
+    const entries = dataSourcesByResourceId.get(dataSource.resourceId) ?? [];
+    entries.push(dataSource);
+    dataSourcesByResourceId.set(dataSource.resourceId, entries);
+  }
+  return dataSourcesByResourceId;
+};
+
+export type ResourceRequestPlan = Readonly<{
+  requests: readonly ResourceRequest[];
+  documents: ReadonlyMap<Resource["id"], unknown>;
+}>;
+
+export const computeResourceRequestPlan = async ({
+  rootResourceIds,
+  resources,
+  dataSources,
+  values,
+  resourceCache,
+}: {
+  rootResourceIds: Iterable<Resource["id"]>;
+  resources: Resources;
+  dataSources: DataSources;
+  values: ReadonlyMap<DataSource["id"], unknown>;
+  resourceCache: ReadonlyMap<string, unknown>;
+}): Promise<ResourceRequestPlan> => {
+  const resolvedValues = new Map(values);
+  const documents = new Map<Resource["id"], unknown>();
+  const requests = new Map<Resource["id"], ResourceRequest>();
+  const pending = new Map<Resource["id"], Promise<boolean>>();
+  const dataSourcesByResourceId = getDataSourcesByResourceId(dataSources);
+
+  const visit = (
+    resourceId: Resource["id"],
+    ancestors: ReadonlySet<Resource["id"]> = new Set()
+  ): Promise<boolean> => {
+    if (ancestors.has(resourceId)) {
+      return Promise.resolve(false);
+    }
+    const previous = pending.get(resourceId);
+    if (previous !== undefined) {
+      return previous;
+    }
+    const nextAncestors = new Set(ancestors).add(resourceId);
+    const resolution = Promise.resolve().then(async () => {
+      const resource = resources.get(resourceId);
+      if (resource === undefined) {
+        return false;
+      }
+      const dependencyIds = getResourceDependencyIds({
+        resource,
+        dataSources,
+      });
+      const dependenciesResolved = await Promise.all(
+        [...dependencyIds].map((dependencyId) =>
+          visit(dependencyId, nextAncestors)
+        )
+      );
+      if (dependenciesResolved.some((resolved) => resolved === false)) {
+        return false;
+      }
+      const request = await computeResourceRequest(resource, resolvedValues);
+      requests.set(resourceId, request);
+      const key = getResourceKey(request);
+      if (resourceCache.has(key) === false) {
+        return false;
+      }
+      const document = resourceCache.get(key);
+      documents.set(resourceId, document);
+      for (const dataSource of dataSourcesByResourceId.get(resourceId) ?? []) {
+        resolvedValues.set(dataSource.id, document);
+      }
+      return true;
+    });
+    pending.set(resourceId, resolution);
+    return resolution;
+  };
+
+  await Promise.all(
+    [...new Set(rootResourceIds)].map((resourceId) => visit(resourceId))
+  );
+  return {
+    requests: Array.from(requests.values()),
+    documents,
+  };
 };
 
 const reset = () => {

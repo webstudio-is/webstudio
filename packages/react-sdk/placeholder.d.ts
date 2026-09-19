@@ -36,13 +36,14 @@ declare module "__CLIENT__" {
 
 declare module "__SERVER__" {
   import type { PageMeta, System, ResourceRequest } from "@webstudio-is/sdk";
+  import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
 
   export const getResources: (props: {
     system: System;
     resources?: Record<string, any>;
   }) => {
-    data: Map<string, ResourceRequest>;
-    action: Map<string, ResourceRequest>;
+    data: ResourceRequestGraph;
+    action: Map<string, { id: string; outputName: string }>;
     contentData?: Map<string, ResourceRequest>;
   };
 

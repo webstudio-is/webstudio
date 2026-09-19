@@ -1,8 +1,27 @@
 import { expect, test, vi } from "vitest";
 import type { ResourceRequest } from "@webstudio-is/sdk";
-import { loadResource } from "@webstudio-is/sdk/runtime";
-import { loadResourceRequestList } from "../services/resource-list-loader.server";
+import {
+  loadResource,
+  resourceLoadConcurrency,
+} from "@webstudio-is/sdk/runtime";
+import {
+  loadResourceRequestList,
+  resourceRequestListSchema,
+} from "../services/resource-list-loader.server";
 import { getResourceKey } from "./resource-utils";
+
+test("limits each server resource batch to the shared concurrency", () => {
+  expect(
+    resourceRequestListSchema.safeParse(
+      Array.from({ length: resourceLoadConcurrency })
+    ).success
+  ).toBe(true);
+  expect(
+    resourceRequestListSchema.safeParse(
+      Array.from({ length: resourceLoadConcurrency + 1 })
+    ).success
+  ).toBe(false);
+});
 
 test("batches Assets while starting and preserving independent remote resources", async () => {
   const events: string[] = [];

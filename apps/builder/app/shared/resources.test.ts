@@ -1,5 +1,11 @@
 import { afterEach, expect, test, vi } from "vitest";
-import type { ResourceRequest } from "@webstudio-is/sdk";
+import {
+  encodeDataSourceVariable,
+  type DataSources,
+  type Resource,
+  type ResourceRequest,
+  type Resources,
+} from "@webstudio-is/sdk";
 import {
   __testing__,
   $hasPendingResources,
@@ -9,6 +15,8 @@ import {
   $resourcePerformanceCache,
   $resourcesState,
   $resourcesCache,
+  computeResourceRequest,
+  computeResourceRequestPlan,
   getResourceKey,
   invalidateAssets,
   loadResourceDiagnostics,
@@ -55,6 +63,243 @@ test("removes obsolete queued requests but keeps cached results", () => {
   expect($pendingResourceKeys.get()).toEqual(new Set());
   expect(resourceCacheListener).not.toHaveBeenCalled();
   unlisten();
+});
+
+test("unlocks reachable resource requests as dependency documents are cached", async () => {
+  const authorVariable = encodeDataSourceVariable("authorDataSource");
+  const resources: Resources = new Map([
+    [
+      "authorResource",
+      {
+        id: "authorResource",
+        name: "Author",
+        method: "get",
+        url: '"https://example.com/authors/1"',
+        headers: [],
+      },
+    ],
+    [
+      "postsResource",
+      {
+        id: "postsResource",
+        name: "Posts",
+        method: "get",
+        url: `"https://example.com/authors/" + ${authorVariable}.data.id + "/posts"`,
+        headers: [],
+      },
+    ],
+    [
+      "unusedResource",
+      {
+        id: "unusedResource",
+        name: "Unused",
+        method: "get",
+        url: '"https://example.com/unused"',
+        headers: [],
+      },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "authorDataSource",
+      {
+        type: "resource",
+        id: "authorDataSource",
+        name: "Author",
+        resourceId: "authorResource",
+      },
+    ],
+    [
+      "postsDataSource",
+      {
+        type: "resource",
+        id: "postsDataSource",
+        name: "Posts",
+        resourceId: "postsResource",
+      },
+    ],
+    [
+      "unusedDataSource",
+      {
+        type: "resource",
+        id: "unusedDataSource",
+        name: "Unused",
+        resourceId: "unusedResource",
+      },
+    ],
+  ]);
+  const resourceCache = new Map<string, unknown>();
+
+  const waiting = await computeResourceRequestPlan({
+    rootResourceIds: ["postsResource"],
+    resources,
+    dataSources,
+    values: new Map(),
+    resourceCache,
+  });
+  expect(waiting.requests.map(({ name }) => name)).toEqual(["Author"]);
+  expect(waiting.documents.has("postsResource")).toBe(false);
+
+  const authorRequest = waiting.requests[0];
+  resourceCache.set(getResourceKey(authorRequest), { data: { id: 1 } });
+  const ready = await computeResourceRequestPlan({
+    rootResourceIds: ["postsResource"],
+    resources,
+    dataSources,
+    values: new Map(),
+    resourceCache,
+  });
+
+  expect(ready.requests.map(({ name }) => name)).toEqual(["Author", "Posts"]);
+  expect(ready.requests[1].url).toBe("https://example.com/authors/1/posts");
+  expect(ready.requests.some(({ name }) => name === "Unused")).toBe(false);
+});
+
+test("computes resource request fields from promise-valued variables", async () => {
+  let resolveValue: (value: string) => void = () => {};
+  const value = new Promise<string>((resolve) => {
+    resolveValue = resolve;
+  });
+  const resource: Resource = {
+    id: "resource",
+    name: "Resource",
+    method: "get",
+    url: encodeDataSourceVariable("url"),
+    searchParams: [{ name: "page", value: encodeDataSourceVariable("page") }],
+    headers: [{ name: "x-token", value: encodeDataSourceVariable("token") }],
+    body: encodeDataSourceVariable("body"),
+  };
+  const requestPromise = computeResourceRequest(
+    resource,
+    new Map<string, unknown>([
+      ["url", value],
+      ["page", "2"],
+      ["token", "secret"],
+      ["body", { ok: true }],
+    ])
+  );
+  resolveValue("https://example.com/items");
+
+  await expect(requestPromise).resolves.toEqual({
+    name: "Resource",
+    method: "get",
+    url: "https://example.com/items",
+    searchParams: [{ name: "page", value: "2" }],
+    headers: [{ name: "x-token", value: "secret" }],
+    body: { ok: true },
+  });
+});
+
+test("resolves missing request dependencies once and reuses provided values", async () => {
+  const remoteVariable = encodeDataSourceVariable("remote");
+  const resource: Resource = {
+    id: "resource",
+    name: "Resource",
+    method: "get",
+    url: `${remoteVariable}.url`,
+    searchParams: [{ name: "id", value: `${remoteVariable}.id` }],
+    headers: [{ name: "x-title", value: `${remoteVariable}.title` }],
+  };
+  const resolveDataSource = vi.fn(async () => ({
+    url: "https://example.com/items",
+    id: 42,
+    title: "Remote item",
+  }));
+
+  await expect(
+    computeResourceRequest(resource, new Map(), resolveDataSource)
+  ).resolves.toEqual({
+    name: "Resource",
+    method: "get",
+    url: "https://example.com/items",
+    searchParams: [{ name: "id", value: 42 }],
+    headers: [{ name: "x-title", value: "Remote item" }],
+  });
+  expect(resolveDataSource).toHaveBeenCalledOnce();
+
+  const providedValue = { url: "https://example.com/provided" };
+  const providedResolver = vi.fn();
+  await expect(
+    computeResourceRequest(
+      { ...resource, url: `${remoteVariable}.url` },
+      new Map([["remote", providedValue]]),
+      providedResolver
+    )
+  ).resolves.toMatchObject({ url: "https://example.com/provided" });
+  expect(providedResolver).not.toHaveBeenCalled();
+
+  await expect(
+    computeResourceRequest(
+      { ...resource, url: remoteVariable },
+      new Map(),
+      () => null
+    )
+  ).resolves.toMatchObject({ url: null });
+});
+
+test("computes async resource plans with dependency documents", async () => {
+  const authorVariable = encodeDataSourceVariable("authorDataSource");
+  const resources: Resources = new Map([
+    [
+      "authorResource",
+      {
+        id: "authorResource",
+        name: "Author",
+        method: "get",
+        url: '"https://example.com/authors/1"',
+        headers: [],
+      },
+    ],
+    [
+      "postsResource",
+      {
+        id: "postsResource",
+        name: "Posts",
+        method: "get",
+        url: `"https://example.com/authors/" + ${authorVariable}.data.id + "/posts"`,
+        headers: [],
+      },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "authorDataSource",
+      {
+        type: "resource",
+        id: "authorDataSource",
+        name: "Author",
+        resourceId: "authorResource",
+      },
+    ],
+    [
+      "postsDataSource",
+      {
+        type: "resource",
+        id: "postsDataSource",
+        name: "Posts",
+        resourceId: "postsResource",
+      },
+    ],
+  ]);
+  const authorRequest = await computeResourceRequest(
+    resources.get("authorResource") as Resource,
+    new Map()
+  );
+  const resourceCache = new Map([
+    [getResourceKey(authorRequest), Promise.resolve({ data: { id: 1 } })],
+  ]);
+
+  const result = await computeResourceRequestPlan({
+    rootResourceIds: ["postsResource"],
+    resources,
+    dataSources,
+    values: new Map(),
+    resourceCache,
+  });
+
+  expect(result.requests.map(({ name }) => name)).toEqual(["Author", "Posts"]);
+  expect(result.requests[1]?.url).toBe("https://example.com/authors/1/posts");
+  expect(result.documents.get("postsResource")).toBeUndefined();
 });
 
 test("dispatches resources synchronously", async () => {
@@ -403,7 +648,7 @@ test("keeps a replacement pending when an obsolete same-key batch settles", asyn
   expect($resourcesCache.get().get(key)).toEqual({ data: "fresh" });
 });
 
-test("fills capacity freed by obsolete resources in a mixed batch", async () => {
+test("loads fresh resources within remaining mixed-batch capacity", async () => {
   const shared = Array.from({ length: 2 }, (_, index) => ({
     name: `Shared ${index}`,
     method: "get" as const,
@@ -453,15 +698,68 @@ test("fills capacity freed by obsolete resources in a mixed batch", async () => 
   await firstLoad;
 });
 
-test("drains bounded batches without an additional delay", async () => {
-  vi.useFakeTimers();
-  const requests: ResourceRequest[] = Array.from({ length: 6 }, (_, index) => ({
-    name: `Resource ${index}`,
+test("counts obsolete requests until their mixed batch settles", async () => {
+  const shared: ResourceRequest = {
+    name: "Shared",
     method: "get",
-    url: `https://example.com/resource-${index}`,
+    url: "https://example.com/shared",
+    searchParams: [],
+    headers: [],
+  };
+  const obsolete = Array.from({ length: 19 }, (_, index) => ({
+    name: `Obsolete ${index}`,
+    method: "get" as const,
+    url: `https://example.com/obsolete-${index}`,
     searchParams: [],
     headers: [],
   }));
+  const fresh = Array.from({ length: 19 }, (_, index) => ({
+    name: `Fresh ${index}`,
+    method: "get" as const,
+    url: `https://example.com/fresh-${index}`,
+    searchParams: [],
+    headers: [],
+  }));
+  let resolveFirst = (_response: Response) => {};
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFirst = resolve;
+        })
+    )
+    .mockResolvedValueOnce(Response.json([]));
+
+  queueResources([shared, ...obsolete]);
+  const firstLoad = loadResources(requestFetch as typeof globalThis.fetch);
+  queueResources([shared, ...fresh]);
+  startLoading(requestFetch as typeof globalThis.fetch);
+
+  expect(requestFetch).toHaveBeenCalledOnce();
+
+  resolveFirst(Response.json([]));
+  await firstLoad;
+  await vi.waitFor(() => {
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
+  expect(JSON.parse(String(requestFetch.mock.calls[1][1]?.body))).toEqual(
+    fresh
+  );
+});
+
+test("drains bounded batches without an additional delay", async () => {
+  vi.useFakeTimers();
+  const requests: ResourceRequest[] = Array.from(
+    { length: 21 },
+    (_, index) => ({
+      name: `Resource ${index}`,
+      method: "get",
+      url: `https://example.com/resource-${index}`,
+      searchParams: [],
+      headers: [],
+    })
+  );
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json([]));
 
   queueResources(requests);
@@ -471,7 +769,7 @@ test("drains bounded batches without an additional delay", async () => {
   });
 
   expect(fetch).toHaveBeenCalledTimes(2);
-  expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(5);
+  expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toHaveLength(20);
   expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toHaveLength(1);
 });
 

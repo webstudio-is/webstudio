@@ -116,31 +116,33 @@ test("preserves and explains an invalid stored Assets query", () => {
   ).toBe("false");
 });
 
-test("reports every issue from the shared query validator", () => {
+test("reports every issue from the shared query validator", async () => {
   const configuration =
     createDefaultStructuredAssetQueryResourceConfiguration();
 
   expect(
-    getAssetQueryConfigurationValidation({
-      configuration: {
-        ...configuration,
-        where: {
-          all: [
-            {
-              field: ["size"],
-              operator: "gt",
-              value: '"large"',
-            },
-            {
-              field: ["extension"],
-              operator: "contains",
-              value: "{}",
-            },
-          ],
+    (
+      await getAssetQueryConfigurationValidation({
+        configuration: {
+          ...configuration,
+          where: {
+            all: [
+              {
+                field: ["size"],
+                operator: "gt",
+                value: '"large"',
+              },
+              {
+                field: ["extension"],
+                operator: "contains",
+                value: "{}",
+              },
+            ],
+          },
         },
-      },
-      scope: {},
-    }).issues
+        scope: {},
+      })
+    ).issues
   ).toMatchObject([
     {
       code: "INCOMPATIBLE_VALUE",
@@ -153,25 +155,27 @@ test("reports every issue from the shared query validator", () => {
   ]);
 });
 
-test("reports every invalid query value expression", () => {
+test("reports every invalid query value expression", async () => {
   const configuration =
     createDefaultStructuredAssetQueryResourceConfiguration();
 
   expect(
-    getAssetQueryConfigurationValidation({
-      configuration: {
-        ...configuration,
-        where: {
-          all: [
-            { field: ["size"], operator: "gt", value: "(" },
-            { field: ["extension"], operator: "eq", value: "}" },
-          ],
+    (
+      await getAssetQueryConfigurationValidation({
+        configuration: {
+          ...configuration,
+          where: {
+            all: [
+              { field: ["size"], operator: "gt", value: "(" },
+              { field: ["extension"], operator: "eq", value: "}" },
+            ],
+          },
+          limit: "missing(",
+          offset: "alsoMissing(",
         },
-        limit: "missing(",
-        offset: "alsoMissing(",
-      },
-      scope: {},
-    }).issues
+        scope: {},
+      })
+    ).issues
   ).toMatchObject([
     {
       code: "INVALID_QUERY_EXPRESSION",
@@ -192,7 +196,7 @@ test("reports every invalid query value expression", () => {
   ]);
 });
 
-test("uses the loaded field catalog with the shared query validator", () => {
+test("uses the loaded field catalog with the shared query validator", async () => {
   const configuration =
     createDefaultStructuredAssetQueryResourceConfiguration();
   const definition = {
@@ -209,23 +213,25 @@ test("uses the loaded field catalog with the shared query validator", () => {
   } as const;
 
   expect(
-    getAssetQueryConfigurationValidation({
-      configuration: {
-        ...configuration,
-        where: {
-          field: ["properties", "score"],
-          operator: "eq",
-          value: '"high"',
+    (
+      await getAssetQueryConfigurationValidation({
+        configuration: {
+          ...configuration,
+          where: {
+            field: ["properties", "score"],
+            operator: "eq",
+            value: '"high"',
+          },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["properties", "missing"]],
+          },
         },
-        output: {
-          mode: "fields",
-          includeMetadata: false,
-          fields: [["properties", "missing"]],
-        },
-      },
-      scope: {},
-      definition,
-    }).issues
+        scope: {},
+        definition,
+      })
+    ).issues
   ).toMatchObject([
     {
       severity: "warning",
