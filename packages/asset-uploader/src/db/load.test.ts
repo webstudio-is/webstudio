@@ -71,6 +71,39 @@ describe("loadAssetsByProject (msw)", () => {
     });
   });
 
+  test("keeps invalid font metadata from breaking asset loads", async () => {
+    server.use(
+      projectOwnershipHandler,
+      db.get("Asset", () =>
+        json([
+          {
+            ...assetRow,
+            filename: "Inter-Regular.woff2",
+            file: {
+              ...assetRow.file,
+              name: "Inter-Regular.woff2",
+              format: "woff2",
+              meta: JSON.stringify({}),
+            },
+          },
+        ])
+      ),
+      db.get("AssetFolder", () => json([]))
+    );
+
+    const result = await loadAssetsByProject("proj-1", createContext());
+
+    expect(result).toMatchObject([
+      {
+        id: "asset-1",
+        name: "Inter-Regular.woff2",
+        type: "file",
+        format: "woff2",
+        meta: {},
+      },
+    ]);
+  });
+
   test("returns empty array when project has no uploaded assets", async () => {
     server.use(
       projectOwnershipHandler,
