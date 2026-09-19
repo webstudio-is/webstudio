@@ -310,7 +310,7 @@ export const usePageSettingsErrors = ({
   const [errors, setErrors] = useState<PageSettingsErrors>({});
   useEffect(() => {
     let active = true;
-    void validatePageSettings({ pages, pageId, values, variableValues }).then(
+    validatePageSettings({ pages, pageId, values, variableValues }).then(
       (nextErrors) => {
         if (active) {
           setErrors(nextErrors);

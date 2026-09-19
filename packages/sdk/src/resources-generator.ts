@@ -9,6 +9,7 @@ import { findTreeInstanceIds } from "./instances-utils";
 import {
   getExpressionDataSourceIds,
   getPageResourceRootIds,
+  getResourceDependencyIds,
   getResourceDataSourceIds,
 } from "./resource-dependencies";
 
@@ -120,15 +121,6 @@ export const generateResources = ({
       )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
   );
-  const dataResourceDataSourceByResourceId = new Map(
-    Array.from(resourceDataSourceByResourceId.values())
-      .filter(
-        (dataSource) =>
-          selectedResourceIds.has(dataSource.resourceId) === false &&
-          actionResourceIds.has(dataSource.resourceId) === false
-      )
-      .map((dataSource) => [dataSource.resourceId, dataSource] as const)
-  );
   const rootResourceIds = getPageResourceRootIds({
     page,
     instances,
@@ -163,12 +155,47 @@ export const generateResources = ({
       contentInputDataSourceIds.add(dataSource.id);
     }
   }
-  const resourceDependencies = new Map<string, string[]>();
+  const graphResourceIds = new Set<Resource["id"]>();
+  const resourceDependencies = new Map<Resource["id"], Resource["id"][]>();
+  const addResourceAndDependencies = (resourceId: Resource["id"]) => {
+    if (graphResourceIds.has(resourceId)) {
+      return;
+    }
+    const resource = resources.get(resourceId);
+    if (resource === undefined) {
+      return;
+    }
+    graphResourceIds.add(resourceId);
+    const dependencies = Array.from(
+      getResourceDependencyIds({
+        resource,
+        dataSources,
+      })
+    );
+    resourceDependencies.set(resourceId, dependencies);
+    for (const dependencyId of dependencies) {
+      addResourceAndDependencies(dependencyId);
+    }
+  };
+  for (const dataSource of resourceDataSourceByResourceId.values()) {
+    if (
+      selectedResourceIds.has(dataSource.resourceId) === false &&
+      actionResourceIds.has(dataSource.resourceId) === false
+    ) {
+      addResourceAndDependencies(dataSource.resourceId);
+    }
+  }
+  for (const resourceId of rootResourceIds) {
+    addResourceAndDependencies(resourceId);
+  }
+  for (const resourceId of actionResourceIds) {
+    addResourceAndDependencies(resourceId);
+  }
 
   let generatedRequests = "";
   for (const resource of resources.values()) {
     const resourceName = scope.getName(resource.id, resource.name);
-    if (dataResourceDataSourceByResourceId.has(resource.id)) {
+    if (graphResourceIds.has(resource.id)) {
       const requestDataSources: DataSources = new Map();
       const fields = generateResourceRequestFields({
         resource,
@@ -177,20 +204,17 @@ export const generateResources = ({
         usedDataSources: requestDataSources,
         scope,
       });
-      const dependencyResourceIds = new Set<string>();
       let generatedRequest = `  const ${resourceName} = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
       for (const dataSource of requestDataSources.values()) {
         usedDataSources.set(dataSource.id, dataSource);
         if (dataSource.type !== "resource") {
           continue;
         }
-        dependencyResourceIds.add(dataSource.resourceId);
         const name = scope.getName(dataSource.id, dataSource.name);
         generatedRequest += `    const ${name} = documents.get(${JSON.stringify(
           dataSource.resourceId
         )})\n`;
       }
-      resourceDependencies.set(resource.id, Array.from(dependencyResourceIds));
       generatedRequest += `    return {\n`;
       generatedRequest += fields;
       generatedRequest += `    }\n`;
@@ -283,8 +307,12 @@ export const generateResources = ({
 
   generated += `  const _data: ResourceRequestGraph = {\n`;
   generated += `    resources: [\n`;
-  for (const [resourceId, dataSource] of dataResourceDataSourceByResourceId) {
-    const name = scope.getName(resourceId, dataSource.name);
+  for (const resourceId of graphResourceIds) {
+    const resource = resources.get(resourceId);
+    if (resource === undefined) {
+      continue;
+    }
+    const name = scope.getName(resourceId, resource.name);
     const dependencies = resourceDependencies.get(resourceId) ?? [];
     generated += `      { id: ${JSON.stringify(
       resourceId
@@ -295,12 +323,35 @@ export const generateResources = ({
   generated += `    ],\n`;
   generated += `    rootIds: [\n`;
   for (const resourceId of rootResourceIds) {
-    if (dataResourceDataSourceByResourceId.has(resourceId)) {
+    if (
+      graphResourceIds.has(resourceId) &&
+      selectedResourceIds.has(resourceId) === false &&
+      actionResourceIds.has(resourceId) === false
+    ) {
       generated += `      ${JSON.stringify(resourceId)},\n`;
     }
   }
   generated += `    ],\n`;
   generated += `  }\n`;
+
+  if (
+    [...selectedResourceIds].some((resourceId) =>
+      graphResourceIds.has(resourceId)
+    )
+  ) {
+    generated += `  const _contentDocuments = new Map<string, unknown>([\n`;
+    for (const dataSource of usedDataSources.values()) {
+      if (
+        dataSource.type !== "resource" ||
+        contentInputDataSourceIds.has(dataSource.id) === false
+      ) {
+        continue;
+      }
+      const name = scope.getName(dataSource.id, dataSource.name);
+      generated += `    [${JSON.stringify(dataSource.resourceId)}, ${name}],\n`;
+    }
+    generated += `  ])\n`;
+  }
 
   generated += `  const _contentData = new Map<string, ResourceRequest>()\n`;
   for (const { source, candidates } of generatedContentSelections) {
@@ -312,16 +363,26 @@ export const generateResources = ({
           continue;
         }
         const name = scope.getName(resourceId, dataSource.name);
-        generated += `    _contentData.set(${JSON.stringify(name)}, ${name})\n`;
+        const request = graphResourceIds.has(resourceId)
+          ? `${scope.getName(resourceId, resources.get(resourceId)?.name ?? dataSource.name)}(_contentDocuments)`
+          : name;
+        generated += `    _contentData.set(${JSON.stringify(name)}, ${request})\n`;
       }
       generated += `  }\n`;
     }
   }
 
-  generated += `  const _action = new Map<string, ResourceRequest>([\n`;
+  generated += `  const _action = new Map<string, { id: string; outputName: string }>([\n`;
   for (const prop of actionResourceProps) {
+    const resource = resources.get(prop.value);
+    if (resource === undefined || graphResourceIds.has(prop.value) === false) {
+      continue;
+    }
     const name = scope.getName(prop.value, prop.name);
-    generated += `    ["${name}", ${name}],\n`;
+    const outputName = scope.getName(prop.value, resource.name);
+    generated += `    ["${name}", { id: ${JSON.stringify(
+      prop.value
+    )}, outputName: ${JSON.stringify(outputName)} }],\n`;
   }
   generated += `  ])\n`;
 
