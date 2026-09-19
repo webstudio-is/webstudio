@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import {
   createTestServer,
   db,
@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { asset } from "@webstudio-is/sdk";
 import { loadAssetsByProject } from "./load";
 
 const server = createTestServer();
@@ -80,6 +81,57 @@ describe("loadAssetsByProject (msw)", () => {
 
     const result = await loadAssetsByProject("proj-1", createContext());
     expect(result).toEqual([]);
+  });
+
+  test("loads malformed font metadata as a generic file and reports it", async () => {
+    const malformedFontRow = {
+      ...assetRow,
+      assetId: "font-1",
+      filename: "Inter",
+      file: {
+        ...assetRow.file,
+        name: "Inter.woff2",
+        format: "woff2",
+        meta: JSON.stringify({ family: "Inter" }),
+      },
+    };
+    const report = vi.spyOn(console, "error").mockImplementation(() => {});
+    server.use(
+      projectOwnershipHandler,
+      db.get("Asset", () => json([malformedFontRow])),
+      db.get("AssetFolder", () => json([]))
+    );
+
+    try {
+      const result = await loadAssetsByProject("proj-1", createContext());
+
+      expect(result).toMatchObject([
+        {
+          id: "font-1",
+          type: "file",
+          format: "unknown",
+          meta: {},
+        },
+      ]);
+      expect(asset.safeParse(result[0]).success).toBe(true);
+      expect(report).toHaveBeenCalledWith(
+        expect.stringContaining("Invalid stored font metadata"),
+        expect.objectContaining({
+          projectId: "proj-1",
+          assets: [
+            expect.objectContaining({
+              assetId: "font-1",
+              format: "woff2",
+              issues: expect.arrayContaining([
+                expect.objectContaining({ path: ["variationAxes"] }),
+              ]),
+            }),
+          ],
+        })
+      );
+    } finally {
+      report.mockRestore();
+    }
   });
 
   test("places assets with a missing folder in the root", async () => {
