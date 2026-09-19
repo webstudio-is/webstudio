@@ -809,6 +809,46 @@ describe("asset patch persistence", () => {
     expect(validatedMeta).toEqual(nextMeta);
   });
 
+  test("rejects invalid font metadata before persisting a raw asset patch", async () => {
+    const projectId = uid();
+    const fontRow = {
+      ...assetRow,
+      projectId,
+      file: {
+        ...assetRow.file,
+        name: "font.woff2",
+        format: "woff2",
+        meta: JSON.stringify({
+          family: "Inter",
+          style: "normal",
+          weight: 400,
+        }),
+      },
+    };
+    let persisted = false;
+    server.use(
+      db.get("Asset", () => json([fontRow])),
+      db.patch("File", () => {
+        persisted = true;
+        return json({ meta: "{}" });
+      })
+    );
+
+    await expect(
+      patchAssetsWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [
+          {
+            op: "replace",
+            path: ["asset-1", "meta"],
+            value: { family: "Inter", style: "normal" },
+          },
+        ]
+      )
+    ).rejects.toThrow();
+    expect(persisted).toBe(false);
+  });
+
   test("updates only supplied metadata and reloads only that asset", async () => {
     const projectId = uid();
     let update: unknown;
