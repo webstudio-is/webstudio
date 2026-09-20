@@ -7,7 +7,7 @@ import {
 import { parseDeployment } from "@webstudio-is/project-build/persistence";
 import {
   createId,
-  getSaasDeploymentTarget,
+  getPublishTarget,
   templates as templateSchema,
   type Deployment,
   type PublishTarget,
@@ -123,7 +123,7 @@ export const listProjectPublishes = async (
           id: build.id,
           jobId: build.id,
           version: build.version,
-          target: getSaasDeploymentTarget(deployment),
+          target: getPublishTarget(deployment),
           domains: deployment.domains,
           createdAt: build.createdAt,
         },
@@ -166,7 +166,7 @@ export const getProjectPublishJob = async (
     status,
     target:
       deployment !== undefined && deployment.destination !== "static"
-        ? getSaasDeploymentTarget(deployment)
+        ? getPublishTarget(deployment)
         : undefined,
     domains:
       deployment !== undefined && deployment.destination !== "static"

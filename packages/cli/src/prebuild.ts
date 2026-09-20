@@ -47,7 +47,7 @@ import {
   blockComponent,
   getContentBlockSources,
   findContentBlockBodyContainers,
-  getSaasDeploymentTarget,
+  getPublishTarget,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
@@ -1171,7 +1171,7 @@ export const prebuild = async (options: {
       : undefined;
   const publishedAssetSourceOrigin =
     saasDeployment !== undefined && options.assets === false
-      ? getSaasDeploymentTarget(saasDeployment) === "staging"
+      ? getPublishTarget(saasDeployment) === "staging"
         ? "https://assets-dev.webstudio.is"
         : "https://assets.webstudio.is"
       : undefined;

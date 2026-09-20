@@ -41,9 +41,7 @@ export type SaasDeployment = Exclude<Deployment, { destination: "static" }>;
  * Resolves the publish target for SaaS deployments, including deployments
  * written before the explicit target field was introduced.
  */
-export const getSaasDeploymentTarget = (
-  deployment: SaasDeployment
-): PublishTarget => {
+export const getPublishTarget = (deployment: SaasDeployment): PublishTarget => {
   if (deployment.target !== undefined) {
     return deployment.target;
   }

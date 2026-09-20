@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { getSaasDeploymentTarget } from "./deployment";
+import { getPublishTarget } from "./deployment";
 
 test.each([
   {
@@ -39,5 +39,5 @@ test.each([
     target: "production",
   },
 ])("resolves $name SaaS deployment target", ({ deployment, target }) => {
-  expect(getSaasDeploymentTarget(deployment)).toBe(target);
+  expect(getPublishTarget(deployment)).toBe(target);
 });
