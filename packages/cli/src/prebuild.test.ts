@@ -2517,6 +2517,9 @@ sitemap.map((page) => page.path);`
         "utf8"
       );
       expect(materializedRuntimeModule).toContain('"url":"/assets/post.md"');
+      expect(materializedRuntimeModule).toContain(
+        '"sourceUrl":"/assets/post.md"'
+      );
       expect(materializedRuntimeModule).not.toContain(
         '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
       );

@@ -1192,14 +1192,21 @@ export const prebuild = async (options: {
         "https://placeholder.local"
       );
       const sourceUrl =
-        publishedAssetSourceOrigin === undefined || asset.type !== "file"
+        asset.type !== "file"
           ? undefined
-          : (() => {
-              const url = new URL(runtimeAsset.url, publishedAssetSourceOrigin);
-              url.pathname = url.pathname.replace("/cgi/asset/", "/");
-              url.search = "";
-              return url.toString();
-            })();
+          : publishedAssetSourceOrigin !== undefined
+            ? (() => {
+                const url = new URL(
+                  runtimeAsset.url,
+                  publishedAssetSourceOrigin
+                );
+                url.pathname = url.pathname.replace("/cgi/asset/", "/");
+                url.search = "";
+                return url.toString();
+              })()
+            : options.assets === true
+              ? getPublishedAssetUrl(asset)
+              : undefined;
       return [
         asset.id,
         {
