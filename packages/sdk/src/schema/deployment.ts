@@ -40,6 +40,14 @@ export type PublishedDeployment = Exclude<
   { destination: "static" }
 >;
 
+const assetOriginByTarget: Record<PublishTarget, string> = {
+  staging: "https://assets-dev.webstudio.is",
+  production: "https://assets.webstudio.is",
+};
+
+export const getAssetOrigin = (target: PublishTarget) =>
+  assetOriginByTarget[target];
+
 /**
  * Resolves the publish target for hosted deployments, including deployments
  * written before the explicit target field was introduced.

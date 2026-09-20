@@ -47,6 +47,7 @@ import {
   blockComponent,
   getContentBlockSources,
   findContentBlockBodyContainers,
+  getAssetOrigin,
   getPublishTarget,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
@@ -1171,9 +1172,7 @@ export const prebuild = async (options: {
       : undefined;
   const publishedAssetSourceOrigin =
     publishedDeployment !== undefined && options.assets === false
-      ? getPublishTarget(publishedDeployment) === "staging"
-        ? "https://assets-dev.webstudio.is"
-        : "https://assets.webstudio.is"
+      ? getAssetOrigin(getPublishTarget(publishedDeployment))
       : undefined;
   const getPublishedAssetUrl = (asset: Asset) => {
     const runtimeAsset = toAssetReferenceRuntimeData(
