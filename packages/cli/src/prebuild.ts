@@ -617,8 +617,8 @@ const createRuntimeFetch = createGeneratedAssetResourceRuntime({
   runtimeAssets,
 });
 
-export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${inputType}) =>
-  createRuntimeFetch({ request, fallback });
+export const createGeneratedAssetResourceFetch = ({ request, context, fallback }: ${inputType}) =>
+  createRuntimeFetch({ request, context, fallback });
 `;
 };
 

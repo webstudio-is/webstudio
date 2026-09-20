@@ -21,6 +21,31 @@ import {
 import type { ContentRuntimeArtifact } from "./content-runtime-artifact";
 
 const assetsResourceUrl = "/$resources/assets";
+const automationEnvironmentVariable = "WEBSTUDIO_AUTOMATION";
+
+const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+
+const getAutomationToken = (context: unknown) => {
+  // Cloudflare exposes bindings under context.cloudflare.env. The other
+  // supported server adapters expose the environment directly or as env.
+  const contextRecord = asRecord(context);
+  const cloudflare = asRecord(contextRecord?.cloudflare);
+  const environments = [
+    contextRecord,
+    asRecord(contextRecord?.env),
+    asRecord(cloudflare?.env),
+  ];
+  for (const environment of environments) {
+    const value = environment?.[automationEnvironmentVariable];
+    if (typeof value === "string" && value.length > 0) {
+      return value;
+    }
+  }
+  return undefined;
+};
 
 const jsonResponse = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), {
@@ -80,6 +105,7 @@ export const createPublishedAssetResourceFetch = ({
   runtimeAssets,
   cache,
   baseUrl,
+  automationToken,
   fetchDocument = globalThis.fetch,
   onDocumentGraphEvent,
 }: {
@@ -88,6 +114,7 @@ export const createPublishedAssetResourceFetch = ({
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
+  automationToken?: string;
   fetchDocument?: typeof fetch;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
@@ -99,6 +126,7 @@ export const createPublishedAssetResourceFetch = ({
     runtimeAssets,
     cache,
     baseUrl,
+    automationToken,
     database: createRuntimeContentDatabase({ artifact }),
     fetchDocument,
     documentCache,
@@ -110,6 +138,7 @@ const createPublishedDocumentLoader = ({
   baseUrl,
   runtimeAssets,
   embeddedContents,
+  automationToken,
   fetchDocument,
   cache,
   onEvent,
@@ -117,6 +146,7 @@ const createPublishedDocumentLoader = ({
   baseUrl: string | URL;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   embeddedContents?: Readonly<Record<string, string>>;
+  automationToken?: string;
   fetchDocument: typeof fetch;
   cache: DocumentSourceCache;
   onEvent?: DocumentGraphRuntimeObserver;
@@ -129,9 +159,10 @@ const createPublishedDocumentLoader = ({
         throw new Error(`Published document URL is unavailable for ${node.id}`);
       }
       const request = new Request(new URL(asset.url, baseUrl));
-      // Cloudflare's asset firewall allows server-side requests without a
-      // referrer. Never inherit one from a caller or runtime wrapper.
       request.headers.delete("referer");
+      if (automationToken !== undefined) {
+        request.headers.set("x-webstudio-automation", automationToken);
+      }
       return request;
     },
     getMetadata: ({ node }) => ({
@@ -203,6 +234,7 @@ const createPublishedAssetResourceHandler = ({
   runtimeAssets,
   cache,
   baseUrl,
+  automationToken,
   database,
   fetchDocument,
   documentCache,
@@ -213,6 +245,7 @@ const createPublishedAssetResourceHandler = ({
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
+  automationToken?: string;
   database: ReturnType<typeof createRuntimeContentDatabase>;
   fetchDocument: typeof fetch;
   documentCache: DocumentSourceCache;
@@ -223,6 +256,7 @@ const createPublishedAssetResourceHandler = ({
     baseUrl,
     runtimeAssets,
     embeddedContents: artifact.contents,
+    automationToken,
     fetchDocument,
     cache: documentCache,
     onEvent: onDocumentGraphEvent,
@@ -346,9 +380,11 @@ export const createGeneratedAssetResourceRuntime = ({
   const documentCache = createMemoryDocumentSourceCache();
   return async ({
     request,
+    context,
     fallback,
   }: {
     request: Request;
+    context?: unknown;
     fallback: typeof fetch;
   }): Promise<typeof fetch> => {
     const origin = new URL(request.url).origin;
@@ -358,6 +394,7 @@ export const createGeneratedAssetResourceRuntime = ({
       runtimeAssets,
       cache,
       baseUrl: origin,
+      automationToken: getAutomationToken(context),
       database,
       fetchDocument: fallback,
       documentCache,

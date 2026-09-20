@@ -18,5 +18,9 @@ export const createSsgAssetResourceFetch = ({
     baseUrl: "https://webstudio.local",
     deploymentId,
     artifact,
+    automationToken:
+      typeof process === "undefined"
+        ? undefined
+        : process.env.WEBSTUDIO_AUTOMATION,
     runtimeAssets,
   });

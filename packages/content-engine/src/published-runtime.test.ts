@@ -444,6 +444,11 @@ describe("published asset resource runtime", () => {
     });
     const generatedFetch = await createGeneratedFetch({
       request: new Request("https://site.example/blog/post"),
+      context: {
+        cloudflare: {
+          env: { WEBSTUDIO_AUTOMATION: "test-automation-token" },
+        },
+      },
       fallback: fetchDocument,
     });
     const generatedResponse = await generatedFetch(
@@ -458,6 +463,13 @@ describe("published asset resource runtime", () => {
       ],
     });
     expect(fetchDocument).toHaveBeenCalledTimes(3);
+    const [generatedDocumentRequest] = fetchDocument.mock.calls[2] ?? [];
+    expect(generatedDocumentRequest).toBeInstanceOf(Request);
+    expect(
+      (generatedDocumentRequest as Request).headers.get(
+        "x-webstudio-automation"
+      )
+    ).toBe("test-automation-token");
     expect(() =>
       createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
