@@ -1168,10 +1168,6 @@ export const prebuild = async (options: {
     siteData.build.deployment?.destination === "saas"
       ? siteData.build.deployment
       : undefined;
-  const publishedAssetSourceOrigin =
-    publishedDeployment !== undefined && options.assets === false
-      ? publishedDeployment.assetOrigin
-      : undefined;
   const getPublishedAssetUrl = (asset: Asset) => {
     const runtimeAsset = toAssetReferenceRuntimeData(
       asset,
@@ -1188,28 +1184,11 @@ export const prebuild = async (options: {
         asset,
         "https://placeholder.local"
       );
-      const sourceUrl =
-        asset.type !== "file"
-          ? undefined
-          : publishedAssetSourceOrigin !== undefined
-            ? (() => {
-                const url = new URL(
-                  runtimeAsset.url,
-                  publishedAssetSourceOrigin
-                );
-                url.pathname = url.pathname.replace("/cgi/asset/", "/");
-                url.search = "";
-                return url.toString();
-              })()
-            : options.assets === true
-              ? getPublishedAssetUrl(asset)
-              : undefined;
       return [
         asset.id,
         {
           ...runtimeAsset,
           contentRef: asset.name,
-          ...(sourceUrl === undefined ? {} : { sourceUrl }),
           // Hosted deployments serve project assets through storage-backed
           // proxies. Generated projects with downloaded assets serve them
           // locally.

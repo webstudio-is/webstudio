@@ -22,7 +22,6 @@ export const deployment = z.union([
   z.object({
     destination: z.literal("saas").optional(),
     target: z.enum(["staging", "production"]).optional(),
-    assetOrigin: z.string().url().optional(),
     domains: z.array(z.string()),
     assetsDomain: z.string().optional(),
     /**

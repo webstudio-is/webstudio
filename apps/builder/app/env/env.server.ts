@@ -32,7 +32,6 @@ const environment = z.object({
   MAX_UPLOAD_SIZE: z.string().optional(),
 
   // Remote assets
-  ASSET_CDN_URL: z.string().url().optional(),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
@@ -99,7 +98,6 @@ const rawEnv = {
   TRPC_SERVER_API_TOKEN: process.env.TRPC_SERVER_API_TOKEN,
   PORT: process.env.PORT,
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
-  ASSET_CDN_URL: process.env.ASSET_CDN_URL,
   S3_ENDPOINT: process.env.S3_ENDPOINT,
   S3_REGION: process.env.S3_REGION,
   S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,

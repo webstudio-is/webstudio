@@ -111,8 +111,7 @@ const devBuildHandler = (row: typeof devBuildRow = devBuildRow) =>
   db.get("Build", () => json([row]));
 
 const createPublishContext = (
-  publish = vi.fn().mockResolvedValue({ success: true }),
-  assetOrigin?: string
+  publish = vi.fn().mockResolvedValue({ success: true })
 ) =>
   ({
     ...testContext,
@@ -131,7 +130,6 @@ const createPublishContext = (
         GITHUB_REF_NAME: "main",
         GITHUB_SHA: "sha-1",
         PUBLISHER_HOST: "wstd.io",
-        ...(assetOrigin === undefined ? {} : { ASSET_CDN_URL: assetOrigin }),
       },
     },
   }) as unknown as AppContext;
@@ -169,7 +167,7 @@ test("publishes saas project through shared domain service", async () => {
         domains: ["project.wstd.io", "example.com"],
         target: "production",
       },
-      createPublishContext(publish, "https://assets.webstudio.is")
+      createPublishContext(publish)
     )
   ).resolves.toMatchObject({
     build: { id: "build-prod" },
@@ -180,7 +178,6 @@ test("publishes saas project through shared domain service", async () => {
   expect(JSON.parse(productionBuildRequest?.deployment ?? "")).toEqual({
     destination: "saas",
     target: "production",
-    assetOrigin: "https://assets.webstudio.is",
     domains: ["project.wstd.io", "example.com"],
     assetsDomain: "project.wstd.io",
     excludeWstdDomainFromSearch: true,

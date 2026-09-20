@@ -63,7 +63,6 @@ type DeploymentContext = {
     GITHUB_REF_NAME: string;
     GITHUB_SHA: string | undefined;
     PUBLISHER_HOST: string;
-    ASSET_CDN_URL?: string;
   };
 };
 

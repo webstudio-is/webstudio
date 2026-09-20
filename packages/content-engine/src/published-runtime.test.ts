@@ -31,6 +31,9 @@ const document: AssetFileDocument = {
 };
 const runtimeAssets = { "post-1": { url: "/assets/post.md" } };
 
+const getRequestUrl = (input: RequestInfo | URL) =>
+  input instanceof Request ? input.url : String(input);
+
 const createPublishedAssetResourceFetch = (
   options: Omit<Parameters<typeof createPublishedRuntime>[0], "artifact"> & {
     artifact: Parameters<typeof createContentRuntimeArtifact>[0];
@@ -372,10 +375,12 @@ describe("published asset resource runtime", () => {
       items: [{ id: "post" }],
     });
     expect(fetchDocument).toHaveBeenCalledTimes(1);
-    expect(fetchDocument).toHaveBeenCalledWith(
-      new URL("https://site.example/assets/author.md"),
-      expect.anything()
+    const [documentRequest] = fetchDocument.mock.calls[0] ?? [];
+    expect(documentRequest).toBeInstanceOf(Request);
+    expect(getRequestUrl(documentRequest as Request)).toBe(
+      "https://site.example/assets/author.md"
     );
+    expect((documentRequest as Request).headers.get("referer")).toBeNull();
     expect(events).toEqual(
       expect.arrayContaining([
         { type: "roots-selected", rootCount: 1 },
@@ -547,7 +552,9 @@ describe("published asset resource runtime", () => {
     });
     const runtimeArtifact = createContentRuntimeArtifact(artifact);
     const fetchDocument = vi.fn(async (input: RequestInfo | URL) => {
-      const id = String(input).includes("second.md") ? "second" : "first";
+      const id = getRequestUrl(input).includes("second.md")
+        ? "second"
+        : "first";
       return new Response(sources[id]);
     });
     const runtimeFetch = createPublishedRuntime({
@@ -558,7 +565,6 @@ describe("published asset resource runtime", () => {
         first: { url: "/assets/first.md", contentRef: "storage:first" },
         second: {
           url: "/cgi/asset/second.md?format=raw",
-          sourceUrl: "https://assets.webstudio.is/second.md",
           contentRef: "storage:second",
         },
       },
@@ -600,10 +606,12 @@ describe("published asset resource runtime", () => {
       totalCount: 1,
     });
     expect(fetchDocument).toHaveBeenCalledOnce();
-    expect(fetchDocument).toHaveBeenCalledWith(
-      new URL("https://assets.webstudio.is/second.md"),
-      expect.anything()
+    const [documentRequest] = fetchDocument.mock.calls[0] ?? [];
+    expect(documentRequest).toBeInstanceOf(Request);
+    expect(getRequestUrl(documentRequest as Request)).toContain(
+      "/cgi/asset/second.md"
     );
+    expect((documentRequest as Request).headers.get("referer")).toBeNull();
   });
 
   test("hydrates parallel CDN roots with one cached shared dependency", async () => {
@@ -659,7 +667,7 @@ describe("published asset resource runtime", () => {
     const fetchDocument = vi.fn(
       (input: RequestInfo | URL) =>
         new Promise<Response>((resolve) => {
-          pending.set(new URL(String(input)).pathname, resolve);
+          pending.set(new URL(getRequestUrl(input)).pathname, resolve);
         })
     );
     const runtimeFetch = createPublishedAssetResourceFetch({
@@ -722,7 +730,7 @@ describe("published asset resource runtime", () => {
     expect(fetchDocument).toHaveBeenCalledTimes(1);
     expect(
       fetchDocument.mock.calls.filter(([input]) =>
-        String(input).includes("/assets/author.json")
+        getRequestUrl(input).includes("/assets/author.json")
       )
     ).toHaveLength(1);
   });
@@ -811,7 +819,7 @@ describe("published asset resource runtime", () => {
       runtimeAssets,
       fetchDocument: async (input) =>
         new Response(
-          String(input).endsWith("graph-post.json")
+          getRequestUrl(input).endsWith("graph-post.json")
             ? '{"author":{"$ref":"./author.json"}}'
             : `{"value":"${"a".repeat(1024 * 1024)}"}`
         ),

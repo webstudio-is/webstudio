@@ -2402,18 +2402,9 @@ sitemap.map((page) => page.path);`
     ).rejects.toThrow("ENOENT");
   });
 
-  test.each([
-    {
-      target: "production" as const,
-      assetOrigin: "https://assets.webstudio.is",
-    },
-    {
-      target: "staging" as const,
-      assetOrigin: "https://assets-dev.webstudio.is",
-    },
-  ])(
-    "keeps deferred published asset proxy URLs deployment-relative ($target)",
-    async ({ target, assetOrigin }) => {
+  test.each(["production", "staging"] as const)(
+    "keeps deferred published asset proxy URLs deployment-relative (%s)",
+    async (target) => {
       const index = await createAssetIndex({
         projectId: "project-1",
         entries: [
@@ -2449,7 +2440,6 @@ sitemap.map((page) => page.path);`
           deployment: {
             destination: "saas" as const,
             target,
-            assetOrigin,
             domains: ["example"],
             assetsDomain: "example",
             excludeWstdDomainFromSearch: false,
@@ -2489,7 +2479,7 @@ sitemap.map((page) => page.path);`
       );
       expect(manifest).not.toContain("# Indexed post body");
       expect(runtimeModule).toContain('"url":"/cgi/asset/post.md?format=raw"');
-      expect(runtimeModule).toContain(`"sourceUrl":"${assetOrigin}/post.md"`);
+      expect(runtimeModule).not.toContain("sourceUrl");
       expect(runtimeModule).not.toContain(
         "https://p-project-1.apps.webstudio.is/cgi/asset/"
       );
@@ -2518,9 +2508,7 @@ sitemap.map((page) => page.path);`
         "utf8"
       );
       expect(materializedRuntimeModule).toContain('"url":"/assets/post.md"');
-      expect(materializedRuntimeModule).toContain(
-        '"sourceUrl":"/assets/post.md"'
-      );
+      expect(materializedRuntimeModule).not.toContain("sourceUrl");
       expect(materializedRuntimeModule).not.toContain(
         '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
       );

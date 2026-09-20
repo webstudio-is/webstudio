@@ -184,16 +184,13 @@ const createPublishedDeployment = ({
   project,
   domains,
   target,
-  assetOrigin,
 }: {
   project: LoadedProject;
   domains: string[];
   target: PublishTarget;
-  assetOrigin?: string;
 }): Deployment => ({
   destination: "saas",
   target,
-  ...(assetOrigin === undefined ? {} : { assetOrigin }),
   domains,
   assetsDomain: project.domain,
   excludeWstdDomainFromSearch: project.domainsVirtual.some(
@@ -220,7 +217,6 @@ export const publishProject = async (
         project,
         domains,
         target,
-        assetOrigin: context.deployment.env.ASSET_CDN_URL,
       }),
     },
     context
