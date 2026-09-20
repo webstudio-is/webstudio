@@ -1165,13 +1165,13 @@ export const prebuild = async (options: {
   }
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
-  const saasDeployment =
+  const publishedDeployment =
     siteData.build.deployment?.destination === "saas"
       ? siteData.build.deployment
       : undefined;
   const publishedAssetSourceOrigin =
-    saasDeployment !== undefined && options.assets === false
-      ? getPublishTarget(saasDeployment) === "staging"
+    publishedDeployment !== undefined && options.assets === false
+      ? getPublishTarget(publishedDeployment) === "staging"
         ? "https://assets-dev.webstudio.is"
         : "https://assets.webstudio.is"
       : undefined;
@@ -1213,8 +1213,9 @@ export const prebuild = async (options: {
           ...runtimeAsset,
           contentRef: asset.name,
           ...(sourceUrl === undefined ? {} : { sourceUrl }),
-          // SaaS serves project assets through its storage-backed proxy.
-          // Generated projects with downloaded assets serve them locally.
+          // Hosted deployments serve project assets through storage-backed
+          // proxies. Generated projects with downloaded assets serve them
+          // locally.
           url: getPublishedAssetUrl(asset),
         },
       ];
@@ -1915,7 +1916,7 @@ export const prebuild = async (options: {
       assetCompilationPlan !== undefined &&
       requiresRuntimeDocumentData(assetCompilationPlan),
     includeContents: !(
-      saasDeployment !== undefined && options.assets === false
+      publishedDeployment !== undefined && options.assets === false
     ),
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,

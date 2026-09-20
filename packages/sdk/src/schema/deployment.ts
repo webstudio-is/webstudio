@@ -35,13 +35,18 @@ export const deployment = z.union([
 export type Deployment = z.infer<typeof deployment>;
 
 export type PublishTarget = "staging" | "production";
-export type SaasDeployment = Exclude<Deployment, { destination: "static" }>;
+export type PublishedDeployment = Exclude<
+  Deployment,
+  { destination: "static" }
+>;
 
 /**
- * Resolves the publish target for SaaS deployments, including deployments
+ * Resolves the publish target for hosted deployments, including deployments
  * written before the explicit target field was introduced.
  */
-export const getPublishTarget = (deployment: SaasDeployment): PublishTarget => {
+export const getPublishTarget = (
+  deployment: PublishedDeployment
+): PublishTarget => {
   if (deployment.target !== undefined) {
     return deployment.target;
   }

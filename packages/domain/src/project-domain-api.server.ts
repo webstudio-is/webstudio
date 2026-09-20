@@ -180,7 +180,7 @@ export const getProjectPublishJob = async (
   };
 };
 
-const createSaasDeployment = ({
+const createPublishedDeployment = ({
   project,
   domains,
   target,
@@ -213,7 +213,7 @@ export const publishProject = async (
   const build = await createProductionBuild(
     {
       projectId: project.id,
-      deployment: createSaasDeployment({ project, domains, target }),
+      deployment: createPublishedDeployment({ project, domains, target }),
     },
     context
   );

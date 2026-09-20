@@ -2412,7 +2412,7 @@ sitemap.map((page) => page.path);`
       assetOrigin: "https://assets-dev.webstudio.is",
     },
   ])(
-    "keeps deferred SaaS asset proxy URLs deployment-relative ($target)",
+    "keeps deferred published asset proxy URLs deployment-relative ($target)",
     async ({ target, assetOrigin }) => {
       const index = await createAssetIndex({
         projectId: "project-1",

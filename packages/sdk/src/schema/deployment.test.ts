@@ -38,6 +38,6 @@ test.each([
     },
     target: "production",
   },
-])("resolves $name SaaS deployment target", ({ deployment, target }) => {
+])("resolves $name published deployment target", ({ deployment, target }) => {
   expect(getPublishTarget(deployment)).toBe(target);
 });
