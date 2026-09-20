@@ -8,6 +8,7 @@ import { parseDeployment } from "@webstudio-is/project-build/persistence";
 import {
   createId,
   getPublishTarget,
+  publishedDeploymentDestination,
   templates as templateSchema,
   type Deployment,
   type PublishTarget,
@@ -189,7 +190,7 @@ const createPublishedDeployment = ({
   domains: string[];
   target: PublishTarget;
 }): Deployment => ({
-  destination: "saas",
+  destination: publishedDeploymentDestination,
   target,
   domains,
   assetsDomain: project.domain,
@@ -232,7 +233,7 @@ export const publishProject = async (
     githubSha: env.GITHUB_SHA,
     buildId: build.id,
     branchName: env.GITHUB_REF_NAME,
-    destination: "saas",
+    destination: publishedDeploymentDestination,
     logProjectName: `${project.title} - ${project.id}`,
   });
 

@@ -60,6 +60,7 @@ import {
   type WsComponentMeta,
   type Pages,
   type ComponentBuildContribution,
+  isPublishedDeployment,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
@@ -1165,7 +1166,7 @@ export const prebuild = async (options: {
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
   const publishedDeployment =
-    siteData.build.deployment?.destination === "saas"
+    isPublishedDeployment(siteData.build.deployment)
       ? siteData.build.deployment
       : undefined;
   const getPublishedAssetUrl = (asset: Asset) => {
@@ -1173,7 +1174,7 @@ export const prebuild = async (options: {
       asset,
       "https://placeholder.local"
     );
-    return siteData.build.deployment?.destination === "saas" &&
+    return isPublishedDeployment(siteData.build.deployment) &&
       options.assets === false
       ? runtimeAsset.url
       : `${assetBaseUrl}${asset.name}`;
