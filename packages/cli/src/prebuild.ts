@@ -161,7 +161,7 @@ type SiteDataByPage = {
   };
 };
 
-const hydrateLocalMdxContents = async ({
+const hydrateLocalMarkdownContents = async ({
   artifact,
   assets,
   assetsDirectory,
@@ -175,7 +175,7 @@ const hydrateLocalMdxContents = async ({
     artifact.documents
       .filter(
         (document) =>
-          document.extension === "mdx" &&
+          (document.extension === "md" || document.extension === "mdx") &&
           document.contentRef !== undefined &&
           artifact.contents?.[document.contentRef] === undefined
       )
@@ -1016,8 +1016,8 @@ export const prebuild = async (options: {
     siteData.assetIndex === undefined
       ? undefined
       : await verifyContentArtifact(siteData.assetIndex);
-  if (verifiedAssetIndex !== undefined) {
-    verifiedAssetIndex = await hydrateLocalMdxContents({
+  if (verifiedAssetIndex !== undefined && options.previewIdentity === true) {
+    verifiedAssetIndex = await hydrateLocalMarkdownContents({
       artifact: verifiedAssetIndex,
       assets: siteData.assets,
       assetsDirectory:
@@ -1156,6 +1156,13 @@ export const prebuild = async (options: {
   }
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
+  const publishedAssetSourceOrigin =
+    siteData.build.deployment?.destination === "saas" &&
+    options.assets === false
+      ? siteData.build.deployment.target === "staging"
+        ? "https://assets-dev.webstudio.is"
+        : "https://assets.webstudio.is"
+      : undefined;
   const getPublishedAssetUrl = (asset: Asset) => {
     const runtimeAsset = toAssetReferenceRuntimeData(
       asset,
@@ -1172,11 +1179,21 @@ export const prebuild = async (options: {
         asset,
         "https://placeholder.local"
       );
+      const sourceUrl =
+        publishedAssetSourceOrigin === undefined || asset.type !== "file"
+          ? undefined
+          : (() => {
+              const url = new URL(runtimeAsset.url, publishedAssetSourceOrigin);
+              url.pathname = url.pathname.replace("/cgi/asset/", "/");
+              url.search = "";
+              return url.toString();
+            })();
       return [
         asset.id,
         {
           ...runtimeAsset,
           contentRef: asset.name,
+          ...(sourceUrl === undefined ? {} : { sourceUrl }),
           // SaaS serves project assets through its storage-backed proxy.
           // Generated projects with downloaded assets serve them locally.
           url: getPublishedAssetUrl(asset),

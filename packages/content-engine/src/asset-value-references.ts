@@ -16,6 +16,8 @@ export type AssetRuntimeData = Readonly<Record<string, unknown>> & {
   url: string;
   /** Immutable storage identity for graph-backed document URLs. */
   contentRef?: string;
+  /** Optional origin URL used by server-side document loading. */
+  sourceUrl?: string;
   width?: number;
   height?: number;
 };

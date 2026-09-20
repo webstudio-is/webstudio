@@ -556,7 +556,11 @@ describe("published asset resource runtime", () => {
       artifact: runtimeArtifact,
       runtimeAssets: {
         first: { url: "/assets/first.md", contentRef: "storage:first" },
-        second: { url: "/assets/second.md", contentRef: "storage:second" },
+        second: {
+          url: "/cgi/asset/second.md?format=raw",
+          sourceUrl: "https://assets.webstudio.is/second.md",
+          contentRef: "storage:second",
+        },
       },
       fetchDocument,
     });
@@ -596,7 +600,10 @@ describe("published asset resource runtime", () => {
       totalCount: 1,
     });
     expect(fetchDocument).toHaveBeenCalledOnce();
-    expect(String(fetchDocument.mock.calls[0][0])).toContain("second.md");
+    expect(fetchDocument).toHaveBeenCalledWith(
+      new URL("https://assets.webstudio.is/second.md"),
+      expect.anything()
+    );
   });
 
   test("hydrates parallel CDN roots with one cached shared dependency", async () => {

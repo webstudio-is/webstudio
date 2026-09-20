@@ -128,7 +128,7 @@ const createPublishedDocumentLoader = ({
       if (asset === undefined) {
         throw new Error(`Published document URL is unavailable for ${node.id}`);
       }
-      return new URL(asset.url, baseUrl);
+      return new URL(asset.sourceUrl ?? asset.url, baseUrl);
     },
     getMetadata: ({ node }) => ({
       format: node.format,
