@@ -21,7 +21,7 @@ import {
 import type { ContentRuntimeArtifact } from "./content-runtime-artifact";
 
 const assetsResourceUrl = "/$resources/assets";
-const automationEnvironmentVariable = "WEBSTUDIO_AUTOMATION";
+const automationEnvironmentVariable = "WEBSTUDIO_AUTOMATION_TOKEN";
 
 const asRecord = (value: unknown): Record<string, unknown> | undefined =>
   typeof value === "object" && value !== null

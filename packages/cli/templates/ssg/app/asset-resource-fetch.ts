@@ -21,6 +21,6 @@ export const createSsgAssetResourceFetch = ({
     automationToken:
       typeof process === "undefined"
         ? undefined
-        : process.env.WEBSTUDIO_AUTOMATION,
+        : process.env.WEBSTUDIO_AUTOMATION_TOKEN,
     runtimeAssets,
   });

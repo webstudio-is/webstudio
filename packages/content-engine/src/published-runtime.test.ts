@@ -446,7 +446,7 @@ describe("published asset resource runtime", () => {
       request: new Request("https://site.example/blog/post"),
       context: {
         cloudflare: {
-          env: { WEBSTUDIO_AUTOMATION: "test-automation-token" },
+          env: { WEBSTUDIO_AUTOMATION_TOKEN: "test-automation-token" },
         },
       },
       fallback: fetchDocument,
