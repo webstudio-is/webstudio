@@ -47,6 +47,7 @@ import {
   blockComponent,
   getContentBlockSources,
   findContentBlockBodyContainers,
+  getSaasDeploymentTarget,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
@@ -625,17 +626,21 @@ const materializeVerifiedAssetIndex = async ({
   index,
   runtimeAssets,
   includeDocumentRuntimeAssets,
+  includeContents,
   generatedDirectory,
   deploymentId,
 }: {
   index: ContentArtifactV1 | undefined;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   includeDocumentRuntimeAssets: boolean;
+  includeContents?: boolean;
   generatedDirectory: string;
   deploymentId: string;
 }) => {
   const runtimeIndex =
-    index === undefined ? undefined : createContentRuntimeArtifact(index);
+    index === undefined
+      ? undefined
+      : createContentRuntimeArtifact(index, { includeContents });
   const serializedIndex =
     runtimeIndex === undefined
       ? undefined
@@ -705,6 +710,7 @@ export const materializeAssetIndex = async ({
   index: PublishedProjectBundle["assetIndex"];
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   includeDocumentRuntimeAssets: boolean;
+  includeContents?: boolean;
   generatedDirectory: string;
   deploymentId: string;
 }) =>
@@ -1016,7 +1022,10 @@ export const prebuild = async (options: {
     siteData.assetIndex === undefined
       ? undefined
       : await verifyContentArtifact(siteData.assetIndex);
-  if (verifiedAssetIndex !== undefined && options.previewIdentity === true) {
+  if (
+    verifiedAssetIndex !== undefined &&
+    (options.previewIdentity === true || options.assets === true)
+  ) {
     verifiedAssetIndex = await hydrateLocalMarkdownContents({
       artifact: verifiedAssetIndex,
       assets: siteData.assets,
@@ -1156,10 +1165,13 @@ export const prebuild = async (options: {
   }
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
+  const saasDeployment =
+    siteData.build.deployment?.destination === "saas"
+      ? siteData.build.deployment
+      : undefined;
   const publishedAssetSourceOrigin =
-    siteData.build.deployment?.destination === "saas" &&
-    options.assets === false
-      ? siteData.build.deployment.target === "staging"
+    saasDeployment !== undefined && options.assets === false
+      ? getSaasDeploymentTarget(saasDeployment) === "staging"
         ? "https://assets-dev.webstudio.is"
         : "https://assets.webstudio.is"
       : undefined;
@@ -1895,6 +1907,9 @@ export const prebuild = async (options: {
     includeDocumentRuntimeAssets:
       assetCompilationPlan !== undefined &&
       requiresRuntimeDocumentData(assetCompilationPlan),
+    includeContents: !(
+      saasDeployment !== undefined && options.assets === false
+    ),
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
   });

@@ -33,3 +33,25 @@ export const deployment = z.union([
 ]);
 
 export type Deployment = z.infer<typeof deployment>;
+
+export type PublishTarget = "staging" | "production";
+export type SaasDeployment = Exclude<Deployment, { destination: "static" }>;
+
+/**
+ * Resolves the publish target for SaaS deployments, including deployments
+ * written before the explicit target field was introduced.
+ */
+export const getSaasDeploymentTarget = (
+  deployment: SaasDeployment
+): PublishTarget => {
+  if (deployment.target !== undefined) {
+    return deployment.target;
+  }
+  const stagingDomain = deployment.assetsDomain ?? deployment.projectDomain;
+  if (stagingDomain !== undefined) {
+    return deployment.domains.some((domain) => domain !== stagingDomain)
+      ? "production"
+      : "staging";
+  }
+  return deployment.domains.length > 1 ? "production" : "staging";
+};
