@@ -2449,6 +2449,7 @@ sitemap.map((page) => page.path);`
           deployment: {
             destination: "saas" as const,
             target,
+            assetOrigin,
             domains: ["example"],
             assetsDomain: "example",
             excludeWstdDomainFromSearch: false,

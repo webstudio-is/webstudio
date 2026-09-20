@@ -22,6 +22,7 @@ export const deployment = z.union([
   z.object({
     destination: z.literal("saas").optional(),
     target: z.enum(["staging", "production"]).optional(),
+    assetOrigin: z.string().url().optional(),
     domains: z.array(z.string()),
     assetsDomain: z.string().optional(),
     /**
@@ -39,14 +40,6 @@ export type PublishedDeployment = Exclude<
   Deployment,
   { destination: "static" }
 >;
-
-const assetOriginByTarget: Record<PublishTarget, string> = {
-  staging: "https://assets-dev.webstudio.is",
-  production: "https://assets.webstudio.is",
-};
-
-export const getAssetOrigin = (target: PublishTarget) =>
-  assetOriginByTarget[target];
 
 /**
  * Resolves the publish target for hosted deployments, including deployments

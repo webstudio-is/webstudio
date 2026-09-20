@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { getAssetOrigin, getPublishTarget } from "./deployment";
+import { getPublishTarget } from "./deployment";
 
 test.each([
   {
@@ -40,9 +40,4 @@ test.each([
   },
 ])("resolves $name published deployment target", ({ deployment, target }) => {
   expect(getPublishTarget(deployment)).toBe(target);
-});
-
-test("resolves the asset origin for each publish target", () => {
-  expect(getAssetOrigin("staging")).toBe("https://assets-dev.webstudio.is");
-  expect(getAssetOrigin("production")).toBe("https://assets.webstudio.is");
 });
