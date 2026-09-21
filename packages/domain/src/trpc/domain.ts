@@ -8,10 +8,7 @@ import {
   getProjectOwnerId,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import {
-  publishedDeploymentDestination,
-  templates,
-} from "@webstudio-is/sdk";
+import { publishedDeploymentDestination, templates } from "@webstudio-is/sdk";
 import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 import {

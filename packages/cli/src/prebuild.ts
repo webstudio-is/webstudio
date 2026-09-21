@@ -1165,10 +1165,9 @@ export const prebuild = async (options: {
   }
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
-  const publishedDeployment =
-    isPublishedDeployment(siteData.build.deployment)
-      ? siteData.build.deployment
-      : undefined;
+  const publishedDeployment = isPublishedDeployment(siteData.build.deployment)
+    ? siteData.build.deployment
+    : undefined;
   const getPublishedAssetUrl = (asset: Asset) => {
     const runtimeAsset = toAssetReferenceRuntimeData(
       asset,
