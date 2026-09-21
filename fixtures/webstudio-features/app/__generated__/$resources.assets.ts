@@ -12,8 +12,7 @@
     "type": "file",
     "url": "/assets/e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
     "mimeType": "audio/mpeg",
-    "contentRef": "e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
-    "sourceUrl": "/assets/e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3"
+    "contentRef": "e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3"
   },
   "42e55b0464790758b9352d675cf28fadfcf8a3259fc1e890100617d3e731be88": {
     "id": "42e55b0464790758b9352d675cf28fadfcf8a3259fc1e890100617d3e731be88",
