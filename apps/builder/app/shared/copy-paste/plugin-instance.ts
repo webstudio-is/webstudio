@@ -35,7 +35,12 @@ import {
   type WebstudioFragment,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
-import { $assetFolders, $instances, $project } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $instances,
+  $project,
+  readBuilderStateStores,
+} from "~/shared/sync/data-stores";
 import { deleteInstanceBySelector } from "../instance-utils/mutation";
 import {
   $allSelectedInstanceSelectors,
@@ -610,11 +615,33 @@ const handleCopyInstance = () =>
 
 const handleCutInstance = (
   writeClipboard: (data: string) => Promise<boolean>
-) =>
-  $allSelectedInstanceSelectors.get().length === 0 &&
-  $selectedInstancePath.get() === undefined
-    ? undefined
-    : handleCutInstanceAsync(writeClipboard);
+) => {
+  if (
+    $allSelectedInstanceSelectors.get().length === 0 &&
+    $selectedInstancePath.get() === undefined
+  ) {
+    return;
+  }
+  // Sync stores are immutable. Conservatively cancel deletion on any project
+  // data change, including edits made while preparing the clipboard snapshot.
+  const sourceData = readBuilderStateStores();
+  const projectId = $project.get()?.id;
+  return handleCutInstanceAsync(async (data) => {
+    if ((await writeClipboard(data)) === false) {
+      return false;
+    }
+    if (
+      projectId !== $project.get()?.id ||
+      shallowEqual(sourceData, readBuilderStateStores()) === false
+    ) {
+      builderApi.toast.info(
+        "The project changed while copying. Nothing was removed. Try cutting again."
+      );
+      return false;
+    }
+    return true;
+  });
+};
 
 export const instanceText = {
   name: "instance-text",

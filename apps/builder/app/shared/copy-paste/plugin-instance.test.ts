@@ -113,6 +113,99 @@ const getMapDifference = <Type extends Map<unknown, unknown>>(
 };
 
 describe("copy and cut guards", () => {
+  test.each(
+    [false, true].flatMap((multiple) =>
+      ["content", "property", "project"].map((change) => ({ multiple, change }))
+    )
+  )(
+    "preserves pending cut after $change change (multiple: $multiple)",
+    async ({ multiple, change }) => {
+      setPageRoot("body0");
+      const project = $project.get();
+      const roots = multiple ? ["box1", "box2"] : ["box1"];
+      $instances.set(
+        toMap([
+          createInstance(
+            "body0",
+            "Body",
+            roots.map((value) => ({ type: "id", value }))
+          ),
+          ...roots.map((id) =>
+            createInstance(id, "Box", [{ type: "text", value: "Before" }])
+          ),
+        ])
+      );
+      $props.set(new Map());
+      selectInstances(roots.map((id) => [id, "body0"]));
+      const notify = vi
+        .spyOn(builderApiTesting.api.toast, "info")
+        .mockImplementation(() => {});
+      let copied: string | undefined;
+      try {
+        await instanceText.onCut(async (data) => {
+          copied = data;
+          if (change === "content") {
+            const instances = new Map($instances.get());
+            instances.set(
+              "box1",
+              createInstance("box1", "Box", [
+                { type: "text", value: "New edit" },
+              ])
+            );
+            $instances.set(instances);
+          }
+          if (change === "property") {
+            $props.set(
+              new Map([
+                [
+                  "prop",
+                  {
+                    id: "prop",
+                    instanceId: "box1",
+                    name: "title",
+                    type: "string",
+                    value: "New edit",
+                  },
+                ],
+              ])
+            );
+          }
+          if (change === "project") {
+            $project.set({ id: "another-project" } as Project);
+          }
+          return true;
+        });
+        const transfer = JSON.parse(copied ?? "");
+        const fragment = multiple
+          ? transfer["@webstudio/instances/v0.1"].fragment
+          : transfer["@webstudio/instance/v0.1"];
+        expect(
+          fragment.instances.find(
+            (instance: Instance) => instance.id === "box1"
+          ).children
+        ).toEqual([{ type: "text", value: "Before" }]);
+        expect($instances.get().get("body0")?.children).toEqual(
+          roots.map((value) => ({ type: "id", value }))
+        );
+        for (const id of roots) {
+          expect($instances.get().has(id)).toBe(true);
+        }
+        if (change === "content") {
+          expect($instances.get().get("box1")?.children).toEqual([
+            { type: "text", value: "New edit" },
+          ]);
+        }
+        if (change === "property") {
+          expect($props.get().get("prop")?.value).toBe("New edit");
+        }
+        expect(notify).toHaveBeenCalledTimes(1);
+      } finally {
+        $project.set(project);
+        $props.set(new Map());
+      }
+    }
+  );
+
   test("does not copy without a selected instance", async () => {
     selectInstance(undefined);
 
