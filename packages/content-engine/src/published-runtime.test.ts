@@ -190,7 +190,7 @@ describe("published asset resource runtime", () => {
           expect(request.headers.get("authorization")).toBe(expected);
           expect(request.headers.has("cookie")).toBe(false);
           if (expected !== null) {
-            expect(request.redirect).toBe("error");
+            expect(request.redirect).toBe("manual");
           }
         }
       );

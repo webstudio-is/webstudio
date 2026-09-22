@@ -170,7 +170,9 @@ const createPublishedDocumentRequest = ({
     request.headers.set("authorization", authorization);
     // Workers can forward headers when following redirects. Asset requests
     // carrying a visitor's credentials must never follow one.
-    return new Request(request, { redirect: "error" });
+    // Use manual because older Workers runtimes reject redirect: "error".
+    // The document loader rejects the resulting non-OK redirect response.
+    return new Request(request, { redirect: "manual" });
   }
   return request;
 };
