@@ -367,7 +367,7 @@ describe("cut", () => {
     ]);
 
     emitCommand("cut");
-    await Promise.resolve();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalled());
 
     expect(JSON.parse(writeText.mock.calls[0]?.[0] ?? "")).toMatchObject({
       "@webstudio/instances/v0.1": {

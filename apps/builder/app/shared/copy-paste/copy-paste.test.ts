@@ -123,7 +123,9 @@ const createClipboardEvent = (type: "copy" | "cut" | "paste") => {
     getData: (mimeType: string) =>
       connected ? (data.get(mimeType) ?? "") : "",
     setData: (mimeType: string, value: string) => {
-      data.set(mimeType, value);
+      if (connected) {
+        data.set(mimeType, value);
+      }
     },
   } as DataTransfer;
   const event = new Event(type, {
@@ -131,7 +133,7 @@ const createClipboardEvent = (type: "copy" | "cut" | "paste") => {
     cancelable: true,
   }) as ClipboardEvent;
   Object.defineProperty(event, "clipboardData", { value: clipboardData });
-  if (type === "paste") {
+  if (type === "paste" || type === "cut") {
     disconnectClipboardData.set(event, () => {
       connected = false;
     });
@@ -183,7 +185,7 @@ const setupToastSuccess = () => {
 };
 
 const waitForClipboardEvent = () =>
-  new Promise((resolve) => setTimeout(resolve, 0));
+  new Promise((resolve) => setTimeout(resolve, 20));
 
 const pastePlainText = async (
   value: unknown,
@@ -265,7 +267,7 @@ test("does not copy instance to clipboard when no instance is selected", async (
   expect(writeText).not.toHaveBeenCalled();
 });
 
-test("copies selected instance through clipboard event", () => {
+test("copies selected instance through clipboard event", async () => {
   resetStores();
   const abortController = new AbortController();
   initCopyPaste({ signal: abortController.signal });
@@ -295,6 +297,7 @@ test("copies selected instance through clipboard event", () => {
   const { clipboardData, event } = createClipboardEvent("copy");
 
   dispatchClipboardEvent(event);
+  await waitForClipboardEvent();
 
   expect(event.defaultPrevented).toBe(true);
   expect(clipboardData.getData("text/plain")).toContain(
@@ -303,7 +306,7 @@ test("copies selected instance through clipboard event", () => {
   abortController.abort();
 });
 
-test("copies multi-selected instances through clipboard event", () => {
+test("copies multi-selected instances through clipboard event", async () => {
   resetStores();
   const abortController = new AbortController();
   initCopyPaste({ signal: abortController.signal });
@@ -348,6 +351,7 @@ test("copies multi-selected instances through clipboard event", () => {
   const { clipboardData, event } = createClipboardEvent("copy");
 
   dispatchClipboardEvent(event);
+  await waitForClipboardEvent();
 
   expect(event.defaultPrevented).toBe(true);
   expect(JSON.parse(clipboardData.getData("text/plain"))).toMatchObject({
@@ -358,7 +362,7 @@ test("copies multi-selected instances through clipboard event", () => {
   abortController.abort();
 });
 
-test("content mode copies selected instances through clipboard event", () => {
+test("content mode copies selected instances through clipboard event", async () => {
   resetStores();
   const abortController = new AbortController();
   const toastInfo = setupToastInfo();
@@ -389,6 +393,7 @@ test("content mode copies selected instances through clipboard event", () => {
   const { clipboardData, event } = createClipboardEvent("copy");
 
   dispatchClipboardEvent(event);
+  await waitForClipboardEvent();
 
   expect(event.defaultPrevented).toBe(true);
   expect(clipboardData.getData("text/plain")).toContain(
@@ -398,7 +403,7 @@ test("content mode copies selected instances through clipboard event", () => {
   abortController.abort();
 });
 
-test("content mode reports unsupported copy selection", () => {
+test("content mode reports unsupported copy selection", async () => {
   resetStores();
   const abortController = new AbortController();
   const toastInfo = setupToastInfo();
@@ -406,6 +411,7 @@ test("content mode reports unsupported copy selection", () => {
   const { event } = createClipboardEvent("copy");
 
   dispatchClipboardEvent(event);
+  await waitForClipboardEvent();
 
   expect(event.defaultPrevented).toBe(false);
   expect(toastInfo).toHaveBeenCalledWith(
@@ -447,6 +453,7 @@ test("content mode pastes instance clipboard data through clipboard event", asyn
   const { clipboardData: copyData, event: copyEvent } =
     createClipboardEvent("copy");
   dispatchClipboardEvent(copyEvent);
+  await waitForClipboardEvent();
   const clipboardText = copyData.getData("text/plain");
   selectInstance(["body-id"]);
   const { clipboardData, event } = createClipboardEvent("paste");
@@ -521,6 +528,7 @@ test("pastes multi-selected instance clipboard data through clipboard event", as
   const { clipboardData: copyData, event: copyEvent } =
     createClipboardEvent("copy");
   dispatchClipboardEvent(copyEvent);
+  await waitForClipboardEvent();
   const clipboardText = copyData.getData("text/plain");
   expect(JSON.parse(clipboardText)).toMatchObject({
     "@webstudio/instances/v0.1": {
@@ -1000,8 +1008,10 @@ test("does not intercept native paste while editing text", async () => {
   abortController.abort();
 });
 
-test("cuts multi-selected instances through clipboard event", () => {
+test("cuts multi-selected instances through clipboard event", async () => {
   resetStores();
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
   const abortController = new AbortController();
   initCopyPaste({ signal: abortController.signal });
   $instances.set(
@@ -1042,12 +1052,13 @@ test("cuts multi-selected instances through clipboard event", () => {
     ["box-id", "body-id"],
     ["heading-id", "body-id"],
   ]);
-  const { clipboardData, event } = createClipboardEvent("cut");
+  const { event } = createClipboardEvent("cut");
 
   dispatchClipboardEvent(event);
+  await waitForClipboardEvent();
 
   expect(event.defaultPrevented).toBe(true);
-  expect(JSON.parse(clipboardData.getData("text/plain"))).toMatchObject({
+  expect(JSON.parse(writeText.mock.calls[0]?.[0] ?? "")).toMatchObject({
     "@webstudio/instances/v0.1": {
       rootInstanceIds: ["box-id", "heading-id"],
     },
@@ -1058,7 +1069,7 @@ test("cuts multi-selected instances through clipboard event", () => {
   abortController.abort();
 });
 
-test("content mode blocks cut through clipboard event", () => {
+test("content mode blocks cut through clipboard event", async () => {
   resetStores();
   const abortController = new AbortController();
   const toastInfo = setupToastInfo();
@@ -1066,6 +1077,7 @@ test("content mode blocks cut through clipboard event", () => {
   const { event } = createClipboardEvent("cut");
 
   dispatchClipboardEvent(event);
+  await waitForClipboardEvent();
 
   expect(event.defaultPrevented).toBe(false);
   expect(toastInfo).toHaveBeenCalledWith(
@@ -1449,6 +1461,92 @@ test("does not cut instance to clipboard when no instance is selected", async ()
 
   expect(writeText).not.toHaveBeenCalled();
 });
+
+test.each(["keyboard", "programmatic"] as const)(
+  "%s cut preserves selected instances until the clipboard write succeeds",
+  async (mode) => {
+    for (const multiple of [false, true]) {
+      for (const outcome of ["success", "failure", "disabled"] as const) {
+        resetStores();
+        setupPage();
+        const toastError = setupToastError();
+        const roots = multiple ? ["box-id", "heading-id"] : ["box-id"];
+        const instances = new Map<string, Instance>([
+          [
+            "body-id",
+            {
+              type: "instance",
+              id: "body-id",
+              component: "Body",
+              children: roots.map((value) => ({ type: "id", value })),
+            },
+          ],
+          ...roots.map((id): [string, Instance] => [
+            id,
+            { type: "instance", id, component: "Box", children: [] },
+          ]),
+        ]);
+        $instances.set(instances);
+        selectInstances(roots.map((id) => [id, "body-id"]));
+        let finishWrite = () => {};
+        const writeText = vi.fn(
+          () =>
+            new Promise<void>((resolve, reject) => {
+              finishWrite = () =>
+                outcome === "failure"
+                  ? reject(new Error("Clipboard write denied"))
+                  : resolve();
+            })
+        );
+        vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+        const controller = new AbortController();
+        initCopyPaste({ signal: controller.signal });
+        if (outcome === "disabled") {
+          $authTokenPermissions.set({
+            ...$authTokenPermissions.get(),
+            canCopy: false,
+          });
+        }
+        let operation: Promise<unknown> | undefined;
+        try {
+          if (mode === "keyboard") {
+            const { event } = createClipboardEvent("cut");
+            dispatchClipboardEvent(event);
+          } else {
+            operation = Promise.resolve(cutInstance()).catch(
+              (error: unknown) => error
+            );
+          }
+          await waitForClipboardEvent();
+          expect($instances.get()).toEqual(instances);
+          expect(writeText).toHaveBeenCalledTimes(
+            outcome === "disabled" ? 0 : 1
+          );
+          finishWrite();
+          await operation;
+          await waitForClipboardEvent();
+          if (outcome === "success") {
+            for (const id of roots) {
+              expect($instances.get().has(id)).toBe(false);
+            }
+            expect($instances.get().get("body-id")?.children).toEqual([]);
+          } else {
+            expect($instances.get()).toEqual(instances);
+            if (mode === "keyboard" && outcome === "failure") {
+              expect(toastError).toHaveBeenCalled();
+            }
+          }
+        } finally {
+          finishWrite();
+          await operation;
+          await waitForClipboardEvent();
+          controller.abort();
+          vi.restoreAllMocks();
+        }
+      }
+    }
+  }
+);
 
 test("cuts selected instance to clipboard and removes it", async () => {
   resetStores();

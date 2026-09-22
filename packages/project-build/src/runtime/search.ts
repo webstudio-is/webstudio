@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { isLiteralExpression } from "@webstudio-is/expression";
+import {
+  isLiteralExpression,
+  parseStringLiteralExpression,
+} from "@webstudio-is/expression";
 import { isAssetsResource, type StyleDecl } from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
@@ -8,7 +11,6 @@ import { validateSelector } from "@webstudio-is/css-data";
 import * as bcp47 from "bcp-47";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
-import { computeExpression } from "./data";
 import { listAssets } from "./assets";
 import { listCssVariables, listDesignTokens } from "./styles";
 import { getInstanceDepths } from "./instances";
@@ -335,8 +337,7 @@ const getStaticString = (expression: string) => {
   if (isLiteralExpression(expression) === false) {
     return;
   }
-  const value = computeExpression(expression, new Map());
-  return typeof value === "string" ? value : undefined;
+  return parseStringLiteralExpression(expression);
 };
 
 export const analyzeProject = (

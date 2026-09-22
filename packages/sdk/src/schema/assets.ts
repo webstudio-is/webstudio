@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { assetFolderId } from "./asset-folders";
 import {
+  FONT_FORMATS,
+  type FontFormat,
   fontFormat,
   fontMeta,
   fontMetaUpdate,
@@ -68,7 +70,12 @@ export type VideoAsset = z.infer<typeof videoAsset>;
 
 export const fileAsset = z.object({
   ...baseAsset,
-  format: z.string(),
+  format: z
+    .string()
+    .refine(
+      (format) => FONT_FORMATS.has(format as FontFormat) === false,
+      "Font formats must use font asset type"
+    ),
   meta: z.object({}),
   type: z.literal(assetType.enum.file),
 });

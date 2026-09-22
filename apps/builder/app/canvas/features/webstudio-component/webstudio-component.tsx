@@ -6,6 +6,7 @@ import {
   useRef,
   useLayoutEffect,
   useMemo,
+  useState,
   useContext,
   Fragment,
   type ReactNode,
@@ -56,12 +57,10 @@ import {
   getIndexedInstanceId,
   $registeredComponentMetas,
   $variableValuesByInstanceSelector,
-  $unscopedVariableValues,
   $isDesignMode,
   $selectedInstanceRenderState,
   $selectedPageHash,
 } from "~/shared/nano-states";
-import { getInstanceVariableValues } from "~/shared/instance-utils/variable-values";
 import { $project, $props } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -553,15 +552,25 @@ const ExternalContentRootLoader = ({
       }),
     [allProps, instance.id]
   );
-  const sourceAssetId = useMemo(() => {
+  const [sourceAssetId, setSourceAssetId] = useState<string>();
+  useEffect(() => {
+    let active = true;
     if (source === undefined) {
+      setSourceAssetId(undefined);
       return;
     }
-    return resolveContentBlockOccurrenceAssetId({
+    void resolveContentBlockOccurrenceAssetId({
       source,
       instanceSelector,
       variableValuesByRenderScope: variableValues,
+    }).then((assetId) => {
+      if (active) {
+        setSourceAssetId(assetId);
+      }
     });
+    return () => {
+      active = false;
+    };
   }, [instanceSelector, source, variableValues]);
 
   const diagnosticsSnapshot = findExternalContentRoot(
@@ -698,10 +707,6 @@ const WebstudioComponentCanvasInner = forwardRef<
 
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
-  const hasExpressionChildren = instance.children.some(
-    (child) => child.type === "expression"
-  );
-
   const children =
     getTextContent(instanceProps) ??
     createInstanceChildrenElements({
@@ -710,13 +715,6 @@ const WebstudioComponentCanvasInner = forwardRef<
       children: instance.children,
       Component: WebstudioComponentCanvas,
       components,
-      variableValues: hasExpressionChildren
-        ? getInstanceVariableValues(
-            $variableValuesByInstanceSelector.get(),
-            instanceSelector,
-            $unscopedVariableValues.get()
-          )
-        : undefined,
     });
   /**
    * Prevents edited element from having a size of 0 on the first render.
@@ -779,16 +777,6 @@ const WebstudioComponentCanvasInner = forwardRef<
               children: instance.children,
               Component: WebstudioComponentCanvas,
               components,
-              variableValues: hasExpressionChildren
-                ? getInstanceVariableValues(
-                    $variableValuesByInstanceSelector.get(),
-                    [
-                      getIndexedInstanceId(instance.id, key),
-                      ...instanceSelector,
-                    ],
-                    $unscopedVariableValues.get()
-                  )
-                : undefined,
             })}
           </Fragment>
         ));
@@ -1020,9 +1008,6 @@ const WebstudioComponentPreviewInner = forwardRef<
   const { isSafeMode } = useContext(ReactSdkContext);
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
-  const hasExpressionChildren = instance.children.some(
-    (child) => child.type === "expression"
-  );
   const props: {
     [componentAttribute]: string;
     [idAttribute]: string;
@@ -1058,16 +1043,6 @@ const WebstudioComponentPreviewInner = forwardRef<
               children: instance.children,
               Component: WebstudioComponentPreview,
               components,
-              variableValues: hasExpressionChildren
-                ? getInstanceVariableValues(
-                    $variableValuesByInstanceSelector.get(),
-                    [
-                      getIndexedInstanceId(instance.id, key),
-                      ...instanceSelector,
-                    ],
-                    $unscopedVariableValues.get()
-                  )
-                : undefined,
             })}
           </Fragment>
         ));
@@ -1125,13 +1100,6 @@ const WebstudioComponentPreviewInner = forwardRef<
           children: instance.children,
           Component: WebstudioComponentPreview,
           components,
-          variableValues: hasExpressionChildren
-            ? getInstanceVariableValues(
-                $variableValuesByInstanceSelector.get(),
-                instanceSelector,
-                $unscopedVariableValues.get()
-              )
-            : undefined,
         })}
     </Component>
   );

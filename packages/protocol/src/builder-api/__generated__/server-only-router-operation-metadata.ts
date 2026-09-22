@@ -1399,6 +1399,30 @@ export const serverOnlyRouterOperationMetadata = {
       additionalProperties: true,
     },
   },
+  "publish.validate": {
+    id: "publish.validate",
+    command: "check-publish-readiness",
+    method: "query",
+    path: "api.publish.validate",
+    client: "checkPublishReadiness",
+    permit: "edit",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: {
+          type: "string",
+          enum: ["staging", "production"],
+        },
+        domains: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+      },
+      required: ["target"],
+    },
+  },
   "publish.list": {
     id: "publish.list",
     command: "list-publishes",

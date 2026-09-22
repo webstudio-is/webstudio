@@ -11,6 +11,10 @@ export const templates = z.enum([
 
 export type Templates = z.infer<typeof templates>;
 
+// This is the persisted/API value for the hosted deployment destination.
+// Keep the wire value here so the rest of the builder can use domain language.
+export const publishedDeploymentDestination = "saas" as const;
+
 export const deployment = z.union([
   z.object({
     destination: z.literal("static"),
@@ -20,7 +24,7 @@ export const deployment = z.union([
     templates: z.array(templates),
   }),
   z.object({
-    destination: z.literal("saas").optional(),
+    destination: z.literal(publishedDeploymentDestination).optional(),
     target: z.enum(["staging", "production"]).optional(),
     domains: z.array(z.string()),
     assetsDomain: z.string().optional(),
@@ -33,3 +37,33 @@ export const deployment = z.union([
 ]);
 
 export type Deployment = z.infer<typeof deployment>;
+
+export type PublishTarget = "staging" | "production";
+export type PublishedDeployment = Exclude<
+  Deployment,
+  { destination: "static" }
+>;
+
+export const isPublishedDeployment = (
+  deployment: Deployment | undefined
+): deployment is PublishedDeployment =>
+  deployment?.destination === publishedDeploymentDestination;
+
+/**
+ * Resolves the publish target for hosted deployments, including deployments
+ * written before the explicit target field was introduced.
+ */
+export const getPublishTarget = (
+  deployment: PublishedDeployment
+): PublishTarget => {
+  if (deployment.target !== undefined) {
+    return deployment.target;
+  }
+  const stagingDomain = deployment.assetsDomain ?? deployment.projectDomain;
+  if (stagingDomain !== undefined) {
+    return deployment.domains.some((domain) => domain !== stagingDomain)
+      ? "production"
+      : "staging";
+  }
+  return deployment.domains.length > 1 ? "production" : "staging";
+};

@@ -60,6 +60,7 @@ import {
   type WsComponentMeta,
   type Pages,
   type ComponentBuildContribution,
+  isPublishedDeployment,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
@@ -118,7 +119,11 @@ import {
 } from "./fs-utils";
 import { htmlToJsx } from "./html-to-jsx";
 import { compareMedia } from "@webstudio-is/css-engine";
-import { LOCAL_ASSETS_DIR, materializeAssetFiles } from "./asset-files";
+import {
+  getLocalAssetPath,
+  LOCAL_ASSETS_DIR,
+  materializeAssetFiles,
+} from "./asset-files";
 import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
@@ -155,6 +160,57 @@ type SiteDataByPage = {
     pages: Array<Page>;
     publishedContentBlocks?: ReadonlyMap<string, PublishedContentBlock>;
   };
+};
+
+const hydrateLocalMarkdownContents = async ({
+  artifact,
+  assets,
+  assetsDirectory,
+  includeMarkdown,
+}: {
+  artifact: ContentArtifactV1;
+  assets: readonly Asset[];
+  assetsDirectory: string;
+  includeMarkdown: boolean;
+}): Promise<ContentArtifactV1> => {
+  const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
+  const missingContents = await Promise.all(
+    artifact.documents
+      .filter(
+        (document) =>
+          (document.extension === "mdx" ||
+            (includeMarkdown && document.extension === "md")) &&
+          document.contentRef !== undefined &&
+          artifact.contents?.[document.contentRef] === undefined
+      )
+      .map(async (document) => {
+        const asset = assetsById.get(document._id);
+        if (asset === undefined) {
+          return;
+        }
+        const content = await readFile(
+          getLocalAssetPath(asset.name, assetsDirectory),
+          "utf8"
+        ).catch(() => undefined);
+        return content === undefined
+          ? undefined
+          : ([document.contentRef, content] as const);
+      })
+  );
+  const contents = Object.fromEntries(
+    missingContents.filter(
+      (entry): entry is readonly [string, string] => entry !== undefined
+    )
+  );
+  return Object.keys(contents).length === 0
+    ? artifact
+    : {
+        ...artifact,
+        contents: {
+          ...artifact.contents,
+          ...contents,
+        },
+      };
 };
 
 const getBoundSystemRouteParameter = (expression: string) => {
@@ -398,7 +454,9 @@ export const getAssetResourcePrerenderPaths = ({
       enumerableConfigurations.length === 0
     ) {
       throw new Error(
-        `Dynamic SSG route parameter ${JSON.stringify(firstUnenumerableParameter)} cannot be completely enumerated from every Assets query branch`
+        `Dynamic SSG route parameter ${JSON.stringify(
+          firstUnenumerableParameter
+        )} cannot be completely enumerated from every Assets query branch`
       );
     }
   }
@@ -453,7 +511,9 @@ export const getAssetResourcePrerenderPaths = ({
         for (const match of [...pathParameters].reverse()) {
           const name = match.groups?.name as string;
           const value = values.get(name) as string;
-          path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
+          path = `${path.slice(0, match.index)}${encodeURIComponent(
+            value
+          )}${path.slice((match.index ?? 0) + match[0].length)}`;
         }
         paths.add(path);
         if (paths.size > assetResourceLimits.candidateDocuments) {
@@ -564,8 +624,8 @@ const createRuntimeFetch = createGeneratedAssetResourceRuntime({
   runtimeAssets,
 });
 
-export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${inputType}) =>
-  createRuntimeFetch({ request, fallback });
+export const createGeneratedAssetResourceFetch = ({ request, context, fallback }: ${inputType}) =>
+  createRuntimeFetch({ request, context, fallback });
 `;
 };
 
@@ -573,17 +633,21 @@ const materializeVerifiedAssetIndex = async ({
   index,
   runtimeAssets,
   includeDocumentRuntimeAssets,
+  includeContents,
   generatedDirectory,
   deploymentId,
 }: {
   index: ContentArtifactV1 | undefined;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   includeDocumentRuntimeAssets: boolean;
+  includeContents?: boolean;
   generatedDirectory: string;
   deploymentId: string;
 }) => {
   const runtimeIndex =
-    index === undefined ? undefined : createContentRuntimeArtifact(index);
+    index === undefined
+      ? undefined
+      : createContentRuntimeArtifact(index, { includeContents });
   const serializedIndex =
     runtimeIndex === undefined
       ? undefined
@@ -653,6 +717,7 @@ export const materializeAssetIndex = async ({
   index: PublishedProjectBundle["assetIndex"];
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   includeDocumentRuntimeAssets: boolean;
+  includeContents?: boolean;
   generatedDirectory: string;
   deploymentId: string;
 }) =>
@@ -923,8 +988,9 @@ export const prebuild = async (options: {
     preserveTemplates: preserveRouteTemplates,
     templatesDirectory: join(buildRoot, routeTemplatesDirectory),
   };
+  const isStaticBuild = options.template.includes("ssg");
   let framework;
-  if (options.template.includes("ssg")) {
+  if (isStaticBuild) {
     framework = await createVikeSsgFramework(frameworkOptions);
   } else if (options.template.includes("react-router")) {
     framework = await createReactRouterFramework(frameworkOptions);
@@ -960,10 +1026,24 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const publicationBuild = { ...siteData.build, pages };
-  const verifiedAssetIndex =
+  let verifiedAssetIndex =
     siteData.assetIndex === undefined
       ? undefined
       : await verifyContentArtifact(siteData.assetIndex);
+  if (
+    verifiedAssetIndex !== undefined &&
+    (options.previewIdentity === true || options.assets === true)
+  ) {
+    verifiedAssetIndex = await hydrateLocalMarkdownContents({
+      artifact: verifiedAssetIndex,
+      assets: siteData.assets,
+      assetsDirectory:
+        options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR),
+      // SSR only needs local MDX sources during component compilation. Its
+      // runtime reads article contents over HTTP, just like hosted sites.
+      includeMarkdown: isStaticBuild,
+    });
+  }
   let dynamicMdxCandidates: ReadonlyMap<string, readonly string[]> | undefined;
   if (hasDynamicPublishedMdxSources(publicationBuild)) {
     dynamicMdxCandidates =
@@ -1101,7 +1181,7 @@ export const prebuild = async (options: {
       asset,
       "https://placeholder.local"
     );
-    return siteData.build.deployment?.destination === "saas" &&
+    return isPublishedDeployment(siteData.build.deployment) &&
       options.assets === false
       ? runtimeAsset.url
       : `${assetBaseUrl}${asset.name}`;
@@ -1117,8 +1197,9 @@ export const prebuild = async (options: {
         {
           ...runtimeAsset,
           contentRef: asset.name,
-          // SaaS serves project assets through its storage-backed proxy.
-          // Generated projects with downloaded assets serve them locally.
+          // Hosted deployments serve project assets through storage-backed
+          // proxies. Generated projects with downloaded assets serve them
+          // locally.
           url: getPublishedAssetUrl(asset),
         },
       ];
@@ -1553,9 +1634,13 @@ export const prebuild = async (options: {
     for (const contribution of componentBuildContributions.values()) {
       for (const buildImport of contribution.imports) {
         if (buildImport.imported === undefined) {
-          importsString += `import ${buildImport.local} from ${JSON.stringify(buildImport.source)};\n`;
+          importsString += `import ${buildImport.local} from ${JSON.stringify(
+            buildImport.source
+          )};\n`;
         } else {
-          importsString += `import { ${buildImport.imported} as ${buildImport.local} } from ${JSON.stringify(buildImport.source)};\n`;
+          importsString += `import { ${buildImport.imported} as ${
+            buildImport.local
+          } } from ${JSON.stringify(buildImport.source)};\n`;
         }
       }
       componentBuildDeclarations.push(...contribution.declarations);
@@ -1628,7 +1713,11 @@ export const prebuild = async (options: {
 
       export const projectId = "${siteData.build.projectId}";
 
-      ${pagePath === "/" ? `export const projectVersion = ${siteData.build.version};` : ""}
+      ${
+        pagePath === "/"
+          ? `export const projectVersion = ${siteData.build.version};`
+          : ""
+      }
 
       export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
 
@@ -1698,6 +1787,7 @@ export const prebuild = async (options: {
         dataSources,
         props,
         resources,
+        instances,
         contentBlockResourceSelections: Array.from(
           pageData.publishedContentBlocks?.values() ?? []
         ).flatMap((block) =>
@@ -1806,7 +1896,11 @@ export const prebuild = async (options: {
   await writeGeneratedFile(
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
-      export const sitemap: Array<{ path: string; lastModified: string }> = ${JSON.stringify(sitemap, null, 2)};
+      export const sitemap: Array<{ path: string; lastModified: string }> = ${JSON.stringify(
+        sitemap,
+        null,
+        2
+      )};
     `
   );
 
@@ -1818,6 +1912,9 @@ export const prebuild = async (options: {
     includeDocumentRuntimeAssets:
       assetCompilationPlan !== undefined &&
       requiresRuntimeDocumentData(assetCompilationPlan),
+    // Only static prerendering consumes embedded source files. Both local
+    // and hosted SSR use the same HTTP content loader and serve assets.
+    includeContents: isStaticBuild,
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
   });

@@ -1767,6 +1767,21 @@ test("publishes project", async () => {
   });
 });
 
+test("checks publish readiness without publishing", async () => {
+  await expectCommandCall({
+    options: {
+      command: "check-publish-readiness",
+      target: "production",
+      domain: ["example.com,www.example.com"],
+    },
+    call: apiCalls.checkPublishReadiness,
+    connection: {
+      target: "production",
+      domains: ["example.com", "www.example.com"],
+    },
+  });
+});
+
 test("lists publishes", async () => {
   await expectCommandCall({
     options: { command: "list-publishes" },

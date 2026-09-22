@@ -695,6 +695,16 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio delete-resource --resource resource-id --json"],
   },
   {
+    command: "check-publish-readiness",
+    description:
+      "Check publish access, selected domains, and content diagnostics without starting a publish. Use audit for project-wide quality checks.",
+    requiredOptions: ["target", "json"],
+    examples: [
+      "webstudio check-publish-readiness --target production --json",
+      'MCP tool: check-publish-readiness {"target":"production"}',
+    ],
+  },
+  {
     command: "publish",
     description:
       "Publish the configured project to staging or production. Uses the project domain by default and, for production, active verified custom domains. If local development cannot contact the deployment backend, the JSON response includes warning while still returning the local publish job id.",

@@ -50,6 +50,7 @@ import {
   fullCanonicalAssetMetadataRequirements,
   materializeContentSource,
   materializeContentSnapshot,
+  mapBounded,
   ContentSourceChangedError,
   DocumentSourceDiagnosticsError,
   readBoundedBytes,
@@ -2107,14 +2108,17 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async validateCollections(assets: readonly Asset[]) {
     await this.assertCanBuild();
-    for (const folderId of getCollectionFolderIds(assets)) {
-      await validateCollectionFolder({
-        assets,
-        folderId,
-        assetStore: this.assetStore,
-        validateEntries: false,
-      });
-    }
+    await mapBounded(
+      [...getCollectionFolderIds(assets)],
+      contentEngineLimits.concurrentContentReads,
+      (folderId) =>
+        validateCollectionFolder({
+          assets,
+          folderId,
+          assetStore: this.assetStore,
+          validateEntries: false,
+        })
+    );
   }
 
   private async synchronizeTrusted(
@@ -2380,50 +2384,59 @@ export class PostgresAssetRepository implements AssetRepository {
             : []
         )
       );
-      for (const folderId of folderIds) {
-        const siblings = entries.filter(
-          (candidate) => candidate.document.folderId === folderId
-        );
-        try {
-          const inspected = await inspectContentCollection({
-            files: siblings.map((entry) => ({
-              file: entry,
-              id: entry.assetId,
-              filename: entry.document.name,
-              basename: entry.document.key,
-              isMdx: entry.document.extension.toLowerCase() === "mdx",
-            })),
-            readSource: async ({ file: entry }) => {
-              if (entry.document.size > contentEngineLimits.hydratedFileBytes) {
-                throw new ContentCollectionError(
-                  `Collection file "${entry.document.name}" exceeds the content size limit`
-                );
-              }
-              const response = await readFile(entry.document.contentRef);
-              const bytes = await readBoundedBytes(
-                response.data,
-                contentEngineLimits.hydratedFileBytes
-              );
-              if (bytes.byteLength !== entry.document.size) {
-                throw new ContentCollectionError(
-                  `Collection file "${entry.document.name}" content length does not match its metadata`
-                );
-              }
-              return decodeUtf8(bytes);
-            },
-            validateTemplate: false,
-            validateEntries: false,
-          });
-          reservedAssetIds.add(inspected.configFile.id);
-          reservedAssetIds.add(inspected.templateFile.id);
-        } catch (error) {
-          if (error instanceof ContentCollectionError) {
-            throw error;
-          }
-          throw new ContentCollectionError(
-            "Collection configuration could not be read"
+      const inspectedCollections = await mapBounded(
+        [...folderIds],
+        contentEngineLimits.concurrentContentReads,
+        async (folderId) => {
+          const siblings = entries.filter(
+            (candidate) => candidate.document.folderId === folderId
           );
+          try {
+            const inspected = await inspectContentCollection({
+              files: siblings.map((entry) => ({
+                file: entry,
+                id: entry.assetId,
+                filename: entry.document.name,
+                basename: entry.document.key,
+                isMdx: entry.document.extension.toLowerCase() === "mdx",
+              })),
+              readSource: async ({ file: entry }) => {
+                if (
+                  entry.document.size > contentEngineLimits.hydratedFileBytes
+                ) {
+                  throw new ContentCollectionError(
+                    `Collection file "${entry.document.name}" exceeds the content size limit`
+                  );
+                }
+                const response = await readFile(entry.document.contentRef);
+                const bytes = await readBoundedBytes(
+                  response.data,
+                  contentEngineLimits.hydratedFileBytes
+                );
+                if (bytes.byteLength !== entry.document.size) {
+                  throw new ContentCollectionError(
+                    `Collection file "${entry.document.name}" content length does not match its metadata`
+                  );
+                }
+                return decodeUtf8(bytes);
+              },
+              validateTemplate: false,
+              validateEntries: false,
+            });
+            return [inspected.configFile.id, inspected.templateFile.id];
+          } catch (error) {
+            if (error instanceof ContentCollectionError) {
+              throw error;
+            }
+            throw new ContentCollectionError(
+              "Collection configuration could not be read"
+            );
+          }
         }
+      );
+      for (const [configId, templateId] of inspectedCollections) {
+        reservedAssetIds.add(configId);
+        reservedAssetIds.add(templateId);
       }
       return entries.filter(
         (entry) => reservedAssetIds.has(entry.assetId) === false

@@ -1,26 +1,21 @@
-import type { Project } from "@webstudio-is/project";
-import { nativeClient } from "~/shared/trpc/trpc-client";
+import type { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
 import { showPublishWarning } from "./publish-warning";
 
-export const showContentDatabasePublishWarning = async ({
-  projectId,
-  setWarning,
-}: {
-  projectId: Project["id"];
-  setWarning: (warning: JSX.Element) => void;
-}) => {
-  const diagnostics =
-    await nativeClient.build.contentDatabasePublishDiagnostics.query({
-      projectId,
-    });
+type ContentDatabasePublishDiagnostics = Awaited<
+  ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
+>;
+
+export const getContentDatabasePublishWarning = (
+  diagnostics: ContentDatabasePublishDiagnostics
+) => {
   const databaseWarning =
     diagnostics.stats?.truncated &&
     diagnostics.stats.omissionReason !== undefined;
   if (!databaseWarning && diagnostics.mdxOmissions.length === 0) {
     return;
   }
-  const message = (
+  return (
     <>
       {diagnostics.mdxOmissions.length > 0 && (
         <div>
@@ -53,5 +48,23 @@ export const showContentDatabasePublishWarning = async ({
         )}
     </>
   );
-  showPublishWarning({ message, setWarning });
+};
+
+export const showContentDatabasePublishWarning = ({
+  diagnostics,
+  setWarning,
+}: {
+  diagnostics: Promise<ContentDatabasePublishDiagnostics>;
+  setWarning: (warning: JSX.Element) => void;
+}) => {
+  void diagnostics
+    .then((diagnostics) => {
+      const warning = getContentDatabasePublishWarning(diagnostics);
+      if (warning !== undefined) {
+        showPublishWarning({ message: warning, setWarning });
+      }
+    })
+    .catch(() => {
+      // Content warnings are advisory and must not block publishing.
+    });
 };

@@ -55,7 +55,8 @@ const getInlineDocumentIds = (artifact: ContentArtifactV1) => {
 
 /** Projects the verified build artifact to the data executed in a Worker. */
 export const createContentRuntimeArtifact = (
-  artifact: ContentArtifactV1
+  artifact: ContentArtifactV1,
+  { includeContents = true }: { includeContents?: boolean } = {}
 ): ContentRuntimeArtifact => {
   const inlineDocumentIds = getInlineDocumentIds(artifact);
   const documentGraph =
@@ -78,7 +79,9 @@ export const createContentRuntimeArtifact = (
     revision: artifact.integrity.checksum,
     documents: artifact.documents,
     ...(documentGraph === undefined ? {} : { documentGraph }),
-    ...(artifact.contents === undefined ? {} : { contents: artifact.contents }),
+    ...(includeContents && artifact.contents !== undefined
+      ? { contents: artifact.contents }
+      : {}),
     ...(artifact.assetReferences === undefined
       ? {}
       : { assetReferences: artifact.assetReferences }),

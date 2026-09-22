@@ -55,7 +55,7 @@ const bindContentBlockSource = (
     : source;
 
 /** Finds every Content Block whose current source resolves to an MDX Asset. */
-export const getMdxAssetSourceBlockInstanceIds = ({
+export const getMdxAssetSourceBlockInstanceIds = async ({
   assetId,
   state,
 }: {
@@ -69,16 +69,24 @@ export const getMdxAssetSourceBlockInstanceIds = ({
       values.set(dataSource.id, dataSource.value.value);
     }
   }
-  return Array.from(
-    getContentBlockSources({
-      instances: state.instances?.values() ?? [],
-      props: state.props?.values() ?? [],
-    })
-  ).flatMap(([blockInstanceId, contentSource]) =>
-    resolveContentBlockSourceAssetId({ source: contentSource, values }) ===
-    assetId
-      ? [blockInstanceId]
-      : []
+  const blockInstanceIds = await Promise.all(
+    Array.from(
+      getContentBlockSources({
+        instances: state.instances?.values() ?? [],
+        props: state.props?.values() ?? [],
+      })
+    ).map(async ([blockInstanceId, contentSource]) =>
+      (await resolveContentBlockSourceAssetId({
+        source: contentSource,
+        values,
+      })) === assetId
+        ? blockInstanceId
+        : undefined
+    )
+  );
+  return blockInstanceIds.filter(
+    (blockInstanceId): blockInstanceId is string =>
+      blockInstanceId !== undefined
   );
 };
 
@@ -145,7 +153,7 @@ export const inspectMdxAssetSource = async ({
   }
   const data = getData(state);
   const blockInstanceIds = new Set([
-    ...getMdxAssetSourceBlockInstanceIds({ assetId, state }),
+    ...(await getMdxAssetSourceBlockInstanceIds({ assetId, state })),
     ...sourceBlockInstanceIds,
   ]);
   for (const blockInstanceId of blockInstanceIds) {
@@ -204,9 +212,9 @@ export const createContentBlockApplication = ({
     source: ContentBlockSource;
     state: BuilderState;
     variables?: Readonly<Record<string, unknown>>;
-  }) => string | undefined;
+  }) => string | undefined | PromiseLike<string | undefined>;
 }) => {
-  const resolveSource = ({
+  const resolveSource = async ({
     source,
     state,
     blockInstanceId,
@@ -217,7 +225,7 @@ export const createContentBlockApplication = ({
     blockInstanceId: string;
     variables?: Readonly<Record<string, unknown>>;
   }) => {
-    const resolved = resolveSourceAssetId?.({ source, state, variables });
+    const resolved = await resolveSourceAssetId?.({ source, state, variables });
     if (resolveSourceAssetId !== undefined) {
       if (resolved === undefined || resolved === "") {
         throw new Error("Content source does not resolve to an MDX Asset");
@@ -244,13 +252,13 @@ export const createContentBlockApplication = ({
         values.set(dataSource.id, dataSource.value.value);
       }
     }
-    const assetId = resolveContentBlockSourceAssetId({ source, values });
+    const assetId = await resolveContentBlockSourceAssetId({ source, values });
     if (assetId !== undefined) {
       return assetId;
     }
     const evaluated =
       source.type === "expression"
-        ? computeExpression(source.value, values)
+        ? await computeExpression(source.value, values)
         : undefined;
     const suppliedVariableShapes =
       Object.entries(variables ?? {})
@@ -298,7 +306,7 @@ export const createContentBlockApplication = ({
     renderScope: string;
     variables?: Readonly<Record<string, unknown>>;
   }) => {
-    const assetId = resolveSource({
+    const assetId = await resolveSource({
       source,
       state,
       blockInstanceId,

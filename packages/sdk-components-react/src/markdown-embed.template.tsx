@@ -42,18 +42,6 @@ Any elements that were not used above are used below.
 > [!NOTE]
 > Add helpful context without interrupting the main content.
 
-> [!TIP]
-> Share a useful suggestion.
-
-> [!IMPORTANT]
-> Highlight essential information.
-
-> [!WARNING]
-> Point out something readers should be careful about.
-
-> [!CAUTION]
-> Explain a potential negative consequence.
-
 Using \`console.log("Hello World");\` will log to the console.
 
 | Header 1   | Header 2   | Header 3   |
@@ -85,20 +73,6 @@ export const meta: TemplateMeta = {
         ws:label="Alert"
         selector=" [data-state]"
         ws:style={markdownAlertStyle}
-      />
-      <ws.descendant ws:label="Note alert" selector={' [data-state="note"]'} />
-      <ws.descendant ws:label="Tip alert" selector={' [data-state="tip"]'} />
-      <ws.descendant
-        ws:label="Important alert"
-        selector={' [data-state="important"]'}
-      />
-      <ws.descendant
-        ws:label="Warning alert"
-        selector={' [data-state="warning"]'}
-      />
-      <ws.descendant
-        ws:label="Caution alert"
-        selector={' [data-state="caution"]'}
       />
       <ws.descendant ws:label="Code Text" selector=" code" />
       <ws.descendant ws:label="List" selector=" :where(ul, ol)" />

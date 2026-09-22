@@ -18,8 +18,329 @@ import {
   getResourceCacheKey,
   isLocalResource,
   loadResource,
+  loadResources,
+  type ResourceRequestGraph,
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
+
+test("resolves request resources after their dependency documents", async () => {
+  const requestedUrls: string[] = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    if (url.endsWith("/posts")) {
+      return Response.json({ id: "author-id" });
+    }
+    return Response.json({ name: "Ada" });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "posts",
+        outputName: "Posts",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Posts",
+          method: "get",
+          url: "https://example.com/posts",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "author",
+        outputName: "Author",
+        dependencies: ["posts"],
+        createRequest: (documents) => ({
+          name: "Author",
+          method: "get",
+          url: `https://example.com/authors/${
+            (documents.get("posts") as { data: { id: string } }).data.id
+          }`,
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "unused",
+        outputName: "Unused",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Unused",
+          method: "get",
+          url: "https://example.com/unused",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+    ],
+    rootIds: ["author"],
+  };
+
+  await expect(loadResources(fetch, graph)).resolves.toEqual({
+    Author: {
+      data: { name: "Ada" },
+      ok: true,
+      status: 200,
+      statusText: "",
+    },
+  });
+  expect(requestedUrls).toEqual([
+    "https://example.com/posts",
+    "https://example.com/authors/author-id",
+  ]);
+});
+
+test("applies action request overrides after resolving remote dependencies", async () => {
+  const requests: Array<{ url: string; body: string | null }> = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const url = String(input);
+    requests.push({ url, body: (init?.body as string | undefined) ?? null });
+    return url.endsWith("/author")
+      ? Response.json({ id: "author-123" })
+      : Response.json({ ok: true });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "author",
+        outputName: "Author",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Author",
+          method: "get",
+          url: "https://example.com/author",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "submit",
+        outputName: "Submit",
+        dependencies: ["author"],
+        createRequest: (documents) => ({
+          name: "Submit",
+          method: "post",
+          url: `https://example.com/submit/${(documents.get("author") as { data: { id: string } }).data.id}`,
+          searchParams: [],
+          headers: [],
+          body: { stale: true },
+        }),
+      },
+    ],
+    rootIds: ["submit"],
+  };
+
+  await expect(
+    loadResources(fetch, graph, undefined, {
+      requestOverrides: new Map([
+        ["submit", { body: { email: "ada@example.com" } }],
+      ]),
+    })
+  ).resolves.toEqual({
+    Submit: {
+      data: { ok: true },
+      ok: true,
+      status: 200,
+      statusText: "",
+    },
+  });
+  expect(requests).toEqual([
+    { url: "https://example.com/author", body: null },
+    {
+      url: "https://example.com/submit/author-123",
+      body: JSON.stringify({ email: "ada@example.com" }),
+    },
+  ]);
+});
+
+test("runs independent resources concurrently while keeping dependency chains serial", async () => {
+  const independentIds = Array.from(
+    { length: 19 },
+    (_, index) => `independent-${index}`
+  );
+  const initialRequestIds = new Set(["chain-first", ...independentIds]);
+  const requestedUrls: string[] = [];
+  let active = 0;
+  let maximumActive = 0;
+  let initialRequestCount = 0;
+  let releaseInitialRequests = () => {};
+  const initialRequestsReleased = new Promise<void>((resolve) => {
+    releaseInitialRequests = resolve;
+  });
+  let resolveInitialRequestsStarted = () => {};
+  const initialRequestsStarted = new Promise<void>((resolve) => {
+    resolveInitialRequestsStarted = resolve;
+  });
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    const requestId = url.split("/").at(-1);
+    if (requestId !== undefined && initialRequestIds.has(requestId)) {
+      initialRequestCount += 1;
+      if (initialRequestCount === initialRequestIds.size) {
+        resolveInitialRequestsStarted();
+      }
+      await initialRequestsReleased;
+    }
+    const response =
+      requestId === "chain-first"
+        ? Response.json({ id: "chain-document" })
+        : Response.json({ requestId });
+    active -= 1;
+    return response;
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "chain-first",
+        outputName: "Chain first",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Chain first",
+          method: "get",
+          url: "https://example.com/chain-first",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "chain-second",
+        outputName: "Chain second",
+        dependencies: ["chain-first"],
+        createRequest: (documents) => ({
+          name: "Chain second",
+          method: "get",
+          url: `https://example.com/chain-second/${
+            (documents.get("chain-first") as { data: { id: string } }).data.id
+          }`,
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      {
+        id: "chain-third",
+        outputName: "Chain third",
+        dependencies: ["chain-second"],
+        createRequest: () => ({
+          name: "Chain third",
+          method: "get",
+          url: "https://example.com/chain-third",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      ...independentIds.map((id) => ({
+        id,
+        outputName: id,
+        dependencies: [],
+        createRequest: () => ({
+          name: id,
+          method: "get" as const,
+          url: `https://example.com/${id}`,
+          searchParams: [],
+          headers: [],
+        }),
+      })),
+    ],
+    rootIds: ["chain-third", ...independentIds],
+  };
+
+  const resultPromise = loadResources(fetch, graph);
+  await initialRequestsStarted;
+
+  expect(initialRequestCount).toBe(20);
+  expect(maximumActive).toBe(20);
+  expect(requestedUrls).not.toContain(
+    "https://example.com/chain-second/chain-document"
+  );
+
+  releaseInitialRequests();
+  const result = await resultPromise;
+
+  expect(fetch).toHaveBeenCalledTimes(22);
+  const chainSecondIndex = requestedUrls.indexOf(
+    "https://example.com/chain-second/chain-document"
+  );
+  const chainThirdIndex = requestedUrls.indexOf(
+    "https://example.com/chain-third"
+  );
+  expect(chainSecondIndex).toBeGreaterThanOrEqual(20);
+  expect(chainThirdIndex).toBeGreaterThan(chainSecondIndex);
+  expect(result["Chain third"]).toMatchObject({
+    data: { requestId: "chain-third" },
+  });
+});
+
+test.each(["legacy map", "request graph"] as const)(
+  "bounds concurrent resource requests from a %s",
+  async (inputType) => {
+    let active = 0;
+    let maximumActive = 0;
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+      active += 1;
+      maximumActive = Math.max(maximumActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      active -= 1;
+      return Response.json({});
+    });
+    const requests = new Map<string, ResourceRequest>();
+    for (let index = 0; index < 21; index += 1) {
+      requests.set(`resource-${index}`, {
+        name: `Resource ${index}`,
+        method: "get",
+        url: `https://example.com/${index}`,
+        searchParams: [],
+        headers: [],
+      });
+    }
+    const graph: ResourceRequestGraph = {
+      resources: Array.from(requests, ([id, request]) => ({
+        id,
+        outputName: id,
+        dependencies: [],
+        createRequest: () => request,
+      })),
+      rootIds: Array.from(requests.keys()),
+    };
+
+    await loadResources(fetch, inputType === "legacy map" ? requests : graph);
+
+    expect(maximumActive).toBe(20);
+  }
+);
+
+test("preserves structured cancellation results for legacy request maps", async () => {
+  const controller = new AbortController();
+  controller.abort(new Error("cancelled"));
+  const fetch = vi.fn<typeof globalThis.fetch>(async (_input, init) => {
+    init?.signal?.throwIfAborted();
+    return Response.json({});
+  });
+  const request: ResourceRequest = {
+    name: "Resource",
+    method: "get",
+    url: "https://example.com/resource",
+    searchParams: [],
+    headers: [],
+  };
+
+  await expect(
+    loadResources(fetch, new Map([["Resource", request]]), undefined, {
+      signal: controller.signal,
+    })
+  ).resolves.toMatchObject({
+    Resource: {
+      ok: false,
+      data: {
+        error: { code: "REQUEST_CANCELLED" },
+      },
+      status: 499,
+    },
+  });
+});
 
 test("builds canonical Assets command URLs", () => {
   expect(assetsUploadsApiUrl).toBe("/rest/assets/uploads");
@@ -557,6 +878,39 @@ describe("loadResource", () => {
     });
   });
 
+  test("preserves the first abort reason when cancellation precedes timeout", async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    let rejectFetch = () => {};
+    mockFetch.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectFetch = () => reject(new DOMException("Aborted", "AbortError"));
+        })
+    );
+    const pending = loadResource(
+      mockFetch,
+      {
+        name: "resource",
+        url: "https://example.com/resource",
+        searchParams: [],
+        method: "get",
+        headers: [],
+      },
+      undefined,
+      { signal: controller.signal, timeoutMs: 100 }
+    );
+
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(100);
+    rejectFetch();
+
+    await expect(pending).resolves.toMatchObject({
+      data: { error: { code: "REQUEST_CANCELLED" } },
+      status: 499,
+    });
+  });
+
   test("aborts at the deadline and returns a structured timeout", async () => {
     vi.useFakeTimers();
     mockFetch.mockImplementation(
@@ -592,6 +946,34 @@ describe("loadResource", () => {
       },
       status: 504,
       statusText: "Resource request exceeded 100ms",
+    });
+  });
+
+  test("times out when fetch ignores its abort signal", async () => {
+    vi.useFakeTimers();
+    mockFetch.mockImplementation(() => new Promise(() => {}));
+    const pending = loadResource(
+      mockFetch,
+      {
+        name: "resource",
+        url: "https://example.com/resource",
+        searchParams: [],
+        method: "get",
+        headers: [],
+      },
+      undefined,
+      { timeoutMs: 100 }
+    );
+    let result: Awaited<typeof pending> | undefined;
+    void pending.then((value) => {
+      result = value;
+    });
+
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(result).toMatchObject({
+      data: { error: { code: "REQUEST_TIMEOUT" } },
+      status: 504,
     });
   });
 

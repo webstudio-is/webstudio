@@ -240,11 +240,13 @@ const getResetBindingButton = () => {
   return button;
 };
 
-test("renders the existing bound Text content control for the expression child", () => {
+test("renders the existing bound Text content control for the expression child", async () => {
   renderTextContent();
+  await vi.waitFor(() =>
+    expect(container.querySelector('[role="textbox"]')?.textContent).toBe("2")
+  );
 
   expect(container.textContent).toContain("Text Content");
-  expect(container.querySelector('[role="textbox"]')?.textContent).toBe("2");
   expect(container.querySelector('[data-variant="bound"]')).not.toBeNull();
 });
 
@@ -293,7 +295,14 @@ test("resets a mixed expression without replacing its text sibling", async () =>
 
   const resetButton = getResetBindingButton();
   expect(resetButton.disabled).toBe(false);
-  act(() => resetButton.click());
+  await act(async () => {
+    resetButton.click();
+    await vi.waitFor(() =>
+      expect($instances.get().get("reading-time")?.children).toEqual([
+        { type: "text", value: " · test" },
+      ])
+    );
+  });
 
   expect($instances.get().get("reading-time")?.children).toEqual([
     { type: "text", value: " · test" },
@@ -312,7 +321,14 @@ test("resets and consolidates every expression on the instance", async () => {
 
   const resetButton = getResetBindingButton();
   expect(resetButton.disabled).toBe(false);
-  act(() => resetButton.click());
+  await act(async () => {
+    resetButton.click();
+    await vi.waitFor(() =>
+      expect($instances.get().get("reading-time")?.children).toEqual([
+        { type: "text", value: "ABCD" },
+      ])
+    );
+  });
 
   expect($instances.get().get("reading-time")?.children).toEqual([
     { type: "text", value: "ABCD" },
@@ -326,7 +342,14 @@ test("resets a sole expression to its evaluated text value", async () => {
 
   const resetButton = getResetBindingButton();
   expect(resetButton.disabled).toBe(false);
-  act(() => resetButton.click());
+  await act(async () => {
+    resetButton.click();
+    await vi.waitFor(() =>
+      expect($instances.get().get("reading-time")?.children).toEqual([
+        { type: "text", value: "2" },
+      ])
+    );
+  });
 
   expect($instances.get().get("reading-time")?.children).toEqual([
     { type: "text", value: "2" },

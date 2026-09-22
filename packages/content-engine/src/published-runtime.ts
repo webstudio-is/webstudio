@@ -3,6 +3,11 @@ import {
   type AssetResourceQueryFailure,
 } from "./schema";
 import { sha256Hex } from "./canonical-json";
+import {
+  encodeUtf8,
+  readableStreamToAsyncIterable,
+  selectByteRange,
+} from "./byte-stream";
 import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
@@ -20,6 +25,31 @@ import {
 import type { ContentRuntimeArtifact } from "./content-runtime-artifact";
 
 const assetsResourceUrl = "/$resources/assets";
+const automationEnvironmentVariable = "WEBSTUDIO_AUTOMATION_TOKEN";
+
+const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+
+const getAutomationToken = (context: unknown) => {
+  // Cloudflare exposes bindings under context.cloudflare.env. The other
+  // supported server adapters expose the environment directly or as env.
+  const contextRecord = asRecord(context);
+  const cloudflare = asRecord(contextRecord?.cloudflare);
+  const environments = [
+    contextRecord,
+    asRecord(contextRecord?.env),
+    asRecord(cloudflare?.env),
+  ];
+  for (const environment of environments) {
+    const value = environment?.[automationEnvironmentVariable];
+    if (typeof value === "string" && value.length > 0) {
+      return value;
+    }
+  }
+  return undefined;
+};
 
 const jsonResponse = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), {
@@ -79,6 +109,7 @@ export const createPublishedAssetResourceFetch = ({
   runtimeAssets,
   cache,
   baseUrl,
+  automationToken,
   fetchDocument = globalThis.fetch,
   onDocumentGraphEvent,
 }: {
@@ -87,6 +118,7 @@ export const createPublishedAssetResourceFetch = ({
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
+  automationToken?: string;
   fetchDocument?: typeof fetch;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
@@ -98,6 +130,7 @@ export const createPublishedAssetResourceFetch = ({
     runtimeAssets,
     cache,
     baseUrl,
+    automationToken,
     database: createRuntimeContentDatabase({ artifact }),
     fetchDocument,
     documentCache,
@@ -105,40 +138,99 @@ export const createPublishedAssetResourceFetch = ({
   });
 };
 
+const createPublishedDocumentRequest = ({
+  assetId,
+  baseUrl,
+  runtimeAssets,
+  automationToken,
+  authorization,
+}: {
+  assetId: string;
+  baseUrl: string | URL;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  automationToken?: string;
+  authorization?: string;
+}) => {
+  const asset = runtimeAssets[assetId];
+  if (asset === undefined) {
+    throw new Error(`Published document URL is unavailable for ${assetId}`);
+  }
+  const request = new Request(new URL(asset.url, baseUrl));
+  request.headers.delete("referer");
+  if (automationToken !== undefined) {
+    request.headers.set("x-webstudio-automation", automationToken);
+  }
+  // The asset proxy may require the same Basic login as the page. Never
+  // forward the visitor's credentials to a different origin or copy cookies.
+  if (
+    authorization !== undefined &&
+    /^Basic\s/i.test(authorization) &&
+    new URL(request.url).origin === new URL(baseUrl).origin
+  ) {
+    request.headers.set("authorization", authorization);
+    // Workers can forward headers when following redirects. Asset requests
+    // carrying a visitor's credentials must never follow one.
+    // Use manual because older Workers runtimes reject redirect: "error".
+    // The document loader rejects the resulting non-OK redirect response.
+    return new Request(request, { redirect: "manual" });
+  }
+  return request;
+};
+
 const createPublishedDocumentLoader = ({
   baseUrl,
   runtimeAssets,
+  embeddedContents,
+  automationToken,
+  authorization,
   fetchDocument,
   cache,
   onEvent,
 }: {
   baseUrl: string | URL;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  embeddedContents?: Readonly<Record<string, string>>;
+  automationToken?: string;
+  authorization?: string;
   fetchDocument: typeof fetch;
   cache: DocumentSourceCache;
   onEvent?: DocumentGraphRuntimeObserver;
-}) =>
-  createCachedDocumentSourceLoader({
+}) => {
+  const httpLoader = createHttpDocumentSourceLoader({
+    fetch: fetchDocument,
+    getRequest: (node) =>
+      createPublishedDocumentRequest({
+        assetId: node.id,
+        baseUrl,
+        runtimeAssets,
+        automationToken,
+        authorization,
+      }),
+    getMetadata: ({ node }) => ({
+      format: node.format,
+      revision: node.revision,
+    }),
+    onEvent,
+  });
+
+  return createCachedDocumentSourceLoader({
     cache,
     onEvent,
-    load: createHttpDocumentSourceLoader({
-      fetch: fetchDocument,
-      getRequest: (node) => {
-        const asset = runtimeAssets[node.id];
-        if (asset === undefined) {
-          throw new Error(
-            `Published document URL is unavailable for ${node.id}`
-          );
-        }
-        return new URL(asset.url, baseUrl);
-      },
-      getMetadata: ({ node }) => ({
-        format: node.format,
-        revision: node.revision,
-      }),
-      onEvent,
-    }),
+    load: async (node, options) => {
+      const format = node.format;
+      const content =
+        format === undefined ? undefined : embeddedContents?.[node.contentRef];
+      if (content !== undefined && format !== undefined) {
+        return {
+          format,
+          revision: node.revision,
+          source: encodeUtf8(content),
+        };
+      }
+      return await httpLoader(node, options);
+    },
   });
+};
 
 const validateRuntimeAssets = ({
   artifact,
@@ -183,6 +275,8 @@ const createPublishedAssetResourceHandler = ({
   runtimeAssets,
   cache,
   baseUrl,
+  automationToken,
+  authorization,
   database,
   fetchDocument,
   documentCache,
@@ -193,15 +287,23 @@ const createPublishedAssetResourceHandler = ({
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
+  automationToken?: string;
+  authorization?: string;
   database: ReturnType<typeof createRuntimeContentDatabase>;
   fetchDocument: typeof fetch;
   documentCache: DocumentSourceCache;
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   const baseOrigin = new URL(baseUrl).origin;
+  const documentsByContentRef = new Map(
+    artifact.documents.map((document) => [document.contentRef, document])
+  );
   const loadDocument = createPublishedDocumentLoader({
     baseUrl,
     runtimeAssets,
+    embeddedContents: artifact.contents,
+    automationToken,
+    authorization,
     fetchDocument,
     cache: documentCache,
     onEvent: onDocumentGraphEvent,
@@ -255,6 +357,37 @@ const createPublishedAssetResourceHandler = ({
         await database.queryWithDocumentGraph({
           request: parsedRequest,
           load: loadDocument,
+          // Plain text and full-file queries do not necessarily have graph
+          // nodes. Resolve those files through the same asset HTTP transport.
+          readContent: async (contentRef, range) => {
+            const document = documentsByContentRef.get(contentRef);
+            if (document === undefined) {
+              throw new Error(
+                `Published content reference is unavailable: ${contentRef}`
+              );
+            }
+            const response = await fetchDocument(
+              createPublishedDocumentRequest({
+                assetId: document._id,
+                baseUrl,
+                runtimeAssets,
+                automationToken,
+                authorization,
+              }),
+              { signal: request.signal }
+            );
+            if (!response.ok || response.body === null) {
+              throw new Error(
+                `Document ${document._id} request returned status ${response.status} or no body`
+              );
+            }
+            return {
+              data: selectByteRange(
+                readableStreamToAsyncIterable(response.body),
+                range
+              ),
+            };
+          },
           runtimeAssets,
           signal: request.signal,
           onEvent: onDocumentGraphEvent,
@@ -325,9 +458,11 @@ export const createGeneratedAssetResourceRuntime = ({
   const documentCache = createMemoryDocumentSourceCache();
   return async ({
     request,
+    context,
     fallback,
   }: {
     request: Request;
+    context?: unknown;
     fallback: typeof fetch;
   }): Promise<typeof fetch> => {
     const origin = new URL(request.url).origin;
@@ -337,6 +472,8 @@ export const createGeneratedAssetResourceRuntime = ({
       runtimeAssets,
       cache,
       baseUrl: origin,
+      automationToken: getAutomationToken(context),
+      authorization: request.headers.get("authorization") ?? undefined,
       database,
       fetchDocument: fallback,
       documentCache,

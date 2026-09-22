@@ -9,9 +9,9 @@ const createRuntimeFetch = createGeneratedAssetResourceRuntime({
   runtimeAssets,
 });
 
-export const createGeneratedAssetResourceFetch = ({ request, fallback }: {
+export const createGeneratedAssetResourceFetch = ({ request, context, fallback }: {
     request: Request;
     context: unknown;
     fallback: typeof fetch;
   }) =>
-  createRuntimeFetch({ request, fallback });
+  createRuntimeFetch({ request, context, fallback });

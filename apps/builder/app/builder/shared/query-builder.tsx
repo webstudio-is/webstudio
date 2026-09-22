@@ -9,6 +9,7 @@ import type { QueryDefinition } from "@webstudio-is/query-builder";
 import { evaluateExpressionWithinScope } from "./binding-popover";
 import { BindableExpressionControl } from "./bindable-expression";
 import { ExpressionEditor, formatValue } from "./expression-editor";
+import { useAsyncValue } from "~/shared/use-async-value";
 
 const BoundExpression = ({
   "aria-label": label,
@@ -27,7 +28,11 @@ const BoundExpression = ({
   aliases: Map<string, string>;
 }) => {
   const bound = isLiteralExpression(value) === false;
-  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(value, scope),
+    [scope, value],
+    undefined
+  );
 
   if (input === "number") {
     const number = Number(evaluatedValue);

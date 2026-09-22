@@ -1,4 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
+import { buffer } from "node:stream/consumers";
 import {
   createTestServer,
   db,
@@ -13,6 +17,8 @@ import {
   uploadFile,
 } from "./upload";
 import { PostgresAssetRepository } from "./asset-repository";
+import { applyAssetDataOverride, getAssetData } from "./utils/get-asset-data";
+import type { AssetObjectWriter } from "./client";
 
 const server = createTestServer();
 
@@ -75,6 +81,212 @@ const uploadedFile = {
 };
 
 describe("createUploadTicket", () => {
+  test.each([
+    { meta: "{}", isDeleted: false },
+    { meta: "{}", isDeleted: true },
+    { meta: "{invalid json", isDeleted: false },
+    { meta: "{invalid json", isDeleted: true },
+  ])(
+    "re-uploads a malformed font ($meta, deleted: $isDeleted)",
+    async ({ meta, isDeleted }) => {
+      const require = createRequire(import.meta.url);
+      const bytes = readFileSync(
+        require.resolve("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+      );
+      const contentHash = createHash("sha256").update(bytes).digest("hex");
+      const oldFile = {
+        ...uploadedFile,
+        name: "inter_old.woff2",
+        format: "woff2",
+        size: bytes.byteLength,
+        contentHash: contentHash as string | null,
+        meta,
+        isDeleted,
+      };
+      const files = [oldFile];
+      const assets = isDeleted
+        ? []
+        : [
+            {
+              id: "old-asset",
+              projectId: "project-1",
+              name: oldFile.name,
+              filename: "inter",
+              description: null,
+              folderId: null,
+            },
+          ];
+      server.use(
+        ownershipHandler,
+        ...availableAssetCapacityHandlers(),
+        db.get("File", ({ request }) => {
+          const params = new URL(request.url).searchParams;
+          if (params.has("contentHash")) {
+            return json(
+              files.filter(
+                (file) => `eq.${file.contentHash}` === params.get("contentHash")
+              )
+            );
+          }
+          return json(
+            files.find((file) => `eq.${file.name}` === params.get("name")) ??
+              null
+          );
+        }),
+        db.patch("File", async ({ request }) => {
+          const params = new URL(request.url).searchParams;
+          const file = files.find(
+            (file) => `eq.${file.name}` === params.get("name")
+          );
+          const update = (await request.json()) as Partial<typeof oldFile>;
+          if (file === oldFile && "contentHash" in update) {
+            expect(update).toEqual({ contentHash: null });
+            expect(params.get("uploaderProjectId")).toBe("eq.project-1");
+            expect(params.get("contentHash")).toBe(`eq.${contentHash}`);
+            expect(params.get("status")).toBe("eq.UPLOADED");
+            expect(params.get("format")).toBe(`eq.${oldFile.format}`);
+            expect(params.get("meta")).toBe(`eq.${meta}`);
+          }
+          if (file !== undefined) {
+            Object.assign(file, update);
+          }
+          return json(file ?? null);
+        }),
+        db.post("File", async ({ request }) => {
+          const file = (await request.json()) as typeof oldFile;
+          if (
+            files.some((existing) => existing.contentHash === file.contentHash)
+          ) {
+            return json(
+              { code: "23505", message: "duplicate content hash" },
+              { status: 409 }
+            );
+          }
+          files.push({ ...uploadedFile, ...file });
+          return empty({ status: 201 });
+        }),
+        db.get("Asset", ({ request }) =>
+          json(
+            assets.find(
+              (asset) =>
+                `eq.${asset.name}` ===
+                new URL(request.url).searchParams.get("name")
+            ) ?? null
+          )
+        ),
+        db.post("Asset", async ({ request }) => {
+          assets.push((await request.json()) as (typeof assets)[number]);
+          return empty({ status: 201 });
+        })
+      );
+
+      const input = {
+        projectId: "project-1",
+        type: "font",
+        filename: "inter.woff2",
+        contentHash,
+      };
+      const ticket = await createUploadTicket(
+        input,
+        createContext(),
+        () => "new-asset"
+      );
+      expect(ticket.deduplicated).toBe(false);
+      expect(ticket.name).not.toBe(oldFile.name);
+      expect(oldFile).toMatchObject({ meta, isDeleted, contentHash: null });
+      expect(assets).toHaveLength(isDeleted ? 1 : 2);
+
+      const writer: AssetObjectWriter = {
+        uploadFile: async (name, _type, data) => {
+          const uploaded = await buffer(data);
+          expect(uploaded).toEqual(bytes);
+          return applyAssetDataOverride(
+            await getAssetData({
+              type: "font",
+              name,
+              size: uploaded.byteLength,
+              data: uploaded,
+            })
+          );
+        },
+      };
+      const asset = await uploadFile(
+        ticket.name,
+        new Blob([new Uint8Array(bytes)]).stream(),
+        writer,
+        createContext(),
+        undefined
+      );
+      expect(asset).toMatchObject({
+        id: "new-asset",
+        type: "font",
+        format: "woff2",
+        meta: { family: "Inter" },
+      });
+      await expect(
+        createUploadTicket(input, createContext())
+      ).resolves.toMatchObject({
+        deduplicated: true,
+        asset,
+      });
+      expect(files).toHaveLength(2);
+    }
+  );
+
+  test("rechecks a font repaired while excluding its old metadata from deduplication", async () => {
+    const file = {
+      ...uploadedFile,
+      name: "inter.woff2",
+      format: "woff2",
+      meta: "{}",
+    };
+    const repairedMeta = { family: "Inter", style: "normal", weight: 400 };
+    let writes = 0;
+    server.use(
+      ownershipHandler,
+      ...availableAssetCapacityHandlers(),
+      db.get("File", () => json([file])),
+      db.post("File", () => empty({ status: 201 })),
+      db.post("Asset", () => empty({ status: 201 })),
+      db.get("Asset", () =>
+        json({
+          id: "font-1",
+          projectId: "project-1",
+          filename: "inter",
+          description: null,
+          folderId: null,
+        })
+      ),
+      db.patch("File", async ({ request }) => {
+        writes += 1;
+        file.meta = JSON.stringify(repairedMeta);
+        const metaFilter = new URL(request.url).searchParams.get("meta");
+        if (metaFilter !== null && metaFilter !== `eq.${file.meta}`) {
+          return json(null);
+        }
+        Object.assign(file, await request.json());
+        return json(file);
+      })
+    );
+
+    await expect(
+      createUploadTicket(
+        {
+          projectId: "project-1",
+          type: "font",
+          filename: "inter.woff2",
+          contentHash: "hash-1",
+        },
+        createContext()
+      )
+    ).resolves.toMatchObject({
+      deduplicated: true,
+      asset: { id: "font-1", type: "font", meta: repairedMeta },
+    });
+    expect(writes).toBe(1);
+    expect(file.contentHash).toBe("hash-1");
+  });
+
   test("reuses an uploaded asset with the same content and display name", async () => {
     let inserted = false;
     server.use(
