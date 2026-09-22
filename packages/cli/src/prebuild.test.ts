@@ -51,6 +51,7 @@ import {
   materializeAssetIndex,
   prebuild,
 } from "./prebuild";
+import { generateResponseHeadersModule } from "./response-headers";
 
 const createSsgAssetResourceFetch = (options: {
   deploymentId: string;
@@ -787,6 +788,44 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("publishes custom headers and refreshes them on incremental builds", async () => {
+    const projectSettings = {
+      meta: {
+        customHeaders: [
+          {
+            name: "Content-Security-Policy",
+            value: "frame-ancestors https://example.com",
+          },
+          { name: "X-Frame-Options", value: null },
+        ],
+      },
+      compiler: {},
+    };
+    const data = createSiteData();
+    const bundle = { ...data, build: { ...data.build, projectSettings } };
+    await writeFile(".webstudio/data.json", JSON.stringify(bundle));
+    await prebuild({
+      assets: false,
+      template: ["defaults"],
+      preserveRouteTemplates: true,
+    });
+    const file = "app/__generated__/$resources.headers.server.ts";
+    await expect(readFile(file, "utf8")).resolves.toBe(
+      generateResponseHeadersModule(projectSettings, data.build.id)
+    );
+
+    bundle.build.projectSettings.meta.customHeaders = [];
+    await writeFile(".webstudio/data.json", JSON.stringify(bundle));
+    await prebuild({
+      assets: false,
+      template: ["defaults"],
+      incremental: true,
+    });
+    await expect(readFile(file, "utf8")).resolves.toBe(
+      generateResponseHeadersModule(undefined, data.build.id)
+    );
+  });
+
   test.each(["defaults", "react-router", "ssg"])(
     "does not scaffold a default root favicon with the %s template",
     async (template) => {

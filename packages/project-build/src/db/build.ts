@@ -2,6 +2,7 @@ import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   AuthorizationError,
   authorizeProject,
+  getProjectPlanFeatures,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
@@ -423,6 +424,32 @@ export const createProductionBuild = async (
 
   const devBuild = await loadDevBuildByProjectId(context, props.projectId);
   assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
+
+  if (
+    props.deployment.destination !== "static" &&
+    (devBuild.projectSettings.meta.customHeaders?.length ?? 0) > 0
+  ) {
+    // Use the saved staging domain, not the caller's target/assetsDomain.
+    // This check also covers API and CLI publishing outside the Builder UI.
+    const project = await context.postgrest.client
+      .from("Project")
+      .select("domain")
+      .eq("id", props.projectId)
+      .single();
+    if (project.error) {
+      throw project.error;
+    }
+    if (
+      props.deployment.domains.some((domain) => domain !== project.data.domain)
+    ) {
+      const plan = await getProjectPlanFeatures(props.projectId, context);
+      if (plan.allowDynamicData !== true) {
+        throw new AuthorizationError(
+          "Custom headers are a Pro feature. Upgrade to Pro or delete the custom header configuration to publish to custom domains. You can still publish to staging."
+        );
+      }
+    }
+  }
 
   const build = await context.postgrest.client.rpc("create_production_build", {
     project_id: props.projectId,

@@ -5403,6 +5403,36 @@ export const runtimeOperationContractData = [
             auth: {
               type: "string",
             },
+            customHeaders: {
+              description:
+                "Project-wide response headers for Webstudio Cloud. A null header value removes that header; an empty string sets an empty value. Publish to apply changes.",
+              maxItems: 50,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                    minLength: 1,
+                    maxLength: 256,
+                    pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$(?![\\s\\S])",
+                  },
+                  value: {
+                    anyOf: [
+                      {
+                        type: "string",
+                        maxLength: 8192,
+                        pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                      },
+                      {
+                        type: "null",
+                      },
+                    ],
+                  },
+                },
+                required: ["name", "value"],
+              },
+            },
           },
           additionalProperties: {},
           required: [],
@@ -5512,6 +5542,44 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            customHeaders: {
+              anyOf: [
+                {
+                  description:
+                    "Project-wide response headers for Webstudio Cloud. A null header value removes that header; an empty string sets an empty value. Publish to apply changes.",
+                  maxItems: 50,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 256,
+                        pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$(?![\\s\\S])",
+                      },
+                      value: {
+                        anyOf: [
+                          {
+                            type: "string",
+                            maxLength: 8192,
+                            pattern:
+                              "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                          },
+                          {
+                            type: "null",
+                          },
+                        ],
+                      },
+                    },
+                    required: ["name", "value"],
+                  },
                 },
                 {
                   type: "null",

@@ -82,6 +82,41 @@ const context = {
 };
 
 describe("project settings runtime", () => {
+  test("saves custom headers and removes the configuration to restore defaults", () => {
+    const customHeaders = [
+      { name: "X-Frame-Options", value: null },
+      {
+        name: "Content-Security-Policy",
+        value: "frame-ancestors https://example.com",
+      },
+    ];
+    const input = projectSettingsUpdateInput.parse({ meta: { customHeaders } });
+    const state = createState();
+    expect(updateProjectSettings(state, input).payload[0]?.patches).toEqual([
+      { op: "add", path: ["meta", "customHeaders"], value: customHeaders },
+    ]);
+    state.projectSettings!.meta.customHeaders = customHeaders;
+    expect(
+      updateProjectSettings(state, { meta: { customHeaders: null } }).payload[0]
+        ?.patches
+    ).toEqual([{ op: "remove", path: ["meta", "customHeaders"] }]);
+  });
+
+  test("rejects malformed custom headers at the API boundary", () => {
+    expect(
+      projectSettingsUpdateInput.safeParse({
+        meta: {
+          customHeaders: [
+            {
+              name: "Content-Security-Policy",
+              value: "safe\r\nX-Injected: true",
+            },
+          ],
+        },
+      }).success
+    ).toBe(false);
+  });
+
   test("exports reusable input contracts for router adapters", () => {
     expect(
       projectSettingsUpdateInput.parse({

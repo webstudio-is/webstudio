@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { StorySection } from "@webstudio-is/design-system";
 import { ProjectSettingsDialog } from "./project-settings";
-import { $pages, $project } from "~/shared/sync/data-stores";
+import { $pages, $project, $projectSettings } from "~/shared/sync/data-stores";
 import type { Project } from "@webstudio-is/project";
 
 export default {
@@ -27,6 +27,29 @@ export const General = () => {
   );
   return (
     <StorySection title="General">
+      <RouterProvider router={router} />
+    </StorySection>
+  );
+};
+
+export const Headers = () => {
+  $projectSettings.set({
+    meta: {
+      customHeaders: [
+        {
+          name: "Content-Security-Policy",
+          value: "frame-ancestors 'self' https://example.com",
+        },
+        { name: "X-Frame-Options", value: null },
+      ],
+    },
+    compiler: {},
+  });
+  const router = createRouter(
+    <ProjectSettingsDialog currentSection="headers" />
+  );
+  return (
+    <StorySection title="Headers">
       <RouterProvider router={router} />
     </StorySection>
   );

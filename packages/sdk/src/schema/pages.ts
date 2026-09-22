@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { validateBasicAuth } from "@webstudio-is/wsauth";
+import { customResponseHeaders } from "./response-headers";
 
 export type System = {
   params: Record<string, string | undefined>;
@@ -219,6 +220,11 @@ export const projectMeta = z.object({
   code: z.string().optional(),
   agentInstructions: z.string().optional(),
   auth: z.string().optional(),
+  customHeaders: customResponseHeaders
+    .optional()
+    .describe(
+      "Project-wide response headers for Webstudio Cloud. A null header value removes that header; an empty string sets an empty value. Publish to apply changes."
+    ),
 });
 export type ProjectMeta = z.infer<typeof projectMeta>;
 

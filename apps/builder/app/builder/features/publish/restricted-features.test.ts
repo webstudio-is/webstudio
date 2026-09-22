@@ -128,6 +128,56 @@ const getPageRestrictedFeatures = (isDraft: boolean) => {
 };
 
 describe("getRestrictedFeatures", () => {
+  test.each(["no-referrer", "", null])(
+    "restricts custom headers with value %j on the free plan",
+    (value) => {
+      const features = getFeatures({
+        pages: createPages(),
+        projectSettings: {
+          compiler: {},
+          meta: { customHeaders: [{ name: "Referrer-Policy", value }] },
+        },
+        permissions: { allowDynamicData: false },
+      });
+
+      expect([...features.keys()]).toEqual(["Custom headers"]);
+    }
+  );
+
+  test("allows custom headers on the Pro plan", () => {
+    const features = getFeatures({
+      pages: createPages(),
+      projectSettings: {
+        compiler: {},
+        meta: {
+          customHeaders: [
+            {
+              name: "Content-Security-Policy",
+              value: "frame-ancestors https://example.com",
+            },
+            { name: "X-Frame-Options", value: null },
+          ],
+        },
+      },
+      permissions: { allowDynamicData: true },
+    });
+
+    expect(features.has("Custom headers")).toBe(false);
+  });
+
+  test.each([undefined, []])(
+    "does not warn about missing or deleted custom headers (%j)",
+    (customHeaders) => {
+      const features = getFeatures({
+        pages: createPages(),
+        projectSettings: { compiler: {}, meta: { customHeaders } },
+        permissions: { allowDynamicData: false },
+      });
+
+      expect(features.has("Custom headers")).toBe(false);
+    }
+  );
+
   test("restricts project authentication when auth is not allowed", () => {
     const features = getFeatures({
       pages: createPages(),

@@ -144,6 +144,26 @@ Authentication is a Pro feature for custom domains. You can publish to staging f
 
 For a single page, you can also configure authentication directly in [Page settings](page-settings.md#authentication).
 
+## Headers
+
+Use **Project settings > Headers** to customize HTTP response headers for all pages published to Webstudio Cloud.
+
+Custom headers are a Pro feature on custom domains. You can configure and publish them to staging for free. When a Free-plan project uses custom headers, the Publish dialog lists **Custom headers** among its Pro features and requires an upgrade or removal of the configuration before publishing to a custom domain.
+
+1. Enter a header name, such as `Content-Security-Policy`.
+2. Enter its value, or select **Remove this header from responses** to omit it entirely.
+3. Click **Add header** and publish the site.
+
+Custom values replace Webstudio's defaults. Headers without custom configuration retain their defaults. An empty value sets an empty header; it does not remove the header. Use **Edit** to change an existing configuration, or **Delete** to restore the default behavior after publishing.
+
+For example, to allow a site to be embedded by `https://example.com`, set `Content-Security-Policy` to `frame-ancestors 'self' https://example.com` and add a removal configuration for `X-Frame-Options`.
+
+Header names are case-insensitive and must be unique. Values cannot contain line breaks. Transport headers, `Set-Cookie`, and internal `X-Webstudio-*` headers are managed by the server and cannot be configured here. Up to 50 headers totaling 16 KB are supported.
+
+Custom cache directives do not override private/no-store responses, including authenticated pages. Public pages can use custom cache settings.
+
+These settings apply to responses from the published Cloud site, including redirects and site errors. They do not apply to the Builder, static assets served by the CDN, or static exports. Changes require republishing.
+
 ## Marketplace
 
 You can contribute free or paid templates by creating a Project and submitting it for review. Approved templates will appear in the [Marketplace](../marketplace.md).

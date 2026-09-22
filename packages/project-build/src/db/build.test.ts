@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import {
   createTestServer,
   db,
@@ -375,6 +375,115 @@ describe("createBuild (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("createProductionBuild (msw)", () => {
+  test.each([
+    {
+      label: "Free owner, custom domain",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [{ name: "X-Test", value: "yes" }],
+      denied: true,
+    },
+    {
+      label: "Free owner, removal only",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [{ name: "X-Test", value: null }],
+      denied: true,
+    },
+    {
+      label: "Free owner, mixed domains",
+      allowed: false,
+      domains: ["project-domain", "example.com"],
+      headers: [{ name: "X-Test", value: "" }],
+      denied: true,
+    },
+    {
+      label: "Free owner, staging",
+      allowed: false,
+      domains: ["project-domain"],
+      headers: [{ name: "X-Test", value: "yes" }],
+      denied: false,
+    },
+    {
+      label: "Pro owner, custom domain",
+      allowed: true,
+      domains: ["example.com"],
+      headers: [{ name: "X-Test", value: "yes" }],
+      denied: false,
+    },
+    {
+      label: "Free owner, deleted headers",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [],
+      denied: false,
+    },
+  ])(
+    "enforces custom header publishing for $label",
+    async ({ allowed, domains, headers, denied }) => {
+      const context = createContext();
+      // A collaborator's own plan must not determine the project's entitlement.
+      context.planFeatures = {
+        ...context.planFeatures,
+        allowDynamicData: !allowed,
+      };
+      const getOwnerPlanFeatures = vi.fn(async () => ({
+        ...context.planFeatures,
+        allowDynamicData: allowed,
+      }));
+      context.getOwnerPlanFeatures = getOwnerPlanFeatures;
+      const createBuild = vi.fn(() => json("build-prod"));
+      server.use(
+        db.get("Project", () =>
+          json({
+            id: "proj-1",
+            userId: "project-owner",
+            domain: "project-domain",
+          })
+        ),
+        db.get("Build", () =>
+          json([
+            {
+              ...buildRow,
+              projectSettings: JSON.stringify({
+                meta: { customHeaders: headers },
+                compiler: {},
+              }),
+            },
+          ])
+        ),
+        db.post("rpc/create_production_build", createBuild)
+      );
+      const result = createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "saas",
+            domains,
+            // Deliberately misleading caller-supplied metadata must not bypass the gate.
+            target: "staging",
+            assetsDomain: domains[0],
+          },
+        },
+        context
+      );
+      if (denied) {
+        await expect(result).rejects.toThrow(
+          "Custom headers are a Pro feature"
+        );
+        expect(createBuild).not.toHaveBeenCalled();
+      } else {
+        await expect(result).resolves.toEqual({ id: "build-prod" });
+        expect(createBuild).toHaveBeenCalledOnce();
+      }
+      if (headers.length > 0 && domains.includes("example.com")) {
+        expect(getOwnerPlanFeatures).toHaveBeenCalledWith("project-owner");
+      } else {
+        expect(getOwnerPlanFeatures).not.toHaveBeenCalled();
+      }
+    }
+  );
+
   test("throws when dev build has orphan resource references", async () => {
     let didCreateProductionBuild = false;
     server.use(

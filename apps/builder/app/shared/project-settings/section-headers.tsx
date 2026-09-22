@@ -1,0 +1,199 @@
+import { useId, useState } from "react";
+import { useStore } from "@nanostores/react";
+import {
+  Button,
+  Checkbox,
+  CheckboxAndLabel,
+  Flex,
+  Grid,
+  InputField,
+  Label,
+  LinkButton,
+  ProChip,
+  Separator,
+  Text,
+} from "@webstudio-is/design-system";
+import {
+  customResponseHeaders,
+  type CustomResponseHeader,
+} from "@webstudio-is/sdk";
+import { $projectSettings } from "~/shared/sync/data-stores";
+import { $permissions } from "~/shared/nano-states";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { sectionSpacing } from "./utils";
+
+export const SectionHeaders = () => {
+  const { allowDynamicData } = useStore($permissions);
+  const settings = useStore($projectSettings);
+  const headers = settings?.meta.customHeaders ?? [];
+  const [name, setName] = useState("");
+  const [value, setValue] = useState("");
+  const [remove, setRemove] = useState(false);
+  const [editing, setEditing] = useState<string>();
+  const [errors, setErrors] = useState<string[]>([]);
+  const nameId = useId();
+  const valueId = useId();
+  const removeId = useId();
+  const errorsId = useId();
+
+  const reset = () => {
+    setName("");
+    setValue("");
+    setRemove(false);
+    setEditing(undefined);
+    setErrors([]);
+  };
+
+  const save = (nextHeaders: CustomResponseHeader[]) => {
+    const result = customResponseHeaders.safeParse(nextHeaders);
+    if (!result.success) {
+      setErrors(result.error.issues.map((issue) => issue.message));
+      return;
+    }
+    executeRuntimeMutation({
+      id: "projectSettings.update",
+      input: {
+        meta: { customHeaders: result.data.length ? result.data : null },
+      },
+    });
+    reset();
+  };
+
+  return (
+    <Grid gap={3}>
+      <Grid gap={2} css={sectionSpacing}>
+        <Flex align="center" gap={1}>
+          <Text variant="titles">Headers</Text>
+          {allowDynamicData === false && <ProChip>PRO</ProChip>}
+        </Flex>
+        <Text color="subtle">
+          Customize HTTP response headers for all pages on Webstudio Cloud.
+          Publish your site to apply changes. Asset files and the Builder are
+          unaffected.
+        </Text>
+        {allowDynamicData === false && (
+          <>
+            <Text color="subtle">
+              Custom headers are a Pro feature. You can publish to staging for
+              free; upgrade to Pro to publish to custom domains.
+            </Text>
+            <LinkButton
+              color="primary"
+              href="https://webstudio.is/pricing"
+              target="_blank"
+            >
+              Upgrade
+            </LinkButton>
+          </>
+        )}
+        <Label htmlFor={nameId}>Header name</Label>
+        <InputField
+          id={nameId}
+          placeholder="Content-Security-Policy"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          aria-describedby={errors.length ? errorsId : undefined}
+        />
+        <CheckboxAndLabel>
+          <Checkbox
+            id={removeId}
+            checked={remove}
+            onCheckedChange={(checked) => setRemove(checked === true)}
+          />
+          <Label htmlFor={removeId}>Remove this header from responses</Label>
+        </CheckboxAndLabel>
+        {!remove && (
+          <>
+            <Label htmlFor={valueId}>Header value</Label>
+            <InputField
+              id={valueId}
+              placeholder="frame-ancestors 'self' https://example.com"
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              aria-describedby={errors.length ? errorsId : undefined}
+            />
+          </>
+        )}
+        {errors.length > 0 && (
+          <Text id={errorsId} role="alert">
+            {errors.join(". ")}
+          </Text>
+        )}
+        <Flex gap={2}>
+          <Button
+            onClick={() => {
+              const header = {
+                name: name.trim(),
+                value: remove ? null : value,
+              };
+              save(
+                editing === undefined
+                  ? [...headers, header]
+                  : headers.map((current) =>
+                      current.name === editing ? header : current
+                    )
+              );
+            }}
+          >
+            {editing === undefined ? "Add header" : "Save header"}
+          </Button>
+          {editing !== undefined && (
+            <Button color="ghost" onClick={reset}>
+              Cancel
+            </Button>
+          )}
+        </Flex>
+      </Grid>
+      <Separator />
+      <Grid gap={3} css={sectionSpacing}>
+        {headers.length === 0 && (
+          <Text color="subtle">
+            No custom headers. Webstudio defaults apply.
+          </Text>
+        )}
+        {headers.map((header) => (
+          <Grid key={header.name} gap={1}>
+            <Text variant="labels" css={{ overflowWrap: "anywhere" }}>
+              {header.name}
+            </Text>
+            <Text color="subtle" css={{ overflowWrap: "anywhere" }}>
+              {header.value === null
+                ? "Remove from responses"
+                : header.value === ""
+                  ? "Set to an empty value"
+                  : header.value}
+            </Text>
+            <Flex gap={2}>
+              <Button
+                color="ghost"
+                aria-label={`Edit ${header.name}`}
+                onClick={() => {
+                  setName(header.name);
+                  setValue(header.value ?? "");
+                  setRemove(header.value === null);
+                  setEditing(header.name);
+                  setErrors([]);
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                color="ghost"
+                aria-label={`Delete ${header.name} configuration`}
+                onClick={() =>
+                  save(headers.filter((current) => current !== header))
+                }
+              >
+                Delete
+              </Button>
+            </Flex>
+          </Grid>
+        ))}
+        <Text color="subtle">
+          Deleting a configuration restores the default behavior after
+          publishing.
+        </Text>
+      </Grid>
+    </Grid>
+  );
+};

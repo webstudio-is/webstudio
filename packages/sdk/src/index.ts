@@ -2,6 +2,7 @@ export * from "./schema/assets";
 export * from "./schema/asset-resource";
 export * from "./schema/asset-folders";
 export * from "./schema/pages";
+export * from "./schema/response-headers";
 export * from "./schema/instances";
 export * from "./schema/expression";
 export * from "./schema/data-sources";
