@@ -302,6 +302,55 @@ test("computes async resource plans with dependency documents", async () => {
   expect(result.documents.get("postsResource")).toBeUndefined();
 });
 
+test.each([
+  ["a", "b", "healthy"],
+  ["healthy", "b", "a"],
+  ["parent", "healthy"],
+])(
+  "skips cycles without blocking independent resources (%j)",
+  async (...rootResourceIds) => {
+    const resources: Resources = new Map(
+      [
+        ["a", encodeDataSourceVariable("b")],
+        ["b", encodeDataSourceVariable("a")],
+        [
+          "parent",
+          `${encodeDataSourceVariable("a")} + ${encodeDataSourceVariable("b")}`,
+        ],
+        ["healthy", '"https://example.com/healthy"'],
+      ].map(([id, url]) => [
+        id,
+        { id, name: id, method: "get", url, headers: [] },
+      ])
+    );
+    const dataSources: DataSources = new Map(
+      [...resources.keys()].map((id) => [
+        id,
+        { id, name: id, type: "resource", resourceId: id },
+      ])
+    );
+    const healthy = await computeResourceRequest(
+      resources.get("healthy")!,
+      new Map()
+    );
+    const document = { data: "healthy" };
+
+    const result = await computeResourceRequestPlan({
+      rootResourceIds,
+      resources,
+      dataSources,
+      values: new Map(),
+      resourceCache: new Map([[getResourceKey(healthy), document]]),
+    });
+
+    expect(result).toEqual({
+      requests: [healthy],
+      documents: new Map([["healthy", document]]),
+    });
+  },
+  1000
+);
+
 test("dispatches resources synchronously", async () => {
   const request: ResourceRequest = {
     name: "Immediate",

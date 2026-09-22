@@ -542,7 +542,9 @@ export const computeResourceRequestPlan = async ({
       return previous;
     }
     const nextAncestors = new Set(ancestors).add(resourceId);
-    const resolution = Promise.resolve().then(async () => {
+    // Walk dependencies before publishing the pending promise so back edges
+    // encounter their ancestor instead of awaiting a promise in the same cycle.
+    const resolution = (async () => {
       const resource = resources.get(resourceId);
       if (resource === undefined) {
         return false;
@@ -571,7 +573,7 @@ export const computeResourceRequestPlan = async ({
         resolvedValues.set(dataSource.id, document);
       }
       return true;
-    });
+    })();
     pending.set(resourceId, resolution);
     return resolution;
   };

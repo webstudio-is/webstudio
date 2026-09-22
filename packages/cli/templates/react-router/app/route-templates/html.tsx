@@ -337,7 +337,9 @@ export const action = async ({
         url,
         {
           requestOverrides: new Map([
-            [actionResource.id, { body: Object.fromEntries(formData) }],
+            // Mutations must reach the backend on every submission, even when
+            // the resource has caching enabled. Dependencies can stay cached.
+            [actionResource.id, { body: Object.fromEntries(formData), fetch }],
           ]),
         }
       );

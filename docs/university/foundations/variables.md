@@ -113,6 +113,8 @@ Webstudio fetches the dependency first and evaluates the dependent request after
 
 When a Form uses a Resource action, Webstudio fetches that action's dependencies when the form is submitted, not when the page loads.
 
+Form actions bypass Webstudio's resource cache so each submission sends a new request. Their dependencies still use the configured cache lifetime.
+
 #### Caching
 
 You may be wondering whether every visit to your blog results in an API call to your CMS or if the content is cached in Webstudio.

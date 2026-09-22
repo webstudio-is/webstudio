@@ -87,7 +87,10 @@ export type ResourceLoadOptions = {
 };
 
 export type ResourceGraphLoadOptions = ResourceLoadOptions & {
-  requestOverrides?: ReadonlyMap<string, Partial<ResourceRequest>>;
+  requestOverrides?: ReadonlyMap<
+    string,
+    Partial<ResourceRequest> & { fetch?: typeof fetch }
+  >;
 };
 
 export type ResourceRequestResource = Readonly<{
@@ -424,12 +427,14 @@ export const loadResources = async (
     dependencies: resource.dependencies,
     resolve: ({ documents, signal }) => {
       const { requestOverrides, ...loadOptions } = options ?? {};
+      const { fetch: requestFetch = customFetch, ...overrides } =
+        requestOverrides?.get(resource.id) ?? {};
       const request = resource.createRequest(documents);
       const resolvedRequest = {
         ...request,
-        ...requestOverrides?.get(resource.id),
+        ...overrides,
       };
-      return loadResource(customFetch, resolvedRequest, baseUrl, {
+      return loadResource(requestFetch, resolvedRequest, baseUrl, {
         ...loadOptions,
         signal: signal ?? options?.signal,
       });
