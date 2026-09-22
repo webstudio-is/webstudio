@@ -211,6 +211,7 @@ const apiCommandOptionsByCommand: Partial<
   "delete-resource": apiCommand.deleteResourceCommandOptions,
   "list-domains": apiCommand.paginatedListCommandOptions,
   publish: apiCommand.publishCommandOptions,
+  "check-publish-readiness": apiCommand.checkPublishReadinessCommandOptions,
   "get-publish-job": apiCommand.publishJobCommandOptions,
   unpublish: apiCommand.unpublishCommandOptions,
   "create-domain": apiCommand.createDomainCommandOptions,
@@ -246,6 +247,10 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
 
 export const highLevelCliCommands = [
   { command: "audit", operation: "audit" },
+  {
+    command: "check-publish-readiness",
+    operation: "check-publish-readiness",
+  },
   { command: "permissions", operation: "permissions" },
   { command: "get-assets-resource", operation: "get-assets-resource" },
   { command: "create-assets-resource", operation: "create-assets-resource" },

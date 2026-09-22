@@ -17,6 +17,7 @@ import {
   createUnpublishJobId,
   deleteProjectDomain,
   getDefaultPublishDomains,
+  getVerifiedPublishDomains,
   getProjectPublishJob,
   listProjectDomains,
   listProjectPublishes,
@@ -27,6 +28,8 @@ import {
 } from "@webstudio-is/domain/index.server";
 import {
   getBuilderRuntimeOperationInputSchema,
+  getBuildIntegrityIssues,
+  formatBuildIntegrityError,
   paginateOutput,
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
@@ -93,6 +96,7 @@ import {
 import { createAssetClient } from "../shared/asset-client";
 import { previewProjectAssetQuery } from "./asset-query-preview.server";
 import { publishConfiguredIssueReport } from "./github-issue-report.server";
+import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -1055,6 +1059,56 @@ export const apiRouter = router({
   }),
 
   publish: router({
+    validate: projectQuery(
+      projectIdInput.extend({
+        target: z.enum(["staging", "production"]),
+        domains: z.array(z.string()).optional(),
+      }),
+      "edit",
+      async ({ auth, ctx, input }) => {
+        const project = await loadById(input.projectId, ctx);
+        const domains =
+          input.domains ?? getDefaultPublishDomains(project, input.target);
+        assertApiPublishDomains({ auth, domains, project });
+        if (domains.length === 0) {
+          throwApiError(
+            "BAD_REQUEST",
+            "Select at least one domain to publish."
+          );
+        }
+        const verifiedDomains = getVerifiedPublishDomains(project, domains);
+        const invalidDomains = domains.filter(
+          (domain) => verifiedDomains.includes(domain) === false
+        );
+        if (invalidDomains.length > 0) {
+          throwApiError(
+            "BAD_REQUEST",
+            `Publish domains must belong to this project and be active and verified: ${invalidDomains.join(", ")}`
+          );
+        }
+        const build = await loadDevBuildByProjectId(ctx, input.projectId);
+        const issues = getBuildIntegrityIssues(build);
+        if (issues[0] !== undefined) {
+          throwApiError(
+            "BAD_REQUEST",
+            formatBuildIntegrityError(issues[0], "Cannot publish"),
+            { issues }
+          );
+        }
+        const diagnostics = await loadContentDatabasePublishDiagnostics(
+          input.projectId,
+          ctx
+        );
+        return {
+          valid: true,
+          target: input.target,
+          domains,
+          diagnostics,
+        };
+      },
+      { command: "check-publish-readiness", client: "checkPublishReadiness" }
+    ),
+
     list: projectQuery(
       paginatedProjectInput,
       "view",

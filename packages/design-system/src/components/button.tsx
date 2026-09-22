@@ -21,6 +21,7 @@ import {
 
 const colors = [
   "primary",
+  "positive",
   "destructive",
   "neutral",
   "ghost",
@@ -44,6 +45,7 @@ const chromaticPressedOverlay = `oklch(from ${cssVar(
 
 const backgrounds: Record<ButtonColor, string> = {
   primary: cssVar("--background-accent"),
+  positive: cssVar("--background-positive"),
   neutral: neutralControlBackground,
   "neutral-destructive": neutralControlBackground,
   destructive: cssVar("--background-negative"),
@@ -53,6 +55,7 @@ const backgrounds: Record<ButtonColor, string> = {
 
 const foregrounds: Record<ButtonColor, string> = {
   primary: cssVar("--foreground-on-accent"),
+  positive: cssVar("--foreground-on-positive"),
   destructive: cssVar("--foreground-on-negative"),
   "neutral-destructive": cssVar("--foreground-negative"),
   neutral: cssVar("--foreground-primary"),
@@ -62,7 +65,10 @@ const foregrounds: Record<ButtonColor, string> = {
 
 const perColorStyle = (variant: ButtonColor) => {
   const isTransparent = variant === "ghost" || variant === "ghost-destructive";
-  const isChromatic = variant === "primary" || variant === "destructive";
+  const isChromatic =
+    variant === "primary" ||
+    variant === "positive" ||
+    variant === "destructive";
   let hoverOverlay = cssVar("--overlay-interaction-hover");
   let pressedOverlay = cssVar("--overlay-interaction-pressed");
   if (isChromatic) {
@@ -131,6 +137,7 @@ export const buttonStyle = css({
   variants: {
     color: {
       primary: perColorStyle("primary"),
+      positive: perColorStyle("positive"),
       destructive: perColorStyle("destructive"),
       "neutral-destructive": perColorStyle("neutral-destructive"),
       neutral: perColorStyle("neutral"),
