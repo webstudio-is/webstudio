@@ -80,6 +80,10 @@ You must publish your site _after_ the domain is verified, or else "[Worker not 
 
 Keep the Publish dialog open to follow the build and deployment status. Resolve any reported error before trying again.
 
+Each domain shows a yellow progress icon while publishing and a green checkmark
+once publishing finishes. A red icon indicates a failure. Hover over the icon
+to see the status and when publishing started.
+
 Once your site is live, you can visit it by clicking the open icon next to the green checkmark.
 
 ---

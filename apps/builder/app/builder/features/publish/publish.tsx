@@ -69,7 +69,6 @@ import { $project } from "~/shared/sync/data-stores";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
-  CheckCircleIcon,
   AlertIcon,
   CopyIcon,
   GearIcon,
@@ -268,12 +267,13 @@ const ChangeProjectDomain = ({
     toast.success(result.message);
   };
 
-  const { statusText, status } =
+  const { statusText, color, Icon } =
     project.latestBuildVirtual != null
       ? getPublishStatusAndText(project.latestBuildVirtual)
       : {
           statusText: "Not published",
-          status: "PENDING" as const,
+          color: cssVar("--foreground-secondary"),
+          Icon: InfoCircleIcon,
         };
 
   // Check if the wstd domain specifically is published (not just any custom domain)
@@ -302,16 +302,10 @@ const ChangeProjectDomain = ({
                 width: theme.sizes.controlHeight,
                 height: theme.sizes.controlHeight,
                 color:
-                  error !== undefined || status === "FAILED"
-                    ? cssVar("--foreground-negative")
-                    : cssVar("--foreground-positive"),
+                  error !== undefined ? cssVar("--foreground-negative") : color,
               }}
             >
-              {error !== undefined || status === "FAILED" ? (
-                <AlertIcon />
-              ) : (
-                <CheckCircleIcon />
-              )}
+              {error !== undefined ? <AlertIcon /> : <Icon />}
             </Flex>
           </Tooltip>
 

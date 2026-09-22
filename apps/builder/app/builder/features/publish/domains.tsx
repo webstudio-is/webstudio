@@ -21,6 +21,8 @@ import {
   CheckCircleIcon,
   CopyIcon,
   HelpIcon,
+  InfoCircleIcon,
+  SpinnerIcon,
 } from "@webstudio-is/icons";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -91,7 +93,20 @@ export const getPublishStatusAndText = ({
     </>
   );
 
-  return { statusText, status };
+  const color =
+    status === "PUBLISHED"
+      ? cssVar("--foreground-positive")
+      : status === "FAILED"
+        ? cssVar("--foreground-negative")
+        : cssVar("--foreground-warning");
+  const Icon =
+    status === "PUBLISHED"
+      ? CheckCircleIcon
+      : status === "FAILED"
+        ? AlertIcon
+        : SpinnerIcon;
+
+  return { statusText, status, color, Icon };
 };
 
 const getStatusText = (props: {
@@ -100,7 +115,8 @@ const getStatusText = (props: {
 }) => {
   const status = getStatus(props.projectDomain);
 
-  let isVerifiedActive = false;
+  let color = cssVar("--foreground-negative");
+  let Icon = AlertIcon;
   let text: ReactNode = "Something went wrong";
 
   switch (status) {
@@ -115,7 +131,8 @@ const getStatusText = (props: {
       text = "Status: Waiting for CNAME propagation";
       break;
     case "VERIFIED_ACTIVE":
-      isVerifiedActive = true;
+      color = cssVar("--foreground-secondary");
+      Icon = InfoCircleIcon;
       text = "Status: Active, not published";
 
       if (props.projectDomain.latestBuildVirtual !== null) {
@@ -124,7 +141,8 @@ const getStatusText = (props: {
         );
 
         text = publishText.statusText;
-        isVerifiedActive = publishText.status !== "FAILED";
+        color = publishText.color;
+        Icon = publishText.Icon;
       }
       break;
     case "VERIFIED_ERROR":
@@ -139,15 +157,14 @@ const getStatusText = (props: {
   }
 
   return {
-    isVerifiedActive,
+    color: props.isLoading ? cssVar("--foreground-secondary") : color,
+    Icon,
     text: props.isLoading ? "Loading status..." : text,
   };
 };
 
 const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
-  const { isVerifiedActive, text } = getStatusText(props);
-
-  const Icon = isVerifiedActive ? CheckCircleIcon : AlertIcon;
+  const { color, Icon, text } = getStatusText(props);
 
   return (
     <Tooltip content={text}>
@@ -158,11 +175,7 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
           cursor: "pointer",
           width: theme.sizes.controlHeight,
           height: theme.sizes.controlHeight,
-          color: props.isLoading
-            ? cssVar("--foreground-secondary")
-            : isVerifiedActive
-              ? cssVar("--foreground-positive")
-              : cssVar("--foreground-negative"),
+          color,
         }}
       >
         <Icon />
@@ -305,7 +318,7 @@ const DomainItem = ({
 
   const domainStatus = getStatus(projectDomain);
 
-  const { isVerifiedActive, text } = getStatusText({
+  const { color, text } = getStatusText({
     projectDomain,
     isLoading: false,
   });
@@ -440,7 +453,9 @@ const DomainItem = ({
 
           {status !== "UNVERIFIED" && (
             <>
-              <Text color={isVerifiedActive ? "success" : "destructive"}>
+              <Text
+                css={{ color, overflowWrap: "anywhere", userSelect: "text" }}
+              >
                 {text}
               </Text>
             </>
@@ -584,3 +599,5 @@ export const Domains = ({
 
 undefined;
 undefined;
+
+export const __testing__ = { StatusIcon };
