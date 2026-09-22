@@ -143,11 +143,13 @@ const createPublishedDocumentRequest = ({
   baseUrl,
   runtimeAssets,
   automationToken,
+  authorization,
 }: {
   assetId: string;
   baseUrl: string | URL;
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   automationToken?: string;
+  authorization?: string;
 }) => {
   const asset = runtimeAssets[assetId];
   if (asset === undefined) {
@@ -158,6 +160,18 @@ const createPublishedDocumentRequest = ({
   if (automationToken !== undefined) {
     request.headers.set("x-webstudio-automation", automationToken);
   }
+  // The asset proxy may require the same Basic login as the page. Never
+  // forward the visitor's credentials to a different origin or copy cookies.
+  if (
+    authorization !== undefined &&
+    /^Basic\s/i.test(authorization) &&
+    new URL(request.url).origin === new URL(baseUrl).origin
+  ) {
+    request.headers.set("authorization", authorization);
+    // Workers can forward headers when following redirects. Asset requests
+    // carrying a visitor's credentials must never follow one.
+    return new Request(request, { redirect: "error" });
+  }
   return request;
 };
 
@@ -166,6 +180,7 @@ const createPublishedDocumentLoader = ({
   runtimeAssets,
   embeddedContents,
   automationToken,
+  authorization,
   fetchDocument,
   cache,
   onEvent,
@@ -174,6 +189,7 @@ const createPublishedDocumentLoader = ({
   runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   embeddedContents?: Readonly<Record<string, string>>;
   automationToken?: string;
+  authorization?: string;
   fetchDocument: typeof fetch;
   cache: DocumentSourceCache;
   onEvent?: DocumentGraphRuntimeObserver;
@@ -186,6 +202,7 @@ const createPublishedDocumentLoader = ({
         baseUrl,
         runtimeAssets,
         automationToken,
+        authorization,
       }),
     getMetadata: ({ node }) => ({
       format: node.format,
@@ -257,6 +274,7 @@ const createPublishedAssetResourceHandler = ({
   cache,
   baseUrl,
   automationToken,
+  authorization,
   database,
   fetchDocument,
   documentCache,
@@ -268,6 +286,7 @@ const createPublishedAssetResourceHandler = ({
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
   automationToken?: string;
+  authorization?: string;
   database: ReturnType<typeof createRuntimeContentDatabase>;
   fetchDocument: typeof fetch;
   documentCache: DocumentSourceCache;
@@ -282,6 +301,7 @@ const createPublishedAssetResourceHandler = ({
     runtimeAssets,
     embeddedContents: artifact.contents,
     automationToken,
+    authorization,
     fetchDocument,
     cache: documentCache,
     onEvent: onDocumentGraphEvent,
@@ -350,6 +370,7 @@ const createPublishedAssetResourceHandler = ({
                 baseUrl,
                 runtimeAssets,
                 automationToken,
+                authorization,
               }),
               { signal: request.signal }
             );
@@ -450,6 +471,7 @@ export const createGeneratedAssetResourceRuntime = ({
       cache,
       baseUrl: origin,
       automationToken: getAutomationToken(context),
+      authorization: request.headers.get("authorization") ?? undefined,
       database,
       fetchDocument: fallback,
       documentCache,

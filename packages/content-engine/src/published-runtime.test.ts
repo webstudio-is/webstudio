@@ -103,6 +103,100 @@ const queryRequest = (content = false) =>
 describe("published asset resource runtime", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  describe.each([false, true])(
+    "Basic auth forwarding (graph: %s)",
+    (withGraph) => {
+      test.each([
+        {
+          url: "/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: "Basic dXNlcjpwYXNz",
+        },
+        {
+          url: "https://site.example/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: "Basic dXNlcjpwYXNz",
+        },
+        {
+          url: "https://cdn.example/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: null,
+        },
+        {
+          url: "http://site.example/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: null,
+        },
+        {
+          url: "https://site.example:8443/assets/post.md",
+          authorization: "Basic dXNlcjpwYXNz",
+          expected: null,
+        },
+        {
+          url: "/assets/post.md",
+          authorization: "Bearer private-token",
+          expected: null,
+        },
+        { url: "/assets/post.md", authorization: undefined, expected: null },
+      ])(
+        "restricts credentials for $url ($authorization)",
+        async ({ url, authorization, expected }) => {
+          const { index } = await createRuntime();
+          const artifact = createContentRuntimeArtifact(index, {
+            includeContents: false,
+          });
+          const fallback = vi.fn<typeof fetch>(
+            async () => new Response("Post")
+          );
+          const createFetch = createGeneratedRuntime({
+            deploymentId: "basic-auth-test",
+            artifact: {
+              ...artifact,
+              ...(withGraph
+                ? {
+                    documentGraph: {
+                      nodes: [
+                        {
+                          id: document._id,
+                          revision,
+                          contentRef: document.contentRef,
+                          format: "markdown" as const,
+                        },
+                      ],
+                      edges: [],
+                    },
+                  }
+                : {}),
+            },
+            runtimeAssets: {
+              "post-1": { url, contentRef: document.contentRef },
+            },
+          });
+          const headers = new Headers({ cookie: "private=value" });
+          if (authorization !== undefined) {
+            headers.set("authorization", authorization);
+          }
+          const generatedFetch = await createFetch({
+            request: new Request("https://site.example/blog/post", { headers }),
+            fallback,
+          });
+          const response = await generatedFetch(queryRequest(true));
+          expect(response.status).toBe(200);
+          expect(await response.json()).toMatchObject({
+            items: [{ content: { text: "Post" } }],
+          });
+          expect(fallback).toHaveBeenCalledOnce();
+          const request = fallback.mock.calls[0][0] as Request;
+          expect(request.headers.get("authorization")).toBe(expected);
+          expect(request.headers.has("cookie")).toBe(false);
+          if (expected !== null) {
+            expect(request.redirect).toBe("error");
+          }
+        }
+      );
+    }
+  );
+
   test.each([
     { content: { mode: "full" }, text: "Post" },
     { content: { mode: "range", offset: 1, length: 2 }, text: "os" },
