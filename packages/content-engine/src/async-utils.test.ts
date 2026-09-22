@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { mapBounded } from "./async-utils";
+import { createConcurrencyLimiter, mapBounded } from "./async-utils";
 
 describe("bounded async work", () => {
   test("limits concurrency and preserves result order", async () => {
@@ -22,6 +22,41 @@ describe("bounded async work", () => {
 
     await expect(pending).resolves.toEqual([6, 4, 2]);
     expect(maximumActive).toBe(2);
+  });
+
+  test("does not start queued work after cancellation", async () => {
+    const controller = new AbortController();
+    const limit = createConcurrencyLimiter({
+      concurrency: 1,
+      signal: controller.signal,
+    });
+    let releaseFirst = () => {};
+    let firstStarted = false;
+    const first = limit(
+      () =>
+        new Promise<void>((resolve) => {
+          firstStarted = true;
+          releaseFirst = resolve;
+        })
+    );
+    let secondStarted = false;
+    const second = limit(async () => {
+      secondStarted = true;
+    });
+    const secondOutcome = second.then(
+      () => "resolved",
+      (error) => error
+    );
+
+    await expect.poll(() => firstStarted).toBe(true);
+    releaseFirst();
+    await Promise.resolve();
+    const reason = new Error("cancelled");
+    controller.abort(reason);
+
+    await first;
+    await expect(secondOutcome).resolves.toBe(reason);
+    expect(secondStarted).toBe(false);
   });
 
   test("rejects invalid concurrency instead of silently skipping work", async () => {

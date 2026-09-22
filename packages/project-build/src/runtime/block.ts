@@ -14,7 +14,7 @@ import {
 import { computeStringExpression } from "./data";
 import type { InstanceSelector } from "./tree";
 
-export const resolveContentBlockSourceAssetId = ({
+export const resolveContentBlockSourceAssetId = async ({
   source,
   values,
 }: {
@@ -25,7 +25,7 @@ export const resolveContentBlockSourceAssetId = ({
     ? source.assetId
     : values === undefined
       ? undefined
-      : computeStringExpression(source.value, values);
+      : await computeStringExpression(source.value, values);
 
 export const findBlockTemplateNameCollision = ({
   instance,

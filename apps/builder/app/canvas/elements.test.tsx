@@ -1,14 +1,29 @@
 import { forwardRef } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { act } from "react-dom/test-utils";
+import { createRoot } from "react-dom/client";
 import { expect, test } from "vitest";
-import type { Instance } from "@webstudio-is/sdk";
+import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
+import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { getInstanceKey } from "~/shared/nano-states/instances";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
 } from "./elements";
 
-test("renders expression and instance siblings in order", () => {
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
+
+test("renders expression and instance siblings in order", async () => {
+  $variableValuesByInstanceSelector.set(
+    new Map([
+      [
+        getInstanceKey(["parent", ROOT_INSTANCE_ID]),
+        new Map([["name", "world"]]),
+      ],
+    ])
+  );
   const instances = new Map<string, Instance>([
     [
       "child",
@@ -35,10 +50,59 @@ test("renders expression and instance siblings in order", () => {
     ],
     Component,
     components: new Map() as Components,
-    variableValues: new Map([["name", "world"]]),
   });
 
-  expect(renderToStaticMarkup(<>{children}</>)).toBe(
-    "Hello world<span>child</span>"
-  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  await act(async () => {
+    root.render(<>{children}</>);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
+  expect(container.innerHTML).toBe("Hello world<span>child</span>");
+  root.unmount();
+  container.remove();
+  $variableValuesByInstanceSelector.set(new Map());
+});
+
+test("updates expressions when async scoped values resolve", async () => {
+  $variableValuesByInstanceSelector.set(new Map());
+  const children = createInstanceChildrenElements({
+    instances: new Map(),
+    instanceSelector: ["parent"],
+    children: [
+      {
+        type: "expression",
+        value: "$ws$dataSource$resource.data.title",
+      },
+    ],
+    Component: forwardRef<HTMLElement, WebstudioComponentProps>(() => <span />),
+    components: new Map() as Components,
+  });
+
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  await act(async () => {
+    root.render(<>{children}</>);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
+  expect(container.innerHTML).toBe("");
+
+  await act(async () => {
+    $variableValuesByInstanceSelector.set(
+      new Map([
+        [
+          getInstanceKey(["parent", ROOT_INSTANCE_ID]),
+          new Map([["resource", { data: { title: "Loaded" } }]]),
+        ],
+      ])
+    );
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
+
+  expect(container.innerHTML).toBe("Loaded");
+  root.unmount();
+  container.remove();
+  $variableValuesByInstanceSelector.set(new Map());
 });

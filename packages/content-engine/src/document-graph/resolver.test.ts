@@ -138,4 +138,48 @@ describe("document graph resolver", () => {
     expect(loadCount).toBe(1);
     expect(result.roots).toEqual(["first:shared", "second:shared"]);
   });
+
+  test("cancels without waiting for a document loader to settle", async () => {
+    const controller = new AbortController();
+    let finish = () => {};
+    let markStarted = () => {};
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    const resolution = resolveDocumentGraph({
+      graph: createDocumentGraph({
+        nodes: [{ id: "root", revision: "r1", contentRef: "root" }],
+        edges: [],
+      }),
+      rootIds: ["root"],
+      concurrency: 1,
+      signal: controller.signal,
+      load: () =>
+        new Promise<string>((resolve) => {
+          finish = () => resolve("source");
+          markStarted();
+        }),
+      assemble: ({ source }) => source,
+    });
+    const outcome = resolution.then(
+      () => "resolved",
+      (error) => error
+    );
+
+    await started;
+    controller.abort(new Error("cancelled"));
+
+    await expect(
+      Promise.race([
+        outcome,
+        new Promise((resolve) =>
+          setTimeout(() => resolve("still pending"), 20)
+        ),
+      ])
+    ).resolves.toMatchObject({
+      code: "REQUEST_CANCELLED",
+    } satisfies Partial<DocumentGraphResolutionError>);
+    finish();
+    await outcome;
+  });
 });
