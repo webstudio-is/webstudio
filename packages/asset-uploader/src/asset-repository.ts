@@ -131,7 +131,10 @@ import {
   type AssetQueryPerformancePhase,
 } from "./query-performance";
 import type { AssetContentRead as SharedAssetContentRead } from "@webstudio-is/content-engine/asset-content-repository";
-import { validateTextAssetSourceBytes } from "@webstudio-is/content-engine/mdx";
+import {
+  createTextAssetSourceValidator,
+  validateTextAssetSourceBytes,
+} from "@webstudio-is/content-engine/mdx";
 import { removeMetadataIssuesDuplicatedBySource } from "./diagnostic-utils";
 import {
   getCollectionFolderIds,
@@ -274,6 +277,7 @@ const parseCollectionTemplate = async (source: string) => {
 };
 
 class RequestContentBytesCache {
+  readonly validateSource = createTextAssetSourceValidator();
   private values = new Map<string, Uint8Array>();
   private byteLength = 0;
 
@@ -2288,6 +2292,7 @@ export class PostgresAssetRepository implements AssetRepository {
       } = await preservePreparationIssues(() =>
         materializeContentSource({
           source,
+          validateSource: contentBytesCache.validateSource,
           plan: requirements,
           maximumContentBytes: this.contentDatabaseMaxBytes,
           onPerformanceEvent: this.onPerformanceEvent,
@@ -2329,6 +2334,7 @@ export class PostgresAssetRepository implements AssetRepository {
             } = await preservePreparationIssues(() =>
               materializeContentSnapshot({
                 snapshot,
+                validateSource: contentBytesCache.validateSource,
                 plan: requirements,
                 maximumContentBytes: this.contentDatabaseMaxBytes,
                 onPerformanceEvent: this.onPerformanceEvent,
@@ -2689,6 +2695,7 @@ export class PostgresAssetRepository implements AssetRepository {
               const validation = await validateTextAssetSourceBytes({
                 source: bytes,
                 format: documentFormat === "markdown" ? "md" : "mdx",
+                validateSource: contentBytesCache.validateSource,
               });
               byteSourceDiagnostics.push(
                 ...validation.diagnostics.map((diagnostic) => ({

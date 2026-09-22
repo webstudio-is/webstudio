@@ -259,7 +259,8 @@ const discoverSnapshotAssetReferences = async ({
 };
 
 const validateSnapshotDocumentSources = async (
-  entries: readonly ContentCompilerInput[]
+  entries: readonly ContentCompilerInput[],
+  validateSource: typeof validateTextAssetSource
 ): Promise<{
   sourceIssues: readonly SourceIssue[];
   mdxDocuments: ReadonlyMap<string, MdxDocument>;
@@ -287,7 +288,7 @@ const validateSnapshotDocumentSources = async (
     ) {
       continue;
     }
-    const validation = await validateTextAssetSource({
+    const validation = await validateSource({
       source: entry.content,
       format: format === "markdown" ? "md" : "mdx",
     });
@@ -593,12 +594,14 @@ export const materializeContentSnapshot = async ({
   maximumContentBytes = contentEngineLimits.databaseBytes,
   onPerformanceEvent,
   performanceNow = () => performance.now(),
+  validateSource = validateTextAssetSource,
 }: {
   snapshot: ContentSourceSnapshot;
   plan?: ContentCompilationPlan;
   maximumContentBytes?: number;
   onPerformanceEvent?: ContentSourcePerformanceObserver;
   performanceNow?: () => number;
+  validateSource?: typeof validateTextAssetSource;
 }) => {
   validateSnapshot(snapshot);
   try {
@@ -608,7 +611,10 @@ export const materializeContentSnapshot = async ({
       string,
       Readonly<Record<string, unknown>>
     >();
-    const validation = await validateSnapshotDocumentSources(entries);
+    const validation = await validateSnapshotDocumentSources(
+      entries,
+      validateSource
+    );
     const documentGraphResult = await measureContentSourcePerformance({
       phase: "document-graph",
       observer: onPerformanceEvent,
@@ -734,12 +740,14 @@ export const materializeContentSource = async ({
   maximumContentBytes,
   onPerformanceEvent,
   performanceNow,
+  validateSource,
 }: {
   source: ContentSource;
   plan?: ContentCompilationPlan;
   maximumContentBytes?: number;
   onPerformanceEvent?: ContentSourcePerformanceObserver;
   performanceNow?: () => number;
+  validateSource?: typeof validateTextAssetSource;
 }): Promise<{
   sourceRevision: string;
   entries: readonly ContentCompilerInput[];
@@ -759,6 +767,7 @@ export const materializeContentSource = async ({
         maximumContentBytes,
         onPerformanceEvent,
         performanceNow,
+        validateSource,
       });
     } catch (error) {
       if (error instanceof ContentSourceChangedError === false) {

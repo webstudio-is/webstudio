@@ -1,4 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import {
+  createTextAssetSourceValidator,
+  validateTextAssetSource,
+  validateTextAssetSourceBytes,
+} from "./mdx";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { getContentArtifactReferencedAssetIds } from "./content-artifact";
 import { createContentDatabase } from "./content-database";
@@ -6,6 +11,7 @@ import {
   compileContentSource,
   ContentSourceChangedError,
   createContentSourceFile,
+  materializeContentSource,
   type ContentSource,
   type ContentSourceFile,
 } from "./content-source";
@@ -121,6 +127,70 @@ const createDocumentSource = ({
 });
 
 describe("content source snapshots", () => {
+  test("reuses source validation across byte loading and compilation passes without losing per-file diagnostics", async () => {
+    const validate = vi.fn(validateTextAssetSource);
+    const validateSource = createTextAssetSourceValidator(
+      {},
+      { validateTextAssetSource: validate }
+    );
+    const files = [
+      createFile({ id: "one", path: "one.mdx", contentType: "text/mdx" }),
+      createFile({ id: "two", path: "two.mdx", contentType: "text/mdx" }),
+    ];
+    let content = "{unsafe()}";
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files,
+          async loadEntries() {
+            const validated = await validateTextAssetSourceBytes({
+              source: new TextEncoder().encode(content),
+              format: "mdx",
+              validateSource,
+            });
+            return files.map((file) => ({
+              ...createEntry(file),
+              content: validated.source,
+            }));
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+    const first = await materializeContentSource({ source, validateSource });
+    expect(first.sourceIssues).toMatchObject([
+      {
+        assetId: "one",
+        path: "one.mdx",
+        severity: "warning",
+        code: "unsafe-mdx",
+      },
+      {
+        assetId: "two",
+        path: "two.mdx",
+        severity: "warning",
+        code: "unsafe-mdx",
+      },
+    ]);
+    expect(await materializeContentSource({ source, validateSource })).toEqual(
+      first
+    );
+    expect(validate).toHaveBeenCalledOnce();
+    content = "<ws.element";
+    await expect(
+      materializeContentSource({ source, validateSource })
+    ).rejects.toMatchObject({
+      diagnostics: [
+        { assetId: "one", severity: "error" },
+        { assetId: "two", severity: "error" },
+      ],
+    });
+    expect(validate).toHaveBeenCalledTimes(2);
+  });
+
   test("reports all fatal MDX errors from selected files", async () => {
     const files = [
       createFile({ id: "one", path: "blog/one.mdx", contentType: "text/mdx" }),
