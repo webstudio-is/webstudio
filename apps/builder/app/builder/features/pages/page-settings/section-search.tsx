@@ -11,6 +11,8 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
+import { computeExpression } from "@webstudio-is/project-build/runtime";
+import { useAsyncValue } from "~/shared/use-async-value";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import type {
   PageSettingsErrors,
@@ -102,7 +104,11 @@ export const SearchSection = ({
   const title = usePageSettingsText(values.title, variableValues);
   const description = usePageSettingsText(values.description, variableValues);
   const excludePageFromSearch = Boolean(
-    usePageSettingsText(values.excludePageFromSearch, variableValues)
+    useAsyncValue(
+      () => computeExpression(values.excludePageFromSearch, variableValues),
+      [values.excludePageFromSearch, variableValues],
+      undefined
+    )
   );
   return (
     <Grid gap={2}>

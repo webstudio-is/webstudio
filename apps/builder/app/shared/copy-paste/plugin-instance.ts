@@ -530,7 +530,9 @@ const handleCopyInstanceAsync = async () => {
   return stringifyMultiRootSelection(selectedData);
 };
 
-const handleCutInstanceAsync = async () => {
+const handleCutInstanceAsync = async (
+  writeClipboard: (data: string) => Promise<boolean>
+) => {
   const selectedInstanceSelectors = $allSelectedInstanceSelectors.get();
   if (selectedInstanceSelectors.length > 1) {
     const instances = $instances.get();
@@ -566,6 +568,12 @@ const handleCutInstanceAsync = async () => {
       reportSkippedSelectedInstances("cut");
     }
     const clipboardData = stringifyMultiRootSelection(selectedPathData);
+    if (
+      clipboardData === undefined ||
+      (await writeClipboard(clipboardData)) === false
+    ) {
+      return;
+    }
     for (const { instancePath } of sortInstancePathsForChildMutation(
       selectedPaths
     )) {
@@ -587,11 +595,12 @@ const handleCutInstanceAsync = async () => {
   if (data === undefined) {
     return;
   }
-  deleteInstanceBySelector(instancePath[0].instanceSelector);
-  if (data === undefined) {
+  const clipboardData = stringify(data);
+  if ((await writeClipboard(clipboardData)) === false) {
     return;
   }
-  return stringify(data);
+  deleteInstanceBySelector(instancePath[0].instanceSelector);
+  return clipboardData;
 };
 
 const handleCopyInstance = () =>
@@ -599,11 +608,13 @@ const handleCopyInstance = () =>
     ? undefined
     : handleCopyInstanceAsync();
 
-const handleCutInstance = () =>
+const handleCutInstance = (
+  writeClipboard: (data: string) => Promise<boolean>
+) =>
   $allSelectedInstanceSelectors.get().length === 0 &&
   $selectedInstancePath.get() === undefined
     ? undefined
-    : handleCutInstanceAsync();
+    : handleCutInstanceAsync(writeClipboard);
 
 export const instanceText = {
   name: "instance-text",

@@ -122,7 +122,7 @@ describe("copy and cut guards", () => {
   test("does not cut without a selected instance", async () => {
     selectInstance(undefined);
 
-    expect(instanceText.onCut?.()).toBeUndefined();
+    expect(instanceText.onCut?.(async () => true)).toBeUndefined();
   });
 
   test("does not copy or cut the selected root instance", async () => {
@@ -134,7 +134,9 @@ describe("copy and cut guards", () => {
     selectInstance(["body0"]);
 
     await expect(instanceText.onCopy?.()).resolves.toBeUndefined();
-    await expect(instanceText.onCut?.()).resolves.toBeUndefined();
+    await expect(
+      instanceText.onCut?.(async () => true)
+    ).resolves.toBeUndefined();
     expect($instances.get()).toEqual(instances);
   });
 
@@ -577,7 +579,7 @@ describe("copy and cut guards", () => {
       ["box2", "body0"],
     ]);
 
-    const clipboardData = await instanceText.onCut?.();
+    const clipboardData = await instanceText.onCut?.(async () => true);
 
     expect(JSON.parse(clipboardData ?? "")).toMatchObject({
       "@webstudio/instances/v0.1": {
@@ -606,7 +608,7 @@ describe("copy and cut guards", () => {
       ["box1", "body0"],
     ]);
 
-    const clipboardData = await instanceText.onCut?.();
+    const clipboardData = await instanceText.onCut?.(async () => true);
 
     expect(JSON.parse(clipboardData ?? "")).toMatchObject({
       "@webstudio/instances/v0.1": {
@@ -636,7 +638,9 @@ describe("copy and cut guards", () => {
       ["template2", "body0"],
     ]);
 
-    await expect(instanceText.onCut?.()).resolves.toBeUndefined();
+    await expect(
+      instanceText.onCut?.(async () => true)
+    ).resolves.toBeUndefined();
     expect($instances.get()).toEqual(instances);
     expect($allSelectedInstanceSelectors.get()).toEqual([
       ["template1", "body0"],
@@ -1338,7 +1342,7 @@ describe("paste target", () => {
     );
     selectInstance(["box", "fragment", "slot1", "body0"]);
 
-    const clipboardData = await instanceText.onCut?.();
+    const clipboardData = await instanceText.onCut?.(async () => true);
     expect(JSON.parse(clipboardData ?? "")).toMatchObject({
       "@webstudio/instance/v0.1": {
         instanceSelector: ["box", "fragment", "slot1", "body0"],
@@ -1378,7 +1382,7 @@ describe("paste target", () => {
     );
     selectInstance(["box", "slot1", "body0"]);
 
-    const clipboardData = await instanceText.onCut?.();
+    const clipboardData = await instanceText.onCut?.(async () => true);
     expect(JSON.parse(clipboardData ?? "")).toMatchObject({
       "@webstudio/instance/v0.1": {
         instanceSelector: ["box", "slot1", "body0"],
@@ -1418,7 +1422,7 @@ describe("paste target", () => {
     );
     selectInstance(["box", "div", "fragment", "slot1", "body0"]);
 
-    const clipboardData = await instanceText.onCut?.();
+    const clipboardData = await instanceText.onCut?.(async () => true);
     expect(JSON.parse(clipboardData ?? "")).toMatchObject({
       "@webstudio/instance/v0.1": {
         instanceSelector: ["box", "div", "fragment", "slot1", "body0"],
@@ -1458,7 +1462,7 @@ describe("paste target", () => {
     );
     selectInstance(["box", "fragment", "slot1", "body0"]);
 
-    const clipboardData = await instanceText.onCut?.();
+    const clipboardData = await instanceText.onCut?.(async () => true);
     expect(JSON.parse(clipboardData ?? "")).toMatchObject({
       "@webstudio/instance/v0.1": {
         instanceSelector: ["box", "fragment", "slot1", "body0"],

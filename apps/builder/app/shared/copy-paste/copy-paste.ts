@@ -81,7 +81,10 @@ export type Plugin = {
   name: string;
   mimeType: string;
   onCopy?: () => undefined | string | Promise<undefined | string>;
-  onCut?: () => undefined | string | Promise<undefined | string>;
+  // Delete the source only after writeClipboard confirms the data was saved.
+  onCut?: (
+    writeClipboard: (data: string) => Promise<boolean>
+  ) => undefined | Promise<undefined | string>;
   onPaste?: (data: string) => PasteResult | Promise<PasteResult>;
 };
 
@@ -192,28 +195,13 @@ const initPlugins = ({
     if (validateClipboardEvent(event) === false) {
       return;
     }
-    for (const { mimeType, onCut } of plugins) {
-      const data = onCut?.();
-      if (data instanceof Promise) {
+    for (const { onCut } of plugins) {
+      const operation = onCut?.(writeClipboardText);
+      if (operation !== undefined) {
         event.preventDefault();
-        void data
-          .then((value) => {
-            if (value !== undefined) {
-              event.clipboardData?.setData(mimeType, value);
-            }
-            return writeClipboardText(value);
-          })
-          .catch(() => {
-            builderApi.toast.error(
-              "Could not prepare the selected content for copying."
-            );
-          });
-        break;
-      }
-      if (data) {
-        // must prevent default, otherwise setData() will not work
-        event.preventDefault();
-        event.clipboardData?.setData(mimeType, data);
+        operation.catch(() => {
+          builderApi.toast.error("Could not cut the selected content.");
+        });
         break;
       }
     }
@@ -396,7 +384,9 @@ const writeClipboardText = async (
   data = await data;
   if (data && validateCopyPermission()) {
     await navigator.clipboard.writeText(data);
+    return true;
   }
+  return false;
 };
 
 // Public API for programmatic copy/paste/cut operations
@@ -434,6 +424,6 @@ export const emitPaste = async () => {
   await pasteClipboardText?.(text);
 };
 
-export const cutInstance = () => {
-  return writeClipboardText(instanceText.onCut?.());
+export const cutInstance = async () => {
+  await instanceText.onCut?.(writeClipboardText);
 };
