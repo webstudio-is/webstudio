@@ -446,11 +446,13 @@ const includesField = (
 };
 
 export const requiresRuntimeDocumentData = (plan: ContentCompilationPlan) =>
-  plan.queries.some((query) =>
-    includesField(
-      query,
-      (field) => field.length === 1 && isAssetQueryRuntimeField(field[0])
-    )
+  plan.queries.some(
+    (query) =>
+      query.content.mode !== "none" ||
+      includesField(
+        query,
+        (field) => field.length === 1 && isAssetQueryRuntimeField(field[0])
+      )
   );
 
 const getStructuredPropertyPaths = (query: ContentCompilationQuery) => {

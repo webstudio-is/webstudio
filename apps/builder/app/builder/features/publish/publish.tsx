@@ -82,7 +82,10 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import type { Templates } from "@webstudio-is/sdk";
+import {
+  publishedDeploymentDestination,
+  type Templates,
+} from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -557,7 +560,7 @@ const Publish = ({
     const publishResult = await nativeClient.domain.publish.mutate({
       projectId: project.id,
       domains,
-      destination: "saas",
+      destination: publishedDeploymentDestination,
     });
 
     if (publishResult.success === false) {

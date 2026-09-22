@@ -15,6 +15,7 @@ import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { createServer } from "node:http";
 import {
   defaultTreeAdapter,
   parse as parseHtml,
@@ -2196,123 +2197,215 @@ sitemap.map((page) => page.path);`
     );
   });
 
-  test("hydrates a synced MDX asset into a dynamic SSR content database", async () => {
-    const source = "# Published post\n";
-    const index = await createTestAssetIndex({
-      ...indexedDocument,
-      name: "post.mdx",
-      path: "blog/post.mdx",
-      extension: "mdx",
-      mimeType: "text/mdx",
-      contentRef: "post.mdx",
-      size: new TextEncoder().encode(source).byteLength,
-      properties: { slug: "post" },
-    });
-    const siteData = {
-      ...createSiteData({
-        pages: [
+  test.each(["mdx", "md"])(
+    "fetches a synced %s asset over HTTP in a dynamic SSR build",
+    async (extension) => {
+      const source = "# Published post\n";
+      const name = `post.${extension}`;
+      const index = await createTestAssetIndex({
+        ...indexedDocument,
+        name,
+        path: `blog/${name}`,
+        extension,
+        mimeType: extension === "mdx" ? "text/mdx" : "text/markdown",
+        contentRef: name,
+        size: new TextEncoder().encode(source).byteLength,
+        properties: { slug: "post" },
+      });
+      const siteData = {
+        ...createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "post",
+              name: "Post",
+              title: "Post",
+              path: "/blog/:slug",
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+        }),
+        assets: [
           {
-            id: "home",
-            name: "Home",
-            title: "Home",
-            path: "",
-            rootInstanceId: "root",
+            id: "post-1",
+            projectId: "project-id",
+            name,
+            type: "file" as const,
+            format: extension,
+            size: source.length,
             meta: {},
+            description: "",
+            createdAt: "2024-01-01T00:00:00.000Z",
           },
           {
-            id: "post",
-            name: "Post",
-            title: "Post",
-            path: "/blog/:slug",
-            rootInstanceId: "root",
+            id: "draft",
+            projectId: "project-id",
+            name: `draft.${extension}`,
+            type: "file" as const,
+            format: extension,
+            size: source.length,
             meta: {},
+            description: "",
+            createdAt: "2024-01-01T00:00:00.000Z",
           },
         ],
-      }),
-      assets: [
-        {
-          id: "post-1",
-          projectId: "project-id",
-          name: "post.mdx",
-          type: "file" as const,
-          format: "mdx",
-          size: source.length,
-          meta: {},
-          description: "",
-          createdAt: "2024-01-01T00:00:00.000Z",
-        },
-        {
-          id: "draft",
-          projectId: "project-id",
-          name: "draft.mdx",
-          type: "file" as const,
-          format: "mdx",
-          size: source.length,
-          meta: {},
-          description: "",
-          createdAt: "2024-01-01T00:00:00.000Z",
-        },
-      ],
-      assetIndex: index,
-    };
-    await writeSiteData(
-      siteData as unknown as ReturnType<typeof createSiteData>
-    );
-    await mkdir(".webstudio/assets", { recursive: true });
-    await writeFile(".webstudio/assets/post.mdx", source, "utf8");
-    await writeFile(".webstudio/assets/draft.mdx", "draft secret", "utf8");
+        assetIndex: index,
+      };
+      siteData.build.resources = [
+        ["posts", createQueryResource("full")],
+      ] as never;
+      siteData.build.dataSources = [
+        [
+          "posts-data",
+          {
+            id: "posts-data",
+            type: "resource",
+            name: "posts",
+            resourceId: "posts",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      await writeSiteData(
+        siteData as unknown as ReturnType<typeof createSiteData>
+      );
+      await mkdir(".webstudio/assets", { recursive: true });
+      await writeFile(`.webstudio/assets/${name}`, source, "utf8");
+      await writeFile(
+        `.webstudio/assets/draft.${extension}`,
+        "draft secret",
+        "utf8"
+      );
 
-    await prebuild({ assets: true, template: ["react-router"] });
+      await prebuild({
+        assets: true,
+        template: ["react-router"],
+      });
 
-    await expect(
-      readFile("app/routes/[blog].$slug._index.tsx", "utf8")
-    ).resolves.toContain("createGeneratedAssetResourceFetch");
-    await expect(readFile("public/assets/post.mdx", "utf8")).resolves.toBe(
-      source
-    );
-    await expect(readFile("public/assets/draft.mdx", "utf8")).resolves.toBe(
-      "draft secret"
-    );
-    const manifest = await readFile(
-      "app/__generated__/$resources.asset-query-manifest.ts",
-      "utf8"
-    );
-    expect(manifest).toContain("Published post");
-    expect(manifest).not.toContain("draft secret");
-    await expect(
-      readFile("app/asset-resource-fetch.ts", "utf8")
-    ).rejects.toThrow("ENOENT");
-    expect(
-      (await getFilePaths("app/routes")).filter((path) =>
-        path.includes("$slug")
-      )
-    ).toHaveLength(1);
-    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("react-router", ["build"]);
-    const serverBundle = (
-      await Promise.all(
-        (
-          await getFilePaths("build/server")
+      await expect(
+        readFile("app/routes/[blog].$slug._index.tsx", "utf8")
+      ).resolves.toContain("createGeneratedAssetResourceFetch");
+      await expect(readFile(`public/assets/${name}`, "utf8")).resolves.toBe(
+        source
+      );
+      await expect(
+        readFile(`public/assets/draft.${extension}`, "utf8")
+      ).resolves.toBe("draft secret");
+      const manifest = await readFile(
+        "app/__generated__/$resources.asset-query-manifest.ts",
+        "utf8"
+      );
+      expect(manifest).not.toContain("Published post");
+      expect(manifest).not.toContain('"contents"');
+      expect(manifest).not.toContain("draft secret");
+      await expect(
+        readFile("app/asset-resource-fetch.ts", "utf8")
+      ).rejects.toThrow("ENOENT");
+      expect(
+        (await getFilePaths("app/routes")).filter((path) =>
+          path.includes("$slug")
         )
-          .filter((path) => path.endsWith(".js"))
-          .map((path) => readFile(path, "utf8"))
-      )
-    ).join("\n");
-    expect(serverBundle).toContain("Published post");
-    expect(serverBundle).not.toContain("draft secret");
-    expect(serverBundle).toContain("post-revision");
-    const clientBundle = (
-      await Promise.all(
-        (
-          await getFilePaths("build/client")
+      ).toHaveLength(1);
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await runGeneratedCommand("react-router", ["build"]);
+      const serverBundle = (
+        await Promise.all(
+          (
+            await getFilePaths("build/server")
+          )
+            .filter((path) => path.endsWith(".js"))
+            .map((path) => readFile(path, "utf8"))
         )
-          .filter((path) => path.endsWith(".js"))
-          .map((path) => readFile(path, "utf8"))
-      )
-    ).join("\n");
-    expect(clientBundle).not.toContain("Published post");
-    expect(clientBundle).not.toContain("post-revision");
-  }, 30_000);
+      ).join("\n");
+      expect(serverBundle).not.toContain("Published post");
+      expect(serverBundle).not.toContain("draft secret");
+      expect(serverBundle).toContain("post-revision");
+      const clientBundle = (
+        await Promise.all(
+          (
+            await getFilePaths("build/client")
+          )
+            .filter((path) => path.endsWith(".js"))
+            .map((path) => readFile(path, "utf8"))
+        )
+      ).join("\n");
+      expect(clientBundle).not.toContain("Published post");
+      expect(clientBundle).not.toContain("post-revision");
+
+      // Exercise the generated runtime against real locally served assets.
+      // The preview/Vite server supplies the same public files in normal use.
+      const runtimeBundle = await build({
+        entryPoints: [
+          join(tempDir, "app/__generated__/$resources.asset-query-runtime.ts"),
+        ],
+        bundle: true,
+        format: "esm",
+        platform: "node",
+        write: false,
+      });
+      const runtime = await import(
+        /* @vite-ignore */
+        `data:text/javascript;base64,${Buffer.from(runtimeBundle.outputFiles[0].text).toString("base64")}`
+      );
+      const requestedPaths: string[] = [];
+      const server = createServer((request, response) => {
+        requestedPaths.push(request.url ?? "");
+        if (request.url !== `/assets/${name}`) {
+          response.writeHead(404).end();
+          return;
+        }
+        void readFile(join(tempDir, "build/client/assets", name)).then(
+          (bytes) => response.end(bytes),
+          () => response.writeHead(404).end()
+        );
+      });
+      await new Promise<void>((resolve) =>
+        server.listen(0, "127.0.0.1", resolve)
+      );
+      try {
+        const address = server.address();
+        if (address === null || typeof address === "string") {
+          throw new Error("Expected a local TCP server");
+        }
+        const origin = `http://127.0.0.1:${address.port}`;
+        const generatedFetch = await runtime.createGeneratedAssetResourceFetch({
+          request: new Request(`${origin}/blog/post`),
+          context: {},
+          fallback: originalFetch,
+        });
+        const response = await generatedFetch("/$resources/assets", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            query: {
+              content: { mode: "full" },
+              output: { mode: "all", includeMetadata: true },
+            },
+          }),
+        });
+        const data = await response.json();
+        expect(response.status, JSON.stringify(data)).toBe(200);
+        expect(data).toMatchObject({
+          items: [{ id: "post-1", content: { text: source } }],
+        });
+        expect(requestedPaths).toEqual([`/assets/${name}`]);
+      } finally {
+        server.closeAllConnections();
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        );
+      }
+    },
+    30_000
+  );
 
   test("embeds the deployment database when asset downloads are disabled", async () => {
     const index = await createTestAssetIndex();
@@ -2348,6 +2441,8 @@ sitemap.map((page) => page.path);`
     await writeSiteData(
       siteData as unknown as ReturnType<typeof createSiteData>
     );
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/post.md", "local post body\n", "utf8");
 
     await prebuild({
       assets: false,
@@ -2358,6 +2453,9 @@ sitemap.map((page) => page.path);`
     await expect(
       readFile("app/__generated__/$resources.asset-query-manifest.ts", "utf8")
     ).resolves.toContain(index.integrity.checksum);
+    await expect(
+      readFile("app/__generated__/$resources.asset-query-manifest.ts", "utf8")
+    ).resolves.not.toContain("local post body");
     const runtimeModule = await readFile(
       "app/__generated__/$resources.asset-query-runtime.ts",
       "utf8"
@@ -2388,109 +2486,131 @@ sitemap.map((page) => page.path);`
     ).rejects.toThrow("ENOENT");
   });
 
-  test("keeps deferred SaaS asset proxy URLs deployment-relative", async () => {
-    const index = await createAssetIndex({
-      projectId: "project-1",
-      entries: [
-        createCanonicalAssetFileEntry({
-          projectId: "project-1",
-          document: indexedDocument,
-        }),
-      ],
-      documentGraph: createDocumentGraph({
-        nodes: [
+  test.each(["production", "staging"] as const)(
+    "keeps deferred published asset proxy URLs deployment-relative (%s)",
+    async (target) => {
+      const index = await createAssetIndex({
+        projectId: "project-1",
+        entries: [
           {
-            id: indexedDocument._id,
-            revision: indexedDocument.revision,
-            contentRef: indexedDocument.contentRef,
-            format: "markdown",
+            ...createCanonicalAssetFileEntry({
+              projectId: "project-1",
+              document: indexedDocument,
+            }),
+            content: "# Indexed post body\n",
           },
         ],
-        edges: [],
-      }),
-    });
-    const baseSiteData = createSiteData({
-      assets: [createAssetForIndexedDocument(indexedDocument)],
-    });
-    const siteData = {
-      ...baseSiteData,
-      origin: "https://p-project-1.apps.webstudio.is",
-      assetIndex: index,
-      build: {
-        ...baseSiteData.build,
-        deployment: {
-          destination: "saas" as const,
-          domains: ["example"],
-          assetsDomain: "example",
-          excludeWstdDomainFromSearch: false,
-        },
-        resources: [["posts", createQueryResource("markdown-body-ref")]],
-        dataSources: [
-          [
-            "posts-data",
+        documentGraph: createDocumentGraph({
+          nodes: [
             {
-              id: "posts-data",
-              type: "resource" as const,
-              name: "posts",
-              resourceId: "posts",
-              scopeInstanceId: "root",
+              id: indexedDocument._id,
+              revision: indexedDocument.revision,
+              contentRef: indexedDocument.contentRef,
+              format: "markdown",
             },
           ],
-        ],
-      },
-    };
-    await writeSiteData(
-      siteData as unknown as ReturnType<typeof createSiteData>
-    );
+          edges: [],
+        }),
+      });
+      const baseSiteData = createSiteData({
+        assets: [createAssetForIndexedDocument(indexedDocument)],
+      });
+      const siteData = {
+        ...baseSiteData,
+        origin: "https://p-project-1.apps.webstudio.is",
+        assetIndex: index,
+        build: {
+          ...baseSiteData.build,
+          deployment: {
+            destination: "saas" as const,
+            target,
+            domains: ["example"],
+            assetsDomain: "example",
+            excludeWstdDomainFromSearch: false,
+          },
+          resources: [["posts", createQueryResource("markdown-body-ref")]],
+          dataSources: [
+            [
+              "posts-data",
+              {
+                id: "posts-data",
+                type: "resource" as const,
+                name: "posts",
+                resourceId: "posts",
+                scopeInstanceId: "root",
+              },
+            ],
+          ],
+        },
+      };
+      await writeSiteData(
+        siteData as unknown as ReturnType<typeof createSiteData>
+      );
 
-    await prebuild({
-      assets: false,
-      template: ["react-router"],
-      preserveRouteTemplates: true,
-    });
+      await prebuild({
+        assets: false,
+        template: ["react-router"],
+        preserveRouteTemplates: true,
+      });
 
-    const runtimeModule = await readFile(
-      "app/__generated__/$resources.asset-query-runtime.ts",
-      "utf8"
-    );
-    expect(runtimeModule).toContain('"url":"/cgi/asset/post.md?format=raw"');
-    expect(runtimeModule).not.toContain(
-      "https://p-project-1.apps.webstudio.is/cgi/asset/"
-    );
-    expect(runtimeModule).not.toContain('"url":"/assets/post.md"');
-    const assetsModule = await readFile(
-      "app/__generated__/$resources.assets.ts",
-      "utf8"
-    );
-    expect(assetsModule).toContain(
-      '"/post.md": "/cgi/asset/post.md?format=raw"'
-    );
-    expect(assetsModule).not.toContain(
-      "https://p-project-1.apps.webstudio.is/cgi/asset/"
-    );
+      const runtimeModule = await readFile(
+        "app/__generated__/$resources.asset-query-runtime.ts",
+        "utf8"
+      );
+      const manifest = await readFile(
+        "app/__generated__/$resources.asset-query-manifest.ts",
+        "utf8"
+      );
+      expect(manifest).not.toContain("# Indexed post body");
+      expect(runtimeModule).toContain('"url":"/cgi/asset/post.md?format=raw"');
+      expect(runtimeModule).not.toContain("sourceUrl");
+      expect(runtimeModule).not.toContain(
+        "https://p-project-1.apps.webstudio.is/cgi/asset/"
+      );
+      expect(runtimeModule).not.toContain('"url":"/assets/post.md"');
+      const assetsModule = await readFile(
+        "app/__generated__/$resources.assets.ts",
+        "utf8"
+      );
+      expect(assetsModule).toContain(
+        '"/post.md": "/cgi/asset/post.md?format=raw"'
+      );
+      expect(assetsModule).not.toContain(
+        "https://p-project-1.apps.webstudio.is/cgi/asset/"
+      );
 
-    await mkdir(".webstudio/assets", { recursive: true });
-    await writeFile(".webstudio/assets/post.md", "# Post\n", "utf8");
-    await prebuild({
-      assets: true,
-      template: ["react-router"],
-      preserveRouteTemplates: true,
-    });
+      await mkdir(".webstudio/assets", { recursive: true });
+      await writeFile(".webstudio/assets/post.md", "# Post\n", "utf8");
+      await prebuild({
+        assets: true,
+        template: ["react-router"],
+        preserveRouteTemplates: true,
+      });
 
-    const materializedRuntimeModule = await readFile(
-      "app/__generated__/$resources.asset-query-runtime.ts",
-      "utf8"
-    );
-    expect(materializedRuntimeModule).toContain('"url":"/assets/post.md"');
-    expect(materializedRuntimeModule).not.toContain(
-      '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
-    );
-    const materializedAssetsModule = await readFile(
-      "app/__generated__/$resources.assets.ts",
-      "utf8"
-    );
-    expect(materializedAssetsModule).toContain('"/post.md": "/assets/post.md"');
-  });
+      const materializedRuntimeModule = await readFile(
+        "app/__generated__/$resources.asset-query-runtime.ts",
+        "utf8"
+      );
+      const materializedManifest = await readFile(
+        "app/__generated__/$resources.asset-query-manifest.ts",
+        "utf8"
+      );
+      expect(materializedManifest).not.toContain("# Indexed post body");
+      expect(materializedManifest).not.toContain('"contents"');
+      expect(materializedRuntimeModule).toContain('"url":"/assets/post.md"');
+      expect(materializedRuntimeModule).not.toContain("sourceUrl");
+      expect(materializedRuntimeModule).not.toContain(
+        '"url":"https://assets.example/cgi/asset/post.md?format=raw"'
+      );
+      const materializedAssetsModule = await readFile(
+        "app/__generated__/$resources.assets.ts",
+        "utf8"
+      );
+      expect(materializedAssetsModule).toContain(
+        '"/post.md": "/assets/post.md"'
+      );
+    }
+  );
 
   test("uses pass-through images in the base react-router template", async () => {
     await prebuild({ assets: false, template: ["react-router"] });

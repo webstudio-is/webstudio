@@ -8,7 +8,7 @@ import {
   getProjectOwnerId,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import { templates } from "@webstudio-is/sdk";
+import { publishedDeploymentDestination, templates } from "@webstudio-is/sdk";
 import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 import {
@@ -69,7 +69,7 @@ export const domainRouter = router({
         z.object({
           projectId: z.string(),
           domains: z.array(z.string()),
-          destination: z.literal("saas"),
+          destination: z.literal(publishedDeploymentDestination),
         }),
         z.object({
           projectId: z.string(),
@@ -80,7 +80,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        if (input.destination === "saas") {
+        if (input.destination === publishedDeploymentDestination) {
           const project = await projectApi.loadById(input.projectId, ctx);
           const domains = getVerifiedPublishDomains(project, input.domains);
           await publishProject(
