@@ -861,39 +861,166 @@ describe("api router permits", () => {
     ).not.toThrow();
   });
 
-  test("validates publish permissions and content diagnostics without publishing", async () => {
-    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
-    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
-      createToken({ relation: "editors", canPublish: true })
-    );
-    vi.spyOn(projectApi, "loadById").mockResolvedValue({
-      domain: "project.wstd.dev",
-    } as never);
-    const loadBundle = vi
-      .spyOn(db, "loadProjectBundleByProjectId")
-      .mockResolvedValue(createPublishedProjectBundleFixture());
-    const caller = createCaller(createContext(true));
-
-    await expect(
-      caller.publish.validate({
-        projectId: "project-1",
-        target: "staging",
-        domains: ["project.wstd.dev"],
-      })
-    ).resolves.toMatchObject({
-      valid: true,
-      target: "staging",
+  test.each([
+    {
+      target: "staging" as const,
       domains: ["project.wstd.dev"],
-      diagnostics: { mdxOmissions: [] },
-    });
-    expect(loadBundle).toHaveBeenCalledWith(
-      "project-1",
-      expect.anything(),
-      expect.objectContaining({
-        onMdxTemplateOmissions: expect.any(Function),
-      })
-    );
-  });
+      expected: ["project.wstd.dev"],
+    },
+    {
+      target: "production" as const,
+      domains: ["custom.example.com"],
+      expected: ["custom.example.com"],
+    },
+    {
+      target: "production" as const,
+      domains: undefined,
+      expected: ["project.wstd.dev", "custom.example.com"],
+    },
+  ])(
+    "validates $target publish domains $domains and content without publishing",
+    async ({ target, domains, expected }) => {
+      vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+      vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+        createToken({ relation: "editors", canPublish: true })
+      );
+      vi.spyOn(projectApi, "loadById").mockResolvedValue({
+        domain: "project.wstd.dev",
+        domainsVirtual: [
+          { domain: "custom.example.com", status: "ACTIVE", verified: true },
+        ],
+      } as never);
+      const loadBuild = vi
+        .spyOn(projectBuild, "loadDevBuildByProjectId")
+        .mockResolvedValue({
+          dataSources: [],
+          props: [],
+          resources: [],
+          instances: [],
+        } as never);
+      const loadBundle = vi
+        .spyOn(db, "loadProjectBundleByProjectId")
+        .mockResolvedValue(createPublishedProjectBundleFixture());
+      const caller = createCaller(createContext(true));
+
+      await expect(
+        caller.publish.validate({
+          projectId: "project-1",
+          target,
+          domains,
+        })
+      ).resolves.toMatchObject({
+        valid: true,
+        target,
+        domains: expected,
+        diagnostics: { mdxOmissions: [] },
+      });
+      expect(loadBuild).toHaveBeenCalledWith(expect.anything(), "project-1");
+      expect(loadBundle).toHaveBeenCalledWith(
+        "project-1",
+        expect.anything(),
+        expect.objectContaining({
+          onMdxTemplateOmissions: expect.any(Function),
+        })
+      );
+    }
+  );
+
+  test.each(
+    [
+      [],
+      ["unknown.example.com"],
+      ["unverified.example.com"],
+      ["inactive.example.com"],
+      ["project.wstd.dev", "unknown.example.com"],
+    ].map((domains) => ({ domains }))
+  )(
+    "rejects unusable publish domains $domains before loading content",
+    async ({ domains }) => {
+      vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+      vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+        createToken({ canPublish: true })
+      );
+      vi.spyOn(projectApi, "loadById").mockResolvedValue({
+        domain: "project.wstd.dev",
+        domainsVirtual: [
+          {
+            domain: "unverified.example.com",
+            status: "ACTIVE",
+            verified: false,
+          },
+          { domain: "inactive.example.com", status: "PENDING", verified: true },
+        ],
+      } as never);
+      const loadBuild = vi.spyOn(projectBuild, "loadDevBuildByProjectId");
+      const loadBundle = vi
+        .spyOn(db, "loadProjectBundleByProjectId")
+        .mockResolvedValue(createPublishedProjectBundleFixture());
+      const caller = createCaller(createContext(true));
+
+      await expect(
+        caller.publish.validate({
+          projectId: "project-1",
+          target: "production",
+          domains,
+        })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      expect(loadBuild).not.toHaveBeenCalled();
+      expect(loadBundle).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(["variable", "prop"])(
+    "rejects a missing resource referenced by a %s before diagnostics",
+    async (source) => {
+      vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+      vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+      vi.spyOn(projectApi, "loadById").mockResolvedValue({
+        domain: "project.wstd.dev",
+        domainsVirtual: [],
+      } as never);
+      vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue({
+        resources: [],
+        instances: [],
+        dataSources:
+          source === "variable"
+            ? [
+                {
+                  id: "broken",
+                  type: "resource",
+                  name: "Broken",
+                  scopeInstanceId: "body",
+                  resourceId: "missing-resource",
+                },
+              ]
+            : [],
+        props:
+          source === "prop"
+            ? [
+                {
+                  id: "broken",
+                  instanceId: "body",
+                  name: "data",
+                  type: "resource",
+                  value: "missing-resource",
+                },
+              ]
+            : [],
+      } as never);
+      const loadBundle = vi
+        .spyOn(db, "loadProjectBundleByProjectId")
+        .mockResolvedValue(createPublishedProjectBundleFixture());
+      const caller = createCaller(createContext(true));
+
+      await expect(
+        caller.publish.validate({
+          projectId: "project-1",
+          target: "staging",
+        })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      expect(loadBundle).not.toHaveBeenCalled();
+    }
+  );
 
   test("does not run publish diagnostics when the selected domains are forbidden", async () => {
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
