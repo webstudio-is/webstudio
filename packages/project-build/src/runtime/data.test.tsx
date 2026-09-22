@@ -24,6 +24,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   computeExpression,
   computeExpressionWithinScope,
+  computeStringExpression,
   bindExpressionToInstanceScope,
   createDataVariable,
   dataVariableCreateInput,
@@ -1007,75 +1008,169 @@ test("replace data source ids in expression", () => {
   ).toEqual("https://example.com/cards.json");
 });
 
-test("compute expression with decoded ids", () => {
-  expect(
+test("compute expression with decoded ids", async () => {
+  await expect(
     computeExpression("$ws$dataSource$myId", new Map([["myId", "value"]]))
-  ).toEqual("value");
+  ).resolves.toEqual("value");
 });
 
-test("compute expression with decoded names", () => {
-  expect(
+test("compute expression asynchronously resolves only referenced data sources", async () => {
+  const resolveDataSource = vi.fn(async (id: string, value: unknown) => {
+    if (id === "remoteId") {
+      return { data: { title: "Remote title" } };
+    }
+    return value;
+  });
+
+  await expect(
+    computeExpression(
+      `${encodeDataVariableId("remoteId")}.data.title`,
+      new Map([
+        ["remoteId", undefined],
+        ["unusedId", undefined],
+      ]),
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+  expect(resolveDataSource).toHaveBeenCalledOnce();
+  expect(resolveDataSource).toHaveBeenCalledWith("remoteId", undefined);
+});
+
+test("compute expression asynchronously resolves independent data sources in parallel", async () => {
+  let finishFirst: (value: number) => void = () => {};
+  let finishSecond: (value: number) => void = () => {};
+  let active = 0;
+  let maximumActive = 0;
+  const resolveDataSource = vi.fn((id: string) => {
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    return new Promise<number>((resolve) => {
+      const finish = (value: number) => {
+        active -= 1;
+        resolve(value);
+      };
+      if (id === "firstId") {
+        finishFirst = finish;
+      } else {
+        finishSecond = finish;
+      }
+    });
+  });
+
+  const result = computeExpression(
+    `${encodeDataVariableId("firstId")} + ${encodeDataVariableId("secondId")}`,
+    new Map(),
+    resolveDataSource
+  );
+  expect(resolveDataSource).toHaveBeenCalledTimes(2);
+  expect(maximumActive).toBe(2);
+  finishFirst(1);
+  finishSecond(2);
+
+  await expect(result).resolves.toBe(3);
+});
+
+test("compute expression asynchronously propagates resolver failures", async () => {
+  const failure = new Error("offline");
+
+  await expect(
+    computeExpression(encodeDataVariableId("remoteId"), new Map(), async () => {
+      throw failure;
+    })
+  ).rejects.toBe(failure);
+});
+
+test("compute string and scoped expressions asynchronously", async () => {
+  const resolveDataSource = async (id: string) =>
+    id === "remoteId" ? "Remote title" : undefined;
+
+  await expect(
+    computeStringExpression(
+      encodeDataVariableId("remoteId"),
+      new Map(),
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+  await expect(
+    computeExpressionWithinScope(
+      encodeDataVariableId("remoteId"),
+      { [encodeDataVariableId("remoteId")]: undefined },
+      resolveDataSource
+    )
+  ).resolves.toBe("Remote title");
+});
+
+test("compute expression with decoded names", async () => {
+  await expect(
     computeExpression("My$32$Name", new Map([["My Name", "value"]]))
-  ).toEqual("value");
+  ).resolves.toEqual("value");
 });
 
-test("compute expression when invalid syntax", () => {
+test("compute expression when invalid syntax", async () => {
   const spy = vi.spyOn(console, "error");
-  expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
+  await expect(
+    computeExpression("https://github.com", new Map())
+  ).resolves.toEqual(undefined);
   expect(spy).not.toHaveBeenCalled();
   spy.mockRestore();
 });
 
-test("compute expression with nested field of undefined without error", () => {
+test("compute expression with nested field of undefined without error", async () => {
   const spy = vi.spyOn(console, "error");
   const variables = new Map([["myVariable", undefined]]);
-  expect(computeExpression("myVariable.field", variables)).toEqual(undefined);
+  await expect(
+    computeExpression("myVariable.field", variables)
+  ).resolves.toEqual(undefined);
   expect(spy).not.toHaveBeenCalled();
   spy.mockRestore();
 });
 
-test("compute literal expression when variable is json object", () => {
+test("compute literal expression when variable is json object", async () => {
   const jsonObject = { hello: "world", subObject: { world: "hello" } };
   const variables = new Map([["jsonVariable", jsonObject]]);
-  expect(computeExpression("`${jsonVariable}`", variables)).toEqual(
-    `{"hello":"world","subObject":{"world":"hello"}}`
-  );
-  expect(computeExpression("`${jsonVariable.subObject}`", variables)).toEqual(
-    `{"world":"hello"}`
-  );
+  await expect(
+    computeExpression("`${jsonVariable}`", variables)
+  ).resolves.toEqual(`{"hello":"world","subObject":{"world":"hello"}}`);
+  await expect(
+    computeExpression("`${jsonVariable.subObject}`", variables)
+  ).resolves.toEqual(`{"world":"hello"}`);
 });
 
-test("compute literal expression when object is frozen", () => {
+test("compute literal expression when object is frozen", async () => {
   const jsonObject = Object.freeze({
     hello: "world",
     subObject: { world: "hello" },
   });
   const variables = new Map([["jsonVariable", jsonObject]]);
-  expect(computeExpression("`${jsonVariable.subObject}`", variables)).toEqual(
-    `{"world":"hello"}`
-  );
+  await expect(
+    computeExpression("`${jsonVariable.subObject}`", variables)
+  ).resolves.toEqual(`{"world":"hello"}`);
 });
 
-test("compute expression does not clone unused variables", () => {
+test("compute expression does not clone unused variables", async () => {
   const variables = new Map<string, unknown>([
     ["usedVariable", 1],
     ["unusedVariable", Object.freeze({ callback: () => undefined })],
   ]);
-  expect(computeExpression("usedVariable + 1", variables)).toEqual(2);
+  await expect(
+    computeExpression("usedVariable + 1", variables)
+  ).resolves.toEqual(2);
 });
 
-test("compute expression cache reads current variables", () => {
-  expect(
+test("compute expression cache reads current variables", async () => {
+  await expect(
     computeExpression("cachedVariable", new Map([["cachedVariable", "first"]]))
-  ).toEqual("first");
-  expect(
+  ).resolves.toEqual("first");
+  await expect(
     computeExpression("cachedVariable", new Map([["cachedVariable", "second"]]))
-  ).toEqual("second");
+  ).resolves.toEqual("second");
 });
 
-test("compute unset variables as undefined", () => {
-  expect(computeExpression(`a`, new Map())).toEqual(undefined);
-  expect(computeExpression("`${a}`", new Map())).toEqual("undefined");
+test("compute unset variables as undefined", async () => {
+  await expect(computeExpression(`a`, new Map())).resolves.toEqual(undefined);
+  await expect(computeExpression("`${a}`", new Map())).resolves.toEqual(
+    "undefined"
+  );
 });
 
 test("find unset variable names", () => {
@@ -3758,36 +3853,46 @@ describe("resource expression form validation", () => {
     [encodeDataVariableId("bodyJson")]: { ok: true },
   };
 
-  test("computes expressions against encoded variable scope names", () => {
-    expect(computeExpressionWithinScope("apiUrl", scope)).toBe(
+  test("computes expressions against encoded variable scope names", async () => {
+    await expect(computeExpressionWithinScope("apiUrl", scope)).resolves.toBe(
       "https://example.com/users"
     );
-    expect(computeExpressionWithinScope("   ", scope)).toBeUndefined();
+    await expect(
+      computeExpressionWithinScope("   ", scope)
+    ).resolves.toBeUndefined();
   });
 
-  test("validates evaluated resource urls", () => {
-    expect(validateResourceUrlExpression("apiUrl", scope)).toBe("");
-    expect(validateResourceUrlExpression("bodyJson", scope)).toBe(
-      "URL expects a string"
+  test("validates evaluated resource urls", async () => {
+    await expect(validateResourceUrlExpression("apiUrl", scope)).resolves.toBe(
+      ""
     );
-    expect(validateResourceUrlExpression("emptyUrl", scope)).toBe(
-      "URL is required"
-    );
-    expect(validateResourceUrlExpression('"not a url"', scope)).toBe(
-      "URL is invalid"
-    );
+    await expect(
+      validateResourceUrlExpression("bodyJson", scope)
+    ).resolves.toBe("URL expects a string");
+    await expect(
+      validateResourceUrlExpression("emptyUrl", scope)
+    ).resolves.toBe("URL is required");
+    await expect(
+      validateResourceUrlExpression('"not a url"', scope)
+    ).resolves.toBe("URL is invalid");
   });
 
-  test("validates evaluated resource body by body type", () => {
-    expect(validateResourceBodyExpression("", "json", scope)).toBe("");
-    expect(validateResourceBodyExpression("bodyJson", "json", scope)).toBe("");
-    expect(validateResourceBodyExpression("bodyText", "json", scope)).toBe(
-      "Expected valid JSON object in body"
-    );
-    expect(validateResourceBodyExpression("bodyText", "text", scope)).toBe("");
-    expect(validateResourceBodyExpression("bodyJson", "text", scope)).toBe(
-      "Expected string in body"
-    );
+  test("validates evaluated resource body by body type", async () => {
+    await expect(
+      validateResourceBodyExpression("", "json", scope)
+    ).resolves.toBe("");
+    await expect(
+      validateResourceBodyExpression("bodyJson", "json", scope)
+    ).resolves.toBe("");
+    await expect(
+      validateResourceBodyExpression("bodyText", "json", scope)
+    ).resolves.toBe("Expected valid JSON object in body");
+    await expect(
+      validateResourceBodyExpression("bodyText", "text", scope)
+    ).resolves.toBe("");
+    await expect(
+      validateResourceBodyExpression("bodyJson", "text", scope)
+    ).resolves.toBe("Expected string in body");
   });
 });
 

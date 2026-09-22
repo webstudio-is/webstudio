@@ -22,7 +22,7 @@ export const parseContentBlockRenderScope = (renderScope: string) => {
   }
 };
 
-export const resolveContentBlockOccurrenceAssetId = ({
+export const resolveContentBlockOccurrenceAssetId = async ({
   source,
   instanceSelector,
   variableValuesByRenderScope,

@@ -39,10 +39,12 @@ import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/
 import {
   createStructuredAssetQueryResourceBody,
   encodeDataSourceVariable,
+  encodeDataVariableId,
   SYSTEM_VARIABLE_ID,
   type Resource,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
+import { formBotFieldName, formIdFieldName } from "@webstudio-is/sdk/runtime";
 import {
   generateRedirectsModule,
   getAssetResourcePrerenderPaths,
@@ -416,6 +418,7 @@ afterEach(async () => {
   consoleInfo.mockRestore();
   process.chdir(originalCwd);
   globalThis.fetch = originalFetch;
+  vi.unstubAllGlobals();
   await rm(tempDir, { recursive: true, force: true });
   vi.restoreAllMocks();
 });
@@ -2745,6 +2748,125 @@ sitemap.map((page) => page.path);`
     );
   });
 
+  test.each(["defaults", "react-router"])(
+    "submits identical forms twice while caching dependencies (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "resource",
+              value: "submit",
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "author",
+          {
+            id: "author",
+            name: "Author",
+            type: "resource",
+            resourceId: "author",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "author",
+          {
+            id: "author",
+            name: "Author",
+            method: "post",
+            url: '"https://example.com/author"',
+            body: '{ query: "author" }',
+            headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
+          },
+        ],
+        [
+          "submit",
+          {
+            id: "submit",
+            name: "Submit",
+            method: "post",
+            url: `"https://example.com/submit/" + ${encodeDataSourceVariable("author")}.data.id`,
+            headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "action.mjs")).href
+      );
+      const cached = new Map<string, Response>();
+      vi.stubGlobal("caches", {
+        open: async () => ({
+          match: async (key: URL) => cached.get(key.href)?.clone(),
+          put: async (key: URL, response: Response) => {
+            cached.set(key.href, response.clone());
+          },
+        }),
+      });
+      const received: Array<{ url: string; body: unknown }> = [];
+      vi.stubGlobal(
+        "fetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({ url: request.url, body: await request.json() });
+          return Response.json({ id: "author-123" });
+        }
+      );
+      for (let index = 0; index < 2; index += 1) {
+        const form = new FormData();
+        form.set(formIdFieldName, "action");
+        form.set(formBotFieldName, "brave");
+        form.set("message", "Hello");
+        await expect(
+          action({
+            request: new Request("https://example.com/", {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: form,
+            }),
+            context: {},
+          })
+        ).resolves.toEqual({ success: true });
+      }
+      expect(received).toEqual([
+        { url: "https://example.com/author", body: { query: "author" } },
+        {
+          url: "https://example.com/submit/author-123",
+          body: { message: "Hello" },
+        },
+        {
+          url: "https://example.com/submit/author-123",
+          body: { message: "Hello" },
+        },
+      ]);
+    }
+  );
+
   test("prerenders the configured Webhook Form method", async () => {
     const siteData = createSiteData({
       instances: [
@@ -3408,6 +3530,18 @@ sitemap.map((page) => page.path);`
     const siteData = {
       ...createSiteData({
         assets: [createAssetForIndexedDocument(document)],
+        props: [
+          [
+            "root-title",
+            {
+              id: "root-title",
+              instanceId: "root",
+              name: "title",
+              type: "expression",
+              value: `${encodeDataVariableId("posts-data")}.data["post-1"].properties.title`,
+            },
+          ],
+        ],
       }),
       assetIndex: index,
     };
@@ -3467,8 +3601,8 @@ sitemap.map((page) => page.path);`
       routeParams: {},
     });
 
-    expect(pageData.resources).toMatchObject({
-      Posts: {
+    expect(Object.values(pageData.resources)).toMatchObject([
+      {
         ok: true,
         status: 200,
         data: {
@@ -3479,7 +3613,7 @@ sitemap.map((page) => page.path);`
         },
         meta: { totalCount: 1, hasMore: false },
       },
-    });
+    ]);
     await runGeneratedCommand("vite", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
     await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(

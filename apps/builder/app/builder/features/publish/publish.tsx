@@ -32,6 +32,11 @@ import {
   PanelBanner,
   toast,
   RadioGroup,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -64,13 +69,15 @@ import { $project } from "~/shared/sync/data-stores";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
-  CheckCircleIcon,
   AlertIcon,
   CopyIcon,
   GearIcon,
   UpgradeIcon,
   HelpIcon,
   InfoCircleIcon,
+  EllipsesIcon,
+  PlusIcon,
+  TerminalIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
@@ -105,7 +112,15 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
-import { showContentDatabasePublishWarning } from "./content-database-publish-warning";
+import {
+  getContentDatabasePublishWarning,
+  showContentDatabasePublishWarning,
+} from "./content-database-publish-warning";
+import {
+  PublishActions,
+  usePublishValidationState,
+  type PublishValidationState,
+} from "./publish-actions";
 import { showPublishWarning } from "./publish-warning";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPrePublishErrorMessage } from "./publish-error";
@@ -255,12 +270,13 @@ const ChangeProjectDomain = ({
     toast.success(result.message);
   };
 
-  const { statusText, status } =
+  const { statusText, color, Icon } =
     project.latestBuildVirtual != null
       ? getPublishStatusAndText(project.latestBuildVirtual)
       : {
           statusText: "Not published",
-          status: "PENDING" as const,
+          color: cssVar("--foreground-secondary"),
+          Icon: InfoCircleIcon,
         };
 
   // Check if the wstd domain specifically is published (not just any custom domain)
@@ -289,16 +305,10 @@ const ChangeProjectDomain = ({
                 width: theme.sizes.controlHeight,
                 height: theme.sizes.controlHeight,
                 color:
-                  error !== undefined || status === "FAILED"
-                    ? cssVar("--foreground-negative")
-                    : cssVar("--foreground-positive"),
+                  error !== undefined ? cssVar("--foreground-negative") : color,
               }}
             >
-              {error !== undefined || status === "FAILED" ? (
-                <AlertIcon />
-              ) : (
-                <CheckCircleIcon />
-              )}
+              {error !== undefined ? <AlertIcon /> : <Icon />}
             </Flex>
           </Tooltip>
 
@@ -467,12 +477,20 @@ const Publish = ({
   disabled,
   refresh,
   restrictedFeatures,
+  validationState,
+  onValidationStateChange,
+  isPublishing,
+  setIsPublishing,
 }: {
   project: Project;
   timesLeft: number;
   disabled: boolean;
   refresh: () => Promise<void>;
   restrictedFeatures: Map<string, RestrictedFeature>;
+  validationState: PublishValidationState;
+  onValidationStateChange: (state: PublishValidationState) => void;
+  isPublishing: boolean;
+  setIsPublishing: (isPublishing: boolean) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
@@ -481,11 +499,11 @@ const Publish = ({
   const [publishWarning, setPublishWarning] = useState<
     undefined | JSX.Element | string
   >();
-  const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
     useState(false);
+  const previousDomainsKey = useRef<string>();
   const countdown = usePublishCountdown(isPublishing);
 
   useEffect(() => {
@@ -500,6 +518,15 @@ const Publish = ({
       const domainsSelected = formData
         .getAll(domainToPublishName)
         .map((domain) => domain.toString());
+      const domainsKey = domainsSelected.join("\u0000");
+
+      if (
+        previousDomainsKey.current !== undefined &&
+        previousDomainsKey.current !== domainsKey
+      ) {
+        onValidationStateChange("idle");
+      }
+      previousDomainsKey.current = domainsKey;
 
       setHasSelectedDomains(domainsSelected.length > 0);
 
@@ -527,7 +554,7 @@ const Publish = ({
     return () => {
       observer.disconnect();
     };
-  }, [project.domain]);
+  }, [onValidationStateChange, project.domain]);
 
   const publish = async (domains: string[]) => {
     const publishResult = await nativeClient.domain.publish.mutate({
@@ -624,15 +651,79 @@ const Publish = ({
     }
   };
 
+  const runPrePublishChecks = async (): Promise<boolean> => {
+    await nativeClient.build.checkProjectBuildPermission.query({
+      projectId: project.id,
+    });
+    await flushExternalContentProject({ projectId: project.id });
+
+    const { error: auditError, warning: auditWarning } =
+      getPrePublishAuditMessages();
+    if (auditError !== undefined) {
+      toast.error(auditError);
+      setPublishError(auditError);
+      return false;
+    }
+    if (auditWarning !== undefined) {
+      showPublishWarning({
+        message: auditWarning,
+        setWarning: setPublishWarning,
+      });
+    }
+
+    return true;
+  };
+
+  const getDomainsFromForm = (formData: FormData) =>
+    formData
+      .getAll(domainToPublishName)
+      .map((domainEntry) => domainEntry.toString());
+
+  const handleValidate = async (formData: FormData) => {
+    setPublishError(undefined);
+    setPublishWarning(undefined);
+    const domains = getDomainsFromForm(formData);
+    if (domains.length === 0) {
+      toast.error("Please select at least one domain to publish");
+      return;
+    }
+
+    try {
+      const passed = await runPrePublishChecks();
+      if (!passed) {
+        onValidationStateChange("idle");
+        return;
+      }
+      const diagnostics =
+        await nativeClient.build.contentDatabasePublishDiagnostics.query({
+          projectId: project.id,
+        });
+      const contentWarning = getContentDatabasePublishWarning(diagnostics);
+      if (contentWarning !== undefined) {
+        showPublishWarning({
+          message: contentWarning,
+          setWarning: setPublishWarning,
+        });
+      }
+      onValidationStateChange("passed");
+      toast.success("Validation passed. Ready to publish.", {
+        duration: Number.POSITIVE_INFINITY,
+      });
+    } catch (error) {
+      onValidationStateChange("idle");
+      const message = getPrePublishErrorMessage(error);
+      toast.error(message);
+      setPublishError(message);
+    }
+  };
+
   const handlePublish = (formData: FormData) => {
     setPublishError(undefined);
     setPublishWarning(undefined);
 
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
-    const domains = formData
-      .getAll(domainToPublishName)
-      .map((domainEntry) => domainEntry.toString());
+    const domains = getDomainsFromForm(formData);
 
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
@@ -643,30 +734,22 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        await flushExternalContentProject({ projectId: project.id });
-        const { error: auditError, warning: auditWarning } =
-          getPrePublishAuditMessages();
-        if (auditError !== undefined) {
-          toast.error(auditError);
-          setPublishError(auditError);
+        const passed = await runPrePublishChecks();
+        if (!passed) {
           return;
         }
-        if (auditWarning !== undefined) {
-          showPublishWarning({
-            message: auditWarning,
-            setWarning: setPublishWarning,
-          });
-        }
-        await showContentDatabasePublishWarning({
-          projectId: project.id,
-          setWarning: setPublishWarning,
-        });
       } catch (error) {
         const message = getPrePublishErrorMessage(error);
         toast.error(message);
         setPublishError(message);
         return;
       }
+      showContentDatabasePublishWarning({
+        diagnostics: nativeClient.build.contentDatabasePublishDiagnostics.query(
+          { projectId: project.id }
+        ),
+        setWarning: setPublishWarning,
+      });
       await publish(domains);
     });
   };
@@ -676,8 +759,7 @@ const Publish = ({
     : false;
 
   const isPublishInProgress = isPublishing || hasPendingState;
-  const showPendingState =
-    isPublishInProgress && (countdown === undefined || countdown === 0);
+  const getForm = () => buttonRef.current?.closest("form");
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
@@ -688,38 +770,36 @@ const Publish = ({
         </PanelBanner>
       )}
 
-      <Tooltip
-        content={
-          isPublishInProgress
-            ? "Publish process in progress"
-            : hasSelectedDomains
-              ? undefined
-              : "Select at least one domain to publish"
+      <PublishActions
+        publishButtonRef={buttonRef}
+        validationState={validationState}
+        validateDisabled={disabled || isPublishInProgress}
+        publishDisabled={
+          hasSelectedDomains === false ||
+          disabled ||
+          (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
+          userPublishCount >= maxDailyPublishesPerUser
         }
-      >
-        <Button
-          ref={buttonRef}
-          type="button"
-          onClick={() => {
-            const form = buttonRef.current?.closest("form");
-            if (form) {
-              handlePublish(new FormData(form));
-            }
-          }}
-          color="primary"
-          state={showPendingState ? "pending" : undefined}
-          disabled={
-            hasSelectedDomains === false ||
-            disabled ||
-            (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
-            userPublishCount >= maxDailyPublishesPerUser
-          }
-        >
-          {countdown !== undefined && countdown > 0
+        publishInProgress={isPublishInProgress}
+        hasSelectedDomains={hasSelectedDomains}
+        publishLabel={
+          countdown !== undefined && countdown > 0
             ? `Publishing (${countdown}s)`
-            : "Publish"}
-        </Button>
-      </Tooltip>
+            : "Publish"
+        }
+        onValidate={async () => {
+          const form = getForm();
+          if (form) {
+            await handleValidate(new FormData(form));
+          }
+        }}
+        onPublish={() => {
+          const form = getForm();
+          if (form) {
+            handlePublish(new FormData(form));
+          }
+        }}
+      />
     </Flex>
   );
 };
@@ -819,8 +899,11 @@ const PublishStatic = ({
               try {
                 setIsPendingOptimistic(true);
 
-                await showContentDatabasePublishWarning({
-                  projectId,
+                showContentDatabasePublishWarning({
+                  diagnostics:
+                    nativeClient.build.contentDatabasePublishDiagnostics.query({
+                      projectId,
+                    }),
                   setWarning: setPublishWarning,
                 });
 
@@ -1064,9 +1147,14 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
+  validationState: PublishValidationState;
+  onValidationStateChange: (state: PublishValidationState) => void;
+  isPublishing: boolean;
+  setIsPublishing: (isPublishing: boolean) => void;
 }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
+  const [isAddingDomain, setIsAddingDomain] = useState(false);
 
   const project = useStore($project);
 
@@ -1090,59 +1178,103 @@ const Content = (props: {
   );
 
   return (
-    <form>
-      <ScrollArea>
-        <RadioGroup name="publishDomain">
-          <ChangeProjectDomain
-            refresh={refreshProject}
-            projectState={projectState}
-            project={project}
-          />
+    <>
+      <PopoverTitle
+        suffix={
+          <PopoverTitleActions>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SmallIconButton
+                  aria-label="Publish options"
+                  icon={<EllipsesIcon />}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  icon={<PlusIcon />}
+                  onSelect={() => setIsAddingDomain(true)}
+                >
+                  Add new domain
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<TerminalIcon />}
+                  onSelect={props.onExportClick}
+                >
+                  Export
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  icon={<GearIcon />}
+                  onSelect={() => $openProjectSettings.set("publish")}
+                >
+                  Publish settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <PopoverClose />
+          </PopoverTitleActions>
+        }
+      >
+        Publish
+      </PopoverTitle>
+      <form>
+        <ScrollArea>
+          <RadioGroup name="publishDomain">
+            <ChangeProjectDomain
+              refresh={refreshProject}
+              projectState={projectState}
+              project={project}
+            />
 
-          <Domains
-            newDomains={newDomains}
-            domains={project.domainsVirtual}
+            <Domains
+              newDomains={newDomains}
+              domains={project.domainsVirtual}
+              refresh={refreshProject}
+              project={project}
+            />
+          </RadioGroup>
+        </ScrollArea>
+        <Flex direction="column" justify="end" css={{ height: 0 }}>
+          <Separator />
+        </Flex>
+        <PanelContent as={Flex} direction="column" gap="2">
+          <AddDomain
+            projectId={props.projectId}
+            isOpen={isAddingDomain}
+            onOpenChange={setIsAddingDomain}
             refresh={refreshProject}
-            project={project}
+            onCreate={(domain) => {
+              setNewDomains((prev) => new Set([...prev, domain]));
+            }}
           />
-        </RadioGroup>
-      </ScrollArea>
-      <Flex direction="column" justify="end" css={{ height: 0 }}>
-        <Separator />
-      </Flex>
-      <PanelContent as={Flex} direction="column" gap="2">
-        <AddDomain
-          projectId={props.projectId}
-          refresh={refreshProject}
-          onCreate={(domain) => {
-            setNewDomains((prev) => {
-              return new Set([...prev, domain]);
-            });
-          }}
-          onExportClick={props.onExportClick}
-        />
-        <UpgradeBanner hasCustomDomains={hasCustomDomains} />
-        {hasUnpublishedDomains && (
-          <PanelBanner>
-            <Flex align="center" gap="1">
-              <InfoCircleIcon color={cssVar("--foreground-primary")} />
-              <Text variant="regularBold">Don't forget to publish</Text>
-            </Flex>
-            <Text>
-              You have a custom domain that hasn't been published yet. Hit
-              publish to make it live.
-            </Text>
-          </PanelBanner>
-        )}
-        <Publish
-          project={project}
-          refresh={refreshProject}
-          timesLeft={maxDailyPublishesPerUser - userPublishCount}
-          disabled={false}
-          restrictedFeatures={restrictedFeatures}
-        />
-      </PanelContent>
-    </form>
+          {isAddingDomain && <Separator />}
+          <UpgradeBanner hasCustomDomains={hasCustomDomains} />
+          {hasUnpublishedDomains && (
+            <PanelBanner>
+              <Flex align="center" gap="1">
+                <InfoCircleIcon color={cssVar("--foreground-primary")} />
+                <Text variant="regularBold">Don't forget to publish</Text>
+              </Flex>
+              <Text>
+                You have a custom domain that hasn't been published yet. Hit
+                publish to make it live.
+              </Text>
+            </PanelBanner>
+          )}
+          <Publish
+            project={project}
+            refresh={refreshProject}
+            timesLeft={maxDailyPublishesPerUser - userPublishCount}
+            disabled={false}
+            restrictedFeatures={restrictedFeatures}
+            validationState={props.validationState}
+            onValidationStateChange={props.onValidationStateChange}
+            isPublishing={props.isPublishing}
+            setIsPublishing={props.setIsPublishing}
+          />
+        </PanelContent>
+      </form>
+    </>
   );
 };
 
@@ -1366,19 +1498,26 @@ type PublishProps = {
 export const PublishButton = ({ projectId }: PublishProps) => {
   const publishDialog = useStore($publishDialog);
   const authTokenPermissions = useStore($authTokenPermissions);
+  const { validationState, update, reset } = usePublishValidationState(
+    publishDialog === "publish"
+  );
+  const [isPublishing, setIsPublishing] = useOptimistic(false);
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
-
   const tooltipContent = isPublishEnabled
     ? undefined
     : "Only the owner, an admin, or content editors with publish permissions can publish projects";
 
   const handleExportClick = () => {
+    reset();
     $publishDialog.set("export");
   };
 
   const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen === false) {
+      reset();
+    }
     $publishDialog.set(isOpen ? "publish" : "none");
   };
 
@@ -1415,26 +1554,14 @@ export const PublishButton = ({ projectId }: PublishProps) => {
         )}
 
         {publishDialog === "publish" && (
-          <>
-            <PopoverTitle
-              suffix={
-                <PopoverTitleActions>
-                  <IconButton
-                    type="button"
-                    onClick={() => {
-                      $openProjectSettings.set("publish");
-                    }}
-                  >
-                    <GearIcon />
-                  </IconButton>
-                  <PopoverClose />
-                </PopoverTitleActions>
-              }
-            >
-              Publish
-            </PopoverTitle>
-            <Content projectId={projectId} onExportClick={handleExportClick} />
-          </>
+          <Content
+            projectId={projectId}
+            onExportClick={handleExportClick}
+            validationState={validationState}
+            onValidationStateChange={update}
+            isPublishing={isPublishing}
+            setIsPublishing={setIsPublishing}
+          />
         )}
       </PopoverContent>
     </Popover>

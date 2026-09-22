@@ -12,6 +12,7 @@ export default {
 
 const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
   "primary",
+  "positive",
   "neutral",
   "destructive",
   "neutral-destructive",

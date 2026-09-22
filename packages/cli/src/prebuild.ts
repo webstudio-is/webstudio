@@ -454,7 +454,9 @@ export const getAssetResourcePrerenderPaths = ({
       enumerableConfigurations.length === 0
     ) {
       throw new Error(
-        `Dynamic SSG route parameter ${JSON.stringify(firstUnenumerableParameter)} cannot be completely enumerated from every Assets query branch`
+        `Dynamic SSG route parameter ${JSON.stringify(
+          firstUnenumerableParameter
+        )} cannot be completely enumerated from every Assets query branch`
       );
     }
   }
@@ -509,7 +511,9 @@ export const getAssetResourcePrerenderPaths = ({
         for (const match of [...pathParameters].reverse()) {
           const name = match.groups?.name as string;
           const value = values.get(name) as string;
-          path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
+          path = `${path.slice(0, match.index)}${encodeURIComponent(
+            value
+          )}${path.slice((match.index ?? 0) + match[0].length)}`;
         }
         paths.add(path);
         if (paths.size > assetResourceLimits.candidateDocuments) {
@@ -1630,9 +1634,13 @@ export const prebuild = async (options: {
     for (const contribution of componentBuildContributions.values()) {
       for (const buildImport of contribution.imports) {
         if (buildImport.imported === undefined) {
-          importsString += `import ${buildImport.local} from ${JSON.stringify(buildImport.source)};\n`;
+          importsString += `import ${buildImport.local} from ${JSON.stringify(
+            buildImport.source
+          )};\n`;
         } else {
-          importsString += `import { ${buildImport.imported} as ${buildImport.local} } from ${JSON.stringify(buildImport.source)};\n`;
+          importsString += `import { ${buildImport.imported} as ${
+            buildImport.local
+          } } from ${JSON.stringify(buildImport.source)};\n`;
         }
       }
       componentBuildDeclarations.push(...contribution.declarations);
@@ -1705,7 +1713,11 @@ export const prebuild = async (options: {
 
       export const projectId = "${siteData.build.projectId}";
 
-      ${pagePath === "/" ? `export const projectVersion = ${siteData.build.version};` : ""}
+      ${
+        pagePath === "/"
+          ? `export const projectVersion = ${siteData.build.version};`
+          : ""
+      }
 
       export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
 
@@ -1775,6 +1787,7 @@ export const prebuild = async (options: {
         dataSources,
         props,
         resources,
+        instances,
         contentBlockResourceSelections: Array.from(
           pageData.publishedContentBlocks?.values() ?? []
         ).flatMap((block) =>
@@ -1883,7 +1896,11 @@ export const prebuild = async (options: {
   await writeGeneratedFile(
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
-      export const sitemap: Array<{ path: string; lastModified: string }> = ${JSON.stringify(sitemap, null, 2)};
+      export const sitemap: Array<{ path: string; lastModified: string }> = ${JSON.stringify(
+        sitemap,
+        null,
+        2
+      )};
     `
   );
 

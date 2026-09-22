@@ -1,9 +1,9 @@
-import { beforeEach, expect, test } from "vitest";
-import { cleanStores } from "nanostores";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
 import {
   type DataSource,
+  encodeDataSourceVariable,
   type Instance,
   ROOT_INSTANCE_ID,
   type Resource,
@@ -22,9 +22,9 @@ import {
   $resources,
 } from "../sync/data-stores";
 import {
-  __testing__,
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
+  subscribeResourceRequestPlan,
 } from "./props";
 import { $dataSourceVariables } from "./variables";
 import { $selectedPageId } from "./pages";
@@ -49,14 +49,14 @@ const Fragment = createTemplateComponentFixture("Fragment");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
 
-const { $computedResourceRequests } = __testing__;
-
 const initialSystem = {
   origin: "https://undefined.wstd.work",
   params: {},
   pathname: "/",
   search: {},
 };
+
+const waitForStores = () => new Promise((resolve) => setTimeout(resolve, 20));
 
 registerContainers();
 setEnv("*");
@@ -86,6 +86,9 @@ const selectPageRoot = (
   $selectedPageId.set(defaultPages.homePageId);
 };
 
+let unsubscribeResourceRequestPlan: (() => void) | undefined;
+let resourceRequests: readonly { name: string }[] = [];
+
 beforeEach(() => {
   $instances.set(new Map());
   $props.set(new Map());
@@ -94,9 +97,19 @@ beforeEach(() => {
   $dataSourceVariables.set(new Map());
   $resourcesCache.set(new Map());
   $externalContentRoots.set(new Map());
+  resourceRequests = [];
+  unsubscribeResourceRequestPlan = subscribeResourceRequestPlan((plan) => {
+    resourceRequests = plan.requests;
+  });
 });
 
-test("provides occurrence frontmatter to a repeated Content Block", () => {
+afterEach(() => {
+  unsubscribeResourceRequestPlan?.();
+  unsubscribeResourceRequestPlan = undefined;
+  resourceRequests = [];
+});
+
+test("provides occurrence frontmatter to a repeated Content Block", async () => {
   const sourceBlock: Instance = {
     type: "instance",
     id: "source-block",
@@ -144,7 +157,9 @@ test("provides occurrence frontmatter to a repeated Content Block", () => {
     ])
   );
   selectPageRoot(runtimeBlock.id);
+  await waitForStores();
 
+  await waitForStores();
   expect(
     $variableValuesByInstanceSelector
       .get()
@@ -153,7 +168,7 @@ test("provides occurrence frontmatter to a repeated Content Block", () => {
   ).toEqual({ frontmatter: { title: "Occurrence title" } });
 });
 
-test("does not reuse frontmatter from a previous Collection occurrence", () => {
+test("does not reuse frontmatter from a previous Collection occurrence", async () => {
   const collectionData = new Variable("Posts", ["first", "second"]);
   const collectionItem = new Parameter("Collection Item");
   const document = new Parameter(contentBlockDocumentProp);
@@ -177,6 +192,7 @@ test("does not reuse frontmatter from a previous Collection occurrence", () => {
   $dataSources.set(data.dataSources);
   $props.set(data.props);
   selectPageRoot("body");
+  await waitForStores();
   const firstBlockSelector = ["block", "collection[0]", "collection", "body"];
   $externalContentRoots.set(
     new Map([
@@ -194,12 +210,14 @@ test("does not reuse frontmatter from a previous Collection occurrence", () => {
     ])
   );
 
+  await waitForStores();
   const values = $propValuesByInstanceSelector.get();
   expect(
     values
       .get(getInstanceKey(["title", ...firstBlockSelector]))
       ?.get("ariaLabel")
   ).toBe("First title");
+  await waitForStores();
   expect(
     values
       .get(
@@ -215,7 +233,7 @@ test("does not reuse frontmatter from a previous Collection occurrence", () => {
   ).toBe(false);
 });
 
-test("does not preload resources in statically hidden subtrees", () => {
+test("does not preload resources in statically hidden subtrees", async () => {
   $instances.set(
     toMap([
       {
@@ -232,29 +250,51 @@ test("does not preload resources in statically hidden subtrees", () => {
         id: "hidden",
         type: "instance",
         component: "Box",
-        children: [{ type: "id", value: "hidden-child" }],
+        children: [
+          { type: "id", value: "hidden-child" },
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("hidden-data-source"),
+          },
+        ],
       },
       {
         id: "hidden-child",
         type: "instance",
         component: "Box",
-        children: [],
+        children: [
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("hidden-child-data-source"),
+          },
+        ],
       },
       {
         id: "visible",
         type: "instance",
         component: "Box",
-        children: [],
+        children: [
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("visible-data-source"),
+          },
+        ],
       },
       {
         id: "dynamic",
         type: "instance",
         component: "Box",
-        children: [],
+        children: [
+          {
+            type: "expression",
+            value: encodeDataSourceVariable("dynamic-data-source"),
+          },
+        ],
       },
     ])
   );
   selectPageRoot("root");
+  await waitForStores();
   $props.set(
     toMap([
       {
@@ -296,14 +336,67 @@ test("does not preload resources in statically hidden subtrees", () => {
     )
   );
 
-  expect(
-    $computedResourceRequests.get().map((request) => request.name)
-  ).toEqual(["visible", "dynamic"]);
+  await vi.waitFor(() => {
+    expect(resourceRequests.map((request) => request.name)).toEqual([
+      "visible",
+      "dynamic",
+    ]);
+  });
 });
 
-test("collect prop values", () => {
+test("preloads resources consumed by copied expressions", async () => {
+  const dataSourceId = "copied-resource-data-source";
+  $instances.set(
+    toMap([
+      {
+        id: "root",
+        type: "instance",
+        component: "Body",
+        children: [
+          {
+            type: "expression",
+            value: `${encodeDataSourceVariable(dataSourceId)}.data.year`,
+          },
+        ],
+      },
+    ])
+  );
+  selectPageRoot("root");
+  await waitForStores();
+  $dataSources.set(
+    toMap([
+      {
+        id: dataSourceId,
+        scopeInstanceId: "template-source",
+        type: "resource",
+        name: "Current date",
+        resourceId: "current-date-resource",
+      },
+    ])
+  );
+  $resources.set(
+    toMap([
+      {
+        id: "current-date-resource",
+        name: "Current date",
+        url: '"/$resources/current-date"',
+        method: "get",
+        headers: [],
+      },
+    ])
+  );
+
+  await vi.waitFor(() => {
+    expect(resourceRequests.map((request) => request.name)).toEqual([
+      "Current date",
+    ]);
+  });
+});
+
+test("collect prop values", async () => {
   setBoxInstance("box");
   selectPageRoot("box");
+  await waitForStores();
   $dataSources.set(new Map());
   $props.set(
     toMap([
@@ -323,6 +416,7 @@ test("collect prop values", () => {
       },
     ])
   );
+  await waitForStores();
   expect(
     $propValuesByInstanceSelector.get().get(getInstanceKey(["box"]))
   ).toEqual(
@@ -331,13 +425,12 @@ test("collect prop values", () => {
       ["second", { name: "John" }],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("compute expression prop values", () => {
+test("compute expression prop values", async () => {
   setBoxInstance("box");
   selectPageRoot("box");
+  await waitForStores();
   $dataSources.set(
     toMap([
       {
@@ -382,6 +475,7 @@ test("compute expression prop values", () => {
       },
     ])
   );
+  await waitForStores();
   expect(
     $propValuesByInstanceSelector.get().get(getInstanceKey(["box"]))
   ).toEqual(
@@ -393,6 +487,7 @@ test("compute expression prop values", () => {
   );
 
   $dataSourceVariables.set(new Map([["var1", 4]]));
+  await waitForStores();
   expect(
     $propValuesByInstanceSelector.get().get(getInstanceKey(["box"]))
   ).toEqual(
@@ -402,13 +497,12 @@ test("compute expression prop values", () => {
       ["third", "something"],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("generate action prop callbacks", () => {
+test("generate action prop callbacks", async () => {
   setBoxInstance("box");
   selectPageRoot("box");
+  await waitForStores();
   $dataSources.set(
     toMap([
       {
@@ -444,23 +538,24 @@ test("generate action prop callbacks", () => {
       },
     ])
   );
+  await waitForStores();
   const values1 = $propValuesByInstanceSelector
     .get()
     .get(getInstanceKey(["box"]));
   expect(values1?.get("value")).toEqual(1);
 
   (values1?.get("onChange") as () => void)();
+  await waitForStores();
   const values2 = $propValuesByInstanceSelector
     .get()
     .get(getInstanceKey(["box"]));
   expect(values2?.get("value")).toEqual(2);
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("resolve asset prop values", () => {
+test("resolve asset prop values", async () => {
   setBoxInstance("box");
   selectPageRoot("box");
+  await waitForStores();
   $dataSources.set(new Map());
   $assets.set(
     toMap([
@@ -488,6 +583,7 @@ test("resolve asset prop values", () => {
       },
     ])
   );
+  await waitForStores();
   expect(
     $propValuesByInstanceSelector.get().get(getInstanceKey(["box"]))
   ).toEqual(
@@ -496,13 +592,12 @@ test("resolve asset prop values", () => {
       ["myAsset", "/cgi/asset/my-file.jpg"],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("resolve page prop values", () => {
+test("resolve page prop values", async () => {
   setBoxInstance("box");
   selectPageRoot("box");
+  await waitForStores();
   $dataSources.set(new Map());
   $props.set(
     toMap([
@@ -515,14 +610,13 @@ test("resolve page prop values", () => {
       },
     ])
   );
+  await waitForStores();
   expect(
     $propValuesByInstanceSelector.get().get(getInstanceKey(["box"]))
   ).toEqual(new Map<string, unknown>([["myPage", "/"]]));
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("compute expression from collection items", () => {
+test("compute expression from collection items", async () => {
   $instances.set(
     toMap([
       {
@@ -540,6 +634,7 @@ test("compute expression from collection items", () => {
     ])
   );
   selectPageRoot("list");
+  await waitForStores();
   $dataSources.set(
     toMap([
       {
@@ -575,6 +670,7 @@ test("compute expression from collection items", () => {
       },
     ])
   );
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -595,11 +691,9 @@ test("compute expression from collection items", () => {
       ],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("compute expression from object collection items", () => {
+test("compute expression from object collection items", async () => {
   const dataVariable = new Variable("dataVariable", {
     first: "orange",
     second: "apple",
@@ -621,8 +715,10 @@ test("compute expression from object collection items", () => {
   $dataSources.set(data.dataSources);
   $props.set(data.props);
   selectPageRoot("bodyId");
+  await waitForStores();
   $dataSourceVariables.set(new Map([]));
 
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [getInstanceKey(["bodyId"]), new Map<string, unknown>([])],
@@ -661,11 +757,9 @@ test("compute expression from object collection items", () => {
       ],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("compute prop values inside collection without item parameter", () => {
+test("compute prop values inside collection without item parameter", async () => {
   $instances.set(
     toMap([
       {
@@ -683,6 +777,7 @@ test("compute prop values inside collection without item parameter", () => {
     ])
   );
   selectPageRoot("list");
+  await waitForStores();
   $dataSources.set(new Map());
   $props.set(
     toMap([
@@ -702,6 +797,7 @@ test("compute prop values inside collection without item parameter", () => {
       },
     ])
   );
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -718,11 +814,9 @@ test("compute prop values inside collection without item parameter", () => {
       ],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("access parameter value from variables values", () => {
+test("access parameter value from variables values", async () => {
   $instances.set(
     toMap([
       {
@@ -734,6 +828,7 @@ test("access parameter value from variables values", () => {
     ])
   );
   selectPageRoot("body");
+  await waitForStores();
   $dataSources.set(
     toMap([
       {
@@ -756,6 +851,7 @@ test("access parameter value from variables values", () => {
       },
     ])
   );
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -764,15 +860,14 @@ test("access parameter value from variables values", () => {
       ],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("compute props bound to resource variables", () => {
+test("compute props bound to resource variables", async () => {
   $instances.set(
     toMap([{ id: "body", type: "instance", component: "Body", children: [] }])
   );
   selectPageRoot("body");
+  await waitForStores();
   $dataSources.set(
     toMap([
       {
@@ -814,19 +909,19 @@ test("compute props bound to resource variables", () => {
       },
     ])
   );
-  expect($propValuesByInstanceSelector.get()).toEqual(
-    new Map([
-      [
-        getInstanceKey(["body"]),
-        new Map<string, unknown>([["resource", "my-value"]]),
-      ],
-    ])
-  );
-
-  cleanStores($propValuesByInstanceSelector);
+  await vi.waitFor(() => {
+    expect($propValuesByInstanceSelector.get()).toEqual(
+      new Map([
+        [
+          getInstanceKey(["body"]),
+          new Map<string, unknown>([["resource", "my-value"]]),
+        ],
+      ])
+    );
+  });
 });
 
-test("compute instance text content when plain text", () => {
+test("compute instance text content when plain text", async () => {
   $instances.set(
     toMap([
       {
@@ -862,6 +957,8 @@ test("compute instance text content when plain text", () => {
     ])
   );
   selectPageRoot("body");
+  await waitForStores();
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [getInstanceKey(["body"]), new Map<string, unknown>()],
@@ -876,11 +973,9 @@ test("compute instance text content when plain text", () => {
       ],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("compute instance text content bound to expression", () => {
+test("compute instance text content bound to expression", async () => {
   $instances.set(
     toMap([
       {
@@ -911,6 +1006,8 @@ test("compute instance text content bound to expression", () => {
     ])
   );
   selectPageRoot("body");
+  await waitForStores();
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [getInstanceKey(["body"]), new Map<string, unknown>()],
@@ -920,11 +1017,9 @@ test("compute instance text content bound to expression", () => {
       ],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("does not collapse mixed expression and element children into text", () => {
+test("does not collapse mixed expression and element children into text", async () => {
   $instances.set(
     toMap([
       {
@@ -952,14 +1047,13 @@ test("does not collapse mixed expression and element children into text", () => 
   );
   selectPageRoot("body");
 
+  await waitForStores();
   expect(
     $propValuesByInstanceSelector.get().get(getInstanceKey(["mixed", "body"]))
   ).toEqual(new Map());
-
-  cleanStores($propValuesByInstanceSelector);
 });
 
-test("use page system values in props", () => {
+test("use page system values in props", async () => {
   const systemParameter = new Parameter("system");
   const data = renderData(
     <Body
@@ -973,6 +1067,7 @@ test("use page system values in props", () => {
   $dataSources.set(data.dataSources);
   $props.set(data.props);
   selectPageRoot("bodyId", systemParameterId);
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -985,7 +1080,7 @@ test("use page system values in props", () => {
   );
 });
 
-test("compute props with global variables", () => {
+test("compute props with global variables", async () => {
   const rootVariable = new Variable("rootVariable", "root value");
   const data = renderData(
     <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
@@ -999,6 +1094,7 @@ test("compute props with global variables", () => {
   $dataSources.set(data.dataSources);
   $props.set(data.props);
   selectPageRoot("bodyId");
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [getInstanceKey(["bodyId"]), new Map<string, unknown>()],
@@ -1010,7 +1106,7 @@ test("compute props with global variables", () => {
   );
 });
 
-test("use global system values in props", () => {
+test("use global system values in props", async () => {
   const data = renderData(
     <Body ws:id="bodyId" data-origin={expression`$ws$system.origin`}></Body>
   );
@@ -1019,6 +1115,7 @@ test("use global system values in props", () => {
   $dataSources.set(data.dataSources);
   $props.set(data.props);
   selectPageRoot("bodyId");
+  await waitForStores();
   expect($propValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -1031,7 +1128,7 @@ test("use global system values in props", () => {
   );
 });
 
-test("compute variable values for page root", () => {
+test("compute variable values for page root", async () => {
   const bodyVariable = new Variable("bodyVariable", "initial");
   const data = renderData(
     <Body ws:id="bodyId" vars={expression`${bodyVariable}`}></Body>
@@ -1042,6 +1139,7 @@ test("compute variable values for page root", () => {
   const [dataSourceId] = data.dataSources.keys();
   selectPageRoot("bodyId");
   $dataSourceVariables.set(new Map([[dataSourceId, "success"]]));
+  await waitForStores();
   expect(
     $variableValuesByInstanceSelector
       .get()
@@ -1054,7 +1152,7 @@ test("compute variable values for page root", () => {
   );
 });
 
-test("nest variable values from global root to current instance", () => {
+test("nest variable values from global root to current instance", async () => {
   const bodyVariable = new Variable("bodyVariable", "");
   const boxVariable = new Variable("boxVariable", "");
   const textVariable = new Variable("textVariable", "");
@@ -1077,6 +1175,7 @@ test("nest variable values from global root to current instance", () => {
       [textVariableId, "textValue"],
     ])
   );
+  await waitForStores();
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -1110,7 +1209,7 @@ test("nest variable values from global root to current instance", () => {
   );
 });
 
-test("compute item values for collection", () => {
+test("compute item values for collection", async () => {
   const dataVariable = new Variable("dataVariable", [
     "apple",
     "banana",
@@ -1134,6 +1233,7 @@ test("compute item values for collection", () => {
   const [_dataVariableId, itemParameterId] = data.dataSources.keys();
   selectPageRoot("bodyId");
   $dataSourceVariables.set(new Map([]));
+  await waitForStores();
   const values = $variableValuesByInstanceSelector.get();
   expect(
     values
@@ -1148,6 +1248,7 @@ test("compute item values for collection", () => {
       )
       ?.get(itemParameterId)
   ).toEqual("apple");
+  await waitForStores();
   expect(
     values
       .get(
@@ -1161,6 +1262,7 @@ test("compute item values for collection", () => {
       )
       ?.get(itemParameterId)
   ).toEqual("banana");
+  await waitForStores();
   expect(
     values
       .get(
@@ -1176,7 +1278,7 @@ test("compute item values for collection", () => {
   ).toEqual("orange");
 });
 
-test("keeps explicitly referenced outer collection items in nested scope", () => {
+test("keeps explicitly referenced outer collection items in nested scope", async () => {
   const outerItem = new Parameter("item");
   const innerItem = new Parameter("item");
   const data = renderData(
@@ -1193,7 +1295,7 @@ test("keeps explicitly referenced outer collection items in nested scope", () =>
   $props.set(data.props);
   const [outerItemId, innerItemId] = data.dataSources.keys();
   selectPageRoot("bodyId");
-
+  await waitForStores();
   const values = $variableValuesByInstanceSelector
     .get()
     .get(
@@ -1211,7 +1313,7 @@ test("keeps explicitly referenced outer collection items in nested scope", () =>
   expect(values?.get(innerItemId)).toBe("inner");
 });
 
-test("compute item values for collection with object data", () => {
+test("compute item values for collection with object data", async () => {
   const dataVariable = new Variable("dataVariable", {
     first: "apple",
     second: "banana",
@@ -1235,6 +1337,7 @@ test("compute item values for collection with object data", () => {
   const [_dataVariableId, itemParameterId] = data.dataSources.keys();
   selectPageRoot("bodyId");
   $dataSourceVariables.set(new Map([]));
+  await waitForStores();
   const values = $variableValuesByInstanceSelector.get();
   expect(
     values
@@ -1249,6 +1352,7 @@ test("compute item values for collection with object data", () => {
       )
       ?.get(itemParameterId)
   ).toEqual("apple");
+  await waitForStores();
   expect(
     values
       .get(
@@ -1262,6 +1366,7 @@ test("compute item values for collection with object data", () => {
       )
       ?.get(itemParameterId)
   ).toEqual("banana");
+  await waitForStores();
   expect(
     values
       .get(
@@ -1277,7 +1382,7 @@ test("compute item values for collection with object data", () => {
   ).toEqual("orange");
 });
 
-test("compute item values for collection with nested object data", () => {
+test("compute item values for collection with nested object data", async () => {
   const dataVariable = new Variable("dataVariable", {
     user1: { name: "Alice", age: 30 },
     user2: { name: "Bob", age: 25 },
@@ -1300,6 +1405,7 @@ test("compute item values for collection with nested object data", () => {
   const [_dataVariableId, itemParameterId] = data.dataSources.keys();
   selectPageRoot("bodyId");
   $dataSourceVariables.set(new Map([]));
+  await waitForStores();
   const values = $variableValuesByInstanceSelector.get();
   expect(
     values
@@ -1314,6 +1420,7 @@ test("compute item values for collection with nested object data", () => {
       )
       ?.get(itemParameterId)
   ).toEqual({ name: "Alice", age: 30 });
+  await waitForStores();
   expect(
     values
       .get(
@@ -1329,7 +1436,7 @@ test("compute item values for collection with nested object data", () => {
   ).toEqual({ name: "Bob", age: 25 });
 });
 
-test("compute inherited item values inside collection without item parameter", () => {
+test("compute inherited item values inside collection without item parameter", async () => {
   const dataVariable = new Variable("dataVariable", [
     { items: ["apple", "banana"] },
   ]);
@@ -1358,6 +1465,7 @@ test("compute inherited item values inside collection without item parameter", (
   )?.id;
   selectPageRoot("bodyId");
   $dataSourceVariables.set(new Map([]));
+  await waitForStores();
   const values = $variableValuesByInstanceSelector.get();
   expect(
     values
@@ -1378,7 +1486,7 @@ test("compute inherited item values inside collection without item parameter", (
   });
 });
 
-test("compute resource variable values", () => {
+test("compute resource variable values", async () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
     method: "get",
@@ -1402,15 +1510,17 @@ test("compute resource variable values", () => {
     searchParams: [],
   });
   $resourcesCache.set(new Map([[key, "my-value"]]));
-  expect(
-    $variableValuesByInstanceSelector
-      .get()
-      .get(getInstanceKey(["bodyId", ROOT_INSTANCE_ID]))
-      ?.get(resourceVariableId)
-  ).toEqual("my-value");
+  await vi.waitFor(() => {
+    expect(
+      $variableValuesByInstanceSelector
+        .get()
+        .get(getInstanceKey(["bodyId", ROOT_INSTANCE_ID]))
+        ?.get(resourceVariableId)
+    ).toEqual("my-value");
+  });
 });
 
-test("stop variables lookup outside of slots", () => {
+test("stop variables lookup outside of slots", async () => {
   const bodyVariable = new Variable("bodyVariable", "body");
   const slotVariable = new Variable("slotVariable", "slot");
   const boxVariable = new Variable("boxVariable", "box");
@@ -1427,6 +1537,7 @@ test("stop variables lookup outside of slots", () => {
   $dataSources.set(data.dataSources);
   $props.set(data.props);
   selectPageRoot("bodyId");
+  await waitForStores();
   const values = $variableValuesByInstanceSelector.get();
   expect(
     values.get(getInstanceKey(["slotId", "bodyId", ROOT_INSTANCE_ID]))?.size
@@ -1450,7 +1561,7 @@ test("stop variables lookup outside of slots", () => {
   ).toEqual(2);
 });
 
-test("compute parameter and resource variables without values to make it available in scope", () => {
+test("compute parameter and resource variables without values to make it available in scope", async () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
     method: "get",
@@ -1469,6 +1580,7 @@ test("compute parameter and resource variables without values to make it availab
   $props.set(data.props);
   const [resourceVariableId, parameterVariableId] = data.dataSources.keys();
   selectPageRoot("bodyId");
+  await waitForStores();
   const values = $variableValuesByInstanceSelector
     .get()
     .get(getInstanceKey(["bodyId", ROOT_INSTANCE_ID]));
@@ -1476,7 +1588,7 @@ test("compute parameter and resource variables without values to make it availab
   expect(values?.get(parameterVariableId)).toEqual(undefined);
 });
 
-test("provide page system variable value", () => {
+test("provide page system variable value", async () => {
   const system = new Parameter("system");
   const data = renderData(
     <Body ws:id="bodyId" vars={expression`${system}`}></Body>
@@ -1486,6 +1598,7 @@ test("provide page system variable value", () => {
   $props.set(data.props);
   const [systemId] = data.dataSources.keys();
   selectPageRoot("bodyId", systemId);
+  await waitForStores();
   expect(
     $variableValuesByInstanceSelector
       .get()
@@ -1495,6 +1608,7 @@ test("provide page system variable value", () => {
   updateCurrentSystem({
     params: { slug: "my-post" },
   });
+  await waitForStores();
   expect(
     $variableValuesByInstanceSelector
       .get()
@@ -1508,7 +1622,7 @@ test("provide page system variable value", () => {
   });
 });
 
-test("provide global system variable value", () => {
+test("provide global system variable value", async () => {
   const data = renderData(
     <Body ws:id="bodyId" vars={expression`$ws$system`}></Body>
   );
@@ -1517,6 +1631,7 @@ test("provide global system variable value", () => {
   $props.set(data.props);
   selectPageRoot("bodyId");
   $systemDataByPage.set(new Map());
+  await waitForStores();
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -1532,6 +1647,7 @@ test("provide global system variable value", () => {
   updateCurrentSystem({
     params: { slug: "my-post" },
   });
+  await waitForStores();
   const updatedSystem = {
     params: { slug: "my-post" },
     pathname: "/",
@@ -1552,7 +1668,7 @@ test("provide global system variable value", () => {
   );
 });
 
-test("keeps shadowed variables addressable by id in nested scope", () => {
+test("keeps shadowed variables addressable by id in nested scope", async () => {
   const bodyVariable = new Variable("myVariable", "body");
   const boxVariable = new Variable("myVariable", "box");
   const data = renderData(
@@ -1566,6 +1682,7 @@ test("keeps shadowed variables addressable by id in nested scope", () => {
   const [bodyVariableId, boxVariableId] = data.dataSources.keys();
   selectPageRoot("bodyId");
   $systemDataByPage.set(new Map());
+  await waitForStores();
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -1591,7 +1708,7 @@ test("keeps shadowed variables addressable by id in nested scope", () => {
   );
 });
 
-test("inherit variables from global root", () => {
+test("inherit variables from global root", async () => {
   const rootVariable = new Variable("rootVariable", "root");
   const boxVariable = new Variable("myVariable", "box");
   const data = renderData(
@@ -1607,6 +1724,7 @@ test("inherit variables from global root", () => {
   $props.set(data.props);
   const [rootVariableId, boxVariableId] = data.dataSources.keys();
   selectPageRoot("bodyId");
+  await waitForStores();
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
       [
@@ -1635,7 +1753,7 @@ test("inherit variables from global root", () => {
   );
 });
 
-test("inherit variables from global root inside slots", () => {
+test("inherit variables from global root inside slots", async () => {
   const rootVariable = new Variable("rootVariable", "root");
   const bodyVariable = new Variable("bodyVariable", "body");
   const boxVariable = new Variable("myVariable", "box");
@@ -1657,6 +1775,7 @@ test("inherit variables from global root inside slots", () => {
   const [rootVariableId, _bodyVariableId, boxVariableId] =
     data.dataSources.keys();
   selectPageRoot("bodyId");
+  await waitForStores();
   expect(
     $variableValuesByInstanceSelector
       .get()

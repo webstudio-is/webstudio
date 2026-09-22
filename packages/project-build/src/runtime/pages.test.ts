@@ -2518,9 +2518,9 @@ describe("page settings validation", () => {
     ).toBe("/folder/post");
   });
 
-  test("accumulates duplicate path errors from the general section", () => {
+  test("accumulates duplicate path errors from the general section", async () => {
     const pages = createPages();
-    const errors = validatePageSettings({
+    const errors = await validatePageSettings({
       pages,
       pageId: undefined,
       values: createPageSettingsValues({ path: "/page" }),
@@ -2530,8 +2530,8 @@ describe("page settings validation", () => {
     expect(errors.path).toEqual(["All paths must be unique"]);
   });
 
-  test("accumulates auth errors with other field errors", () => {
-    const errors = validatePageSettings({
+  test("accumulates auth errors with other field errors", async () => {
+    const errors = await validatePageSettings({
       pages: createPages(),
       pageId: undefined,
       values: createPageSettingsValues({
@@ -2555,24 +2555,26 @@ describe("page settings validation", () => {
     });
   });
 
-  test("does not require auth when both credentials are empty", () => {
+  test("does not require auth when both credentials are empty", async () => {
     expect(
-      validatePageSettings({
-        pages: createPages(),
-        pageId: undefined,
-        values: createPageSettingsValues(),
-        variableValues: new Map(),
-      }).auth
+      (
+        await validatePageSettings({
+          pages: createPages(),
+          pageId: undefined,
+          values: createPageSettingsValues(),
+          variableValues: new Map(),
+        })
+      ).auth
     ).toBeUndefined();
   });
 
-  test("validates only visible document type sections", () => {
+  test("validates only visible document type sections", async () => {
     const invalidHtmlMetadata = {
       title: `""`,
       language: `"not a locale"`,
     };
 
-    const textErrors = validatePageSettings({
+    const textErrors = await validatePageSettings({
       pages: createPages(),
       pageId: undefined,
       values: createPageSettingsValues({
@@ -2587,7 +2589,7 @@ describe("page settings validation", () => {
     expect(textErrors.language).toBeUndefined();
     expect(textErrors.content).toBeDefined();
 
-    const xmlErrors = validatePageSettings({
+    const xmlErrors = await validatePageSettings({
       pages: createPages(),
       pageId: undefined,
       values: createPageSettingsValues({
@@ -2603,8 +2605,8 @@ describe("page settings validation", () => {
     expect(xmlErrors.content).toBeUndefined();
   });
 
-  test("allows redirect on the home page", () => {
-    const errors = validatePageSettings({
+  test("allows redirect on the home page", async () => {
+    const errors = await validatePageSettings({
       pages: createPages(),
       pageId: "home",
       values: createPageSettingsValues({
