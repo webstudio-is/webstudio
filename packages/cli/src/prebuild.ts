@@ -166,17 +166,20 @@ const hydrateLocalMarkdownContents = async ({
   artifact,
   assets,
   assetsDirectory,
+  includeMarkdown,
 }: {
   artifact: ContentArtifactV1;
   assets: readonly Asset[];
   assetsDirectory: string;
+  includeMarkdown: boolean;
 }): Promise<ContentArtifactV1> => {
   const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
   const missingContents = await Promise.all(
     artifact.documents
       .filter(
         (document) =>
-          (document.extension === "md" || document.extension === "mdx") &&
+          (document.extension === "mdx" ||
+            (includeMarkdown && document.extension === "md")) &&
           document.contentRef !== undefined &&
           artifact.contents?.[document.contentRef] === undefined
       )
@@ -981,8 +984,9 @@ export const prebuild = async (options: {
     preserveTemplates: preserveRouteTemplates,
     templatesDirectory: join(buildRoot, routeTemplatesDirectory),
   };
+  const isStaticBuild = options.template.includes("ssg");
   let framework;
-  if (options.template.includes("ssg")) {
+  if (isStaticBuild) {
     framework = await createVikeSsgFramework(frameworkOptions);
   } else if (options.template.includes("react-router")) {
     framework = await createReactRouterFramework(frameworkOptions);
@@ -1031,6 +1035,9 @@ export const prebuild = async (options: {
       assets: siteData.assets,
       assetsDirectory:
         options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR),
+      // SSR only needs local MDX sources during component compilation. Its
+      // runtime reads article contents over HTTP, just like hosted sites.
+      includeMarkdown: isStaticBuild,
     });
   }
   let dynamicMdxCandidates: ReadonlyMap<string, readonly string[]> | undefined;
@@ -1165,9 +1172,6 @@ export const prebuild = async (options: {
   }
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
-  const publishedDeployment = isPublishedDeployment(siteData.build.deployment)
-    ? siteData.build.deployment
-    : undefined;
   const getPublishedAssetUrl = (asset: Asset) => {
     const runtimeAsset = toAssetReferenceRuntimeData(
       asset,
@@ -1891,9 +1895,9 @@ export const prebuild = async (options: {
     includeDocumentRuntimeAssets:
       assetCompilationPlan !== undefined &&
       requiresRuntimeDocumentData(assetCompilationPlan),
-    includeContents: !(
-      publishedDeployment !== undefined && options.assets === false
-    ),
+    // Only static prerendering consumes embedded source files. Both local
+    // and hosted SSR use the same HTTP content loader and serve assets.
+    includeContents: isStaticBuild,
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
   });

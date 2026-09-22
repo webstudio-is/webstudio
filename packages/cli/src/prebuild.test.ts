@@ -15,6 +15,7 @@ import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { createServer } from "node:http";
 import {
   defaultTreeAdapter,
   parse as parseHtml,
@@ -2194,7 +2195,7 @@ sitemap.map((page) => page.path);`
   });
 
   test.each(["mdx", "md"])(
-    "hydrates a synced %s asset into a dynamic SSR content database",
+    "fetches a synced %s asset over HTTP in a dynamic SSR build",
     async (extension) => {
       const source = "# Published post\n";
       const name = `post.${extension}`;
@@ -2255,6 +2256,21 @@ sitemap.map((page) => page.path);`
         ],
         assetIndex: index,
       };
+      siteData.build.resources = [
+        ["posts", createQueryResource("full")],
+      ] as never;
+      siteData.build.dataSources = [
+        [
+          "posts-data",
+          {
+            id: "posts-data",
+            type: "resource",
+            name: "posts",
+            resourceId: "posts",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
       await writeSiteData(
         siteData as unknown as ReturnType<typeof createSiteData>
       );
@@ -2284,7 +2300,8 @@ sitemap.map((page) => page.path);`
         "app/__generated__/$resources.asset-query-manifest.ts",
         "utf8"
       );
-      expect(manifest).toContain("Published post");
+      expect(manifest).not.toContain("Published post");
+      expect(manifest).not.toContain('"contents"');
       expect(manifest).not.toContain("draft secret");
       await expect(
         readFile("app/asset-resource-fetch.ts", "utf8")
@@ -2305,7 +2322,7 @@ sitemap.map((page) => page.path);`
             .map((path) => readFile(path, "utf8"))
         )
       ).join("\n");
-      expect(serverBundle).toContain("Published post");
+      expect(serverBundle).not.toContain("Published post");
       expect(serverBundle).not.toContain("draft secret");
       expect(serverBundle).toContain("post-revision");
       const clientBundle = (
@@ -2319,6 +2336,70 @@ sitemap.map((page) => page.path);`
       ).join("\n");
       expect(clientBundle).not.toContain("Published post");
       expect(clientBundle).not.toContain("post-revision");
+
+      // Exercise the generated runtime against real locally served assets.
+      // The preview/Vite server supplies the same public files in normal use.
+      const runtimeBundle = await build({
+        entryPoints: [
+          join(tempDir, "app/__generated__/$resources.asset-query-runtime.ts"),
+        ],
+        bundle: true,
+        format: "esm",
+        platform: "node",
+        write: false,
+      });
+      const runtime = await import(
+        /* @vite-ignore */
+        `data:text/javascript;base64,${Buffer.from(runtimeBundle.outputFiles[0].text).toString("base64")}`
+      );
+      const requestedPaths: string[] = [];
+      const server = createServer((request, response) => {
+        requestedPaths.push(request.url ?? "");
+        if (request.url !== `/assets/${name}`) {
+          response.writeHead(404).end();
+          return;
+        }
+        void readFile(join(tempDir, "build/client/assets", name)).then(
+          (bytes) => response.end(bytes),
+          () => response.writeHead(404).end()
+        );
+      });
+      await new Promise<void>((resolve) =>
+        server.listen(0, "127.0.0.1", resolve)
+      );
+      try {
+        const address = server.address();
+        if (address === null || typeof address === "string") {
+          throw new Error("Expected a local TCP server");
+        }
+        const origin = `http://127.0.0.1:${address.port}`;
+        const generatedFetch = await runtime.createGeneratedAssetResourceFetch({
+          request: new Request(`${origin}/blog/post`),
+          context: {},
+          fallback: originalFetch,
+        });
+        const response = await generatedFetch("/$resources/assets", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            query: {
+              content: { mode: "full" },
+              output: { mode: "all", includeMetadata: true },
+            },
+          }),
+        });
+        const data = await response.json();
+        expect(response.status, JSON.stringify(data)).toBe(200);
+        expect(data).toMatchObject({
+          items: [{ id: "post-1", content: { text: source } }],
+        });
+        expect(requestedPaths).toEqual([`/assets/${name}`]);
+      } finally {
+        server.closeAllConnections();
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        );
+      }
     },
     30_000
   );
@@ -2507,6 +2588,12 @@ sitemap.map((page) => page.path);`
         "app/__generated__/$resources.asset-query-runtime.ts",
         "utf8"
       );
+      const materializedManifest = await readFile(
+        "app/__generated__/$resources.asset-query-manifest.ts",
+        "utf8"
+      );
+      expect(materializedManifest).not.toContain("# Indexed post body");
+      expect(materializedManifest).not.toContain('"contents"');
       expect(materializedRuntimeModule).toContain('"url":"/assets/post.md"');
       expect(materializedRuntimeModule).not.toContain("sourceUrl");
       expect(materializedRuntimeModule).not.toContain(

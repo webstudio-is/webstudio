@@ -103,6 +103,69 @@ const queryRequest = (content = false) =>
 describe("published asset resource runtime", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  test.each([
+    { content: { mode: "full" }, text: "Post" },
+    { content: { mode: "range", offset: 1, length: 2 }, text: "os" },
+  ])(
+    "fetches unembedded files without graph nodes: $content.mode",
+    async ({ content, text }) => {
+      const { index } = await createRuntime();
+      const fetchDocument = vi.fn<typeof fetch>(
+        async () => new Response("Post")
+      );
+      const runtimeFetch = createPublishedRuntime({
+        baseUrl: "https://site.example/blog/post",
+        deploymentId: "build-http",
+        artifact: createContentRuntimeArtifact(index, {
+          includeContents: false,
+        }),
+        runtimeAssets,
+        automationToken: "test-automation-token",
+        fetchDocument,
+      });
+      const controller = new AbortController();
+      const request = new Request(queryRequest(), {
+        signal: controller.signal,
+        body: JSON.stringify({
+          query: { content, output: { mode: "all", includeMetadata: true } },
+        }),
+      });
+      const response = await runtimeFetch(request);
+      expect(response?.status).toBe(200);
+      expect(await response?.json()).toMatchObject({
+        items: [{ id: "post-1", content: { text } }],
+      });
+      expect(fetchDocument).toHaveBeenCalledOnce();
+      const [assetRequest, init] = fetchDocument.mock.calls[0];
+      expect(assetRequest).toBeInstanceOf(Request);
+      expect(getRequestUrl(assetRequest)).toBe(
+        "https://site.example/assets/post.md"
+      );
+      expect(
+        (assetRequest as Request).headers.get("x-webstudio-automation")
+      ).toBe("test-automation-token");
+      expect(init?.signal?.aborted).toBe(false);
+      controller.abort();
+      expect(init?.signal?.aborted).toBe(true);
+    }
+  );
+
+  test("does not return an HTTP error body as file content", async () => {
+    const { index } = await createRuntime();
+    const runtimeFetch = createPublishedRuntime({
+      baseUrl: "https://site.example",
+      deploymentId: "build-http-error",
+      artifact: createContentRuntimeArtifact(index, { includeContents: false }),
+      runtimeAssets,
+      fetchDocument: async () => new Response("Unauthorized", { status: 401 }),
+    });
+    const response = await runtimeFetch(queryRequest(true));
+    expect(response?.status).toBe(400);
+    expect(await response?.json()).toMatchObject({
+      error: { code: "INVALID_REQUEST" },
+    });
+  });
+
   test("does not open the query-result cache for ordinary generated fetches", async () => {
     const { index } = await createRuntime();
     const open = vi.fn();

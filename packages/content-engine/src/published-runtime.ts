@@ -3,7 +3,11 @@ import {
   type AssetResourceQueryFailure,
 } from "./schema";
 import { sha256Hex } from "./canonical-json";
-import { encodeUtf8 } from "./byte-stream";
+import {
+  encodeUtf8,
+  readableStreamToAsyncIterable,
+  selectByteRange,
+} from "./byte-stream";
 import { createRuntimeContentDatabase } from "./content-database";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
@@ -134,6 +138,29 @@ export const createPublishedAssetResourceFetch = ({
   });
 };
 
+const createPublishedDocumentRequest = ({
+  assetId,
+  baseUrl,
+  runtimeAssets,
+  automationToken,
+}: {
+  assetId: string;
+  baseUrl: string | URL;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  automationToken?: string;
+}) => {
+  const asset = runtimeAssets[assetId];
+  if (asset === undefined) {
+    throw new Error(`Published document URL is unavailable for ${assetId}`);
+  }
+  const request = new Request(new URL(asset.url, baseUrl));
+  request.headers.delete("referer");
+  if (automationToken !== undefined) {
+    request.headers.set("x-webstudio-automation", automationToken);
+  }
+  return request;
+};
+
 const createPublishedDocumentLoader = ({
   baseUrl,
   runtimeAssets,
@@ -153,18 +180,13 @@ const createPublishedDocumentLoader = ({
 }) => {
   const httpLoader = createHttpDocumentSourceLoader({
     fetch: fetchDocument,
-    getRequest: (node) => {
-      const asset = runtimeAssets[node.id];
-      if (asset === undefined) {
-        throw new Error(`Published document URL is unavailable for ${node.id}`);
-      }
-      const request = new Request(new URL(asset.url, baseUrl));
-      request.headers.delete("referer");
-      if (automationToken !== undefined) {
-        request.headers.set("x-webstudio-automation", automationToken);
-      }
-      return request;
-    },
+    getRequest: (node) =>
+      createPublishedDocumentRequest({
+        assetId: node.id,
+        baseUrl,
+        runtimeAssets,
+        automationToken,
+      }),
     getMetadata: ({ node }) => ({
       format: node.format,
       revision: node.revision,
@@ -252,6 +274,9 @@ const createPublishedAssetResourceHandler = ({
   onDocumentGraphEvent?: DocumentGraphRuntimeObserver;
 }) => {
   const baseOrigin = new URL(baseUrl).origin;
+  const documentsByContentRef = new Map(
+    artifact.documents.map((document) => [document.contentRef, document])
+  );
   const loadDocument = createPublishedDocumentLoader({
     baseUrl,
     runtimeAssets,
@@ -310,6 +335,36 @@ const createPublishedAssetResourceHandler = ({
         await database.queryWithDocumentGraph({
           request: parsedRequest,
           load: loadDocument,
+          // Plain text and full-file queries do not necessarily have graph
+          // nodes. Resolve those files through the same asset HTTP transport.
+          readContent: async (contentRef, range) => {
+            const document = documentsByContentRef.get(contentRef);
+            if (document === undefined) {
+              throw new Error(
+                `Published content reference is unavailable: ${contentRef}`
+              );
+            }
+            const response = await fetchDocument(
+              createPublishedDocumentRequest({
+                assetId: document._id,
+                baseUrl,
+                runtimeAssets,
+                automationToken,
+              }),
+              { signal: request.signal }
+            );
+            if (!response.ok || response.body === null) {
+              throw new Error(
+                `Document ${document._id} request returned status ${response.status} or no body`
+              );
+            }
+            return {
+              data: selectByteRange(
+                readableStreamToAsyncIterable(response.body),
+                range
+              ),
+            };
+          },
           runtimeAssets,
           signal: request.signal,
           onEvent: onDocumentGraphEvent,

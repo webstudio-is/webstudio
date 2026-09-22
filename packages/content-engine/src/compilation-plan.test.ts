@@ -197,6 +197,17 @@ describe("content compilation plan", () => {
     }
   });
 
+  test.each([
+    { mode: "full" },
+    { mode: "range", offset: 1, length: 2 },
+    { mode: "markdown-body-ref" },
+  ])("retains asset URLs for HTTP content reads: $mode", (content) => {
+    const plan = createContentCompilationPlan([
+      compilationQuery("content", assetQuery.parse({ ...query, content })),
+    ]);
+    expect(requiresRuntimeDocumentData(plan!)).toBe(true);
+  });
+
   test("unions selected fields deterministically and returns no requirements for no queries", () => {
     expect(createContentCompilationPlan([])).toBeUndefined();
     expect(

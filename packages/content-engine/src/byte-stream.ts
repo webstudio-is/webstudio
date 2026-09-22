@@ -42,6 +42,40 @@ export const toByteChunks = (source: ByteSource): AsyncIterable<Uint8Array> => {
   return source;
 };
 
+export const selectByteRange = (
+  source: ByteSource,
+  range?: { offset: number; length: number }
+): AsyncIterable<Uint8Array> => {
+  if (range === undefined) {
+    return toByteChunks(source);
+  }
+  return {
+    async *[Symbol.asyncIterator]() {
+      let skipped = 0;
+      let emitted = 0;
+      for await (const chunk of toByteChunks(source)) {
+        if (emitted === range.length) {
+          return;
+        }
+        if (skipped + chunk.byteLength <= range.offset) {
+          skipped += chunk.byteLength;
+          continue;
+        }
+        const start = Math.max(0, range.offset - skipped);
+        const length = Math.min(
+          chunk.byteLength - start,
+          range.length - emitted
+        );
+        if (length > 0) {
+          yield chunk.subarray(start, start + length);
+          emitted += length;
+        }
+        skipped += chunk.byteLength;
+      }
+    },
+  };
+};
+
 export const readableStreamToAsyncIterable = (
   stream: ReadableStream<Uint8Array>
 ): AsyncIterable<Uint8Array> => ({
