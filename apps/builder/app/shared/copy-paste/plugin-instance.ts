@@ -538,6 +538,22 @@ const handleCopyInstanceAsync = async () => {
 const handleCutInstanceAsync = async (
   writeClipboard: (data: string) => Promise<boolean>
 ) => {
+  // Sync stores are immutable. Validate after the final await so no queued
+  // edit can run between this check and deletion.
+  const sourceData = readBuilderStateStores();
+  const projectId = $project.get()?.id;
+  const canDeleteCopiedContent = () => {
+    if (
+      projectId !== $project.get()?.id ||
+      shallowEqual(sourceData, readBuilderStateStores()) === false
+    ) {
+      builderApi.toast.info(
+        "The project changed while copying. Nothing was removed. Try cutting again."
+      );
+      return false;
+    }
+    return true;
+  };
   const selectedInstanceSelectors = $allSelectedInstanceSelectors.get();
   if (selectedInstanceSelectors.length > 1) {
     const instances = $instances.get();
@@ -575,7 +591,8 @@ const handleCutInstanceAsync = async (
     const clipboardData = stringifyMultiRootSelection(selectedPathData);
     if (
       clipboardData === undefined ||
-      (await writeClipboard(clipboardData)) === false
+      (await writeClipboard(clipboardData)) === false ||
+      canDeleteCopiedContent() === false
     ) {
       return;
     }
@@ -601,7 +618,10 @@ const handleCutInstanceAsync = async (
     return;
   }
   const clipboardData = stringify(data);
-  if ((await writeClipboard(clipboardData)) === false) {
+  if (
+    (await writeClipboard(clipboardData)) === false ||
+    canDeleteCopiedContent() === false
+  ) {
     return;
   }
   deleteInstanceBySelector(instancePath[0].instanceSelector);
@@ -622,25 +642,7 @@ const handleCutInstance = (
   ) {
     return;
   }
-  // Sync stores are immutable. Conservatively cancel deletion on any project
-  // data change, including edits made while preparing the clipboard snapshot.
-  const sourceData = readBuilderStateStores();
-  const projectId = $project.get()?.id;
-  return handleCutInstanceAsync(async (data) => {
-    if ((await writeClipboard(data)) === false) {
-      return false;
-    }
-    if (
-      projectId !== $project.get()?.id ||
-      shallowEqual(sourceData, readBuilderStateStores()) === false
-    ) {
-      builderApi.toast.info(
-        "The project changed while copying. Nothing was removed. Try cutting again."
-      );
-      return false;
-    }
-    return true;
-  });
+  return handleCutInstanceAsync(writeClipboard);
 };
 
 export const instanceText = {

@@ -113,6 +113,61 @@ const getMapDifference = <Type extends Map<unknown, unknown>>(
 };
 
 describe("copy and cut guards", () => {
+  test.each([false, true])(
+    "does not delete an edit queued during clipboard completion (multiple: %s)",
+    async (multiple) => {
+      setPageRoot("body0");
+      const roots = multiple ? ["box1", "box2"] : ["box1"];
+      $instances.set(
+        toMap([
+          createInstance(
+            "body0",
+            "Body",
+            roots.map((value) => ({ type: "id", value }))
+          ),
+          ...roots.map((id) =>
+            createInstance(id, "Box", [{ type: "text", value: "Before" }])
+          ),
+        ])
+      );
+      selectInstances(roots.map((id) => [id, "body0"]));
+      const notify = vi
+        .spyOn(builderApiTesting.api.toast, "info")
+        .mockImplementation(() => {});
+      let edited = false;
+      await instanceText.onCut(async () => {
+        queueMicrotask(() =>
+          queueMicrotask(() => {
+            // Like an instance mutation, an edit cannot target a deleted instance.
+            if ($instances.get().has("box1") === false) {
+              return;
+            }
+            const instances = new Map($instances.get());
+            instances.set(
+              "box1",
+              createInstance("box1", "Box", [
+                { type: "text", value: "New edit" },
+              ])
+            );
+            $instances.set(instances);
+            edited = true;
+          })
+        );
+        return true;
+      });
+      // Either cut finished first, or the edit must cancel the whole deletion.
+      expect($instances.get().get("body0")?.children).toEqual(
+        edited ? roots.map((value) => ({ type: "id", value })) : []
+      );
+      expect(notify).toHaveBeenCalledTimes(edited ? 1 : 0);
+      if (edited) {
+        expect($instances.get().get("box1")?.children).toEqual([
+          { type: "text", value: "New edit" },
+        ]);
+      }
+    }
+  );
+
   test.each(
     [false, true].flatMap((multiple) =>
       ["content", "property", "project"].map((change) => ({ multiple, change }))
