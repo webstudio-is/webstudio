@@ -450,6 +450,7 @@ describe("createProductionBuild (msw)", () => {
       }));
       context.getOwnerPlanFeatures = getOwnerPlanFeatures;
       const createBuild = vi.fn(() => json("build-prod"));
+      const removeBuild = vi.fn(() => empty({ status: 204 }));
       server.use(
         db.get("Project", () =>
           json({
@@ -469,7 +470,8 @@ describe("createProductionBuild (msw)", () => {
             },
           ])
         ),
-        db.post("rpc/create_production_build", createBuild)
+        db.post("rpc/create_production_build", createBuild),
+        db.delete("Build", removeBuild)
       );
       const result = createProductionBuild(
         {
@@ -488,13 +490,16 @@ describe("createProductionBuild (msw)", () => {
         await expect(result).rejects.toThrow(
           "Custom headers are a Pro feature"
         );
-        expect(createBuild).not.toHaveBeenCalled();
+        expect(removeBuild).toHaveBeenCalledOnce();
       } else {
         await expect(result).resolves.toEqual({ id: "build-prod" });
-        expect(createBuild).toHaveBeenCalledOnce();
+        expect(removeBuild).not.toHaveBeenCalled();
       }
+      expect(createBuild).toHaveBeenCalledOnce();
       if (checkPlan) {
-        expect(getOwnerPlanFeatures).toHaveBeenCalledWith("project-owner");
+        expect(getOwnerPlanFeatures).toHaveBeenCalledExactlyOnceWith(
+          "project-owner"
+        );
       } else {
         expect(getOwnerPlanFeatures).not.toHaveBeenCalled();
       }
@@ -549,7 +554,7 @@ describe("createProductionBuild (msw)", () => {
               },
             ]);
           }
-          // The preflight sees defaults, but an edit lands before the RPC snapshot.
+          // Development settings change before the RPC snapshots them.
           return json([buildRow]);
         }),
         db.post("rpc/create_production_build", () => json("build-prod")),
