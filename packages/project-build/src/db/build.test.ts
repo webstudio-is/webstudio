@@ -501,6 +501,107 @@ describe("createProductionBuild (msw)", () => {
     }
   );
 
+  test.each([
+    { label: "custom value", value: "DENY", allowed: false, staging: false },
+    { label: "optional removal", value: null, allowed: false, staging: false },
+    { label: "Pro owner", value: "DENY", allowed: true, staging: false },
+    { label: "staging", value: "DENY", allowed: false, staging: true },
+    {
+      label: "default value",
+      value: "SAMEORIGIN",
+      allowed: false,
+      staging: false,
+    },
+  ])(
+    "checks the published snapshot after a concurrent edit: $label",
+    async ({ value, allowed, staging }) => {
+      const context = createContext();
+      context.getOwnerPlanFeatures = vi.fn(async () => ({
+        ...context.planFeatures,
+        allowDynamicData: allowed,
+      }));
+      const removeBuild = vi.fn(({ request }: { request: Request }) => {
+        expect(new URL(request.url).searchParams.get("id")).toBe(
+          "eq.build-prod"
+        );
+        return empty({ status: 204 });
+      });
+      const readSnapshot = vi.fn();
+      server.use(
+        db.get("Project", () =>
+          json({
+            id: "proj-1",
+            userId: "project-owner",
+            domain: "project-domain",
+          })
+        ),
+        db.get("Build", ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get("id") === "eq.build-prod") {
+            readSnapshot();
+            expect(url.searchParams.get("select")).toBe("projectSettings");
+            return json([
+              {
+                projectSettings: JSON.stringify({
+                  meta: { customHeaders: [{ name: "X-Frame-Options", value }] },
+                  compiler: {},
+                }),
+              },
+            ]);
+          }
+          // The preflight sees defaults, but an edit lands before the RPC snapshot.
+          return json([buildRow]);
+        }),
+        db.post("rpc/create_production_build", () => json("build-prod")),
+        db.delete("Build", removeBuild)
+      );
+      const result = createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: {
+            destination: "saas",
+            domains: [staging ? "project-domain" : "example.com"],
+          },
+        },
+        context
+      );
+      if (!allowed && !staging && value !== "SAMEORIGIN") {
+        await expect(result).rejects.toThrow(
+          "Custom headers are a Pro feature"
+        );
+        expect(removeBuild).toHaveBeenCalledOnce();
+      } else {
+        await expect(result).resolves.toEqual({ id: "build-prod" });
+        expect(removeBuild).not.toHaveBeenCalled();
+      }
+      expect(readSnapshot).toHaveBeenCalledOnce();
+    }
+  );
+
+  test("fails closed and removes the unpublished build when its settings cannot be verified", async () => {
+    const removeBuild = vi.fn(() => empty({ status: 204 }));
+    server.use(
+      ownershipHandler,
+      db.get("Build", ({ request }) =>
+        new URL(request.url).searchParams.has("id")
+          ? json([])
+          : json([buildRow])
+      ),
+      db.post("rpc/create_production_build", () => json("build-prod")),
+      db.delete("Build", removeBuild)
+    );
+    await expect(
+      createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: { destination: "saas", domains: ["example.com"] },
+        },
+        createContext()
+      )
+    ).rejects.toThrow("Cannot verify published response headers");
+    expect(removeBuild).toHaveBeenCalledOnce();
+  });
+
   test("throws when dev build has orphan resource references", async () => {
     let didCreateProductionBuild = false;
     server.use(
