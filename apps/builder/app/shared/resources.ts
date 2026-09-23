@@ -45,6 +45,8 @@ const diagnosticsErrorCache = new Map<string, unknown>();
 const performanceCache = new Map<string, ResourcePerformance>();
 const pendingDiagnostics = new Map<string, InFlightResourceDiagnostics>();
 const knownRequests = new Map<string, ResourceRequest>();
+const pageRequestKeys = new Set<string>();
+const previewRequests = new Map<string, Set<symbol>>();
 const resourceVersions = new Map<string, number>();
 const inFlightBatches = new Set<InFlightResourceBatch>();
 
@@ -233,18 +235,18 @@ const invalidateRequestState = (key: string) => {
   resourceVersions.set(key, (resourceVersions.get(key) ?? 0) + 1);
 };
 
-const queueResources = (resources: readonly ResourceRequest[]) => {
-  const currentKeys = new Set(resources.map(getResourceKey));
+const removeObsoleteRequests = () => {
   let pendingChanged = false;
   let diagnosticsChanged = false;
   for (const key of knownRequests.keys()) {
-    if (currentKeys.has(key) === false) {
-      knownRequests.delete(key);
-      invalidateRequestState(key);
-      diagnosticsChanged = true;
-      pendingChanged = queue.delete(key) || pendingChanged;
-      pendingChanged = pending.delete(key) || pendingChanged;
+    if (pageRequestKeys.has(key) || previewRequests.has(key)) {
+      continue;
     }
+    knownRequests.delete(key);
+    invalidateRequestState(key);
+    diagnosticsChanged = true;
+    pendingChanged = queue.delete(key) || pendingChanged;
+    pendingChanged = pending.delete(key) || pendingChanged;
   }
   abortObsoleteBatches();
   if (diagnosticsChanged) {
@@ -253,6 +255,14 @@ const queueResources = (resources: readonly ResourceRequest[]) => {
   if (pendingChanged) {
     updatePending();
   }
+};
+
+const queueResources = (resources: readonly ResourceRequest[]) => {
+  pageRequestKeys.clear();
+  for (const resource of resources) {
+    pageRequestKeys.add(getResourceKey(resource));
+  }
+  removeObsoleteRequests();
   for (const resource of resources) {
     preloadResource(resource);
   }
@@ -285,9 +295,28 @@ const queueInvalidatedResource = (resource: ResourceRequest) => {
   updatePending();
 };
 
-export const invalidateResource = (resource: ResourceRequest) => {
+/** Keep an explicitly requested preview alive until its dialog releases it. */
+export const loadResourcePreview = (
+  resource: ResourceRequest,
+  requestFetch: typeof fetch = fetch
+) => {
+  const key = getResourceKey(resource);
+  const lease = Symbol();
+  const leases = previewRequests.get(key) ?? new Set<symbol>();
+  leases.add(lease);
+  previewRequests.set(key, leases);
   queueInvalidatedResource(resource);
-  startLoading();
+  startLoading(requestFetch);
+  return () => {
+    const activeLeases = previewRequests.get(key);
+    if (activeLeases?.delete(lease) !== true) {
+      return;
+    }
+    if (activeLeases.size === 0) {
+      previewRequests.delete(key);
+      removeObsoleteRequests();
+    }
+  };
 };
 
 /**
@@ -603,6 +632,8 @@ const reset = () => {
   }
   pendingDiagnostics.clear();
   knownRequests.clear();
+  pageRequestKeys.clear();
+  previewRequests.clear();
   resourceVersions.clear();
   updateCache();
   updatePending();

@@ -19,6 +19,7 @@ import {
   computeResourceRequestPlan,
   getResourceKey,
   invalidateAssets,
+  loadResourcePreview,
   loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
@@ -36,6 +37,22 @@ afterEach(() => {
   reset();
   vi.useRealTimers();
 });
+
+const previewRequest = (name: string, url: string): ResourceRequest => ({
+  name,
+  method: "get",
+  url,
+  searchParams: [],
+  headers: [],
+});
+
+const deferredResponse = () => {
+  let respond: (response: Response) => void = () => {};
+  const promise = new Promise<Response>((resolve) => {
+    respond = resolve;
+  });
+  return { promise, respond };
+};
 
 test("removes obsolete queued requests but keeps cached results", () => {
   vi.useFakeTimers();
@@ -63,6 +80,181 @@ test("removes obsolete queued requests but keeps cached results", () => {
   expect($pendingResourceKeys.get()).toEqual(new Set());
   expect(resourceCacheListener).not.toHaveBeenCalled();
   unlisten();
+});
+
+test("keeps an explicitly loaded unbound resource through page-plan recalculation", async () => {
+  const request = previewRequest("Current date", "/$resources/current-date");
+  const key = getResourceKey(request);
+  const response = deferredResponse();
+  const requestFetch = vi.fn<typeof globalThis.fetch>(() => response.promise);
+
+  const release = loadResourcePreview(request, requestFetch);
+  // Cache updates trigger this page-plan recalculation, which does not include
+  // the unsaved resource.
+  queueResources([]);
+  response.respond(Response.json([[key, { data: "2026-09-23" }]]));
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(key)).toEqual({ data: "2026-09-23" });
+  });
+  release();
+});
+
+test.each([
+  ["Sitemap", "/$resources/sitemap.xml"],
+  ["HTTP", "https://example.com/posts"],
+  ["Existing unbound", "https://example.com/existing"],
+])(
+  "loads an unbound %s preview without making it a page dependency",
+  async (name, url) => {
+    const request = previewRequest(name, url);
+    const key = getResourceKey(request);
+    const requestFetch = vi.fn<typeof globalThis.fetch>(
+      async (_input, init) => {
+        expect(JSON.parse(String(init?.body))).toEqual([request]);
+        return Response.json([[key, { data: name }]]);
+      }
+    );
+
+    queueResources([]);
+    const release = loadResourcePreview(request, requestFetch);
+    queueResources([]);
+    await vi.waitFor(() => {
+      expect($resourcesCache.get().get(key)).toEqual({ data: name });
+    });
+    expect(requestFetch).toHaveBeenCalledOnce();
+    release();
+    expect($pendingResourceKeys.get()).toEqual(new Set());
+  }
+);
+
+test("replaces a preview when its inputs change and ignores the old response", async () => {
+  const oldRequest = previewRequest(
+    "Posts",
+    "https://example.com/posts?page=1"
+  );
+  const newRequest = { ...oldRequest, url: "https://example.com/posts?page=2" };
+  const oldKey = getResourceKey(oldRequest);
+  const newKey = getResourceKey(newRequest);
+  const oldResponse = deferredResponse();
+  const newResponse = deferredResponse();
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(() => oldResponse.promise)
+    .mockImplementationOnce(() => newResponse.promise);
+
+  const releaseOld = loadResourcePreview(oldRequest, requestFetch);
+  releaseOld();
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+  const releaseNew = loadResourcePreview(newRequest, requestFetch);
+  queueResources([]);
+  oldResponse.respond(Response.json([[oldKey, { data: "old" }]]));
+  newResponse.respond(Response.json([[newKey, { data: "new" }]]));
+
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(newKey)).toEqual({ data: "new" });
+  });
+  expect($resourcesCache.get().has(oldKey)).toBe(false);
+  releaseNew();
+});
+
+test("releasing a closed preview cancels it but keeps page requests alive", async () => {
+  const preview = previewRequest("Preview", "https://example.com/preview");
+  const page = previewRequest("Page", "https://example.com/page");
+  const previewKey = getResourceKey(preview);
+  const pageKey = getResourceKey(page);
+  const response = deferredResponse();
+  const requestFetch = vi.fn<typeof globalThis.fetch>(() => response.promise);
+
+  queueResources([page]);
+  const release = loadResourcePreview(preview, requestFetch);
+  // Both requests share a batch, so releasing the preview must not abort the
+  // page's request or accept the preview's late result.
+  release();
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(false);
+  response.respond(
+    Response.json([
+      [previewKey, { data: "late preview" }],
+      [pageKey, { data: "page" }],
+    ])
+  );
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(pageKey)).toEqual({ data: "page" });
+  });
+  expect($resourcesCache.get().has(previewKey)).toBe(false);
+});
+
+test("closing an unbound preview aborts its request and rejects a late response", async () => {
+  const request = previewRequest(
+    "Preview",
+    "https://example.com/close-preview"
+  );
+  const key = getResourceKey(request);
+  const response = deferredResponse();
+  const requestFetch = vi.fn<typeof globalThis.fetch>(() => response.promise);
+
+  const release = loadResourcePreview(request, requestFetch);
+  release();
+  release();
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+  response.respond(Response.json([[key, { data: "late" }]]));
+  await vi.waitFor(() => {
+    expect($pendingResourceKeys.get()).toEqual(new Set());
+  });
+  expect($resourcesCache.get().has(key)).toBe(false);
+});
+
+test("releasing one of two previews for the same request keeps the other active", async () => {
+  const request = previewRequest(
+    "Shared",
+    "https://example.com/shared-preview"
+  );
+  const key = getResourceKey(request);
+  const firstResponse = deferredResponse();
+  const secondResponse = deferredResponse();
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(() => firstResponse.promise)
+    .mockImplementationOnce(() => secondResponse.promise);
+
+  const releaseFirst = loadResourcePreview(request, requestFetch);
+  const releaseSecond = loadResourcePreview(request, requestFetch);
+  releaseFirst();
+  queueResources([]);
+  secondResponse.respond(Response.json([[key, { data: "shared" }]]));
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(key)).toEqual({ data: "shared" });
+  });
+  releaseSecond();
+});
+
+test("an old preview release cannot cancel a new load after reset", async () => {
+  const request = previewRequest("Date", "/$resources/current-date");
+  const key = getResourceKey(request);
+  const newResponse = deferredResponse();
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true }
+          );
+        })
+    )
+    .mockImplementationOnce(() => newResponse.promise);
+
+  const releaseOld = loadResourcePreview(request, requestFetch);
+  reset();
+  const releaseNew = loadResourcePreview(request, requestFetch);
+  releaseOld();
+  queueResources([]);
+  newResponse.respond(Response.json([[key, { data: "new" }]]));
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(key)).toEqual({ data: "new" });
+  });
+  releaseNew();
 });
 
 test("unlocks reachable resource requests as dependency documents are cached", async () => {

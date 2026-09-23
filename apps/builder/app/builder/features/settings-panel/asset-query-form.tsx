@@ -318,6 +318,7 @@ export const AssetQueryForm = ({
   aliases,
   sourceContainer,
   fetchDescription = builderFetch,
+  onChange,
   onPendingChange,
 }: {
   resource?: Resource;
@@ -325,6 +326,7 @@ export const AssetQueryForm = ({
   aliases: Map<string, string>;
   sourceContainer?: Element | null;
   fetchDescription?: typeof globalThis.fetch;
+  onChange?: () => void;
   onPendingChange?: (pending: boolean) => void;
 }) => {
   const assets = useStore($assets);
@@ -463,6 +465,7 @@ export const AssetQueryForm = ({
           sourceContainer={sourceContainer}
           sectionPaddingInline={theme.panel.paddingInline}
           onChange={(value) => {
+            onChange?.();
             setStoredConfigurationError(undefined);
             setConfiguration(
               configuration.result === "many" && value.result !== "many"
