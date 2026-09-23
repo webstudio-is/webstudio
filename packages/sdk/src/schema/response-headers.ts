@@ -1,52 +1,76 @@
 import { z } from "zod";
 
-// These headers describe the transport or carry platform/session state. They
-// cannot be configured as static, project-wide response headers.
-const managedHeaders = new Set([
-  "connection",
-  "content-encoding",
-  "content-length",
-  "host",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "set-cookie",
-  "te",
-  "trailer",
-  "transfer-encoding",
-  "upgrade",
-]);
+// Keep defaults and required flags in sync with the Cloud hosting template's
+// response-header-settings.ts. Missing project settings use these defaults.
+export const responseHeaderDefinitions = [
+  {
+    name: "Content-Security-Policy",
+    defaultValue: "frame-ancestors 'self'",
+    required: true,
+  },
+  { name: "X-Frame-Options", defaultValue: "SAMEORIGIN", required: false },
+  { name: "X-Content-Type-Options", defaultValue: "nosniff", required: true },
+  {
+    name: "Referrer-Policy",
+    defaultValue: "strict-origin-when-cross-origin",
+    required: true,
+  },
+  {
+    name: "Strict-Transport-Security",
+    defaultValue: "max-age=63072000; includeSubDomains; preload",
+    required: true,
+  },
+] as const;
 
-export const customResponseHeader = z.object({
-  // Unlike $ alone, the final assertion also rejects a trailing newline.
-  name: z
-    .string()
-    .min(1, "Header name is required")
-    .max(256, "Header name must be at most 256 characters")
-    .regex(
-      /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$(?![\s\S])/,
-      "Invalid HTTP header name"
-    )
-    .refine(
-      (name) =>
-        !managedHeaders.has(name.toLowerCase()) &&
-        !name.toLowerCase().startsWith("x-webstudio-"),
-      "This header is managed by Webstudio or the HTTP server"
-    ),
-  // null explicitly removes a header; an empty string sets an empty value.
-  value: z
-    .string()
-    .max(8192, "Header value must be at most 8192 characters")
-    .regex(
-      /^[\t\x20-\x7e\x80-\xff]*$(?![\s\S])/,
-      "Header values cannot contain newlines, control characters, or Unicode outside Latin-1"
-    )
-    .nullable(),
-});
+export type ResponseHeaderDefinition =
+  (typeof responseHeaderDefinitions)[number];
+
+export const getResponseHeaderDefinition = (name: string) =>
+  responseHeaderDefinitions.find(
+    (header) => header.name.toLowerCase() === name.toLowerCase()
+  );
+
+export const customResponseHeader = z
+  .object({
+    name: z
+      .string()
+      .refine(
+        (name) => getResponseHeaderDefinition(name) !== undefined,
+        "Choose a supported response header"
+      ),
+    value: z
+      .string()
+      .max(8192, "Header value must be at most 8192 characters")
+      // Unlike $ alone, the final assertion also rejects a trailing newline.
+      .regex(
+        /^[\t\x20-\x7e\x80-\xff]*$(?![\s\S])/,
+        "Header values cannot contain newlines, control characters, or Unicode outside Latin-1"
+      )
+      .refine(
+        (value) => value.trim().length > 0,
+        "Header value cannot be empty"
+      )
+      .nullable(),
+  })
+  .superRefine((header, context) => {
+    if (
+      header.value === null &&
+      getResponseHeaderDefinition(header.name)?.required
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["value"],
+        message: "Required headers cannot be removed",
+      });
+    }
+  });
 
 export const customResponseHeaders = z
   .array(customResponseHeader)
-  .max(50, "At most 50 custom headers are allowed")
+  .max(
+    responseHeaderDefinitions.length,
+    "At most 5 response headers are supported"
+  )
   .superRefine((headers, context) => {
     const names = new Set<string>();
     let size = 0;
@@ -66,9 +90,34 @@ export const customResponseHeaders = z
     if (size > 16384) {
       context.addIssue({
         code: "custom",
-        message: "Custom headers must total at most 16 KB",
+        message: "Response headers must total at most 16 KB",
       });
     }
   });
 
 export type CustomResponseHeader = z.infer<typeof customResponseHeader>;
+
+// Persisted defaults, including values supplied through the API, are not a Pro
+// customization. Removing an optional header is a customization.
+export const hasCustomResponseHeaders = (
+  headers: readonly CustomResponseHeader[] = []
+) =>
+  headers.some(({ name, value }) => {
+    const definition = getResponseHeaderDefinition(name);
+    return (
+      definition === undefined || value?.trim() !== definition.defaultValue
+    );
+  });
+
+export const getResponseHeaders = (
+  headers: readonly CustomResponseHeader[] = []
+): CustomResponseHeader[] =>
+  responseHeaderDefinitions.map(({ name, defaultValue }) => {
+    const configured = headers.find(
+      (header) => header.name.toLowerCase() === name.toLowerCase()
+    );
+    return {
+      name,
+      value: configured === undefined ? defaultValue : configured.value,
+    };
+  });

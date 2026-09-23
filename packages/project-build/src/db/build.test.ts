@@ -380,36 +380,41 @@ describe("createProductionBuild (msw)", () => {
       label: "Free owner, custom domain",
       allowed: false,
       domains: ["example.com"],
-      headers: [{ name: "X-Test", value: "yes" }],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
       denied: true,
+      checkPlan: true,
     },
     {
       label: "Free owner, removal only",
       allowed: false,
       domains: ["example.com"],
-      headers: [{ name: "X-Test", value: null }],
+      headers: [{ name: "X-Frame-Options", value: null }],
       denied: true,
+      checkPlan: true,
     },
     {
       label: "Free owner, mixed domains",
       allowed: false,
       domains: ["project-domain", "example.com"],
-      headers: [{ name: "X-Test", value: "" }],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
       denied: true,
+      checkPlan: true,
     },
     {
       label: "Free owner, staging",
       allowed: false,
       domains: ["project-domain"],
-      headers: [{ name: "X-Test", value: "yes" }],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
       denied: false,
+      checkPlan: false,
     },
     {
       label: "Pro owner, custom domain",
       allowed: true,
       domains: ["example.com"],
-      headers: [{ name: "X-Test", value: "yes" }],
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
       denied: false,
+      checkPlan: true,
     },
     {
       label: "Free owner, deleted headers",
@@ -417,10 +422,22 @@ describe("createProductionBuild (msw)", () => {
       domains: ["example.com"],
       headers: [],
       denied: false,
+      checkPlan: false,
+    },
+    {
+      label: "Free owner, explicit defaults",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [
+        { name: "content-security-policy", value: "frame-ancestors 'self'" },
+        { name: "X-Frame-Options", value: "SAMEORIGIN" },
+      ],
+      denied: false,
+      checkPlan: false,
     },
   ])(
     "enforces custom header publishing for $label",
-    async ({ allowed, domains, headers, denied }) => {
+    async ({ allowed, domains, headers, denied, checkPlan }) => {
       const context = createContext();
       // A collaborator's own plan must not determine the project's entitlement.
       context.planFeatures = {
@@ -476,7 +493,7 @@ describe("createProductionBuild (msw)", () => {
         await expect(result).resolves.toEqual({ id: "build-prod" });
         expect(createBuild).toHaveBeenCalledOnce();
       }
-      if (headers.length > 0 && domains.includes("example.com")) {
+      if (checkPlan) {
         expect(getOwnerPlanFeatures).toHaveBeenCalledWith("project-owner");
       } else {
         expect(getOwnerPlanFeatures).not.toHaveBeenCalled();

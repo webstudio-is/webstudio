@@ -223,7 +223,7 @@ export const projectMeta = z.object({
   customHeaders: customResponseHeaders
     .optional()
     .describe(
-      "Site-wide HTTP response headers. A null value removes the header; an empty string sets an empty value. Apply through the hosting adapter when publishing."
+      "Site-wide security response headers. Omitted settings use defaults. Required headers need nonempty values; null removes only optional headers."
     ),
 });
 export type ProjectMeta = z.infer<typeof projectMeta>;

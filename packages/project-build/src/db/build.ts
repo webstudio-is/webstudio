@@ -8,6 +8,7 @@ import {
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import {
   createId,
+  hasCustomResponseHeaders,
   dataSource,
   type Deployment,
   type Resource,
@@ -427,7 +428,7 @@ export const createProductionBuild = async (
 
   if (
     props.deployment.destination !== "static" &&
-    (devBuild.projectSettings.meta.customHeaders?.length ?? 0) > 0
+    hasCustomResponseHeaders(devBuild.projectSettings.meta.customHeaders)
   ) {
     // Use the saved staging domain, not the caller's target/assetsDomain.
     // This check also covers API and CLI publishing outside the Builder UI.
@@ -445,7 +446,7 @@ export const createProductionBuild = async (
       const plan = await getProjectPlanFeatures(props.projectId, context);
       if (plan.allowDynamicData !== true) {
         throw new AuthorizationError(
-          "Custom headers are a Pro feature. Upgrade to Pro or delete the custom header configuration to publish to custom domains. You can still publish to staging."
+          "Custom headers are a Pro feature. Upgrade to Pro or reset the response headers to defaults to publish to custom domains. You can still publish to staging."
         );
       }
     }

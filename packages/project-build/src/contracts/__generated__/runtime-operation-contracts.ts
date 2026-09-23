@@ -5405,17 +5405,14 @@ export const runtimeOperationContractData = [
             },
             customHeaders: {
               description:
-                "Site-wide HTTP response headers. A null value removes the header; an empty string sets an empty value. Apply through the hosting adapter when publishing.",
-              maxItems: 50,
+                "Site-wide security response headers. Omitted settings use defaults. Required headers need nonempty values; null removes only optional headers.",
+              maxItems: 5,
               type: "array",
               items: {
                 type: "object",
                 properties: {
                   name: {
                     type: "string",
-                    minLength: 1,
-                    maxLength: 256,
-                    pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$(?![\\s\\S])",
                   },
                   value: {
                     anyOf: [
@@ -5552,17 +5549,14 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   description:
-                    "Site-wide HTTP response headers. A null value removes the header; an empty string sets an empty value. Apply through the hosting adapter when publishing.",
-                  maxItems: 50,
+                    "Site-wide security response headers. Omitted settings use defaults. Required headers need nonempty values; null removes only optional headers.",
+                  maxItems: 5,
                   type: "array",
                   items: {
                     type: "object",
                     properties: {
                       name: {
                         type: "string",
-                        minLength: 1,
-                        maxLength: 256,
-                        pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$(?![\\s\\S])",
                       },
                       value: {
                         anyOf: [

@@ -128,14 +128,14 @@ const getPageRestrictedFeatures = (isDraft: boolean) => {
 };
 
 describe("getRestrictedFeatures", () => {
-  test.each(["no-referrer", "", null])(
+  test.each(["DENY", null])(
     "restricts custom headers with value %j on the free plan",
     (value) => {
       const features = getFeatures({
         pages: createPages(),
         projectSettings: {
           compiler: {},
-          meta: { customHeaders: [{ name: "Referrer-Policy", value }] },
+          meta: { customHeaders: [{ name: "X-Frame-Options", value }] },
         },
         permissions: { allowDynamicData: false },
       });
@@ -165,7 +165,12 @@ describe("getRestrictedFeatures", () => {
     expect(features.has("Custom headers")).toBe(false);
   });
 
-  test.each([undefined, []])(
+  test.each([
+    undefined,
+    [],
+    [{ name: "Content-Security-Policy", value: "frame-ancestors 'self'" }],
+    [{ name: "x-frame-options", value: "SAMEORIGIN" }],
+  ])(
     "does not warn about missing or deleted custom headers (%j)",
     (customHeaders) => {
       const features = getFeatures({

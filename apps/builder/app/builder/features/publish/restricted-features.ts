@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   getPublishablePages,
+  hasCustomResponseHeaders,
   isAssetsResource,
   isPathnamePattern,
   type DataSource,
@@ -71,8 +72,8 @@ export const getRestrictedFeatures = ({
   }
   if (permissions.allowDynamicData === false) {
     // Headers share the Pro publishing entitlement used by dynamic pages and
-    // resources. Both setting and removing a header require it.
-    if ((projectMeta?.customHeaders?.length ?? 0) > 0) {
+    // resources. Only changes from the defaults require it.
+    if (hasCustomResponseHeaders(projectMeta?.customHeaders)) {
       features.set("Custom headers", undefined);
     }
     for (const page of publishablePages) {

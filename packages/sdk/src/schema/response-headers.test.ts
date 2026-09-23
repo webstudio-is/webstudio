@@ -1,46 +1,83 @@
 import { describe, expect, test } from "vitest";
 import { projectMeta } from "./pages";
-import { customResponseHeaders } from "./response-headers";
+import {
+  customResponseHeader,
+  customResponseHeaders,
+  getResponseHeaders,
+  hasCustomResponseHeaders,
+  responseHeaderDefinitions,
+} from "./response-headers";
 
-describe("custom response headers", () => {
-  test("preserves explicit removal, empty values, and legacy projects", () => {
+describe("response header settings", () => {
+  test("legacy and empty settings resolve to defaults without a Pro customization", () => {
     expect(projectMeta.parse({})).toEqual({});
+    expect(getResponseHeaders()).toEqual(
+      responseHeaderDefinitions.map(({ name, defaultValue }) => ({
+        name,
+        value: defaultValue,
+      }))
+    );
+    expect(hasCustomResponseHeaders()).toBe(false);
+    expect(hasCustomResponseHeaders(getResponseHeaders())).toBe(false);
+    expect(
+      hasCustomResponseHeaders(
+        getResponseHeaders().map(({ name, value }) => ({
+          name: name.toLowerCase(),
+          value: ` ${value} `,
+        }))
+      )
+    ).toBe(false);
+  });
+
+  test("supports edits and optional removal, preserving other defaults", () => {
     const headers = [
       {
-        name: "Content-Security-Policy",
+        name: "content-security-policy",
         value: "frame-ancestors https://example.com",
       },
       { name: "X-Frame-Options", value: null },
-      { name: "X-Empty", value: "" },
     ];
-    expect(projectMeta.parse({ customHeaders: headers }).customHeaders).toEqual(
-      headers
+    expect(customResponseHeaders.parse(headers)).toEqual(headers);
+    expect(getResponseHeaders(headers)).toEqual(
+      expect.arrayContaining([
+        { name: "Content-Security-Policy", value: headers[0].value },
+        { name: "X-Frame-Options", value: null },
+        { name: "X-Content-Type-Options", value: "nosniff" },
+      ])
     );
+    expect(hasCustomResponseHeaders(headers)).toBe(true);
+    expect(hasCustomResponseHeaders([headers[1]])).toBe(true);
   });
 
-  test.each([
-    "",
-    "Bad Name",
-    "Bad:Name",
-    "Bad\r\nName",
-    "Trailing\n",
-    "Trailing\r\n",
-    "Héader",
-  ])("rejects invalid header name %j", (name) =>
-    expect(
-      customResponseHeaders.safeParse([{ name, value: "value" }]).success
-    ).toBe(false)
+  test.each(responseHeaderDefinitions.filter((header) => header.required))(
+    "required $name cannot be removed or emptied",
+    ({ name }) => {
+      for (const value of [null, "", " \t "]) {
+        expect(
+          customResponseHeader.safeParse({ name: name.toLowerCase(), value })
+            .success
+        ).toBe(false);
+        expect(
+          projectMeta.safeParse({ customHeaders: [{ name, value }] }).success
+        ).toBe(false);
+      }
+      expect(
+        customResponseHeaders.safeParse([{ name, value: "custom value" }])
+          .success
+      ).toBe(true);
+    }
   );
 
   test.each([
+    "X-Powered-By",
+    "Cache-Control",
     "Content-Length",
-    "content-ENCODING",
-    "Connection",
-    "Transfer-Encoding",
     "Set-Cookie",
+    "X-Test",
     "X-Webstudio-Removed-Headers",
-    "X-Webstudio-Internal",
-  ])("rejects setting or removing managed header %s", (name) => {
+    "",
+    "Content-Security-Policy\n",
+  ])("rejects unsupported header %j", (name) => {
     for (const value of ["value", null]) {
       expect(customResponseHeaders.safeParse([{ name, value }]).success).toBe(
         false
@@ -56,40 +93,30 @@ describe("custom response headers", () => {
     "bad\0value",
     "bad\x7fvalue",
     "💥",
-  ])("rejects invalid header value %j", (value) =>
-    expect(
-      customResponseHeaders.safeParse([{ name: "X-Test", value }]).success
-    ).toBe(false)
-  );
-
-  test("rejects conflicting names regardless of capitalization", () => {
+  ])("rejects invalid header value %j", (value) => {
     expect(
       customResponseHeaders.safeParse([
-        { name: "X-Test", value: "one" },
-        { name: "x-test", value: null },
+        { name: "Content-Security-Policy", value },
       ]).success
     ).toBe(false);
   });
 
-  test("enforces count, individual length, and total size limits", () => {
-    expect(
-      customResponseHeaders.safeParse(
-        Array.from({ length: 51 }, (_, i) => ({ name: `X-${i}`, value: "" }))
-      ).success
-    ).toBe(false);
+  test("rejects case-insensitive duplicates and excessive values", () => {
     expect(
       customResponseHeaders.safeParse([
-        { name: "X-Test", value: "a".repeat(8193) },
+        { name: "X-Frame-Options", value: "DENY" },
+        { name: "x-frame-options", value: null },
       ]).success
     ).toBe(false);
     expect(
-      customResponseHeaders.safeParse([{ name: "a".repeat(257), value: "" }])
-        .success
+      customResponseHeaders.safeParse([
+        { name: "Content-Security-Policy", value: "a".repeat(8193) },
+      ]).success
     ).toBe(false);
     expect(
       customResponseHeaders.safeParse([
-        { name: "X-One", value: "a".repeat(8192) },
-        { name: "X-Two", value: "a".repeat(8192) },
+        { name: "Content-Security-Policy", value: "a".repeat(8192) },
+        { name: "Referrer-Policy", value: "a".repeat(8192) },
       ]).success
     ).toBe(false);
   });

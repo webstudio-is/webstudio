@@ -1,3 +1,4 @@
+import { getResponseHeaders } from "@webstudio-is/sdk/schema";
 import { runInNewContext } from "node:vm";
 import { transformSync } from "esbuild";
 import { expect, test } from "vitest";
@@ -20,7 +21,9 @@ const readGeneratedHeaders = (source: string) =>
 
 test("isolates cached responses when headers change, are removed, or the site is republished", () => {
   const settings = {
-    meta: { customHeaders: [{ name: "X-Test", value: "old" }] },
+    meta: {
+      customHeaders: [{ name: "Content-Security-Policy", value: "old" }],
+    },
     compiler: {},
   };
   const configured = readGeneratedModule(
@@ -36,7 +39,9 @@ test("isolates cached responses when headers change, are removed, or the site is
     generateResponseHeadersModule(
       {
         ...settings,
-        meta: { customHeaders: [{ name: "X-Test", value: "new" }] },
+        meta: {
+          customHeaders: [{ name: "Content-Security-Policy", value: "new" }],
+        },
       },
       "build-1"
     )
@@ -49,19 +54,20 @@ test("isolates cached responses when headers change, are removed, or the site is
   ).toBe(configured);
 });
 
-test("generates an empty configuration for existing projects", () => {
-  expect(readGeneratedHeaders(generateResponseHeadersModule())).toEqual([]);
+test("generates all default headers for existing projects", () => {
+  expect(readGeneratedHeaders(generateResponseHeadersModule())).toEqual(
+    getResponseHeaders()
+  );
 });
 
-test("compiles values as data, preserving removal and empty strings", () => {
+test("compiles values as data, preserving optional removal", () => {
   const headers = [
     {
       name: "Content-Security-Policy",
       value: "frame-ancestors 'self' https://example.com",
     },
     { name: "X-Frame-Options", value: null },
-    { name: "X-Empty", value: "" },
-    { name: "X-Quoted", value: '"; throw new Error("injection"); //' },
+    { name: "Referrer-Policy", value: '"; throw new Error("injection"); //' },
   ];
   expect(
     readGeneratedHeaders(
@@ -70,13 +76,17 @@ test("compiles values as data, preserving removal and empty strings", () => {
         compiler: {},
       })
     )
-  ).toEqual(headers);
+  ).toEqual(getResponseHeaders(headers));
 });
 
 test("invalid configuration fails the build", () => {
   expect(() =>
     generateResponseHeadersModule({
-      meta: { customHeaders: [{ name: "X-Test", value: "bad\r\nvalue" }] },
+      meta: {
+        customHeaders: [
+          { name: "Content-Security-Policy", value: "bad\r\nvalue" },
+        ],
+      },
       compiler: {},
     })
   ).toThrow();

@@ -1,4 +1,7 @@
-import { customResponseHeaders } from "@webstudio-is/sdk/schema";
+import {
+  customResponseHeaders,
+  getResponseHeaders,
+} from "@webstudio-is/sdk/schema";
 import type { ProjectSettings } from "@webstudio-is/project-build";
 import { createHash } from "node:crypto";
 
@@ -6,8 +9,8 @@ export const generateResponseHeadersModule = (
   settings?: ProjectSettings,
   deploymentId = ""
 ) => {
-  const headers = customResponseHeaders.parse(
-    settings?.meta.customHeaders ?? []
+  const headers = getResponseHeaders(
+    customResponseHeaders.parse(settings?.meta.customHeaders ?? [])
   );
   // Cache entries contain the final response headers. Isolate each deployment
   // and configuration so deleted overrides cannot survive a republish.
