@@ -48,15 +48,20 @@ export const SectionHeaders = () => {
     const result = customResponseHeaders.safeParse(nextHeaders);
     if (!result.success) {
       setErrors(result.error.issues.map((issue) => issue.message));
-      return;
+      return false;
     }
-    executeRuntimeMutation({
+    const mutation = executeRuntimeMutation({
       id: "projectSettings.update",
       input: {
         meta: { customHeaders: result.data.length ? result.data : null },
       },
     });
-    reset();
+    if (mutation === undefined) {
+      setErrors(["Changes could not be saved. Please try again."]);
+      return false;
+    }
+    setErrors([]);
+    return true;
   };
 
   return (
@@ -122,17 +127,31 @@ export const SectionHeaders = () => {
         <Flex gap={2}>
           <Button
             onClick={() => {
+              if (
+                editing !== undefined &&
+                !headers.some((current) => current.name === editing)
+              ) {
+                setEditing(undefined);
+                setErrors([
+                  "This header was removed or renamed. Review the current headers before adding it again.",
+                ]);
+                return;
+              }
               const header = {
                 name: name.trim(),
                 value: remove ? null : value,
               };
-              save(
-                editing === undefined
-                  ? [...headers, header]
-                  : headers.map((current) =>
-                      current.name === editing ? header : current
-                    )
-              );
+              if (
+                save(
+                  editing === undefined
+                    ? [...headers, header]
+                    : headers.map((current) =>
+                        current.name === editing ? header : current
+                      )
+                )
+              ) {
+                reset();
+              }
             }}
           >
             {editing === undefined ? "Add header" : "Save header"}
@@ -180,9 +199,14 @@ export const SectionHeaders = () => {
               <Button
                 color="ghost"
                 aria-label={`Delete ${header.name} configuration`}
-                onClick={() =>
-                  save(headers.filter((current) => current !== header))
-                }
+                onClick={() => {
+                  if (
+                    save(headers.filter((current) => current !== header)) &&
+                    editing === header.name
+                  ) {
+                    reset();
+                  }
+                }}
               >
                 Delete
               </Button>
