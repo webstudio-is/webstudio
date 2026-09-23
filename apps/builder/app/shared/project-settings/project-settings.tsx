@@ -82,6 +82,16 @@ export const ProjectSettingsDialog = ({
         }
         height={Number.parseInt(rawTheme.spacing[35], 10)}
         data-floating-panel-container
+        onEscapeKeyDown={(event) => {
+          // Radix handles Escape during capture, before the header field can
+          // cancel its draft. Keep that keypress from dismissing the dialog.
+          if (
+            currentSection === "headers" &&
+            event.target instanceof HTMLTextAreaElement
+          ) {
+            event.preventDefault();
+          }
+        }}
       >
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           <Flex grow>

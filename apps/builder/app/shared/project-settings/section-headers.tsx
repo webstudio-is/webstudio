@@ -50,18 +50,22 @@ const HeaderSetting = ({
       setErrors(result.error.issues.map((issue) => issue.message));
       return;
     }
-    const mutation = executeRuntimeMutation({
-      id: "projectSettings.update",
-      input: {
-        meta: { customHeaders: result.data.length ? result.data : null },
-      },
-    });
-    if (mutation === undefined) {
-      setErrors(["Changes could not be saved. Please try again."]);
-      return;
+    try {
+      const mutation = executeRuntimeMutation({
+        id: "projectSettings.update",
+        input: {
+          meta: { customHeaders: result.data.length ? result.data : null },
+        },
+      });
+      if (mutation !== undefined) {
+        setDraft(undefined);
+        setErrors([]);
+        return;
+      }
+    } catch {
+      // Keep the draft available for retry after a failed runtime mutation.
     }
-    setDraft(undefined);
-    setErrors([]);
+    setErrors(["Changes could not be saved. Please try again."]);
   };
 
   return (
