@@ -28,6 +28,7 @@ export type ContentRuntimeArtifact = Readonly<{
     edges: readonly RuntimeDocumentGraphEdge[];
   }>;
   contents?: Readonly<Record<string, string>>;
+  assetPaths?: Readonly<Record<string, string>>;
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
   queries?: Readonly<Record<string, MaterializedAssetQuery>>;
@@ -78,6 +79,9 @@ export const createContentRuntimeArtifact = (
   return {
     revision: artifact.integrity.checksum,
     documents: artifact.documents,
+    ...(artifact.assetPaths === undefined
+      ? {}
+      : { assetPaths: artifact.assetPaths }),
     ...(documentGraph === undefined ? {} : { documentGraph }),
     ...(includeContents && artifact.contents !== undefined
       ? { contents: artifact.contents }
@@ -111,6 +115,9 @@ export const getContentRuntimeArtifactRuntimeAssetIds = ({
           .map(({ assetId }) => assetId)
     )
   );
+  for (const id of Object.keys(artifact.assetPaths ?? {})) {
+    ids.add(id);
+  }
   if (includeDocuments) {
     for (const { _id } of artifact.documents) {
       ids.add(_id);

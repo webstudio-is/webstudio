@@ -39,7 +39,7 @@ import {
 import { getQueryConditions } from "@webstudio-is/query-builder/runtime";
 import type { AssetValueReferences } from "./asset-value-references";
 
-export const contentCompilationGeneration = 1;
+export const contentCompilationGeneration = 2;
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -136,29 +136,10 @@ const isDocumentEvaluationAffectedByAssetValues = ({
   );
 
 export type ContentCompilerInput = CanonicalAssetFileEntry & {
+  /** Complete source frontmatter before output-field projection. */
+  sourceFrontmatter?: Readonly<Record<string, unknown>>;
   content?: string;
   contentRequired?: true;
-};
-
-const selectMarkdownBodyReferenceIds = ({
-  entries,
-  plan,
-}: {
-  entries: readonly ContentCompilerInput[];
-  plan?: ContentCompilationPlan;
-}) => {
-  if (plan === undefined) {
-    return new Set<string>();
-  }
-  return selectContentHydrationCandidates({
-    documents: entries.map(({ document }) => document),
-    plan: {
-      ...plan,
-      queries: plan.queries.filter(
-        ({ content }) => content.mode === "markdown-body-ref"
-      ),
-    },
-  });
 };
 
 const excludeReferencedMarkdownBodies = ({
@@ -175,15 +156,10 @@ const excludeReferencedMarkdownBodies = ({
   if (plan === undefined) {
     return entries;
   }
-  const embeddedQueryPlan = {
-    ...plan,
-    queries: plan.queries.filter(
-      ({ content }) => content.mode !== "markdown-body-ref"
-    ),
-  };
   const embeddedIds = selectContentHydrationCandidates({
     documents: entries.map(({ document }) => document),
-    plan: embeddedQueryPlan,
+    plan,
+    mode: "embedded",
   });
   const graphNodeIds = new Set(documentGraph.nodes.map(({ id }) => id));
   const missingNodeIds = [...referencedIds].filter(
@@ -294,6 +270,7 @@ const buildAssetIndex = async ({
   documentContents,
   plan,
   finalize = true,
+  assetPaths,
 }: {
   entries: readonly ContentCompilerInput[];
   sourceDocumentCount: number;
@@ -305,6 +282,7 @@ const buildAssetIndex = async ({
   documentContents?: Readonly<Record<string, string>>;
   plan?: ContentCompilationPlan;
   finalize?: boolean;
+  assetPaths?: Readonly<Record<string, string>>;
 }) => {
   const sourceDocuments = entries.map(({ document }) => document);
   const sourceCatalog = await createAssetFieldCatalog(entries);
@@ -458,6 +436,7 @@ const buildAssetIndex = async ({
     format: "webstudio-content-database",
     version: 1,
     assetRevision,
+    ...(assetPaths === undefined ? {} : { assetPaths }),
     documents,
     ...(documentGraph === undefined ? {} : { documentGraph }),
     ...(Object.keys(contents).length === 0 ? {} : { contents }),
@@ -505,6 +484,7 @@ export const compileContentArtifact = async ({
   documentGraph,
   documentContents,
   plan,
+  assetPaths,
 }: {
   projectId: string;
   entries: readonly ContentCompilerInput[];
@@ -514,6 +494,7 @@ export const compileContentArtifact = async ({
   documentGraph?: DocumentGraph;
   documentContents?: Readonly<Record<string, string>>;
   plan?: ContentCompilationPlan;
+  assetPaths?: Readonly<Record<string, string>>;
 }): Promise<{
   artifact: ContentArtifactV1;
   diagnostics: ContentCompilerDiagnostics;
@@ -521,10 +502,14 @@ export const compileContentArtifact = async ({
   if (Number.isSafeInteger(maxBytes) === false || maxBytes <= 0) {
     throw new Error("Content database byte limit must be a positive integer");
   }
-  const referencedMarkdownBodyIds = selectMarkdownBodyReferenceIds({
-    entries,
-    plan,
-  });
+  const referencedMarkdownBodyIds =
+    plan === undefined
+      ? new Set<string>()
+      : selectContentHydrationCandidates({
+          documents: entries.map(({ document }) => document),
+          plan,
+          mode: "deferred",
+        });
   if (referencedMarkdownBodyIds.size > 0 && documentGraph === undefined) {
     throw new Error("Markdown body reference queries require a document graph");
   }
@@ -565,6 +550,7 @@ export const compileContentArtifact = async ({
   for (let attempt = 0; ; attempt += 1) {
     unbounded = await buildAssetIndex({
       entries: available,
+      assetPaths,
       sourceDocumentCount,
       maxBytes,
       unboundedBytes,
@@ -594,6 +580,7 @@ export const compileContentArtifact = async ({
     let selectedContentRefs = new Set<string>();
     const emptyArtifact = await buildAssetIndex({
       entries: selected,
+      assetPaths,
       sourceDocumentCount,
       maxBytes,
       unboundedBytes,
@@ -628,6 +615,7 @@ export const compileContentArtifact = async ({
       ) {
         const trial = await buildAssetIndex({
           entries: [...selected, ...candidates],
+          assetPaths,
           sourceDocumentCount,
           maxBytes,
           unboundedBytes,
@@ -663,6 +651,7 @@ export const compileContentArtifact = async ({
   }
   const artifact = await buildAssetIndex({
     entries: selected,
+    assetPaths,
     sourceDocumentCount,
     maxBytes,
     unboundedBytes,
@@ -715,14 +704,6 @@ export const compileContentArtifact = async ({
   };
 };
 
-export const createAssetIndex = async (input: {
-  projectId: string;
-  entries: readonly ContentCompilerInput[];
-  maxBytes?: number;
-  assetReferences?: MarkdownAssetReferences;
-  assetValueReferences?: AssetValueReferences;
-  documentGraph?: DocumentGraph;
-  documentContents?: Readonly<Record<string, string>>;
-  plan?: ContentCompilationPlan;
-}): Promise<ContentArtifactV1> =>
-  (await compileContentArtifact(input)).artifact;
+export const createAssetIndex = async (
+  input: Parameters<typeof compileContentArtifact>[0]
+): Promise<ContentArtifactV1> => (await compileContentArtifact(input)).artifact;

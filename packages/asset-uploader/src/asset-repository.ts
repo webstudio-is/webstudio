@@ -20,7 +20,7 @@ import {
   inspectContentCollection,
   prepareContentCompilerEntries,
   requiresRuntimeDocumentData,
-  requiresStructuredProperties,
+  getContentCompilationMetadataRequirements,
   validateAssetQueryAgainstCatalog,
   collectionConfigFilename,
   ContentCollectionError,
@@ -47,7 +47,6 @@ import {
   createContentSourceFile,
   computeCanonicalAssetRevision,
   decodeUtf8,
-  fullCanonicalAssetMetadataRequirements,
   materializeContentSource,
   materializeContentSnapshot,
   mapBounded,
@@ -2137,10 +2136,8 @@ export class PostgresAssetRepository implements AssetRepository {
       ...(requirements === undefined
         ? {}
         : {
-            requirements: {
-              structuredProperties: requiresStructuredProperties(requirements),
-              excerpt: requirements.excerpt,
-            },
+            requirements:
+              getContentCompilationMetadataRequirements(requirements),
           }),
     });
   }
@@ -2228,22 +2225,15 @@ export class PostgresAssetRepository implements AssetRepository {
       contentBytesCache,
       preparationIssues
     );
-    const compile = async (
-      entries: Parameters<typeof createAssetIndex>[0]["entries"],
-      assetReferences: Parameters<
-        typeof createAssetIndex
-      >[0]["assetReferences"],
-      assetValueReferences: Parameters<
-        typeof createAssetIndex
-      >[0]["assetValueReferences"],
-      documentGraph: Parameters<typeof createAssetIndex>[0]["documentGraph"],
-      assetReferenceIssues: Awaited<
-        ReturnType<typeof materializeContentSource>
-      >["assetReferenceIssues"],
-      sourceIssues: Awaited<
-        ReturnType<typeof materializeContentSource>
-      >["sourceIssues"]
-    ) => {
+    const compile = async ({
+      entries,
+      assetReferences,
+      assetPaths,
+      assetValueReferences,
+      documentGraph,
+      assetReferenceIssues,
+      sourceIssues,
+    }: Awaited<ReturnType<typeof materializeContentSource>>) => {
       const artifact = await this.measurePerformance(
         "artifact-compilation",
         async () =>
@@ -2251,6 +2241,7 @@ export class PostgresAssetRepository implements AssetRepository {
             projectId: this.projectId,
             entries,
             assetReferences,
+            assetPaths,
             ...(assetValueReferences === undefined ||
             Object.keys(assetValueReferences).length === 0
               ? {}
@@ -2282,14 +2273,7 @@ export class PostgresAssetRepository implements AssetRepository {
         type: "compilation-cache",
         status: "disabled",
       });
-      const {
-        entries,
-        assetReferences,
-        assetValueReferences,
-        documentGraph,
-        assetReferenceIssues,
-        sourceIssues,
-      } = await preservePreparationIssues(() =>
+      const materialized = await preservePreparationIssues(() =>
         materializeContentSource({
           source,
           validateSource: contentBytesCache.validateSource,
@@ -2299,14 +2283,7 @@ export class PostgresAssetRepository implements AssetRepository {
           performanceNow: this.dependencies.performanceNow,
         })
       );
-      return await compile(
-        entries,
-        assetReferences,
-        assetValueReferences,
-        documentGraph,
-        assetReferenceIssues,
-        sourceIssues
-      );
+      return await compile(materialized);
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const snapshot = await this.measurePerformance(
@@ -2324,14 +2301,7 @@ export class PostgresAssetRepository implements AssetRepository {
         const cached = this.compilationCache.getOrCreateWithStatus(
           key,
           async () => {
-            const {
-              entries,
-              assetReferences,
-              assetValueReferences,
-              documentGraph,
-              assetReferenceIssues,
-              sourceIssues,
-            } = await preservePreparationIssues(() =>
+            const materialized = await preservePreparationIssues(() =>
               materializeContentSnapshot({
                 snapshot,
                 validateSource: contentBytesCache.validateSource,
@@ -2341,14 +2311,7 @@ export class PostgresAssetRepository implements AssetRepository {
                 performanceNow: this.dependencies.performanceNow,
               })
             );
-            return await compile(
-              entries,
-              assetReferences,
-              assetValueReferences,
-              documentGraph,
-              assetReferenceIssues,
-              sourceIssues
-            );
+            return await compile(materialized);
           }
         );
         emitAssetQueryPerformanceEvent(this.onPerformanceEvent, {
@@ -2560,22 +2523,15 @@ export class PostgresAssetRepository implements AssetRepository {
         ? undefined
         : candidateBaseEntries.map(({ assetId }) => assetId);
     let entries = candidateBaseEntries;
+    const metadataRequirements =
+      getContentCompilationMetadataRequirements(requirements);
     if (
-      requirements === undefined ||
-      requiresStructuredProperties(requirements) ||
-      requirements.excerpt
+      metadataRequirements.structuredProperties ||
+      metadataRequirements.excerpt
     ) {
       entries = await this.measurePerformance(
         "canonical-metadata",
         async () => {
-          const metadataRequirements =
-            requirements === undefined
-              ? fullCanonicalAssetMetadataRequirements
-              : {
-                  structuredProperties:
-                    requiresStructuredProperties(requirements),
-                  excerpt: requirements.excerpt,
-                };
           const current =
             await this.dependencies.loadCanonicalAssetFileEntriesForRecovery({
               client: this.context.postgrest.client,

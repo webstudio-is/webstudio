@@ -172,6 +172,124 @@ const prepareAssetContentUpdate = (
   });
 
 describe("PostgresAssetRepository", () => {
+  test.each(
+    [false, true].flatMap((cache) =>
+      [false, true].map((recover) => ({ cache, recover }))
+    )
+  )(
+    "uses prepared frontmatter for body-reference publication (cache: $cache, recover: $recover)",
+    async ({ cache, recover }) => {
+      const dependencies = createDependencies();
+      const source = "---\ntitle: Post\n---\n![Cover](./cover.svg)\n";
+      const entry: CanonicalAssetFileEntry = {
+        projectId: "project-1",
+        assetId: "post",
+        revision: "post-r1",
+        metadataRequirements: { structuredProperties: true, excerpt: false },
+        document: {
+          _id: "post",
+          _type: "asset.file",
+          name: "post.md",
+          path: "blog/post.md",
+          key: "post",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: new TextEncoder().encode(source).byteLength,
+          revision: "post-r1",
+          contentRef: "storage:post",
+          properties: { title: "Post" },
+        },
+      };
+      const image: CanonicalAssetFileEntry = {
+        ...entry,
+        assetId: "cover",
+        revision: "cover-r1",
+        document: {
+          ...entry.document,
+          _id: "cover",
+          name: "cover.svg",
+          path: "blog/cover.svg",
+          key: "cover",
+          extension: "svg",
+          mimeType: "image/svg+xml",
+          revision: "cover-r1",
+          contentRef: "storage:cover",
+          properties: {},
+        },
+      };
+      const baseEntry = {
+        ...entry,
+        metadataRequirements: { structuredProperties: false, excerpt: false },
+        document: { ...entry.document, properties: {} },
+      };
+      dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+        baseEntry,
+        image,
+      ]);
+      dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+      if (recover) {
+        dependencies.loadCanonicalAssetFileEntries.mockResolvedValueOnce([
+          baseEntry,
+        ]);
+      }
+      dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+      const assetStore = createSourceAssetClient({ "storage:post": source });
+      const repository = new PostgresAssetRepository({
+        projectId: "project-1",
+        context,
+        assetStore,
+        dependencies,
+        compilationCache: cache ? createContentCompilationCache() : false,
+      });
+      const plan = createCompilationPlan({
+        output: { mode: "base", includeMetadata: false },
+        content: { mode: "markdown-body-ref" },
+      });
+      const artifact = await repository.prepareIndex(plan);
+      expect(assetStore.readFile).not.toHaveBeenCalled();
+      if (recover) {
+        expect(
+          dependencies.synchronizeCanonicalAssets
+        ).toHaveBeenCalledExactlyOnceWith({
+          client: context.postgrest.client,
+          assetClient: assetStore,
+          projectId: "project-1",
+          assetIds: ["post"],
+          requirements: { structuredProperties: true, excerpt: false },
+        });
+      } else {
+        expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
+      }
+      expect(artifact.contents).toBeUndefined();
+      const fetchDocument = vi.fn(async () => new Response(source));
+      const runtimeFetch = createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: "publication",
+        artifact: createContentRuntimeArtifact(artifact),
+        runtimeAssets: {
+          post: { url: "/assets/post.md", contentRef: "storage:post" },
+          cover: { url: "/assets/cover.svg" },
+        },
+        fetchDocument,
+      });
+      const response = await runtimeFetch("/$resources/assets", {
+        method: "POST",
+        body: JSON.stringify({
+          query: {
+            output: { mode: "base", includeMetadata: false },
+            content: { mode: "markdown-body-ref" },
+          },
+        }),
+      });
+      await expect(response?.json()).resolves.toMatchObject({
+        items: [
+          { id: "post", content: { text: "![Cover](/assets/cover.svg)\n" } },
+        ],
+      });
+      expect(fetchDocument).toHaveBeenCalledOnce();
+    }
+  );
+
   test("publication keeps entries with invalid fields but rejects broken configuration", async () => {
     const sources = {
       "collection.json": createDefaultCollectionConfig(),
@@ -3261,56 +3379,64 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledOnce();
   });
 
-  test("creates a base-only index without synchronizing or reading content", async () => {
-    const dependencies = createDependencies();
-    const entries = [
-      {
-        projectId: "project-1",
-        assetId: "asset-1",
-        revision: "revision-1",
-        document: {
-          _id: "asset-1",
-          _type: "asset.file" as const,
-          name: "post.md",
-          path: "post.md",
-          key: "post",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: 10,
+  test.each([
+    { mode: "none", limit: 10 },
+    { mode: "markdown-body-ref", limit: 0 },
+  ] as const)(
+    "creates a base-only index without synchronizing or reading content: $mode / $limit",
+    async ({ mode, limit }) => {
+      const dependencies = createDependencies();
+      const entries = [
+        {
+          projectId: "project-1",
+          assetId: "asset-1",
           revision: "revision-1",
-          contentRef: "post.md",
-          properties: {},
+          document: {
+            _id: "asset-1",
+            _type: "asset.file" as const,
+            name: "post.md",
+            path: "post.md",
+            key: "post",
+            extension: "md",
+            mimeType: "text/markdown",
+            size: 10,
+            revision: "revision-1",
+            contentRef: "post.md",
+            properties: {},
+          },
         },
-      },
-    ];
-    const index = { integrity: { checksum: `sha256:${"b".repeat(64)}` } };
-    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
-    dependencies.createAssetIndex.mockResolvedValue(index as never);
-    const readFile = vi.fn();
-    const repository = new PostgresAssetRepository({
-      projectId: "project-1",
-      context,
-      assetStore: { readFile, uploadFile: vi.fn() },
-      dependencies,
-    });
+      ];
+      const index = { integrity: { checksum: `sha256:${"b".repeat(64)}` } };
+      dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+      dependencies.createAssetIndex.mockResolvedValue(index as never);
+      const readFile = vi.fn();
+      const repository = new PostgresAssetRepository({
+        projectId: "project-1",
+        context,
+        assetStore: { readFile, uploadFile: vi.fn() },
+        dependencies,
+      });
 
-    await expect(
-      repository.prepareIndex(
-        createCompilationPlan({
-          where: { all: [] },
-          output: { mode: "base", includeMetadata: true },
-        })
-      )
-    ).resolves.toBe(index);
+      await expect(
+        repository.prepareIndex(
+          createCompilationPlan({
+            where: { all: [] },
+            output: { mode: "base", includeMetadata: true },
+            limit,
+            content: { mode },
+          })
+        )
+      ).resolves.toBe(index);
 
-    expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
-    expect(dependencies.loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
-    expect(dependencies.loadCanonicalAssetBaseEntries).toHaveBeenCalledWith({
-      client: context.postgrest.client,
-      projectId: "project-1",
-    });
-    expect(readFile).not.toHaveBeenCalled();
-  });
+      expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
+      expect(dependencies.loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
+      expect(dependencies.loadCanonicalAssetBaseEntries).toHaveBeenCalledWith({
+        client: context.postgrest.client,
+        projectId: "project-1",
+      });
+      expect(readFile).not.toHaveBeenCalled();
+    }
+  );
 
   test("keeps collection configuration and templates out of query indexes", async () => {
     const dependencies = createDependencies();

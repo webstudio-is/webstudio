@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import type { AssetFileDocument } from "./schema";
 import { contentEngineLimits } from "./limits";
+import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
 import {
   hydrateAssetResourceResult,
   type AssetResourceContentReader,
@@ -140,6 +141,44 @@ describe("selected asset content hydration", () => {
       read,
     });
     expect(result.content[document._id]?.text).toBe("# Body\n");
+  });
+
+  test("resolves relative images per article path when articles share stored bytes", async () => {
+    const body = "![Cover](./cover.svg)\n";
+    const documents = ["first", "second"].map((id) =>
+      createDocument(id, body, {
+        path: `${id}/post.md`,
+        contentRef: "shared-content",
+      })
+    );
+    const assetPaths = {
+      "first-cover": "first/cover.svg",
+      "second-cover": "second/cover.svg",
+    };
+    const assetUrls = {
+      "first-cover": "/assets/first.svg",
+      "second-cover": "/assets/second.svg",
+    };
+    // A mixed full/body query can include a reference map keyed by shared bytes.
+    const references = discoverMarkdownAssetReferenceRanges({
+      markdown: body,
+      sourcePath: documents[0].path,
+      assetIdsByPath: new Map(
+        Object.entries(assetPaths).map(([id, path]) => [path, id])
+      ),
+    });
+    const result = await hydrateAssetResourceResult({
+      result: documents.map(identity),
+      documents,
+      options: { mode: "markdown-body-ref" },
+      read: createReader({ "shared-content": body }),
+      assetReferences: { "shared-content": references },
+      assetPaths,
+      assetUrls,
+    });
+
+    expect(result.content.first.text).toBe("![Cover](/assets/first.svg)\n");
+    expect(result.content.second.text).toBe("![Cover](/assets/second.svg)\n");
   });
 
   test("requires selected projections to retain stable content identity", async () => {

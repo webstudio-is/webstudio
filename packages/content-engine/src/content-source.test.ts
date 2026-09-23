@@ -5,8 +5,20 @@ import {
   validateTextAssetSourceBytes,
 } from "./mdx";
 import { createCanonicalAssetFileEntry } from "./canonical";
-import { getContentArtifactReferencedAssetIds } from "./content-artifact";
+import {
+  getContentArtifactReferencedAssetIds,
+  getContentArtifactRuntimeAssetIds,
+} from "./content-artifact";
 import { createContentDatabase } from "./content-database";
+import {
+  createContentRuntimeArtifact,
+  getContentRuntimeArtifactRuntimeAssetIds,
+} from "./content-runtime-artifact";
+import { createPublishedAssetResourceFetch } from "./published-runtime";
+import {
+  createContentCompilationPlan,
+  prepareContentCompilerEntries,
+} from "./compilation-plan";
 import {
   compileContentSource,
   ContentSourceChangedError,
@@ -127,6 +139,327 @@ const createDocumentSource = ({
 });
 
 describe("content source snapshots", () => {
+  test.each([
+    "zero limit",
+    "no match",
+    "zero limit with dynamic filter",
+    "zero limit with dynamic offset",
+  ])(
+    "omits the asset-path map when no article body can be selected: %s",
+    async (selection) => {
+      const article = createFile({ id: "article" });
+      const files = [
+        article,
+        ...Array.from({ length: 100 }, (_, index) =>
+          createFile({
+            id: `image-${index}`,
+            path: `images/${"long-name-".repeat(12)}${index}.svg`,
+            contentType: "image/svg+xml",
+          })
+        ),
+      ];
+      const plan = createContentCompilationPlan([
+        {
+          id: "empty",
+          where: {
+            field: ["id"],
+            operator: "eq",
+            value:
+              selection === "zero limit with dynamic filter"
+                ? { type: "dynamic" }
+                : {
+                    type: "literal",
+                    value: selection === "no match" ? "missing" : "article",
+                  },
+          },
+          sort: [],
+          limit: { type: "literal", value: selection === "no match" ? 1 : 0 },
+          offset:
+            selection === "zero limit with dynamic offset"
+              ? { type: "dynamic" }
+              : { type: "literal", value: 0 },
+          output: { mode: "base", includeMetadata: false },
+          content: { mode: "markdown-body-ref" },
+        },
+      ]);
+      const read = vi.fn(async () => "");
+      const { artifact } = await compileContentSource({
+        projectId,
+        plan,
+        maxBytes: 4096,
+        source: {
+          async openSnapshot() {
+            return {
+              revision: "snapshot",
+              files,
+              loadEntries: () =>
+                prepareContentCompilerEntries({
+                  entries: files.map(createEntry),
+                  plan,
+                  loadContent: read,
+                }),
+              async loadDocumentSources() {
+                return [
+                  {
+                    id: article.id,
+                    source: {
+                      async *[Symbol.asyncIterator]() {
+                        yield new TextEncoder().encode(await read());
+                      },
+                    },
+                  },
+                ];
+              },
+              async isCurrent() {
+                return true;
+              },
+            };
+          },
+        },
+      });
+      expect(artifact.assetPaths).toBeUndefined();
+      expect(read).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(["md", "mdx"])(
+    "compiles a query over 300 referenced %s articles without reading bodies and loads only the requested article",
+    async (extension) => {
+      const body =
+        "---\ntitle: Article\n---\nArticle body\n![Cover](./cover.svg)\n";
+      const articles = Array.from({ length: 300 }, (_, index) =>
+        createFile({
+          id: `article-${index}`,
+          path: `blog/article-${index}.${extension}`,
+          contentType: extension === "md" ? "text/markdown" : "text/mdx",
+          size: new TextEncoder().encode(body).byteLength,
+        })
+      );
+      const files = [
+        ...articles,
+        createFile({
+          id: "cover",
+          path: "blog/cover.svg",
+          contentType: "image/svg+xml",
+        }),
+      ];
+      const plan = createContentCompilationPlan([
+        {
+          id: "article",
+          result: "one",
+          where: {
+            field: ["id"],
+            operator: "eq",
+            value: { type: "dynamic" },
+          },
+          sort: [],
+          limit: { type: "literal", value: 1 },
+          offset: { type: "literal", value: 0 },
+          output: { mode: "base", includeMetadata: false },
+          content: { mode: "markdown-body-ref" },
+        },
+      ]);
+      const readAtPublish = vi.fn(async () => body);
+      const source: ContentSource = {
+        async openSnapshot() {
+          return {
+            revision: "snapshot",
+            files,
+            loadEntries: () =>
+              prepareContentCompilerEntries({
+                entries: files.map((file) => ({
+                  ...createEntry(file),
+                  metadataRequirements: {
+                    structuredProperties: true,
+                    excerpt: false,
+                  },
+                })),
+                plan,
+                loadContent: readAtPublish,
+              }),
+            async loadDocumentSources() {
+              return articles.map(({ id }) => ({
+                id,
+                source: {
+                  async *[Symbol.asyncIterator]() {
+                    yield new TextEncoder().encode(await readAtPublish());
+                  },
+                },
+              }));
+            },
+            async isCurrent() {
+              return true;
+            },
+          };
+        },
+      };
+      const { artifact, diagnostics } = await compileContentSource({
+        projectId,
+        source,
+        plan,
+      });
+      expect(readAtPublish.mock.calls.length).toBe(0);
+      expect(artifact.contents).toBeUndefined();
+      expect(artifact.documents).toHaveLength(300);
+      expect(diagnostics.omittedDocumentCount).toBe(0);
+
+      const fetchDocument = vi.fn(async () => new Response(body));
+      const runtimeArtifact = createContentRuntimeArtifact(artifact);
+      const publishedAssetIds = new Set(
+        getContentArtifactRuntimeAssetIds({
+          artifact,
+          includeDocuments: true,
+        })
+      );
+      const runtimeAssetIds = new Set(
+        getContentRuntimeArtifactRuntimeAssetIds({
+          artifact: runtimeArtifact,
+          includeDocuments: true,
+        })
+      );
+      const runtimeFetch = createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: `articles-${extension}`,
+        artifact: runtimeArtifact,
+        runtimeAssets: Object.fromEntries(
+          files
+            .filter(
+              ({ id }) => publishedAssetIds.has(id) && runtimeAssetIds.has(id)
+            )
+            .map((file) => [
+              file.id,
+              { url: `/assets/${file.id}`, contentRef: file.contentRef },
+            ])
+        ),
+        fetchDocument,
+      });
+      const response = await runtimeFetch("/$resources/assets", {
+        method: "POST",
+        body: JSON.stringify({
+          query: {
+            result: "one",
+            where: { field: ["id"], operator: "eq", value: "article-175" },
+            output: { mode: "base", includeMetadata: false },
+            content: { mode: "markdown-body-ref" },
+          },
+        }),
+      });
+      await expect(response?.json()).resolves.toMatchObject({
+        item: {
+          id: "article-175",
+          content: { text: "Article body\n![Cover](/assets/cover)\n" },
+        },
+        totalCount: 1,
+      });
+      expect(response?.status).toBe(200);
+      expect(fetchDocument).toHaveBeenCalledOnce();
+    }
+  );
+
+  test.each(
+    ["md", "mdx"].flatMap((extension) =>
+      (["none", "full", "markdown-body-ref"] as const).flatMap((mode) =>
+        (["current", "missing", "invalid"] as const).map((metadata) => ({
+          extension,
+          mode,
+          metadata,
+        }))
+      )
+    )
+  )(
+    "reads $extension bodies only when needed: $mode / $metadata metadata",
+    async ({ extension, mode, metadata }) => {
+      const file = createFile({
+        id: "article",
+        path: `article.${extension}`,
+        contentType: extension === "md" ? "text/markdown" : "text/mdx",
+      });
+      const plan = createContentCompilationPlan([
+        {
+          id: "titles",
+          where: { all: [] },
+          sort: [],
+          limit: { type: "literal", value: 10 },
+          offset: { type: "literal", value: 0 },
+          output: {
+            mode: "fields",
+            fields: [["properties", "title"]],
+            includeMetadata: false,
+          },
+          content: { mode },
+        },
+      ]);
+      const read = vi.fn(async () => "---\ntitle: article\n---\nBody");
+      const entry = createEntry(file);
+      const source: ContentSource = {
+        async openSnapshot() {
+          return {
+            revision: "snapshot",
+            files: [file],
+            loadEntries: () =>
+              prepareContentCompilerEntries({
+                entries: [
+                  {
+                    ...entry,
+                    metadataRequirements: {
+                      structuredProperties: metadata !== "missing",
+                      excerpt: false,
+                    },
+                    document: {
+                      ...entry.document,
+                      ...(metadata === "invalid"
+                        ? {
+                            metadataError: {
+                              code: "MARKDOWN_INVALID_FRONTMATTER",
+                              message: "Invalid frontmatter",
+                            },
+                          }
+                        : {}),
+                    },
+                  },
+                ],
+                plan,
+                loadContent: read,
+              }),
+            async loadDocumentSources() {
+              return [
+                {
+                  id: file.id,
+                  source: {
+                    async *[Symbol.asyncIterator]() {
+                      yield new TextEncoder().encode(await read());
+                    },
+                  },
+                },
+              ];
+            },
+            async isCurrent() {
+              return true;
+            },
+          };
+        },
+      };
+      const result = await materializeContentSource({ source, plan });
+      expect(result.entries[0].document.properties).toEqual({
+        title: "article",
+      });
+      if (mode !== "full" && metadata === "current") {
+        expect(result.documentContents).toBeUndefined();
+        if (mode === "none") {
+          expect(result.documentGraph).toBeUndefined();
+        }
+        expect(read).not.toHaveBeenCalled();
+      } else {
+        expect(read).toHaveBeenCalled();
+      }
+      if (mode === "full") {
+        expect(result.entries[0].content).toContain("Body");
+      } else {
+        expect(result.entries[0].content).toBeUndefined();
+      }
+    }
+  );
+
   test("reuses source validation across byte loading and compilation passes without losing per-file diagnostics", async () => {
     const validate = vi.fn(validateTextAssetSource);
     const validateSource = createTextAssetSourceValidator(

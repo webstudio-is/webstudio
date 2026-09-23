@@ -1,5 +1,6 @@
 import {
   createContentCompilationPlan,
+  isContentCompilationWindowEmpty,
   requiresStructuredProperties,
   selectContentHydrationCandidates,
   type ContentCompilationPlan,
@@ -35,6 +36,7 @@ import {
   compileDocumentSourceGraph,
   createDocumentSourceUrl,
   getDocumentFormatByContentType,
+  getDocumentGraphClosure,
   type SourceReferenceOccurrence,
   type DocumentGraph,
 } from "./document-graph";
@@ -216,19 +218,15 @@ const discoverSnapshotAssetReferences = async ({
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
   plan?: ContentCompilationPlan;
-}): Promise<MarkdownAssetReferences> => {
+}) => {
   const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
   const selectedAssetIds =
     plan === undefined
       ? undefined
       : selectContentHydrationCandidates({
           documents: entries.map(({ document }) => document),
-          plan: {
-            ...plan,
-            queries: plan.queries.filter(
-              ({ content }) => content.mode === "markdown-body-ref"
-            ),
-          },
+          plan,
+          mode: "deferred",
         });
   const references: Record<string, MarkdownAssetReferences[string]> = {};
   for (const entry of [...entries].sort((left, right) =>
@@ -255,7 +253,13 @@ const discoverSnapshotAssetReferences = async ({
       references[entry.document.contentRef] = discovered;
     }
   }
-  return references;
+  return {
+    assetReferences: references,
+    assetPaths:
+      selectedAssetIds !== undefined && selectedAssetIds.size > 0
+        ? Object.fromEntries(snapshot.files.map(({ id, path }) => [id, path]))
+        : undefined,
+  };
 };
 
 const validateSnapshotDocumentSources = async (
@@ -413,11 +417,7 @@ const discoverSnapshotAssetValueReferences = async ({
 const queryNeedsDocumentGraph = (
   query: ContentCompilationPlan["queries"][number]
 ) => {
-  if (
-    query.limit.type === "literal" &&
-    typeof query.limit.value === "number" &&
-    query.limit.value <= 0
-  ) {
+  if (isContentCompilationWindowEmpty(query)) {
     return false;
   }
   if (query.content.mode === "markdown-body-ref") {
@@ -482,6 +482,7 @@ const discoverSnapshotDocumentGraph = async (
   }
   const sourceDocuments = await snapshot.loadDocumentSources();
   const filesById = new Map(snapshot.files.map((file) => [file.id, file]));
+  const entriesById = new Map(entries.map((entry) => [entry.assetId, entry]));
   const sourcesById = new Map<string, ByteSource>();
   for (const document of sourceDocuments) {
     if (sourcesById.has(document.id)) {
@@ -536,6 +537,7 @@ const discoverSnapshotDocumentGraph = async (
         revision: file.revision,
         contentRef: file.contentRef,
         format,
+        frontmatter: entriesById.get(file.id)?.sourceFrontmatter,
         source: {
           async *[Symbol.asyncIterator]() {
             yield await getBytes(file.id);
@@ -577,15 +579,26 @@ const discoverSnapshotDocumentGraph = async (
       ? undefined
       : { assetReferenceIssues };
   }
+  const embeddedNodes = getDocumentGraphClosure({
+    graph,
+    rootIds: entries
+      .filter(({ content }) => content !== undefined)
+      .map(({ assetId }) => assetId)
+      .filter((id) => sourcesById.has(id)),
+  });
   const contents = Object.fromEntries(
     await Promise.all(
-      graph.nodes.map(async (node) => [
+      embeddedNodes.map(async (node) => [
         node.contentRef,
         decodeUtf8(await getBytes(node.id)),
       ])
     )
   );
-  return { graph, contents, assetReferenceIssues };
+  return {
+    graph,
+    contents: embeddedNodes.length === 0 ? undefined : contents,
+    assetReferenceIssues,
+  };
 };
 
 export const materializeContentSnapshot = async ({
@@ -628,13 +641,14 @@ export const materializeContentSnapshot = async ({
         ),
     });
     const documentGraph = documentGraphResult?.graph;
-    const assetReferences = await measureContentSourcePerformance({
-      phase: "asset-references",
-      observer: onPerformanceEvent,
-      now: performanceNow,
-      operation: () =>
-        discoverSnapshotAssetReferences({ snapshot, entries, plan }),
-    });
+    const { assetReferences, assetPaths } =
+      await measureContentSourcePerformance({
+        phase: "asset-references",
+        observer: onPerformanceEvent,
+        now: performanceNow,
+        operation: () =>
+          discoverSnapshotAssetReferences({ snapshot, entries, plan }),
+      });
     const assetValueReferenceResult =
       await discoverSnapshotAssetValueReferences({
         snapshot,
@@ -654,6 +668,7 @@ export const materializeContentSnapshot = async ({
         sourceRevision: snapshot.revision,
         entries,
         assetReferences,
+        assetPaths,
         assetValueReferences: assetValueReferenceResult.references,
         sourceIssues: assetValueReferenceResult.sourceIssues,
         documentGraph,
@@ -700,6 +715,7 @@ export const compileContentSource = async ({
     sourceRevision,
     entries,
     assetReferences,
+    assetPaths,
     assetValueReferences,
     sourceIssues,
     documentGraph,
@@ -716,6 +732,7 @@ export const compileContentSource = async ({
     projectId,
     entries,
     assetReferences,
+    assetPaths,
     assetValueReferences,
     documentGraph,
     documentContents,
@@ -752,6 +769,7 @@ export const materializeContentSource = async ({
   sourceRevision: string;
   entries: readonly ContentCompilerInput[];
   assetReferences: MarkdownAssetReferences;
+  assetPaths?: Readonly<Record<string, string>>;
   assetValueReferences: AssetValueReferences;
   documentGraph?: DocumentGraph;
   documentContents?: Readonly<Record<string, string>>;

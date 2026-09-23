@@ -35,6 +35,61 @@ const documents = [
 ];
 
 describe("document source graph compiler", () => {
+  test("rejects invalid reference markers in supplied frontmatter", async () => {
+    await expect(
+      compileDocumentSourceGraph({
+        documents: [
+          {
+            ...documents[1],
+            source: "---\nname: Ada\n---\nBody",
+            frontmatter: { avatar: { $ref: 42 } },
+          },
+        ],
+      })
+    ).rejects.toMatchObject({
+      code: "DOCUMENT_ANALYSIS_FAILED",
+      documentId: "author",
+      cause: {
+        code: "INVALID_REFERENCE_MARKER",
+        referenceId: "#frontmatter/avatar",
+      },
+    });
+  });
+
+  test.each(["markdown", "mdx"] as const)(
+    "discovers %s references from supplied frontmatter without reading its body",
+    async (format) => {
+      const expected = await compileDocumentSourceGraph({ documents });
+      const graph = await compileDocumentSourceGraph({
+        documents: documents.map((document) =>
+          document.id === "author"
+            ? {
+                ...document,
+                format,
+                frontmatter: {
+                  name: "Ada",
+                  avatar: { $ref: "../media/ada.json#/url" },
+                },
+                source: {
+                  async *[Symbol.asyncIterator]() {
+                    yield await Promise.reject<Uint8Array>(
+                      new Error("Markdown body must not be downloaded")
+                    );
+                  },
+                },
+              }
+            : document
+        ),
+      });
+      expect(graph.edges).toEqual(expected.edges);
+      expect(graph.nodes).toEqual(
+        expected.nodes.map((node) =>
+          node.id === "author" ? { ...node, format } : node
+        )
+      );
+    }
+  );
+
   test("encodes every Asset path segment as document URL data", () => {
     expect(createDocumentSourceUrl("authors/Ada #1/プロフィール.md")).toBe(
       "https://content.webstudio.local/authors/Ada%20%231/%E3%83%97%E3%83%AD%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB.md"

@@ -5,7 +5,6 @@ import {
   createCanonicalAssetFileEntry,
   createContentSourceFile,
   decodeUtf8,
-  fullCanonicalAssetMetadataRequirements,
   normalizeAssetFileDocument,
   prepareCanonicalContentMetadata,
   type ContentSource,
@@ -14,7 +13,7 @@ import {
   getDocumentFormatByContentType,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
-  requiresStructuredProperties,
+  getContentCompilationMetadataRequirements,
   type ContentCompilationPlan,
 } from "@webstudio-is/content-engine";
 import {
@@ -252,13 +251,7 @@ export const createFileSystemContentSource = ({
                   available: "base",
                 })
               );
-        const requirements =
-          plan === undefined
-            ? fullCanonicalAssetMetadataRequirements
-            : {
-                structuredProperties: requiresStructuredProperties(plan),
-                excerpt: plan.excerpt,
-              };
+        const requirements = getContentCompilationMetadataRequirements(plan);
         const prepared = await Promise.all(
           candidates.map(({ entry, filePath, identity }) =>
             requirements.structuredProperties === false &&

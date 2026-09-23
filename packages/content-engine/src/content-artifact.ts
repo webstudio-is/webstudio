@@ -13,17 +13,21 @@ export const serializeContentArtifact = (value: unknown) =>
   serializeJsonDeterministically(contentArtifactV1.parse(value));
 
 export const getContentArtifactReferencedAssetIds = (
-  artifact: Pick<ContentArtifactV1, "assetReferences" | "assetValueReferences">
+  artifact: Pick<
+    ContentArtifactV1,
+    "assetReferences" | "assetValueReferences" | "assetPaths"
+  >
 ) =>
   [
-    ...new Set(
-      [artifact.assetReferences, artifact.assetValueReferences].flatMap(
+    ...new Set([
+      ...Object.keys(artifact.assetPaths ?? {}),
+      ...[artifact.assetReferences, artifact.assetValueReferences].flatMap(
         (references) =>
           Object.values(references ?? {})
             .flat()
             .map(({ assetId }) => assetId)
-      )
-    ),
+      ),
+    ]),
   ].sort();
 
 export const getContentArtifactRuntimeAssetIds = ({
@@ -33,7 +37,7 @@ export const getContentArtifactRuntimeAssetIds = ({
 }: {
   artifact: Pick<
     ContentArtifactV1,
-    "assetReferences" | "assetValueReferences"
+    "assetReferences" | "assetValueReferences" | "assetPaths"
   > & {
     documents: readonly { _id: string }[];
     documentGraph?: { readonly nodes: readonly { id: string }[] };

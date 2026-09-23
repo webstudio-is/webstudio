@@ -173,6 +173,42 @@ export const parseMarkdownDocumentSource = async ({
   });
 };
 
+/** Discovers references from complete, revision-matched frontmatter. */
+export const analyzeMarkdownFrontmatter = ({
+  frontmatter,
+  sourceDocumentId,
+  documentUrl,
+}: {
+  frontmatter: Readonly<Record<string, unknown>>;
+  sourceDocumentId: string;
+  documentUrl: string | URL;
+}) => {
+  let analyzedFrontmatter;
+  try {
+    analyzedFrontmatter = analyzeJsonDocument({
+      value: frontmatter,
+      sourceDocumentId,
+      documentUrl,
+    });
+  } catch (cause) {
+    if (cause instanceof JsonDocumentError) {
+      throwMarkdownJsonError(cause);
+    }
+    throw cause;
+  }
+  return Object.freeze({
+    properties: analyzedFrontmatter.document as MarkdownDocument["frontmatter"],
+    references: Object.freeze(
+      analyzedFrontmatter.references.map((occurrence) =>
+        Object.freeze({
+          ...occurrence,
+          referenceId: toMarkdownReferenceId(occurrence.referenceId),
+        })
+      )
+    ),
+  });
+};
+
 /** Reads one bounded Markdown source and discovers references in frontmatter. */
 export const analyzeMarkdownDocument = async ({
   source,
@@ -191,34 +227,14 @@ export const analyzeMarkdownDocument = async ({
   }>
 > => {
   const parsed = await parseMarkdownDocumentSource({ source, maximumBytes });
-  let analyzedFrontmatter;
-  try {
-    analyzedFrontmatter = analyzeJsonDocument({
-      value: parsed.frontmatter,
-      sourceDocumentId,
-      documentUrl,
-    });
-  } catch (cause) {
-    if (cause instanceof JsonDocumentError) {
-      throwMarkdownJsonError(cause);
-    }
-    throw cause;
-  }
-  const document = normalizeMarkdownDocument({
-    source: parsed.source,
-    body: parsed.body,
-    frontmatter: analyzedFrontmatter.document,
+  const { properties, references } = analyzeMarkdownFrontmatter({
+    frontmatter: parsed.frontmatter,
+    sourceDocumentId,
+    documentUrl,
   });
   return Object.freeze({
-    document,
-    references: Object.freeze(
-      analyzedFrontmatter.references.map((occurrence) =>
-        Object.freeze({
-          ...occurrence,
-          referenceId: toMarkdownReferenceId(occurrence.referenceId),
-        })
-      )
-    ),
+    document: normalizeMarkdownDocument({ ...parsed, frontmatter: properties }),
+    references,
   });
 };
 

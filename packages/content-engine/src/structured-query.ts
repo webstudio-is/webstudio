@@ -906,12 +906,14 @@ const finalizeAssetQueries = async ({
   read,
   assetReferences,
   assetUrls,
+  assetPaths,
 }: {
   preparedQueries: readonly PreparedAssetQuery[];
   results: AssetQuerySettlements;
   read?: AssetResourceContentReader;
   assetReferences?: MarkdownAssetReferences;
   assetUrls: Readonly<Record<string, string>>;
+  assetPaths?: Readonly<Record<string, string>>;
 }) => {
   await Promise.all(
     preparedQueries.map(async (state) => {
@@ -949,7 +951,8 @@ const finalizeAssetQueries = async ({
             options: contentOptions,
             read,
             assetReferences,
-            assetUrls: assetReferences === undefined ? undefined : assetUrls,
+            assetUrls,
+            assetPaths,
           });
           items = selectedDocuments.map((document, index) => {
             const content = hydrated.content[document._id];
@@ -998,6 +1001,7 @@ export const executeAssetQueries = async ({
   runtimeAssets,
   assetReferences,
   assetValueReferences,
+  assetPaths,
 }: {
   queries: readonly AssetQueryInput[];
   catalog?: BuilderAssetFieldCatalog;
@@ -1006,6 +1010,7 @@ export const executeAssetQueries = async ({
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   assetReferences?: MarkdownAssetReferences;
   assetValueReferences?: AssetValueReferences;
+  assetPaths?: Readonly<Record<string, string>>;
 }): Promise<PromiseSettledResult<AssetQueryExecutionResult>[]> => {
   const results: AssetQuerySettlements = Array.from({ length: inputs.length });
   const { filterKeys, preparedQueries, sortGroups } = prepareAssetQueries({
@@ -1066,6 +1071,7 @@ export const executeAssetQueries = async ({
     read,
     assetReferences,
     assetUrls,
+    assetPaths,
   });
   return requireSettledAssetQueryResults(results);
 };
@@ -1077,6 +1083,7 @@ type ExecuteAssetQueryInput = {
   read?: AssetResourceContentReader;
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   assetReferences?: MarkdownAssetReferences;
+  assetPaths?: Readonly<Record<string, string>>;
   assetValueReferences?: AssetValueReferences;
 };
 
