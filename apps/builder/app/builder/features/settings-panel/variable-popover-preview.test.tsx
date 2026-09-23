@@ -129,4 +129,12 @@ test("loads an unsaved system resource while an unrelated page request is pendin
       "2026-09-23"
     );
   });
+
+  await selectOption("System resource", "GraphQL");
+  expect(dialog.textContent).not.toContain("2026-09-23");
+  expect(
+    Array.from(dialog.querySelectorAll("button")).some(
+      (button) => button.textContent === "Load data"
+    )
+  ).toBe(true);
 });

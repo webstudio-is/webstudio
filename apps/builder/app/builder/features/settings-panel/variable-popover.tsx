@@ -950,8 +950,16 @@ const VariablePopoverContent = ({
 
   const updateVariableType = (variableType: VariableType) => {
     cancelPreview();
+    setShowSavedResourceRequest(false);
     setVariableType(variableType);
     setValue((prev: unknown) => {
+      if (
+        variableType === "resource" ||
+        variableType === "graphql-resource" ||
+        variableType === "system-resource"
+      ) {
+        return;
+      }
       if (variableType === "string" && typeof prev !== "string") {
         return "";
       }

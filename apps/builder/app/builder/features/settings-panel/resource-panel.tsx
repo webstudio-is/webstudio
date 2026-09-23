@@ -561,12 +561,14 @@ const BodyField = ({
   aliases,
   bodyType,
   value,
+  onChangeStart,
   onChange,
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
   bodyType: BodyType;
   value: string;
+  onChangeStart?: () => void;
   onChange: (value: string, bodyType: BodyType) => void;
 }) => {
   const [isBodyLiteral, setIsBodyLiteral] = useState(
@@ -588,6 +590,7 @@ const BodyField = ({
     undefined
   );
   const updateBody = async (newBody: string) => {
+    onChangeStart?.();
     const evaluatedValue = await evaluateExpressionWithinScope(newBody, scope);
     // automatically add Content-Type: application/json header
     // when value is object
@@ -611,6 +614,7 @@ const BodyField = ({
         options={["text", "json"]}
         onChange={(newBodyType) => {
           if (newBodyType) {
+            onChangeStart?.();
             onChange(value, newBodyType);
           }
         }}
@@ -866,8 +870,8 @@ export const ResourceForm = forwardRef<
             aliases={aliases}
             value={body ?? ""}
             bodyType={bodyType}
+            onChangeStart={onChange}
             onChange={(newBody, newBodyType) => {
-              onChange?.();
               setBodyType(newBodyType);
               // reset header
               if (newBodyType) {
