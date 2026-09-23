@@ -811,7 +811,7 @@ describe("prebuild", () => {
     });
     const file = "app/__generated__/$resources.headers.server.ts";
     await expect(readFile(file, "utf8")).resolves.toBe(
-      generateResponseHeadersModule(projectSettings, data.build.id)
+      generateResponseHeadersModule(projectSettings)
     );
 
     bundle.build.projectSettings.meta.customHeaders = [];
@@ -822,7 +822,7 @@ describe("prebuild", () => {
       incremental: true,
     });
     await expect(readFile(file, "utf8")).resolves.toBe(
-      generateResponseHeadersModule(undefined, data.build.id)
+      generateResponseHeadersModule()
     );
   });
 

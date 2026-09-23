@@ -4,55 +4,14 @@ import { transformSync } from "esbuild";
 import { expect, test } from "vitest";
 import { generateResponseHeadersModule } from "./response-headers";
 
-const readGeneratedModule = (source: string) => {
+const readGeneratedHeaders = (source: string) => {
   const { code } = transformSync(source, { loader: "ts", format: "cjs" });
   const module = {
-    exports: {} as {
-      customHeaders?: unknown;
-      responseHeadersCacheName?: string;
-    },
+    exports: {} as { customHeaders?: unknown },
   };
   runInNewContext(code, { module });
-  return module.exports;
+  return module.exports.customHeaders;
 };
-
-const readGeneratedHeaders = (source: string) =>
-  readGeneratedModule(source).customHeaders;
-
-test("isolates cached responses when headers change, are removed, or the site is republished", () => {
-  const settings = {
-    meta: {
-      customHeaders: [{ name: "Content-Security-Policy", value: "old" }],
-    },
-    compiler: {},
-  };
-  const configured = readGeneratedModule(
-    generateResponseHeadersModule(settings, "build-1")
-  ).responseHeadersCacheName;
-  const deleted = readGeneratedModule(
-    generateResponseHeadersModule(undefined, "build-1")
-  ).responseHeadersCacheName;
-  const republished = readGeneratedModule(
-    generateResponseHeadersModule(settings, "build-2")
-  ).responseHeadersCacheName;
-  const changed = readGeneratedModule(
-    generateResponseHeadersModule(
-      {
-        ...settings,
-        meta: {
-          customHeaders: [{ name: "Content-Security-Policy", value: "new" }],
-        },
-      },
-      "build-1"
-    )
-  ).responseHeadersCacheName;
-  expect(new Set([configured, deleted, republished, changed]).size).toBe(4);
-  expect(configured).toMatch(/^file-cache-headers-[a-f0-9]{64}$/);
-  expect(
-    readGeneratedModule(generateResponseHeadersModule(settings, "build-1"))
-      .responseHeadersCacheName
-  ).toBe(configured);
-});
 
 test("generates all default headers for existing projects", () => {
   expect(readGeneratedHeaders(generateResponseHeadersModule())).toEqual(

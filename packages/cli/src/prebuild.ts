@@ -1098,10 +1098,7 @@ export const prebuild = async (options: {
   );
   await writeGeneratedFile(
     join(generatedDir, "$resources.headers.server.ts"),
-    generateResponseHeadersModule(
-      siteData.build.projectSettings,
-      siteData.build.id
-    )
+    generateResponseHeadersModule(siteData.build.projectSettings)
   );
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
