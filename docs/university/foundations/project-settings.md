@@ -156,7 +156,7 @@ Use **Project settings > Headers** to configure your site's HTTP security respon
 | Referrer-Policy | `strict-origin-when-cross-origin` | Yes |
 | Strict-Transport-Security | `max-age=63072000; includeSubDomains; preload` | Yes |
 
-Choose **Edit**, change the value, and **Save**. Required headers cannot be removed or left empty. For optional headers, select **Remove header** to omit them. **Reset to default** restores the original value. Publish to apply changes.
+Edit values directly in their fields. Changes are saved when you leave a field or press Enter; Escape cancels an unsaved edit. Required headers cannot be removed or left empty. Use the trash icon to remove X-Frame-Options and the reset icon to restore a header’s default value. Publish to apply changes.
 
 On Webstudio Cloud, changing the defaults or removing an optional header requires Pro when publishing to a custom domain. Default values and staging are free. Platform headers such as `X-Powered-By` are not configurable.
 

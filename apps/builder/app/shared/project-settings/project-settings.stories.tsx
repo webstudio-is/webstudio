@@ -1,9 +1,10 @@
-import type { JSX } from "react";
+import { useEffect, type JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { StorySection } from "@webstudio-is/design-system";
 import { ProjectSettingsDialog } from "./project-settings";
 import { $pages, $project, $projectSettings } from "~/shared/sync/data-stores";
 import type { Project } from "@webstudio-is/project";
+import { $authPermit, $builderMode } from "~/shared/nano-states";
 
 export default {
   title: "Project settings",
@@ -32,19 +33,34 @@ export const General = () => {
   );
 };
 
-export const Headers = () => {
-  $projectSettings.set({
-    meta: {
-      customHeaders: [
-        {
-          name: "Content-Security-Policy",
-          value: "frame-ancestors 'self' https://example.com",
-        },
-        { name: "X-Frame-Options", value: null },
-      ],
-    },
-    compiler: {},
-  });
+const HeadersStory = ({ customized = false }: { customized?: boolean }) => {
+  useEffect(() => {
+    const previousSettings = $projectSettings.get();
+    const previousPermit = $authPermit.get();
+    const previousMode = $builderMode.get();
+    $authPermit.set("own");
+    $builderMode.set("design");
+    $projectSettings.set({
+      meta: customized
+        ? {
+            customHeaders: [
+              {
+                name: "Content-Security-Policy",
+                value:
+                  "frame-ancestors 'self' https://example.com https://another-example.com",
+              },
+              { name: "X-Frame-Options", value: null },
+            ],
+          }
+        : {},
+      compiler: {},
+    });
+    return () => {
+      $projectSettings.set(previousSettings);
+      $authPermit.set(previousPermit);
+      $builderMode.set(previousMode);
+    };
+  }, [customized]);
   const router = createRouter(
     <ProjectSettingsDialog currentSection="headers" />
   );
@@ -54,6 +70,9 @@ export const Headers = () => {
     </StorySection>
   );
 };
+
+export const Headers = () => <HeadersStory customized />;
+export const HeadersDefaults = () => <HeadersStory />;
 
 export const Redirects = () => {
   $pages.set({

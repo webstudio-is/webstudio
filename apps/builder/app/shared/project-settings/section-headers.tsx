@@ -1,18 +1,20 @@
 import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  Button,
-  Checkbox,
-  CheckboxAndLabel,
   Flex,
   Grid,
-  InputField,
+  InputErrorsTooltip,
   Label,
   LinkButton,
   ProChip,
-  Separator,
+  SmallIconButton,
   Text,
+  TextArea,
+  Tooltip,
+  cssVar,
+  theme,
 } from "@webstudio-is/design-system";
+import { InfoCircleIcon, ResetIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   customResponseHeaders,
   getResponseHeaders,
@@ -31,13 +33,9 @@ const HeaderSetting = ({
   definition: ResponseHeaderDefinition;
   value: string | null;
 }) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [remove, setRemove] = useState(false);
+  const [draft, setDraft] = useState<string>();
   const [errors, setErrors] = useState<string[]>([]);
   const valueId = useId();
-  const removeId = useId();
-  const errorsId = useId();
 
   const save = (value: string | null) => {
     // Read the latest settings so saving one header preserves other edits.
@@ -62,87 +60,78 @@ const HeaderSetting = ({
       setErrors(["Changes could not be saved. Please try again."]);
       return;
     }
-    setEditing(false);
+    setDraft(undefined);
     setErrors([]);
   };
 
   return (
-    <Grid gap={2} css={sectionSpacing}>
-      <Flex gap={2} align="center">
-        <Text variant="labels">{definition.name}</Text>
-        {definition.required && <Text color="subtle">Required</Text>}
-      </Flex>
-      {editing ? (
-        <>
-          {!definition.required && (
-            <CheckboxAndLabel>
-              <Checkbox
-                id={removeId}
-                checked={remove}
-                onCheckedChange={(checked) => setRemove(checked === true)}
-              />
-              <Label htmlFor={removeId}>Remove header</Label>
-            </CheckboxAndLabel>
-          )}
-          {!remove && (
-            <>
-              <Label htmlFor={valueId}>Value</Label>
-              <InputField
-                id={valueId}
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                aria-describedby={errors.length ? errorsId : undefined}
-              />
-            </>
-          )}
-          <Flex gap={2}>
-            <Button onClick={() => save(remove ? null : draft)}>Save</Button>
-            <Button
-              color="ghost"
-              onClick={() => {
-                setEditing(false);
-                setErrors([]);
-              }}
-            >
-              Cancel
-            </Button>
-          </Flex>
-        </>
-      ) : (
-        <>
-          <Text color="subtle" css={{ overflowWrap: "anywhere" }}>
-            {value ?? "Removed"}
-          </Text>
-          <Flex gap={2}>
-            <Button
-              color="ghost"
-              aria-label={`Edit ${definition.name}`}
-              onClick={() => {
-                setDraft(value ?? definition.defaultValue);
-                setRemove(value === null && !definition.required);
-                setEditing(true);
-                setErrors([]);
-              }}
-            >
-              Edit
-            </Button>
-            {value !== definition.defaultValue && (
-              <Button
-                color="ghost"
-                aria-label={`Reset ${definition.name}`}
+    <Grid gap={1}>
+      <Flex
+        justify="between"
+        align="center"
+        css={{ minHeight: theme.spacing[9] }}
+      >
+        <Label htmlFor={valueId}>{definition.name}</Label>
+        <Flex gap={1}>
+          {(value !== definition.defaultValue || draft !== undefined) && (
+            <Tooltip content="Reset to default">
+              <SmallIconButton
+                icon={<ResetIcon />}
+                aria-label={`Reset ${definition.name} to default`}
                 onClick={() => save(definition.defaultValue)}
-              >
-                Reset to default
-              </Button>
-            )}
-          </Flex>
-        </>
-      )}
-      {errors.length > 0 && (
-        <Text id={errorsId} role="alert">
-          {errors.join(". ")}
-        </Text>
-      )}
+              />
+            </Tooltip>
+          )}
+          {!definition.required && value !== null && (
+            <Tooltip content="Remove header">
+              <SmallIconButton
+                variant="destructive"
+                icon={<TrashIcon />}
+                aria-label={`Remove ${definition.name}`}
+                onClick={() => save(null)}
+              />
+            </Tooltip>
+          )}
+        </Flex>
+      </Flex>
+      <InputErrorsTooltip errors={errors.length ? errors : undefined}>
+        <TextArea
+          id={valueId}
+          variant="mono"
+          rows={1}
+          maxRows={4}
+          autoGrow
+          value={draft ?? value ?? ""}
+          placeholder="Not sent"
+          disabled={value === null}
+          color={errors.length ? "error" : undefined}
+          aria-invalid={errors.length > 0}
+          onChange={(value) => {
+            setDraft(value);
+            setErrors([]);
+          }}
+          onBlur={() => {
+            if (draft !== undefined) {
+              save(draft);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) {
+              return;
+            }
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              setDraft(undefined);
+              setErrors([]);
+            }
+          }}
+        />
+      </InputErrorsTooltip>
     </Grid>
   );
 };
@@ -152,37 +141,56 @@ export const SectionHeaders = () => {
   const settings = useStore($projectSettings);
   const headers = getResponseHeaders(settings?.meta.customHeaders);
   return (
-    <Grid gap={3}>
-      <Grid gap={2} css={sectionSpacing}>
-        <Flex align="center" gap={1}>
-          <Text variant="titles">Headers</Text>
-          {allowDynamicData === false && <ProChip>PRO</ProChip>}
-        </Flex>
-        <Text color="subtle">
-          Configure HTTP response headers for your site. Required headers can be
-          edited but cannot be removed. Publish to apply changes.
-        </Text>
-        {allowDynamicData === false && (
-          <>
-            <Text color="subtle">
-              Customizing headers on a custom domain requires Pro. Default
-              values and staging are free.
-            </Text>
-            <LinkButton
-              color="primary"
-              href="https://webstudio.is/pricing"
-              target="_blank"
-            >
-              Upgrade
-            </LinkButton>
-          </>
-        )}
-      </Grid>
+    <Grid gap={3} css={sectionSpacing}>
+      <Flex align="center" gap={1}>
+        <Text variant="titles">Headers</Text>
+        {allowDynamicData === false && <ProChip>Pro</ProChip>}
+        <Tooltip
+          variant="wrapped"
+          content={
+            <>
+              <Text>
+                Configure your site's HTTP security headers. Changes are saved
+                when you leave a field. Publish to apply them to your site.
+              </Text>
+              <br />
+              <Text>
+                All headers are required except X-Frame-Options, which can be
+                removed. Reset restores a header's default value.
+              </Text>
+              {allowDynamicData === false && (
+                <>
+                  <br />
+                  <Text>
+                    Customizing headers on a custom domain requires Pro. Default
+                    values and staging are free.
+                  </Text>
+                  <LinkButton
+                    color="primary"
+                    css={{ marginTop: theme.spacing[5], width: "100%" }}
+                    href="https://webstudio.is/pricing"
+                    target="_blank"
+                  >
+                    Upgrade
+                  </LinkButton>
+                </>
+              )}
+            </>
+          }
+        >
+          <InfoCircleIcon
+            color={cssVar("--foreground-secondary")}
+            tabIndex={0}
+            aria-label="About response headers"
+          />
+        </Tooltip>
+      </Flex>
       {responseHeaderDefinitions.map((definition, index) => (
-        <Grid key={definition.name} gap={3}>
-          <Separator />
-          <HeaderSetting definition={definition} value={headers[index].value} />
-        </Grid>
+        <HeaderSetting
+          key={definition.name}
+          definition={definition}
+          value={headers[index].value}
+        />
       ))}
     </Grid>
   );
