@@ -14,7 +14,7 @@ export const generateResponseHeadersModule = (
   const revision = createHash("sha256")
     .update(JSON.stringify([deploymentId, headers]))
     .digest("hex");
-  return `// Generated at publish time. Consumed by the Webstudio Cloud worker.
+  return `// Generated response header configuration for hosting adapters.
 export const customHeaders: Array<{ name: string; value: string | null }> = ${JSON.stringify(headers, null, 2)};
 export const responseHeadersCacheName = "file-cache-headers-${revision}";
 `;

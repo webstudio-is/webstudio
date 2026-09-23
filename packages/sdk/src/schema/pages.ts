@@ -223,7 +223,7 @@ export const projectMeta = z.object({
   customHeaders: customResponseHeaders
     .optional()
     .describe(
-      "Project-wide response headers for Webstudio Cloud. A null header value removes that header; an empty string sets an empty value. Publish to apply changes."
+      "Site-wide HTTP response headers. A null value removes the header; an empty string sets an empty value. Apply through the hosting adapter when publishing."
     ),
 });
 export type ProjectMeta = z.infer<typeof projectMeta>;

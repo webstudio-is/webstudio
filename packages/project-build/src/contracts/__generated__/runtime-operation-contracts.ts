@@ -5405,7 +5405,7 @@ export const runtimeOperationContractData = [
             },
             customHeaders: {
               description:
-                "Project-wide response headers for Webstudio Cloud. A null header value removes that header; an empty string sets an empty value. Publish to apply changes.",
+                "Site-wide HTTP response headers. A null value removes the header; an empty string sets an empty value. Apply through the hosting adapter when publishing.",
               maxItems: 50,
               type: "array",
               items: {
@@ -5552,7 +5552,7 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   description:
-                    "Project-wide response headers for Webstudio Cloud. A null header value removes that header; an empty string sets an empty value. Publish to apply changes.",
+                    "Site-wide HTTP response headers. A null value removes the header; an empty string sets an empty value. Apply through the hosting adapter when publishing.",
                   maxItems: 50,
                   type: "array",
                   items: {

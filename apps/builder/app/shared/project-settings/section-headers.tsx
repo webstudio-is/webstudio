@@ -72,15 +72,14 @@ export const SectionHeaders = () => {
           {allowDynamicData === false && <ProChip>PRO</ProChip>}
         </Flex>
         <Text color="subtle">
-          Customize HTTP response headers for all pages on Webstudio Cloud.
-          Publish your site to apply changes. Asset files and the Builder are
-          unaffected.
+          Set or remove HTTP response headers for your site. Publish to apply
+          changes.
         </Text>
         {allowDynamicData === false && (
           <>
             <Text color="subtle">
-              Custom headers are a Pro feature. You can publish to staging for
-              free; upgrade to Pro to publish to custom domains.
+              Publishing custom headers to a custom domain requires Pro. Staging
+              is free.
             </Text>
             <LinkButton
               color="primary"
@@ -105,7 +104,7 @@ export const SectionHeaders = () => {
             checked={remove}
             onCheckedChange={(checked) => setRemove(checked === true)}
           />
-          <Label htmlFor={removeId}>Remove this header from responses</Label>
+          <Label htmlFor={removeId}>Remove header</Label>
         </CheckboxAndLabel>
         {!remove && (
           <>
@@ -166,9 +165,7 @@ export const SectionHeaders = () => {
       <Separator />
       <Grid gap={3} css={sectionSpacing}>
         {headers.length === 0 && (
-          <Text color="subtle">
-            No custom headers. Webstudio defaults apply.
-          </Text>
+          <Text color="subtle">No headers configured.</Text>
         )}
         {headers.map((header) => (
           <Grid key={header.name} gap={1}>
@@ -177,9 +174,9 @@ export const SectionHeaders = () => {
             </Text>
             <Text color="subtle" css={{ overflowWrap: "anywhere" }}>
               {header.value === null
-                ? "Remove from responses"
+                ? "Remove header"
                 : header.value === ""
-                  ? "Set to an empty value"
+                  ? "Empty value"
                   : header.value}
             </Text>
             <Flex gap={2}>
@@ -208,15 +205,11 @@ export const SectionHeaders = () => {
                   }
                 }}
               >
-                Delete
+                Delete rule
               </Button>
             </Flex>
           </Grid>
         ))}
-        <Text color="subtle">
-          Deleting a configuration restores the default behavior after
-          publishing.
-        </Text>
       </Grid>
     </Grid>
   );
