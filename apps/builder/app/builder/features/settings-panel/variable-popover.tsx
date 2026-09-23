@@ -85,7 +85,6 @@ import {
 } from "./resource-panel";
 import { generateCurl } from "./curl";
 import {
-  $hasPendingResources,
   $pendingResourceKeys,
   $resourceDiagnosticsCache,
   $resourceDiagnosticsErrorCache,
@@ -694,7 +693,6 @@ const VariablePreview = ({
     variableType === "resource" ||
     variableType === "graphql-resource" ||
     variableType === "system-resource";
-  const hasPendingResources = useStore($hasPendingResources);
   const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
   const variableValues = useStore($instanceVariableValues);
@@ -752,6 +750,10 @@ const VariablePreview = ({
     (variable?.type === "resource" && showSavedResourceRequest
       ? resolvedResourceRequest
       : undefined);
+  const previewPending =
+    isComputingRequest ||
+    (computedResourceRequest !== undefined &&
+      pendingResourceKeys.has(getResourceKey(computedResourceRequest)));
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
   let resourcePerformance: ResourcePerformance | undefined;
@@ -808,14 +810,8 @@ const VariablePreview = ({
           align="center"
           css={{ position: "absolute", inset: 0 }}
         >
-          <Button
-            type="button"
-            disabled={hasPendingResources || isComputingRequest}
-            onClick={onLoadData}
-          >
-            {hasPendingResources || isComputingRequest
-              ? "Loading..."
-              : "Load data"}
+          <Button type="button" disabled={previewPending} onClick={onLoadData}>
+            {previewPending ? "Loading..." : "Load data"}
           </Button>
         </Flex>
       )}
@@ -839,11 +835,7 @@ const VariablePreview = ({
       queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={preview}
       queryPending={queryPending}
-      previewPending={
-        isComputingRequest ||
-        (computedResourceKey !== undefined &&
-          pendingResourceKeys.has(computedResourceKey))
-      }
+      previewPending={previewPending}
       onDiagnosticsOpen={
         computedResourceRequest !== undefined &&
         isAssetsResourceRequest(computedResourceRequest) &&
@@ -884,7 +876,6 @@ const VariablePopoverContent = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
-  const hasPendingResources = useStore($hasPendingResources);
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const [queryActive, setQueryActive] = useState(false);
   const [queryPending, setQueryPending] = useState(false);
@@ -1131,7 +1122,7 @@ const VariablePopoverContent = ({
                   aria-label="Refresh resource data"
                   prefix={<RefreshIcon />}
                   color="ghost"
-                  disabled={hasPendingResources}
+                  disabled={isComputingRequest}
                   onClick={reloadData}
                 />
               </Tooltip>
