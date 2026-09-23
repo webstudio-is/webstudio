@@ -76,7 +76,7 @@ const HeaderSetting = ({
           {(value !== definition.defaultValue || draft !== undefined) && (
             <Tooltip content="Reset to default">
               <SmallIconButton
-                icon={<ResetIcon />}
+                icon={<ResetIcon fill="currentColor" />}
                 aria-label={`Reset ${definition.name} to default`}
                 onClick={() => save(definition.defaultValue)}
               />
