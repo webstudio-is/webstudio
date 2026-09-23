@@ -723,8 +723,8 @@ const parseHeaders = (headers: Resource["headers"]) => {
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource }
->(({ variable }, ref) => {
+  { variable?: DataSource; onChange?: () => void }
+>(({ variable, onChange }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
 
   const resources = useStore($resources);
@@ -773,7 +773,13 @@ export const ResourceForm = forwardRef<
   return (
     <>
       <Row>
-        <MethodField value={method} onChange={setMethod} />
+        <MethodField
+          value={method}
+          onChange={(value) => {
+            onChange?.();
+            setMethod(value);
+          }}
+        />
       </Row>
       <Row>
         <UrlField
@@ -781,12 +787,14 @@ export const ResourceForm = forwardRef<
           aliases={aliases}
           value={url}
           onChange={(urlExpression, searchParams) => {
+            onChange?.();
             setUrl(urlExpression);
             if (searchParams) {
               setSearchParams((prev) => [...prev, ...searchParams]);
             }
           }}
           onCurlPaste={(curl) => {
+            onChange?.();
             // update all feilds when curl is paste into url field
             setMethod(curl.method);
             setUrl(JSON.stringify(curl.url));
@@ -814,13 +822,17 @@ export const ResourceForm = forwardRef<
           scope={scope}
           aliases={aliases}
           searchParams={searchParams}
-          onChange={setSearchParams}
+          onChange={(value) => {
+            onChange?.();
+            setSearchParams(value);
+          }}
         />
       </Row>
       <Row>
         <CacheMaxAge
           value={maxAge}
           onChange={(newMaxAge) => {
+            onChange?.();
             setMaxAge(newMaxAge);
             // reset header
             setHeaders((headers) =>
@@ -835,6 +847,7 @@ export const ResourceForm = forwardRef<
           aliases={aliases}
           headers={headers}
           onChange={(newHeaders) => {
+            onChange?.();
             // reset dedicated fields
             if (newHeaders.some(({ name }) => isCacheControl(name))) {
               setMaxAge(undefined);
@@ -854,6 +867,7 @@ export const ResourceForm = forwardRef<
             value={body ?? ""}
             bodyType={bodyType}
             onChange={(newBody, newBodyType) => {
+              onChange?.();
               setBodyType(newBodyType);
               // reset header
               if (newBodyType) {
@@ -873,6 +887,7 @@ ResourceForm.displayName = "ResourceForm";
 
 type SystemResourceFormProps = {
   variable?: DataSource;
+  onChange?: () => void;
   querySourceContainer?: Element | null;
   onQueryActiveChange?: (active: boolean) => void;
   onQueryPendingChange?: (pending: boolean) => void;
@@ -896,6 +911,7 @@ export const SystemResourceForm = forwardRef<
 >((props, ref) => {
   const {
     variable,
+    onChange,
     querySourceContainer,
     onQueryActiveChange,
     onQueryPendingChange,
@@ -1015,7 +1031,10 @@ export const SystemResourceForm = forwardRef<
               );
             }}
             value={localResource}
-            onChange={setLocalResource}
+            onChange={(value) => {
+              onChange?.();
+              setLocalResource(value);
+            }}
           />
         </Grid>
       </Row>
@@ -1031,6 +1050,7 @@ export const SystemResourceForm = forwardRef<
             aliases={aliases}
             sourceContainer={querySourceContainer}
             onPendingChange={onQueryPendingChange}
+            onChange={onChange}
           />
         </Suspense>
       )}
@@ -1046,8 +1066,8 @@ const zGraphqlBody = z.object({
 
 export const GraphqlResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource }
->(({ variable }, ref) => {
+  { variable?: DataSource; onChange?: () => void }
+>(({ variable, onChange }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
 
   const resources = useStore($resources);
@@ -1144,8 +1164,12 @@ export const GraphqlResourceForm = forwardRef<
           scope={scope}
           aliases={aliases}
           value={url}
-          onChange={setUrl}
+          onChange={(value) => {
+            onChange?.();
+            setUrl(value);
+          }}
           onCurlPaste={(curl) => {
+            onChange?.();
             // update all feilds when curl is paste into url field
             setUrl(JSON.stringify(curl.url));
             const parsedHeaders = parseHeaders(
@@ -1176,12 +1200,22 @@ export const GraphqlResourceForm = forwardRef<
               maxRows={10}
               autoGrow={true}
               value={query}
-              onChange={setQuery}
+              onChange={(value) => {
+                onChange?.();
+                setQuery(value);
+              }}
             />
             <EditorDialog
               title="GraphQL query"
               content={
-                <TextArea grow={true} value={query} onChange={setQuery} />
+                <TextArea
+                  grow={true}
+                  value={query}
+                  onChange={(value) => {
+                    onChange?.();
+                    setQuery(value);
+                  }}
+                />
               }
             >
               <EditorDialogButton />
@@ -1217,12 +1251,17 @@ export const GraphqlResourceForm = forwardRef<
             bound={isVariablesLiteral === false}
             scope={scope}
             aliases={aliases}
-            onChangeValue={setVariables}
+            onChangeValue={(value) => {
+              onChange?.();
+              setVariables(value);
+            }}
             onChangeExpression={(value) => {
+              onChange?.();
               setVariables(value);
               setIsVariablesLiteral(isLiteralExpression(value));
             }}
             onRemove={(value) => {
+              onChange?.();
               setVariables(JSON.stringify(value));
               setIsVariablesLiteral(true);
             }}
@@ -1252,6 +1291,7 @@ export const GraphqlResourceForm = forwardRef<
         <CacheMaxAge
           value={maxAge}
           onChange={(newMaxAge) => {
+            onChange?.();
             setMaxAge(newMaxAge);
             setHeaders((headers) =>
               headers.filter(({ name }) => !isCacheControl(name))
@@ -1266,6 +1306,7 @@ export const GraphqlResourceForm = forwardRef<
           aliases={aliases}
           headers={headers}
           onChange={(newHeaders) => {
+            onChange?.();
             // reset dedicated fields
             if (newHeaders.some(({ name }) => isCacheControl(name))) {
               setMaxAge(undefined);

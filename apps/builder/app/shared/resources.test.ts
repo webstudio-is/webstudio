@@ -19,6 +19,7 @@ import {
   computeResourceRequestPlan,
   getResourceKey,
   invalidateAssets,
+  loadResourcePreview,
   loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
@@ -63,6 +64,249 @@ test("removes obsolete queued requests but keeps cached results", () => {
   expect($pendingResourceKeys.get()).toEqual(new Set());
   expect(resourceCacheListener).not.toHaveBeenCalled();
   unlisten();
+});
+
+test("keeps an explicitly loaded unbound resource through page-plan recalculation", async () => {
+  const request: ResourceRequest = {
+    name: "Current date",
+    method: "get",
+    url: "/$resources/current-date",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  let resolveResponse: (response: Response) => void = () => {};
+  const requestFetch = vi.fn<typeof globalThis.fetch>(
+    () =>
+      new Promise<Response>((resolve) => {
+        resolveResponse = resolve;
+      })
+  );
+
+  const release = loadResourcePreview(request, requestFetch);
+  // Cache updates trigger this page-plan recalculation, which does not include
+  // the unsaved resource.
+  queueResources([]);
+  resolveResponse(Response.json([[key, { data: "2026-09-23" }]]));
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(key)).toEqual({ data: "2026-09-23" });
+  });
+  release();
+});
+
+test.each([
+  ["Sitemap", "/$resources/sitemap.xml"],
+  ["HTTP", "https://example.com/posts"],
+  ["Existing unbound", "https://example.com/existing"],
+])(
+  "loads an unbound %s preview without making it a page dependency",
+  async (name, url) => {
+    const request: ResourceRequest = {
+      name,
+      method: "get",
+      url,
+      searchParams: [],
+      headers: [],
+    };
+    const key = getResourceKey(request);
+    const requestFetch = vi.fn<typeof globalThis.fetch>(
+      async (_input, init) => {
+        expect(JSON.parse(String(init?.body))).toEqual([request]);
+        return Response.json([[key, { data: name }]]);
+      }
+    );
+
+    queueResources([]);
+    const release = loadResourcePreview(request, requestFetch);
+    queueResources([]);
+    await vi.waitFor(() => {
+      expect($resourcesCache.get().get(key)).toEqual({ data: name });
+    });
+    expect(requestFetch).toHaveBeenCalledOnce();
+    release();
+    expect($pendingResourceKeys.get()).toEqual(new Set());
+  }
+);
+
+test("replaces a preview when its inputs change and ignores the old response", async () => {
+  const oldRequest: ResourceRequest = {
+    name: "Posts",
+    method: "get",
+    url: "https://example.com/posts?page=1",
+    searchParams: [],
+    headers: [],
+  };
+  const newRequest = { ...oldRequest, url: "https://example.com/posts?page=2" };
+  const oldKey = getResourceKey(oldRequest);
+  const newKey = getResourceKey(newRequest);
+  let respondOld: (response: Response) => void = () => {};
+  let respondNew: (response: Response) => void = () => {};
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          respondOld = resolve;
+        })
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          respondNew = resolve;
+        })
+    );
+
+  const releaseOld = loadResourcePreview(oldRequest, requestFetch);
+  releaseOld();
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+  const releaseNew = loadResourcePreview(newRequest, requestFetch);
+  queueResources([]);
+  respondOld(Response.json([[oldKey, { data: "old" }]]));
+  respondNew(Response.json([[newKey, { data: "new" }]]));
+
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(newKey)).toEqual({ data: "new" });
+  });
+  expect($resourcesCache.get().has(oldKey)).toBe(false);
+  releaseNew();
+});
+
+test("releasing a closed preview cancels it but keeps page requests alive", async () => {
+  const preview: ResourceRequest = {
+    name: "Preview",
+    method: "get",
+    url: "https://example.com/preview",
+    searchParams: [],
+    headers: [],
+  };
+  const page: ResourceRequest = {
+    ...preview,
+    name: "Page",
+    url: "https://example.com/page",
+  };
+  const previewKey = getResourceKey(preview);
+  const pageKey = getResourceKey(page);
+  let respond: (response: Response) => void = () => {};
+  const requestFetch = vi.fn<typeof globalThis.fetch>(
+    () =>
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+  );
+
+  queueResources([page]);
+  const release = loadResourcePreview(preview, requestFetch);
+  // Both requests share a batch, so releasing the preview must not abort the
+  // page's request or accept the preview's late result.
+  release();
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(false);
+  respond(
+    Response.json([
+      [previewKey, { data: "late preview" }],
+      [pageKey, { data: "page" }],
+    ])
+  );
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(pageKey)).toEqual({ data: "page" });
+  });
+  expect($resourcesCache.get().has(previewKey)).toBe(false);
+});
+
+test("closing an unbound preview aborts its request and rejects a late response", async () => {
+  const request: ResourceRequest = {
+    name: "Preview",
+    method: "get",
+    url: "https://example.com/close-preview",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  let respond: (response: Response) => void = () => {};
+  const requestFetch = vi.fn<typeof globalThis.fetch>(
+    () =>
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+  );
+
+  const release = loadResourcePreview(request, requestFetch);
+  release();
+  release();
+  expect(requestFetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+  respond(Response.json([[key, { data: "late" }]]));
+  await vi.waitFor(() => {
+    expect($pendingResourceKeys.get()).toEqual(new Set());
+  });
+  expect($resourcesCache.get().has(key)).toBe(false);
+});
+
+test("releasing one of two previews for the same request keeps the other active", async () => {
+  const request: ResourceRequest = {
+    name: "Shared",
+    method: "get",
+    url: "https://example.com/shared-preview",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  let respond: (response: Response) => void = () => {};
+  const requestFetch = vi.fn<typeof globalThis.fetch>(
+    () =>
+      new Promise((resolve) => {
+        respond = resolve;
+      })
+  );
+
+  const releaseFirst = loadResourcePreview(request, requestFetch);
+  const releaseSecond = loadResourcePreview(request, requestFetch);
+  releaseFirst();
+  queueResources([]);
+  respond(Response.json([[key, { data: "shared" }]]));
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(key)).toEqual({ data: "shared" });
+  });
+  releaseSecond();
+});
+
+test("an old preview release cannot cancel a new load after reset", async () => {
+  const request: ResourceRequest = {
+    name: "Date",
+    method: "get",
+    url: "/$resources/current-date",
+    searchParams: [],
+    headers: [],
+  };
+  const key = getResourceKey(request);
+  let respondNew: (response: Response) => void = () => {};
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true }
+          );
+        })
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          respondNew = resolve;
+        })
+    );
+
+  const releaseOld = loadResourcePreview(request, requestFetch);
+  reset();
+  const releaseNew = loadResourcePreview(request, requestFetch);
+  releaseOld();
+  queueResources([]);
+  respondNew(Response.json([[key, { data: "new" }]]));
+  await vi.waitFor(() => {
+    expect($resourcesCache.get().get(key)).toEqual({ data: "new" });
+  });
+  releaseNew();
 });
 
 test("unlocks reachable resource requests as dependency documents are cached", async () => {
