@@ -85,7 +85,6 @@ import {
 } from "./resource-panel";
 import { generateCurl } from "./curl";
 import {
-  $hasPendingResources,
   $pendingResourceKeys,
   $resourceDiagnosticsCache,
   $resourceDiagnosticsErrorCache,
@@ -93,7 +92,7 @@ import {
   $resourcesCache,
   computeResourceRequest,
   getResourceKey,
-  invalidateResource,
+  loadResourcePreview,
   loadResourceDiagnostics,
 } from "~/shared/resources";
 import { Row } from "./shared";
@@ -546,6 +545,7 @@ const VariablePanelForm = forwardRef<
     onVariableTypeChange: (variableType: VariableType) => void;
     value: unknown;
     onValueChange: (value: unknown) => void;
+    onResourceChange: () => void;
     querySourceContainer: Element | null;
     onQueryActiveChange: (active: boolean) => void;
     onQueryPendingChange: (pending: boolean) => void;
@@ -558,6 +558,7 @@ const VariablePanelForm = forwardRef<
       onVariableTypeChange,
       value,
       onValueChange,
+      onResourceChange,
       querySourceContainer,
       onQueryActiveChange,
       onQueryPendingChange,
@@ -629,15 +630,24 @@ const VariablePanelForm = forwardRef<
             </Row>
           )}
           {variableType === "resource" && (
-            <ResourceForm ref={ref} variable={variable} />
+            <ResourceForm
+              ref={ref}
+              variable={variable}
+              onChange={onResourceChange}
+            />
           )}
           {variableType === "graphql-resource" && (
-            <GraphqlResourceForm ref={ref} variable={variable} />
+            <GraphqlResourceForm
+              ref={ref}
+              variable={variable}
+              onChange={onResourceChange}
+            />
           )}
           {variableType === "system-resource" && (
             <SystemResourceForm
               ref={ref}
               variable={variable}
+              onChange={onResourceChange}
               querySourceContainer={querySourceContainer}
               onQueryActiveChange={onQueryActiveChange}
               onQueryPendingChange={onQueryPendingChange}
@@ -661,6 +671,8 @@ const VariablePreview = ({
   variable,
   variableType,
   variableValue,
+  showSavedResourceRequest,
+  isComputingRequest,
   onLoadData,
   queryActive,
   queryPending,
@@ -669,6 +681,8 @@ const VariablePreview = ({
   variable?: DataSource;
   variableType: VariableType;
   variableValue: unknown;
+  showSavedResourceRequest: boolean;
+  isComputingRequest: boolean;
   onLoadData: () => void;
   queryActive: boolean;
   queryPending: boolean;
@@ -679,7 +693,6 @@ const VariablePreview = ({
     variableType === "resource" ||
     variableType === "graphql-resource" ||
     variableType === "system-resource";
-  const hasPendingResources = useStore($hasPendingResources);
   const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
   const variableValues = useStore($instanceVariableValues);
@@ -699,7 +712,7 @@ const VariablePreview = ({
       setResolvedResourceRequest(parsedResourceRequest);
       return;
     }
-    if (variable?.type !== "resource") {
+    if (variable?.type !== "resource" || !showSavedResourceRequest) {
       setResolvedResourceRequest(undefined);
       return;
     }
@@ -724,11 +737,23 @@ const VariablePreview = ({
     return () => {
       active = false;
     };
-  }, [resources, resourceScope.variableValues, variable, variableValue]);
+  }, [
+    resources,
+    resourceScope.variableValues,
+    variable,
+    variableValue,
+    showSavedResourceRequest,
+  ]);
   const parsedResourceRequest = resourceRequest.safeParse(variableValue).data;
   const computedResourceRequest =
     parsedResourceRequest ??
-    (variable?.type === "resource" ? resolvedResourceRequest : undefined);
+    (variable?.type === "resource" && showSavedResourceRequest
+      ? resolvedResourceRequest
+      : undefined);
+  const previewPending =
+    isComputingRequest ||
+    (computedResourceRequest !== undefined &&
+      pendingResourceKeys.has(getResourceKey(computedResourceRequest)));
   let computedValue: unknown;
   let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
   let resourcePerformance: ResourcePerformance | undefined;
@@ -785,12 +810,8 @@ const VariablePreview = ({
           align="center"
           css={{ position: "absolute", inset: 0 }}
         >
-          <Button
-            type="button"
-            disabled={hasPendingResources}
-            onClick={onLoadData}
-          >
-            {hasPendingResources ? "Loading..." : "Load data"}
+          <Button type="button" disabled={previewPending} onClick={onLoadData}>
+            {previewPending ? "Loading..." : "Load data"}
           </Button>
         </Flex>
       )}
@@ -814,10 +835,7 @@ const VariablePreview = ({
       queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={preview}
       queryPending={queryPending}
-      previewPending={
-        computedResourceKey !== undefined &&
-        pendingResourceKeys.has(computedResourceKey)
-      }
+      previewPending={previewPending}
       onDiagnosticsOpen={
         computedResourceRequest !== undefined &&
         isAssetsResourceRequest(computedResourceRequest) &&
@@ -850,13 +868,14 @@ const VariablePreview = ({
 const VariablePopoverContent = ({
   formRef,
   variable,
+  isOpen,
   onClose,
 }: {
   formRef: RefObject<HTMLFormElement>;
   variable?: DataSource;
+  isOpen: boolean;
   onClose: () => void;
 }) => {
-  const hasPendingResources = useStore($hasPendingResources);
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const [queryActive, setQueryActive] = useState(false);
   const [queryPending, setQueryPending] = useState(false);
@@ -867,6 +886,11 @@ const VariablePopoverContent = ({
     []
   );
   const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
+  const previewReleaseRef = useRef<(() => void) | undefined>(undefined);
+  const previewRevisionRef = useRef(0);
+  const [showSavedResourceRequest, setShowSavedResourceRequest] =
+    useState(true);
+  const [isComputingRequest, setIsComputingRequest] = useState(false);
   const [value, setValue] = useState<unknown>(() => {
     if (variable?.type === "variable") {
       if (variable.value.type === "json") {
@@ -901,9 +925,41 @@ const VariablePopoverContent = ({
     return "string";
   });
 
+  const cancelPreview = () => {
+    previewRevisionRef.current += 1;
+    previewReleaseRef.current?.();
+    previewReleaseRef.current = undefined;
+    setIsComputingRequest(false);
+  };
+
+  const onResourceChange = () => {
+    cancelPreview();
+    setShowSavedResourceRequest(false);
+    setValue(undefined);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      return () => {
+        previewRevisionRef.current += 1;
+        previewReleaseRef.current?.();
+        previewReleaseRef.current = undefined;
+      };
+    }
+  }, [isOpen]);
+
   const updateVariableType = (variableType: VariableType) => {
+    cancelPreview();
+    setShowSavedResourceRequest(false);
     setVariableType(variableType);
     setValue((prev: unknown) => {
+      if (
+        variableType === "resource" ||
+        variableType === "graphql-resource" ||
+        variableType === "system-resource"
+      ) {
+        return;
+      }
       if (variableType === "string" && typeof prev !== "string") {
         return "";
       }
@@ -924,20 +980,38 @@ const VariablePopoverContent = ({
   const resourceScope = useResourceScope({ variable });
 
   const reloadData = async () => {
+    cancelPreview();
+    const revision = previewRevisionRef.current;
+    setShowSavedResourceRequest(false);
+    setValue(undefined);
     const formData = getReloadableResourceFormData(formRef.current);
     if (formData === undefined) {
       return;
     }
-    const resource = createResourceValueFromFormData({
-      id: variable?.id ?? "new",
-      formData,
-    });
-    const resourceRequest = await computeResourceRequest(
-      resource,
-      resourceScope.variableValues
-    );
-    invalidateResource(resourceRequest);
-    setValue(resourceRequest);
+    setIsComputingRequest(true);
+    try {
+      const resource = createResourceValueFromFormData({
+        id: variable?.id ?? "new",
+        formData,
+      });
+      const resourceRequest = await computeResourceRequest(
+        resource,
+        resourceScope.variableValues
+      );
+      if (revision !== previewRevisionRef.current) {
+        return;
+      }
+      previewReleaseRef.current = loadResourcePreview(resourceRequest);
+      setValue(resourceRequest);
+    } catch {
+      if (revision === previewRevisionRef.current) {
+        console.error("Unable to load resource preview");
+      }
+    } finally {
+      if (revision === previewRevisionRef.current) {
+        setIsComputingRequest(false);
+      }
+    }
   };
 
   const copyAsCurl = async () => {
@@ -1007,6 +1081,7 @@ const VariablePopoverContent = ({
                   onVariableTypeChange={updateVariableType}
                   value={value}
                   onValueChange={setValue}
+                  onResourceChange={onResourceChange}
                   querySourceContainer={querySourceContainer}
                   onQueryActiveChange={setQueryActive}
                   onQueryPendingChange={setQueryPending}
@@ -1020,6 +1095,8 @@ const VariablePopoverContent = ({
             variable={variable}
             variableType={variableType}
             variableValue={value}
+            showSavedResourceRequest={showSavedResourceRequest}
+            isComputingRequest={isComputingRequest}
             onLoadData={reloadData}
             queryActive={queryActive}
             queryPending={queryPending}
@@ -1053,7 +1130,7 @@ const VariablePopoverContent = ({
                   aria-label="Refresh resource data"
                   prefix={<RefreshIcon />}
                   color="ghost"
-                  disabled={hasPendingResources}
+                  disabled={isComputingRequest}
                   onClick={reloadData}
                 />
               </Tooltip>
@@ -1129,6 +1206,7 @@ export const VariablePopoverTrigger = ({
         <VariablePopoverContent
           formRef={formRef}
           variable={variable}
+          isOpen={isOpen}
           onClose={() => setOpen(false)}
         />
       }
