@@ -9,6 +9,9 @@ import {
   List,
   ListItem,
   ScrollArea,
+  Text,
+  cssVar,
+  theme,
 } from "@webstudio-is/design-system";
 import { ProjectSettingsDataRow } from "./data-row";
 
@@ -35,12 +38,16 @@ export const ProjectSettingsRuleList = ({
   onSubmit,
   rules,
   columns,
+  columnLabels,
+  label,
 }: {
   fields: Field[];
   validate: (values: Values) => Errors;
   onSubmit: (values: Values) => boolean;
   rules: Rule[];
   columns: string;
+  columnLabels: string[];
+  label: string;
 }) => {
   const [values, setValues] = useState<Values>({});
   const [errors, setErrors] = useState<Errors>({});
@@ -143,22 +150,52 @@ export const ProjectSettingsRuleList = ({
       </Flex>
       {rules.length > 0 && (
         <ScrollArea>
-          <Grid>
+          <Grid role="table" aria-label={label}>
+            <Grid role="rowgroup">
+              <Grid
+                role="row"
+                gap="2"
+                css={{
+                  gridTemplateColumns: `${columns} ${theme.spacing[9]}`,
+                  p: theme.spacing[3],
+                }}
+              >
+                {columnLabels.map((columnLabel) => (
+                  <Text
+                    key={columnLabel}
+                    role="columnheader"
+                    variant="regularBold"
+                  >
+                    {columnLabel}
+                  </Text>
+                ))}
+                <Text role="columnheader" aria-label="Actions" />
+              </Grid>
+            </Grid>
             <List asChild>
-              <Flex direction="column" gap="1" align="stretch">
-                {rules.map(({ key, values, actions }) => (
-                  <ListItem asChild key={key}>
+              <Flex role="rowgroup" direction="column" gap="1" align="stretch">
+                {rules.map(({ key, values, actions }, index) => (
+                  <ListItem asChild key={key} index={index}>
                     <ProjectSettingsDataRow
+                      role="row"
                       align="center"
                       gap="2"
-                      css={{ gridTemplateColumns: columns }}
+                      css={{
+                        gridTemplateColumns: `${columns} ${theme.spacing[9]}`,
+                        "&:focus-visible": {
+                          outline: `2px solid ${cssVar("--border-focus")}`,
+                          outlineOffset: -2,
+                        },
+                      }}
                     >
                       {values.map((value, index) => (
-                        <Flex key={index} css={{ minWidth: 0 }}>
+                        <Flex key={index} role="cell" css={{ minWidth: 0 }}>
                           {value}
                         </Flex>
                       ))}
-                      {actions}
+                      <Flex role="cell" align="center">
+                        {actions}
+                      </Flex>
                     </ProjectSettingsDataRow>
                   </ListItem>
                 ))}

@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
-import { TooltipProvider } from "@webstudio-is/design-system";
+import { Button, TooltipProvider } from "@webstudio-is/design-system";
 import { ProjectSettingsRuleList } from "./rule-list";
 
 test("invalid route disables Add until corrected", () => {
@@ -30,6 +30,8 @@ test("invalid route disables Add until corrected", () => {
           onSubmit={onSubmit}
           rules={[]}
           columns="1fr"
+          columnLabels={["Path"]}
+          label="Rules"
         />
       </TooltipProvider>
     );
@@ -57,6 +59,61 @@ test("invalid route disables Add until corrected", () => {
   expect(add.disabled).toBe(false);
   act(() => add.click());
   expect(onSubmit).toHaveBeenCalledWith({ route: "/private" });
+  act(() => root.unmount());
+  container.remove();
+});
+
+test("rules expose table cells and support keyboard navigation to actions", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  act(() => {
+    root.render(
+      <TooltipProvider>
+        <ProjectSettingsRuleList
+          fields={[]}
+          validate={() => ({})}
+          onSubmit={() => true}
+          label="Response header rules"
+          columnLabels={["Path", "Header"]}
+          columns="1fr 1fr"
+          rules={[
+            {
+              key: "one",
+              values: ["/*", "Content-Security-Policy"],
+            },
+            {
+              key: "two",
+              values: ["/private", "X-Frame-Options"],
+              actions: (
+                <Button aria-label="Remove X-Frame-Options">Remove</Button>
+              ),
+            },
+          ]}
+        />
+      </TooltipProvider>
+    );
+  });
+  const table = container.querySelector('[role="table"]');
+  const rows = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="row"]')
+  );
+  expect(table?.getAttribute("aria-label")).toBe("Response header rules");
+  expect(container.querySelectorAll('[role="columnheader"]')).toHaveLength(3);
+  expect(rows).toHaveLength(3);
+  expect(rows[1]?.querySelectorAll('[role="cell"]')).toHaveLength(3);
+  expect(rows[1]?.tabIndex).toBe(0);
+  expect(rows[2]?.tabIndex).toBe(-1);
+  act(() => {
+    rows[1]?.focus();
+    rows[1]?.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })
+    );
+  });
+  expect(document.activeElement).toBe(rows[2]);
+  expect(rows[2]?.querySelector("button")?.getAttribute("aria-label")).toBe(
+    "Remove X-Frame-Options"
+  );
   act(() => root.unmount());
   container.remove();
 });

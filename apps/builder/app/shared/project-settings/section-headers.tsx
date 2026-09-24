@@ -192,6 +192,8 @@ export const SectionHeaders = () => {
           return save(next, ruleKey(route, name));
         }}
         columns="1fr 1.5fr 1.5fr"
+        columnLabels={["Path", "Header", "Value"]}
+        label="Response header rules"
         rules={activeHeaders.map((header) => {
           const route = header.route ?? "/*";
           const key = ruleKey(route, header.name);

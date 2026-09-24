@@ -203,6 +203,8 @@ export const SectionAuth = () => {
         })}
         onSubmit={handleAddAuthRoute}
         columns="1fr 1fr"
+        columnLabels={["Path", "Login"]}
+        label="Authentication rules"
         rules={filteredAuthRoutes.map((authRoute) => ({
           key: authRoute.route,
           values: [
