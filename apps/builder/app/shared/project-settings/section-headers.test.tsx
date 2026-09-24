@@ -129,14 +129,30 @@ test.each(["denied", "throws"])(
 test("adds a route rule and keeps required site-wide headers nonremovable", () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   render();
-  expect(
-    document.querySelector(
-      'button[aria-label="Remove Content-Security-Policy for /*"]'
-    )
-  ).toBeNull();
-  expect(
-    document.querySelector('button[aria-label="Remove X-Frame-Options for /*"]')
-  ).not.toBeNull();
+  for (const name of [
+    "Content-Security-Policy",
+    "X-Content-Type-Options",
+    "Referrer-Policy",
+    "Strict-Transport-Security",
+  ]) {
+    expect(
+      document.querySelector<HTMLButtonElement>(
+        `button[aria-label="Remove ${name} for /*"]`
+      )?.disabled
+    ).toBe(true);
+  }
+  const optionalRemove = document.querySelector<HTMLButtonElement>(
+    'button[aria-label="Remove X-Frame-Options for /*"]'
+  );
+  expect(optionalRemove?.disabled).toBe(false);
+  act(() =>
+    document
+      .querySelector<HTMLButtonElement>(
+        'button[aria-label="Remove Content-Security-Policy for /*"]'
+      )
+      ?.click()
+  );
+  expect(executeRuntimeMutation).not.toHaveBeenCalled();
   const { route, name, value } = {
     route: document.querySelector<HTMLInputElement>(
       'input[placeholder="/* or /private/*"]'

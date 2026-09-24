@@ -29,6 +29,10 @@ import { getExistingRoutePaths, sectionSpacing } from "./utils";
 const ruleKey = (route: string, name: string) =>
   `${route}\0${name.toLowerCase()}`;
 
+const canRemoveHeader = (header: CustomResponseHeader) =>
+  (header.route !== undefined && header.route !== "/*") ||
+  customResponseHeader.safeParse({ name: header.name, value: null }).success;
+
 export const SectionHeaders = () => {
   const { allowDynamicData } = useStore($permissions);
   const settings = useStore($projectSettings);
@@ -198,9 +202,7 @@ export const SectionHeaders = () => {
         rules={activeHeaders.map((header) => {
           const route = header.route ?? "/*";
           const key = ruleKey(route, header.name);
-          const requiredGlobal =
-            route === "/*" &&
-            getResponseHeaderDefinition(header.name)?.required === true;
+          const canRemove = canRemoveHeader(header);
           return {
             key,
             values: [
@@ -214,12 +216,16 @@ export const SectionHeaders = () => {
                 <Text truncate>{header.value ?? "Not sent"}</Text>
               </Tooltip>,
             ],
-            actions: requiredGlobal ? undefined : (
+            actions: (
               <SmallIconButton
                 variant="destructive"
                 icon={<TrashIcon />}
                 aria-label={`Remove ${header.name} for ${route}`}
+                disabled={!canRemove}
                 onClick={() => {
+                  if (!canRemoveHeader(header)) {
+                    return;
+                  }
                   save(
                     route === "/*"
                       ? { name: header.name, value: null }
