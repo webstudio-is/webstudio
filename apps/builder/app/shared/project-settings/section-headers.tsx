@@ -1,54 +1,82 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Flex,
   Grid,
-  InputErrorsTooltip,
-  Label,
   LinkButton,
   ProChip,
   SmallIconButton,
   Text,
-  TextArea,
   Tooltip,
   cssVar,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, ResetIcon, TrashIcon } from "@webstudio-is/icons";
 import {
+  InfoCircleIcon,
+  NotebookAndPenIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
+import {
+  customResponseHeader,
   customResponseHeaders,
+  getResponseHeaderDefinition,
   getResponseHeaders,
   responseHeaderDefinitions,
-  type ResponseHeaderDefinition,
+  type CustomResponseHeader,
 } from "@webstudio-is/sdk";
-import { $projectSettings } from "~/shared/sync/data-stores";
+import { validateWsAuthRoute } from "@webstudio-is/wsauth";
+import { $pages, $projectSettings } from "~/shared/sync/data-stores";
 import { $permissions } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { sectionSpacing } from "./utils";
+import { ProjectSettingsRuleList } from "./rule-list";
+import { getExistingRoutePaths, sectionSpacing } from "./utils";
 
-const HeaderSetting = ({
-  definition,
-  value,
-}: {
-  definition: ResponseHeaderDefinition;
-  value: string | null;
-}) => {
-  const [draft, setDraft] = useState<string>();
-  const [errors, setErrors] = useState<string[]>([]);
-  const valueId = useId();
+const ruleKey = (route: string, name: string) =>
+  `${route}\0${name.toLowerCase()}`;
 
-  const save = (value: string | null) => {
-    // Read the latest settings so saving one header preserves other edits.
+export const SectionHeaders = () => {
+  const { allowDynamicData } = useStore($permissions);
+  const settings = useStore($projectSettings);
+  const pages = useStore($pages);
+  const [editing, setEditing] = useState<{
+    key: string;
+    values: Record<string, string>;
+  }>();
+  const [saveError, setSaveError] = useState("");
+  const configured = settings?.meta.customHeaders ?? [];
+  const activeHeaders = [
+    ...getResponseHeaders(configured).filter(({ value }) => value !== null),
+    ...configured.filter(
+      (header) => header.route !== undefined && header.route !== "/"
+    ),
+  ];
+  const routeSuggestions = [
+    "/",
+    ...Array.from(getExistingRoutePaths(pages)).sort(),
+  ];
+
+  const save = (
+    next: CustomResponseHeader | undefined,
+    previousKey?: string
+  ) => {
     const headers = ($projectSettings.get()?.meta.customHeaders ?? []).filter(
-      (header) => header.name.toLowerCase() !== definition.name.toLowerCase()
+      (header) => ruleKey(header.route ?? "/", header.name) !== previousKey
     );
-    if (value?.trim() !== definition.defaultValue) {
-      headers.push({ name: definition.name, value: value?.trim() ?? null });
+    if (next !== undefined) {
+      const definition = getResponseHeaderDefinition(next.name);
+      if (
+        next.route !== undefined ||
+        next.value?.trim() !== definition?.defaultValue
+      ) {
+        headers.unshift(next);
+      }
     }
     const result = customResponseHeaders.safeParse(headers);
     if (!result.success) {
-      setErrors(result.error.issues.map((issue) => issue.message));
-      return;
+      setSaveError(
+        result.error.issues.map((issue) => issue.message).join(". ")
+      );
+      return false;
     }
     try {
       const mutation = executeRuntimeMutation({
@@ -58,92 +86,16 @@ const HeaderSetting = ({
         },
       });
       if (mutation !== undefined) {
-        setDraft(undefined);
-        setErrors([]);
-        return;
+        setSaveError("");
+        return true;
       }
     } catch {
-      // Keep the draft available for retry after a failed runtime mutation.
+      // Keep the form values or existing row available for retry.
     }
-    setErrors(["Changes could not be saved. Please try again."]);
+    setSaveError("Changes could not be saved. Please try again.");
+    return false;
   };
 
-  return (
-    <Grid gap={1}>
-      <Flex
-        justify="between"
-        align="center"
-        css={{ minHeight: theme.spacing[9] }}
-      >
-        <Label htmlFor={valueId}>{definition.name}</Label>
-        <Flex gap={1}>
-          {(value !== definition.defaultValue || draft !== undefined) && (
-            <Tooltip content="Reset to default">
-              <SmallIconButton
-                icon={<ResetIcon fill="currentColor" />}
-                aria-label={`Reset ${definition.name} to default`}
-                onClick={() => save(definition.defaultValue)}
-              />
-            </Tooltip>
-          )}
-          {!definition.required && value !== null && (
-            <Tooltip content="Remove header">
-              <SmallIconButton
-                variant="destructive"
-                icon={<TrashIcon />}
-                aria-label={`Remove ${definition.name}`}
-                onClick={() => save(null)}
-              />
-            </Tooltip>
-          )}
-        </Flex>
-      </Flex>
-      <InputErrorsTooltip errors={errors.length ? errors : undefined}>
-        <TextArea
-          id={valueId}
-          variant="mono"
-          rows={1}
-          maxRows={4}
-          autoGrow
-          value={draft ?? value ?? ""}
-          placeholder="Not sent"
-          disabled={value === null}
-          color={errors.length ? "error" : undefined}
-          aria-invalid={errors.length > 0}
-          onChange={(value) => {
-            setDraft(value);
-            setErrors([]);
-          }}
-          onBlur={() => {
-            if (draft !== undefined) {
-              save(draft);
-            }
-          }}
-          onKeyDown={(event) => {
-            if (event.nativeEvent.isComposing) {
-              return;
-            }
-            if (event.key === "Enter") {
-              event.preventDefault();
-              event.currentTarget.blur();
-            }
-            if (event.key === "Escape") {
-              event.preventDefault();
-              event.stopPropagation();
-              setDraft(undefined);
-              setErrors([]);
-            }
-          }}
-        />
-      </InputErrorsTooltip>
-    </Grid>
-  );
-};
-
-export const SectionHeaders = () => {
-  const { allowDynamicData } = useStore($permissions);
-  const settings = useStore($projectSettings);
-  const headers = getResponseHeaders(settings?.meta.customHeaders);
   return (
     <Grid gap={3} css={sectionSpacing}>
       <Flex align="center" gap={1}>
@@ -154,20 +106,22 @@ export const SectionHeaders = () => {
           content={
             <>
               <Text>
-                Configure your site's HTTP security headers. Changes are saved
-                when you leave a field. Publish to apply them to your site.
+                Set response headers for all paths or a route. Routes use the
+                same syntax as Authentication, including :params and *.
               </Text>
               <br />
               <Text>
-                All headers are required except X-Frame-Options, which can be
-                removed. Reset restores a header's default value.
+                / applies to every path. Four security headers are required.
+                Select Edit to change a value; route rules override the
+                site-wide value. An empty value omits the optional
+                X-Frame-Options header. Publish to apply changes.
               </Text>
               {allowDynamicData === false && (
                 <>
                   <br />
                   <Text>
-                    Customizing headers on a custom domain requires Pro. Default
-                    values and staging are free.
+                    Custom headers on a custom domain require Pro. Defaults and
+                    staging are free.
                   </Text>
                   <LinkButton
                     color="primary"
@@ -189,13 +143,135 @@ export const SectionHeaders = () => {
           />
         </Tooltip>
       </Flex>
-      {responseHeaderDefinitions.map((definition, index) => (
-        <HeaderSetting
-          key={definition.name}
-          definition={definition}
-          value={headers[index].value}
-        />
-      ))}
+      {saveError && <Text color="destructive">{saveError}</Text>}
+      <ProjectSettingsRuleList
+        fields={[
+          {
+            name: "route",
+            placeholder: "/ or /private/*",
+            suggestions: routeSuggestions,
+            disabledWhenEditing: true,
+          },
+          {
+            name: "name",
+            placeholder: "Header name",
+            suggestions: responseHeaderDefinitions.map(({ name }) => name),
+            disabledWhenEditing: true,
+          },
+          { name: "value", placeholder: "Header value" },
+        ]}
+        validate={(values) => {
+          const route = values.route?.trim() ?? "";
+          const name = values.name?.trim() ?? "";
+          const value = values.value?.trim() ?? "";
+          const errors: Record<string, string[]> = {};
+          const routeError = validateWsAuthRoute(route);
+          if (routeError) {
+            errors.route = [routeError];
+          }
+          if (
+            !editing &&
+            activeHeaders.some(
+              (header) =>
+                ruleKey(header.route ?? "/", header.name) ===
+                ruleKey(route, name)
+            )
+          ) {
+            errors.name = ["This header already exists for this route"];
+          }
+          const definition = getResponseHeaderDefinition(name);
+          const result = customResponseHeader.safeParse({
+            route,
+            name,
+            value:
+              value === "" && definition?.required === false ? null : value,
+          });
+          if (!result.success) {
+            for (const issue of result.error.issues) {
+              const field = String(issue.path[0] ?? "value");
+              (errors[field] ??= []).push(issue.message);
+            }
+          }
+          return errors;
+        }}
+        onSubmit={(values, editingKey) => {
+          const route = values.route.trim();
+          const name =
+            getResponseHeaderDefinition(values.name.trim())?.name ??
+            values.name.trim();
+          const next: CustomResponseHeader = {
+            ...(route === "/" ? {} : { route }),
+            name,
+            value:
+              values.value.trim() === "" &&
+              getResponseHeaderDefinition(name)?.required === false
+                ? null
+                : values.value.trim(),
+          };
+          return save(next, editingKey);
+        }}
+        editing={editing}
+        onCancelEdit={() => setEditing(undefined)}
+        columns="1fr 1.5fr 1.5fr"
+        rules={activeHeaders.map((header) => {
+          const route = header.route ?? "/";
+          const key = ruleKey(route, header.name);
+          const requiredGlobal =
+            route === "/" &&
+            getResponseHeaderDefinition(header.name)?.required === true;
+          return {
+            key,
+            values: [
+              <Tooltip content={route} key="route">
+                <Text truncate>{route}</Text>
+              </Tooltip>,
+              <Tooltip content={header.name} key="name">
+                <Text truncate>{header.name}</Text>
+              </Tooltip>,
+              <Tooltip content={header.value ?? "Not sent"} key="value">
+                <Text truncate>{header.value ?? "Not sent"}</Text>
+              </Tooltip>,
+            ],
+            actions: (
+              <Flex data-row-actions align="center">
+                <SmallIconButton
+                  icon={<NotebookAndPenIcon />}
+                  aria-label={`Edit ${header.name} for ${route}`}
+                  onClick={() => {
+                    setSaveError("");
+                    setEditing({
+                      key,
+                      values: {
+                        route,
+                        name: header.name,
+                        value: header.value ?? "",
+                      },
+                    });
+                  }}
+                />
+                {!requiredGlobal && (
+                  <SmallIconButton
+                    variant="destructive"
+                    icon={<TrashIcon />}
+                    aria-label={`Remove ${header.name} for ${route}`}
+                    onClick={() => {
+                      const removed = save(
+                        route === "/"
+                          ? { name: header.name, value: null }
+                          : undefined,
+                        key
+                      );
+                      if (removed && editing?.key === key) {
+                        setEditing(undefined);
+                      }
+                    }}
+                  />
+                )}
+              </Flex>
+            ),
+          };
+        })}
+      />
     </Grid>
   );
 };

@@ -83,11 +83,12 @@ export const ProjectSettingsDialog = ({
         height={Number.parseInt(rawTheme.spacing[35], 10)}
         data-floating-panel-container
         onEscapeKeyDown={(event) => {
-          // Radix handles Escape during capture, before the header field can
-          // cancel its draft. Keep that keypress from dismissing the dialog.
+          // Radix handles Escape during capture, before the rule form can
+          // cancel its edit. Keep that keypress from dismissing the dialog.
           if (
             currentSection === "headers" &&
-            event.target instanceof HTMLTextAreaElement
+            event.target instanceof HTMLElement &&
+            event.target.closest("[data-rule-editing]")
           ) {
             event.preventDefault();
           }

@@ -393,6 +393,20 @@ describe("createProductionBuild (msw)", () => {
       checkPlan: true,
     },
     {
+      label: "Free owner, route rule",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [
+        {
+          route: "/private/*",
+          name: "Referrer-Policy",
+          value: "no-referrer",
+        },
+      ],
+      denied: true,
+      checkPlan: true,
+    },
+    {
       label: "Free owner, mixed domains",
       allowed: false,
       domains: ["project-domain", "example.com"],

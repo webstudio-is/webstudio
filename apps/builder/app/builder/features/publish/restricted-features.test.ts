@@ -144,6 +144,26 @@ describe("getRestrictedFeatures", () => {
     }
   );
 
+  test("restricts path-specific header rules on the free plan", () => {
+    const features = getFeatures({
+      pages: createPages(),
+      projectSettings: {
+        compiler: {},
+        meta: {
+          customHeaders: [
+            {
+              route: "/private/*",
+              name: "Referrer-Policy",
+              value: "no-referrer",
+            },
+          ],
+        },
+      },
+      permissions: { allowDynamicData: false },
+    });
+    expect(features.has("Custom headers")).toBe(true);
+  });
+
   test("allows custom headers on the Pro plan", () => {
     const features = getFeatures({
       pages: createPages(),

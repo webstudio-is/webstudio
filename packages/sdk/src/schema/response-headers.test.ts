@@ -49,6 +49,48 @@ describe("response header settings", () => {
     expect(hasCustomResponseHeaders([headers[1]])).toBe(true);
   });
 
+  test("supports route rules while preserving site-wide defaults", () => {
+    const rules = [
+      { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },
+      { route: "/private/:id", name: "Referrer-Policy", value: "same-origin" },
+    ];
+    expect(customResponseHeaders.parse(rules)).toEqual(rules);
+    expect(getResponseHeaders(rules)).toContainEqual({
+      name: "Referrer-Policy",
+      value: "strict-origin-when-cross-origin",
+    });
+    expect(hasCustomResponseHeaders(rules)).toBe(true);
+    expect(
+      hasCustomResponseHeaders([
+        {
+          route: "/",
+          name: "Referrer-Policy",
+          value: "strict-origin-when-cross-origin",
+        },
+      ])
+    ).toBe(false);
+    expect(
+      customResponseHeaders.safeParse([
+        { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },
+        { route: "/docs/*", name: "referrer-policy", value: "same-origin" },
+      ]).success
+    ).toBe(false);
+    expect(
+      customResponseHeader.safeParse({
+        route: "/docs/*/bad",
+        name: "Referrer-Policy",
+        value: "no-referrer",
+      }).success
+    ).toBe(false);
+    expect(
+      customResponseHeader.safeParse({
+        route: "/private/*",
+        name: "X-Frame-Options",
+        value: null,
+      }).success
+    ).toBe(true);
+  });
+
   test.each(responseHeaderDefinitions.filter((header) => header.required))(
     "required $name cannot be removed or emptied",
     ({ name }) => {

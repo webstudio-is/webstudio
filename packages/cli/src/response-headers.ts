@@ -5,10 +5,16 @@ import {
 import type { ProjectSettings } from "@webstudio-is/project-build";
 
 export const generateResponseHeadersModule = (settings?: ProjectSettings) => {
-  const headers = getResponseHeaders(
-    customResponseHeaders.parse(settings?.meta.customHeaders ?? [])
+  const configured = customResponseHeaders.parse(
+    settings?.meta.customHeaders ?? []
   );
+  const headers = [
+    ...getResponseHeaders(configured),
+    ...configured.filter(
+      (header) => header.route !== undefined && header.route !== "/"
+    ),
+  ];
   return `// Generated response header configuration for hosting adapters.
-export const customHeaders: Array<{ name: string; value: string | null }> = ${JSON.stringify(headers, null, 2)};
+export const customHeaders: Array<{ route?: string; name: string; value: string | null }> = ${JSON.stringify(headers, null, 2)};
 `;
 };

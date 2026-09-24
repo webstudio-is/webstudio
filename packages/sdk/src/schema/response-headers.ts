@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validateWsAuthRoute } from "@webstudio-is/wsauth";
 
 // Keep defaults and required flags in sync with the Cloud hosting template's
 // response-header-settings.ts. Missing project settings use these defaults.
@@ -32,6 +33,15 @@ export const getResponseHeaderDefinition = (name: string) =>
 
 export const customResponseHeader = z
   .object({
+    // Omitted route is the site-wide setting used by existing projects.
+    route: z
+      .string()
+      .max(2048)
+      .refine(
+        (route) => validateWsAuthRoute(route) === undefined,
+        "Invalid route"
+      )
+      .optional(),
     name: z
       .string()
       .refine(
@@ -67,25 +77,25 @@ export const customResponseHeader = z
 
 export const customResponseHeaders = z
   .array(customResponseHeader)
-  .max(
-    responseHeaderDefinitions.length,
-    "At most 5 response headers are supported"
-  )
+  .max(100, "At most 100 response header rules are supported")
   .superRefine((headers, context) => {
     const names = new Set<string>();
     let size = 0;
     for (const [index, header] of headers.entries()) {
-      const name = header.name.toLowerCase();
+      const name = `${header.route ?? "/"}\0${header.name.toLowerCase()}`;
       if (names.has(name)) {
         context.addIssue({
           code: "custom",
           path: [index, "name"],
-          message:
-            "This header is already configured (names are case-insensitive)",
+          message: "This header is already configured for this route",
         });
       }
       names.add(name);
-      size += header.name.length + (header.value?.length ?? 0) + 4;
+      size +=
+        (header.route?.length ?? 0) +
+        header.name.length +
+        (header.value?.length ?? 0) +
+        4;
     }
     if (size > 16384) {
       context.addIssue({
@@ -102,10 +112,12 @@ export type CustomResponseHeader = z.infer<typeof customResponseHeader>;
 export const hasCustomResponseHeaders = (
   headers: readonly CustomResponseHeader[] = []
 ) =>
-  headers.some(({ name, value }) => {
+  headers.some(({ route, name, value }) => {
     const definition = getResponseHeaderDefinition(name);
     return (
-      definition === undefined || value?.trim() !== definition.defaultValue
+      (route !== undefined && route !== "/") ||
+      definition === undefined ||
+      value?.trim() !== definition.defaultValue
     );
   });
 
@@ -114,7 +126,9 @@ export const getResponseHeaders = (
 ): CustomResponseHeader[] =>
   responseHeaderDefinitions.map(({ name, defaultValue }) => {
     const configured = headers.find(
-      (header) => header.name.toLowerCase() === name.toLowerCase()
+      (header) =>
+        (header.route === undefined || header.route === "/") &&
+        header.name.toLowerCase() === name.toLowerCase()
     );
     return {
       name,

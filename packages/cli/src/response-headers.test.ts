@@ -50,3 +50,18 @@ test("invalid configuration fails the build", () => {
     })
   ).toThrow();
 });
+
+test("generates site-wide defaults followed by route rules", () => {
+  const rule = {
+    route: "/docs/*",
+    name: "Referrer-Policy",
+    value: "no-referrer",
+  };
+  const generated = readGeneratedHeaders(
+    generateResponseHeadersModule({
+      meta: { customHeaders: [rule] },
+      compiler: {},
+    })
+  ) as unknown[];
+  expect(generated).toEqual([...getResponseHeaders(), rule]);
+});
