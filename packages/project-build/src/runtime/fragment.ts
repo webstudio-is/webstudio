@@ -55,6 +55,7 @@ import {
   traverseStyleValue,
 } from "./style-utils";
 import { countDataSourceAssetReferences } from "./assets";
+import { throwBuilderRuntimeError } from "./errors";
 
 const createNanoId = () => createId("nano");
 
@@ -650,6 +651,30 @@ export const insertWebstudioFragmentCopy = ({
     styleSourceSelections,
   } = data;
 
+  const referencedTokenIds = new Map<string, string>();
+  for (const id of fragment.referenceTokenIds ?? []) {
+    const source = fragment.styleSources.find(
+      (candidate) => candidate.id === id
+    );
+    if (
+      source?.type !== "token" ||
+      fragment.styles.some((style) => style.styleSourceId === id)
+    ) {
+      return throwBuilderRuntimeError("BAD_REQUEST", "Invalid token reference");
+    }
+    const existing = Array.from(styleSources.values()).find(
+      (candidate) =>
+        candidate.type === "token" && candidate.name === source.name
+    );
+    if (existing === undefined) {
+      return throwBuilderRuntimeError(
+        "NOT_FOUND",
+        `Design token "${source.name}" was not found`
+      );
+    }
+    referencedTokenIds.set(id, existing.id);
+  }
+
   /**
    * insert reusables without changing their ids to not bloat data
    * and catch up with user changes
@@ -691,6 +716,7 @@ export const insertWebstudioFragmentCopy = ({
     styleSourceIdMap = insertTokenStyleSources({
       fragmentStyleSources: fragment.styleSources,
       fragmentStyles: fragment.styles,
+      referencedTokenIds,
       styleSources,
       styles,
       breakpoints,
@@ -965,6 +991,7 @@ export const insertWebstudioFragmentCopy = ({
     insertLocalStyleSourcesWithNewIds({
       ...localStyleSourceInput,
       contentMode: true,
+      styleSourceIdMap: referencedTokenIds,
       breakpoints,
       createId,
     });
@@ -1047,6 +1074,7 @@ export const detectFragmentTokenConflicts = ({
   return detectTokenConflicts({
     fragmentStyleSources: fragment.styleSources,
     fragmentStyles: fragment.styles,
+    referenceTokenIds: new Set(fragment.referenceTokenIds),
     existingStyleSources: targetData.styleSources,
     existingStyles: targetData.styles,
     breakpoints: targetData.breakpoints,

@@ -1383,13 +1383,19 @@ describe("project session mcp adapter", () => {
     const [tool] = listProjectSessionMcpTools([createPageOperation]);
     const toolProperties = getSchemaProperties(tool?.inputSchema);
     const toolMetaProperties = getSchemaProperties(toolProperties.meta);
+    const expressionInputSchema = {
+      anyOf: [
+        { type: "string" },
+        {
+          type: "object",
+          properties: { expression: { type: "string" } },
+          required: ["expression"],
+        },
+      ],
+    };
 
-    expect(toolProperties.title).toMatchObject({
-      type: "string",
-    });
-    expect(toolMetaProperties.description).toMatchObject({
-      type: "string",
-    });
+    expect(toolProperties.title).toMatchObject(expressionInputSchema);
+    expect(toolMetaProperties.description).toMatchObject(expressionInputSchema);
     expectPageStatusInputSchema(toolMetaProperties.status);
 
     const adapter = createProjectSessionMcpCore({
@@ -1411,12 +1417,10 @@ describe("project session mcp adapter", () => {
       toolDetailsProperties.meta
     );
 
-    expect(toolDetailsProperties.title).toMatchObject({
-      type: "string",
-    });
-    expect(toolDetailsMetaProperties.description).toMatchObject({
-      type: "string",
-    });
+    expect(toolDetailsProperties.title).toMatchObject(expressionInputSchema);
+    expect(toolDetailsMetaProperties.description).toMatchObject(
+      expressionInputSchema
+    );
     expectPageStatusInputSchema(toolDetailsMetaProperties.status);
   });
 

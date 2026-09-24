@@ -164,10 +164,6 @@ export const findTokenWithMatchingStyles = ({
     return { hasConflict: false, matchingToken: undefined };
   }
 
-  if (tokenStyles.length === 0) {
-    return { hasConflict: false, matchingToken: tokensWithSameName[0] };
-  }
-
   // Get the signature of the token we're checking
   // Use a temporary ID since we're just comparing styles
   const tempId = "temp";
@@ -209,6 +205,7 @@ export type TokenConflict = {
 export const detectTokenConflicts = ({
   fragmentStyleSources,
   fragmentStyles,
+  referenceTokenIds,
   existingStyleSources,
   existingStyles,
   breakpoints,
@@ -216,6 +213,7 @@ export const detectTokenConflicts = ({
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
+  referenceTokenIds?: Set<string>;
   existingStyleSources: StyleSources;
   existingStyles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
@@ -226,7 +224,10 @@ export const detectTokenConflicts = ({
   const comparedStyles = Array.from(existingStyles.values());
 
   for (const styleSource of fragmentStyleSources) {
-    if (styleSource.type !== "token") {
+    if (
+      styleSource.type !== "token" ||
+      referenceTokenIds?.has(styleSource.id)
+    ) {
       continue;
     }
 
@@ -290,6 +291,7 @@ export const detectTokenConflicts = ({
 export const insertStyleSources = ({
   fragmentStyleSources,
   fragmentStyles,
+  referencedTokenIds,
   existingStyleSources,
   existingStyles,
   breakpoints,
@@ -299,6 +301,7 @@ export const insertStyleSources = ({
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
+  referencedTokenIds?: Map<string, string>;
   existingStyleSources: StyleSources;
   existingStyles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
@@ -351,6 +354,11 @@ export const insertStyleSources = ({
     styleSource.type satisfies "token";
 
     const originalFragmentTokenId = styleSource.id;
+    const referencedTokenId = referencedTokenIds?.get(originalFragmentTokenId);
+    if (referencedTokenId !== undefined) {
+      styleSourceIdMap.set(originalFragmentTokenId, referencedTokenId);
+      continue;
+    }
     const newTokenId = createId();
 
     // Check if there's an existing token with the same name
@@ -450,6 +458,7 @@ export const insertStyleSources = ({
 export const insertTokenStyleSources = ({
   fragmentStyleSources,
   fragmentStyles,
+  referencedTokenIds,
   styleSources,
   styles,
   breakpoints,
@@ -459,6 +468,7 @@ export const insertTokenStyleSources = ({
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
+  referencedTokenIds?: Map<string, string>;
   styleSources: StyleSources;
   styles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
@@ -470,6 +480,7 @@ export const insertTokenStyleSources = ({
     insertStyleSources({
       fragmentStyleSources,
       fragmentStyles,
+      referencedTokenIds,
       existingStyleSources: styleSources,
       existingStyles: styles,
       breakpoints,

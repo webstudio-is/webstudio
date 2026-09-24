@@ -1053,20 +1053,6 @@ const requireFragmentTokenConflictResolution = ({
   targetData: ReturnType<typeof getRequiredComponentInsertState>;
   conflictResolution?: ConflictResolution;
 }) => {
-  for (const source of fragment.styleSources) {
-    if (
-      source.type === "token" &&
-      fragment.styles.every((style) => style.styleSourceId !== source.id) &&
-      Array.from(targetData.styleSources.values()).some(
-        (existing) => existing.type === "token" && existing.name === source.name
-      ) === false
-    ) {
-      return throwBuilderRuntimeError(
-        "NOT_FOUND",
-        `Design token "${source.name}" was not found`
-      );
-    }
-  }
   if (conflictResolution !== undefined) {
     return;
   }

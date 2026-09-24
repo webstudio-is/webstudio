@@ -81,8 +81,8 @@ export const setTemplateMeta = (
 
 export class Token {
   name: string;
-  styles: TemplateStyleDecl[];
-  constructor(name: string, styles: TemplateStyleDecl[]) {
+  styles?: TemplateStyleDecl[];
+  constructor(name: string, styles?: TemplateStyleDecl[]) {
     this.name = name;
     this.styles = styles;
   }
@@ -95,7 +95,7 @@ export const token = (name: string, styles?: TemplateStyleDecl[]): Token => {
     );
   }
   if (styles === undefined) {
-    return new Token(name, []);
+    return new Token(name);
   }
   if (Array.isArray(styles) === false) {
     throw new Error(
@@ -428,6 +428,7 @@ export const renderTemplate = (
   const styleSources: StyleSource[] = [];
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styles: StyleDecl[] = [];
+  const referenceTokenIds: string[] = [];
   const dataSources = new Map<Variable | Parameter, DataSource>();
   const resources = new Map<ResourceValue, Resource>();
   const idsByKey = new Map<unknown, string>();
@@ -869,7 +870,10 @@ export const renderTemplate = (
         id: tokenId,
         name: token.name,
       });
-      for (const { breakpoint, state, property, value } of token.styles) {
+      if (token.styles === undefined) {
+        referenceTokenIds.push(tokenId);
+      }
+      for (const { breakpoint, state, property, value } of token.styles ?? []) {
         const breakpointId = getBreakpointId(breakpoint);
         if (breakpointId === undefined) {
           continue;
@@ -905,6 +909,7 @@ export const renderTemplate = (
     styleSources,
     styleSourceSelections,
     styles,
+    ...(referenceTokenIds.length === 0 ? {} : { referenceTokenIds }),
     dataSources: Array.from(dataSources.values()),
     resources: Array.from(resources.values()),
     assets: [],

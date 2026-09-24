@@ -4803,9 +4803,24 @@ export const runtimeOperationContractData = [
             'Plain page path. For a new non-home page, start with "/", for example "/pricing". Use colon-prefixed dynamic segments such as "/blog/:slug" when one page definition must render many concrete routes; do not create a separate page for every route value. The home page path is the empty string ""; do not use an empty path when creating a new page.',
         },
         title: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "object",
+              properties: {
+                expression: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["expression"],
+              additionalProperties: false,
+            },
+          ],
           description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-          type: "string",
+            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
         },
         parentFolderId: {
           type: "string",
@@ -4814,24 +4829,84 @@ export const runtimeOperationContractData = [
           type: "object",
           properties: {
             description: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             language: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             redirect: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageUrl: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageAssetId: {
               type: "string",
@@ -4842,9 +4917,24 @@ export const runtimeOperationContractData = [
                   type: "boolean",
                 },
                 {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
               ],
             },
@@ -4853,9 +4943,24 @@ export const runtimeOperationContractData = [
               enum: ["html", "xml", "text"],
             },
             content: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             status: {
               anyOf: [
@@ -4914,9 +5019,24 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   content: {
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          expression: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: ["expression"],
+                        additionalProperties: false,
+                      },
+                    ],
                     description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                    type: "string",
+                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                   },
                 },
                 required: ["property", "content"],
@@ -4977,9 +5097,24 @@ export const runtimeOperationContractData = [
                 'Plain page path. For a new non-home page, start with "/", for example "/pricing". Use colon-prefixed dynamic segments such as "/blog/:slug" when one page definition must render many concrete routes; do not create a separate page for every route value. The home page path is the empty string ""; do not use an empty path when creating a new page.',
             },
             title: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             isDraft: {
               type: "boolean",
@@ -4993,24 +5128,84 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 description: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 language: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 redirect: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageUrl: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageAssetId: {
                   type: "string",
@@ -5021,9 +5216,24 @@ export const runtimeOperationContractData = [
                       type: "boolean",
                     },
                     {
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            expression: {
+                              type: "string",
+                              minLength: 1,
+                            },
+                          },
+                          required: ["expression"],
+                          additionalProperties: false,
+                        },
+                      ],
                       description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                      type: "string",
+                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                     },
                   ],
                 },
@@ -5032,9 +5242,24 @@ export const runtimeOperationContractData = [
                   enum: ["html", "xml", "text"],
                 },
                 content: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 status: {
                   anyOf: [
@@ -5093,9 +5318,24 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       content: {
+                        anyOf: [
+                          {
+                            type: "string",
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              expression: {
+                                type: "string",
+                                minLength: 1,
+                              },
+                            },
+                            required: ["expression"],
+                            additionalProperties: false,
+                          },
+                        ],
                         description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                        type: "string",
+                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                       },
                     },
                     required: ["property", "content"],
@@ -6834,32 +7074,107 @@ export const runtimeOperationContractData = [
           minLength: 1,
         },
         title: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "object",
+              properties: {
+                expression: {
+                  type: "string",
+                  minLength: 1,
+                },
+              },
+              required: ["expression"],
+              additionalProperties: false,
+            },
+          ],
           description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-          type: "string",
+            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
         },
         meta: {
           type: "object",
           properties: {
             description: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             language: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             redirect: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageUrl: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageAssetId: {
               type: "string",
@@ -6870,9 +7185,24 @@ export const runtimeOperationContractData = [
                   type: "boolean",
                 },
                 {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
               ],
             },
@@ -6881,9 +7211,24 @@ export const runtimeOperationContractData = [
               enum: ["html", "xml", "text"],
             },
             content: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             status: {
               anyOf: [
@@ -6942,9 +7287,24 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   content: {
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          expression: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        required: ["expression"],
+                        additionalProperties: false,
+                      },
+                    ],
                     description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                    type: "string",
+                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                   },
                 },
                 required: ["property", "content"],
@@ -7027,32 +7387,107 @@ export const runtimeOperationContractData = [
               minLength: 1,
             },
             title: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    expression: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  required: ["expression"],
+                  additionalProperties: false,
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
             },
             meta: {
               type: "object",
               properties: {
                 description: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 language: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 redirect: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageUrl: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageAssetId: {
                   type: "string",
@@ -7063,9 +7498,24 @@ export const runtimeOperationContractData = [
                       type: "boolean",
                     },
                     {
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            expression: {
+                              type: "string",
+                              minLength: 1,
+                            },
+                          },
+                          required: ["expression"],
+                          additionalProperties: false,
+                        },
+                      ],
                       description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                      type: "string",
+                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                     },
                   ],
                 },
@@ -7074,9 +7524,24 @@ export const runtimeOperationContractData = [
                   enum: ["html", "xml", "text"],
                 },
                 content: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        expression: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      required: ["expression"],
+                      additionalProperties: false,
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 status: {
                   anyOf: [
@@ -7135,9 +7600,24 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       content: {
+                        anyOf: [
+                          {
+                            type: "string",
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              expression: {
+                                type: "string",
+                                minLength: 1,
+                              },
+                            },
+                            required: ["expression"],
+                            additionalProperties: false,
+                          },
+                        ],
                         description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                        type: "string",
+                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.',
                       },
                     },
                     required: ["property", "content"],
@@ -10972,6 +11452,12 @@ export const runtimeOperationContractData = [
                         ],
                       },
                     },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
+                    },
                   },
                   required: [
                     "children",
@@ -14180,6 +14666,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -17403,6 +17895,12 @@ export const runtimeOperationContractData = [
                         ],
                       },
                     },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
+                    },
                   },
                   required: [
                     "children",
@@ -20611,6 +21109,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -26732,6 +27236,12 @@ export const runtimeOperationContractData = [
                               ],
                             },
                           },
+                          referenceTokenIds: {
+                            type: "array",
+                            items: {
+                              type: "string",
+                            },
+                          },
                         },
                         required: [
                           "children",
@@ -30148,6 +30658,12 @@ export const runtimeOperationContractData = [
                                 "property",
                                 "value",
                               ],
+                            },
+                          },
+                          referenceTokenIds: {
+                            type: "array",
+                            items: {
+                              type: "string",
                             },
                           },
                         },
@@ -44627,6 +45143,12 @@ export const runtimeOperationContractData = [
                         ],
                       },
                     },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
+                    },
                   },
                   required: [
                     "children",
@@ -47914,6 +48436,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -54822,6 +55350,12 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
+            referenceTokenIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
           },
           required: [
             "children",
@@ -60725,6 +61259,12 @@ export const runtimeOperationContractData = [
                   "property",
                   "value",
                 ],
+              },
+            },
+            referenceTokenIds: {
+              type: "array",
+              items: {
+                type: "string",
               },
             },
           },
