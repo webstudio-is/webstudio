@@ -841,7 +841,7 @@ export const listPageMetadataExpressions = (
 };
 
 export const pageExpressionFieldHint =
-  'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. For ambiguous expressions such as subtraction between variables, pass {"expression":"first - second"}. Read webstudio://project/expressions for syntax and scope rules.';
+  'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Wrap ambiguous expressions in parentheses, for example `(first - second)`. Read webstudio://project/expressions for syntax and scope rules.';
 
 export const pageStatusFieldHint =
   "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.";
@@ -931,24 +931,17 @@ const normalizePageStatusInput = (value: string) => {
 };
 
 const pageExpressionStringInput = z
-  .union(
-    [
-      z.preprocess(
-        (value) =>
-          typeof value === "string"
-            ? normalizePageExpressionInput(value)
-            : value,
-        z.string()
-      ),
-      z
-        .object({ expression: z.string().trim().min(1) })
-        .strict()
-        .transform(({ expression }) => `(${expression})`),
-    ],
-    {
-      error: () =>
-        `${pageExpressionFieldHint} Pass a string or {"expression":"..."}, not a prop value object like {"type":"string","value":"..."}.`,
-    }
+  .preprocess(
+    (value) =>
+      typeof value === "string" ? normalizePageExpressionInput(value) : value,
+    z.string({
+      error: (issue) =>
+        issue.input !== null &&
+        typeof issue.input === "object" &&
+        Array.isArray(issue.input) === false
+          ? `${pageExpressionFieldHint} Pass it as a string, not as a prop value object like {"type":"string","value":"..."}.`
+          : undefined,
+    })
   )
   .describe(pageExpressionFieldHint);
 

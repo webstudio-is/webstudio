@@ -27,19 +27,6 @@ const expectPageStatusInputSchema = (schema: unknown) => {
   });
 };
 
-const expectPageExpressionInputSchema = (schema: unknown) => {
-  expect(schema).toMatchObject({
-    anyOf: [
-      { type: "string" },
-      {
-        type: "object",
-        properties: { expression: { type: "string" } },
-        required: ["expression"],
-      },
-    ],
-  });
-};
-
 describe("builder runtime operation contracts", () => {
   const getContract = (id: RuntimeOperationId) => {
     const contract = runtimeOperationContracts.find(
@@ -133,10 +120,14 @@ describe("builder runtime operation contracts", () => {
       createPageCustomItems
     );
 
-    expectPageExpressionInputSchema(createPageProperties.title);
-    expectPageExpressionInputSchema(createPageMetaProperties.description);
+    expect(createPageProperties.title).toMatchObject({ type: "string" });
+    expect(createPageMetaProperties.description).toMatchObject({
+      type: "string",
+    });
     expectPageStatusInputSchema(createPageMetaProperties.status);
-    expectPageExpressionInputSchema(createPageCustomItemProperties.content);
+    expect(createPageCustomItemProperties.content).toMatchObject({
+      type: "string",
+    });
 
     const updatePageInputSchema = getContract("pages.update").inputSchema;
     const updatePageProperties = getSchemaProperties(updatePageInputSchema);
@@ -147,8 +138,10 @@ describe("builder runtime operation contracts", () => {
       updatePageValueProperties.meta
     );
 
-    expectPageExpressionInputSchema(updatePageValueProperties.title);
-    expectPageExpressionInputSchema(updatePageMetaProperties.description);
+    expect(updatePageValueProperties.title).toMatchObject({ type: "string" });
+    expect(updatePageMetaProperties.description).toMatchObject({
+      type: "string",
+    });
     expectPageStatusInputSchema(updatePageMetaProperties.status);
   });
 

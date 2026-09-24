@@ -1778,7 +1778,7 @@ describe("createPage", () => {
     );
   });
 
-  test("explains expression-backed title input, not a prop object", () => {
+  test("explains expression-backed title must be a string, not a prop object", () => {
     const result = pageCreateInput.safeParse({
       name: "Healthcare Operations Design System",
       path: "/healthcare-operations-design-system",
@@ -1794,7 +1794,7 @@ describe("createPage", () => {
         expect.objectContaining({
           path: ["title"],
           message: expect.stringContaining(
-            'Pass a string or {"expression":"..."}, not a prop value object like {"type":"string","value":"..."}'
+            'Pass it as a string, not as a prop value object like {"type":"string","value":"..."}'
           ),
         }),
       ])
@@ -1951,24 +1951,18 @@ describe("createPage", () => {
     );
   });
 
-  test("accepts an explicit ambiguous page expression", () => {
-    const input = pageCreateInput.parse({
-      name: "Pricing",
-      path: "/pricing",
-      title: { expression: "first - second" },
-    });
-    const mutation = createPage({ pages: createPages() }, input, {
-      createId: createIdFactory(),
-    });
+  test("preserves parenthesized subtraction as an expression", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "(first - second)" },
+      { createId: createIdFactory() }
+    );
 
     expect(mutation.payload[0]?.patches[0]).toEqual(
       expect.objectContaining({
         value: expect.objectContaining({ title: "(first - second)" }),
       })
     );
-    expect(
-      pageFieldsInput.parse({ title: { expression: "first - second" } })
-    ).toEqual({ title: "(first - second)" });
   });
 
   test("accepts multi-sentence fixed page text", () => {

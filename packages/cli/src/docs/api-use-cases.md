@@ -199,7 +199,7 @@ Commands:
 Notes:
 
 - `name`, `path`, page `title`, and metadata text fields accept plain fixed values.
-- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. For an ambiguous expression, use `{"expression":"first - second"}` as the field value.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. Wrap an ambiguous expression in parentheses, for example `(first - second)`.
 
 ## Update page settings/metadata
 
@@ -211,7 +211,7 @@ Commands:
 Notes:
 
 - Page `title` and metadata text fields accept plain fixed values.
-- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. For an ambiguous expression, use `{"expression":"first - second"}` as the field value.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. Wrap an ambiguous expression in parentheses, for example `(first - second)`.
 - Page `status` accepts a fixed HTTP status code as a number from 200 through 599 or a JavaScript expression string for a dynamic status.
 
 ## Read project settings
