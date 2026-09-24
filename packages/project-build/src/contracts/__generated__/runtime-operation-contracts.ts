@@ -5405,7 +5405,7 @@ export const runtimeOperationContractData = [
             },
             customHeaders: {
               description:
-                "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/' applies site-wide. Required headers need nonempty values; null removes only optional headers.",
+                "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; null removes only optional headers.",
               maxItems: 100,
               type: "array",
               items: {
@@ -5553,7 +5553,7 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   description:
-                    "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/' applies site-wide. Required headers need nonempty values; null removes only optional headers.",
+                    "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; null removes only optional headers.",
                   maxItems: 100,
                   type: "array",
                   items: {

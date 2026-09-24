@@ -57,7 +57,7 @@ const render = () => {
     );
   });
   const route = document.querySelector<HTMLInputElement>(
-    'input[placeholder="/ or /private/*"]'
+    'input[placeholder="/* or /private/*"]'
   );
   const name = document.querySelector<HTMLInputElement>(
     'input[placeholder="Header name"]'
@@ -113,7 +113,7 @@ test.each(["denied", "throws"])(
       return undefined;
     });
     const { route, name, value } = render();
-    type(route, "/");
+    type(route, "/*");
     type(name, "Content-Security-Policy");
     type(value, "frame-ancestors https://example.com");
     const add = Array.from(document.querySelectorAll("button")).find(
@@ -131,15 +131,15 @@ test("adds a route rule and keeps required site-wide headers nonremovable", () =
   render();
   expect(
     document.querySelector(
-      'button[aria-label="Remove Content-Security-Policy for /"]'
+      'button[aria-label="Remove Content-Security-Policy for /*"]'
     )
   ).toBeNull();
   expect(
-    document.querySelector('button[aria-label="Remove X-Frame-Options for /"]')
+    document.querySelector('button[aria-label="Remove X-Frame-Options for /*"]')
   ).not.toBeNull();
   const { route, name, value } = {
     route: document.querySelector<HTMLInputElement>(
-      'input[placeholder="/ or /private/*"]'
+      'input[placeholder="/* or /private/*"]'
     ),
     name: document.querySelector<HTMLInputElement>(
       'input[placeholder="Header name"]'
@@ -177,7 +177,7 @@ test("adds a route rule and keeps required site-wide headers nonremovable", () =
 test("submitting an existing required header updates its value", () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name, value } = render();
-  type(route, "/");
+  type(route, "/*");
   type(name, "Content-Security-Policy");
   type(value, "frame-ancestors https://example.com");
   const add = Array.from(document.querySelectorAll("button")).find(
@@ -193,6 +193,28 @@ test("submitting an existing required header updates its value", () => {
             name: "Content-Security-Policy",
             value: "frame-ancestors https://example.com",
           },
+        ],
+      },
+    },
+  });
+});
+
+test("saves / as a root-only rule", () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  const { route, name, value } = render();
+  type(route, "/");
+  type(name, "Referrer-Policy");
+  type(value, "no-referrer");
+  const add = Array.from(document.querySelectorAll("button")).find(
+    (button) => button.textContent === "Add"
+  );
+  act(() => add?.click());
+  expect(executeRuntimeMutation).toHaveBeenCalledWith({
+    id: "projectSettings.update",
+    input: {
+      meta: {
+        customHeaders: [
+          { route: "/", name: "Referrer-Policy", value: "no-referrer" },
         ],
       },
     },

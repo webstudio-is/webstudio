@@ -82,7 +82,7 @@ export const customResponseHeaders = z
     const names = new Set<string>();
     let size = 0;
     for (const [index, header] of headers.entries()) {
-      const name = `${header.route ?? "/"}\0${header.name.toLowerCase()}`;
+      const name = `${header.route ?? "/*"}\0${header.name.toLowerCase()}`;
       if (names.has(name)) {
         context.addIssue({
           code: "custom",
@@ -115,7 +115,7 @@ export const hasCustomResponseHeaders = (
   headers.some(({ route, name, value }) => {
     const definition = getResponseHeaderDefinition(name);
     return (
-      (route !== undefined && route !== "/") ||
+      (route !== undefined && route !== "/*") ||
       definition === undefined ||
       value?.trim() !== definition.defaultValue
     );
@@ -127,7 +127,7 @@ export const getResponseHeaders = (
   responseHeaderDefinitions.map(({ name, defaultValue }) => {
     const configured = headers.find(
       (header) =>
-        (header.route === undefined || header.route === "/") &&
+        (header.route === undefined || header.route === "/*") &&
         header.name.toLowerCase() === name.toLowerCase()
     );
     return {

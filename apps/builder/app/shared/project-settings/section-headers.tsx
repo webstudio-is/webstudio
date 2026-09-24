@@ -39,10 +39,11 @@ export const SectionHeaders = () => {
   const activeHeaders = [
     ...getResponseHeaders(configured).filter(({ value }) => value !== null),
     ...configured.filter(
-      (header) => header.route !== undefined && header.route !== "/"
+      (header) => header.route !== undefined && header.route !== "/*"
     ),
   ];
   const routeSuggestions = [
+    "/*",
     "/",
     ...Array.from(getExistingRoutePaths(pages)).sort(),
   ];
@@ -52,7 +53,7 @@ export const SectionHeaders = () => {
     previousKey?: string
   ) => {
     const headers = ($projectSettings.get()?.meta.customHeaders ?? []).filter(
-      (header) => ruleKey(header.route ?? "/", header.name) !== previousKey
+      (header) => ruleKey(header.route ?? "/*", header.name) !== previousKey
     );
     if (next !== undefined) {
       const definition = getResponseHeaderDefinition(next.name);
@@ -103,10 +104,10 @@ export const SectionHeaders = () => {
               </Text>
               <br />
               <Text>
-                / applies to every path. Four security headers are required. Add
-                a rule for an existing path and header to update its value. An
-                empty value omits the optional X-Frame-Options header. Publish
-                to apply changes.
+                /* applies to every path; / applies only to the root. Four
+                security headers are required. Add a rule for an existing path
+                and header to update its value. An empty value omits the
+                optional X-Frame-Options header. Publish to apply changes.
               </Text>
               {allowDynamicData === false && (
                 <>
@@ -140,7 +141,7 @@ export const SectionHeaders = () => {
         fields={[
           {
             name: "route",
-            placeholder: "/ or /private/*",
+            placeholder: "/* or /private/*",
             suggestions: routeSuggestions,
           },
           {
@@ -180,7 +181,7 @@ export const SectionHeaders = () => {
             getResponseHeaderDefinition(values.name.trim())?.name ??
             values.name.trim();
           const next: CustomResponseHeader = {
-            ...(route === "/" ? {} : { route }),
+            ...(route === "/*" ? {} : { route }),
             name,
             value:
               values.value.trim() === "" &&
@@ -192,10 +193,10 @@ export const SectionHeaders = () => {
         }}
         columns="1fr 1.5fr 1.5fr"
         rules={activeHeaders.map((header) => {
-          const route = header.route ?? "/";
+          const route = header.route ?? "/*";
           const key = ruleKey(route, header.name);
           const requiredGlobal =
-            route === "/" &&
+            route === "/*" &&
             getResponseHeaderDefinition(header.name)?.required === true;
           return {
             key,
@@ -217,7 +218,7 @@ export const SectionHeaders = () => {
                 aria-label={`Remove ${header.name} for ${route}`}
                 onClick={() => {
                   save(
-                    route === "/"
+                    route === "/*"
                       ? { name: header.name, value: null }
                       : undefined,
                     key

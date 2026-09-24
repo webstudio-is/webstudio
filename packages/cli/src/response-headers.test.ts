@@ -13,9 +13,12 @@ const readGeneratedHeaders = (source: string) => {
   return module.exports.customHeaders;
 };
 
+const siteWideHeaders = (headers = getResponseHeaders()) =>
+  headers.map((header) => ({ route: "/*", ...header }));
+
 test("generates all default headers for existing projects", () => {
   expect(readGeneratedHeaders(generateResponseHeadersModule())).toEqual(
-    getResponseHeaders()
+    siteWideHeaders()
   );
 });
 
@@ -35,7 +38,7 @@ test("compiles values as data, preserving optional removal", () => {
         compiler: {},
       })
     )
-  ).toEqual(getResponseHeaders(headers));
+  ).toEqual(siteWideHeaders(getResponseHeaders(headers)));
 });
 
 test("invalid configuration fails the build", () => {
@@ -63,5 +66,5 @@ test("generates site-wide defaults followed by route rules", () => {
       compiler: {},
     })
   ) as unknown[];
-  expect(generated).toEqual([...getResponseHeaders(), rule]);
+  expect(generated).toEqual([...siteWideHeaders(), rule]);
 });

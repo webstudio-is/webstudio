@@ -9,9 +9,12 @@ export const generateResponseHeadersModule = (settings?: ProjectSettings) => {
     settings?.meta.customHeaders ?? []
   );
   const headers = [
-    ...getResponseHeaders(configured),
+    ...getResponseHeaders(configured).map((header) => ({
+      route: "/*",
+      ...header,
+    })),
     ...configured.filter(
-      (header) => header.route !== undefined && header.route !== "/"
+      (header) => header.route !== undefined && header.route !== "/*"
     ),
   ];
   return `// Generated response header configuration for hosting adapters.

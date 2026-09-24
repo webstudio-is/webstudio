@@ -63,12 +63,29 @@ describe("response header settings", () => {
     expect(
       hasCustomResponseHeaders([
         {
-          route: "/",
+          route: "/*",
           name: "Referrer-Policy",
           value: "strict-origin-when-cross-origin",
         },
       ])
     ).toBe(false);
+    expect(
+      hasCustomResponseHeaders([
+        {
+          route: "/",
+          name: "Referrer-Policy",
+          value: "strict-origin-when-cross-origin",
+        },
+      ])
+    ).toBe(true);
+    expect(
+      getResponseHeaders([
+        { route: "/", name: "Referrer-Policy", value: "no-referrer" },
+      ])
+    ).toContainEqual({
+      name: "Referrer-Policy",
+      value: "strict-origin-when-cross-origin",
+    });
     expect(
       customResponseHeaders.safeParse([
         { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },

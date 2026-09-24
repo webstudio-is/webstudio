@@ -223,7 +223,7 @@ export const projectMeta = z.object({
   customHeaders: customResponseHeaders
     .optional()
     .describe(
-      "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/' applies site-wide. Required headers need nonempty values; null removes only optional headers."
+      "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; null removes only optional headers."
     ),
 });
 export type ProjectMeta = z.infer<typeof projectMeta>;
