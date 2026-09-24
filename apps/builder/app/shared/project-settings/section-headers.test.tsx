@@ -220,3 +220,34 @@ test("saves / as a root-only rule", () => {
     },
   });
 });
+
+test("adds an arbitrary header and displays existing custom headers", () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  $projectSettings.set({
+    meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
+    compiler: {},
+  });
+  const { route, name, value } = render();
+  expect(document.body.textContent).toContain("Cache-Control");
+  expect(
+    document.querySelector('button[aria-label="Remove Cache-Control for /*"]')
+  ).not.toBeNull();
+  type(route, "/*");
+  type(name, "Access-Control-Allow-Origin");
+  type(value, "*");
+  const add = Array.from(document.querySelectorAll("button")).find(
+    (button) => button.textContent === "Add"
+  );
+  act(() => add?.click());
+  expect(executeRuntimeMutation).toHaveBeenCalledWith({
+    id: "projectSettings.update",
+    input: {
+      meta: {
+        customHeaders: [
+          { name: "Access-Control-Allow-Origin", value: "*" },
+          { name: "Cache-Control", value: "no-store" },
+        ],
+      },
+    },
+  });
+});

@@ -1,5 +1,6 @@
 import {
   customResponseHeaders,
+  getResponseHeaderDefinition,
   getResponseHeaders,
 } from "@webstudio-is/sdk/schema";
 import type { ProjectSettings } from "@webstudio-is/project-build";
@@ -14,7 +15,9 @@ export const generateResponseHeadersModule = (settings?: ProjectSettings) => {
       ...header,
     })),
     ...configured.filter(
-      (header) => header.route !== undefined && header.route !== "/*"
+      (header) =>
+        getResponseHeaderDefinition(header.name) === undefined ||
+        (header.route !== undefined && header.route !== "/*")
     ),
   ];
   return `// Generated response header configuration for hosting adapters.

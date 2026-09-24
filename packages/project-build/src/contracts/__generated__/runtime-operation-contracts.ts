@@ -5405,7 +5405,7 @@ export const runtimeOperationContractData = [
             },
             customHeaders: {
               description:
-                "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; null removes only optional headers.",
+                "Response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; X-Powered-By is managed by Webstudio Cloud.",
               maxItems: 100,
               type: "array",
               items: {
@@ -5417,6 +5417,7 @@ export const runtimeOperationContractData = [
                   },
                   name: {
                     type: "string",
+                    maxLength: 256,
                   },
                   value: {
                     anyOf: [
@@ -5553,7 +5554,7 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   description:
-                    "Security response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; null removes only optional headers.",
+                    "Response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; X-Powered-By is managed by Webstudio Cloud.",
                   maxItems: 100,
                   type: "array",
                   items: {
@@ -5565,6 +5566,7 @@ export const runtimeOperationContractData = [
                       },
                       name: {
                         type: "string",
+                        maxLength: 256,
                       },
                       value: {
                         anyOf: [

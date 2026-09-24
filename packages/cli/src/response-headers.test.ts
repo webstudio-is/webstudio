@@ -68,3 +68,19 @@ test("generates site-wide defaults followed by route rules", () => {
   ) as unknown[];
   expect(generated).toEqual([...siteWideHeaders(), rule]);
 });
+
+test("generates custom headers for all paths and matching routes", () => {
+  const global = { name: "Cache-Control", value: "public, max-age=60" };
+  const scoped = {
+    route: "/api/*",
+    name: "Access-Control-Allow-Origin",
+    value: "*",
+  };
+  const generated = readGeneratedHeaders(
+    generateResponseHeadersModule({
+      meta: { customHeaders: [global, scoped] },
+      compiler: {},
+    })
+  );
+  expect(generated).toEqual([...siteWideHeaders(), global, scoped]);
+});

@@ -127,16 +127,25 @@ describe("response header settings", () => {
     }
   );
 
+  test("allows custom names while treating them as a Pro customization", () => {
+    const headers = [
+      { name: "Cache-Control", value: "public, max-age=60" },
+      { route: "/api/*", name: "Access-Control-Allow-Origin", value: "*" },
+    ];
+    expect(customResponseHeaders.parse(headers)).toEqual(headers);
+    expect(hasCustomResponseHeaders(headers)).toBe(true);
+    expect(getResponseHeaders(headers)).toHaveLength(5);
+  });
+
   test.each([
     "X-Powered-By",
-    "Cache-Control",
-    "Content-Length",
-    "Set-Cookie",
-    "X-Test",
-    "X-Webstudio-Removed-Headers",
+    "x-powered-by",
     "",
+    "Bad Header",
+    "X:Test",
+    "X-💥",
     "Content-Security-Policy\n",
-  ])("rejects unsupported header %j", (name) => {
+  ])("rejects invalid or platform-owned header %j", (name) => {
     for (const value of ["value", null]) {
       expect(customResponseHeaders.safeParse([{ name, value }]).success).toBe(
         false

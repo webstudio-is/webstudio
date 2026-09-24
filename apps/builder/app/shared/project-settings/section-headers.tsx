@@ -17,7 +17,6 @@ import {
   customResponseHeaders,
   getResponseHeaderDefinition,
   getResponseHeaders,
-  responseHeaderDefinitions,
   type CustomResponseHeader,
 } from "@webstudio-is/sdk";
 import { validateWsAuthRoute } from "@webstudio-is/wsauth";
@@ -39,7 +38,9 @@ export const SectionHeaders = () => {
   const activeHeaders = [
     ...getResponseHeaders(configured).filter(({ value }) => value !== null),
     ...configured.filter(
-      (header) => header.route !== undefined && header.route !== "/*"
+      (header) =>
+        getResponseHeaderDefinition(header.name) === undefined ||
+        (header.route !== undefined && header.route !== "/*")
     ),
   ];
   const routeSuggestions = [
@@ -105,9 +106,10 @@ export const SectionHeaders = () => {
               <br />
               <Text>
                 /* applies to every path; / applies only to the root. Four
-                security headers are required. Add a rule for an existing path
-                and header to update its value. An empty value omits the
-                optional X-Frame-Options header. Publish to apply changes.
+                security headers are required. Add any HTTP response header,
+                except X-Powered-By. Add a rule for an existing path and header
+                to update its value. An empty value omits the optional
+                X-Frame-Options header. Publish to apply changes.
               </Text>
               {allowDynamicData === false && (
                 <>
@@ -147,7 +149,6 @@ export const SectionHeaders = () => {
           {
             name: "name",
             placeholder: "Header name",
-            suggestions: responseHeaderDefinitions.map(({ name }) => name),
           },
           { name: "value", placeholder: "Header value" },
         ]}

@@ -44,9 +44,14 @@ export const customResponseHeader = z
       .optional(),
     name: z
       .string()
+      .max(256, "Header name must be at most 256 characters")
       .refine(
-        (name) => getResponseHeaderDefinition(name) !== undefined,
-        "Choose a supported response header"
+        (name) => /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name),
+        "Enter a valid HTTP header name"
+      )
+      .refine(
+        (name) => name.toLowerCase() !== "x-powered-by",
+        "X-Powered-By is managed by Webstudio Cloud"
       ),
     value: z
       .string()
