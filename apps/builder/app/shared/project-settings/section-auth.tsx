@@ -185,6 +185,8 @@ export const SectionAuth = () => {
             name: "route",
             placeholder: "/private or /docs/*",
             suggestions: routeSuggestions,
+            validateOnChange: (value) =>
+              validateProjectAuthRoute(value.trim(), authRoutes),
           },
           { name: "login", placeholder: "Login" },
           { name: "password", placeholder: "Password", type: "password" },

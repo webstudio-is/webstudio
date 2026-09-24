@@ -20,6 +20,7 @@ type Field = {
   placeholder: string;
   type?: "text" | "password";
   suggestions?: string[];
+  validateOnChange?: (value: string) => string[];
 };
 
 type Rule = {
@@ -55,8 +56,6 @@ export const ProjectSettingsRuleList = ({
       setValues({});
       setErrors({});
       firstInputRef.current?.focus();
-    } else {
-      setErrors({ value: ["Changes could not be saved. Please try again."] });
     }
   };
 
@@ -85,7 +84,10 @@ export const ProjectSettingsRuleList = ({
                       ...current,
                       [field.name]: value ?? "",
                     }));
-                    setErrors((current) => ({ ...current, [field.name]: [] }));
+                    setErrors((current) => ({
+                      ...current,
+                      [field.name]: field.validateOnChange?.(value ?? "") ?? [],
+                    }));
                   }}
                   onChange={(value) => {
                     if (value !== undefined) {
@@ -95,7 +97,7 @@ export const ProjectSettingsRuleList = ({
                       }));
                       setErrors((current) => ({
                         ...current,
-                        [field.name]: [],
+                        [field.name]: field.validateOnChange?.(value) ?? [],
                       }));
                     }
                   }}
@@ -111,7 +113,11 @@ export const ProjectSettingsRuleList = ({
                       ...current,
                       [field.name]: event.target.value,
                     }));
-                    setErrors((current) => ({ ...current, [field.name]: [] }));
+                    setErrors((current) => ({
+                      ...current,
+                      [field.name]:
+                        field.validateOnChange?.(event.target.value) ?? [],
+                    }));
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
@@ -124,7 +130,14 @@ export const ProjectSettingsRuleList = ({
             </InputErrorsTooltip>
           </Flex>
         ))}
-        <Button color="primary" onClick={submit} css={{ flexShrink: 0 }}>
+        <Button
+          color="primary"
+          disabled={Object.values(errors).some(
+            (messages) => messages.length > 0
+          )}
+          onClick={submit}
+          css={{ flexShrink: 0 }}
+        >
           Add
         </Button>
       </Flex>
