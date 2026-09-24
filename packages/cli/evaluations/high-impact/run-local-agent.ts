@@ -291,9 +291,8 @@ const runFixture = async ({
           ...(fixture.id === markdownBlogFixture.id ||
           fixture.id === markdownReferencesDiscoveryFixture.id
             ? {
-                contentDatabase: await compileEvaluationContentDatabase(
-                  projectDirectory
-                ),
+                contentDatabase:
+                  await compileEvaluationContentDatabase(projectDirectory),
               }
             : {}),
         });
