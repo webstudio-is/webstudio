@@ -2195,6 +2195,68 @@ describe("var() substitution — CSS var() inline fallback", () => {
     );
   });
 
+  const unresolvedBorderColorCases: Array<[string, string[], number, string]> =
+    [
+      [
+        "border-bottom: 1.5px solid var(--color-variable);",
+        ["bottom"],
+        1.5,
+        "color-variable",
+      ],
+      ["border-top: 1px solid var(--x);", ["top"], 1, "x"],
+      [
+        "border: 1.5px solid var(--x);",
+        ["top", "right", "bottom", "left"],
+        1.5,
+        "x",
+      ],
+      ["border-right: 1.5px solid var(--x);", ["right"], 1.5, "x"],
+      ["border-left: 1.5px solid var(--x);", ["left"], 1.5, "x"],
+    ];
+
+  test.each(unresolvedBorderColorCases)(
+    "maps the unresolved color var in %s without corrupting width or style",
+    (css, sides, width, varName) => {
+      const result = decls(css);
+      const color = expect.objectContaining({ type: "var", value: varName });
+      expect(result).toEqual(
+        expect.arrayContaining(
+          sides.flatMap((side) => [
+            prop(`border-${side}-width`, u(width, "px")),
+            prop(`border-${side}-style`, kw("solid")),
+            prop(`border-${side}-color`, color),
+          ])
+        )
+      );
+    }
+  );
+
+  test("maps an unresolved border width var to width from its position", () => {
+    expect(decls("border-bottom: var(--x) solid red;")).toEqual(
+      expect.arrayContaining([
+        prop(
+          "border-bottom-width",
+          expect.objectContaining({ type: "var", value: "x" })
+        ),
+        prop("border-bottom-style", kw("solid")),
+        prop("border-bottom-color", kw("red")),
+      ])
+    );
+  });
+
+  test("maps an unresolved border style var to style from its position", () => {
+    expect(decls("border-bottom: 1px var(--x) red;")).toEqual(
+      expect.arrayContaining([
+        prop("border-bottom-width", u(1, "px")),
+        prop(
+          "border-bottom-style",
+          expect.objectContaining({ type: "var", value: "x" })
+        ),
+        prop("border-bottom-color", kw("red")),
+      ])
+    );
+  });
+
   test("border-color longhand with unresolved var is preserved", () => {
     const result = decls(`border-color: var(--border-color);`);
     expect(result).toEqual(
