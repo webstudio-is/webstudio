@@ -860,7 +860,7 @@ const pageStatusCodeInput = z.number().refine(
 const jsExpressionStartPattern =
   /^\s*(?:["'`[{(]|(?:await|new|typeof|void)\b|(?:undefined|null|true|false)\s*$)/;
 const jsExpressionOperatorPattern =
-  /(?:\?\?|&&|\|\||=>|\?\s*.+\s*:|\.\s*[A-Za-z_$]|\[[^\]]*\]|\s(?:[=!<>]=?|[+\-*/%])\s)/;
+  /(?:\?\?|&&|\|\||=>|\?\s*.+\s*:|\.\s*[A-Za-z_$]|\[[^\]]*\]|\s(?:[=!<>]=?|[*/%])\s|\s[-+]\s*\d|\s\+\s*["'`]|["'`]\s*\+\s)/;
 
 const pageTextSentenceSegmenter = new Intl.Segmenter(undefined, {
   granularity: "sentence",

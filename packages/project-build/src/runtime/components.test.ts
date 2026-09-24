@@ -1387,6 +1387,55 @@ test("requires an explicit fragment token conflict resolution", async () => {
   ).toThrow(/explicit conflictResolution.*brand/);
 });
 
+test("attaches an existing design token by name in a JSX fragment", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment(
+        `<ws.element ws:tag="div" ws:tokens={[token("brand")]} />`
+      ),
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues(mutation, "styleSources")).toEqual([]);
+  expect(getAddedValues(mutation, "styles")).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-1",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+});
+
+test("reports an unknown design token reference in a JSX fragment", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("missing")]} />`
+  );
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow('Design token "missing" was not found');
+});
+
 test("inserts token-only fragments without a parent instance", async () => {
   const parent = createParent();
   const state = createState(parent);

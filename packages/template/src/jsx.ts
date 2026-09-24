@@ -88,11 +88,14 @@ export class Token {
   }
 }
 
-export const token = (name: string, styles: TemplateStyleDecl[]): Token => {
+export const token = (name: string, styles?: TemplateStyleDecl[]): Token => {
   if (typeof name !== "string" || name.length === 0) {
     throw new Error(
       'token() requires a non-empty string name, for example token("brand", css`color: red;`).'
     );
+  }
+  if (styles === undefined) {
+    return new Token(name, []);
   }
   if (Array.isArray(styles) === false) {
     throw new Error(

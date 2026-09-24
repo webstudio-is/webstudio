@@ -15,6 +15,9 @@ import { createAssetContentSession } from "@webstudio-is/content-engine/asset-co
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   bundleVersion,
+  issueReportBrowserAttempt,
+  issueReportBrowserSignal,
+  issueReportEntityId,
   getPublicBuildIncludes,
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
@@ -249,7 +252,7 @@ const publicOperationById = new Map(
 
 export const createIssueReportRuntime = (
   recentFailure?: IssueReportRecentFailure,
-  diagnostics?: Pick<IssueReportRuntime, "session" | "preview">
+  diagnostics?: Pick<IssueReportRuntime, "projectId" | "session" | "preview">
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
@@ -263,13 +266,124 @@ export const createIssueReportRuntime = (
   ...diagnostics,
 });
 
+const getIssueReportErrorRecords = (error: unknown) => {
+  const records: Record<string, unknown>[] = [];
+  const seen = new Set<unknown>();
+  let current = error;
+  while (isPlainRecord(current) && !seen.has(current) && records.length < 10) {
+    records.push(current);
+    seen.add(current);
+    const data = isPlainRecord(current.data) ? current.data : undefined;
+    current = current.cause ?? data?.cause;
+  }
+  return records;
+};
+
+const getIssueReportEntityIds = (input: unknown) => {
+  const ids: NonNullable<IssueReportRecentFailure["entityIds"]> = [];
+  const seen = new Set<string>();
+  if (!isPlainRecord(input)) {
+    return ids;
+  }
+  // Only inspect operation fields, never arbitrary authored values or content.
+  const updates = Array.isArray(input.updates)
+    ? input.updates.slice(0, 100)
+    : [];
+  for (const entry of [input, ...updates]) {
+    if (!isPlainRecord(entry)) {
+      continue;
+    }
+    for (const [field, candidate] of Object.entries(entry).slice(0, 100)) {
+      const parsed = issueReportEntityId.safeParse({ field, id: candidate });
+      if (parsed.success) {
+        const { id } = parsed.data;
+        const key = `${field}:${id}`;
+        if (!seen.has(key)) {
+          ids.push(parsed.data);
+          seen.add(key);
+        }
+      }
+      if (ids.length === 20) {
+        return ids;
+      }
+    }
+  }
+  return ids;
+};
+
 export const createIssueReportFailure = (
   canonicalTool: string,
   error: unknown,
-  elapsedMs?: number
+  elapsedMs?: number,
+  input?: unknown
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
-  const httpStatus = httpClient.getErrorStatus(error);
+  const records = getIssueReportErrorRecords(error);
+  const record = records.find(
+    (candidate) =>
+      candidate.attempts !== undefined || candidate.processExit !== undefined
+  );
+  const responseRecord = records.find(
+    (candidate) =>
+      isPlainRecord(candidate.meta) &&
+      (candidate.meta.response !== undefined ||
+        candidate.meta.responseJSON !== undefined)
+  );
+  const meta = isPlainRecord(responseRecord?.meta)
+    ? responseRecord.meta
+    : undefined;
+  const response = isPlainRecord(meta?.response) ? meta.response : undefined;
+  const contentType =
+    response?.headers instanceof Headers
+      ? response.headers.get("content-type")
+      : undefined;
+  const responseJson = meta?.responseJSON;
+  const envelope = Array.isArray(responseJson) ? responseJson[0] : responseJson;
+  const responseFormat =
+    typeof contentType === "string" && contentType.includes("json")
+      ? "json"
+      : typeof contentType === "string" && contentType.includes("html")
+        ? "html"
+        : "other";
+  const responseEnvelope =
+    responseJson === undefined
+      ? "missing"
+      : isPlainRecord(envelope) && "result" in envelope
+        ? "result"
+        : isPlainRecord(envelope) && "error" in envelope
+          ? "error"
+          : "other";
+  const httpStatus = httpClient.getErrorStatus(error) ?? response?.status;
+  const isResponseTransformFailure = records.some(
+    (candidate) =>
+      candidate.name === "TRPCClientError" &&
+      candidate.message === "Unable to transform response from server"
+  );
+  const processExit = isPlainRecord(record?.processExit)
+    ? record.processExit
+    : undefined;
+  const exitSignal = issueReportBrowserSignal.safeParse(processExit?.signal);
+  const exitCode =
+    typeof processExit?.code === "number" &&
+    Number.isInteger(processExit.code) &&
+    processExit.code >= 0 &&
+    processExit.code <= 255
+      ? processExit.code
+      : undefined;
+  const browserAttempts = Array.isArray(record?.attempts)
+    ? record.attempts
+        .flatMap((attempt) => {
+          if (!isPlainRecord(attempt)) {
+            return [];
+          }
+          const parsed = issueReportBrowserAttempt.safeParse({
+            browser: attempt.browser,
+            source: attempt.source,
+          });
+          return parsed.success ? [parsed.data] : [];
+        })
+        .slice(0, 10)
+    : [];
   const issues =
     errorCode === undefined
       ? undefined
@@ -288,9 +402,12 @@ export const createIssueReportFailure = (
             code: issue.code,
             constraint: issue.constraint,
           }));
+  const entityIds = getIssueReportEntityIds(input);
   return {
     tool: canonicalTool,
-    code: errorCode ?? "MCP_TOOL_FAILED",
+    code: isResponseTransformFailure
+      ? "API_RESPONSE_TRANSFORM_FAILED"
+      : (errorCode ?? "MCP_TOOL_FAILED"),
     ...(typeof httpStatus === "number" &&
     Number.isInteger(httpStatus) &&
     httpStatus >= 100 &&
@@ -298,7 +415,54 @@ export const createIssueReportFailure = (
       ? { httpStatus }
       : {}),
     ...(elapsedMs === undefined ? {} : { elapsedMs }),
+    ...(entityIds.length === 0 ? {} : { entityIds }),
     ...(issues === undefined || issues.length === 0 ? {} : { issues }),
+    ...(response === undefined
+      ? {}
+      : {
+          response: {
+            format: responseFormat,
+            envelope: responseEnvelope,
+            ...(Array.isArray(responseJson)
+              ? { batchSize: Math.min(responseJson.length, 1_000) }
+              : {}),
+          },
+        }),
+    ...(browserAttempts.length === 0 &&
+    !exitSignal.success &&
+    exitCode === undefined
+      ? {}
+      : {
+          browser: {
+            ...(exitSignal.success ? { exitSignal: exitSignal.data } : {}),
+            ...(exitCode === undefined ? {} : { exitCode }),
+            ...(browserAttempts.length === 0
+              ? {}
+              : { attempts: browserAttempts }),
+          },
+        }),
+  };
+};
+
+export const createIssueReportFailureTracker = (now = Date.now) => {
+  let recent: { failure: IssueReportRecentFailure; at: number } | undefined;
+  return {
+    record(tool: string, error: unknown, elapsedMs?: number, input?: unknown) {
+      recent = {
+        failure: createIssueReportFailure(tool, error, elapsedMs, input),
+        at: now(),
+      };
+    },
+    get() {
+      return recent !== undefined && now() - recent.at <= 10 * 60_000
+        ? recent.failure
+        : undefined;
+    },
+    succeed(tool: string) {
+      if (tool === "report-issue") {
+        recent = undefined;
+      }
+    },
   };
 };
 
@@ -341,7 +505,11 @@ const executePublicServerOperation = async ({
     ...(addIssueReportRuntime(
       operation.command,
       input,
-      issueReportRuntime
+      issueReportRuntime ??
+        (() =>
+          createIssueReportRuntime(undefined, {
+            projectId: connection.projectId,
+          }))
     ) as Record<string, unknown>),
     projectId: connection.projectId,
   });

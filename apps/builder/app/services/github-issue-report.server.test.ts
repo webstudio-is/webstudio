@@ -19,6 +19,7 @@ const report: IssueReportInput = {
     reasoningEffort: "medium",
   },
   runtime: {
+    projectId: "project-123",
     cliVersion: "1.2.3",
     nodeVersion: "22.14.0",
     os: "linux",
@@ -28,6 +29,10 @@ const report: IssueReportInput = {
     apiContractVersion: "public-api:client",
     bundleVersion: "bundle:client",
     recentFailure: {
+      entityIds: [
+        { field: "pageId", id: "page-123" },
+        { field: "instanceId", id: "instance-123" },
+      ],
       tool: "preview.start",
       code: "PROJECT_BUNDLE_INVALID",
       httpStatus: 504,
@@ -75,6 +80,9 @@ describe("GitHub issue reports", () => {
     expect(body).toContain(report.report.actualResult);
     expect(body).toContain("- Client: Codex 1.2.3");
     expect(body).toContain("- CLI: 1.2.3");
+    expect(body).toContain("- Project ID: `project-123`");
+    expect(body).toContain("- pageId: `page-123`");
+    expect(body).toContain("- instanceId: `instance-123`");
     expect(body).toContain("- Node.js: 22.14.0");
     expect(body).toContain("- Operating system: linux 6 (arm64)");
     expect(body).toContain("- Execution mode: mcp");
@@ -106,6 +114,27 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("## Technical runtime");
     expect(body).toContain("- CLI: unknown");
     expect(body).toContain("- Node.js: unknown");
+  });
+
+  test("formats response and browser diagnostics without raw data", () => {
+    const responseReport = structuredClone(report);
+    if (responseReport.runtime?.recentFailure === undefined) {
+      throw new Error("Expected failure diagnostics");
+    }
+    responseReport.runtime.recentFailure.response = {
+      format: "json",
+      envelope: "result",
+      batchSize: 1,
+    };
+    responseReport.runtime.recentFailure.browser = {
+      exitSignal: "SIGABRT",
+      attempts: [{ browser: "chromium", source: "path" }],
+    };
+
+    const body = formatIssueReport(responseReport);
+    expect(body).toContain("Response: json; envelope=result; batch size=1");
+    expect(body).toContain("Browser exit: SIGABRT");
+    expect(body).toContain("Browser attempts: chromium (path)");
   });
 
   test("discovers the repository installation before creating its token", async () => {

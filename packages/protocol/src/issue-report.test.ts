@@ -60,6 +60,40 @@ const report = {
 } as const;
 
 describe("issue report contract", () => {
+  test("accepts bounded project and entity IDs but rejects arbitrary input data", () => {
+    const runtime = {
+      ...report.runtime,
+      projectId: "project-123",
+      recentFailure: {
+        ...report.runtime.recentFailure,
+        entityIds: [
+          { field: "pageId", id: "page-123" },
+          { field: "instanceId", id: "instance_123" },
+        ],
+      },
+    };
+    expect(issueReportInput.parse({ ...report, runtime }).runtime).toEqual(
+      runtime
+    );
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: { ...runtime, projectId: "https://secret.example.com" },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...runtime,
+          recentFailure: {
+            ...runtime.recentFailure,
+            entityIds: [{ field: "authTokenId", id: "private" }],
+          },
+        },
+      })
+    ).toThrow();
+  });
   test("accepts a complete anonymous LLM-authored report", () => {
     expect(issueReportInput.parse(report)).toEqual(report);
   });
@@ -78,6 +112,52 @@ describe("issue report contract", () => {
       issueReportInput.parse({
         ...report,
         deduplicationKey: "project/123@example.com",
+      })
+    ).toThrow();
+  });
+
+  test("accepts bounded response and browser diagnostics but no raw payloads", () => {
+    const failure = {
+      ...report.runtime.recentFailure,
+      response: { format: "json", envelope: "result", batchSize: 1 },
+      browser: {
+        exitSignal: "SIGABRT",
+        attempts: [{ browser: "chromium", source: "path" }],
+      },
+    };
+    expect(
+      issueReportInput.parse({
+        ...report,
+        runtime: { ...report.runtime, recentFailure: failure },
+      }).runtime?.recentFailure
+    ).toEqual(failure);
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: { ...failure, responseBody: "private content" },
+        },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: {
+            ...failure,
+            browser: {
+              attempts: [
+                {
+                  browser: "chromium",
+                  source: "path",
+                  path: "/private/browser",
+                },
+              ],
+            },
+          },
+        },
       })
     ).toThrow();
   });

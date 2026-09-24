@@ -514,6 +514,7 @@ describe("captureScreenshot", () => {
       uid: 1000,
       waitUntil: "load",
       waitForSelector: undefined,
+      waitForFonts: undefined,
       waitForTimeout: 250,
       timeout: 30000,
       startupTimeout: 10000,
@@ -540,6 +541,7 @@ describe("captureScreenshot", () => {
         browser: "auto",
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       },
@@ -550,6 +552,7 @@ describe("captureScreenshot", () => {
       expect.objectContaining({
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       })
@@ -773,6 +776,7 @@ test.each(["capture", "capturePage"] as const)(
 test("does not start a fallback browser for an explicit browser path", async () => {
   const createBrowserScreenshotSession = vi.fn(async () => {
     throw new BrowserStartupError("Chromium exited with signal SIGABRT.", {
+      processExit: { signal: "SIGABRT" },
       diagnostic: {
         stage: "browser-startup",
         reason: "browser_ipc_permission_denied",
@@ -798,6 +802,7 @@ test("does not start a fallback browser for an explicit browser path", async () 
     })
   ).rejects.toMatchObject({
     code: "BROWSER_STARTUP_FAILED",
+    processExit: { signal: "SIGABRT" },
     message: expect.stringContaining("/usr/bin/chromium"),
     diagnostic: {
       stage: "browser-startup",

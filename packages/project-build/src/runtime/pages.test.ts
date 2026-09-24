@@ -1875,6 +1875,68 @@ describe("createPage", () => {
     ]);
   });
 
+  test("accepts a fixed page title with a spaced separator", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "Pricing - Plans" },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: `"Pricing - Plans"` }),
+      })
+    );
+  });
+
+  test("accepts a fixed page title that is not valid JavaScript", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "Pricing - Plans for teams" },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({
+          title: `"Pricing - Plans for teams"`,
+        }),
+      })
+    );
+  });
+
+  test("preserves page expressions with explicit string concatenation", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      {
+        name: "Pricing",
+        path: "/pricing",
+        title: 'pageTitle + " | Plans"',
+      },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: 'pageTitle + " | Plans"' }),
+      })
+    );
+  });
+
+  test("preserves numeric arithmetic in page expressions", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "price - 1" },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: "price - 1" }),
+      })
+    );
+  });
+
   test("accepts multi-sentence fixed page text", () => {
     const mutation = createPage(
       { pages: createPages() },

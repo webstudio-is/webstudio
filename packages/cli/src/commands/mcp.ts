@@ -27,7 +27,6 @@ import { diffPngFiles } from "@webstudio-is/vision/diff";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
-  type IssueReportRecentFailure,
 } from "@webstudio-is/protocol";
 import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
@@ -64,7 +63,7 @@ import {
   assertCliServerOperationSupported,
   createCliProjectRestorePointStorage,
   createCliProjectSession,
-  createIssueReportFailure,
+  createIssueReportFailureTracker,
   createIssueReportRuntime,
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
@@ -1859,7 +1858,7 @@ const createCliMcpHost = async ({
   };
   const apiContract = await getCliServerApiContract(apiConnection);
   const operations = getSupportedPublicApiOperations(apiContract);
-  let recentFailure: IssueReportRecentFailure | undefined;
+  const failureTracker = createIssueReportFailureTracker();
   const session = createCliProjectSession({
     connection: apiConnection,
     projectRoot,
@@ -1873,7 +1872,8 @@ const createCliMcpHost = async ({
           ? undefined
           : (status: BuilderStateNamespaceStatus) =>
               getBuilderStateNamespacesByStatus(snapshot.freshness, status);
-      return createIssueReportRuntime(recentFailure, {
+      return createIssueReportRuntime(failureTracker.get(), {
+        projectId,
         ...(namespacesByStatus === undefined
           ? {}
           : {
@@ -2184,20 +2184,15 @@ const createCliMcpHost = async ({
     recordToolFailure(
       canonicalTool: string,
       error: unknown,
-      elapsedMs: number
+      elapsedMs: number,
+      input: unknown
     ) {
       if (canonicalTool !== "report-issue") {
-        recentFailure = createIssueReportFailure(
-          canonicalTool,
-          error,
-          elapsedMs
-        );
+        failureTracker.record(canonicalTool, error, elapsedMs, input);
       }
     },
     recordToolSuccess(canonicalTool: string) {
-      if (canonicalTool !== "report-issue") {
-        recentFailure = undefined;
-      }
+      failureTracker.succeed(canonicalTool);
     },
     reportLog(message: string) {
       if (message.startsWith("ready with ")) {

@@ -12,6 +12,7 @@ import {
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
   createIssueReportFailure,
+  createIssueReportFailureTracker,
   addIssueReportRuntime,
   getCliServerApiContract,
   getCliProjectSessionFile,
@@ -169,6 +170,34 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual([]);
 });
 
+test("captures only recognized IDs from nested failed tool input", () => {
+  const failure = createIssueReportFailure(
+    "update-styles",
+    Object.assign(new Error("private content"), { code: "INVALID_INPUT" }),
+    20,
+    {
+      pageId: "page-1",
+      updates: [
+        {
+          instanceId: "instance-1",
+          dataSourceId: "variable-1",
+          value: { pageId: "private-customer-value" },
+        },
+        { instanceId: "instance-1", value: "private content" },
+      ],
+      authTokenId: "secret-1",
+      nested: { url: "https://secret.example.com", randomId: "secret-2" },
+    }
+  );
+  expect(failure.entityIds).toEqual([
+    { field: "pageId", id: "page-1" },
+    { field: "instanceId", id: "instance-1" },
+    { field: "dataSourceId", id: "variable-1" },
+  ]);
+  expect(JSON.stringify(failure)).not.toContain("secret");
+  expect(JSON.stringify(failure)).not.toContain("private-customer-value");
+});
+
 test("captures failure timing and HTTP status", () => {
   expect(
     createIssueReportFailure(
@@ -184,6 +213,89 @@ test("captures failure timing and HTTP status", () => {
     httpStatus: 504,
     elapsedMs: 17_000,
   });
+});
+
+test("keeps a failed mutation available after a successful diagnostic read", () => {
+  let now = 1_000;
+  const tracker = createIssueReportFailureTracker(() => now);
+  tracker.record(
+    "create-page",
+    new Error("Unable to transform response from server"),
+    750,
+    { pageId: "page-1" }
+  );
+  tracker.succeed("list-pages");
+  expect(tracker.get()?.tool).toBe("create-page");
+  expect(tracker.get()?.entityIds).toEqual([{ field: "pageId", id: "page-1" }]);
+  now += 60_000;
+  expect(tracker.get()?.tool).toBe("create-page");
+  now += 10 * 60_000;
+  expect(tracker.get()).toBeUndefined();
+  tracker.record("screenshot", new Error("Browser failed"), 120);
+  tracker.succeed("report-issue");
+  expect(tracker.get()).toBeUndefined();
+});
+
+test("reports only the shape of an untransformable server response", () => {
+  const error = Object.assign(
+    new Error("Unable to transform response from server"),
+    {
+      name: "TRPCClientError",
+      meta: {
+        response: new Response("private customer content", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+        responseJSON: [{ result: { data: "private customer content" } }],
+      },
+    }
+  );
+  const failure = createIssueReportFailure(
+    "create-page",
+    new Error("Page creation failed", { cause: error })
+  );
+  expect(failure).toEqual({
+    tool: "create-page",
+    code: "API_RESPONSE_TRANSFORM_FAILED",
+    httpStatus: 200,
+    response: { format: "json", envelope: "result", batchSize: 1 },
+  });
+  expect(JSON.stringify(failure)).not.toContain("private customer content");
+});
+
+test("reports browser family and exit signal without executable paths", () => {
+  const failure = createIssueReportFailure("screenshot", {
+    code: "SCREENSHOT_CAPTURE_FAILED",
+    cause: {
+      code: "BROWSER_STARTUP_FAILED",
+      processExit: { signal: "SIGABRT" },
+      attempts: [
+        { browser: "chromium", source: "path", path: "/private/browser" },
+      ],
+    },
+  });
+  expect(failure).toEqual({
+    tool: "screenshot",
+    code: "SCREENSHOT_CAPTURE_FAILED",
+    browser: {
+      exitSignal: "SIGABRT",
+      attempts: [{ browser: "chromium", source: "path" }],
+    },
+  });
+  expect(JSON.stringify(failure)).not.toContain("/private/browser");
+  expect(
+    createIssueReportFailure("screenshot", {
+      code: "BROWSER_STARTUP_FAILED",
+      processExit: { signal: "SIGCUSTOMERSECRET" },
+      attempts: [
+        {
+          browser: "private-browser",
+          source: "path",
+          path: "/private/browser",
+        },
+      ],
+    })
+  ).toEqual({ tool: "screenshot", code: "BROWSER_STARTUP_FAILED" });
 });
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -1083,7 +1195,7 @@ describe("cli project session transport", () => {
     expect(issueReportRuntime).not.toHaveBeenCalled();
   });
 
-  test("adds anonymous runtime metadata to issue report requests", async () => {
+  test("adds project ID and runtime metadata to issue report requests", async () => {
     let requestBody = "";
     const fetch = vi.fn(
       async (request: URL | RequestInfo, init?: RequestInit) => {
@@ -1147,6 +1259,7 @@ describe("cli project session transport", () => {
       0: { runtime?: Record<string, unknown> };
     };
     expect(body[0].runtime).toEqual({
+      projectId: "project-1",
       cliVersion: expect.any(String),
       nodeVersion: process.versions.node,
       os: process.platform,

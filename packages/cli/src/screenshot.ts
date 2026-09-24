@@ -665,6 +665,7 @@ type CaptureScreenshotOptions = {
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
   waitForSelector?: string;
+  waitForFonts?: boolean;
   waitForTimeout?: number;
   timeout?: number;
   format?: "png" | "jpeg" | "webp";
@@ -694,6 +695,7 @@ const getBrowserScreenshotOptions = (
     uid: dependencies.getuid(),
     waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
     waitForSelector: options.waitForSelector,
+    waitForFonts: options.waitForFonts,
     waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
     timeout,
     startupTimeout: Math.max(
@@ -797,6 +799,7 @@ const createBrowserStartupError = (
     ({ error }) =>
       error instanceof BrowserStartupError && error.diagnostic !== undefined
   )?.error;
+  const lastFailure = failures.at(-1)?.error;
   return Object.assign(
     new BrowserStartupError(
       [
@@ -814,10 +817,14 @@ const createBrowserStartupError = (
           : []),
       ].join("\n"),
       {
-        cause: failures.at(-1)?.error,
+        cause: lastFailure,
         diagnostic:
           diagnostic instanceof BrowserStartupError
             ? diagnostic.diagnostic
+            : undefined,
+        processExit:
+          lastFailure instanceof BrowserStartupError
+            ? lastFailure.processExit
             : undefined,
       }
     ),
@@ -1065,6 +1072,7 @@ export const captureScreenshotWithBrowserInstall = async (
     browserPath?: string;
     waitUntil?: ScreenshotWaitUntil;
     waitForSelector?: string;
+    waitForFonts?: boolean;
     waitForTimeout?: number;
     timeout?: number;
     isJson: boolean;

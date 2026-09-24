@@ -216,6 +216,56 @@ export const serverOnlyRouterOperationMetadata = {
                   minimum: 0,
                   maximum: 9007199254740991,
                 },
+                entityIds: {
+                  maxItems: 20,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      field: {
+                        type: "string",
+                        enum: [
+                          "assetId",
+                          "blockInstanceId",
+                          "breakpointId",
+                          "collectionInstanceId",
+                          "dataSourceId",
+                          "designTokenId",
+                          "folderId",
+                          "fragmentId",
+                          "instanceId",
+                          "itemRootInstanceId",
+                          "pageId",
+                          "parentFolderId",
+                          "parentInstanceId",
+                          "propId",
+                          "relatedInstanceId",
+                          "resourceId",
+                          "rootInstanceId",
+                          "ruleId",
+                          "scopeInstanceId",
+                          "slotId",
+                          "sourceInstanceId",
+                          "sourceTemplateId",
+                          "styleSourceId",
+                          "targetFolderId",
+                          "targetParentInstanceId",
+                          "targetTemplateId",
+                          "templateId",
+                          "variableId",
+                        ],
+                      },
+                      id: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 160,
+                        pattern: "^[A-Za-z0-9_-]+$",
+                      },
+                    },
+                    required: ["field", "id"],
+                    additionalProperties: false,
+                  },
+                },
                 issues: {
                   maxItems: 30,
                   type: "array",
@@ -244,6 +294,82 @@ export const serverOnlyRouterOperationMetadata = {
                     required: ["path", "code", "constraint"],
                     additionalProperties: false,
                   },
+                },
+                response: {
+                  type: "object",
+                  properties: {
+                    format: {
+                      type: "string",
+                      enum: ["json", "html", "other"],
+                    },
+                    envelope: {
+                      type: "string",
+                      enum: ["result", "error", "other", "missing"],
+                    },
+                    batchSize: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 1000,
+                    },
+                  },
+                  required: ["format", "envelope"],
+                  additionalProperties: false,
+                },
+                browser: {
+                  type: "object",
+                  properties: {
+                    exitSignal: {
+                      type: "string",
+                      enum: [
+                        "SIGABRT",
+                        "SIGBUS",
+                        "SIGFPE",
+                        "SIGHUP",
+                        "SIGILL",
+                        "SIGINT",
+                        "SIGKILL",
+                        "SIGPIPE",
+                        "SIGQUIT",
+                        "SIGSEGV",
+                        "SIGSYS",
+                        "SIGTERM",
+                        "SIGTRAP",
+                      ],
+                    },
+                    exitCode: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 255,
+                    },
+                    attempts: {
+                      maxItems: 10,
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          browser: {
+                            type: "string",
+                            enum: ["chromium", "chrome", "edge", "brave"],
+                          },
+                          source: {
+                            type: "string",
+                            enum: [
+                              "option",
+                              "env",
+                              "path",
+                              "platform",
+                              "playwright",
+                              "chrome-launcher",
+                            ],
+                          },
+                        },
+                        required: ["browser", "source"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  additionalProperties: false,
+                  required: [],
                 },
               },
               required: ["tool", "code"],
@@ -312,7 +438,7 @@ export const serverOnlyRouterOperationMetadata = {
           ],
           additionalProperties: false,
           description:
-            "Anonymous CLI-collected runtime metadata without host, user, path, environment, network, location, project, or argument data.",
+            "CLI-collected runtime metadata with the project ID and bounded entity IDs from the failed tool input; no raw arguments, URLs, credentials, or customer content.",
         },
         report: {
           type: "object",
@@ -402,7 +528,7 @@ export const serverOnlyRouterOperationMetadata = {
       ],
       additionalProperties: false,
       description:
-        "Anonymous LLM-authored technical report. Generalize context, exclude all identifying or project-specific data, and preserve only stable tool, schema, error, version, and input-shape details.",
+        "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from the failed tool input. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data.",
     },
   },
   "build.get": {

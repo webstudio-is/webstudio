@@ -129,12 +129,18 @@ Write and review larger fragments as JSX before placing them in the `fragment` f
   </button>
 </section>
 
+<section ws:tokens={[token("accent")]}>Reuse an existing accent token</section>
+
 <section>
   <Switch>
     <SwitchThumb />
   </Switch>
 </section>
 ```
+
+Use the two-argument `token` form with a `css` template to define styles in the
+fragment. Use `token("name")` to attach an existing project token; an unknown
+name is an error.
 
 Rules:
 
@@ -1106,6 +1112,13 @@ source of truth. For tools with no required arguments, pass `{}`.
 {
   "parentInstanceId": "parent-id",
   "fragment": "<section ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><h2>Token Example</h2><button onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</button></section>"
+}
+```
+
+```json
+{
+  "parentInstanceId": "parent-id",
+  "fragment": "<section ws:tokens={[token('accent')]}><h2>Reuse an existing accent token</h2></section>"
 }
 ```
 

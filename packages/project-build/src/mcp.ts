@@ -1772,6 +1772,12 @@ const screenshotInputSchema = {
       type: "string",
       description: "CSS selector that must exist before capture.",
     },
+    waitForFonts: {
+      type: "boolean",
+      default: true,
+      description:
+        "Wait for document.fonts.ready before sampling layout. Set false if a font never settles; capture still waits for stable layout frames.",
+    },
     waitForTimeout: {
       type: "number",
       default: defaultScreenshotWaitForTimeout,
@@ -1836,6 +1842,7 @@ const responsiveScreenshotInputSchema = {
     browser: screenshotInputSchema.properties.browser,
     waitUntil: screenshotInputSchema.properties.waitUntil,
     waitForSelector: screenshotInputSchema.properties.waitForSelector,
+    waitForFonts: screenshotInputSchema.properties.waitForFonts,
     waitForTimeout: screenshotInputSchema.properties.waitForTimeout,
     timeout: screenshotInputSchema.properties.timeout,
   },
@@ -2426,6 +2433,11 @@ export const mcpArgumentExamples: Record<
       parentInstanceId: "parent-id",
       fragment:
         "<section ws:tokens={[token('accent', css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><h2>Token Example</h2><button onClick={new ActionValue(['event'], expression`console.log(event)`)}>Track launch</button></section>",
+    },
+    {
+      parentInstanceId: "parent-id",
+      fragment:
+        "<section ws:tokens={[token('accent')]}><h2>Reuse an existing accent token</h2></section>",
     },
     {
       parentInstanceId: "parent-id",
@@ -7814,6 +7826,12 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       throw new Error("screenshot waitForSelector must be a non-empty string.");
     }
   }
+  if (
+    input.waitForFonts !== undefined &&
+    typeof input.waitForFonts !== "boolean"
+  ) {
+    throw new Error("screenshot waitForFonts must be a boolean.");
+  }
   const source = input.source === undefined ? undefined : input.source;
   if (source !== undefined && isProjectSessionPreviewSource(source) === false) {
     throw new Error("screenshot source must be local or session.");
@@ -7870,6 +7888,7 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       typeof input.browserPath === "string" ? input.browserPath : undefined,
     waitUntil,
     waitForSelector,
+    waitForFonts: input.waitForFonts,
     waitForTimeout,
     timeout,
   };
@@ -9224,7 +9243,8 @@ export const createProjectSessionMcpServer = async <
   onToolFailure?: (
     canonicalTool: string,
     error: unknown,
-    elapsedMs: number
+    elapsedMs: number,
+    input: unknown
   ) => void;
   onToolSuccess?: (canonicalTool: string) => void;
 }) => {
@@ -9369,7 +9389,7 @@ export const createProjectSessionMcpServer = async <
       return result;
     } catch (error) {
       const elapsedMs = Date.now() - startedAt;
-      onToolFailure?.(canonicalName ?? "unknown", error, elapsedMs);
+      onToolFailure?.(canonicalName ?? "unknown", error, elapsedMs, input);
       sendLog(
         "error",
         `tool ${name} failed in ${elapsedMs}ms: ${

@@ -156,11 +156,16 @@ export const findTokenWithMatchingStyles = ({
   | { hasConflict: false; matchingToken: undefined } => {
   // Find tokens with the same name
   const tokensWithSameName = existingTokens.filter(
-    (token) => token.type === "token" && token.name === tokenName
+    (token): token is Extract<StyleSource, { type: "token" }> =>
+      token.type === "token" && token.name === tokenName
   );
 
   if (tokensWithSameName.length === 0) {
     return { hasConflict: false, matchingToken: undefined };
+  }
+
+  if (tokenStyles.length === 0) {
+    return { hasConflict: false, matchingToken: tokensWithSameName[0] };
   }
 
   // Get the signature of the token we're checking
@@ -175,9 +180,6 @@ export const findTokenWithMatchingStyles = ({
 
   // Check if any existing token with the same name has matching styles
   for (const existing of tokensWithSameName) {
-    if (existing.type !== "token") {
-      continue;
-    }
     const existingSignature = getStyleSourceStylesSignature(
       existing.id,
       existingStyles,

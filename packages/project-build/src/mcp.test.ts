@@ -6321,6 +6321,7 @@ describe("project session mcp adapter", () => {
         browser: "auto",
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       },
@@ -6346,6 +6347,7 @@ describe("project session mcp adapter", () => {
         browserPath: undefined,
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       },
@@ -6375,6 +6377,7 @@ describe("project session mcp adapter", () => {
         ],
         fullPage: true,
         source: "session",
+        waitForFonts: false,
       },
     });
 
@@ -6385,6 +6388,7 @@ describe("project session mcp adapter", () => {
           viewport: { width: 1440, height: 900 },
           fullPage: true,
           source: "session",
+          waitForFonts: false,
         }),
         expect.objectContaining({
           path: "/pricing",
@@ -8836,7 +8840,19 @@ describe("project session mcp adapter", () => {
       expect(onToolFailure).toHaveBeenCalledWith(
         "list-pages",
         error,
-        expect.any(Number)
+        expect.any(Number),
+        {}
+      );
+
+      await client.callTool({
+        name: "list-instances",
+        arguments: { rootInstanceId: "instance-1" },
+      });
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "list-instances",
+        error,
+        expect.any(Number),
+        { rootInstanceId: "instance-1" }
       );
 
       await client.callTool({
