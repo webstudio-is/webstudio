@@ -56,18 +56,19 @@ const render = () => {
       </TooltipProvider>
     );
   });
-  const edit = document.querySelector<HTMLButtonElement>(
-    'button[aria-label="Edit Content-Security-Policy for /"]'
+  const route = document.querySelector<HTMLInputElement>(
+    'input[placeholder="/ or /private/*"]'
   );
-  act(() => edit?.click());
-  const input = document.querySelector<HTMLInputElement>(
+  const name = document.querySelector<HTMLInputElement>(
+    'input[placeholder="Header name"]'
+  );
+  const value = document.querySelector<HTMLInputElement>(
     'input[placeholder="Header value"]'
   );
-  if (input === null) {
-    throw new Error("Expected the header value field");
+  if (!route || !name || !value) {
+    throw new Error("Expected the rule form");
   }
-  act(() => input.focus());
-  return { input, onOpenChange };
+  return { route, name, value, onOpenChange };
 };
 
 const type = (input: HTMLInputElement, value: string) => {
@@ -94,29 +95,16 @@ const pressEscape = async (target: Element) => {
   });
 };
 
-test("Escape cancels a header edit without dismissing Project Settings", async () => {
-  const { input, onOpenChange } = render();
-  type(input, "frame-ancestors https://example.com");
-  await pressEscape(input);
-  expect(
-    document.querySelector<HTMLInputElement>(
-      'input[placeholder="Header value"]'
-    )?.value
-  ).toBe("");
-  expect(executeRuntimeMutation).not.toHaveBeenCalled();
-  expect(onOpenChange).not.toHaveBeenCalled();
-
-  const dialog = document.querySelector('[role="dialog"]');
-  if (dialog === null) {
-    throw new Error("Expected Project Settings to remain open");
-  }
-  // Escape outside the field retains normal dialog dismissal.
-  await pressEscape(dialog);
+test("Escape from the header form dismisses Project Settings", async () => {
+  const { value, onOpenChange } = render();
+  act(() => value.focus());
+  await pressEscape(value);
   expect(onOpenChange).toHaveBeenCalledWith(false);
+  expect(executeRuntimeMutation).not.toHaveBeenCalled();
 });
 
 test.each(["denied", "throws"])(
-  "keeps a failed draft and shows an error when saving %s",
+  "keeps form values and shows an error when saving %s",
   (failure) => {
     vi.mocked(executeRuntimeMutation).mockImplementation(() => {
       if (failure === "throws") {
@@ -124,13 +112,15 @@ test.each(["denied", "throws"])(
       }
       return undefined;
     });
-    const { input } = render();
-    type(input, "frame-ancestors https://example.com");
-    const save = Array.from(document.querySelectorAll("button")).find(
-      (button) => button.textContent === "Save"
+    const { route, name, value } = render();
+    type(route, "/");
+    type(name, "Content-Security-Policy");
+    type(value, "frame-ancestors https://example.com");
+    const add = Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === "Add"
     );
-    act(() => save?.click());
-    expect(input.value).toBe("frame-ancestors https://example.com");
+    act(() => add?.click());
+    expect(value.value).toBe("frame-ancestors https://example.com");
     expect(document.body.textContent).toContain("Changes could not be saved");
     expect($projectSettings.get()?.meta.customHeaders).toBeUndefined();
   }
@@ -147,19 +137,17 @@ test("adds a route rule and keeps required site-wide headers nonremovable", () =
   expect(
     document.querySelector('button[aria-label="Remove X-Frame-Options for /"]')
   ).not.toBeNull();
-  const cancel = Array.from(document.querySelectorAll("button")).find(
-    (button) => button.textContent === "Cancel"
-  );
-  act(() => cancel?.click());
-  const route = document.querySelector<HTMLInputElement>(
-    'input[placeholder="/ or /private/*"]'
-  );
-  const name = document.querySelector<HTMLInputElement>(
-    'input[placeholder="Header name"]'
-  );
-  const value = document.querySelector<HTMLInputElement>(
-    'input[placeholder="Header value"]'
-  );
+  const { route, name, value } = {
+    route: document.querySelector<HTMLInputElement>(
+      'input[placeholder="/ or /private/*"]'
+    ),
+    name: document.querySelector<HTMLInputElement>(
+      'input[placeholder="Header name"]'
+    ),
+    value: document.querySelector<HTMLInputElement>(
+      'input[placeholder="Header value"]'
+    ),
+  };
   if (!route || !name || !value) {
     throw new Error("Expected the rule form");
   }
@@ -179,6 +167,31 @@ test("adds a route rule and keeps required site-wide headers nonremovable", () =
             route: "/private/*",
             name: "Referrer-Policy",
             value: "no-referrer",
+          },
+        ],
+      },
+    },
+  });
+});
+
+test("submitting an existing required header updates its value", () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  const { route, name, value } = render();
+  type(route, "/");
+  type(name, "Content-Security-Policy");
+  type(value, "frame-ancestors https://example.com");
+  const add = Array.from(document.querySelectorAll("button")).find(
+    (button) => button.textContent === "Add"
+  );
+  act(() => add?.click());
+  expect(executeRuntimeMutation).toHaveBeenCalledWith({
+    id: "projectSettings.update",
+    input: {
+      meta: {
+        customHeaders: [
+          {
+            name: "Content-Security-Policy",
+            value: "frame-ancestors https://example.com",
           },
         ],
       },

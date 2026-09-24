@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Button,
   Combobox,
@@ -20,7 +20,6 @@ type Field = {
   placeholder: string;
   type?: "text" | "password";
   suggestions?: string[];
-  disabledWhenEditing?: boolean;
 };
 
 type Rule = {
@@ -33,16 +32,12 @@ export const ProjectSettingsRuleList = ({
   fields,
   validate,
   onSubmit,
-  editing,
-  onCancelEdit,
   rules,
   columns,
 }: {
   fields: Field[];
   validate: (values: Values) => Errors;
-  onSubmit: (values: Values, editingKey?: string) => boolean;
-  editing?: { key: string; values: Values };
-  onCancelEdit?: () => void;
+  onSubmit: (values: Values) => boolean;
   rules: Rule[];
   columns: string;
 }) => {
@@ -50,21 +45,15 @@ export const ProjectSettingsRuleList = ({
   const [errors, setErrors] = useState<Errors>({});
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setValues(editing?.values ?? {});
-    setErrors({});
-  }, [editing]);
-
   const submit = () => {
     const nextErrors = validate(values);
     setErrors(nextErrors);
     if (Object.values(nextErrors).some((messages) => messages.length > 0)) {
       return;
     }
-    if (onSubmit(values, editing?.key)) {
+    if (onSubmit(values)) {
       setValues({});
       setErrors({});
-      onCancelEdit?.();
       firstInputRef.current?.focus();
     } else {
       setErrors({ value: ["Changes could not be saved. Please try again."] });
@@ -73,18 +62,7 @@ export const ProjectSettingsRuleList = ({
 
   return (
     <>
-      <Flex
-        gap="2"
-        align="center"
-        data-rule-editing={editing ? "" : undefined}
-        onKeyDown={(event) => {
-          if (event.key === "Escape" && editing) {
-            event.preventDefault();
-            event.stopPropagation();
-            onCancelEdit?.();
-          }
-        }}
-      >
+      <Flex gap="2" align="center">
         {fields.map((field, index) => (
           <Flex key={field.name} grow css={{ minWidth: 0 }}>
             <InputErrorsTooltip
@@ -100,7 +78,6 @@ export const ProjectSettingsRuleList = ({
                   placeholder={field.placeholder}
                   value={values[field.name] ?? ""}
                   color={errors[field.name]?.length ? "error" : undefined}
-                  disabled={field.disabledWhenEditing && editing !== undefined}
                   getItems={() => field.suggestions ?? []}
                   itemToString={(item) => item ?? ""}
                   onItemSelect={(value) => {
@@ -129,7 +106,6 @@ export const ProjectSettingsRuleList = ({
                   type={field.type}
                   value={values[field.name] ?? ""}
                   color={errors[field.name]?.length ? "error" : undefined}
-                  disabled={field.disabledWhenEditing && editing !== undefined}
                   onChange={(event) => {
                     setValues((current) => ({
                       ...current,
@@ -148,13 +124,8 @@ export const ProjectSettingsRuleList = ({
             </InputErrorsTooltip>
           </Flex>
         ))}
-        {editing && (
-          <Button color="ghost" onClick={onCancelEdit}>
-            Cancel
-          </Button>
-        )}
         <Button color="primary" onClick={submit} css={{ flexShrink: 0 }}>
-          {editing ? "Save" : "Add"}
+          Add
         </Button>
       </Flex>
       {rules.length > 0 && (

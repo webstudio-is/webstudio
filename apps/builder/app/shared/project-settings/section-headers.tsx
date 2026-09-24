@@ -11,11 +11,7 @@ import {
   cssVar,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  InfoCircleIcon,
-  NotebookAndPenIcon,
-  TrashIcon,
-} from "@webstudio-is/icons";
+import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   customResponseHeader,
   customResponseHeaders,
@@ -38,10 +34,6 @@ export const SectionHeaders = () => {
   const { allowDynamicData } = useStore($permissions);
   const settings = useStore($projectSettings);
   const pages = useStore($pages);
-  const [editing, setEditing] = useState<{
-    key: string;
-    values: Record<string, string>;
-  }>();
   const [saveError, setSaveError] = useState("");
   const configured = settings?.meta.customHeaders ?? [];
   const activeHeaders = [
@@ -111,10 +103,10 @@ export const SectionHeaders = () => {
               </Text>
               <br />
               <Text>
-                / applies to every path. Four security headers are required.
-                Select Edit to change a value; route rules override the
-                site-wide value. An empty value omits the optional
-                X-Frame-Options header. Publish to apply changes.
+                / applies to every path. Four security headers are required. Add
+                a rule for an existing path and header to update its value. An
+                empty value omits the optional X-Frame-Options header. Publish
+                to apply changes.
               </Text>
               {allowDynamicData === false && (
                 <>
@@ -150,13 +142,11 @@ export const SectionHeaders = () => {
             name: "route",
             placeholder: "/ or /private/*",
             suggestions: routeSuggestions,
-            disabledWhenEditing: true,
           },
           {
             name: "name",
             placeholder: "Header name",
             suggestions: responseHeaderDefinitions.map(({ name }) => name),
-            disabledWhenEditing: true,
           },
           { name: "value", placeholder: "Header value" },
         ]}
@@ -168,16 +158,6 @@ export const SectionHeaders = () => {
           const routeError = validateWsAuthRoute(route);
           if (routeError) {
             errors.route = [routeError];
-          }
-          if (
-            !editing &&
-            activeHeaders.some(
-              (header) =>
-                ruleKey(header.route ?? "/", header.name) ===
-                ruleKey(route, name)
-            )
-          ) {
-            errors.name = ["This header already exists for this route"];
           }
           const definition = getResponseHeaderDefinition(name);
           const result = customResponseHeader.safeParse({
@@ -194,7 +174,7 @@ export const SectionHeaders = () => {
           }
           return errors;
         }}
-        onSubmit={(values, editingKey) => {
+        onSubmit={(values) => {
           const route = values.route.trim();
           const name =
             getResponseHeaderDefinition(values.name.trim())?.name ??
@@ -208,10 +188,8 @@ export const SectionHeaders = () => {
                 ? null
                 : values.value.trim(),
           };
-          return save(next, editingKey);
+          return save(next, ruleKey(route, name));
         }}
-        editing={editing}
-        onCancelEdit={() => setEditing(undefined)}
         columns="1fr 1.5fr 1.5fr"
         rules={activeHeaders.map((header) => {
           const route = header.route ?? "/";
@@ -232,42 +210,20 @@ export const SectionHeaders = () => {
                 <Text truncate>{header.value ?? "Not sent"}</Text>
               </Tooltip>,
             ],
-            actions: (
-              <Flex data-row-actions align="center">
-                <SmallIconButton
-                  icon={<NotebookAndPenIcon />}
-                  aria-label={`Edit ${header.name} for ${route}`}
-                  onClick={() => {
-                    setSaveError("");
-                    setEditing({
-                      key,
-                      values: {
-                        route,
-                        name: header.name,
-                        value: header.value ?? "",
-                      },
-                    });
-                  }}
-                />
-                {!requiredGlobal && (
-                  <SmallIconButton
-                    variant="destructive"
-                    icon={<TrashIcon />}
-                    aria-label={`Remove ${header.name} for ${route}`}
-                    onClick={() => {
-                      const removed = save(
-                        route === "/"
-                          ? { name: header.name, value: null }
-                          : undefined,
-                        key
-                      );
-                      if (removed && editing?.key === key) {
-                        setEditing(undefined);
-                      }
-                    }}
-                  />
-                )}
-              </Flex>
+            actions: requiredGlobal ? undefined : (
+              <SmallIconButton
+                variant="destructive"
+                icon={<TrashIcon />}
+                aria-label={`Remove ${header.name} for ${route}`}
+                onClick={() => {
+                  save(
+                    route === "/"
+                      ? { name: header.name, value: null }
+                      : undefined,
+                    key
+                  );
+                }}
+              />
             ),
           };
         })}
