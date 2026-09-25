@@ -26,6 +26,7 @@ import { leftPanelWidth, rightPanelWidth } from "./utils";
 import { SectionGeneral } from "./section-general";
 import { SectionAgents } from "./section-agents";
 import { SectionAuth } from "./section-auth";
+import { SectionHeaders } from "./section-headers";
 import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
@@ -43,6 +44,7 @@ const sections = new Map<
   ["marketplace", SectionMarketplace],
   ["backups", SectionBackups],
   ["auth", SectionAuth],
+  ["headers", SectionHeaders],
 ] as const);
 
 const sectionLabels = new Map<SectionName, string>([

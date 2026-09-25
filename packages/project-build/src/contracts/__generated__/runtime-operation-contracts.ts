@@ -5403,6 +5403,38 @@ export const runtimeOperationContractData = [
             auth: {
               type: "string",
             },
+            customHeaders: {
+              description:
+                "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
+              maxItems: 100,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  route: {
+                    type: "string",
+                    maxLength: 2048,
+                  },
+                  name: {
+                    type: "string",
+                    maxLength: 256,
+                  },
+                  value: {
+                    anyOf: [
+                      {
+                        type: "string",
+                        maxLength: 8192,
+                        pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                      },
+                      {
+                        type: "null",
+                      },
+                    ],
+                  },
+                },
+                required: ["name", "value"],
+              },
+            },
           },
           additionalProperties: {},
           required: [],
@@ -5512,6 +5544,46 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            customHeaders: {
+              anyOf: [
+                {
+                  description:
+                    "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
+                  maxItems: 100,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      route: {
+                        type: "string",
+                        maxLength: 2048,
+                      },
+                      name: {
+                        type: "string",
+                        maxLength: 256,
+                      },
+                      value: {
+                        anyOf: [
+                          {
+                            type: "string",
+                            maxLength: 8192,
+                            pattern:
+                              "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                          },
+                          {
+                            type: "null",
+                          },
+                        ],
+                      },
+                    },
+                    required: ["name", "value"],
+                  },
                 },
                 {
                   type: "null",

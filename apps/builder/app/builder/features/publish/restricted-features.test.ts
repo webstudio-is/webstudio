@@ -128,6 +128,79 @@ const getPageRestrictedFeatures = (isDraft: boolean) => {
 };
 
 describe("getRestrictedFeatures", () => {
+  test("restricts customized headers on the free plan", () => {
+    const features = getFeatures({
+      pages: createPages(),
+      projectSettings: {
+        compiler: {},
+        meta: { customHeaders: [{ name: "X-Frame-Options", value: "DENY" }] },
+      },
+      permissions: { allowDynamicData: false },
+    });
+
+    expect([...features.keys()]).toEqual(["Custom headers"]);
+  });
+
+  test("restricts path-specific header rules on the free plan", () => {
+    const features = getFeatures({
+      pages: createPages(),
+      projectSettings: {
+        compiler: {},
+        meta: {
+          customHeaders: [
+            {
+              route: "/private/*",
+              name: "Referrer-Policy",
+              value: "no-referrer",
+            },
+          ],
+        },
+      },
+      permissions: { allowDynamicData: false },
+    });
+    expect(features.has("Custom headers")).toBe(true);
+  });
+
+  test("allows custom headers on the Pro plan", () => {
+    const features = getFeatures({
+      pages: createPages(),
+      projectSettings: {
+        compiler: {},
+        meta: {
+          customHeaders: [
+            {
+              name: "Content-Security-Policy",
+              value: "frame-ancestors https://example.com",
+            },
+            { name: "X-Frame-Options", value: null },
+          ],
+        },
+      },
+      permissions: { allowDynamicData: true },
+    });
+
+    expect(features.has("Custom headers")).toBe(false);
+  });
+
+  test.each([
+    undefined,
+    [],
+    [{ name: "X-Frame-Options", value: null }],
+    [{ name: "Content-Security-Policy", value: "frame-ancestors 'self'" }],
+    [{ name: "x-frame-options", value: "SAMEORIGIN" }],
+  ])(
+    "does not warn about missing or deleted custom headers (%j)",
+    (customHeaders) => {
+      const features = getFeatures({
+        pages: createPages(),
+        projectSettings: { compiler: {}, meta: { customHeaders } },
+        permissions: { allowDynamicData: false },
+      });
+
+      expect(features.has("Custom headers")).toBe(false);
+    }
+  );
+
   test("restricts project authentication when auth is not allowed", () => {
     const features = getFeatures({
       pages: createPages(),

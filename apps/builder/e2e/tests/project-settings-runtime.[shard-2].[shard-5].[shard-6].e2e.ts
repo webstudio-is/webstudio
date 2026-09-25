@@ -161,6 +161,7 @@ const deleteBasicAuth = async ({
   await page
     .getByRole("button", { name: `Delete authentication for ${route}` })
     .click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
