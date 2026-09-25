@@ -145,7 +145,7 @@ describe("builder runtime operation contracts", () => {
     expectPageStatusInputSchema(updatePageMetaProperties.status);
   });
 
-  test("normalizes fixed page metadata text before runtime operation execution", () => {
+  test("does not guess page expression intent in the input schema", () => {
     const createPageInputSchema =
       getBuilderRuntimeOperationInputSchema("pages.create");
 
@@ -161,10 +161,11 @@ describe("builder runtime operation contracts", () => {
         },
       })
     ).toMatchObject({
-      title: `"FleetOps Design System"`,
+      title: "FleetOps Design System",
       meta: {
-        description: `"A realistic interface system for a fleet operations platform."`,
-        socialImageUrl: `"https://assets.example.com/fleetops-og.png"`,
+        description:
+          "A realistic interface system for a fleet operations platform.",
+        socialImageUrl: "https://assets.example.com/fleetops-og.png",
       },
     });
   });

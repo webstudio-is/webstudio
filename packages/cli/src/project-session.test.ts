@@ -177,6 +177,8 @@ test("captures only recognized IDs from nested failed tool input", () => {
     20,
     {
       pageId: "page-1",
+      sourceSlotId: "slot-1",
+      randomId: "private-1",
       updates: [
         {
           instanceId: "instance-1",
@@ -191,10 +193,12 @@ test("captures only recognized IDs from nested failed tool input", () => {
   );
   expect(failure.entityIds).toEqual([
     { field: "pageId", id: "page-1" },
+    { field: "sourceSlotId", id: "slot-1" },
     { field: "instanceId", id: "instance-1" },
     { field: "dataSourceId", id: "variable-1" },
   ]);
   expect(JSON.stringify(failure)).not.toContain("secret");
+  expect(JSON.stringify(failure)).not.toContain("private-1");
   expect(JSON.stringify(failure)).not.toContain("private-customer-value");
 });
 

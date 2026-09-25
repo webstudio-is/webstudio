@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publicApiEntityIdFields } from "./builder-api/operations";
 
 const issueReportTrigger = z.enum(["user-requested", "automatic-friction"]);
 
@@ -82,36 +83,12 @@ const issueReportId = z
   .max(160)
   .regex(/^[A-Za-z0-9_-]+$/);
 
-export const issueReportEntityIdField = z.enum([
-  "assetId",
-  "blockInstanceId",
-  "breakpointId",
-  "collectionInstanceId",
-  "dataSourceId",
-  "designTokenId",
-  "folderId",
-  "fragmentId",
-  "instanceId",
-  "itemRootInstanceId",
-  "pageId",
-  "parentFolderId",
-  "parentInstanceId",
-  "propId",
-  "relatedInstanceId",
-  "resourceId",
-  "rootInstanceId",
-  "ruleId",
-  "scopeInstanceId",
-  "slotId",
-  "sourceInstanceId",
-  "sourceTemplateId",
-  "styleSourceId",
-  "targetFolderId",
-  "targetParentInstanceId",
-  "targetTemplateId",
-  "templateId",
-  "variableId",
-]);
+const sensitiveIdField =
+  /^(?:auth|access|api|session|token|customer|user)|secret|password|credential|private/i;
+
+export const issueReportEntityIdField = z.enum(
+  [...publicApiEntityIdFields].filter((field) => !sensitiveIdField.test(field))
+);
 
 export const issueReportEntityId = z
   .object({ field: issueReportEntityIdField, id: issueReportId })

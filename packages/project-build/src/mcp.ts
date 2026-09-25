@@ -2487,9 +2487,9 @@ export const mcpArgumentExamples: Record<
     {
       pageId: "page-id",
       values: {
-        title: "Pricing",
+        title: '"Pricing"',
         meta: {
-          description: "Pricing plans",
+          description: '"Pricing plans"',
         },
       },
     },

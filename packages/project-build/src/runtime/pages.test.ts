@@ -59,6 +59,7 @@ import {
   nameToSlug,
   nameToPath,
   pageCreateInput,
+  pageUpdateInput,
   pageCustomMetadataSettingsInput,
   pageFieldsInput,
   pageGeneralSettingsInput,
@@ -1263,12 +1264,10 @@ describe("page input schemas", () => {
         },
       })
     ).toEqual([
-      expect.stringMatching(/^title: .*Plain fixed text is accepted/),
+      expect.stringMatching(/^title: .*quoted string expression/),
+      expect.stringMatching(/^meta.description: .*quoted string expression/),
       expect.stringMatching(
-        /^meta.description: .*Plain fixed text is accepted/
-      ),
-      expect.stringMatching(
-        /^meta.custom.0.content: .*Plain fixed text is accepted/
+        /^meta.custom.0.content: .*quoted string expression/
       ),
     ]);
   });
@@ -1794,7 +1793,7 @@ describe("createPage", () => {
         expect.objectContaining({
           path: ["title"],
           message: expect.stringContaining(
-            'Pass it as a string, not as a prop value object like {"type":"string","value":"..."}'
+            'Pass expression source as a string, not as a prop value object like {"type":"string","value":"..."}'
           ),
         }),
       ])
@@ -1818,16 +1817,21 @@ describe("createPage", () => {
     const pages = createPages();
     const mutation = createPage(
       { pages },
-      {
+      pageCreateInput.parse({
         name: "Atlas Ops Design System",
         path: "/atlas-ops-design-system",
-        title: "Atlas Ops Design System",
+        title: `"Atlas Ops Design System"`,
         meta: {
-          description: "Reusable interface examples for operations teams.",
-          socialImageUrl: "https://assets.example.com/atlas-og.png",
-          custom: [{ property: "og:title", content: "Atlas Ops" }],
+          description: `"Reusable interface examples for operations teams."`,
+          socialImageUrl: `"https://assets.example.com/atlas-og.png"`,
+          custom: [
+            {
+              property: "og:title",
+              content: `"Atlas Ops"`,
+            },
+          ],
         },
-      },
+      }),
       { createId: createIdFactory() }
     );
 
@@ -1878,7 +1882,11 @@ describe("createPage", () => {
   test("accepts a fixed page title with a spaced separator", () => {
     const mutation = createPage(
       { pages: createPages() },
-      { name: "Pricing", path: "/pricing", title: "Pricing - Plans" },
+      pageCreateInput.parse({
+        name: "Pricing",
+        path: "/pricing",
+        title: `"Pricing - Plans"`,
+      }),
       { createId: createIdFactory() }
     );
 
@@ -1892,7 +1900,11 @@ describe("createPage", () => {
   test("accepts a fixed page title that is not valid JavaScript", () => {
     const mutation = createPage(
       { pages: createPages() },
-      { name: "Pricing", path: "/pricing", title: "Pricing - Plans for teams" },
+      pageCreateInput.parse({
+        name: "Pricing",
+        path: "/pricing",
+        title: `"Pricing - Plans for teams"`,
+      }),
       { createId: createIdFactory() }
     );
 
@@ -1901,6 +1913,27 @@ describe("createPage", () => {
         value: expect.objectContaining({
           title: `"Pricing - Plans for teams"`,
         }),
+      })
+    );
+  });
+
+  test("does not guess whether unquoted page input is fixed text", () => {
+    expect(() =>
+      createPage(
+        { pages: createPages() },
+        { name: "Pricing", path: "/pricing", title: "Plans for teams" },
+        { createId: createIdFactory() }
+      )
+    ).toThrow(/Invalid Webstudio expression/);
+
+    const mutation = createPage(
+      { pages: createPages() },
+      { name: "Pricing", path: "/pricing", title: "Pricing - Plans" },
+      { createId: createIdFactory() }
+    );
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({ title: "Pricing - Plans" }),
       })
     );
   });
@@ -1968,15 +2001,14 @@ describe("createPage", () => {
   test("accepts multi-sentence fixed page text", () => {
     const mutation = createPage(
       { pages: createPages() },
-      {
+      pageCreateInput.parse({
         name: "Marques",
         path: "/marques",
-        title: "Marques. Toutes nos marques",
+        title: `"Marques. Toutes nos marques"`,
         meta: {
-          description:
-            "Toutes nos marques moto. Concessionnaire multimarque en Gironde.",
+          description: `"Toutes nos marques moto. Concessionnaire multimarque en Gironde."`,
         },
-      },
+      }),
       { createId: createIdFactory() }
     );
 
@@ -2022,7 +2054,7 @@ describe("createPage", () => {
         },
         { createId: createIdFactory() }
       )
-    ).toThrow(/title: .*Plain fixed text is accepted/);
+    ).toThrow(/title: .*quoted string expression/);
   });
 });
 
@@ -2140,16 +2172,16 @@ describe("updatePage", () => {
     expect(
       updatePage(
         { pages },
-        {
+        pageUpdateInput.parse({
           pageId: "page",
           values: {
-            title: "Pricing Plans",
+            title: `"Pricing Plans"`,
             meta: {
-              description: "Plans for teams.",
-              socialImageUrl: "https://assets.example.com/pricing-og.png",
+              description: `"Plans for teams."`,
+              socialImageUrl: `"https://assets.example.com/pricing-og.png"`,
             },
           },
-        }
+        })
       ).payload
     ).toEqual([
       {
@@ -2178,16 +2210,15 @@ describe("updatePage", () => {
   test("accepts multi-sentence fixed page text", () => {
     const mutation = updatePage(
       { pages: createPages() },
-      {
+      pageUpdateInput.parse({
         pageId: "page",
         values: {
-          title: "Marques. Toutes nos marques",
+          title: `"Marques. Toutes nos marques"`,
           meta: {
-            description:
-              "L'atelier présente toutes nos marques moto. Concessionnaire multimarque en Gironde.",
+            description: `"L'atelier présente toutes nos marques moto. Concessionnaire multimarque en Gironde."`,
           },
         },
-      }
+      })
     );
 
     expect(mutation.payload[0]?.patches).toEqual([
@@ -2217,7 +2248,7 @@ describe("updatePage", () => {
           },
         }
       )
-    ).toThrow(/title: .*Plain fixed text is accepted/);
+    ).toThrow(/title: .*quoted string expression/);
   });
 
   test("rejects updated page paths with unsupported URL pattern syntax", () => {
@@ -2287,8 +2318,8 @@ describe("updatePageMarketplace", () => {
       {
         pageId: "page",
         values: {
-          title: "Landing",
-          description: "Welcome",
+          title: `"Landing"`,
+          description: `"Welcome"`,
           marketplace: {
             include: true,
             category: "Marketing",

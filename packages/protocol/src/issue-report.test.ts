@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { issueReportInput } from "./issue-report";
+import { z } from "zod";
+import { issueReportEntityIdField, issueReportInput } from "./issue-report";
 
 const report = {
   trigger: "user-requested",
@@ -60,6 +61,14 @@ const report = {
 } as const;
 
 describe("issue report contract", () => {
+  test("advertised entity ID fields enforce the privacy rule", () => {
+    const schema = z.toJSONSchema(issueReportEntityIdField);
+    expect(schema.enum).toContain("pageId");
+    expect(schema.enum).toContain("sourceSlotId");
+    expect(schema.enum).not.toContain("authTokenId");
+    expect(schema.enum).not.toContain("billingSecretId");
+  });
+
   test("accepts bounded project and entity IDs but rejects arbitrary input data", () => {
     const runtime = {
       ...report.runtime,
@@ -69,6 +78,8 @@ describe("issue report contract", () => {
         entityIds: [
           { field: "pageId", id: "page-123" },
           { field: "instanceId", id: "instance_123" },
+          { field: "sourceSlotId", id: "slot-123" },
+          { field: "designTokenId", id: "token-123" },
         ],
       },
     };

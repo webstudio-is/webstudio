@@ -394,7 +394,11 @@ describe("api router build operation adapters", () => {
 
     const caller = createCaller({
       ...createContext(true),
-      apiClient: { type: "cli", version: "0.276.0" },
+      apiClient: {
+        type: "cli",
+        version: "0.276.0",
+        contractVersion: undefined,
+      },
     });
 
     await expect(
@@ -428,7 +432,11 @@ describe("api router build operation adapters", () => {
 
     const caller = createCaller({
       ...createContext(true),
-      apiClient: { type: "cli", version: "0.276.0" },
+      apiClient: {
+        type: "cli",
+        version: "0.276.0",
+        contractVersion: publicApiContractVersion,
+      },
     });
 
     await expect(

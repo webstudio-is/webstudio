@@ -194,25 +194,27 @@ Commands:
 Commands:
 
 - MCP tool: create-page {"name":"Pricing","path":"/pricing"}
-- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"Pricing","meta":{"description":"Plans for teams"}}
+- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"\"Pricing\"","meta":{"description":"\"Plans for teams\""}}
 
 Notes:
 
-- `name`, `path`, page `title`, and metadata text fields accept plain fixed values.
-- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. Wrap an ambiguous expression in parentheses, for example `(first - second)`.
+- `name` and `path` are plain values. Page `title` and metadata text fields contain expression source; quote fixed text as a JavaScript string literal inside the JSON string.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. An unquoted word is a variable reference.
+- CLI flags such as `--title` treat values as fixed text. Add `--expressions` to `webstudio create-page` when passing expression source through these flags; quote any fixed text in the same call as a JavaScript string expression.
 
 ## Update page settings/metadata
 
 Commands:
 
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans","status":200}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\"","status":200}}}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"method":"basic","login":"<login>","password":"<password>"}}}}
 
 Notes:
 
-- Page `title` and metadata text fields accept plain fixed values.
-- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. Wrap an ambiguous expression in parentheses, for example `(first - second)`.
+- For fixed page `title` and metadata text, quote the text as a JavaScript string literal inside the JSON string.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`. An unquoted word is a variable reference.
 - Page `status` accepts a fixed HTTP status code as a number from 200 through 599 or a JavaScript expression string for a dynamic status.
+- For `webstudio update-page`, add `--expressions` when page title or metadata flags contain expression source. Without it, those flags are fixed text.
 
 ## Read project settings
 
@@ -339,7 +341,9 @@ Commands:
 
 Commands:
 
-- MCP tool: create-page-template {"name":"Landing Template","title":"Landing"}
+- MCP tool: create-page-template {"name":"Landing Template","title":"\"Landing\""}
+
+CLI `create-page-template` and `update-page-template` use fixed text flags by default. Add `--expressions` when passing expression source through title or metadata flags.
 
 ## Update page template
 
@@ -1207,7 +1211,7 @@ Commands:
 - MCP tool: update-text {"instanceId":"<instanceId>","childIndex":0,"text":"Launch faster"}
 - MCP tool: replace-text {"find":"Old headline","replace":"New headline","match":"exact","pagePath":"/pricing","limit":20}
 - MCP tool: update-props {"updates":"props.json contents"}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans"}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>"}
 - MCP tool: replace-styles {"property":"color","fromValue":{"type":"keyword","value":"red"},"toValue":{"type":"keyword","value":"blue"}}
@@ -1223,7 +1227,7 @@ Commands:
 
 - MCP tool: list-pages {}
 - MCP tool: list-folders {}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans"}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: list-breakpoints {}
 - MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"maxWidth":1023}}

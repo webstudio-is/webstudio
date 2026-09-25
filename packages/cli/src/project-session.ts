@@ -19,6 +19,7 @@ import {
   issueReportBrowserSignal,
   issueReportEntityId,
   getPublicBuildIncludes,
+  publicApiEntityIdFields,
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
@@ -294,6 +295,9 @@ const getIssueReportEntityIds = (input: unknown) => {
       continue;
     }
     for (const [field, candidate] of Object.entries(entry).slice(0, 100)) {
+      if (publicApiEntityIdFields.has(field) === false) {
+        continue;
+      }
       const parsed = issueReportEntityId.safeParse({ field, id: candidate });
       if (parsed.success) {
         const { id } = parsed.data;

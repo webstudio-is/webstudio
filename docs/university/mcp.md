@@ -1192,9 +1192,9 @@ source of truth. For tools with no required arguments, pass `{}`.
 {
   "pageId": "page-id",
   "values": {
-    "title": "Pricing",
+    "title": "\"Pricing\"",
     "meta": {
-      "description": "Pricing plans"
+      "description": "\"Pricing plans\""
     }
   }
 }
