@@ -504,7 +504,11 @@ const Publish = ({
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
     useState(false);
   const previousDomainsKey = useRef<string>();
-  const countdown = usePublishCountdown(isPublishing);
+  const hasPendingState = project.latestBuildVirtual
+    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
+    : false;
+  const isPublishInProgress = isPublishing || hasPendingState;
+  const countdown = usePublishCountdown(isPublishInProgress);
 
   useEffect(() => {
     const form = buttonRef.current?.closest("form");
@@ -754,11 +758,6 @@ const Publish = ({
     });
   };
 
-  const hasPendingState = project.latestBuildVirtual
-    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
-    : false;
-
-  const isPublishInProgress = isPublishing || hasPendingState;
   const getForm = () => buttonRef.current?.closest("form");
 
   return (
@@ -781,6 +780,9 @@ const Publish = ({
           userPublishCount >= maxDailyPublishesPerUser
         }
         publishInProgress={isPublishInProgress}
+        publishPending={
+          isPublishInProgress && (countdown === undefined || countdown === 0)
+        }
         hasSelectedDomains={hasSelectedDomains}
         publishLabel={
           countdown !== undefined && countdown > 0
@@ -1184,10 +1186,9 @@ const Content = (props: {
           <PopoverTitleActions>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SmallIconButton
-                  aria-label="Publish options"
-                  icon={<EllipsesIcon />}
-                />
+                <IconButton type="button" aria-label="Publish options">
+                  <EllipsesIcon />
+                </IconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem

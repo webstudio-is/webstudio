@@ -22,7 +22,9 @@ afterEach(() => {
 const render = (
   validationState: "idle" | "passed",
   publishInProgress = false,
-  publishDisabled = false
+  publishDisabled = false,
+  publishPending = false,
+  publishLabel = "Publish"
 ) => {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -35,8 +37,9 @@ const render = (
           validateDisabled={publishInProgress}
           publishDisabled={publishDisabled}
           publishInProgress={publishInProgress}
+          publishPending={publishPending}
           hasSelectedDomains
-          publishLabel="Publish"
+          publishLabel={publishLabel}
           publishButtonRef={createRef<HTMLButtonElement>()}
           onValidate={vi.fn(async () => {})}
           onPublish={vi.fn()}
@@ -84,6 +87,7 @@ test("clears the validation result when the publish popover closes", async () =>
             validateDisabled={false}
             publishDisabled={false}
             publishInProgress={false}
+            publishPending={false}
             hasSelectedDomains
             publishLabel="Publish"
             publishButtonRef={createRef<HTMLButtonElement>()}
@@ -134,11 +138,27 @@ test("clears the validation result when the publish popover closes", async () =>
   expect(reopenedValidate.querySelector("svg")).toBeNull();
 });
 
-test("shows publish progress and disables actions immediately", () => {
-  const [validate, publish] = render("idle", true, true);
+test("shows the countdown and disables actions during publish progress", () => {
+  const [validate, publish] = render(
+    "idle",
+    true,
+    true,
+    false,
+    "Publishing (60s)"
+  );
 
   expect(validate).toBeDisabled();
-  expect(publish.dataset.state).toBe("pending");
+  expect(publish.dataset.state).toBe("disabled");
+  expect(publish).toBeDisabled();
+  expect(publish.textContent).toBe("Publishing (60s)");
+  expect(publish.querySelector("svg")).toBeNull();
+});
+
+test("shows the pending state after the countdown expires", () => {
+  const [validate, publish] = render("idle", true, true, true);
+
+  expect(validate).toBeDisabled();
+  expect(publish.dataset.state).toBe("disabled");
   expect(publish).toBeDisabled();
   expect(publish.querySelector("svg")).not.toBeNull();
 });
@@ -161,6 +181,7 @@ test("shows pending immediately after Validate is clicked", async () => {
           validateDisabled={false}
           publishDisabled={false}
           publishInProgress={false}
+          publishPending={false}
           hasSelectedDomains
           publishLabel="Publish"
           publishButtonRef={createRef<HTMLButtonElement>()}
