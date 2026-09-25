@@ -504,7 +504,11 @@ const Publish = ({
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
     useState(false);
   const previousDomainsKey = useRef<string>();
-  const countdown = usePublishCountdown(isPublishing);
+  const hasPendingState = project.latestBuildVirtual
+    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
+    : false;
+  const isPublishInProgress = isPublishing || hasPendingState;
+  const countdown = usePublishCountdown(isPublishInProgress);
 
   useEffect(() => {
     const form = buttonRef.current?.closest("form");
@@ -754,11 +758,6 @@ const Publish = ({
     });
   };
 
-  const hasPendingState = project.latestBuildVirtual
-    ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
-    : false;
-
-  const isPublishInProgress = isPublishing || hasPendingState;
   const getForm = () => buttonRef.current?.closest("form");
 
   return (
