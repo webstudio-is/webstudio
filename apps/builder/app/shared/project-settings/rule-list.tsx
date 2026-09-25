@@ -6,11 +6,12 @@ import {
   Grid,
   InputErrorsTooltip,
   InputField,
+  InsetList,
+  InsetListItem,
   List,
   ListItem,
   ScrollArea,
   Text,
-  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import { ProjectSettingsDataRow } from "./data-row";
@@ -186,33 +187,31 @@ export const ProjectSettingsRuleList = ({
               </Grid>
             </Grid>
             <List asChild>
-              <Flex role="rowgroup" direction="column" gap="1" align="stretch">
+              <InsetList role="rowgroup">
                 {rules.map(({ key, values, actions }, index) => (
                   <ListItem asChild key={key} index={index}>
-                    <ProjectSettingsDataRow
-                      role="row"
-                      align="center"
-                      gap="2"
-                      css={{
-                        gridTemplateColumns: `${columns} ${theme.spacing[9]}`,
-                        "&:focus-visible": {
-                          outline: `2px solid ${cssVar("--border-focus")}`,
-                          outlineOffset: -2,
-                        },
-                      }}
-                    >
-                      {values.map((value, index) => (
-                        <Flex key={index} role="cell" css={{ minWidth: 0 }}>
-                          {value}
+                    <InsetListItem asChild>
+                      <ProjectSettingsDataRow
+                        role="row"
+                        align="center"
+                        gap="2"
+                        css={{
+                          gridTemplateColumns: `${columns} ${theme.spacing[9]}`,
+                        }}
+                      >
+                        {values.map((value, index) => (
+                          <Flex key={index} role="cell" css={{ minWidth: 0 }}>
+                            {value}
+                          </Flex>
+                        ))}
+                        <Flex role="cell" align="center">
+                          {actions}
                         </Flex>
-                      ))}
-                      <Flex role="cell" align="center">
-                        {actions}
-                      </Flex>
-                    </ProjectSettingsDataRow>
+                      </ProjectSettingsDataRow>
+                    </InsetListItem>
                   </ListItem>
                 ))}
-              </Flex>
+              </InsetList>
             </List>
           </Grid>
         </ScrollArea>
