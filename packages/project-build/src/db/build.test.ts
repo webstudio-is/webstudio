@@ -29,7 +29,7 @@ const createContext = (userId = "user-1"): AppContext =>
     ...testContext,
     authorization: { type: "user", userId },
     getOwnerPlanFeatures: async () => ({}),
-  } as unknown as AppContext);
+  }) as unknown as AppContext;
 
 /** hasProjectPermit: return the row when userId param is in the query */
 const ownershipHandler = db.get("Project", ({ request }) => {

@@ -5405,7 +5405,7 @@ export const runtimeOperationContractData = [
             },
             customHeaders: {
               description:
-                "Response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; X-Powered-By is managed by Webstudio Cloud.",
+                "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
               maxItems: 100,
               type: "array",
               items: {
@@ -5554,7 +5554,7 @@ export const runtimeOperationContractData = [
               anyOf: [
                 {
                   description:
-                    "Response header rules. Omitted settings use site-wide defaults. Optional route patterns use Authentication syntax; '/*' applies site-wide. Required headers need nonempty values; X-Powered-By is managed by Webstudio Cloud.",
+                    "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
                   maxItems: 100,
                   type: "array",
                   items: {
