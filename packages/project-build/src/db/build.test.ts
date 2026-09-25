@@ -385,14 +385,6 @@ describe("createProductionBuild (msw)", () => {
       checkPlan: true,
     },
     {
-      label: "Free owner, legacy null fallback",
-      allowed: false,
-      domains: ["example.com"],
-      headers: [{ name: "X-Frame-Options", value: null }],
-      denied: false,
-      checkPlan: false,
-    },
-    {
       label: "Free owner, route rule",
       allowed: false,
       domains: ["example.com"],
@@ -522,12 +514,6 @@ describe("createProductionBuild (msw)", () => {
 
   test.each([
     { label: "custom value", value: "DENY", allowed: false, staging: false },
-    {
-      label: "legacy null fallback",
-      value: null,
-      allowed: false,
-      staging: false,
-    },
     { label: "Pro owner", value: "DENY", allowed: true, staging: false },
     { label: "staging", value: "DENY", allowed: false, staging: true },
     {

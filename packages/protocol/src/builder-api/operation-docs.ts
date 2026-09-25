@@ -116,6 +116,27 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio list-redirects --json"],
   },
   {
+    command: "list-response-headers",
+    description: "List configured response header rules",
+    examples: ["webstudio list-response-headers --json"],
+  },
+  {
+    command: "set-response-header",
+    description:
+      "Add or replace a response header for a route. Omit route for all paths.",
+    requiredOptions: ["name", "value", "json"],
+    examples: [
+      "webstudio set-response-header --name Cache-Control --value 'public, max-age=60' --json",
+    ],
+  },
+  {
+    command: "delete-response-header",
+    description:
+      "Delete a response header for a route. Omit route for the all-paths rule.",
+    requiredOptions: ["name", "json"],
+    examples: ["webstudio delete-response-header --name Cache-Control --json"],
+  },
+  {
     command: "create-redirect",
     description: "Create a project redirect",
     requiredOptions: ["old", "new", "json"],

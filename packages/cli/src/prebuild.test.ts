@@ -796,7 +796,7 @@ describe("prebuild", () => {
             name: "Content-Security-Policy",
             value: "frame-ancestors https://example.com",
           },
-          { name: "X-Frame-Options", value: null },
+          { name: "X-Frame-Options", value: "DENY" },
         ],
       },
       compiler: {},

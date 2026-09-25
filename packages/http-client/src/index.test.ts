@@ -44,6 +44,7 @@ import {
   deleteProps,
   deleteResource,
   deleteRedirect,
+  deleteResponseHeader,
   deleteVariable,
   duplicatePage,
   duplicateAsset,
@@ -84,6 +85,7 @@ import {
   listPageTemplates,
   listPublishes,
   listRedirects,
+  listResponseHeaders,
   listResources,
   listTexts,
   listVariables,
@@ -115,6 +117,7 @@ import {
   updateFolder,
   updateProps,
   updateProjectSettings,
+  setResponseHeader,
   updateRedirect,
   updateResource,
   updateStyleDeclarations,
@@ -506,6 +509,18 @@ test("wraps project api trpc calls in named functions", async () => {
       compiler: { atomicStyles: true },
     });
     await listRedirects(params);
+    await listResponseHeaders(params);
+    await setResponseHeader({
+      ...params,
+      route: "/docs/*",
+      name: "Cache-Control",
+      value: "public",
+    });
+    await deleteResponseHeader({
+      ...params,
+      route: "/docs/*",
+      name: "Cache-Control",
+    });
     await createRedirect({
       ...params,
       old: "/old",
@@ -931,6 +946,15 @@ test("wraps project api trpc calls in named functions", async () => {
     expectRequest("/trpc/api.projectSettings.getMarketplaceProduct"),
     expectBodyRequest("/trpc/api.projectSettings.update", '"siteName":"Acme"'),
     expectRequest("/trpc/api.redirects.list"),
+    expectRequest("/trpc/api.responseHeaders.list"),
+    expectBodyRequest(
+      "/trpc/api.responseHeaders.set",
+      '"name":"Cache-Control"'
+    ),
+    expectBodyRequest(
+      "/trpc/api.responseHeaders.delete",
+      '"name":"Cache-Control"'
+    ),
     expectBodyRequest("/trpc/api.redirects.create", '"old":"/old"'),
     expectBodyRequest("/trpc/api.redirects.update", '"old":"/older"'),
     expectBodyRequest("/trpc/api.redirects.delete", '"old":"/older"'),

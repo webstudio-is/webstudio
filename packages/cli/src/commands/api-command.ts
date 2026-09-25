@@ -283,6 +283,27 @@ export const projectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
 export const paginatedListCommandOptions = (yargs: CommonYargsArgv) =>
   outputDetailCommandOptions(apiCommandOptions(yargs));
 
+const responseHeaderCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("route", {
+      type: "string",
+      describe: "Route pattern; omit for all paths",
+    })
+    .option("name", {
+      type: "string",
+      describe: "Response header name",
+      demandOption: true,
+    });
+
+export const setResponseHeaderCommandOptions = (yargs: CommonYargsArgv) =>
+  responseHeaderCommandOptions(yargs).option("value", {
+    type: "string",
+    describe: "Response header value",
+    demandOption: true,
+  });
+
+export const deleteResponseHeaderCommandOptions = responseHeaderCommandOptions;
+
 export const updateProjectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
     apiCommandOptions(yargs),
@@ -1342,6 +1363,7 @@ export type ApiCommandOptions = {
   template?: string;
   folder?: string;
   path?: string;
+  route?: string;
   name?: string;
   variable?: string;
   resource?: string;
@@ -2134,6 +2156,38 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
         cursor: options.cursor,
         limit: options.limit,
         verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
+  "list-response-headers": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-response-headers",
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
+  "set-response-header": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "set-response-header",
+      {
+        route: options.route,
+        name: requireOption(options.name, "--name"),
+        value: requireOption(options.value, "--value"),
+      },
+      connection,
+      dependencies
+    ),
+  "delete-response-header": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "delete-response-header",
+      {
+        route: options.route,
+        name: requireOption(options.name, "--name"),
       },
       connection,
       dependencies

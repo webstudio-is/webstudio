@@ -15,15 +15,18 @@ import {
   createRedirect,
   deleteBreakpoint,
   deleteRedirect,
+  deleteResponseHeader,
   getMarketplaceProduct,
   getProjectSettings,
   listBreakpoints,
   listRedirects,
+  listResponseHeaders,
   marketplaceProductUpdateInput,
   projectSettingsUpdateInput,
   redirectFieldsInput,
   redirectUpdateFieldsInput,
   setRedirects,
+  setResponseHeader,
   updateBreakpoint,
   updateMarketplaceProduct,
   updateProjectSettings,
@@ -82,9 +85,50 @@ const context = {
 };
 
 describe("project settings runtime", () => {
+  test("MCP response-header operations use the same validation and route-specific edits", () => {
+    const state = createState();
+    const allPaths = { name: "Cache-Control", value: "public" };
+    expect(setResponseHeader(state, allPaths).payload[0]?.patches).toEqual([
+      { op: "add", path: ["meta", "customHeaders"], value: [allPaths] },
+    ]);
+    state.projectSettings!.meta.customHeaders = [allPaths];
+    expect(
+      setResponseHeader(state, {
+        route: "/",
+        name: "Cache-Control",
+        value: "private",
+      }).payload[0]?.patches
+    ).toEqual([
+      {
+        op: "replace",
+        path: ["meta", "customHeaders"],
+        value: [
+          { route: "/", name: "Cache-Control", value: "private" },
+          allPaths,
+        ],
+      },
+    ]);
+    state.projectSettings!.meta.customHeaders = [
+      { route: "/", name: "Cache-Control", value: "private" },
+      allPaths,
+    ];
+    expect(listResponseHeaders(state).headers).toEqual(
+      state.projectSettings!.meta.customHeaders
+    );
+    expect(
+      deleteResponseHeader(state, { name: "cache-control" }).payload[0]?.patches
+    ).toEqual([
+      {
+        op: "replace",
+        path: ["meta", "customHeaders"],
+        value: [{ route: "/", name: "Cache-Control", value: "private" }],
+      },
+    ]);
+    expect(() => deleteResponseHeader(state, { name: "Missing" })).toThrow();
+  });
   test("saves custom headers and removes the configuration to restore defaults", () => {
     const customHeaders = [
-      { name: "X-Frame-Options", value: null },
+      { name: "X-Frame-Options", value: "DENY" },
       {
         name: "Content-Security-Policy",
         value: "frame-ancestors https://example.com",

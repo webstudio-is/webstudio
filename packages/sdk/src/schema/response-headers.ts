@@ -20,7 +20,6 @@ const platformHeaderNames = new Set([
   "strict-transport-security",
 ]);
 
-// Keep in sync with the published worker's forbiddenCustomResponseHeaderNames.
 // Static route rules must not customize cookies, connection state, or values
 // that describe the actual response body and status.
 export const forbiddenCustomResponseHeaderNames = [
@@ -68,10 +67,7 @@ export const customResponseHeader = z.object({
   name: z
     .string()
     .max(256, "Header name must be at most 256 characters")
-    .refine(
-      (name) => /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name),
-      "Enter a valid HTTP header name"
-    )
+    .regex(/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/, "Enter a valid HTTP header name")
     .refine(
       (name) => !platformHeaderNames.has(name.toLowerCase()),
       "This header is managed by Webstudio Cloud"
@@ -82,14 +78,14 @@ export const customResponseHeader = z.object({
     ),
   value: z
     .string()
+    .min(1, "Header value cannot be empty")
     .max(8192, "Header value must be at most 8192 characters")
     // Unlike $ alone, the final assertion also rejects a trailing newline.
     .regex(
       /^[\t\x20-\x7e\x80-\xff]*$(?![\s\S])/,
       "Header values cannot contain newlines, control characters, or Unicode outside Latin-1"
     )
-    .refine((value) => value.trim().length > 0, "Header value cannot be empty")
-    .nullable(),
+    .refine((value) => value.trim().length > 0, "Header value cannot be empty"),
 });
 
 export const customResponseHeaders = z
@@ -111,7 +107,7 @@ export const customResponseHeaders = z
       size +=
         (header.route?.length ?? 0) +
         header.name.length +
-        (header.value?.length ?? 0) +
+        header.value.length +
         4;
     }
     if (size > 16384) {
@@ -124,6 +120,26 @@ export const customResponseHeaders = z
 
 export type CustomResponseHeader = z.infer<typeof customResponseHeader>;
 
+export const customResponseHeaderKey = ({
+  route,
+  name,
+}: Pick<CustomResponseHeader, "route" | "name">) =>
+  `${route ?? "/*"}\0${name.toLowerCase()}`;
+
+export const editCustomResponseHeaders = (
+  headers: readonly CustomResponseHeader[],
+  key: string,
+  next?: CustomResponseHeader
+) => {
+  const updated = headers.filter(
+    (header) => customResponseHeaderKey(header) !== key
+  );
+  if (next !== undefined) {
+    updated.unshift(next);
+  }
+  return customResponseHeaders.parse(updated);
+};
+
 // Explicitly setting a fallback default is not a Pro customization.
 export const hasCustomResponseHeaders = (
   headers: readonly CustomResponseHeader[] = []
@@ -133,6 +149,6 @@ export const hasCustomResponseHeaders = (
     return (
       (route !== undefined && route !== "/*") ||
       definition === undefined ||
-      (value !== null && value?.trim() !== definition.defaultValue)
+      value.trim() !== definition.defaultValue
     );
   });

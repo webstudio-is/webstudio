@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
+import { ZodError } from "zod";
 import {
   Flex,
   Grid,
@@ -13,8 +14,8 @@ import {
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   customResponseHeader,
-  customResponseHeaders,
-  getResponseHeaderDefinition,
+  customResponseHeaderKey,
+  editCustomResponseHeaders,
   type CustomResponseHeader,
 } from "@webstudio-is/sdk";
 import { validateWsAuthRoute } from "@webstudio-is/wsauth";
@@ -31,9 +32,6 @@ import {
   responseHeaderNames,
 } from "./response-header-suggestions";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
-
-const ruleKey = (route: string, name: string) =>
-  `${route}\0${name.toLowerCase()}`;
 
 export const SectionHeaders = ({
   executeMutation = executeRuntimeMutation,
@@ -54,18 +52,20 @@ export const SectionHeaders = ({
 
   const save = (
     next: CustomResponseHeader | undefined,
-    previousKey?: string
+    previousKey: string
   ) => {
-    const headers = ($projectSettings.get()?.meta.customHeaders ?? []).filter(
-      (header) => ruleKey(header.route ?? "/*", header.name) !== previousKey
-    );
-    if (next !== undefined) {
-      headers.unshift(next);
-    }
-    const result = customResponseHeaders.safeParse(headers);
-    if (!result.success) {
+    let headers: CustomResponseHeader[];
+    try {
+      headers = editCustomResponseHeaders(
+        $projectSettings.get()?.meta.customHeaders ?? [],
+        previousKey,
+        next
+      );
+    } catch (error) {
       setSaveError(
-        result.error.issues.map((issue) => issue.message).join(". ")
+        error instanceof ZodError
+          ? error.issues.map((issue) => issue.message).join(". ")
+          : "Invalid response header"
       );
       return false;
     }
@@ -73,7 +73,7 @@ export const SectionHeaders = ({
       const mutation = executeMutation({
         id: "projectSettings.update",
         input: {
-          meta: { customHeaders: result.data.length ? result.data : null },
+          meta: { customHeaders: headers.length ? headers : null },
         },
       });
       if (mutation !== undefined) {
@@ -165,16 +165,13 @@ export const SectionHeaders = ({
           if (routeError) {
             errors.route = [routeError];
           }
-          if (
-            value === "" &&
-            (route === "/*" || getResponseHeaderDefinition(name) !== undefined)
-          ) {
+          if (value === "") {
             errors.value = ["Enter a header value"];
           }
           const result = customResponseHeader.safeParse({
             route,
             name,
-            value: value === "" ? null : value,
+            value,
           });
           if (!result.success) {
             for (const issue of result.error.issues) {
@@ -186,25 +183,22 @@ export const SectionHeaders = ({
         }}
         onSubmit={(values) => {
           const route = values.route.trim();
-          const value = values.value?.trim();
+          const value = values.value?.trim() ?? "";
           const name =
             getResponseHeaderName(values.name.trim()) ?? values.name.trim();
           const next: CustomResponseHeader = {
             ...(route === "/*" ? {} : { route }),
             name,
-            value: value || null,
+            value,
           };
-          return save(next, ruleKey(route, name));
+          return save(next, customResponseHeaderKey({ route, name }));
         }}
         columns="1fr 1.5fr 1.5fr"
         columnLabels={["Path", "Header", "Value"]}
         label="Response header rules"
         rules={configured.map((header) => {
           const route = header.route ?? "/*";
-          const key = ruleKey(route, header.name);
-          const value =
-            header.value ??
-            (getResponseHeaderDefinition(header.name) ? "Default" : "Not sent");
+          const key = customResponseHeaderKey(header);
           return {
             key,
             values: [
@@ -214,8 +208,8 @@ export const SectionHeaders = ({
               <Tooltip content={header.name} key="name">
                 <Text truncate>{header.name}</Text>
               </Tooltip>,
-              <Tooltip content={value} key="value">
-                <Text truncate>{value}</Text>
+              <Tooltip content={header.value} key="value">
+                <Text truncate>{header.value}</Text>
               </Tooltip>,
             ],
             actions: (

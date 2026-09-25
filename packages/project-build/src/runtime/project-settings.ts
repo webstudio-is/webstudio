@@ -2,6 +2,9 @@ import type { Breakpoint, PageRedirect } from "@webstudio-is/sdk";
 import {
   breakpoint,
   compilerSettings,
+  customResponseHeader,
+  customResponseHeaderKey,
+  editCustomResponseHeaders,
   pageRedirect,
   projectMeta,
   projectNewRedirectPath,
@@ -237,6 +240,52 @@ export const updateProjectSettings = (
     ]),
     result: { updated: patches.length > 0 },
     invalidatesNamespaces: patches.length === 0 ? [] : ["projectSettings"],
+  });
+};
+
+export const listResponseHeaders = (
+  state: Pick<BuilderState, "projectSettings">,
+  input: PaginatedOutputInput = {}
+) => {
+  const { items, ...pagination } = paginateProjectSettingItems(
+    getRequiredProjectSettings(state).meta.customHeaders ?? [],
+    input
+  );
+  return { headers: items, ...pagination };
+};
+
+export const responseHeaderSetInput = customResponseHeader;
+export const responseHeaderDeleteInput = customResponseHeader.pick({
+  route: true,
+  name: true,
+});
+
+export const setResponseHeader = (
+  state: Pick<BuilderState, "projectSettings">,
+  input: z.infer<typeof responseHeaderSetInput>
+) => {
+  const headers = editCustomResponseHeaders(
+    getRequiredProjectSettings(state).meta.customHeaders ?? [],
+    customResponseHeaderKey(input),
+    input
+  );
+  return updateProjectSettings(state, {
+    meta: { customHeaders: headers },
+  });
+};
+
+export const deleteResponseHeader = (
+  state: Pick<BuilderState, "projectSettings">,
+  input: z.infer<typeof responseHeaderDeleteInput>
+) => {
+  const current = getRequiredProjectSettings(state).meta.customHeaders ?? [];
+  const key = customResponseHeaderKey(input);
+  if (current.every((header) => customResponseHeaderKey(header) !== key)) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Response header not found");
+  }
+  const headers = editCustomResponseHeaders(current, key);
+  return updateProjectSettings(state, {
+    meta: { customHeaders: headers.length ? headers : null },
   });
 };
 

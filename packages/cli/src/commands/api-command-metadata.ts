@@ -147,6 +147,9 @@ const apiCommandOptionsByCommand: Partial<
   "submit-marketplace-product":
     apiCommand.submitMarketplaceProductCommandOptions,
   "list-redirects": apiCommand.paginatedListCommandOptions,
+  "list-response-headers": apiCommand.paginatedListCommandOptions,
+  "set-response-header": apiCommand.setResponseHeaderCommandOptions,
+  "delete-response-header": apiCommand.deleteResponseHeaderCommandOptions,
   "create-redirect": apiCommand.createRedirectCommandOptions,
   "update-redirect": apiCommand.updateRedirectCommandOptions,
   "delete-redirect": apiCommand.deleteRedirectCommandOptions,

@@ -2,7 +2,9 @@ import { describe, expect, test } from "vitest";
 import { projectMeta } from "./pages";
 import {
   customResponseHeader,
+  customResponseHeaderKey,
   customResponseHeaders,
+  editCustomResponseHeaders,
   hasCustomResponseHeaders,
   responseHeaderDefinitions,
   forbiddenCustomResponseHeaderNames,
@@ -48,19 +50,42 @@ describe("response header settings", () => {
     ).toBe(false);
   });
 
-  test.each(responseHeaderDefinitions)(
-    "fallback $name can be omitted in settings",
-    ({ name }) => {
+  test("edits rules by route and case-insensitive name", () => {
+    const headers = [
+      { name: "Cache-Control", value: "all paths" },
+      { route: "/", name: "Cache-Control", value: "root only" },
+    ];
+    const updated = editCustomResponseHeaders(
+      headers,
+      customResponseHeaderKey({ name: "cache-control" }),
+      { name: "cache-control", value: "updated" }
+    );
+    expect(updated).toEqual([
+      { name: "cache-control", value: "updated" },
+      headers[1],
+    ]);
+    expect(
+      editCustomResponseHeaders(
+        updated,
+        customResponseHeaderKey({ route: "/", name: "CACHE-CONTROL" })
+      )
+    ).toEqual([{ name: "cache-control", value: "updated" }]);
+    expect(() =>
+      editCustomResponseHeaders(headers, customResponseHeaderKey(headers[0]), {
+        name: "Set-Cookie",
+        value: "session=secret",
+      })
+    ).toThrow();
+  });
+
+  test("a rule requires a nonempty string value", () => {
+    for (const value of [null, "", "  "]) {
       expect(
-        customResponseHeader.safeParse({ name, value: null }).success
-      ).toBe(true);
-      expect(
-        projectMeta.safeParse({ customHeaders: [{ name, value: null }] })
+        customResponseHeader.safeParse({ name: "X-Frame-Options", value })
           .success
-      ).toBe(true);
-      expect(hasCustomResponseHeaders([{ name, value: null }])).toBe(false);
+      ).toBe(false);
     }
-  );
+  });
 
   test.each([
     "X-Powered-By",
@@ -70,25 +95,23 @@ describe("response header settings", () => {
     "Strict-Transport-Security",
     "strict-transport-security",
   ])("rejects dispatcher-owned header %j", (name) => {
-    for (const value of ["value", null]) {
-      expect(customResponseHeaders.safeParse([{ name, value }]).success).toBe(
-        false
-      );
-    }
+    expect(
+      customResponseHeaders.safeParse([{ name, value: "value" }]).success
+    ).toBe(false);
   });
 
   test.each(forbiddenCustomResponseHeaderNames)(
-    "rejects forbidden custom response header %s, including case variants and removal rules",
+    "rejects forbidden custom response header %s, including case variants",
     (name) => {
-      for (const value of ["value", null]) {
-        expect(customResponseHeader.safeParse({ name, value }).success).toBe(
-          false
-        );
-        expect(
-          customResponseHeader.safeParse({ name: name.toUpperCase(), value })
-            .success
-        ).toBe(false);
-      }
+      expect(
+        customResponseHeader.safeParse({ name, value: "value" }).success
+      ).toBe(false);
+      expect(
+        customResponseHeader.safeParse({
+          name: name.toUpperCase(),
+          value: "value",
+        }).success
+      ).toBe(false);
     }
   );
 
@@ -121,7 +144,7 @@ describe("response header settings", () => {
     expect(
       customResponseHeaders.safeParse([
         { name: "X-Frame-Options", value: "DENY" },
-        { name: "x-frame-options", value: null },
+        { name: "x-frame-options", value: "SAMEORIGIN" },
       ]).success
     ).toBe(false);
     expect(

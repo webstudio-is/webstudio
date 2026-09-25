@@ -3,6 +3,7 @@ import {
   assetQueryWhereExpression,
   assetType,
   compilerSettings,
+  customResponseHeader,
   dataSourceVariableValue,
   documentTypes,
   pageAuth,
@@ -426,6 +427,12 @@ export const runtimeOutputSchemas = {
     redirects: z.array(redirect).optional(),
   }),
   "projectSettings.update": looseObject({ updated: z.boolean() }),
+  "responseHeaders.list": looseObject({
+    headers: z.array(customResponseHeader),
+    ...outputPage,
+  }),
+  "responseHeaders.set": looseObject({ updated: z.boolean() }),
+  "responseHeaders.delete": looseObject({ updated: z.boolean() }),
   "projectSettings.getMarketplaceProduct": looseObject({
     marketplaceProduct: looseObject(marketplaceProduct.shape).nullable(),
   }),
