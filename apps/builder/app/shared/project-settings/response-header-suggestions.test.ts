@@ -8,6 +8,13 @@ import {
 test("suggests response headers but excludes platform-owned names", () => {
   expect(responseHeaderNames).toContain("Content-Security-Policy");
   expect(responseHeaderNames).toContain("Access-Control-Allow-Origin");
+  expect(responseHeaderNames).toContain(
+    "Cross-Origin-Embedder-Policy-Report-Only"
+  );
+  expect(responseHeaderNames).toContain(
+    "Cross-Origin-Opener-Policy-Report-Only"
+  );
+  expect(responseHeaderNames).not.toContain("Set-Cookie");
   expect(responseHeaderNames).not.toContain("X-Powered-By");
   expect(responseHeaderNames).not.toContain("X-Content-Type-Options");
   expect(responseHeaderNames).not.toContain("Strict-Transport-Security");
@@ -25,5 +32,10 @@ test("suggests values for the selected header without restricting custom values"
   expect(getResponseHeaderValueSuggestions("x-frame-options")).toContain(
     "SAMEORIGIN"
   );
+  expect(
+    getResponseHeaderValueSuggestions(
+      "Cross-Origin-Embedder-Policy-Report-Only"
+    )
+  ).toContain("require-corp");
   expect(getResponseHeaderValueSuggestions("X-Custom-Header")).toEqual([]);
 });

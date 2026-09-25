@@ -107,11 +107,7 @@ test("Escape from the header form dismisses Project Settings", async () => {
 test("offers standard names and values for the selected header", () => {
   const { name, value } = render();
   const options = (input: HTMLInputElement) =>
-    Array.from(
-      document.querySelectorAll<HTMLOptionElement>(
-        `datalist[id="${input.getAttribute("list")}"] option`
-      )
-    ).map((option) => option.value);
+    Array.from(input.list?.options ?? []).map((option) => option.value);
 
   expect(options(name)).toContain("Cache-Control");
   expect(options(name)).not.toContain("X-Powered-By");
@@ -119,6 +115,29 @@ test("offers standard names and values for the selected header", () => {
   expect(options(value)).toContain("no-store");
   type(name, "X-Custom-Header");
   expect(options(value)).toEqual([]);
+});
+
+test("Enter in an autocomplete field does not add a rule", () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  const { route, name, value } = render();
+  type(route, "/*");
+  type(name, "Cache-Control");
+  type(value, "no-store");
+  act(() => {
+    value.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Enter",
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  });
+  expect(executeRuntimeMutation).not.toHaveBeenCalled();
+  const add = Array.from(document.querySelectorAll("button")).find(
+    (button) => button.textContent === "Add"
+  );
+  act(() => add?.click());
+  expect(executeRuntimeMutation).toHaveBeenCalledOnce();
 });
 
 test.each(["denied", "throws"])(

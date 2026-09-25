@@ -134,7 +134,7 @@ export const ProjectSettingsRuleList = ({
                     }));
                   }}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") {
+                    if (event.key === "Enter" && !field.autocomplete) {
                       event.preventDefault();
                       submit();
                     }

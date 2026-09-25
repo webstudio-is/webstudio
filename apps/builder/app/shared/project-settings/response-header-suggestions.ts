@@ -1,5 +1,7 @@
 // Response fields that are useful on published sites. Platform-owned fields are
-// deliberately excluded. Names are suggestions, not an allowlist.
+// deliberately excluded. Set-Cookie is omitted because the rule model supports
+// only one value per name and would replace existing cookies. Names are
+// suggestions, not an allowlist.
 export const responseHeaderNames = [
   "Accept-CH",
   "Accept-Patch",
@@ -27,7 +29,9 @@ export const responseHeaderNames = [
   "Content-Security-Policy-Report-Only",
   "Content-Type",
   "Cross-Origin-Embedder-Policy",
+  "Cross-Origin-Embedder-Policy-Report-Only",
   "Cross-Origin-Opener-Policy",
+  "Cross-Origin-Opener-Policy-Report-Only",
   "Cross-Origin-Resource-Policy",
   "Critical-CH",
   "ETag",
@@ -48,7 +52,6 @@ export const responseHeaderNames = [
   "Server",
   "Server-Timing",
   "Service-Worker-Allowed",
-  "Set-Cookie",
   "SourceMap",
   "Speculation-Rules",
   "Supports-Loading-Mode",
@@ -96,23 +99,31 @@ const responseHeaderValues: Record<string, readonly string[]> = {
     "require-corp",
     "credentialless",
   ],
+  "cross-origin-embedder-policy-report-only": [
+    "require-corp",
+    "credentialless",
+  ],
   "cross-origin-opener-policy": [
     "unsafe-none",
     "same-origin",
     "same-origin-allow-popups",
     "noopener-allow-popups",
   ],
+  "cross-origin-opener-policy-report-only": [
+    "same-origin",
+    "same-origin-allow-popups",
+  ],
   "cross-origin-resource-policy": ["same-origin", "same-site", "cross-origin"],
   "origin-agent-cluster": ["?1", "?0"],
   "permissions-policy": ["geolocation=()", "camera=()", "microphone=()"],
   "referrer-policy": [
+    "strict-origin-when-cross-origin",
     "no-referrer",
     "no-referrer-when-downgrade",
     "origin",
     "origin-when-cross-origin",
     "same-origin",
     "strict-origin",
-    "strict-origin-when-cross-origin",
     "unsafe-url",
   ],
   "service-worker-allowed": ["/"],
