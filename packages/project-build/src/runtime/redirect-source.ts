@@ -1,4 +1,4 @@
-import { matchPathnamePattern } from "./url-pattern";
+import { matchPathnamePatternWithParams } from "./url-pattern";
 
 const isOptionalSegmentMarker = (source: string, index: number) => {
   const nextChar = source[index + 1];
@@ -179,7 +179,10 @@ const getOptionalStaticSegmentVariants = (pathname: string) => {
 const doesPathnamePatternOverlap = (pattern: string, pathname: string) => {
   for (const patternVariant of getOptionalStaticSegmentVariants(pattern)) {
     for (const pathnameVariant of getOptionalStaticSegmentVariants(pathname)) {
-      if (matchPathnamePattern(patternVariant, pathnameVariant) !== undefined) {
+      if (
+        matchPathnamePatternWithParams(patternVariant, pathnameVariant) !==
+        undefined
+      ) {
         return true;
       }
     }
@@ -209,7 +212,9 @@ export const doesRedirectSourceMatchLocalUrl = (
     for (const urlVariant of getOptionalStaticSegmentVariants(
       normalizedUrlPathname
     )) {
-      if (matchPathnamePattern(sourceVariant, urlVariant) !== undefined) {
+      if (
+        matchPathnamePatternWithParams(sourceVariant, urlVariant) !== undefined
+      ) {
         return true;
       }
     }

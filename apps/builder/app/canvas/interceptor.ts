@@ -1,7 +1,7 @@
 import { getAllPages, getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
-  matchPathnamePattern,
+  matchPathnamePatternWithParams,
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
 import { $selectedPage } from "~/shared/nano-states";
@@ -51,7 +51,7 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   );
   for (const page of sortedPages) {
     const pagePath = getPagePath(page.id, pages);
-    const params = matchPathnamePattern(pagePath, pageHref.pathname);
+    const params = matchPathnamePatternWithParams(pagePath, pageHref.pathname);
     if (params) {
       // populate search params with form data values if available
       if (formData) {
