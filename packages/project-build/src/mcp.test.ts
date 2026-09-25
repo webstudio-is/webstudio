@@ -1466,6 +1466,7 @@ describe("project session mcp adapter", () => {
             enum: expect.arrayContaining([
               "general",
               "markdown-blog",
+              "content-block-source",
               "design-input",
             ]),
           }),
@@ -4649,6 +4650,13 @@ describe("project session mcp adapter", () => {
         workflow: "markdown-blog",
       },
     });
+    const contentBlockSourceGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief: "Connect an MDX article and make its designed header editable",
+        workflow: "content-block-source",
+      },
+    });
     const authenticatedPageGuide = await adapter.callTool({
       name: "meta.guide",
       input: {
@@ -4804,6 +4812,10 @@ describe("project session mcp adapter", () => {
               terminal: true,
             },
           ],
+          pages: [
+            { path: "/blog", name: "Blog" },
+            { path: "/blog/:slug", name: "Blog article" },
+          ],
           toolDiscovery: {
             tool: "meta.get-more-tools",
             when: "after-query-verification",
@@ -4880,6 +4892,44 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(contentBlockSourceGuide.structuredContent.data).toMatchObject({
+      routing: {
+        workflow: "content-block-source",
+        matchedBy: "explicit-workflow",
+      },
+      recipe: {
+        executionOrder: [
+          { tool: "inspect-instance", calls: 1 },
+          { tool: "connect-content-block-source", calls: 1 },
+          { tool: "inspect-content-block-source", calls: 1 },
+          {
+            tool: "update-text",
+            calls: "once per requested designed text field",
+          },
+          { tool: "update-content-block-frontmatter", calls: 1 },
+          { tool: "reload-content-block-source", calls: 1 },
+          { tool: "inspect-content-block-source", calls: 1 },
+          { tool: "audit", calls: 1 },
+        ],
+        connectSource: {
+          source: { type: "asset", assetId: "<md-or-mdx-asset-id>" },
+        },
+        designedTextBinding: {
+          tool: "update-text",
+          input: {
+            instanceId: "<designedTextInstanceId>",
+            childIndex: 0,
+            text: "<documentVariable>.frontmatter.<exactFieldPath>",
+            mode: "expression",
+            expressionBindingMode: "readwrite",
+          },
+        },
+      },
+      tools: expect.arrayContaining([
+        expect.objectContaining({ name: "update-text" }),
+        expect.objectContaining({ name: "audit" }),
+      ]),
+    });
     const markdownBlogRecipe = (
       markdownBlogGuide.structuredContent.data as {
         recipe: {
@@ -5059,7 +5109,7 @@ describe("project session mcp adapter", () => {
         input: { brief: "Build a blog", workflow: "blog" },
       })
     ).rejects.toThrow(
-      "meta.guide input.workflow must be one of general, markdown-blog, json-ld, collection, expression, authenticated-page, font-assets, design-input, craft."
+      "meta.guide input.workflow must be one of general, markdown-blog, json-ld, collection, expression, authenticated-page, font-assets, design-input, content-block-source, craft."
     );
     await expect(
       adapter.callTool({

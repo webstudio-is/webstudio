@@ -97,9 +97,6 @@ const getEvaluationContentCompilationInput = (
     dataSources: snapshot.state.dataSources?.values() ?? [],
     resources: snapshot.state.resources?.values() ?? [],
   });
-  if (plan === undefined) {
-    throw new Error("Evaluation blog has no reachable Assets resources");
-  }
   return { snapshot, plan };
 };
 
@@ -135,6 +132,9 @@ const compileEvaluationContentDatabase = async (projectDirectory: string) => {
   ).load();
   const { snapshot, plan } =
     getEvaluationContentCompilationInput(loadedSnapshot);
+  if (plan === undefined) {
+    return undefined;
+  }
   const { artifact } = await compileContentSource({
     source: createFileSystemContentSource({
       projectId: snapshot.projectId,
@@ -368,37 +368,42 @@ const run = async () => {
   process.once("SIGINT", abort);
   process.once("SIGTERM", abort);
   const baselines: AgentEvaluationResult[] = [];
-  const completed = await runConcurrently(fixtures, async (fixture) => {
-    const resultPath = resolve(
-      process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
-        join(resultsDirectory, `${fixture.id}.json`)
-    );
-    const result = await runFixture({
-      fixture,
-      repositoryRoot,
-      resultPath,
-      signal: controller.signal,
-    });
-    const baseline = await readFile(
-      join(baselineDirectory, `${fixture.id}.json`),
-      "utf8"
-    )
-      .then((source) => JSON.parse(source) as AgentEvaluationResult)
-      .catch(() => undefined);
-    const report = {
-      ...result,
-      comparison: compareEvaluationResult(result, baseline),
-    };
-    if (baseline !== undefined) {
-      baselines.push(baseline);
-    }
-    await writeFile(
-      resultPath,
-      `${JSON.stringify(report, undefined, 2)}\n`,
-      "utf8"
-    );
-    return { result, report };
-  }).finally(() => {
+  // Run model and browser-backed evaluations sequentially to avoid resource contention.
+  const completed = await runConcurrently(
+    fixtures,
+    async (fixture) => {
+      const resultPath = resolve(
+        process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
+          join(resultsDirectory, `${fixture.id}.json`)
+      );
+      const result = await runFixture({
+        fixture,
+        repositoryRoot,
+        resultPath,
+        signal: controller.signal,
+      });
+      const baseline = await readFile(
+        join(baselineDirectory, `${fixture.id}.json`),
+        "utf8"
+      )
+        .then((source) => JSON.parse(source) as AgentEvaluationResult)
+        .catch(() => undefined);
+      const report = {
+        ...result,
+        comparison: compareEvaluationResult(result, baseline),
+      };
+      if (baseline !== undefined) {
+        baselines.push(baseline);
+      }
+      await writeFile(
+        resultPath,
+        `${JSON.stringify(report, undefined, 2)}\n`,
+        "utf8"
+      );
+      return { result, report };
+    },
+    1
+  ).finally(() => {
     process.removeListener("SIGINT", abort);
     process.removeListener("SIGTERM", abort);
   });

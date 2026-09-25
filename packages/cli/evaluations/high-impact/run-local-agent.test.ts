@@ -36,9 +36,9 @@ describe("high-impact local agent setup", () => {
     );
   });
 
-  test("rejects a snapshot without reachable Assets resources explicitly", () => {
-    expect(() =>
-      getEvaluationContentCompilationInput({ state: {} } as never)
-    ).toThrowError("Evaluation blog has no reachable Assets resources");
+  test("returns no compilation plan when Assets resources are unreachable", () => {
+    expect(
+      getEvaluationContentCompilationInput({ state: {} } as never).plan
+    ).toBeUndefined();
   });
 });
