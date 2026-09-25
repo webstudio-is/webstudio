@@ -40,9 +40,7 @@ export const SectionHeaders = () => {
   const [saveError, setSaveError] = useState("");
   const configured = settings?.meta.customHeaders ?? [];
   const routeSuggestions = [
-    "/*",
-    "/",
-    ...Array.from(getExistingRoutePaths(pages)).sort(),
+    ...new Set(["/*", "/", ...Array.from(getExistingRoutePaths(pages)).sort()]),
   ];
 
   const save = (
