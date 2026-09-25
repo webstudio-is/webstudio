@@ -862,6 +862,35 @@ export const builderRuntimeOperations = [
     ({ state, input }) => projectSettings.updateProjectSettings(state, input)
   ),
   runtimeOperation(
+    "responseHeaders.list",
+    api("list-response-headers", "listResponseHeaders"),
+    readContract(["projectSettings"]),
+    paginatedListInput,
+    ({ state, input }) => projectSettings.listResponseHeaders(state, input)
+  ),
+  runtimeOperation(
+    "responseHeaders.set",
+    api("set-response-header", "setResponseHeader"),
+    mutationContract({
+      readNamespaces: ["projectSettings"],
+      writeNamespaces: ["projectSettings"],
+      retryOnConflict: true,
+    }),
+    projectSettings.responseHeaderSetInput,
+    ({ state, input }) => projectSettings.setResponseHeader(state, input)
+  ),
+  runtimeOperation(
+    "responseHeaders.delete",
+    api("delete-response-header", "deleteResponseHeader"),
+    mutationContract({
+      readNamespaces: ["projectSettings"],
+      writeNamespaces: ["projectSettings"],
+      retryOnConflict: true,
+    }),
+    projectSettings.responseHeaderDeleteInput,
+    ({ state, input }) => projectSettings.deleteResponseHeader(state, input)
+  ),
+  runtimeOperation(
     "projectSettings.getMarketplaceProduct",
     api("get-marketplace-product", "getMarketplaceProduct"),
     readContract(["marketplaceProduct"]),

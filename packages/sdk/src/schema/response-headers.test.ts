@@ -2,7 +2,9 @@ import { describe, expect, test } from "vitest";
 import { projectMeta } from "./pages";
 import {
   customResponseHeader,
+  customResponseHeaderKey,
   customResponseHeaders,
+  editCustomResponseHeaders,
   hasCustomResponseHeaders,
   responseHeaderDefinitions,
   forbiddenCustomResponseHeaderNames,
@@ -46,6 +48,34 @@ describe("response header settings", () => {
         value: "no-referrer",
       }).success
     ).toBe(false);
+  });
+
+  test("edits rules by route and case-insensitive name", () => {
+    const headers = [
+      { name: "Cache-Control", value: "all paths" },
+      { route: "/", name: "Cache-Control", value: "root only" },
+    ];
+    const updated = editCustomResponseHeaders(
+      headers,
+      customResponseHeaderKey({ name: "cache-control" }),
+      { name: "cache-control", value: "updated" }
+    );
+    expect(updated).toEqual([
+      { name: "cache-control", value: "updated" },
+      headers[1],
+    ]);
+    expect(
+      editCustomResponseHeaders(
+        updated,
+        customResponseHeaderKey({ route: "/", name: "CACHE-CONTROL" })
+      )
+    ).toEqual([{ name: "cache-control", value: "updated" }]);
+    expect(() =>
+      editCustomResponseHeaders(headers, customResponseHeaderKey(headers[0]), {
+        name: "Set-Cookie",
+        value: "session=secret",
+      })
+    ).toThrow();
   });
 
   test("a rule requires a nonempty string value", () => {

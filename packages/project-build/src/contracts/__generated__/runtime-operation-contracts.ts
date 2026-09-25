@@ -5418,9 +5418,11 @@ export const runtimeOperationContractData = [
                   name: {
                     type: "string",
                     maxLength: 256,
+                    pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
                   },
                   value: {
                     type: "string",
+                    minLength: 1,
                     maxLength: 8192,
                     pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
                   },
@@ -5560,9 +5562,11 @@ export const runtimeOperationContractData = [
                       name: {
                         type: "string",
                         maxLength: 256,
+                        pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
                       },
                       value: {
                         type: "string",
+                        minLength: 1,
                         maxLength: 8192,
                         pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
                       },
@@ -5616,6 +5620,180 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["projectSettings"],
     invalidatesNamespaces: ["projectSettings"],
     retryOnConflict: true,
+  },
+  {
+    id: "responseHeaders.list",
+    command: "list-response-headers",
+    client: "listResponseHeaders",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        headers: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              route: {
+                type: "string",
+                maxLength: 2048,
+              },
+              name: {
+                type: "string",
+                maxLength: 256,
+                pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+              },
+              value: {
+                type: "string",
+                minLength: 1,
+                maxLength: 8192,
+                pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+              },
+            },
+            required: ["name", "value"],
+          },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
+      },
+      required: [
+        "headers",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
+    id: "responseHeaders.set",
+    command: "set-response-header",
+    client: "setResponseHeader",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        route: {
+          type: "string",
+          maxLength: 2048,
+        },
+        name: {
+          type: "string",
+          maxLength: 256,
+          pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+        },
+        value: {
+          type: "string",
+          minLength: 1,
+          maxLength: 8192,
+          pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+        },
+      },
+      required: ["name", "value"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        updated: {
+          type: "boolean",
+        },
+      },
+      required: ["updated"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: ["projectSettings"],
+    invalidatesNamespaces: ["projectSettings"],
+    retryOnConflict: true,
+  },
+  {
+    id: "responseHeaders.delete",
+    command: "delete-response-header",
+    client: "deleteResponseHeader",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        route: {
+          type: "string",
+          maxLength: 2048,
+        },
+        name: {
+          type: "string",
+          maxLength: 256,
+          pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+        },
+      },
+      required: ["name"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        updated: {
+          type: "boolean",
+        },
+      },
+      required: ["updated"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: ["projectSettings"],
+    invalidatesNamespaces: ["projectSettings"],
+    retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "projectSettings.getMarketplaceProduct",

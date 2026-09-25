@@ -815,6 +815,35 @@ describe("project session mcp adapter", () => {
     ]);
     expect(toolNames).toContain("insert-fragment");
     expect(toolNames).not.toContain("meta.get_more_tools");
+    const responseHeaderTools = listProjectSessionMcpTools(
+      runtimeOperationContracts
+        .filter(({ id }) => id.startsWith("responseHeaders."))
+        .map((contract) =>
+          publicOperation({
+            command: contract.command,
+            id: contract.id,
+            description: contract.command,
+            inputSchema: contract.inputSchema,
+          })
+        )
+    );
+    expect(responseHeaderTools.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        "list-response-headers",
+        "set-response-header",
+        "delete-response-header",
+      ])
+    );
+    expect(
+      responseHeaderTools.find(({ name }) => name === "set-response-header")
+        ?.inputSchema
+    ).toMatchObject({
+      required: ["name", "value"],
+      properties: {
+        name: { pattern: expect.any(String) },
+        value: { minLength: 1, pattern: expect.any(String) },
+      },
+    });
     const assetOperationTools = listProjectSessionMcpTools(
       runtimeOperationContracts
         .filter(

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
+import { ZodError } from "zod";
 import {
   Flex,
   Grid,
@@ -13,7 +14,8 @@ import {
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   customResponseHeader,
-  customResponseHeaders,
+  customResponseHeaderKey,
+  editCustomResponseHeaders,
   type CustomResponseHeader,
 } from "@webstudio-is/sdk";
 import { validateWsAuthRoute } from "@webstudio-is/wsauth";
@@ -30,9 +32,6 @@ import {
   responseHeaderNames,
 } from "./response-header-suggestions";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
-
-const ruleKey = (route: string, name: string) =>
-  `${route}\0${name.toLowerCase()}`;
 
 export const SectionHeaders = ({
   executeMutation = executeRuntimeMutation,
@@ -53,18 +52,20 @@ export const SectionHeaders = ({
 
   const save = (
     next: CustomResponseHeader | undefined,
-    previousKey?: string
+    previousKey: string
   ) => {
-    const headers = ($projectSettings.get()?.meta.customHeaders ?? []).filter(
-      (header) => ruleKey(header.route ?? "/*", header.name) !== previousKey
-    );
-    if (next !== undefined) {
-      headers.unshift(next);
-    }
-    const result = customResponseHeaders.safeParse(headers);
-    if (!result.success) {
+    let headers: CustomResponseHeader[];
+    try {
+      headers = editCustomResponseHeaders(
+        $projectSettings.get()?.meta.customHeaders ?? [],
+        previousKey,
+        next
+      );
+    } catch (error) {
       setSaveError(
-        result.error.issues.map((issue) => issue.message).join(". ")
+        error instanceof ZodError
+          ? error.issues.map((issue) => issue.message).join(". ")
+          : "Invalid response header"
       );
       return false;
     }
@@ -72,7 +73,7 @@ export const SectionHeaders = ({
       const mutation = executeMutation({
         id: "projectSettings.update",
         input: {
-          meta: { customHeaders: result.data.length ? result.data : null },
+          meta: { customHeaders: headers.length ? headers : null },
         },
       });
       if (mutation !== undefined) {
@@ -190,14 +191,14 @@ export const SectionHeaders = ({
             name,
             value,
           };
-          return save(next, ruleKey(route, name));
+          return save(next, customResponseHeaderKey({ route, name }));
         }}
         columns="1fr 1.5fr 1.5fr"
         columnLabels={["Path", "Header", "Value"]}
         label="Response header rules"
         rules={configured.map((header) => {
           const route = header.route ?? "/*";
-          const key = ruleKey(route, header.name);
+          const key = customResponseHeaderKey(header);
           return {
             key,
             values: [
