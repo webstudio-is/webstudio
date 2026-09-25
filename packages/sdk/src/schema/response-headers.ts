@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { validateWsAuthRoute } from "@webstudio-is/wsauth";
+import { validatePathnamePattern } from "../url-pattern";
 
 // Keep fallback defaults in sync with the Cloud dispatcher.
 export const responseHeaderDefinitions = [
@@ -60,7 +60,7 @@ export const customResponseHeader = z.object({
     .string()
     .max(2048)
     .refine(
-      (route) => validateWsAuthRoute(route) === undefined,
+      (route) => validatePathnamePattern(route) === undefined,
       "Invalid route"
     )
     .optional(),
