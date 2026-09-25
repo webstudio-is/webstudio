@@ -38,6 +38,22 @@ structured collection entries:
 
 <figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
+## Choose Markdown or MDX
+
+Choose the file format based on how editors will work with the article body:
+
+| Format | Publishing | Editing in Content mode |
+| --- | --- | --- |
+| `.mdx` with a Content Block | Publishing downloads the article files and compiles the MDX for every article the page can render. More articles can make publishing slower. | Editors can change the article visually on the canvas with a Notion-style experience, or edit the MDX source file. |
+| `.md` with Markdown Embed | No per-article MDX compilation is needed. A hosted page reads the selected Markdown body when it is requested. | Editors can edit the `.md` file in the Markdown source editor in Assets, but cannot edit its body visually on the canvas. |
+
+The publish runner currently synchronizes Asset files for either format. That
+transfer still takes time; the difference is the additional per-article MDX
+compilation. Static pages can also read Markdown bodies while generating their
+HTML. Use [Content Block](../core-components/content-block.md) when visual
+article editing matters, or [Markdown Embed](../core-components/markdown-embed.md)
+when source editing is enough.
+
 ## Decide if the Content Engine fits
 
 Use the Content Engine for bounded, file-based content that should live with
@@ -522,13 +538,16 @@ In Page Settings, bind the fields needed for search and sharing:
 
 The status expression returns a real 404 when no article matches the URL.
 
-### Render a read-only Markdown body
+### Render a Markdown body without visual editing
 
-Use a `.md` file and [Markdown Embed](../core-components/markdown-embed.md) only
-when the article body does not need visual editing. Set the article resource's
+Use a `.md` file and [Markdown Embed](../core-components/markdown-embed.md) when
+editors can work in the Markdown source editor instead of editing the body on
+the canvas. Content mode editors can still open and edit the `.md` file in
+Assets. Set the article resource's
 `extension` filter to `md` and **Content** to **Markdown body reference**, then
 bind the Markdown Embed code to `post.data.content.text`. Style its nested
-document elements once for every article.
+document elements once for every article. See [Choose Markdown or MDX](#choose-markdown-or-mdx)
+for the publishing tradeoff.
 
 ## 7. Publish the article
 

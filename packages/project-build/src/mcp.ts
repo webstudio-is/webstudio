@@ -6272,6 +6272,7 @@ const metaGoalGuides = [
       "verify-page-responsive",
     ],
     workflow: [
+      "This fixed recipe uses .md files and Markdown source editing. If the user needs visual article editing in Content mode, do not follow this recipe; request the general guide and connect .mdx articles to a Content Block. Connected MDX adds per-article compilation during publishing, while the .md path does not. Both formats still incur the current Asset sync transfer.",
       "Follow recipe.executionOrder in order. Resolve documented placeholders from earlier results, and do not add calls outside that sequence.",
       'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
       'Create exactly two pages once using the recipe pages payloads exactly: call create-page with {"path":"/blog","name":"Blog"} and {"path":"/blog/:slug","name":"Blog article"}. Use each returned pageId and rootInstanceId in later recipe placeholders. Do not omit name, dry-run page creation, create one page per post, or copy Markdown into static page content.',
@@ -6283,6 +6284,20 @@ const metaGoalGuides = [
       'After both insertions succeed, ask whether the user wants visual verification unless they explicitly requested it. If they decline, use focused reads and a static audit. If they opt in, call verify-page-responsive once for "/blog" and once for one concrete detail path with desktop and mobile viewports. Confirm Assets-backed content and empty/not-found behavior. Stop on an error instead of retrying.',
     ],
     recipe: {
+      articleFormat: {
+        extension: "md",
+        editSurface: "asset-source-editor",
+        publishCompilation: false,
+        assetSyncDownloadsFiles: true,
+        visualAlternative: {
+          extension: "mdx",
+          editSurface: "content-block-canvas",
+          publishCompilation: true,
+          assetSyncDownloadsFiles: true,
+          workflow: "general",
+          tool: "connect-content-block-source",
+        },
+      },
       executionOrder: [
         { tool: "create-asset-folder", calls: 1 },
         { tool: "upload-assets", calls: 1 },

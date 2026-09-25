@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { spinner } from "@clack/prompts";
+import deepEqual from "fast-deep-equal";
 import {
   bundleVersion,
   publishedProjectBundle,
@@ -30,6 +31,14 @@ import {
   createSerializedBuilderBuildDataFromState,
 } from "@webstudio-is/project-build/state";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
+import {
+  createBuildContentCompilationPlan,
+  createPublishedBuildContentCompilationPlan,
+  createPublishedMdxDependencyClosureResolver,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxContentDatabaseMaxBytes,
+  resolvePublishedMdxAssetCandidates,
+} from "@webstudio-is/project-build";
 import {
   createReachableAssetContentCompilationPlan,
   getHomePage,
@@ -178,6 +187,7 @@ export const sync = async (
         serviceToken: options.authToken,
         origin: options.origin,
         headers: apiCompatibilityHeaders,
+        contentIndex: "client",
       });
       project.origin = options.origin;
     } catch (error) {
@@ -211,6 +221,7 @@ export const sync = async (
               authToken,
               origin,
               headers: apiCompatibilityHeaders,
+              contentIndex: "client",
             })
           : await dependencies.loadCurrentProjectBundle({
               projectId,
@@ -229,15 +240,22 @@ export const sync = async (
     throw new HandledCliError();
   }
 
-  if (project.assets.length > 0) {
-    syncing.message(`Downloading ${project.assets.length} asset files`);
+  const isStaticBuild = project.build.deployment?.destination === "static";
+  const assetsToDownload =
+    options.buildId !== undefined && isStaticBuild === false
+      ? project.assets.filter(
+          (asset) => asset.format !== "md" && asset.format !== "mdx"
+        )
+      : project.assets;
+  if (assetsToDownload.length > 0) {
+    syncing.message(`Downloading ${assetsToDownload.length} asset files`);
     if (project.origin === undefined) {
       syncing.stop("Asset origin is missing from project bundle", 2);
       throw new HandledCliError();
     }
     try {
       await dependencies.downloadAssetFiles({
-        assets: project.assets,
+        assets: assetsToDownload,
         origin: project.origin,
       });
     } catch (error) {
@@ -251,7 +269,81 @@ export const sync = async (
     }
   }
 
-  if (options.buildId === undefined) {
+  if (
+    options.buildId !== undefined &&
+    isStaticBuild &&
+    project.assetIndex === undefined
+  ) {
+    const publicationBuild = {
+      ...project.build,
+      pages: migratePages(project.build.pages),
+    };
+    const projectCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      allowUnresolved: true,
+    });
+    const needsCandidateDiscovery = getDynamicPublishedMdxSourceBlockIds(
+      publicationBuild
+    ).some((blockId) => projectCandidates.has(blockId) === false);
+    const candidateDiscoveryPlan = needsCandidateDiscovery
+      ? createBuildContentCompilationPlan(publicationBuild)
+      : undefined;
+    let plan =
+      candidateDiscoveryPlan ??
+      createPublishedBuildContentCompilationPlan(
+        publicationBuild,
+        projectCandidates
+      );
+    if (plan !== undefined) {
+      syncing.message("Preparing local content index");
+      const source = createFileSystemContentSource({
+        projectId: project.build.projectId,
+        assets: project.assets,
+        folders: new Map(
+          (project.assetFolders ?? []).map((folder) => [folder.id, folder])
+        ),
+      });
+      const maxBytes = getPublishedMdxContentDatabaseMaxBytes({
+        baseBytes: parseContentDatabaseMaxBytes(
+          process.env.CONTENT_DATABASE_MAX_BYTES
+        ),
+        assets: project.assets,
+      });
+      const compile = async () =>
+        (
+          await compileContentSource({
+            source,
+            projectId: project.build.projectId,
+            plan,
+            maxBytes,
+          })
+        ).artifact;
+      let artifact = await compile();
+      if (
+        candidateDiscoveryPlan !== undefined ||
+        plan.queries.some(({ id }) => id.startsWith("__content-block-mdx__:"))
+      ) {
+        const resolvePlan = createPublishedMdxDependencyClosureResolver();
+        for (let pass = 0; pass < 20; pass += 1) {
+          const nextPlan = await resolvePlan({
+            build: publicationBuild,
+            artifact,
+          });
+          if (nextPlan === undefined || deepEqual(plan, nextPlan)) {
+            break;
+          }
+          if (pass === 19) {
+            throw new Error(
+              "Dynamic MDX dependency closure exceeds the safe publication depth"
+            );
+          }
+          plan = nextPlan;
+          artifact = await compile();
+        }
+      }
+      project.assetIndex = artifact;
+    }
+  } else if (options.buildId === undefined) {
     const plan = createReachableAssetContentCompilationPlan({
       props: project.build.props.map(([, value]) => value),
       dataSources: project.build.dataSources.map(([, value]) => value),

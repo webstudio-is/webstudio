@@ -232,6 +232,7 @@ test("sends the bundle contract when loading by project id", async () => {
   expect(decodeURIComponent(String(url))).toContain(
     `"bundleVersion":"${bundleVersion}"`
   );
+  expect(decodeURIComponent(String(url))).not.toContain("contentIndex");
 });
 
 test("creates api client compatibility headers", () => {
@@ -1298,6 +1299,26 @@ test("loads project bundle by build id without auth headers", async () => {
   );
   expect((init.headers as Record<string, string>).authorization).toBe(
     undefined
+  );
+});
+
+test("requests local content preparation for the publish runner", async () => {
+  const project = createPublishedProjectBundleFixture();
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await loadProjectBundleByBuildId({
+    buildId: project.build.id,
+    origin: "https://example.com",
+    contentIndex: "client",
+  });
+
+  expect(decodeURIComponent(String(fetch.mock.calls[0]?.[0]))).toContain(
+    '"contentIndex":"client"'
   );
 });
 

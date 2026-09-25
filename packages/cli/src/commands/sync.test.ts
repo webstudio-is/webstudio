@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createServer } from "node:http";
@@ -13,6 +20,7 @@ import { resolveApiConnection } from "../api-connection";
 import { sync, defaultSyncDependencies } from "./sync";
 import { apiCompatibilityHeaders } from "./api";
 import { materializeManagedAgents } from "../managed-agents";
+import { prebuild } from "../prebuild";
 
 const originalCwd = process.cwd();
 let tempDir: string;
@@ -206,6 +214,133 @@ test("downloads project bundle asset files into local project bundle", async () 
   expect(indicator.message).toHaveBeenCalledWith("Downloading 1 asset files");
 });
 
+test.each([
+  {
+    name: "hosted",
+    deployment: { destination: "saas" as const, domains: [] },
+    compilesArticles: false,
+  },
+  {
+    name: "SSG",
+    deployment: {
+      destination: "static" as const,
+      name: "site.zip",
+      assetsDomain: "https://assets.example.com",
+      templates: ["ssg" as const],
+    },
+    compilesArticles: true,
+  },
+])(
+  "$name publish sync $compilesArticles articles only for SSG",
+  async ({ deployment, compilesArticles }) => {
+    const source = "# Published from the runner";
+    const article = {
+      ...createImageAssetFixture(),
+      id: "article",
+      name: "article.mdx",
+      type: "file" as const,
+      format: "mdx",
+      size: new TextEncoder().encode(source).byteLength,
+      meta: {},
+    };
+    const image = createImageAssetFixture();
+    loadProjectBundleByBuildId.mockResolvedValue(
+      createProjectBundle({
+        assets: [article, image],
+        build: {
+          deployment,
+          instances: [
+            [
+              "root",
+              {
+                type: "instance",
+                id: "root",
+                component: "Box",
+                children: [{ type: "id", value: "content" }],
+              },
+            ],
+            [
+              "content",
+              {
+                type: "instance",
+                id: "content",
+                component: "ws:block",
+                children: [{ type: "id", value: "templates" }],
+              },
+            ],
+            [
+              "templates",
+              {
+                type: "instance",
+                id: "templates",
+                component: "ws:block-template",
+                children: [],
+              },
+            ],
+          ],
+          props: [
+            [
+              "article-source",
+              {
+                id: "article-source",
+                instanceId: "content",
+                name: "src",
+                type: "asset",
+                value: article.id,
+              },
+            ],
+          ],
+        },
+      })
+    );
+    downloadAssetFiles.mockImplementation(async ({ assets }) => {
+      await mkdir(".webstudio/assets", { recursive: true });
+      await Promise.all(
+        assets.map((asset: { id: string; name: string }) =>
+          writeFile(
+            `.webstudio/assets/${asset.name}`,
+            asset.id === article.id ? source : "image"
+          )
+        )
+      );
+    });
+
+    await sync(
+      {
+        authToken: "token-1",
+        buildId: "build-1",
+        origin: "https://example.com",
+      },
+      dependencies
+    );
+
+    const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
+    if (compilesArticles) {
+      expect(downloadAssetFiles).toHaveBeenCalledWith({
+        assets: [article, image],
+        origin: "https://example.com",
+      });
+      expect(data.assetIndex.documents).toContainEqual(
+        expect.objectContaining({ _id: article.id, extension: "mdx" })
+      );
+      expect(Object.values(data.assetIndex.contents)).toContain(source);
+
+      await prebuild({ assets: false, template: ["ssg"] });
+      const generatedPage = await readFile(
+        "app/__generated__/_index.tsx",
+        "utf8"
+      );
+      expect(generatedPage).toContain("Published from the runner");
+    } else {
+      expect(downloadAssetFiles).toHaveBeenCalledWith({
+        assets: [image],
+        origin: "https://example.com",
+      });
+      expect(data.assetIndex).toBeUndefined();
+    }
+  }
+);
+
 test("sends linked share token when synchronizing by build id", async () => {
   const resolveApiConnection = vi.fn(async () => ({
     authToken: "share-token",
@@ -228,6 +363,7 @@ test("sends linked share token when synchronizing by build id", async () => {
     authToken: "share-token",
     origin: "https://example.com",
     headers: apiCompatibilityHeaders,
+    contentIndex: "client",
   });
 });
 

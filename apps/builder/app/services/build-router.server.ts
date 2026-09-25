@@ -59,6 +59,7 @@ const projectBundleInput = z.object({
 const buildBundleInput = z.object({
   buildId: z.string(),
   bundleVersion: z.union([z.string(), z.number()]).optional(),
+  contentIndex: z.literal("client").optional(),
 });
 
 const assertCliBundleVersion = (
@@ -101,6 +102,27 @@ const prepareProjectBundleForClient = async (
     },
   };
 };
+
+const createLoadProjectBundleByBuildIdHandler =
+  (dependencies: {
+    loadProjectBundleByBuildId: typeof loadProjectBundleByBuildId;
+    prepareProjectBundleForClient: typeof prepareProjectBundleForClient;
+  }) =>
+  async (ctx: AppContext, input: z.infer<typeof buildBundleInput>) => {
+    assertCliBundleVersion(ctx, input.bundleVersion);
+    return await dependencies.prepareProjectBundleForClient(
+      ctx,
+      await dependencies.loadProjectBundleByBuildId(input.buildId, ctx, {
+        contentIndex: input.contentIndex,
+      })
+    );
+  };
+
+const loadProjectBundleByBuildIdHandler =
+  createLoadProjectBundleByBuildIdHandler({
+    loadProjectBundleByBuildId,
+    prepareProjectBundleForClient,
+  });
 
 type ImportProjectBundleDependencies = {
   importPublishedProjectBundle: typeof importPublishedProjectBundle;
@@ -272,11 +294,7 @@ export const buildRouter = router({
   loadProjectBundleByBuildId: procedure
     .input(buildBundleInput)
     .query(async ({ ctx, input }) => {
-      assertCliBundleVersion(ctx, input.bundleVersion);
-      return await prepareProjectBundleForClient(
-        ctx,
-        await loadProjectBundleByBuildId(input.buildId, ctx)
-      );
+      return await loadProjectBundleByBuildIdHandler(ctx, input);
     }),
 
   loadProjectBundleByProjectId: procedure
@@ -430,6 +448,7 @@ export const buildRouter = router({
 
 export const __testing__ = {
   createImportProjectBundleHandler,
+  createLoadProjectBundleByBuildIdHandler,
   assertCliBundleVersion,
   loadContentDatabasePublishDiagnostics,
   prepareProjectBundleForClient,

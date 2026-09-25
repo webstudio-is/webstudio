@@ -167,6 +167,8 @@ Rules:
 
 Use a connected `.mdx` Asset when editors should change a Content Block body visually while the document remains stored as a file.
 
+Choose this format before building a blog: each reachable connected MDX article is downloaded and compiled when publishing, so publishing can take longer as the blog grows. If editors only need to edit Markdown source in Assets, use `.md` with Markdown Embed instead. Content mode editors can edit those files in the Markdown file editor, but cannot edit the article body visually on the canvas. `.md` does not need per-article MDX compilation; the current publish sync still transfers Asset files for either format, and static generation may read Markdown bodies.
+
 ### Connect a collection to its entry page
 
 When MDX files belong to a content collection, connect the collection to its dynamic entry page explicitly. Read the page ID after finding or creating the page, verify that its path has exactly one URL parameter, and store the ID at `x-webstudio.entryPageId` in `collection.json`. Do not assume Webstudio infers the page from its path, Assets query, or Content Block source. Preserve the rest of `collection.json`, and verify **Open on canvas** from both an entry asset menu and **Entry settings** before handoff. If no compatible page exists, leave the field unset and report that entry navigation still needs configuration.

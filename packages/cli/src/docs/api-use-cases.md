@@ -849,6 +849,7 @@ Commands:
 
 Notes:
 
+- Choose `.mdx` connected to a Content Block when editors must edit article bodies visually in Content mode. Publishing downloads and compiles every reachable MDX article, so more articles can slow publishing. Choose `.md` with Markdown Embed when editing the source in Assets is enough; Content mode editors can still edit the Markdown file there, but not its body on the canvas. `.md` needs no per-article MDX compilation, though the publish runner still synchronizes Asset files for both formats and static generation may read Markdown bodies.
 - Read the field catalog before authoring unfamiliar queries. It includes dynamic schema-less frontmatter paths such as `properties.author.name`, observed types, optionality, and mixed-type state without downloading the source files.
 - Minimize the deployed content database by using `output.mode:"fields"` and selecting only fields the rendered page needs. Keep `includeMetadata:false` unless the rendered value needs file metadata such as name, path, MIME type, or creation date, and avoid `output.mode:"all"` as a convenience default. Query diagnostics are returned separately and do not require metadata output. Filters and sorting may still require their referenced fields in the database.
 - Every reachable Assets data source contributes to the shared published database. Keep one final resource per rendered query. Update an existing scoped resource rather than creating a placeholder, preview copy, or repair replacement, and remove obsolete duplicates.
