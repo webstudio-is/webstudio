@@ -2,7 +2,12 @@ import hash from "@emotion/hash";
 import { serverOnlyRouterOperationMetadata } from "./__generated__/server-only-router-operation-metadata";
 import { localOnlyOperationInputs } from "./local-operation-inputs";
 import { publicApiOperationDocumentation } from "./operation-docs";
-import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
+import {
+  getInputJsonSchemaMetadata,
+  getInputJsonSchemaProperties,
+  inputJsonSchemaAcceptsType,
+  toInputJsonSchemaObject,
+} from "@webstudio-is/sdk";
 import {
   publicRuntimeOperationContracts,
   type InputJsonSchema,
@@ -181,6 +186,49 @@ export const publicApiOperations = publicApiOperationDocumentation.map(
   ({ command }) => withDefaultPermit(getOperationInputByCommand(command))
 );
 
+const collectEntityIdFields = (
+  schema: InputJsonSchema | undefined,
+  fields: Set<string>
+) => {
+  if (schema === undefined) {
+    return;
+  }
+  for (const [field, property] of Object.entries(
+    getInputJsonSchemaProperties(schema) ?? {}
+  )) {
+    if (
+      field.endsWith("Id") &&
+      inputJsonSchemaAcceptsType(property, "string")
+    ) {
+      fields.add(field);
+    }
+    collectEntityIdFields(property, fields);
+  }
+  if (Array.isArray(schema.items)) {
+    for (const item of schema.items) {
+      collectEntityIdFields(toInputJsonSchemaObject(item), fields);
+    }
+  } else {
+    collectEntityIdFields(toInputJsonSchemaObject(schema.items), fields);
+  }
+  if (Array.isArray(schema.prefixItems)) {
+    for (const item of schema.prefixItems) {
+      collectEntityIdFields(toInputJsonSchemaObject(item), fields);
+    }
+  }
+  for (const key of ["anyOf", "oneOf", "allOf"] as const) {
+    for (const variant of schema[key] ?? []) {
+      collectEntityIdFields(toInputJsonSchemaObject(variant), fields);
+    }
+  }
+};
+
+const entityIdFields = new Set<string>();
+for (const operation of publicApiOperations) {
+  collectEntityIdFields(operation.inputSchema, entityIdFields);
+}
+export const publicApiEntityIdFields: ReadonlySet<string> = entityIdFields;
+
 const operationsRequiringNegotiatedServerSupport = new Set([
   "instances.insertComponent",
   "instances.insertCollection",
@@ -194,20 +242,39 @@ export const publicApiOperationRequiresServerSupport = (operation: {
   operation.serverOnly ||
   operationsRequiringNegotiatedServerSupport.has(operation.id);
 
+const stringifyApiContractSchema = (schema: InputJsonSchema | undefined) =>
+  JSON.stringify(schema, (key, value) =>
+    ["description", "title", "examples", "$comment"].includes(key)
+      ? undefined
+      : value
+  );
+
 export const publicApiContractVersion = `public-api:${hash(
-  JSON.stringify(
-    publicApiOperations.map(({ command, id, method, path, serverOnly }) => ({
-      command,
-      id,
-      method,
-      path,
-      serverOnly,
-      requiresServerSupport: publicApiOperationRequiresServerSupport({
+  JSON.stringify({
+    operations: publicApiOperations.map(
+      ({
+        command,
         id,
+        method,
+        path,
         serverOnly,
-      }),
-    }))
-  )
+        inputSchema,
+        outputSchema,
+      }) => ({
+        command,
+        id,
+        method,
+        path,
+        serverOnly,
+        inputSchema: stringifyApiContractSchema(inputSchema),
+        outputSchema: stringifyApiContractSchema(outputSchema),
+        requiresServerSupport: publicApiOperationRequiresServerSupport({
+          id,
+          serverOnly,
+        }),
+      })
+    ),
+  })
 )}`;
 
 const publicApiOperationByCommand = new Map(

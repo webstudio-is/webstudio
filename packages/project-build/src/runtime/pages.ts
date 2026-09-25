@@ -24,7 +24,6 @@ import {
   isPageDraft,
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
-import { tokenizer } from "acorn";
 import * as bcp47 from "bcp-47";
 import slugify from "slugify";
 import { z } from "zod";
@@ -841,7 +840,7 @@ export const listPageMetadataExpressions = (
 };
 
 export const pageExpressionFieldHint =
-  'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.';
+  'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.';
 
 export const pageStatusFieldHint =
   "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.";
@@ -857,99 +856,19 @@ const pageStatusCodeInput = z.number().refine(
   })
 );
 
-const jsExpressionStartPattern =
-  /^\s*(?:["'`[{(]|(?:await|new|typeof|void)\b|(?:undefined|null|true|false)\s*$)/;
-const jsExpressionOperatorPattern =
-  /(?:\?\?|&&|\|\||=>|\?\s*.+\s*:|\.\s*[A-Za-z_$]|\[[^\]]*\]|\s(?:[=!<>]=?|[+\-*/%])\s)/;
-
-const pageTextSentenceSegmenter = new Intl.Segmenter(undefined, {
-  granularity: "sentence",
-});
-
-const hasMultipleSentences = (value: string) => {
-  let count = 0;
-  for (const { segment } of pageTextSentenceSegmenter.segment(value)) {
-    if (segment.trim().length > 0) {
-      count += 1;
-    }
-    if (count > 1) {
-      return true;
-    }
-  }
-  return false;
-};
-
-const hasWhitespaceAfterDot = (value: string) => {
-  try {
-    const tokens = tokenizer(value, { ecmaVersion: "latest" });
-    let token = tokens.getToken();
-    while (token.type.label !== "eof") {
-      const nextToken = tokens.getToken();
-      if (
-        token.type.label === "." &&
-        nextToken.type.label === "name" &&
-        token.end < nextToken.start
-      ) {
-        return true;
-      }
-      token = nextToken;
-    }
-  } catch {
-    return hasMultipleSentences(value);
-  }
-  return false;
-};
-
-const isAbsoluteUrl = (value: string) => {
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const normalizePageExpressionInput = (value: string) => {
-  if (isAbsoluteUrl(value) || hasWhitespaceAfterDot(value)) {
-    return JSON.stringify(value);
-  }
-  if (
-    jsExpressionStartPattern.test(value) ||
-    jsExpressionOperatorPattern.test(value)
-  ) {
-    return value;
-  }
-  return JSON.stringify(value);
-};
-
-const normalizePageStatusInput = (value: string) => {
-  const number = Number(value);
-  if (Number.isNaN(number) === false && String(number) === value) {
-    return value;
-  }
-  return normalizePageExpressionInput(value);
-};
-
 const pageExpressionStringInput = z
-  .preprocess(
-    (value) =>
-      typeof value === "string" ? normalizePageExpressionInput(value) : value,
-    z.string({
-      error: (issue) =>
-        issue.input !== null &&
-        typeof issue.input === "object" &&
-        Array.isArray(issue.input) === false
-          ? `${pageExpressionFieldHint} Pass it as a string, not as a prop value object like {"type":"string","value":"..."}.`
-          : undefined,
-    })
-  )
+  .string({
+    error: (issue) =>
+      issue.input !== null &&
+      typeof issue.input === "object" &&
+      Array.isArray(issue.input) === false
+        ? `${pageExpressionFieldHint} Pass expression source as a string, not as a prop value object like {"type":"string","value":"..."}.`
+        : undefined,
+  })
   .describe(pageExpressionFieldHint);
 
 const pageStatusExpressionInput = z
-  .union([
-    pageStatusCodeInput.transform((value) => String(value)),
-    z.string().transform(normalizePageStatusInput),
-  ])
+  .union([pageStatusCodeInput.transform((value) => String(value)), z.string()])
   .describe(pageStatusFieldHint);
 
 export const pagePathFieldHint =
@@ -996,42 +915,6 @@ type PageFieldsPatchInput = Partial<{
   parentFolderId: string;
   meta: PageMetaPatchInput;
 }>;
-
-const normalizePageMetaExpressionInputs = (
-  meta: PageMetaPatchInput | undefined
-) => {
-  if (meta === undefined) {
-    return undefined;
-  }
-  const normalized: PageMetaPatchInput = { ...meta };
-  for (const name of pageMetaExpressionFields) {
-    const value = normalized[name];
-    if (typeof value === "string" && value !== "") {
-      normalized[name] =
-        name === "status"
-          ? normalizePageStatusInput(value)
-          : normalizePageExpressionInput(value);
-    }
-  }
-  normalized.custom = normalized.custom?.map((customMeta) => ({
-    ...customMeta,
-    content: normalizePageExpressionInput(customMeta.content),
-  }));
-  return normalized;
-};
-
-const normalizePageFieldsExpressionInputs = <
-  Input extends PageFieldsPatchInput,
->(
-  input: Input
-): Input => ({
-  ...input,
-  title:
-    typeof input.title === "string"
-      ? normalizePageExpressionInput(input.title)
-      : input.title,
-  meta: normalizePageMetaExpressionInputs(input.meta),
-});
 
 const bindPageFieldsExpressionInputs = <Input extends PageFieldsPatchInput>({
   state,
@@ -1898,11 +1781,9 @@ export const createPage = (
   context: BuilderRuntimeContext
 ) => {
   const pages = getRequiredPages(state);
-  const normalizedInput = normalizePageFieldsExpressionInputs(input);
   const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
   const parentFolder = getFolderOrThrow(pages, parentFolderId);
-  const expressionIssues =
-    collectPageExpressionValidationIssues(normalizedInput);
+  const expressionIssues = collectPageExpressionValidationIssues(input);
   if (expressionIssues.length > 0) {
     return throwBuilderValidationError(
       formatValidationIssueMessages(expressionIssues),
@@ -1936,7 +1817,7 @@ export const createPage = (
   const rootInstanceId = context.createId();
   const boundInput = bindPageFieldsExpressionInputs({
     state,
-    input: normalizedInput,
+    input,
     rootInstanceId,
   });
   const page = createPageValue({
@@ -1972,9 +1853,8 @@ export const updatePage = (
   if (page === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
   }
-  const normalizedValues = normalizePageFieldsExpressionInputs(input.values);
-  const nextPath = normalizedValues.path ?? page.path;
-  const nextIsDraft = normalizedValues.isDraft ?? isPageDraft(page);
+  const nextPath = input.values.path ?? page.path;
+  const nextIsDraft = input.values.isDraft ?? isPageDraft(page);
   const draftabilityError = getPageDraftabilityError({
     pageId: page.id,
     pagePath: nextPath,
@@ -1983,17 +1863,14 @@ export const updatePage = (
   if (nextIsDraft && draftabilityError !== undefined) {
     return throwBuilderRuntimeError("BAD_REQUEST", draftabilityError);
   }
-  const expressionIssues =
-    collectPageExpressionValidationIssues(normalizedValues);
+  const expressionIssues = collectPageExpressionValidationIssues(input.values);
   if (expressionIssues.length > 0) {
     return throwBuilderValidationError(
       formatValidationIssueMessages(expressionIssues),
       prefixValidationIssuePaths(expressionIssues, ["values"])
     );
   }
-  const pathIssues = getPagePathValidationIssues(normalizedValues.path, [
-    "values",
-  ]);
+  const pathIssues = getPagePathValidationIssues(input.values.path, ["values"]);
   if (pathIssues.length > 0) {
     return throwBuilderValidationError(
       pathIssues.map((issue) => issue.detail).join("\n"),
@@ -2001,29 +1878,28 @@ export const updatePage = (
     );
   }
   if (
-    (normalizedValues.path !== undefined ||
-      normalizedValues.parentFolderId !== undefined) &&
+    (input.values.path !== undefined ||
+      input.values.parentFolderId !== undefined) &&
     isPathAvailable({
       pages,
-      path: normalizedValues.path ?? page.path,
+      path: input.values.path ?? page.path,
       parentFolderId:
-        normalizedValues.parentFolderId ??
-        getParentFolderIdOrThrow(pages, page.id),
+        input.values.parentFolderId ?? getParentFolderIdOrThrow(pages, page.id),
       pageId: page.id,
     }) === false
   ) {
     return throwBuilderRuntimeError(
       "CONFLICT",
-      `Page path "${normalizedValues.path ?? page.path}" is already in use`
+      `Page path "${input.values.path ?? page.path}" is already in use`
     );
   }
-  if (normalizedValues.parentFolderId !== undefined) {
-    getFolderOrThrow(pages, normalizedValues.parentFolderId);
+  if (input.values.parentFolderId !== undefined) {
+    getFolderOrThrow(pages, input.values.parentFolderId);
     getParentFolderIdOrThrow(pages, page.id);
   }
   const boundValues = bindPageFieldsExpressionInputs({
     state,
-    input: normalizedValues,
+    input: input.values,
     rootInstanceId: page.rootInstanceId,
   });
   return createRuntimeMutation({

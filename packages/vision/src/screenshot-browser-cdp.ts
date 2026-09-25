@@ -57,6 +57,7 @@ export type BrowserScreenshotOptions = {
   prepareExpression?: string;
   waitForSelector?: string;
   failForSelector?: string;
+  waitForFonts?: boolean;
   waitForTimeout: number;
   finalizeExpression?: string;
   timeout: number;
@@ -171,13 +172,21 @@ export type BrowserStartupDiagnostic = {
   message: string;
 };
 
+type BrowserProcessExit = { code?: number; signal?: string };
+
 export class BrowserSessionClosedError extends Error {
   readonly code = "BROWSER_SESSION_CLOSED";
   readonly diagnostic?: BrowserStartupDiagnostic;
+  readonly processExit?: BrowserProcessExit;
 
-  constructor(message: string, diagnostic?: BrowserStartupDiagnostic) {
+  constructor(
+    message: string,
+    diagnostic?: BrowserStartupDiagnostic,
+    processExit?: BrowserProcessExit
+  ) {
     super(message);
     this.diagnostic = diagnostic;
+    this.processExit = processExit;
   }
 }
 
@@ -472,12 +481,17 @@ type BrowserReadiness = {
 const waitForFontsAndFrames = async (
   cdp: CdpSession,
   timeout: number,
-  pageMetadata: BrowserScreenshotOptions["pageMetadata"]
+  {
+    pageMetadata,
+    waitForFonts = true,
+  }: Pick<BrowserScreenshotOptions, "pageMetadata" | "waitForFonts">
 ): Promise<BrowserReadiness> => {
   const measure = async () => {
-    const response = await withDeadline(
-      cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
-        expression: `Promise.resolve(document.fonts?.ready).then(() => {
+    let response: { result?: { value?: unknown } };
+    try {
+      response = await withDeadline(
+        cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
+          expression: `Promise.resolve(${waitForFonts ? "document.fonts?.ready" : "undefined"}).then(() => {
           const metadata = ${JSON.stringify(pageMetadata)};
           const root = document.documentElement;
           const id = metadata?.idAttribute === undefined
@@ -502,12 +516,49 @@ const waitForFontsAndFrames = async (
             height: root.scrollHeight,
           };
         })`,
-        awaitPromise: true,
-        returnByValue: true,
-      }),
-      "Page fonts and layout sample were not ready",
-      timeout
-    );
+          awaitPromise: true,
+          returnByValue: true,
+        }),
+        waitForFonts
+          ? "Page fonts and layout sample were not ready"
+          : "Page layout sample was not ready",
+        timeout
+      );
+    } catch (error) {
+      if (
+        !waitForFonts ||
+        typeof error !== "object" ||
+        error === null ||
+        !("code" in error) ||
+        error.code !== "SCREENSHOT_TIMEOUT"
+      ) {
+        throw error;
+      }
+      let loadingFonts: unknown;
+      try {
+        const diagnostic = await withDeadline(
+          cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
+            expression:
+              'Array.from(document.fonts).filter((font) => font.status === "loading").map((font) => font.family).slice(0, 5)',
+            returnByValue: true,
+          }),
+          "Font diagnostic was not ready",
+          Math.min(timeout, 500)
+        );
+        loadingFonts = diagnostic.result?.value;
+      } catch {
+        // Preserve the original timeout when diagnostics are unavailable.
+      }
+      const names = Array.isArray(loadingFonts)
+        ? loadingFonts.filter(
+            (name): name is string => typeof name === "string"
+          )
+        : [];
+      throw createTimeoutError(
+        `Page fonts and layout sample were not ready${names.length > 0 ? `; loading fonts: ${names.join(", ")}` : ""}`,
+        timeout
+      );
+    }
     return response.result?.value;
   };
   const isLayoutSample = (
@@ -1270,6 +1321,7 @@ const getScreenshotCaptureParams = async ({
 export class BrowserStartupError extends Error {
   readonly code = "BROWSER_STARTUP_FAILED";
   readonly diagnostic?: BrowserStartupDiagnostic;
+  readonly processExit?: BrowserProcessExit;
   readonly issues?: Array<{
     code: string;
     path: string[];
@@ -1279,11 +1331,16 @@ export class BrowserStartupError extends Error {
 
   constructor(
     message: string,
-    options?: { cause?: unknown; diagnostic?: BrowserStartupDiagnostic }
+    options?: {
+      cause?: unknown;
+      diagnostic?: BrowserStartupDiagnostic;
+      processExit?: BrowserProcessExit;
+    }
   ) {
     super(message, options);
     this.name = "BrowserStartupError";
     this.diagnostic = options?.diagnostic;
+    this.processExit = options?.processExit;
     this.issues =
       options?.diagnostic === undefined
         ? undefined
@@ -1414,20 +1471,25 @@ const startBrowserRuntimeOnce = async (
     }
   });
   let running = true;
+  let processExit: BrowserProcessExit | undefined;
   const browserClosed = new Promise<string | undefined>((resolveClosed) => {
     const close = (reason?: string) => {
       running = false;
       resolveClosed(reason);
     };
-    browserProcess.once("exit", (code, signal) =>
+    browserProcess.once("exit", (code, signal) => {
+      processExit = {
+        ...(typeof code === "number" ? { code } : {}),
+        ...(typeof signal === "string" ? { signal } : {}),
+      };
       close(
         typeof code === "number"
           ? `exit code ${code}`
           : typeof signal === "string"
             ? `signal ${signal}`
             : undefined
-      )
-    );
+      );
+    });
     browserProcess.once("error", (error) => {
       const code = "code" in error ? error.code : undefined;
       close(code === undefined ? undefined : `spawn error ${code}`);
@@ -1444,7 +1506,8 @@ const startBrowserRuntimeOnce = async (
             reason,
             diagnostic
           ),
-          diagnostic
+          diagnostic,
+          processExit
         );
       }),
     ]);
@@ -1509,6 +1572,10 @@ const startBrowserRuntime = async (
         diagnostic:
           error instanceof BrowserSessionClosedError
             ? error.diagnostic
+            : undefined,
+        processExit:
+          error instanceof BrowserSessionClosedError
+            ? error.processExit
             : undefined,
       }
     );
@@ -1723,7 +1790,7 @@ const capturePageWithBrowserRuntime = async (
           const readiness = await waitForFontsAndFrames(
             cdp,
             options.timeout,
-            options.pageMetadata
+            options
           );
           if (options.waitForTimeout > 0) {
             await delay(options.waitForTimeout);

@@ -236,6 +236,17 @@ test("creates api client compatibility headers", () => {
     "x-webstudio-client": "cli",
     "x-webstudio-client-version": "1.2.3",
   });
+  expect(
+    createApiClientHeaders({
+      name: "cli",
+      version: "1.2.3",
+      contractVersion: "public-api:current",
+    })
+  ).toEqual({
+    "x-webstudio-client": "cli",
+    "x-webstudio-client-version": "1.2.3",
+    "x-webstudio-api-contract-version": "public-api:current",
+  });
 });
 
 test("formats api compatibility update messages", () => {

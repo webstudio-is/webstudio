@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publicApiEntityIdFields } from "./builder-api/operations";
 
 const issueReportTrigger = z.enum(["user-requested", "automatic-friction"]);
 
@@ -46,13 +47,77 @@ const issueReportFailureIssue = z
   })
   .strict();
 
+export const issueReportBrowserAttempt = z
+  .object({
+    browser: z.enum(["chromium", "chrome", "edge", "brave"]),
+    source: z.enum([
+      "option",
+      "env",
+      "path",
+      "platform",
+      "playwright",
+      "chrome-launcher",
+    ]),
+  })
+  .strict();
+
+export const issueReportBrowserSignal = z.enum([
+  "SIGABRT",
+  "SIGBUS",
+  "SIGFPE",
+  "SIGHUP",
+  "SIGILL",
+  "SIGINT",
+  "SIGKILL",
+  "SIGPIPE",
+  "SIGQUIT",
+  "SIGSEGV",
+  "SIGSYS",
+  "SIGTERM",
+  "SIGTRAP",
+]);
+
+const issueReportId = z
+  .string()
+  .min(1)
+  .max(160)
+  .regex(/^[A-Za-z0-9_-]+$/);
+
+const sensitiveIdField =
+  /^(?:auth|access|api|session|token|customer|user)|secret|password|credential|private/i;
+
+export const issueReportEntityIdField = z.enum(
+  [...publicApiEntityIdFields].filter((field) => !sensitiveIdField.test(field))
+);
+
+export const issueReportEntityId = z
+  .object({ field: issueReportEntityIdField, id: issueReportId })
+  .strict();
+
 const issueReportRecentFailure = z
   .object({
     tool: z.string().trim().min(1).max(160),
     code: z.string().trim().min(1).max(160),
     httpStatus: z.number().int().min(100).max(599).optional(),
     elapsedMs: z.number().int().nonnegative().optional(),
+    entityIds: z.array(issueReportEntityId).max(20).optional(),
     issues: z.array(issueReportFailureIssue).max(30).optional(),
+    response: z
+      .object({
+        format: z.enum(["json", "html", "other"]),
+        envelope: z.enum(["result", "error", "other", "missing"]),
+        batchSize: z.number().int().min(0).max(1_000).optional(),
+      })
+      .strict()
+      .optional(),
+    browser: z
+      .object({
+        exitSignal: issueReportBrowserSignal.optional(),
+        exitCode: z.number().int().min(0).max(255).optional(),
+        attempts: z.array(issueReportBrowserAttempt).max(10).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -82,13 +147,14 @@ const issueReportRuntime = z
     executionMode: z.enum(["mcp"]),
     apiContractVersion: z.string().trim().min(1).max(100),
     bundleVersion: z.string().trim().min(1).max(100).optional(),
+    projectId: issueReportId.optional(),
     recentFailure: issueReportRecentFailure.optional(),
     session: issueReportSession.optional(),
     preview: issueReportPreview.optional(),
   })
   .strict()
   .describe(
-    "Anonymous CLI-collected runtime metadata without host, user, path, environment, network, location, project, or argument data."
+    "CLI-collected runtime metadata with the project ID and bounded entity IDs from the failed tool input; no raw arguments, URLs, credentials, or customer content."
   );
 
 const issueReportContent = z
@@ -125,7 +191,7 @@ export const issueReportInput = z
   })
   .strict()
   .describe(
-    "Anonymous LLM-authored technical report. Generalize context, exclude all identifying or project-specific data, and preserve only stable tool, schema, error, version, and input-shape details."
+    "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from the failed tool input. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data."
   );
 
 export const issueReportResult = z

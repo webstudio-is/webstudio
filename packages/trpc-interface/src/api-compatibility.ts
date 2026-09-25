@@ -4,6 +4,8 @@ export const apiCompatibilityErrorType = "webstudioApiCompatibilityError";
 
 export const apiClientHeader = "x-webstudio-client";
 export const apiClientVersionHeader = "x-webstudio-client-version";
+export const apiClientContractVersionHeader =
+  "x-webstudio-api-contract-version";
 
 export const apiCompatibilityTarget = z.enum(["browser", "cli"]);
 export type ApiCompatibilityTarget = z.infer<typeof apiCompatibilityTarget>;

@@ -28,6 +28,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   apiClientHeader,
+  apiClientContractVersionHeader,
   apiClientVersionHeader,
   getApiCompatibilityPayload,
 } from "@webstudio-is/trpc-interface/api-compatibility";
@@ -147,12 +148,17 @@ type ApiClientName = "browser" | "cli" | "service";
 export const createApiClientHeaders = ({
   name,
   version,
+  contractVersion,
 }: {
   name: ApiClientName;
   version: string;
+  contractVersion?: string;
 }): RequestHeaders => ({
   [apiClientHeader]: name,
   [apiClientVersionHeader]: version,
+  ...(contractVersion === undefined
+    ? {}
+    : { [apiClientContractVersionHeader]: contractVersion }),
 });
 
 export const getApiCompatibilityMessage = (

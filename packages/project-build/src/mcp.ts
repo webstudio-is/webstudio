@@ -359,6 +359,7 @@ const metaGuideWorkflows = [
   "authenticated-page",
   "font-assets",
   "design-input",
+  "content-block-source",
   "craft",
 ] as const;
 
@@ -1772,6 +1773,12 @@ const screenshotInputSchema = {
       type: "string",
       description: "CSS selector that must exist before capture.",
     },
+    waitForFonts: {
+      type: "boolean",
+      default: true,
+      description:
+        "Wait for document.fonts.ready before sampling layout. Set false if a font never settles; capture still waits for stable layout frames.",
+    },
     waitForTimeout: {
       type: "number",
       default: defaultScreenshotWaitForTimeout,
@@ -1836,6 +1843,7 @@ const responsiveScreenshotInputSchema = {
     browser: screenshotInputSchema.properties.browser,
     waitUntil: screenshotInputSchema.properties.waitUntil,
     waitForSelector: screenshotInputSchema.properties.waitForSelector,
+    waitForFonts: screenshotInputSchema.properties.waitForFonts,
     waitForTimeout: screenshotInputSchema.properties.waitForTimeout,
     timeout: screenshotInputSchema.properties.timeout,
   },
@@ -2429,6 +2437,11 @@ export const mcpArgumentExamples: Record<
     },
     {
       parentInstanceId: "parent-id",
+      fragment:
+        "<section ws:tokens={[token('accent')]}><h2>Reuse an existing accent token</h2></section>",
+    },
+    {
+      parentInstanceId: "parent-id",
       fragment: "<section><Switch><SwitchThumb /></Switch></section>",
     },
   ],
@@ -2475,9 +2488,9 @@ export const mcpArgumentExamples: Record<
     {
       pageId: "page-id",
       values: {
-        title: "Pricing",
+        title: '"Pricing"',
         meta: {
-          description: "Pricing plans",
+          description: '"Pricing plans"',
         },
       },
     },
@@ -6251,7 +6264,7 @@ const metaGoalGuides = [
     workflow: [
       "Follow recipe.executionOrder in order. Resolve documented placeholders from earlier results, and do not add calls outside that sequence.",
       'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
-      'Create exactly two pages once: "/blog" and "/blog/:slug". Do not dry-run page creation, create one page per post, or copy Markdown into static page content.',
+      'Create exactly two pages once using the recipe pages payloads exactly: call create-page with {"path":"/blog","name":"Blog"} and {"path":"/blog/:slug","name":"Blog article"}. Use each returned pageId and rootInstanceId in later recipe placeholders. Do not omit name, dry-run page creation, create one page per post, or copy Markdown into static page content.',
       "Substitute the returned folder id in every recipe query. Pass recipe.overviewValidationQuery and recipe.detailValidationQuery directly to validate-asset-query, then pass recipe.detailValidationQuery directly to preview-asset-query. These execution queries contain resolved JSON values. Do not copy the expression-bearing resource queries into validation or preview tools.",
       "After both validations and the preview succeed, call recipe.toolDiscovery exactly once immediately before creating the resources. Do not call meta.get-more-tools again.",
       'Create exactly one scoped Assets resource per page by copying recipe.overviewResource and recipe.detailResource unchanged except for id placeholders. Keep the detail query result as "one" and bind it directly without a Collection. Do not add query defaults or create placeholder resources.',
@@ -6272,6 +6285,10 @@ const metaGoalGuides = [
         { tool: "insert-fragment", calls: 1 },
         { tool: "update-page", calls: 1 },
         { tool: "verify-page-responsive", calls: 2, terminal: true },
+      ],
+      pages: [
+        { path: "/blog", name: "Blog" },
+        { path: "/blog/:slug", name: "Blog article" },
       ],
       toolDiscovery: {
         tool: "meta.get-more-tools",
@@ -6466,6 +6483,53 @@ const metaGoalGuides = [
             socialImageUrl: 'post.data.properties.featureImage.src ?? ""',
             status: "post.data ? 200 : 404",
           },
+        },
+      },
+    },
+  },
+  {
+    id: "content-block-source",
+    tools: [
+      "inspect-instance",
+      "connect-content-block-source",
+      "inspect-content-block-source",
+      "update-text",
+      "bind-props",
+      "update-content-block-frontmatter",
+      "reload-content-block-source",
+      "audit",
+    ],
+    workflow: [
+      "Inspect the designed Content Block and its persistent header instances. Connect the Markdown or MDX Asset with connect-content-block-source, then inspect the source to get the actual document parameter name and scope.",
+      "Before changing frontmatter, bind every requested designed header text value directly to the document parameter with update-text and expressionBindingMode readwrite. Use exact frontmatter paths; keep fixed suffixes and labels as separate static text. Use bind-props only for component properties, not text children.",
+      "Update frontmatter with update-content-block-frontmatter, preserving every existing property the user did not ask to change. Do not target MDX-rendered descendants with generic instance mutations.",
+      "Reload the connected source, inspect the saved frontmatter and diagnostics, then run audit. Confirm each requested header value is still a direct writable binding and remains outside the MDX body.",
+    ],
+    recipe: {
+      executionOrder: [
+        { tool: "inspect-instance", calls: 1 },
+        { tool: "connect-content-block-source", calls: 1 },
+        { tool: "inspect-content-block-source", calls: 1 },
+        {
+          tool: "update-text",
+          calls: "once per requested designed text field",
+        },
+        { tool: "update-content-block-frontmatter", calls: 1 },
+        { tool: "reload-content-block-source", calls: 1 },
+        { tool: "inspect-content-block-source", calls: 1 },
+        { tool: "audit", calls: 1 },
+      ],
+      connectSource: {
+        source: { type: "asset", assetId: "<md-or-mdx-asset-id>" },
+      },
+      designedTextBinding: {
+        tool: "update-text",
+        input: {
+          instanceId: "<designedTextInstanceId>",
+          childIndex: 0,
+          text: "<documentVariable>.frontmatter.<exactFieldPath>",
+          mode: "expression",
+          expressionBindingMode: "readwrite",
         },
       },
     },
@@ -7814,6 +7878,12 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       throw new Error("screenshot waitForSelector must be a non-empty string.");
     }
   }
+  if (
+    input.waitForFonts !== undefined &&
+    typeof input.waitForFonts !== "boolean"
+  ) {
+    throw new Error("screenshot waitForFonts must be a boolean.");
+  }
   const source = input.source === undefined ? undefined : input.source;
   if (source !== undefined && isProjectSessionPreviewSource(source) === false) {
     throw new Error("screenshot source must be local or session.");
@@ -7870,6 +7940,7 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       typeof input.browserPath === "string" ? input.browserPath : undefined,
     waitUntil,
     waitForSelector,
+    waitForFonts: input.waitForFonts,
     waitForTimeout,
     timeout,
   };
@@ -9224,7 +9295,8 @@ export const createProjectSessionMcpServer = async <
   onToolFailure?: (
     canonicalTool: string,
     error: unknown,
-    elapsedMs: number
+    elapsedMs: number,
+    input: unknown
   ) => void;
   onToolSuccess?: (canonicalTool: string) => void;
 }) => {
@@ -9369,7 +9441,7 @@ export const createProjectSessionMcpServer = async <
       return result;
     } catch (error) {
       const elapsedMs = Date.now() - startedAt;
-      onToolFailure?.(canonicalName ?? "unknown", error, elapsedMs);
+      onToolFailure?.(canonicalName ?? "unknown", error, elapsedMs, input);
       sendLog(
         "error",
         `tool ${name} failed in ${elapsedMs}ms: ${

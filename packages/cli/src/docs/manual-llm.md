@@ -479,9 +479,9 @@ Before authoring unfamiliar expressions, read `webstudio://project/expressions` 
 - Use `bind-props` only when the prop must stay dynamic: an expression, resource result, action, or existing scoped runtime context such as `system`. Do not use `bind-props` just to set a fixed string.
 - Direct prop string example: `{"updates":[{"instanceId":"button-id","name":"aria-label","type":"string","value":"Open menu"}]}`.
 - Expression binding example: `{"bindings":[{"instanceId":"link-id","name":"href","binding":{"type":"expression","value":"currentPost.url"}}]}`.
-- Page metadata fields such as `title`, `description`, `language`, `redirect`, and custom meta content accept plain fixed text. For computed values, pass JavaScript expression code such as `pageTitle ?? "Pricing | Acme"`.
+- Page metadata fields contain JavaScript expression source. For fixed text, pass a quoted string expression such as `"Pricing | Acme"`; for computed values, pass code such as `pageTitle ?? "Pricing | Acme"`. An unquoted word is a variable reference, not fixed text.
 - Page `status` accepts a fixed HTTP status code as a number from 200 through 599, for example `302`. For a dynamic status, pass JavaScript expression code such as `system.status`.
-- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"Pricing | Acme","meta":{"description":"Plans for teams"}}}`.
+- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"\"Pricing | Acme\"","meta":{"description":"\"Plans for teams\""}}}`.
 - Draft a page with `update-page` and `{"pageId":"page-id","values":{"isDraft":true}}`. It remains editable and previewable but is omitted from every publish target, including staging, and from sitemap output.
 - Stage a draft page for a future publish with `{"pageId":"page-id","values":{"isDraft":false}}`. This clears draft state but does not deploy the site. The home page and `/*` catch-all page cannot be drafts.
 - Resource `url` accepts plain fixed URLs and paths. For computed URLs, pass JavaScript expression code such as `"https://api.example.com/items?tag=" + filters.tag`. Resource header values, search parameter values, and text bodies accept expressions for dynamic values; for fixed text, use `{ "type": "literal", "value": "application/json" }`.
@@ -539,7 +539,7 @@ MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
 - Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions.
 - Do not edit generated files for normal Webstudio content/design requests.
 - Use direct values for static strings and bindings only for dynamic expressions/resources/actions.
-- Use plain fixed text where documented. Only encode a quoted JavaScript string literal when a field is explicitly documented as an expression-only value.
+- Use expression source for page metadata. Quote fixed text as a JavaScript string literal within the JSON string.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
 - Use webstudio schema api for machine-readable top-level command metadata and webstudio schema mcp for MCP tool schemas.
 

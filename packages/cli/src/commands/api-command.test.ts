@@ -6,7 +6,12 @@ import {
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import { apiCompatibilityHeaders } from "./api";
-import { apiCommand, auditCommandOptions } from "./api-command";
+import {
+  apiCommand,
+  auditCommandOptions,
+  createPageCommandOptions,
+  createPageTemplateCommandOptions,
+} from "./api-command";
 import type { CommonYargsArgv } from "./yargs-types";
 import { apiCommandMetadata } from "./api-command-metadata";
 
@@ -891,7 +896,7 @@ test("creates page with settings", async () => {
       command: "create-page",
       name: "Pricing",
       path: "/pricing",
-      title: "Pricing",
+      title: "Pricing + Plans",
       parentFolder: "folder-1",
       description: "Plans",
     },
@@ -899,10 +904,58 @@ test("creates page with settings", async () => {
     connection: {
       name: "Pricing",
       path: "/pricing",
-      title: "Pricing",
+      title: `"Pricing + Plans"`,
       parentFolderId: "folder-1",
       meta: {
-        description: "Plans",
+        description: `"Plans"`,
+        language: undefined,
+        redirect: undefined,
+        socialImageUrl: undefined,
+        socialImageAssetId: undefined,
+        excludePageFromSearch: undefined,
+        documentType: undefined,
+        content: undefined,
+        status: undefined,
+        auth: undefined,
+      },
+    },
+  });
+});
+
+test("preserves page expressions from explicit CLI expression mode", async () => {
+  const parsed = await createPageCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).parseAsync([
+    "--name",
+    "Pricing",
+    "--path",
+    "/pricing",
+    "--title",
+    'pageTitle ?? "Pricing"',
+    "--expressions",
+  ]);
+  expect(parsed).toMatchObject({
+    title: 'pageTitle ?? "Pricing"',
+    expressions: true,
+  });
+
+  await expectCommandCall({
+    options: {
+      command: "create-page",
+      name: "Pricing",
+      path: "/pricing",
+      expressions: true,
+      title: 'pageTitle ?? "Pricing"',
+      description: '"Plans for teams"',
+    },
+    call: apiCalls.createPage,
+    connection: {
+      name: "Pricing",
+      path: "/pricing",
+      title: 'pageTitle ?? "Pricing"',
+      parentFolderId: undefined,
+      meta: {
+        description: '"Plans for teams"',
         language: undefined,
         redirect: undefined,
         socialImageUrl: undefined,
@@ -934,7 +987,7 @@ test("updates page metadata", async () => {
       values: {
         name: undefined,
         path: undefined,
-        title: "Pricing",
+        title: `"Pricing"`,
         parentFolderId: undefined,
         meta: {
           description: undefined,
@@ -1257,14 +1310,44 @@ test("creates page template", async () => {
     options: {
       command: "create-page-template",
       name: "Landing Template",
-      title: '"Landing"',
-      description: '"Reusable landing layout"',
+      title: "Landing",
+      description: "Reusable landing layout",
     },
     call: apiCalls.createPageTemplate,
     connection: {
       name: "Landing Template",
-      title: '"Landing"',
-      meta: { description: '"Reusable landing layout"' },
+      title: `"Landing"`,
+      meta: {
+        description: `"Reusable landing layout"`,
+      },
+    },
+  });
+});
+
+test("preserves template expressions from explicit CLI expression mode", async () => {
+  const parsed = await createPageTemplateCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).parseAsync([
+    "--name",
+    "Landing",
+    "--title",
+    'templateTitle ?? "Landing"',
+    "--expressions",
+  ]);
+  expect(parsed).toMatchObject({ expressions: true });
+
+  await expectCommandCall({
+    options: {
+      command: "create-page-template",
+      name: "Landing",
+      title: 'templateTitle ?? "Landing"',
+      expressions: true,
+    },
+    call: apiCalls.createPageTemplate,
+    connection: {
+      name: "Landing",
+      title: 'templateTitle ?? "Landing"',
+      meta: undefined,
     },
   });
 });
@@ -1275,7 +1358,7 @@ test("updates page template", async () => {
       command: "update-page-template",
       template: "template-1",
       name: "Article Template",
-      description: '"Reusable article layout"',
+      description: "Reusable article layout",
     },
     call: apiCalls.updatePageTemplate,
     connection: {
@@ -1283,7 +1366,9 @@ test("updates page template", async () => {
       values: {
         name: "Article Template",
         title: undefined,
-        meta: { description: '"Reusable article layout"' },
+        meta: {
+          description: `"Reusable article layout"`,
+        },
       },
     },
   });
