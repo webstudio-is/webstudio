@@ -4,7 +4,7 @@ export const ProjectSettingsDataRow = styled(Grid, {
   p: theme.spacing[3],
   overflow: "hidden",
   position: "relative",
-  "& > button": {
+  "& > button, & > [role='cell'] > button": {
     opacity: 0,
     position: "absolute",
     right: 0,
@@ -14,7 +14,9 @@ export const ProjectSettingsDataRow = styled(Grid, {
     borderRadius: 0,
     background: cssVar("--background-primary"),
   },
-  "&:hover > button, &:focus-within > button": {
-    opacity: 1,
+  "&:hover, &:focus-within": {
+    "& > button, & > [role='cell'] > button": {
+      opacity: 1,
+    },
   },
 });

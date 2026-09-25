@@ -104,6 +104,8 @@ test("rules expose table cells and support keyboard navigation to actions", () =
   expect(rows[1]?.querySelectorAll('[role="cell"]')).toHaveLength(3);
   expect(rows[1]?.tabIndex).toBe(0);
   expect(rows[2]?.tabIndex).toBe(-1);
+  const removeButton = rows[2]?.querySelector("button");
+  expect(removeButton && getComputedStyle(removeButton).opacity).toBe("0");
   act(() => {
     rows[1]?.focus();
     rows[1]?.dispatchEvent(
@@ -111,6 +113,7 @@ test("rules expose table cells and support keyboard navigation to actions", () =
     );
   });
   expect(document.activeElement).toBe(rows[2]);
+  expect(removeButton && getComputedStyle(removeButton).opacity).toBe("1");
   expect(rows[2]?.querySelector("button")?.getAttribute("aria-label")).toBe(
     "Remove X-Frame-Options"
   );
