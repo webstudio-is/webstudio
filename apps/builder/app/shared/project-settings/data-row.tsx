@@ -7,11 +7,9 @@ export const ProjectSettingsDataRow = styled(Grid, {
   "& > button, & > [role='cell'] > button": {
     opacity: 0,
     position: "absolute",
-    right: 0,
-    top: 0,
-    bottom: 0,
-    height: "auto",
-    borderRadius: 0,
+    right: theme.spacing[2],
+    top: "50%",
+    transform: "translateY(-50%)",
     background: cssVar("--background-primary"),
   },
   "&:hover, &:focus-within": {
