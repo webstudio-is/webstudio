@@ -98,9 +98,7 @@ export const PublishActions = ({
           color="primary"
           state={publishPending ? "pending" : undefined}
           css={{ flex: 1 }}
-          disabled={
-            publishInProgress === false && (publishDisabled || isValidating)
-          }
+          disabled={publishInProgress || publishDisabled || isValidating}
         >
           {publishLabel}
         </Button>
