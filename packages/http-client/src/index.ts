@@ -4,6 +4,7 @@ import {
   getAssetContentHash,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
+  type CustomResponseHeader,
   type ExpressionBindingMode,
 } from "@webstudio-is/sdk";
 import {
@@ -1632,6 +1633,7 @@ type ProjectSettingsInput = {
     faviconAssetId?: string | null;
     code?: string | null;
     auth?: string | null;
+    customHeaders?: CustomResponseHeader[] | null;
   };
   compiler?: {
     atomicStyles?: boolean | null;
@@ -1649,6 +1651,18 @@ export const updateProjectSettings = projectMutationInput<
 export const listRedirects = projectQueryInput<
   AuthProjectParams & PaginatedQueryInput
 >("list-redirects");
+
+export const listResponseHeaders = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-response-headers");
+
+export const setResponseHeader = projectMutationInput<
+  AuthProjectParams & CustomResponseHeader
+>("set-response-header");
+
+export const deleteResponseHeader = projectMutationInput<
+  AuthProjectParams & Pick<CustomResponseHeader, "route" | "name">
+>("delete-response-header");
 
 export const createRedirect = projectMutationInput<
   AuthProjectParams & {
