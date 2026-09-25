@@ -1,4 +1,4 @@
-import { Grid, cssVar, styled, theme } from "@webstudio-is/design-system";
+import { Grid, styled, theme } from "@webstudio-is/design-system";
 
 export const ProjectSettingsDataRow = styled(Grid, {
   p: theme.spacing[3],
@@ -10,7 +10,6 @@ export const ProjectSettingsDataRow = styled(Grid, {
     right: theme.spacing[2],
     top: "50%",
     transform: "translateY(-50%)",
-    background: cssVar("--background-primary"),
   },
   "&:hover, &:focus-within": {
     "& > button, & > [role='cell'] > button": {

@@ -75,10 +75,7 @@ export const ProjectSettingsDeleteRuleButton = ({
           <DialogTitle>Delete rule</DialogTitle>
           <DialogDescription asChild>
             <PanelContent as={Flex}>
-              <Text>
-                Are you sure you want to delete {description}? This action
-                cannot be undone.
-              </Text>
+              <Text>Are you sure you want to delete {description}?</Text>
             </PanelContent>
           </DialogDescription>
           <DialogActions>
