@@ -1186,10 +1186,7 @@ const Content = (props: {
           <PopoverTitleActions>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <IconButton
-                  type="button"
-                  aria-label="Publish options"
-                >
+                <IconButton type="button" aria-label="Publish options">
                   <EllipsesIcon />
                 </IconButton>
               </DropdownMenuTrigger>
