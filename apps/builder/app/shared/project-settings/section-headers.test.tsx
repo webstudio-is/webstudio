@@ -126,33 +126,10 @@ test.each(["denied", "throws"])(
   }
 );
 
-test("adds a route rule and keeps required site-wide headers nonremovable", () => {
+test("starts with no rows and adds a route rule", () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   render();
-  for (const name of [
-    "Content-Security-Policy",
-    "X-Content-Type-Options",
-    "Referrer-Policy",
-    "Strict-Transport-Security",
-  ]) {
-    expect(
-      document.querySelector<HTMLButtonElement>(
-        `button[aria-label="Remove ${name} for /*"]`
-      )?.disabled
-    ).toBe(true);
-  }
-  const optionalRemove = document.querySelector<HTMLButtonElement>(
-    'button[aria-label="Remove X-Frame-Options for /*"]'
-  );
-  expect(optionalRemove?.disabled).toBe(false);
-  act(() =>
-    document
-      .querySelector<HTMLButtonElement>(
-        'button[aria-label="Remove Content-Security-Policy for /*"]'
-      )
-      ?.click()
-  );
-  expect(executeRuntimeMutation).not.toHaveBeenCalled();
+  expect(document.querySelector('[role="table"]')).toBeNull();
   const { route, name, value } = {
     route: document.querySelector<HTMLInputElement>(
       'input[placeholder="/* or /private/*"]'
@@ -190,7 +167,7 @@ test("adds a route rule and keeps required site-wide headers nonremovable", () =
   });
 });
 
-test("submitting an existing required header updates its value", () => {
+test("submitting an existing default header updates its value", () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name, value } = render();
   type(route, "/*");
@@ -266,4 +243,60 @@ test("adds an arbitrary header and displays existing custom headers", () => {
       },
     },
   });
+});
+
+test("deleting a custom site-wide header removes its rule", () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  $projectSettings.set({
+    meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
+    compiler: {},
+  });
+  render();
+  act(() =>
+    document
+      .querySelector<HTMLButtonElement>(
+        'button[aria-label="Remove Cache-Control for /*"]'
+      )
+      ?.click()
+  );
+  expect(executeRuntimeMutation).toHaveBeenCalledWith({
+    id: "projectSettings.update",
+    input: { meta: { customHeaders: null } },
+  });
+});
+
+test("deleting a configured fallback header leaves no settings rule", () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  $projectSettings.set({
+    meta: {
+      customHeaders: [
+        { name: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+      ],
+    },
+    compiler: {},
+  });
+  render();
+  act(() =>
+    document
+      .querySelector<HTMLButtonElement>(
+        'button[aria-label="Remove Content-Security-Policy for /*"]'
+      )
+      ?.click()
+  );
+  expect(executeRuntimeMutation).toHaveBeenCalledWith({
+    id: "projectSettings.update",
+    input: { meta: { customHeaders: null } },
+  });
+});
+
+test("empty route value cannot create a fallback-header rule", () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  const { route, name } = render();
+  type(route, "/private/*");
+  type(name, "Content-Security-Policy");
+  const add = Array.from(document.querySelectorAll("button")).find(
+    (button) => button.textContent === "Add"
+  );
+  act(() => add?.click());
+  expect(executeRuntimeMutation).not.toHaveBeenCalled();
 });

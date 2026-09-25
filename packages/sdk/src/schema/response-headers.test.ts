@@ -3,89 +3,35 @@ import { projectMeta } from "./pages";
 import {
   customResponseHeader,
   customResponseHeaders,
-  getResponseHeaders,
   hasCustomResponseHeaders,
   responseHeaderDefinitions,
 } from "./response-headers";
 
 describe("response header settings", () => {
-  test("legacy and empty settings resolve to defaults without a Pro customization", () => {
+  test("settings start empty and explicit fallback values are not Pro customizations", () => {
     expect(projectMeta.parse({})).toEqual({});
-    expect(getResponseHeaders()).toEqual(
-      responseHeaderDefinitions.map(({ name, defaultValue }) => ({
-        name,
-        value: defaultValue,
-      }))
-    );
     expect(hasCustomResponseHeaders()).toBe(false);
-    expect(hasCustomResponseHeaders(getResponseHeaders())).toBe(false);
     expect(
       hasCustomResponseHeaders(
-        getResponseHeaders().map(({ name, value }) => ({
-          name: name.toLowerCase(),
-          value: ` ${value} `,
+        responseHeaderDefinitions.map(({ name, defaultValue }) => ({
+          name,
+          value: defaultValue,
         }))
       )
     ).toBe(false);
   });
 
-  test("supports edits and optional removal, preserving other defaults", () => {
+  test("supports custom values and routes", () => {
     const headers = [
       {
-        name: "content-security-policy",
+        name: "Content-Security-Policy",
         value: "frame-ancestors https://example.com",
       },
-      { name: "X-Frame-Options", value: null },
+      { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },
+      { name: "Cache-Control", value: "public, max-age=60" },
     ];
     expect(customResponseHeaders.parse(headers)).toEqual(headers);
-    expect(getResponseHeaders(headers)).toEqual(
-      expect.arrayContaining([
-        { name: "Content-Security-Policy", value: headers[0].value },
-        { name: "X-Frame-Options", value: null },
-        { name: "X-Content-Type-Options", value: "nosniff" },
-      ])
-    );
     expect(hasCustomResponseHeaders(headers)).toBe(true);
-    expect(hasCustomResponseHeaders([headers[1]])).toBe(true);
-  });
-
-  test("supports route rules while preserving site-wide defaults", () => {
-    const rules = [
-      { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },
-      { route: "/private/:id", name: "Referrer-Policy", value: "same-origin" },
-    ];
-    expect(customResponseHeaders.parse(rules)).toEqual(rules);
-    expect(getResponseHeaders(rules)).toContainEqual({
-      name: "Referrer-Policy",
-      value: "strict-origin-when-cross-origin",
-    });
-    expect(hasCustomResponseHeaders(rules)).toBe(true);
-    expect(
-      hasCustomResponseHeaders([
-        {
-          route: "/*",
-          name: "Referrer-Policy",
-          value: "strict-origin-when-cross-origin",
-        },
-      ])
-    ).toBe(false);
-    expect(
-      hasCustomResponseHeaders([
-        {
-          route: "/",
-          name: "Referrer-Policy",
-          value: "strict-origin-when-cross-origin",
-        },
-      ])
-    ).toBe(true);
-    expect(
-      getResponseHeaders([
-        { route: "/", name: "Referrer-Policy", value: "no-referrer" },
-      ])
-    ).toContainEqual({
-      name: "Referrer-Policy",
-      value: "strict-origin-when-cross-origin",
-    });
     expect(
       customResponseHeaders.safeParse([
         { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },
@@ -99,53 +45,30 @@ describe("response header settings", () => {
         value: "no-referrer",
       }).success
     ).toBe(false);
-    expect(
-      customResponseHeader.safeParse({
-        route: "/private/*",
-        name: "X-Frame-Options",
-        value: null,
-      }).success
-    ).toBe(true);
   });
 
-  test.each(responseHeaderDefinitions.filter((header) => header.required))(
-    "required $name cannot be removed or emptied",
+  test.each(responseHeaderDefinitions)(
+    "fallback $name can be omitted in settings",
     ({ name }) => {
-      for (const value of [null, "", " \t "]) {
-        expect(
-          customResponseHeader.safeParse({ name: name.toLowerCase(), value })
-            .success
-        ).toBe(false);
-        expect(
-          projectMeta.safeParse({ customHeaders: [{ name, value }] }).success
-        ).toBe(false);
-      }
       expect(
-        customResponseHeaders.safeParse([{ name, value: "custom value" }])
+        customResponseHeader.safeParse({ name, value: null }).success
+      ).toBe(true);
+      expect(
+        projectMeta.safeParse({ customHeaders: [{ name, value: null }] })
           .success
       ).toBe(true);
+      expect(hasCustomResponseHeaders([{ name, value: null }])).toBe(false);
     }
   );
-
-  test("allows custom names while treating them as a Pro customization", () => {
-    const headers = [
-      { name: "Cache-Control", value: "public, max-age=60" },
-      { route: "/api/*", name: "Access-Control-Allow-Origin", value: "*" },
-    ];
-    expect(customResponseHeaders.parse(headers)).toEqual(headers);
-    expect(hasCustomResponseHeaders(headers)).toBe(true);
-    expect(getResponseHeaders(headers)).toHaveLength(5);
-  });
 
   test.each([
     "X-Powered-By",
     "x-powered-by",
-    "",
-    "Bad Header",
-    "X:Test",
-    "X-💥",
-    "Content-Security-Policy\n",
-  ])("rejects invalid or platform-owned header %j", (name) => {
+    "X-Content-Type-Options",
+    "x-content-type-options",
+    "Strict-Transport-Security",
+    "strict-transport-security",
+  ])("rejects dispatcher-owned header %j", (name) => {
     for (const value of ["value", null]) {
       expect(customResponseHeaders.safeParse([{ name, value }]).success).toBe(
         false
@@ -153,11 +76,20 @@ describe("response header settings", () => {
     }
   });
 
+  test.each(["", "Bad Header", "X:Test", "X-💥", "Content-Security-Policy\n"])(
+    "rejects invalid header name %j",
+    (name) => {
+      expect(
+        customResponseHeader.safeParse({ name, value: "value" }).success
+      ).toBe(false);
+    }
+  );
+
   test.each([
+    "",
+    " \t ",
     "ok\r\nSet-Cookie: secret",
     "bad\nvalue",
-    "trailing\n",
-    "trailing\r\n",
     "bad\0value",
     "bad\x7fvalue",
     "💥",
@@ -179,12 +111,6 @@ describe("response header settings", () => {
     expect(
       customResponseHeaders.safeParse([
         { name: "Content-Security-Policy", value: "a".repeat(8193) },
-      ]).success
-    ).toBe(false);
-    expect(
-      customResponseHeaders.safeParse([
-        { name: "Content-Security-Policy", value: "a".repeat(8192) },
-        { name: "Referrer-Policy", value: "a".repeat(8192) },
       ]).success
     ).toBe(false);
   });

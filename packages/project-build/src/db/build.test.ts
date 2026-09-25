@@ -29,7 +29,7 @@ const createContext = (userId = "user-1"): AppContext =>
     ...testContext,
     authorization: { type: "user", userId },
     getOwnerPlanFeatures: async () => ({}),
-  }) as unknown as AppContext;
+  } as unknown as AppContext);
 
 /** hasProjectPermit: return the row when userId param is in the query */
 const ownershipHandler = db.get("Project", ({ request }) => {
@@ -385,12 +385,12 @@ describe("createProductionBuild (msw)", () => {
       checkPlan: true,
     },
     {
-      label: "Free owner, removal only",
+      label: "Free owner, legacy null fallback",
       allowed: false,
       domains: ["example.com"],
       headers: [{ name: "X-Frame-Options", value: null }],
-      denied: true,
-      checkPlan: true,
+      denied: false,
+      checkPlan: false,
     },
     {
       label: "Free owner, route rule",
@@ -522,7 +522,12 @@ describe("createProductionBuild (msw)", () => {
 
   test.each([
     { label: "custom value", value: "DENY", allowed: false, staging: false },
-    { label: "optional removal", value: null, allowed: false, staging: false },
+    {
+      label: "legacy null fallback",
+      value: null,
+      allowed: false,
+      staging: false,
+    },
     { label: "Pro owner", value: "DENY", allowed: true, staging: false },
     { label: "staging", value: "DENY", allowed: false, staging: true },
     {
@@ -584,7 +589,7 @@ describe("createProductionBuild (msw)", () => {
         },
         context
       );
-      if (!allowed && !staging && value !== "SAMEORIGIN") {
+      if (!allowed && !staging && value !== "SAMEORIGIN" && value !== null) {
         await expect(result).rejects.toThrow(
           "Custom headers are a Pro feature"
         );

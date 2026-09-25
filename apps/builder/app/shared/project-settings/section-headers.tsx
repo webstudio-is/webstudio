@@ -16,7 +16,6 @@ import {
   customResponseHeader,
   customResponseHeaders,
   getResponseHeaderDefinition,
-  getResponseHeaders,
   type CustomResponseHeader,
 } from "@webstudio-is/sdk";
 import { validateWsAuthRoute } from "@webstudio-is/wsauth";
@@ -29,24 +28,12 @@ import { getExistingRoutePaths, sectionSpacing } from "./utils";
 const ruleKey = (route: string, name: string) =>
   `${route}\0${name.toLowerCase()}`;
 
-const canRemoveHeader = (header: CustomResponseHeader) =>
-  (header.route !== undefined && header.route !== "/*") ||
-  customResponseHeader.safeParse({ name: header.name, value: null }).success;
-
 export const SectionHeaders = () => {
   const { allowDynamicData } = useStore($permissions);
   const settings = useStore($projectSettings);
   const pages = useStore($pages);
   const [saveError, setSaveError] = useState("");
   const configured = settings?.meta.customHeaders ?? [];
-  const activeHeaders = [
-    ...getResponseHeaders(configured).filter(({ value }) => value !== null),
-    ...configured.filter(
-      (header) =>
-        getResponseHeaderDefinition(header.name) === undefined ||
-        (header.route !== undefined && header.route !== "/*")
-    ),
-  ];
   const routeSuggestions = [
     "/*",
     "/",
@@ -61,13 +48,7 @@ export const SectionHeaders = () => {
       (header) => ruleKey(header.route ?? "/*", header.name) !== previousKey
     );
     if (next !== undefined) {
-      const definition = getResponseHeaderDefinition(next.name);
-      if (
-        next.route !== undefined ||
-        next.value?.trim() !== definition?.defaultValue
-      ) {
-        headers.unshift(next);
-      }
+      headers.unshift(next);
     }
     const result = customResponseHeaders.safeParse(headers);
     if (!result.success) {
@@ -109,11 +90,11 @@ export const SectionHeaders = () => {
               </Text>
               <br />
               <Text>
-                /* applies to every path; / applies only to the root. Four
-                security headers are required. Add any HTTP response header,
-                except X-Powered-By. Add a rule for an existing path and header
-                to update its value. An empty value omits the optional
-                X-Frame-Options header. Publish to apply changes.
+                /* applies to every path; / applies only to the root. Webstudio
+                Cloud supplies CSP, X-Frame-Options, and Referrer-Policy when
+                they are not set. X-Powered-By, X-Content-Type-Options, and
+                Strict-Transport-Security are managed by the platform and cannot
+                be configured here. Publish to apply changes.
               </Text>
               {allowDynamicData === false && (
                 <>
@@ -165,12 +146,16 @@ export const SectionHeaders = () => {
           if (routeError) {
             errors.route = [routeError];
           }
-          const definition = getResponseHeaderDefinition(name);
+          if (
+            value === "" &&
+            (route === "/*" || getResponseHeaderDefinition(name) !== undefined)
+          ) {
+            errors.value = ["Enter a header value"];
+          }
           const result = customResponseHeader.safeParse({
             route,
             name,
-            value:
-              value === "" && definition?.required === false ? null : value,
+            value: value === "" ? null : value,
           });
           if (!result.success) {
             for (const issue of result.error.issues) {
@@ -182,27 +167,26 @@ export const SectionHeaders = () => {
         }}
         onSubmit={(values) => {
           const route = values.route.trim();
+          const value = values.value?.trim();
           const name =
             getResponseHeaderDefinition(values.name.trim())?.name ??
             values.name.trim();
           const next: CustomResponseHeader = {
             ...(route === "/*" ? {} : { route }),
             name,
-            value:
-              values.value.trim() === "" &&
-              getResponseHeaderDefinition(name)?.required === false
-                ? null
-                : values.value.trim(),
+            value: value || null,
           };
           return save(next, ruleKey(route, name));
         }}
         columns="1fr 1.5fr 1.5fr"
         columnLabels={["Path", "Header", "Value"]}
         label="Response header rules"
-        rules={activeHeaders.map((header) => {
+        rules={configured.map((header) => {
           const route = header.route ?? "/*";
           const key = ruleKey(route, header.name);
-          const canRemove = canRemoveHeader(header);
+          const value =
+            header.value ??
+            (getResponseHeaderDefinition(header.name) ? "Default" : "Not sent");
           return {
             key,
             values: [
@@ -212,8 +196,9 @@ export const SectionHeaders = () => {
               <Tooltip content={header.name} key="name">
                 <Text truncate>{header.name}</Text>
               </Tooltip>,
-              <Tooltip content={header.value ?? "Not sent"} key="value">
-                <Text truncate>{header.value ?? "Not sent"}</Text>
+              <Tooltip content={value} key="value">
+                <Text truncate>{value}</Text>
+                </Text>
               </Tooltip>,
             ],
             actions: (
@@ -221,17 +206,8 @@ export const SectionHeaders = () => {
                 variant="destructive"
                 icon={<TrashIcon />}
                 aria-label={`Remove ${header.name} for ${route}`}
-                disabled={!canRemove}
                 onClick={() => {
-                  if (!canRemoveHeader(header)) {
-                    return;
-                  }
-                  save(
-                    route === "/*"
-                      ? { name: header.name, value: null }
-                      : undefined,
-                    key
-                  );
+                  save(undefined, key);
                 }}
               />
             ),

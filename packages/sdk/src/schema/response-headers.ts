@@ -1,27 +1,24 @@
 import { z } from "zod";
 import { validateWsAuthRoute } from "@webstudio-is/wsauth";
 
-// Keep defaults and required flags in sync with the Cloud hosting template's
-// response-header-settings.ts. Missing project settings use these defaults.
+// Keep fallback defaults in sync with the Cloud dispatcher.
 export const responseHeaderDefinitions = [
   {
     name: "Content-Security-Policy",
     defaultValue: "frame-ancestors 'self'",
-    required: true,
   },
-  { name: "X-Frame-Options", defaultValue: "SAMEORIGIN", required: false },
-  { name: "X-Content-Type-Options", defaultValue: "nosniff", required: true },
+  { name: "X-Frame-Options", defaultValue: "SAMEORIGIN" },
   {
     name: "Referrer-Policy",
     defaultValue: "strict-origin-when-cross-origin",
-    required: true,
-  },
-  {
-    name: "Strict-Transport-Security",
-    defaultValue: "max-age=63072000; includeSubDomains; preload",
-    required: true,
   },
 ] as const;
+
+const platformHeaderNames = new Set([
+  "x-powered-by",
+  "x-content-type-options",
+  "strict-transport-security",
+]);
 
 export type ResponseHeaderDefinition =
   (typeof responseHeaderDefinitions)[number];
@@ -31,54 +28,38 @@ export const getResponseHeaderDefinition = (name: string) =>
     (header) => header.name.toLowerCase() === name.toLowerCase()
   );
 
-export const customResponseHeader = z
-  .object({
-    // Omitted route is the site-wide setting used by existing projects.
-    route: z
-      .string()
-      .max(2048)
-      .refine(
-        (route) => validateWsAuthRoute(route) === undefined,
-        "Invalid route"
-      )
-      .optional(),
-    name: z
-      .string()
-      .max(256, "Header name must be at most 256 characters")
-      .refine(
-        (name) => /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name),
-        "Enter a valid HTTP header name"
-      )
-      .refine(
-        (name) => name.toLowerCase() !== "x-powered-by",
-        "X-Powered-By is managed by Webstudio Cloud"
-      ),
-    value: z
-      .string()
-      .max(8192, "Header value must be at most 8192 characters")
-      // Unlike $ alone, the final assertion also rejects a trailing newline.
-      .regex(
-        /^[\t\x20-\x7e\x80-\xff]*$(?![\s\S])/,
-        "Header values cannot contain newlines, control characters, or Unicode outside Latin-1"
-      )
-      .refine(
-        (value) => value.trim().length > 0,
-        "Header value cannot be empty"
-      )
-      .nullable(),
-  })
-  .superRefine((header, context) => {
-    if (
-      header.value === null &&
-      getResponseHeaderDefinition(header.name)?.required
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["value"],
-        message: "Required headers cannot be removed",
-      });
-    }
-  });
+export const customResponseHeader = z.object({
+  // Omitted route is the site-wide setting used by existing projects.
+  route: z
+    .string()
+    .max(2048)
+    .refine(
+      (route) => validateWsAuthRoute(route) === undefined,
+      "Invalid route"
+    )
+    .optional(),
+  name: z
+    .string()
+    .max(256, "Header name must be at most 256 characters")
+    .refine(
+      (name) => /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name),
+      "Enter a valid HTTP header name"
+    )
+    .refine(
+      (name) => !platformHeaderNames.has(name.toLowerCase()),
+      "This header is managed by Webstudio Cloud"
+    ),
+  value: z
+    .string()
+    .max(8192, "Header value must be at most 8192 characters")
+    // Unlike $ alone, the final assertion also rejects a trailing newline.
+    .regex(
+      /^[\t\x20-\x7e\x80-\xff]*$(?![\s\S])/,
+      "Header values cannot contain newlines, control characters, or Unicode outside Latin-1"
+    )
+    .refine((value) => value.trim().length > 0, "Header value cannot be empty")
+    .nullable(),
+});
 
 export const customResponseHeaders = z
   .array(customResponseHeader)
@@ -112,8 +93,7 @@ export const customResponseHeaders = z
 
 export type CustomResponseHeader = z.infer<typeof customResponseHeader>;
 
-// Persisted defaults, including values supplied through the API, are not a Pro
-// customization. Removing an optional header is a customization.
+// Explicitly setting a fallback default is not a Pro customization.
 export const hasCustomResponseHeaders = (
   headers: readonly CustomResponseHeader[] = []
 ) =>
@@ -122,21 +102,6 @@ export const hasCustomResponseHeaders = (
     return (
       (route !== undefined && route !== "/*") ||
       definition === undefined ||
-      value?.trim() !== definition.defaultValue
+      (value !== null && value?.trim() !== definition.defaultValue)
     );
-  });
-
-export const getResponseHeaders = (
-  headers: readonly CustomResponseHeader[] = []
-): CustomResponseHeader[] =>
-  responseHeaderDefinitions.map(({ name, defaultValue }) => {
-    const configured = headers.find(
-      (header) =>
-        (header.route === undefined || header.route === "/*") &&
-        header.name.toLowerCase() === name.toLowerCase()
-    );
-    return {
-      name,
-      value: configured === undefined ? defaultValue : configured.value,
-    };
   });

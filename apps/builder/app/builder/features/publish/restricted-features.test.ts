@@ -128,21 +128,18 @@ const getPageRestrictedFeatures = (isDraft: boolean) => {
 };
 
 describe("getRestrictedFeatures", () => {
-  test.each(["DENY", null])(
-    "restricts custom headers with value %j on the free plan",
-    (value) => {
-      const features = getFeatures({
-        pages: createPages(),
-        projectSettings: {
-          compiler: {},
-          meta: { customHeaders: [{ name: "X-Frame-Options", value }] },
-        },
-        permissions: { allowDynamicData: false },
-      });
+  test("restricts customized headers on the free plan", () => {
+    const features = getFeatures({
+      pages: createPages(),
+      projectSettings: {
+        compiler: {},
+        meta: { customHeaders: [{ name: "X-Frame-Options", value: "DENY" }] },
+      },
+      permissions: { allowDynamicData: false },
+    });
 
-      expect([...features.keys()]).toEqual(["Custom headers"]);
-    }
-  );
+    expect([...features.keys()]).toEqual(["Custom headers"]);
+  });
 
   test("restricts path-specific header rules on the free plan", () => {
     const features = getFeatures({
@@ -188,6 +185,7 @@ describe("getRestrictedFeatures", () => {
   test.each([
     undefined,
     [],
+    [{ name: "X-Frame-Options", value: null }],
     [{ name: "Content-Security-Policy", value: "frame-ancestors 'self'" }],
     [{ name: "x-frame-options", value: "SAMEORIGIN" }],
   ])(
