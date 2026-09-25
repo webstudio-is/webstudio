@@ -172,7 +172,7 @@ describe("getRestrictedFeatures", () => {
               name: "Content-Security-Policy",
               value: "frame-ancestors https://example.com",
             },
-            { name: "X-Frame-Options", value: null },
+            { name: "X-Frame-Options", value: "DENY" },
           ],
         },
       },
@@ -185,11 +185,10 @@ describe("getRestrictedFeatures", () => {
   test.each([
     undefined,
     [],
-    [{ name: "X-Frame-Options", value: null }],
     [{ name: "Content-Security-Policy", value: "frame-ancestors 'self'" }],
     [{ name: "x-frame-options", value: "SAMEORIGIN" }],
   ])(
-    "does not warn about missing or deleted custom headers (%j)",
+    "does not warn about missing or default custom headers (%j)",
     (customHeaders) => {
       const features = getFeatures({
         pages: createPages(),

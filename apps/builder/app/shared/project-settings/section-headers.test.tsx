@@ -362,14 +362,17 @@ test("shows an error when confirmed deletion cannot be saved", async () => {
   expect(document.body.textContent).toContain("Cache-Control");
 });
 
-test("empty route value cannot create a fallback-header rule", async () => {
-  executeRuntimeMutation.mockReturnValue({} as never);
-  const { route, name } = render();
-  await type(route, "/private/*");
-  await type(name, "Content-Security-Policy");
-  const add = Array.from(document.querySelectorAll("button")).find(
-    (button) => button.textContent === "Add"
-  );
-  act(() => add?.click());
-  expect(executeRuntimeMutation).not.toHaveBeenCalled();
-});
+test.each(["Content-Security-Policy", "X-Custom-Header"])(
+  "empty route value cannot create a %s rule",
+  async (headerName) => {
+    executeRuntimeMutation.mockReturnValue({} as never);
+    const { route, name } = render();
+    await type(route, "/private/*");
+    await type(name, headerName);
+    const add = Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === "Add"
+    );
+    act(() => add?.click());
+    expect(executeRuntimeMutation).not.toHaveBeenCalled();
+  }
+);

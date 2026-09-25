@@ -6,7 +6,7 @@ export const generateResponseHeadersModule = (settings?: ProjectSettings) => {
     settings?.meta.customHeaders ?? []
   );
   return `// Generated response header configuration for hosting adapters.
-export const customHeaders: Array<{ route?: string; name: string; value: string | null }> = ${JSON.stringify(
+export const customHeaders: Array<{ route?: string; name: string; value: string }> = ${JSON.stringify(
     configured,
     null,
     2

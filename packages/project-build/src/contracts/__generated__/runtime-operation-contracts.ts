@@ -5420,16 +5420,9 @@ export const runtimeOperationContractData = [
                     maxLength: 256,
                   },
                   value: {
-                    anyOf: [
-                      {
-                        type: "string",
-                        maxLength: 8192,
-                        pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
-                      },
-                      {
-                        type: "null",
-                      },
-                    ],
+                    type: "string",
+                    maxLength: 8192,
+                    pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
                   },
                 },
                 required: ["name", "value"],
@@ -5569,17 +5562,9 @@ export const runtimeOperationContractData = [
                         maxLength: 256,
                       },
                       value: {
-                        anyOf: [
-                          {
-                            type: "string",
-                            maxLength: 8192,
-                            pattern:
-                              "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
-                          },
-                          {
-                            type: "null",
-                          },
-                        ],
+                        type: "string",
+                        maxLength: 8192,
+                        pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
                       },
                     },
                     required: ["name", "value"],

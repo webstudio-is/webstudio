@@ -84,7 +84,7 @@ const context = {
 describe("project settings runtime", () => {
   test("saves custom headers and removes the configuration to restore defaults", () => {
     const customHeaders = [
-      { name: "X-Frame-Options", value: null },
+      { name: "X-Frame-Options", value: "DENY" },
       {
         name: "Content-Security-Policy",
         value: "frame-ancestors https://example.com",

@@ -49,7 +49,7 @@ const HeadersStory = ({ customized = false }: { customized?: boolean }) => {
                 value:
                   "frame-ancestors 'self' https://example.com https://another-example.com",
               },
-              { name: "X-Frame-Options", value: null },
+              { name: "X-Frame-Options", value: "DENY" },
               {
                 route: "/private/*",
                 name: "Referrer-Policy",

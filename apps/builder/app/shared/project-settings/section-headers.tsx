@@ -14,7 +14,6 @@ import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   customResponseHeader,
   customResponseHeaders,
-  getResponseHeaderDefinition,
   type CustomResponseHeader,
 } from "@webstudio-is/sdk";
 import { validateWsAuthRoute } from "@webstudio-is/wsauth";
@@ -165,16 +164,13 @@ export const SectionHeaders = ({
           if (routeError) {
             errors.route = [routeError];
           }
-          if (
-            value === "" &&
-            (route === "/*" || getResponseHeaderDefinition(name) !== undefined)
-          ) {
+          if (value === "") {
             errors.value = ["Enter a header value"];
           }
           const result = customResponseHeader.safeParse({
             route,
             name,
-            value: value === "" ? null : value,
+            value,
           });
           if (!result.success) {
             for (const issue of result.error.issues) {
@@ -186,13 +182,13 @@ export const SectionHeaders = ({
         }}
         onSubmit={(values) => {
           const route = values.route.trim();
-          const value = values.value?.trim();
+          const value = values.value?.trim() ?? "";
           const name =
             getResponseHeaderName(values.name.trim()) ?? values.name.trim();
           const next: CustomResponseHeader = {
             ...(route === "/*" ? {} : { route }),
             name,
-            value: value || null,
+            value,
           };
           return save(next, ruleKey(route, name));
         }}
@@ -202,9 +198,6 @@ export const SectionHeaders = ({
         rules={configured.map((header) => {
           const route = header.route ?? "/*";
           const key = ruleKey(route, header.name);
-          const value =
-            header.value ??
-            (getResponseHeaderDefinition(header.name) ? "Default" : "Not sent");
           return {
             key,
             values: [
@@ -214,8 +207,8 @@ export const SectionHeaders = ({
               <Tooltip content={header.name} key="name">
                 <Text truncate>{header.name}</Text>
               </Tooltip>,
-              <Tooltip content={value} key="value">
-                <Text truncate>{value}</Text>
+              <Tooltip content={header.value} key="value">
+                <Text truncate>{header.value}</Text>
               </Tooltip>,
             ],
             actions: (

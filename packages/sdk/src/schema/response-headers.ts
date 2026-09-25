@@ -20,7 +20,6 @@ const platformHeaderNames = new Set([
   "strict-transport-security",
 ]);
 
-// Keep in sync with the published worker's forbiddenCustomResponseHeaderNames.
 // Static route rules must not customize cookies, connection state, or values
 // that describe the actual response body and status.
 export const forbiddenCustomResponseHeaderNames = [
@@ -88,8 +87,7 @@ export const customResponseHeader = z.object({
       /^[\t\x20-\x7e\x80-\xff]*$(?![\s\S])/,
       "Header values cannot contain newlines, control characters, or Unicode outside Latin-1"
     )
-    .refine((value) => value.trim().length > 0, "Header value cannot be empty")
-    .nullable(),
+    .refine((value) => value.trim().length > 0, "Header value cannot be empty"),
 });
 
 export const customResponseHeaders = z
@@ -111,7 +109,7 @@ export const customResponseHeaders = z
       size +=
         (header.route?.length ?? 0) +
         header.name.length +
-        (header.value?.length ?? 0) +
+        header.value.length +
         4;
     }
     if (size > 16384) {
@@ -133,6 +131,6 @@ export const hasCustomResponseHeaders = (
     return (
       (route !== undefined && route !== "/*") ||
       definition === undefined ||
-      (value !== null && value?.trim() !== definition.defaultValue)
+      value.trim() !== definition.defaultValue
     );
   });
