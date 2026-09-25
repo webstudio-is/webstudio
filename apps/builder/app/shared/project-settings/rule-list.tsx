@@ -96,7 +96,7 @@ export const ProjectSettingsRuleList = ({
                   getItems={() => [
                     ...(typeof field.suggestions === "function"
                       ? field.suggestions(values)
-                      : (field.suggestions ?? [])),
+                      : field.suggestions ?? []),
                   ]}
                   itemToString={(item) => item ?? ""}
                   onItemSelect={(value) => {
@@ -204,7 +204,11 @@ export const ProjectSettingsRuleList = ({
                             {value}
                           </Flex>
                         ))}
-                        <Flex role="cell" align="center">
+                        <Flex
+                          role="cell"
+                          align="center"
+                          onKeyDown={(event) => event.stopPropagation()}
+                        >
                           {actions}
                         </Flex>
                       </ProjectSettingsDataRow>

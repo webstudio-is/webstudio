@@ -1,7 +1,8 @@
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
-import { Button, TooltipProvider } from "@webstudio-is/design-system";
+import { userEvent } from "@vitest/browser/context";
+import { SmallIconButton, TooltipProvider } from "@webstudio-is/design-system";
 import { ProjectSettingsRuleList } from "./rule-list";
 
 test("invalid route disables Add until corrected", () => {
@@ -63,10 +64,11 @@ test("invalid route disables Add until corrected", () => {
   container.remove();
 });
 
-test("rules expose table cells and support keyboard navigation to actions", () => {
+test("rules expose table cells and support keyboard navigation to actions", async () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
+  const onRemove = vi.fn();
   act(() => {
     root.render(
       <TooltipProvider>
@@ -86,7 +88,11 @@ test("rules expose table cells and support keyboard navigation to actions", () =
               key: "two",
               values: ["/private", "X-Frame-Options"],
               actions: (
-                <Button aria-label="Remove X-Frame-Options">Remove</Button>
+                <SmallIconButton
+                  icon={<span>Remove</span>}
+                  aria-label="Remove X-Frame-Options"
+                  onClick={onRemove}
+                />
               ),
             },
           ]}
@@ -117,6 +123,12 @@ test("rules expose table cells and support keyboard navigation to actions", () =
   expect(rows[2]?.querySelector("button")?.getAttribute("aria-label")).toBe(
     "Remove X-Frame-Options"
   );
+  removeButton?.focus();
+  await act(async () => userEvent.keyboard("{Enter}"));
+  expect(onRemove).toHaveBeenCalledOnce();
+  removeButton?.focus();
+  await act(async () => userEvent.keyboard("{Space}"));
+  expect(onRemove).toHaveBeenCalledTimes(2);
   act(() => root.unmount());
   container.remove();
 });
