@@ -5,7 +5,6 @@ import {
   Grid,
   LinkButton,
   ProChip,
-  SearchField,
   SmallIconButton,
   Text,
   theme,
@@ -48,7 +47,6 @@ export const SectionAuth = () => {
   const [authRoutes, setAuthRoutes] = useState(() => {
     return parseProjectAuthRoutes($projectSettings.get()?.meta.auth).routes;
   });
-  const [searchQuery, setSearchQuery] = useState("");
 
   const authContent = projectSettings?.meta.auth;
   const parseResult = useMemo(() => {
@@ -62,16 +60,6 @@ export const SectionAuth = () => {
 
   const existingPaths = getExistingRoutePaths(pages);
   const routeSuggestions = ["/", ...Array.from(existingPaths).sort()];
-  const filteredAuthRoutes = searchQuery
-    ? authRoutes.filter((authRoute) => {
-        const query = searchQuery.toLowerCase();
-        return (
-          authRoute.route.toLowerCase().includes(query) ||
-          authRoute.auth.login.toLowerCase().includes(query)
-        );
-      })
-    : authRoutes;
-
   const handleSave = (nextAuthRoutes: WsAuthRoute[]) => {
     setAuthRoutes(nextAuthRoutes);
     saveAuthRoutes(nextAuthRoutes);
@@ -161,24 +149,6 @@ export const SectionAuth = () => {
         </Grid>
       )}
 
-      <Flex gap="2" justify="between">
-        <SearchField
-          placeholder="Search"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          onAbort={() => setSearchQuery("")}
-          disabled={authRoutes.length === 0}
-        />
-        <Button
-          color="ghost"
-          prefix={<TrashIcon />}
-          disabled={authRoutes.length === 0}
-          onClick={handleReset}
-        >
-          Delete all
-        </Button>
-      </Flex>
-
       <ProjectSettingsRuleList
         fields={[
           {
@@ -205,7 +175,7 @@ export const SectionAuth = () => {
         columns="1fr 1fr"
         columnLabels={["Path", "Login"]}
         label="Authentication rules"
-        rules={filteredAuthRoutes.map((authRoute) => ({
+        rules={authRoutes.map((authRoute, index) => ({
           key: authRoute.route,
           values: [
             <Tooltip content={authRoute.route} key="route">
@@ -222,9 +192,7 @@ export const SectionAuth = () => {
               variant="destructive"
               icon={<TrashIcon />}
               aria-label={`Delete authentication for ${authRoute.route}`}
-              onClick={() =>
-                handleDeleteAuthRoute(authRoutes.indexOf(authRoute))
-              }
+              onClick={() => handleDeleteAuthRoute(index)}
             />
           ),
         }))}
