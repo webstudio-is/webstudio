@@ -1,7 +1,6 @@
 // Response fields that are useful on published sites. Platform-owned fields are
-// deliberately excluded. Set-Cookie is omitted because the rule model supports
-// only one value per name and would replace existing cookies. Names are
-// suggestions, not an allowlist.
+// deliberately excluded. Names are suggestions, not an allowlist; the shared
+// response-header schema rejects unsupported names even when typed manually.
 export const responseHeaderNames = [
   "Accept-CH",
   "Accept-Patch",
@@ -24,7 +23,6 @@ export const responseHeaderNames = [
   "Content-Digest",
   "Content-Language",
   "Content-Location",
-  "Content-Range",
   "Content-Security-Policy",
   "Content-Security-Policy-Report-Only",
   "Content-Type",
@@ -43,7 +41,6 @@ export const responseHeaderNames = [
   "Origin-Agent-Cluster",
   "Permissions-Policy",
   "Priority",
-  "Proxy-Authenticate",
   "Proxy-Status",
   "Referrer-Policy",
   "Reporting-Endpoints",

@@ -171,6 +171,22 @@ test("Enter in an autocomplete field does not add a rule", async () => {
   expect(executeRuntimeMutation).toHaveBeenCalledOnce();
 });
 
+test("typing an unsupported header cannot save a rule", async () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  const { route, name, value } = render();
+  await type(route, "/*");
+  await type(name, "sEt-CoOkIe");
+  await type(value, "session=override");
+  await act(async () =>
+    page.getByRole("button", { name: "Add", exact: true }).click()
+  );
+  expect(executeRuntimeMutation).not.toHaveBeenCalled();
+  expect(
+    document.querySelector<HTMLInputElement>('input[placeholder="Header name"]')
+      ?.value
+  ).toBe("sEt-CoOkIe");
+});
+
 test.each(["denied", "throws"])(
   "keeps form values and shows an error when saving %s",
   async (failure) => {

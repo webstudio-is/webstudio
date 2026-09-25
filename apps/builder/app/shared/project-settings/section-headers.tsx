@@ -99,7 +99,8 @@ export const SectionHeaders = () => {
                 Cloud supplies CSP, X-Frame-Options, and Referrer-Policy when
                 they are not set. X-Powered-By, X-Content-Type-Options, and
                 Strict-Transport-Security are managed by the platform and cannot
-                be configured here. Publish to apply changes.
+                be configured here. Cookie, connection, and response-body
+                framing headers are also unavailable. Publish to apply changes.
               </Text>
               {allowDynamicData === false && (
                 <>

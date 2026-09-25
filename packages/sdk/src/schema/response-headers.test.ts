@@ -5,6 +5,7 @@ import {
   customResponseHeaders,
   hasCustomResponseHeaders,
   responseHeaderDefinitions,
+  unsupportedResponseHeaderNames,
 } from "./response-headers";
 
 describe("response header settings", () => {
@@ -75,6 +76,21 @@ describe("response header settings", () => {
       );
     }
   });
+
+  test.each(unsupportedResponseHeaderNames)(
+    "rejects unsupported response header %s, including case variants and removal rules",
+    (name) => {
+      for (const value of ["value", null]) {
+        expect(customResponseHeader.safeParse({ name, value }).success).toBe(
+          false
+        );
+        expect(
+          customResponseHeader.safeParse({ name: name.toUpperCase(), value })
+            .success
+        ).toBe(false);
+      }
+    }
+  );
 
   test.each(["", "Bad Header", "X:Test", "X-💥", "Content-Security-Policy\n"])(
     "rejects invalid header name %j",

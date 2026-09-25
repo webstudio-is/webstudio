@@ -20,6 +20,31 @@ const platformHeaderNames = new Set([
   "strict-transport-security",
 ]);
 
+// Keep in sync with the published worker's unsupportedResponseHeaderNames.
+// Static route rules cannot manage cookies, connection state, or values that
+// must describe the actual response body and status.
+export const unsupportedResponseHeaderNames = [
+  "cookie",
+  "cookie2",
+  "set-cookie",
+  "set-cookie2",
+  "connection",
+  "keep-alive",
+  "proxy-connection",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+  "http2-settings",
+  "content-length",
+  "content-encoding",
+  "content-range",
+  "proxy-authenticate",
+  "proxy-authentication-info",
+] as const;
+
+const unsupportedHeaderNames = new Set<string>(unsupportedResponseHeaderNames);
+
 export type ResponseHeaderDefinition =
   (typeof responseHeaderDefinitions)[number];
 
@@ -48,6 +73,10 @@ export const customResponseHeader = z.object({
     .refine(
       (name) => !platformHeaderNames.has(name.toLowerCase()),
       "This header is managed by Webstudio Cloud"
+    )
+    .refine(
+      (name) => !unsupportedHeaderNames.has(name.toLowerCase()),
+      "This header cannot be configured as a static response header"
     ),
   value: z
     .string()
