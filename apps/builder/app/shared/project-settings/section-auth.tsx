@@ -5,13 +5,12 @@ import {
   Grid,
   LinkButton,
   ProChip,
-  SmallIconButton,
   Text,
   theme,
   Tooltip,
   cssVar,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import {
   createBasicAuthRoute,
@@ -27,7 +26,10 @@ import {
   parseProjectAuthRoutes,
   validateProjectAuthRoute,
 } from "@webstudio-is/project-build/contracts";
-import { ProjectSettingsRuleList } from "./rule-list";
+import {
+  ProjectSettingsDeleteRuleButton,
+  ProjectSettingsRuleList,
+} from "./rule-list";
 
 const saveAuthRoutes = (authRoutes: WsAuthRoute[]) => {
   executeRuntimeMutation({
@@ -188,11 +190,10 @@ export const SectionAuth = () => {
             </Tooltip>,
           ],
           actions: (
-            <SmallIconButton
-              variant="destructive"
-              icon={<TrashIcon />}
-              aria-label={`Delete authentication for ${authRoute.route}`}
-              onClick={() => handleDeleteAuthRoute(index)}
+            <ProjectSettingsDeleteRuleButton
+              label={`Delete authentication for ${authRoute.route}`}
+              description={`authentication for ${authRoute.route}`}
+              onDelete={() => handleDeleteAuthRoute(index)}
             />
           ),
         }))}

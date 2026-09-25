@@ -332,19 +332,28 @@ test("adds an arbitrary header and displays existing custom headers", async () =
   });
 });
 
-test("deleting a custom site-wide header removes its rule", () => {
+test("deleting a custom site-wide header requires confirmation", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   $projectSettings.set({
     meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
     compiler: {},
   });
   render();
-  act(() =>
-    document
-      .querySelector<HTMLButtonElement>(
-        'button[aria-label="Remove Cache-Control for /*"]'
-      )
-      ?.click()
+  await act(async () =>
+    page.getByRole("button", { name: "Remove Cache-Control for /*" }).click()
+  );
+  expect(executeRuntimeMutation).not.toHaveBeenCalled();
+  expect(document.body.textContent).toContain("delete Cache-Control for /*");
+  await act(async () => {
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await new Promise(requestAnimationFrame);
+  });
+  expect(executeRuntimeMutation).not.toHaveBeenCalled();
+  await act(async () =>
+    page.getByRole("button", { name: "Remove Cache-Control for /*" }).click()
+  );
+  await act(async () =>
+    page.getByRole("button", { name: "Delete", exact: true }).click()
   );
   expect(executeRuntimeMutation).toHaveBeenCalledWith({
     id: "projectSettings.update",
@@ -352,7 +361,7 @@ test("deleting a custom site-wide header removes its rule", () => {
   });
 });
 
-test("deleting a configured fallback header leaves no settings rule", () => {
+test("deleting a configured fallback header leaves no settings rule", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   $projectSettings.set({
     meta: {
@@ -363,17 +372,34 @@ test("deleting a configured fallback header leaves no settings rule", () => {
     compiler: {},
   });
   render();
-  act(() =>
-    document
-      .querySelector<HTMLButtonElement>(
-        'button[aria-label="Remove Content-Security-Policy for /*"]'
-      )
-      ?.click()
+  await act(async () =>
+    page
+      .getByRole("button", { name: "Remove Content-Security-Policy for /*" })
+      .click()
+  );
+  await act(async () =>
+    page.getByRole("button", { name: "Delete", exact: true }).click()
   );
   expect(executeRuntimeMutation).toHaveBeenCalledWith({
     id: "projectSettings.update",
     input: { meta: { customHeaders: null } },
   });
+});
+
+test("shows an error when confirmed deletion cannot be saved", async () => {
+  $projectSettings.set({
+    meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
+    compiler: {},
+  });
+  render();
+  await act(async () =>
+    page.getByRole("button", { name: "Remove Cache-Control for /*" }).click()
+  );
+  await act(async () =>
+    page.getByRole("button", { name: "Delete", exact: true }).click()
+  );
+  expect(document.body.textContent).toContain("Changes could not be saved");
+  expect(document.body.textContent).toContain("Cache-Control");
 });
 
 test("empty route value cannot create a fallback-header rule", async () => {

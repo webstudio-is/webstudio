@@ -5,13 +5,12 @@ import {
   Grid,
   LinkButton,
   ProChip,
-  SmallIconButton,
   Text,
   Tooltip,
   cssVar,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   customResponseHeader,
   customResponseHeaders,
@@ -22,7 +21,10 @@ import { validateWsAuthRoute } from "@webstudio-is/wsauth";
 import { $pages, $projectSettings } from "~/shared/sync/data-stores";
 import { $permissions } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { ProjectSettingsRuleList } from "./rule-list";
+import {
+  ProjectSettingsDeleteRuleButton,
+  ProjectSettingsRuleList,
+} from "./rule-list";
 import {
   getResponseHeaderName,
   getResponseHeaderValueSuggestions,
@@ -210,13 +212,10 @@ export const SectionHeaders = () => {
               </Tooltip>,
             ],
             actions: (
-              <SmallIconButton
-                variant="destructive"
-                icon={<TrashIcon />}
-                aria-label={`Remove ${header.name} for ${route}`}
-                onClick={() => {
-                  save(undefined, key);
-                }}
+              <ProjectSettingsDeleteRuleButton
+                label={`Remove ${header.name} for ${route}`}
+                description={`${header.name} for ${route}`}
+                onDelete={() => save(undefined, key)}
               />
             ),
           };

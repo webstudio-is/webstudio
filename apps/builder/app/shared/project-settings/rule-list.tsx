@@ -2,6 +2,12 @@ import { useRef, useState, type ReactNode } from "react";
 import {
   Button,
   Combobox,
+  Dialog,
+  DialogActions,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
   Flex,
   Grid,
   InputErrorsTooltip,
@@ -10,10 +16,13 @@ import {
   InsetListItem,
   List,
   ListItem,
+  PanelContent,
   ScrollArea,
+  SmallIconButton,
   Text,
   theme,
 } from "@webstudio-is/design-system";
+import { TrashIcon } from "@webstudio-is/icons";
 import { ProjectSettingsDataRow } from "./data-row";
 
 type Values = Record<string, string>;
@@ -31,6 +40,67 @@ type Rule = {
   key: string;
   values: ReactNode[];
   actions?: ReactNode;
+};
+
+export const ProjectSettingsDeleteRuleButton = ({
+  label,
+  description,
+  onDelete,
+}: {
+  label: string;
+  description: string;
+  onDelete: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  return (
+    <>
+      <SmallIconButton
+        ref={buttonRef}
+        variant="destructive"
+        icon={<TrashIcon />}
+        aria-label={label}
+        onClick={() => setOpen(true)}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          onCloseAutoFocus={(event) => {
+            if (buttonRef.current?.isConnected) {
+              event.preventDefault();
+              buttonRef.current.focus();
+            }
+          }}
+        >
+          <DialogTitle>Delete rule</DialogTitle>
+          <DialogDescription asChild>
+            <PanelContent as={Flex}>
+              <Text>
+                Are you sure you want to delete {description}? This action
+                cannot be undone.
+              </Text>
+            </PanelContent>
+          </DialogDescription>
+          <DialogActions>
+            <Button
+              color="destructive"
+              onClick={() => {
+                onDelete();
+                setOpen(false);
+              }}
+            >
+              Delete
+            </Button>
+            <DialogClose>
+              <Button color="ghost" autoFocus>
+                Cancel
+              </Button>
+            </DialogClose>
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 };
 
 export const ProjectSettingsRuleList = ({
