@@ -1,18 +1,12 @@
 import type { BasicAuthInput, WsAuthConfig } from "./schema";
-import {
-  matchesPathnamePattern,
-  validatePathnamePattern,
-} from "@webstudio-is/sdk/url-pattern";
 export type { BasicAuthInput, WsAuthConfig } from "./schema";
 
-import { validateBasicAuth } from "@webstudio-is/sdk/basic-auth";
-export { validateBasicAuth } from "@webstudio-is/sdk/basic-auth";
-export type {
-  BasicAuthRule,
-  BasicAuthValidation,
-  BasicAuthIssue,
-} from "@webstudio-is/sdk/basic-auth";
-import type { BasicAuthRule } from "@webstudio-is/sdk/basic-auth";
+export type BasicAuthRule = {
+  method: "basic";
+  login: string;
+  password: string;
+  credentials: string;
+};
 
 export type AuthRule = BasicAuthRule;
 
@@ -62,6 +56,84 @@ export type WsAuthResources = WsAuthBuildResult & {
   module: string;
 };
 
+export type BasicAuthValidation = {
+  auth?: BasicAuthRule;
+  issues?: BasicAuthIssue[];
+  errors?: {
+    login?: string[];
+    password?: string[];
+  };
+};
+
+export type BasicAuthIssue = {
+  path: ["login"] | ["password"];
+  message: string;
+};
+
+const basicLoginErrors = (login: string) => {
+  const issues: BasicAuthIssue[] = [];
+  if (login.length === 0) {
+    issues.push({ path: ["login"], message: "Login is required" });
+  }
+  if (login.includes(":")) {
+    issues.push({ path: ["login"], message: "Login can't contain a colon" });
+  }
+  if (/\s/.test(login)) {
+    issues.push({
+      path: ["login"],
+      message: "Login can't contain whitespace",
+    });
+  }
+  return issues;
+};
+
+const basicPasswordErrors = (password: string) => {
+  const issues: BasicAuthIssue[] = [];
+  if (password.length === 0) {
+    issues.push({ path: ["password"], message: "Password is required" });
+  }
+  if (/\s/.test(password)) {
+    issues.push({
+      path: ["password"],
+      message: "Password can't contain whitespace",
+    });
+  }
+  return issues;
+};
+
+export const validateBasicAuth = ({
+  login,
+  password,
+}: {
+  login: string;
+  password: string;
+}): BasicAuthValidation => {
+  const issues = [...basicLoginErrors(login), ...basicPasswordErrors(password)];
+  if (issues.length > 0) {
+    const loginErrors = issues
+      .filter((issue) => issue.path[0] === "login")
+      .map((issue) => issue.message);
+    const passwordErrors = issues
+      .filter((issue) => issue.path[0] === "password")
+      .map((issue) => issue.message);
+    return {
+      issues,
+      errors: {
+        login: loginErrors.length > 0 ? loginErrors : undefined,
+        password: passwordErrors.length > 0 ? passwordErrors : undefined,
+      },
+    };
+  }
+  return {
+    auth: {
+      method: "basic",
+      login,
+      password,
+      credentials: `${login}:${password}`,
+    },
+  };
+};
+
 export const parseBasicAuthExpression = (expression: string) => {
   const separatorIndex = expression.indexOf(":");
   if (separatorIndex === -1) {
@@ -82,7 +154,7 @@ export const createBasicAuthRoute = ({
   login: string;
   password: string;
 }): WsAuthRoute => {
-  const routeError = validateWsAuthRoute(route);
+  const routeError = validatePathnamePattern(route);
   if (routeError) {
     throw new Error(routeError);
   }
@@ -123,7 +195,42 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
   );
 };
 
-export const validateWsAuthRoute = validatePathnamePattern;
+const parameterSegment = /^:\w+[?*]?$/;
+
+/** Validate the route-rule syntax shared by authentication and response headers. */
+export const validatePathnamePattern = (route: string) => {
+  if (route.startsWith("/") === false) {
+    return 'Route must start with "/"';
+  }
+  if (route === "/") {
+    return;
+  }
+  if (route !== "/" && route.endsWith("/")) {
+    return 'Route must not end with "/"';
+  }
+  if (route.includes("//")) {
+    return 'Route must not contain repeating "/"';
+  }
+  const segments = route.slice(1).split("/");
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index];
+    if (segment === undefined || segment === "") {
+      return "Route contains an empty segment";
+    }
+    if (segment === "*" || /^:\w+\*$/.test(segment)) {
+      if (index !== segments.length - 1) {
+        return "Wildcard route segment must be the last segment";
+      }
+      continue;
+    }
+    if (segment.startsWith(":") && parameterSegment.test(segment) === false) {
+      return `Invalid route parameter "${segment}"`;
+    }
+    if (segment.includes("*")) {
+      return "Wildcard can only be used as * or :name*";
+    }
+  }
+};
 
 const parseJson = (content: string, errors: WsAuthParseError[]) => {
   if (content.trim() === "") {
@@ -159,7 +266,7 @@ export const parseWsAuth = (content: string): WsAuthParseResult => {
   }
 
   for (const [route, authInput] of Object.entries(json.routes)) {
-    const routeError = validateWsAuthRoute(route);
+    const routeError = validatePathnamePattern(route);
     if (routeError) {
       errors.push({
         path: `routes.${JSON.stringify(route)}`,
@@ -321,10 +428,57 @@ export const getBasicAuthCredentials = (authorization: string | null) => {
   return auth?.credentials;
 };
 
-export const matchWsAuthRoute = matchesPathnamePattern;
+const normalizePathname = (pathname: string) => {
+  if (pathname === "" || pathname === "/") {
+    return "/";
+  }
+  return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+};
+
+/**
+ * Boolean matcher for auth and response-header rules. A trailing wildcard also
+ * matches its base path (`/docs/*` matches `/docs`). Page routing instead uses
+ * project-build's URLPattern matcher, which returns decoded path parameters and
+ * does not match `/docs` for that pattern.
+ */
+export const matchesPathnamePattern = (route: string, pathname: string) => {
+  const routeSegments = normalizePathname(route).slice(1).split("/");
+  const pathnameSegments = normalizePathname(pathname).slice(1).split("/");
+  const matchSegments = (
+    routeIndex: number,
+    pathnameIndex: number
+  ): boolean => {
+    const routeSegment = routeSegments[routeIndex];
+    const pathnameSegment = pathnameSegments[pathnameIndex];
+    if (routeSegment === undefined) {
+      return pathnameSegment === undefined;
+    }
+    if (routeSegment === "*" || /^:\w+\*$/.test(routeSegment)) {
+      return routeIndex === routeSegments.length - 1;
+    }
+    if (/^:\w+\?$/.test(routeSegment)) {
+      return (
+        matchSegments(routeIndex + 1, pathnameIndex) ||
+        (pathnameSegment !== undefined &&
+          matchSegments(routeIndex + 1, pathnameIndex + 1))
+      );
+    }
+    if (pathnameSegment === undefined) {
+      return false;
+    }
+    if (/^:\w+$/.test(routeSegment)) {
+      return matchSegments(routeIndex + 1, pathnameIndex + 1);
+    }
+    return (
+      routeSegment === pathnameSegment &&
+      matchSegments(routeIndex + 1, pathnameIndex + 1)
+    );
+  };
+  return matchSegments(0, 0);
+};
 
 export const findWsAuthRoute = (authRoutes: WsAuthRoute[], pathname: string) =>
-  authRoutes.find(({ route }) => matchWsAuthRoute(route, pathname));
+  authRoutes.find(({ route }) => matchesPathnamePattern(route, pathname));
 
 export const authenticateRequest = (
   request: Request,

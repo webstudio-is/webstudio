@@ -18,7 +18,7 @@ import {
   editCustomResponseHeaders,
   type CustomResponseHeader,
 } from "@webstudio-is/sdk";
-import { validateWsAuthRoute } from "@webstudio-is/wsauth";
+import { validatePathnamePattern } from "@webstudio-is/wsauth";
 import { $pages, $projectSettings } from "~/shared/sync/data-stores";
 import { $permissions } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
@@ -161,7 +161,7 @@ export const SectionHeaders = ({
           const name = values.name?.trim() ?? "";
           const value = values.value?.trim() ?? "";
           const errors: Record<string, string[]> = {};
-          const routeError = validateWsAuthRoute(route);
+          const routeError = validatePathnamePattern(route);
           if (routeError) {
             errors.route = [routeError];
           }

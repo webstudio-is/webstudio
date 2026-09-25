@@ -12,7 +12,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@webstudio-is/sdk": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {

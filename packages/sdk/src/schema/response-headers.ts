@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { validatePathnamePattern } from "../url-pattern";
+import { validatePathnamePattern } from "@webstudio-is/wsauth";
 
 // Keep fallback defaults in sync with the Cloud dispatcher.
 export const responseHeaderDefinitions = [

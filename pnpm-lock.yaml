@@ -2578,6 +2578,9 @@ importers:
       '@webstudio-is/query-builder':
         specifier: workspace:*
         version: link:../query-builder
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../wsauth
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -3174,9 +3177,6 @@ importers:
 
   packages/wsauth:
     dependencies:
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../sdk
       zod:
         specifier: ^4.4.3
         version: 4.4.3

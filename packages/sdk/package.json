@@ -33,16 +33,6 @@
       "types": "./lib/types/link-utils.d.ts",
       "import": "./lib/link-utils.js"
     },
-    "./url-pattern": {
-      "webstudio": "./src/url-pattern.ts",
-      "types": "./lib/types/url-pattern.d.ts",
-      "import": "./lib/url-pattern.js"
-    },
-    "./basic-auth": {
-      "webstudio": "./src/basic-auth.ts",
-      "types": "./lib/types/basic-auth.d.ts",
-      "import": "./lib/basic-auth.js"
-    },
     "./schema": {
       "webstudio": "./src/schema.ts",
       "types": "./lib/types/schema.d.ts",
@@ -73,7 +63,7 @@
     "test": "vitest run",
     "build:schema-org-data": "tsx scripts/schema-org-data.ts && oxfmt src/__generated__/schema-org-data.ts",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && oxfmt src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/url-pattern.ts src/basic-auth.ts src/schema.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
@@ -84,6 +74,7 @@
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
+    "@webstudio-is/wsauth": "workspace:*",
     "change-case": "^5.4.4",
     "json-schema-typed": "^8.0.2",
     "nanoid": "^5.1.5",

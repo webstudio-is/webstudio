@@ -2,9 +2,7 @@ import { expect, test, describe } from "vitest";
 import {
   isPathnamePattern,
   isAbsoluteUrl,
-  matchesPathnamePattern,
   removeTrailingSlash,
-  validatePathnamePattern,
 } from "./url-pattern";
 
 test("removes trailing slashes without changing the root path", () => {
@@ -25,35 +23,6 @@ test("check pathname is pattern", () => {
   expect(isPathnamePattern("/")).toEqual(false);
   expect(isPathnamePattern("/blog")).toEqual(false);
   expect(isPathnamePattern("/blog/post-name")).toEqual(false);
-});
-
-test.each([
-  ["/", "/", true],
-  ["/", "/docs", false],
-  ["/*", "/", true],
-  ["/*", "/docs/a", true],
-  ["/docs/*", "/docs", true],
-  ["/docs/*", "/docs/a", true],
-  ["/docs", "/docs/a", false],
-  ["/docs/:id", "/docs/a", true],
-  ["/docs/:id", "/docs", false],
-  ["/docs/:id?", "/docs", true],
-  ["/docs/:id?", "/docs/a", true],
-  ["/docs/:id?", "/docs/a/b", false],
-  ["/docs/:rest*", "/docs/a/b", true],
-  ["/Docs", "/docs", false],
-  ["/docs", "/docs/", true],
-] as const)("matches %s against %s: %s", (pattern, pathname, expected) => {
-  expect(matchesPathnamePattern(pattern, pathname)).toBe(expected);
-});
-
-test("validates shared auth and header route patterns", () => {
-  expect(validatePathnamePattern("/docs/*")).toBeUndefined();
-  expect(validatePathnamePattern("/docs/:id?")).toBeUndefined();
-  expect(validatePathnamePattern("docs")).toBe('Route must start with "/"');
-  expect(validatePathnamePattern("/docs/*/more")).toBe(
-    "Wildcard route segment must be the last segment"
-  );
 });
 
 describe("isAbsoluteUrl", () => {

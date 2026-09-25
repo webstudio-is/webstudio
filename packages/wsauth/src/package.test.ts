@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createRequire } from "node:module";
-import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,7 +10,6 @@ import { afterEach, test } from "vitest";
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
 const packageDirectory = fileURLToPath(new URL("..", import.meta.url));
-const sdkDirectory = fileURLToPath(new URL("../../sdk", import.meta.url));
 const workspaceDirectory = fileURLToPath(new URL("../../..", import.meta.url));
 const tsc = join(workspaceDirectory, "node_modules/.bin/tsc");
 const packageBinDirectory = join(workspaceDirectory, "node_modules/.bin");
@@ -27,12 +26,10 @@ test("publishes type declarations for every public entrypoint", async () => {
   temporaryDirectory = await mkdtemp(join(tmpdir(), "webstudio-wsauth-pack-"));
   const packDirectory = join(temporaryDirectory, "pack");
   const stagingDirectory = join(temporaryDirectory, "staging");
-  const sdkStagingDirectory = join(temporaryDirectory, "sdk");
   const projectDirectory = join(temporaryDirectory, "project");
   await Promise.all([
     mkdir(packDirectory, { recursive: true }),
     mkdir(stagingDirectory, { recursive: true }),
-    mkdir(sdkStagingDirectory, { recursive: true }),
     mkdir(projectDirectory, { recursive: true }),
   ]);
   await Promise.all([
@@ -66,65 +63,6 @@ test("publishes type declarations for every public entrypoint", async () => {
     ...process.env,
     PATH: `${packageBinDirectory}${delimiter}${process.env.PATH ?? ""}`,
   };
-  await execFileAsync("pnpm", ["build"], { cwd: sdkDirectory, env });
-  await execFileAsync("pnpm", ["dts"], { cwd: sdkDirectory, env });
-  await cp(
-    join(sdkDirectory, "lib", "basic-auth.js"),
-    join(sdkStagingDirectory, "basic-auth.js")
-  );
-  await cp(
-    join(sdkDirectory, "lib", "url-pattern.js"),
-    join(sdkStagingDirectory, "url-pattern.js")
-  );
-  await cp(
-    join(sdkDirectory, "lib", "types", "basic-auth.d.ts"),
-    join(sdkStagingDirectory, "basic-auth.d.ts")
-  );
-  await cp(
-    join(sdkDirectory, "lib", "types", "url-pattern.d.ts"),
-    join(sdkStagingDirectory, "url-pattern.d.ts")
-  );
-  await writeFile(
-    join(sdkStagingDirectory, "package.json"),
-    JSON.stringify({
-      name: "@webstudio-is/sdk",
-      version: "0.0.0-webstudio-version",
-      type: "module",
-      exports: {
-        "./basic-auth": {
-          types: "./basic-auth.d.ts",
-          import: "./basic-auth.js",
-        },
-        "./url-pattern": {
-          types: "./url-pattern.d.ts",
-          import: "./url-pattern.js",
-        },
-      },
-    })
-  );
-  const sdkPacked = JSON.parse(
-    (
-      await execFileAsync(
-        "npm",
-        ["pack", "--json", "--pack-destination", packDirectory],
-        { cwd: sdkStagingDirectory }
-      )
-    ).stdout
-  ) as Array<{ filename: string }>;
-  const sdkArchive = join(packDirectory, sdkPacked[0]?.filename ?? "");
-  const stagingPackageJson = JSON.parse(
-    await readFile(join(stagingDirectory, "package.json"), "utf8")
-  );
-  stagingPackageJson.dependencies["@webstudio-is/sdk"] = `file:${sdkArchive}`;
-  await writeFile(
-    join(stagingDirectory, "package.json"),
-    JSON.stringify(stagingPackageJson)
-  );
-  await cp(
-    sdkStagingDirectory,
-    join(stagingDirectory, "node_modules", "@webstudio-is", "sdk"),
-    { recursive: true }
-  );
   await execFileAsync("pnpm", ["build"], { cwd: stagingDirectory, env });
   await execFileAsync("pnpm", ["dts"], { cwd: stagingDirectory, env });
   const packed = JSON.parse(
@@ -162,12 +100,15 @@ test("publishes type declarations for every public entrypoint", async () => {
   );
   await writeFile(
     join(projectDirectory, "index.ts"),
-    `import type { WsAuthResources } from "@webstudio-is/wsauth";
+    `import { matchesPathnamePattern, validatePathnamePattern } from "@webstudio-is/wsauth";
+import type { WsAuthResources } from "@webstudio-is/wsauth";
 import type { WsAuthConfig } from "@webstudio-is/wsauth/schema";
 
 const routes: WsAuthResources["routes"] = [];
 const config: WsAuthConfig = { version: 1, routes: {} };
-void [routes, config];
+const matches: boolean = matchesPathnamePattern("/*", "/docs");
+const routeError: string | undefined = validatePathnamePattern("/docs/*");
+void [routes, config, matches, routeError];
 `,
     "utf8"
   );

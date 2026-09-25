@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { validateBasicAuth } from "../basic-auth";
+import { validateBasicAuth } from "@webstudio-is/wsauth";
 import { customResponseHeaders } from "./response-headers";
 
 export type System = {
