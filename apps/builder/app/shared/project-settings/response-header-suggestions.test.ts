@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { unsupportedResponseHeaderNames } from "@webstudio-is/sdk";
+import { forbiddenCustomResponseHeaderNames } from "@webstudio-is/sdk";
 import {
   getResponseHeaderName,
   getResponseHeaderValueSuggestions,
@@ -16,7 +16,7 @@ test("suggests response headers but excludes platform-owned names", () => {
     "Cross-Origin-Opener-Policy-Report-Only"
   );
   expect(responseHeaderNames).not.toContain("Set-Cookie");
-  for (const name of unsupportedResponseHeaderNames) {
+  for (const name of forbiddenCustomResponseHeaderNames) {
     expect(
       responseHeaderNames.some(
         (suggestion) => suggestion.toLowerCase() === name

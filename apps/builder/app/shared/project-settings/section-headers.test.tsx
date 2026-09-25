@@ -171,7 +171,7 @@ test("Enter in an autocomplete field does not add a rule", async () => {
   expect(executeRuntimeMutation).toHaveBeenCalledOnce();
 });
 
-test("typing an unsupported header cannot save a rule", async () => {
+test("typing a non-customizable header cannot save a rule", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name, value } = render();
   await type(route, "/*");

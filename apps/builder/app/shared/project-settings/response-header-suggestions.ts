@@ -1,6 +1,6 @@
 // Response fields that are useful on published sites. Platform-owned fields are
 // deliberately excluded. Names are suggestions, not an allowlist; the shared
-// response-header schema rejects unsupported names even when typed manually.
+// response-header schema rejects forbidden customizations even when typed manually.
 export const responseHeaderNames = [
   "Accept-CH",
   "Accept-Patch",

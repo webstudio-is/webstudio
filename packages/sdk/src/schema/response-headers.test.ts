@@ -5,7 +5,7 @@ import {
   customResponseHeaders,
   hasCustomResponseHeaders,
   responseHeaderDefinitions,
-  unsupportedResponseHeaderNames,
+  forbiddenCustomResponseHeaderNames,
 } from "./response-headers";
 
 describe("response header settings", () => {
@@ -77,8 +77,8 @@ describe("response header settings", () => {
     }
   });
 
-  test.each(unsupportedResponseHeaderNames)(
-    "rejects unsupported response header %s, including case variants and removal rules",
+  test.each(forbiddenCustomResponseHeaderNames)(
+    "rejects forbidden custom response header %s, including case variants and removal rules",
     (name) => {
       for (const value of ["value", null]) {
         expect(customResponseHeader.safeParse({ name, value }).success).toBe(
