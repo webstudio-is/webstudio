@@ -139,12 +139,12 @@ export const SectionHeaders = () => {
           {
             name: "name",
             placeholder: "Header name",
-            autocomplete: responseHeaderNames,
+            suggestions: responseHeaderNames,
           },
           {
             name: "value",
             placeholder: "Header value",
-            autocomplete: (values) =>
+            suggestions: (values) =>
               getResponseHeaderValueSuggestions(values.name ?? ""),
           },
         ]}

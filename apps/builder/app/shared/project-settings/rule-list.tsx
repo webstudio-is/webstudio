@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Button,
   Combobox,
@@ -22,8 +22,7 @@ type Field = {
   name: string;
   placeholder: string;
   type?: "text" | "password";
-  suggestions?: readonly string[];
-  autocomplete?: readonly string[] | ((values: Values) => readonly string[]);
+  suggestions?: readonly string[] | ((values: Values) => readonly string[]);
   validateOnChange?: (value: string) => string[];
 };
 
@@ -52,19 +51,24 @@ export const ProjectSettingsRuleList = ({
 }) => {
   const [values, setValues] = useState<Values>({});
   const [errors, setErrors] = useState<Errors>({});
+  const [formRevision, setFormRevision] = useState(0);
   const firstInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteId = useId();
 
   const submit = () => {
     const nextErrors = validate(values);
     setErrors(nextErrors);
     if (Object.values(nextErrors).some((messages) => messages.length > 0)) {
+      setFormRevision((current) => current + 1);
       return;
     }
     if (onSubmit(values)) {
       setValues({});
       setErrors({});
       firstInputRef.current?.focus();
+    } else {
+      // Downshift clears an unselected free-form value on blur. Remount the
+      // comboboxes after a failed save to restore the values kept in state.
+      setFormRevision((current) => current + 1);
     }
   };
 
@@ -81,18 +85,25 @@ export const ProjectSettingsRuleList = ({
             >
               {field.suggestions ? (
                 <Combobox<string>
+                  key={formRevision}
+                  modal={false}
                   inputRef={index === 0 ? firstInputRef : undefined}
                   autoFocus={index === 0}
                   placeholder={field.placeholder}
                   value={values[field.name] ?? ""}
                   color={errors[field.name]?.length ? "error" : undefined}
-                  getItems={() => [...(field.suggestions ?? [])]}
+                  getItems={() => [
+                    ...(typeof field.suggestions === "function"
+                      ? field.suggestions(values)
+                      : (field.suggestions ?? [])),
+                  ]}
                   itemToString={(item) => item ?? ""}
                   onItemSelect={(value) => {
                     setValues((current) => ({
                       ...current,
                       [field.name]: value ?? "",
                     }));
+                    setFormRevision((current) => current + 1);
                     setErrors((current) => ({
                       ...current,
                       [field.name]: field.validateOnChange?.(value ?? "") ?? [],
@@ -114,11 +125,6 @@ export const ProjectSettingsRuleList = ({
               ) : (
                 <InputField
                   placeholder={field.placeholder}
-                  list={
-                    field.autocomplete
-                      ? `${autocompleteId}-${field.name}`
-                      : undefined
-                  }
                   type={field.type}
                   value={values[field.name] ?? ""}
                   color={errors[field.name]?.length ? "error" : undefined}
@@ -134,7 +140,7 @@ export const ProjectSettingsRuleList = ({
                     }));
                   }}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" && !field.autocomplete) {
+                    if (event.key === "Enter") {
                       event.preventDefault();
                       submit();
                     }
@@ -142,16 +148,6 @@ export const ProjectSettingsRuleList = ({
                 />
               )}
             </InputErrorsTooltip>
-            {field.autocomplete && (
-              <datalist id={`${autocompleteId}-${field.name}`}>
-                {(typeof field.autocomplete === "function"
-                  ? field.autocomplete(values)
-                  : field.autocomplete
-                ).map((suggestion) => (
-                  <option key={suggestion} value={suggestion} />
-                ))}
-              </datalist>
-            )}
           </Flex>
         ))}
         <Button

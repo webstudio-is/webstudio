@@ -1,5 +1,6 @@
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
+import { page } from "@vitest/browser/context";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { $builderMode } from "~/shared/nano-states";
@@ -71,15 +72,8 @@ const render = () => {
   return { route, name, value, onOpenChange };
 };
 
-const type = (input: HTMLInputElement, value: string) => {
-  act(() => {
-    input.focus();
-    Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value"
-    )?.set?.call(input, value);
-    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
-  });
+const type = async (input: HTMLInputElement, value: string) => {
+  await act(async () => page.getByPlaceholder(input.placeholder).fill(value));
 };
 
 const pressEscape = async (target: Element) => {
@@ -104,25 +98,62 @@ test("Escape from the header form dismisses Project Settings", async () => {
   expect(executeRuntimeMutation).not.toHaveBeenCalled();
 });
 
-test("offers standard names and values for the selected header", () => {
-  const { name, value } = render();
-  const options = (input: HTMLInputElement) =>
-    Array.from(input.list?.options ?? []).map((option) => option.value);
-
-  expect(options(name)).toContain("Cache-Control");
-  expect(options(name)).not.toContain("X-Powered-By");
-  type(name, "Cache-Control");
-  expect(options(value)).toContain("no-store");
-  type(name, "X-Custom-Header");
-  expect(options(value)).toEqual([]);
-});
-
-test("Enter in an autocomplete field does not add a rule", () => {
+test("offers standard names and values for the selected header", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name, value } = render();
-  type(route, "/*");
-  type(name, "Cache-Control");
-  type(value, "no-store");
+  await type(route, "/*");
+  await type(name, "Cache");
+  const options = () =>
+    Array.from(document.querySelectorAll('[role="option"]')).map(
+      (option) => option.textContent
+    );
+  expect(options()).toContain("Cache-Control");
+  expect(options()).not.toContain("X-Powered-By");
+  await act(async () =>
+    page.getByRole("option", { name: "Cache-Control", exact: true }).click()
+  );
+  expect(
+    document.querySelector<HTMLInputElement>('input[placeholder="Header name"]')
+      ?.value
+  ).toBe("Cache-Control");
+  await type(value, "no");
+  expect(options()).toContain("no-store");
+  await act(async () =>
+    page.getByRole("option", { name: "no-store", exact: true }).click()
+  );
+  expect(
+    document.querySelector<HTMLInputElement>(
+      'input[placeholder="Header value"]'
+    )?.value
+  ).toBe("no-store");
+  await act(async () =>
+    page.getByRole("button", { name: "Add", exact: true }).click()
+  );
+  expect(executeRuntimeMutation).toHaveBeenCalledWith({
+    id: "projectSettings.update",
+    input: {
+      meta: {
+        customHeaders: [{ name: "Cache-Control", value: "no-store" }],
+      },
+    },
+  });
+  expect(
+    document.querySelector<HTMLInputElement>('input[placeholder="Header name"]')
+      ?.value
+  ).toBe("");
+  expect(
+    document.querySelector<HTMLInputElement>(
+      'input[placeholder="Header value"]'
+    )?.value
+  ).toBe("");
+});
+
+test("Enter in an autocomplete field does not add a rule", async () => {
+  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  const { route, name, value } = render();
+  await type(route, "/*");
+  await type(name, "Cache-Control");
+  await type(value, "no-store");
   act(() => {
     value.dispatchEvent(
       new KeyboardEvent("keydown", {
@@ -142,7 +173,7 @@ test("Enter in an autocomplete field does not add a rule", () => {
 
 test.each(["denied", "throws"])(
   "keeps form values and shows an error when saving %s",
-  (failure) => {
+  async (failure) => {
     vi.mocked(executeRuntimeMutation).mockImplementation(() => {
       if (failure === "throws") {
         throw new Error("Runtime mutation failed");
@@ -150,20 +181,23 @@ test.each(["denied", "throws"])(
       return undefined;
     });
     const { route, name, value } = render();
-    type(route, "/*");
-    type(name, "Content-Security-Policy");
-    type(value, "frame-ancestors https://example.com");
-    const add = Array.from(document.querySelectorAll("button")).find(
-      (button) => button.textContent === "Add"
+    await type(route, "/*");
+    await type(name, "Content-Security-Policy");
+    await type(value, "frame-ancestors https://example.com");
+    await act(async () =>
+      page.getByRole("button", { name: "Add", exact: true }).click()
     );
-    act(() => add?.click());
-    expect(value.value).toBe("frame-ancestors https://example.com");
+    expect(
+      document.querySelector<HTMLInputElement>(
+        'input[placeholder="Header value"]'
+      )?.value
+    ).toBe("frame-ancestors https://example.com");
     expect(document.body.textContent).toContain("Changes could not be saved");
     expect($projectSettings.get()?.meta.customHeaders).toBeUndefined();
   }
 );
 
-test("starts with no rows and adds a route rule", () => {
+test("starts with no rows and adds a route rule", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   render();
   expect(document.querySelector('[role="table"]')).toBeNull();
@@ -181,9 +215,9 @@ test("starts with no rows and adds a route rule", () => {
   if (!route || !name || !value) {
     throw new Error("Expected the rule form");
   }
-  type(route, "/private/*");
-  type(name, "Referrer-Policy");
-  type(value, "no-referrer");
+  await type(route, "/private/*");
+  await type(name, "Referrer-Policy");
+  await type(value, "no-referrer");
   const add = Array.from(document.querySelectorAll("button")).find(
     (button) => button.textContent === "Add"
   );
@@ -204,12 +238,12 @@ test("starts with no rows and adds a route rule", () => {
   });
 });
 
-test("submitting an existing default header updates its value", () => {
+test("submitting an existing default header updates its value", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name, value } = render();
-  type(route, "/*");
-  type(name, "content-security-policy");
-  type(value, "frame-ancestors https://example.com");
+  await type(route, "/*");
+  await type(name, "content-security-policy");
+  await type(value, "frame-ancestors https://example.com");
   const add = Array.from(document.querySelectorAll("button")).find(
     (button) => button.textContent === "Add"
   );
@@ -229,12 +263,12 @@ test("submitting an existing default header updates its value", () => {
   });
 });
 
-test("saves / as a root-only rule", () => {
+test("saves / as a root-only rule", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name, value } = render();
-  type(route, "/");
-  type(name, "Referrer-Policy");
-  type(value, "no-referrer");
+  await type(route, "/");
+  await type(name, "Referrer-Policy");
+  await type(value, "no-referrer");
   const add = Array.from(document.querySelectorAll("button")).find(
     (button) => button.textContent === "Add"
   );
@@ -251,7 +285,7 @@ test("saves / as a root-only rule", () => {
   });
 });
 
-test("adds an arbitrary header and displays existing custom headers", () => {
+test("adds an arbitrary header and displays existing custom headers", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   $projectSettings.set({
     meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
@@ -262,9 +296,9 @@ test("adds an arbitrary header and displays existing custom headers", () => {
   expect(
     document.querySelector('button[aria-label="Remove Cache-Control for /*"]')
   ).not.toBeNull();
-  type(route, "/*");
-  type(name, "Access-Control-Allow-Origin");
-  type(value, "*");
+  await type(route, "/*");
+  await type(name, "Access-Control-Allow-Origin");
+  await type(value, "*");
   const add = Array.from(document.querySelectorAll("button")).find(
     (button) => button.textContent === "Add"
   );
@@ -326,11 +360,11 @@ test("deleting a configured fallback header leaves no settings rule", () => {
   });
 });
 
-test("empty route value cannot create a fallback-header rule", () => {
+test("empty route value cannot create a fallback-header rule", async () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name } = render();
-  type(route, "/private/*");
-  type(name, "Content-Security-Policy");
+  await type(route, "/private/*");
+  await type(name, "Content-Security-Policy");
   const add = Array.from(document.querySelectorAll("button")).find(
     (button) => button.textContent === "Add"
   );
