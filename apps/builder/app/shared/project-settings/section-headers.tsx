@@ -35,7 +35,14 @@ import { getExistingRoutePaths, sectionSpacing } from "./utils";
 const ruleKey = (route: string, name: string) =>
   `${route}\0${name.toLowerCase()}`;
 
-export const SectionHeaders = () => {
+export const SectionHeaders = ({
+  executeMutation = executeRuntimeMutation,
+}: {
+  projectId?: string;
+  executeMutation?: (
+    args: Parameters<typeof executeRuntimeMutation>[0]
+  ) => ReturnType<typeof executeRuntimeMutation>;
+} = {}) => {
   const { allowDynamicData } = useStore($permissions);
   const settings = useStore($projectSettings);
   const pages = useStore($pages);
@@ -63,7 +70,7 @@ export const SectionHeaders = () => {
       return false;
     }
     try {
-      const mutation = executeRuntimeMutation({
+      const mutation = executeMutation({
         id: "projectSettings.update",
         input: {
           meta: { customHeaders: result.data.length ? result.data : null },

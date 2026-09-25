@@ -170,6 +170,9 @@ test("rule deletion requires confirmation", async () => {
   }
   await act(async () => userEvent.click(cancelButton));
   expect(onDelete).not.toHaveBeenCalled();
+  await vi.waitFor(() => {
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
   await act(async () => userEvent.click(deleteButton));
   const confirmButton = Array.from(
     document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')

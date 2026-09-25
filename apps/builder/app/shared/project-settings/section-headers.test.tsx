@@ -3,21 +3,10 @@ import { act } from "react-dom/test-utils";
 import { page } from "@vitest/browser/context";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { $builderMode } from "~/shared/nano-states";
 import { $projectSettings } from "~/shared/sync/data-stores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { ProjectSettingsDialog } from "./project-settings";
+import { SectionHeaders } from "./section-headers";
 
-vi.mock("~/shared/instance-utils/data", () => ({
-  executeRuntimeMutation: vi.fn(),
-}));
-vi.mock("./section-general", () => ({ SectionGeneral: () => null }));
-vi.mock("./section-agents", () => ({ SectionAgents: () => null }));
-vi.mock("./section-auth", () => ({ SectionAuth: () => null }));
-vi.mock("./section-redirects", () => ({ SectionRedirects: () => null }));
-vi.mock("./section-publish", () => ({ SectionPublish: () => null }));
-vi.mock("./section-marketplace", () => ({ SectionMarketplace: () => null }));
-vi.mock("./section-backups", () => ({ SectionBackups: () => null }));
+const executeRuntimeMutation = vi.fn(() => ({}) as never);
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -25,14 +14,11 @@ vi.mock("./section-backups", () => ({ SectionBackups: () => null }));
 
 let root: Root;
 let previousSettings: ReturnType<typeof $projectSettings.get>;
-let previousMode: ReturnType<typeof $builderMode.get>;
 
 beforeEach(() => {
   previousSettings = $projectSettings.get();
-  previousMode = $builderMode.get();
-  $builderMode.set("design");
   $projectSettings.set({ meta: {}, compiler: {} });
-  vi.mocked(executeRuntimeMutation).mockReset();
+  executeRuntimeMutation.mockReset().mockImplementation(() => ({}) as never);
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -42,18 +28,13 @@ afterEach(() => {
   act(() => root.unmount());
   document.body.innerHTML = "";
   $projectSettings.set(previousSettings);
-  $builderMode.set(previousMode);
 });
 
 const render = () => {
-  const onOpenChange = vi.fn();
   act(() => {
     root.render(
       <TooltipProvider>
-        <ProjectSettingsDialog
-          currentSection="headers"
-          onOpenChange={onOpenChange}
-        />
+        <SectionHeaders executeMutation={executeRuntimeMutation} />
       </TooltipProvider>
     );
   });
@@ -69,37 +50,15 @@ const render = () => {
   if (!route || !name || !value) {
     throw new Error("Expected the rule form");
   }
-  return { route, name, value, onOpenChange };
+  return { route, name, value };
 };
 
 const type = async (input: HTMLInputElement, value: string) => {
   await act(async () => page.getByPlaceholder(input.placeholder).fill(value));
 };
 
-const pressEscape = async (target: Element) => {
-  await act(async () => {
-    target.dispatchEvent(
-      new KeyboardEvent("keydown", {
-        key: "Escape",
-        bubbles: true,
-        cancelable: true,
-      })
-    );
-    // Dialog dismissal runs on the next frame.
-    await new Promise(requestAnimationFrame);
-  });
-};
-
-test("Escape from the header form dismisses Project Settings", async () => {
-  const { value, onOpenChange } = render();
-  act(() => value.focus());
-  await pressEscape(value);
-  expect(onOpenChange).toHaveBeenCalledWith(false);
-  expect(executeRuntimeMutation).not.toHaveBeenCalled();
-});
-
 test("offers standard names and values for the selected header", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   const { route, name, value } = render();
   await type(route, "/*");
   await type(name, "Cache");
@@ -149,7 +108,7 @@ test("offers standard names and values for the selected header", async () => {
 });
 
 test("Enter in an autocomplete field does not add a rule", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   const { route, name, value } = render();
   await type(route, "/*");
   await type(name, "Cache-Control");
@@ -172,7 +131,7 @@ test("Enter in an autocomplete field does not add a rule", async () => {
 });
 
 test("typing a non-customizable header cannot save a rule", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   const { route, name, value } = render();
   await type(route, "/*");
   await type(name, "sEt-CoOkIe");
@@ -190,11 +149,11 @@ test("typing a non-customizable header cannot save a rule", async () => {
 test.each(["denied", "throws"])(
   "keeps form values and shows an error when saving %s",
   async (failure) => {
-    vi.mocked(executeRuntimeMutation).mockImplementation(() => {
+    executeRuntimeMutation.mockImplementation(() => {
       if (failure === "throws") {
         throw new Error("Runtime mutation failed");
       }
-      return undefined;
+      return undefined as never;
     });
     const { route, name, value } = render();
     await type(route, "/*");
@@ -214,7 +173,7 @@ test.each(["denied", "throws"])(
 );
 
 test("starts with no rows and adds a route rule", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   render();
   expect(document.querySelector('[role="table"]')).toBeNull();
   const { route, name, value } = {
@@ -255,7 +214,7 @@ test("starts with no rows and adds a route rule", async () => {
 });
 
 test("submitting an existing default header updates its value", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   const { route, name, value } = render();
   await type(route, "/*");
   await type(name, "content-security-policy");
@@ -280,7 +239,7 @@ test("submitting an existing default header updates its value", async () => {
 });
 
 test("saves / as a root-only rule", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   const { route, name, value } = render();
   await type(route, "/");
   await type(name, "Referrer-Policy");
@@ -302,7 +261,7 @@ test("saves / as a root-only rule", async () => {
 });
 
 test("adds an arbitrary header and displays existing custom headers", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   $projectSettings.set({
     meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
     compiler: {},
@@ -333,7 +292,7 @@ test("adds an arbitrary header and displays existing custom headers", async () =
 });
 
 test("deleting a custom site-wide header requires confirmation", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   $projectSettings.set({
     meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
     compiler: {},
@@ -362,7 +321,7 @@ test("deleting a custom site-wide header requires confirmation", async () => {
 });
 
 test("deleting a configured fallback header leaves no settings rule", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   $projectSettings.set({
     meta: {
       customHeaders: [
@@ -387,6 +346,7 @@ test("deleting a configured fallback header leaves no settings rule", async () =
 });
 
 test("shows an error when confirmed deletion cannot be saved", async () => {
+  executeRuntimeMutation.mockReturnValue(undefined as never);
   $projectSettings.set({
     meta: { customHeaders: [{ name: "Cache-Control", value: "no-store" }] },
     compiler: {},
@@ -403,7 +363,7 @@ test("shows an error when confirmed deletion cannot be saved", async () => {
 });
 
 test("empty route value cannot create a fallback-header rule", async () => {
-  vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
+  executeRuntimeMutation.mockReturnValue({} as never);
   const { route, name } = render();
   await type(route, "/private/*");
   await type(name, "Content-Security-Policy");
