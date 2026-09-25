@@ -198,7 +198,6 @@ export const SectionHeaders = () => {
               </Tooltip>,
               <Tooltip content={value} key="value">
                 <Text truncate>{value}</Text>
-                </Text>
               </Tooltip>,
             ],
             actions: (
