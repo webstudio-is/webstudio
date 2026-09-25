@@ -73,6 +73,7 @@ const render = () => {
 
 const type = (input: HTMLInputElement, value: string) => {
   act(() => {
+    input.focus();
     Object.getOwnPropertyDescriptor(
       HTMLInputElement.prototype,
       "value"
@@ -101,6 +102,23 @@ test("Escape from the header form dismisses Project Settings", async () => {
   await pressEscape(value);
   expect(onOpenChange).toHaveBeenCalledWith(false);
   expect(executeRuntimeMutation).not.toHaveBeenCalled();
+});
+
+test("offers standard names and values for the selected header", () => {
+  const { name, value } = render();
+  const options = (input: HTMLInputElement) =>
+    Array.from(
+      document.querySelectorAll<HTMLOptionElement>(
+        `datalist[id="${input.getAttribute("list")}"] option`
+      )
+    ).map((option) => option.value);
+
+  expect(options(name)).toContain("Cache-Control");
+  expect(options(name)).not.toContain("X-Powered-By");
+  type(name, "Cache-Control");
+  expect(options(value)).toContain("no-store");
+  type(name, "X-Custom-Header");
+  expect(options(value)).toEqual([]);
 });
 
 test.each(["denied", "throws"])(
@@ -171,7 +189,7 @@ test("submitting an existing default header updates its value", () => {
   vi.mocked(executeRuntimeMutation).mockReturnValue({} as never);
   const { route, name, value } = render();
   type(route, "/*");
-  type(name, "Content-Security-Policy");
+  type(name, "content-security-policy");
   type(value, "frame-ancestors https://example.com");
   const add = Array.from(document.querySelectorAll("button")).find(
     (button) => button.textContent === "Add"

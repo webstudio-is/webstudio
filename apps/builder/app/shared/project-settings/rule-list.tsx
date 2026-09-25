@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import {
   Button,
   Combobox,
@@ -22,7 +22,8 @@ type Field = {
   name: string;
   placeholder: string;
   type?: "text" | "password";
-  suggestions?: string[];
+  suggestions?: readonly string[];
+  autocomplete?: readonly string[] | ((values: Values) => readonly string[]);
   validateOnChange?: (value: string) => string[];
 };
 
@@ -52,6 +53,7 @@ export const ProjectSettingsRuleList = ({
   const [values, setValues] = useState<Values>({});
   const [errors, setErrors] = useState<Errors>({});
   const firstInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteId = useId();
 
   const submit = () => {
     const nextErrors = validate(values);
@@ -84,7 +86,7 @@ export const ProjectSettingsRuleList = ({
                   placeholder={field.placeholder}
                   value={values[field.name] ?? ""}
                   color={errors[field.name]?.length ? "error" : undefined}
-                  getItems={() => field.suggestions ?? []}
+                  getItems={() => [...(field.suggestions ?? [])]}
                   itemToString={(item) => item ?? ""}
                   onItemSelect={(value) => {
                     setValues((current) => ({
@@ -112,6 +114,11 @@ export const ProjectSettingsRuleList = ({
               ) : (
                 <InputField
                   placeholder={field.placeholder}
+                  list={
+                    field.autocomplete
+                      ? `${autocompleteId}-${field.name}`
+                      : undefined
+                  }
                   type={field.type}
                   value={values[field.name] ?? ""}
                   color={errors[field.name]?.length ? "error" : undefined}
@@ -135,6 +142,16 @@ export const ProjectSettingsRuleList = ({
                 />
               )}
             </InputErrorsTooltip>
+            {field.autocomplete && (
+              <datalist id={`${autocompleteId}-${field.name}`}>
+                {(typeof field.autocomplete === "function"
+                  ? field.autocomplete(values)
+                  : field.autocomplete
+                ).map((suggestion) => (
+                  <option key={suggestion} value={suggestion} />
+                ))}
+              </datalist>
+            )}
           </Flex>
         ))}
         <Button

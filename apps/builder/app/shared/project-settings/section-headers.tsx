@@ -23,6 +23,11 @@ import { $pages, $projectSettings } from "~/shared/sync/data-stores";
 import { $permissions } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { ProjectSettingsRuleList } from "./rule-list";
+import {
+  getResponseHeaderName,
+  getResponseHeaderValueSuggestions,
+  responseHeaderNames,
+} from "./response-header-suggestions";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
 
 const ruleKey = (route: string, name: string) =>
@@ -134,8 +139,14 @@ export const SectionHeaders = () => {
           {
             name: "name",
             placeholder: "Header name",
+            autocomplete: responseHeaderNames,
           },
-          { name: "value", placeholder: "Header value" },
+          {
+            name: "value",
+            placeholder: "Header value",
+            autocomplete: (values) =>
+              getResponseHeaderValueSuggestions(values.name ?? ""),
+          },
         ]}
         validate={(values) => {
           const route = values.route?.trim() ?? "";
@@ -169,8 +180,7 @@ export const SectionHeaders = () => {
           const route = values.route.trim();
           const value = values.value?.trim();
           const name =
-            getResponseHeaderDefinition(values.name.trim())?.name ??
-            values.name.trim();
+            getResponseHeaderName(values.name.trim()) ?? values.name.trim();
           const next: CustomResponseHeader = {
             ...(route === "/*" ? {} : { route }),
             name,
