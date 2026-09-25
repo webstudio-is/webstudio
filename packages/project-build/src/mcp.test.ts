@@ -6685,6 +6685,19 @@ describe("project session mcp adapter", () => {
     ).rejects.toThrow("screenshot requires url or path.");
   });
 
+  test("declares the screenshot target requirement in its MCP schema", () => {
+    const screenshotTool = listProjectSessionMcpTools(publicMcpOperations, {
+      includeScreenshot: true,
+    }).find((tool) => tool.name === "screenshot");
+
+    expect(screenshotTool?.inputSchema).toMatchObject({
+      oneOf: expect.arrayContaining([
+        expect.objectContaining({ required: ["url"] }),
+        expect.objectContaining({ required: ["path"] }),
+      ]),
+    });
+  });
+
   test("rejects ambiguous screenshot base URL input", async () => {
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,

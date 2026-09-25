@@ -1812,6 +1812,13 @@ const screenshotInputSchema = {
       items: { type: "string" },
     },
   },
+  oneOf: [
+    {
+      required: ["url"],
+      not: { anyOf: [{ required: ["path"] }, { required: ["baseUrl"] }] },
+    },
+    { required: ["path"], not: { required: ["url"] } },
+  ],
   required: ["viewport"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
