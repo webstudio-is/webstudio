@@ -163,7 +163,7 @@ export const ProjectSettingsRuleList = ({
                   getItems={() => [
                     ...(typeof field.suggestions === "function"
                       ? field.suggestions(values)
-                      : field.suggestions ?? []),
+                      : (field.suggestions ?? [])),
                   ]}
                   itemToString={(item) => item ?? ""}
                   onItemSelect={(value) => {
