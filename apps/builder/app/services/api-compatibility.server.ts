@@ -10,18 +10,16 @@ export const throwApiClientUpdateRequired = ({
   expectedVersion,
   receivedVersion,
   target,
-  versionKind = "bundle",
 }: {
   expectedVersion: string | number;
   receivedVersion: string | number | undefined;
   target: ApiCompatibilityTarget;
-  versionKind?: "bundle" | "API contract";
 }): never => {
   const compatibility = createApiCompatibilityPayload({
     reason: "clientVersionUnsupported",
     target,
   });
-  const message = `${compatibility.message} Expected ${versionKind} version ${expectedVersion}, received ${receivedVersion ?? "missing"}.`;
+  const message = `${compatibility.message} Expected bundle version ${expectedVersion}, received ${receivedVersion ?? "missing"}.`;
   throw new TRPCError({
     code: "PRECONDITION_FAILED",
     message,
@@ -37,11 +35,15 @@ export const assertCliApiContractVersion = (ctx: AppContext) => {
     ctx.apiClient?.type === "cli" &&
     ctx.apiClient.contractVersion !== publicApiContractVersion
   ) {
-    throwApiClientUpdateRequired({
-      expectedVersion: publicApiContractVersion,
-      receivedVersion: ctx.apiClient.contractVersion,
+    const compatibility = createApiCompatibilityPayload({
+      reason: "clientVersionUnsupported",
       target: "cli",
-      versionKind: "API contract",
+    });
+    const message = `The Webstudio CLI and API use different editing contracts. Expected ${publicApiContractVersion}, received ${ctx.apiClient.contractVersion ?? "missing"}. Update the CLI; if it is already current, retry after the Webstudio API deployment is updated.`;
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message,
+      cause: { ...compatibility, message },
     });
   }
 };

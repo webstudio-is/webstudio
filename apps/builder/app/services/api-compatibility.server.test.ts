@@ -21,6 +21,7 @@ test("requires the current API contract from CLI clients", () => {
       reason: "clientVersionUnsupported",
       target: "cli",
       action: { type: "updateCli" },
+      message: `The Webstudio CLI and API use different editing contracts. Expected ${publicApiContractVersion}, received ${contractVersion ?? "missing"}. Update the CLI; if it is already current, retry after the Webstudio API deployment is updated.`,
     });
   }
 
