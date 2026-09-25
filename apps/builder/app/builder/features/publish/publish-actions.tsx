@@ -40,6 +40,7 @@ export const PublishActions = ({
   validateDisabled,
   publishDisabled,
   publishInProgress,
+  publishPending,
   hasSelectedDomains,
   publishLabel,
   publishButtonRef,
@@ -50,6 +51,7 @@ export const PublishActions = ({
   validateDisabled: boolean;
   publishDisabled: boolean;
   publishInProgress: boolean;
+  publishPending: boolean;
   hasSelectedDomains: boolean;
   publishLabel: string;
   publishButtonRef: Ref<HTMLButtonElement>;
@@ -94,7 +96,7 @@ export const PublishActions = ({
           type="button"
           onClick={onPublish}
           color="primary"
-          state={publishInProgress ? "pending" : undefined}
+          state={publishPending ? "pending" : undefined}
           css={{ flex: 1 }}
           disabled={
             publishInProgress === false && (publishDisabled || isValidating)

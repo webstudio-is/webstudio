@@ -780,6 +780,9 @@ const Publish = ({
           userPublishCount >= maxDailyPublishesPerUser
         }
         publishInProgress={isPublishInProgress}
+        publishPending={
+          isPublishInProgress && (countdown === undefined || countdown === 0)
+        }
         hasSelectedDomains={hasSelectedDomains}
         publishLabel={
           countdown !== undefined && countdown > 0
