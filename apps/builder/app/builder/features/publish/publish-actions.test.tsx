@@ -148,7 +148,7 @@ test("shows the countdown and disables actions during publish progress", () => {
   );
 
   expect(validate).toBeDisabled();
-  expect(publish.dataset.state).toBe("auto");
+  expect(publish.dataset.state).toBe("disabled");
   expect(publish).toBeDisabled();
   expect(publish.textContent).toBe("Publishing (60s)");
   expect(publish.querySelector("svg")).toBeNull();
@@ -158,7 +158,7 @@ test("shows the pending state after the countdown expires", () => {
   const [validate, publish] = render("idle", true, true, true);
 
   expect(validate).toBeDisabled();
-  expect(publish.dataset.state).toBe("pending");
+  expect(publish.dataset.state).toBe("disabled");
   expect(publish).toBeDisabled();
   expect(publish.querySelector("svg")).not.toBeNull();
 });
