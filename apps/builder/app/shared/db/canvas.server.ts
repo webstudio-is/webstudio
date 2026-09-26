@@ -178,7 +178,7 @@ const addProjectMetadata = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
-    prepareContentIndex?: boolean;
+    contentIndex?: "client";
   } = {}
 ): Promise<PublishedProjectBundle> => {
   const user =
@@ -186,20 +186,23 @@ const addProjectMetadata = async (
       ? undefined
       : await dependencies.getUserById(context, project.userId);
 
-  let publicationBuild:
-    | Parameters<typeof createPublishedBuildContentCompilationPlan>[0]
-    | undefined;
+  const publicationBuild = {
+    ...data.build,
+    pages: migratePages(data.build.pages),
+  };
   let candidateDiscoveryPlan: ReturnType<
     typeof createBuildContentCompilationPlan
   >;
   let assetRequirements: ReturnType<
     typeof createPublishedBuildContentCompilationPlan
   >;
-  if (options.prepareContentIndex !== false) {
-    publicationBuild = {
-      ...data.build,
-      pages: migratePages(data.build.pages),
-    };
+  if (options.contentIndex === "client") {
+    // Static builds compile downloaded sources in the runner. Hosted builds
+    // still need query metadata; Markdown body references resolve at runtime.
+    if (data.build.deployment?.destination !== "static") {
+      assetRequirements = createBuildContentCompilationPlan(publicationBuild);
+    }
+  } else {
     const dynamicBlockIds =
       getDynamicPublishedMdxSourceBlockIds(publicationBuild);
     const projectCandidates = resolvePublishedMdxAssetCandidates({
@@ -223,7 +226,7 @@ const addProjectMetadata = async (
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
   let mdxTemplateOmissions: PublishedMdxTemplateOmission[] = [];
-  if (assetRequirements !== undefined && publicationBuild !== undefined) {
+  if (assetRequirements !== undefined) {
     const resolveMdxDependencies =
       createPublishedMdxDependencyClosureResolver();
     const publishedAssetData = await dependencies.preparePublishedAssetData({
@@ -367,7 +370,7 @@ export const loadProjectBundleByBuildId = async (
     project,
     context,
     addProjectMetadataDependencies,
-    { prepareContentIndex: contentIndex !== "client" }
+    { contentIndex }
   );
 };
 

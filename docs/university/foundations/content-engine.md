@@ -47,10 +47,11 @@ Choose the file format based on how editors will work with the article body:
 | `.mdx` with a Content Block | Publishing downloads the article files and compiles the MDX for every article the page can render. More articles can make publishing slower. | Editors can change the article visually on the canvas with a Notion-style experience, or edit the MDX source file. |
 | `.md` with Markdown Embed | No per-article MDX compilation is needed. A hosted page reads the selected Markdown body when it is requested. | Editors can edit the `.md` file in the Markdown source editor in Assets, but cannot edit its body visually on the canvas. |
 
-The publish runner currently synchronizes Asset files for either format. That
-transfer still takes time; the difference is the additional per-article MDX
-compilation. Static pages can also read Markdown bodies while generating their
-HTML. Use [Content Block](../core-components/content-block.md) when visual
+Hosted builds receive a content database for their Assets queries. Markdown
+body-reference queries use stored frontmatter for that database and fetch the
+selected body when a visitor opens the page. Static exports download article
+sources and build the database in the publish runner; this transfer and any
+MDX compilation still take time. Use [Content Block](../core-components/content-block.md) when visual
 article editing matters, or [Markdown Embed](../core-components/markdown-embed.md)
 when source editing is enough.
 

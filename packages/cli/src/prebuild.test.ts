@@ -10,7 +10,7 @@ import {
   utimes,
   writeFile,
 } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
@@ -788,6 +788,41 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("rejects Assets queries without a content database without changing generated files", async () => {
+    const siteData = createSiteData();
+    siteData.build.resources = [["posts", createQueryResource()]] as never;
+    siteData.build.dataSources = [
+      [
+        "posts-data",
+        {
+          id: "posts-data",
+          type: "resource",
+          name: "posts",
+          resourceId: "posts",
+          scopeInstanceId: "root",
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+    const existingFiles = [
+      "app/routes/_index.tsx",
+      "app/__generated__/index.ts",
+    ];
+    for (const file of existingFiles) {
+      await mkdir(dirname(file), { recursive: true });
+      await writeFile(file, "previous build");
+    }
+
+    await expect(
+      prebuild({ assets: false, template: ["defaults"] })
+    ).rejects.toThrow(
+      "Assets queries require a content database. Sync the project again before building."
+    );
+    for (const file of existingFiles) {
+      await expect(readFile(file, "utf8")).resolves.toBe("previous build");
+    }
+  });
+
   test("publishes custom headers and refreshes them on incremental builds", async () => {
     const projectSettings = {
       meta: {

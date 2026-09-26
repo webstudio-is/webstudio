@@ -1,5 +1,17 @@
 import { expect, test, vi } from "vitest";
-import type { Asset } from "@webstudio-is/sdk";
+import {
+  createAssetResourceRequest,
+  createStructuredAssetQueryResourceBody,
+  type Asset,
+} from "@webstudio-is/sdk";
+import { loadResource } from "@webstudio-is/sdk/runtime";
+import {
+  createAssetIndex,
+  createCanonicalAssetFileEntry,
+  createContentRuntimeArtifact,
+} from "@webstudio-is/content-engine/compiler";
+import { createGeneratedAssetResourceRuntime } from "@webstudio-is/content-engine/runtime";
+import { createDocumentGraph } from "@webstudio-is/content-engine";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   createImageAssetFixture,
@@ -244,7 +256,7 @@ test("build-id bundles do not read MDX bodies while preparing the RPC response",
     project,
     {} as never,
     dependencies,
-    { prepareContentIndex: false }
+    { contentIndex: "client" }
   );
 
   expect(preparePublishedAssetData).not.toHaveBeenCalled();
@@ -252,6 +264,174 @@ test("build-id bundles do not read MDX bodies while preparing the RPC response",
   expect(result.assetIndex).toBeUndefined();
   expect(result.assets).toContainEqual(article);
 });
+
+test.each([
+  { origin: "https://project.wstd.io", destination: "saas" as const },
+  { origin: "https://custom.example", destination: "saas" as const },
+  { origin: "https://project.wstd.io", destination: "static" as const },
+])(
+  "prepares Assets queries for $destination builds on $origin",
+  async ({ origin, destination }) => {
+    const source = "---\nslug: post\ntitle: Post\n---\nArticle body\n";
+    const article: Asset = {
+      ...createImageAssetFixture(),
+      id: "article",
+      name: "article.md",
+      type: "file",
+      format: "md",
+      size: new TextEncoder().encode(source).byteLength,
+      meta: {},
+    };
+    const configuration = {
+      result: "one" as const,
+      where: {
+        field: ["properties", "slug"],
+        operator: "eq" as const,
+        value: "system.params.slug",
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      output: { mode: "all" as const, includeMetadata: false },
+      content: { mode: "markdown-body-ref" as const },
+    };
+    const build = createBundleBuild({
+      deployment:
+        destination === "saas"
+          ? { destination, domains: [] }
+          : {
+              destination,
+              name: "site.zip",
+              assetsDomain: origin,
+              templates: ["ssg"],
+            },
+      resources: [
+        {
+          id: "article-query",
+          name: "Article",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          headers: [],
+          body: createStructuredAssetQueryResourceBody(configuration),
+        },
+      ],
+      dataSources: [
+        {
+          id: "article-data",
+          type: "resource",
+          name: "Article",
+          resourceId: "article-query",
+        },
+      ],
+    });
+    const artifact = await createAssetIndex({
+      projectId: build.projectId,
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: build.projectId,
+          document: {
+            _id: article.id,
+            _type: "asset.file",
+            name: article.name,
+            path: article.name,
+            key: "article",
+            extension: "md",
+            mimeType: "text/markdown",
+            size: article.size,
+            revision: "article-r1",
+            contentRef: article.name,
+            properties: { slug: "post", title: "Post" },
+          },
+        }),
+      ],
+      documentGraph: createDocumentGraph({
+        nodes: [
+          {
+            id: article.id,
+            revision: "article-r1",
+            contentRef: article.name,
+            format: "markdown",
+          },
+        ],
+        edges: [],
+      }),
+    });
+    const preparePublishedAssetData = vi.fn(async () => ({
+      artifact,
+      assets: [article],
+      assetFolders: [],
+    }));
+    const bundle = await addProjectMetadata(
+      serializeProjectBundle({ build, assets: [article] }),
+      {
+        id: build.projectId,
+        userId: null,
+        domain: "project.wstd.io",
+        title: "Example",
+      } as never,
+      {} as never,
+      {
+        getUserById: vi.fn(),
+        preparePublishedAssetData,
+        validatePublishedAssetCollections: vi.fn(async () => ({
+          assets: [article],
+          assetFolders: [],
+        })),
+        createAssetClient: vi.fn(() => ({}) as never),
+      },
+      { contentIndex: "client" }
+    );
+    if (destination === "static") {
+      expect(preparePublishedAssetData).not.toHaveBeenCalled();
+      expect(bundle.assetIndex).toBeUndefined();
+      return;
+    }
+    const fetchDocument = vi.fn<typeof fetch>(async () => new Response(source));
+    // Match the generated runtime: a bundle without an index uses ordinary fetch.
+    const generatedFetch =
+      bundle.assetIndex === undefined
+        ? fetch
+        : await createGeneratedAssetResourceRuntime({
+            deploymentId: build.id,
+            artifact: createContentRuntimeArtifact(bundle.assetIndex),
+            runtimeAssets: {
+              [article.id]: {
+                url: `/assets/${article.name}`,
+                contentRef: article.name,
+              },
+            },
+          })({
+            request: new Request(`${origin}/blog/post`),
+            fallback: fetchDocument,
+          });
+    const result = await loadResource(
+      generatedFetch,
+      createAssetResourceRequest({
+        query: {
+          ...configuration,
+          where: { ...configuration.where, value: "post" },
+          limit: undefined,
+          offset: undefined,
+        },
+      })
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      status: 200,
+      data: {
+        properties: { title: "Post" },
+        content: { text: "Article body\n" },
+      },
+    });
+    expect(preparePublishedAssetData).toHaveBeenCalledOnce();
+    expect(bundle.assetIndex?.contents).toBeUndefined();
+    expect(fetchDocument).toHaveBeenCalledOnce();
+    expect((fetchDocument.mock.calls[0][0] as Request).url).toBe(
+      `${origin}/assets/article.md`
+    );
+  }
+);
 
 test("loads project-id bundles from the published build", async () => {
   const data = createPublishedProjectBundleFixture();
