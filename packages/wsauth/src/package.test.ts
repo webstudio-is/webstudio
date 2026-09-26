@@ -100,12 +100,15 @@ test("publishes type declarations for every public entrypoint", async () => {
   );
   await writeFile(
     join(projectDirectory, "index.ts"),
-    `import type { WsAuthResources } from "@webstudio-is/wsauth";
+    `import { matchesPathnamePattern, validatePathnamePattern } from "@webstudio-is/wsauth";
+import type { WsAuthResources } from "@webstudio-is/wsauth";
 import type { WsAuthConfig } from "@webstudio-is/wsauth/schema";
 
 const routes: WsAuthResources["routes"] = [];
 const config: WsAuthConfig = { version: 1, routes: {} };
-void [routes, config];
+const matches: boolean = matchesPathnamePattern("/*", "/docs");
+const routeError: string | undefined = validatePathnamePattern("/docs/*");
+void [routes, config, matches, routeError];
 `,
     "utf8"
   );

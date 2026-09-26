@@ -13,7 +13,12 @@ const tryDecode = (encoded: string) => {
   }
 };
 
-export const matchPathnamePattern = (pattern: string, pathname: string) => {
+/**
+ * Match a page or redirect path using URLPattern. Returns decoded parameters
+ * (`{}` for a static match) or `undefined` when it does not match. Unlike the
+ * wsauth's `matchesPathnamePattern`, `/docs/*` does not match `/docs` here.
+ */
+export const matchUrlPattern = (pattern: string, pathname: string) => {
   try {
     const groups = new URLPattern({ pathname: pattern }).exec({ pathname })
       ?.pathname.groups;
