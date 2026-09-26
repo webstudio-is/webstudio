@@ -98,6 +98,15 @@ export const executeProjectSessionApiOperation = async ({
       `${command} does not support --dry-run. Use --dry-run only with local-capable mutation tools; omit it for read or server-only tools.`
     );
   }
+  const requiresServerSupport =
+    runtimeOperationId === undefined ||
+    publicApiOperationRequiresServerSupport(operation);
+  const contract = requiresServerSupport
+    ? await getServerApiContract(connection)
+    : undefined;
+  if (requiresServerSupport && contract !== undefined) {
+    assertCliServerOperationSupported(operation.id, contract);
+  }
   const session = createProjectSession({ connection });
   await session.initialize();
   if (refresh && runtimeOperationId !== undefined) {
@@ -107,13 +116,6 @@ export const executeProjectSessionApiOperation = async ({
         ...operation.writeNamespaces,
       ])
     );
-  }
-  if (
-    runtimeOperationId === undefined ||
-    publicApiOperationRequiresServerSupport(operation)
-  ) {
-    const contract = await getServerApiContract(connection);
-    assertCliServerOperationSupported(operation.id, contract);
   }
   const envelope =
     runtimeOperationId === undefined

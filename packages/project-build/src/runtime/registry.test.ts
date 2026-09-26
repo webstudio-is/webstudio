@@ -2420,6 +2420,8 @@ describe("builder runtime registry", () => {
       ["pages.savePathInHistory", {}],
       ["pages.setHome", {}],
       ["projectSettings.update", { meta: "invalid" }],
+      ["responseHeaders.set", {}],
+      ["responseHeaders.delete", {}],
       ["projectSettings.updateMarketplaceProduct", {}],
       ["redirects.create", {}],
       ["redirects.update", {}],

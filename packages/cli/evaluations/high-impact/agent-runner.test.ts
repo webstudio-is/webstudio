@@ -6,6 +6,7 @@ import { authenticatedPageFixture } from "./fixtures";
 import { designInputFixture } from "./fixtures";
 import {
   fontAssetsFixture,
+  mdxArticleFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
 } from "./fixtures";
@@ -71,8 +72,24 @@ describe("high-impact agent runner", () => {
       calls: 1,
       followReturnedWorkflow: true,
     });
+    const mdxTask = createMinimalAgentTask(mdxArticleFixture, target);
+    expect(mdxTask.guidance).toEqual({
+      tool: "meta.guide",
+      arguments: {
+        workflow: "content-block-source",
+      },
+      argumentBindings: { brief: "objective" },
+      calls: 1,
+      followReturnedWorkflow: true,
+    });
+    expect(getFixtureToolNames(mdxArticleFixture)).not.toContain(
+      "meta.get-more-tools"
+    );
     const blogTask = createMinimalAgentTask(markdownBlogFixture, target);
     expect(blogTask.inputs).toEqual(markdownBlogFixture.agent.inputs);
+    expect(blogTask.constraints).toContain(
+      "Create pages with the required create-page shape {path, name}; specifically use path /blog with name Blog and path /blog/:slug with name Blog article, then retain both returned pageId and rootInstanceId values. Do not stop after the first validate-asset-query call: validate both overview and detail queries, then preview the detail query. Continue through both resource creations, both page insertions, page settings, and the two requested route verifications. The task is incomplete until the full recipe finishes."
+    );
     expect(blogTask.guidance).toEqual({
       tool: "meta.guide",
       arguments: {

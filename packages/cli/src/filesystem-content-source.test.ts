@@ -5,9 +5,12 @@ import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
 } from "@webstudio-is/content-engine";
-import { readBoundedBytes } from "@webstudio-is/content-engine/compiler";
+import {
+  compileContentSource,
+  readBoundedBytes,
+} from "@webstudio-is/content-engine/compiler";
 import type { Asset, AssetFolders } from "@webstudio-is/sdk";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { createFileSystemContentSource } from "./filesystem-content-source";
 
 const temporaryDirectories: string[] = [];
@@ -112,6 +115,59 @@ describe("filesystem content source", () => {
     );
     expect(documentText).toBe(content);
     await expect(snapshot.isCurrent()).resolves.toBe(true);
+  });
+
+  test("reuses prepared local frontmatter when compiling deferred article queries", async () => {
+    const directory = await createTemporaryDirectory();
+    const name = "hello_hash.md";
+    await writeFile(join(directory, name), "---\ntitle: Hello\n---\n# Body\n");
+    const snapshot = await createFileSystemContentSource({
+      projectId: "project",
+      assets: [createAsset(name)],
+      folders,
+      assetsDirectory: directory,
+    }).openSnapshot();
+    const deferredPlan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "post",
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 1,
+          offset: 0,
+          output: { mode: "base", includeMetadata: false },
+          content: { mode: "markdown-body-ref" },
+        },
+      }),
+    ]);
+    const readGraphSource = vi.fn(() => {
+      throw new Error(
+        "Prepared frontmatter must not require a second source read"
+      );
+    });
+    const { artifact } = await compileContentSource({
+      projectId: "project",
+      plan: deferredPlan,
+      source: {
+        async openSnapshot() {
+          return {
+            ...snapshot,
+            async loadDocumentSources() {
+              return [
+                {
+                  id: "post",
+                  source: { [Symbol.asyncIterator]: readGraphSource },
+                },
+              ];
+            },
+          };
+        },
+      },
+    });
+
+    expect(readGraphSource).not.toHaveBeenCalled();
+    expect(artifact.documents).toHaveLength(1);
+    expect(artifact.contents).toBeUndefined();
   });
 
   test("invalidates a snapshot when a local file is replaced", async () => {

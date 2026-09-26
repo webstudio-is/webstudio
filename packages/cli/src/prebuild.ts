@@ -110,6 +110,7 @@ import {
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
+import { generateResponseHeadersModule } from "./response-headers";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -1094,6 +1095,10 @@ export const prebuild = async (options: {
     pages,
     siteData.build.projectSettings,
     writeGeneratedFile
+  );
+  await writeGeneratedFile(
+    join(generatedDir, "$resources.headers.server.ts"),
+    generateResponseHeadersModule(siteData.build.projectSettings)
   );
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};

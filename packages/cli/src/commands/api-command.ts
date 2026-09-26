@@ -181,8 +181,15 @@ export const pathCommandOptions = (yargs: CommonYargsArgv) =>
 export const pagesCommandOptions = (yargs: CommonYargsArgv) =>
   outputDetailCommandOptions(apiCommandOptions(yargs));
 
+const pageExpressionModeOption = (yargs: CommonYargsArgv) =>
+  yargs.option("expressions", {
+    type: "boolean",
+    describe:
+      "Treat page title and metadata text flags as JavaScript expressions; quote fixed text",
+  });
+
 export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  pageExpressionModeOption(apiCommandOptions(yargs))
     .option("name", {
       type: "string",
       describe: "Required page name shown in Builder",
@@ -195,7 +202,7 @@ export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
     })
     .option("title", {
       type: "string",
-      describe: "Page title text or expression; defaults to --name",
+      describe: "Fixed page title text; defaults to --name",
     })
     .option("parent-folder", {
       type: "string",
@@ -203,7 +210,7 @@ export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
     });
 
 export const updatePageCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  pageExpressionModeOption(apiCommandOptions(yargs))
     .option("page", {
       type: "string",
       describe: "Required page id to update",
@@ -219,23 +226,23 @@ export const updatePageCommandOptions = (yargs: CommonYargsArgv) =>
     })
     .option("title", {
       type: "string",
-      describe: "Update page title text or expression",
+      describe: "Update fixed page title text",
     })
     .option("description", {
       type: "string",
-      describe: "Update page meta description text or expression",
+      describe: "Update fixed page meta description text",
     })
     .option("language", {
       type: "string",
-      describe: "Update page language text or expression",
+      describe: "Update fixed page language text",
     })
     .option("redirect", {
       type: "string",
-      describe: "Update page redirect expression",
+      describe: "Update fixed page redirect URL",
     })
     .option("social-image-url", {
       type: "string",
-      describe: "Update page social image URL expression",
+      describe: "Update fixed page social image URL",
     })
     .option("social-image-asset", {
       type: "string",
@@ -275,6 +282,27 @@ export const projectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
 
 export const paginatedListCommandOptions = (yargs: CommonYargsArgv) =>
   outputDetailCommandOptions(apiCommandOptions(yargs));
+
+const responseHeaderCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("route", {
+      type: "string",
+      describe: "Route pattern; omit for all paths",
+    })
+    .option("name", {
+      type: "string",
+      describe: "Response header name",
+      demandOption: true,
+    });
+
+export const setResponseHeaderCommandOptions = (yargs: CommonYargsArgv) =>
+  responseHeaderCommandOptions(yargs).option("value", {
+    type: "string",
+    describe: "Response header value",
+    demandOption: true,
+  });
+
+export const deleteResponseHeaderCommandOptions = responseHeaderCommandOptions;
 
 export const updateProjectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
@@ -458,7 +486,7 @@ const pageTemplateFieldsCommandOptions = (
   yargs: CommonYargsArgv,
   options: { requireName?: boolean } = {}
 ) =>
-  yargs
+  pageExpressionModeOption(yargs)
     .option("name", {
       type: "string",
       describe: "Page template name shown in Builder",
@@ -466,19 +494,19 @@ const pageTemplateFieldsCommandOptions = (
     })
     .option("title", {
       type: "string",
-      describe: "Page template title text or expression",
+      describe: "Fixed page template title text",
     })
     .option("description", {
       type: "string",
-      describe: "Page template meta description text or expression",
+      describe: "Fixed page template meta description text",
     })
     .option("language", {
       type: "string",
-      describe: "Page template language text or expression",
+      describe: "Fixed page template language text",
     })
     .option("social-image-url", {
       type: "string",
-      describe: "Social image URL expression",
+      describe: "Fixed social image URL",
     })
     .option("social-image-asset", {
       type: "string",
@@ -1335,6 +1363,7 @@ export type ApiCommandOptions = {
   template?: string;
   folder?: string;
   path?: string;
+  route?: string;
   name?: string;
   variable?: string;
   resource?: string;
@@ -1351,6 +1380,7 @@ export type ApiCommandOptions = {
   dataSourceName?: string;
   slug?: string;
   title?: string;
+  expressions?: boolean;
   description?: string;
   language?: string;
   redirect?: string;
@@ -1754,6 +1784,9 @@ const getResourceFields = async (
   return fields;
 };
 
+const pageTextInput = (value: string | undefined, expressions?: boolean) =>
+  value === undefined || expressions === true ? value : JSON.stringify(value);
+
 const getPageMetaOptions = (options: ApiCommandOptions) => {
   const auth =
     options.authLogin !== undefined || options.authPassword !== undefined
@@ -1764,15 +1797,15 @@ const getPageMetaOptions = (options: ApiCommandOptions) => {
         }
       : undefined;
   const meta = {
-    description: options.description,
-    language: options.language,
-    redirect: options.redirect,
+    description: pageTextInput(options.description, options.expressions),
+    language: pageTextInput(options.language, options.expressions),
+    redirect: pageTextInput(options.redirect, options.expressions),
     status: options.status,
-    socialImageUrl: options.socialImageUrl,
+    socialImageUrl: pageTextInput(options.socialImageUrl, options.expressions),
     socialImageAssetId: options.socialImageAsset,
     excludePageFromSearch: options.excludePageFromSearch,
     documentType: options.documentType,
-    content: options.content,
+    content: pageTextInput(options.content, options.expressions),
     auth,
   };
   return Object.values(meta).some((value) => value !== undefined)
@@ -2042,7 +2075,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       name: requireOption(options.name, "--name"),
       path: requireOption(options.path, "--path"),
-      title: options.title,
+      title: pageTextInput(options.title, options.expressions),
       parentFolderId: options.parentFolder,
       meta: getPageMetaOptions(options),
     };
@@ -2059,7 +2092,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       values: {
         name: options.name,
         path: options.path,
-        title: options.title,
+        title: pageTextInput(options.title, options.expressions),
         parentFolderId: options.parentFolder,
         meta: getPageMetaOptions(options),
       },
@@ -2123,6 +2156,38 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
         cursor: options.cursor,
         limit: options.limit,
         verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
+  "list-response-headers": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-response-headers",
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
+  "set-response-header": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "set-response-header",
+      {
+        route: options.route,
+        name: requireOption(options.name, "--name"),
+        value: requireOption(options.value, "--value"),
+      },
+      connection,
+      dependencies
+    ),
+  "delete-response-header": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "delete-response-header",
+      {
+        route: options.route,
+        name: requireOption(options.name, "--name"),
       },
       connection,
       dependencies
@@ -2301,7 +2366,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   "create-page-template": async (options, connection, dependencies) => {
     const input = {
       name: requireOption(options.name, "--name"),
-      title: options.title,
+      title: pageTextInput(options.title, options.expressions),
       meta: getPageMetaOptions(options),
     };
     return runProjectSessionCommand(
@@ -2316,7 +2381,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       templateId: requireOption(options.template, "--template"),
       values: {
         name: options.name,
-        title: options.title,
+        title: pageTextInput(options.title, options.expressions),
         meta: getPageMetaOptions(options),
       },
     };

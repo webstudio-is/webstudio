@@ -154,7 +154,7 @@ export const createBasicAuthRoute = ({
   login: string;
   password: string;
 }): WsAuthRoute => {
-  const routeError = validateWsAuthRoute(route);
+  const routeError = validatePathnamePattern(route);
   if (routeError) {
     throw new Error(routeError);
   }
@@ -197,7 +197,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 
 const parameterSegment = /^:\w+[?*]?$/;
 
-export const validateWsAuthRoute = (route: string) => {
+/** Validate the route-rule syntax shared by authentication and response headers. */
+export const validatePathnamePattern = (route: string) => {
   if (route.startsWith("/") === false) {
     return 'Route must start with "/"';
   }
@@ -265,7 +266,7 @@ export const parseWsAuth = (content: string): WsAuthParseResult => {
   }
 
   for (const [route, authInput] of Object.entries(json.routes)) {
-    const routeError = validateWsAuthRoute(route);
+    const routeError = validatePathnamePattern(route);
     if (routeError) {
       errors.push({
         path: `routes.${JSON.stringify(route)}`,
@@ -434,7 +435,13 @@ const normalizePathname = (pathname: string) => {
   return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
 };
 
-export const matchWsAuthRoute = (route: string, pathname: string) => {
+/**
+ * Boolean matcher for auth and response-header rules. A trailing wildcard also
+ * matches its base path (`/docs/*` matches `/docs`). Page routing instead uses
+ * project-build's `matchUrlPattern`, which returns decoded path parameters and
+ * does not match `/docs` for that pattern.
+ */
+export const matchesPathnamePattern = (route: string, pathname: string) => {
   const routeSegments = normalizePathname(route).slice(1).split("/");
   const pathnameSegments = normalizePathname(pathname).slice(1).split("/");
   const matchSegments = (
@@ -471,7 +478,7 @@ export const matchWsAuthRoute = (route: string, pathname: string) => {
 };
 
 export const findWsAuthRoute = (authRoutes: WsAuthRoute[], pathname: string) =>
-  authRoutes.find(({ route }) => matchWsAuthRoute(route, pathname));
+  authRoutes.find(({ route }) => matchesPathnamePattern(route, pathname));
 
 export const authenticateRequest = (
   request: Request,

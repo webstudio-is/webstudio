@@ -350,6 +350,7 @@ test("project access verification uses the linked API connection and compatibili
     headers: expect.objectContaining({
       "x-webstudio-client": "cli",
       "x-webstudio-client-version": expect.any(String),
+      "x-webstudio-api-contract-version": expect.any(String),
     }),
   });
 });

@@ -371,7 +371,11 @@ const DomainItem = ({
 
           <CopyToClipboard
             text={pageUrl.toString()}
-            copyText={`Copy link: ${pageUrl.toString()}`}
+            copyText={
+              <Text css={{ overflowWrap: "anywhere" }}>
+                Copy link: {pageUrl.toString()}
+              </Text>
+            }
           >
             <IconButton type="button" tabIndex={-1}>
               <CopyIcon />

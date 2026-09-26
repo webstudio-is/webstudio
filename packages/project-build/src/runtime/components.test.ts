@@ -1387,6 +1387,128 @@ test("requires an explicit fragment token conflict resolution", async () => {
   ).toThrow(/explicit conflictResolution.*brand/);
 });
 
+test("attaches an existing design token by name in a JSX fragment", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment(
+        `<ws.element ws:tag="div" ws:tokens={[token("brand")]} />`
+      ),
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues(mutation, "styleSources")).toEqual([]);
+  expect(getAddedValues(mutation, "styles")).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-0",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+});
+
+test("keeps an existing design token in content-mode fragment insertion", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      contentMode: true,
+      fragment: await parseWebstudioJsxFragment(
+        `<ws.element ws:tag="div" ws:tokens={[token("brand")]} />`
+      ),
+    },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues(mutation, "styleSources")).toEqual([]);
+  expect(
+    getAddedValues<{ instanceId: string; values: string[] }>(
+      mutation,
+      "styleSourceSelections"
+    )
+  ).toEqual([
+    {
+      instanceId: "generated-0",
+      values: [existingFragment.styleSources[0]?.id],
+    },
+  ]);
+});
+
+test("reports an unknown design token reference in a JSX fragment", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("missing")]} />`
+  );
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow('Design token "missing" was not found');
+});
+
+test("inserts an empty token definition from a portable fragment", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
+  );
+  fragment.styles = [];
+
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues(mutation, "styleSources")).toContainEqual(
+    expect.objectContaining({ type: "token", name: "brand" })
+  );
+});
+
+test("does not reuse a styled token for an empty token definition", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  addFragmentStyles(state, existingFragment);
+  const fragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
+  );
+  fragment.styles = [];
+
+  expect(() =>
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow(/explicit conflictResolution.*brand/);
+});
+
 test("inserts token-only fragments without a parent instance", async () => {
   const parent = createParent();
   const state = createState(parent);

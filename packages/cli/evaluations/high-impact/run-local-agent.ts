@@ -26,8 +26,10 @@ import {
 import { startHighImpactFixtureApi } from "./fixture-api";
 import { evaluateHighImpactOutcome } from "./validate";
 import {
+  createMinimalAgentTask,
   runHighImpactAgentEvaluation,
   getFixtureToolNames,
+  type AgentCliTarget,
   type AgentEvaluationResult,
 } from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
@@ -95,13 +97,34 @@ const getEvaluationContentCompilationInput = (
     dataSources: snapshot.state.dataSources?.values() ?? [],
     resources: snapshot.state.resources?.values() ?? [],
   });
-  if (plan === undefined) {
-    throw new Error("Evaluation blog has no reachable Assets resources");
-  }
   return { snapshot, plan };
 };
 
-export const __testing__ = { getEvaluationContentCompilationInput };
+const getEvaluationPrompt = (
+  fixture: HighImpactFixture,
+  target: AgentCliTarget
+) =>
+  `Complete this task using the configured Webstudio MCP tools:\n${JSON.stringify(
+    createMinimalAgentTask(fixture, target)
+  )}`;
+
+const getMcpProxyArgs = (
+  traceProxy: string,
+  localCli: string,
+  tracePath: string
+) => [
+  "--conditions=webstudio",
+  `--import=${pathToFileURL(require.resolve("tsx")).href}`,
+  traceProxy,
+  localCli,
+  tracePath,
+];
+
+export const __testing__ = {
+  getEvaluationContentCompilationInput,
+  getEvaluationPrompt,
+  getMcpProxyArgs,
+};
 
 const compileEvaluationContentDatabase = async (projectDirectory: string) => {
   const loadedSnapshot = await createCliProjectSessionStorage(
@@ -109,6 +132,9 @@ const compileEvaluationContentDatabase = async (projectDirectory: string) => {
   ).load();
   const { snapshot, plan } =
     getEvaluationContentCompilationInput(loadedSnapshot);
+  if (plan === undefined) {
+    return undefined;
+  }
   const { artifact } = await compileContentSource({
     source: createFileSystemContentSource({
       projectId: snapshot.projectId,
@@ -152,7 +178,19 @@ const runFixture = async ({
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
   const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.4-mini";
-  const reasoningEffort = fixture.agent.reasoningEffort;
+  const requestedReasoningEffort =
+    process.env.WEBSTUDIO_HIGH_IMPACT_REASONING_EFFORT;
+  if (
+    requestedReasoningEffort !== undefined &&
+    requestedReasoningEffort !== "low" &&
+    requestedReasoningEffort !== "medium" &&
+    requestedReasoningEffort !== "high"
+  ) {
+    throw new Error("Evaluation reasoning effort must be low, medium or high.");
+  }
+  const reasoningEffort =
+    requestedReasoningEffort ?? fixture.agent.reasoningEffort;
+  const target = { kind: "source", repositoryRoot } as const;
   const directory = await mkdtemp(
     join(tmpdir(), "webstudio-high-impact-agent-")
   );
@@ -180,15 +218,17 @@ const runFixture = async ({
     );
     const mcpConfig = [
       `mcp_servers.webstudio.command=${JSON.stringify(process.execPath)}`,
-      `mcp_servers.webstudio.args=${JSON.stringify([
-        `--import=${pathToFileURL(require.resolve("tsx")).href}`,
-        traceProxy,
-        localCli,
-        tracePath,
-      ])}`,
+      `mcp_servers.webstudio.args=${JSON.stringify(
+        getMcpProxyArgs(traceProxy, localCli, tracePath)
+      )}`,
       `mcp_servers.webstudio.cwd=${JSON.stringify(projectDirectory)}`,
-      `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(configDirectory)} }`,
-      `mcp_servers.webstudio.enabled_tools=${JSON.stringify(getFixtureToolNames(fixture))}`,
+      `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(
+        configDirectory
+      )} }`,
+      `mcp_servers.webstudio.enabled_tools=${JSON.stringify(
+        getFixtureToolNames(fixture)
+      )}`,
+      "mcp_servers.webstudio.required=true",
     ];
     const agentCommand = [
       shellQuote(codex),
@@ -206,9 +246,7 @@ const runFixture = async ({
       "--cd",
       shellQuote(projectDirectory),
       ...mcpConfig.flatMap((config) => ["--config", shellQuote(config)]),
-      shellQuote(
-        "Read the evaluation task at $WEBSTUDIO_HIGH_IMPACT_AGENT_TASK and complete its objective using the configured Webstudio MCP."
-      ),
+      shellQuote(getEvaluationPrompt(fixture, target)),
     ].join(" ");
     let toolCalls: EvaluationToolCall[] = [];
     let catalogObservations: McpCatalogObservation[] = [];
@@ -219,7 +257,7 @@ const runFixture = async ({
         .map((line) => JSON.parse(line) as EvaluationTraceEvent);
     return await runHighImpactAgentEvaluation({
       fixture,
-      target: { kind: "source", repositoryRoot },
+      target,
       agentCommand,
       cwd: projectDirectory,
       taskPath,
@@ -330,37 +368,42 @@ const run = async () => {
   process.once("SIGINT", abort);
   process.once("SIGTERM", abort);
   const baselines: AgentEvaluationResult[] = [];
-  const completed = await runConcurrently(fixtures, async (fixture) => {
-    const resultPath = resolve(
-      process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
-        join(resultsDirectory, `${fixture.id}.json`)
-    );
-    const result = await runFixture({
-      fixture,
-      repositoryRoot,
-      resultPath,
-      signal: controller.signal,
-    });
-    const baseline = await readFile(
-      join(baselineDirectory, `${fixture.id}.json`),
-      "utf8"
-    )
-      .then((source) => JSON.parse(source) as AgentEvaluationResult)
-      .catch(() => undefined);
-    const report = {
-      ...result,
-      comparison: compareEvaluationResult(result, baseline),
-    };
-    if (baseline !== undefined) {
-      baselines.push(baseline);
-    }
-    await writeFile(
-      resultPath,
-      `${JSON.stringify(report, undefined, 2)}\n`,
-      "utf8"
-    );
-    return { result, report };
-  }).finally(() => {
+  // Run model and browser-backed evaluations sequentially to avoid resource contention.
+  const completed = await runConcurrently(
+    fixtures,
+    async (fixture) => {
+      const resultPath = resolve(
+        process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
+          join(resultsDirectory, `${fixture.id}.json`)
+      );
+      const result = await runFixture({
+        fixture,
+        repositoryRoot,
+        resultPath,
+        signal: controller.signal,
+      });
+      const baseline = await readFile(
+        join(baselineDirectory, `${fixture.id}.json`),
+        "utf8"
+      )
+        .then((source) => JSON.parse(source) as AgentEvaluationResult)
+        .catch(() => undefined);
+      const report = {
+        ...result,
+        comparison: compareEvaluationResult(result, baseline),
+      };
+      if (baseline !== undefined) {
+        baselines.push(baseline);
+      }
+      await writeFile(
+        resultPath,
+        `${JSON.stringify(report, undefined, 2)}\n`,
+        "utf8"
+      );
+      return { result, report };
+    },
+    1
+  ).finally(() => {
     process.removeListener("SIGINT", abort);
     process.removeListener("SIGTERM", abort);
   });

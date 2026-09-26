@@ -232,15 +232,40 @@ const expandBorder = function* (property: string, value: CssNode) {
     case "border-right":
     case "border-bottom":
     case "border-left": {
-      const [width, style, color] = parseUnordered(
+      const {
+        assigned: [width, style, color],
+        unresolved,
+      } = assignUnorderedNodes(
         ["<line-width>", "<line-style>", "<color>"],
         value
       );
-      yield [`${property}-width`, width ?? createIdentifier("medium")] as const;
-      yield [`${property}-style`, style ?? createIdentifier("none")] as const;
+      const missing = [width, style, color]
+        .map((value, index) => (value === undefined ? index : undefined))
+        .filter((index): index is number => index !== undefined);
+      const unresolvedNodes =
+        unresolved === undefined ? [] : getValueList(unresolved);
+      const unresolvedIndex =
+        missing.length === 1 &&
+        unresolvedNodes.length === 1 &&
+        unresolvedNodes[0]?.type === "Function" &&
+        unresolvedNodes[0].name === "var"
+          ? missing[0]
+          : undefined;
+      const values = [width, style, color];
+      if (unresolvedIndex !== undefined) {
+        values[unresolvedIndex] = unresolved;
+      }
+      yield [
+        `${property}-width`,
+        values[0] ?? createIdentifier("medium"),
+      ] as const;
+      yield [
+        `${property}-style`,
+        values[1] ?? createIdentifier("none"),
+      ] as const;
       yield [
         `${property}-color`,
-        color ?? createIdentifier("currentcolor"),
+        values[2] ?? createIdentifier("currentcolor"),
       ] as const;
       break;
     }

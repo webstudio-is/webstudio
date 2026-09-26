@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { validateBasicAuth } from "@webstudio-is/wsauth";
+import { customResponseHeaders } from "./response-headers";
 
 export type System = {
   params: Record<string, string | undefined>;
@@ -219,6 +220,11 @@ export const projectMeta = z.object({
   code: z.string().optional(),
   agentInstructions: z.string().optional(),
   auth: z.string().optional(),
+  customHeaders: customResponseHeaders
+    .optional()
+    .describe(
+      "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud."
+    ),
 });
 export type ProjectMeta = z.infer<typeof projectMeta>;
 

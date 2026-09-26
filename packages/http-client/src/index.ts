@@ -4,6 +4,7 @@ import {
   getAssetContentHash,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
+  type CustomResponseHeader,
   type ExpressionBindingMode,
 } from "@webstudio-is/sdk";
 import {
@@ -28,6 +29,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   apiClientHeader,
+  apiClientContractVersionHeader,
   apiClientVersionHeader,
   getApiCompatibilityPayload,
 } from "@webstudio-is/trpc-interface/api-compatibility";
@@ -147,12 +149,17 @@ type ApiClientName = "browser" | "cli" | "service";
 export const createApiClientHeaders = ({
   name,
   version,
+  contractVersion,
 }: {
   name: ApiClientName;
   version: string;
+  contractVersion?: string;
 }): RequestHeaders => ({
   [apiClientHeader]: name,
   [apiClientVersionHeader]: version,
+  ...(contractVersion === undefined
+    ? {}
+    : { [apiClientContractVersionHeader]: contractVersion }),
 });
 
 export const getApiCompatibilityMessage = (
@@ -1206,6 +1213,7 @@ export const loadProjectBundleByBuildId = async (
     buildId: string;
     origin: string;
     headers?: RequestHeaders;
+    contentIndex?: "client";
   } & (
     | {
         serviceToken: string;
@@ -1228,6 +1236,7 @@ export const loadProjectBundleByBuildId = async (
   const data = await client.query("build.loadProjectBundleByBuildId", {
     buildId: params.buildId,
     bundleVersion: currentBundleVersion,
+    contentIndex: params.contentIndex,
   });
   return publishedProjectBundle.parse(data);
 };
@@ -1632,6 +1641,7 @@ type ProjectSettingsInput = {
     faviconAssetId?: string | null;
     code?: string | null;
     auth?: string | null;
+    customHeaders?: CustomResponseHeader[] | null;
   };
   compiler?: {
     atomicStyles?: boolean | null;
@@ -1649,6 +1659,18 @@ export const updateProjectSettings = projectMutationInput<
 export const listRedirects = projectQueryInput<
   AuthProjectParams & PaginatedQueryInput
 >("list-redirects");
+
+export const listResponseHeaders = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-response-headers");
+
+export const setResponseHeader = projectMutationInput<
+  AuthProjectParams & CustomResponseHeader
+>("set-response-header");
+
+export const deleteResponseHeader = projectMutationInput<
+  AuthProjectParams & Pick<CustomResponseHeader, "route" | "name">
+>("delete-response-header");
 
 export const createRedirect = projectMutationInput<
   AuthProjectParams & {

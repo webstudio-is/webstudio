@@ -3,11 +3,13 @@ import {
   createApiClientHeaders,
   getApiCompatibilityMessage,
 } from "@webstudio-is/http-client";
+import { publicApiContractVersion } from "@webstudio-is/protocol";
 import packageJson from "../../package.json";
 
 export const apiCompatibilityHeaders = createApiClientHeaders({
   name: "cli",
   version: packageJson.version,
+  contractVersion: publicApiContractVersion,
 });
 
 const updateCliCommand = "npm install -g webstudio@latest";

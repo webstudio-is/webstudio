@@ -42,6 +42,7 @@ export type ScreenshotCaptureOptions = {
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
   waitForSelector?: string;
+  waitForFonts?: boolean;
   waitForTimeout?: number;
   timeout?: number;
   format?: "png" | "jpeg" | "webp";

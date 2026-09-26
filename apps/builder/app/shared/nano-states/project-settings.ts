@@ -4,6 +4,7 @@ export type SectionName =
   | "general"
   | "agents"
   | "auth"
+  | "headers"
   | "redirects"
   | "publish"
   | "marketplace"

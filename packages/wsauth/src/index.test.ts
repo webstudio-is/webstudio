@@ -6,9 +6,10 @@ import {
   createWsAuthResources,
   findWsAuthRoute,
   getBasicAuthCredentials,
+  matchesPathnamePattern,
   parseWsAuth,
   validateBasicAuth,
-  validateWsAuthRoute,
+  validatePathnamePattern,
 } from "./index";
 
 describe("wsauth", () => {
@@ -121,12 +122,34 @@ describe("wsauth", () => {
   });
 
   test("validates route syntax", () => {
-    expect(validateWsAuthRoute("/private")).toBeUndefined();
-    expect(validateWsAuthRoute("/docs/*")).toBeUndefined();
-    expect(validateWsAuthRoute("private")).toBe('Route must start with "/"');
-    expect(validateWsAuthRoute("/docs/*/page")).toBe(
+    expect(validatePathnamePattern("/private")).toBeUndefined();
+    expect(validatePathnamePattern("/docs/*")).toBeUndefined();
+    expect(validatePathnamePattern("private")).toBe(
+      'Route must start with "/"'
+    );
+    expect(validatePathnamePattern("/docs/*/page")).toBe(
       "Wildcard route segment must be the last segment"
     );
+  });
+
+  test.each([
+    ["/", "/", true],
+    ["/", "/docs", false],
+    ["/*", "/", true],
+    ["/*", "/docs/a", true],
+    ["/docs/*", "/docs", true],
+    ["/docs/*", "/docs/a", true],
+    ["/docs", "/docs/a", false],
+    ["/docs/:id", "/docs/a", true],
+    ["/docs/:id", "/docs", false],
+    ["/docs/:id?", "/docs", true],
+    ["/docs/:id?", "/docs/a", true],
+    ["/docs/:id?", "/docs/a/b", false],
+    ["/docs/:rest*", "/docs/a/b", true],
+    ["/Docs", "/docs", false],
+    ["/docs", "/docs/", true],
+  ] as const)("matches %s against %s: %s", (pattern, pathname, expected) => {
+    expect(matchesPathnamePattern(pattern, pathname)).toBe(expected);
   });
 
   test("builds content from JSON and route sources", () => {

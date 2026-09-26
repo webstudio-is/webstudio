@@ -1040,11 +1040,13 @@ test("captures one session page across multiple viewports through resize", async
       source: "session",
       viewport: { width: 375, height: 812 },
       waitForTimeout: 0,
+      waitForFonts: false,
     },
     {
       path: "/responsive",
       viewport: { width: 1440, height: 900 },
       waitForTimeout: 0,
+      waitForFonts: false,
     },
   ]);
 
@@ -1055,11 +1057,13 @@ test("captures one session page across multiple viewports through resize", async
       url: "http://127.0.0.1:3000/responsive",
       width: 375,
       waitForTimeout: 0,
+      waitForFonts: false,
     }),
     expect.objectContaining({
       url: "http://127.0.0.1:3000/responsive",
       width: 1440,
       waitForTimeout: 0,
+      waitForFonts: false,
     }),
   ]);
   expect(preview.startAndWait).not.toHaveBeenCalled();

@@ -180,6 +180,79 @@ test("validates collections when publication does not need a content index", asy
   expect(result.assetFolders).toBe(currentAssetFolders);
 });
 
+test("build-id bundles do not read MDX bodies while preparing the RPC response", async () => {
+  const build = createBundleBuild();
+  const rootInstanceId = build.pages.pages.get(
+    build.pages.homePageId
+  )?.rootInstanceId;
+  if (rootInstanceId === undefined) {
+    throw new Error("Home page root is missing");
+  }
+  build.instances = [
+    {
+      type: "instance",
+      id: rootInstanceId,
+      component: "ws:block",
+      children: [],
+    },
+  ];
+  build.props = [
+    {
+      id: "article-source",
+      instanceId: rootInstanceId,
+      name: "src",
+      type: "asset",
+      value: "article",
+    },
+  ];
+  const article: Asset = {
+    ...createImageAssetFixture({ projectId: build.projectId }),
+    id: "article",
+    name: "article.mdx",
+    type: "file",
+    format: "mdx",
+    meta: {},
+  };
+  const preparePublishedAssetData = vi.fn(() => {
+    throw new Error("RPC attempted to read article content");
+  });
+  const validatePublishedAssetCollections = vi.fn().mockResolvedValue({
+    assets: [article],
+    assetFolders: [],
+  });
+  const data = serializeProjectBundle({ build, assets: [article] });
+  const project = {
+    id: build.projectId,
+    userId: null,
+    domain: "example.com",
+    title: "Example",
+  } as never;
+  const dependencies = {
+    getUserById: vi.fn(),
+    preparePublishedAssetData,
+    validatePublishedAssetCollections,
+    createAssetClient: vi.fn(() => ({}) as never),
+  };
+
+  await expect(
+    addProjectMetadata(data, project, {} as never, dependencies)
+  ).rejects.toThrow("RPC attempted to read article content");
+  preparePublishedAssetData.mockClear();
+
+  const result = await addProjectMetadata(
+    data,
+    project,
+    {} as never,
+    dependencies,
+    { prepareContentIndex: false }
+  );
+
+  expect(preparePublishedAssetData).not.toHaveBeenCalled();
+  expect(validatePublishedAssetCollections).toHaveBeenCalledOnce();
+  expect(result.assetIndex).toBeUndefined();
+  expect(result.assets).toContainEqual(article);
+});
+
 test("loads project-id bundles from the published build", async () => {
   const data = createPublishedProjectBundleFixture();
   const project = {

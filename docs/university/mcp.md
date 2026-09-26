@@ -129,12 +129,18 @@ Write and review larger fragments as JSX before placing them in the `fragment` f
   </button>
 </section>
 
+<section ws:tokens={[token("accent")]}>Reuse an existing accent token</section>
+
 <section>
   <Switch>
     <SwitchThumb />
   </Switch>
 </section>
 ```
+
+Use the two-argument `token` form with a `css` template to define styles in the
+fragment. Use `token("name")` to attach an existing project token; an unknown
+name is an error.
 
 Rules:
 
@@ -160,6 +166,8 @@ Rules:
 ## MDX-backed Content Blocks
 
 Use a connected `.mdx` Asset when editors should change a Content Block body visually while the document remains stored as a file.
+
+Choose this format before building a blog: each reachable connected MDX article is downloaded and compiled when publishing, so publishing can take longer as the blog grows. If editors only need to edit Markdown source in Assets, use `.md` with Markdown Embed instead. Content mode editors can edit those files in the Markdown file editor, but cannot edit the article body visually on the canvas. `.md` does not need per-article MDX compilation; the current publish sync still transfers Asset files for either format, and static generation may read Markdown bodies.
 
 ### Connect a collection to its entry page
 
@@ -356,7 +364,7 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 
 `meta.guide` returns structured `routing` with the selected workflow and any broad context bundle it recommends. Authentication and design context bundles appear only when their specialized workflow is selected. Set `authoredFragment` when using an authored fragment and `reuseDesignSystem` when its recommendations should retain design-system discovery tools.
 
-Set `taskScope` and `workflow` explicitly; `meta.guide` does not infer them or the authored-fragment flags from the brief. Specialized workflows are `markdown-blog`, `json-ld`, `collection`, `expression`, `authenticated-page`, `font-assets`, `design-input`, and `craft`; otherwise use `general`. For work that must not change project or local state, pass `{"brief":"Inventory custom code","taskScope":"read-only-audit","workflow":"general"}`. The resulting `read-only-discovery` workflow excludes mutation and side-effecting session tools and uses focused search, list, get, inspect, and snapshot tools.
+Set `taskScope` and `workflow` explicitly; `meta.guide` does not infer them or the authored-fragment flags from the brief. Specialized workflows are `markdown-blog`, `json-ld`, `collection`, `expression`, `authenticated-page`, `font-assets`, `design-input`, `content-block-source`, and `craft`; otherwise use `general`. Use `content-block-source` to connect or edit a Markdown/MDX-backed Content Block, including writable bindings for its designed header. For work that must not change project or local state, pass `{"brief":"Inventory custom code","taskScope":"read-only-audit","workflow":"general"}`. The resulting `read-only-discovery` workflow excludes mutation and side-effecting session tools and uses focused search, list, get, inspect, and snapshot tools.
 
 `search-project` follows normal ProjectSession synchronization, then searches in the CLI process. Namespace filters limit values matched; related namespaces may still supply route and reference context, and synchronization is unchanged. Only paged matches enter model context. Recognized credential fields and asset binary or document bodies are excluded.
 
@@ -1112,6 +1120,13 @@ source of truth. For tools with no required arguments, pass `{}`.
 ```json
 {
   "parentInstanceId": "parent-id",
+  "fragment": "<section ws:tokens={[token('accent')]}><h2>Reuse an existing accent token</h2></section>"
+}
+```
+
+```json
+{
+  "parentInstanceId": "parent-id",
   "fragment": "<section><Switch><SwitchThumb /></Switch></section>"
 }
 ```
@@ -1179,9 +1194,9 @@ source of truth. For tools with no required arguments, pass `{}`.
 {
   "pageId": "page-id",
   "values": {
-    "title": "Pricing",
+    "title": "\"Pricing\"",
     "meta": {
-      "description": "Pricing plans"
+      "description": "\"Pricing plans\""
     }
   }
 }

@@ -39,7 +39,8 @@ type EvaluationAgentConfig = {
       | "authenticated-page"
       | "design-input"
       | "font-assets"
-      | "markdown-blog";
+      | "markdown-blog"
+      | "content-block-source";
   };
   inputs?: EvaluationAgentInputs;
 };
@@ -340,8 +341,11 @@ Follow the marked trail and carry a map.
 export const mdxArticleFixture: HighImpactFixture = {
   id: "mdx-article-editing-v1",
   objective:
-    "Connect the existing article.mdx Asset (article-file) to the Content Block article-block on Home. Keep its designed header outside the file body. Make the header's article-title, article-author, and article-reading-time text display the file's title, author name, and reading time and remain editable in Content mode. Keep the reading-time number separate from the existing static ‘ min read’ suffix. Change the file's author name to Noor Silva, preserving all other metadata and body content. Reload the connected source and inspect the saved result, then audit the page. Discover the supported editing workflow from MCP guidance. No visual verification is requested.",
-  agent: { reasoningEffort: "medium", guidance: { workflow: "general" } },
+    "Use the content-block-source MCP workflow to connect the existing article.mdx Asset (article-file) to the Content Block article-block on Home. Inspect the connected source and use its actual document parameter. Before editing frontmatter, call update-text once for each of article-title, article-author, and article-reading-time with childIndex 0, mode expression, and expressionBindingMode readwrite. Bind them respectively to the direct paths document.frontmatter.title, document.frontmatter.author.name, and document.frontmatter.readingTime. Keep these designed header instances outside the MDX body and leave the existing static ‘ min read’ suffix separate. Then change only author.name to Noor Silva in the complete frontmatter map, preserving the title, readingTime, draft value, and body. Reload the connected source, inspect the saved result, and audit the page. No visual verification is requested.",
+  agent: {
+    reasoningEffort: "medium",
+    guidance: { workflow: "content-block-source" },
+  },
   assetSources: { "article-file": mdxArticleSource },
   project: {
     ...emptyProject(),

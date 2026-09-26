@@ -49,7 +49,6 @@ export type AgentEvaluationResult = {
 const fixtureToolNames = {
   "mdx-article-editing-v1": [
     "meta.guide",
-    "meta.get-more-tools",
     "inspect-instance",
     "list-variables",
     "connect-content-block-source",
@@ -138,6 +137,7 @@ export const createMinimalAgentTask = (
   const isMarkdownBlogFixture =
     fixture.id === "markdown-blog-v1" ||
     fixture.id === "markdown-references-discovery-v1";
+  const isMdxArticleFixture = fixture.id === "mdx-article-editing-v1";
   return {
     schemaVersion: 2,
     fixtureId: fixture.id,
@@ -167,6 +167,13 @@ export const createMinimalAgentTask = (
         ? [
             "Treat the supplied asset manifest as input inventory. Derive operation payloads from the MCP schemas and the markdown-blog guide instead of a fixture-specific answer.",
             "Substitute returned IDs only for the documented placeholders in the guide's recipe. Call each mutation once as a committed mutation; if one fails, stop and report it instead of retrying or inventing a repair workflow.",
+            "Create pages with the required create-page shape {path, name}; specifically use path /blog with name Blog and path /blog/:slug with name Blog article, then retain both returned pageId and rootInstanceId values. Do not stop after the first validate-asset-query call: validate both overview and detail queries, then preview the detail query. Continue through both resource creations, both page insertions, page settings, and the two requested route verifications. The task is incomplete until the full recipe finishes.",
+          ]
+        : []),
+      ...(isMdxArticleFixture
+        ? [
+            "Do not stop after reading or connecting the source. Complete all three update-text mutations for the designed title, author, and reading-time instances before changing frontmatter. Each text is a separate tool call with mode expression and expressionBindingMode readwrite.",
+            "After those bindings succeed, update only the requested author frontmatter value while preserving all other fields, then reload, inspect, and audit.",
           ]
         : []),
     ],

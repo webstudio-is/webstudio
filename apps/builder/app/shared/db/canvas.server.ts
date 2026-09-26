@@ -178,6 +178,7 @@ const addProjectMetadata = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
+    prepareContentIndex?: boolean;
   } = {}
 ): Promise<PublishedProjectBundle> => {
   const user =
@@ -185,33 +186,44 @@ const addProjectMetadata = async (
       ? undefined
       : await dependencies.getUserById(context, project.userId);
 
-  const publicationBuild = {
-    ...data.build,
-    pages: migratePages(data.build.pages),
-  };
-  const dynamicBlockIds =
-    getDynamicPublishedMdxSourceBlockIds(publicationBuild);
-  const projectCandidates = resolvePublishedMdxAssetCandidates({
-    build: publicationBuild,
-    allowUnresolved: true,
-  });
-  const needsCandidateDiscovery = dynamicBlockIds.some(
-    (blockId) => projectCandidates.has(blockId) === false
-  );
-  const candidateDiscoveryPlan = needsCandidateDiscovery
-    ? createBuildContentCompilationPlan(data.build)
-    : undefined;
-  const assetRequirements =
-    candidateDiscoveryPlan ??
-    createPublishedBuildContentCompilationPlan(
-      publicationBuild,
-      projectCandidates
+  let publicationBuild:
+    | Parameters<typeof createPublishedBuildContentCompilationPlan>[0]
+    | undefined;
+  let candidateDiscoveryPlan: ReturnType<
+    typeof createBuildContentCompilationPlan
+  >;
+  let assetRequirements: ReturnType<
+    typeof createPublishedBuildContentCompilationPlan
+  >;
+  if (options.prepareContentIndex !== false) {
+    publicationBuild = {
+      ...data.build,
+      pages: migratePages(data.build.pages),
+    };
+    const dynamicBlockIds =
+      getDynamicPublishedMdxSourceBlockIds(publicationBuild);
+    const projectCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      allowUnresolved: true,
+    });
+    const needsCandidateDiscovery = dynamicBlockIds.some(
+      (blockId) => projectCandidates.has(blockId) === false
     );
+    candidateDiscoveryPlan = needsCandidateDiscovery
+      ? createBuildContentCompilationPlan(data.build)
+      : undefined;
+    assetRequirements =
+      candidateDiscoveryPlan ??
+      createPublishedBuildContentCompilationPlan(
+        publicationBuild,
+        projectCandidates
+      );
+  }
   let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
   let mdxTemplateOmissions: PublishedMdxTemplateOmission[] = [];
-  if (assetRequirements !== undefined) {
+  if (assetRequirements !== undefined && publicationBuild !== undefined) {
     const resolveMdxDependencies =
       createPublishedMdxDependencyClosureResolver();
     const publishedAssetData = await dependencies.preparePublishedAssetData({
@@ -342,7 +354,8 @@ export const loadPublishedProjectBundleByProjectId =
 
 export const loadProjectBundleByBuildId = async (
   buildId: string,
-  context: AppContext
+  context: AppContext,
+  { contentIndex }: { contentIndex?: "client" } = {}
 ): Promise<PublishedProjectBundle> => {
   const build = await loadBuildById(context, buildId);
   const project = await loadById(build.projectId, context);
@@ -352,7 +365,9 @@ export const loadProjectBundleByBuildId = async (
   return await addProjectMetadata(
     await createProjectBundle(build, context),
     project,
-    context
+    context,
+    addProjectMetadataDependencies,
+    { prepareContentIndex: contentIndex !== "client" }
   );
 };
 

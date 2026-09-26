@@ -29,6 +29,9 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
     "",
     `- CLI: ${runtime?.cliVersion ?? "unknown"}`,
     `- Node.js: ${runtime?.nodeVersion ?? "unknown"}`,
+    ...(runtime?.projectId === undefined
+      ? []
+      : [`- Project ID: \`${runtime.projectId}\``]),
     ...(runtime === undefined
       ? []
       : [
@@ -66,6 +69,28 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     ...(failure.elapsedMs === undefined
       ? []
       : [`- Duration: \`${failure.elapsedMs}ms\``]),
+    ...(failure.entityIds === undefined
+      ? []
+      : failure.entityIds.map(({ field, id }) => `- ${field}: \`${id}\``)),
+    ...(failure.response === undefined
+      ? []
+      : [
+          `- Response: ${failure.response.format}; envelope=${failure.response.envelope}${failure.response.batchSize === undefined ? "" : `; batch size=${failure.response.batchSize}`}`,
+        ]),
+    ...(failure.browser === undefined
+      ? []
+      : [
+          ...(failure.browser.exitSignal !== undefined
+            ? [`- Browser exit: ${failure.browser.exitSignal}`]
+            : failure.browser.exitCode === undefined
+              ? []
+              : [`- Browser exit: code ${failure.browser.exitCode}`]),
+          ...(failure.browser.attempts === undefined
+            ? []
+            : [
+                `- Browser attempts: ${failure.browser.attempts.map((attempt) => `${attempt.browser} (${attempt.source})`).join(", ")}`,
+              ]),
+        ]),
     ...(issues.length === 0
       ? []
       : [

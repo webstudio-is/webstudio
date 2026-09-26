@@ -59,6 +59,7 @@ type McpScreenshotInput = {
   browserPath?: string;
   waitUntil?: CaptureScreenshotInput["waitUntil"];
   waitForSelector?: string;
+  waitForFonts?: boolean;
   waitForTimeout?: number;
   timeout?: number;
   source?: PreviewSource;
@@ -485,6 +486,7 @@ export const createMcpPreviewHandlers = ({
     browserPath: input.browserPath,
     waitUntil: input.waitUntil,
     waitForSelector: input.waitForSelector,
+    waitForFonts: input.waitForFonts,
     waitForTimeout: input.waitForTimeout,
     timeout: input.timeout,
     format: input.format,

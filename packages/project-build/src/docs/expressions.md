@@ -20,8 +20,9 @@ name only when JavaScript requires it, such as `{ "published-at": date }`. Do
 not pass a JSON-stringified object as an expression.
 
 Do not send a fixed prop string as an expression. Use `update-props` with
-`type:"string"`. Page metadata and resource URLs accept plain fixed strings and
-normalize them for storage. Expression-only resource headers, search parameters,
+`type:"string"`. Page metadata fields contain expression source; for fixed text,
+pass a quoted JavaScript string expression such as `"Plans"`. Resource URLs
+accept plain fixed strings and normalize them for storage. Expression-only resource headers, search parameters,
 and bodies accept `{ "type": "literal", "value": "fixed text" }` when the
 value is not dynamic.
 

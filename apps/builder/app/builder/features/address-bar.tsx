@@ -29,7 +29,7 @@ import { CheckMarkIcon, CopyIcon, DynamicPageIcon } from "@webstudio-is/icons";
 import {
   compilePathnamePattern,
   isPathnamePattern,
-  matchPathnamePattern,
+  matchUrlPattern,
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
 import {
@@ -260,7 +260,7 @@ const AddressBar = forwardRef<
   const path = useStore($selectedPagePath);
   let history = useStore($selectedPageHistory);
   history = useMemo(() => {
-    return history.filter((item) => matchPathnamePattern(path, item));
+    return history.filter((item) => matchUrlPattern(path, item));
   }, [history, path]);
   const [pathParams, setPathParams] = useState(
     () => $currentSystem.get().params
@@ -308,7 +308,7 @@ const AddressBar = forwardRef<
         options={history}
         onSelect={(option) => {
           flushSync(() => {
-            setPathParams(matchPathnamePattern(path, option) ?? {});
+            setPathParams(matchUrlPattern(path, option) ?? {});
           });
           containerRef.current?.requestSubmit();
         }}

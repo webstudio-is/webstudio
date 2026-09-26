@@ -677,6 +677,12 @@ test("validates token helper input", () => {
   ).toThrow("token() styles must include at least one valid CSS declaration");
 });
 
+test("marks token names without styles as references", () => {
+  const fragment = renderTemplate(<Body ws:tokens={[token("primary")]}></Body>);
+  expect(fragment.referenceTokenIds).toEqual([fragment.styleSources[0]?.id]);
+  expect(fragment.styles).toEqual([]);
+});
+
 test("validates ws:tokens values", () => {
   expect(() =>
     renderTemplate(<Body ws:tokens={"primary" as never}></Body>)

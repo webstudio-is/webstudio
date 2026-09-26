@@ -20,7 +20,10 @@ class FakeBrowserStderr {
 }
 
 class FakeBrowserProcess {
-  readonly listeners = new Map<string, Array<(value?: unknown) => void>>();
+  readonly listeners = new Map<
+    string,
+    Array<(value?: unknown, signal?: unknown) => void>
+  >();
   readonly stderr = new FakeBrowserStderr();
   kill = vi.fn((_signal?: NodeJS.Signals | number) => {
     this.emit("exit", 0);
@@ -32,11 +35,11 @@ class FakeBrowserProcess {
     this.listeners.set(event, listeners);
     return this;
   });
-  emit = (event: string, value?: unknown) => {
+  emit = (event: string, value?: unknown, signal?: unknown) => {
     const listeners = this.listeners.get(event) ?? [];
     this.listeners.delete(event);
     for (const listener of listeners) {
-      listener(value);
+      listener(value, signal);
     }
   };
 }
@@ -57,6 +60,7 @@ class FakeWebSocket {
   readonly subframeStatus?: number;
   readonly readinessWidths?: number[];
   readonly lifecycleFrames: string[];
+  readonly pendingFonts: boolean;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
   private currentUrl = "about:blank";
@@ -66,13 +70,15 @@ class FakeWebSocket {
     finalUrl?: string,
     subframeStatus?: number,
     readinessWidths?: number[],
-    lifecycleFrames = ["main"]
+    lifecycleFrames = ["main"],
+    pendingFonts = false
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
     this.subframeStatus = subframeStatus;
     this.readinessWidths = readinessWidths;
     this.lifecycleFrames = lifecycleFrames;
+    this.pendingFonts = pendingFonts;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -105,6 +111,12 @@ class FakeWebSocket {
       typeof message.params?.expression === "string" &&
       message.params.expression.includes("rootMarkerPresent")
     ) {
+      if (
+        this.pendingFonts &&
+        message.params.expression.includes("document.fonts?.ready")
+      ) {
+        return;
+      }
       const hasPageMetadata = message.params.expression.includes(
         '"rootMarkerAttribute":"data-site"'
       );
@@ -130,6 +142,14 @@ class FakeWebSocket {
           }),
         0
       );
+      return;
+    }
+    if (
+      message.method === "Runtime.evaluate" &&
+      typeof message.params?.expression === "string" &&
+      message.params.expression.includes("Array.from(document.fonts)")
+    ) {
+      setTimeout(() => respond({ result: { value: ["Test Font"] } }), 0);
       return;
     }
     if (
@@ -1233,6 +1253,7 @@ test("reports browser startup exit diagnostics without local paths", async () =>
 
   expect(startupError).toMatchObject({
     code: "BROWSER_STARTUP_FAILED",
+    processExit: { code: 21 },
     message:
       "Browser exited before its DevTools endpoint became ready (exit code 21). The operating system denied browser IPC or socket access. Check the browser installation or provide a supported Chromium executable.",
     diagnostic: {
@@ -1249,6 +1270,37 @@ test("reports browser startup exit diagnostics without local paths", async () =>
   });
   expect(JSON.stringify(startupError)).not.toContain("/Users/example/private");
   expect(JSON.stringify(startupError)).not.toContain("secret");
+});
+
+test("keeps a browser startup signal as structured diagnostics", async () => {
+  const dependencies = createDependencies();
+  vi.mocked(dependencies.spawnBrowser).mockImplementation(() => {
+    const browserProcess = new FakeBrowserProcess();
+    setTimeout(() => browserProcess.emit("exit", undefined, "SIGABRT"), 0);
+    return browserProcess as never;
+  });
+  vi.mocked(dependencies.readFile).mockImplementation(
+    async () => await new Promise(() => undefined)
+  );
+
+  await expect(
+    createBrowserScreenshotSession(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 100,
+      },
+      dependencies
+    )
+  ).rejects.toMatchObject({
+    code: "BROWSER_STARTUP_FAILED",
+    processExit: { signal: "SIGABRT" },
+  });
 });
 
 test("does not restart a browser session after cleanup", async () => {
@@ -1527,6 +1579,60 @@ test("waits for two stable layout samples after a late shift", async () => {
   );
 
   expect(layout.navigation?.layoutStable).toBe(true);
+});
+
+test("can capture stable layout without waiting for pending fonts", async () => {
+  const socket = new FakeWebSocket(
+    200,
+    undefined,
+    undefined,
+    undefined,
+    ["main"],
+    true
+  );
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com/page",
+      output: "/tmp/page-with-pending-font.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForFonts: false,
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({ socket })
+  );
+
+  expect(layout.navigation?.layoutStable).toBe(true);
+  expect(socket.sentMethods).toContain("Page.captureScreenshot");
+});
+
+test("reports a font that blocks screenshot readiness", async () => {
+  const socket = new FakeWebSocket(
+    200,
+    undefined,
+    undefined,
+    undefined,
+    ["main"],
+    true
+  );
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com/page",
+        output: "/tmp/page-with-pending-font.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 100,
+      },
+      createDependencies({ socket })
+    )
+  ).rejects.toThrow("loading fonts: Test Font");
 });
 
 test("times out when browser DevTools commands stop responding", async () => {

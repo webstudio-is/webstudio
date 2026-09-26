@@ -11,6 +11,7 @@ export * from "./schema/deployment";
 export * from "./schema/instances";
 export * from "./schema/expression";
 export * from "./schema/pages";
+export * from "./schema/response-headers";
 export * from "./schema/props";
 export * from "./schema/resources";
 export * from "./schema/style-source-selections";

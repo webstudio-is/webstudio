@@ -171,7 +171,7 @@ export const ComboboxItemDescription = ({
 };
 
 export const ComboboxRoot = (props: ComponentProps<typeof Popover>) => {
-  return <Popover {...props} modal />;
+  return <Popover modal {...props} />;
 };
 
 const StyledPopoverContent = styled(PopoverContent, {
@@ -473,7 +473,7 @@ type ComboboxProps<Item> = UseComboboxProps<Item> &
     | "onBlur"
     | "onInvalid"
     | "disabled"
-  >;
+  > & { modal?: boolean };
 
 export const Combobox = <Item,>({
   getDescription,
@@ -487,6 +487,7 @@ export const Combobox = <Item,>({
   onBlur,
   onInvalid,
   disabled,
+  modal,
   ...props
 }: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
@@ -500,7 +501,7 @@ export const Combobox = <Item,>({
   const descriptions = combobox.items.map((item) => getDescription?.(item));
 
   return (
-    <ComboboxRoot open={combobox.isOpen}>
+    <ComboboxRoot open={combobox.isOpen} modal={modal ?? true}>
       <Box {...combobox.getComboboxProps()}>
         <ComboboxAnchor>
           <InputField

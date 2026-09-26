@@ -1,20 +1,19 @@
-import { Grid, cssVar, styled, theme } from "@webstudio-is/design-system";
+import { Grid, styled, theme } from "@webstudio-is/design-system";
 
 export const ProjectSettingsDataRow = styled(Grid, {
   p: theme.spacing[3],
   overflow: "hidden",
   position: "relative",
-  "& > button": {
+  "& > button, & > [role='cell'] > button": {
     opacity: 0,
     position: "absolute",
-    right: 0,
-    top: 0,
-    bottom: 0,
-    height: "auto",
-    borderRadius: 0,
-    background: cssVar("--background-primary"),
+    right: theme.spacing[2],
+    top: "50%",
+    transform: "translateY(-50%)",
   },
-  "&:hover > button, &:focus-within > button": {
-    opacity: 1,
+  "&:hover, &:focus-within": {
+    "& > button, & > [role='cell'] > button": {
+      opacity: 1,
+    },
   },
 });

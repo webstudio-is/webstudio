@@ -4803,9 +4803,9 @@ export const runtimeOperationContractData = [
             'Plain page path. For a new non-home page, start with "/", for example "/pricing". Use colon-prefixed dynamic segments such as "/blog/:slug" when one page definition must render many concrete routes; do not create a separate page for every route value. The home page path is the empty string ""; do not use an empty path when creating a new page.',
         },
         title: {
-          description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
           type: "string",
+          description:
+            'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
         },
         parentFolderId: {
           type: "string",
@@ -4814,24 +4814,24 @@ export const runtimeOperationContractData = [
           type: "object",
           properties: {
             description: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             language: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             redirect: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageUrl: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageAssetId: {
               type: "string",
@@ -4842,9 +4842,9 @@ export const runtimeOperationContractData = [
                   type: "boolean",
                 },
                 {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
               ],
             },
@@ -4853,9 +4853,9 @@ export const runtimeOperationContractData = [
               enum: ["html", "xml", "text"],
             },
             content: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             status: {
               anyOf: [
@@ -4914,9 +4914,9 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   content: {
-                    description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     type: "string",
+                    description:
+                      'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   },
                 },
                 required: ["property", "content"],
@@ -4977,9 +4977,9 @@ export const runtimeOperationContractData = [
                 'Plain page path. For a new non-home page, start with "/", for example "/pricing". Use colon-prefixed dynamic segments such as "/blog/:slug" when one page definition must render many concrete routes; do not create a separate page for every route value. The home page path is the empty string ""; do not use an empty path when creating a new page.',
             },
             title: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             isDraft: {
               type: "boolean",
@@ -4993,24 +4993,24 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 description: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 language: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 redirect: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageUrl: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageAssetId: {
                   type: "string",
@@ -5021,9 +5021,9 @@ export const runtimeOperationContractData = [
                       type: "boolean",
                     },
                     {
-                      description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       type: "string",
+                      description:
+                        'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     },
                   ],
                 },
@@ -5032,9 +5032,9 @@ export const runtimeOperationContractData = [
                   enum: ["html", "xml", "text"],
                 },
                 content: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 status: {
                   anyOf: [
@@ -5093,9 +5093,9 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       content: {
-                        description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                         type: "string",
+                        description:
+                          'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       },
                     },
                     required: ["property", "content"],
@@ -5403,6 +5403,33 @@ export const runtimeOperationContractData = [
             auth: {
               type: "string",
             },
+            customHeaders: {
+              description:
+                "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
+              maxItems: 100,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  route: {
+                    type: "string",
+                    maxLength: 2048,
+                  },
+                  name: {
+                    type: "string",
+                    maxLength: 256,
+                    pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+                  },
+                  value: {
+                    type: "string",
+                    minLength: 1,
+                    maxLength: 8192,
+                    pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                  },
+                },
+                required: ["name", "value"],
+              },
+            },
           },
           additionalProperties: {},
           required: [],
@@ -5518,6 +5545,40 @@ export const runtimeOperationContractData = [
                 },
               ],
             },
+            customHeaders: {
+              anyOf: [
+                {
+                  description:
+                    "Response header rules. Optional route patterns use Authentication syntax; '/*' applies site-wide. Missing CSP, X-Frame-Options, and Referrer-Policy receive dispatcher defaults. X-Powered-By, X-Content-Type-Options, and Strict-Transport-Security are managed by Webstudio Cloud.",
+                  maxItems: 100,
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      route: {
+                        type: "string",
+                        maxLength: 2048,
+                      },
+                      name: {
+                        type: "string",
+                        maxLength: 256,
+                        pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+                      },
+                      value: {
+                        type: "string",
+                        minLength: 1,
+                        maxLength: 8192,
+                        pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+                      },
+                    },
+                    required: ["name", "value"],
+                  },
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
           },
           additionalProperties: false,
           required: [],
@@ -5559,6 +5620,180 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["projectSettings"],
     invalidatesNamespaces: ["projectSettings"],
     retryOnConflict: true,
+  },
+  {
+    id: "responseHeaders.list",
+    command: "list-response-headers",
+    client: "listResponseHeaders",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        headers: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              route: {
+                type: "string",
+                maxLength: 2048,
+              },
+              name: {
+                type: "string",
+                maxLength: 256,
+                pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+              },
+              value: {
+                type: "string",
+                minLength: 1,
+                maxLength: 8192,
+                pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+              },
+            },
+            required: ["name", "value"],
+          },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
+      },
+      required: [
+        "headers",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
+    id: "responseHeaders.set",
+    command: "set-response-header",
+    client: "setResponseHeader",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        route: {
+          type: "string",
+          maxLength: 2048,
+        },
+        name: {
+          type: "string",
+          maxLength: 256,
+          pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+        },
+        value: {
+          type: "string",
+          minLength: 1,
+          maxLength: 8192,
+          pattern: "^[\\t\\x20-\\x7e\\x80-\\xff]*$(?![\\s\\S])",
+        },
+      },
+      required: ["name", "value"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        updated: {
+          type: "boolean",
+        },
+      },
+      required: ["updated"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: ["projectSettings"],
+    invalidatesNamespaces: ["projectSettings"],
+    retryOnConflict: true,
+  },
+  {
+    id: "responseHeaders.delete",
+    command: "delete-response-header",
+    client: "deleteResponseHeader",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        route: {
+          type: "string",
+          maxLength: 2048,
+        },
+        name: {
+          type: "string",
+          maxLength: 256,
+          pattern: "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+        },
+      },
+      required: ["name"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        updated: {
+          type: "boolean",
+        },
+      },
+      required: ["updated"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: ["projectSettings"],
+    invalidatesNamespaces: ["projectSettings"],
+    retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "projectSettings.getMarketplaceProduct",
@@ -6762,32 +6997,32 @@ export const runtimeOperationContractData = [
           minLength: 1,
         },
         title: {
-          description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
           type: "string",
+          description:
+            'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
         },
         meta: {
           type: "object",
           properties: {
             description: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             language: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             redirect: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageUrl: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             socialImageAssetId: {
               type: "string",
@@ -6798,9 +7033,9 @@ export const runtimeOperationContractData = [
                   type: "boolean",
                 },
                 {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
               ],
             },
@@ -6809,9 +7044,9 @@ export const runtimeOperationContractData = [
               enum: ["html", "xml", "text"],
             },
             content: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             status: {
               anyOf: [
@@ -6870,9 +7105,9 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   content: {
-                    description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     type: "string",
+                    description:
+                      'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   },
                 },
                 required: ["property", "content"],
@@ -6955,32 +7190,32 @@ export const runtimeOperationContractData = [
               minLength: 1,
             },
             title: {
-              description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+              description:
+                'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
             },
             meta: {
               type: "object",
               properties: {
                 description: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 language: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 redirect: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageUrl: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 socialImageAssetId: {
                   type: "string",
@@ -6991,9 +7226,9 @@ export const runtimeOperationContractData = [
                       type: "boolean",
                     },
                     {
-                      description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       type: "string",
+                      description:
+                        'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     },
                   ],
                 },
@@ -7002,9 +7237,9 @@ export const runtimeOperationContractData = [
                   enum: ["html", "xml", "text"],
                 },
                 content: {
-                  description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
+                  description:
+                    'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                 },
                 status: {
                   anyOf: [
@@ -7063,9 +7298,9 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       content: {
-                        description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                         type: "string",
+                        description:
+                          'Pass one Webstudio JavaScript expression. For fixed text, pass a quoted string expression such as `"Plans for teams"`. For computed values, pass `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       },
                     },
                     required: ["property", "content"],
@@ -10900,6 +11135,12 @@ export const runtimeOperationContractData = [
                         ],
                       },
                     },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
+                    },
                   },
                   required: [
                     "children",
@@ -14108,6 +14349,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -17331,6 +17578,12 @@ export const runtimeOperationContractData = [
                         ],
                       },
                     },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
+                    },
                   },
                   required: [
                     "children",
@@ -20539,6 +20792,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -26660,6 +26919,12 @@ export const runtimeOperationContractData = [
                               ],
                             },
                           },
+                          referenceTokenIds: {
+                            type: "array",
+                            items: {
+                              type: "string",
+                            },
+                          },
                         },
                         required: [
                           "children",
@@ -30076,6 +30341,12 @@ export const runtimeOperationContractData = [
                                 "property",
                                 "value",
                               ],
+                            },
+                          },
+                          referenceTokenIds: {
+                            type: "array",
+                            items: {
+                              type: "string",
                             },
                           },
                         },
@@ -44555,6 +44826,12 @@ export const runtimeOperationContractData = [
                         ],
                       },
                     },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
+                    },
                   },
                   required: [
                     "children",
@@ -47842,6 +48119,12 @@ export const runtimeOperationContractData = [
                           "property",
                           "value",
                         ],
+                      },
+                    },
+                    referenceTokenIds: {
+                      type: "array",
+                      items: {
+                        type: "string",
                       },
                     },
                   },
@@ -54750,6 +55033,12 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
+            referenceTokenIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
           },
           required: [
             "children",
@@ -60653,6 +60942,12 @@ export const runtimeOperationContractData = [
                   "property",
                   "value",
                 ],
+              },
+            },
+            referenceTokenIds: {
+              type: "array",
+              items: {
+                type: "string",
               },
             },
           },

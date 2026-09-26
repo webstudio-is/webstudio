@@ -44,6 +44,7 @@ import {
   deleteProps,
   deleteResource,
   deleteRedirect,
+  deleteResponseHeader,
   deleteVariable,
   duplicatePage,
   duplicateAsset,
@@ -84,6 +85,7 @@ import {
   listPageTemplates,
   listPublishes,
   listRedirects,
+  listResponseHeaders,
   listResources,
   listTexts,
   listVariables,
@@ -115,6 +117,7 @@ import {
   updateFolder,
   updateProps,
   updateProjectSettings,
+  setResponseHeader,
   updateRedirect,
   updateResource,
   updateStyleDeclarations,
@@ -229,12 +232,24 @@ test("sends the bundle contract when loading by project id", async () => {
   expect(decodeURIComponent(String(url))).toContain(
     `"bundleVersion":"${bundleVersion}"`
   );
+  expect(decodeURIComponent(String(url))).not.toContain("contentIndex");
 });
 
 test("creates api client compatibility headers", () => {
   expect(createApiClientHeaders({ name: "cli", version: "1.2.3" })).toEqual({
     "x-webstudio-client": "cli",
     "x-webstudio-client-version": "1.2.3",
+  });
+  expect(
+    createApiClientHeaders({
+      name: "cli",
+      version: "1.2.3",
+      contractVersion: "public-api:current",
+    })
+  ).toEqual({
+    "x-webstudio-client": "cli",
+    "x-webstudio-client-version": "1.2.3",
+    "x-webstudio-api-contract-version": "public-api:current",
   });
 });
 
@@ -495,6 +510,18 @@ test("wraps project api trpc calls in named functions", async () => {
       compiler: { atomicStyles: true },
     });
     await listRedirects(params);
+    await listResponseHeaders(params);
+    await setResponseHeader({
+      ...params,
+      route: "/docs/*",
+      name: "Cache-Control",
+      value: "public",
+    });
+    await deleteResponseHeader({
+      ...params,
+      route: "/docs/*",
+      name: "Cache-Control",
+    });
     await createRedirect({
       ...params,
       old: "/old",
@@ -920,6 +947,15 @@ test("wraps project api trpc calls in named functions", async () => {
     expectRequest("/trpc/api.projectSettings.getMarketplaceProduct"),
     expectBodyRequest("/trpc/api.projectSettings.update", '"siteName":"Acme"'),
     expectRequest("/trpc/api.redirects.list"),
+    expectRequest("/trpc/api.responseHeaders.list"),
+    expectBodyRequest(
+      "/trpc/api.responseHeaders.set",
+      '"name":"Cache-Control"'
+    ),
+    expectBodyRequest(
+      "/trpc/api.responseHeaders.delete",
+      '"name":"Cache-Control"'
+    ),
     expectBodyRequest("/trpc/api.redirects.create", '"old":"/old"'),
     expectBodyRequest("/trpc/api.redirects.update", '"old":"/older"'),
     expectBodyRequest("/trpc/api.redirects.delete", '"old":"/older"'),
@@ -1263,6 +1299,26 @@ test("loads project bundle by build id without auth headers", async () => {
   );
   expect((init.headers as Record<string, string>).authorization).toBe(
     undefined
+  );
+});
+
+test("requests local content preparation for the publish runner", async () => {
+  const project = createPublishedProjectBundleFixture();
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await loadProjectBundleByBuildId({
+    buildId: project.build.id,
+    origin: "https://example.com",
+    contentIndex: "client",
+  });
+
+  expect(decodeURIComponent(String(fetch.mock.calls[0]?.[0]))).toContain(
+    '"contentIndex":"client"'
   );
 });
 

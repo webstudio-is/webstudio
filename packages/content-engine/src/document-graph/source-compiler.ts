@@ -14,11 +14,14 @@ import {
 import type { DocumentFormat } from "./document-format";
 import type { DocumentGraph } from "./graph";
 import type { SourceReferenceOccurrence } from "./reference-codec";
+import { analyzeMarkdownFrontmatter } from "./markdown-document";
 
 export type DocumentSourceDescriptor = DocumentDescriptor &
   Readonly<{
     format: DocumentFormat;
     source: ByteSource;
+    /** Complete frontmatter for this revision, never an output-field projection. */
+    frontmatter?: Readonly<Record<string, unknown>>;
   }>;
 
 export const createDocumentSourceUrl = (path: string) =>
@@ -212,6 +215,22 @@ export const compileDocumentSourceGraph = async ({
             });
           }
           assertActive(signal);
+          if (
+            document.format !== "json" &&
+            document.frontmatter !== undefined
+          ) {
+            return {
+              status: "fulfilled" as const,
+              value: {
+                document,
+                ...analyzeMarkdownFrontmatter({
+                  frontmatter: document.frontmatter,
+                  sourceDocumentId: document.id,
+                  documentUrl: document.documentUrl,
+                }),
+              },
+            };
+          }
           const result = await analyzeDocumentSource({
             format: document.format,
             source: document.source,
@@ -221,7 +240,11 @@ export const compileDocumentSourceGraph = async ({
           });
           return {
             status: "fulfilled" as const,
-            value: { document, analyzedDocument: result },
+            value: {
+              document,
+              properties: getAdaptedDocumentProperties(result),
+              references: result.references,
+            },
           };
         } catch (cause) {
           assertActive(signal);
@@ -254,15 +277,14 @@ export const compileDocumentSourceGraph = async ({
       compilationErrors.push(settlement.reason);
       return [];
     });
-    for (const { document, analyzedDocument } of analyzed) {
+    for (const { document, properties } of analyzed) {
       analyzedIds.add(document.id);
-      const properties = getAdaptedDocumentProperties(analyzedDocument);
       if (properties !== undefined) {
         onDocumentProperties?.({ id: document.id, properties });
       }
     }
     for (const result of analyzed) {
-      for (const occurrence of result.analyzedDocument.references) {
+      for (const occurrence of result.references) {
         if (
           ignoredReferenceUrls?.has(occurrence.reference.documentUrl) ||
           ignoreReference?.(occurrence) === true

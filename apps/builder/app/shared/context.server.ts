@@ -19,6 +19,7 @@ import { parseBuilderUrl } from "@webstudio-is/protocol";
 import {
   apiClient,
   apiClientHeader,
+  apiClientContractVersionHeader,
   apiClientVersionHeader,
 } from "@webstudio-is/trpc-interface/api-compatibility";
 
@@ -197,12 +198,15 @@ const createApiClientContext = (request: Request): AppContext["apiClient"] => {
     return {
       type: "unknown",
       version: undefined,
+      contractVersion: undefined,
     };
   }
 
   return {
     type: client.data,
     version: request.headers.get(apiClientVersionHeader) ?? undefined,
+    contractVersion:
+      request.headers.get(apiClientContractVersionHeader) ?? undefined,
   };
 };
 

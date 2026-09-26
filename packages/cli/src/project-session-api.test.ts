@@ -218,6 +218,42 @@ describe("project session api adapter", () => {
     expect(session.executeServerOperation).not.toHaveBeenCalled();
   });
 
+  test("does not require a local mutation in the server operation list", async () => {
+    const session = {
+      initialize: vi.fn(async () => undefined),
+      mutate: vi.fn(async () => ({ diagnostics: [] })),
+      read: vi.fn(),
+      refresh: vi.fn(),
+      executeServerOperation: vi.fn(),
+    };
+    const createProjectSession = vi.fn(
+      () => session
+    ) as unknown as CreateProjectSession;
+    const getServerApiContract = vi.fn(async () => ({
+      clientVersion: "public-api:client",
+      serverVersion: "public-api:server",
+      supportedOperationIds: new Set<string>(),
+      missingServerOperationIds: [],
+      negotiated: true,
+    }));
+
+    await executeProjectSessionApiOperation({
+      command: "create-page",
+      input: { name: "Pricing", path: "/pricing" },
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      createProjectSession,
+      getServerApiContract,
+    });
+
+    expect(getServerApiContract).not.toHaveBeenCalled();
+    expect(session.initialize).toHaveBeenCalledOnce();
+    expect(session.mutate).toHaveBeenCalledOnce();
+  });
+
   test("refreshes local namespaces before local-capable commands when requested", async () => {
     const session = {
       initialize: vi.fn(async () => undefined),

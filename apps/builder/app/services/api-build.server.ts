@@ -14,6 +14,7 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { assertApiProjectPermit } from "./api-permits.server";
+import { assertCliApiContractVersion } from "./api-compatibility.server";
 import { throwApiError } from "./api-errors.server";
 import { createAssetClient } from "~/shared/asset-client";
 
@@ -157,6 +158,7 @@ export const commitBuildTransactions = async ({
   clientVersion: number;
   transactions: z.infer<typeof buildPatchTransaction>[];
 }) => {
+  assertCliApiContractVersion(ctx);
   const result = await patchBuild(
     {
       buildId,

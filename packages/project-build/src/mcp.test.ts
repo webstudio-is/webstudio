@@ -815,6 +815,35 @@ describe("project session mcp adapter", () => {
     ]);
     expect(toolNames).toContain("insert-fragment");
     expect(toolNames).not.toContain("meta.get_more_tools");
+    const responseHeaderTools = listProjectSessionMcpTools(
+      runtimeOperationContracts
+        .filter(({ id }) => id.startsWith("responseHeaders."))
+        .map((contract) =>
+          publicOperation({
+            command: contract.command,
+            id: contract.id,
+            description: contract.command,
+            inputSchema: contract.inputSchema,
+          })
+        )
+    );
+    expect(responseHeaderTools.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        "list-response-headers",
+        "set-response-header",
+        "delete-response-header",
+      ])
+    );
+    expect(
+      responseHeaderTools.find(({ name }) => name === "set-response-header")
+        ?.inputSchema
+    ).toMatchObject({
+      required: ["name", "value"],
+      properties: {
+        name: { pattern: expect.any(String) },
+        value: { minLength: 1, pattern: expect.any(String) },
+      },
+    });
     const assetOperationTools = listProjectSessionMcpTools(
       runtimeOperationContracts
         .filter(
@@ -1383,13 +1412,8 @@ describe("project session mcp adapter", () => {
     const [tool] = listProjectSessionMcpTools([createPageOperation]);
     const toolProperties = getSchemaProperties(tool?.inputSchema);
     const toolMetaProperties = getSchemaProperties(toolProperties.meta);
-
-    expect(toolProperties.title).toMatchObject({
-      type: "string",
-    });
-    expect(toolMetaProperties.description).toMatchObject({
-      type: "string",
-    });
+    expect(toolProperties.title).toMatchObject({ type: "string" });
+    expect(toolMetaProperties.description).toMatchObject({ type: "string" });
     expectPageStatusInputSchema(toolMetaProperties.status);
 
     const adapter = createProjectSessionMcpCore({
@@ -1411,9 +1435,7 @@ describe("project session mcp adapter", () => {
       toolDetailsProperties.meta
     );
 
-    expect(toolDetailsProperties.title).toMatchObject({
-      type: "string",
-    });
+    expect(toolDetailsProperties.title).toMatchObject({ type: "string" });
     expect(toolDetailsMetaProperties.description).toMatchObject({
       type: "string",
     });
@@ -1473,6 +1495,7 @@ describe("project session mcp adapter", () => {
             enum: expect.arrayContaining([
               "general",
               "markdown-blog",
+              "content-block-source",
               "design-input",
             ]),
           }),
@@ -4656,6 +4679,13 @@ describe("project session mcp adapter", () => {
         workflow: "markdown-blog",
       },
     });
+    const contentBlockSourceGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: {
+        brief: "Connect an MDX article and make its designed header editable",
+        workflow: "content-block-source",
+      },
+    });
     const authenticatedPageGuide = await adapter.callTool({
       name: "meta.guide",
       input: {
@@ -4794,6 +4824,20 @@ describe("project session mcp adapter", () => {
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: expect.objectContaining({
+          articleFormat: {
+            extension: "md",
+            editSurface: "asset-source-editor",
+            publishCompilation: false,
+            assetSyncDownloadsFiles: true,
+            visualAlternative: {
+              extension: "mdx",
+              editSurface: "content-block-canvas",
+              publishCompilation: true,
+              assetSyncDownloadsFiles: true,
+              workflow: "general",
+              tool: "connect-content-block-source",
+            },
+          },
           executionOrder: [
             { tool: "create-asset-folder", calls: 1 },
             { tool: "upload-assets", calls: 1 },
@@ -4810,6 +4854,10 @@ describe("project session mcp adapter", () => {
               calls: 2,
               terminal: true,
             },
+          ],
+          pages: [
+            { path: "/blog", name: "Blog" },
+            { path: "/blog/:slug", name: "Blog article" },
           ],
           toolDiscovery: {
             tool: "meta.get-more-tools",
@@ -4887,6 +4935,44 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(contentBlockSourceGuide.structuredContent.data).toMatchObject({
+      routing: {
+        workflow: "content-block-source",
+        matchedBy: "explicit-workflow",
+      },
+      recipe: {
+        executionOrder: [
+          { tool: "inspect-instance", calls: 1 },
+          { tool: "connect-content-block-source", calls: 1 },
+          { tool: "inspect-content-block-source", calls: 1 },
+          {
+            tool: "update-text",
+            calls: "once per requested designed text field",
+          },
+          { tool: "update-content-block-frontmatter", calls: 1 },
+          { tool: "reload-content-block-source", calls: 1 },
+          { tool: "inspect-content-block-source", calls: 1 },
+          { tool: "audit", calls: 1 },
+        ],
+        connectSource: {
+          source: { type: "asset", assetId: "<md-or-mdx-asset-id>" },
+        },
+        designedTextBinding: {
+          tool: "update-text",
+          input: {
+            instanceId: "<designedTextInstanceId>",
+            childIndex: 0,
+            text: "<documentVariable>.frontmatter.<exactFieldPath>",
+            mode: "expression",
+            expressionBindingMode: "readwrite",
+          },
+        },
+      },
+      tools: expect.arrayContaining([
+        expect.objectContaining({ name: "update-text" }),
+        expect.objectContaining({ name: "audit" }),
+      ]),
+    });
     const markdownBlogRecipe = (
       markdownBlogGuide.structuredContent.data as {
         recipe: {
@@ -5066,7 +5152,7 @@ describe("project session mcp adapter", () => {
         input: { brief: "Build a blog", workflow: "blog" },
       })
     ).rejects.toThrow(
-      "meta.guide input.workflow must be one of general, markdown-blog, json-ld, collection, expression, authenticated-page, font-assets, design-input, craft."
+      "meta.guide input.workflow must be one of general, markdown-blog, json-ld, collection, expression, authenticated-page, font-assets, design-input, content-block-source, craft."
     );
     await expect(
       adapter.callTool({
@@ -6321,6 +6407,7 @@ describe("project session mcp adapter", () => {
         browser: "auto",
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       },
@@ -6346,6 +6433,7 @@ describe("project session mcp adapter", () => {
         browserPath: undefined,
         waitUntil: "networkidle",
         waitForSelector: "#ready",
+        waitForFonts: false,
         waitForTimeout: 500,
         timeout: 10_000,
       },
@@ -6375,6 +6463,7 @@ describe("project session mcp adapter", () => {
         ],
         fullPage: true,
         source: "session",
+        waitForFonts: false,
       },
     });
 
@@ -6385,6 +6474,7 @@ describe("project session mcp adapter", () => {
           viewport: { width: 1440, height: 900 },
           fullPage: true,
           source: "session",
+          waitForFonts: false,
         }),
         expect.objectContaining({
           path: "/pricing",
@@ -6607,6 +6697,19 @@ describe("project session mcp adapter", () => {
         },
       })
     ).rejects.toThrow("screenshot requires url or path.");
+  });
+
+  test("declares the screenshot target requirement in its MCP schema", () => {
+    const screenshotTool = listProjectSessionMcpTools(publicMcpOperations, {
+      includeScreenshot: true,
+    }).find((tool) => tool.name === "screenshot");
+
+    expect(screenshotTool?.inputSchema).toMatchObject({
+      oneOf: expect.arrayContaining([
+        expect.objectContaining({ required: ["url"] }),
+        expect.objectContaining({ required: ["path"] }),
+      ]),
+    });
   });
 
   test("rejects ambiguous screenshot base URL input", async () => {
@@ -8836,7 +8939,19 @@ describe("project session mcp adapter", () => {
       expect(onToolFailure).toHaveBeenCalledWith(
         "list-pages",
         error,
-        expect.any(Number)
+        expect.any(Number),
+        {}
+      );
+
+      await client.callTool({
+        name: "list-instances",
+        arguments: { rootInstanceId: "instance-1" },
+      });
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "list-instances",
+        error,
+        expect.any(Number),
+        { rootInstanceId: "instance-1" }
       );
 
       await client.callTool({
