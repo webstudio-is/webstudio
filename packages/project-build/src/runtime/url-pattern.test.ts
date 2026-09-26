@@ -2,7 +2,7 @@ import { expect, test, describe } from "vitest";
 import {
   compilePathnamePattern,
   isPathnamePattern,
-  matchPathnamePatternWithParams,
+  matchUrlPattern,
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
@@ -18,9 +18,7 @@ describe("Shared router path tests - URLPattern matching", () => {
       // Pattern should be valid for URLPattern
       // Some patterns may have validation errors due to our custom rules
       // but they should still work with URLPattern itself
-      expect(() =>
-        matchPathnamePatternWithParams(pattern, pattern)
-      ).not.toThrow();
+      expect(() => matchUrlPattern(pattern, pattern)).not.toThrow();
     });
   });
 
@@ -31,31 +29,26 @@ describe("Shared router path tests - URLPattern matching", () => {
     );
 
     test.each(staticPaths)("matches exactly: %s", (path) => {
-      const result = matchPathnamePatternWithParams(path, path);
+      const result = matchUrlPattern(path, path);
       expect(result).toEqual({});
     });
   });
 });
 
 test("decode matched params", () => {
-  expect(matchPathnamePatternWithParams("/blog/:slug", "/blog/привет")).toEqual(
-    {
-      slug: "привет",
-    }
-  );
+  expect(matchUrlPattern("/blog/:slug", "/blog/привет")).toEqual({
+    slug: "привет",
+  });
   expect(
-    matchPathnamePatternWithParams(
-      "/blog/:slug",
-      "/blog/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
-    )
+    matchUrlPattern("/blog/:slug", "/blog/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82")
   ).toEqual({
     slug: "привет",
   });
 });
 
 test("URLPattern wildcard requires the slash after its base path", () => {
-  expect(matchPathnamePatternWithParams("/docs/*", "/docs")).toBeUndefined();
-  expect(matchPathnamePatternWithParams("/docs/*", "/docs/")).toEqual({});
+  expect(matchUrlPattern("/docs/*", "/docs")).toBeUndefined();
+  expect(matchUrlPattern("/docs/*", "/docs/")).toEqual({});
 });
 
 describe("URLPattern Unicode/non-Latin character support", () => {
@@ -65,87 +58,65 @@ describe("URLPattern Unicode/non-Latin character support", () => {
 
   describe("exact path matching with non-Latin characters", () => {
     test("matches Chinese Simplified paths", () => {
-      expect(matchPathnamePatternWithParams("/关于我们", "/关于我们")).toEqual(
-        {}
-      );
-      expect(
-        matchPathnamePatternWithParams("/产品/手机", "/产品/手机")
-      ).toEqual({});
+      expect(matchUrlPattern("/关于我们", "/关于我们")).toEqual({});
+      expect(matchUrlPattern("/产品/手机", "/产品/手机")).toEqual({});
     });
 
     test("matches Chinese Traditional paths", () => {
-      expect(matchPathnamePatternWithParams("/關於我們", "/關於我們")).toEqual(
-        {}
-      );
-      expect(matchPathnamePatternWithParams("/港聞", "/港聞")).toEqual({});
+      expect(matchUrlPattern("/關於我們", "/關於我們")).toEqual({});
+      expect(matchUrlPattern("/港聞", "/港聞")).toEqual({});
     });
 
     test("matches Japanese paths (Hiragana, Katakana, Kanji)", () => {
-      expect(
-        matchPathnamePatternWithParams("/こんにちは", "/こんにちは")
-      ).toEqual({});
-      expect(matchPathnamePatternWithParams("/カテゴリ", "/カテゴリ")).toEqual(
-        {}
-      );
-      expect(matchPathnamePatternWithParams("/日本語", "/日本語")).toEqual({});
+      expect(matchUrlPattern("/こんにちは", "/こんにちは")).toEqual({});
+      expect(matchUrlPattern("/カテゴリ", "/カテゴリ")).toEqual({});
+      expect(matchUrlPattern("/日本語", "/日本語")).toEqual({});
     });
 
     test("matches Korean paths (Hangul)", () => {
-      expect(matchPathnamePatternWithParams("/한국어", "/한국어")).toEqual({});
-      expect(
-        matchPathnamePatternWithParams("/블로그/포스트", "/블로그/포스트")
-      ).toEqual({});
+      expect(matchUrlPattern("/한국어", "/한국어")).toEqual({});
+      expect(matchUrlPattern("/블로그/포스트", "/블로그/포스트")).toEqual({});
     });
 
     test("matches Cyrillic paths", () => {
-      expect(matchPathnamePatternWithParams("/о-нас", "/о-нас")).toEqual({});
-      expect(
-        matchPathnamePatternWithParams("/блог/статья", "/блог/статья")
-      ).toEqual({});
+      expect(matchUrlPattern("/о-нас", "/о-нас")).toEqual({});
+      expect(matchUrlPattern("/блог/статья", "/блог/статья")).toEqual({});
     });
 
     test("matches Arabic paths", () => {
-      expect(matchPathnamePatternWithParams("/مرحبا", "/مرحبا")).toEqual({});
+      expect(matchUrlPattern("/مرحبا", "/مرحبا")).toEqual({});
     });
 
     test("matches Hebrew paths", () => {
-      expect(matchPathnamePatternWithParams("/שלום", "/שלום")).toEqual({});
+      expect(matchUrlPattern("/שלום", "/שלום")).toEqual({});
     });
 
     test("matches Greek paths", () => {
-      expect(matchPathnamePatternWithParams("/σχετικά", "/σχετικά")).toEqual(
-        {}
-      );
+      expect(matchUrlPattern("/σχετικά", "/σχετικά")).toEqual({});
     });
 
     test("matches European diacritics", () => {
-      expect(matchPathnamePatternWithParams("/über-uns", "/über-uns")).toEqual(
-        {}
-      );
-      expect(matchPathnamePatternWithParams("/café", "/café")).toEqual({});
-      expect(matchPathnamePatternWithParams("/niño", "/niño")).toEqual({});
+      expect(matchUrlPattern("/über-uns", "/über-uns")).toEqual({});
+      expect(matchUrlPattern("/café", "/café")).toEqual({});
+      expect(matchUrlPattern("/niño", "/niño")).toEqual({});
     });
   });
 
   describe("dynamic segments with non-Latin characters", () => {
     test("captures Chinese characters in :slug parameter", () => {
-      expect(matchPathnamePatternWithParams("/:slug", "/关于我们")).toEqual({
+      expect(matchUrlPattern("/:slug", "/关于我们")).toEqual({
         slug: "关于我们",
       });
     });
 
     test("captures Japanese characters in :slug parameter", () => {
-      expect(
-        matchPathnamePatternWithParams("/blog/:slug", "/blog/日本語")
-      ).toEqual({
+      expect(matchUrlPattern("/blog/:slug", "/blog/日本語")).toEqual({
         slug: "日本語",
       });
     });
 
     test("captures Korean characters in :slug parameter", () => {
-      expect(
-        matchPathnamePatternWithParams("/:category/:post", "/블로그/포스트")
-      ).toEqual({
+      expect(matchUrlPattern("/:category/:post", "/블로그/포스트")).toEqual({
         category: "블로그",
         post: "포스트",
       });
@@ -154,17 +125,13 @@ describe("URLPattern Unicode/non-Latin character support", () => {
 
   describe("wildcard patterns with non-Latin characters", () => {
     test("matches wildcard with Chinese paths", () => {
-      expect(
-        matchPathnamePatternWithParams("/blog/*", "/blog/中文/测试")
-      ).toEqual({
+      expect(matchUrlPattern("/blog/*", "/blog/中文/测试")).toEqual({
         0: "中文/测试",
       });
     });
 
     test("matches wildcard with Japanese paths", () => {
-      expect(
-        matchPathnamePatternWithParams("/カテゴリ/*", "/カテゴリ/記事/詳細")
-      ).toEqual({
+      expect(matchUrlPattern("/カテゴリ/*", "/カテゴリ/記事/詳細")).toEqual({
         0: "記事/詳細",
       });
     });
@@ -173,20 +140,14 @@ describe("URLPattern Unicode/non-Latin character support", () => {
   describe("URL-encoded vs literal matching", () => {
     test("matches URL-encoded paths and decodes them", () => {
       // %E6%B8%AF%E8%81%9E is URL-encoded 港聞
-      expect(
-        matchPathnamePatternWithParams("/:slug", "/%E6%B8%AF%E8%81%9E")
-      ).toEqual({
+      expect(matchUrlPattern("/:slug", "/%E6%B8%AF%E8%81%9E")).toEqual({
         slug: "港聞",
       });
     });
 
     test("matches mixed Latin and non-Latin paths", () => {
-      expect(
-        matchPathnamePatternWithParams("/blog/关于", "/blog/关于")
-      ).toEqual({});
-      expect(
-        matchPathnamePatternWithParams("/news/:slug", "/news/港聞")
-      ).toEqual({
+      expect(matchUrlPattern("/blog/关于", "/blog/关于")).toEqual({});
+      expect(matchUrlPattern("/news/:slug", "/news/港聞")).toEqual({
         slug: "港聞",
       });
     });

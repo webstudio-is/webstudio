@@ -438,7 +438,7 @@ const normalizePathname = (pathname: string) => {
 /**
  * Boolean matcher for auth and response-header rules. A trailing wildcard also
  * matches its base path (`/docs/*` matches `/docs`). Page routing instead uses
- * project-build's URLPattern matcher, which returns decoded path parameters and
+ * project-build's `matchUrlPattern`, which returns decoded path parameters and
  * does not match `/docs` for that pattern.
  */
 export const matchesPathnamePattern = (route: string, pathname: string) => {
