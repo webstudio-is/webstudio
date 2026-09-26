@@ -1213,6 +1213,7 @@ export const loadProjectBundleByBuildId = async (
     buildId: string;
     origin: string;
     headers?: RequestHeaders;
+    contentIndex?: "client";
   } & (
     | {
         serviceToken: string;
@@ -1235,6 +1236,7 @@ export const loadProjectBundleByBuildId = async (
   const data = await client.query("build.loadProjectBundleByBuildId", {
     buildId: params.buildId,
     bundleVersion: currentBundleVersion,
+    contentIndex: params.contentIndex,
   });
   return publishedProjectBundle.parse(data);
 };

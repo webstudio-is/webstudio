@@ -8,6 +8,7 @@ import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-com
 const {
   assertCliBundleVersion,
   createImportProjectBundleHandler,
+  createLoadProjectBundleByBuildIdHandler,
   loadContentDatabasePublishDiagnostics,
   prepareProjectBundleForClient,
 } = __testing__;
@@ -17,6 +18,32 @@ afterEach(() => {
 });
 
 describe("build router project bundle compatibility", () => {
+  test("passes client content preparation to the build bundle loader", async () => {
+    const bundle = createPublishedProjectBundleFixture();
+    const loadProjectBundleByBuildId = vi.fn().mockResolvedValue(bundle);
+    const prepareProjectBundleForClient = vi.fn((_, value) => value);
+    const handler = createLoadProjectBundleByBuildIdHandler({
+      loadProjectBundleByBuildId: loadProjectBundleByBuildId as never,
+      prepareProjectBundleForClient: prepareProjectBundleForClient as never,
+    });
+    const context = { apiClient: { type: "cli" } } as never;
+
+    await expect(
+      handler(context, {
+        buildId: bundle.build.id,
+        bundleVersion,
+        contentIndex: "client",
+      })
+    ).resolves.toBe(bundle);
+
+    expect(loadProjectBundleByBuildId).toHaveBeenCalledWith(
+      bundle.build.id,
+      context,
+      { contentIndex: "client" }
+    );
+    expect(prepareProjectBundleForClient).toHaveBeenCalledWith(context, bundle);
+  });
+
   test("requires the current bundle contract from CLI clients", () => {
     const ctx = { apiClient: { type: "cli" } } as never;
     let error: unknown;

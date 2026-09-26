@@ -133,6 +133,7 @@ const createQueryableContentDatabase = ({
     | "documents"
     | "contents"
     | "assetReferences"
+    | "assetPaths"
     | "assetValueReferences"
     | "queries"
   >;
@@ -204,6 +205,7 @@ const createQueryableContentDatabase = ({
       read: createContentReader(queryContentReader),
       runtimeAssets,
       assetReferences: artifact.assetReferences,
+      assetPaths: artifact.assetPaths,
       assetValueReferences: artifact.assetValueReferences,
     });
   const executeDynamicQuery = async ({

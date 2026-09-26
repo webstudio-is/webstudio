@@ -183,6 +183,7 @@ export const contentArtifactV1 = strictObject({
   documents: array(contentDatabaseDocument),
   documentGraph: documentGraphArtifactV1.optional(),
   contents: record(string().min(1), string()).optional(),
+  assetPaths: record(string().min(1), string().min(1)).optional(),
   assetReferences: record(
     string().min(1),
     array(

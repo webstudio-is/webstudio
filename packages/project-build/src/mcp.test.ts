@@ -4824,6 +4824,20 @@ describe("project session mcp adapter", () => {
     expect(markdownBlogGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         recipe: expect.objectContaining({
+          articleFormat: {
+            extension: "md",
+            editSurface: "asset-source-editor",
+            publishCompilation: false,
+            assetSyncDownloadsFiles: true,
+            visualAlternative: {
+              extension: "mdx",
+              editSurface: "content-block-canvas",
+              publishCompilation: true,
+              assetSyncDownloadsFiles: true,
+              workflow: "general",
+              tool: "connect-content-block-source",
+            },
+          },
           executionOrder: [
             { tool: "create-asset-folder", calls: 1 },
             { tool: "upload-assets", calls: 1 },

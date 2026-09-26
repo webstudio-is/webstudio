@@ -7,6 +7,8 @@ import type {
 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import { extractMarkdownBody } from "./markdown-body";
+import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
+import { createUniqueAssetIdsByPath } from "./asset-path-resolution";
 import {
   ByteLimitExceededError,
   decodeUtf8,
@@ -256,6 +258,7 @@ export const hydrateAssetResourceResult = async ({
   read,
   assetReferences,
   assetUrls,
+  assetPaths,
 }: {
   result: unknown;
   documents: readonly ContentDatabaseDocument[];
@@ -263,6 +266,7 @@ export const hydrateAssetResourceResult = async ({
   read: AssetResourceContentReader;
   assetReferences?: MarkdownAssetReferences;
   assetUrls?: Readonly<Record<string, string>>;
+  assetPaths?: Readonly<Record<string, string>>;
 }) => {
   if (options.mode === "none") {
     return { content: {}, hydratedFileCount: 0, hydratedBytes: 0 };
@@ -356,6 +360,12 @@ export const hydrateAssetResourceResult = async ({
     });
   }
 
+  const assetIdsByPath =
+    assetPaths === undefined
+      ? undefined
+      : createUniqueAssetIdsByPath(
+          Object.entries(assetPaths).map(([id, path]) => ({ id, path }))
+        );
   const settlements = await mapBounded(
     selected,
     contentEngineLimits.concurrentContentReads,
@@ -385,7 +395,14 @@ export const hydrateAssetResourceResult = async ({
           try {
             text = (await extractMarkdownBody(bytes, item.readLength || 1))
               .body;
-            const references = assetReferences?.[item.identity.contentRef];
+            const references =
+              assetIdsByPath === undefined || item.document.path === undefined
+                ? assetReferences?.[item.identity.contentRef]
+                : discoverMarkdownAssetReferenceRanges({
+                    markdown: text,
+                    sourcePath: item.document.path,
+                    assetIdsByPath,
+                  });
             if (references !== undefined && assetUrls !== undefined) {
               text = rewriteMarkdownAssetReferenceRanges({
                 markdown: text,

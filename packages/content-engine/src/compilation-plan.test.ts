@@ -128,6 +128,31 @@ const document: AssetFileDocument = {
 };
 
 describe("content compilation plan", () => {
+  test("preserves complete frontmatter separately from projected properties", async () => {
+    const properties = { title: "Post", author: { $ref: "author.json" } };
+    const entry = createCanonicalAssetFileEntry({
+      projectId: "project",
+      document: { ...document, properties },
+    });
+    const plan = createContentCompilationPlan([
+      compilationQuery(
+        "title",
+        assetQuery.parse({
+          output: { mode: "fields", fields: [["properties", "title"]] },
+        })
+      ),
+    ]);
+    const [prepared] = await prepareContentCompilerEntries({
+      entries: [entry],
+      plan,
+      loadContent: async () => {
+        throw new Error("No body requested");
+      },
+    });
+    expect(prepared.document.properties).toEqual({ title: "Post" });
+    expect(prepared.sourceFrontmatter).toEqual(properties);
+  });
+
   test("keeps base-only queries free of parser and hydration work", () => {
     const plan = createContentCompilationPlan([compilationQuery("base")]);
     expect(plan).toEqual({
@@ -499,13 +524,9 @@ describe("content compilation plan", () => {
       loadContent,
     });
 
-    expect(loadContent).toHaveBeenCalledOnce();
-    expect(loadContent).toHaveBeenCalledWith(
-      expect.objectContaining({ assetId: "post" })
-    );
-    expect(prepared).toEqual([
-      expect.objectContaining({ assetId: "post", contentRequired: true }),
-    ]);
+    expect(loadContent).not.toHaveBeenCalled();
+    expect(prepared).toEqual([expect.objectContaining({ assetId: "post" })]);
+    expect(prepared[0].content).toBeUndefined();
   });
 
   test("reports dynamic filter and window values", () => {

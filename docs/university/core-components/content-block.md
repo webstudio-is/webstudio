@@ -74,6 +74,12 @@ Editors can delete top-level content instances. In MDX-connected blocks, these a
 
 Connect a `.mdx` file when the Content Block's body should live in Assets instead of the project's regular instance data. The designed shell and Templates list remain in the project. Markdown `.md` files cannot be connected to a Content Block.
 
+Publishing a site with connected MDX articles downloads and compiles each
+reachable article, which can increase publish time. A `.md` file with Markdown
+Embed avoids that compilation but supports source editing instead of visual
+body editing. See [Choose Markdown or MDX](../foundations/content-engine.md#choose-markdown-or-mdx)
+for the full comparison.
+
 To insert a custom component such as Accordion into **MDX content**, first add its design to **Templates**, then insert it from the template picker. Inserting custom components directly from the Add panel into MDX content is blocked. Basic Markdown elements, images, and code blocks can still be inserted directly. Place designer-owned, one-off components outside **MDX content**; they remain in the project and are not saved to the file.
 
 Moving, pasting, or duplicating content into an MDX region also checks the destination's Templates. Unsupported components are rejected before the tree changes, including components nested inside a pasted container.

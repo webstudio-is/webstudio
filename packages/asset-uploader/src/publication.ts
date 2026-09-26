@@ -3,7 +3,10 @@ import {
   type ContentCompilationPlan,
   type ContentArtifactV1,
 } from "@webstudio-is/content-engine";
-import { serializeJsonDeterministically } from "@webstudio-is/content-engine/compiler";
+import {
+  compileContentUntilPlanIsStable,
+  serializeJsonDeterministically,
+} from "@webstudio-is/content-engine/compiler";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { PostgresAssetRepository } from "./asset-repository";
@@ -155,37 +158,13 @@ export const preparePublishedAssetData = async (
         await repository.withIndexPreparationSession(async (prepareIndex) => {
           // Keep hydrated bytes local to one stability attempt. Dependency
           // convergence can reuse them, while a retry starts from a clean cache.
-          let artifact = await prepareIndex(plan);
-          if (resolvePlan !== undefined) {
-            let resolvedPlan = await resolvePlan(artifact);
-            if (
-              serializeJsonDeterministically(plan) ===
-              serializeJsonDeterministically(resolvedPlan)
-            ) {
-              return artifact;
-            }
-            for (
-              let dependencyPass = 0;
-              dependencyPass < 20;
-              dependencyPass += 1
-            ) {
-              artifact = await prepareIndex(resolvedPlan);
-              const validatedPlan = await resolvePlan(artifact);
-              if (
-                serializeJsonDeterministically(resolvedPlan) ===
-                serializeJsonDeterministically(validatedPlan)
-              ) {
-                break;
-              }
-              if (dependencyPass === 19) {
-                throw new Error(
-                  "Dynamic MDX dependency closure exceeds the safe publication depth"
-                );
-              }
-              resolvedPlan = validatedPlan;
-            }
-          }
-          return artifact;
+          return resolvePlan === undefined
+            ? await prepareIndex(plan)
+            : await compileContentUntilPlanIsStable({
+                plan,
+                compile: prepareIndex,
+                resolvePlan,
+              });
         }),
       dependencies,
     }

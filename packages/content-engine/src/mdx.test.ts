@@ -1,9 +1,10 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { resolveAssetValueReferences } from "./asset-value-references";
 import { parseMarkdownAst } from "./markdown-ast";
 import {
   createMdxCodeBlock,
   createMdxSourceDiagnostics,
+  createTextAssetSourceValidator,
   discoverMdxAssetReferences,
   isMdxTemplateComponentName,
   MdxDocumentError,
@@ -21,6 +22,113 @@ import {
   type MdxDocument,
 } from "./mdx";
 import { contentEngineLimits } from "./limits";
+
+describe("compilation-scoped text validation", () => {
+  test.each(["# Article", "<ws.element", "{unsafe()}"])(
+    "shares byte and text validation, including diagnostics: %s",
+    async (source) => {
+      const validate = vi.fn(validateTextAssetSource);
+      const validateSource = createTextAssetSourceValidator(
+        {},
+        { validateTextAssetSource: validate }
+      );
+      const input = { source, format: "mdx" as const };
+      const first = validateSource(input);
+      expect(validateSource(input)).toBe(first);
+      const expected = await validateTextAssetSource(input);
+      expect(await first).toEqual(expected);
+      expect(
+        await validateTextAssetSourceBytes({
+          source: new TextEncoder().encode(source),
+          format: "mdx",
+          validateSource,
+        })
+      ).toEqual({ ...expected, source });
+      expect(validate).toHaveBeenCalledOnce();
+    }
+  );
+
+  test("does not reuse validation for different content, formats, or sessions", async () => {
+    const validate = vi.fn(validateTextAssetSource);
+    const dependencies = { validateTextAssetSource: validate };
+    const validateSource = createTextAssetSourceValidator({}, dependencies);
+    const source = "<ws.element";
+    expect(
+      (await validateSource({ source, format: "md" })).diagnostics
+    ).toEqual([]);
+    expect(
+      (await validateSource({ source, format: "mdx" })).diagnostics[0].severity
+    ).toBe("error");
+    expect(
+      (await validateSource({ source: "# Fixed", format: "mdx" })).diagnostics
+    ).toEqual([]);
+    await createTextAssetSourceValidator(
+      {},
+      dependencies
+    )({ source, format: "mdx" });
+    expect(validate).toHaveBeenCalledTimes(4);
+  });
+
+  test("bounds retained source bytes, including multibyte input", async () => {
+    const validate = vi.fn(validateTextAssetSource);
+    const validateSource = createTextAssetSourceValidator(
+      { maximumBytes: 8 },
+      { validateTextAssetSource: validate }
+    );
+    const first = { source: "éé", format: "mdx" as const };
+    await validateSource(first);
+    await validateSource(first);
+    expect(validate).toHaveBeenCalledOnce();
+    await validateSource({ source: "abc", format: "mdx" });
+    await validateSource(first);
+    expect(validate).toHaveBeenCalledTimes(3);
+    await validateSource({ source: "ééé", format: "mdx" });
+    await validateSource({ source: "ééé", format: "mdx" });
+    expect(validate).toHaveBeenCalledTimes(5);
+  });
+
+  test("does not retain a failed validation attempt", async () => {
+    const failure = new Error("Parser failed");
+    const validate = vi
+      .fn(validateTextAssetSource)
+      .mockRejectedValueOnce(failure);
+    const validateSource = createTextAssetSourceValidator(
+      {},
+      { validateTextAssetSource: validate }
+    );
+    const input = { source: "# Article", format: "mdx" as const };
+    await expect(validateSource(input)).rejects.toBe(failure);
+    expect((await validateSource(input)).diagnostics).toEqual([]);
+    expect(validate).toHaveBeenCalledTimes(2);
+  });
+
+  test("rejects invalid byte input before consulting the source cache", async () => {
+    const validateSource = vi.fn(validateTextAssetSource);
+    await expect(
+      validateTextAssetSourceBytes({
+        source: new Uint8Array([0xc3, 0x28]),
+        format: "md",
+        validateSource,
+      })
+    ).resolves.toMatchObject({
+      diagnostics: [
+        { code: "MARKDOWN_BODY_DECODING_FAILED", severity: "error" },
+      ],
+    });
+    await expect(
+      validateTextAssetSourceBytes({
+        source: new Uint8Array(contentEngineLimits.hydratedFileBytes + 1),
+        format: "md",
+        validateSource,
+      })
+    ).resolves.toMatchObject({
+      diagnostics: [
+        { code: "MARKDOWN_BODY_BYTES_EXCEEDED", severity: "error" },
+      ],
+    });
+    expect(validateSource).not.toHaveBeenCalled();
+  });
+});
 
 test("validates template names as PascalCase JavaScript identifiers", () => {
   expect(isMdxTemplateComponentName("PromotionCard")).toBe(true);

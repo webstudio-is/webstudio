@@ -10,6 +10,7 @@ import {
 } from "mdast-util-to-hast";
 import { parse, postprocess, preprocess } from "micromark";
 import { mdxjs } from "micromark-extension-mdxjs";
+import { LRUCache } from "lru-cache";
 import {
   discoverAssetValueReferences,
   rewriteAssetValueReferences,
@@ -1724,6 +1725,38 @@ export const validateTextAssetSource = async ({
   return { format, ...validation };
 };
 
+/** Reuses validation only within a caller-owned compilation session. */
+export const createTextAssetSourceValidator = (
+  {
+    maximumBytes = contentEngineLimits.hydratedTotalBytes,
+  }: {
+    maximumBytes?: number;
+  } = {},
+  dependencies = { validateTextAssetSource }
+): typeof validateTextAssetSource => {
+  const cache = new LRUCache<string, Promise<TextAssetSourceValidation>>({
+    maxSize: maximumBytes,
+    sizeCalculation: (_value, key) => getUtf8ByteLength(key),
+  });
+  return (input) => {
+    const key = `${input.format}:${input.source}`;
+    const cached = cache.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const result = dependencies
+      .validateTextAssetSource(input)
+      .catch((error) => {
+        if (cache.peek(key) === result) {
+          cache.delete(key);
+        }
+        throw error;
+      });
+    cache.set(key, result);
+    return result;
+  };
+};
+
 /**
  * Fatal-decodes one complete byte source before running the shared source
  * validator. This is the byte-input entry point for query and MCP callers.
@@ -1731,9 +1764,11 @@ export const validateTextAssetSource = async ({
 export const validateTextAssetSourceBytes = async ({
   source: bytes,
   format,
+  validateSource = validateTextAssetSource,
 }: {
   source: Uint8Array;
   format: "md" | "mdx";
+  validateSource?: typeof validateTextAssetSource;
 }): Promise<TextAssetByteSourceValidation> => {
   if (bytes.byteLength > contentEngineLimits.hydratedFileBytes) {
     if (format === "md") {
@@ -1785,7 +1820,7 @@ export const validateTextAssetSourceBytes = async ({
       recovery: { status: "unrecoverable", diagnostics: [error] },
     };
   }
-  return { ...(await validateTextAssetSource({ source, format })), source };
+  return { ...(await validateSource({ source, format })), source };
 };
 
 const withMarkdownSyntax = (node: MdxAuthoredNode): MdxAuthoredNode => {

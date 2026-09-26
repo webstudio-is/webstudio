@@ -31,11 +31,22 @@ import {
 } from "@webstudio-is/project-build/state";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
+  createBuildContentCompilationPlan,
+  createPublishedBuildContentCompilationPlan,
+  createPublishedMdxDependencyClosureResolver,
+  getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxContentDatabaseMaxBytes,
+  resolvePublishedMdxAssetCandidates,
+} from "@webstudio-is/project-build";
+import {
   createReachableAssetContentCompilationPlan,
   getHomePage,
 } from "@webstudio-is/sdk";
-import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
+import {
+  compileContentSource,
+  compileContentUntilPlanIsStable,
+} from "@webstudio-is/content-engine/compiler";
 import { createFileSystemContentSource } from "../filesystem-content-source";
 import { z } from "zod";
 import {
@@ -178,6 +189,7 @@ export const sync = async (
         serviceToken: options.authToken,
         origin: options.origin,
         headers: apiCompatibilityHeaders,
+        contentIndex: "client",
       });
       project.origin = options.origin;
     } catch (error) {
@@ -211,6 +223,7 @@ export const sync = async (
               authToken,
               origin,
               headers: apiCompatibilityHeaders,
+              contentIndex: "client",
             })
           : await dependencies.loadCurrentProjectBundle({
               projectId,
@@ -229,15 +242,31 @@ export const sync = async (
     throw new HandledCliError();
   }
 
-  if (project.assets.length > 0) {
-    syncing.message(`Downloading ${project.assets.length} asset files`);
+  const createContentSource = () =>
+    createFileSystemContentSource({
+      projectId: project.build.projectId,
+      assets: project.assets,
+      folders: new Map(
+        (project.assetFolders ?? []).map((folder) => [folder.id, folder])
+      ),
+    });
+
+  const isStaticBuild = project.build.deployment?.destination === "static";
+  const assetsToDownload =
+    options.buildId !== undefined && isStaticBuild === false
+      ? project.assets.filter(
+          (asset) => asset.format !== "md" && asset.format !== "mdx"
+        )
+      : project.assets;
+  if (assetsToDownload.length > 0) {
+    syncing.message(`Downloading ${assetsToDownload.length} asset files`);
     if (project.origin === undefined) {
       syncing.stop("Asset origin is missing from project bundle", 2);
       throw new HandledCliError();
     }
     try {
       await dependencies.downloadAssetFiles({
-        assets: project.assets,
+        assets: assetsToDownload,
         origin: project.origin,
       });
     } catch (error) {
@@ -251,7 +280,65 @@ export const sync = async (
     }
   }
 
-  if (options.buildId === undefined) {
+  if (
+    options.buildId !== undefined &&
+    isStaticBuild &&
+    project.assetIndex === undefined
+  ) {
+    const publicationBuild = {
+      ...project.build,
+      pages: migratePages(project.build.pages),
+    };
+    const projectCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      allowUnresolved: true,
+    });
+    const needsCandidateDiscovery = getDynamicPublishedMdxSourceBlockIds(
+      publicationBuild
+    ).some((blockId) => projectCandidates.has(blockId) === false);
+    const candidateDiscoveryPlan = needsCandidateDiscovery
+      ? createBuildContentCompilationPlan(publicationBuild)
+      : undefined;
+    let plan =
+      candidateDiscoveryPlan ??
+      createPublishedBuildContentCompilationPlan(
+        publicationBuild,
+        projectCandidates
+      );
+    if (plan !== undefined) {
+      syncing.message("Preparing local content index");
+      const source = createContentSource();
+      const maxBytes = getPublishedMdxContentDatabaseMaxBytes({
+        baseBytes: parseContentDatabaseMaxBytes(
+          process.env.CONTENT_DATABASE_MAX_BYTES
+        ),
+        assets: project.assets,
+      });
+      const compile = async (compilationPlan: typeof plan) =>
+        (
+          await compileContentSource({
+            source,
+            projectId: project.build.projectId,
+            plan: compilationPlan,
+            maxBytes,
+          })
+        ).artifact;
+      if (
+        candidateDiscoveryPlan !== undefined ||
+        plan.queries.some(({ id }) => id.startsWith("__content-block-mdx__:"))
+      ) {
+        const resolvePlan = createPublishedMdxDependencyClosureResolver();
+        project.assetIndex = await compileContentUntilPlanIsStable({
+          plan,
+          compile,
+          resolvePlan: async (artifact) =>
+            await resolvePlan({ build: publicationBuild, artifact }),
+        });
+      } else {
+        project.assetIndex = await compile(plan);
+      }
+    }
+  } else if (options.buildId === undefined) {
     const plan = createReachableAssetContentCompilationPlan({
       props: project.build.props.map(([, value]) => value),
       dataSources: project.build.dataSources.map(([, value]) => value),
@@ -260,13 +347,7 @@ export const sync = async (
     if (plan !== undefined) {
       syncing.message("Preparing local content index");
       const { artifact } = await compileContentSource({
-        source: createFileSystemContentSource({
-          projectId: project.build.projectId,
-          assets: project.assets,
-          folders: new Map(
-            (project.assetFolders ?? []).map((folder) => [folder.id, folder])
-          ),
-        }),
+        source: createContentSource(),
         projectId: project.build.projectId,
         plan,
         maxBytes: parseContentDatabaseMaxBytes(

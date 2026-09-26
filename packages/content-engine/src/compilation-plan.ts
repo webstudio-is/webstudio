@@ -23,7 +23,14 @@ import {
 } from "./structured-query";
 import { contentEngineLimits } from "./limits";
 import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
-import type { CanonicalAssetFileEntry } from "./canonical";
+import {
+  fullCanonicalAssetMetadataRequirements,
+  getCanonicalAssetMetadataRequirements,
+  type CanonicalAssetFileEntry,
+  type CanonicalAssetMetadataRequirements,
+} from "./canonical";
+import { getDocumentFormatByContentType } from "./document-graph/document-format";
+import type { ContentCompilerInput } from "./asset-index";
 import {
   areJsonValuesEqual,
   compareStrings,
@@ -97,6 +104,29 @@ export type ContentCompilationPlan = {
 export const requiresStructuredProperties = (plan: ContentCompilationPlan) =>
   plan.structuredPropertyPaths === "all" ||
   plan.structuredPropertyPaths.length > 0;
+
+export const isContentCompilationWindowEmpty = ({
+  limit,
+}: Pick<ContentCompilationQuery, "limit">) =>
+  limit.type === "literal" &&
+  typeof limit.value === "number" &&
+  limit.value <= 0;
+
+export const getContentCompilationMetadataRequirements = (
+  plan?: ContentCompilationPlan
+): CanonicalAssetMetadataRequirements =>
+  plan === undefined
+    ? fullCanonicalAssetMetadataRequirements
+    : {
+        structuredProperties:
+          requiresStructuredProperties(plan) ||
+          plan.queries.some(
+            (query) =>
+              query.content.mode === "markdown-body-ref" &&
+              isContentCompilationWindowEmpty(query) === false
+          ),
+        excerpt: plan.excerpt,
+      };
 
 export const requiresHydratedContent = (plan: ContentCompilationPlan) =>
   plan.queries.some(({ content }) => content.mode !== "none");
@@ -279,13 +309,20 @@ const usesRuntimeWhere = (where: ContentCompilationWhere) =>
 export const selectContentHydrationCandidates = ({
   documents,
   plan,
+  mode = "all",
 }: {
   documents: readonly ContentDatabaseDocument[];
   plan: ContentCompilationPlan;
+  mode?: "all" | "embedded" | "deferred";
 }) => {
   const selected = new Set<string>();
   for (const query of plan.queries) {
-    if (query.content.mode === "none") {
+    if (
+      query.content.mode === "none" ||
+      isContentCompilationWindowEmpty(query) ||
+      (mode === "embedded" && query.content.mode === "markdown-body-ref") ||
+      (mode === "deferred" && query.content.mode !== "markdown-body-ref")
+    ) {
       continue;
     }
     const matched = documents.filter(
@@ -328,7 +365,7 @@ export const prepareContentCompilerEntries = async ({
   plan?: ContentCompilationPlan;
   loadContent: (entry: CanonicalAssetFileEntry) => Promise<string | undefined>;
   maximumContentBytes?: number;
-}) => {
+}): Promise<readonly ContentCompilerInput[]> => {
   if (
     Number.isSafeInteger(maximumContentBytes) === false ||
     maximumContentBytes <= 0
@@ -338,10 +375,16 @@ export const prepareContentCompilerEntries = async ({
   if (plan === undefined) {
     return entries;
   }
-  const projected = entries.map((entry) => {
+  const projected: ContentCompilerInput[] = entries.map((entry) => {
     const { excerpt, ...document } = entry.document;
+    const format = getDocumentFormatByContentType(document.mimeType);
     return {
       ...entry,
+      ...((format === "markdown" || format === "mdx") &&
+      getCanonicalAssetMetadataRequirements(entry).structuredProperties &&
+      document.metadataError === undefined
+        ? { sourceFrontmatter: document.properties }
+        : {}),
       document: {
         ...document,
         properties:
@@ -358,6 +401,7 @@ export const prepareContentCompilerEntries = async ({
   const hydrationIds = selectContentHydrationCandidates({
     documents: projected.map(({ document }) => document),
     plan,
+    mode: "embedded",
   });
   const candidates = projected.filter(({ document }) =>
     isContentDocumentCandidate({ document, plan, available: "all" })
