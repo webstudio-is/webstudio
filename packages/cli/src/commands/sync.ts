@@ -2,7 +2,6 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { spinner } from "@clack/prompts";
-import deepEqual from "fast-deep-equal";
 import {
   bundleVersion,
   publishedProjectBundle,
@@ -43,8 +42,11 @@ import {
   createReachableAssetContentCompilationPlan,
   getHomePage,
 } from "@webstudio-is/sdk";
-import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
+import {
+  compileContentSource,
+  compileContentUntilPlanIsStable,
+} from "@webstudio-is/content-engine/compiler";
 import { createFileSystemContentSource } from "../filesystem-content-source";
 import { z } from "zod";
 import {
@@ -240,6 +242,15 @@ export const sync = async (
     throw new HandledCliError();
   }
 
+  const createContentSource = () =>
+    createFileSystemContentSource({
+      projectId: project.build.projectId,
+      assets: project.assets,
+      folders: new Map(
+        (project.assetFolders ?? []).map((folder) => [folder.id, folder])
+      ),
+    });
+
   const isStaticBuild = project.build.deployment?.destination === "static";
   const assetsToDownload =
     options.buildId !== undefined && isStaticBuild === false
@@ -296,52 +307,36 @@ export const sync = async (
       );
     if (plan !== undefined) {
       syncing.message("Preparing local content index");
-      const source = createFileSystemContentSource({
-        projectId: project.build.projectId,
-        assets: project.assets,
-        folders: new Map(
-          (project.assetFolders ?? []).map((folder) => [folder.id, folder])
-        ),
-      });
+      const source = createContentSource();
       const maxBytes = getPublishedMdxContentDatabaseMaxBytes({
         baseBytes: parseContentDatabaseMaxBytes(
           process.env.CONTENT_DATABASE_MAX_BYTES
         ),
         assets: project.assets,
       });
-      const compile = async () =>
+      const compile = async (compilationPlan: typeof plan) =>
         (
           await compileContentSource({
             source,
             projectId: project.build.projectId,
-            plan,
+            plan: compilationPlan,
             maxBytes,
           })
         ).artifact;
-      let artifact = await compile();
       if (
         candidateDiscoveryPlan !== undefined ||
         plan.queries.some(({ id }) => id.startsWith("__content-block-mdx__:"))
       ) {
         const resolvePlan = createPublishedMdxDependencyClosureResolver();
-        for (let pass = 0; pass < 20; pass += 1) {
-          const nextPlan = await resolvePlan({
-            build: publicationBuild,
-            artifact,
-          });
-          if (nextPlan === undefined || deepEqual(plan, nextPlan)) {
-            break;
-          }
-          if (pass === 19) {
-            throw new Error(
-              "Dynamic MDX dependency closure exceeds the safe publication depth"
-            );
-          }
-          plan = nextPlan;
-          artifact = await compile();
-        }
+        project.assetIndex = await compileContentUntilPlanIsStable({
+          plan,
+          compile,
+          resolvePlan: async (artifact) =>
+            await resolvePlan({ build: publicationBuild, artifact }),
+        });
+      } else {
+        project.assetIndex = await compile(plan);
       }
-      project.assetIndex = artifact;
     }
   } else if (options.buildId === undefined) {
     const plan = createReachableAssetContentCompilationPlan({
@@ -352,13 +347,7 @@ export const sync = async (
     if (plan !== undefined) {
       syncing.message("Preparing local content index");
       const { artifact } = await compileContentSource({
-        source: createFileSystemContentSource({
-          projectId: project.build.projectId,
-          assets: project.assets,
-          folders: new Map(
-            (project.assetFolders ?? []).map((folder) => [folder.id, folder])
-          ),
-        }),
+        source: createContentSource(),
         projectId: project.build.projectId,
         plan,
         maxBytes: parseContentDatabaseMaxBytes(

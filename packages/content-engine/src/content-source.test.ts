@@ -18,9 +18,11 @@ import { createPublishedAssetResourceFetch } from "./published-runtime";
 import {
   createContentCompilationPlan,
   prepareContentCompilerEntries,
+  type ContentCompilationPlan,
 } from "./compilation-plan";
 import {
   compileContentSource,
+  compileContentUntilPlanIsStable,
   ContentSourceChangedError,
   createContentSourceFile,
   materializeContentSource,
@@ -29,6 +31,87 @@ import {
 } from "./content-source";
 
 const projectId = "project";
+
+describe("compileContentUntilPlanIsStable", () => {
+  const initialPlan: ContentCompilationPlan = {
+    standardFields: "all",
+    structuredPropertyPaths: "all",
+    excerpt: false,
+    metadataError: false,
+    queries: [],
+  };
+
+  test("keeps the initial artifact when the resolved plan is unchanged", async () => {
+    const equivalentPlan: ContentCompilationPlan = {
+      queries: [],
+      metadataError: false,
+      excerpt: false,
+      structuredPropertyPaths: "all",
+      standardFields: "all",
+    };
+    const artifact = {};
+    const compile = vi.fn(async () => artifact);
+    const resolvePlan = vi.fn(async () => equivalentPlan);
+
+    await expect(
+      compileContentUntilPlanIsStable({
+        plan: initialPlan,
+        compile,
+        resolvePlan,
+      })
+    ).resolves.toBe(artifact);
+
+    expect(compile).toHaveBeenCalledOnce();
+    expect(resolvePlan).toHaveBeenCalledOnce();
+  });
+
+  test("recompiles when dependency discovery expands the plan", async () => {
+    const expandedPlan: ContentCompilationPlan = {
+      ...initialPlan,
+      excerpt: true,
+    };
+    const compile = vi
+      .fn()
+      .mockResolvedValueOnce({ pass: 0 })
+      .mockResolvedValueOnce({ pass: 1 });
+    const resolvePlan = vi
+      .fn()
+      .mockResolvedValueOnce(expandedPlan)
+      .mockResolvedValueOnce(expandedPlan);
+
+    const artifact = await compileContentUntilPlanIsStable({
+      plan: initialPlan,
+      compile,
+      resolvePlan,
+    });
+
+    expect(artifact).toEqual({ pass: 1 });
+    expect(compile.mock.calls).toEqual([[initialPlan], [expandedPlan]]);
+    expect(resolvePlan).toHaveBeenCalledTimes(2);
+  });
+
+  test("rejects dependency discovery that never stabilizes", async () => {
+    const compile = vi.fn(async (_plan: ContentCompilationPlan) => ({
+      pass: compile.mock.calls.length,
+    }));
+    const resolvePlan = vi.fn(async ({ pass }: { pass: number }) => ({
+      ...initialPlan,
+      excerpt: pass % 2 === 1,
+    }));
+
+    await expect(
+      compileContentUntilPlanIsStable({
+        plan: initialPlan,
+        compile,
+        resolvePlan,
+      })
+    ).rejects.toThrow(
+      "Dynamic MDX dependency closure exceeds the safe publication depth"
+    );
+    expect(compile).toHaveBeenCalledTimes(21);
+    expect(resolvePlan).toHaveBeenCalledTimes(21);
+  });
+});
 
 const createFile = (
   values: Partial<ContentSourceFile> & Pick<ContentSourceFile, "id">

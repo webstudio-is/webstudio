@@ -18,7 +18,7 @@ import {
   discoverAssetValueReferences,
   type AssetValueReferences,
 } from "./asset-value-references";
-import { compareStrings } from "./canonical-json";
+import { areJsonValuesEqual, compareStrings } from "./canonical-json";
 import {
   decodeUtf8,
   encodeUtf8,
@@ -84,6 +84,40 @@ export type ContentSourcePerformanceObserver = (event: {
   phase: ContentSourcePerformancePhase;
   durationMs: number;
 }) => void;
+
+const maxContentCompilationPlanUpdates = 20;
+
+export const compileContentUntilPlanIsStable = async <Artifact>({
+  plan: initialPlan,
+  compile,
+  resolvePlan,
+}: {
+  plan: ContentCompilationPlan;
+  compile: (plan: ContentCompilationPlan) => Promise<Artifact>;
+  resolvePlan: (
+    artifact: Artifact
+  ) =>
+    | ContentCompilationPlan
+    | undefined
+    | Promise<ContentCompilationPlan | undefined>;
+}) => {
+  let plan = initialPlan;
+  let artifact = await compile(plan);
+
+  for (let depth = 0; ; depth += 1) {
+    const nextPlan = await resolvePlan(artifact);
+    if (nextPlan === undefined || areJsonValuesEqual(plan, nextPlan)) {
+      return artifact;
+    }
+    if (depth === maxContentCompilationPlanUpdates) {
+      throw new Error(
+        "Dynamic MDX dependency closure exceeds the safe publication depth"
+      );
+    }
+    plan = nextPlan;
+    artifact = await compile(plan);
+  }
+};
 
 const measureContentSourcePerformance = async <Value>({
   phase,
