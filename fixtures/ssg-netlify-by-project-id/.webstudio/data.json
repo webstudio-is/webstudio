@@ -1,5 +1,5 @@
 {
-  "bundleVersion": "bundle-1he6g9u",
+  "bundleVersion": "bundle-1e81gg6",
   "build": {
     "id": "823cc69d-b2ed-418b-823c-2efc717319cd",
     "projectId": "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e",
@@ -51,7 +51,10 @@
           "id": "root",
           "name": "Root",
           "slug": "",
-          "children": ["Y60VJnVZMU_ifI0GnAR1N", "fOBamlMdmM461hLaITmV7"]
+          "children": [
+            "Y60VJnVZMU_ifI0GnAR1N",
+            "fOBamlMdmM461hLaITmV7"
+          ]
         }
       ]
     },

@@ -6272,7 +6272,7 @@ const metaGoalGuides = [
       "verify-page-responsive",
     ],
     workflow: [
-      "This fixed recipe uses .md files and Markdown source editing. If the user needs visual article editing in Content mode, do not follow this recipe; request the general guide and connect .mdx articles to a Content Block. Connected MDX adds per-article compilation during publishing, while the .md path does not. Both formats still incur the current Asset sync transfer.",
+      "Use .md for Markdown-only editing; use .mdx when visual Content mode is needed. MDX compiles during publishing, and Asset sync downloads both formats.",
       "Follow recipe.executionOrder in order. Resolve documented placeholders from earlier results, and do not add calls outside that sequence.",
       'Create one asset folder named exactly "Blog", then call upload-assets exactly once with all Markdown files and assetsDir ".webstudio/assets". Put slug, title, author, publishedAt, excerpt, and draft in frontmatter. Each asset uses {"name":"<filename>.md","type":"file","format":"md","folderId":"<blog-folder-id>","meta":{}}; do not create companion files.',
       'Create exactly two pages once using the recipe pages payloads exactly: call create-page with {"path":"/blog","name":"Blog"} and {"path":"/blog/:slug","name":"Blog article"}. Use each returned pageId and rootInstanceId in later recipe placeholders. Do not omit name, dry-run page creation, create one page per post, or copy Markdown into static page content.',
