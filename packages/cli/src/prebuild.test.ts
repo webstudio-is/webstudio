@@ -883,79 +883,101 @@ describe("prebuild", () => {
     }
   );
 
-  test("materializes direct MDX Content Blocks into generated page code", async () => {
-    const source = "# Published from MDX";
-    const article: AssetFileDocument = {
-      ...indexedDocument,
-      _id: "article",
-      name: "article.mdx",
-      path: "article.mdx",
-      key: "article",
-      extension: "mdx",
-      mimeType: "text/mdx",
-      size: new TextEncoder().encode(source).byteLength,
-      revision: "article-revision",
-      contentRef: "article.mdx",
-      properties: {},
-    };
-    const siteData = createSiteData({
-      assets: [createAssetForIndexedDocument(article)],
-      instances: [
-        [
-          "root",
-          {
-            id: "root",
-            component: "Box",
-            children: [{ type: "id", value: "content" }],
-          },
+  test.each([true, false, undefined])(
+    "requires direct MDX source content (available: %s)",
+    async (hasSource) => {
+      const source = "# Published from MDX";
+      const article: AssetFileDocument = {
+        ...indexedDocument,
+        _id: "article",
+        name: "article.mdx",
+        path: "article.mdx",
+        key: "article",
+        extension: "mdx",
+        mimeType: "text/mdx",
+        size: new TextEncoder().encode(source).byteLength,
+        revision: "article-revision",
+        contentRef: "article.mdx",
+        properties: {},
+      };
+      const siteData = createSiteData({
+        assets: [createAssetForIndexedDocument(article)],
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: [{ type: "id", value: "content" }],
+            },
+          ],
+          [
+            "content",
+            {
+              id: "content",
+              component: "ws:block",
+              children: [{ type: "id", value: "content-templates" }],
+            },
+          ],
+          [
+            "content-templates",
+            {
+              id: "content-templates",
+              component: "ws:block-template",
+              children: [],
+            },
+          ],
         ],
-        [
-          "content",
-          {
-            id: "content",
-            component: "ws:block",
-            children: [{ type: "id", value: "content-templates" }],
-          },
+        props: [
+          [
+            "content-src",
+            {
+              id: "content-src",
+              instanceId: "content",
+              name: "src",
+              type: "asset",
+              value: "article",
+            },
+          ],
         ],
-        [
-          "content-templates",
-          {
-            id: "content-templates",
-            component: "ws:block-template",
-            children: [],
-          },
-        ],
-      ],
-      props: [
-        [
-          "content-src",
-          {
-            id: "content-src",
-            instanceId: "content",
-            name: "src",
-            type: "asset",
-            value: "article",
-          },
-        ],
-      ],
-    });
-    const siteDataWithIndex = {
-      ...siteData,
-      assetIndex: await createTestAssetIndex(article, {
-        "article.mdx": source,
-      }),
-    };
-    await writeSiteData(siteDataWithIndex);
+      });
+      const siteDataWithIndex = {
+        ...siteData,
+        assetIndex:
+          hasSource === undefined
+            ? undefined
+            : await createTestAssetIndex(
+                article,
+                hasSource
+                  ? {
+                      "article.mdx": source,
+                    }
+                  : {}
+              ),
+      };
+      await writeSiteData(siteDataWithIndex);
 
-    await prebuild({ assets: false, template: ["react-router"] });
+      if (!hasSource) {
+        await expect(
+          prebuild({ assets: false, template: ["react-router"] })
+        ).rejects.toThrow(
+          hasSource === undefined
+            ? "require a content database"
+            : 'Published MDX Asset "article" content is unavailable'
+        );
+        return;
+      }
 
-    const generatedPage = await readFile(
-      "app/__generated__/_index.tsx",
-      "utf8"
-    );
-    expect(generatedPage).toContain("Published from MDX");
-    expect(generatedPage).not.toContain("fetch(");
-  });
+      await prebuild({ assets: false, template: ["react-router"] });
+
+      const generatedPage = await readFile(
+        "app/__generated__/_index.tsx",
+        "utf8"
+      );
+      expect(generatedPage).toContain("Published from MDX");
+      expect(generatedPage).not.toContain("fetch(");
+    }
+  );
 
   test("materializes Content Blocks introduced by an MDX template", async () => {
     const outerSource = '<ws.element ws:name="Nested" />';
@@ -1321,8 +1343,7 @@ describe("prebuild", () => {
     expect(generatedPage).not.toContain('"dynamic.png"');
   });
 
-  test("warns and skips a dynamic MDX source without finite candidates", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  test("rejects a dynamic MDX source without a content database", async () => {
     const siteData = createSiteData({
       instances: [
         [
@@ -1350,17 +1371,9 @@ describe("prebuild", () => {
     });
     await writeSiteData(siteData);
 
-    await prebuild({ assets: false, template: ["react-router"] });
-
-    expect(
-      warn.mock.calls
-        .map(([message]) => JSON.parse(String(message)))
-        .find(({ feature }) => feature === "content-block-mdx")
-    ).toMatchObject({
-      type: "webstudio-build-warning",
-      code: "invalid-mdx",
-      blockInstanceId: "content",
-    });
+    await expect(
+      prebuild({ assets: false, template: ["react-router"] })
+    ).rejects.toThrow("require a content database");
   });
 
   test("excludes resources in statically hidden subtrees", async () => {

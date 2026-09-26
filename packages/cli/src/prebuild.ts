@@ -73,7 +73,6 @@ import {
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
 import {
-  createBuildContentCompilationPlan,
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
   hasDynamicPublishedMdxSources,
@@ -979,7 +978,9 @@ export const prebuild = async (options: {
   const publicationBuild = { ...siteData.build, pages };
   if (
     siteData.assetIndex === undefined &&
-    createBuildContentCompilationPlan(publicationBuild) !== undefined
+    (createPublishedBuildContentCompilationPlan(publicationBuild) !==
+      undefined ||
+      hasDynamicPublishedMdxSources(publicationBuild))
   ) {
     throw new Error(
       "Assets queries require a content database. Sync the project again before building."
@@ -1465,6 +1466,9 @@ export const prebuild = async (options: {
               ...warning.diagnostic,
             })
           );
+          if (warning.diagnostic.severity === "error") {
+            throw new Error(warning.diagnostic.message);
+          }
         }
       }
       pageData.build.instances = Array.from(pageInstances);

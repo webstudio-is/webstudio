@@ -10,6 +10,17 @@ import {
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createServer } from "node:http";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { build } from "esbuild";
+import {
+  createStructuredAssetQueryResourceBody,
+  encodeDataSourceVariable,
+} from "@webstudio-is/sdk";
+import {
+  createAssetIndex,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/content-engine/compiler";
 import { bundleVersion } from "@webstudio-is/protocol";
 import {
   createImageAssetFixture,
@@ -218,7 +229,6 @@ test.each([
   {
     name: "hosted",
     deployment: { destination: "saas" as const, domains: [] },
-    compilesArticles: false,
   },
   {
     name: "SSG",
@@ -228,11 +238,10 @@ test.each([
       assetsDomain: "https://assets.example.com",
       templates: ["ssg" as const],
     },
-    compilesArticles: true,
   },
 ])(
-  "$name publish sync $compilesArticles articles only for SSG",
-  async ({ deployment, compilesArticles }) => {
+  "$name publish sync compiles required MDX articles",
+  async ({ deployment }) => {
     const source = "# Published from the runner";
     const article = {
       ...createImageAssetFixture(),
@@ -315,31 +324,267 @@ test.each([
     );
 
     const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
-    if (compilesArticles) {
-      expect(downloadAssetFiles).toHaveBeenCalledWith({
-        assets: [article, image],
-        origin: "https://example.com",
-      });
-      expect(data.assetIndex.documents).toContainEqual(
-        expect.objectContaining({ _id: article.id, extension: "mdx" })
-      );
-      expect(Object.values(data.assetIndex.contents)).toContain(source);
+    expect(downloadAssetFiles).toHaveBeenCalledWith({
+      assets: [article, image],
+      origin: "https://example.com",
+    });
+    expect(data.assetIndex.documents).toContainEqual(
+      expect.objectContaining({ _id: article.id, extension: "mdx" })
+    );
+    expect(Object.values(data.assetIndex.contents)).toContain(source);
 
-      await prebuild({ assets: false, template: ["ssg"] });
-      const generatedPage = await readFile(
-        "app/__generated__/_index.tsx",
-        "utf8"
-      );
-      expect(generatedPage).toContain("Published from the runner");
-    } else {
-      expect(downloadAssetFiles).toHaveBeenCalledWith({
-        assets: [image],
-        origin: "https://example.com",
-      });
-      expect(data.assetIndex).toBeUndefined();
-    }
+    await prebuild({
+      assets: false,
+      template: [deployment.destination === "static" ? "ssg" : "react-router"],
+    });
+    const generatedPage = await readFile(
+      "app/__generated__/_index.tsx",
+      "utf8"
+    );
+    expect(generatedPage).toContain("Published from the runner");
   }
 );
+
+test("hosted sync compiles metadata-only dynamic MDX into a server-rendered page", async () => {
+  const source =
+    "---\nslug: post\ntitle: Article title\n---\n# Published article body";
+  const article = {
+    ...createImageAssetFixture(),
+    id: "article",
+    name: "article.mdx",
+    type: "file" as const,
+    format: "mdx",
+    size: new TextEncoder().encode(source).byteLength,
+    meta: {},
+  };
+  const project = createProjectBundle({
+    assets: [article],
+    build: {
+      deployment: { destination: "saas", domains: [] },
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            type: "instance",
+            component: "Box",
+            children: [{ type: "id", value: "content" }],
+          },
+        ],
+        [
+          "content",
+          {
+            id: "content",
+            type: "instance",
+            component: "ws:block",
+            children: [
+              { type: "id", value: "title" },
+              { type: "id", value: "templates" },
+              { type: "id", value: "body" },
+            ],
+          },
+        ],
+        [
+          "body",
+          {
+            id: "body",
+            type: "instance",
+            component: "ws:content-block-body",
+            children: [],
+          },
+        ],
+        [
+          "title",
+          {
+            id: "title",
+            type: "instance",
+            component: "Heading",
+            children: [
+              {
+                type: "expression",
+                value: `${encodeDataSourceVariable("document")}.frontmatter.title`,
+              },
+            ],
+          },
+        ],
+        [
+          "templates",
+          {
+            id: "templates",
+            type: "instance",
+            component: "ws:block-template",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: "content",
+            name: "src",
+            type: "expression",
+            value: `${encodeDataSourceVariable("article-data")}.data.id`,
+          },
+        ],
+        [
+          "document",
+          {
+            id: "document",
+            instanceId: "content",
+            name: "document",
+            type: "parameter",
+            value: "document",
+          },
+        ],
+      ],
+      dataSources: [
+        [
+          "article-data",
+          {
+            id: "article-data",
+            type: "resource",
+            name: "article",
+            scopeInstanceId: "root",
+            resourceId: "article-query",
+          },
+        ],
+        [
+          "document",
+          {
+            id: "document",
+            type: "parameter",
+            name: "document",
+            scopeInstanceId: "content",
+          },
+        ],
+      ],
+      resources: [
+        [
+          "article-query",
+          {
+            id: "article-query",
+            name: "Article",
+            control: "system",
+            method: "post",
+            url: '"/$resources/assets"',
+            headers: [],
+            body: createStructuredAssetQueryResourceBody({
+              result: "one",
+              limit: "1",
+              offset: "0",
+              where: {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "$ws$system.params.slug",
+              },
+              sort: [],
+              output: { mode: "all", includeMetadata: true },
+              content: { mode: "none" },
+            }),
+          },
+        ],
+      ],
+    },
+  });
+  project.assetIndex = await createAssetIndex({
+    projectId: project.build.projectId,
+    entries: [
+      createCanonicalAssetFileEntry({
+        projectId: project.build.projectId,
+        document: {
+          _id: article.id,
+          _type: "asset.file",
+          name: article.name,
+          path: article.name,
+          key: "article",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: article.size,
+          revision: "article-revision",
+          contentRef: article.name,
+          properties: { slug: "post", title: "Article title" },
+        },
+      }),
+    ],
+  });
+  loadProjectBundleByBuildId.mockResolvedValue(project);
+  downloadAssetFiles.mockImplementation(async () => {
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/article.mdx", source);
+  });
+  await sync(
+    { authToken: "token", buildId: "build-1", origin: "https://example.com" },
+    dependencies
+  );
+  await prebuild({ assets: false, template: ["react-router"] });
+  // Execute the generated resource graph and server-render its actual React page.
+  await build({
+    stdin: {
+      contents: `
+      import React from "react";
+      import { renderToString } from "react-dom/server";
+      import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+      import { loadResources } from "@webstudio-is/sdk/runtime";
+      import { Page } from "./app/__generated__/_index";
+      import { getResources } from "./app/__generated__/_index.server";
+      import { createGeneratedAssetResourceFetch } from "./app/__generated__/$resources.asset-query-runtime";
+      (async () => {
+        const system = { params: { slug: "post" }, search: {}, origin: "https://example.com", pathname: "/post" };
+        const resourceFetch = await createGeneratedAssetResourceFetch({ request: new Request("https://example.com/post"), context: {}, fallback: fetch });
+        const resources = await loadResources(resourceFetch, getResources({system}).data);
+        console.log(renderToString(<ReactSdkContext.Provider value={{resources, assetBaseUrl: "/", imageLoader: ({src}) => src, breakpoints: [], onError: (error) => {throw error} }}><Page system={system} /></ReactSdkContext.Provider>));
+      })().catch((error) => { console.error(error); process.exitCode = 1; });
+    `,
+      loader: "tsx",
+      resolveDir: tempDir,
+    },
+    outfile: join(tempDir, "render.cjs"),
+    bundle: true,
+    platform: "node",
+    format: "cjs",
+    jsx: "automatic",
+    conditions: ["webstudio"],
+    nodePaths: [join(originalCwd, "node_modules")],
+  });
+  const { stdout } = await promisify(execFile)(process.execPath, [
+    join(tempDir, "render.cjs"),
+  ]);
+  expect(stdout).toContain("Article title");
+  expect(stdout).toContain("Published article body");
+}, 30_000);
+
+test("hosted sync keeps article bodies remote without MDX Content Blocks", async () => {
+  const image = createImageAssetFixture();
+  const articles = ["md", "mdx"].map((format) => ({
+    ...image,
+    id: format,
+    name: `article.${format}`,
+    format,
+    type: "file" as const,
+    meta: {},
+  }));
+  const project = createProjectBundle({
+    assets: [...articles, image],
+    build: { deployment: { destination: "saas", domains: [] } },
+  });
+  project.assetIndex = await createAssetIndex({
+    projectId: project.build.projectId,
+    entries: [],
+  });
+  loadProjectBundleByBuildId.mockResolvedValue(project);
+  await sync(
+    { authToken: "token", buildId: "build-1", origin: "https://example.com" },
+    dependencies
+  );
+  expect(downloadAssetFiles).toHaveBeenCalledWith({
+    assets: [image],
+    origin: "https://example.com",
+  });
+  const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
+  expect(data.assetIndex).toEqual(project.assetIndex);
+});
 
 test("sends linked share token when synchronizing by build id", async () => {
   const resolveApiConnection = vi.fn(async () => ({
