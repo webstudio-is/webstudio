@@ -12,6 +12,9 @@ jobs:
       github.repository_owner == 'webstudio-is' &&
       startsWith(github.event.label.name, 'publish:')
 
+    environment:
+      name: development
+
     timeout-minutes: 20
 
     runs-on: ubuntu-latest
