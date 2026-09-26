@@ -73,6 +73,7 @@ import {
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
 import {
+  createBuildContentCompilationPlan,
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
   hasDynamicPublishedMdxSources,
@@ -1027,6 +1028,14 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const publicationBuild = { ...siteData.build, pages };
+  if (
+    siteData.assetIndex === undefined &&
+    createBuildContentCompilationPlan(publicationBuild) !== undefined
+  ) {
+    throw new Error(
+      "Assets queries require a content database. Sync the project again before building."
+    );
+  }
   let verifiedAssetIndex =
     siteData.assetIndex === undefined
       ? undefined

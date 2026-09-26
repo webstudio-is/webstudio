@@ -788,6 +788,33 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("rejects Assets queries without a content database before generating routes", async () => {
+    const siteData = createSiteData();
+    siteData.build.resources = [["posts", createQueryResource()]] as never;
+    siteData.build.dataSources = [
+      [
+        "posts-data",
+        {
+          id: "posts-data",
+          type: "resource",
+          name: "posts",
+          resourceId: "posts",
+          scopeInstanceId: "root",
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await expect(
+      prebuild({ assets: false, template: ["defaults"] })
+    ).rejects.toThrow(
+      "Assets queries require a content database. Sync the project again before building."
+    );
+    await expect(stat("app/routes/_index.tsx")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  });
+
   test("publishes custom headers and refreshes them on incremental builds", async () => {
     const projectSettings = {
       meta: {
