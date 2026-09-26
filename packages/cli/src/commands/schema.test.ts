@@ -149,8 +149,8 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  // Includes the custom response headers schema in project settings updates.
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(220_000);
+  // Includes the custom response headers and screenshot target schemas.
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(221_000);
   expect(
     JSON.stringify(
       expectedTools.find(({ name }) => name === "insert-page-transfer-item")
