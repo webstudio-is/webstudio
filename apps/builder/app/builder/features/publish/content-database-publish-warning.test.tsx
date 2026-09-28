@@ -14,6 +14,7 @@ const mdxDiagnostics = (count: number) => ({
     filename: `post-${index}.mdx`,
     templateName: `Post ${index}`,
   })),
+  mdxErrors: [],
 });
 
 describe("content database publish warning", () => {

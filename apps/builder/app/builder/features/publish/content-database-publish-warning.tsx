@@ -6,6 +6,29 @@ type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
 >;
 
+export const getContentDatabasePublishError = (
+  diagnostics: ContentDatabasePublishDiagnostics
+) => {
+  if (diagnostics.mdxErrors.length === 0) {
+    return;
+  }
+  const errors = diagnostics.mdxErrors;
+  const entries = errors.slice(0, 5).map(({ filename, diagnostic }) => {
+    const start =
+      "sourceRange" in diagnostic ? diagnostic.sourceRange?.start : undefined;
+    const location =
+      start === undefined ? "" : `:${start.line}:${start.column}`;
+    const message =
+      "message" in diagnostic ? diagnostic.message : diagnostic.code;
+    return `${filename}${location}: ${message}`;
+  });
+  const more =
+    errors.length > entries.length
+      ? `; and ${errors.length - entries.length} more`
+      : "";
+  return `Cannot publish until MDX content errors are fixed: ${entries.join("; ")}${more}`;
+};
+
 export const getContentDatabasePublishWarning = (
   diagnostics: ContentDatabasePublishDiagnostics
 ) => {

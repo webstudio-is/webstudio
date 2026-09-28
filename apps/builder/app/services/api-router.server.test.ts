@@ -921,7 +921,7 @@ describe("api router permits", () => {
         valid: true,
         target,
         domains: expected,
-        diagnostics: { mdxOmissions: [] },
+        diagnostics: { mdxOmissions: [], mdxErrors: [] },
       });
       expect(loadBuild).toHaveBeenCalledWith(expect.anything(), "project-1");
       expect(loadBundle).toHaveBeenCalledWith(

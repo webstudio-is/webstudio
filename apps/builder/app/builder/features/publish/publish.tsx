@@ -113,6 +113,7 @@ import {
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
 import {
+  getContentDatabasePublishError,
   getContentDatabasePublishWarning,
   showContentDatabasePublishWarning,
 } from "./content-database-publish-warning";
@@ -655,7 +656,7 @@ const Publish = ({
     }
   };
 
-  const runPrePublishChecks = async (): Promise<boolean> => {
+  const runPrePublishChecks = async () => {
     await nativeClient.build.checkProjectBuildPermission.query({
       projectId: project.id,
     });
@@ -666,7 +667,7 @@ const Publish = ({
     if (auditError !== undefined) {
       toast.error(auditError);
       setPublishError(auditError);
-      return false;
+      return { passed: false as const };
     }
     if (auditWarning !== undefined) {
       showPublishWarning({
@@ -675,7 +676,18 @@ const Publish = ({
       });
     }
 
-    return true;
+    const diagnostics =
+      await nativeClient.build.contentDatabasePublishDiagnostics.query({
+        projectId: project.id,
+      });
+    const mdxError = getContentDatabasePublishError(diagnostics);
+    if (mdxError !== undefined) {
+      toast.error(mdxError);
+      setPublishError(mdxError);
+      return { passed: false as const };
+    }
+
+    return { passed: true as const, diagnostics };
   };
 
   const getDomainsFromForm = (formData: FormData) =>
@@ -693,16 +705,14 @@ const Publish = ({
     }
 
     try {
-      const passed = await runPrePublishChecks();
-      if (!passed) {
+      const checks = await runPrePublishChecks();
+      if (checks.passed === false) {
         onValidationStateChange("idle");
         return;
       }
-      const diagnostics =
-        await nativeClient.build.contentDatabasePublishDiagnostics.query({
-          projectId: project.id,
-        });
-      const contentWarning = getContentDatabasePublishWarning(diagnostics);
+      const contentWarning = getContentDatabasePublishWarning(
+        checks.diagnostics
+      );
       if (contentWarning !== undefined) {
         showPublishWarning({
           message: contentWarning,
@@ -738,22 +748,20 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        const passed = await runPrePublishChecks();
-        if (!passed) {
+        const checks = await runPrePublishChecks();
+        if (checks.passed === false) {
           return;
         }
+        showContentDatabasePublishWarning({
+          diagnostics: Promise.resolve(checks.diagnostics),
+          setWarning: setPublishWarning,
+        });
       } catch (error) {
         const message = getPrePublishErrorMessage(error);
         toast.error(message);
         setPublishError(message);
         return;
       }
-      showContentDatabasePublishWarning({
-        diagnostics: nativeClient.build.contentDatabasePublishDiagnostics.query(
-          { projectId: project.id }
-        ),
-        setWarning: setPublishWarning,
-      });
       await publish(domains);
     });
   };
@@ -901,11 +909,19 @@ const PublishStatic = ({
               try {
                 setIsPendingOptimistic(true);
 
+                await flushExternalContentProject({ projectId });
+                const diagnostics =
+                  await nativeClient.build.contentDatabasePublishDiagnostics.query({
+                    projectId,
+                  });
+                const mdxError = getContentDatabasePublishError(diagnostics);
+                if (mdxError !== undefined) {
+                  toast.error(mdxError);
+                  return;
+                }
+
                 showContentDatabasePublishWarning({
-                  diagnostics:
-                    nativeClient.build.contentDatabasePublishDiagnostics.query({
-                      projectId,
-                    }),
+                  diagnostics: Promise.resolve(diagnostics),
                   setWarning: setPublishWarning,
                 });
 
