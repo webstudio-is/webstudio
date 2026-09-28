@@ -116,6 +116,32 @@ describe("loadBuildById (msw)", () => {
     expect(result.marketplaceProduct).toBeUndefined();
   });
 
+  test("drops persisted response-header rules with a null value", async () => {
+    server.use(
+      db.get("Build", () =>
+        json([
+          {
+            ...buildRow,
+            projectSettings: JSON.stringify({
+              meta: {
+                customHeaders: [
+                  { name: "X-Frame-Options", value: null },
+                  { name: "Referrer-Policy", value: "no-referrer" },
+                ],
+              },
+              compiler: {},
+            }),
+          },
+        ])
+      )
+    );
+
+    const result = await loadBuildById(createContext(), "build-1");
+    expect(result.projectSettings.meta.customHeaders).toEqual([
+      { name: "Referrer-Policy", value: "no-referrer" },
+    ]);
+  });
+
   test("rejects invalid persisted data sources", async () => {
     server.use(
       db.get("Build", () =>
@@ -427,6 +453,14 @@ describe("createProductionBuild (msw)", () => {
       allowed: false,
       domains: ["example.com"],
       headers: [],
+      denied: false,
+      checkPlan: false,
+    },
+    {
+      label: "Free owner, legacy null header value",
+      allowed: false,
+      domains: ["example.com"],
+      headers: [{ name: "X-Frame-Options", value: null }],
       denied: false,
       checkPlan: false,
     },
