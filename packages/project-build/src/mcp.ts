@@ -9311,7 +9311,9 @@ export const createProjectSessionMcpServer = async <
   toolHeartbeatIntervalMs = 10_000,
   onToolFailure,
   onToolSuccess,
+  additionalInstructions,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
+  additionalInstructions?: string;
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
   onInitialized?: (clientName: string | undefined) => void;
@@ -9333,7 +9335,9 @@ export const createProjectSessionMcpServer = async <
         resources: {},
         logging: {},
       },
-      instructions: startupGuidance,
+      instructions: [startupGuidance, additionalInstructions?.trim()]
+        .filter(Boolean)
+        .join("\n\n"),
     }
   );
   const sendLog = (level: "info" | "error", data: string) => {

@@ -33,6 +33,7 @@ const {
   createMcpRunErrorPayload,
   createMcpSingleOpCallErrorPayload,
   createMcpStatusReporter,
+  getCliUpdateInstructions,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
   prepareTextAssetWriteFeedback,
@@ -51,6 +52,18 @@ const {
   executeMcpRunCall,
   withMcpHost,
 } = __testing__;
+
+test("instructs connected agents to update an outdated MCP CLI", () => {
+  expect(
+    getCliUpdateInstructions({
+      currentVersion: "0.299.0",
+      latestVersion: "0.301.0",
+    })
+  ).toBe(
+    "This MCP server runs Webstudio CLI 0.299.0, but 0.301.0 is available. Tell the user before editing and recommend restarting this MCP server with the latest CLI, for example `npx -y webstudio@latest mcp`. Do not try to update or restart the CLI yourself. The existing API compatibility check remains the authority for whether writes are supported."
+  );
+  expect(getCliUpdateInstructions(undefined)).toBeUndefined();
+});
 
 test("disposes an MCP host when its operation fails", async () => {
   const dispose = vi.fn(async () => undefined);
