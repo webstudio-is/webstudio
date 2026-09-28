@@ -51,7 +51,11 @@ Hosted builds receive a content database for their Assets queries. Markdown
 body-reference queries use stored frontmatter for that database and fetch the
 selected body when a visitor opens the page. Static exports download article
 sources and build the database in the publish runner; this transfer and any
-MDX compilation still take time. Use [Content Block](../core-components/content-block.md) when visual
+MDX compilation still take time. Hosted pages using MDX Content Blocks also
+download article sources and compile the required MDX in the publish runner.
+If required MDX content is unavailable or compilation reports an error, the
+build fails instead of publishing an incomplete page.
+Use [Content Block](../core-components/content-block.md) when visual
 article editing matters, or [Markdown Embed](../core-components/markdown-embed.md)
 when source editing is enough.
 
