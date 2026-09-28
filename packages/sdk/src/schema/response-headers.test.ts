@@ -61,8 +61,8 @@ describe("response header settings", () => {
       { name: "cache-control", value: "updated" }
     );
     expect(updated).toEqual([
-      { name: "cache-control", value: "updated" },
       headers[1],
+      { name: "cache-control", value: "updated" },
     ]);
     expect(
       editCustomResponseHeaders(
@@ -76,6 +76,18 @@ describe("response header settings", () => {
         value: "session=secret",
       })
     ).toThrow();
+  });
+
+  test("new rules appear last, where they take precedence on overlap", () => {
+    const global = { name: "Cache-Control", value: "private" };
+    const route = {
+      route: "/public",
+      name: "Cache-Control",
+      value: "public, max-age=60",
+    };
+    expect(
+      editCustomResponseHeaders([global], customResponseHeaderKey(route), route)
+    ).toEqual([global, route]);
   });
 
   test("a rule requires a nonempty string value", () => {
