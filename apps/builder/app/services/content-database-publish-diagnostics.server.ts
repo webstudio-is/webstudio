@@ -4,12 +4,12 @@ import {
   getContentDatabasePublishDiagnostics,
 } from "./content-database.server";
 import {
-  type PublishedMdxSource,
+  resolvePublishedMdxAssetCandidates,
   type PublishedMdxTemplateOmission,
 } from "@webstudio-is/project-build";
 import {
   getUnsafeDynamicPublishedMdxDiagnostic,
-  materializeMdxSource,
+  materializePublishedMdx,
 } from "@webstudio-is/project-build/runtime";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -22,7 +22,7 @@ export const loadContentDatabasePublishDiagnostics = async (
   } = { loadProjectBundleByProjectId }
 ) => {
   let mdxTemplateOmissions: readonly PublishedMdxTemplateOmission[] = [];
-  const mdxSources: PublishedMdxSource[] = [];
+  const mdxBlockInstanceIds = new Set<string>();
   const bundle = await dependencies.loadProjectBundleByProjectId(
     projectId,
     ctx,
@@ -30,16 +30,15 @@ export const loadContentDatabasePublishDiagnostics = async (
       onMdxTemplateOmissions: (issues) => {
         mdxTemplateOmissions = issues;
       },
-      onMdxSources: (sources) => {
-        mdxSources.push(...sources);
-      },
+      onMdxBlockInstanceId: (blockInstanceId) =>
+        mdxBlockInstanceIds.add(blockInstanceId),
     }
   );
   const mdxErrors: Array<{
-    assetId: string;
     filename: string;
-    blockInstanceId: string;
-    diagnostic: Awaited<ReturnType<typeof materializeMdxSource>>["diagnostics"][number];
+    diagnostic: Awaited<
+      ReturnType<typeof materializePublishedMdx>
+    >["warnings"][number]["diagnostic"];
   }> = [];
   if (bundle.assetIndex !== undefined) {
     const data = {
@@ -60,49 +59,46 @@ export const loadContentDatabasePublishDiagnostics = async (
             ),
           }),
     };
-    for (const source of mdxSources) {
-      const materialized = await materializeMdxSource({
-        source: source.source,
-        identity: {
-          blockInstanceId: source.blockInstanceId,
-          assetId: source.assetId,
-          revision: source.revision,
-          contentRef: source.contentRef,
-          format: "mdx",
-          renderScope: `prepublish:block:${source.blockInstanceId}:asset:${source.assetId}`,
-        },
-        data,
-        metas: componentMetas,
-        projectId: bundle.build.projectId,
-        parsed: { source: source.source, result: source.parsed },
-      });
-      const asset = data.assets.get(source.assetId);
-      const unsafeDynamicDiagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
-        root: materialized.root,
+    const dynamicAssetIdsByBlock = resolvePublishedMdxAssetCandidates({
+      build: bundle.build,
+      artifact: bundle.assetIndex,
+      blockInstanceIds: mdxBlockInstanceIds,
+    });
+    const materialized = await materializePublishedMdx({
+      route: "prepublish",
+      data,
+      artifact: bundle.assetIndex,
+      metas: componentMetas,
+      projectId: bundle.build.projectId,
+      blockInstanceIds: mdxBlockInstanceIds,
+      dynamicAssetIdsByBlock,
+    });
+    const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
+    for (const { root } of materialized.roots) {
+      const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
+        root,
         route: "prepublish",
         dataSources: data.dataSources,
         props: data.props,
       });
-      const diagnostics = [
-        ...materialized.diagnostics,
-        ...(unsafeDynamicDiagnostic === undefined
-          ? []
-          : [unsafeDynamicDiagnostic]),
-      ];
-      mdxErrors.push(
-        ...diagnostics.flatMap((diagnostic) =>
-          diagnostic.severity === "error"
-            ? [
-                {
-                  assetId: source.assetId,
-                  filename: asset?.name ?? source.contentRef,
-                  blockInstanceId: source.blockInstanceId,
-                  diagnostic,
-                },
-              ]
-            : []
-        )
-      );
+      if (diagnostic !== undefined) {
+        mdxErrors.push({
+          filename:
+            assets.get(root.identity.assetId)?.name ?? root.identity.contentRef,
+          diagnostic,
+        });
+      }
+    }
+    for (const { diagnostic } of materialized.warnings) {
+      if (diagnostic.severity !== "error") {
+        continue;
+      }
+      const assetId = diagnostic.assetId ?? "";
+      mdxErrors.push({
+        filename:
+          assets.get(assetId)?.name ?? diagnostic.contentRef ?? "MDX content",
+        diagnostic,
+      });
     }
   }
   return {

@@ -223,27 +223,18 @@ export type PublishedMdxTemplateOmission = {
   templateName: string;
 };
 
-export type PublishedMdxSource = Readonly<{
-  blockInstanceId: string;
-  assetId: string;
-  revision: string;
-  contentRef: string;
-  source: string;
-  parsed: Awaited<ReturnType<typeof parseMdxDocumentRecovering>>;
-}>;
-
 type ResolvePublishedMdxDependencyClosureOptions = {
   build: PublishedContentDatabaseBuild;
   artifact: ContentArtifactV1;
   onTemplateOmission?: (issue: PublishedMdxTemplateOmission) => void;
-  onMdxSource?: (source: PublishedMdxSource) => void;
+  onMdxBlockInstanceId?: (blockInstanceId: string) => void;
 };
 
 const resolvePublishedMdxDependencyClosureWithParser = async ({
   build,
   artifact,
   onTemplateOmission,
-  onMdxSource,
+  onMdxBlockInstanceId,
   parseDocument,
 }: ResolvePublishedMdxDependencyClosureOptions & {
   parseDocument: (input: {
@@ -326,14 +317,7 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
         contentRef: documentEntry.contentRef,
         source: sourceText,
       });
-      onMdxSource?.({
-        blockInstanceId: blockId,
-        assetId,
-        revision: documentEntry.revision,
-        contentRef: documentEntry.contentRef,
-        source: sourceText,
-        parsed,
-      });
+      onMdxBlockInstanceId?.(blockId);
       if (parsed.status === "unrecoverable") {
         continue;
       }

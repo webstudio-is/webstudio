@@ -14,7 +14,6 @@ import {
   getDynamicPublishedMdxSourceBlockIds,
   getPublishedMdxContentDatabaseMaxBytes,
   resolvePublishedMdxAssetCandidates,
-  type PublishedMdxSource,
   type PublishedMdxTemplateOmission,
 } from "@webstudio-is/project-build";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
@@ -179,7 +178,7 @@ const addProjectMetadata = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
-    onMdxSources?: (sources: readonly PublishedMdxSource[]) => void;
+    onMdxBlockInstanceId?: (blockInstanceId: string) => void;
     contentIndex?: "client";
   } = {}
 ): Promise<PublishedProjectBundle> => {
@@ -228,7 +227,6 @@ const addProjectMetadata = async (
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
   let mdxTemplateOmissions: PublishedMdxTemplateOmission[] = [];
-  let mdxSources: PublishedMdxSource[] = [];
   if (assetRequirements !== undefined) {
     const resolveMdxDependencies =
       createPublishedMdxDependencyClosureResolver();
@@ -252,15 +250,13 @@ const addProjectMetadata = async (
               artifact: NonNullable<PublishedProjectBundle["assetIndex"]>
             ) => {
               const nextOmissions: PublishedMdxTemplateOmission[] = [];
-              const nextSources: PublishedMdxSource[] = [];
               const plan = await resolveMdxDependencies({
                 build: publicationBuild,
                 artifact,
                 onTemplateOmission: (issue) => nextOmissions.push(issue),
-                onMdxSource: (source) => nextSources.push(source),
+                onMdxBlockInstanceId: options.onMdxBlockInstanceId,
               });
               mdxTemplateOmissions = nextOmissions;
-              mdxSources = nextSources;
               return plan!;
             },
           }
@@ -288,7 +284,6 @@ const addProjectMetadata = async (
   }
 
   options.onMdxTemplateOmissions?.(mdxTemplateOmissions);
-  options.onMdxSources?.(mdxSources);
 
   return {
     ...data,
@@ -388,7 +383,7 @@ export const loadProjectBundleByProjectId = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
-    onMdxSources?: (sources: readonly PublishedMdxSource[]) => void;
+    onMdxBlockInstanceId?: (blockInstanceId: string) => void;
   } = {}
 ): Promise<PublishedProjectBundle> => {
   const project = await loadById(projectId, context);
