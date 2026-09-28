@@ -15,6 +15,7 @@ import { promisify } from "node:util";
 import { build } from "esbuild";
 import {
   createStructuredAssetQueryResourceBody,
+  encodeDataVariableId,
   encodeDataSourceVariable,
 } from "@webstudio-is/sdk";
 import {
@@ -344,6 +345,99 @@ test.each([
     expect(generatedPage).toContain("Published from the runner");
   }
 );
+
+test("hosted sync compiles MDX selected by a mutable project variable", async () => {
+  const source = "# Published from a project variable";
+  const article = {
+    ...createImageAssetFixture(),
+    id: "article",
+    name: "article.mdx",
+    type: "file" as const,
+    format: "mdx",
+    size: new TextEncoder().encode(source).byteLength,
+    meta: {},
+  };
+  loadProjectBundleByBuildId.mockResolvedValue(
+    createProjectBundle({
+      assets: [article],
+      build: {
+        deployment: { destination: "saas", domains: [] },
+        instances: [
+          [
+            "root",
+            {
+              type: "instance",
+              id: "root",
+              component: "Box",
+              children: [{ type: "id", value: "content" }],
+            },
+          ],
+          [
+            "content",
+            {
+              type: "instance",
+              id: "content",
+              component: "ws:block",
+              children: [{ type: "id", value: "templates" }],
+            },
+          ],
+          [
+            "templates",
+            {
+              type: "instance",
+              id: "templates",
+              component: "ws:block-template",
+              children: [],
+            },
+          ],
+        ],
+        props: [
+          [
+            "src",
+            {
+              id: "src",
+              instanceId: "content",
+              name: "src",
+              type: "expression",
+              value: encodeDataVariableId("article-source"),
+            },
+          ],
+        ],
+        dataSources: [
+          [
+            "article-source",
+            {
+              id: "article-source",
+              type: "variable",
+              scopeInstanceId: "content",
+              name: "articleSource",
+              value: { type: "string", value: article.id },
+            },
+          ],
+        ],
+      },
+    })
+  );
+  downloadAssetFiles.mockImplementation(async () => {
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/article.mdx", source);
+  });
+
+  await sync(
+    {
+      authToken: "token-1",
+      buildId: "build-1",
+      origin: "https://example.com",
+    },
+    dependencies
+  );
+
+  const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
+  expect(data.assetIndex.documents).toContainEqual(
+    expect.objectContaining({ _id: article.id, extension: "mdx" })
+  );
+  expect(Object.values(data.assetIndex.contents)).toContain(source);
+});
 
 test("hosted sync compiles metadata-only dynamic MDX into a server-rendered page", async () => {
   const source =
