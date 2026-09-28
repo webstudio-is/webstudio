@@ -4,6 +4,7 @@ import {
   buildWsAuth,
   createBasicAuthRoute,
   createWsAuthResources,
+  findMostSpecificPathnameRule,
   findWsAuthRoute,
   getBasicAuthCredentials,
   matchesPathnamePattern,
@@ -150,6 +151,37 @@ describe("wsauth", () => {
     ["/docs", "/docs/", true],
   ] as const)("matches %s against %s: %s", (pattern, pathname, expected) => {
     expect(matchesPathnamePattern(pattern, pathname)).toBe(expected);
+  });
+
+  test("selects the most specific matching pattern regardless of list order", () => {
+    const rules = [
+      { route: "/*", value: "global" },
+      { route: "/docs/*", value: "docs" },
+      { route: "/docs/:page", value: "param" },
+      { route: "/docs/setup", value: "exact" },
+      { route: "/", value: "root" },
+    ];
+    expect(findMostSpecificPathnameRule(rules, "/")?.value).toBe("root");
+    expect(findMostSpecificPathnameRule(rules, "/docs")?.value).toBe("docs");
+    expect(findMostSpecificPathnameRule(rules, "/docs/a")?.value).toBe("param");
+    expect(findMostSpecificPathnameRule(rules, "/docs/setup")?.value).toBe(
+      "exact"
+    );
+    expect(findMostSpecificPathnameRule(rules, "/other")?.value).toBe("global");
+    expect(
+      findMostSpecificPathnameRule<{ route?: string; value: string }>(
+        [{ value: "legacy" }],
+        "/other"
+      )?.value
+    ).toBe("legacy");
+  });
+
+  test("preserves list order when matching patterns have equal specificity", () => {
+    const rules = [
+      { route: "/:first", value: "first" },
+      { route: "/:second", value: "second" },
+    ];
+    expect(findMostSpecificPathnameRule(rules, "/page")?.value).toBe("first");
   });
 
   test("builds content from JSON and route sources", () => {

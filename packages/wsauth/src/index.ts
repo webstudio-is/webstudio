@@ -436,45 +436,80 @@ const normalizePathname = (pathname: string) => {
 };
 
 /**
- * Boolean matcher for auth and response-header rules. A trailing wildcard also
- * matches its base path (`/docs/*` matches `/docs`). Page routing instead uses
- * project-build's `matchUrlPattern`, which returns decoded path parameters and
- * does not match `/docs` for that pattern.
+ * Match a pathname and rank the parsed pattern: literal segments beat params,
+ * which beat wildcards. A trailing wildcard also matches its base path
+ * (`/docs/*` matches `/docs`). Page routing instead uses project-build's
+ * `matchUrlPattern`, which returns decoded path parameters and does not match
+ * `/docs` for that pattern.
  */
-export const matchesPathnamePattern = (route: string, pathname: string) => {
+const matchPathnamePattern = (route: string, pathname: string) => {
   const routeSegments = normalizePathname(route).slice(1).split("/");
   const pathnameSegments = normalizePathname(pathname).slice(1).split("/");
   const matchSegments = (
     routeIndex: number,
     pathnameIndex: number
-  ): boolean => {
+  ): number[] | undefined => {
     const routeSegment = routeSegments[routeIndex];
     const pathnameSegment = pathnameSegments[pathnameIndex];
     if (routeSegment === undefined) {
-      return pathnameSegment === undefined;
+      return pathnameSegment === undefined ? [] : undefined;
     }
     if (routeSegment === "*" || /^:\w+\*$/.test(routeSegment)) {
-      return routeIndex === routeSegments.length - 1;
+      return routeIndex === routeSegments.length - 1 ? [0] : undefined;
     }
     if (/^:\w+\?$/.test(routeSegment)) {
-      return (
-        matchSegments(routeIndex + 1, pathnameIndex) ||
-        (pathnameSegment !== undefined &&
-          matchSegments(routeIndex + 1, pathnameIndex + 1))
-      );
+      const remainder =
+        matchSegments(routeIndex + 1, pathnameIndex) ??
+        (pathnameSegment !== undefined
+          ? matchSegments(routeIndex + 1, pathnameIndex + 1)
+          : undefined);
+      return remainder === undefined ? undefined : [1, ...remainder];
     }
     if (pathnameSegment === undefined) {
-      return false;
+      return undefined;
     }
     if (/^:\w+$/.test(routeSegment)) {
-      return matchSegments(routeIndex + 1, pathnameIndex + 1);
+      const remainder = matchSegments(routeIndex + 1, pathnameIndex + 1);
+      return remainder === undefined ? undefined : [2, ...remainder];
     }
-    return (
-      routeSegment === pathnameSegment &&
-      matchSegments(routeIndex + 1, pathnameIndex + 1)
-    );
+    if (routeSegment !== pathnameSegment) {
+      return undefined;
+    }
+    const remainder = matchSegments(routeIndex + 1, pathnameIndex + 1);
+    return remainder === undefined ? undefined : [3, ...remainder];
   };
   return matchSegments(0, 0);
+};
+
+export const matchesPathnamePattern = (route: string, pathname: string) =>
+  matchPathnamePattern(route, pathname) !== undefined;
+
+/** Choose the most specific matching rule; keep list order for equal patterns. */
+export const findMostSpecificPathnameRule = <T extends { route?: string }>(
+  rules: ReadonlyArray<T>,
+  pathname: string
+): T | undefined => {
+  let selected: T | undefined;
+  let selectedRank: number[] = [];
+  for (const rule of rules) {
+    const rank = matchPathnamePattern(rule.route ?? "/*", pathname);
+    if (rank === undefined) {
+      continue;
+    }
+    const differentIndex = rank.findIndex(
+      (value, index) => value !== selectedRank[index]
+    );
+    const isMoreSpecific =
+      selected === undefined ||
+      (differentIndex === -1
+        ? rank.length < selectedRank.length
+        : rank[differentIndex] > (selectedRank[differentIndex] ?? 4));
+    if (isMoreSpecific) {
+      selected = rule;
+      selectedRank = rank;
+    }
+  }
+  return selected;
 };
 
 export const findWsAuthRoute = (authRoutes: WsAuthRoute[], pathname: string) =>
