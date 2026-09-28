@@ -8072,6 +8072,8 @@ describe("project session mcp adapter", () => {
       ],
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
+      additionalInstructions:
+        "This MCP server runs CLI 0.299.0; CLI 0.301.0 is available.",
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -8085,6 +8087,12 @@ describe("project session mcp adapter", () => {
         name: "webstudio",
         version: "0.0.0",
       });
+      expect(client.getInstructions()).toContain(
+        "This MCP server runs CLI 0.299.0; CLI 0.301.0 is available."
+      );
+      expect(client.getInstructions()).toContain(
+        "For any multi-step authoring task"
+      );
       const listedTools = await client.listTools();
       expect(
         listedTools.tools.find(({ name }) => name === "list-pages")?.annotations
