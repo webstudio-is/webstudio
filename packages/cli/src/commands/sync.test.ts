@@ -437,6 +437,10 @@ test("hosted sync compiles MDX selected by a mutable project variable", async ()
     expect.objectContaining({ _id: article.id, extension: "mdx" })
   );
   expect(Object.values(data.assetIndex.contents)).toContain(source);
+
+  await prebuild({ assets: false, template: ["react-router"] });
+  const generatedPage = await readFile("app/__generated__/_index.tsx", "utf8");
+  expect(generatedPage).toContain("Published from a project variable");
 });
 
 test("hosted sync compiles metadata-only dynamic MDX into a server-rendered page", async () => {
