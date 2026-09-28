@@ -135,7 +135,8 @@ export const editCustomResponseHeaders = (
     (header) => customResponseHeaderKey(header) !== key
   );
   if (next !== undefined) {
-    updated.unshift(next);
+    // Later matching rules override earlier ones when a site is published.
+    updated.push(next);
   }
   return customResponseHeaders.parse(updated);
 };

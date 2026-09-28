@@ -23,9 +23,7 @@
           "id": "WPPAbLFyJD_02vhjRd8P4",
           "name": "Another page",
           "title": "\"Another page\"",
-          "history": [
-            "/another-page"
-          ],
+          "history": ["/another-page"],
           "rootInstanceId": "n_VBMr7klpx25buS0NV7R",
           "systemDataSourceId": "tdXe9gFf83hSo9BLWU6xl",
           "meta": {
@@ -55,10 +53,7 @@
           "id": "root",
           "name": "Root",
           "slug": "",
-          "children": [
-            "9di_L14CzctvSruIoKVvE",
-            "WPPAbLFyJD_02vhjRd8P4"
-          ]
+          "children": ["9di_L14CzctvSruIoKVvE", "WPPAbLFyJD_02vhjRd8P4"]
         }
       ]
     },
@@ -199,27 +194,21 @@
         "MMimeobf_zi4ZkRGXapju",
         {
           "instanceId": "MMimeobf_zi4ZkRGXapju",
-          "values": [
-            "7_QL45cpvP-zG8Hkgf4cr"
-          ]
+          "values": ["7_QL45cpvP-zG8Hkgf4cr"]
         }
       ],
       [
         "BMJfjOzunWs8XkQgvvx1e",
         {
           "instanceId": "BMJfjOzunWs8XkQgvvx1e",
-          "values": [
-            "0KA68BwP9gdTzE1ESO2Zp"
-          ]
+          "values": ["0KA68BwP9gdTzE1ESO2Zp"]
         }
       ],
       [
         "uHB3Fjb7-NELG-bnH7bXB",
         {
           "instanceId": "uHB3Fjb7-NELG-bnH7bXB",
-          "values": [
-            "mf2C07UBmGT7y_G4Du3yg"
-          ]
+          "values": ["mf2C07UBmGT7y_G4Du3yg"]
         }
       ]
     ],
@@ -453,9 +442,7 @@
       "id": "WPPAbLFyJD_02vhjRd8P4",
       "name": "Another page",
       "title": "\"Another page\"",
-      "history": [
-        "/another-page"
-      ],
+      "history": ["/another-page"],
       "rootInstanceId": "n_VBMr7klpx25buS0NV7R",
       "systemDataSourceId": "tdXe9gFf83hSo9BLWU6xl",
       "meta": {

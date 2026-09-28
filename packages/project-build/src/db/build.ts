@@ -30,7 +30,7 @@ import { parseDeployment } from "./deployment";
 import { marketplaceProduct } from "../shared/marketplace";
 import {
   createProjectSettingsFromPages,
-  projectSettings,
+  parseProjectSettings,
   removeLegacyProjectSettingsFromPages,
 } from "../shared/project-settings";
 import { breakCyclesMutable } from "../shared/graph-utils";
@@ -100,7 +100,7 @@ const parseCompactBuild = async (
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
       ? createProjectSettingsFromPages(pages)
-      : projectSettings.parse(parseConfig<unknown>(build.projectSettings));
+      : parseProjectSettings(parseConfig<unknown>(build.projectSettings));
   return {
     id: build.id,
     projectId: build.projectId,
@@ -455,7 +455,7 @@ export const createProductionBuild = async (
     if (snapshot.data.length !== 1) {
       throw new Error("Cannot verify published response headers");
     }
-    const settings = projectSettings.parse(
+    const settings = parseProjectSettings(
       parseConfig<unknown>(snapshot.data[0].projectSettings)
     );
     if (!hasCustomResponseHeaders(settings.meta.customHeaders)) {

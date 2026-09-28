@@ -1708,3 +1708,96 @@ test("rejects resized generated routes that rendered Builder chrome", async () =
     ])
   ).rejects.toMatchObject({ code: "SCREENSHOT_NOT_GENERATED_SITE" });
 });
+
+test("retries a resized generated route while the refreshed preview settles", async () => {
+  const capturePage = vi
+    .fn()
+    .mockResolvedValueOnce([
+      {
+        navigation: { generatedSiteRootPresent: false },
+      },
+    ])
+    .mockResolvedValueOnce([
+      {
+        navigation: { generatedSiteRootPresent: true },
+      },
+    ]);
+  const sleep = vi.fn(async () => undefined);
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/account"),
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(),
+      capturePage,
+      close: vi.fn(),
+    })) as never,
+    sleep,
+  });
+
+  await expect(
+    handlers.capturePageScreenshots([
+      {
+        path: "/account",
+        source: "session",
+        viewport: { width: 1280, height: 720 },
+      },
+    ])
+  ).resolves.toMatchObject([
+    { navigation: { generatedSiteRootPresent: true } },
+  ]);
+  expect(capturePage).toHaveBeenCalledTimes(2);
+  expect(sleep).toHaveBeenCalledWith(1000);
+});
+
+test("reports an interior route HTTP failure instead of a wrong-site error", async () => {
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/account"),
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(),
+      capturePage: vi.fn(async () => [
+        {
+          navigation: {
+            generatedSiteRootPresent: false,
+            status: 503,
+            documentReadyState: "complete",
+            redirects: [],
+          },
+        },
+      ]),
+      close: vi.fn(),
+    })) as never,
+    sleep: vi.fn(async () => undefined),
+  });
+
+  await expect(
+    handlers.capturePageScreenshots([
+      {
+        path: "/account",
+        source: "session",
+        viewport: { width: 1280, height: 720 },
+      },
+    ])
+  ).rejects.toMatchObject({
+    code: "SCREENSHOT_ROUTE_HTTP_ERROR",
+    issues: [
+      { code: "screenshot_route_http_error", constraint: "http_status:503" },
+    ],
+  });
+});

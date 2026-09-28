@@ -950,6 +950,43 @@ export const prebuild = async (options: {
     }
   }
 
+  const loadedSiteData = await loadJSONFile<unknown>(LOCAL_DATA_FILE);
+
+  if (loadedSiteData === null) {
+    throw new Error(
+      `Project bundle is missing, please make sure the project is synced.`
+    );
+  }
+  const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
+  if (parsedSiteData.success === false) {
+    throw Object.assign(
+      new Error(
+        `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
+          parsedSiteData.error.issues,
+          loadedSiteData
+        )}`
+      ),
+      {
+        code: "PROJECT_BUNDLE_INVALID",
+        bundleVersion,
+        issues: getZodValidationIssues(parsedSiteData.error),
+      }
+    );
+  }
+  const siteData = parsedSiteData.data;
+  const pages = migratePages(siteData.build.pages);
+  const publicationBuild = { ...siteData.build, pages };
+  if (
+    siteData.assetIndex === undefined &&
+    (createPublishedBuildContentCompilationPlan(publicationBuild) !==
+      undefined ||
+      hasDynamicPublishedMdxSources(publicationBuild))
+  ) {
+    throw new Error(
+      "Assets queries require a content database. Sync the project again before building."
+    );
+  }
+
   feedback.step("Scaffolding the project files");
 
   if (options.incremental !== true) {
@@ -1001,32 +1038,6 @@ export const prebuild = async (options: {
 
   const assetBaseUrl = await readAssetBaseUrl(join(cwd(), "app/constants.mjs"));
 
-  const loadedSiteData = await loadJSONFile<unknown>(LOCAL_DATA_FILE);
-
-  if (loadedSiteData === null) {
-    throw new Error(
-      `Project bundle is missing, please make sure the project is synced.`
-    );
-  }
-  const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
-  if (parsedSiteData.success === false) {
-    throw Object.assign(
-      new Error(
-        `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
-          parsedSiteData.error.issues,
-          loadedSiteData
-        )}`
-      ),
-      {
-        code: "PROJECT_BUNDLE_INVALID",
-        bundleVersion,
-        issues: getZodValidationIssues(parsedSiteData.error),
-      }
-    );
-  }
-  const siteData = parsedSiteData.data;
-  const pages = migratePages(siteData.build.pages);
-  const publicationBuild = { ...siteData.build, pages };
   let verifiedAssetIndex =
     siteData.assetIndex === undefined
       ? undefined
@@ -1455,6 +1466,9 @@ export const prebuild = async (options: {
               ...warning.diagnostic,
             })
           );
+          if (warning.diagnostic.severity === "error") {
+            throw new Error(warning.diagnostic.message);
+          }
         }
       }
       pageData.build.instances = Array.from(pageInstances);
@@ -1788,7 +1802,8 @@ export const prebuild = async (options: {
       import type { PageMeta } from "@webstudio-is/sdk";
       ${generateResources({
         scope,
-        page,
+        // XML generation removes the body wrapper from the instance map.
+        page: { ...page, rootInstanceId },
         dataSources,
         props,
         resources,

@@ -95,6 +95,7 @@ import { readCliDoc } from "../docs";
 import { printJson } from "../json-output";
 import { isPlainRecord } from "../type-utils";
 import { withTimeout } from "../async-utils";
+import { checkForCliUpdate, type CliUpdate } from "../cli-update";
 import { LOCAL_DATA_FILE } from "../config";
 import {
   assertMcpBatchMutationApproved,
@@ -145,6 +146,13 @@ export const prepareMcpProjectSession = async (
 
 const mcpStatusPrefix = "[webstudio mcp]";
 const renderedAuditArtifactDirectory = ".webstudio/audits";
+
+const getCliUpdateInstructions = (update: CliUpdate | undefined) => {
+  if (update === undefined) {
+    return;
+  }
+  return `This MCP server runs Webstudio CLI ${update.currentVersion}, but ${update.latestVersion} is available. Tell the user before editing and recommend restarting this MCP server with the latest CLI, for example \`npx -y webstudio@latest mcp\`. Do not try to update or restart the CLI yourself. The existing API compatibility check remains the authority for whether writes are supported.`;
+};
 
 export const formatMcpStatusLine = (message: string) =>
   `${mcpStatusPrefix} ${message}`;
@@ -1873,7 +1881,7 @@ const createCliMcpHost = async ({
           : (status: BuilderStateNamespaceStatus) =>
               getBuilderStateNamespacesByStatus(snapshot.freshness, status);
       return createIssueReportRuntime(failureTracker.get(), {
-        projectId,
+        projectId: connection.projectId,
         ...(namespacesByStatus === undefined
           ? {}
           : {
@@ -2771,6 +2779,9 @@ export const mcp = async (
   stdin.once("end", reportClose);
   stdin.once("close", reportClose);
   status.starting();
+  const cliUpdatePromise = checkForCliUpdate({
+    currentVersion: packageJson.version,
+  });
   const {
     host,
     toolCount,
@@ -2782,6 +2793,7 @@ export const mcp = async (
   } = await createCliMcpHost({
     projectId: options.project,
   });
+  const cliUpdate = await cliUpdatePromise;
   disposeHost = dispose;
   if (didReportClose) {
     await disposeHost().catch(() => undefined);
@@ -2792,6 +2804,7 @@ export const mcp = async (
   status.ready(toolCount);
   const server = await connectProjectSessionMcpServer({
     ...host,
+    additionalInstructions: getCliUpdateInstructions(cliUpdate),
     toolNameFormat: options.toolNameFormat,
     getErrorCode: getStableErrorCode,
     onToolFailure: recordToolFailure,
@@ -2809,6 +2822,7 @@ export const mcp = async (
 
 export const __testing__ = {
   getMcpDownloadAsset,
+  getCliUpdateInstructions,
   createMcpStatusReporter,
   formatMcpStatusLine,
   assertSingleOpCallToolSupported,

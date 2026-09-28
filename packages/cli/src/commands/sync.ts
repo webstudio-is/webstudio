@@ -252,8 +252,28 @@ export const sync = async (
     });
 
   const isStaticBuild = project.build.deployment?.destination === "static";
+  const publicationBuild = {
+    ...project.build,
+    pages: migratePages(project.build.pages),
+  };
+  const projectCandidates = resolvePublishedMdxAssetCandidates({
+    build: publicationBuild,
+    artifact: project.assetIndex,
+    allowUnresolved: true,
+  });
+  const dynamicBlockIds =
+    getDynamicPublishedMdxSourceBlockIds(publicationBuild);
+  const publicationPlan = createPublishedBuildContentCompilationPlan(
+    publicationBuild,
+    projectCandidates
+  );
+  const needsMdxCompilation =
+    dynamicBlockIds.length > 0 ||
+    publicationPlan?.queries.some(({ id }) =>
+      id.startsWith("__content-block-mdx__:")
+    ) === true;
   const assetsToDownload =
-    options.buildId !== undefined && isStaticBuild === false
+    options.buildId !== undefined && !isStaticBuild && !needsMdxCompilation
       ? project.assets.filter(
           (asset) => asset.format !== "md" && asset.format !== "mdx"
         )
@@ -282,29 +302,15 @@ export const sync = async (
 
   if (
     options.buildId !== undefined &&
-    isStaticBuild &&
-    project.assetIndex === undefined
+    ((isStaticBuild && project.assetIndex === undefined) || needsMdxCompilation)
   ) {
-    const publicationBuild = {
-      ...project.build,
-      pages: migratePages(project.build.pages),
-    };
-    const projectCandidates = resolvePublishedMdxAssetCandidates({
-      build: publicationBuild,
-      allowUnresolved: true,
-    });
-    const needsCandidateDiscovery = getDynamicPublishedMdxSourceBlockIds(
-      publicationBuild
-    ).some((blockId) => projectCandidates.has(blockId) === false);
+    const needsCandidateDiscovery = dynamicBlockIds.some(
+      (blockId) => projectCandidates.has(blockId) === false
+    );
     const candidateDiscoveryPlan = needsCandidateDiscovery
       ? createBuildContentCompilationPlan(publicationBuild)
       : undefined;
-    let plan =
-      candidateDiscoveryPlan ??
-      createPublishedBuildContentCompilationPlan(
-        publicationBuild,
-        projectCandidates
-      );
+    const plan = candidateDiscoveryPlan ?? publicationPlan;
     if (plan !== undefined) {
       syncing.message("Preparing local content index");
       const source = createContentSource();
