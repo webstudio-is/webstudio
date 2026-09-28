@@ -9,6 +9,10 @@ export const loader = (arg: LoaderFunctionArgs) => {
 
   const urls = sitemap.map((page) => {
     const url = new URL(`https://${host}${page.path}`);
+    // URL credentials may be present when the site is opened through a
+    // Basic Auth URL. They must not be published in sitemap locations.
+    url.username = "";
+    url.password = "";
 
     return `
   <url>
