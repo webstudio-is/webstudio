@@ -1802,7 +1802,8 @@ export const prebuild = async (options: {
       import type { PageMeta } from "@webstudio-is/sdk";
       ${generateResources({
         scope,
-        page,
+        // XML generation removes the body wrapper from the instance map.
+        page: { ...page, rootInstanceId },
         dataSources,
         props,
         resources,

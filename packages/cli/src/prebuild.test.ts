@@ -3708,6 +3708,127 @@ sitemap.map((page) => page.path);`
     );
   }, 30_000);
 
+  test("keeps resources used by XML collection pages in the request graph", async () => {
+    const siteData = createSiteData({
+      pages: [
+        {
+          id: "home",
+          name: "Home",
+          title: "Home",
+          path: "",
+          rootInstanceId: "root",
+          meta: {},
+        },
+        {
+          id: "sitemap",
+          name: "Sitemap",
+          title: "Sitemap",
+          path: "/sitemap.xml",
+          rootInstanceId: "sitemap-body",
+          meta: { documentType: "xml" },
+        },
+      ],
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [],
+          },
+        ],
+        [
+          "sitemap-body",
+          {
+            id: "sitemap-body",
+            component: "Box",
+            children: [{ type: "id", value: "urlset" }],
+          },
+        ],
+        [
+          "urlset",
+          {
+            id: "urlset",
+            component: elementComponent,
+            tag: "urlset",
+            children: [{ type: "id", value: "collection" }],
+          },
+        ],
+        [
+          "collection",
+          {
+            id: "collection",
+            component: "ws:collection",
+            children: [{ type: "id", value: "url" }],
+          },
+        ],
+        [
+          "url",
+          {
+            id: "url",
+            component: elementComponent,
+            tag: "url",
+            children: [],
+          },
+        ],
+      ],
+      props: [
+        [
+          "collection-data",
+          {
+            id: "collection-data",
+            instanceId: "collection",
+            name: "data",
+            type: "expression",
+            value: `${encodeDataVariableId("sitemap-data-source")}?.data`,
+          },
+        ],
+        [
+          "collection-item",
+          {
+            id: "collection-item",
+            instanceId: "collection",
+            name: "item",
+            type: "parameter",
+            value: "sitemap-item",
+          },
+        ],
+      ],
+    });
+    siteData.build.dataSources = [
+      [
+        "sitemap-data-source",
+        {
+          id: "sitemap-data-source",
+          type: "resource",
+          name: "Static Sitemap",
+          resourceId: "sitemap-resource",
+          scopeInstanceId: "collection",
+        },
+      ],
+    ] as never;
+    siteData.build.resources = [
+      [
+        "sitemap-resource",
+        {
+          id: "sitemap-resource",
+          name: "Static Sitemap",
+          control: "system",
+          method: "get",
+          url: '"/$resources/sitemap.xml"',
+          headers: [],
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    await expect(
+      readFile("app/__generated__/[sitemap.xml]._index.server.tsx", "utf8")
+    ).resolves.toContain('rootIds: [\n      "sitemap-resource"');
+  });
+
   test("generates html, xml, and text document routes", async () => {
     await writeSiteData(
       createSiteData({
