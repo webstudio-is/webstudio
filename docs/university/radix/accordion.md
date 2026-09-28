@@ -30,6 +30,12 @@ To change the content of an Accordion that isn't currently displayed in the canv
 
 <figure><img src="../../.gitbook/assets/radix-accordion-content.png" alt="Accordion Content selected on the canvas and in the Navigator"><figcaption></figcaption></figure>
 
+## Animating Accordion content
+
+The Accordion template keeps its content mounted with **Force Mount** and uses a closed-state `height: 0` rule. If you add a custom animation, keep an explicit collapsed style for `[data-state="closed"]`; animation-only examples can leave every panel visible when content stays mounted.
+
+Radix temporarily sets inline `transition-duration: 0s` and `animation-name: none` while it measures content height. This can suppress the first open animation. Test both the first open and later open/close cycles when changing the animation.
+
 ## Using Collections within Accordions
 
 To create an accordion with a [Collection](../core-components/collection.md) that iterates over data and outputs an accordion item for each entry, ensure each item has a unique value set, like this:

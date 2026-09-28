@@ -34,6 +34,10 @@ To customize the Collapsible component:
 
 Select **Collapsible Content** and enable **Force Mount** to keep its content in the HTML while the Collapsible is closed. New Collapsible components enable this setting by default. Disable it to remove closed content from the HTML.
 
+When **Force Mount** is enabled, add a closed-state CSS rule such as `height: 0` for `[data-state="closed"]`. Animation-only examples can leave the content visible because they assume Radix unmounts closed content.
+
+Radix temporarily sets inline `transition-duration: 0s` and `animation-name: none` while it measures content height. This can suppress the first open animation, so test both the first open and later open/close cycles.
+
 ## Using Collapsible for UI Patterns
 
 The Collapsible component is useful for various UI patterns:
