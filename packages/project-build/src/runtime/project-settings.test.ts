@@ -103,14 +103,14 @@ describe("project settings runtime", () => {
         op: "replace",
         path: ["meta", "customHeaders"],
         value: [
-          { route: "/", name: "Cache-Control", value: "private" },
           allPaths,
+          { route: "/", name: "Cache-Control", value: "private" },
         ],
       },
     ]);
     state.projectSettings!.meta.customHeaders = [
-      { route: "/", name: "Cache-Control", value: "private" },
       allPaths,
+      { route: "/", name: "Cache-Control", value: "private" },
     ];
     expect(listResponseHeaders(state).headers).toEqual(
       state.projectSettings!.meta.customHeaders

@@ -1791,16 +1791,16 @@ describe("insert webstudio fragment copy", () => {
     });
     expect(Array.from(data.styleSourceSelections.values())).toEqual([
       {
-        instanceId: expect.not.stringMatching("box"),
-        values: [expect.not.stringMatching("localId"), "tokenId"],
+        instanceId: expect.not.stringMatching(/^box$/),
+        values: [expect.not.stringMatching(/^localId$/), "tokenId"],
       },
     ]);
     expect(Array.from(data.styleSources.values())).toEqual([
-      { id: expect.not.stringMatching("localId"), type: "local" },
+      { id: expect.not.stringMatching(/^localId$/), type: "local" },
     ]);
     expect(Array.from(data.styles.values())).toEqual([
       {
-        styleSourceId: expect.not.stringMatching("localId"),
+        styleSourceId: expect.not.stringMatching(/^localId$/),
         breakpointId: "base",
         property: "color",
         value: { type: "keyword", value: "red" },

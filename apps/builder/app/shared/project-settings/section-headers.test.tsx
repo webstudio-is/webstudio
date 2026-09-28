@@ -283,8 +283,8 @@ test("adds an arbitrary header and displays existing custom headers", async () =
     input: {
       meta: {
         customHeaders: [
-          { name: "Access-Control-Allow-Origin", value: "*" },
           { name: "Cache-Control", value: "no-store" },
+          { name: "Access-Control-Allow-Origin", value: "*" },
         ],
       },
     },

@@ -98,7 +98,9 @@ export const SectionHeaders = ({
             <>
               <Text>
                 Set response headers for all paths or a route. Routes use the
-                same syntax as Authentication, including :params and *.
+                same syntax as Authentication, including :params and *. If
+                multiple rules set the same header on a path, the last matching
+                rule in this list wins.
               </Text>
               <br />
               <Text>
