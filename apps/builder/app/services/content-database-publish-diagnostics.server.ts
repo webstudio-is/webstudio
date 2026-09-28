@@ -4,7 +4,6 @@ import {
   getContentDatabasePublishDiagnostics,
 } from "./content-database.server";
 import {
-  resolvePublishedMdxDependencyClosure,
   type PublishedMdxSource,
   type PublishedMdxTemplateOmission,
 } from "@webstudio-is/project-build";
@@ -30,6 +29,9 @@ export const loadContentDatabasePublishDiagnostics = async (
     {
       onMdxTemplateOmissions: (issues) => {
         mdxTemplateOmissions = issues;
+      },
+      onMdxSources: (sources) => {
+        mdxSources.push(...sources);
       },
     }
   );
@@ -58,11 +60,6 @@ export const loadContentDatabasePublishDiagnostics = async (
             ),
           }),
     };
-    await resolvePublishedMdxDependencyClosure({
-      build: bundle.build,
-      artifact: bundle.assetIndex,
-      onMdxSource: (source) => mdxSources.push(source),
-    });
     for (const source of mdxSources) {
       const materialized = await materializeMdxSource({
         source: source.source,
