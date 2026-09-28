@@ -11,7 +11,7 @@ const side =
   "The preferred alignment against the Trigger. May change when collisions occur.";
 
 const forceMount =
-  "When true, closed content stays mounted. Add a closed-state CSS rule such as height: 0; Radix's animation-only example assumes closed content is unmounted.";
+  "When true, closed content stays mounted. Keep an explicit closed-state CSS rule such as height: 0; Radix's animation-only example assumes unmounted content. Radix suppresses CSS transitions and animations while measuring height, so the first open may not animate.";
 
 export const propsDescriptions = {
   Dialog: {
