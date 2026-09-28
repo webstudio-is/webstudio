@@ -493,6 +493,19 @@ export const createMcpPreviewHandlers = ({
     quality: input.quality,
     scale: input.scale,
   });
+  const captureWhileRouteSettles = async <Result>(
+    capture: () => Promise<Result>,
+    isGeneratedSite: (result: Result) => boolean,
+    progress?: McpToolProgress
+  ) => {
+    let result = await capture();
+    for (let retry = 0; retry < 2 && !isGeneratedSite(result); retry += 1) {
+      progress?.report("tool screenshot waiting for refreshed generated route");
+      await sleep(1000);
+      result = await capture();
+    }
+    return result;
+  };
   const assertGeneratedSiteCapture = (
     input: McpScreenshotInput,
     result: Awaited<ReturnType<typeof captureScreenshot>>
@@ -502,12 +515,29 @@ export const createMcpPreviewHandlers = ({
       input.baseUrl === undefined &&
       result.navigation?.generatedSiteRootPresent === false
     ) {
-      throw Object.assign(
-        new Error(
-          'Screenshot did not render the generated Webstudio site. Capture the route with screenshot { path: "/" }; do not capture the Builder UI.'
-        ),
-        { code: "SCREENSHOT_NOT_GENERATED_SITE" }
-      );
+      const status = result.navigation.status;
+      const routeFailed = status !== undefined && status >= 400;
+      const code = routeFailed
+        ? "SCREENSHOT_ROUTE_HTTP_ERROR"
+        : "SCREENSHOT_NOT_GENERATED_SITE";
+      const message = routeFailed
+        ? `The generated route returned HTTP ${status} before a Webstudio page could render. Check the preview server output for the route error.`
+        : "The requested route did not render a generated Webstudio page. Check the route and preview server output; a screenshot of the home route does not verify this page.";
+      throw Object.assign(new Error(message), {
+        code,
+        issues: [
+          {
+            code: routeFailed
+              ? "screenshot_route_http_error"
+              : "generated_site_marker_missing",
+            path: [],
+            message,
+            constraint: routeFailed
+              ? `http_status:${status}`
+              : "generated_site_identity_present",
+          },
+        ],
+      });
     }
     return result;
   };
@@ -589,25 +619,13 @@ export const createMcpPreviewHandlers = ({
               return await captureWithSessionReconnect(
                 input,
                 progress,
-                async (captureSession) => {
-                  let captureResult =
-                    await captureSession.capture(captureOptions);
-                  for (
-                    let retry = 0;
-                    retry < 2 &&
-                    captureResult.navigation?.generatedSiteRootPresent ===
-                      false;
-                    retry += 1
-                  ) {
-                    progress?.report(
-                      "tool screenshot waiting for refreshed generated route"
-                    );
-                    await sleep(1000);
-                    captureResult =
-                      await captureSession.capture(captureOptions);
-                  }
-                  return captureResult;
-                }
+                async (captureSession) =>
+                  await captureWhileRouteSettles(
+                    () => captureSession.capture(captureOptions),
+                    (result) =>
+                      result.navigation?.generatedSiteRootPresent !== false,
+                    progress
+                  )
               );
             }
             return await captureScreenshot({
@@ -675,18 +693,29 @@ export const createMcpPreviewHandlers = ({
             return await captureWithSessionReconnect(
               firstInput,
               progress,
-              async (captureSession) =>
-                await captureSession.capturePage(
-                  inputs.map((input, index) => {
-                    const url = urls[index];
-                    if (url === undefined) {
-                      throw new Error(
-                        "Screenshot URL resolution was incomplete."
-                      );
-                    }
-                    return getCaptureOptions(input, url);
-                  })
-                )
+              async (captureSession) => {
+                const captureOptions = inputs.map((input, index) => {
+                  const url = urls[index];
+                  if (url === undefined) {
+                    throw new Error(
+                      "Screenshot URL resolution was incomplete."
+                    );
+                  }
+                  return getCaptureOptions(input, url);
+                });
+                if (isManagedSessionPreviewCapture(firstInput) === false) {
+                  return await captureSession.capturePage(captureOptions);
+                }
+                return await captureWhileRouteSettles(
+                  () => captureSession.capturePage(captureOptions),
+                  (results) =>
+                    results.every(
+                      (result) =>
+                        result.navigation?.generatedSiteRootPresent !== false
+                    ),
+                  progress
+                );
+              }
             );
           },
           timeout,
