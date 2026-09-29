@@ -7,7 +7,7 @@ import {
   relative,
   sep,
 } from "node:path";
-import { existsSync } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
@@ -95,6 +95,10 @@ import {
   verifyContentArtifact,
 } from "@webstudio-is/content-engine";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import {
+  decodeUtf8,
+  readBoundedBytes,
+} from "@webstudio-is/content-engine/compiler";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   parseJsonExpression,
@@ -1354,14 +1358,21 @@ export const prebuild = async (options: {
           dynamicAssetIdsByBlock: pageDynamicCandidates,
           blockInstanceIds: pendingBlockIds,
           runtimeAssets: runtimeAssetsById,
-          loadDocumentSource: async ({ contentRef }) =>
-            await readFile(
+          loadDocumentSource: async ({ contentRef }) => {
+            const source = createReadStream(
               getLocalAssetPath(
                 contentRef,
-                options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR)
-              ),
-              "utf8"
-            ),
+                options.sourceAssetsDirectory ??
+                  join(buildRoot, LOCAL_ASSETS_DIR)
+              )
+            );
+            return decodeUtf8(
+              await readBoundedBytes(
+                source,
+                contentEngineLimits.hydratedFileBytes
+              )
+            );
+          },
         });
         for (const root of materialized.roots) {
           const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
