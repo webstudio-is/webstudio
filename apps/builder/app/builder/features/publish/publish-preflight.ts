@@ -17,11 +17,6 @@ export const runPublishAfterBestEffortChecks = <T>({
     }
   };
 
-  try {
-    void Promise.resolve(checks()).catch(reportFailure);
-  } catch (error) {
-    reportFailure(error);
-  }
-
+  void Promise.resolve().then(checks).catch(reportFailure);
   return publish();
 };

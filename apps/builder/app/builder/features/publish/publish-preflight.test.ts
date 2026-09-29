@@ -44,7 +44,7 @@ describe("runPublishAfterBestEffortChecks", () => {
       })
     ).resolves.toBe("publish started");
 
-    expect(order).toEqual(["checks started", "publish started"]);
+    expect(order).toEqual(["publish started", "checks started"]);
   });
 
   test("publishes even if reporting a check failure throws", async () => {
