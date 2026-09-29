@@ -22,6 +22,8 @@ export const getContentDatabasePublishFindings = (
         message.includes("requires unavailable MDX Asset") ||
         message.includes("content is unavailable")
           ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
+          : message.includes("Linked document")
+            ? "Restore or reconnect the referenced document in Content Assets, then run validation again."
           : message.includes("violates HTML spec")
             ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
             : message.includes(

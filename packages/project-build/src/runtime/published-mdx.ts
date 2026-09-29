@@ -14,6 +14,7 @@ import type {
 import {
   contentEngineLimits,
   createDocumentGraph,
+  DocumentGraphResolutionError,
   getDocumentGraphClosure,
   resolveAssetValueReferences,
   resolveDocumentGraphProperties,
@@ -449,6 +450,41 @@ export const materializePublishedMdx = async ({
           resolution.references.map((reference) => reference.templateName)
         )
       );
+      let resolvedFrontmatter = document.frontmatter.properties;
+      try {
+        resolvedFrontmatter = await resolveFrontmatter(
+          candidate._id,
+          document
+        );
+      } catch (error) {
+        if (
+          error instanceof DocumentGraphResolutionError &&
+          error.code === "REQUEST_CANCELLED"
+        ) {
+          throw error;
+        }
+        if (error instanceof DocumentGraphResolutionError) {
+          const linkedDocument =
+            error.documentId === undefined
+              ? "Linked document"
+              : `Linked document "${error.documentId}"`;
+          const reference =
+            error.referenceId === undefined
+              ? ""
+              : ` (reference "${error.referenceId}")`;
+          const failure =
+            error.code === "DOCUMENT_LOAD_FAILED"
+              ? "could not be loaded"
+              : `could not be resolved: ${error.message}`;
+          warnUnavailableSource({
+            blockInstanceId: block.id,
+            assetId: candidate._id,
+            message: `${linkedDocument} ${failure}${reference} while resolving frontmatter for published MDX Asset "${candidate._id}".`,
+          });
+        } else {
+          throw error;
+        }
+      }
       const materialized = materializeMdxAuthoredContent({
         identity,
         document,
@@ -484,7 +520,7 @@ export const materializePublishedMdx = async ({
         dynamic: isDynamicSource,
         identity,
         document,
-        resolvedFrontmatter: await resolveFrontmatter(candidate._id, document),
+        resolvedFrontmatter,
         fragment: materialized.fragment,
         templateDependencies: templates.dependencies.templates,
         templateNames: referencedTemplateNames,
