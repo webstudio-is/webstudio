@@ -238,14 +238,7 @@ const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
   });
 };
 
-const runPublishValidation = async (
-  projectId: Project["id"],
-  checkPermission = false
-) => {
-  if (checkPermission) {
-    await nativeClient.build.checkProjectBuildPermission.query({ projectId });
-  }
-  await flushExternalContentProject({ projectId });
+const runPublishDiagnostics = async (projectId: Project["id"]) => {
   const auditFindings = getPrePublishAuditFindings();
   const diagnostics =
     await nativeClient.build.contentDatabasePublishDiagnostics.query({
@@ -267,6 +260,17 @@ const runPublishValidation = async (
     passed: findings.every(({ severity }) => severity !== "error"),
     findings,
   };
+};
+
+const runPublishValidation = async (
+  projectId: Project["id"],
+  checkPermission = false
+) => {
+  if (checkPermission) {
+    await nativeClient.build.checkProjectBuildPermission.query({ projectId });
+  }
+  await flushExternalContentProject({ projectId });
+  return runPublishDiagnostics(projectId);
 };
 
 const reportPublishValidationFailure = (
@@ -812,14 +816,18 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        const checks = await runPublishValidation(project.id, true);
-        setPublishFindings(checks.findings);
-        if (checks.passed === false) {
-          return;
-        }
+        await flushExternalContentProject({ projectId: project.id });
       } catch (error) {
         reportPublishValidationFailure(error, setPublishFindings);
         return;
+      }
+
+      // Diagnostics are best-effort and must not prevent the publish request.
+      try {
+        const checks = await runPublishDiagnostics(project.id);
+        setPublishFindings(checks.findings);
+      } catch (error) {
+        reportPublishValidationFailure(error, setPublishFindings);
       }
       await publish(domains);
     });
@@ -947,16 +955,12 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
-                let checks: Awaited<ReturnType<typeof runPublishValidation>>;
+                await flushExternalContentProject({ projectId });
                 try {
-                  checks = await runPublishValidation(projectId);
+                  const checks = await runPublishDiagnostics(projectId);
+                  setPublishFindings(checks.findings);
                 } catch (error) {
                   reportPublishValidationFailure(error, setPublishFindings);
-                  return;
-                }
-                setPublishFindings(checks.findings);
-                if (checks.passed === false) {
-                  return;
                 }
 
                 const result = await nativeClient.domain.publish.mutate({
