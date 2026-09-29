@@ -6,6 +6,11 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { getTrpcResponseMeta } from "~/services/trpc-response-meta.server";
 import { ensureApiCsrf } from "~/services/api-auth.server";
 
+// Publish validation can read and compile a project's linked content assets.
+// Give tRPC requests enough time to finish on Vercel instead of returning a
+// function invocation timeout for larger projects.
+export const maxDuration = 60;
+
 const isServiceRequest = (request: Request) => {
   return isServiceAuthorization(request.headers.get("Authorization"));
 };
