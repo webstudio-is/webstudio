@@ -283,11 +283,25 @@ const reportPrePublishFailure = (
     toast.error(message);
     return;
   }
+  const mcpUrl = "https://wstd.us/mcp";
+  const mcpUrlIndex = message.indexOf(mcpUrl);
+  const details =
+    mcpUrlIndex === -1 ? (
+      message
+    ) : (
+      <>
+        {message.slice(0, mcpUrlIndex)}
+        <Link href={mcpUrl} target="_blank" rel="noreferrer">
+          Webstudio MCP
+        </Link>
+        {message.slice(mcpUrlIndex + mcpUrl.length)}
+      </>
+    );
   setFindings([
     {
       severity: "error",
       title: "Unable to complete publish checks",
-      details: message,
+      details,
       reportText: `ERROR: Unable to complete publish checks\n${message}`,
     },
   ]);

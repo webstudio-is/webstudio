@@ -51,11 +51,12 @@ export const getPrePublishErrorMessage = (
               .replaceAll(" / ", " > ")}`;
       return [
         `Publish checks couldn’t read “${formatAssetName(asset)}” in ${location}.`,
-        "Try again. If it continues, contact Webstudio support and include this document ID:",
+        "Try again. If it continues, investigate this document with Webstudio MCP:",
+        "https://wstd.us/mcp",
         `Document ID: ${documentId}.`,
       ].join(" ");
     }
-    return `Publish checks couldn’t read a linked file in Content Assets. Try again. If it continues, contact Webstudio support and include this document ID: ${documentId}.`;
+    return `Publish checks couldn’t read a linked file in Content Assets. Try again. If it continues, investigate this document with Webstudio MCP: https://wstd.us/mcp. Document ID: ${documentId}.`;
   }
   return message ?? "Content database validation failed";
 };
