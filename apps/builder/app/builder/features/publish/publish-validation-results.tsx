@@ -50,6 +50,7 @@ export const PublishValidationResults = ({
             {errors.length > 0 && "Fix the errors before publishing."}
           </Text>
           <Button
+            type="button"
             color="ghost"
             css={{ flexShrink: 0 }}
             onClick={() => setIsOpen(true)}
@@ -73,7 +74,9 @@ export const PublishValidationResults = ({
           </ScrollArea>
           <DialogActions>
             <DialogClose>
-              <Button color="ghost">Close</Button>
+              <Button type="button" color="ghost">
+                Close
+              </Button>
             </DialogClose>
           </DialogActions>
         </DialogContent>
