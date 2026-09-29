@@ -7,10 +7,10 @@ import {
 } from "@webstudio-is/sdk";
 import { formatAssetFolderPath } from "~/builder/shared/asset-manager/asset-folder-utils";
 
-export const prePublishTimeoutMessage =
-  "Pre-publish checks timed out. Publishing was not started. Please try again.";
+export const publishValidationTimeoutMessage =
+  "Publish validation timed out. Publishing was not started. Please try again.";
 
-export const getPrePublishErrorMessage = (
+export const getPublishValidationErrorMessage = (
   error: unknown,
   {
     assets,
@@ -29,7 +29,7 @@ export const getPrePublishErrorMessage = (
     (response.status === 504 ||
       response.headers.get("x-vercel-error") === "FUNCTION_INVOCATION_TIMEOUT")
   ) {
-    return prePublishTimeoutMessage;
+    return publishValidationTimeoutMessage;
   }
   const message = error instanceof Error ? error.message : undefined;
   const unloadedDocument = /^Document (.+) could not be loaded$/.exec(
@@ -50,13 +50,13 @@ export const getPrePublishErrorMessage = (
               .replace("Root / ", "")
               .replaceAll(" / ", " > ")}`;
       return [
-        `Publish checks couldn’t read “${formatAssetName(asset)}” in ${location}.`,
+        `Publish validation couldn’t read “${formatAssetName(asset)}” in ${location}.`,
         "Try again. If it continues, investigate this document with Webstudio MCP:",
         "https://wstd.us/mcp",
         `Document ID: ${documentId}.`,
       ].join(" ");
     }
-    return `Publish checks couldn’t read a linked file in Content Assets. Try again. If it continues, investigate this document with Webstudio MCP: https://wstd.us/mcp. Document ID: ${documentId}.`;
+    return `Publish validation couldn’t read a linked file in Content Assets. Try again. If it continues, investigate this document with Webstudio MCP: https://wstd.us/mcp. Document ID: ${documentId}.`;
   }
-  return message ?? "Content database validation failed";
+  return message ?? "Publish validation failed";
 };

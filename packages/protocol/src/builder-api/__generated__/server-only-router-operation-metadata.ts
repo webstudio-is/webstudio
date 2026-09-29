@@ -1529,10 +1529,10 @@ export const serverOnlyRouterOperationMetadata = {
   },
   "publish.validate": {
     id: "publish.validate",
-    command: "check-publish-readiness",
+    command: "validate-publish",
     method: "query",
     path: "api.publish.validate",
-    client: "checkPublishReadiness",
+    client: "validatePublish",
     permit: "edit",
     inputSchema: {
       type: "object",

@@ -8,10 +8,10 @@ description: Learn how to connect a custom domain to your Project.
 Many DNS providers do not allow adding a CNAME at the root/apex. If yours doesn’t, jump to [this section](publishing-and-custom-domains.md#dns-provider-doesnt-allow-cname-flattening) for alternate options.
 {% endhint %}
 
-## Pre-publish checks
+## Publish validation
 
-Webstudio checks publishable pages before starting a cloud publish or static
-export. These checks detect broken Resource references and invalid HTML nesting
+Choose **Validate** in the publish dialog before publishing or exporting. Webstudio
+checks publishable pages for broken Resource references and invalid HTML nesting
 that could make the generated site fail or behave unexpectedly.
 
 - **Errors** stop publishing until you resolve them.

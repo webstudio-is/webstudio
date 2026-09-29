@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { TRPCClientError } from "@trpc/client";
 import {
-  getPrePublishErrorMessage,
-  prePublishTimeoutMessage,
+  getPublishValidationErrorMessage,
+  publishValidationTimeoutMessage,
 } from "./publish-error";
 
-describe("getPrePublishErrorMessage", () => {
+describe("getPublishValidationErrorMessage", () => {
   test("describes a gateway timeout in terms of the publish flow", () => {
     const response = new Response("<!DOCTYPE html>", {
       status: 504,
@@ -16,7 +16,9 @@ describe("getPrePublishErrorMessage", () => {
       { meta: { response } }
     );
 
-    expect(getPrePublishErrorMessage(error)).toBe(prePublishTimeoutMessage);
+    expect(getPublishValidationErrorMessage(error)).toBe(
+      publishValidationTimeoutMessage
+    );
   });
 
   test("recognizes the Vercel timeout code", () => {
@@ -30,7 +32,9 @@ describe("getPrePublishErrorMessage", () => {
       },
     });
 
-    expect(getPrePublishErrorMessage(error)).toBe(prePublishTimeoutMessage);
+    expect(getPublishValidationErrorMessage(error)).toBe(
+      publishValidationTimeoutMessage
+    );
   });
 
   test("locates a linked asset and points users to Webstudio MCP", () => {
@@ -57,7 +61,7 @@ describe("getPrePublishErrorMessage", () => {
     };
 
     expect(
-      getPrePublishErrorMessage(error, {
+      getPublishValidationErrorMessage(error, {
         assets: new Map([[asset.id, asset]]) as never,
         assetFolders: new Map([
           [folder.id, folder],
@@ -65,9 +69,9 @@ describe("getPrePublishErrorMessage", () => {
         ]) as never,
       })
     ).toContain(
-      "Publish checks couldn’t read “article.md” in Content Assets > blog > authors."
+      "Publish validation couldn’t read “article.md” in Content Assets > blog > authors."
     );
-    const message = getPrePublishErrorMessage(error, {
+    const message = getPublishValidationErrorMessage(error, {
       assets: new Map([[asset.id, asset]]) as never,
       assetFolders: new Map([
         [folder.id, folder],
@@ -80,7 +84,7 @@ describe("getPrePublishErrorMessage", () => {
   });
 
   test("includes the document ID and MCP link when asset metadata is unavailable", () => {
-    const message = getPrePublishErrorMessage(
+    const message = getPublishValidationErrorMessage(
       new Error("Document asset-id could not be loaded")
     );
 

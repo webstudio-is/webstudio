@@ -497,7 +497,7 @@ const apiCommandsByArea = {
   publishAndDomains: cliCommandMetadata
     .filter(
       ({ cliCommand }) =>
-        cliCommand === "check-publish-readiness" ||
+        cliCommand === "validate-publish" ||
         cliCommand.startsWith("publish ") ||
         cliCommand.startsWith("domains ")
     )

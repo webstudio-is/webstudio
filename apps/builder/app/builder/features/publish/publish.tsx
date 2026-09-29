@@ -128,7 +128,7 @@ import {
   type PublishValidationState,
 } from "./publish-actions";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
-import { getPrePublishErrorMessage } from "./publish-error";
+import { getPublishValidationErrorMessage } from "./publish-error";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -238,7 +238,7 @@ const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
   });
 };
 
-const runPrePublishChecks = async (
+const runPublishValidation = async (
   projectId: Project["id"],
   checkPermission = false
 ) => {
@@ -269,11 +269,11 @@ const runPrePublishChecks = async (
   };
 };
 
-const reportPrePublishFailure = (
+const reportPublishValidationFailure = (
   error: unknown,
   setFindings: (findings: PublishValidationFinding[]) => void
 ) => {
-  const message = getPrePublishErrorMessage(error, {
+  const message = getPublishValidationErrorMessage(error, {
     assets: $assets.get(),
     assetFolders: $assetFolders.get(),
   });
@@ -298,9 +298,9 @@ const reportPrePublishFailure = (
   setFindings([
     {
       severity: "error",
-      title: "Unable to complete publish checks",
+      title: "Unable to complete publish validation",
       details,
-      reportText: `ERROR: Unable to complete publish checks\n${message}`,
+      reportText: `ERROR: Unable to complete publish validation\n${message}`,
     },
   ]);
 };
@@ -775,7 +775,7 @@ const Publish = ({
     }
 
     try {
-      const checks = await runPrePublishChecks(project.id, true);
+      const checks = await runPublishValidation(project.id, true);
       setPublishFindings(checks.findings);
       if (checks.passed === false) {
         onValidationStateChange("idle");
@@ -787,7 +787,7 @@ const Publish = ({
       });
     } catch (error) {
       onValidationStateChange("idle");
-      reportPrePublishFailure(error, setPublishFindings);
+      reportPublishValidationFailure(error, setPublishFindings);
     }
   };
 
@@ -808,13 +808,13 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        const checks = await runPrePublishChecks(project.id, true);
+        const checks = await runPublishValidation(project.id, true);
         setPublishFindings(checks.findings);
         if (checks.passed === false) {
           return;
         }
       } catch (error) {
-        reportPrePublishFailure(error, setPublishFindings);
+        reportPublishValidationFailure(error, setPublishFindings);
         return;
       }
       await publish(domains);
@@ -943,11 +943,11 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
-                let checks: Awaited<ReturnType<typeof runPrePublishChecks>>;
+                let checks: Awaited<ReturnType<typeof runPublishValidation>>;
                 try {
-                  checks = await runPrePublishChecks(projectId);
+                  checks = await runPublishValidation(projectId);
                 } catch (error) {
-                  reportPrePublishFailure(error, setPublishFindings);
+                  reportPublishValidationFailure(error, setPublishFindings);
                   return;
                 }
                 setPublishFindings(checks.findings);
