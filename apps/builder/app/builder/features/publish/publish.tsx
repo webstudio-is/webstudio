@@ -129,6 +129,7 @@ import {
 } from "./publish-actions";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPublishValidationErrorMessage } from "./publish-error";
+import { runPublishAfterBestEffortChecks } from "./publish-preflight";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -238,14 +239,7 @@ const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
   });
 };
 
-const runPublishValidation = async (
-  projectId: Project["id"],
-  checkPermission = false
-) => {
-  if (checkPermission) {
-    await nativeClient.build.checkProjectBuildPermission.query({ projectId });
-  }
-  await flushExternalContentProject({ projectId });
+const runPublishDiagnostics = async (projectId: Project["id"]) => {
   const auditFindings = getPrePublishAuditFindings();
   const diagnostics =
     await nativeClient.build.contentDatabasePublishDiagnostics.query({
@@ -269,14 +263,29 @@ const runPublishValidation = async (
   };
 };
 
+const runPublishValidation = async (
+  projectId: Project["id"],
+  checkPermission = false
+) => {
+  if (checkPermission) {
+    await nativeClient.build.checkProjectBuildPermission.query({ projectId });
+  }
+  await flushExternalContentProject({ projectId });
+  return runPublishDiagnostics(projectId);
+};
+
 const reportPublishValidationFailure = (
   error: unknown,
-  setFindings: (findings: PublishValidationFinding[]) => void
+  setFindings: (findings: PublishValidationFinding[]) => void,
+  publishingContinues = false
 ) => {
-  const message = getPublishValidationErrorMessage(error, {
+  const diagnosticMessage = getPublishValidationErrorMessage(error, {
     assets: $assets.get(),
     assetFolders: $assetFolders.get(),
   });
+  const message = publishingContinues
+    ? `${diagnosticMessage}\n\nThe publish request was sent without waiting for these diagnostics.`
+    : diagnosticMessage;
   if ($publishDialog.get() === "none") {
     toast.error(message);
     return;
@@ -298,7 +307,9 @@ const reportPublishValidationFailure = (
   setFindings([
     {
       severity: "error",
-      title: "Unable to complete publish validation",
+      title: publishingContinues
+        ? "Publish checks couldn’t complete"
+        : "Unable to complete publish validation",
       details,
       reportText: `ERROR: Unable to complete publish validation\n${message}`,
     },
@@ -810,18 +821,15 @@ const Publish = ({
 
     startTransition(async () => {
       setIsPublishing(true);
-
-      try {
-        const checks = await runPublishValidation(project.id, true);
-        setPublishFindings(checks.findings);
-        if (checks.passed === false) {
-          return;
-        }
-      } catch (error) {
-        reportPublishValidationFailure(error, setPublishFindings);
-        return;
-      }
-      await publish(domains);
+      await runPublishAfterBestEffortChecks({
+        checks: async () => {
+          const checks = await runPublishDiagnostics(project.id);
+          setPublishFindings(checks.findings);
+        },
+        onCheckFailure: (error) =>
+          reportPublishValidationFailure(error, setPublishFindings, true),
+        publish: () => publish(domains),
+      });
     });
   };
 
@@ -947,22 +955,23 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
-                let checks: Awaited<ReturnType<typeof runPublishValidation>>;
-                try {
-                  checks = await runPublishValidation(projectId);
-                } catch (error) {
-                  reportPublishValidationFailure(error, setPublishFindings);
-                  return;
-                }
-                setPublishFindings(checks.findings);
-                if (checks.passed === false) {
-                  return;
-                }
-
-                const result = await nativeClient.domain.publish.mutate({
-                  projectId,
-                  destination: "static",
-                  templates: [...templates],
+                const result = await runPublishAfterBestEffortChecks({
+                  checks: async () => {
+                    const checks = await runPublishDiagnostics(projectId);
+                    setPublishFindings(checks.findings);
+                  },
+                  onCheckFailure: (error) =>
+                    reportPublishValidationFailure(
+                      error,
+                      setPublishFindings,
+                      true
+                    ),
+                  publish: () =>
+                    nativeClient.domain.publish.mutate({
+                      projectId,
+                      destination: "static",
+                      templates: [...templates],
+                    }),
                 });
 
                 if (result.success === false) {
