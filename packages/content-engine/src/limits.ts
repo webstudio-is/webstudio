@@ -26,7 +26,7 @@ export const contentEngineLimits = {
   mdxProps: 4_000,
   hydratedFileBytes: 1024 * 1024,
   hydratedTotalBytes: 2 * 1024 * 1024,
-  hydratedFileCount: 50,
+  hydratedFileCount: 20,
   hydratedRangeBytes: 256 * 1024,
   concurrentContentReads: 8,
 } as const;
