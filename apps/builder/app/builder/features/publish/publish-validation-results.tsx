@@ -7,8 +7,9 @@ import {
   DialogContent,
   DialogTitle,
   Flex,
-  PanelContent,
   PanelBanner,
+  PanelContent,
+  Separator,
   ScrollArea,
   Text,
 } from "@webstudio-is/design-system";
@@ -60,17 +61,21 @@ export const PublishValidationResults = ({
         </Flex>
       </PanelBanner>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent width={640} height={640}>
+        <DialogContent
+          width={640}
+          height={640}
+          css={{ display: "flex", flexDirection: "column" }}
+        >
           <DialogTitle>Publish check details</DialogTitle>
-          <ScrollArea>
-            <Flex direction="column" gap={4}>
+          <ScrollArea css={{ flex: 1, minHeight: 0 }}>
+            <PanelContent as={Flex} direction="column" gap={4}>
               {errors.length > 0 && (
                 <FindingGroup title="Errors" findings={errors} />
               )}
               {warnings.length > 0 && (
                 <FindingGroup title="Warnings" findings={warnings} />
               )}
-            </Flex>
+            </PanelContent>
           </ScrollArea>
           <DialogActions>
             <DialogClose>
@@ -92,22 +97,20 @@ const FindingGroup = ({
   title: string;
   findings: PublishValidationFinding[];
 }) => (
-  <Flex direction="column" gap={2}>
-    <Text variant="labels" weight="bold">
+  <Flex direction="column" gap={3}>
+    <Text variant="labels">
       {title} ({findings.length})
     </Text>
-    {findings.map((finding, index) => (
-      <PanelContent
-        key={`${title}-${index}`}
-        as={Flex}
-        direction="column"
-        gap={1}
-      >
-        <Text>{finding.title}</Text>
-        {finding.details !== undefined && (
-          <Text color="subtle">{finding.details}</Text>
-        )}
-      </PanelContent>
-    ))}
+    <Flex direction="column" gap={3}>
+      {findings.map((finding, index) => (
+        <Flex key={`${title}-${index}`} direction="column" gap={1}>
+          <Text variant="labels">{finding.title}</Text>
+          {finding.details !== undefined && (
+            <Text color="subtle">{finding.details}</Text>
+          )}
+          {index < findings.length - 1 && <Separator />}
+        </Flex>
+      ))}
+    </Flex>
   </Flex>
 );
