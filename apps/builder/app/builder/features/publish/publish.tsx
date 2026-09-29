@@ -239,12 +239,23 @@ const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
   });
 };
 
-const runPublishDiagnostics = async (projectId: Project["id"]) => {
+const runPublishDiagnostics = async (
+  projectId: Project["id"],
+  domains?: string[]
+) => {
   const auditFindings = getPrePublishAuditFindings();
   const diagnostics =
-    await nativeClient.build.contentDatabasePublishDiagnostics.query({
-      projectId,
-    });
+    domains === undefined
+      ? await nativeClient.build.contentDatabasePublishDiagnostics.query({
+          projectId,
+        })
+      : (
+          await nativeClient.api.publish.validate.query({
+            projectId,
+            target: "staging",
+            domains,
+          })
+        ).diagnostics;
   const contentFindings = getContentDatabasePublishFindings(diagnostics).map(
     (finding) => ({
       ...finding,
@@ -265,13 +276,10 @@ const runPublishDiagnostics = async (projectId: Project["id"]) => {
 
 const runPublishValidation = async (
   projectId: Project["id"],
-  checkPermission = false
+  domains: string[]
 ) => {
-  if (checkPermission) {
-    await nativeClient.build.checkProjectBuildPermission.query({ projectId });
-  }
   await flushExternalContentProject({ projectId });
-  return runPublishDiagnostics(projectId);
+  return runPublishDiagnostics(projectId, domains);
 };
 
 const reportPublishValidationFailure = (
@@ -790,7 +798,7 @@ const Publish = ({
     }
 
     try {
-      const checks = await runPublishValidation(project.id, true);
+      const checks = await runPublishValidation(project.id, domains);
       setPublishFindings(checks.findings);
       if (checks.passed === false) {
         onValidationStateChange("idle");
