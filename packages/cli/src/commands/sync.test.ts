@@ -15,6 +15,7 @@ import { promisify } from "node:util";
 import { build } from "esbuild";
 import {
   createStructuredAssetQueryResourceBody,
+  encodeDataVariableId,
   encodeDataSourceVariable,
 } from "@webstudio-is/sdk";
 import {
@@ -344,6 +345,132 @@ test.each([
     expect(generatedPage).toContain("Published from the runner");
   }
 );
+
+test("hosted sync compiles all MDX assets reachable from a mutable project variable", async () => {
+  const article = {
+    ...createImageAssetFixture(),
+    id: "article",
+    name: "article.mdx",
+    type: "file" as const,
+    format: "mdx",
+    size: new TextEncoder().encode("# Current project variable value")
+      .byteLength,
+    meta: {},
+  };
+  const updatedArticle = {
+    ...createImageAssetFixture(),
+    id: "updated-article",
+    name: "updated-article.mdx",
+    type: "file" as const,
+    format: "mdx",
+    size: new TextEncoder().encode("# Updated project variable value")
+      .byteLength,
+    meta: {},
+  };
+  const articles = [article, updatedArticle];
+  const sources = new Map([
+    [article.id, "# Current project variable value"],
+    [updatedArticle.id, "# Updated project variable value"],
+  ]);
+  loadProjectBundleByBuildId.mockResolvedValue(
+    createProjectBundle({
+      assets: articles,
+      build: {
+        deployment: { destination: "saas", domains: [] },
+        instances: [
+          [
+            "root",
+            {
+              type: "instance",
+              id: "root",
+              component: "Box",
+              children: [{ type: "id", value: "content" }],
+            },
+          ],
+          [
+            "content",
+            {
+              type: "instance",
+              id: "content",
+              component: "ws:block",
+              children: [{ type: "id", value: "templates" }],
+            },
+          ],
+          [
+            "templates",
+            {
+              type: "instance",
+              id: "templates",
+              component: "ws:block-template",
+              children: [],
+            },
+          ],
+        ],
+        props: [
+          [
+            "src",
+            {
+              id: "src",
+              instanceId: "content",
+              name: "src",
+              type: "expression",
+              value: encodeDataVariableId("article-source"),
+            },
+          ],
+        ],
+        dataSources: [
+          [
+            "article-source",
+            {
+              id: "article-source",
+              type: "variable",
+              scopeInstanceId: "content",
+              name: "articleSource",
+              value: { type: "string", value: article.id },
+            },
+          ],
+        ],
+      },
+    })
+  );
+  downloadAssetFiles.mockImplementation(async ({ assets }) => {
+    await mkdir(".webstudio/assets", { recursive: true });
+    await Promise.all(
+      assets.map((asset: { id: string; name: string }) =>
+        writeFile(
+          `.webstudio/assets/${asset.name}`,
+          sources.get(asset.id) ?? ""
+        )
+      )
+    );
+  });
+
+  await sync(
+    {
+      authToken: "token-1",
+      buildId: "build-1",
+      origin: "https://example.com",
+    },
+    dependencies
+  );
+
+  expect(downloadAssetFiles).toHaveBeenCalledWith({
+    assets: expect.arrayContaining([article, updatedArticle]),
+    origin: "https://example.com",
+  });
+  const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
+  for (const [id, source] of sources) {
+    expect(data.assetIndex.documents).toContainEqual(
+      expect.objectContaining({ _id: id, extension: "mdx" })
+    );
+    expect(Object.values(data.assetIndex.contents)).toContain(source);
+  }
+
+  await prebuild({ assets: false, template: ["react-router"] });
+  const generatedPage = await readFile("app/__generated__/_index.tsx", "utf8");
+  expect(generatedPage).toContain("Current project variable value");
+  expect(generatedPage).toContain("Updated project variable value");
+});
 
 test("hosted sync compiles metadata-only dynamic MDX into a server-rendered page", async () => {
   const source =

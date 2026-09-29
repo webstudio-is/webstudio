@@ -28,6 +28,7 @@ import {
   getStaticContentBlockSourceAssetId,
   isMdxFileAsset,
   getPublishablePages,
+  type Asset,
   type DataSource,
   type Instance,
   type Prop,
@@ -58,6 +59,9 @@ type PublishedContentDatabaseBuild = ContentDatabaseBuild & {
 };
 
 const publishedMdxTotalBytes = 32 * 1024 * 1024;
+
+export const getPublishedMdxAssetIds = (assets: readonly Asset[]) =>
+  new Set(assets.filter(isMdxFileAsset).map(({ id }) => id));
 
 export const getPublishedMdxContentDatabaseMaxBytes = ({
   baseBytes,
@@ -227,12 +231,14 @@ type ResolvePublishedMdxDependencyClosureOptions = {
   build: PublishedContentDatabaseBuild;
   artifact: ContentArtifactV1;
   onTemplateOmission?: (issue: PublishedMdxTemplateOmission) => void;
+  allMdxAssetIds?: ReadonlySet<string>;
 };
 
 const resolvePublishedMdxDependencyClosureWithParser = async ({
   build,
   artifact,
   onTemplateOmission,
+  allMdxAssetIds,
   parseDocument,
 }: ResolvePublishedMdxDependencyClosureOptions & {
   parseDocument: (input: {
@@ -295,6 +301,7 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
             build,
             artifact,
             blockInstanceIds: new Set([blockId]),
+            allMdxAssetIds,
           }).get(blockId) ?? []);
     for (const assetId of assetIds) {
       const documentEntry = documentsById.get(assetId);
@@ -352,6 +359,7 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
     artifact,
     blockInstanceIds: reachableIds,
     allowUnresolved: true,
+    allMdxAssetIds,
   });
   return createPublishedBuildContentCompilationPlan(
     build,
@@ -439,11 +447,13 @@ export const resolvePublishedMdxAssetCandidates = ({
   artifact,
   allowUnresolved = false,
   blockInstanceIds = getPublishedInstanceIds(build),
+  allMdxAssetIds,
 }: {
   build: PublishedContentDatabaseBuild;
   artifact?: ContentArtifactV1;
   allowUnresolved?: boolean;
   blockInstanceIds?: ReadonlySet<string>;
+  allMdxAssetIds?: ReadonlySet<string>;
 }) => {
   const instances = new Map(
     getBuildValues<Instance>(build.instances).map((instance) => [
@@ -479,7 +489,8 @@ export const resolvePublishedMdxAssetCandidates = ({
   const evaluateDataSource = (
     dataSourceId: string,
     path: readonly string[],
-    visiting = new Set<string>()
+    visiting = new Set<string>(),
+    mutableVariables = new Set<string>()
   ): unknown[] => {
     if (visiting.has(dataSourceId)) {
       throw new Error("Dynamic MDX source data dependency is cyclic");
@@ -491,6 +502,7 @@ export const resolvePublishedMdxAssetCandidates = ({
     if (dataSource.type === "variable") {
       // Project variables can be changed by actions after publication. Their
       // initial value is therefore not a complete dependency set.
+      mutableVariables.add(dataSourceId);
       return [];
     }
     if (dataSource.type === "resource") {
@@ -584,7 +596,8 @@ export const resolvePublishedMdxAssetCandidates = ({
         iterables = evaluateDataSource(
           dependencyId,
           dataPath.slice(1),
-          visiting
+          visiting,
+          mutableVariables
         );
         visiting.delete(dataSourceId);
       }
@@ -628,11 +641,17 @@ export const resolvePublishedMdxAssetCandidates = ({
     const dataSourceId =
       path === undefined ? undefined : decodeDataSourceVariable(path[0]);
     let assetIds: string[] = [];
+    const mutableVariables = new Set<string>();
     try {
       assetIds =
         dataSourceId === undefined || path === undefined
           ? []
-          : evaluateDataSource(dataSourceId, path.slice(1)).filter(
+          : evaluateDataSource(
+              dataSourceId,
+              path.slice(1),
+              new Set(),
+              mutableVariables
+            ).filter(
               (value): value is string =>
                 typeof value === "string" && value.length > 0
             );
@@ -640,6 +659,9 @@ export const resolvePublishedMdxAssetCandidates = ({
       if (allowUnresolved === false) {
         throw error;
       }
+    }
+    if (mutableVariables.size > 0 && allMdxAssetIds !== undefined) {
+      assetIds.push(...allMdxAssetIds);
     }
     if (assetIds.length === 0) {
       if (allowUnresolved) {

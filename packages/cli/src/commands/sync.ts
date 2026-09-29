@@ -35,6 +35,7 @@ import {
   createPublishedBuildContentCompilationPlan,
   createPublishedMdxDependencyClosureResolver,
   getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxAssetIds,
   getPublishedMdxContentDatabaseMaxBytes,
   resolvePublishedMdxAssetCandidates,
 } from "@webstudio-is/project-build";
@@ -256,10 +257,12 @@ export const sync = async (
     ...project.build,
     pages: migratePages(project.build.pages),
   };
+  const allMdxAssetIds = getPublishedMdxAssetIds(project.assets);
   const projectCandidates = resolvePublishedMdxAssetCandidates({
     build: publicationBuild,
     artifact: project.assetIndex,
     allowUnresolved: true,
+    allMdxAssetIds,
   });
   const dynamicBlockIds =
     getDynamicPublishedMdxSourceBlockIds(publicationBuild);
@@ -338,7 +341,11 @@ export const sync = async (
           plan,
           compile,
           resolvePlan: async (artifact) =>
-            await resolvePlan({ build: publicationBuild, artifact }),
+            await resolvePlan({
+              build: publicationBuild,
+              artifact,
+              allMdxAssetIds,
+            }),
         });
       } else {
         project.assetIndex = await compile(plan);
