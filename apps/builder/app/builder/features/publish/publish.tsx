@@ -61,7 +61,11 @@ import {
   $stagingUsername,
   $stagingPassword,
 } from "~/shared/nano-states";
-import { $assets, $publisherHost } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $assets,
+  $publisherHost,
+} from "~/shared/sync/data-stores";
 import {
   $publishDialog,
   setActiveSidebarPanel,
@@ -271,7 +275,10 @@ const reportPrePublishFailure = (
   error: unknown,
   setFindings: (findings: PublishValidationFinding[]) => void
 ) => {
-  const message = getPrePublishErrorMessage(error);
+  const message = getPrePublishErrorMessage(error, {
+    assets: $assets.get(),
+    assetFolders: $assetFolders.get(),
+  });
   if ($publishDialog.get() === "none") {
     toast.error(message);
     return;
