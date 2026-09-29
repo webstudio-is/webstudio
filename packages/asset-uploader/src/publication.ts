@@ -123,6 +123,34 @@ export const validatePublishedAssetCollections = async (
   return assetData;
 };
 
+export const createPublishedMdxDependencySourceLoader = (
+  assetStore: Pick<AssetObjectStore, "readFile">
+) => {
+  const sources = new Map<string, Promise<string>>();
+  return ({
+    id,
+    revision,
+    contentRef,
+  }: {
+    id: string;
+    revision: string;
+    contentRef: string;
+  }) => {
+    const key = JSON.stringify([id, revision, contentRef]);
+    let source = sources.get(key);
+    if (source === undefined) {
+      source = (async () => {
+        const { data } = await assetStore.readFile(contentRef);
+        return decodeUtf8(
+          await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
+        );
+      })();
+      sources.set(key, source);
+    }
+    return source;
+  };
+};
+
 export const preparePublishedAssetData = async (
   {
     projectId,
@@ -156,26 +184,8 @@ export const preparePublishedAssetData = async (
     assetStore,
     contentDatabaseMaxBytes,
   });
-  const documentSources = new Map<string, Promise<string>>();
-  const loadDocumentSource = (input: {
-    id: string;
-    revision: string;
-    contentRef: string;
-  }) => {
-    const key = JSON.stringify([input.id, input.revision, input.contentRef]);
-    const cached = documentSources.get(key);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const source = (async () => {
-      const { data } = await assetStore.readFile(input.contentRef);
-      return decodeUtf8(
-        await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
-      );
-    })();
-    documentSources.set(key, source);
-    return source;
-  };
+  const loadDocumentSource =
+    createPublishedMdxDependencySourceLoader(assetStore);
   const { result: artifact, assetData } = await prepareStablePublishedAssetData(
     {
       projectId,

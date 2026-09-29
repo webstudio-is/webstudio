@@ -7,6 +7,24 @@ type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
 >;
 
+const missingAssetFix =
+  "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset.";
+
+const invalidMdxFixes = {
+  "source-read-failed":
+    "Check that the asset is available in Content Assets, then run Validate again. If it still fails, investigate the document with Webstudio MCP: https://wstd.us/mcp.",
+  "missing-source": missingAssetFix,
+  "missing-asset": missingAssetFix,
+  "linked-document-unavailable":
+    "Restore or reconnect the referenced document in Content Assets, then run validation again.",
+  "html-content-model":
+    "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links.",
+  "dynamic-resource":
+    "Use a static MDX source for this Content Block, or remove Resource-dependent content from the MDX file.",
+  "dynamic-source-unbounded":
+    "Use a static MDX source or narrow the Collection query so validation can identify its MDX assets.",
+} as const;
+
 export const getContentDatabasePublishFindings = (
   diagnostics: ContentDatabasePublishDiagnostics
 ) => {
@@ -18,36 +36,10 @@ export const getContentDatabasePublishFindings = (
         start === undefined ? "" : `:${start.line}:${start.column}`;
       const message =
         "message" in diagnostic ? diagnostic.message : diagnostic.code;
-      let fix = "Open this MDX source and fix the reported error.";
-      if (diagnostic.code === "invalid-mdx") {
-        switch (diagnostic.reason) {
-          case "source-read-failed":
-            fix =
-              "Check that the asset is available in Content Assets, then run Validate again. If it still fails, investigate the document with Webstudio MCP: https://wstd.us/mcp.";
-            break;
-          case "missing-source":
-          case "missing-asset":
-            fix =
-              "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset.";
-            break;
-          case "linked-document-unavailable":
-            fix =
-              "Restore or reconnect the referenced document in Content Assets, then run validation again.";
-            break;
-          case "html-content-model":
-            fix =
-              "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links.";
-            break;
-          case "dynamic-resource":
-            fix =
-              "Use a static MDX source for this Content Block, or remove Resource-dependent content from the MDX file.";
-            break;
-          case "dynamic-source-unbounded":
-            fix =
-              "Use a static MDX source or narrow the Collection query so validation can identify its MDX assets.";
-            break;
-        }
-      }
+      const fix =
+        diagnostic.code === "invalid-mdx" && diagnostic.reason !== undefined
+          ? invalidMdxFixes[diagnostic.reason]
+          : "Open this MDX source and fix the reported error.";
       const context = [
         `Diagnostic code: ${diagnostic.code}`,
         `Content Block instance ID: ${diagnostic.blockInstanceId}`,

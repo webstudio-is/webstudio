@@ -15,11 +15,7 @@ import {
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { formatAssetName } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import { contentEngineLimits } from "@webstudio-is/content-engine";
-import {
-  decodeUtf8,
-  readBoundedBytes,
-} from "@webstudio-is/content-engine/compiler";
+import { createPublishedMdxDependencySourceLoader } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { createAssetClient } from "~/shared/asset-client";
@@ -38,30 +34,8 @@ export const loadContentDatabasePublishDiagnostics = async (
   let mdxDependencyReadFailures: readonly PublishedMdxDependencyReadFailure[] =
     [];
   const assetStore = createAssetClient();
-  const documentSources = new Map<string, Promise<string>>();
-  const loadDocumentSource = ({
-    id,
-    revision,
-    contentRef,
-  }: {
-    id: string;
-    revision: string;
-    contentRef: string;
-  }) => {
-    const key = JSON.stringify([id, revision, contentRef]);
-    const cached = documentSources.get(key);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const source = (async () => {
-      const { data } = await assetStore.readFile(contentRef);
-      return decodeUtf8(
-        await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
-      );
-    })();
-    documentSources.set(key, source);
-    return source;
-  };
+  const loadDocumentSource =
+    createPublishedMdxDependencySourceLoader(assetStore);
   const mdxBlockInstanceIds = new Set<string>();
   const bundle = await (
     dependencies.loadProjectBundleByProjectId ?? loadProjectBundleByProjectId
