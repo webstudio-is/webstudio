@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 import {
   discoverMdxBodyAssetReferences,
@@ -907,6 +907,62 @@ featureImage:
         projectId: "project",
       })
     ).rejects.toThrow("Document graph source missing does not exist");
+  });
+
+  test("loads a referenced author when only the MDX source is embedded", async () => {
+    const source =
+      "---\nauthor:\n  $ref: ./author.md#frontmatter\n---\n# Published";
+    const artifact = createArtifact([{ id: "article", source }]);
+    artifact.documentGraph = {
+      format: "webstudio-document-graph",
+      version: 1,
+      nodes: [
+        {
+          id: "article",
+          revision: revision("b"),
+          contentRef: "article.mdx",
+          format: "mdx",
+        },
+        {
+          id: "author",
+          revision: revision("c"),
+          contentRef: "author.md",
+          format: "markdown",
+        },
+      ],
+      edges: [
+        {
+          sourceId: "article",
+          referenceId: "#frontmatter/author",
+          reference: {
+            documentId: "author",
+            revision: revision("c"),
+            representation: { type: "markdown-frontmatter" },
+          },
+        },
+      ],
+      integrity: { algorithm: "sha256", checksum: revision("d") },
+    };
+    const loadDocumentSource = vi.fn(async () => "---\nname: Oleg\n---\n");
+
+    const result = await materializePublishedMdx({
+      route: "/",
+      data: createData({}),
+      artifact,
+      metas: new Map(),
+      projectId: "project",
+      loadDocumentSource,
+    });
+
+    expect(result.roots[0].resolvedFrontmatter.author).toEqual({
+      name: "Oleg",
+    });
+    expect(loadDocumentSource).toHaveBeenCalledExactlyOnceWith({
+      id: "author",
+      revision: revision("c"),
+      contentRef: "author.md",
+      format: "markdown",
+    });
   });
 });
 

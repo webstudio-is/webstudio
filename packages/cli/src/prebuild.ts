@@ -1354,6 +1354,14 @@ export const prebuild = async (options: {
           dynamicAssetIdsByBlock: pageDynamicCandidates,
           blockInstanceIds: pendingBlockIds,
           runtimeAssets: runtimeAssetsById,
+          loadDocumentSource: async ({ contentRef }) =>
+            await readFile(
+              getLocalAssetPath(
+                contentRef,
+                options.sourceAssetsDirectory ?? join(buildRoot, LOCAL_ASSETS_DIR)
+              ),
+              "utf8"
+            ),
         });
         for (const root of materialized.roots) {
           const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({

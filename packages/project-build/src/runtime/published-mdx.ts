@@ -215,6 +215,7 @@ export const materializePublishedMdx = async ({
   dynamicAssetIdsByBlock = new Map(),
   blockInstanceIds,
   runtimeAssets: providedRuntimeAssets,
+  loadDocumentSource,
 }: {
   route: string;
   data: Omit<WebstudioData, "pages">;
@@ -225,6 +226,10 @@ export const materializePublishedMdx = async ({
   dynamicAssetIdsByBlock?: ReadonlyMap<string, readonly string[]>;
   blockInstanceIds?: ReadonlySet<string>;
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  loadDocumentSource?: (node: {
+    id: string;
+    contentRef: string;
+  }) => Promise<string>;
 }): Promise<{
   roots: readonly PublishedMdxRoot[];
   warnings: readonly PublishedMdxWarning[];
@@ -267,7 +272,9 @@ export const materializePublishedMdx = async ({
             assetValueReferences: artifact.assetValueReferences,
             runtimeAssets,
             load: async (node) => {
-              const source = artifact.contents?.[node.contentRef];
+              const source =
+                artifact.contents?.[node.contentRef] ??
+                (await loadDocumentSource?.(node));
               if (source === undefined || node.format === undefined) {
                 throw new Error(`Published document ${node.id} is unavailable`);
               }

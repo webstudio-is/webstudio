@@ -14,7 +14,13 @@ import {
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { formatAssetName } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
+import { contentEngineLimits } from "@webstudio-is/content-engine";
+import {
+  decodeUtf8,
+  readBoundedBytes,
+} from "@webstudio-is/content-engine/compiler";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { createAssetClient } from "~/shared/asset-client";
 
 export const loadContentDatabasePublishDiagnostics = async (
   projectId: string,
@@ -43,6 +49,7 @@ export const loadContentDatabasePublishDiagnostics = async (
     >["warnings"][number]["diagnostic"];
   }> = [];
   if (bundle.assetIndex !== undefined) {
+    const assetStore = createAssetClient();
     const data = {
       instances: new Map(bundle.build.instances),
       props: new Map(bundle.build.props),
@@ -74,6 +81,12 @@ export const loadContentDatabasePublishDiagnostics = async (
       projectId: bundle.build.projectId,
       blockInstanceIds: mdxBlockInstanceIds,
       dynamicAssetIdsByBlock,
+      loadDocumentSource: async ({ contentRef }) => {
+        const { data } = await assetStore.readFile(contentRef);
+        return decodeUtf8(
+          await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
+        );
+      },
     });
     const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
     const getFilename = (assetId: string, fallback: string) => {
