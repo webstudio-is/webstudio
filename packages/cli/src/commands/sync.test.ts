@@ -436,7 +436,7 @@ test("hosted sync compiles all MDX assets reachable from a mutable project varia
   downloadAssetFiles.mockImplementation(async ({ assets }) => {
     await mkdir(".webstudio/assets", { recursive: true });
     await Promise.all(
-      assets.map((asset) =>
+      assets.map((asset: { id: string; name: string }) =>
         writeFile(
           `.webstudio/assets/${asset.name}`,
           sources.get(asset.id) ?? ""
