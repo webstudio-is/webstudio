@@ -36,6 +36,7 @@ import {
 } from "@webstudio-is/sdk";
 import { parseStaticMemberPath } from "@webstudio-is/expression";
 import { materializeMdxAuthoredContent } from "./mdx-authored-content";
+import { createFindAvailableVariables } from "./data";
 import {
   materializeMdxTemplates,
   type MdxTemplateDependency,
@@ -303,6 +304,9 @@ export const materializePublishedMdx = async ({
   });
   const roots: PublishedMdxRoot[] = [];
   const warnings: PublishedMdxWarning[] = [];
+  let findAvailableVariables:
+    | ReturnType<typeof createFindAvailableVariables>
+    | undefined;
   const warnUnavailableSource = ({
     blockInstanceId,
     assetId,
@@ -384,7 +388,22 @@ export const materializePublishedMdx = async ({
         });
         continue;
       }
-      const sourceText = artifact.contents?.[candidate.contentRef];
+      let sourceText = artifact.contents?.[candidate.contentRef];
+      if (sourceText === undefined && loadDocumentSource !== undefined) {
+        try {
+          sourceText = await loadDocumentSource({
+            id: candidate._id,
+            contentRef: candidate.contentRef,
+          });
+        } catch (error) {
+          warnUnavailableSource({
+            blockInstanceId: block.id,
+            assetId: candidate._id,
+            message: `Published MDX Asset "${candidate._id}" could not be loaded: ${error instanceof Error ? error.message : String(error)}`,
+          });
+          continue;
+        }
+      }
       if (sourceText === undefined) {
         warnUnavailableSource({
           blockInstanceId: block.id,
@@ -437,6 +456,17 @@ export const materializePublishedMdx = async ({
         metas,
       });
       assertMdxTemplateStructure(resolution);
+      if (
+        findAvailableVariables === undefined &&
+        resolution.references.some(
+          (reference) => reference.type === "resolved-template"
+        )
+      ) {
+        findAvailableVariables = createFindAvailableVariables({
+          instances: data.instances,
+          dataSources: data.dataSources,
+        });
+      }
       const templates = await materializeMdxTemplates({
         identity,
         resolution,
@@ -444,6 +474,7 @@ export const materializePublishedMdx = async ({
         metas,
         projectId,
         assetReferences,
+        findAvailableVariables,
       });
       const referencedTemplateNames = Array.from(
         new Set(
