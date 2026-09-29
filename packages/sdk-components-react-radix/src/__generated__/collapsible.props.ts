@@ -19,7 +19,7 @@ export const propsCollapsibleTrigger: Record<string, PropMeta> = {};
 export const propsCollapsibleContent: Record<string, PropMeta> = {
   forceMount: {
     description:
-      "Used to force mounting when more control is needed. Useful when controlling animation with React animation libraries or keeping content available in the DOM.",
+      "When true, closed content stays mounted. Keep an explicit closed-state CSS rule such as height: 0; Radix's animation-only example assumes unmounted content. Radix suppresses CSS transitions and animations while measuring height, so the first open may not animate.",
     required: false,
     control: "boolean",
     type: "boolean",

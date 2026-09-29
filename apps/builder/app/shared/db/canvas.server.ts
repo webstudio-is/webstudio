@@ -178,6 +178,7 @@ const addProjectMetadata = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
+    onMdxBlockInstanceId?: (blockInstanceId: string) => void;
     contentIndex?: "client";
   } = {}
 ): Promise<PublishedProjectBundle> => {
@@ -253,6 +254,7 @@ const addProjectMetadata = async (
                 build: publicationBuild,
                 artifact,
                 onTemplateOmission: (issue) => nextOmissions.push(issue),
+                onMdxBlockInstanceId: options.onMdxBlockInstanceId,
               });
               mdxTemplateOmissions = nextOmissions;
               return plan!;
@@ -381,6 +383,7 @@ export const loadProjectBundleByProjectId = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
+    onMdxBlockInstanceId?: (blockInstanceId: string) => void;
   } = {}
 ): Promise<PublishedProjectBundle> => {
   const project = await loadById(projectId, context);

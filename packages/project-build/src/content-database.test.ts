@@ -556,7 +556,7 @@ describe("Content Block MDX compilation", () => {
     }
   );
 
-  test("rejects a mutable project variable as an incomplete candidate set", () => {
+  test("bounds a mutable project variable to the project's MDX assets", () => {
     const build = createBuild({ sourceType: "expression" });
     build.props[0].value = encodeDataVariableId("article-source");
     build.dataSources.push({
@@ -567,6 +567,12 @@ describe("Content Block MDX compilation", () => {
       value: { type: "string", value: "article.mdx" },
     });
 
+    expect(
+      resolvePublishedMdxAssetCandidates({
+        build,
+        allMdxAssetIds: new Set(["article.mdx", "another-article.mdx"]),
+      }).get("block")
+    ).toEqual(["another-article.mdx", "article.mdx"]);
     expect(() => resolvePublishedMdxAssetCandidates({ build })).toThrow(
       'Content Block "block" has no finite dynamic MDX Asset candidates'
     );

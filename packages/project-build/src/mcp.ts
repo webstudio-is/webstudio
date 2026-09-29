@@ -4352,8 +4352,9 @@ const capabilityAreas = [
   },
   {
     area: "publish",
-    goal: "Publish, unpublish, inspect publish jobs, and manage domains.",
+    goal: "Validate and publish projects, inspect publish jobs, and manage domains.",
     tools: [
+      "validate-publish",
       "publish",
       "list-publishes",
       "get-publish-job",

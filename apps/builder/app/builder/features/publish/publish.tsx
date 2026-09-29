@@ -8,6 +8,7 @@ import {
   startTransition,
   useRef,
   useId,
+  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -60,7 +61,11 @@ import {
   $stagingUsername,
   $stagingPassword,
 } from "~/shared/nano-states";
-import { $assets, $publisherHost } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $assets,
+  $publisherHost,
+} from "~/shared/sync/data-stores";
 import {
   $publishDialog,
   setActiveSidebarPanel,
@@ -112,18 +117,18 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
+import { getContentDatabasePublishFindings } from "./content-database-publish-warning";
 import {
-  getContentDatabasePublishWarning,
-  showContentDatabasePublishWarning,
-} from "./content-database-publish-warning";
+  PublishValidationResults,
+  type PublishValidationFinding,
+} from "./publish-validation-results";
 import {
   PublishActions,
   usePublishValidationState,
   type PublishValidationState,
 } from "./publish-actions";
-import { showPublishWarning } from "./publish-warning";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
-import { getPrePublishErrorMessage } from "./publish-error";
+import { getPublishValidationErrorMessage } from "./publish-error";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -131,18 +136,26 @@ const PrePublishAuditMessage = ({
   finding: PrePublishAuditFinding;
 }) => {
   const message = formatPrePublishAuditFinding(finding);
-  const { instanceId } = finding.location;
-  const pages = $pages.get();
-  const instances = $instances.get();
-
-  if (
-    instanceId === undefined ||
-    pages === undefined ||
-    instances.has(instanceId) === false
-  ) {
+  const instanceId = finding.location.instanceId;
+  if (instanceId === undefined) {
     return message;
   }
+  return (
+    <>
+      {message}{" "}
+      <PrePublishInstanceLink instanceId={instanceId}>
+        Show element
+      </PrePublishInstanceLink>
+    </>
+  );
+};
 
+const getPrePublishInstanceTarget = (instanceId: string) => {
+  const pages = $pages.get();
+  const instances = $instances.get();
+  if (pages === undefined || instances.has(instanceId) === false) {
+    return;
+  }
   const { pageId, instanceSelector } = findPageAndSelectorByInstanceId(
     pages,
     instances,
@@ -150,37 +163,47 @@ const PrePublishAuditMessage = ({
   );
   const href = getInstanceLink(instanceSelector);
   if (href === undefined) {
-    return message;
+    return;
   }
+  return { pageId, instanceSelector, href };
+};
 
+const PrePublishInstanceLink = ({
+  instanceId,
+  children,
+}: {
+  instanceId: string;
+  children: ReactNode;
+}) => {
+  const target = getPrePublishInstanceTarget(instanceId);
+  if (target === undefined) {
+    return null;
+  }
   return (
-    <>
-      {message}{" "}
-      <Link
-        href={href}
-        onClick={(event) => {
-          if (
-            event.button !== 0 ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.shiftKey ||
-            event.altKey
-          ) {
-            return;
-          }
-          event.preventDefault();
-          $selectedPageId.set(pageId);
-          selectInstance(instanceSelector);
-          $publishDialog.set("none");
-        }}
-      >
-        Show element
-      </Link>
-    </>
+    <Link
+      href={target.href}
+      onClick={(event) => {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        $selectedPageId.set(target.pageId);
+        selectInstance(target.instanceSelector);
+        $publishDialog.set("none");
+      }}
+    >
+      {children}
+    </Link>
   );
 };
 
-const getPrePublishAuditMessages = () => {
+const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
   const findings = runPrePublishAudit({
     pages: $pages.get(),
     instances: $instances.get(),
@@ -190,14 +213,96 @@ const getPrePublishAuditMessages = () => {
     assets: $assets.get(),
     metas: $registeredComponentMetas.get(),
   });
-  const getMessage = (severity: PrePublishAuditFinding["severity"]) => {
-    const finding = findings.find((item) => item.severity === severity);
-    return finding && <PrePublishAuditMessage finding={finding} />;
-  };
+  return findings.flatMap((finding) => {
+    if (finding.severity !== "error" && finding.severity !== "warning") {
+      return [];
+    }
+    const context = Object.entries(finding.location)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}: ${value}`);
+    const reportText = [
+      `${finding.severity.toUpperCase()}: ${formatPrePublishAuditFinding(
+        finding
+      )}`,
+      `Rule: ${finding.ruleId}`,
+      ...context,
+    ].join("\n");
+    return [
+      {
+        severity: finding.severity,
+        title: <PrePublishAuditMessage finding={finding} />,
+        details: context.length === 0 ? undefined : context.join(" · "),
+        reportText,
+      },
+    ];
+  });
+};
+
+const runPublishValidation = async (
+  projectId: Project["id"],
+  checkPermission = false
+) => {
+  if (checkPermission) {
+    await nativeClient.build.checkProjectBuildPermission.query({ projectId });
+  }
+  await flushExternalContentProject({ projectId });
+  const auditFindings = getPrePublishAuditFindings();
+  const diagnostics =
+    await nativeClient.build.contentDatabasePublishDiagnostics.query({
+      projectId,
+    });
+  const contentFindings = getContentDatabasePublishFindings(diagnostics).map(
+    (finding) => ({
+      ...finding,
+      link:
+        finding.relatedInstanceId === undefined ? undefined : (
+          <PrePublishInstanceLink instanceId={finding.relatedInstanceId}>
+            Open Content Block
+          </PrePublishInstanceLink>
+        ),
+    })
+  );
+  const findings = [...auditFindings, ...contentFindings];
   return {
-    error: getMessage("error"),
-    warning: getMessage("warning"),
+    passed: findings.every(({ severity }) => severity !== "error"),
+    findings,
   };
+};
+
+const reportPublishValidationFailure = (
+  error: unknown,
+  setFindings: (findings: PublishValidationFinding[]) => void
+) => {
+  const message = getPublishValidationErrorMessage(error, {
+    assets: $assets.get(),
+    assetFolders: $assetFolders.get(),
+  });
+  if ($publishDialog.get() === "none") {
+    toast.error(message);
+    return;
+  }
+  const mcpUrl = "https://wstd.us/mcp";
+  const mcpUrlIndex = message.indexOf(mcpUrl);
+  const details =
+    mcpUrlIndex === -1 ? (
+      message
+    ) : (
+      <>
+        {message.slice(0, mcpUrlIndex)}
+        <Link href={mcpUrl} target="_blank" rel="noreferrer">
+          Webstudio MCP
+        </Link>
+        {message.slice(mcpUrlIndex + mcpUrl.length)}
+      </>
+    );
+  setFindings([
+    {
+      severity: "error",
+      title: "Unable to complete publish validation",
+      details,
+      reportText: `ERROR: Unable to complete publish validation\n${message}`,
+    },
+  ]);
 };
 
 type ChangeProjectDomainProps = {
@@ -270,25 +375,29 @@ const ChangeProjectDomain = ({
     toast.success(result.message);
   };
 
+  const latestProjectDomainBuild =
+    project.latestBuildVirtual?.domain === project.domain
+      ? project.latestBuildVirtual
+      : undefined;
+
   const { statusText, color, Icon } =
-    project.latestBuildVirtual != null
-      ? getPublishStatusAndText(project.latestBuildVirtual)
+    latestProjectDomainBuild != null
+      ? getPublishStatusAndText(latestProjectDomainBuild)
       : {
           statusText: "Not published",
           color: cssVar("--foreground-secondary"),
           Icon: InfoCircleIcon,
         };
 
-  // Check if the wstd domain specifically is published (not just any custom domain)
-  const isPublished = project.latestBuildVirtual?.domain === project.domain;
+  const isPublished = latestProjectDomainBuild != null;
 
   return (
     <CollapsibleDomainSection
       title={pageUrl.host}
       prefix={
         <DomainCheckbox
-          defaultChecked={project.latestBuildVirtual?.domain === domain}
-          buildId={project.latestBuildVirtual?.buildId}
+          defaultChecked={latestProjectDomainBuild?.domain === domain}
+          buildId={latestProjectDomainBuild?.buildId}
           domain={domain}
         />
       }
@@ -496,9 +605,9 @@ const Publish = ({
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
-  const [publishWarning, setPublishWarning] = useState<
-    undefined | JSX.Element | string
-  >();
+  const [publishFindings, setPublishFindings] = useState<
+    PublishValidationFinding[]
+  >([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
@@ -655,29 +764,6 @@ const Publish = ({
     }
   };
 
-  const runPrePublishChecks = async (): Promise<boolean> => {
-    await nativeClient.build.checkProjectBuildPermission.query({
-      projectId: project.id,
-    });
-    await flushExternalContentProject({ projectId: project.id });
-
-    const { error: auditError, warning: auditWarning } =
-      getPrePublishAuditMessages();
-    if (auditError !== undefined) {
-      toast.error(auditError);
-      setPublishError(auditError);
-      return false;
-    }
-    if (auditWarning !== undefined) {
-      showPublishWarning({
-        message: auditWarning,
-        setWarning: setPublishWarning,
-      });
-    }
-
-    return true;
-  };
-
   const getDomainsFromForm = (formData: FormData) =>
     formData
       .getAll(domainToPublishName)
@@ -685,7 +771,7 @@ const Publish = ({
 
   const handleValidate = async (formData: FormData) => {
     setPublishError(undefined);
-    setPublishWarning(undefined);
+    setPublishFindings([]);
     const domains = getDomainsFromForm(formData);
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
@@ -693,21 +779,11 @@ const Publish = ({
     }
 
     try {
-      const passed = await runPrePublishChecks();
-      if (!passed) {
+      const checks = await runPublishValidation(project.id, true);
+      setPublishFindings(checks.findings);
+      if (checks.passed === false) {
         onValidationStateChange("idle");
         return;
-      }
-      const diagnostics =
-        await nativeClient.build.contentDatabasePublishDiagnostics.query({
-          projectId: project.id,
-        });
-      const contentWarning = getContentDatabasePublishWarning(diagnostics);
-      if (contentWarning !== undefined) {
-        showPublishWarning({
-          message: contentWarning,
-          setWarning: setPublishWarning,
-        });
       }
       onValidationStateChange("passed");
       toast.success("Validation passed. Ready to publish.", {
@@ -715,15 +791,13 @@ const Publish = ({
       });
     } catch (error) {
       onValidationStateChange("idle");
-      const message = getPrePublishErrorMessage(error);
-      toast.error(message);
-      setPublishError(message);
+      reportPublishValidationFailure(error, setPublishFindings);
     }
   };
 
   const handlePublish = (formData: FormData) => {
     setPublishError(undefined);
-    setPublishWarning(undefined);
+    setPublishFindings([]);
 
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
@@ -738,22 +812,15 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        const passed = await runPrePublishChecks();
-        if (!passed) {
+        const checks = await runPublishValidation(project.id, true);
+        setPublishFindings(checks.findings);
+        if (checks.passed === false) {
           return;
         }
       } catch (error) {
-        const message = getPrePublishErrorMessage(error);
-        toast.error(message);
-        setPublishError(message);
+        reportPublishValidationFailure(error, setPublishFindings);
         return;
       }
-      showContentDatabasePublishWarning({
-        diagnostics: nativeClient.build.contentDatabasePublishDiagnostics.query(
-          { projectId: project.id }
-        ),
-        setWarning: setPublishWarning,
-      });
       await publish(domains);
     });
   };
@@ -762,13 +829,8 @@ const Publish = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      <PublishValidationResults findings={publishFindings} />
       {publishError && <Text color="destructive">{publishError}</Text>}
-      {publishWarning && (
-        <PanelBanner variant="warning">
-          <Text>{publishWarning}</Text>
-        </PanelBanner>
-      )}
-
       <PublishActions
         publishButtonRef={buttonRef}
         validationState={validationState}
@@ -848,7 +910,9 @@ const PublishStatic = ({
   const project = useStore($project);
   const [_, startTransition] = useTransition();
   const [publishError, setPublishError] = useState<JSX.Element | string>();
-  const [publishWarning, setPublishWarning] = useState<JSX.Element | string>();
+  const [publishFindings, setPublishFindings] = useState<
+    PublishValidationFinding[]
+  >([]);
 
   if (project == null) {
     throw new Error("Project not found");
@@ -865,12 +929,8 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      <PublishValidationResults findings={publishFindings} />
       {publishError && <Text color="destructive">{publishError}</Text>}
-      {publishWarning && (
-        <PanelBanner variant="warning">
-          <Text>{publishWarning}</Text>
-        </PanelBanner>
-      )}
       {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
 
       <Tooltip
@@ -882,32 +942,22 @@ const PublishStatic = ({
           state={isPublishInProgress ? "pending" : undefined}
           onClick={() => {
             setPublishError(undefined);
-            setPublishWarning(undefined);
-            const { error: auditError, warning: auditWarning } =
-              getPrePublishAuditMessages();
-            if (auditError !== undefined) {
-              toast.error(auditError);
-              setPublishError(auditError);
-              return;
-            }
-            if (auditWarning !== undefined) {
-              showPublishWarning({
-                message: auditWarning,
-                setWarning: setPublishWarning,
-              });
-            }
+            setPublishFindings([]);
 
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
-
-                showContentDatabasePublishWarning({
-                  diagnostics:
-                    nativeClient.build.contentDatabasePublishDiagnostics.query({
-                      projectId,
-                    }),
-                  setWarning: setPublishWarning,
-                });
+                let checks: Awaited<ReturnType<typeof runPublishValidation>>;
+                try {
+                  checks = await runPublishValidation(projectId);
+                } catch (error) {
+                  reportPublishValidationFailure(error, setPublishFindings);
+                  return;
+                }
+                setPublishFindings(checks.findings);
+                if (checks.passed === false) {
+                  return;
+                }
 
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,

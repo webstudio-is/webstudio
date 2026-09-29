@@ -7,7 +7,7 @@ import {
   relative,
   sep,
 } from "node:path";
-import { existsSync } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
@@ -75,6 +75,7 @@ import {
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxAssetIds,
   hasDynamicPublishedMdxSources,
   resolvePublishedMdxAssetCandidates,
 } from "@webstudio-is/project-build";
@@ -95,6 +96,10 @@ import {
   verifyContentArtifact,
 } from "@webstudio-is/content-engine";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import {
+  decodeUtf8,
+  readBoundedBytes,
+} from "@webstudio-is/content-engine/compiler";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   parseJsonExpression,
@@ -976,6 +981,7 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const publicationBuild = { ...siteData.build, pages };
+  const allMdxAssetIds = getPublishedMdxAssetIds(siteData.assets);
   if (
     siteData.assetIndex === undefined &&
     (createPublishedBuildContentCompilationPlan(publicationBuild) !==
@@ -1058,14 +1064,12 @@ export const prebuild = async (options: {
   }
   let dynamicMdxCandidates: ReadonlyMap<string, readonly string[]> | undefined;
   if (hasDynamicPublishedMdxSources(publicationBuild)) {
-    dynamicMdxCandidates =
-      verifiedAssetIndex === undefined
-        ? new Map()
-        : resolvePublishedMdxAssetCandidates({
-            build: publicationBuild,
-            artifact: verifiedAssetIndex,
-            allowUnresolved: true,
-          });
+    dynamicMdxCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      artifact: verifiedAssetIndex,
+      allowUnresolved: true,
+      allMdxAssetIds,
+    });
     for (const blockInstanceId of getDynamicPublishedMdxSourceBlockIds(
       publicationBuild
     )) {
@@ -1332,6 +1336,7 @@ export const prebuild = async (options: {
               build: pageBuild,
               artifact: verifiedAssetIndex,
               blockInstanceIds: pendingBlockIds,
+              allMdxAssetIds,
             })
           : undefined;
         const materialized = await materializePublishedMdx({
@@ -1354,6 +1359,21 @@ export const prebuild = async (options: {
           dynamicAssetIdsByBlock: pageDynamicCandidates,
           blockInstanceIds: pendingBlockIds,
           runtimeAssets: runtimeAssetsById,
+          loadDocumentSource: async ({ contentRef }) => {
+            const source = createReadStream(
+              getLocalAssetPath(
+                contentRef,
+                options.sourceAssetsDirectory ??
+                  join(buildRoot, LOCAL_ASSETS_DIR)
+              )
+            );
+            return decodeUtf8(
+              await readBoundedBytes(
+                source,
+                contentEngineLimits.hydratedFileBytes
+              )
+            );
+          },
         });
         for (const root of materialized.roots) {
           const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
