@@ -1852,14 +1852,14 @@ test("publishes project", async () => {
   });
 });
 
-test("checks publish readiness without publishing", async () => {
+test("validates publishing without publishing", async () => {
   await expectCommandCall({
     options: {
-      command: "check-publish-readiness",
+      command: "validate-publish",
       target: "production",
       domain: ["example.com,www.example.com"],
     },
-    call: apiCalls.checkPublishReadiness,
+    call: apiCalls.validatePublish,
     connection: {
       target: "production",
       domains: ["example.com", "www.example.com"],

@@ -231,6 +231,7 @@ type ResolvePublishedMdxDependencyClosureOptions = {
   build: PublishedContentDatabaseBuild;
   artifact: ContentArtifactV1;
   onTemplateOmission?: (issue: PublishedMdxTemplateOmission) => void;
+  onMdxBlockInstanceId?: (blockInstanceId: string) => void;
   allMdxAssetIds?: ReadonlySet<string>;
 };
 
@@ -238,6 +239,7 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
   build,
   artifact,
   onTemplateOmission,
+  onMdxBlockInstanceId,
   allMdxAssetIds,
   parseDocument,
 }: ResolvePublishedMdxDependencyClosureOptions & {
@@ -293,6 +295,7 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
     if (source === undefined) {
       continue;
     }
+    onMdxBlockInstanceId?.(blockId);
     const staticValue = getStaticContentBlockSourceAssetId(source);
     const assetIds =
       typeof staticValue === "string"

@@ -51,6 +51,7 @@ export const getContentDatabaseMaxBytes = () =>
 export type ContentDatabasePublishDiagnostics = {
   stats: NonNullable<ReturnType<typeof analyzeContentDatabasePublish>>["stats"];
   affectedResources: Array<{
+    id: string;
     name: string;
     kind: "dynamic" | "static";
   }>;
@@ -72,6 +73,7 @@ export const getContentDatabasePublishDiagnostics = (
   return {
     stats: diagnostics.stats,
     affectedResources: diagnostics.queries.map(({ id, kind }) => ({
+      id,
       name: resourceNameById.get(id) ?? id,
       kind,
     })),
