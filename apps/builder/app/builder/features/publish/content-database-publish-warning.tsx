@@ -1,39 +1,73 @@
 import type { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
+import type { PublishValidationFinding } from "./publish-validation-results";
 import { showPublishWarning } from "./publish-warning";
 
 type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
 >;
 
-export const getContentDatabasePublishError = (
+export const getContentDatabasePublishFindings = (
   diagnostics: ContentDatabasePublishDiagnostics
 ) => {
-  if (diagnostics.mdxErrors.length === 0) {
-    return;
+  const findings: PublishValidationFinding[] = diagnostics.mdxErrors.map(
+    ({ filename, diagnostic }) => {
+      const start =
+        "sourceRange" in diagnostic ? diagnostic.sourceRange?.start : undefined;
+      const location =
+        start === undefined ? "" : `:${start.line}:${start.column}`;
+      const message =
+        "message" in diagnostic ? diagnostic.message : diagnostic.code;
+      const fix = message.includes("requires unavailable MDX Asset")
+        ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
+        : message.includes("violates HTML spec")
+          ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
+          : "Open this MDX source and fix the reported error.";
+      return {
+        severity: "error" as const,
+        title: `${filename}${location}`,
+        details: (
+          <>
+            {message} Fix: {fix}
+          </>
+        ),
+      };
+    }
+  );
+  const databaseWarning =
+    diagnostics.stats?.truncated &&
+    diagnostics.stats.omissionReason !== undefined;
+  findings.push(
+    ...diagnostics.mdxOmissions.map((issue) => ({
+      severity: "warning" as const,
+      title: `${issue.filename}: ${issue.templateName}`,
+      details:
+        "Some MDX content cannot render because its custom template is missing or ambiguous. Add or repair the template in the Content Block.",
+    }))
+  );
+  if (
+    databaseWarning &&
+    diagnostics.stats !== undefined &&
+    diagnostics.affectedResources !== undefined
+  ) {
+    findings.push({
+      severity: "warning",
+      title: "Some content database files will be omitted",
+      details: (
+        <ContentDatabasePublishWarning
+          diagnostics={{
+            stats: diagnostics.stats,
+            affectedResources: diagnostics.affectedResources,
+          }}
+        />
+      ),
+    });
   }
-  const errors = diagnostics.mdxErrors;
-  const entries = errors.slice(0, 5).map(({ filename, diagnostic }) => {
-    const start =
-      "sourceRange" in diagnostic ? diagnostic.sourceRange?.start : undefined;
-    const location =
-      start === undefined ? "" : `:${start.line}:${start.column}`;
-    const message =
-      "message" in diagnostic ? diagnostic.message : diagnostic.code;
-    const fix = message.includes("requires unavailable MDX Asset")
-      ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
-      : message.includes("violates HTML spec")
-        ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
-        : "Open this MDX source and fix the reported error.";
-    return `${filename}${location}: ${message} Fix: ${fix}`;
-  });
-  const more =
-    errors.length > entries.length
-      ? `; and ${errors.length - entries.length} more`
-      : "";
-  return `Cannot publish until MDX content errors are fixed: ${entries.join("; ")}${more}`;
+  return findings;
 };
 
+// Keep the warning helpers for callers that need to announce advisory warnings
+// outside the publish check summary.
 export const getContentDatabasePublishWarning = (
   diagnostics: ContentDatabasePublishDiagnostics
 ) => {

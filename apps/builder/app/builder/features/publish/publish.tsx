@@ -113,16 +113,17 @@ import {
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
 import {
-  getContentDatabasePublishError,
-  getContentDatabasePublishWarning,
-  showContentDatabasePublishWarning,
+  getContentDatabasePublishFindings,
 } from "./content-database-publish-warning";
+import {
+  PublishValidationResults,
+  type PublishValidationFinding,
+} from "./publish-validation-results";
 import {
   PublishActions,
   usePublishValidationState,
   type PublishValidationState,
 } from "./publish-actions";
-import { showPublishWarning } from "./publish-warning";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPrePublishErrorMessage } from "./publish-error";
 
@@ -181,7 +182,7 @@ const PrePublishAuditMessage = ({
   );
 };
 
-const getPrePublishAuditMessages = () => {
+const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
   const findings = runPrePublishAudit({
     pages: $pages.get(),
     instances: $instances.get(),
@@ -191,14 +192,36 @@ const getPrePublishAuditMessages = () => {
     assets: $assets.get(),
     metas: $registeredComponentMetas.get(),
   });
-  const getMessage = (severity: PrePublishAuditFinding["severity"]) => {
-    const finding = findings.find((item) => item.severity === severity);
-    return finding && <PrePublishAuditMessage finding={finding} />;
-  };
-  return {
-    error: getMessage("error"),
-    warning: getMessage("warning"),
-  };
+  return findings.flatMap((finding) =>
+    finding.severity === "error" || finding.severity === "warning"
+      ? [
+          {
+            severity: finding.severity,
+            title: <PrePublishAuditMessage finding={finding} />,
+          },
+        ]
+      : []
+  );
+};
+
+const runPrePublishChecks = async (
+  projectId: Project["id"],
+  checkPermission = false
+) => {
+  if (checkPermission) {
+    await nativeClient.build.checkProjectBuildPermission.query({ projectId });
+  }
+  await flushExternalContentProject({ projectId });
+  const auditFindings = getPrePublishAuditFindings();
+  const diagnostics =
+    await nativeClient.build.contentDatabasePublishDiagnostics.query({
+      projectId,
+    });
+  const findings = [
+    ...auditFindings,
+    ...getContentDatabasePublishFindings(diagnostics),
+  ];
+  return { passed: findings.every(({ severity }) => severity !== "error"), findings };
 };
 
 type ChangeProjectDomainProps = {
@@ -497,9 +520,9 @@ const Publish = ({
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
-  const [publishWarning, setPublishWarning] = useState<
-    undefined | JSX.Element | string
-  >();
+  const [publishFindings, setPublishFindings] = useState<
+    PublishValidationFinding[]
+  >([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
@@ -656,40 +679,6 @@ const Publish = ({
     }
   };
 
-  const runPrePublishChecks = async () => {
-    await nativeClient.build.checkProjectBuildPermission.query({
-      projectId: project.id,
-    });
-    await flushExternalContentProject({ projectId: project.id });
-
-    const { error: auditError, warning: auditWarning } =
-      getPrePublishAuditMessages();
-    if (auditError !== undefined) {
-      toast.error(auditError);
-      setPublishError(auditError);
-      return { passed: false as const };
-    }
-    if (auditWarning !== undefined) {
-      showPublishWarning({
-        message: auditWarning,
-        setWarning: setPublishWarning,
-      });
-    }
-
-    const diagnostics =
-      await nativeClient.build.contentDatabasePublishDiagnostics.query({
-        projectId: project.id,
-      });
-    const mdxError = getContentDatabasePublishError(diagnostics);
-    if (mdxError !== undefined) {
-      toast.error(mdxError);
-      setPublishError(mdxError);
-      return { passed: false as const };
-    }
-
-    return { passed: true as const, diagnostics };
-  };
-
   const getDomainsFromForm = (formData: FormData) =>
     formData
       .getAll(domainToPublishName)
@@ -697,7 +686,7 @@ const Publish = ({
 
   const handleValidate = async (formData: FormData) => {
     setPublishError(undefined);
-    setPublishWarning(undefined);
+    setPublishFindings([]);
     const domains = getDomainsFromForm(formData);
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
@@ -705,19 +694,11 @@ const Publish = ({
     }
 
     try {
-      const checks = await runPrePublishChecks();
+      const checks = await runPrePublishChecks(project.id, true);
+      setPublishFindings(checks.findings);
       if (checks.passed === false) {
         onValidationStateChange("idle");
         return;
-      }
-      const contentWarning = getContentDatabasePublishWarning(
-        checks.diagnostics
-      );
-      if (contentWarning !== undefined) {
-        showPublishWarning({
-          message: contentWarning,
-          setWarning: setPublishWarning,
-        });
       }
       onValidationStateChange("passed");
       toast.success("Validation passed. Ready to publish.", {
@@ -727,13 +708,19 @@ const Publish = ({
       onValidationStateChange("idle");
       const message = getPrePublishErrorMessage(error);
       toast.error(message);
-      setPublishError(message);
+      setPublishFindings([
+        {
+          severity: "error",
+          title: "Unable to complete publish checks",
+          details: message,
+        },
+      ]);
     }
   };
 
   const handlePublish = (formData: FormData) => {
     setPublishError(undefined);
-    setPublishWarning(undefined);
+    setPublishFindings([]);
 
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
@@ -748,18 +735,21 @@ const Publish = ({
       setIsPublishing(true);
 
       try {
-        const checks = await runPrePublishChecks();
+        const checks = await runPrePublishChecks(project.id, true);
+        setPublishFindings(checks.findings);
         if (checks.passed === false) {
           return;
         }
-        showContentDatabasePublishWarning({
-          diagnostics: Promise.resolve(checks.diagnostics),
-          setWarning: setPublishWarning,
-        });
       } catch (error) {
         const message = getPrePublishErrorMessage(error);
         toast.error(message);
-        setPublishError(message);
+        setPublishFindings([
+          {
+            severity: "error",
+            title: "Unable to complete publish checks",
+            details: message,
+          },
+        ]);
         return;
       }
       await publish(domains);
@@ -770,13 +760,8 @@ const Publish = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      <PublishValidationResults findings={publishFindings} />
       {publishError && <Text color="destructive">{publishError}</Text>}
-      {publishWarning && (
-        <PanelBanner variant="warning">
-          <Text>{publishWarning}</Text>
-        </PanelBanner>
-      )}
-
       <PublishActions
         publishButtonRef={buttonRef}
         validationState={validationState}
@@ -856,7 +841,9 @@ const PublishStatic = ({
   const project = useStore($project);
   const [_, startTransition] = useTransition();
   const [publishError, setPublishError] = useState<JSX.Element | string>();
-  const [publishWarning, setPublishWarning] = useState<JSX.Element | string>();
+  const [publishFindings, setPublishFindings] = useState<
+    PublishValidationFinding[]
+  >([]);
 
   if (project == null) {
     throw new Error("Project not found");
@@ -873,12 +860,8 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      <PublishValidationResults findings={publishFindings} />
       {publishError && <Text color="destructive">{publishError}</Text>}
-      {publishWarning && (
-        <PanelBanner variant="warning">
-          <Text>{publishWarning}</Text>
-        </PanelBanner>
-      )}
       {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
 
       <Tooltip
@@ -890,40 +873,30 @@ const PublishStatic = ({
           state={isPublishInProgress ? "pending" : undefined}
           onClick={() => {
             setPublishError(undefined);
-            setPublishWarning(undefined);
-            const { error: auditError, warning: auditWarning } =
-              getPrePublishAuditMessages();
-            if (auditError !== undefined) {
-              toast.error(auditError);
-              setPublishError(auditError);
-              return;
-            }
-            if (auditWarning !== undefined) {
-              showPublishWarning({
-                message: auditWarning,
-                setWarning: setPublishWarning,
-              });
-            }
+            setPublishFindings([]);
 
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
-
-                await flushExternalContentProject({ projectId });
-                const diagnostics =
-                  await nativeClient.build.contentDatabasePublishDiagnostics.query({
-                    projectId,
-                  });
-                const mdxError = getContentDatabasePublishError(diagnostics);
-                if (mdxError !== undefined) {
-                  toast.error(mdxError);
+                let checks: Awaited<ReturnType<typeof runPrePublishChecks>>;
+                try {
+                  checks = await runPrePublishChecks(projectId);
+                } catch (error) {
+                  const message = getPrePublishErrorMessage(error);
+                  toast.error(message);
+                  setPublishFindings([
+                    {
+                      severity: "error",
+                      title: "Unable to complete publish checks",
+                      details: message,
+                    },
+                  ]);
                   return;
                 }
-
-                showContentDatabasePublishWarning({
-                  diagnostics: Promise.resolve(diagnostics),
-                  setWarning: setPublishWarning,
-                });
+                setPublishFindings(checks.findings);
+                if (checks.passed === false) {
+                  return;
+                }
 
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,
