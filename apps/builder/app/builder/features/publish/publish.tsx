@@ -129,6 +129,7 @@ import {
 } from "./publish-actions";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPublishValidationErrorMessage } from "./publish-error";
+import { runPublishAfterBestEffortChecks } from "./publish-preflight";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -275,12 +276,16 @@ const runPublishValidation = async (
 
 const reportPublishValidationFailure = (
   error: unknown,
-  setFindings: (findings: PublishValidationFinding[]) => void
+  setFindings: (findings: PublishValidationFinding[]) => void,
+  publishingContinues = false
 ) => {
-  const message = getPublishValidationErrorMessage(error, {
+  const diagnosticMessage = getPublishValidationErrorMessage(error, {
     assets: $assets.get(),
     assetFolders: $assetFolders.get(),
   });
+  const message = publishingContinues
+    ? `${diagnosticMessage}\n\nPublishing will continue without these diagnostics.`
+    : diagnosticMessage;
   if ($publishDialog.get() === "none") {
     toast.error(message);
     return;
@@ -302,7 +307,9 @@ const reportPublishValidationFailure = (
   setFindings([
     {
       severity: "error",
-      title: "Unable to complete publish validation",
+      title: publishingContinues
+        ? "Publish checks couldn’t complete; publishing continues"
+        : "Unable to complete publish validation",
       details,
       reportText: `ERROR: Unable to complete publish validation\n${message}`,
     },
@@ -814,22 +821,16 @@ const Publish = ({
 
     startTransition(async () => {
       setIsPublishing(true);
-
-      try {
-        await flushExternalContentProject({ projectId: project.id });
-      } catch (error) {
-        reportPublishValidationFailure(error, setPublishFindings);
-        return;
-      }
-
-      // Diagnostics are best-effort and must not prevent the publish request.
-      try {
-        const checks = await runPublishDiagnostics(project.id);
-        setPublishFindings(checks.findings);
-      } catch (error) {
-        reportPublishValidationFailure(error, setPublishFindings);
-      }
-      await publish(domains);
+      await runPublishAfterBestEffortChecks({
+        checks: async () => {
+          await flushExternalContentProject({ projectId: project.id });
+          const checks = await runPublishDiagnostics(project.id);
+          setPublishFindings(checks.findings);
+        },
+        onCheckFailure: (error) =>
+          reportPublishValidationFailure(error, setPublishFindings, true),
+        publish: () => publish(domains),
+      });
     });
   };
 
@@ -955,18 +956,24 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
-                await flushExternalContentProject({ projectId });
-                try {
-                  const checks = await runPublishDiagnostics(projectId);
-                  setPublishFindings(checks.findings);
-                } catch (error) {
-                  reportPublishValidationFailure(error, setPublishFindings);
-                }
-
-                const result = await nativeClient.domain.publish.mutate({
-                  projectId,
-                  destination: "static",
-                  templates: [...templates],
+                const result = await runPublishAfterBestEffortChecks({
+                  checks: async () => {
+                    await flushExternalContentProject({ projectId });
+                    const checks = await runPublishDiagnostics(projectId);
+                    setPublishFindings(checks.findings);
+                  },
+                  onCheckFailure: (error) =>
+                    reportPublishValidationFailure(
+                      error,
+                      setPublishFindings,
+                      true
+                    ),
+                  publish: () =>
+                    nativeClient.domain.publish.mutate({
+                      projectId,
+                      destination: "static",
+                      templates: [...templates],
+                    }),
                 });
 
                 if (result.success === false) {

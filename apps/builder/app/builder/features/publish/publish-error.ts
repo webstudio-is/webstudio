@@ -8,7 +8,7 @@ import {
 import { formatAssetFolderPath } from "~/builder/shared/asset-manager/asset-folder-utils";
 
 export const publishValidationTimeoutMessage =
-  "Publish validation timed out. Publishing was not started. Please try again.";
+  "Publish validation timed out. Try again to view the diagnostics.";
 
 export const getPublishValidationErrorMessage = (
   error: unknown,
