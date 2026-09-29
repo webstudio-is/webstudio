@@ -289,6 +289,7 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
     if (source === undefined) {
       continue;
     }
+    onMdxBlockInstanceId?.(blockId);
     const staticValue = getStaticContentBlockSourceAssetId(source);
     const assetIds =
       typeof staticValue === "string"
@@ -317,7 +318,6 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
         contentRef: documentEntry.contentRef,
         source: sourceText,
       });
-      onMdxBlockInstanceId?.(blockId);
       if (parsed.status === "unrecoverable") {
         continue;
       }
