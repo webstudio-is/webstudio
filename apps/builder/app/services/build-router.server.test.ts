@@ -4,6 +4,10 @@ import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixt
 import { buildRouter, __testing__ } from "./build-router.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
+import {
+  createAssetIndex,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/content-engine/compiler";
 
 const {
   assertCliBundleVersion,
@@ -160,6 +164,105 @@ describe("content database publish diagnostics", () => {
       ],
     });
     expect(loadProjectBundle).toHaveBeenCalledOnce();
+  });
+
+  test("reports publish-time MDX errors with the user-facing asset filename", async () => {
+    const bundle = createPublishedProjectBundleFixture();
+    const blockId = bundle.build.pages.pages[0].rootInstanceId;
+    const source = `1. item\n\n   <ws.element ws:tag="li">nested item</ws.element>`;
+    bundle.build.instances = [
+      [
+        blockId,
+        {
+          id: blockId,
+          type: "instance",
+          component: "ws:block",
+          children: [{ type: "id", value: "templates" }],
+        },
+      ],
+      [
+        "templates",
+        {
+          id: "templates",
+          type: "instance",
+          component: "ws:block-template",
+          children: [],
+        },
+      ],
+    ];
+    bundle.build.props = [
+      [
+        "content-source",
+        {
+          id: "content-source",
+          instanceId: blockId,
+          name: "src",
+          type: "asset",
+          value: "article",
+        },
+      ],
+    ];
+    bundle.assets = [
+      {
+        id: "article",
+        projectId: bundle.build.projectId,
+        name: "article-storage.mdx",
+        filename: "article",
+        type: "file",
+        format: "mdx",
+        size: new TextEncoder().encode(source).byteLength,
+        meta: {},
+        createdAt: "2026-09-17T00:00:00.000Z",
+      },
+    ];
+    bundle.assetIndex = {
+      ...(await createAssetIndex({
+        projectId: bundle.build.projectId,
+        entries: [
+          createCanonicalAssetFileEntry({
+            projectId: bundle.build.projectId,
+            document: {
+              _id: "article",
+              _type: "asset.file",
+              name: "article.mdx",
+              path: "blog/article.mdx",
+              key: "article",
+              extension: "mdx",
+              mimeType: "text/mdx",
+              size: new TextEncoder().encode(source).byteLength,
+              revision: "revision",
+              contentRef: "article-storage.mdx",
+              properties: {},
+            },
+          }),
+        ],
+        maxBytes: 5000,
+      })),
+      contents: { "article-storage.mdx": source },
+    };
+    const loadProjectBundle = vi.fn(async (_projectId, _ctx, options) => {
+      options.onMdxBlockInstanceId(blockId);
+      return bundle;
+    });
+
+    const result = await loadContentDatabasePublishDiagnostics(
+      "project-id",
+      {} as never,
+      { loadProjectBundleByProjectId: loadProjectBundle as never }
+    );
+
+    expect(result.mdxErrors).toEqual([
+      expect.objectContaining({
+        filename: "article.mdx",
+        diagnostic: expect.objectContaining({
+          code: "invalid-mdx",
+          severity: "error",
+          blockInstanceId: blockId,
+          assetId: "article",
+          message: "Placing <li> element inside a <li> violates HTML spec.",
+        }),
+      }),
+    ]);
   });
 
   test("uses the same edit permit as publishing", async () => {

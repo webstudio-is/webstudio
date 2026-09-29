@@ -2,7 +2,6 @@ import { Flex, Text } from "@webstudio-is/design-system";
 import type { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
 import type { PublishValidationFinding } from "./publish-validation-results";
-import { showPublishWarning } from "./publish-warning";
 
 type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
@@ -19,11 +18,18 @@ export const getContentDatabasePublishFindings = (
         start === undefined ? "" : `:${start.line}:${start.column}`;
       const message =
         "message" in diagnostic ? diagnostic.message : diagnostic.code;
-      const fix = message.includes("requires unavailable MDX Asset")
-        ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
-        : message.includes("violates HTML spec")
-          ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
-          : "Open this MDX source and fix the reported error.";
+      const fix =
+        message.includes("requires unavailable MDX Asset") ||
+        message.includes("content is unavailable")
+          ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
+          : message.includes("violates HTML spec")
+            ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
+            : message.includes(
+                  "Dynamic MDX selected by a Collection item cannot contain Resources"
+                ) ||
+                message.includes("Dynamic MDX cannot contain action Resources")
+              ? "Use a static MDX source for this Content Block, or remove Resource-dependent content from the MDX file."
+              : "Open this MDX source and fix the reported error.";
       const context = [
         `Diagnostic code: ${diagnostic.code}`,
         `Content Block instance ID: ${diagnostic.blockInstanceId}`,
@@ -130,69 +136,4 @@ export const getContentDatabasePublishFindings = (
     });
   }
   return findings;
-};
-
-// Keep the warning helpers for callers that need to announce advisory warnings
-// outside the publish check summary.
-export const getContentDatabasePublishWarning = (
-  diagnostics: ContentDatabasePublishDiagnostics
-) => {
-  const databaseWarning =
-    diagnostics.stats?.truncated &&
-    diagnostics.stats.omissionReason !== undefined;
-  if (!databaseWarning && diagnostics.mdxOmissions.length === 0) {
-    return;
-  }
-  return (
-    <>
-      {diagnostics.mdxOmissions.length > 0 && (
-        <div>
-          Some MDX content cannot render because its custom template is missing
-          or ambiguous. Add or repair the template in the Content Block:
-          <ul>
-            {diagnostics.mdxOmissions.slice(0, 10).map((issue) => (
-              <li key={JSON.stringify(issue)}>
-                {issue.filename}: {issue.templateName}
-              </li>
-            ))}
-          </ul>
-          {diagnostics.mdxOmissions.length > 10 && (
-            <div>
-              And {diagnostics.mdxOmissions.length - 10} more template
-              references.
-            </div>
-          )}
-        </div>
-      )}
-      {databaseWarning &&
-        diagnostics.stats !== undefined &&
-        diagnostics.affectedResources !== undefined && (
-          <ContentDatabasePublishWarning
-            diagnostics={{
-              stats: diagnostics.stats,
-              affectedResources: diagnostics.affectedResources,
-            }}
-          />
-        )}
-    </>
-  );
-};
-
-export const showContentDatabasePublishWarning = ({
-  diagnostics,
-  setWarning,
-}: {
-  diagnostics: Promise<ContentDatabasePublishDiagnostics>;
-  setWarning: (warning: JSX.Element) => void;
-}) => {
-  void diagnostics
-    .then((diagnostics) => {
-      const warning = getContentDatabasePublishWarning(diagnostics);
-      if (warning !== undefined) {
-        showPublishWarning({ message: warning, setWarning });
-      }
-    })
-    .catch(() => {
-      // Content warnings are advisory and must not block publishing.
-    });
 };

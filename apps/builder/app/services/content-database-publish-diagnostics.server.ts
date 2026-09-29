@@ -12,6 +12,7 @@ import {
   materializePublishedMdx,
 } from "@webstudio-is/project-build/runtime";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { formatAssetName } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 
@@ -75,6 +76,10 @@ export const loadContentDatabasePublishDiagnostics = async (
       dynamicAssetIdsByBlock,
     });
     const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
+    const getFilename = (assetId: string, fallback: string) => {
+      const asset = assets.get(assetId);
+      return asset === undefined ? fallback : formatAssetName(asset);
+    };
     for (const root of materialized.roots) {
       const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
         root,
@@ -84,8 +89,10 @@ export const loadContentDatabasePublishDiagnostics = async (
       });
       if (diagnostic !== undefined) {
         mdxErrors.push({
-          filename:
-            assets.get(root.identity.assetId)?.name ?? root.identity.contentRef,
+          filename: getFilename(
+            root.identity.assetId,
+            root.identity.contentRef
+          ),
           diagnostic,
         });
       }
@@ -96,8 +103,7 @@ export const loadContentDatabasePublishDiagnostics = async (
       }
       const assetId = diagnostic.assetId ?? "";
       mdxErrors.push({
-        filename:
-          assets.get(assetId)?.name ?? diagnostic.contentRef ?? "MDX content",
+        filename: getFilename(assetId, diagnostic.contentRef ?? "MDX content"),
         diagnostic,
       });
     }

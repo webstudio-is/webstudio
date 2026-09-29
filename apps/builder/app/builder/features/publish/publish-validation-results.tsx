@@ -90,6 +90,7 @@ export const PublishValidationResults = ({
         <DialogContent
           width={640}
           height={640}
+          aria-describedby={undefined}
           css={{ display: "flex", flexDirection: "column" }}
         >
           <DialogTitle
