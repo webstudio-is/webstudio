@@ -98,7 +98,7 @@ const createArtifact = (
     assetValueReferences,
     fieldCatalog: { canonicalRevision: revision("a"), fields: {} },
     integrity: { algorithm: "sha256", checksum: revision("d") },
-  } as ContentArtifactV1);
+  }) as ContentArtifactV1;
 
 const getFragmentText = (
   fragment: Awaited<

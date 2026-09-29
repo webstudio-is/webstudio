@@ -58,12 +58,27 @@ const diagnosticContext = {
   sourceRange: contentBlockSourceRange.optional(),
 };
 
+export const invalidMdxDiagnosticReason = z.enum([
+  "source-read-failed",
+  "missing-source",
+  "missing-asset",
+  "linked-document-unavailable",
+  "html-content-model",
+  "dynamic-resource",
+  "dynamic-source-unbounded",
+]);
+
+export type InvalidMdxDiagnosticReason = z.infer<
+  typeof invalidMdxDiagnosticReason
+>;
+
 export const contentBlockDiagnostic = z.discriminatedUnion("code", [
   z.strictObject({
     ...diagnosticContext,
     code: z.literal("invalid-mdx"),
     severity: z.literal("error"),
     message: z.string().min(1),
+    reason: invalidMdxDiagnosticReason.optional(),
   }),
   z.strictObject({
     ...diagnosticContext,

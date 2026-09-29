@@ -328,12 +328,12 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
         const assetIds =
           typeof staticValue === "string"
             ? [staticValue]
-            : resolvePublishedMdxAssetCandidates({
+            : (resolvePublishedMdxAssetCandidates({
                 build,
                 artifact,
                 blockInstanceIds: new Set([blockId]),
                 allMdxAssetIds,
-              }).get(blockId) ?? [];
+              }).get(blockId) ?? []);
         const parsedDocuments = await mapBounded(
           assetIds,
           maxConcurrentMdxDependenciesPerBlock,

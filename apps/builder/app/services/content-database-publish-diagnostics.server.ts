@@ -99,6 +99,7 @@ export const loadContentDatabasePublishDiagnostics = async (
       diagnostic: {
         code: "invalid-mdx",
         severity: "error",
+        reason: "source-read-failed",
         blockInstanceId: failure.blockInstanceId,
         assetId: failure.assetId,
         contentRef: failure.contentRef,
@@ -163,13 +164,10 @@ export const loadContentDatabasePublishDiagnostics = async (
         continue;
       }
       if (
+        diagnostic.code === "invalid-mdx" &&
         diagnostic.blockInstanceId !== undefined &&
         diagnostic.assetId !== undefined &&
-        (diagnostic.message.startsWith(
-          `Published MDX Asset "${diagnostic.assetId}" could not be loaded:`
-        ) ||
-          diagnostic.message ===
-            `Published MDX Asset "${diagnostic.assetId}" content is unavailable`) &&
+        diagnostic.reason === "source-read-failed" &&
         dependencyReadFailureKeys.has(
           JSON.stringify([diagnostic.blockInstanceId, diagnostic.assetId])
         )

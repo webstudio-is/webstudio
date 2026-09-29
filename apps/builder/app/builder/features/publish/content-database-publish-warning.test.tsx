@@ -9,7 +9,7 @@ const createDiagnostics = (overrides: Record<string, unknown> = {}) =>
     mdxOmissions: [],
     mdxErrors: [],
     ...overrides,
-  } as never);
+  }) as never;
 
 describe("content database publish findings", () => {
   test("returns no findings when diagnostics are clean", () => {
@@ -25,6 +25,7 @@ describe("content database publish findings", () => {
             diagnostic: {
               code: "invalid-mdx",
               severity: "error",
+              reason: "html-content-model",
               blockInstanceId: "block-1",
               assetId: "asset-1",
               contentRef: "article-revision.mdx",
@@ -41,6 +42,7 @@ describe("content database publish findings", () => {
             diagnostic: {
               code: "invalid-mdx",
               severity: "error",
+              reason: "missing-asset",
               blockInstanceId: "block-2",
               assetId: "missing-asset",
               message:
@@ -77,11 +79,11 @@ describe("content database publish findings", () => {
             diagnostic: {
               code: "invalid-mdx",
               severity: "error",
+              reason: "source-read-failed",
               blockInstanceId: "block-1",
               assetId: "asset-1",
               contentRef: "article-revision.mdx",
-              message:
-                "Could not inspect this MDX source: asset store unavailable",
+              message: "Object storage returned an I/O error",
             },
           },
         ],
@@ -93,6 +95,9 @@ describe("content database publish findings", () => {
     );
     expect(finding.reportText).toContain("https://wstd.us/mcp");
     expect(finding.reportText).toContain("Asset ID: asset-1");
+    expect(finding.reportText).toContain(
+      "Diagnostic reason: source-read-failed"
+    );
   });
 
   test("includes every missing template warning and its identifying IDs", () => {
