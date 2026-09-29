@@ -23,6 +23,30 @@ describe("runPublishAfterBestEffortChecks", () => {
     expect(publish).toHaveBeenCalledOnce();
   });
 
+  test("starts publishing without waiting for checks to finish", async () => {
+    const order: string[] = [];
+    const checks = vi.fn(
+      () =>
+        new Promise<void>(() => {
+          order.push("checks started");
+        })
+    );
+    const publish = vi.fn(async () => {
+      order.push("publish started");
+      return "publish started";
+    });
+
+    await expect(
+      runPublishAfterBestEffortChecks({
+        checks,
+        onCheckFailure: vi.fn(),
+        publish,
+      })
+    ).resolves.toBe("publish started");
+
+    expect(order).toEqual(["checks started", "publish started"]);
+  });
+
   test("publishes even if reporting a check failure throws", async () => {
     const publish = vi.fn().mockResolvedValue("publish started");
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {

@@ -1,4 +1,4 @@
-export const runPublishAfterBestEffortChecks = async <T>({
+export const runPublishAfterBestEffortChecks = <T>({
   checks,
   onCheckFailure,
   publish,
@@ -6,10 +6,8 @@ export const runPublishAfterBestEffortChecks = async <T>({
   checks: () => Promise<unknown>;
   onCheckFailure: (error: unknown) => void;
   publish: () => Promise<T>;
-}) => {
-  try {
-    await checks();
-  } catch (error) {
+}): Promise<T> => {
+  const reportFailure = (error: unknown) => {
     try {
       onCheckFailure(error);
     } catch (reportError) {
@@ -17,6 +15,12 @@ export const runPublishAfterBestEffortChecks = async <T>({
         console.error("Could not report publish diagnostics", reportError);
       } catch {}
     }
+  };
+
+  try {
+    void Promise.resolve(checks()).catch(reportFailure);
+  } catch (error) {
+    reportFailure(error);
   }
 
   return publish();

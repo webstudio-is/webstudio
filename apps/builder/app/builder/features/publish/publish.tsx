@@ -823,7 +823,6 @@ const Publish = ({
       setIsPublishing(true);
       await runPublishAfterBestEffortChecks({
         checks: async () => {
-          await flushExternalContentProject({ projectId: project.id });
           const checks = await runPublishDiagnostics(project.id);
           setPublishFindings(checks.findings);
         },
@@ -958,7 +957,6 @@ const PublishStatic = ({
                 setIsPendingOptimistic(true);
                 const result = await runPublishAfterBestEffortChecks({
                   checks: async () => {
-                    await flushExternalContentProject({ projectId });
                     const checks = await runPublishDiagnostics(projectId);
                     setPublishFindings(checks.findings);
                   },
