@@ -86,7 +86,7 @@ export const PublishValidationResults = ({
           </Button>
         </Flex>
       </PanelBanner>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={setIsOpen} draggable resize="both">
         <DialogContent
           width={640}
           height={640}
@@ -108,7 +108,7 @@ export const PublishValidationResults = ({
               </DialogTitleActions>
             }
           >
-            Publish check report
+            Diagnostics
           </DialogTitle>
           <PanelTabs
             key={`${errors.length}-${warnings.length}`}
