@@ -20,7 +20,12 @@ export const getContentDatabasePublishError = (
       start === undefined ? "" : `:${start.line}:${start.column}`;
     const message =
       "message" in diagnostic ? diagnostic.message : diagnostic.code;
-    return `${filename}${location}: ${message}`;
+    const fix = message.includes("requires unavailable MDX Asset")
+      ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
+      : message.includes("violates HTML spec")
+        ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
+        : "Open this MDX source and fix the reported error.";
+    return `${filename}${location}: ${message} Fix: ${fix}`;
   });
   const more =
     errors.length > entries.length
