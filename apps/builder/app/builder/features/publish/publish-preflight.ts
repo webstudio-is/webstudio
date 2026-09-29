@@ -13,7 +13,9 @@ export const runPublishAfterBestEffortChecks = async <T>({
     try {
       onCheckFailure(error);
     } catch (reportError) {
-      console.error("Could not report publish diagnostics", reportError);
+      try {
+        console.error("Could not report publish diagnostics", reportError);
+      } catch {}
     }
   }
 

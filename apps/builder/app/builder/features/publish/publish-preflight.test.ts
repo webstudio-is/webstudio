@@ -25,9 +25,9 @@ describe("runPublishAfterBestEffortChecks", () => {
 
   test("publishes even if reporting a check failure throws", async () => {
     const publish = vi.fn().mockResolvedValue("publish started");
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {
+      throw new Error("logging failed");
+    });
 
     const result = await runPublishAfterBestEffortChecks({
       checks: async () => {
