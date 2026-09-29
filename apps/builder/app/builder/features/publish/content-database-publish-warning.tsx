@@ -24,14 +24,16 @@ export const getContentDatabasePublishFindings = (
           ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
           : message.includes("Linked document")
             ? "Restore or reconnect the referenced document in Content Assets, then run validation again."
-          : message.includes("violates HTML spec")
-            ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
-            : message.includes(
-                  "Dynamic MDX selected by a Collection item cannot contain Resources"
-                ) ||
-                message.includes("Dynamic MDX cannot contain action Resources")
-              ? "Use a static MDX source for this Content Block, or remove Resource-dependent content from the MDX file."
-              : "Open this MDX source and fix the reported error.";
+            : message.includes("violates HTML spec")
+              ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
+              : message.includes(
+                    "Dynamic MDX selected by a Collection item cannot contain Resources"
+                  ) ||
+                  message.includes(
+                    "Dynamic MDX cannot contain action Resources"
+                  )
+                ? "Use a static MDX source for this Content Block, or remove Resource-dependent content from the MDX file."
+                : "Open this MDX source and fix the reported error.";
       const context = [
         `Diagnostic code: ${diagnostic.code}`,
         `Content Block instance ID: ${diagnostic.blockInstanceId}`,

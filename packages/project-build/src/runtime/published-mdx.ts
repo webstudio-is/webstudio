@@ -452,10 +452,7 @@ export const materializePublishedMdx = async ({
       );
       let resolvedFrontmatter = document.frontmatter.properties;
       try {
-        resolvedFrontmatter = await resolveFrontmatter(
-          candidate._id,
-          document
-        );
+        resolvedFrontmatter = await resolveFrontmatter(candidate._id, document);
       } catch (error) {
         if (
           error instanceof DocumentGraphResolutionError &&
