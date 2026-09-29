@@ -346,20 +346,35 @@ test.each([
   }
 );
 
-test("hosted sync compiles MDX selected by a mutable project variable", async () => {
-  const source = "# Published from a project variable";
+test("hosted sync compiles all MDX assets reachable from a mutable project variable", async () => {
   const article = {
     ...createImageAssetFixture(),
     id: "article",
     name: "article.mdx",
     type: "file" as const,
     format: "mdx",
-    size: new TextEncoder().encode(source).byteLength,
+    size: new TextEncoder().encode("# Current project variable value")
+      .byteLength,
     meta: {},
   };
+  const updatedArticle = {
+    ...createImageAssetFixture(),
+    id: "updated-article",
+    name: "updated-article.mdx",
+    type: "file" as const,
+    format: "mdx",
+    size: new TextEncoder().encode("# Updated project variable value")
+      .byteLength,
+    meta: {},
+  };
+  const articles = [article, updatedArticle];
+  const sources = new Map([
+    [article.id, "# Current project variable value"],
+    [updatedArticle.id, "# Updated project variable value"],
+  ]);
   loadProjectBundleByBuildId.mockResolvedValue(
     createProjectBundle({
-      assets: [article],
+      assets: articles,
       build: {
         deployment: { destination: "saas", domains: [] },
         instances: [
@@ -418,9 +433,16 @@ test("hosted sync compiles MDX selected by a mutable project variable", async ()
       },
     })
   );
-  downloadAssetFiles.mockImplementation(async () => {
+  downloadAssetFiles.mockImplementation(async ({ assets }) => {
     await mkdir(".webstudio/assets", { recursive: true });
-    await writeFile(".webstudio/assets/article.mdx", source);
+    await Promise.all(
+      assets.map((asset) =>
+        writeFile(
+          `.webstudio/assets/${asset.name}`,
+          sources.get(asset.id) ?? ""
+        )
+      )
+    );
   });
 
   await sync(
@@ -432,15 +454,22 @@ test("hosted sync compiles MDX selected by a mutable project variable", async ()
     dependencies
   );
 
+  expect(downloadAssetFiles).toHaveBeenCalledWith({
+    assets: expect.arrayContaining([article, updatedArticle]),
+    origin: "https://example.com",
+  });
   const data = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
-  expect(data.assetIndex.documents).toContainEqual(
-    expect.objectContaining({ _id: article.id, extension: "mdx" })
-  );
-  expect(Object.values(data.assetIndex.contents)).toContain(source);
+  for (const [id, source] of sources) {
+    expect(data.assetIndex.documents).toContainEqual(
+      expect.objectContaining({ _id: id, extension: "mdx" })
+    );
+    expect(Object.values(data.assetIndex.contents)).toContain(source);
+  }
 
   await prebuild({ assets: false, template: ["react-router"] });
   const generatedPage = await readFile("app/__generated__/_index.tsx", "utf8");
-  expect(generatedPage).toContain("Published from a project variable");
+  expect(generatedPage).toContain("Current project variable value");
+  expect(generatedPage).toContain("Updated project variable value");
 });
 
 test("hosted sync compiles metadata-only dynamic MDX into a server-rendered page", async () => {
