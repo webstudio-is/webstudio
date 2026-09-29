@@ -284,7 +284,7 @@ const reportPublishValidationFailure = (
     assetFolders: $assetFolders.get(),
   });
   const message = publishingContinues
-    ? `${diagnosticMessage}\n\nPublishing will continue without these diagnostics.`
+    ? `${diagnosticMessage}\n\nThe publish request was sent without waiting for these diagnostics.`
     : diagnosticMessage;
   if ($publishDialog.get() === "none") {
     toast.error(message);
@@ -308,7 +308,7 @@ const reportPublishValidationFailure = (
     {
       severity: "error",
       title: publishingContinues
-        ? "Publish checks couldn’t complete; publishing continues"
+        ? "Publish checks couldn’t complete"
         : "Unable to complete publish validation",
       details,
       reportText: `ERROR: Unable to complete publish validation\n${message}`,

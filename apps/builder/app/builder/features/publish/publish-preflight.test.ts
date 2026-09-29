@@ -52,16 +52,22 @@ describe("runPublishAfterBestEffortChecks", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {
       throw new Error("logging failed");
     });
+    let finishReporting!: () => void;
+    const reportFinished = new Promise<void>((resolve) => {
+      finishReporting = resolve;
+    });
 
     const result = await runPublishAfterBestEffortChecks({
       checks: async () => {
         throw new Error("check failed");
       },
       onCheckFailure: () => {
+        finishReporting();
         throw new Error("report failed");
       },
       publish,
     });
+    await reportFinished;
 
     expect(result).toBe("publish started");
     expect(publish).toHaveBeenCalledOnce();
