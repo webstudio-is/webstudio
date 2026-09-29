@@ -12,6 +12,7 @@ import {
   materializePublishedMdx,
 } from "@webstudio-is/project-build/runtime";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 
 export const loadContentDatabasePublishDiagnostics = async (
@@ -60,7 +61,7 @@ export const loadContentDatabasePublishDiagnostics = async (
           }),
     };
     const dynamicAssetIdsByBlock = resolvePublishedMdxAssetCandidates({
-      build: bundle.build,
+      build: { ...bundle.build, pages: migratePages(bundle.build.pages) },
       artifact: bundle.assetIndex,
       blockInstanceIds: mdxBlockInstanceIds,
     });
@@ -74,7 +75,7 @@ export const loadContentDatabasePublishDiagnostics = async (
       dynamicAssetIdsByBlock,
     });
     const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
-    for (const { root } of materialized.roots) {
+    for (const root of materialized.roots) {
       const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
         root,
         route: "prepublish",
