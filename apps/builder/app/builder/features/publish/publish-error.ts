@@ -16,8 +16,11 @@ export const getPrePublishErrorMessage = (error: unknown) => {
     return prePublishTimeoutMessage;
   }
   const message = error instanceof Error ? error.message : undefined;
-  if (/^Document .+ could not be loaded$/.test(message ?? "")) {
-    return "A linked content document could not be loaded. Check that the linked file still exists and its source is available, then try again.";
+  const unloadedDocument = /^Document (.+) could not be loaded$/.exec(
+    message ?? ""
+  );
+  if (unloadedDocument !== null) {
+    return `Could not load linked content document ${unloadedDocument[1]}. In Content Assets, search for this ID and restore or reconnect the file, then run publish validation again.`;
   }
   return message ?? "Content database validation failed";
 };

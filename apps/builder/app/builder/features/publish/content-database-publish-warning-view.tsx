@@ -10,10 +10,11 @@ export const ContentDatabasePublishWarning = ({
     stats.includedDocumentCount + stats.omittedDocumentCount;
   const omittedFileLabel = stats.omittedDocumentCount === 1 ? "file" : "files";
   const dynamicResourceNames = diagnostics.affectedResources.flatMap(
-    ({ name, kind }) => (kind === "dynamic" ? [name] : [])
+    ({ name, id, kind }) =>
+      kind === "dynamic" ? [`${name} (ID: ${id})`] : []
   );
   const staticResourceNames = diagnostics.affectedResources.flatMap(
-    ({ name, kind }) => (kind === "static" ? [name] : [])
+    ({ name, id, kind }) => (kind === "static" ? [`${name} (ID: ${id})`] : [])
   );
   return (
     <>

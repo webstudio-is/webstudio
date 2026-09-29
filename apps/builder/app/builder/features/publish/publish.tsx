@@ -8,6 +8,7 @@ import {
   startTransition,
   useRef,
   useId,
+  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -133,18 +134,26 @@ const PrePublishAuditMessage = ({
   finding: PrePublishAuditFinding;
 }) => {
   const message = formatPrePublishAuditFinding(finding);
-  const { instanceId } = finding.location;
-  const pages = $pages.get();
-  const instances = $instances.get();
-
-  if (
-    instanceId === undefined ||
-    pages === undefined ||
-    instances.has(instanceId) === false
-  ) {
+  const instanceId = finding.location.instanceId;
+  if (instanceId === undefined) {
     return message;
   }
+  return (
+    <>
+      {message} {" "}
+      <PrePublishInstanceLink instanceId={instanceId}>
+        Show element
+      </PrePublishInstanceLink>
+    </>
+  );
+};
 
+const getPrePublishInstanceTarget = (instanceId: string) => {
+  const pages = $pages.get();
+  const instances = $instances.get();
+  if (pages === undefined || instances.has(instanceId) === false) {
+    return;
+  }
   const { pageId, instanceSelector } = findPageAndSelectorByInstanceId(
     pages,
     instances,
@@ -152,33 +161,43 @@ const PrePublishAuditMessage = ({
   );
   const href = getInstanceLink(instanceSelector);
   if (href === undefined) {
-    return message;
+    return;
   }
+  return { pageId, instanceSelector, href };
+};
 
+const PrePublishInstanceLink = ({
+  instanceId,
+  children,
+}: {
+  instanceId: string;
+  children: ReactNode;
+}) => {
+  const target = getPrePublishInstanceTarget(instanceId);
+  if (target === undefined) {
+    return null;
+  }
   return (
-    <>
-      {message}{" "}
-      <Link
-        href={href}
-        onClick={(event) => {
-          if (
-            event.button !== 0 ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.shiftKey ||
-            event.altKey
-          ) {
-            return;
-          }
-          event.preventDefault();
-          $selectedPageId.set(pageId);
-          selectInstance(instanceSelector);
-          $publishDialog.set("none");
-        }}
-      >
-        Show element
-      </Link>
-    </>
+    <Link
+      href={target.href}
+      onClick={(event) => {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        $selectedPageId.set(target.pageId);
+        selectInstance(target.instanceSelector);
+        $publishDialog.set("none");
+      }}
+    >
+      {children}
+    </Link>
   );
 };
 
@@ -192,16 +211,29 @@ const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
     assets: $assets.get(),
     metas: $registeredComponentMetas.get(),
   });
-  return findings.flatMap((finding) =>
-    finding.severity === "error" || finding.severity === "warning"
-      ? [
-          {
-            severity: finding.severity,
-            title: <PrePublishAuditMessage finding={finding} />,
-          },
-        ]
-      : []
-  );
+  return findings.flatMap((finding) => {
+    if (finding.severity !== "error" && finding.severity !== "warning") {
+      return [];
+    }
+    const context = Object.entries(finding.location)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}: ${value}`);
+    const reportText = [
+      `${finding.severity.toUpperCase()}: ${formatPrePublishAuditFinding(
+        finding
+      )}`,
+      `Rule: ${finding.ruleId}`,
+      ...context,
+    ].join("\n");
+    return [
+      {
+        severity: finding.severity,
+        title: <PrePublishAuditMessage finding={finding} />,
+        details: context.length === 0 ? undefined : context.join(" · "),
+        reportText,
+      },
+    ];
+  });
 };
 
 const runPrePublishChecks = async (
@@ -217,11 +249,22 @@ const runPrePublishChecks = async (
     await nativeClient.build.contentDatabasePublishDiagnostics.query({
       projectId,
     });
-  const findings = [
-    ...auditFindings,
-    ...getContentDatabasePublishFindings(diagnostics),
-  ];
-  return { passed: findings.every(({ severity }) => severity !== "error"), findings };
+  const contentFindings = getContentDatabasePublishFindings(diagnostics).map(
+    (finding) => ({
+      ...finding,
+      link:
+        finding.relatedInstanceId === undefined ? undefined : (
+          <PrePublishInstanceLink instanceId={finding.relatedInstanceId}>
+            Open Content Block
+          </PrePublishInstanceLink>
+        ),
+    })
+  );
+  const findings = [...auditFindings, ...contentFindings];
+  return {
+    passed: findings.every(({ severity }) => severity !== "error"),
+    findings,
+  };
 };
 
 const reportPrePublishFailure = (
@@ -238,6 +281,7 @@ const reportPrePublishFailure = (
       severity: "error",
       title: "Unable to complete publish checks",
       details: message,
+      reportText: `ERROR: Unable to complete publish checks\n${message}`,
     },
   ]);
 };

@@ -1,23 +1,33 @@
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import {
   Button,
   Dialog,
-  DialogActions,
   DialogClose,
   DialogContent,
   DialogTitle,
+  DialogTitleActions,
   Flex,
+  IconButton,
   PanelBanner,
   PanelContent,
-  Separator,
+  PanelTabs,
+  PanelTabsContent,
+  PanelTabsList,
+  PanelTabsTrigger,
   ScrollArea,
+  Separator,
   Text,
 } from "@webstudio-is/design-system";
+import { CopyIcon } from "@webstudio-is/icons";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 
 export type PublishValidationFinding = {
   severity: "error" | "warning";
   title: ReactNode;
   details?: ReactNode;
+  link?: ReactNode;
+  relatedInstanceId?: string;
+  reportText: string;
 };
 
 export const PublishValidationResults = ({
@@ -41,6 +51,21 @@ export const PublishValidationResults = ({
   ]
     .filter(Boolean)
     .join(" · ");
+  const defaultTab = errors.length > 0 ? "errors" : "warnings";
+  const reportText = [
+    `Publish validation report: ${countLabel}`,
+    errors.length > 0 &&
+      [`Errors (${errors.length})`, ...errors.map(({ reportText }) => reportText)].join(
+        "\n\n"
+      ),
+    warnings.length > 0 &&
+      [
+        `Warnings (${warnings.length})`,
+        ...warnings.map(({ reportText }) => reportText),
+      ].join("\n\n"),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   return (
     <>
@@ -66,51 +91,86 @@ export const PublishValidationResults = ({
           height={640}
           css={{ display: "flex", flexDirection: "column" }}
         >
-          <DialogTitle>Publish check details</DialogTitle>
-          <ScrollArea css={{ flex: 1, minHeight: 0 }}>
-            <PanelContent as={Flex} direction="column" gap={4}>
+          <DialogTitle
+            suffix={
+              <DialogTitleActions>
+                <CopyToClipboard text={reportText} copyText="Copy all reports">
+                  <IconButton
+                    type="button"
+                    aria-label="Copy all reports"
+                    onPointerDown={(event) => event.stopPropagation()}
+                  >
+                    <CopyIcon aria-hidden />
+                  </IconButton>
+                </CopyToClipboard>
+                <DialogClose />
+              </DialogTitleActions>
+            }
+          >
+            Publish check report
+          </DialogTitle>
+          <PanelTabs
+            key={`${errors.length}-${warnings.length}`}
+            defaultValue={defaultTab}
+            css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+          >
+            <PanelTabsList aria-label="Publish check severity">
               {errors.length > 0 && (
-                <FindingGroup title="Errors" findings={errors} />
+                <PanelTabsTrigger value="errors">
+                  Errors ({errors.length})
+                </PanelTabsTrigger>
               )}
               {warnings.length > 0 && (
-                <FindingGroup title="Warnings" findings={warnings} />
+                <PanelTabsTrigger value="warnings">
+                  Warnings ({warnings.length})
+                </PanelTabsTrigger>
               )}
-            </PanelContent>
-          </ScrollArea>
-          <DialogActions>
-            <DialogClose>
-              <Button type="button" color="ghost">
-                Close
-              </Button>
-            </DialogClose>
-          </DialogActions>
+            </PanelTabsList>
+            {errors.length > 0 && (
+              <PanelTabsContent
+                value="errors"
+                css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+              >
+                <FindingList findings={errors} />
+              </PanelTabsContent>
+            )}
+            {warnings.length > 0 && (
+              <PanelTabsContent
+                value="warnings"
+                css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+              >
+                <FindingList findings={warnings} />
+              </PanelTabsContent>
+            )}
+          </PanelTabs>
         </DialogContent>
       </Dialog>
     </>
   );
 };
 
-const FindingGroup = ({
-  title,
+const FindingList = ({
   findings,
 }: {
-  title: string;
   findings: PublishValidationFinding[];
 }) => (
-  <Flex direction="column" gap={3}>
-    <Text variant="labels">
-      {title} ({findings.length})
-    </Text>
-    <Flex direction="column" gap={3}>
+  <ScrollArea css={{ height: "100%" }}>
+    <PanelContent as={Flex} direction="column" gap={3}>
       {findings.map((finding, index) => (
-        <Flex key={`${title}-${index}`} direction="column" gap={1}>
-          <Text variant="labels">{finding.title}</Text>
-          {finding.details !== undefined && (
-            <Text color="subtle">{finding.details}</Text>
-          )}
+        <Fragment key={`${finding.severity}-${index}`}>
+          <Flex direction="column" gap={2}>
+            <Text variant="labels" userSelect="text">
+              {finding.title} {finding.link}
+            </Text>
+            {finding.details !== undefined && (
+              <Text userSelect="text" color="subtle">
+                {finding.details}
+              </Text>
+            )}
+          </Flex>
           {index < findings.length - 1 && <Separator />}
-        </Flex>
+        </Fragment>
       ))}
-    </Flex>
-  </Flex>
+    </PanelContent>
+  </ScrollArea>
 );
