@@ -15,7 +15,9 @@ export const getPrePublishErrorMessage = (error: unknown) => {
   ) {
     return prePublishTimeoutMessage;
   }
-  return error instanceof Error
-    ? error.message
-    : "Content database validation failed";
+  const message = error instanceof Error ? error.message : undefined;
+  if (/^Document .+ could not be loaded$/.test(message ?? "")) {
+    return "A linked content document could not be loaded. Check that the linked file still exists and its source is available, then try again.";
+  }
+  return message ?? "Content database validation failed";
 };

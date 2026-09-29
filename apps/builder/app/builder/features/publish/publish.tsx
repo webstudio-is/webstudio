@@ -224,6 +224,24 @@ const runPrePublishChecks = async (
   return { passed: findings.every(({ severity }) => severity !== "error"), findings };
 };
 
+const reportPrePublishFailure = (
+  error: unknown,
+  setFindings: (findings: PublishValidationFinding[]) => void
+) => {
+  const message = getPrePublishErrorMessage(error);
+  if ($publishDialog.get() === "none") {
+    toast.error(message);
+    return;
+  }
+  setFindings([
+    {
+      severity: "error",
+      title: "Unable to complete publish checks",
+      details: message,
+    },
+  ]);
+};
+
 type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
@@ -706,15 +724,7 @@ const Publish = ({
       });
     } catch (error) {
       onValidationStateChange("idle");
-      const message = getPrePublishErrorMessage(error);
-      toast.error(message);
-      setPublishFindings([
-        {
-          severity: "error",
-          title: "Unable to complete publish checks",
-          details: message,
-        },
-      ]);
+      reportPrePublishFailure(error, setPublishFindings);
     }
   };
 
@@ -741,15 +751,7 @@ const Publish = ({
           return;
         }
       } catch (error) {
-        const message = getPrePublishErrorMessage(error);
-        toast.error(message);
-        setPublishFindings([
-          {
-            severity: "error",
-            title: "Unable to complete publish checks",
-            details: message,
-          },
-        ]);
+        reportPrePublishFailure(error, setPublishFindings);
         return;
       }
       await publish(domains);
@@ -882,15 +884,7 @@ const PublishStatic = ({
                 try {
                   checks = await runPrePublishChecks(projectId);
                 } catch (error) {
-                  const message = getPrePublishErrorMessage(error);
-                  toast.error(message);
-                  setPublishFindings([
-                    {
-                      severity: "error",
-                      title: "Unable to complete publish checks",
-                      details: message,
-                    },
-                  ]);
+                  reportPrePublishFailure(error, setPublishFindings);
                   return;
                 }
                 setPublishFindings(checks.findings);
