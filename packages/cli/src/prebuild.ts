@@ -75,6 +75,7 @@ import {
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
+  getPublishedMdxAssetIds,
   hasDynamicPublishedMdxSources,
   resolvePublishedMdxAssetCandidates,
 } from "@webstudio-is/project-build";
@@ -980,6 +981,7 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const publicationBuild = { ...siteData.build, pages };
+  const allMdxAssetIds = getPublishedMdxAssetIds(siteData.assets);
   if (
     siteData.assetIndex === undefined &&
     (createPublishedBuildContentCompilationPlan(publicationBuild) !==
@@ -1062,14 +1064,12 @@ export const prebuild = async (options: {
   }
   let dynamicMdxCandidates: ReadonlyMap<string, readonly string[]> | undefined;
   if (hasDynamicPublishedMdxSources(publicationBuild)) {
-    dynamicMdxCandidates =
-      verifiedAssetIndex === undefined
-        ? new Map()
-        : resolvePublishedMdxAssetCandidates({
-            build: publicationBuild,
-            artifact: verifiedAssetIndex,
-            allowUnresolved: true,
-          });
+    dynamicMdxCandidates = resolvePublishedMdxAssetCandidates({
+      build: publicationBuild,
+      artifact: verifiedAssetIndex,
+      allowUnresolved: true,
+      allMdxAssetIds,
+    });
     for (const blockInstanceId of getDynamicPublishedMdxSourceBlockIds(
       publicationBuild
     )) {
@@ -1336,6 +1336,7 @@ export const prebuild = async (options: {
               build: pageBuild,
               artifact: verifiedAssetIndex,
               blockInstanceIds: pendingBlockIds,
+              allMdxAssetIds,
             })
           : undefined;
         const materialized = await materializePublishedMdx({

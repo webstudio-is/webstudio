@@ -375,25 +375,29 @@ const ChangeProjectDomain = ({
     toast.success(result.message);
   };
 
+  const latestProjectDomainBuild =
+    project.latestBuildVirtual?.domain === project.domain
+      ? project.latestBuildVirtual
+      : undefined;
+
   const { statusText, color, Icon } =
-    project.latestBuildVirtual != null
-      ? getPublishStatusAndText(project.latestBuildVirtual)
+    latestProjectDomainBuild != null
+      ? getPublishStatusAndText(latestProjectDomainBuild)
       : {
           statusText: "Not published",
           color: cssVar("--foreground-secondary"),
           Icon: InfoCircleIcon,
         };
 
-  // Check if the wstd domain specifically is published (not just any custom domain)
-  const isPublished = project.latestBuildVirtual?.domain === project.domain;
+  const isPublished = latestProjectDomainBuild != null;
 
   return (
     <CollapsibleDomainSection
       title={pageUrl.host}
       prefix={
         <DomainCheckbox
-          defaultChecked={project.latestBuildVirtual?.domain === domain}
-          buildId={project.latestBuildVirtual?.buildId}
+          defaultChecked={latestProjectDomainBuild?.domain === domain}
+          buildId={latestProjectDomainBuild?.buildId}
           domain={domain}
         />
       }
