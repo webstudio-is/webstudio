@@ -380,6 +380,7 @@ export const loadProjectBundleByProjectId = async (
   projectId: string,
   context: AppContext,
   options: {
+    build?: Build;
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
@@ -392,7 +393,7 @@ export const loadProjectBundleByProjectId = async (
   }
   return await addProjectMetadata(
     await createProjectBundle(
-      await loadDevBuildByProjectId(context, projectId),
+      options.build ?? (await loadDevBuildByProjectId(context, projectId)),
       context
     ),
     project,

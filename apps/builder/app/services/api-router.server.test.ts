@@ -928,6 +928,7 @@ describe("api router permits", () => {
         "project-1",
         expect.anything(),
         expect.objectContaining({
+          build: expect.objectContaining({ instances: [] }),
           onMdxTemplateOmissions: expect.any(Function),
         })
       );

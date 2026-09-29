@@ -20,28 +20,31 @@ import {
   readBoundedBytes,
 } from "@webstudio-is/content-engine/compiler";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { createAssetClient } from "~/shared/asset-client";
+
+type Build = Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
 
 export const loadContentDatabasePublishDiagnostics = async (
   projectId: string,
   ctx: AppContext,
   dependencies: {
-    loadProjectBundleByProjectId: typeof loadProjectBundleByProjectId;
-  } = { loadProjectBundleByProjectId }
+    loadProjectBundleByProjectId?: typeof loadProjectBundleByProjectId;
+    build?: Build;
+  } = {}
 ) => {
   let mdxTemplateOmissions: readonly PublishedMdxTemplateOmission[] = [];
   const mdxBlockInstanceIds = new Set<string>();
-  const bundle = await dependencies.loadProjectBundleByProjectId(
-    projectId,
-    ctx,
-    {
-      onMdxTemplateOmissions: (issues) => {
-        mdxTemplateOmissions = issues;
-      },
-      onMdxBlockInstanceId: (blockInstanceId) =>
-        mdxBlockInstanceIds.add(blockInstanceId),
-    }
-  );
+  const bundle = await (
+    dependencies.loadProjectBundleByProjectId ?? loadProjectBundleByProjectId
+  )(projectId, ctx, {
+    ...(dependencies.build === undefined ? {} : { build: dependencies.build }),
+    onMdxTemplateOmissions: (issues) => {
+      mdxTemplateOmissions = issues;
+    },
+    onMdxBlockInstanceId: (blockInstanceId) =>
+      mdxBlockInstanceIds.add(blockInstanceId),
+  });
   const mdxErrors: Array<{
     filename: string;
     diagnostic: Awaited<
@@ -50,6 +53,7 @@ export const loadContentDatabasePublishDiagnostics = async (
   }> = [];
   if (bundle.assetIndex !== undefined) {
     const assetStore = createAssetClient();
+    const documentSources = new Map<string, Promise<string>>();
     const data = {
       instances: new Map(bundle.build.instances),
       props: new Map(bundle.build.props),
@@ -81,11 +85,20 @@ export const loadContentDatabasePublishDiagnostics = async (
       projectId: bundle.build.projectId,
       blockInstanceIds: mdxBlockInstanceIds,
       dynamicAssetIdsByBlock,
-      loadDocumentSource: async ({ contentRef }) => {
-        const { data } = await assetStore.readFile(contentRef);
-        return decodeUtf8(
-          await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
-        );
+      loadDocumentSource: ({ id, contentRef }) => {
+        const key = `${id}:${contentRef}`;
+        const cached = documentSources.get(key);
+        if (cached !== undefined) {
+          return cached;
+        }
+        const source = (async () => {
+          const { data } = await assetStore.readFile(contentRef);
+          return decodeUtf8(
+            await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
+          );
+        })();
+        documentSources.set(key, source);
+        return source;
       },
     });
     const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
