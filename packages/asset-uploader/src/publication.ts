@@ -1,10 +1,13 @@
 import {
+  contentEngineLimits,
   getContentArtifactRuntimeAssetIds,
   type ContentCompilationPlan,
   type ContentArtifactV1,
 } from "@webstudio-is/content-engine";
 import {
   compileContentUntilPlanIsStable,
+  decodeUtf8,
+  readBoundedBytes,
   serializeJsonDeterministically,
 } from "@webstudio-is/content-engine/compiler";
 import type { Asset } from "@webstudio-is/sdk";
@@ -137,7 +140,12 @@ export const preparePublishedAssetData = async (
     plan: ContentCompilationPlan;
     retainedAssetIds: Iterable<string>;
     resolvePlan?: (
-      artifact: ContentArtifactV1
+      artifact: ContentArtifactV1,
+      loadDocumentSource: (input: {
+        id: string;
+        revision: string;
+        contentRef: string;
+      }) => Promise<string>
     ) => ContentCompilationPlan | Promise<ContentCompilationPlan>;
   },
   dependencies = defaultDependencies
@@ -148,6 +156,26 @@ export const preparePublishedAssetData = async (
     assetStore,
     contentDatabaseMaxBytes,
   });
+  const documentSources = new Map<string, Promise<string>>();
+  const loadDocumentSource = (input: {
+    id: string;
+    revision: string;
+    contentRef: string;
+  }) => {
+    const key = JSON.stringify([input.id, input.revision, input.contentRef]);
+    const cached = documentSources.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const source = (async () => {
+      const { data } = await assetStore.readFile(input.contentRef);
+      return decodeUtf8(
+        await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
+      );
+    })();
+    documentSources.set(key, source);
+    return source;
+  };
   const { result: artifact, assetData } = await prepareStablePublishedAssetData(
     {
       projectId,
@@ -163,7 +191,8 @@ export const preparePublishedAssetData = async (
             : await compileContentUntilPlanIsStable({
                 plan,
                 compile: prepareIndex,
-                resolvePlan,
+                resolvePlan: (artifact) =>
+                  resolvePlan(artifact, loadDocumentSource),
               });
         }),
       dependencies,

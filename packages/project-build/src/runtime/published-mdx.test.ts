@@ -98,7 +98,7 @@ const createArtifact = (
     assetValueReferences,
     fieldCatalog: { canonicalRevision: revision("a"), fields: {} },
     integrity: { algorithm: "sha256", checksum: revision("d") },
-  }) as ContentArtifactV1;
+  } as ContentArtifactV1);
 
 const getFragmentText = (
   fragment: Awaited<
@@ -145,6 +145,7 @@ describe("published MDX materialization", () => {
     expect(result.roots).toHaveLength(1);
     expect(loadDocumentSource).toHaveBeenCalledExactlyOnceWith({
       id: "article",
+      revision: revision("b"),
       contentRef: "article.mdx",
     });
   });

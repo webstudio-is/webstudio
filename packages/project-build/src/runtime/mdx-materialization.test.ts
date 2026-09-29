@@ -274,7 +274,7 @@ const getUnresolvedTemplate = (
 };
 
 describe("materializeMdxTemplates", () => {
-  test("reuses variable scope indexes across resolved template references", async () => {
+  test("materializes repeated resolved references with consistent scope", async () => {
     const materialization = await materializeMdxTemplates({
       identity,
       resolution: {

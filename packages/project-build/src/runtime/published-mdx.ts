@@ -230,6 +230,7 @@ export const materializePublishedMdx = async ({
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   loadDocumentSource?: (node: {
     id: string;
+    revision: string;
     contentRef: string;
   }) => Promise<string>;
 }): Promise<{
@@ -345,7 +346,7 @@ export const materializePublishedMdx = async ({
     const resolvedAssetIds =
       typeof staticAssetId === "string" && staticAssetId.length > 0
         ? [staticAssetId]
-        : (dynamicAssetIdsByBlock.get(block.id) ?? []);
+        : dynamicAssetIdsByBlock.get(block.id) ?? [];
     if (resolvedAssetIds.length > contentEngineLimits.candidateDocuments) {
       warnUnavailableSource({
         blockInstanceId: block.id,
@@ -393,13 +394,18 @@ export const materializePublishedMdx = async ({
         try {
           sourceText = await loadDocumentSource({
             id: candidate._id,
+            revision: candidate.revision,
             contentRef: candidate.contentRef,
           });
         } catch (error) {
           warnUnavailableSource({
             blockInstanceId: block.id,
             assetId: candidate._id,
-            message: `Published MDX Asset "${candidate._id}" could not be loaded: ${error instanceof Error ? error.message : String(error)}`,
+            message: `Published MDX Asset "${
+              candidate._id
+            }" could not be loaded: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           });
           continue;
         }

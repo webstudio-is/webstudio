@@ -15,6 +15,7 @@ import {
   getPublishedMdxContentDatabaseMaxBytes,
   resolvePublishedMdxAssetCandidates,
   type PublishedMdxTemplateOmission,
+  type PublishedMdxDependencyReadFailure,
 } from "@webstudio-is/project-build";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
@@ -178,7 +179,15 @@ const addProjectMetadata = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
+    onMdxDependencyReadFailures?: (
+      failures: readonly PublishedMdxDependencyReadFailure[]
+    ) => void;
     onMdxBlockInstanceId?: (blockInstanceId: string) => void;
+    loadMdxDependencySource?: (input: {
+      id: string;
+      revision: string;
+      contentRef: string;
+    }) => Promise<string>;
     contentIndex?: "client";
   } = {}
 ): Promise<PublishedProjectBundle> => {
@@ -227,6 +236,7 @@ const addProjectMetadata = async (
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
   let mdxTemplateOmissions: PublishedMdxTemplateOmission[] = [];
+  let mdxDependencyReadFailures: PublishedMdxDependencyReadFailure[] = [];
   if (assetRequirements !== undefined) {
     const resolveMdxDependencies =
       createPublishedMdxDependencyClosureResolver();
@@ -247,16 +257,23 @@ const addProjectMetadata = async (
       ) || candidateDiscoveryPlan !== undefined
         ? {
             resolvePlan: async (
-              artifact: NonNullable<PublishedProjectBundle["assetIndex"]>
+              artifact: NonNullable<PublishedProjectBundle["assetIndex"]>,
+              loadDocumentSource
             ) => {
               const nextOmissions: PublishedMdxTemplateOmission[] = [];
+              const nextReadFailures: PublishedMdxDependencyReadFailure[] = [];
               const plan = await resolveMdxDependencies({
                 build: publicationBuild,
                 artifact,
+                loadDocumentSource:
+                  options.loadMdxDependencySource ?? loadDocumentSource,
                 onTemplateOmission: (issue) => nextOmissions.push(issue),
+                onDependencyReadFailure: (failure) =>
+                  nextReadFailures.push(failure),
                 onMdxBlockInstanceId: options.onMdxBlockInstanceId,
               });
               mdxTemplateOmissions = nextOmissions;
+              mdxDependencyReadFailures = nextReadFailures;
               return plan!;
             },
           }
@@ -284,6 +301,7 @@ const addProjectMetadata = async (
   }
 
   options.onMdxTemplateOmissions?.(mdxTemplateOmissions);
+  options.onMdxDependencyReadFailures?.(mdxDependencyReadFailures);
 
   return {
     ...data,
@@ -384,7 +402,15 @@ export const loadProjectBundleByProjectId = async (
     onMdxTemplateOmissions?: (
       issues: readonly PublishedMdxTemplateOmission[]
     ) => void;
+    onMdxDependencyReadFailures?: (
+      failures: readonly PublishedMdxDependencyReadFailure[]
+    ) => void;
     onMdxBlockInstanceId?: (blockInstanceId: string) => void;
+    loadMdxDependencySource?: (input: {
+      id: string;
+      revision: string;
+      contentRef: string;
+    }) => Promise<string>;
   } = {}
 ): Promise<PublishedProjectBundle> => {
   const project = await loadById(projectId, context);

@@ -9,7 +9,7 @@ const createDiagnostics = (overrides: Record<string, unknown> = {}) =>
     mdxOmissions: [],
     mdxErrors: [],
     ...overrides,
-  }) as never;
+  } as never);
 
 describe("content database publish findings", () => {
   test("returns no findings when diagnostics are clean", () => {
@@ -66,6 +66,33 @@ describe("content database publish findings", () => {
     expect(findings[1].reportText).toContain(
       "Choose an available MDX asset in this Content Block's source settings"
     );
+  });
+
+  test("suggests storage troubleshooting for MDX source read failures", () => {
+    const [finding] = getContentDatabasePublishFindings(
+      createDiagnostics({
+        mdxErrors: [
+          {
+            filename: "article.mdx",
+            diagnostic: {
+              code: "invalid-mdx",
+              severity: "error",
+              blockInstanceId: "block-1",
+              assetId: "asset-1",
+              contentRef: "article-revision.mdx",
+              message:
+                "Could not inspect this MDX source: asset store unavailable",
+            },
+          },
+        ],
+      })
+    );
+
+    expect(finding.reportText).toContain(
+      "Check that the asset is available in Content Assets, then run Validate again."
+    );
+    expect(finding.reportText).toContain("https://wstd.us/mcp");
+    expect(finding.reportText).toContain("Asset ID: asset-1");
   });
 
   test("includes every missing template warning and its identifying IDs", () => {

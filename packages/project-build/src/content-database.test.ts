@@ -239,7 +239,7 @@ describe("Content Block MDX compilation", () => {
     );
   });
 
-  test("retains nested sources only through referenced templates", async () => {
+  test("discovers nested sources when the MDX body must be loaded", async () => {
     const build = createBuild({});
     build.instances[0].children = [{ type: "id", value: "templates" }];
     build.instances.push(
@@ -308,14 +308,21 @@ describe("Content Block MDX compilation", () => {
           contentRef: "article.mdx",
         },
       ],
-      contents: { "article.mdx": source },
+      contents: {},
     } as unknown as ContentArtifactV1;
 
     const omissions: { assetId: string; templateName: string }[] = [];
+    const loadDocumentSource = vi.fn(async () => source);
     const plan = await resolvePublishedMdxDependencyClosure({
       build,
       artifact,
       onTemplateOmission: (issue) => omissions.push(issue),
+      loadDocumentSource,
+    });
+    expect(loadDocumentSource).toHaveBeenCalledExactlyOnceWith({
+      id: "article.mdx",
+      revision: "article-revision",
+      contentRef: "article.mdx",
     });
     expect(omissions).toEqual([
       expect.objectContaining({
@@ -327,6 +334,130 @@ describe("Content Block MDX compilation", () => {
 
     expect(queryIds).toContain("__content-block-mdx__:nested.mdx");
     expect(queryIds).not.toContain("__content-block-mdx__:private.mdx");
+  });
+
+  test("keeps dependency planning non-blocking when source loading fails", async () => {
+    const build = createBuild({});
+    const artifact = {
+      format: "webstudio-content-database",
+      version: 1,
+      documents: [
+        {
+          _id: "article.mdx",
+          _type: "asset.file",
+          name: "article.mdx",
+          path: "article.mdx",
+          key: "article",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: 1,
+          revision: "article-revision",
+          contentRef: "article.mdx",
+        },
+      ],
+      contents: {},
+    } as unknown as ContentArtifactV1;
+
+    const failures: unknown[] = [];
+    const plan = await resolvePublishedMdxDependencyClosure({
+      build,
+      artifact,
+      loadDocumentSource: async () => {
+        throw new Error("asset store unavailable");
+      },
+      onDependencyReadFailure: (failure) => failures.push(failure),
+    });
+
+    expect(plan?.queries.map(({ id }) => id)).toContain(
+      "__content-block-mdx__:article.mdx"
+    );
+    expect(failures).toEqual([
+      {
+        blockInstanceId: expect.any(String),
+        assetId: "article.mdx",
+        contentRef: "article.mdx",
+        message: expect.stringContaining("asset store unavailable"),
+      },
+    ]);
+  });
+
+  test("loads MDX dependencies in the same publication depth concurrently", async () => {
+    const build = createBuild({});
+    build.instances[0].children = [
+      { type: "id", value: "first-templates" },
+      { type: "id", value: "second-block" },
+    ];
+    build.instances.push({
+      type: "instance",
+      id: "second-block",
+      component: "ws:block",
+      children: [{ type: "id", value: "second-templates" }],
+    });
+    build.instances.push(
+      {
+        type: "instance",
+        id: "first-templates",
+        component: "ws:block-template",
+        children: [],
+      },
+      {
+        type: "instance",
+        id: "second-templates",
+        component: "ws:block-template",
+        children: [],
+      }
+    );
+    build.props.push({
+      id: "second-source",
+      instanceId: "second-block",
+      name: "src",
+      type: "asset",
+      value: "second.mdx",
+    });
+    const createDocument = (id: string) => ({
+      _id: id,
+      _type: "asset.file",
+      name: id,
+      path: id,
+      key: id,
+      extension: "mdx",
+      mimeType: "text/mdx",
+      size: 1,
+      revision: `${id}-revision`,
+      contentRef: id,
+    });
+    const artifact = {
+      format: "webstudio-content-database",
+      version: 1,
+      documents: [createDocument("article.mdx"), createDocument("second.mdx")],
+      contents: {},
+    } as unknown as ContentArtifactV1;
+    let resolveBothReads: () => void = () => {};
+    const bothReadsStarted = new Promise<void>((resolve) => {
+      resolveBothReads = resolve;
+    });
+    const startedIds: string[] = [];
+
+    const plan = await resolvePublishedMdxDependencyClosure({
+      build,
+      artifact,
+      loadDocumentSource: async ({ id }) => {
+        startedIds.push(id);
+        if (startedIds.length === 2) {
+          resolveBothReads();
+        }
+        await bothReadsStarted;
+        return "# Article";
+      },
+    });
+
+    expect(startedIds).toEqual(["article.mdx", "second.mdx"]);
+    expect(plan?.queries.map(({ id }) => id)).toEqual(
+      expect.arrayContaining([
+        "__content-block-mdx__:article.mdx",
+        "__content-block-mdx__:second.mdx",
+      ])
+    );
   });
 
   test("retains nested sources through semantic component templates", async () => {

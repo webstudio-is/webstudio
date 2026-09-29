@@ -36,8 +36,12 @@ import {
 } from "@webstudio-is/sdk";
 import { parseStaticMemberPath } from "@webstudio-is/expression";
 import type { Pages } from "@webstudio-is/sdk";
+import { mapBounded } from "@webstudio-is/content-engine/compiler";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { parseMdxDocumentRecovering } from "@webstudio-is/content-engine/mdx";
+
+const maxConcurrentMdxDependencyBlocks = 4;
+const maxConcurrentMdxDependenciesPerBlock = 8;
 import {
   assertMdxTemplateStructure,
   resolveMdxTemplates,
@@ -227,10 +231,25 @@ export type PublishedMdxTemplateOmission = {
   templateName: string;
 };
 
+export type PublishedMdxDependencyReadFailure = {
+  blockInstanceId: string;
+  assetId: string;
+  contentRef: string;
+  message: string;
+};
+
 type ResolvePublishedMdxDependencyClosureOptions = {
   build: PublishedContentDatabaseBuild;
   artifact: ContentArtifactV1;
+  loadDocumentSource?: (input: {
+    id: string;
+    revision: string;
+    contentRef: string;
+  }) => Promise<string>;
   onTemplateOmission?: (issue: PublishedMdxTemplateOmission) => void;
+  onDependencyReadFailure?: (
+    failure: PublishedMdxDependencyReadFailure
+  ) => void;
   onMdxBlockInstanceId?: (blockInstanceId: string) => void;
   allMdxAssetIds?: ReadonlySet<string>;
 };
@@ -238,7 +257,9 @@ type ResolvePublishedMdxDependencyClosureOptions = {
 const resolvePublishedMdxDependencyClosureWithParser = async ({
   build,
   artifact,
+  loadDocumentSource,
   onTemplateOmission,
+  onDependencyReadFailure,
   onMdxBlockInstanceId,
   allMdxAssetIds,
   parseDocument,
@@ -286,73 +307,132 @@ const resolvePublishedMdxDependencyClosureWithParser = async ({
   };
 
   while (pending.length > 0) {
-    const blockId = pending.shift()!;
-    if (processed.has(blockId)) {
-      continue;
-    }
-    processed.add(blockId);
-    const source = sourcesByBlockId.get(blockId);
-    if (source === undefined) {
-      continue;
-    }
-    onMdxBlockInstanceId?.(blockId);
-    const staticValue = getStaticContentBlockSourceAssetId(source);
-    const assetIds =
-      typeof staticValue === "string"
-        ? [staticValue]
-        : (resolvePublishedMdxAssetCandidates({
-            build,
-            artifact,
-            blockInstanceIds: new Set([blockId]),
-            allMdxAssetIds,
-          }).get(blockId) ?? []);
-    for (const assetId of assetIds) {
-      const documentEntry = documentsById.get(assetId);
-      const sourceText =
-        documentEntry?.contentRef === undefined
-          ? undefined
-          : artifact.contents?.[documentEntry.contentRef];
-      if (
-        documentEntry?.revision === undefined ||
-        documentEntry.contentRef === undefined ||
-        sourceText === undefined
-      ) {
-        continue;
+    // Resolve each dependency depth concurrently. A level can contain many
+    // Content Blocks, and serial asset-store reads here would add their
+    // latencies to publication preparation one by one.
+    const blockIds = pending.splice(0);
+    const parsedDocumentsByBlock = await mapBounded(
+      blockIds,
+      maxConcurrentMdxDependencyBlocks,
+      async (blockId) => {
+        if (processed.has(blockId)) {
+          return { blockId, parsedDocuments: [] };
+        }
+        processed.add(blockId);
+        const source = sourcesByBlockId.get(blockId);
+        if (source === undefined) {
+          return { blockId, parsedDocuments: [] };
+        }
+        onMdxBlockInstanceId?.(blockId);
+        const staticValue = getStaticContentBlockSourceAssetId(source);
+        const assetIds =
+          typeof staticValue === "string"
+            ? [staticValue]
+            : resolvePublishedMdxAssetCandidates({
+                build,
+                artifact,
+                blockInstanceIds: new Set([blockId]),
+                allMdxAssetIds,
+              }).get(blockId) ?? [];
+        const parsedDocuments = await mapBounded(
+          assetIds,
+          maxConcurrentMdxDependenciesPerBlock,
+          async (assetId) => {
+            const documentEntry = documentsById.get(assetId);
+            if (
+              documentEntry?.extension?.toLowerCase() !== "mdx" &&
+              documentEntry?.mimeType !== "text/mdx"
+            ) {
+              return;
+            }
+            let sourceText =
+              documentEntry.contentRef === undefined
+                ? undefined
+                : artifact.contents?.[documentEntry.contentRef];
+            if (
+              sourceText === undefined &&
+              documentEntry.revision !== undefined &&
+              documentEntry.contentRef !== undefined &&
+              loadDocumentSource !== undefined
+            ) {
+              try {
+                sourceText = await loadDocumentSource({
+                  id: assetId,
+                  revision: documentEntry.revision,
+                  contentRef: documentEntry.contentRef,
+                });
+              } catch (error) {
+                onDependencyReadFailure?.({
+                  blockInstanceId: blockId,
+                  assetId,
+                  contentRef: documentEntry.contentRef,
+                  message: `Could not inspect this MDX source: ${
+                    error instanceof Error ? error.message : String(error)
+                  }`,
+                });
+                return;
+              }
+            }
+            if (
+              documentEntry.revision === undefined ||
+              documentEntry.contentRef === undefined ||
+              sourceText === undefined
+            ) {
+              return;
+            }
+            const parsed = await parseDocument({
+              assetId,
+              revision: documentEntry.revision,
+              contentRef: documentEntry.contentRef,
+              source: sourceText,
+            });
+            return parsed.status === "unrecoverable"
+              ? undefined
+              : { assetId, documentEntry, document: parsed.document };
+          }
+        );
+        return {
+          blockId,
+          parsedDocuments: parsedDocuments.filter(
+            (document) => document !== undefined
+          ),
+        };
       }
-      const parsed = await parseDocument({
-        assetId,
-        revision: documentEntry.revision,
-        contentRef: documentEntry.contentRef,
-        source: sourceText,
-      });
-      if (parsed.status === "unrecoverable") {
-        continue;
-      }
-      const document = parsed.document;
-      const resolution = resolveMdxTemplates({
-        document,
-        identity: {
-          blockInstanceId: blockId,
-          assetId,
-          revision: documentEntry.revision,
-          contentRef: documentEntry.contentRef,
-          format: "mdx",
-          renderScope: "publication-dependency-discovery",
-        },
-        instances,
-        props: propsById,
-        metas: componentMetas,
-      });
-      assertMdxTemplateStructure(resolution);
-      for (const reference of resolution.references) {
-        if (reference.type === "resolved-template") {
-          visitTemplateSubtree(reference.templateInstanceId);
-        } else {
-          onTemplateOmission?.({
+    );
+
+    for (const { blockId, parsedDocuments } of parsedDocumentsByBlock) {
+      for (const { assetId, documentEntry, document } of parsedDocuments) {
+        if (
+          documentEntry.revision === undefined ||
+          documentEntry.contentRef === undefined
+        ) {
+          continue;
+        }
+        const resolution = resolveMdxTemplates({
+          document,
+          identity: {
             blockInstanceId: blockId,
             assetId,
-            templateName: reference.templateName,
-          });
+            revision: documentEntry.revision,
+            contentRef: documentEntry.contentRef,
+            format: "mdx",
+            renderScope: "publication-dependency-discovery",
+          },
+          instances,
+          props: propsById,
+          metas: componentMetas,
+        });
+        assertMdxTemplateStructure(resolution);
+        for (const reference of resolution.references) {
+          if (reference.type === "resolved-template") {
+            visitTemplateSubtree(reference.templateInstanceId);
+          } else {
+            onTemplateOmission?.({
+              blockInstanceId: blockId,
+              assetId,
+              templateName: reference.templateName,
+            });
+          }
         }
       }
     }
@@ -383,9 +463,26 @@ export const createPublishedMdxDependencyClosureResolver = (
     string,
     ReturnType<typeof parseMdxDocumentRecovering>
   >();
+  const loadedSources = new Map<string, Promise<string>>();
   return async (options: ResolvePublishedMdxDependencyClosureOptions) =>
     await resolvePublishedMdxDependencyClosureWithParser({
       ...options,
+      loadDocumentSource:
+        options.loadDocumentSource === undefined
+          ? undefined
+          : (input) => {
+              const key = JSON.stringify([
+                input.id,
+                input.revision,
+                input.contentRef,
+              ]);
+              let source = loadedSources.get(key);
+              if (source === undefined) {
+                source = options.loadDocumentSource!(input);
+                loadedSources.set(key, source);
+              }
+              return source;
+            },
       parseDocument: ({ assetId, revision, contentRef, source }) => {
         const key = JSON.stringify([assetId, revision, contentRef]);
         let parsed = parsedDocuments.get(key);

@@ -5,6 +5,7 @@ import {
 } from "./content-database.server";
 import {
   resolvePublishedMdxAssetCandidates,
+  type PublishedMdxDependencyReadFailure,
   type PublishedMdxTemplateOmission,
 } from "@webstudio-is/project-build";
 import {
@@ -34,6 +35,33 @@ export const loadContentDatabasePublishDiagnostics = async (
   } = {}
 ) => {
   let mdxTemplateOmissions: readonly PublishedMdxTemplateOmission[] = [];
+  let mdxDependencyReadFailures: readonly PublishedMdxDependencyReadFailure[] =
+    [];
+  const assetStore = createAssetClient();
+  const documentSources = new Map<string, Promise<string>>();
+  const loadDocumentSource = ({
+    id,
+    revision,
+    contentRef,
+  }: {
+    id: string;
+    revision: string;
+    contentRef: string;
+  }) => {
+    const key = JSON.stringify([id, revision, contentRef]);
+    const cached = documentSources.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const source = (async () => {
+      const { data } = await assetStore.readFile(contentRef);
+      return decodeUtf8(
+        await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
+      );
+    })();
+    documentSources.set(key, source);
+    return source;
+  };
   const mdxBlockInstanceIds = new Set<string>();
   const bundle = await (
     dependencies.loadProjectBundleByProjectId ?? loadProjectBundleByProjectId
@@ -42,6 +70,10 @@ export const loadContentDatabasePublishDiagnostics = async (
     onMdxTemplateOmissions: (issues) => {
       mdxTemplateOmissions = issues;
     },
+    onMdxDependencyReadFailures: (failures) => {
+      mdxDependencyReadFailures = failures;
+    },
+    loadMdxDependencySource: loadDocumentSource,
     onMdxBlockInstanceId: (blockInstanceId) =>
       mdxBlockInstanceIds.add(blockInstanceId),
   });
@@ -51,9 +83,31 @@ export const loadContentDatabasePublishDiagnostics = async (
       ReturnType<typeof materializePublishedMdx>
     >["warnings"][number]["diagnostic"];
   }> = [];
+  const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
+  const getFilename = (assetId: string, fallback: string) => {
+    const asset = assets.get(assetId);
+    return asset === undefined ? fallback : formatAssetName(asset);
+  };
+  const dependencyReadFailureKeys = new Set(
+    mdxDependencyReadFailures.map(({ blockInstanceId, assetId }) =>
+      JSON.stringify([blockInstanceId, assetId])
+    )
+  );
+  for (const failure of mdxDependencyReadFailures) {
+    mdxErrors.push({
+      filename: getFilename(failure.assetId, failure.contentRef),
+      diagnostic: {
+        code: "invalid-mdx",
+        severity: "error",
+        blockInstanceId: failure.blockInstanceId,
+        assetId: failure.assetId,
+        contentRef: failure.contentRef,
+        renderScope: `route:prepublish:block:${failure.blockInstanceId}`,
+        message: failure.message,
+      },
+    });
+  }
   if (bundle.assetIndex !== undefined) {
-    const assetStore = createAssetClient();
-    const documentSources = new Map<string, Promise<string>>();
     const data = {
       instances: new Map(bundle.build.instances),
       props: new Map(bundle.build.props),
@@ -85,27 +139,8 @@ export const loadContentDatabasePublishDiagnostics = async (
       projectId: bundle.build.projectId,
       blockInstanceIds: mdxBlockInstanceIds,
       dynamicAssetIdsByBlock,
-      loadDocumentSource: ({ id, contentRef }) => {
-        const key = `${id}:${contentRef}`;
-        const cached = documentSources.get(key);
-        if (cached !== undefined) {
-          return cached;
-        }
-        const source = (async () => {
-          const { data } = await assetStore.readFile(contentRef);
-          return decodeUtf8(
-            await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
-          );
-        })();
-        documentSources.set(key, source);
-        return source;
-      },
+      loadDocumentSource,
     });
-    const assets = new Map(bundle.assets.map((asset) => [asset.id, asset]));
-    const getFilename = (assetId: string, fallback: string) => {
-      const asset = assets.get(assetId);
-      return asset === undefined ? fallback : formatAssetName(asset);
-    };
     for (const root of materialized.roots) {
       const diagnostic = getUnsafeDynamicPublishedMdxDiagnostic({
         root,
@@ -125,6 +160,20 @@ export const loadContentDatabasePublishDiagnostics = async (
     }
     for (const { diagnostic } of materialized.warnings) {
       if (diagnostic.severity !== "error") {
+        continue;
+      }
+      if (
+        diagnostic.blockInstanceId !== undefined &&
+        diagnostic.assetId !== undefined &&
+        (diagnostic.message.startsWith(
+          `Published MDX Asset "${diagnostic.assetId}" could not be loaded:`
+        ) ||
+          diagnostic.message ===
+            `Published MDX Asset "${diagnostic.assetId}" content is unavailable`) &&
+        dependencyReadFailureKeys.has(
+          JSON.stringify([diagnostic.blockInstanceId, diagnostic.assetId])
+        )
+      ) {
         continue;
       }
       const assetId = diagnostic.assetId ?? "";
