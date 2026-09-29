@@ -117,9 +117,7 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
-import {
-  getContentDatabasePublishFindings,
-} from "./content-database-publish-warning";
+import { getContentDatabasePublishFindings } from "./content-database-publish-warning";
 import {
   PublishValidationResults,
   type PublishValidationFinding,
@@ -144,7 +142,7 @@ const PrePublishAuditMessage = ({
   }
   return (
     <>
-      {message} {" "}
+      {message}{" "}
       <PrePublishInstanceLink instanceId={instanceId}>
         Show element
       </PrePublishInstanceLink>

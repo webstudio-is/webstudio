@@ -55,9 +55,10 @@ export const PublishValidationResults = ({
   const reportText = [
     `Publish validation report: ${countLabel}`,
     errors.length > 0 &&
-      [`Errors (${errors.length})`, ...errors.map(({ reportText }) => reportText)].join(
-        "\n\n"
-      ),
+      [
+        `Errors (${errors.length})`,
+        ...errors.map(({ reportText }) => reportText),
+      ].join("\n\n"),
     warnings.length > 0 &&
       [
         `Warnings (${warnings.length})`,
