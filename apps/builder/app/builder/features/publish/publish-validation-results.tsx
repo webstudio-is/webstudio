@@ -45,12 +45,16 @@ export const PublishValidationResults = ({
     <>
       <PanelBanner variant={errors.length > 0 ? "error" : "warning"}>
         <Flex align="center" justify="between" gap={2}>
-          <Text>
+          <Text css={{ flex: 1, minWidth: 0 }}>
             Publish check found {countLabel}.{" "}
             {errors.length > 0 && "Fix the errors before publishing."}
           </Text>
-          <Button color="ghost" onClick={() => setIsOpen(true)}>
-            View details
+          <Button
+            color="ghost"
+            css={{ flexShrink: 0 }}
+            onClick={() => setIsOpen(true)}
+          >
+            See issues
           </Button>
         </Flex>
       </PanelBanner>
