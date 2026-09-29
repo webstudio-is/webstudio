@@ -50,12 +50,12 @@ export const getPrePublishErrorMessage = (
               .replace("Root / ", "")
               .replaceAll(" / ", " > ")}`;
       return [
-        `Could not load “${formatAssetName(asset)}” in ${location}.`,
-        "Restore or reupload the file, then run publish validation again.",
+        `Publish checks couldn’t read “${formatAssetName(asset)}” in ${location}.`,
+        "Try again. If it continues, contact Webstudio support and include this document ID:",
         `Document ID: ${documentId}.`,
       ].join(" ");
     }
-    return `Could not load a linked content document from Content Assets. Open the Content Assets panel to inspect the linked file, then restore or reupload its source and run publish validation again. Document ID: ${documentId}.`;
+    return `Publish checks couldn’t read a linked file in Content Assets. Try again. If it continues, contact Webstudio support and include this document ID: ${documentId}.`;
   }
   return message ?? "Content database validation failed";
 };
