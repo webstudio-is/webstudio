@@ -123,30 +123,16 @@ describe("wsauth", () => {
     });
   });
 
-  test("validates route syntax", () => {
-    expect(validatePathnamePattern("/private")).toBeUndefined();
-    expect(validatePathnamePattern("/docs/*")).toBeUndefined();
-    expect(validatePathnamePattern("private")).toBe(
-      'Route must start with "/"'
-    );
-    expect(validatePathnamePattern("/docs/*/page")).toBe(
-      "Wildcard route segment must be the last segment"
-    );
-    expect(validatePathnamePattern("/docs?")).toBe(
-      'Optional marker "?" is only allowed on a named parameter'
-    );
-    expect(validatePathnamePattern("/%2A")).toBe(
-      'Encoded route syntax is not supported in "%2A"'
-    );
-  });
-
   test.each([
     ["/", undefined],
+    ["/private", undefined],
     ["/static/path", undefined],
+    ["/docs/*", undefined],
     ["/:id", undefined],
     ["/:id?", undefined],
     ["/:path*", undefined],
     ["/*", undefined],
+    ["private", 'Route must start with "/"'],
     ["/docs/", 'Route must not end with "/"'],
     ["/docs//api", 'Route must not contain repeating "/"'],
     ["/docs/*/api", "Wildcard route segment must be the last segment"],
