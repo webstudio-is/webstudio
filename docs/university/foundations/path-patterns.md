@@ -1,30 +1,30 @@
 ---
-description: Write and understand URL path patterns used by project settings.
+description: Write path patterns for project-level Authentication and HTTP response header rules.
 ---
 
-# URL path patterns
+# Project settings path patterns
 
-Webstudio uses path patterns in Page Settings and Project settings. In Project settings, the same syntax is used by **Authentication** and **HTTP response headers**. For example, you can require a password for every page under `/private` or apply a response header to every page under `/docs`.
+Project-level **Authentication** and **HTTP response headers** use the same path pattern syntax and validator. Use these patterns to apply a rule to one page or a group of pages—for example, require a password for `/private/*` or apply a response header to `/docs/*`.
 
-Page Settings use the same basic syntax to define page paths, but page routing and project settings do not match every pattern in exactly the same way. Differences are described below.
+These are not the same implementation as Page Settings paths. Page Settings routes use `URLPattern`, which supports additional pattern forms and has different matching behavior. See [Page settings: Path](page-settings.md#path) for page route syntax and behavior.
 
 ## Pattern syntax
 
-Patterns are slash-separated URL path segments and must start with `/`. A segment can be a literal path name, a named parameter, an optional parameter, or a wildcard.
+Project settings patterns are slash-separated URL path segments. A segment can be a literal path name, a named parameter, an optional parameter, or a wildcard.
 
 | Pattern | Meaning | Examples that match |
 | --- | --- | --- |
 | `/about` | Exact static path | `/about` |
 | `/blog/:slug` | One required path segment named `slug` | `/blog/hello-world` |
 | `/blog/:slug?` | One optional path segment named `slug` | `/blog`, `/blog/hello-world` |
-| `/docs/*` | Any number of path segments after `/docs` | `/docs`, `/docs/setup`, `/docs/api/v1` |
-| `/files/:path*` | Any number of path segments after `/files`, using the name `path` | `/files`, `/files/image.png`, `/files/a/b.txt` |
+| `/docs/*` | `/docs` and any number of path segments below it | `/docs`, `/docs/setup`, `/docs/api/v1` |
+| `/files/:path*` | `/files` and any number of path segments below it | `/files`, `/files/image.png`, `/files/a/b.txt` |
 | `/*` | Any path on the site, including the home page | `/`, `/about`, `/blog/post` |
 | `/` | The home page only | `/` |
 
-Use `:name` for a single segment, `:name?` for one optional segment, and `:name*` for a wildcard that captures the remaining path. Parameter names use letters, numbers, and underscores. `*` and `:name*` must be the final segment.
+Use `:name` for a single segment, `:name?` for one optional segment, and `:name*` for a wildcard matching the remaining path. Parameter names use letters, numbers, and underscores. A parameter must occupy a complete segment; `*` and `:name*` must be the final segment.
 
-For **Project settings**, patterns must start with `/`, cannot contain repeating slashes such as `//`, and cannot end with `/` except for the home page pattern `/`. For a page's home route, Page Settings uses an empty path instead of `/`.
+For **Project settings**, patterns must start with `/`, cannot contain repeating slashes such as `//`, and cannot end with `/` except for the home page pattern `/`.
 
 ## Matching behavior in Project settings
 
@@ -40,16 +40,14 @@ Project-level Authentication and Headers compare patterns against the URL pathna
 
 When writing Authentication and Headers rules, use these examples to check the scope before publishing. A pattern such as `/*` is site-wide; `/` is only the home page.
 
-## Difference from Page Settings routes
+## How Page Settings paths differ
 
-Page Settings use path patterns to select which page handles a URL. Project-level Authentication and Headers use patterns to decide whether a rule applies to the URL pathname. The syntax is shared, but wildcard behavior has one important difference:
+Page Settings routes are parsed and matched separately using `URLPattern`. Their syntax supports forms that project settings do not, such as parameters embedded within a segment. Matching also differs for wildcards:
 
-- In **Project settings**, `/docs/*` matches `/docs` and all paths below it.
-- As a **Page Settings** route, `/docs/*` matches paths below `/docs`, but not `/docs` itself.
+- A project setting pattern `/docs/*` matches `/docs` and paths below it.
+- A Page Settings route `/docs/*` matches paths below `/docs`, but not `/docs` itself.
 
-Page routing can also capture and decode parameter values for use by dynamic pages. Authentication and Headers use patterns only to determine whether a rule matches; they do not expose parameter values.
-
-For Page Settings fields and page routing behavior, see [Page settings](page-settings.md#path).
+Page routing can capture and decode parameter values for dynamic pages. Authentication and Headers only use the pattern to determine whether a rule applies; parameter values are not exposed. Do not assume that a pattern that works in one settings area has the same meaning in the other.
 
 ## Choose a pattern
 
