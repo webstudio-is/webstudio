@@ -4,6 +4,7 @@ import {
   getContentDatabasePublishDiagnostics,
 } from "./content-database.server";
 import {
+  getPublishedMdxAssetIds,
   resolvePublishedMdxAssetCandidates,
   type PublishedMdxDependencyReadFailure,
   type PublishedMdxTemplateOmission,
@@ -105,6 +106,8 @@ export const loadContentDatabasePublishDiagnostics = async (
       build: { ...bundle.build, pages: migratePages(bundle.build.pages) },
       artifact: bundle.assetIndex,
       blockInstanceIds: mdxBlockInstanceIds,
+      allAssetIds: new Set(bundle.assets.map(({ id }) => id)),
+      allMdxAssetIds: getPublishedMdxAssetIds(bundle.assets),
     });
     const materialized = await materializePublishedMdx({
       route: "prepublish",

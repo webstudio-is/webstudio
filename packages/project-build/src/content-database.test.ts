@@ -687,6 +687,76 @@ describe("Content Block MDX compilation", () => {
     }
   );
 
+  test("excludes known non-MDX assets from dynamic source candidates", () => {
+    const resourceVariable = encodeDataVariableId("posts-data");
+    const build = createBuild({ sourceType: "expression" });
+    build.props[0].value = `${resourceVariable}.data.id`;
+    build.dataSources.push({
+      type: "resource",
+      id: "posts-data",
+      scopeInstanceId: "block",
+      name: "posts",
+      resourceId: "posts",
+    });
+    build.resources.push({
+      id: "posts",
+      name: "Posts",
+      control: "system",
+      method: "post",
+      url: '"/$resources/assets"',
+      headers: [],
+      body: createStructuredAssetQueryResourceBody({
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: '"legal"',
+            },
+          ],
+        },
+        sort: [],
+        limit: "10",
+        offset: "0",
+        output: { mode: "all", includeMetadata: false },
+        content: { mode: "none" },
+      }),
+    });
+    const artifact = {
+      documents: [
+        {
+          _id: "article.mdx",
+          name: "article.mdx",
+          path: "MDX-Data/Guidelines/article.mdx",
+          key: "article",
+          extension: "mdx",
+          mimeType: "text/mdx",
+          size: 1,
+          properties: { slug: "legal" },
+        },
+        {
+          _id: "collection.json",
+          name: "collection.json",
+          path: "MDX-Data/Guidelines/collection.json",
+          key: "collection",
+          extension: "json",
+          mimeType: "application/json",
+          size: 1,
+          properties: { slug: "legal" },
+        },
+      ],
+    } as unknown as ContentArtifactV1;
+
+    expect(
+      resolvePublishedMdxAssetCandidates({
+        build,
+        artifact,
+        allAssetIds: new Set(["article.mdx", "collection.json"]),
+        allMdxAssetIds: new Set(["article.mdx"]),
+      }).get("block")
+    ).toEqual(["article.mdx"]);
+  });
+
   test("bounds a mutable project variable to the project's MDX assets", () => {
     const build = createBuild({ sourceType: "expression" });
     build.props[0].value = encodeDataVariableId("article-source");

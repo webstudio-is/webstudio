@@ -547,12 +547,14 @@ export const resolvePublishedMdxAssetCandidates = ({
   artifact,
   allowUnresolved = false,
   blockInstanceIds = getPublishedInstanceIds(build),
+  allAssetIds,
   allMdxAssetIds,
 }: {
   build: PublishedContentDatabaseBuild;
   artifact?: ContentArtifactV1;
   allowUnresolved?: boolean;
   blockInstanceIds?: ReadonlySet<string>;
+  allAssetIds?: ReadonlySet<string>;
   allMdxAssetIds?: ReadonlySet<string>;
 }) => {
   const instances = new Map(
@@ -585,6 +587,12 @@ export const resolvePublishedMdxAssetCandidates = ({
   // Compiled documents are projected file records; metadata such as _type
   // can be omitted by the resource's output selection.
   const documents = artifact?.documents ?? [];
+  const knownNonMdxAssetIds =
+    allAssetIds === undefined || allMdxAssetIds === undefined
+      ? undefined
+      : new Set(
+          [...allAssetIds].filter((assetId) => !allMdxAssetIds.has(assetId))
+        );
 
   const evaluateDataSource = (
     dataSourceId: string,
@@ -751,10 +759,15 @@ export const resolvePublishedMdxAssetCandidates = ({
               path.slice(1),
               new Set(),
               mutableVariables
-            ).filter(
-              (value): value is string =>
-                typeof value === "string" && value.length > 0
-            );
+            )
+              .filter(
+                (value): value is string =>
+                  typeof value === "string" && value.length > 0
+              )
+              // Dynamic resource queries can conservatively include every
+              // matching file when route parameters are unknown. Keep known
+              // non-MDX assets out of the MDX materialization candidates.
+              .filter((assetId) => !knownNonMdxAssetIds?.has(assetId));
     } catch (error) {
       if (allowUnresolved === false) {
         throw error;
