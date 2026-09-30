@@ -6,7 +6,7 @@ description: Write path patterns for project-level Authentication and HTTP respo
 
 Project-level **Authentication** and **HTTP response headers** use the same path pattern syntax and validator. Use these patterns to apply a rule to one page or a group of pages—for example, require a password for `/private/*` or apply a response header to `/docs/*`.
 
-These are not the same implementation as Page Settings paths. Page Settings routes use `URLPattern`, which supports additional pattern forms and has different matching behavior. See [Page settings: Path](page-settings.md#path) for page route syntax and behavior.
+Page Settings paths use a separate `URLPattern`-based implementation with Webstudio-specific validation. Although the general `URLPattern` syntax is broader, Page Settings applies additional restrictions too; for example, it rejects a dynamic parameter mixed with static text in one segment. See [Page settings: Path](page-settings.md#path) for its documented syntax.
 
 ## Pattern syntax
 
@@ -42,12 +42,12 @@ When writing Authentication and Headers rules, use these examples to check the s
 
 ## How Page Settings paths differ
 
-Page Settings routes are parsed and matched separately using `URLPattern`. Their syntax supports forms that project settings do not, such as parameters embedded within a segment. Matching also differs for wildcards:
+Page Settings routes are parsed and matched separately using `URLPattern`, then checked by Webstudio's own validator. Matching differs for wildcards:
 
 - A project setting pattern `/docs/*` matches `/docs` and paths below it.
 - A Page Settings route `/docs/*` matches paths below `/docs`, but not `/docs` itself.
 
-Page routing can capture and decode parameter values for dynamic pages. Authentication and Headers only use the pattern to determine whether a rule applies; parameter values are not exposed. Do not assume that a pattern that works in one settings area has the same meaning in the other.
+Page routing can capture and decode parameter values for dynamic pages. Authentication and Headers only use the pattern to determine whether a rule applies; parameter values are not exposed. The common pattern forms overlap, but don't assume they match the same URLs in both settings areas.
 
 ## Choose a pattern
 
