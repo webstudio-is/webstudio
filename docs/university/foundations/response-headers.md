@@ -68,7 +68,7 @@ Check that the response includes the header and value you configured. Use a `GET
 
 Webstudio Cloud applies configured headers to site responses, including redirects and site errors. Static assets served by the CDN keep their existing headers.
 
-For a CLI project, Webstudio generates the configuration in `app/__generated__/$resources.headers.server.ts`. Your server or hosting adapter must apply those rules to responses, and any proxy or CDN in front of it must preserve them. Other hosting templates and static exports do not apply the settings automatically.
+If you export and host the site elsewhere, configure response headers with your hosting provider. The Headers settings do not automatically configure that host.
 
 You can add up to 100 rules. Header values must be non-empty, cannot contain line breaks or characters outside Latin-1, and can be up to 8 KB; all rules combined are limited to 16 KB. Cookies, connection-specific headers, and response-body framing headers cannot be configured.
 
