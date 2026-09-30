@@ -344,13 +344,10 @@ describe("published asset data", () => {
       .mockResolvedValueOnce(preliminaryArtifact)
       .mockResolvedValueOnce(finalArtifact);
     const source = "# Article";
-    const sourceBytes = new TextEncoder().encode(source);
     const assetStore = {
-      readFile: vi.fn(async () => ({
-        data: (async function* () {
-          yield sourceBytes;
-        })(),
-      })),
+      readFile: vi.fn().mockResolvedValue({
+        data: new Blob([source]).stream(),
+      }),
     };
     const resolvePlan = vi.fn(
       async (
