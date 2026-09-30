@@ -117,6 +117,7 @@ const ResourceForm = ({ resource }: { resource: Resource }) => {
       }}
     >
       <UrlField
+        autoFocus
         scope={scope}
         aliases={aliases}
         value={url}
@@ -135,6 +136,7 @@ const ResourceForm = ({ resource }: { resource: Resource }) => {
       />
       <MethodField value={method} onChange={setMethod} />
       <Headers
+        suggestHeaders
         scope={scope}
         aliases={aliases}
         headers={headers}

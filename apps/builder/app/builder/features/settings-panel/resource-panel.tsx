@@ -38,6 +38,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
+  Combobox,
   Flex,
   Grid,
   InputErrorsTooltip,
@@ -83,6 +84,10 @@ import {
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";
+import {
+  getRequestHeaderValueSuggestions,
+  requestHeaderNames,
+} from "./request-header-suggestions";
 import { CenteredPanelMessage, Row } from "./shared";
 const AssetQueryForm = lazy(() =>
   import("./asset-query-form").then(({ AssetQueryForm }) => ({
@@ -96,6 +101,7 @@ export const UrlField = ({
   value,
   onChange,
   onCurlPaste,
+  autoFocus,
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
@@ -105,6 +111,7 @@ export const UrlField = ({
     searchParams?: Resource["searchParams"]
   ) => void;
   onCurlPaste: (curl: CurlRequest) => void;
+  autoFocus?: boolean;
 }) => {
   const urlId = useId();
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -154,6 +161,7 @@ export const UrlField = ({
           <InputErrorsTooltip errors={error ? [error] : undefined}>
             <TextArea
               ref={ref}
+              autoFocus={autoFocus}
               name="url-validator"
               id={urlId}
               rows={1}
@@ -228,6 +236,8 @@ const ExpressionNameValuePair = ({
   value,
   onChange,
   onDelete,
+  suggestHeaders,
+  autoFocusName,
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
@@ -236,6 +246,8 @@ const ExpressionNameValuePair = ({
   value: string;
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
+  suggestHeaders?: boolean;
+  autoFocusName: boolean;
 }) => {
   const evaluatedValue = useAsyncValue(
     () => evaluateExpressionWithinScope(value, scope),
@@ -243,20 +255,42 @@ const ExpressionNameValuePair = ({
     undefined
   );
   const isValueString = typeof evaluatedValue === "string";
+  const valueSuggestions =
+    kind === "header" && suggestHeaders
+      ? getRequestHeaderValueSuggestions(name)
+      : [];
   return (
     <Grid
       gap={2}
       align="center"
       css={{ gridTemplateColumns: `120px 1fr min-content` }}
     >
-      <InputField
-        // autofocus only new fields
-        autoFocus={name === ""}
-        placeholder="Name"
-        name={kind === "header" ? "header-name" : "search-param-name"}
-        value={name}
-        onChange={(event) => onChange(event.target.value, value)}
-      />
+      {kind === "header" && suggestHeaders ? (
+        <Combobox<string>
+          modal={false}
+          autoFocus={autoFocusName}
+          placeholder="Name"
+          name="header-name"
+          value={name}
+          getItems={() => [...requestHeaderNames]}
+          itemToString={(item) => item ?? ""}
+          onItemSelect={(selected) => onChange(selected, value)}
+          onChange={(nextName) => {
+            if (nextName !== undefined) {
+              onChange(nextName, value);
+            }
+          }}
+        />
+      ) : (
+        <InputField
+          // autofocus only new fields
+          autoFocus={autoFocusName}
+          placeholder="Name"
+          name={kind === "header" ? "header-name" : "search-param-name"}
+          value={name}
+          onChange={(event) => onChange(event.target.value, value)}
+        />
+      )}
       <input
         type="hidden"
         readOnly={true}
@@ -272,19 +306,37 @@ const ExpressionNameValuePair = ({
         onChangeValue={(value) => onChange(name, JSON.stringify(value))}
         onChangeExpression={(value) => onChange(name, value)}
         onRemove={(value) => onChange(name, JSON.stringify(value))}
-        renderControl={({ value, readOnly, onChangeValue }) => (
-          <InputField
-            placeholder="Value"
-            name={
-              kind === "header"
-                ? "header-value-validator"
-                : "search-param-value-literal"
-            }
-            disabled={readOnly || !isValueString}
-            value={value}
-            onChange={(event) => onChangeValue(event.target.value)}
-          />
-        )}
+        renderControl={({ value, readOnly, onChangeValue }) =>
+          valueSuggestions.length > 0 ? (
+            <Combobox<string>
+              modal={false}
+              placeholder="Value"
+              name="header-value-validator"
+              disabled={readOnly || !isValueString}
+              value={value}
+              getItems={() => [...valueSuggestions]}
+              itemToString={(item) => item ?? ""}
+              onItemSelect={onChangeValue}
+              onChange={(nextValue) => {
+                if (nextValue !== undefined) {
+                  onChangeValue(nextValue);
+                }
+              }}
+            />
+          ) : (
+            <InputField
+              placeholder="Value"
+              name={
+                kind === "header"
+                  ? "header-value-validator"
+                  : "search-param-value-literal"
+              }
+              disabled={readOnly || !isValueString}
+              value={value}
+              onChange={(event) => onChangeValue(event.target.value)}
+            />
+          )
+        }
       />
       <SmallIconButton
         aria-label={`Delete ${kind}`}
@@ -302,14 +354,20 @@ const ExpressionPairs = ({
   kind,
   values,
   onChange,
+  suggestHeaders,
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
   kind: "header" | "search param";
   values: ExpressionPair[];
   onChange: (values: ExpressionPair[]) => void;
+  suggestHeaders?: boolean;
 }) => {
   const label = kind === "header" ? "Headers" : "Search params";
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    hasMounted.current = true;
+  }, []);
   return (
     <Grid gap={1}>
       <Flex justify="between" align="center">
@@ -328,6 +386,10 @@ const ExpressionPairs = ({
             scope={scope}
             aliases={aliases}
             kind={kind}
+            suggestHeaders={suggestHeaders}
+            autoFocusName={
+              item.name === "" && (!suggestHeaders || hasMounted.current)
+            }
             name={item.name}
             value={item.value}
             onChange={(name, value) => {
@@ -368,6 +430,7 @@ export const Headers = ({
   scope: Record<string, unknown>;
   headers: Resource["headers"];
   onChange: (headers: Resource["headers"]) => void;
+  suggestHeaders?: boolean;
 }) => <ExpressionPairs {...props} kind="header" values={headers} />;
 
 const CacheMaxAge = ({
