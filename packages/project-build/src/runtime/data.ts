@@ -669,6 +669,41 @@ const findVariablesByInstanceId = ({
   return { maskedIdByName, availableDataSourceIds };
 };
 
+export const createFindAvailableVariables = ({
+  instances,
+  dataSources,
+}: {
+  instances: Instances;
+  dataSources: DataSources;
+}) => {
+  // These indexes depend only on the project data, not on the starting
+  // instance. Reuse them when resolving variables for many template roots.
+  const parentInstanceById = getParentInstanceById(instances);
+  const dataSourcesByScopeInstanceId =
+    getDataSourcesByScopeInstanceId(dataSources);
+
+  return (startingInstanceId: Instance["id"]) => {
+    const { maskedIdByName } = findVariablesByInstanceId({
+      startingInstanceId,
+      parentInstanceById,
+      instances,
+      dataSources,
+      dataSourcesByScopeInstanceId,
+    });
+    const availableVariables: DataSource[] = [];
+    for (const dataSourceId of maskedIdByName.values()) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource) {
+        availableVariables.push(dataSource);
+      }
+      if (dataSourceId === SYSTEM_VARIABLE_ID) {
+        availableVariables.push(systemParameter);
+      }
+    }
+    return availableVariables;
+  };
+};
+
 export const findAvailableVariables = ({
   startingInstanceId,
   instances,
@@ -678,24 +713,9 @@ export const findAvailableVariables = ({
   instances: Instances;
   dataSources: DataSources;
 }) => {
-  const { maskedIdByName } = findVariablesByInstanceId({
-    startingInstanceId,
-    parentInstanceById: getParentInstanceById(instances),
-    instances,
-    dataSources,
-    dataSourcesByScopeInstanceId: getDataSourcesByScopeInstanceId(dataSources),
-  });
-  const availableVariables: DataSource[] = [];
-  for (const dataSourceId of maskedIdByName.values()) {
-    const dataSource = dataSources.get(dataSourceId);
-    if (dataSource) {
-      availableVariables.push(dataSource);
-    }
-    if (dataSourceId === SYSTEM_VARIABLE_ID) {
-      availableVariables.push(systemParameter);
-    }
-  }
-  return availableVariables;
+  return createFindAvailableVariables({ instances, dataSources })(
+    startingInstanceId
+  );
 };
 
 export const bindExpressionToInstanceScope = ({

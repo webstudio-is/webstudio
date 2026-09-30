@@ -7,6 +7,24 @@ type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>
 >;
 
+const missingAssetFix =
+  "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset.";
+
+const invalidMdxFixes = {
+  "source-read-failed":
+    "Check that the asset is available in Content Assets, then run Validate again. If it still fails, investigate the document with Webstudio MCP: https://wstd.us/mcp.",
+  "missing-source": missingAssetFix,
+  "missing-asset": missingAssetFix,
+  "linked-document-unavailable":
+    "Restore or reconnect the referenced document in Content Assets, then run validation again.",
+  "html-content-model":
+    "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links.",
+  "dynamic-resource":
+    "Use a static MDX source for this Content Block, or remove Resource-dependent content from the MDX file.",
+  "dynamic-source-unbounded":
+    "Use a static MDX source or narrow the Collection query so validation can identify its MDX assets.",
+} as const;
+
 export const getContentDatabasePublishFindings = (
   diagnostics: ContentDatabasePublishDiagnostics
 ) => {
@@ -19,27 +37,18 @@ export const getContentDatabasePublishFindings = (
       const message =
         "message" in diagnostic ? diagnostic.message : diagnostic.code;
       const fix =
-        message.includes("requires unavailable MDX Asset") ||
-        message.includes("content is unavailable")
-          ? "Choose an available MDX asset in this Content Block's source settings, or restore the missing asset."
-          : message.includes("Linked document")
-            ? "Restore or reconnect the referenced document in Content Assets, then run validation again."
-            : message.includes("violates HTML spec")
-              ? "Edit the MDX element nesting to satisfy the HTML content model. For nested links, remove one of the links."
-              : message.includes(
-                    "Dynamic MDX selected by a Collection item cannot contain Resources"
-                  ) ||
-                  message.includes(
-                    "Dynamic MDX cannot contain action Resources"
-                  )
-                ? "Use a static MDX source for this Content Block, or remove Resource-dependent content from the MDX file."
-                : "Open this MDX source and fix the reported error.";
+        diagnostic.code === "invalid-mdx" && diagnostic.reason !== undefined
+          ? invalidMdxFixes[diagnostic.reason]
+          : "Open this MDX source and fix the reported error.";
       const context = [
         `Diagnostic code: ${diagnostic.code}`,
         `Content Block instance ID: ${diagnostic.blockInstanceId}`,
         diagnostic.assetId === undefined
           ? undefined
           : `Asset ID: ${diagnostic.assetId}`,
+        diagnostic.code === "invalid-mdx" && diagnostic.reason !== undefined
+          ? `Diagnostic reason: ${diagnostic.reason}`
+          : undefined,
         diagnostic.contentRef === undefined
           ? undefined
           : `Content reference: ${diagnostic.contentRef}`,

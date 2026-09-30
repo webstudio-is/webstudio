@@ -25,6 +25,7 @@ describe("content database publish findings", () => {
             diagnostic: {
               code: "invalid-mdx",
               severity: "error",
+              reason: "html-content-model",
               blockInstanceId: "block-1",
               assetId: "asset-1",
               contentRef: "article-revision.mdx",
@@ -41,6 +42,7 @@ describe("content database publish findings", () => {
             diagnostic: {
               code: "invalid-mdx",
               severity: "error",
+              reason: "missing-asset",
               blockInstanceId: "block-2",
               assetId: "missing-asset",
               message:
@@ -65,6 +67,36 @@ describe("content database publish findings", () => {
     );
     expect(findings[1].reportText).toContain(
       "Choose an available MDX asset in this Content Block's source settings"
+    );
+  });
+
+  test("suggests storage troubleshooting for MDX source read failures", () => {
+    const [finding] = getContentDatabasePublishFindings(
+      createDiagnostics({
+        mdxErrors: [
+          {
+            filename: "article.mdx",
+            diagnostic: {
+              code: "invalid-mdx",
+              severity: "error",
+              reason: "source-read-failed",
+              blockInstanceId: "block-1",
+              assetId: "asset-1",
+              contentRef: "article-revision.mdx",
+              message: "Object storage returned an I/O error",
+            },
+          },
+        ],
+      })
+    );
+
+    expect(finding.reportText).toContain(
+      "Check that the asset is available in Content Assets, then run Validate again."
+    );
+    expect(finding.reportText).toContain("https://wstd.us/mcp");
+    expect(finding.reportText).toContain("Asset ID: asset-1");
+    expect(finding.reportText).toContain(
+      "Diagnostic reason: source-read-failed"
     );
   });
 

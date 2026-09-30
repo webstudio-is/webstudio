@@ -85,6 +85,7 @@ export const createMdxContentModelDiagnostics = ({
       {
         code: "invalid-mdx" as const,
         severity: "error" as const,
+        reason: "html-content-model" as const,
         blockInstanceId: root.identity.blockInstanceId,
         assetId: root.identity.assetId,
         contentRef: root.identity.contentRef,

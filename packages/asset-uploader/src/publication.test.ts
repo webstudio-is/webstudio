@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { createDefaultCollectionConfig } from "@webstudio-is/content-engine";
+import {
+  createDefaultCollectionConfig,
+  type ContentArtifactV1,
+} from "@webstudio-is/content-engine";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   preparePublishedAssetData,
@@ -340,14 +343,38 @@ describe("published asset data", () => {
       .fn()
       .mockResolvedValueOnce(preliminaryArtifact)
       .mockResolvedValueOnce(finalArtifact);
-    const resolvePlan = vi.fn(() => resolvedPlan);
+    const source = "# Article";
+    const assetStore = {
+      readFile: vi.fn().mockResolvedValue({
+        data: new Blob([source]).stream(),
+      }),
+    };
+    const resolvePlan = vi.fn(
+      async (
+        _artifact: ContentArtifactV1,
+        loadDocumentSource: (input: {
+          id: string;
+          revision: string;
+          contentRef: string;
+        }) => Promise<string>
+      ) => {
+        expect(
+          await loadDocumentSource({
+            id: "article.mdx",
+            revision: "revision-1",
+            contentRef: "article.mdx",
+          })
+        ).toBe(source);
+        return resolvedPlan;
+      }
+    );
     const assetData = { assets: [], assetFolders: [] };
 
     const result = await preparePublishedAssetData(
       {
         projectId: "project-1",
         context: {} as never,
-        assetStore: {} as never,
+        assetStore: assetStore as never,
         contentDatabaseMaxBytes: 512_000,
         plan: initialPlan,
         retainedAssetIds: [],
@@ -366,10 +393,16 @@ describe("published asset data", () => {
 
     expect(result.artifact).toBe(finalArtifact);
     expect(prepareIndex.mock.calls).toEqual([[initialPlan], [resolvedPlan]]);
-    expect(resolvePlan.mock.calls).toEqual([
+    expect(resolvePlan.mock.calls.map(([artifact]) => [artifact])).toEqual([
       [preliminaryArtifact],
       [finalArtifact],
     ]);
+    expect(
+      resolvePlan.mock.calls.every(([, loadDocumentSource]) =>
+        Boolean(loadDocumentSource)
+      )
+    ).toBe(true);
+    expect(assetStore.readFile).toHaveBeenCalledExactlyOnceWith("article.mdx");
   });
 
   test("keeps the initial artifact when its dependency plan is already stable", async () => {

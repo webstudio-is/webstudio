@@ -963,7 +963,7 @@ describe("prebuild", () => {
         ).rejects.toThrow(
           hasSource === undefined
             ? "require a content database"
-            : 'Published MDX Asset "article" content is unavailable'
+            : 'Published MDX Asset "article" could not be loaded'
         );
         return;
       }

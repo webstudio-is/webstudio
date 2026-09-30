@@ -1097,7 +1097,8 @@ export const apiRouter = router({
         }
         const diagnostics = await loadContentDatabasePublishDiagnostics(
           input.projectId,
-          ctx
+          ctx,
+          { build }
         );
         return {
           valid: true,
