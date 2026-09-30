@@ -447,7 +447,7 @@ export const createProductionBuild = async (
     // the Pro requirement. The caller publishes only after this check passes.
     const snapshot = await context.postgrest.client
       .from("Build")
-      .select("projectSettings")
+      .select("projectSettings,pages")
       .eq("id", buildId);
     if (snapshot.error) {
       throw snapshot.error;
@@ -455,9 +455,16 @@ export const createProductionBuild = async (
     if (snapshot.data.length !== 1) {
       throw new Error("Cannot verify published response headers");
     }
-    const settings = parseProjectSettings(
-      parseConfig<unknown>(snapshot.data[0].projectSettings)
-    );
+    const savedBuild = snapshot.data[0];
+    const settings =
+      savedBuild.projectSettings === undefined ||
+      savedBuild.projectSettings === null
+        ? createProjectSettingsFromPages(
+            migratePages(parseConfig<unknown>(savedBuild.pages))
+          )
+        : parseProjectSettings(
+            parseConfig<unknown>(savedBuild.projectSettings)
+          );
     if (!hasCustomResponseHeaders(settings.meta.customHeaders)) {
       return { id: buildId };
     }
