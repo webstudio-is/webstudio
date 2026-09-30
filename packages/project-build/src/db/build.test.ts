@@ -402,6 +402,63 @@ describe("createBuild (msw)", () => {
 
 describe("createProductionBuild (msw)", () => {
   test.each([
+    { label: "without custom headers", headers: [], denied: false },
+    {
+      label: "with custom headers on a Free plan",
+      headers: [{ name: "X-Frame-Options", value: "DENY" }],
+      denied: true,
+    },
+  ])(
+    "reads legacy settings from the saved snapshot $label",
+    async ({ headers, denied }) => {
+      const removeBuild = vi.fn(() => empty({ status: 204 }));
+      server.use(
+        db.get("Project", () =>
+          json({
+            id: "proj-1",
+            userId: "project-owner",
+            domain: "project-domain",
+          })
+        ),
+        db.get("Build", ({ request }) => {
+          // Use the saved snapshot's legacy settings, even when the development
+          // build read before snapshot creation had different settings.
+          if (new URL(request.url).searchParams.get("id") === "eq.build-prod") {
+            return json([
+              {
+                projectSettings: null,
+                pages: JSON.stringify({
+                  ...JSON.parse(buildRow.pages),
+                  meta: { siteName: "Legacy site", customHeaders: headers },
+                }),
+              },
+            ]);
+          }
+          return json([buildRow]);
+        }),
+        db.post("rpc/create_production_build", () => json("build-prod")),
+        db.delete("Build", removeBuild)
+      );
+      const result = createProductionBuild(
+        {
+          projectId: "proj-1",
+          deployment: { destination: "saas", domains: ["example.com"] },
+        },
+        createContext()
+      );
+      if (denied) {
+        await expect(result).rejects.toThrow(
+          "Custom headers are a Pro feature"
+        );
+        expect(removeBuild).toHaveBeenCalledOnce();
+      } else {
+        await expect(result).resolves.toEqual({ id: "build-prod" });
+        expect(removeBuild).not.toHaveBeenCalled();
+      }
+    }
+  );
+
+  test.each([
     {
       label: "Free owner, custom domain",
       allowed: false,
@@ -583,7 +640,9 @@ describe("createProductionBuild (msw)", () => {
           const url = new URL(request.url);
           if (url.searchParams.get("id") === "eq.build-prod") {
             readSnapshot();
-            expect(url.searchParams.get("select")).toBe("projectSettings");
+            expect(url.searchParams.get("select")).toBe(
+              "projectSettings,pages"
+            );
             return json([
               {
                 projectSettings: JSON.stringify({
