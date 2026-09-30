@@ -1,15 +1,14 @@
 import { getAllPages, getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
-  matchUrlPattern,
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
+import { matchPathnameRoutes } from "@webstudio-is/wsauth";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 import { $isPreviewMode, $selectedPageHash } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
-import { comparePatterns } from "./shared/routing-priority";
 
 const getSelectedPagePathname = () => {
   const pages = $pages.get();
@@ -45,26 +44,25 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     }
   }
   const pageHref = new URL(href, "https://any-valid.url");
-  // sort pages before matching to not depend on order of page creation
-  const sortedPages = getAllPages(pages).toSorted((leftPage, rightPage) =>
-    comparePatterns(leftPage.path, rightPage.path)
+  const matchedPage = matchPathnameRoutes(
+    getAllPages(pages).map((page) => ({
+      pattern: getPagePath(page.id, pages),
+      value: page,
+    })),
+    pageHref.pathname
   );
-  for (const page of sortedPages) {
-    const pagePath = getPagePath(page.id, pages);
-    const params = matchUrlPattern(pagePath, pageHref.pathname);
-    if (params) {
-      // populate search params with form data values if available
-      if (formData) {
-        for (const [key, value] of formData.entries()) {
-          pageHref.searchParams.set(key, value.toString());
-        }
+  if (matchedPage) {
+    const { value: page, params } = matchedPage;
+    // populate search params with form data values if available
+    if (formData) {
+      for (const [key, value] of formData.entries()) {
+        pageHref.searchParams.set(key, value.toString());
       }
-      const search = Object.fromEntries(pageHref.searchParams);
-      $selectedPageHash.set({ hash: pageHref.hash });
-      selectPage(page.id);
-      updateCurrentSystem({ params, search });
-      break;
     }
+    const search = Object.fromEntries(pageHref.searchParams);
+    $selectedPageHash.set({ hash: pageHref.hash });
+    selectPage(page.id);
+    updateCurrentSystem({ params, search });
   }
 };
 

@@ -46,6 +46,10 @@ test("publishes type declarations for every public entrypoint", async () => {
     ),
     ...[
       ["zod", dirname(require.resolve("zod/package.json"))],
+      [
+        "@remix-run/router",
+        dirname(require.resolve("@remix-run/router/package.json")),
+      ],
       ["@types/node", dirname(require.resolve("@types/node/package.json"))],
       [
         "@webstudio-is/tsconfig",

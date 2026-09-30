@@ -6,7 +6,7 @@ description: Write path patterns for project-level Authentication and HTTP respo
 
 Project-level **Authentication** and **HTTP response headers** use the same path pattern syntax and validator. Use these patterns to apply a rule to one page or a group of pages—for example, require a password for `/private/*` or apply a response header to `/docs/*`.
 
-Page Settings paths are handled separately from these project-level rules. On the published dynamic site, Webstudio generates Remix route modules from page paths, and Remix's router selects the page for each request. A static export has no app router; URL resolution depends on the hosting platform. See [Page settings: Path](page-settings.md#path) for the path syntax used when defining pages.
+Page Settings paths and these project-level rules use the same route-matching behavior on published dynamic sites. Webstudio generates Remix routes from page paths and uses Remix's router when matching Authentication and Headers rules. A static export has no app router; URL resolution depends on the hosting platform. See [Page settings: Path](page-settings.md#path) for the path syntax used when defining pages.
 
 ## Pattern syntax
 
@@ -25,12 +25,13 @@ Project settings patterns are slash-separated URL path segments. A segment can b
 Use `:name` for a single segment, `:name?` for one optional segment, and `:name*` for a wildcard matching the remaining path. Parameter names use letters, numbers, and underscores. A parameter must occupy a complete segment; `*` and `:name*` must be the final segment.
 
 For **Project settings**, patterns must start with `/`, cannot contain repeating slashes such as `//`, and cannot end with `/` except for the home page pattern `/`.
+Use `?` only for an optional named parameter. URL-encoded `:`, `*`, and `?` cannot be used as pattern syntax.
 
 ## Matching behavior in Project settings
 
 Project-level Authentication and Headers compare patterns against the URL pathname. The query string and fragment are not part of the match: `/docs?lang=en#start` is matched as `/docs`.
 
-- Matching is case-sensitive: `/Docs` does not match `/docs`.
+- Matching is case-insensitive: `/Docs` also matches `/docs`.
 - A trailing slash is ignored for matching: `/about` matches both `/about` and `/about/`.
 - A wildcard matches zero or more trailing segments. Therefore, `/docs/*` matches `/docs` as well as `/docs/setup`.
 - A named wildcard works the same way for matching: `/files/:path*` matches `/files` and paths below it.
@@ -42,9 +43,9 @@ When writing Authentication and Headers rules, use these examples to check the s
 
 ## Page paths on the published site
 
-Page Settings paths become routes in the generated Remix app. For example, Webstudio maps a dynamic segment such as `:slug` to a Remix dynamic route and a trailing `*` to a Remix splat route. The published app's page selection is handled by Remix's router, not by the matcher used for Authentication and Headers rules. In that app, `/docs/*` matches `/docs` and paths below it; that base-path behavior is also true for Project settings rules.
+Page Settings paths become routes in the generated Remix app. For example, Webstudio maps a dynamic segment such as `:slug` to a Remix dynamic route and a trailing `*` to a Remix splat route. Builder navigation and project rules now use the same router matching behavior. A rule for `/docs/*` matches `/docs` and paths below it in both places.
 
-Page routes can provide parameter values to dynamic pages. Authentication and Headers use their patterns only to decide whether a rule applies; they do not expose route parameters. While the syntax overlaps, these are separate routing systems. For static exports, the hosting platform determines how page paths resolve.
+Page routes can provide parameter values to dynamic pages. Authentication and Headers use their patterns only to decide whether a rule applies; they do not expose route parameters. If several rules match, Authentication uses the first matching rule, while Headers applies each matching rule in order. For static exports, the hosting platform determines how page paths resolve.
 
 ## Choose a pattern
 

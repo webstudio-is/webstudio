@@ -2,9 +2,9 @@ import { atom, computed } from "nanostores";
 import { getPagePath, isPage, type Page, type System } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
-  matchUrlPattern,
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
+import { matchPathnamePattern } from "@webstudio-is/wsauth";
 import { $selectedPage } from "./nano-states/pages";
 import { $pages } from "./sync/data-stores";
 import { $publishedOrigin } from "./nano-states/misc";
@@ -25,8 +25,10 @@ const extractParams = (
   // see the page without manually entering params
   // or selecting them in address bar
   const matchedParams = path
-    ? (matchUrlPattern(pattern, path) ??
-      (fallbackPattern ? matchUrlPattern(fallbackPattern, path) : undefined))
+    ? (matchPathnamePattern(pattern, path) ??
+      (fallbackPattern
+        ? matchPathnamePattern(fallbackPattern, path)
+        : undefined))
     : undefined;
   for (const token of tokens) {
     if (token.type === "param") {

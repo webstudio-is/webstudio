@@ -29,9 +29,9 @@ import { CheckMarkIcon, CopyIcon, DynamicPageIcon } from "@webstudio-is/icons";
 import {
   compilePathnamePattern,
   isPathnamePattern,
-  matchUrlPattern,
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
+import { matchPathnamePattern } from "@webstudio-is/wsauth";
 import {
   $selectedPage,
   $selectedPagePath,
@@ -260,7 +260,7 @@ const AddressBar = forwardRef<
   const path = useStore($selectedPagePath);
   let history = useStore($selectedPageHistory);
   history = useMemo(() => {
-    return history.filter((item) => matchUrlPattern(path, item));
+    return history.filter((item) => matchPathnamePattern(path, item));
   }, [history, path]);
   const [pathParams, setPathParams] = useState(
     () => $currentSystem.get().params
@@ -308,7 +308,7 @@ const AddressBar = forwardRef<
         options={history}
         onSelect={(option) => {
           flushSync(() => {
-            setPathParams(matchUrlPattern(path, option) ?? {});
+            setPathParams(matchPathnamePattern(path, option) ?? {});
           });
           containerRef.current?.requestSubmit();
         }}

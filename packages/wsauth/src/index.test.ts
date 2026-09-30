@@ -6,6 +6,8 @@ import {
   createWsAuthResources,
   findWsAuthRoute,
   getBasicAuthCredentials,
+  matchPathnamePattern,
+  matchPathnameRoutes,
   matchesPathnamePattern,
   parseWsAuth,
   validateBasicAuth,
@@ -130,6 +132,12 @@ describe("wsauth", () => {
     expect(validatePathnamePattern("/docs/*/page")).toBe(
       "Wildcard route segment must be the last segment"
     );
+    expect(validatePathnamePattern("/docs?")).toBe(
+      'Optional marker "?" is only allowed on a named parameter'
+    );
+    expect(validatePathnamePattern("/%2A")).toBe(
+      'Encoded route syntax is not supported in "%2A"'
+    );
   });
 
   test.each([
@@ -145,11 +153,71 @@ describe("wsauth", () => {
     ["/docs/:id?", "/docs", true],
     ["/docs/:id?", "/docs/a", true],
     ["/docs/:id?", "/docs/a/b", false],
+    ["/docs/:id?", "/docs123", false],
     ["/docs/:rest*", "/docs/a/b", true],
-    ["/Docs", "/docs", false],
+    ["/Docs", "/docs", true],
     ["/docs", "/docs/", true],
+    ["/docs", "/docs//", true],
+    ["/docs", "/%64ocs", true],
+    ["/café", "/caf%C3%A9", true],
+    ["/foo%20bar", "/foo%20bar", true],
+    ["/path%2Bplus", "/path%2Bplus", true],
   ] as const)("matches %s against %s: %s", (pattern, pathname, expected) => {
     expect(matchesPathnamePattern(pattern, pathname)).toBe(expected);
+  });
+
+  test("returns published route parameters, including named splats", () => {
+    expect(matchPathnamePattern("/docs/:rest*", "/docs/a/b")).toEqual({
+      rest: "a/b",
+    });
+    expect(matchPathnamePattern("/docs/*", "/docs")).toEqual({ 0: "" });
+    expect(matchPathnamePattern("/users/:id", "/users/caf%C3%A9")).toEqual({
+      id: "café",
+    });
+  });
+
+  test("selects the route preferred by the published router", () => {
+    const routes = [
+      { pattern: "/a/:x/:y", value: "first" },
+      { pattern: "/:x/b/c", value: "second" },
+    ];
+    expect(matchPathnameRoutes(routes, "/a/b/c")?.value).toBe("second");
+    expect(
+      matchPathnameRoutes(
+        [
+          { pattern: "/docs/*", value: "splat" },
+          { pattern: "/docs", value: "static" },
+        ],
+        "/docs"
+      )?.value
+    ).toBe("static");
+  });
+
+  test("authentication still uses the first matching rule", () => {
+    const routes = [
+      createBasicAuthRoute({
+        route: "/*",
+        login: "general",
+        password: "password",
+      }),
+      createBasicAuthRoute({
+        route: "/docs",
+        login: "docs",
+        password: "password",
+      }),
+    ];
+    expect(findWsAuthRoute(routes, "/docs")?.auth.login).toBe("general");
+  });
+
+  test("protects an encoded URL that resolves to an authenticated page", () => {
+    const route = createBasicAuthRoute({
+      route: "/docs",
+      login: "admin",
+      password: "password",
+    });
+    expect(() =>
+      authenticateRequest(new Request("https://example.com/%64ocs"), [route])
+    ).toThrowError(Response);
   });
 
   test("builds content from JSON and route sources", () => {

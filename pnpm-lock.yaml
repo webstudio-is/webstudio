@@ -3177,6 +3177,9 @@ importers:
 
   packages/wsauth:
     dependencies:
+      '@remix-run/router':
+        specifier: 1.23.0
+        version: 1.23.0
       zod:
         specifier: ^4.4.3
         version: 4.4.3

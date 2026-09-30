@@ -53,8 +53,8 @@ Webstudio paths can be static or dynamic. Dynamic segments use a `:` prefix, mak
 | `/about` | One static route |
 | `/blog/:slug` | One dynamic segment |
 | `/blog/:slug?` | Optional dynamic segment |
-| `/docs/*` | `/docs` and everything below it on a published JavaScript app |
-| `/docs/:path*` | Named wildcard under `/docs/` |
+| `/docs/*` | `/docs` and everything below it in Builder and on a published JavaScript app |
+| `/docs/:path*` | Named wildcard matching `/docs` and everything below it |
 
 Path rules:
 

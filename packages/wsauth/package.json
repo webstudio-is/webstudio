@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@remix-run/router": "1.23.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

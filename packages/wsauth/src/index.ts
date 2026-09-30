@@ -1,4 +1,5 @@
 import type { BasicAuthInput, WsAuthConfig } from "./schema";
+import { matchRoutes } from "@remix-run/router";
 export type { BasicAuthInput, WsAuthConfig } from "./schema";
 
 export type BasicAuthRule = {
@@ -226,8 +227,24 @@ export const validatePathnamePattern = (route: string) => {
     if (segment.startsWith(":") && parameterSegment.test(segment) === false) {
       return `Invalid route parameter "${segment}"`;
     }
+    if (segment.includes("?")) {
+      if (parameterSegment.test(segment) === false) {
+        return 'Optional marker "?" is only allowed on a named parameter';
+      }
+    }
     if (segment.includes("*")) {
       return "Wildcard can only be used as * or :name*";
+    }
+    if (segment.includes("%")) {
+      let decoded: string;
+      try {
+        decoded = decodeURIComponent(segment);
+      } catch {
+        return `Invalid URL encoding in route segment "${segment}"`;
+      }
+      if (decoded.startsWith(":") || /[?*]/.test(decoded)) {
+        return `Encoded route syntax is not supported in "${segment}"`;
+      }
     }
   }
 };
@@ -428,54 +445,66 @@ export const getBasicAuthCredentials = (authorization: string | null) => {
   return auth?.credentials;
 };
 
-const normalizePathname = (pathname: string) => {
-  if (pathname === "" || pathname === "/") {
-    return "/";
+const toRouterPattern = (pattern: string) =>
+  (pattern || "/")
+    .replace(/:\w+\*$/, "*")
+    .split("/")
+    .map((segment) => {
+      if (segment === "*" || segment.startsWith(":")) {
+        return segment;
+      }
+      try {
+        // matchRoutes decodes the request pathname before matching route paths.
+        // Keep encoded slashes inside their original segment.
+        return decodeURIComponent(segment).replaceAll("/", "%2F");
+      } catch {
+        return segment;
+      }
+    })
+    .join("/");
+
+const toWebstudioParams = (
+  pattern: string,
+  params: Record<string, string | undefined>
+) => {
+  const result = { ...params };
+  const namedSplat = pattern.match(/:(\w+)\*$/)?.[1];
+  if (namedSplat) {
+    result[namedSplat] = result["*"];
+    delete result["*"];
+  } else if (pattern.endsWith("/*")) {
+    result[0] = result["*"];
+    delete result["*"];
   }
-  return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return result;
 };
 
-/**
- * Boolean matcher for auth and response-header rules. A trailing wildcard also
- * matches its base path (`/docs/*` matches `/docs`). Page routing instead uses
- * project-build's `matchUrlPattern`, which returns decoded path parameters and
- * does not match `/docs` for that pattern.
- */
-export const matchesPathnamePattern = (route: string, pathname: string) => {
-  const routeSegments = normalizePathname(route).slice(1).split("/");
-  const pathnameSegments = normalizePathname(pathname).slice(1).split("/");
-  const matchSegments = (
-    routeIndex: number,
-    pathnameIndex: number
-  ): boolean => {
-    const routeSegment = routeSegments[routeIndex];
-    const pathnameSegment = pathnameSegments[pathnameIndex];
-    if (routeSegment === undefined) {
-      return pathnameSegment === undefined;
-    }
-    if (routeSegment === "*" || /^:\w+\*$/.test(routeSegment)) {
-      return routeIndex === routeSegments.length - 1;
-    }
-    if (/^:\w+\?$/.test(routeSegment)) {
-      return (
-        matchSegments(routeIndex + 1, pathnameIndex) ||
-        (pathnameSegment !== undefined &&
-          matchSegments(routeIndex + 1, pathnameIndex + 1))
-      );
-    }
-    if (pathnameSegment === undefined) {
-      return false;
-    }
-    if (/^:\w+$/.test(routeSegment)) {
-      return matchSegments(routeIndex + 1, pathnameIndex + 1);
-    }
-    return (
-      routeSegment === pathnameSegment &&
-      matchSegments(routeIndex + 1, pathnameIndex + 1)
-    );
+/** Match a set of page paths with the same route ranking as the published app. */
+export const matchPathnameRoutes = <Value>(
+  routes: ReadonlyArray<{ pattern: string; value: Value }>,
+  pathname: string
+): { value: Value; params: Record<string, string | undefined> } | undefined => {
+  const routerRoutes = routes.map((route) => ({
+    path: toRouterPattern(route.pattern),
+    caseSensitive: false,
+    source: route,
+  }));
+  const match = matchRoutes(routerRoutes, pathname)?.at(-1);
+  if (match === undefined) {
+    return;
+  }
+  return {
+    value: match.route.source.value,
+    params: toWebstudioParams(match.route.source.pattern, match.params),
   };
-  return matchSegments(0, 0);
 };
+
+/** Match one project rule or page path using the published app's route semantics. */
+export const matchPathnamePattern = (pattern: string, pathname: string) =>
+  matchPathnameRoutes([{ pattern, value: true }], pathname)?.params;
+
+export const matchesPathnamePattern = (pattern: string, pathname: string) =>
+  matchPathnamePattern(pattern, pathname) !== undefined;
 
 export const findWsAuthRoute = (authRoutes: WsAuthRoute[], pathname: string) =>
   authRoutes.find(({ route }) => matchesPathnamePattern(route, pathname));

@@ -53,6 +53,13 @@ Route rules:
 - `*` and `:name*` wildcard segments must be the final segment.
 - Named parameters use `:name`, `:name?`, or `:name*`.
 - Parameter names must contain word characters only, matching `\w+`.
+- `?` is only allowed on a named parameter. URL-encoded `:`, `*`, and `?`
+  cannot be used as route syntax.
+
+Matching follows the router used by published dynamic sites. It ignores letter
+case, decodes URL path segments, and matches a trailing splat at its base path:
+`/docs/*` matches both `/docs` and `/docs/guide`. Authentication keeps the
+first matching rule when several rules cover one URL.
 
 ## Basic Auth
 
