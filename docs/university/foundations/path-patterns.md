@@ -1,16 +1,16 @@
 ---
-description: Write path patterns for project-level Authentication and HTTP response header rules.
+description: Define page paths and target project-level Authentication and HTTP response header rules.
 ---
 
-# Project settings path patterns
+# Path patterns
 
-Project-level **Authentication** and **HTTP response headers** use the same path pattern syntax and validator. Use these patterns to apply a rule to one page or a group of pages—for example, require a password for `/private/*` or apply a response header to `/docs/*`.
+Webstudio uses path patterns to define page URLs and to target project-level **Authentication** and **HTTP response header** rules. The same static, dynamic, optional, and wildcard forms can describe one page or a group of paths.
 
-Page Settings paths and these project-level rules use the same route-matching behavior on published dynamic sites. Webstudio generates Remix routes from page paths and uses Remix's router when matching Authentication and Headers rules. A static export has no app router; URL resolution depends on the hosting platform. See [Page settings: Path](page-settings.md#path) for the path syntax used when defining pages.
+Page settings and project-level rules have different validation and storage, but use the same route-matching behavior on published dynamic sites. Webstudio generates Remix routes from page paths and uses Remix's router when matching Authentication and Headers rules. A static export has no app router; URL resolution depends on the hosting platform.
 
 ## Pattern syntax
 
-Project settings patterns are slash-separated URL path segments. A segment can be a literal path name, a named parameter, an optional parameter, or a wildcard.
+Path patterns are slash-separated URL path segments. A segment can be a literal path name, a named parameter, an optional parameter, or a wildcard.
 
 | Pattern | Meaning | Examples that match |
 | --- | --- | --- |
@@ -24,8 +24,9 @@ Project settings patterns are slash-separated URL path segments. A segment can b
 
 Use `:name` for a single segment, `:name?` for one optional segment, and `:name*` for a wildcard matching the remaining path. Parameter names use letters, numbers, and underscores. A parameter must occupy a complete segment; `*` and `:name*` must be the final segment.
 
-For **Project settings**, patterns must start with `/`, cannot contain repeating slashes such as `//`, and cannot end with `/` except for the home page pattern `/`.
-Use `?` only for an optional named parameter. URL-encoded `:`, `*`, and `?` cannot be used as pattern syntax.
+Non-home page paths and non-root project rules start with `/`, cannot contain repeating slashes such as `//`, and cannot end with `/`. The project-rule pattern for the home page is `/`; [Page settings](page-settings.md#path) stores the home page path as an empty value. Wildcards must be the final segment.
+
+For **Project settings**, use `?` only for an optional named parameter. URL-encoded `:`, `*`, and `?` cannot be used as pattern syntax.
 
 ## Matching behavior in Project settings
 
