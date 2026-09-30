@@ -198,6 +198,25 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 
 const parameterSegment = /^:\w+[?*]?$/;
 
+const decodeStaticSegment = (segment: string) => {
+  if (segment.includes("%") === false) {
+    return { path: segment };
+  }
+  try {
+    const decoded = decodeURIComponent(segment);
+    return {
+      // Remix decodes request paths; keep encoded slashes within one segment.
+      path: decoded.replaceAll("/", "%2F"),
+      error:
+        decoded.startsWith(":") || /[?*]/.test(decoded)
+          ? "encodedSyntax"
+          : undefined,
+    };
+  } catch {
+    return { path: segment, error: "invalidEncoding" };
+  }
+};
+
 /** Validate the route-rule syntax shared by authentication and response headers. */
 export const validatePathnamePattern = (route: string) => {
   if (route.startsWith("/") === false) {
@@ -206,7 +225,7 @@ export const validatePathnamePattern = (route: string) => {
   if (route === "/") {
     return;
   }
-  if (route !== "/" && route.endsWith("/")) {
+  if (route.endsWith("/")) {
     return 'Route must not end with "/"';
   }
   if (route.includes("//")) {
@@ -227,22 +246,18 @@ export const validatePathnamePattern = (route: string) => {
     if (segment.startsWith(":") && parameterSegment.test(segment) === false) {
       return `Invalid route parameter "${segment}"`;
     }
-    if (segment.includes("?")) {
-      if (parameterSegment.test(segment) === false) {
-        return 'Optional marker "?" is only allowed on a named parameter';
-      }
+    if (segment.includes("?") && parameterSegment.test(segment) === false) {
+      return 'Optional marker "?" is only allowed on a named parameter';
     }
     if (segment.includes("*")) {
       return "Wildcard can only be used as * or :name*";
     }
     if (segment.includes("%")) {
-      let decoded: string;
-      try {
-        decoded = decodeURIComponent(segment);
-      } catch {
+      const decoded = decodeStaticSegment(segment);
+      if (decoded.error === "invalidEncoding") {
         return `Invalid URL encoding in route segment "${segment}"`;
       }
-      if (decoded.startsWith(":") || /[?*]/.test(decoded)) {
+      if (decoded.error === "encodedSyntax") {
         return `Encoded route syntax is not supported in "${segment}"`;
       }
     }
@@ -454,22 +469,12 @@ const toRouterPattern = (pattern: string) => {
       segments.push(segment);
       continue;
     }
-    try {
-      // matchRoutes decodes the request pathname before matching route paths.
-      // Keep encoded slashes inside their original segment.
-      const decoded = decodeURIComponent(segment);
-      if (
-        segment.includes("%") &&
-        (decoded.startsWith(":") || /[?*]/.test(decoded))
-      ) {
-        // An encoded literal must not become router syntax, even if a saved
-        // project rule reaches the matcher without passing current validation.
-        return;
-      }
-      segments.push(decoded.replaceAll("/", "%2F"));
-    } catch {
-      segments.push(segment);
+    const decoded = decodeStaticSegment(segment);
+    if (decoded.error === "encodedSyntax") {
+      // Saved rules can reach the matcher without passing current validation.
+      return;
     }
+    segments.push(decoded.path);
   }
   return segments.join("/");
 };
