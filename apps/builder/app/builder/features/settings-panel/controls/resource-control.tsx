@@ -1,5 +1,6 @@
 import { computed } from "nanostores";
 import {
+  Fragment,
   forwardRef,
   useId,
   useRef,
@@ -101,10 +102,11 @@ const $selectedInstanceResourceScope = computed(
   }
 );
 
-const ResourceForm = ({ resource }: { resource: Resource }) => {
+export const ResourceForm = ({ resource }: { resource: Resource }) => {
   const { scope, aliases } = useStore($selectedInstanceResourceScope);
   const [url, setUrl] = useState(resource.url);
   const [method, setMethod] = useState<Resource["method"]>(resource.method);
+  const [searchParams, setSearchParams] = useState(resource.searchParams ?? []);
   const [headers, setHeaders] = useState<Resource["headers"]>(resource.headers);
   return (
     <Flex
@@ -121,11 +123,22 @@ const ResourceForm = ({ resource }: { resource: Resource }) => {
         scope={scope}
         aliases={aliases}
         value={url}
-        onChange={setUrl}
+        onChange={(urlExpression, nextSearchParams) => {
+          setUrl(urlExpression);
+          if (nextSearchParams) {
+            setSearchParams((previous) => [...previous, ...nextSearchParams]);
+          }
+        }}
         onCurlPaste={(curl) => {
-          // update all feilds when curl is paste into url field
+          // update all fields when curl is pasted into the URL field
           setUrl(JSON.stringify(curl.url));
           setMethod(curl.method);
+          setSearchParams(
+            (curl.searchParams ?? []).map(({ name, value }) => ({
+              name,
+              value: JSON.stringify(value),
+            }))
+          );
           setHeaders(
             curl.headers.map((header) => ({
               name: header.name,
@@ -135,6 +148,12 @@ const ResourceForm = ({ resource }: { resource: Resource }) => {
         }}
       />
       <MethodField value={method} onChange={setMethod} />
+      {searchParams.map(({ name, value }, index) => (
+        <Fragment key={index}>
+          <input type="hidden" name="search-param-name" value={name} />
+          <input type="hidden" name="search-param-value" value={value} />
+        </Fragment>
+      ))}
       <Headers
         suggestHeaders
         scope={scope}
@@ -146,13 +165,29 @@ const ResourceForm = ({ resource }: { resource: Resource }) => {
   );
 };
 
+export const updateResourceFromFormData = (
+  resource: Resource,
+  formData: FormData
+): Resource => {
+  const edited = createResourceValueFromFormData({
+    id: resource.id,
+    name: resource.name,
+    formData,
+  });
+  return {
+    ...resource,
+    url: edited.url,
+    method: edited.method,
+    searchParams: edited.searchParams,
+    headers: edited.headers,
+  };
+};
+
 const ResourceControlPanel = ({
   resource,
-  propName,
   onChange,
 }: {
   resource: Resource;
-  propName: string;
   onChange: (resource: Resource) => void;
 }) => {
   const [isResourceOpen, setIsResourceOpen] = useState(false);
@@ -186,12 +221,7 @@ const ResourceControlPanel = ({
             event.preventDefault();
             if (event.currentTarget.checkValidity()) {
               const formData = new FormData(event.currentTarget);
-              const newResource = createResourceValueFromFormData({
-                id: resource?.id ?? "",
-                name: resource?.name ?? propName,
-                formData,
-              });
-              onChange(newResource);
+              onChange(updateResourceFromFormData(resource, formData));
             }
           }}
         >
@@ -321,7 +351,6 @@ export const ResourceControl = ({
               isFeatureEnabled("resourceProp") && (
                 <ResourceControlPanel
                   resource={resource}
-                  propName={propName}
                   onChange={updateResource}
                 />
               )

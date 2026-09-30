@@ -299,7 +299,7 @@ const ExpressionNameValuePair = ({
       />
       <BindableExpressionControl
         expression={value}
-        value={serializeValue(evaluatedValue)}
+        value={serializeValue(evaluatedValue) ?? ""}
         bound={isLiteralExpression(value) === false}
         scope={scope}
         aliases={aliases}

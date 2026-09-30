@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
-import { page } from "@vitest/browser/context";
+import { page, userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   encodeDataVariableId,
@@ -16,6 +16,10 @@ import {
   ResourceForm,
   UrlField,
 } from "./resource-panel";
+import {
+  ResourceForm as ResourceControlForm,
+  updateResourceFromFormData,
+} from "./controls/resource-control";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -140,14 +144,25 @@ test("focuses the resource URL when requested", () => {
           title: "Edit resource",
           open: true,
           children: createElement("button", undefined, "Edit resource"),
-          content: createElement(UrlField, {
-            autoFocus: true,
-            aliases: new Map(),
-            scope: {},
-            value: '"https://example.com"',
-            onChange: vi.fn(),
-            onCurlPaste: vi.fn(),
-          }),
+          content: createElement(
+            "div",
+            undefined,
+            createElement(UrlField, {
+              autoFocus: true,
+              aliases: new Map(),
+              scope: {},
+              value: '"https://example.com"',
+              onChange: vi.fn(),
+              onCurlPaste: vi.fn(),
+            }),
+            createElement(Headers, {
+              aliases: new Map(),
+              scope: {},
+              headers: [{ name: "", value: '""' }],
+              onChange: vi.fn(),
+              suggestHeaders: true,
+            })
+          ),
         })
       )
     );
@@ -155,6 +170,51 @@ test("focuses the resource URL when requested", () => {
   expect(document.activeElement).toBe(
     document.querySelector('textarea[name="url-validator"]')
   );
+});
+
+test("selecting a header suggestion with Enter does not submit the resource", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onSubmit = vi.fn();
+  const onChange = vi.fn();
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(FloatingPanel, {
+          title: "Edit resource",
+          open: true,
+          children: createElement("button", undefined, "Edit resource"),
+          content: createElement(
+            "form",
+            {
+              onSubmit: (event) => {
+                event.preventDefault();
+                onSubmit();
+              },
+            },
+            createElement("button", { hidden: true }),
+            createElement(Headers, {
+              aliases: new Map(),
+              scope: {},
+              headers: [{ name: "", value: '""' }],
+              onChange,
+              suggestHeaders: true,
+            })
+          ),
+        })
+      )
+    );
+  });
+
+  await act(async () => page.getByPlaceholder("Name").fill("Auth"));
+  await act(async () => userEvent.keyboard("{ArrowDown}{Enter}"));
+  expect(onChange).toHaveBeenCalledWith([
+    { name: "Authorization", value: '""' },
+  ]);
+  expect(onSubmit).not.toHaveBeenCalled();
 });
 
 test("suggests request header names and known values", async () => {
@@ -209,5 +269,76 @@ test("suggests request header names and known values", async () => {
   await act(async () => page.getByPlaceholder("Name").fill("X-Custom"));
   expect(onChange).toHaveBeenCalledWith([
     { name: "X-Custom", value: '"application/json"' },
+  ]);
+});
+
+test("saving a resource keeps fields absent from the popover", () => {
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    method: "post",
+    url: '"https://example.com"',
+    searchParams: [{ name: "token", value: '"existing"' }],
+    headers: [{ name: "Content-Type", value: '"application/json"' }],
+    body: '"existing body"',
+  };
+  const formData = new FormData();
+  formData.set("url", '"https://changed.example.com"');
+  formData.set("method", "post");
+  formData.set("search-param-name", "token");
+  formData.set("search-param-value", '"existing"');
+  formData.set("header-name", "Content-Type");
+  formData.set("header-value", '"application/json"');
+
+  expect(updateResourceFromFormData(resource, formData)).toEqual({
+    ...resource,
+    url: '"https://changed.example.com"',
+  });
+});
+
+test("resource popover keeps and imports URL search parameters", async () => {
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    method: "get",
+    url: '"https://example.com"',
+    searchParams: [{ name: "existing", value: '"one"' }],
+    headers: [],
+  };
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(FloatingPanel, {
+          title: "Edit resource",
+          open: true,
+          children: createElement("button", undefined, "Edit resource"),
+          content: createElement(
+            "form",
+            undefined,
+            createElement(ResourceControlForm, { resource })
+          ),
+        })
+      )
+    );
+  });
+  const form = document.querySelector("form");
+  expect(form).not.toBeNull();
+  expect(new FormData(form!).getAll("search-param-name")).toEqual(["existing"]);
+
+  await act(async () =>
+    page
+      .getByRole("textbox", { name: "URL" })
+      .fill("https://example.com?added=two")
+  );
+  const formData = new FormData(form!);
+  expect(formData.getAll("search-param-name")).toEqual(["existing", "added"]);
+  expect(updateResourceFromFormData(resource, formData).searchParams).toEqual([
+    { name: "existing", value: '"one"' },
+    { name: "added", value: '"two"' },
   ]);
 });
