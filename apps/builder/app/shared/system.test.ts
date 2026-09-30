@@ -181,3 +181,40 @@ test("system params support legacy history without parent folder slug", () => {
     pathname: "/blog/post/my-post",
   });
 });
+
+test("system params decode history paths with an encoded folder slug", () => {
+  $pages.set({
+    ...getInitialPages({
+      id: "dynamicId",
+      path: "/post/:slug",
+      name: "",
+      title: "",
+      meta: {},
+      rootInstanceId: "",
+      history: ["/%62log/post/caf%C3%A9"],
+    }),
+    folders: new Map([
+      [
+        "rootId",
+        {
+          id: "rootId",
+          name: "",
+          slug: "",
+          children: ["homeId", "folderId"],
+        },
+      ],
+      [
+        "folderId",
+        {
+          id: "folderId",
+          name: "Blog",
+          slug: "blog",
+          children: ["dynamicId"],
+        },
+      ],
+    ]),
+  });
+  selectPage("dynamicId");
+
+  expect($currentSystem.get().params).toEqual({ slug: "café" });
+});
