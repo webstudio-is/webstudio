@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage } from "node:http";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   bundleVersion,
+  maxProjectBundleSize,
   publicApiOperations,
   stagedUploadPath,
 } from "@webstudio-is/protocol";
@@ -2247,7 +2248,8 @@ test("imports project bundle through staged upload", async () => {
         origin: `http://127.0.0.1:${address.port}`,
         projectId: "project-id",
         data: {
-          largeContent: "x".repeat(3 * 1024 * 1024 + 1),
+          // Real customer builds can exceed the old 20 MiB import limit.
+          largeContent: "x".repeat(28 * 1024 * 1024),
           assetIndex: { marker: "derived-index-marker" },
         } as unknown as PublishedProjectBundle,
       })
@@ -2258,10 +2260,10 @@ test("imports project bundle through staged upload", async () => {
     });
   }
 
-  expect(uploadChunks).toHaveLength(2);
-  expect(Buffer.concat(uploadChunks).toString("utf8")).not.toContain(
-    "derived-index-marker"
-  );
+  const importedData = Buffer.concat(uploadChunks);
+  expect(importedData.byteLength).toBeGreaterThan(20 * 1024 * 1024);
+  expect(importedData.byteLength).toBeLessThan(maxProjectBundleSize);
+  expect(importedData.toString("utf8")).not.toContain("derived-index-marker");
   expect(JSON.stringify(trpcBody)).toContain('"uploadId":"upload-id"');
   expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
 });
@@ -2478,11 +2480,11 @@ test("rejects project bundles over the import size limit", async () => {
         origin: `http://127.0.0.1:${address.port}`,
         projectId: "project-id",
         data: {
-          largeContent: "x".repeat(20 * 1024 * 1024),
+          largeContent: "x".repeat(maxProjectBundleSize),
         } as unknown as PublishedProjectBundle,
       })
     ).rejects.toThrow(
-      "Project bundle is too large to import. Maximum size is 20 MiB."
+      "Project bundle is too large to import. Maximum size is 32 MiB."
     );
   } finally {
     await new Promise<void>((resolve, reject) => {

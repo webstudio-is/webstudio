@@ -31,11 +31,13 @@ import {
   type ContentBlockDiagnostic,
   type ContentBlockExternalContentIdentity,
   type ContentBlockSource,
+  type InvalidMdxDiagnosticReason,
   type WebstudioData,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { parseStaticMemberPath } from "@webstudio-is/expression";
 import { materializeMdxAuthoredContent } from "./mdx-authored-content";
+import { createFindAvailableVariables } from "./data";
 import {
   materializeMdxTemplates,
   type MdxTemplateDependency,
@@ -96,6 +98,7 @@ export const getUnsafeDynamicPublishedMdxDiagnostic = ({
     return {
       code: "invalid-mdx",
       severity: "error",
+      reason: "dynamic-resource",
       blockInstanceId: root.identity.blockInstanceId,
       assetId: root.identity.assetId,
       renderScope: `route:${route}:block:${root.identity.blockInstanceId}`,
@@ -112,6 +115,7 @@ export const getUnsafeDynamicPublishedMdxDiagnostic = ({
     return {
       code: "invalid-mdx",
       severity: "error",
+      reason: "dynamic-resource",
       blockInstanceId: root.identity.blockInstanceId,
       assetId: root.identity.assetId,
       renderScope: `route:${route}:block:${root.identity.blockInstanceId}`,
@@ -229,6 +233,7 @@ export const materializePublishedMdx = async ({
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   loadDocumentSource?: (node: {
     id: string;
+    revision: string;
     contentRef: string;
   }) => Promise<string>;
 }): Promise<{
@@ -303,13 +308,18 @@ export const materializePublishedMdx = async ({
   });
   const roots: PublishedMdxRoot[] = [];
   const warnings: PublishedMdxWarning[] = [];
+  let findAvailableVariables:
+    | ReturnType<typeof createFindAvailableVariables>
+    | undefined;
   const warnUnavailableSource = ({
     blockInstanceId,
     assetId,
+    reason,
     message,
   }: {
     blockInstanceId: string;
     assetId?: string;
+    reason?: InvalidMdxDiagnosticReason;
     message: string;
   }) => {
     warnings.push({
@@ -317,6 +327,7 @@ export const materializePublishedMdx = async ({
       diagnostic: {
         code: "invalid-mdx",
         severity: "error",
+        ...(reason === undefined ? {} : { reason }),
         blockInstanceId,
         ...(assetId === undefined ? {} : { assetId }),
         renderScope: `route:${route}:block:${blockInstanceId}`,
@@ -345,6 +356,7 @@ export const materializePublishedMdx = async ({
     if (resolvedAssetIds.length > contentEngineLimits.candidateDocuments) {
       warnUnavailableSource({
         blockInstanceId: block.id,
+        reason: "dynamic-source-unbounded",
         message: `Published Content Block "${block.id}" exceeds the safe MDX candidate limit`,
       });
       continue;
@@ -352,6 +364,7 @@ export const materializePublishedMdx = async ({
     if (resolvedAssetIds.length === 0) {
       warnUnavailableSource({
         blockInstanceId: block.id,
+        reason: "dynamic-source-unbounded",
         message: `Published Content Block "${block.id}" has no bounded dynamic MDX dependency set`,
       });
       continue;
@@ -369,6 +382,7 @@ export const materializePublishedMdx = async ({
       warnUnavailableSource({
         blockInstanceId: block.id,
         assetId,
+        reason: "missing-asset",
         message: `Published Content Block "${block.id}" requires unavailable MDX Asset "${assetId}"`,
       });
     }
@@ -380,15 +394,38 @@ export const materializePublishedMdx = async ({
         warnUnavailableSource({
           blockInstanceId: block.id,
           assetId: candidate._id,
+          reason: "missing-source",
           message: `Published MDX Asset "${candidate._id}" has no revision identity`,
         });
         continue;
       }
-      const sourceText = artifact.contents?.[candidate.contentRef];
+      let sourceText = artifact.contents?.[candidate.contentRef];
+      if (sourceText === undefined && loadDocumentSource !== undefined) {
+        try {
+          sourceText = await loadDocumentSource({
+            id: candidate._id,
+            revision: candidate.revision,
+            contentRef: candidate.contentRef,
+          });
+        } catch (error) {
+          warnUnavailableSource({
+            blockInstanceId: block.id,
+            assetId: candidate._id,
+            reason: "source-read-failed",
+            message: `Published MDX Asset "${
+              candidate._id
+            }" could not be loaded: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          });
+          continue;
+        }
+      }
       if (sourceText === undefined) {
         warnUnavailableSource({
           blockInstanceId: block.id,
           assetId: candidate._id,
+          reason: "missing-source",
           message: `Published MDX Asset "${candidate._id}" content is unavailable`,
         });
         continue;
@@ -437,6 +474,17 @@ export const materializePublishedMdx = async ({
         metas,
       });
       assertMdxTemplateStructure(resolution);
+      if (
+        findAvailableVariables === undefined &&
+        resolution.references.some(
+          (reference) => reference.type === "resolved-template"
+        )
+      ) {
+        findAvailableVariables = createFindAvailableVariables({
+          instances: data.instances,
+          dataSources: data.dataSources,
+        });
+      }
       const templates = await materializeMdxTemplates({
         identity,
         resolution,
@@ -444,6 +492,7 @@ export const materializePublishedMdx = async ({
         metas,
         projectId,
         assetReferences,
+        findAvailableVariables,
       });
       const referencedTemplateNames = Array.from(
         new Set(
@@ -476,6 +525,7 @@ export const materializePublishedMdx = async ({
           warnUnavailableSource({
             blockInstanceId: block.id,
             assetId: candidate._id,
+            reason: "linked-document-unavailable",
             message: `${linkedDocument} ${failure}${reference} while resolving frontmatter for published MDX Asset "${candidate._id}".`,
           });
         } else {

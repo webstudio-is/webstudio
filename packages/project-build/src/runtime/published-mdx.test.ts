@@ -127,6 +127,56 @@ describe("published MDX materialization", () => {
     expect(getFragmentText(result.roots[0].fragment)).toContain("Published");
   });
 
+  test("loads an MDX source when it is not embedded in the artifact", async () => {
+    const source = "# Loaded from asset storage";
+    const artifact = createArtifact([{ id: "article", source }]);
+    delete artifact.contents?.["article.mdx"];
+    const loadDocumentSource = vi.fn(async () => source);
+
+    const result = await materializePublishedMdx({
+      route: "/blog/article",
+      data: createData({}),
+      artifact,
+      metas: new Map(),
+      projectId: "project",
+      loadDocumentSource,
+    });
+
+    expect(result.roots).toHaveLength(1);
+    expect(loadDocumentSource).toHaveBeenCalledExactlyOnceWith({
+      id: "article",
+      revision: revision("b"),
+      contentRef: "article.mdx",
+    });
+  });
+
+  test("reports an MDX source load failure without rejecting materialization", async () => {
+    const artifact = createArtifact([{ id: "article", source: "# Published" }]);
+    delete artifact.contents?.["article.mdx"];
+
+    const result = await materializePublishedMdx({
+      route: "/blog/article",
+      data: createData({}),
+      artifact,
+      metas: new Map(),
+      projectId: "project",
+      loadDocumentSource: async () => {
+        throw new Error("asset store unavailable");
+      },
+    });
+
+    expect(result.roots).toHaveLength(0);
+    expect(result.warnings).toEqual([
+      expect.objectContaining({
+        diagnostic: expect.objectContaining({
+          severity: "error",
+          assetId: "article",
+          message: expect.stringContaining("asset store unavailable"),
+        }),
+      }),
+    ]);
+  });
+
   test("rejects publication with multiple Templates containers", async () => {
     const data = createData({ withTemplate: true });
     const block = data.instances.get("block");

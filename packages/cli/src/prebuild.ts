@@ -981,6 +981,7 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const publicationBuild = { ...siteData.build, pages };
+  const allAssetIds = new Set(siteData.assets.map(({ id }) => id));
   const allMdxAssetIds = getPublishedMdxAssetIds(siteData.assets);
   if (
     siteData.assetIndex === undefined &&
@@ -1068,6 +1069,7 @@ export const prebuild = async (options: {
       build: publicationBuild,
       artifact: verifiedAssetIndex,
       allowUnresolved: true,
+      allAssetIds,
       allMdxAssetIds,
     });
     for (const blockInstanceId of getDynamicPublishedMdxSourceBlockIds(
@@ -1336,6 +1338,7 @@ export const prebuild = async (options: {
               build: pageBuild,
               artifact: verifiedAssetIndex,
               blockInstanceIds: pendingBlockIds,
+              allAssetIds,
               allMdxAssetIds,
             })
           : undefined;

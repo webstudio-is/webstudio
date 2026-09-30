@@ -17,6 +17,7 @@ import {
   getHtmlTagFromInstance,
   type ContentBlockDiagnostic,
   type ContentBlockExternalContentIdentity,
+  type DataSource,
   type Instance,
   type Prop,
   type WebstudioData,
@@ -28,7 +29,7 @@ import {
   getContentModeEditableStaticPropNames,
   getContentModePropEligibility,
 } from "./content-mode-permissions";
-import { findAvailableVariables } from "./data";
+import { createFindAvailableVariables } from "./data";
 import {
   createWebstudioDataFromFragment,
   extractWebstudioFragment,
@@ -244,6 +245,7 @@ export const materializeMdxTemplates = async ({
   metas,
   projectId,
   assetReferences = [],
+  findAvailableVariables: sharedFindAvailableVariables,
 }: {
   identity: ContentBlockExternalContentIdentity;
   resolution: MdxTemplateResolution;
@@ -251,6 +253,7 @@ export const materializeMdxTemplates = async ({
   metas: Map<string, WsComponentMeta>;
   projectId: string;
   assetReferences?: readonly AssetValueReference[];
+  findAvailableVariables?: (startingInstanceId: Instance["id"]) => DataSource[];
 }): Promise<MdxTemplateMaterialization> => {
   const materializedTemplates: MaterializedMdxTemplate[] = [];
   const diagnostics: ContentBlockDiagnostic[] = [...resolution.diagnostics];
@@ -267,6 +270,12 @@ export const materializeMdxTemplates = async ({
       reference,
     ])
   );
+  let findAvailableVariables = sharedFindAvailableVariables;
+  const getFindAvailableVariables = () =>
+    (findAvailableVariables ??= createFindAvailableVariables({
+      instances: data.instances,
+      dataSources: data.dataSources,
+    }));
   for (const reference of resolution.references) {
     if (reference.type === "unresolved-template") {
       materializedTemplates.push({
@@ -314,11 +323,9 @@ export const materializeMdxTemplates = async ({
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data: materializedData,
       fragment: sourceFragment,
-      availableVariables: findAvailableVariables({
-        startingInstanceId: reference.templateInstanceId,
-        instances: data.instances,
-        dataSources: data.dataSources,
-      }),
+      availableVariables: getFindAvailableVariables()(
+        reference.templateInstanceId
+      ),
       projectId,
       createId,
     });

@@ -274,6 +274,46 @@ const getUnresolvedTemplate = (
 };
 
 describe("materializeMdxTemplates", () => {
+  test("materializes repeated resolved references with consistent scope", async () => {
+    const materialization = await materializeMdxTemplates({
+      identity,
+      resolution: {
+        ...resolution,
+        references: [
+          resolution.references[0],
+          { ...resolution.references[0], path: [1] },
+        ],
+      },
+      data: createData(),
+      metas,
+      projectId: "target-project",
+    });
+
+    expect(materialization.templates).toHaveLength(2);
+    expect(
+      materialization.templates.every(
+        (template) => template.type === "resolved-template"
+      )
+    ).toBe(true);
+    const [first, second] = materialization.templates.map((template) =>
+      getResolvedTemplate([template])
+    );
+    expect(
+      first?.fragment.props.map(({ name, type, value }) => ({
+        name,
+        type,
+        value,
+      }))
+    ).toEqual(
+      second?.fragment.props.map(({ name, type, value }) => ({
+        name,
+        type,
+        value,
+      }))
+    );
+    expect(first?.fragment.instances).not.toEqual(second?.fragment.instances);
+  });
+
   test("copies resolved fragments and represents unresolved usages", async () => {
     const data = createData();
     const originalData = structuredClone(data);

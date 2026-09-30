@@ -1,10 +1,13 @@
 import {
+  contentEngineLimits,
   getContentArtifactRuntimeAssetIds,
   type ContentCompilationPlan,
   type ContentArtifactV1,
 } from "@webstudio-is/content-engine";
 import {
   compileContentUntilPlanIsStable,
+  decodeUtf8,
+  readBoundedBytes,
   serializeJsonDeterministically,
 } from "@webstudio-is/content-engine/compiler";
 import type { Asset } from "@webstudio-is/sdk";
@@ -120,6 +123,34 @@ export const validatePublishedAssetCollections = async (
   return assetData;
 };
 
+export const createPublishedMdxDependencySourceLoader = (
+  assetStore: Pick<AssetObjectStore, "readFile">
+) => {
+  const sources = new Map<string, Promise<string>>();
+  return ({
+    id,
+    revision,
+    contentRef,
+  }: {
+    id: string;
+    revision: string;
+    contentRef: string;
+  }) => {
+    const key = JSON.stringify([id, revision, contentRef]);
+    let source = sources.get(key);
+    if (source === undefined) {
+      source = (async () => {
+        const { data } = await assetStore.readFile(contentRef);
+        return decodeUtf8(
+          await readBoundedBytes(data, contentEngineLimits.hydratedFileBytes)
+        );
+      })();
+      sources.set(key, source);
+    }
+    return source;
+  };
+};
+
 export const preparePublishedAssetData = async (
   {
     projectId,
@@ -137,7 +168,12 @@ export const preparePublishedAssetData = async (
     plan: ContentCompilationPlan;
     retainedAssetIds: Iterable<string>;
     resolvePlan?: (
-      artifact: ContentArtifactV1
+      artifact: ContentArtifactV1,
+      loadDocumentSource: (input: {
+        id: string;
+        revision: string;
+        contentRef: string;
+      }) => Promise<string>
     ) => ContentCompilationPlan | Promise<ContentCompilationPlan>;
   },
   dependencies = defaultDependencies
@@ -148,6 +184,8 @@ export const preparePublishedAssetData = async (
     assetStore,
     contentDatabaseMaxBytes,
   });
+  const loadDocumentSource =
+    createPublishedMdxDependencySourceLoader(assetStore);
   const { result: artifact, assetData } = await prepareStablePublishedAssetData(
     {
       projectId,
@@ -163,7 +201,8 @@ export const preparePublishedAssetData = async (
             : await compileContentUntilPlanIsStable({
                 plan,
                 compile: prepareIndex,
-                resolvePlan,
+                resolvePlan: (artifact) =>
+                  resolvePlan(artifact, loadDocumentSource),
               });
         }),
       dependencies,
