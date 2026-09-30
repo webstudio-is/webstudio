@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import type { Page } from "@playwright/test";
 import { loadDevBuild } from "../db";
+import { createHttpResourceVariable } from "../flows/data-variables";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { openNavigatorPanel } from "../flows/navigator";
@@ -79,23 +80,17 @@ const selectFirstNavigatorChild = async ({
   await child.click();
 };
 
-const updateResourceActionUrl = async ({
+const selectResourceAction = async ({
   page,
-  url,
+  name,
 }: {
   page: Page;
-  url: string;
+  name: string;
 }) => {
   await page.getByRole("tab", { name: "Settings" }).click();
-  await page.getByText("Action", { exact: true }).first().waitFor({
-    state: "visible",
-    timeout: 10_000,
-  });
-  const input = page.locator("input:not([placeholder])").last();
-  await input.waitFor({ state: "visible", timeout: 10_000 });
-  await input.fill(url);
+  await page.getByRole("combobox", { name: "Action source" }).click();
   const save = waitForChangeToBeSaved({ page });
-  await input.press("Enter");
+  await page.getByRole("option", { name, exact: true }).click();
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
@@ -160,9 +155,11 @@ const bindSelectedPropertyToExpression = async ({
 const expectPersistedActionResource = async ({
   projectId,
   url,
+  name,
 }: {
   projectId: string;
   url: string;
+  name: string;
 }) => {
   const build = await loadDevBuild({ projectId });
   const props = JSON.parse(build.props) as Array<{
@@ -182,7 +179,7 @@ const expectPersistedActionResource = async ({
   }>;
   const resource = resources.find(
     (resource) =>
-      resource.name === "action" &&
+      resource.name === name &&
       resource.method === "post" &&
       resource.url === JSON.stringify(url)
   );
@@ -199,13 +196,13 @@ const expectPersistedActionResource = async ({
     );
   }
   if (
-    dataSources.some(
+    !dataSources.some(
       (dataSource) =>
         dataSource.type === "resource" && dataSource.resourceId === resource.id
     )
   ) {
     throw new Error(
-      `Expected Webhook Form action resource "${url}" not to load during rendering. Data sources: ${JSON.stringify(dataSources)}`
+      `Expected Webhook Form action to reference a Resource variable for "${url}". Data sources: ${JSON.stringify(dataSources)}`
     );
   }
 };
@@ -387,7 +384,7 @@ const expectBooleanPropDeleted = async ({
   }
 };
 
-test("Webhook Form action submits once and persists after reload", async ({
+test("Webhook Form Resource variable submits once and persists after reload", async ({
   page,
   context,
 }) => {
@@ -402,6 +399,7 @@ test("Webhook Form action submits once and persists after reload", async ({
   const webhook = await startWebhookServer();
   const text = "Initial content";
   const actionUrl = webhook.url;
+  const resourceName = "Webhook request";
 
   try {
     await measure("props runtime open builder", async () => {
@@ -421,12 +419,18 @@ test("Webhook Form action submits once and persists after reload", async ({
     });
     await selectNavigatorItem({ page, itemName: "Webhook Form" });
 
-    await measure("props runtime update resource action", async () => {
-      await updateResourceActionUrl({ page, url: actionUrl });
+    await measure("props runtime select Resource variable action", async () => {
+      await createHttpResourceVariable({
+        page,
+        name: resourceName,
+        url: `curl -X POST -H 'Content-Type: application/json' --data '{}' ${actionUrl}`,
+      });
+      await selectResourceAction({ page, name: resourceName });
     });
     await expectPersistedActionResource({
       projectId: fixture.projectId,
       url: actionUrl,
+      name: resourceName,
     });
 
     await measure("props runtime reload builder", async () => {
@@ -441,6 +445,7 @@ test("Webhook Form action submits once and persists after reload", async ({
     await expectPersistedActionResource({
       projectId: fixture.projectId,
       url: actionUrl,
+      name: resourceName,
     });
 
     await measure("props runtime submit generated webhook form", async () => {

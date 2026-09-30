@@ -110,7 +110,7 @@ export const createHttpResourceVariable = async ({
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: "Resource" });
-  await page.getByRole("textbox", { name: "URL" }).fill(url);
+  await page.getByRole("textbox", { name: "URL", exact: true }).fill(url);
   await closeVariablePanelAndWaitForSave({ page });
 };
 
@@ -128,7 +128,7 @@ export const createGraphqlResourceVariable = async ({
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: "GraphQL" });
-  await page.getByRole("textbox", { name: "URL" }).fill(url);
+  await page.getByRole("textbox", { name: "URL", exact: true }).fill(url);
   await page.getByRole("textbox", { name: "Query" }).fill(query);
   await closeVariablePanelAndWaitForSave({ page });
 };
