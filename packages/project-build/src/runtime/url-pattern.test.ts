@@ -1,4 +1,5 @@
-import { matchPathnamePattern } from "@webstudio-is/wsauth";
+import { matchPathnamePattern as matchRouterPattern } from "@webstudio-is/wsauth";
+import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import { expect, test, describe } from "vitest";
 import {
   compilePathnamePattern,
@@ -7,6 +8,12 @@ import {
   validatePathnamePattern,
 } from "./url-pattern";
 import { VALID_URLPATTERN_PATHS } from "@webstudio-is/sdk/router-path-test-data";
+
+// Published pages adapt Remix's "*" parameter to Webstudio's page path names.
+const matchPathnamePattern = (pattern: string, pathname: string) => {
+  const params = matchRouterPattern(pattern, pathname);
+  return params === undefined ? undefined : toWebstudioParams(pattern, params);
+};
 
 /**
  * These tests use the shared test data from @webstudio-is/sdk to ensure
