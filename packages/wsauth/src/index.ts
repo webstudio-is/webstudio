@@ -474,23 +474,6 @@ const toRouterPattern = (pattern: string) => {
   return segments.join("/");
 };
 
-// Published routes expose splats under their Webstudio names, not Remix's "*".
-const toWebstudioParams = (
-  pattern: string,
-  params: Record<string, string | undefined>
-) => {
-  const result = { ...params };
-  const namedSplat = pattern.match(/:(\w+)\*$/)?.[1];
-  if (namedSplat) {
-    result[namedSplat] = result["*"];
-    delete result["*"];
-  } else if (pattern.endsWith("/*")) {
-    result[0] = result["*"];
-    delete result["*"];
-  }
-  return result;
-};
-
 /** Match a set of page paths with the same route ranking as the published app. */
 export const matchPathnameRoutes = <Value>(
   routes: ReadonlyArray<{ pattern: string; value: Value }>,
@@ -508,7 +491,7 @@ export const matchPathnameRoutes = <Value>(
   }
   return {
     value: match.route.source.value,
-    params: toWebstudioParams(match.route.source.pattern, match.params),
+    params: match.params,
   };
 };
 

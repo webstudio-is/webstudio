@@ -32,6 +32,7 @@ import {
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
 import { matchPathnamePattern } from "@webstudio-is/wsauth";
+import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import {
   $selectedPage,
   $selectedPagePath,
@@ -308,7 +309,9 @@ const AddressBar = forwardRef<
         options={history}
         onSelect={(option) => {
           flushSync(() => {
-            setPathParams(matchPathnamePattern(path, option) ?? {});
+            setPathParams(
+              toWebstudioParams(path, matchPathnamePattern(path, option) ?? {})
+            );
           });
           containerRef.current?.requestSubmit();
         }}

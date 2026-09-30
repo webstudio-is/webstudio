@@ -5,6 +5,7 @@ import {
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
 import { matchPathnamePattern } from "@webstudio-is/wsauth";
+import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import { $selectedPage } from "./nano-states/pages";
 import { $pages } from "./sync/data-stores";
 import { $publishedOrigin } from "./nano-states/misc";
@@ -24,12 +25,18 @@ const extractParams = (
   // try to match the first item in history to let user
   // see the page without manually entering params
   // or selecting them in address bar
-  const matchedParams = path
-    ? (matchPathnamePattern(pattern, path) ??
-      (fallbackPattern
-        ? matchPathnamePattern(fallbackPattern, path)
-        : undefined))
-    : undefined;
+  let matchedParams: System["params"] | undefined;
+  if (path) {
+    const match = matchPathnamePattern(pattern, path);
+    if (match) {
+      matchedParams = toWebstudioParams(pattern, match);
+    } else if (fallbackPattern) {
+      const fallbackMatch = matchPathnamePattern(fallbackPattern, path);
+      if (fallbackMatch) {
+        matchedParams = toWebstudioParams(fallbackPattern, fallbackMatch);
+      }
+    }
+  }
   for (const token of tokens) {
     if (token.type === "param") {
       params[token.name] = matchedParams?.[token.name] ?? undefined;

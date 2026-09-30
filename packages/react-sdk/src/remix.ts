@@ -42,29 +42,23 @@ export const generateRemixRoute = (pathname: string) => {
   return `${base}${tail}`;
 };
 
-/**
- * generates a function to convert remix params to compatible with url pattern groups
- *
- * for /:name* pattern
- * params["*"] is replaced with params["name"]
- *
- * for /* pattern
- * params["*"] is replaced with params[0]
- */
-export const generateRemixParams = (pathname: string) => {
-  const name = pathname.match(/:(?<name>\w+)\*$/)?.groups?.name;
-  let generated = "";
-  generated += `type Params = Record<string, string | undefined>;\n`;
-  generated += `export const getRemixParams = ({ ...params }: Params): Params => {\n`;
-  if (name) {
-    generated += `  params["${name}"] = params["*"]\n`;
-    generated += `  delete params["*"]\n`;
+/** Map Remix splat parameters to the names used in Webstudio page paths. */
+export const toWebstudioParams = (
+  pathname: string,
+  params: Record<string, string | undefined>
+) => {
+  const result = { ...params };
+  const namedSplat = pathname.match(/:(\w+)\*$/)?.[1];
+  if (namedSplat) {
+    result[namedSplat] = result["*"];
+    delete result["*"];
+  } else if (pathname.endsWith("/*")) {
+    result[0] = result["*"];
+    delete result["*"];
   }
-  if (pathname.endsWith("/*")) {
-    generated += `  params[0] = params["*"]\n`;
-    generated += `  delete params["*"]\n`;
-  }
-  generated += `  return params\n`;
-  generated += `}\n`;
-  return generated;
+  return result;
 };
+
+/** Generate the page-specific wrapper used by published routes. */
+export const generateRemixParams = (pathname: string) =>
+  `export const getRemixParams = (params: Record<string, string | undefined>) => toWebstudioParams(${JSON.stringify(pathname)}, params);`;

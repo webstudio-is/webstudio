@@ -231,16 +231,16 @@ describe("wsauth", () => {
     );
   });
 
-  test("returns published route parameters, including named splats", () => {
+  test("returns Remix route parameters", () => {
     expect(matchPathnamePattern("/docs/:rest*", "/docs/a/b")).toEqual({
-      rest: "a/b",
+      "*": "a/b",
     });
-    expect(matchPathnamePattern("/docs/*", "/docs")).toEqual({ 0: "" });
+    expect(matchPathnamePattern("/docs/*", "/docs")).toEqual({ "*": "" });
     expect(matchPathnamePattern("/users/:id", "/users/caf%C3%A9")).toEqual({
       id: "café",
     });
     expect(matchPathnamePattern("/docs/:rest*", "/docs")).toEqual({
-      rest: "",
+      "*": "",
     });
     expect(matchPathnamePattern("/docs/:id?", "/docs")).toEqual({});
     expect(matchPathnamePattern("/docs/:id?", "/docs/guide")).toEqual({

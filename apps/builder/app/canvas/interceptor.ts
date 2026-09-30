@@ -4,6 +4,7 @@ import {
   tokenizePathnamePattern,
 } from "@webstudio-is/project-build/runtime";
 import { matchPathnameRoutes } from "@webstudio-is/wsauth";
+import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 import { $isPreviewMode, $selectedPageHash } from "~/shared/nano-states";
@@ -62,7 +63,10 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     const search = Object.fromEntries(pageHref.searchParams);
     $selectedPageHash.set({ hash: pageHref.hash });
     selectPage(page.id);
-    updateCurrentSystem({ params, search });
+    updateCurrentSystem({
+      params: toWebstudioParams(getPagePath(page.id, pages), params),
+      search,
+    });
   }
 };
 
