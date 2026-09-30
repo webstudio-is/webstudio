@@ -438,7 +438,7 @@ export const replaceFormActionsWithResources = ({
     }
     if (
       prop.name === "action" &&
-      prop.type === "string" &&
+      (prop.type === "string" || prop.type === "expression") &&
       prop.value &&
       instances.get(prop.instanceId)?.component === "Form"
     ) {
@@ -447,7 +447,8 @@ export const replaceFormActionsWithResources = ({
         data = {};
         formProps.set(prop.instanceId, data);
       }
-      data.action = prop.value;
+      data.action =
+        prop.type === "string" ? JSON.stringify(prop.value) : prop.value;
       props.set(prop.id, {
         id: prop.id,
         instanceId: prop.instanceId,
@@ -463,7 +464,7 @@ export const replaceFormActionsWithResources = ({
         id: instanceId,
         name: "action",
         method: getMethod(method),
-        url: JSON.stringify(action),
+        url: action,
         headers: [
           { name: "Content-Type", value: JSON.stringify("application/json") },
         ],

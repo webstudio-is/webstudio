@@ -850,6 +850,7 @@ export const ResourceForm = forwardRef<
       </Row>
       <Row>
         <UrlField
+          autoFocus
           scope={scope}
           aliases={aliases}
           value={url}
@@ -910,6 +911,7 @@ export const ResourceForm = forwardRef<
       </Row>
       <Row>
         <Headers
+          suggestHeaders
           scope={scope}
           aliases={aliases}
           headers={headers}

@@ -16,10 +16,6 @@ import {
   ResourceForm,
   UrlField,
 } from "./resource-panel";
-import {
-  ResourceForm as ResourceControlForm,
-  updateResourceFromFormData,
-} from "./controls/resource-control";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -269,76 +265,5 @@ test("suggests request header names and known values", async () => {
   await act(async () => page.getByPlaceholder("Name").fill("X-Custom"));
   expect(onChange).toHaveBeenCalledWith([
     { name: "X-Custom", value: '"application/json"' },
-  ]);
-});
-
-test("saving a resource keeps fields absent from the popover", () => {
-  const resource: Resource = {
-    id: "request",
-    name: "Request",
-    method: "post",
-    url: '"https://example.com"',
-    searchParams: [{ name: "token", value: '"existing"' }],
-    headers: [{ name: "Content-Type", value: '"application/json"' }],
-    body: '"existing body"',
-  };
-  const formData = new FormData();
-  formData.set("url", '"https://changed.example.com"');
-  formData.set("method", "post");
-  formData.set("search-param-name", "token");
-  formData.set("search-param-value", '"existing"');
-  formData.set("header-name", "Content-Type");
-  formData.set("header-value", '"application/json"');
-
-  expect(updateResourceFromFormData(resource, formData)).toEqual({
-    ...resource,
-    url: '"https://changed.example.com"',
-  });
-});
-
-test("resource popover keeps and imports URL search parameters", async () => {
-  const resource: Resource = {
-    id: "request",
-    name: "Request",
-    method: "get",
-    url: '"https://example.com"',
-    searchParams: [{ name: "existing", value: '"one"' }],
-    headers: [],
-  };
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  await act(async () => {
-    root?.render(
-      createElement(
-        TooltipProvider,
-        undefined,
-        createElement(FloatingPanel, {
-          title: "Edit resource",
-          open: true,
-          children: createElement("button", undefined, "Edit resource"),
-          content: createElement(
-            "form",
-            undefined,
-            createElement(ResourceControlForm, { resource })
-          ),
-        })
-      )
-    );
-  });
-  const form = document.querySelector("form");
-  expect(form).not.toBeNull();
-  expect(new FormData(form!).getAll("search-param-name")).toEqual(["existing"]);
-
-  await act(async () =>
-    page
-      .getByRole("textbox", { name: "URL" })
-      .fill("https://example.com?added=two")
-  );
-  const formData = new FormData(form!);
-  expect(formData.getAll("search-param-name")).toEqual(["existing", "added"]);
-  expect(updateResourceFromFormData(resource, formData).searchParams).toEqual([
-    { name: "existing", value: '"one"' },
-    { name: "added", value: '"two"' },
   ]);
 });

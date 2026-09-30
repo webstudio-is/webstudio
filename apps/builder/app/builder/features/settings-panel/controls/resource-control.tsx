@@ -1,89 +1,45 @@
 import { computed } from "nanostores";
-import {
-  Fragment,
-  forwardRef,
-  useId,
-  useRef,
-  useState,
-  type ComponentProps,
-} from "react";
+import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { GearIcon } from "@webstudio-is/icons";
 import {
-  EnhancedTooltip,
+  Button,
   Flex,
-  FloatingPanel,
   InputField,
-  NestedInputButton,
-  theme,
+  Select,
+  SmallIconButton,
+  Text,
 } from "@webstudio-is/design-system";
-import { isLiteralExpression } from "@webstudio-is/expression";
-import type { Resource } from "@webstudio-is/sdk";
-import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
-import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
-import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { useAsyncValue } from "~/shared/use-async-value";
-import { $dataSources } from "~/shared/sync/data-stores";
-import { $props, $resources } from "~/shared/sync/data-stores";
+import {
+  isLiteralExpression,
+  parseStringLiteralExpression,
+} from "@webstudio-is/expression";
+import type { DataSource } from "@webstudio-is/sdk";
 import {
   computeExpression,
   createResourceFieldsFromResource,
-  createResourceValueFromFormData,
+  findAvailableVariables,
+  validatePrimitiveValue,
 } from "@webstudio-is/project-build/runtime";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
-  $selectedInstance,
   $selectedInstanceKeyWithRoot,
   $selectedPage,
+  $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
+import { useAsyncValue } from "~/shared/use-async-value";
 import {
-  UrlField,
-  MethodField,
-  Headers,
-  getResourceScopeForInstance,
-} from "../resource-panel";
+  $dataSources,
+  $instances,
+  $resources,
+} from "~/shared/sync/data-stores";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { getResourceScopeForInstance } from "../resource-panel";
+import { VariablePopoverTrigger } from "../variable-popover";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";
-
-// dirty, dirty hack
-const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
-  if (form === null) {
-    return false;
-  }
-  // check all errors in form fields are visible
-  for (const element of form.elements) {
-    if (
-      element instanceof HTMLInputElement ||
-      element instanceof HTMLTextAreaElement
-    ) {
-      // field is invalid and the error is not visible
-      if (
-        element.validity.valid === false &&
-        // rely on data-color=error convention in webstudio design system
-        element.getAttribute("data-color") !== "error"
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
-};
-
-const ResourceButton = forwardRef<
-  HTMLButtonElement,
-  ComponentProps<typeof NestedInputButton>
->((props, ref) => {
-  return (
-    <EnhancedTooltip content="Edit resource">
-      <NestedInputButton {...props} ref={ref} aria-label="Edit resource">
-        <GearIcon />
-      </NestedInputButton>
-    </EnhancedTooltip>
-  );
-});
-ResourceButton.displayName = "ResourceButton";
 
 const $selectedInstanceResourceScope = computed(
   [
@@ -92,272 +48,193 @@ const $selectedInstanceResourceScope = computed(
     $variableValuesByInstanceSelector,
     $dataSources,
   ],
-  (page, instanceKey, variableValuesByInstanceSelector, dataSources) => {
-    return getResourceScopeForInstance({
+  (page, instanceKey, variableValuesByInstanceSelector, dataSources) =>
+    getResourceScopeForInstance({
       page,
       instanceKey,
       dataSources,
       variableValuesByInstanceSelector,
-    });
-  }
-);
-
-export const ResourceForm = ({ resource }: { resource: Resource }) => {
-  const { scope, aliases } = useStore($selectedInstanceResourceScope);
-  const [url, setUrl] = useState(resource.url);
-  const [method, setMethod] = useState<Resource["method"]>(resource.method);
-  const [searchParams, setSearchParams] = useState(resource.searchParams ?? []);
-  const [headers, setHeaders] = useState<Resource["headers"]>(resource.headers);
-  return (
-    <Flex
-      direction="column"
-      css={{
-        width: theme.spacing[30],
-        overflow: "hidden",
-        gap: theme.spacing[9],
-        p: theme.spacing[9],
-      }}
-    >
-      <UrlField
-        autoFocus
-        scope={scope}
-        aliases={aliases}
-        value={url}
-        onChange={(urlExpression, nextSearchParams) => {
-          setUrl(urlExpression);
-          if (nextSearchParams) {
-            setSearchParams((previous) => [...previous, ...nextSearchParams]);
-          }
-        }}
-        onCurlPaste={(curl) => {
-          // update all fields when curl is pasted into the URL field
-          setUrl(JSON.stringify(curl.url));
-          setMethod(curl.method);
-          setSearchParams(
-            (curl.searchParams ?? []).map(({ name, value }) => ({
-              name,
-              value: JSON.stringify(value),
-            }))
-          );
-          setHeaders(
-            curl.headers.map((header) => ({
-              name: header.name,
-              value: JSON.stringify(header.value),
-            }))
-          );
-        }}
-      />
-      <MethodField value={method} onChange={setMethod} />
-      {searchParams.map(({ name, value }, index) => (
-        <Fragment key={index}>
-          <input type="hidden" name="search-param-name" value={name} />
-          <input type="hidden" name="search-param-value" value={value} />
-        </Fragment>
-      ))}
-      <Headers
-        suggestHeaders
-        scope={scope}
-        aliases={aliases}
-        headers={headers}
-        onChange={setHeaders}
-      />
-    </Flex>
-  );
-};
-
-export const updateResourceFromFormData = (
-  resource: Resource,
-  formData: FormData
-): Resource => {
-  const edited = createResourceValueFromFormData({
-    id: resource.id,
-    name: resource.name,
-    formData,
-  });
-  return {
-    ...resource,
-    url: edited.url,
-    method: edited.method,
-    searchParams: edited.searchParams,
-    headers: edited.headers,
-  };
-};
-
-const ResourceControlPanel = ({
-  resource,
-  onChange,
-}: {
-  resource: Resource;
-  onChange: (resource: Resource) => void;
-}) => {
-  const [isResourceOpen, setIsResourceOpen] = useState(false);
-  const form = useRef<HTMLFormElement>(null);
-  return (
-    <FloatingPanel
-      title="Edit resource"
-      open={isResourceOpen}
-      onOpenChange={(isOpen) => {
-        if (isOpen) {
-          setIsResourceOpen(true);
-          return;
-        }
-        // attempt to save form on close
-        if (areAllFormErrorsVisible(form.current)) {
-          form.current?.requestSubmit();
-          setIsResourceOpen(false);
-        } else {
-          form.current?.checkValidity();
-          // prevent closing when not all errors are shown to user
-        }
-      }}
-      content={
-        <form
-          ref={form}
-          // ref={formRef}
-          noValidate={true}
-          // exclude from the flow
-          style={{ display: "contents" }}
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (event.currentTarget.checkValidity()) {
-              const formData = new FormData(event.currentTarget);
-              onChange(updateResourceFromFormData(resource, formData));
-            }
-          }}
-        >
-          {/* submit is not triggered when press enter on input without submit button */}
-          <button hidden></button>
-          <ResourceForm resource={resource} />
-        </form>
-      }
-    >
-      <ResourceButton />
-    </FloatingPanel>
-  );
-};
-
-const $methodPropValue = computed(
-  [$selectedInstance, $props],
-  (instance, props): Resource["method"] => {
-    for (const prop of props.values()) {
-      if (
-        prop.instanceId === instance?.id &&
-        prop.type === "string" &&
-        prop.name === "method"
-      ) {
-        const value = prop.value.toLowerCase();
-        if (
-          value === "get" ||
-          value === "post" ||
-          value === "put" ||
-          value === "delete"
-        ) {
-          return value;
-        }
-        break;
-      }
-    }
-    return "post";
-  }
+    })
 );
 
 export const ResourceControl = ({
   instanceId,
   propName,
   prop,
+  onChange,
 }: ControlProps<"resource">) => {
   const resources = useStore($resources);
+  const dataSources = useStore($dataSources);
+  const instances = useStore($instances);
   const { variableValues, scope, aliases } = useStore(
     $selectedInstanceResourceScope
   );
-  const methodPropValue = useStore($methodPropValue);
-  let resource: undefined | Resource;
-  let urlExpression: string = JSON.stringify("");
-  if (prop?.type === "string") {
-    urlExpression = JSON.stringify(prop.value);
-  }
-  if (prop?.type === "expression") {
-    urlExpression = prop.value;
-  }
-  if (prop?.type === "resource") {
-    resource = resources.get(prop.value);
-    if (resource) {
-      urlExpression = resource.url;
-    }
-  }
-  resource ??= {
-    id: "",
-    name: propName,
-    url: urlExpression,
-    method: methodPropValue,
-    headers: [{ name: "Content-Type", value: `"application/json"` }],
-  };
-
-  const updateResource = (newResource: Resource) => {
-    executeRuntimeMutation({
-      id: "resources.upsertProp",
-      input: {
-        resourceId: prop?.type === "resource" ? newResource.id : undefined,
-        resource: createResourceFieldsFromResource(newResource),
-        instanceId,
-        propName,
-        scopeInstanceId: instanceId,
-        dataSourceName: newResource.name,
-      },
-    });
-  };
-
-  const id = useId();
-  const bound = isLiteralExpression(urlExpression) === false;
+  const availableVariables = findAvailableVariables({
+    startingInstanceId: instanceId,
+    instances,
+    dataSources,
+  });
+  const resourceVariables = Array.from(availableVariables.values()).filter(
+    (variable): variable is Extract<DataSource, { type: "resource" }> =>
+      variable.type === "resource" &&
+      resources.has(variable.resourceId) &&
+      resources.get(variable.resourceId)?.control !== "system"
+  );
+  const resource =
+    prop?.type === "resource" ? resources.get(prop.value) : undefined;
+  const variable = Array.from(dataSources.values()).find(
+    (variable) =>
+      variable.type === "resource" && variable.resourceId === resource?.id
+  );
+  const urlExpression =
+    resource?.url ??
+    (prop?.type === "expression"
+      ? prop.value
+      : JSON.stringify(prop?.type === "string" ? prop.value : ""));
   const evaluatedUrl = useAsyncValue(
-    () => computeExpression(resource.url, variableValues),
-    [resource.url, variableValues],
+    async () =>
+      prop?.type === "resource"
+        ? ""
+        : computeExpression(urlExpression, variableValues),
+    [urlExpression, variableValues, prop?.type],
     undefined
   );
-  const localValue = useDraftValue(String(evaluatedUrl ?? ""), (value) =>
-    updateResource({ ...resource, url: JSON.stringify(value) })
-  );
+  const bound = isLiteralExpression(urlExpression) === false;
+  const localValue = useDraftValue(String(evaluatedUrl ?? ""), (value) => {
+    if (prop?.type !== "resource" && !bound) {
+      onChange({ type: "string", value });
+    }
+  });
+  const id = useId();
+  const updateUrl = (expression: string) => {
+    const literalUrl = parseStringLiteralExpression(expression);
+    onChange(
+      literalUrl === undefined
+        ? { type: "expression", value: expression }
+        : { type: "string", value: literalUrl }
+    );
+  };
+  const options = new Map([
+    ["url", "URL"],
+    ...resourceVariables.map(
+      (variable) => [`resource:${variable.resourceId}`, variable.name] as const
+    ),
+  ]);
+  // Keep legacy or out-of-scope references visible until the user replaces them.
+  if (
+    prop?.type === "resource" &&
+    options.has(`resource:${prop.value}`) === false
+  ) {
+    options.set(
+      `resource:${prop.value}`,
+      variable?.name ?? resource?.name ?? "Missing Resource"
+    );
+  }
 
   return (
-    <VerticalLayout label={<PropertyLabel name={propName} readOnly={bound} />}>
-      <BindableExpressionControl
-        expression={urlExpression}
-        value={localValue.value}
-        bound={bound}
-        scope={scope}
-        aliases={aliases}
-        validate={(value) => validatePrimitiveValue(value, "URL")}
-        onChangeValue={(value) =>
-          updateResource({ ...resource, url: JSON.stringify(value) })
-        }
-        onChangeExpression={(value) =>
-          updateResource({ ...resource, url: value })
-        }
-        onRemove={(value) =>
-          updateResource({
-            ...resource,
-            url: JSON.stringify(String(value)),
-          })
-        }
-        renderControl={({ readOnly }) => (
-          <InputField
-            id={id}
-            disabled={readOnly}
-            value={localValue.value}
-            onChange={(event) => localValue.set(event.target.value)}
-            onBlur={localValue.save}
-            onSubmit={localValue.save}
-            suffix={
-              isFeatureEnabled("resourceProp") && (
-                <ResourceControlPanel
-                  resource={resource}
-                  onChange={updateResource}
-                />
-              )
-            }
+    <VerticalLayout
+      label={
+        <PropertyLabel
+          name={propName}
+          readOnly={prop?.type !== "resource" && bound}
+        />
+      }
+    >
+      {(isFeatureEnabled("resourceProp") || prop?.type === "resource") && (
+        <Flex gap="1" css={{ width: "100%" }}>
+          <Select
+            aria-label="Action source"
+            value={prop?.type === "resource" ? `resource:${prop.value}` : "url"}
+            options={Array.from(options.keys())}
+            getLabel={(value) => options.get(value)}
+            onChange={(value) => {
+              if (value === "url") {
+                updateUrl(urlExpression);
+              } else {
+                onChange({
+                  type: "resource",
+                  value: value.slice("resource:".length),
+                });
+              }
+            }}
           />
+          {variable && (
+            <VariablePopoverTrigger key={variable.id} variable={variable}>
+              <SmallIconButton
+                aria-label="Edit Resource variable"
+                icon={<GearIcon />}
+              />
+            </VariablePopoverTrigger>
+          )}
+        </Flex>
+      )}
+      {prop?.type === "resource" ? (
+        resource &&
+        variable === undefined && (
+          <Button
+            color="neutral"
+            onClick={() => {
+              const names = new Set(
+                Array.from(
+                  availableVariables.values(),
+                  (variable) => variable.name
+                )
+              );
+              const baseName = resource.name || "Action";
+              let name = baseName;
+              for (let suffix = 2; names.has(name); suffix += 1) {
+                name = `${baseName} ${suffix}`;
+              }
+              executeRuntimeMutation({
+                id: "resources.upsert",
+                input: {
+                  resourceId: resource.id,
+                  resource: createResourceFieldsFromResource({
+                    ...resource,
+                    name,
+                  }),
+                  scopeInstanceId: instanceId,
+                  dataSourceName: name,
+                },
+              });
+            }}
+          >
+            Make Resource variable
+          </Button>
+        )
+      ) : (
+        <BindableExpressionControl
+          expression={urlExpression}
+          value={localValue.value}
+          bound={bound}
+          scope={scope}
+          aliases={aliases}
+          validate={(value) => validatePrimitiveValue(value, "URL")}
+          onChangeValue={(value) => onChange({ type: "string", value })}
+          onChangeExpression={updateUrl}
+          onRemove={(value) =>
+            onChange({ type: "string", value: String(value ?? "") })
+          }
+          renderControl={({ readOnly }) => (
+            <InputField
+              id={id}
+              aria-label="Action URL"
+              disabled={readOnly}
+              value={localValue.value}
+              onChange={(event) => localValue.set(event.target.value)}
+              onBlur={localValue.save}
+              onSubmit={localValue.save}
+            />
+          )}
+        />
+      )}
+      {isFeatureEnabled("resourceProp") &&
+        resourceVariables.length === 0 &&
+        prop?.type !== "resource" && (
+          <Text color="subtle">
+            Create a Resource variable in Variables to use it here.
+          </Text>
         )}
-      />
     </VerticalLayout>
   );
 };

@@ -52,6 +52,7 @@ import {
   findUnusedDataVariableIds,
   findUnsetVariableNames,
   findVariableUsagesByInstance,
+  findUsedVariables,
   getDataVariableJsonExpressionErrors,
   getResourceExpressionErrors,
   rebindTreeVariablesMutable,
@@ -3915,5 +3916,61 @@ describe("getResourceExpressionErrors", () => {
 
   test("allows omitted optional expressions", () => {
     expect(getResourceExpressionErrors({})).toEqual([]);
+  });
+});
+
+test("counts form actions as Resource variable usages and preserves their request when the variable is deleted", () => {
+  const data = renderData(
+    <Body ws:id="body">
+      <Box ws:id="form" />
+    </Body>
+  );
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    url: '"https://example.com"',
+    method: "post",
+    headers: [],
+  };
+  data.resources.set(resource.id, resource);
+  data.dataSources.set("variable", {
+    type: "resource",
+    id: "variable",
+    name: "Request",
+    scopeInstanceId: "body",
+    resourceId: resource.id,
+  });
+  data.props.set("action", {
+    id: "action",
+    instanceId: "form",
+    name: "action",
+    type: "resource",
+    value: resource.id,
+  });
+  expect(
+    findVariableUsagesByInstance({
+      ...data,
+      pages: undefined,
+      startingInstanceId: "body",
+    }).get("variable")
+  ).toEqual(new Set(["form"]));
+  expect(
+    findUsedVariables({
+      ...data,
+      pages: undefined,
+      startingInstanceId: "body",
+    }).get("variable")
+  ).toBe(1);
+  const deletion = deleteResource(
+    { ...data, pages: createDefaultPages({ rootInstanceId: "body" }) },
+    { resourceId: resource.id, force: true }
+  );
+  expect(deletion.result.propIds).toEqual(["action"]);
+  deleteVariableMutable(data, "variable");
+  expect(data.dataSources.has("variable")).toBe(false);
+  expect(data.resources.get(resource.id)).toEqual(resource);
+  expect(data.props.get("action")).toMatchObject({
+    type: "resource",
+    value: resource.id,
   });
 });

@@ -1569,7 +1569,7 @@ export const builderRuntimeOperations = [
     "instances.deleteProps",
     api("delete-props", "deleteProps", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props"],
+      readNamespaces: ["instances", "props", "dataSources"],
       writeNamespaces: ["props", "resources"],
     }),
     props.propDeletionsInput,

@@ -56,6 +56,7 @@ export type PropValue =
   | { type: "string[]"; value: string[] }
   | Pick<Extract<Prop, { type: "expression" }>, "type" | "value" | "mode">
   | { type: "asset"; value: Asset["id"] }
+  | { type: "resource"; value: string }
   | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
   | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] }
   | {

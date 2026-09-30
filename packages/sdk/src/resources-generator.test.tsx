@@ -954,3 +954,21 @@ test("ignore empty form action", () => {
   );
   expect(data.resources).toEqual(new Map());
 });
+
+test("preserves URL bindings when preparing webhook actions for publishing", () => {
+  const data = renderData(<Form ws:id="form" action="" />);
+  const url = `${encodeDataSourceVariable("endpoint")} + "/submit"`;
+  data.props.set("form:action", {
+    id: "form:action",
+    instanceId: "form",
+    name: "action",
+    type: "expression",
+    value: url,
+  });
+  replaceFormActionsWithResources(data);
+  expect(data.props.get("form:action")).toMatchObject({
+    type: "resource",
+    value: "form",
+  });
+  expect(data.resources.get("form")?.url).toBe(url);
+});

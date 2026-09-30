@@ -3313,3 +3313,34 @@ test("lists instances in tree order", () => {
     ).instances.map((instance) => instance.id)
   ).toEqual(["root", "child-a", "child-b"]);
 });
+
+test("deleting a form preserves a Resource variable owned by its parent", () => {
+  const payload = createInstanceCleanupPayload({
+    instanceIds: new Set(["form"]),
+    props: [
+      {
+        id: "action",
+        instanceId: "form",
+        name: "action",
+        type: "resource",
+        value: "shared",
+      },
+    ],
+    dataSources: [
+      {
+        id: "request",
+        type: "resource",
+        name: "Request",
+        resourceId: "shared",
+        scopeInstanceId: "body",
+      },
+    ],
+    styleSources: [],
+    styleSourceSelections: [],
+    styles: [],
+  });
+  expect(payload.map((change) => change.namespace)).toEqual([
+    "instances",
+    "props",
+  ]);
+});

@@ -54,6 +54,7 @@ import { validatePageSelector } from "./page-selector";
 import {
   createPropClonePatches,
   createPropDeletePayload,
+  getUnreferencedResourceIds,
   createPropRenamePayload,
 } from "./props";
 import {
@@ -1014,7 +1015,10 @@ export const getInstanceDeleteTargets = ({
     instanceIds
   );
 
-  for (const prop of props) {
+  const propList = Array.from(props);
+  const dataSourceList = Array.from(dataSources);
+
+  for (const prop of propList) {
     if (instanceIds.has(prop.instanceId) === false) {
       continue;
     }
@@ -1024,7 +1028,7 @@ export const getInstanceDeleteTargets = ({
     }
   }
 
-  for (const dataSource of dataSources) {
+  for (const dataSource of dataSourceList) {
     if (instanceIds.has(dataSource.scopeInstanceId ?? "") === false) {
       continue;
     }
@@ -1044,7 +1048,13 @@ export const getInstanceDeleteTargets = ({
     instanceIds,
     propIds,
     dataSourceIds,
-    resourceIds,
+    resourceIds: getUnreferencedResourceIds({
+      resourceIds,
+      props: propList.filter((prop) => !propIds.has(prop.id)),
+      dataSources: dataSourceList.filter(
+        (dataSource) => !dataSourceIds.has(dataSource.id)
+      ),
+    }),
     styleSourceSelectionInstanceIds,
     localStyleSourceIds,
   };
@@ -2565,6 +2575,7 @@ export const convertInstance = (
             deletions: [{ instanceId: selectedInstance.id, name: "tag" }],
             instances: draft.instances,
             props: draft.props.values(),
+            dataSources: draft.dataSources.values(),
           }).payload
         );
         const renames = getStandardPropRenames({
@@ -2675,6 +2686,7 @@ export const convertInstance = (
         deletions: [{ instanceId, name: "tag" }],
         instances,
         props: state.props.values(),
+        dataSources: state.dataSources?.values(),
       }).payload
     );
     const renames = getStandardPropRenames({

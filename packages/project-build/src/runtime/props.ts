@@ -9,6 +9,7 @@ import {
   getExpressionBindingError,
   expressionBindingMode,
   prop as propSchema,
+  type DataSource,
   type Instance,
   type Prop,
   type PropMeta,
@@ -735,14 +736,39 @@ export const getPropDeletePlan = ({
   return { propIds, resourceIds };
 };
 
+export const getUnreferencedResourceIds = ({
+  resourceIds,
+  props,
+  dataSources,
+}: {
+  resourceIds: Iterable<string>;
+  props: Iterable<Prop>;
+  dataSources: Iterable<DataSource>;
+}) => {
+  const unreferenced = new Set(resourceIds);
+  for (const prop of props) {
+    if (prop.type === "resource") {
+      unreferenced.delete(prop.value);
+    }
+  }
+  for (const dataSource of dataSources) {
+    if (dataSource.type === "resource") {
+      unreferenced.delete(dataSource.resourceId);
+    }
+  }
+  return unreferenced;
+};
+
 export const createPropDeletePayload = ({
   deletions,
   instances,
   props,
+  dataSources = [],
 }: {
   deletions: Array<{ instanceId: Instance["id"]; name: Prop["name"] }>;
   instances: Map<Instance["id"], Instance>;
   props: Iterable<Prop>;
+  dataSources?: Iterable<DataSource>;
 }) => {
   const propList = Array.from(props);
   const propIds = new Set<string>();
@@ -770,7 +796,13 @@ export const createPropDeletePayload = ({
     }
   }
   const propIdList = Array.from(propIds);
-  const resourceIdList = Array.from(resourceIds);
+  const resourceIdList = Array.from(
+    getUnreferencedResourceIds({
+      resourceIds,
+      props: propList.filter((prop) => !propIds.has(prop.id)),
+      dataSources,
+    })
+  );
   return {
     propIds: propIdList,
     resourceIds: resourceIdList,
@@ -1101,7 +1133,7 @@ export const bindProps = (
 };
 
 export const deleteProps = (
-  state: Pick<BuilderState, "instances" | "props">,
+  state: Pick<BuilderState, "instances" | "props" | "dataSources">,
   input: z.infer<typeof propDeletionsInput>
 ) => {
   const { instances, props } = getRequiredPropState(state);
@@ -1115,6 +1147,7 @@ export const deleteProps = (
     instances,
     props: props.values(),
     deletions: input.deletions,
+    dataSources: state.dataSources?.values(),
   });
   if (missingInstanceId !== undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");

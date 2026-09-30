@@ -72,6 +72,7 @@ import {
 } from "./output";
 import {
   createPropUpsertPayload,
+  getUnreferencedResourceIds,
   createValidatedPropValueFromInput,
   findProp,
 } from "./props";
@@ -767,6 +768,7 @@ const traverseExpressions = ({
   dataSources,
   resources,
   update,
+  onResourceReference,
 }: {
   startingInstanceId: undefined | Instance["id"];
   pages: undefined | Pages;
@@ -779,6 +781,10 @@ const traverseExpressions = ({
     instanceId: Instance["id"],
     args?: string[]
   ) => void | string;
+  onResourceReference?: (
+    resourceId: Resource["id"],
+    instanceId: Instance["id"]
+  ) => void;
 }) => {
   const pagesList = pages ? getAllPages(pages) : [];
   const updateExpression = ({
@@ -917,6 +923,7 @@ const traverseExpressions = ({
       continue;
     }
     if (prop.type === "resource") {
+      onResourceReference?.(prop.value, prop.instanceId);
       instanceIdByResourceId.set(prop.value, prop.instanceId);
       continue;
     }
@@ -1007,6 +1014,7 @@ export const findUsedVariables = ({
   props,
   dataSources,
   resources,
+  includeResourceReferences = true,
 }: {
   startingInstanceId: Instance["id"];
   pages: undefined | Pages;
@@ -1014,6 +1022,7 @@ export const findUsedVariables = ({
   props: Props;
   dataSources: DataSources;
   resources: Resources;
+  includeResourceReferences?: boolean;
 }) => {
   const usedVariables = new Map<DataSource["id"], number>();
   traverseExpressions({
@@ -1023,6 +1032,22 @@ export const findUsedVariables = ({
     props,
     dataSources,
     resources,
+    onResourceReference: (resourceId) => {
+      if (includeResourceReferences === false) {
+        return;
+      }
+      for (const variable of dataSources.values()) {
+        if (
+          variable.type === "resource" &&
+          variable.resourceId === resourceId
+        ) {
+          usedVariables.set(
+            variable.id,
+            (usedVariables.get(variable.id) ?? 0) + 1
+          );
+        }
+      }
+    },
     update: (expression) => {
       const identifiers = getExpressionIdentifiers(expression);
       for (const identifier of identifiers) {
@@ -1060,6 +1085,18 @@ export const findVariableUsagesByInstance = ({
     props,
     dataSources,
     resources,
+    onResourceReference: (resourceId, instanceId) => {
+      for (const variable of dataSources.values()) {
+        if (
+          variable.type === "resource" &&
+          variable.resourceId === resourceId
+        ) {
+          const usages = usedIn.get(variable.id) ?? new Set();
+          usages.add(instanceId);
+          usedIn.set(variable.id, usages);
+        }
+      }
+    },
     update: (expression, instanceId) => {
       const identifiers = getExpressionIdentifiers(expression);
       for (const identifier of identifiers) {
@@ -1155,7 +1192,13 @@ export const deleteVariableMutable = (
   }
   data.dataSources.delete(variableId);
   if (dataSource.type === "resource") {
-    data.resources.delete(dataSource.resourceId);
+    for (const resourceId of getUnreferencedResourceIds({
+      resourceIds: [dataSource.resourceId],
+      props: data.props.values(),
+      dataSources: data.dataSources.values(),
+    })) {
+      data.resources.delete(resourceId);
+    }
   }
   if (data.pages !== undefined) {
     for (const page of data.pages.pages.values()) {
@@ -1460,13 +1503,19 @@ const createDataSourceUpsertPayload = ({
   return produceWebstudioDataMutation(
     { pages, instances, props, dataSources, resources },
     (draft) => {
+      const previous = draft.dataSources.get(dataSource.id);
+      draft.dataSources.set(dataSource.id, dataSource);
       if (dataSource.type === "variable") {
-        const previous = draft.dataSources.get(dataSource.id);
         if (previous?.type === "resource") {
-          draft.resources.delete(previous.resourceId);
+          for (const resourceId of getUnreferencedResourceIds({
+            resourceIds: [previous.resourceId],
+            props: draft.props.values(),
+            dataSources: draft.dataSources.values(),
+          })) {
+            draft.resources.delete(resourceId);
+          }
         }
       }
-      draft.dataSources.set(dataSource.id, dataSource);
       rebindTreeVariablesMutable({
         startingInstanceId: scopeInstanceId,
         ...draft,
@@ -3136,6 +3185,8 @@ export const deleteResource = (
     props: getRequiredProps(state),
     dataSources,
     resources: getRequiredResources(state),
+    // Prop references are handled below, including forced removal.
+    includeResourceReferences: false,
   });
   const referencedDataSourceIds = Array.from(resourceDataSourceIds).filter(
     (dataSourceId) => usedDataSources.has(dataSourceId)

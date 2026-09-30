@@ -1234,3 +1234,33 @@ describe("createPropDeletePayload", () => {
     });
   });
 });
+
+test("removing an action keeps Resources referenced by variables or other forms", () => {
+  const action = prop("action", { type: "resource", value: "shared" });
+  for (const remainingReference of ["variable", "form"] as const) {
+    const result = createPropDeletePayload({
+      deletions: [{ instanceId: image.id, name: "action" }],
+      instances: new Map([[image.id, image]]),
+      props: [
+        action,
+        ...(remainingReference === "form"
+          ? [{ ...action, id: "other-action", instanceId: "other-form" }]
+          : []),
+      ],
+      dataSources:
+        remainingReference === "variable"
+          ? [
+              {
+                type: "resource",
+                id: "variable",
+                name: "Request",
+                scopeInstanceId: "body",
+                resourceId: "shared",
+              },
+            ]
+          : [],
+    });
+    expect(result.resourceIds).toEqual([]);
+    expect(result.payload.map((change) => change.namespace)).toEqual(["props"]);
+  }
+});
