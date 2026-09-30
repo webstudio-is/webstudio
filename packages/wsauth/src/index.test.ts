@@ -10,6 +10,7 @@ import {
   matchPathnameRoutes,
   matchesPathnamePattern,
   parseWsAuth,
+  parseWsAuthOrThrow,
   validateBasicAuth,
   validatePathnamePattern,
 } from "./index";
@@ -184,6 +185,49 @@ describe("wsauth", () => {
     ["", "/", true],
   ] as const)("matches %s against %s: %s", (pattern, pathname, expected) => {
     expect(matchesPathnamePattern(pattern, pathname)).toBe(expected);
+  });
+
+  test.each([
+    ["/%2A", "/%2A"],
+    ["/%2A", "/docs"],
+    ["/%3F", "/%3F"],
+    ["/%3F", "/"],
+    ["/%3Aid", "/%3Aid"],
+    ["/%3Aid", "/docs"],
+    ["/docs/%2A", "/docs/guide"],
+  ] as const)(
+    "does not interpret a saved encoded literal %s as router syntax at %s",
+    (pattern, pathname) => {
+      expect(matchesPathnamePattern(pattern, pathname)).toBe(false);
+    }
+  );
+
+  test("skips an invalid saved route while matching other routes", () => {
+    expect(
+      matchPathnameRoutes(
+        [
+          { pattern: "/%2A", value: "encoded literal" },
+          { pattern: "/docs", value: "docs" },
+        ],
+        "/docs"
+      )?.value
+    ).toBe("docs");
+  });
+
+  test("rejects a previously saved encoded auth rule before publishing", () => {
+    const content = JSON.stringify({
+      version: 1,
+      routes: {
+        "/%2A": {
+          method: "basic",
+          login: "admin",
+          password: "secret",
+        },
+      },
+    });
+    expect(() => parseWsAuthOrThrow(content, "Saved auth")).toThrow(
+      'Saved auth:routes."/%2A" Encoded route syntax is not supported in "%2A"'
+    );
   });
 
   test("returns published route parameters, including named splats", () => {

@@ -445,23 +445,32 @@ export const getBasicAuthCredentials = (authorization: string | null) => {
   return auth?.credentials;
 };
 
-const toRouterPattern = (pattern: string) =>
-  (pattern || "/")
-    .replace(/:\w+\*$/, "*")
-    .split("/")
-    .map((segment) => {
-      if (segment === "*" || segment.startsWith(":")) {
-        return segment;
+const toRouterPattern = (pattern: string) => {
+  const segments: string[] = [];
+  for (const segment of (pattern || "/").replace(/:\w+\*$/, "*").split("/")) {
+    if (segment === "*" || segment.startsWith(":")) {
+      segments.push(segment);
+      continue;
+    }
+    try {
+      // matchRoutes decodes the request pathname before matching route paths.
+      // Keep encoded slashes inside their original segment.
+      const decoded = decodeURIComponent(segment);
+      if (
+        segment.includes("%") &&
+        (decoded.startsWith(":") || /[?*]/.test(decoded))
+      ) {
+        // An encoded literal must not become router syntax, even if a saved
+        // project rule reaches the matcher without passing current validation.
+        return;
       }
-      try {
-        // matchRoutes decodes the request pathname before matching route paths.
-        // Keep encoded slashes inside their original segment.
-        return decodeURIComponent(segment).replaceAll("/", "%2F");
-      } catch {
-        return segment;
-      }
-    })
-    .join("/");
+      segments.push(decoded.replaceAll("/", "%2F"));
+    } catch {
+      segments.push(segment);
+    }
+  }
+  return segments.join("/");
+};
 
 const toWebstudioParams = (
   pattern: string,
@@ -484,11 +493,12 @@ export const matchPathnameRoutes = <Value>(
   routes: ReadonlyArray<{ pattern: string; value: Value }>,
   pathname: string
 ): { value: Value; params: Record<string, string | undefined> } | undefined => {
-  const routerRoutes = routes.map((route) => ({
-    path: toRouterPattern(route.pattern),
-    caseSensitive: false,
-    source: route,
-  }));
+  const routerRoutes = routes.flatMap((route) => {
+    const path = toRouterPattern(route.pattern);
+    return path === undefined
+      ? []
+      : [{ path, caseSensitive: false, source: route }];
+  });
   const match = matchRoutes(routerRoutes, pathname)?.at(-1);
   if (match === undefined) {
     return;

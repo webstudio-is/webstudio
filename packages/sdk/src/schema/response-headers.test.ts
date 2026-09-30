@@ -50,6 +50,14 @@ describe("response header settings", () => {
     ).toBe(false);
   });
 
+  test("rejects encoded route syntax in a saved header rule", () => {
+    expect(
+      customResponseHeaders.safeParse([
+        { route: "/%2A", name: "Referrer-Policy", value: "no-referrer" },
+      ]).success
+    ).toBe(false);
+  });
+
   test("edits rules by route and case-insensitive name", () => {
     const headers = [
       { name: "Cache-Control", value: "all paths" },
