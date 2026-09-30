@@ -59,12 +59,19 @@ const diagnosticContext = {
 };
 
 export const invalidMdxDiagnosticReason = z.enum([
+  // The MDX source was identified, but reading it from asset storage failed.
   "source-read-failed",
+  // The MDX document exists, but its revision, content reference, or source text is unavailable.
   "missing-source",
+  // No MDX document in the publication artifact matches the requested asset ID.
   "missing-asset",
+  // A document referenced from MDX frontmatter could not be loaded or resolved.
   "linked-document-unavailable",
+  // The rendered MDX violates HTML nesting rules, such as a link inside a link.
   "html-content-model",
+  // Dynamic MDX contains Resources that cannot be selected safely for a Collection item or action.
   "dynamic-resource",
+  // A dynamic source has no known candidates or exceeds the supported candidate limit.
   "dynamic-source-unbounded",
 ]);
 
