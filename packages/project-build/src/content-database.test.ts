@@ -732,7 +732,7 @@ describe("Content Block MDX compilation", () => {
           extension: "mdx",
           mimeType: "text/mdx",
           size: 1,
-          properties: { slug: "legal" },
+          properties: { slug: "legal", mdx: "collection.json" },
         },
         {
           _id: "collection.json",
@@ -755,6 +755,18 @@ describe("Content Block MDX compilation", () => {
         allMdxAssetIds: new Set(["article.mdx"]),
       }).get("block")
     ).toEqual(["article.mdx"]);
+
+    // An explicitly referenced file must survive candidate discovery so
+    // materialization can report that it is not an MDX asset.
+    build.props[0].value = `${resourceVariable}.data.properties.mdx`;
+    expect(
+      resolvePublishedMdxAssetCandidates({
+        build,
+        artifact,
+        allAssetIds: new Set(["article.mdx", "collection.json"]),
+        allMdxAssetIds: new Set(["article.mdx"]),
+      }).get("block")
+    ).toEqual(["collection.json"]);
   });
 
   test("bounds a mutable project variable to the project's MDX assets", () => {

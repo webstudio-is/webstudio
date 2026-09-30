@@ -40,12 +40,13 @@ import { mapBounded } from "@webstudio-is/content-engine/compiler";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { parseMdxDocumentRecovering } from "@webstudio-is/content-engine/mdx";
 
-const maxConcurrentMdxDependencyBlocks = 4;
-const maxConcurrentMdxDependenciesPerBlock = 8;
 import {
   assertMdxTemplateStructure,
   resolveMdxTemplates,
 } from "./runtime/mdx-template-resolution";
+
+const maxConcurrentMdxDependencyBlocks = 4;
+const maxConcurrentMdxDependenciesPerBlock = 8;
 
 type BuildValues<Value> =
   | readonly Value[]
@@ -463,26 +464,9 @@ export const createPublishedMdxDependencyClosureResolver = (
     string,
     ReturnType<typeof parseMdxDocumentRecovering>
   >();
-  const loadedSources = new Map<string, Promise<string>>();
   return async (options: ResolvePublishedMdxDependencyClosureOptions) =>
     await resolvePublishedMdxDependencyClosureWithParser({
       ...options,
-      loadDocumentSource:
-        options.loadDocumentSource === undefined
-          ? undefined
-          : (input) => {
-              const key = JSON.stringify([
-                input.id,
-                input.revision,
-                input.contentRef,
-              ]);
-              let source = loadedSources.get(key);
-              if (source === undefined) {
-                source = options.loadDocumentSource!(input);
-                loadedSources.set(key, source);
-              }
-              return source;
-            },
       parseDocument: ({ assetId, revision, contentRef, source }) => {
         const key = JSON.stringify([assetId, revision, contentRef]);
         let parsed = parsedDocuments.get(key);
@@ -511,9 +495,20 @@ const isCandidateDocument = (value: unknown): value is CandidateDocument =>
 
 const getValueAtPath = (
   value: unknown | CandidateDocument,
-  path: readonly string[]
+  path: readonly string[],
+  knownNonMdxAssetIds?: ReadonlySet<string>
 ): unknown => {
   if (isCandidateDocument(value)) {
+    // Asset queries can include non-MDX records while route parameters are
+    // unknown. Exclude their own IDs, but preserve explicit field references
+    // so materialization can diagnose invalid sources.
+    if (
+      knownNonMdxAssetIds?.has(value[candidateDocumentKey]._id) &&
+      (path.length === 0 ||
+        (path.length === 1 && (path[0] === "id" || path[0] === "_id")))
+    ) {
+      return;
+    }
     if (
       path[0] === "properties" &&
       value.graph !== undefined &&
@@ -671,7 +666,8 @@ export const resolvePublishedMdxAssetCandidates = ({
               } satisfies CandidateDocument)
             : getValueAtPath(
                 { [candidateDocumentKey]: document, graph: documentGraph },
-                fieldPath
+                fieldPath,
+                knownNonMdxAssetIds
               )
         );
     }
@@ -727,7 +723,7 @@ export const resolvePublishedMdxAssetCandidates = ({
       }
       return [iterable];
     });
-    return items.map((item) => getValueAtPath(item, path));
+    return items.map((item) => getValueAtPath(item, path, knownNonMdxAssetIds));
   };
 
   const candidatesByBlock = new Map<string, readonly string[]>();
@@ -759,15 +755,10 @@ export const resolvePublishedMdxAssetCandidates = ({
               path.slice(1),
               new Set(),
               mutableVariables
-            )
-              .filter(
-                (value): value is string =>
-                  typeof value === "string" && value.length > 0
-              )
-              // Dynamic resource queries can conservatively include every
-              // matching file when route parameters are unknown. Keep known
-              // non-MDX assets out of the MDX materialization candidates.
-              .filter((assetId) => !knownNonMdxAssetIds?.has(assetId));
+            ).filter(
+              (value): value is string =>
+                typeof value === "string" && value.length > 0
+            );
     } catch (error) {
       if (allowUnresolved === false) {
         throw error;

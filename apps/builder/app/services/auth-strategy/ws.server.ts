@@ -20,7 +20,7 @@ const asyncLocalStorage = new AsyncLocalStorage<
 // remix-auth-oauth2 logs OAuth state, PKCE verifier, and full callback URLs.
 // Match both the exact namespace and any prefixed namespace enabled by DEBUG=*.
 createDebugRaw.enable(
-  `${createDebugRaw.disable()},-OAuth2Strategy,-*OAuth2Strategy*`
+  `${process.env.DEBUG ?? ""},-OAuth2Strategy,-*OAuth2Strategy*`
 );
 
 /**
