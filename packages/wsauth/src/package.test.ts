@@ -1,18 +1,13 @@
 import { execFile } from "node:child_process";
-import { createRequire } from "node:module";
-import { cp, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { delimiter, dirname, join } from "node:path";
+import { cp, mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { afterEach, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
 
 const execFileAsync = promisify(execFile);
-const require = createRequire(import.meta.url);
 const packageDirectory = fileURLToPath(new URL("..", import.meta.url));
 const workspaceDirectory = fileURLToPath(new URL("../../..", import.meta.url));
-const tsc = join(workspaceDirectory, "node_modules/.bin/tsc");
-const packageBinDirectory = join(workspaceDirectory, "node_modules/.bin");
 let temporaryDirectory: string | undefined;
 
 afterEach(async () => {
@@ -22,18 +17,19 @@ afterEach(async () => {
   }
 });
 
-test("publishes type declarations for every public entrypoint", async () => {
-  temporaryDirectory = await mkdtemp(join(tmpdir(), "webstudio-wsauth-pack-"));
-  const packDirectory = join(temporaryDirectory, "pack");
+test("packs JavaScript and usable declarations for every public entrypoint", async () => {
+  // Stage inside the package so its normal workspace dependencies resolve.
+  temporaryDirectory = await mkdtemp(join(packageDirectory, ".package-test-"));
   const stagingDirectory = join(temporaryDirectory, "staging");
-  const projectDirectory = join(temporaryDirectory, "project");
+  const consumerDirectory = join(temporaryDirectory, "consumer");
   await Promise.all([
-    mkdir(packDirectory, { recursive: true }),
-    mkdir(stagingDirectory, { recursive: true }),
-    mkdir(projectDirectory, { recursive: true }),
+    mkdir(stagingDirectory),
+    mkdir(join(consumerDirectory, "node_modules", "@webstudio-is"), {
+      recursive: true,
+    }),
   ]);
-  await Promise.all([
-    ...[
+  await Promise.all(
+    [
       "package.json",
       "README.md",
       "src",
@@ -43,82 +39,50 @@ test("publishes type declarations for every public entrypoint", async () => {
       cp(join(packageDirectory, entry), join(stagingDirectory, entry), {
         recursive: true,
       })
-    ),
-    ...[
-      ["zod", dirname(require.resolve("zod/package.json"))],
-      [
-        "@remix-run/router",
-        dirname(require.resolve("@remix-run/router/package.json")),
-      ],
-      ["@types/node", dirname(require.resolve("@types/node/package.json"))],
-      [
-        "@webstudio-is/tsconfig",
-        dirname(require.resolve("@webstudio-is/tsconfig/package.json")),
-      ],
-      ["undici-types", dirname(require.resolve("undici-types/package.json"))],
-    ].map(async ([name, source]) => {
-      const destination = join(stagingDirectory, "node_modules", name);
-      await mkdir(dirname(destination), { recursive: true });
-      await cp(source, destination, { recursive: true });
-    }),
-  ]);
+    )
+  );
 
-  const env = {
-    ...process.env,
-    PATH: `${packageBinDirectory}${delimiter}${process.env.PATH ?? ""}`,
-  };
-  await execFileAsync("pnpm", ["build"], { cwd: stagingDirectory, env });
-  await execFileAsync("pnpm", ["dts"], { cwd: stagingDirectory, env });
+  await execFileAsync("pnpm", ["build"], { cwd: stagingDirectory });
+  await execFileAsync("pnpm", ["dts"], { cwd: stagingDirectory });
+
   const packed = JSON.parse(
     (
-      await execFileAsync(
-        "npm",
-        ["pack", "--json", "--pack-destination", packDirectory],
-        { cwd: stagingDirectory }
-      )
+      await execFileAsync("npm", ["pack", "--dry-run", "--json"], {
+        cwd: stagingDirectory,
+      })
     ).stdout
-  ) as Array<{ filename: string }>;
-  const archive = join(packDirectory, packed[0]?.filename ?? "");
-  await writeFile(
-    join(projectDirectory, "package.json"),
-    JSON.stringify({
-      private: true,
-      type: "module",
-      dependencies: {
-        "@webstudio-is/wsauth": `file:${archive}`,
-        zod: `file:${dirname(require.resolve("zod/package.json"))}`,
-      },
-    }),
-    "utf8"
+  ) as Array<{ files: Array<{ path: string }> }>;
+  const packedFiles = packed[0]?.files.map((file) => file.path);
+  expect(packedFiles).toEqual(
+    expect.arrayContaining([
+      "lib/index.js",
+      "lib/schema.js",
+      "lib/types/index.d.ts",
+      "lib/types/schema.d.ts",
+    ])
   );
-  await execFileAsync(
-    "npm",
-    [
-      "install",
-      "--ignore-scripts",
-      "--no-package-lock",
-      "--no-audit",
-      "--no-fund",
-    ],
-    { cwd: projectDirectory }
+
+  // Check the same public imports that a separate TypeScript project uses.
+  await symlink(
+    stagingDirectory,
+    join(consumerDirectory, "node_modules", "@webstudio-is", "wsauth"),
+    "dir"
   );
   await writeFile(
-    join(projectDirectory, "index.ts"),
-    `import { matchesPathnamePattern, validatePathnamePattern } from "@webstudio-is/wsauth";
+    join(consumerDirectory, "index.ts"),
+    `import { matchPathnamePattern, validatePathnamePattern } from "@webstudio-is/wsauth";
 import type { WsAuthResources } from "@webstudio-is/wsauth";
 import type { WsAuthConfig } from "@webstudio-is/wsauth/schema";
 
 const routes: WsAuthResources["routes"] = [];
 const config: WsAuthConfig = { version: 1, routes: {} };
-const matches: boolean = matchesPathnamePattern("/*", "/docs");
+const params: Record<string, string | undefined> | undefined = matchPathnamePattern("/*", "/docs");
 const routeError: string | undefined = validatePathnamePattern("/docs/*");
-void [routes, config, matches, routeError];
-`,
-    "utf8"
+void [routes, config, params, routeError];
+`
   );
-
   await execFileAsync(
-    tsc,
+    join(workspaceDirectory, "node_modules/.bin/tsc"),
     [
       "--ignoreConfig",
       "--noEmit",
@@ -131,6 +95,6 @@ void [routes, config, matches, routeError];
       "es2022",
       "index.ts",
     ],
-    { cwd: projectDirectory }
+    { cwd: consumerDirectory }
   );
 }, 30_000);

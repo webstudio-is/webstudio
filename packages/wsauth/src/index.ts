@@ -445,6 +445,8 @@ export const getBasicAuthCredentials = (authorization: string | null) => {
   return auth?.credentials;
 };
 
+// Webstudio accepts named splats and encoded static segments that cannot be
+// passed to matchRoutes unchanged. Remix still performs all route matching.
 const toRouterPattern = (pattern: string) => {
   const segments: string[] = [];
   for (const segment of (pattern || "/").replace(/:\w+\*$/, "*").split("/")) {
@@ -472,6 +474,7 @@ const toRouterPattern = (pattern: string) => {
   return segments.join("/");
 };
 
+// Published routes expose splats under their Webstudio names, not Remix's "*".
 const toWebstudioParams = (
   pattern: string,
   params: Record<string, string | undefined>
@@ -513,11 +516,10 @@ export const matchPathnameRoutes = <Value>(
 export const matchPathnamePattern = (pattern: string, pathname: string) =>
   matchPathnameRoutes([{ pattern, value: true }], pathname)?.params;
 
-export const matchesPathnamePattern = (pattern: string, pathname: string) =>
-  matchPathnamePattern(pattern, pathname) !== undefined;
-
 export const findWsAuthRoute = (authRoutes: WsAuthRoute[], pathname: string) =>
-  authRoutes.find(({ route }) => matchesPathnamePattern(route, pathname));
+  authRoutes.find(
+    ({ route }) => matchPathnamePattern(route, pathname) !== undefined
+  );
 
 export const authenticateRequest = (
   request: Request,

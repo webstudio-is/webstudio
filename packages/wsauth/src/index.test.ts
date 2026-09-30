@@ -8,7 +8,6 @@ import {
   getBasicAuthCredentials,
   matchPathnamePattern,
   matchPathnameRoutes,
-  matchesPathnamePattern,
   parseWsAuth,
   parseWsAuthOrThrow,
   validateBasicAuth,
@@ -184,7 +183,9 @@ describe("wsauth", () => {
     ["/%ZZ", "/%ZZ", true],
     ["", "/", true],
   ] as const)("matches %s against %s: %s", (pattern, pathname, expected) => {
-    expect(matchesPathnamePattern(pattern, pathname)).toBe(expected);
+    expect(matchPathnamePattern(pattern, pathname) !== undefined).toBe(
+      expected
+    );
   });
 
   test.each([
@@ -198,7 +199,7 @@ describe("wsauth", () => {
   ] as const)(
     "does not interpret a saved encoded literal %s as router syntax at %s",
     (pattern, pathname) => {
-      expect(matchesPathnamePattern(pattern, pathname)).toBe(false);
+      expect(matchPathnamePattern(pattern, pathname)).toBeUndefined();
     }
   );
 
