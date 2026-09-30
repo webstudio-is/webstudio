@@ -21,14 +21,7 @@ Header names are case-insensitive. Suggestions in the header-name field are comm
 
 ## Choose which paths receive a header
 
-The path pattern determines which page responses receive the rule. Patterns use the same syntax as [authentication routes](project-settings.md#authentication).
-
-| Pattern | Applies to |
-| --- | --- |
-| `/` | The home page only |
-| `/about` | The exact `/about` path |
-| `/blog/*` | `/blog` and all paths under `/blog/` |
-| `/*` | Every path on the site |
+The path pattern determines which page responses receive the rule. Headers use the same path pattern syntax as project-level Authentication. See [URL path patterns](path-patterns.md) for the complete syntax, examples, and matching behavior.
 
 Add separate rules to use the same header on different paths. If several matching rules set the same header, the last matching rule in the list wins. A route-specific value replaces the value that would otherwise apply to that response; write the full value you want the browser to receive.
 
@@ -82,5 +75,6 @@ You can add up to 100 rules. Header values must be non-empty, cannot contain lin
 ## Related
 
 - [Project settings](project-settings.md)
-- [Authentication routes](project-settings.md#authentication)
+- [URL path patterns](path-patterns.md)
+- [Project settings: Authentication](project-settings.md#authentication)
 - [Publishing & custom domains](publishing-and-custom-domains.md)

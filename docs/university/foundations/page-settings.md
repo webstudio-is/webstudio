@@ -46,23 +46,7 @@ The URL path for this page, e.g. `/about` or `/blog/:slug`.
 
 ### Path syntax
 
-Webstudio paths can be static or dynamic. Dynamic segments use a `:` prefix, making the page a [Dynamic Page](cms.md#dynamic-pages).
-
-| Pattern | Matches |
-| --- | --- |
-| `/about` | One static route |
-| `/blog/:slug` | One dynamic segment |
-| `/blog/:slug?` | Optional dynamic segment |
-| `/docs/*` | Everything under `/docs/` |
-| `/docs/:path*` | Named wildcard under `/docs/` |
-
-Path rules:
-
-- Paths must start with `/`, except the home page path, which is empty
-- Paths cannot contain repeating `/`
-- Paths cannot end with `/`, except the home route `/`
-- Wildcards such as `*` and `:path*` must be the final segment
-- Parameter names can contain letters, numbers, and underscores
+Webstudio paths can be static or dynamic. Dynamic segments use a `:` prefix, making the page a [Dynamic Page](cms.md#dynamic-pages). For the shared pattern syntax and how it differs from project-level Authentication and Headers matching, see [URL path patterns](path-patterns.md).
 
 Webstudio Cloud sites and exported JavaScript applications permanently redirect
 a trailing-slash URL such as `/about/` to the page path `/about` and preserve

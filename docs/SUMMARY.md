@@ -49,6 +49,7 @@
   * [📄 Page templates](university/foundations/page-templates.md)
   * [⚙️ Project settings](university/foundations/project-settings.md)
   * [🌐 HTTP response headers](university/foundations/response-headers.md)
+  * [🔀 URL path patterns](university/foundations/path-patterns.md)
   * [🎭 Modes](university/foundations/modes.md)
   * [🔗 Share links](university/foundations/share-links.md)
   * [🌐 Publishing & custom domains](university/foundations/publishing-and-custom-domains.md)

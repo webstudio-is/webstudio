@@ -117,7 +117,7 @@ To add a protected route:
 4. Click **Add**
 5. Publish the site
 
-Routes use the same syntax as page paths. See [Path syntax](page-settings.md#path-syntax) for supported static routes, dynamic segments, optional segments, and wildcards.
+Routes use the shared [URL path pattern syntax](path-patterns.md), including static paths, dynamic segments, optional segments, and wildcards. Project-level Authentication matching has a wildcard behavior difference from Page Settings: `/private/*` matches both `/private` and paths below it.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-authentication-dark.png">
