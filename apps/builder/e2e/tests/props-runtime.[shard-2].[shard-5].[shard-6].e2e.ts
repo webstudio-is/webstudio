@@ -218,7 +218,7 @@ const expectPersistedActionResource = async ({
   }
 };
 
-const startWebhookServer = async () => {
+const startWebhookServer = async ({ multipart = false } = {}) => {
   const requests: Array<{
     method: string | undefined;
     url: string | undefined;
@@ -230,12 +230,37 @@ const startWebhookServer = async () => {
     for await (const chunk of request) {
       chunks.push(Buffer.from(chunk));
     }
-    const bodyText = Buffer.concat(chunks).toString("utf8");
+    const bytes = Buffer.concat(chunks);
+    let body: unknown;
+    try {
+      if (multipart) {
+        const data = await new Response(new Uint8Array(bytes), {
+          headers: { "Content-Type": request.headers["content-type"] ?? "" },
+        }).formData();
+        body = await Promise.all(
+          Array.from(data, async ([name, value]) => [
+            name,
+            typeof value === "string"
+              ? value
+              : {
+                  name: value.name,
+                  type: value.type,
+                  bytes: Array.from(new Uint8Array(await value.arrayBuffer())),
+                },
+          ])
+        );
+      } else {
+        const bodyText = bytes.toString("utf8");
+        body = bodyText === "" ? undefined : JSON.parse(bodyText);
+      }
+    } catch (error) {
+      body = { error: String(error) };
+    }
     requests.push({
       method: request.method,
       url: request.url,
       accept: request.headers.accept,
-      body: bodyText === "" ? undefined : JSON.parse(bodyText),
+      body,
     });
     response.writeHead(200, {
       "Access-Control-Allow-Origin": "*",
@@ -631,6 +656,141 @@ for (const mode of ["URL", "URL binding"] as const) {
               body: { name: "Ada", email: "ada@example.com" },
             },
           ]);
+        },
+      });
+    } finally {
+      await webhook.close();
+    }
+  });
+}
+
+for (const source of ["URL", "Resource"] as const) {
+  test(`Webhook Form uploads files and repeated fields through ${source}`, async ({
+    page,
+    context,
+  }) => {
+    const fixture = await createContentModeProject({
+      context,
+      email: `webhook-files-${source.toLowerCase()}@webstudio.test`,
+      title: "Webhook files",
+      assetNamePrefix: "webhook-files-",
+      editorToken: "webhook-files-editor-token",
+      builderToken: "webhook-files-builder-token",
+    });
+    const webhook = await startWebhookServer({ multipart: true });
+    const files = [
+      {
+        name: "attachment.bin",
+        mimeType: "application/octet-stream",
+        buffer: Buffer.from([0, 1, 127, 128, 255]),
+      },
+      {
+        name: "notes.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("Hello, 世界!\n"),
+      },
+    ];
+    try {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+        features: ["resourceProp"],
+      });
+      await waitForCanvasText({ page, text: "Initial content" });
+      await selectCanvasTextInstance({ page, text: "Initial content" });
+      await openComponentsPanel({ page });
+      await insertComponentPanelOption({ page, name: "Webhook Form" });
+      if (source === "Resource") {
+        await selectNavigatorItem({ page, itemName: "Body" });
+        await createHttpResourceVariable({
+          page,
+          name: "Upload request",
+          url: `curl -X POST -H 'Content-Type: application/json' --data '{}' '${webhook.url}'`,
+        });
+      }
+      await selectNavigatorItem({ page, itemName: "Webhook Form" });
+      await page.getByRole("tab", { name: "Settings" }).click();
+      if (source === "Resource") {
+        await selectResourceAction({ page, name: "Upload request" });
+      } else {
+        const input = page.getByRole("textbox", { name: "Action URL" });
+        await input.fill(webhook.url);
+        const save = waitForChangeToBeSaved({ page });
+        await input.press("Enter");
+        await save;
+      }
+      await page
+        .getByText("Properties & attributes", { exact: true })
+        .locator("xpath=ancestor::div[@data-state][1]")
+        .getByRole("button")
+        .last()
+        .click();
+      await page.getByPlaceholder("Select or create").fill("enctype");
+      await page.getByRole("option", { name: /enc.?type/i }).click();
+      const save = waitForChangeToBeSaved({ page });
+      await page
+        .getByRole("radio", { name: "multipart/form-data", exact: true })
+        .click();
+      await save;
+      await selectFirstNavigatorChild({ page, parentLabel: "Webhook Form" });
+      await pastePlainTextFromClipboardShortcut({
+        page,
+        text: `<div>
+          <label>Attachments<input type="file" name="attachments" multiple /></label>
+          <label>Design<input type="checkbox" name="topics" value="design" /></label>
+          <label>Development<input type="checkbox" name="topics" value="development" /></label>
+        </div>`,
+      });
+      await page.reload();
+      await waitForCanvasText({ page, text: "Attachments" });
+      await withGeneratedPreview({
+        projectId: fixture.projectId,
+        callback: async ({ url }) => {
+          await page.goto(url);
+          expect(webhook.requests).toEqual([]);
+          await expect(page.locator("form")).toHaveAttribute(
+            "enctype",
+            "multipart/form-data"
+          );
+          await page.locator('input[name="name"]').fill("Ada");
+          await page.locator('input[name="email"]').fill("ada@example.com");
+          await page.getByLabel("Attachments").setInputFiles(files);
+          await page
+            .getByRole("checkbox", { name: "Design", exact: true })
+            .check();
+          await page
+            .getByRole("checkbox", { name: "Development", exact: true })
+            .check();
+          await page
+            .getByRole("button", { name: "Submit", exact: true })
+            .click();
+          await expect(
+            page.getByText("Thank you for getting in touch!", { exact: true })
+          ).toBeVisible();
+          expect(webhook.requests).toHaveLength(1);
+          expect(webhook.requests[0]).toMatchObject({
+            method: "POST",
+            url: "/submit",
+          });
+          const expected = [
+            ["name", "Ada"],
+            ["email", "ada@example.com"],
+            ["topics", "design"],
+            ["topics", "development"],
+            ...files.map((file) => [
+              "attachments",
+              {
+                name: file.name,
+                type: file.mimeType,
+                bytes: Array.from(file.buffer),
+              },
+            ]),
+          ];
+          expect(webhook.requests[0].body).toEqual(
+            expect.arrayContaining(expected)
+          );
+          expect(webhook.requests[0].body).toHaveLength(expected.length);
         },
       });
     } finally {

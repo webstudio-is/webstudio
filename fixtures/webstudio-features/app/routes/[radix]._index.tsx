@@ -314,6 +314,14 @@ export const action = async ({
         context,
         fallback: customFetch,
       });
+      // formData() above has already validated and parsed the content type.
+      // Preserve multipart fields and files; ordinary forms keep JSON payloads.
+      const body = request.headers
+        .get("Content-Type")
+        ?.toLowerCase()
+        .startsWith("multipart/form-data")
+        ? formData
+        : Object.fromEntries(formData);
       const results = await loadResources(
         actionFetch,
         {
@@ -325,7 +333,7 @@ export const action = async ({
           requestOverrides: new Map([
             // Mutations must reach the backend on every submission, even when
             // the resource has caching enabled. Dependencies can stay cached.
-            [actionResource.id, { body: Object.fromEntries(formData), fetch }],
+            [actionResource.id, { body, fetch }],
           ]),
         }
       );

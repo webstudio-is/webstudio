@@ -35,6 +35,21 @@ You can also send form submission data to a webhook—an external URL that recei
 
 Once set up, every form submission will send a payload (form fields and values) to the webhook URL.
 
+### File uploads and repeated fields
+
+Use `multipart/form-data` when your webhook needs files or several values with the same field name. The receiving service must support multipart requests. Other submissions use JSON by default.
+
+1. Select **Webhook Form** and open **Settings**.
+2. Set **Action** to your webhook URL.
+3. Under **Properties & attributes**, add `enctype` and choose `multipart/form-data`.
+4. Add an [Input](input.md) inside **Form Content**. Set its **Type** to `file` and give it a **Name**, such as `attachments`.
+5. To allow several files, add the `multiple` attribute to the Input and enable it.
+6. Publish the site and submit the form with a file selected.
+
+The webhook receives each file with its filename, media type, and contents. Uploads go to the configured webhook; default email notifications do not provide file attachments.
+
+For a group of checkboxes, give each checkbox the same **Name** and a different **Value**. Multipart submissions keep every checked value as a separate field with that name. You do not need to add `[]` to the name.
+
 ## Using the Webhook Form Component
 
 You can add a Webhook Form Component to your canvas from **Components Panel > Data section**.

@@ -491,6 +491,53 @@ describe("loadResource", () => {
     vi.restoreAllMocks();
   });
 
+  test.each([
+    undefined,
+    "application/json",
+    "multipart/form-data; boundary=stale",
+  ])(
+    "preserves multipart files and repeated values with content type %s",
+    async (contentType) => {
+      const form = new FormData();
+      form.append("topics", "design");
+      form.append("topics", "development");
+      const bytes = new Uint8Array([0, 128, 255]);
+      form.append(
+        "attachment",
+        new Blob([bytes], { type: "application/octet-stream" }),
+        "file.bin"
+      );
+      let received: FormData | undefined;
+      const result = await loadResource(
+        async (input, init) => {
+          const request = new Request(input, init);
+          expect(request.headers.get("X-Test")).toBe("retained");
+          received = await request.formData();
+          return Response.json({ success: true });
+        },
+        {
+          name: "Upload",
+          method: "post",
+          url: "https://example.com/upload",
+          searchParams: [],
+          headers: [
+            { name: "X-Test", value: "retained" },
+            ...(contentType === undefined
+              ? []
+              : [{ name: "cOnTeNt-TyPe", value: contentType }]),
+          ],
+          body: form,
+        }
+      );
+      expect(result.ok).toBe(true);
+      expect(received?.getAll("topics")).toEqual(["design", "development"]);
+      const file = received?.get("attachment") as File;
+      expect(file.name).toBe("file.bin");
+      expect(file.type).toBe("application/octet-stream");
+      expect(new Uint8Array(await file.arrayBuffer())).toEqual(bytes);
+    }
+  );
+
   test("should successfully fetch a resource and return a JSON response", async () => {
     const mockResponse = new Response(JSON.stringify({ key: "value" }), {
       status: 200,

@@ -336,7 +336,13 @@ export const loadResource = async (
       requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
-      requestInit.body = serializeValue(body);
+      if (body instanceof FormData) {
+        // Fetch must generate the Content-Type boundary for this FormData.
+        requestHeaders.delete("Content-Type");
+        requestInit.body = body;
+      } else {
+        requestInit.body = serializeValue(body);
+      }
     }
     const response = await awaitWithSignal(
       customFetch(href, requestInit),

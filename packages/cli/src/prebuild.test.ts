@@ -2925,7 +2925,7 @@ sitemap.map((page) => page.path);`
         }
       );
       for (let index = 0; index < 2; index += 1) {
-        const form = new FormData();
+        const form = new URLSearchParams();
         form.set(formIdFieldName, "action");
         form.set(formBotFieldName, "brave");
         form.set("message", "Hello");
@@ -2951,6 +2951,94 @@ sitemap.map((page) => page.path);`
           body: { message: "Hello" },
         },
       ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "forwards uploaded files and repeated fields as multipart (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "resource",
+              value: "upload",
+            },
+          ],
+        ],
+      });
+      siteData.build.resources = [
+        [
+          "upload",
+          {
+            id: "upload",
+            name: "Upload",
+            method: "post",
+            url: '"https://example.com/upload"',
+            headers: [{ name: "Content-Type", value: '"application/json"' }],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "action.mjs")).href
+      );
+      const received: FormData[] = [];
+      vi.stubGlobal(
+        "fetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          received.push(await new Request(input, init).formData());
+          return Response.json({ success: true });
+        }
+      );
+      const form = new FormData();
+      form.set(formIdFieldName, "action");
+      form.set(formBotFieldName, "brave");
+      form.append("topics", "design");
+      form.append("topics", "development");
+      const bytes = new Uint8Array([0, 128, 255]);
+      form.append(
+        "attachment",
+        new Blob([bytes], { type: "application/octet-stream" }),
+        "file.bin"
+      );
+      await expect(
+        action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: form,
+          }),
+          context: {},
+        })
+      ).resolves.toEqual({ success: true });
+      expect(received).toHaveLength(1);
+      expect(received[0].getAll("topics")).toEqual(["design", "development"]);
+      expect(received[0].has(formBotFieldName)).toBe(false);
+      expect(received[0].has(formIdFieldName)).toBe(false);
+      const file = received[0].get("attachment") as File;
+      expect(file.name).toBe("file.bin");
+      expect(file.type).toBe("application/octet-stream");
+      expect(new Uint8Array(await file.arrayBuffer())).toEqual(bytes);
     }
   );
 
