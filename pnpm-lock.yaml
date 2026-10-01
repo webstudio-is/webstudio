@@ -624,6 +624,9 @@ importers:
       '@react-router/dev':
         specifier: ^7.5.3
         version: 7.5.3(@react-router/serve@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.130.0)(yaml@2.9.0)
+      '@react-router/express':
+        specifier: ^7.5.3
+        version: 7.5.3(express@4.21.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
       '@react-router/fs-routes':
         specifier: ^7.5.3
         version: 7.5.3(@react-router/dev@7.5.3(@react-router/serve@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.130.0)(yaml@2.9.0))(typescript@7.0.2)
@@ -663,6 +666,12 @@ importers:
       '@webstudio-is/wsauth':
         specifier: workspace:*
         version: link:../../packages/wsauth
+      compression:
+        specifier: ^1.7.4
+        version: 1.7.4
+      express:
+        specifier: ^4.21.1
+        version: 4.21.1
       h3:
         specifier: ^1.15.1
         version: 1.15.1
@@ -1357,6 +1366,9 @@ importers:
       '@react-router/dev':
         specifier: ^7.5.3
         version: 7.5.3(@react-router/serve@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.130.0)(yaml@2.9.0)
+      '@react-router/express':
+        specifier: 7.5.3
+        version: 7.5.3(express@4.21.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
       '@react-router/fs-routes':
         specifier: ^7.5.3
         version: 7.5.3(@react-router/dev@7.5.3(@react-router/serve@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.130.0)(yaml@2.9.0))(typescript@7.0.2)
@@ -1390,6 +1402,12 @@ importers:
       '@shikijs/themes':
         specifier: 4.4.1
         version: 4.4.1
+      '@types/compression':
+        specifier: ^1.7.5
+        version: 1.8.1
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.21
       '@types/mdast':
         specifier: ^4.0.4
         version: 4.0.4
@@ -1468,6 +1486,12 @@ importers:
       '@webstudio-is/wsauth':
         specifier: workspace:*
         version: link:../wsauth
+      compression:
+        specifier: 1.7.4
+        version: 1.7.4
+      express:
+        specifier: 4.21.1
+        version: 4.21.1
       h3:
         specifier: ^1.15.1
         version: 1.15.1
@@ -7197,6 +7221,9 @@ packages:
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
+
+  '@types/compression@1.8.1':
+    resolution: {integrity: sha512-kCFuWS0ebDbmxs0AXYn6e2r2nrGAb5KwQhknjSPSPgJcGd8+HVSILlUyFhGqML2gk39HcG7D1ydW9/qpYkN00Q==}
 
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
@@ -16967,6 +16994,11 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
+      '@types/node': 22.13.10
+
+  '@types/compression@1.8.1':
+    dependencies:
+      '@types/express': 4.17.21
       '@types/node': 22.13.10
 
   '@types/connect@3.4.38':
