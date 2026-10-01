@@ -1,4 +1,3 @@
-import { getPropResourceIds } from "@webstudio-is/sdk";
 import {
   type Asset,
   collectionComponent,
@@ -10,6 +9,7 @@ import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getAllPages,
+  getPropResourceIds,
   getStyleDeclKey,
   isAssetsResource,
   ROOT_INSTANCE_ID,
@@ -769,7 +769,7 @@ const traverseExpressions = ({
   dataSources,
   resources,
   update,
-  onResourceReference,
+  onResourceVariableReference,
 }: {
   startingInstanceId: undefined | Instance["id"];
   pages: undefined | Pages;
@@ -782,8 +782,8 @@ const traverseExpressions = ({
     instanceId: Instance["id"],
     args?: string[]
   ) => void | string;
-  onResourceReference?: (
-    resourceId: Resource["id"],
+  onResourceVariableReference?: (
+    variableId: DataSource["id"],
     instanceId: Instance["id"]
   ) => void;
 }) => {
@@ -884,11 +884,15 @@ const traverseExpressions = ({
     }
   }
   const instanceIdByResourceId = new Map<Resource["id"], Instance["id"]>();
-  const variableResourceIds = new Set(
-    Array.from(dataSources.values()).flatMap((dataSource) =>
-      dataSource.type === "resource" ? [dataSource.resourceId] : []
-    )
-  );
+  const variableIdsByResourceId = new Map<Resource["id"], DataSource["id"][]>();
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "resource") {
+      const variableIds =
+        variableIdsByResourceId.get(dataSource.resourceId) ?? [];
+      variableIds.push(dataSource.id);
+      variableIdsByResourceId.set(dataSource.resourceId, variableIds);
+    }
+  }
 
   for (const instance of instances.values()) {
     if (instanceIds.has(instance.id) === false) {
@@ -930,9 +934,12 @@ const traverseExpressions = ({
     }
     if (prop.type === "resource") {
       for (const resourceId of getPropResourceIds(prop)) {
-        onResourceReference?.(resourceId, prop.instanceId);
+        for (const variableId of variableIdsByResourceId.get(resourceId) ??
+          []) {
+          onResourceVariableReference?.(variableId, prop.instanceId);
+        }
         // Shared requests retain their variable's scope.
-        if (variableResourceIds.has(resourceId) === false) {
+        if (variableIdsByResourceId.has(resourceId) === false) {
           instanceIdByResourceId.set(resourceId, prop.instanceId);
         }
       }
@@ -1043,20 +1050,9 @@ export const findUsedVariables = ({
     props,
     dataSources,
     resources,
-    onResourceReference: (resourceId) => {
-      if (includeResourceReferences === false) {
-        return;
-      }
-      for (const variable of dataSources.values()) {
-        if (
-          variable.type === "resource" &&
-          variable.resourceId === resourceId
-        ) {
-          usedVariables.set(
-            variable.id,
-            (usedVariables.get(variable.id) ?? 0) + 1
-          );
-        }
+    onResourceVariableReference: (variableId) => {
+      if (includeResourceReferences) {
+        usedVariables.set(variableId, (usedVariables.get(variableId) ?? 0) + 1);
       }
     },
     update: (expression) => {
@@ -1096,17 +1092,10 @@ export const findVariableUsagesByInstance = ({
     props,
     dataSources,
     resources,
-    onResourceReference: (resourceId, instanceId) => {
-      for (const variable of dataSources.values()) {
-        if (
-          variable.type === "resource" &&
-          variable.resourceId === resourceId
-        ) {
-          const usages = usedIn.get(variable.id) ?? new Set();
-          usages.add(instanceId);
-          usedIn.set(variable.id, usages);
-        }
-      }
+    onResourceVariableReference: (variableId, instanceId) => {
+      const usages = usedIn.get(variableId) ?? new Set();
+      usages.add(instanceId);
+      usedIn.set(variableId, usages);
     },
     update: (expression, instanceId) => {
       const identifiers = getExpressionIdentifiers(expression);
