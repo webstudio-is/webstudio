@@ -21,7 +21,7 @@ import {
   parse as parseHtml,
   type DefaultTreeAdapterMap,
 } from "parse5";
-import { build } from "esbuild";
+import { build, transform } from "esbuild";
 import { loadConfigFromFile } from "vite";
 import { bundleVersion } from "@webstudio-is/protocol";
 import type { Asset, Instance, Prop } from "@webstudio-is/sdk";
@@ -38,13 +38,19 @@ import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
 import {
   createStructuredAssetQueryResourceBody,
+  createScope,
+  generateResources,
   encodeDataSourceVariable,
   encodeDataVariableId,
   SYSTEM_VARIABLE_ID,
   type Resource,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { formBotFieldName, formIdFieldName } from "@webstudio-is/sdk/runtime";
+import {
+  formBotFieldName,
+  formIdFieldName,
+  submitFormActions,
+} from "@webstudio-is/sdk/runtime";
 import {
   generateRedirectsModule,
   getAssetResourcePrerenderPaths,
@@ -2981,9 +2987,33 @@ sitemap.map((page) => page.path);`
             method: "post",
             url: '"https://example.com/upload"',
             headers: [{ name: "Content-Type", value: '"application/json"' }],
+            // The form replaces this body; it must never be evaluated.
+            body: `${encodeDataSourceVariable("body-only-variable")}.data.value`,
           },
         ],
       ] as never;
+      siteData.build.dataSources = [
+        [
+          "body-only-variable",
+          {
+            id: "body-only-variable",
+            type: "resource",
+            name: "Body only",
+            scopeInstanceId: "root",
+            resourceId: "body-only",
+          },
+        ],
+      ] as never;
+      siteData.build.resources.push([
+        "body-only",
+        {
+          id: "body-only",
+          name: "Body only",
+          method: "get",
+          url: '"https://example.com/body-only"',
+          headers: [],
+        },
+      ] as never);
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
@@ -4383,4 +4413,113 @@ sitemap.map((page) => page.path);`
       });
     }
   });
+});
+
+test("keeps configured bodies when a webhook is another form's read dependency", async () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "root" } as Parameters<
+      typeof generateResources
+    >[0]["page"],
+    instances: new Map(),
+    props: new Map(
+      ["upload", "consumer"].map((id) => [
+        id,
+        {
+          id,
+          instanceId: id,
+          name: "action",
+          type: "resource" as const,
+          value: id,
+        },
+      ])
+    ),
+    dataSources: new Map(
+      ["body", "upload"].map((id) => [
+        id,
+        {
+          id,
+          type: "resource" as const,
+          name: id,
+          resourceId: id,
+          scopeInstanceId: "root",
+        },
+      ])
+    ),
+    resources: new Map<string, Resource>([
+      [
+        "body",
+        {
+          id: "body",
+          name: "Body",
+          method: "get",
+          url: '"https://example.com/body"',
+          headers: [],
+        },
+      ],
+      [
+        "upload",
+        {
+          id: "upload",
+          name: "Upload",
+          method: "post",
+          url: '"https://example.com/upload"',
+          headers: [],
+          body: `${encodeDataSourceVariable("body")}.data`,
+        },
+      ],
+      [
+        "consumer",
+        {
+          id: "consumer",
+          name: "Consumer",
+          method: "post",
+          url: '"https://example.com/consumer"',
+          headers: [
+            {
+              name: "X-Upload",
+              value: `${encodeDataSourceVariable("upload")}.data.id`,
+            },
+          ],
+        },
+      ],
+    ]),
+  });
+  const { code } = await transform(generated, { loader: "ts", format: "cjs" });
+  const compiled = {
+    exports: {} as {
+      getResources: (props: object) => {
+        data: Parameters<typeof submitFormActions>[0]["graph"];
+      };
+    },
+  };
+  new Function("module", code)(compiled);
+  const { data: graph } = compiled.exports.getResources({ system: {} });
+  const requests: Array<{ path: string; body: unknown }> = [];
+  const capture: typeof fetch = async (input, init) => {
+    const request = new Request(input, init);
+    const path = new URL(request.url).pathname;
+    requests.push({
+      path,
+      body: request.method === "GET" ? undefined : await request.json(),
+    });
+    return Response.json(
+      path === "/body" ? { seed: "configured" } : { id: "uploaded" }
+    );
+  };
+  await expect(
+    submitFormActions({
+      graph,
+      resourceIds: ["consumer"],
+      body: { message: "form" },
+      baseUrl: new URL("https://example.com"),
+      dependencyFetch: capture,
+      actionFetch: capture,
+    })
+  ).resolves.toEqual({ success: true });
+  expect(requests).toEqual([
+    { path: "/body", body: undefined },
+    { path: "/upload", body: { seed: "configured" } },
+    { path: "/consumer", body: { message: "form" } },
+  ]);
 });

@@ -140,3 +140,39 @@ test("redirects only after a successful retry finishes, without leaking the prop
     history.replaceState(null, "", originalUrl);
   }
 });
+
+test("honors submit handlers and cancellation before sending the form", async () => {
+  const onSubmit = vi.fn((event: React.FormEvent<HTMLFormElement>) => {
+    if (onSubmit.mock.calls.length === 1) {
+      event.preventDefault();
+    }
+  });
+  const submit = vi.fn(async ({ request }: { request: Request }) => {
+    const data = await request.formData();
+    expect(data.get(formBotFieldName)).toBe(Date.now().toString(16));
+    return { success: true };
+  });
+  vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+  router = createMemoryRouter([
+    {
+      path: "/",
+      element: (
+        <WebhookForm onSubmit={onSubmit}>
+          <button>Submit</button>
+        </WebhookForm>
+      ),
+      action: submit,
+    },
+  ]);
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => root?.render(<RouterProvider router={router!} />));
+  const form = container.querySelector("form")!;
+  await act(async () => form.requestSubmit());
+  expect(onSubmit).toHaveBeenCalledTimes(1);
+  expect(submit).not.toHaveBeenCalled();
+  await act(async () => form.requestSubmit());
+  expect(onSubmit).toHaveBeenCalledTimes(2);
+  expect(submit).toHaveBeenCalledTimes(1);
+});

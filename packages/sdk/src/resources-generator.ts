@@ -20,8 +20,10 @@ const generateResourceRequestFields = ({
   dataSources,
   usedDataSources,
   scope,
+  bodyOverride,
 }: {
   resource: Resource;
+  bodyOverride?: string;
   indent: string;
   dataSources: DataSources;
   usedDataSources: DataSources;
@@ -69,7 +71,7 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}body: ${body},\n`;
+    generated += `${indent}body: ${bodyOverride ? `${bodyOverride} ? ${bodyOverride}.value : (${body})` : body},\n`;
   }
   return generated;
 };
@@ -221,14 +223,19 @@ export const generateResources = ({
     const resourceName = scope.getName(resource.id, resource.name);
     if (graphResourceIds.has(resource.id)) {
       const requestDataSources: DataSources = new Map();
+      const bodyOverride =
+        actionResourceIds.has(resource.id) && resource.body
+          ? scope.getName(`${resource.id}:body-override`, "bodyOverride")
+          : undefined;
       const fields = generateResourceRequestFields({
         resource,
         indent: "      ",
         dataSources,
         usedDataSources: requestDataSources,
         scope,
+        bodyOverride,
       });
-      let generatedRequest = `  const ${resourceName} = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
+      let generatedRequest = `  const ${resourceName} = (documents: ReadonlyMap<string, unknown>${bodyOverride ? `, ${bodyOverride}?: { value: unknown }` : ""}): ResourceRequest => {\n`;
       for (const dataSource of requestDataSources.values()) {
         usedDataSources.set(dataSource.id, dataSource);
         if (dataSource.type !== "resource") {
@@ -338,11 +345,20 @@ export const generateResources = ({
     }
     const name = scope.getName(resourceId, resource.name);
     const dependencies = resourceDependencies.get(resourceId) ?? [];
+    let bodyDependencies = "";
+    if (actionResourceIds.has(resourceId) && resource.body) {
+      const requiredDependencies = getResourceDependencyIds({
+        resource: { ...resource, body: undefined },
+        dataSources,
+      });
+      // Skip only dependencies used exclusively by the overridden body.
+      bodyDependencies = `bodyDependencies: ${JSON.stringify(dependencies.filter((id) => !requiredDependencies.has(id)))}, `;
+    }
     generated += `      { id: ${JSON.stringify(
       resourceId
     )}, outputName: ${JSON.stringify(name)}, dependencies: ${JSON.stringify(
       dependencies
-    )}, createRequest: ${name} },\n`;
+    )}, ${bodyDependencies}createRequest: ${name} },\n`;
   }
   generated += `    ],\n`;
   generated += `    rootIds: [\n`;

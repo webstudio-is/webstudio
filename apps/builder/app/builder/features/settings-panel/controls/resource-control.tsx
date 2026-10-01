@@ -82,6 +82,15 @@ export const ResourceControl = ({
       resources.has(variable.resourceId) &&
       resources.get(variable.resourceId)?.control !== "system"
   );
+  const variablesByResourceId = new Map<string, DataSource>();
+  for (const variable of dataSources.values()) {
+    if (
+      variable.type === "resource" &&
+      !variablesByResourceId.has(variable.resourceId)
+    ) {
+      variablesByResourceId.set(variable.resourceId, variable);
+    }
+  }
   const group =
     prop?.type === "resource" && typeof prop.value !== "string"
       ? prop.value
@@ -90,10 +99,7 @@ export const ResourceControl = ({
     prop?.type === "resource" && typeof prop.value === "string"
       ? resources.get(prop.value)
       : undefined;
-  const variable = Array.from(dataSources.values()).find(
-    (variable) =>
-      variable.type === "resource" && variable.resourceId === resource?.id
-  );
+  const variable = resource && variablesByResourceId.get(resource.id);
   const urlExpression =
     resource?.url ??
     (prop?.type === "expression"
@@ -207,11 +213,7 @@ export const ResourceControl = ({
       {group ? (
         <>
           {group.resourceIds.map((resourceId) => {
-            const selectedVariable = Array.from(dataSources.values()).find(
-              (variable) =>
-                variable.type === "resource" &&
-                variable.resourceId === resourceId
-            );
+            const selectedVariable = variablesByResourceId.get(resourceId);
             const name =
               selectedVariable?.name ??
               resources.get(resourceId)?.name ??

@@ -97,7 +97,12 @@ export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
   dependencies: readonly string[];
-  createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
+  /** Dependencies used only by the configured body, which a form may replace. */
+  bodyDependencies?: readonly string[];
+  createRequest: (
+    documents: ReadonlyMap<string, unknown>,
+    bodyOverride?: { value: unknown }
+  ) => ResourceRequest;
 }>;
 
 export type ResourceRequestGraph = Readonly<{

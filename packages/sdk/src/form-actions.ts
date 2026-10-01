@@ -113,45 +113,56 @@ export const submitFormActions = async ({
   const { roots } = await resolveResources<{ ok: boolean }>({
     rootIds,
     concurrency: resourceLoadConcurrency,
-    resources: requests.map((resource) => ({
-      id: resource.id,
-      dependencies: resource.dependencies,
-      resolve: async ({ documents }) => {
-        try {
-          for (const dependencyId of resource.dependencies) {
-            if (documents.get(dependencyId)?.ok !== true) {
-              return failedAction();
+    resources: requests.map((resource) => {
+      const isWebhook = resourceIds.includes(resource.id);
+      const dependencies = isWebhook
+        ? resource.dependencies.filter(
+            (id) => !resource.bodyDependencies?.includes(id)
+          )
+        : resource.dependencies;
+      return {
+        id: resource.id,
+        dependencies,
+        resolve: async ({ documents }) => {
+          try {
+            for (const dependencyId of dependencies) {
+              if (documents.get(dependencyId)?.ok !== true) {
+                return failedAction();
+              }
             }
-          }
-          let request = resource.createRequest(documents);
-          if (resourceIds.includes(resource.id)) {
-            const configuredNames = new Set(
-              request.headers.map(({ name }) => name.toLowerCase())
+            let request = resource.createRequest(
+              documents,
+              isWebhook ? { value: body } : undefined
             );
-            request = {
-              ...request,
-              body,
-              headers: [
-                ...request.headers,
-                ...submissionHeaders.filter(
-                  ({ name }) => !configuredNames.has(name.toLowerCase())
-                ),
-              ],
-            };
+            if (isWebhook) {
+              const configuredNames = new Set(
+                request.headers.map(({ name }) => name.toLowerCase())
+              );
+              request = {
+                ...request,
+                body,
+                headers: [
+                  ...request.headers,
+                  ...submissionHeaders.filter(
+                    ({ name }) => !configuredNames.has(name.toLowerCase())
+                  ),
+                ],
+              };
+            }
+            return await loadResource(
+              mutationIds.has(resource.id) ? actionFetch : dependencyFetch,
+              request,
+              baseUrl,
+              { timeoutMs }
+            );
+          } catch {
+            // A request expression can fail before fetch. Keep sibling actions
+            // running and never send private configuration back to the browser.
+            return failedAction();
           }
-          return await loadResource(
-            mutationIds.has(resource.id) ? actionFetch : dependencyFetch,
-            request,
-            baseUrl,
-            { timeoutMs }
-          );
-        } catch {
-          // A request expression can fail before fetch. Keep sibling actions
-          // running and never send private configuration back to the browser.
-          return failedAction();
-        }
-      },
-    })),
+        },
+      };
+    }),
   });
   if (roots.every(({ ok }) => ok)) {
     return { success: true as const };
