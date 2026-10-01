@@ -7,8 +7,6 @@ import {
   type ResourceRequestGraph,
 } from "./resource-loader";
 
-const clientAddressSchema = z.union([z.ipv4(), z.ipv6()]);
-
 /** Only forward visitor metadata, never the site's cookies or credentials. */
 export const getFormSubmissionHeaders = (
   request: Request,
@@ -31,7 +29,7 @@ export const getFormSubmissionHeaders = (
   ) {
     clientAddress = request.headers.get("CF-Connecting-IP") ?? undefined;
   }
-  const address = clientAddressSchema.safeParse(clientAddress);
+  const address = z.union([z.ipv4(), z.ipv6()]).safeParse(clientAddress);
   if (address.success) {
     headers.push({ name: "X-Forwarded-For", value: address.data });
   }
