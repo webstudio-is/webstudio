@@ -4017,3 +4017,39 @@ test("form variables do not rebind a Resource owned by an ancestor", () => {
   });
   expect(data.resources.get(resource.id)).toEqual(original);
 });
+
+test("forced Resource deletion preserves the other actions in a group", () => {
+  const resource: Resource = {
+    id: "crm",
+    name: "CRM",
+    url: '\"https://example.com/crm\"',
+    method: "post",
+    headers: [],
+  };
+  const action: Prop = {
+    id: "action",
+    instanceId: "form",
+    name: "action",
+    type: "resource",
+    value: { resourceIds: ["crm", "newsletter"], includeEmail: false },
+  };
+  expect(
+    createResourceDeletePayload({ resource, props: [action], dataSources: [] })
+      .isUsed
+  ).toBe(true);
+  const result = createResourceDeletePayload({
+    resource,
+    props: [action],
+    dataSources: [],
+    force: true,
+  });
+  expect(
+    result.payload.find(({ namespace }) => namespace === "props")?.patches
+  ).toEqual([
+    {
+      op: "replace",
+      path: ["action", "value"],
+      value: { resourceIds: ["newsletter"], includeEmail: false },
+    },
+  ]);
+});

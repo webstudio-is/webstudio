@@ -1,3 +1,4 @@
+import { getPropResourceIds } from "@webstudio-is/sdk";
 import {
   blockTemplateComponent,
   findTreeInstanceIds,
@@ -95,14 +96,16 @@ export const getBuildIntegrityIssues = ({
   }
 
   for (const prop of propsList) {
-    if (prop.type === "resource" && resourceIds.has(prop.value) === false) {
-      issues.push({
-        type: "missingResource",
-        source: "prop",
-        propId: prop.id,
-        propName: prop.name,
-        resourceId: prop.value,
-      });
+    for (const resourceId of getPropResourceIds(prop)) {
+      if (resourceIds.has(resourceId) === false) {
+        issues.push({
+          type: "missingResource",
+          source: "prop",
+          propId: prop.id,
+          propName: prop.name,
+          resourceId,
+        });
+      }
     }
   }
 

@@ -1,3 +1,4 @@
+import { getPropResourceIds } from "@webstudio-is/sdk";
 import {
   decodeDataVariableId,
   encodeDataVariableId,
@@ -417,22 +418,24 @@ export const verifyBindings = (
     });
     if (prop.type === "resource") {
       bindingsChecked += 1;
-      addResourceScope(prop.value, prop.instanceId);
-      if (resources.has(prop.value) === false) {
-        findings.push(
-          createFinding(
-            "missing-resource",
-            "prop-resource",
-            { ...baseLocation, resourceId: prop.value },
-            {
-              category: "reference",
-              severity: "error",
-              message: `Prop ${JSON.stringify(prop.name)} references missing resource ${JSON.stringify(prop.value)}.`,
-              remediation:
-                "Bind the prop to an existing resource or remove the stale resource binding.",
-            }
-          )
-        );
+      for (const resourceId of getPropResourceIds(prop)) {
+        addResourceScope(resourceId, prop.instanceId);
+        if (resources.has(resourceId) === false) {
+          findings.push(
+            createFinding(
+              "missing-resource",
+              "prop-resource",
+              { ...baseLocation, resourceId: resourceId },
+              {
+                category: "reference",
+                severity: "error",
+                message: `Prop ${JSON.stringify(prop.name)} references missing resource ${JSON.stringify(resourceId)}.`,
+                remediation:
+                  "Bind the prop to an existing resource or remove the stale resource binding.",
+              }
+            )
+          );
+        }
       }
       continue;
     }

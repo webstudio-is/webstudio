@@ -1,3 +1,4 @@
+import { getPropResourceIds } from "@webstudio-is/sdk";
 import {
   blockTemplateComponent,
   assignUniqueBlockTemplateNamesMutable,
@@ -1024,7 +1025,9 @@ export const getInstanceDeleteTargets = ({
     }
     propIds.add(prop.id);
     if (prop.type === "resource") {
-      resourceIds.add(prop.value);
+      for (const resourceId of getPropResourceIds(prop)) {
+        resourceIds.add(resourceId);
+      }
     }
   }
 

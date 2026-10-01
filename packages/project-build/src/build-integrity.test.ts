@@ -203,3 +203,30 @@ describe("getBuildIntegrityIssues", () => {
     ).toEqual([]);
   });
 });
+
+test("reports each missing Resource in a form action group", () => {
+  expect(
+    getBuildIntegrityIssues({
+      dataSources: [],
+      instances: [],
+      resources: [resource],
+      props: [
+        {
+          id: "action",
+          instanceId: "form",
+          name: "action",
+          type: "resource",
+          value: { resourceIds: [resource.id, "missing"], includeEmail: false },
+        },
+      ],
+    })
+  ).toEqual([
+    {
+      type: "missingResource",
+      source: "prop",
+      propId: "action",
+      propName: "action",
+      resourceId: "missing",
+    },
+  ]);
+});

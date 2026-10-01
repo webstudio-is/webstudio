@@ -220,3 +220,58 @@ test("turns a legacy inline Resource into a variable without losing its settings
   );
   expect($resources.get().get(resource.id)).toEqual(resource);
 });
+
+test("adds another Resource and email without replacing the selected Resource", async () => {
+  const secondVariable = {
+    ...variable,
+    id: "second-variable",
+    resourceId: "second",
+    name: "Newsletter",
+  };
+  $dataSources.set(
+    new Map([
+      [variable.id, variable],
+      [secondVariable.id, secondVariable],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [resource.id, resource],
+      ["second", { ...resource, id: "second" }],
+    ])
+  );
+  const onChange = await render({
+    id: "action",
+    instanceId: "form",
+    name: "action",
+    type: "resource",
+    value: { resourceIds: [resource.id], includeEmail: false },
+  });
+  await act(async () =>
+    page.getByRole("combobox", { name: "Add Resource action" }).click()
+  );
+  expect(
+    page.getByRole("option", { name: "Submit contact", exact: true }).query()
+  ).toBeNull();
+  await act(async () =>
+    page.getByRole("option", { name: "Newsletter", exact: true }).click()
+  );
+  expect(onChange).toHaveBeenCalledWith({
+    type: "resource",
+    value: { resourceIds: [resource.id, "second"], includeEmail: false },
+  });
+  await act(async () =>
+    page.getByRole("checkbox", { name: "Send email" }).click()
+  );
+  expect(onChange).toHaveBeenCalledWith({
+    type: "resource",
+    value: { resourceIds: [resource.id], includeEmail: true },
+  });
+  await act(async () =>
+    page.getByRole("button", { name: "Remove Submit contact" }).click()
+  );
+  expect(onChange).toHaveBeenCalledWith({
+    type: "resource",
+    value: { resourceIds: [], includeEmail: false },
+  });
+});

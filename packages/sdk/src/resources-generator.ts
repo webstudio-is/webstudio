@@ -2,6 +2,7 @@ import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import type { Resource, Resources } from "./schema/resources";
 import type { Prop, Props } from "./schema/props";
+import { getPropResourceIds } from "./resource-prop-utils";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
@@ -108,10 +109,10 @@ export const generateResources = ({
     (prop): prop is Extract<Prop, { type: "resource" }> =>
       (instances.size === 0 || pageInstanceIds.has(prop.instanceId)) &&
       prop.type === "resource" &&
-      resources.has(prop.value)
+      (typeof prop.value !== "string" || resources.has(prop.value))
   );
   const actionResourceIds = new Set(
-    actionResourceProps.map((prop) => prop.value)
+    actionResourceProps.flatMap(getPropResourceIds)
   );
   const resourceDataSourceByResourceId = new Map(
     Array.from(dataSources.values())
@@ -190,6 +191,29 @@ export const generateResources = ({
   }
   for (const resourceId of actionResourceIds) {
     addResourceAndDependencies(resourceId);
+  }
+
+  // A read request must never dispatch a selected form mutation during loading.
+  const checkedPageResourceIds = new Set<string>();
+  const checkPageDependencies = (resourceId: string) => {
+    if (actionResourceIds.has(resourceId)) {
+      throw new Error("Page Resources cannot depend on a form action Resource");
+    }
+    if (checkedPageResourceIds.has(resourceId)) {
+      return;
+    }
+    checkedPageResourceIds.add(resourceId);
+    for (const dependencyId of resourceDependencies.get(resourceId) ?? []) {
+      checkPageDependencies(dependencyId);
+    }
+  };
+  for (const resourceId of rootResourceIds) {
+    if (
+      !actionResourceIds.has(resourceId) &&
+      !selectedResourceIds.has(resourceId)
+    ) {
+      checkPageDependencies(resourceId);
+    }
   }
 
   let generatedRequests = "";
@@ -372,11 +396,22 @@ export const generateResources = ({
     }
   }
 
-  generated += `  const _action = new Map<string, { id: string; outputName: string }>([\n`;
+  const hasActionGroups = actionResourceProps.some(
+    (prop) => typeof prop.value !== "string"
+  );
+  const actionType = hasActionGroups
+    ? "{ id: string; outputName: string } | { resourceIds: string[]; includeEmail: boolean }"
+    : "{ id: string; outputName: string }";
+  generated += `  const _action = new Map<string, ${actionType}>([\n`;
   for (const prop of actionResourceProps) {
+    if (typeof prop.value !== "string") {
+      const name = scope.getName(prop.id, prop.name);
+      generated += `    [${JSON.stringify(name)}, ${JSON.stringify(prop.value)}],\n`;
+      continue;
+    }
     const resource = resources.get(prop.value);
     if (resource === undefined || graphResourceIds.has(prop.value) === false) {
-      continue;
+      throw new Error("Form action references a missing Resource");
     }
     const name = scope.getName(prop.value, prop.name);
     const outputName = scope.getName(prop.value, resource.name);
@@ -386,7 +421,25 @@ export const generateResources = ({
   }
   generated += `  ])\n`;
 
-  generated += `  return { data: _data, action: _action, contentData: _contentData }\n`;
+  // Only legacy email-only forms may submit without an action identifier.
+  const actionPropsByInstanceId = new Map(
+    [...props.values()]
+      .filter((prop) => prop.name === "action")
+      .map((prop) => [prop.instanceId, prop])
+  );
+  const allowDefaultEmail = [...instances.values()].some((instance) => {
+    if (instance.component !== "Form" || !pageInstanceIds.has(instance.id)) {
+      return false;
+    }
+    const action = actionPropsByInstanceId.get(instance.id);
+    return (
+      action === undefined || (action.type === "string" && action.value === "")
+    );
+  });
+  const emailMetadata = hasActionGroups
+    ? `, allowDefaultEmail: ${allowDefaultEmail}`
+    : "";
+  generated += `  return { data: _data, action: _action, contentData: _contentData${emailMetadata} }\n`;
   generated += `}\n`;
 
   return generated;

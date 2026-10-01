@@ -1,3 +1,4 @@
+import { getPropResourceIds } from "@webstudio-is/sdk";
 // Fragment utilities own extracting, copying, and conflict-checking portable
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
@@ -439,7 +440,9 @@ export const extractWebstudioFragment = (
 
     // collect resources from props
     if (prop.type === "resource") {
-      fragmentResourceIds.add(prop.value);
+      for (const resourceId of getPropResourceIds(prop)) {
+        fragmentResourceIds.add(resourceId);
+      }
     }
   }
 
@@ -761,7 +764,9 @@ export const insertWebstudioFragmentCopy = ({
         if (instanceIds.has(prop.instanceId)) {
           props.set(prop.id, prop);
           if (prop.type === "resource") {
-            usedResourceIds.add(prop.value);
+            for (const resourceId of getPropResourceIds(prop)) {
+              usedResourceIds.add(resourceId);
+            }
           }
         }
       }
@@ -821,6 +826,11 @@ export const insertWebstudioFragmentCopy = ({
     maskedIdByName.set(dataSource.name, dataSource.id);
   }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
+  const availableResourceIds = new Set(
+    availableVariables.flatMap((variable) =>
+      variable.type === "resource" ? [variable.resourceId] : []
+    )
+  );
   if (contentMode === false) {
     for (let dataSource of fragment.dataSources) {
       const scopeInstanceId = dataSource.scopeInstanceId ?? "";
@@ -843,7 +853,8 @@ export const insertWebstudioFragmentCopy = ({
         dataSource.scopeInstanceId =
           newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId;
         if (dataSource.type === "resource") {
-          const newResourceId = createId();
+          const newResourceId =
+            newResourceIds.get(dataSource.resourceId) ?? createId();
           newResourceIds.set(dataSource.resourceId, newResourceId);
           dataSource.resourceId = newResourceId;
         }
@@ -897,9 +908,24 @@ export const insertWebstudioFragmentCopy = ({
       prop.value = newDataSourceIds.get(prop.value) ?? prop.value;
     }
     if (prop.type === "resource") {
-      const newResourceId = createId();
-      newResourceIds.set(prop.value, newResourceId);
-      prop.value = newResourceId;
+      const resourceIds = getPropResourceIds(prop).map((resourceId) => {
+        // Keep ancestor variables shared when pasting within their scope.
+        // Variables copied with the subtree use their newly mapped Resources.
+        if (
+          !newResourceIds.has(resourceId) &&
+          availableResourceIds.has(resourceId) &&
+          resources.has(resourceId)
+        ) {
+          return resourceId;
+        }
+        const newResourceId = newResourceIds.get(resourceId) ?? createId();
+        newResourceIds.set(resourceId, newResourceId);
+        return newResourceId;
+      });
+      prop.value =
+        typeof prop.value === "string"
+          ? resourceIds[0]
+          : { ...prop.value, resourceIds };
     }
     props.set(prop.id, prop);
   }

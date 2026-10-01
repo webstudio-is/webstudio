@@ -7,6 +7,19 @@ import {
 
 const propId = z.string();
 
+export const resourcePropValue = z.union([
+  z.string(),
+  z.object({
+    resourceIds: z
+      .array(z.string())
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        "Select each Resource only once"
+      ),
+    includeEmail: z.boolean(),
+  }),
+]);
+
 const baseProp = {
   id: propId,
   instanceId: z.string(),
@@ -65,8 +78,8 @@ export const prop = z.union([
   z.object({
     ...baseProp,
     type: z.literal("resource"),
-    // resource id
-    value: z.string(),
+    // A legacy single Resource or an explicit group of form actions.
+    value: resourcePropValue,
   }),
   z
     .object({

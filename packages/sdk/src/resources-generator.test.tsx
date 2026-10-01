@@ -972,3 +972,60 @@ test("preserves URL bindings when preparing webhook actions for publishing", () 
   });
   expect(data.resources.get("form")?.url).toBe(url);
 });
+
+test("prevents page data dependencies from dispatching a form action on page load", () => {
+  expect(() =>
+    generateResources({
+      scope: createScope(),
+      page: { rootInstanceId: "body" } as Page,
+      dataSources: toMap<DataSource>([
+        {
+          id: "submit-variable",
+          type: "resource",
+          name: "Submit",
+          resourceId: "submit",
+          scopeInstanceId: "body",
+        },
+        {
+          id: "page-variable",
+          type: "resource",
+          name: "Page data",
+          resourceId: "page-data",
+          scopeInstanceId: "body",
+        },
+      ]),
+      resources: toMap([
+        {
+          id: "submit",
+          name: "Submit",
+          url: '\"https://example.com/submit\"',
+          method: "post",
+          headers: [],
+        },
+        {
+          id: "page-data",
+          name: "Page data",
+          url: `\"https://example.com/data/\" + ${encodeDataSourceVariable("submit-variable")}.data.id`,
+          method: "get",
+          headers: [],
+        },
+      ]),
+      props: toMap([
+        {
+          id: "action",
+          instanceId: "body",
+          name: "action",
+          type: "resource",
+          value: { resourceIds: ["submit"], includeEmail: false },
+        },
+        {
+          id: "text",
+          instanceId: "body",
+          name: "title",
+          type: "expression",
+          value: encodeDataSourceVariable("page-variable"),
+        },
+      ]),
+    })
+  ).toThrow("Page Resources cannot depend on a form action Resource");
+});

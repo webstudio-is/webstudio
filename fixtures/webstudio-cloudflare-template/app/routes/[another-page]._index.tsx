@@ -12,7 +12,8 @@ import {
 import { useLoaderData } from "@remix-run/react";
 import {
   isLocalResource,
-  loadResource,
+  getFormActionGroup,
+  submitFormActions,
   loadResources,
   cachedFetch,
   formIdFieldName,
@@ -258,7 +259,8 @@ export const action = async ({
   request,
   context,
 }: ActionFunctionArgs): Promise<
-  { success: true } | { success: false; errors: string[] }
+  | { success: true }
+  | { success: false; errors: string[]; partialSuccess?: boolean }
 > => {
   authenticateProductionRequest(request);
 
@@ -308,67 +310,57 @@ export const action = async ({
     formData.delete(formIdFieldName);
     formData.delete(formBotFieldName);
 
-    let result: Awaited<ReturnType<typeof loadResource>>;
-    if (actionResource === undefined) {
+    if (
+      actionResource === undefined &&
+      (resourceName ||
+        ("allowDefaultEmail" in generatedResources &&
+          generatedResources.allowDefaultEmail === false))
+    ) {
+      throw new Error("Form action not found");
+    }
+    const group = getFormActionGroup(actionResource);
+    let emailRequest;
+    if (group.includeEmail) {
       if (contactEmail === undefined) {
         throw new Error("Contact email not found");
       }
-      const resource = context.getDefaultActionResource?.({
+      emailRequest = context.getDefaultActionResource?.({
         url,
         projectId,
         contactEmail,
         formData,
       });
-      if (resource === undefined) {
-        throw Error("Resource not found");
+      if (emailRequest === undefined) {
+        throw new Error("Email delivery is not configured");
       }
-      result = await loadResource(fetch, resource);
-    } else {
-      const actionFetch = await createGeneratedAssetResourceFetch({
-        request,
-        context,
-        fallback: customFetch,
-      });
-      // formData() above has already validated and parsed the content type.
-      // Preserve multipart fields and files; ordinary forms keep JSON payloads.
-      const body = request.headers
-        .get("Content-Type")
-        ?.toLowerCase()
-        .startsWith("multipart/form-data")
-        ? formData
-        : Object.fromEntries(formData);
-      const results = await loadResources(
-        actionFetch,
-        {
-          ...generatedResources.data,
-          rootIds: [actionResource.id],
-        },
-        url,
-        {
-          requestOverrides: new Map([
-            // Mutations must reach the backend on every submission, even when
-            // the resource has caching enabled. Dependencies can stay cached.
-            [actionResource.id, { body, fetch }],
-          ]),
-        }
-      );
-      const actionResult = results[actionResource.outputName];
-      if (actionResult === undefined) {
-        throw Error("Resource not found");
-      }
-      result = actionResult as Awaited<ReturnType<typeof loadResource>>;
     }
-    const { ok, statusText } = result;
-    if (ok) {
-      return { success: true };
-    }
-    return { success: false, errors: [statusText] };
+    const dependencyFetch = await createGeneratedAssetResourceFetch({
+      request,
+      context,
+      fallback: customFetch,
+    });
+    // Each request gets its own multipart boundary. Ordinary forms retain JSON.
+    const body = request.headers
+      .get("Content-Type")
+      ?.toLowerCase()
+      .startsWith("multipart/form-data")
+      ? formData
+      : Object.fromEntries(formData);
+    return await submitFormActions({
+      graph: generatedResources.data,
+      resourceIds: group.resourceIds,
+      emailRequest,
+      body,
+      baseUrl: url,
+      dependencyFetch,
+      actionFetch: fetch,
+    });
   } catch (error) {
     console.error(error);
 
     return {
       success: false,
-      errors: [error instanceof Error ? error.message : "Unknown error"],
+      errors: ["Form submission failed"],
     };
   }
 };

@@ -94,7 +94,10 @@ export const WebhookForm = forwardRef<
     { children, action, method, state = "initial", onStateChange, ...rest },
     ref
   ) => {
-    const fetcher = useFetcher<{ success: boolean }>();
+    const fetcher = useFetcher<{
+      success: boolean;
+      partialSuccess?: boolean;
+    }>();
     const botInputRef = useRef<HTMLInputElement>(null);
 
     useOnFetchEnd(fetcher, (data) => {
@@ -136,6 +139,11 @@ export const WebhookForm = forwardRef<
         />
         <input type="hidden" name={formBotFieldName} ref={botInputRef} />
         {children}
+        {fetcher.state === "idle" && fetcher.data?.partialSuccess && (
+          <p role="alert">
+            Some deliveries succeeded. Submitting again may send them twice.
+          </p>
+        )}
       </fetcher.Form>
     );
   }

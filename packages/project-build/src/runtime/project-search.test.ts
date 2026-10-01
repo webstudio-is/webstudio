@@ -566,3 +566,32 @@ describe("project search", () => {
     ).toThrow();
   });
 });
+
+test("resolves Resource references inside action groups", () => {
+  const group: Prop = {
+    id: "group",
+    instanceId: "heading",
+    name: "action",
+    type: "resource",
+    value: { resourceIds: ["resource"], includeEmail: false },
+  };
+  const result = searchProject(
+    { ...state, props: new Map([[group.id, group]]) },
+    { query: "resource", namespaces: ["props"] }
+  );
+  expect(result.matches).toContainEqual(
+    expect.objectContaining({
+      currentValue: "resource",
+      location: {
+        namespace: "props",
+        path: ["group", "value", "resourceIds", 0],
+      },
+      reference: {
+        namespace: "resources",
+        entityType: "resource",
+        id: "resource",
+        resolved: true,
+      },
+    })
+  );
+});

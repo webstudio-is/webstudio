@@ -1,3 +1,4 @@
+import { getPropResourceIds } from "./resource-prop-utils";
 import {
   createQuerySourceCodec,
   createStructuredQuery,
@@ -146,7 +147,9 @@ export const createReachableAssetContentCompilationPlanResult = ({
   const reachableResourceIds = new Set<string>();
   for (const prop of props) {
     if (prop.type === "resource") {
-      reachableResourceIds.add(prop.value);
+      for (const resourceId of getPropResourceIds(prop)) {
+        reachableResourceIds.add(resourceId);
+      }
     }
   }
   for (const dataSource of dataSources) {

@@ -1,3 +1,4 @@
+import { getPropResourceIds } from "@webstudio-is/sdk";
 import {
   basename,
   dirname,
@@ -1162,7 +1163,9 @@ export const prebuild = async (options: {
       if (pageInstanceSet.has(prop.instanceId)) {
         props.push([prop.id, prop]);
         if (prop.type === "resource") {
-          resourceIds.add(prop.value);
+          for (const resourceId of getPropResourceIds(prop)) {
+            resourceIds.add(resourceId);
+          }
         }
       }
     }

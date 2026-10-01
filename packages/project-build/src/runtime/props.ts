@@ -1,3 +1,4 @@
+import { getPropResourceIds, resourcePropValue } from "@webstudio-is/sdk";
 import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { getExpressionValueKind } from "@webstudio-is/expression";
@@ -237,7 +238,7 @@ const propValueInputVariants = [
   z.object({
     ...propValueBaseInput,
     type: z.literal("resource"),
-    value: z.string().describe("Resource id."),
+    value: resourcePropValue.describe("Resource id or form action group."),
   }),
   z.object({
     ...propValueBaseInput,
@@ -291,7 +292,7 @@ export const dataPropBindingInput = z.discriminatedUnion("type", [
     mode: expressionBindingMode.optional(),
   }),
   z.object({ type: z.literal("parameter"), value: z.string() }),
-  z.object({ type: z.literal("resource"), value: z.string() }),
+  z.object({ type: z.literal("resource"), value: resourcePropValue }),
 ]);
 
 const actionPropBindingInput = z.object({
@@ -730,7 +731,9 @@ export const getPropDeletePlan = ({
   for (const propId of propIds) {
     const prop = propById.get(propId);
     if (prop?.type === "resource") {
-      resourceIds.add(prop.value);
+      for (const resourceId of getPropResourceIds(prop)) {
+        resourceIds.add(resourceId);
+      }
     }
   }
   return { propIds, resourceIds };
@@ -748,7 +751,9 @@ export const getUnreferencedResourceIds = ({
   const unreferenced = new Set(resourceIds);
   for (const prop of props) {
     if (prop.type === "resource") {
-      unreferenced.delete(prop.value);
+      for (const resourceId of getPropResourceIds(prop)) {
+        unreferenced.delete(resourceId);
+      }
     }
   }
   for (const dataSource of dataSources) {

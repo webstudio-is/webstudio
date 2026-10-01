@@ -1,3 +1,4 @@
+import { getPropResourceIds } from "@webstudio-is/sdk";
 import {
   type Asset,
   collectionComponent,
@@ -928,11 +929,12 @@ const traverseExpressions = ({
       continue;
     }
     if (prop.type === "resource") {
-      onResourceReference?.(prop.value, prop.instanceId);
-      // Shared requests belong to their variable's scope. Referencing one from
-      // a form must not rebind its expressions to that form's local variables.
-      if (variableResourceIds.has(prop.value) === false) {
-        instanceIdByResourceId.set(prop.value, prop.instanceId);
+      for (const resourceId of getPropResourceIds(prop)) {
+        onResourceReference?.(resourceId, prop.instanceId);
+        // Shared requests retain their variable's scope.
+        if (variableResourceIds.has(resourceId) === false) {
+          instanceIdByResourceId.set(resourceId, prop.instanceId);
+        }
       }
       continue;
     }
@@ -2609,8 +2611,8 @@ export const createResourceDeletePayload = ({
   propIds: Prop["id"][];
   isUsed: boolean;
 } => {
-  const resourceProps = Array.from(props).filter(
-    (prop) => prop.type === "resource" && prop.value === resource.id
+  const resourceProps = Array.from(props).filter((prop) =>
+    getPropResourceIds(prop).includes(resource.id)
   );
   if (resourceProps.length > 0 && force !== true) {
     return { payload: [], dataSourceIds: [], propIds: [], isUsed: true };
@@ -2637,10 +2639,21 @@ export const createResourceDeletePayload = ({
   if (resourceProps.length > 0) {
     payload.push({
       namespace: "props",
-      patches: resourceProps.map((prop) => ({
-        op: "remove" as const,
-        path: [prop.id],
-      })),
+      patches: resourceProps.map((prop) => {
+        if (prop.type === "resource" && typeof prop.value !== "string") {
+          return {
+            op: "replace" as const,
+            path: [prop.id, "value"],
+            value: {
+              ...prop.value,
+              resourceIds: prop.value.resourceIds.filter(
+                (id) => id !== resource.id
+              ),
+            },
+          };
+        }
+        return { op: "remove" as const, path: [prop.id] };
+      }),
     });
   }
 

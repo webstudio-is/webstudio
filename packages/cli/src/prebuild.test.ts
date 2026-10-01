@@ -3042,6 +3042,165 @@ sitemap.map((page) => page.path);`
     }
   );
 
+  test.each(["defaults", "react-router"])(
+    "dispatches multiple Resources and email concurrently (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        pageMeta: { contactEmail: "sales@example.com, support@example.com" },
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "resource",
+              value: { resourceIds: ["crm", "newsletter"], includeEmail: true },
+            },
+          ],
+        ],
+      });
+      siteData.build.resources = ["crm", "newsletter"].map((id) => [
+        id,
+        {
+          id,
+          name: id,
+          method: "post",
+          url: JSON.stringify(`https://example.com/${id}`),
+          headers: [{ name: "Content-Type", value: '\"application/json\"' }],
+        },
+      ]) as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "action.mjs")).href
+      );
+      const received: Array<{ url: string; body: unknown }> = [];
+      let release = () => {};
+      const barrier = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      vi.stubGlobal(
+        "fetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({ url: request.url, body: await request.json() });
+          if (received.length === 3) {
+            release();
+          }
+          await barrier;
+          return Response.json({ success: true });
+        }
+      );
+      const form = new URLSearchParams({
+        [formIdFieldName]: "action",
+        [formBotFieldName]: "brave",
+        message: "Hello",
+      });
+      const result = action({
+        request: new Request("https://example.com/", {
+          method: "POST",
+          headers: { host: "example.com" },
+          body: form,
+        }),
+        context: {
+          getDefaultActionResource: ({
+            formData,
+            contactEmail,
+          }: {
+            formData: FormData;
+            contactEmail: string;
+          }) => {
+            expect(contactEmail).toBe("sales@example.com, support@example.com");
+            return {
+              name: "Email",
+              url: "https://example.com/email",
+              method: "post",
+              headers: [],
+              body: Object.fromEntries(formData),
+            };
+          },
+        },
+      });
+      try {
+        await expect.poll(() => received.length).toBe(3);
+      } finally {
+        release();
+      }
+      await expect(result).resolves.toEqual({ success: true });
+      expect(received.map(({ url }) => url).sort()).toEqual([
+        "https://example.com/crm",
+        "https://example.com/email",
+        "https://example.com/newsletter",
+      ]);
+      expect(received.map(({ body }) => body)).toEqual(
+        Array(3).fill({ message: "Hello" })
+      );
+      const submit = (id: string, context: Record<string, unknown>) =>
+        action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: new URLSearchParams({
+              [formIdFieldName]: id,
+              [formBotFieldName]: "brave",
+              message: "Hello",
+            }),
+          }),
+          context,
+        });
+      const emailContext = {
+        getDefaultActionResource: () => ({
+          name: "Email",
+          url: "https://example.com/email",
+          method: "post",
+          headers: [],
+          body: {},
+        }),
+      };
+      await expect(
+        submit("unknown-action", emailContext)
+      ).resolves.toMatchObject({ success: false });
+      await expect(submit("action", {})).resolves.toMatchObject({
+        success: false,
+      });
+      await expect(submit("", emailContext)).resolves.toMatchObject({
+        success: false,
+      });
+      expect(received).toHaveLength(3);
+      for (const partialSuccess of [true, false]) {
+        const calls: string[] = [];
+        vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+          calls.push(String(input));
+          return new Response("", {
+            status:
+              partialSuccess && String(input).endsWith("/crm") ? 200 : 503,
+          });
+        });
+        await expect(submit("action", emailContext)).resolves.toEqual({
+          success: false,
+          partialSuccess,
+          errors: ["One or more form actions failed"],
+        });
+        expect(calls).toHaveLength(3);
+      }
+    }
+  );
+
   test("prerenders the configured Webhook Form method", async () => {
     const siteData = createSiteData({
       instances: [

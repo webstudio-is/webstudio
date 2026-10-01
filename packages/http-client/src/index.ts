@@ -1933,7 +1933,10 @@ type PropBindingInput = {
         mode?: ExpressionBindingMode;
       }
     | { type: "parameter"; value: string }
-    | { type: "resource"; value: string }
+    | {
+        type: "resource";
+        value: string | { resourceIds: string[]; includeEmail: boolean };
+      }
     | {
         type: "action";
         value: Array<{ type: "execute"; args: string[]; code: string }>;

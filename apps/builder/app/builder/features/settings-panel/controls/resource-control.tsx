@@ -2,9 +2,11 @@ import { computed } from "nanostores";
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { GearIcon } from "@webstudio-is/icons";
+import { GearIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   Button,
+  Checkbox,
+  CheckboxAndLabel,
   Flex,
   InputField,
   Select,
@@ -38,7 +40,7 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { getResourceScopeForInstance } from "../resource-panel";
 import { VariablePopoverTrigger } from "../variable-popover";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import { type ControlProps, VerticalLayout } from "../shared";
+import { type ControlProps, VerticalLayout, Label } from "../shared";
 import { PropertyLabel } from "../property-label";
 
 const $selectedInstanceResourceScope = computed(
@@ -80,8 +82,14 @@ export const ResourceControl = ({
       resources.has(variable.resourceId) &&
       resources.get(variable.resourceId)?.control !== "system"
   );
+  const group =
+    prop?.type === "resource" && typeof prop.value !== "string"
+      ? prop.value
+      : undefined;
   const resource =
-    prop?.type === "resource" ? resources.get(prop.value) : undefined;
+    prop?.type === "resource" && typeof prop.value === "string"
+      ? resources.get(prop.value)
+      : undefined;
   const variable = Array.from(dataSources.values()).find(
     (variable) =>
       variable.type === "resource" && variable.resourceId === resource?.id
@@ -123,6 +131,7 @@ export const ResourceControl = ({
   // Keep legacy or out-of-scope references visible until the user replaces them.
   if (
     prop?.type === "resource" &&
+    typeof prop.value === "string" &&
     options.has(`resource:${prop.value}`) === false
   ) {
     options.set(
@@ -130,6 +139,19 @@ export const ResourceControl = ({
       variable?.name ?? resource?.name ?? "Missing Resource"
     );
   }
+
+  // A configured URL can be replaced with a Resource explicitly. Do not drop it
+  // when enabling multiple actions; first select a reusable Resource variable.
+  if (
+    group ||
+    variable ||
+    (prop?.type !== "resource" && urlExpression === '\"\"')
+  ) {
+    options.set("multiple", "Multiple actions");
+  }
+  const unselectedVariables = resourceVariables.filter(
+    (variable) => !group?.resourceIds.includes(variable.resourceId)
+  );
 
   return (
     <VerticalLayout
@@ -144,11 +166,25 @@ export const ResourceControl = ({
         <Flex gap="1" css={{ width: "100%" }}>
           <Select
             aria-label="Action source"
-            value={prop?.type === "resource" ? `resource:${prop.value}` : "url"}
+            value={
+              group
+                ? "multiple"
+                : prop?.type === "resource"
+                  ? `resource:${prop.value}`
+                  : "url"
+            }
             options={Array.from(options.keys())}
             getLabel={(value) => options.get(value)}
             onChange={(value) => {
-              if (value === "url") {
+              if (value === "multiple") {
+                onChange({
+                  type: "resource",
+                  value: {
+                    resourceIds: resource ? [resource.id] : [],
+                    includeEmail: resource === undefined,
+                  },
+                });
+              } else if (value === "url") {
                 updateUrl(urlExpression);
               } else {
                 onChange({
@@ -168,7 +204,98 @@ export const ResourceControl = ({
           )}
         </Flex>
       )}
-      {prop?.type === "resource" ? (
+      {group ? (
+        <>
+          {group.resourceIds.map((resourceId) => {
+            const selectedVariable = Array.from(dataSources.values()).find(
+              (variable) =>
+                variable.type === "resource" &&
+                variable.resourceId === resourceId
+            );
+            const name =
+              selectedVariable?.name ??
+              resources.get(resourceId)?.name ??
+              "Missing Resource";
+            return (
+              <Flex key={resourceId} gap="1" align="center">
+                <Text css={{ flexGrow: 1 }}>{name}</Text>
+                {selectedVariable && (
+                  <VariablePopoverTrigger variable={selectedVariable}>
+                    <SmallIconButton
+                      aria-label={`Edit ${name}`}
+                      icon={<GearIcon />}
+                    />
+                  </VariablePopoverTrigger>
+                )}
+                <SmallIconButton
+                  aria-label={`Remove ${name}`}
+                  icon={<TrashIcon />}
+                  onClick={() =>
+                    onChange({
+                      type: "resource",
+                      value: {
+                        ...group,
+                        resourceIds: group.resourceIds.filter(
+                          (id) => id !== resourceId
+                        ),
+                      },
+                    })
+                  }
+                />
+              </Flex>
+            );
+          })}
+          {unselectedVariables.length > 0 && (
+            <Select
+              aria-label="Add Resource action"
+              value="add"
+              options={[
+                "add",
+                ...unselectedVariables.map((variable) => variable.resourceId),
+              ]}
+              getLabel={(value) =>
+                value === "add"
+                  ? "Add Resource"
+                  : unselectedVariables.find(
+                      (variable) => variable.resourceId === value
+                    )?.name
+              }
+              onChange={(resourceId) => {
+                if (
+                  resourceId !== "add" &&
+                  !group.resourceIds.includes(resourceId)
+                ) {
+                  onChange({
+                    type: "resource",
+                    value: {
+                      ...group,
+                      resourceIds: [...group.resourceIds, resourceId],
+                    },
+                  });
+                }
+              }}
+            />
+          )}
+          <CheckboxAndLabel>
+            <Checkbox
+              id={`${id}-email`}
+              checked={group.includeEmail}
+              onCheckedChange={(checked) =>
+                onChange({
+                  type: "resource",
+                  value: { ...group, includeEmail: checked === true },
+                })
+              }
+            />
+            <Label htmlFor={`${id}-email`}>Send email</Label>
+          </CheckboxAndLabel>
+          <Text color="subtle">
+            {group.resourceIds.length === 0 && !group.includeEmail
+              ? "Select at least one action."
+              : "All actions must succeed. Submitting again may repeat deliveries that already succeeded."}
+          </Text>
+        </>
+      ) : prop?.type === "resource" ? (
         resource &&
         variable === undefined && (
           <Button

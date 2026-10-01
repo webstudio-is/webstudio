@@ -62,3 +62,29 @@ test("retrying after six minutes submits one fresh bot field", async () => {
   expect(submissions[1].get("email")).toBe("ada@example.com");
   expect(form.querySelectorAll(`[name="${formBotFieldName}"]`)).toHaveLength(1);
 });
+
+test("partial delivery shows retry guidance and does not resubmit automatically", async () => {
+  const onStateChange = vi.fn();
+  const submit = vi.fn(() => ({ success: false, partialSuccess: true }));
+  router = createMemoryRouter([
+    {
+      path: "/",
+      element: (
+        <WebhookForm action="group" onStateChange={onStateChange}>
+          <button>Submit</button>
+        </WebhookForm>
+      ),
+      action: submit,
+    },
+  ]);
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => root?.render(<RouterProvider router={router!} />));
+  await act(async () => container.querySelector("form")!.requestSubmit());
+  expect(onStateChange).toHaveBeenLastCalledWith("error");
+  expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+    "Some deliveries succeeded. Submitting again may send them twice."
+  );
+  expect(submit).toHaveBeenCalledTimes(1);
+});

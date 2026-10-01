@@ -221,7 +221,10 @@ const expectPersistedActionResource = async ({
   }
 };
 
-const startWebhookServer = async ({ multipart = false } = {}) => {
+const startWebhookServer = async ({
+  multipart = false,
+  onRequest = async () => 200,
+}: { multipart?: boolean; onRequest?: () => Promise<number> } = {}) => {
   const requests: Array<{
     method: string | undefined;
     url: string | undefined;
@@ -265,7 +268,7 @@ const startWebhookServer = async ({ multipart = false } = {}) => {
       accept: request.headers.accept,
       body,
     });
-    response.writeHead(200, {
+    response.writeHead(await onRequest(), {
       "Access-Control-Allow-Origin": "*",
       "Content-Type": "application/json",
     });
@@ -801,6 +804,195 @@ for (const source of ["URL", "Resource"] as const) {
     }
   });
 }
+
+test("Webhook Form multiple Resources persist, upload in parallel, and report partial delivery", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createContentModeProject({
+    context,
+    email: "webhook-multiple@webstudio.test",
+    title: "Multiple form actions",
+    assetNamePrefix: "webhook-multiple-",
+    editorToken: "webhook-multiple-editor",
+    builderToken: "webhook-multiple-builder",
+  });
+  let arrivals = 0;
+  let release = () => {};
+  const barrier = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let failSecond = true;
+  const arrived = async () => {
+    arrivals += 1;
+    if (arrivals === 2) {
+      release();
+    }
+    await barrier;
+    return 200;
+  };
+  const first = await startWebhookServer({
+    multipart: true,
+    onRequest: arrived,
+  });
+  const second = await startWebhookServer({
+    multipart: true,
+    onRequest: async () => {
+      await arrived();
+      return failSecond ? 503 : 200;
+    },
+  });
+  const file = {
+    name: "attachment.bin",
+    mimeType: "application/octet-stream",
+    buffer: Buffer.from([0, 128, 255]),
+  };
+  try {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+      features: ["resourceProp"],
+    });
+    await waitForCanvasText({ page, text: "Initial content" });
+    await selectCanvasTextInstance({ page, text: "Initial content" });
+    await openComponentsPanel({ page });
+    await insertComponentPanelOption({ page, name: "Webhook Form" });
+    await selectNavigatorItem({ page, itemName: "Body" });
+    for (const [name, url] of [
+      ["CRM", first.url],
+      ["Newsletter", second.url],
+    ]) {
+      await createHttpResourceVariable({
+        page,
+        name,
+        url: `curl -X POST -H 'Content-Type: application/json' --data '{}' '${url}'`,
+      });
+    }
+    await selectNavigatorItem({ page, itemName: "Webhook Form" });
+    await selectResourceAction({ page, name: "CRM" });
+    await page.getByRole("combobox", { name: "Action source" }).click();
+    await page
+      .getByRole("option", { name: "Multiple actions", exact: true })
+      .click();
+    await page.getByRole("combobox", { name: "Add Resource action" }).click();
+    await page.getByRole("option", { name: "Newsletter", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Remove Newsletter", exact: true })
+      .click();
+    await page.getByRole("combobox", { name: "Add Resource action" }).click();
+    await page.getByRole("option", { name: "Newsletter", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Edit Newsletter", exact: true })
+      .click();
+    await expect(
+      page.getByRole("textbox", { name: "URL", exact: true })
+    ).toBeFocused();
+    await expect(
+      page.getByText("Search params", { exact: true })
+    ).toBeVisible();
+    await page
+      .getByRole("dialog", { name: "Edit variable", exact: true })
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await page
+      .getByText("Properties & attributes", { exact: true })
+      .locator("xpath=ancestor::div[@data-state][1]")
+      .getByRole("button")
+      .last()
+      .click();
+    await page.getByPlaceholder("Select or create").fill("enctype");
+    await page.getByRole("option", { name: /enc.?type/i }).click();
+    await page
+      .getByRole("radio", { name: "multipart/form-data", exact: true })
+      .click();
+    await selectFirstNavigatorChild({ page, parentLabel: "Webhook Form" });
+    await pastePlainTextFromClipboardShortcut({
+      page,
+      text: `<div>
+      <label>Attachments<input type="file" name="attachments" /></label>
+      <label>Design<input type="checkbox" name="topics" value="design" /></label>
+      <label>Development<input type="checkbox" name="topics" value="development" /></label>
+    </div>`,
+    });
+    await waitForSyncStatus({ page, status: "idle" });
+    await page.reload();
+    await waitForCanvasText({ page, text: "Attachments" });
+    await selectNavigatorItem({ page, itemName: "Webhook Form" });
+    await page.getByRole("tab", { name: "Settings" }).click();
+    await expect(
+      page.getByRole("button", { name: "Remove CRM", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Remove Newsletter", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("checkbox", { name: "Send email" })
+    ).not.toBeChecked();
+    await withGeneratedPreview({
+      projectId: fixture.projectId,
+      callback: async ({ url }) => {
+        await page.goto(url);
+        expect(first.requests).toEqual([]);
+        expect(second.requests).toEqual([]);
+        for (const round of [1, 2]) {
+          await page.locator('input[name="name"]').fill("Ada");
+          await page.locator('input[name="email"]').fill("ada@example.com");
+          await page.getByLabel("Attachments").setInputFiles(file);
+          await page
+            .getByRole("checkbox", { name: "Design", exact: true })
+            .check();
+          await page
+            .getByRole("checkbox", { name: "Development", exact: true })
+            .check();
+          await page
+            .getByRole("button", { name: "Submit", exact: true })
+            .click();
+          if (round === 1) {
+            await expect(page.getByRole("alert")).toHaveText(
+              "Some deliveries succeeded. Submitting again may send them twice."
+            );
+            await expect(page.locator("form")).toHaveAttribute(
+              "data-state",
+              "error"
+            );
+          } else {
+            await expect(
+              page.getByText("Thank you for getting in touch!", { exact: true })
+            ).toBeVisible();
+          }
+          for (const webhook of [first, second]) {
+            expect(webhook.requests).toHaveLength(round);
+            expect(webhook.requests[round - 1].body).toEqual(
+              expect.arrayContaining([
+                ["name", "Ada"],
+                ["email", "ada@example.com"],
+                ["topics", "design"],
+                ["topics", "development"],
+                [
+                  "attachments",
+                  {
+                    name: file.name,
+                    type: file.mimeType,
+                    bytes: Array.from(file.buffer),
+                  },
+                ],
+              ])
+            );
+            expect(webhook.requests[round - 1].body).toHaveLength(5);
+          }
+          if (round === 1) {
+            failSecond = false;
+            await page.reload();
+          }
+        }
+      },
+    });
+  } finally {
+    release();
+    await Promise.all([first.close(), second.close()]);
+  }
+});
 
 test("Webhook Form retries after an expired submission", async ({
   page,

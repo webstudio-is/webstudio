@@ -35,6 +35,26 @@ You can also send form submission data to a webhook—an external URL that recei
 
 Once set up, every form submission will send a payload (form fields and values) to the webhook URL.
 
+### Multiple actions
+
+A form can send the same submission to several services and also send an email notification.
+
+1. Create a [Resource variable](../foundations/variables.md) for each service. Configure its URL, method, headers, and any query parameters in the variable editor.
+2. Select the Webhook Form, open **Settings**, and select a Resource in **Action source**.
+3. Choose **Multiple actions**, then use **Add Resource** to select more existing Resources. Each Resource can be selected once.
+4. Enable **Send email** to also notify the recipients in **Project settings > General > Contact email**. Separate multiple recipients with commas; your plan's recipient limit applies. Without a custom recipient, email goes to the project owner.
+5. Publish and submit the form to test every destination.
+
+Use the gear beside a selected Resource to open its full variable editor. Changes apply everywhere that Resource is used. Removing an action from the form keeps its Resource variable available.
+
+Independent actions run at the same time. A Resource that depends on another Resource waits for it, and shared dependencies load once per submission. Each action receives the form fields as its body, replacing its configured body. Multipart submissions send the same files and repeated fields to every selected webhook. GET requests do not send a body.
+
+The form shows success only after every action succeeds. Failed dependencies prevent their dependent actions from being sent; independent actions still finish. Each request has a 30-second timeout. A timeout does not prove that the receiving service rejected the submission.
+
+If some actions succeed and others fail, the form shows an error with retry guidance. Webstudio does not retry automatically or undo successful deliveries. Submitting again sends all actions again and may create duplicates. Use a receiving service's deduplication feature when duplicates would be harmful.
+
+Built-in email requires Webstudio hosting or a configured email adapter in your own server deployment. Selecting email on a deployment without that adapter fails the submission before webhooks are sent. Static exports cannot run these server actions.
+
 ### File uploads and repeated fields
 
 Use `multipart/form-data` when your webhook needs files or several values with the same field name. The receiving service must support multipart requests. Other submissions use JSON by default.

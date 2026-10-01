@@ -1264,3 +1264,24 @@ test("removing an action keeps Resources referenced by variables or other forms"
     expect(result.payload.map((change) => change.namespace)).toEqual(["props"]);
   }
 });
+
+test("removing grouped actions cleans up only Resources with no other references", () => {
+  const action = prop("action", {
+    type: "resource",
+    value: { resourceIds: ["orphan", "shared"], includeEmail: true },
+  });
+  const otherAction: Prop = {
+    ...action,
+    type: "resource",
+    id: "other-action",
+    instanceId: "other-form",
+    value: { resourceIds: ["shared"], includeEmail: false },
+  };
+  const result = createPropDeletePayload({
+    deletions: [{ instanceId: image.id, name: "action" }],
+    instances: new Map([[image.id, image]]),
+    props: [action, otherAction],
+    dataSources: [],
+  });
+  expect(result.resourceIds).toEqual(["orphan"]);
+});
