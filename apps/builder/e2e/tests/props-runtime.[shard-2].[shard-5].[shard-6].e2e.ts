@@ -639,6 +639,74 @@ for (const mode of ["URL", "URL binding"] as const) {
   });
 }
 
+test("Webhook Form retries after an expired submission", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createContentModeProject({
+    context,
+    email: "webhook-retry@webstudio.test",
+    title: "Webhook retry",
+    assetNamePrefix: "webhook-retry-",
+    editorToken: "webhook-retry-editor-token",
+    builderToken: "webhook-retry-builder-token",
+  });
+  const webhook = await startWebhookServer();
+  try {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+      features: ["resourceProp"],
+    });
+    await waitForCanvasText({ page, text: "Initial content" });
+    await selectCanvasTextInstance({ page, text: "Initial content" });
+    await openComponentsPanel({ page });
+    await insertComponentPanelOption({ page, name: "Webhook Form" });
+    await selectNavigatorItem({ page, itemName: "Webhook Form" });
+    await page.getByRole("tab", { name: "Settings" }).click();
+    const input = page.getByRole("textbox", { name: "Action URL" });
+    await input.fill(webhook.url);
+    const save = waitForChangeToBeSaved({ page });
+    await input.press("Enter");
+    await save;
+    await waitForSyncStatus({ page, status: "idle" });
+
+    await withGeneratedPreview({
+      projectId: fixture.projectId,
+      callback: async ({ url }) => {
+        await page.goto(url);
+        await page.locator('input[name="name"]').fill("Ada");
+        await page.locator('input[name="email"]').fill("ada@example.com");
+        // Expire the first timestamp without a five-minute wait. The server
+        // must still reject it; a subsequent fresh submission must succeed.
+        await page.clock.setFixedTime(Date.now() - 6 * 60_000);
+        await page.getByRole("button", { name: "Submit" }).click();
+        await expect(
+          page.getByText("Sorry, something went wrong.", { exact: true })
+        ).toBeVisible();
+        expect(webhook.requests).toEqual([]);
+
+        await page.clock.setFixedTime(Date.now());
+        await page.getByRole("button", { name: "Submit" }).click();
+        await expect(
+          page.getByText("Thank you for getting in touch!", { exact: true })
+        ).toBeVisible();
+        expect(webhook.requests).toEqual([
+          {
+            method: "POST",
+            url: "/submit",
+            accept: "*/*",
+            body: { name: "Ada", email: "ada@example.com" },
+          },
+        ]);
+      },
+    });
+  } finally {
+    await webhook.close();
+  }
+});
+
 test("Props panel expression binding persists after reload", async ({
   page,
   context,

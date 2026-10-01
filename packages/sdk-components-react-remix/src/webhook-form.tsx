@@ -95,6 +95,7 @@ export const WebhookForm = forwardRef<
     ref
   ) => {
     const fetcher = useFetcher<{ success: boolean }>();
+    const botInputRef = useRef<HTMLInputElement>(null);
 
     useOnFetchEnd(fetcher, (data) => {
       const state: State = data?.success === true ? "success" : "error";
@@ -102,16 +103,15 @@ export const WebhookForm = forwardRef<
     });
 
     /**
-     * Add hidden field generated using js with simple jsdom detector.
+     * Refresh the hidden field on every submission using a simple jsdom detector.
      * This is used to protect form submission against very simple bots.
      * Skipped for Brave browser due to: https://github.com/brave/brave-browser/issues/46541
      */
-    const handleSubmitAndAddHiddenJsField = (
-      event: React.FormEvent<HTMLFormElement>
-    ) => {
-      const hiddenInput = document.createElement("input");
-      hiddenInput.type = "hidden";
-      hiddenInput.name = formBotFieldName;
+    const handleSubmit = () => {
+      const hiddenInput = botInputRef.current;
+      if (hiddenInput === null) {
+        return;
+      }
       // Skip bot detection for Brave - Shields blocks matchMedia fingerprinting detection
       if (isBraveBrowser()) {
         hiddenInput.value = "brave";
@@ -119,7 +119,6 @@ export const WebhookForm = forwardRef<
         // Non-numeric values are utilized for logging purposes.
         hiddenInput.value = isJSDom() ? "jsdom" : Date.now().toString(16);
       }
-      event.currentTarget.appendChild(hiddenInput);
     };
 
     return (
@@ -128,13 +127,14 @@ export const WebhookForm = forwardRef<
         method="post"
         data-state={state}
         ref={ref}
-        onSubmit={handleSubmitAndAddHiddenJsField}
+        onSubmit={handleSubmit}
       >
         <input
           type="hidden"
           name={formIdFieldName}
           value={action?.toString()}
         />
+        <input type="hidden" name={formBotFieldName} ref={botInputRef} />
         {children}
       </fetcher.Form>
     );
