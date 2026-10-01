@@ -18,7 +18,7 @@ import {
   formBotFieldName,
   cachedFetch,
 } from "@webstudio-is/sdk/runtime";
-import { authenticateRequest } from "@webstudio-is/wsauth";
+import { authenticateProjectRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
   PageSettingsMeta,
@@ -46,24 +46,6 @@ import { sitemap } from "__SITEMAP__";
 import { authRoutes } from "__AUTH__";
 import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
 import { assetUrlsByPath } from "__ASSETS__";
-
-const authenticateProductionRequest = (request: Request) => {
-  const host =
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host") ||
-    "";
-
-  const requestHost = host.split(":")[0];
-  if (
-    projectDomain !== undefined &&
-    (requestHost === projectDomain ||
-      requestHost.startsWith(`${projectDomain}.`))
-  ) {
-    return;
-  }
-
-  return authenticateRequest(request, authRoutes);
-};
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -99,7 +81,11 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
-  const authRoute = authenticateProductionRequest(arg.request);
+  const authRoute = authenticateProjectRequest(
+    arg.request,
+    authRoutes,
+    projectDomain
+  );
 
   const url = new URL(arg.request.url);
   const host =
@@ -259,7 +245,7 @@ export const action = async ({
 }: ActionFunctionArgs): Promise<
   { success: true } | { success: false; errors: string[] }
 > => {
-  authenticateProductionRequest(request);
+  authenticateProjectRequest(request, authRoutes, projectDomain);
 
   try {
     const url = new URL(request.url);

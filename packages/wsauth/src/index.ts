@@ -570,3 +570,19 @@ export const authenticateRequest = (
     });
   }
 };
+
+/** Skip project authentication only on the actual project hostname. */
+export const authenticateProjectRequest = (
+  request: Request,
+  authRoutes: WsAuthRoute[],
+  projectDomain?: string
+) => {
+  const hostname = new URL(request.url).hostname;
+  if (
+    projectDomain !== undefined &&
+    (hostname === projectDomain || hostname.startsWith(`${projectDomain}.`))
+  ) {
+    return;
+  }
+  return authenticateRequest(request, authRoutes);
+};

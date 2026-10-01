@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  authenticateProjectRequest,
   authenticateRequest,
   buildWsAuth,
   createBasicAuthRoute,
@@ -592,5 +593,57 @@ describe("wsauth", () => {
         "private, no-store"
       );
     }
+  });
+
+  test("project domain exemption uses the request URL, not forwarded host headers", () => {
+    const authRoutes = [
+      createBasicAuthRoute({
+        route: "/private/*",
+        login: "admin",
+        password: "secret",
+      }),
+    ];
+    const projectDomain = "project";
+
+    expect(
+      authenticateProjectRequest(
+        new Request("https://project.wstd.work/private"),
+        authRoutes,
+        projectDomain
+      )
+    ).toBeUndefined();
+
+    expect(() =>
+      authenticateProjectRequest(
+        new Request("https://customer.example/private", {
+          headers: { "x-forwarded-host": "project.wstd.work" },
+        }),
+        authRoutes,
+        projectDomain
+      )
+    ).toThrow(Response);
+
+    expect(
+      authenticateProjectRequest(
+        new Request("https://customer.example/private", {
+          headers: {
+            "x-forwarded-host": "project.wstd.work",
+            Authorization: `Basic ${btoa("admin:secret")}`,
+          },
+        }),
+        authRoutes,
+        projectDomain
+      )
+    ).toBe(authRoutes[0]);
+
+    expect(() =>
+      authenticateProjectRequest(
+        new Request("https://customer.example/private", {
+          headers: { Host: "project.wstd.work" },
+        }),
+        authRoutes,
+        projectDomain
+      )
+    ).toThrow(Response);
   });
 });
