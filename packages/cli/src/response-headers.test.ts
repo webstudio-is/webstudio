@@ -21,6 +21,7 @@ test("compiles configured values and route rules as data", () => {
       value: "frame-ancestors https://example.com",
     },
     { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },
+    { route: "/%2A", name: "X-Legacy-Route", value: "literal" },
     { name: "Cache-Control", value: "public, max-age=60" },
   ];
   expect(
@@ -38,7 +39,6 @@ test("invalid or dispatcher-owned configuration fails the build", () => {
     { name: "Content-Security-Policy", value: "bad\r\nvalue" },
     { name: "X-Content-Type-Options", value: "off" },
     { name: "Strict-Transport-Security", value: "max-age=0" },
-    { route: "/%2A", name: "Referrer-Policy", value: "no-referrer" },
   ]) {
     expect(() =>
       generateResponseHeadersModule({

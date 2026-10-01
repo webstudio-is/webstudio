@@ -207,13 +207,11 @@ const decodeStaticSegment = (segment: string) => {
     return {
       // Remix decodes request paths; keep encoded slashes within one segment.
       path: decoded.replaceAll("/", "%2F"),
-      error:
-        decoded.startsWith(":") || /[?*]/.test(decoded)
-          ? "encodedSyntax"
-          : undefined,
+      // These were valid literal segments before route matching used Remix.
+      literal: decoded.startsWith(":") || /[?*%]/.test(decoded),
     };
   } catch {
-    return { path: segment, error: "invalidEncoding" };
+    return { path: segment, literal: true };
   }
 };
 
@@ -251,15 +249,6 @@ export const validatePathnamePattern = (route: string) => {
     }
     if (segment.includes("*")) {
       return "Wildcard can only be used as * or :name*";
-    }
-    if (segment.includes("%")) {
-      const decoded = decodeStaticSegment(segment);
-      if (decoded.error === "invalidEncoding") {
-        return `Invalid URL encoding in route segment "${segment}"`;
-      }
-      if (decoded.error === "encodedSyntax") {
-        return `Encoded route syntax is not supported in "${segment}"`;
-      }
     }
   }
 };
@@ -460,9 +449,13 @@ export const getBasicAuthCredentials = (authorization: string | null) => {
   return auth?.credentials;
 };
 
-// Webstudio accepts named splats and encoded static segments that cannot be
-// passed to matchRoutes unchanged. Remix still performs all route matching.
-const toRouterPattern = (pattern: string) => {
+// Remix performs route matching; literal encoded segments need placeholders so
+// saved rules such as /%2A cannot turn into router syntax.
+const toRouterPattern = (
+  pattern: string,
+  literals: Map<string, string>,
+  decodedPathname: string
+) => {
   const segments: string[] = [];
   for (const segment of (pattern || "/").replace(/:\w+\*$/, "*").split("/")) {
     if (segment === "*" || segment.startsWith(":")) {
@@ -470,9 +463,22 @@ const toRouterPattern = (pattern: string) => {
       continue;
     }
     const decoded = decodeStaticSegment(segment);
-    if (decoded.error === "encodedSyntax") {
-      // Saved rules can reach the matcher without passing current validation.
-      return;
+    if (decoded.literal) {
+      let marker = literals.get(segment);
+      if (marker === undefined) {
+        let index = literals.size;
+        marker = `\0${index}\0`;
+        while (
+          decodedPathname.includes(marker) ||
+          Array.from(literals.values()).includes(marker)
+        ) {
+          index += 1;
+          marker = `\0${index}\0`;
+        }
+        literals.set(segment, marker);
+      }
+      segments.push(marker);
+      continue;
     }
     segments.push(decoded.path);
   }
@@ -484,19 +490,50 @@ export const matchPathnameRoutes = <Value>(
   routes: ReadonlyArray<{ pattern: string; value: Value }>,
   pathname: string
 ): { value: Value; params: Record<string, string | undefined> } | undefined => {
-  const routerRoutes = routes.flatMap((route) => {
-    const path = toRouterPattern(route.pattern);
-    return path === undefined
-      ? []
-      : [{ path, caseSensitive: false, source: route }];
+  const literals = new Map<string, string>();
+  const decodedPathname = pathname
+    .split("/")
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join("/");
+  const routerRoutes = routes.map((route) => ({
+    path: toRouterPattern(route.pattern, literals, decodedPathname),
+    caseSensitive: false,
+    source: route,
+  }));
+  const decodedLiterals = Array.from(literals, ([literal, marker]) => {
+    try {
+      return [marker, decodeURIComponent(literal)] as const;
+    } catch {
+      return [marker, literal] as const;
+    }
   });
-  const match = matchRoutes(routerRoutes, pathname)?.at(-1);
+  const routerPathname = pathname
+    .split("/")
+    .map((segment) => literals.get(segment) ?? segment)
+    .join("/");
+  const match = matchRoutes(routerRoutes, routerPathname)?.at(-1);
   if (match === undefined) {
     return;
   }
   return {
     value: match.route.source.value,
-    params: match.params,
+    params: Object.fromEntries(
+      Object.entries(match.params).map(([name, value]) => [
+        name,
+        value === undefined
+          ? value
+          : decodedLiterals.reduce(
+              (result, [marker, literal]) => result.replaceAll(marker, literal),
+              value
+            ),
+      ])
+    ),
   };
 };
 

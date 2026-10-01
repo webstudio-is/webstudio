@@ -26,7 +26,7 @@ Use `:name` for a single segment, `:name?` for one optional segment, and `:name*
 
 Non-home page paths and non-root project rules start with `/`, cannot contain repeating slashes such as `//`, and cannot end with `/`. The project-rule pattern for the home page is `/`; [Page settings](page-settings.md#path) stores the home page path as an empty value. Wildcards must be the final segment.
 
-For **Project settings**, use `?` only for an optional named parameter. URL-encoded `:`, `*`, and `?` cannot be used as pattern syntax.
+For **Project settings**, use `?` only for an optional named parameter. URL-encoded `:`, `*`, and `?` are literal characters, not pattern syntax. For example, `/%2A` matches only that encoded pathname, with the same hex-letter case; it does not match every page.
 
 ## Matching behavior in Project settings
 

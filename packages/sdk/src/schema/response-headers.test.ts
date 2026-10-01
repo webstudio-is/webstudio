@@ -50,12 +50,12 @@ describe("response header settings", () => {
     ).toBe(false);
   });
 
-  test("rejects encoded route syntax in a saved header rule", () => {
+  test("keeps encoded literal routes in saved header rules", () => {
     expect(
       customResponseHeaders.safeParse([
         { route: "/%2A", name: "Referrer-Policy", value: "no-referrer" },
       ]).success
-    ).toBe(false);
+    ).toBe(true);
   });
 
   test("edits rules by route and case-insensitive name", () => {

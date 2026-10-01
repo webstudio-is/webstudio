@@ -141,10 +141,11 @@ describe("wsauth", () => {
     ["/docs/:name??", 'Invalid route parameter ":name??"'],
     ["/docs/a?", 'Optional marker "?" is only allowed on a named parameter'],
     ["/docs/a*", "Wildcard can only be used as * or :name*"],
-    ["/%3Aid", 'Encoded route syntax is not supported in "%3Aid"'],
-    ["/%3F", 'Encoded route syntax is not supported in "%3F"'],
-    ["/%2A", 'Encoded route syntax is not supported in "%2A"'],
-    ["/%ZZ", 'Invalid URL encoding in route segment "%ZZ"'],
+    ["/%3Aid", undefined],
+    ["/%3F", undefined],
+    ["/%2A", undefined],
+    ["/%252A", undefined],
+    ["/%ZZ", undefined],
   ] as const)("validates project rule %s", (pattern, error) => {
     expect(validatePathnamePattern(pattern)).toBe(error);
   });
@@ -189,33 +190,63 @@ describe("wsauth", () => {
   });
 
   test.each([
-    ["/%2A", "/%2A"],
-    ["/%2A", "/docs"],
-    ["/%3F", "/%3F"],
-    ["/%3F", "/"],
-    ["/%3Aid", "/%3Aid"],
-    ["/%3Aid", "/docs"],
-    ["/docs/%2A", "/docs/guide"],
+    ["/%2A", "/%2A", true],
+    ["/%2A", "/%2a", false],
+    ["/%2A", "/docs", false],
+    ["/%3F", "/%3F", true],
+    ["/%3F", "/", false],
+    ["/%3Aid", "/%3Aid", true],
+    ["/%3Aid", "/docs", false],
+    ["/%252A", "/%252A", true],
+    ["/%252A", "/%2A", false],
+    ["/%ZZ", "/%ZZ", true],
+    ["/docs/%2A", "/docs/%2A", true],
+    ["/docs/%2A", "/docs/guide", false],
   ] as const)(
     "does not interpret a saved encoded literal %s as router syntax at %s",
-    (pattern, pathname) => {
-      expect(matchPathnamePattern(pattern, pathname)).toBeUndefined();
+    (pattern, pathname, expected) => {
+      expect(matchPathnamePattern(pattern, pathname) !== undefined).toBe(
+        expected
+      );
     }
   );
 
-  test("skips an invalid saved route while matching other routes", () => {
+  test("ranks saved encoded literals without losing other routes", () => {
+    const routes = [
+      { pattern: "/:id", value: "dynamic" },
+      { pattern: "/%2A", value: "encoded literal" },
+      { pattern: "/docs", value: "docs" },
+    ];
+    expect(matchPathnameRoutes(routes, "/%2A")?.value).toBe("encoded literal");
+    expect(matchPathnameRoutes(routes, "/docs")?.value).toBe("docs");
+    expect(matchPathnameRoutes(routes, "/%2a")?.params).toEqual({ id: "*" });
+  });
+
+  test("restores parameters when another route wins over an encoded literal", () => {
+    const routes = [
+      { pattern: "/%2A/other", value: "encoded literal" },
+      { pattern: "/:id/leaf", value: "dynamic" },
+    ];
+    expect(matchPathnameRoutes(routes, "/%2A/leaf")).toEqual({
+      value: "dynamic",
+      params: { id: "*" },
+    });
     expect(
       matchPathnameRoutes(
         [
-          { pattern: "/%2A", value: "encoded literal" },
-          { pattern: "/docs", value: "docs" },
+          { pattern: "/a%2Fb%2A/other", value: "encoded literal" },
+          { pattern: "/:id/leaf", value: "dynamic" },
         ],
-        "/docs"
-      )?.value
-    ).toBe("docs");
+        "/a%2Fb%2A/leaf"
+      )?.params
+    ).toEqual({ id: "a/b*" });
   });
 
-  test("rejects a previously saved encoded auth rule before publishing", () => {
+  test("an encoded NUL cannot impersonate a literal rule placeholder", () => {
+    expect(matchPathnamePattern("/%2A", "/%000%00")).toBeUndefined();
+  });
+
+  test("preserves a previously saved encoded auth rule", () => {
     const content = JSON.stringify({
       version: 1,
       routes: {
@@ -226,9 +257,15 @@ describe("wsauth", () => {
         },
       },
     });
-    expect(() => parseWsAuthOrThrow(content, "Saved auth")).toThrow(
-      'Saved auth:routes."/%2A" Encoded route syntax is not supported in "%2A"'
-    );
+    const routes = parseWsAuthOrThrow(content, "Saved auth");
+    expect(findWsAuthRoute(routes, "/%2A")?.route).toBe("/%2A");
+    expect(findWsAuthRoute(routes, "/docs")).toBeUndefined();
+    expect(() =>
+      authenticateRequest(new Request("https://example.com/%2A"), routes)
+    ).toThrowError(Response);
+    expect(
+      authenticateRequest(new Request("https://example.com/docs"), routes)
+    ).toBeUndefined();
   });
 
   test("returns Remix route parameters", () => {
