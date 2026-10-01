@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { resolveResources } from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
 import {
@@ -5,6 +6,37 @@ import {
   resourceLoadConcurrency,
   type ResourceRequestGraph,
 } from "./resource-loader";
+
+const clientAddressSchema = z.union([z.ipv4(), z.ipv6()]);
+
+/** Only forward visitor metadata, never the site's cookies or credentials. */
+export const getFormSubmissionHeaders = (
+  request: Request,
+  clientAddress?: string
+) => {
+  const headers: Array<{ name: string; value: string }> = [];
+  for (const name of ["User-Agent", "Accept-Language"]) {
+    const value = request.headers.get(name);
+    if (value) {
+      headers.push({ name, value });
+    }
+  }
+  // The runtime's navigator identifies Workers; the incoming User-Agent does not.
+  // Remix reconstructs Request objects and can drop request.cf before actions.
+  // https://developers.cloudflare.com/workers/configuration/compatibility-flags/#global-navigator
+  if (
+    clientAddress === undefined &&
+    typeof navigator !== "undefined" &&
+    navigator.userAgent === "Cloudflare-Workers"
+  ) {
+    clientAddress = request.headers.get("CF-Connecting-IP") ?? undefined;
+  }
+  const address = clientAddressSchema.safeParse(clientAddress);
+  if (address.success) {
+    headers.push({ name: "X-Forwarded-For", value: address.data });
+  }
+  return headers;
+};
 
 export type FormAction =
   | { id: string; outputName: string }
@@ -41,6 +73,7 @@ export const submitFormActions = async ({
   dependencyFetch,
   actionFetch,
   timeoutMs = 30_000,
+  submissionHeaders = [],
 }: {
   graph: ResourceRequestGraph;
   resourceIds: readonly string[];
@@ -50,6 +83,7 @@ export const submitFormActions = async ({
   dependencyFetch: typeof fetch;
   actionFetch: typeof fetch;
   timeoutMs?: number;
+  submissionHeaders?: ResourceRequest["headers"];
 }) => {
   if (new Set(resourceIds).size !== resourceIds.length) {
     throw new Error("Duplicate form action");
@@ -91,10 +125,25 @@ export const submitFormActions = async ({
               return failedAction();
             }
           }
-          const request = resource.createRequest(documents);
+          let request = resource.createRequest(documents);
+          if (resourceIds.includes(resource.id)) {
+            const configuredNames = new Set(
+              request.headers.map(({ name }) => name.toLowerCase())
+            );
+            request = {
+              ...request,
+              body,
+              headers: [
+                ...request.headers,
+                ...submissionHeaders.filter(
+                  ({ name }) => !configuredNames.has(name.toLowerCase())
+                ),
+              ],
+            };
+          }
           return await loadResource(
             mutationIds.has(resource.id) ? actionFetch : dependencyFetch,
-            resourceIds.includes(resource.id) ? { ...request, body } : request,
+            request,
             baseUrl,
             { timeoutMs }
           );

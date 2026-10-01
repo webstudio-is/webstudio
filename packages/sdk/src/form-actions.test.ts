@@ -1,5 +1,5 @@
-import { expect, test, vi } from "vitest";
-import { submitFormActions } from "./form-actions";
+import { afterEach, expect, test, vi } from "vitest";
+import { getFormSubmissionHeaders, submitFormActions } from "./form-actions";
 import type { ResourceRequestGraph } from "./resource-loader";
 
 const request = (name: string) => ({
@@ -201,4 +201,138 @@ test("respects dependencies between selected actions and skips an action when it
         : ["https://example.com/first"]
     );
   }
+});
+
+afterEach(() => vi.unstubAllGlobals());
+
+test("forwards only visitor metadata and uses a trusted IPv4 or IPv6 address", () => {
+  const incoming = new Request("https://site.example", {
+    headers: {
+      "User-Agent": "Visitor browser",
+      "Accept-Language": "de-DE,de;q=0.9",
+      "X-Forwarded-For": "192.0.2.66, 192.0.2.67",
+      "CF-Connecting-IP": "192.0.2.68",
+      Cookie: "private-cookie",
+      Authorization: "Bearer private-token",
+      Origin: "https://private.example",
+      Referer: "https://private.example/path?private=1",
+    },
+  });
+  const metadata = [
+    { name: "User-Agent", value: "Visitor browser" },
+    { name: "Accept-Language", value: "de-DE,de;q=0.9" },
+  ];
+  vi.stubGlobal("navigator", { userAgent: "Node.js" });
+  expect(getFormSubmissionHeaders(incoming)).toEqual(metadata);
+  for (const address of ["203.0.113.9", "2001:db8::9", "::ffff:127.0.0.1"]) {
+    expect(getFormSubmissionHeaders(incoming, address)).toEqual([
+      ...metadata,
+      { name: "X-Forwarded-For", value: address },
+    ]);
+  }
+  for (const address of [
+    "",
+    "not an IP",
+    "192.0.2.1, 192.0.2.2",
+    "999.0.0.1",
+    "192.0.2.1:80",
+  ]) {
+    expect(getFormSubmissionHeaders(incoming, address)).toEqual(metadata);
+  }
+  expect(getFormSubmissionHeaders(new Request("https://site.example"))).toEqual(
+    []
+  );
+  incoming.headers.set("User-Agent", "Cloudflare-Workers");
+  expect(getFormSubmissionHeaders(incoming)).toEqual([
+    { name: "User-Agent", value: "Cloudflare-Workers" },
+    metadata[1],
+  ]);
+  incoming.headers.set("User-Agent", "Visitor browser");
+  vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
+  expect(getFormSubmissionHeaders(incoming)).toEqual([
+    ...metadata,
+    { name: "X-Forwarded-For", value: "192.0.2.68" },
+  ]);
+  expect(getFormSubmissionHeaders(incoming, "203.0.113.10")).toEqual([
+    ...metadata,
+    { name: "X-Forwarded-For", value: "203.0.113.10" },
+  ]);
+  incoming.headers.set("CF-Connecting-IP", "192.0.2.1, 192.0.2.2");
+  expect(getFormSubmissionHeaders(incoming)).toEqual(metadata);
+  incoming.headers.delete("CF-Connecting-IP");
+  expect(getFormSubmissionHeaders(incoming)).toEqual(metadata);
+});
+
+test("each webhook gets its visitor headers without changing dependencies, email or configured headers", async () => {
+  const configured = [
+    { name: "uSeR-aGeNt", value: "Configured integration" },
+    { name: "Authorization", value: "Configured credential" },
+    { name: "x-FORWARDED-for", value: "192.0.2.40" },
+    { name: "accept-LANGUAGE", value: "en" },
+  ];
+  const graph: ResourceRequestGraph = {
+    rootIds: [],
+    resources: [
+      node("shared"),
+      node("first", ["shared"]),
+      {
+        ...node("second", ["shared"]),
+        createRequest: () => ({ ...request("second"), headers: configured }),
+      },
+    ],
+  };
+  const received: Request[] = [];
+  const capture: typeof fetch = async (input, init) => {
+    received.push(new Request(input, init));
+    return Response.json({ ok: true });
+  };
+  for (const visitor of ["first visitor", "second visitor"]) {
+    await expect(
+      submitFormActions({
+        graph,
+        resourceIds: ["first", "second"],
+        emailRequest: request("email"),
+        body: { message: "Hello" },
+        baseUrl,
+        actionFetch: capture,
+        dependencyFetch: capture,
+        submissionHeaders: [
+          { name: "User-Agent", value: visitor },
+          { name: "Accept-Language", value: "fr" },
+          { name: "X-Forwarded-For", value: "2001:db8::1" },
+        ],
+      })
+    ).resolves.toEqual({ success: true });
+    for (const outgoing of received.splice(0)) {
+      const path = new URL(outgoing.url).pathname;
+      expect(outgoing.headers.get("user-agent")).toBe(
+        path === "/first"
+          ? visitor
+          : path === "/second"
+            ? "Configured integration"
+            : null
+      );
+      expect(outgoing.headers.get("accept-language")).toBe(
+        path === "/first" ? "fr" : path === "/second" ? "en" : null
+      );
+      expect(outgoing.headers.get("x-forwarded-for")).toBe(
+        path === "/first"
+          ? "2001:db8::1"
+          : path === "/second"
+            ? "192.0.2.40"
+            : null
+      );
+      if (path === "/second") {
+        expect(outgoing.headers.get("authorization")).toBe(
+          "Configured credential"
+        );
+      }
+    }
+  }
+  expect(configured).toEqual([
+    { name: "uSeR-aGeNt", value: "Configured integration" },
+    { name: "Authorization", value: "Configured credential" },
+    { name: "x-FORWARDED-for", value: "192.0.2.40" },
+    { name: "accept-LANGUAGE", value: "en" },
+  ]);
 });

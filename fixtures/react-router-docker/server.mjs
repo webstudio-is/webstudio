@@ -23,7 +23,20 @@ export const createApp = ({ build, trustProxy = false }) => {
   );
   app.use(build.publicPath, express.static(build.assetsBuildDirectory));
   app.use(express.static("public", { maxAge: "1h" }));
-  app.all("*", createRequestHandler({ build, mode: process.env.NODE_ENV }));
+  app.all(
+    "*",
+    createRequestHandler({
+      build,
+      mode: process.env.NODE_ENV,
+      // Other deployment templates augment the same interface during CLI checks.
+      getLoadContext: (request) => {
+        return /** @type {import("react-router").AppLoadContext} */ ({
+          EXCLUDE_FROM_SEARCH: false,
+          clientAddress: request.ip,
+        });
+      },
+    })
+  );
   return app;
 };
 

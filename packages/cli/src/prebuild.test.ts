@@ -3006,7 +3006,13 @@ sitemap.map((page) => page.path);`
       vi.stubGlobal(
         "fetch",
         async (input: RequestInfo | URL, init?: RequestInit) => {
-          received.push(await new Request(input, init).formData());
+          const outgoing = new Request(input, init);
+          expect(outgoing.headers.get("user-agent")).toBe("Visitor browser");
+          expect(outgoing.headers.get("accept-language")).toBe("fr-FR");
+          expect(outgoing.headers.get("x-forwarded-for")).toBe("2001:db8::1");
+          expect(outgoing.headers.has("cookie")).toBe(false);
+          expect(outgoing.headers.has("authorization")).toBe(false);
+          received.push(await outgoing.formData());
           return Response.json({ success: true });
         }
       );
@@ -3021,17 +3027,28 @@ sitemap.map((page) => page.path);`
         new Blob([bytes], { type: "application/octet-stream" }),
         "file.bin"
       );
-      await expect(
-        action({
-          request: new Request("https://example.com/", {
-            method: "POST",
-            headers: { host: "example.com" },
-            body: form,
-          }),
-          context: {},
-        })
-      ).resolves.toEqual({ success: true });
-      expect(received).toHaveLength(1);
+      vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
+      for (const context of [{ clientAddress: "2001:db8::1" }, {}]) {
+        await expect(
+          action({
+            request: new Request("https://example.com/", {
+              method: "POST",
+              headers: {
+                host: "example.com",
+                "User-Agent": "Visitor browser",
+                "Accept-Language": "fr-FR",
+                "X-Forwarded-For": "192.0.2.99",
+                "CF-Connecting-IP": "2001:db8::1",
+                Cookie: "private-cookie",
+                Authorization: "Bearer private-token",
+              },
+              body: form,
+            }),
+            context,
+          })
+        ).resolves.toEqual({ success: true });
+      }
+      expect(received).toHaveLength(2);
       expect(received[0].getAll("topics")).toEqual(["design", "development"]);
       expect(received[0].has(formBotFieldName)).toBe(false);
       expect(received[0].has(formIdFieldName)).toBe(false);

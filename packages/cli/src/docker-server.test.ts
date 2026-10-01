@@ -13,7 +13,11 @@ const build: ServerBuild = {
       module: {
         // Resource routes have no default export.
         default: undefined as never,
-        action: ({ request }) => Response.json({ url: request.url }),
+        action: ({ request, context }) =>
+          Response.json({
+            url: request.url,
+            clientAddress: context.clientAddress,
+          }),
       },
     },
   },
@@ -52,6 +56,8 @@ test("Docker requests use HTTPS information only from a configured proxy", async
                 Origin: "https://my-site.example",
                 "X-Forwarded-Host": "my-site.example",
                 "X-Forwarded-Proto": "https",
+                "X-Forwarded-For": "192.0.2.66, 203.0.113.9",
+                "CF-Connecting-IP": "192.0.2.68",
                 "Content-Type": "application/x-www-form-urlencoded",
               },
             },
@@ -68,6 +74,7 @@ test("Docker requests use HTTPS information only from a configured proxy", async
       );
       expect(response.status).toBe(200);
       expect(JSON.parse(response.body)).toEqual({
+        clientAddress: trustProxy === false ? "127.0.0.1" : "203.0.113.9",
         url:
           trustProxy === false
             ? "http://internal.example/submit?page=1"

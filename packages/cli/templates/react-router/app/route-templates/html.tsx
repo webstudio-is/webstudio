@@ -13,6 +13,7 @@ import {
 import {
   isLocalResource,
   getFormActionGroup,
+  getFormSubmissionHeaders,
   submitFormActions,
   loadResources,
   formIdFieldName,
@@ -339,6 +340,7 @@ export const action = async ({
       baseUrl: url,
       dependencyFetch,
       actionFetch: fetch,
+      submissionHeaders: getFormSubmissionHeaders(request, context.clientAddress),
     });
   } catch (error) {
     console.error(error);

@@ -13,6 +13,7 @@ import { useLoaderData } from "@remix-run/react";
 import {
   isLocalResource,
   getFormActionGroup,
+  getFormSubmissionHeaders,
   submitFormActions,
   loadResources,
   cachedFetch,
@@ -354,6 +355,10 @@ export const action = async ({
       baseUrl: url,
       dependencyFetch,
       actionFetch: fetch,
+      submissionHeaders: getFormSubmissionHeaders(
+        request,
+        context.clientAddress
+      ),
     });
   } catch (error) {
     console.error(error);

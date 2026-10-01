@@ -55,6 +55,16 @@ If some actions succeed and others fail, the form shows an error with retry guid
 
 Built-in email requires Webstudio hosting or a configured email adapter in your own server deployment. Selecting email on a deployment without that adapter fails the submission before webhooks are sent. Static exports cannot run these server actions.
 
+### Visitor information
+
+Webhook requests include the visitor's `User-Agent` and `Accept-Language` headers when available. `X-Forwarded-For` contains a single visitor IP supplied by the hosting platform. Headers you configure on a Resource take precedence, regardless of capitalization.
+
+Webstudio hosting and Cloudflare Workers use `CF-Connecting-IP`. Docker exports use the server's client address. If Docker runs behind a reverse proxy, [configure `TRUST_PROXY`](../self-hosting/vps-with-docker.md) for your trusted proxy addresses; otherwise the address is that of the direct connection. Custom server adapters can supply a trusted `clientAddress` in their load context. Other hosts omit `X-Forwarded-For` unless the adapter supplies it. Invalid addresses are omitted, and arbitrary incoming forwarding headers are not copied.
+
+Only these three headers are forwarded automatically to selected webhook actions. The site's cookies and authorization headers are not forwarded. This does not change page-load Resources, dependent Resource reads, or built-in email notifications. Visitor headers are metadata, not proof of identity.
+
+Republish existing sites, or regenerate and redeploy exported sites, to enable this behavior.
+
 ### File uploads and repeated fields
 
 Use `multipart/form-data` when your webhook needs files or several values with the same field name. The receiving service must support multipart requests. Other submissions use JSON by default.
