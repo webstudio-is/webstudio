@@ -513,7 +513,9 @@ export const UrlInput = ({
         >
           {Object.entries(modes).map(([key, { icon, label }]) => (
             <Tooltip key={key} content={label}>
-              <ToggleGroupButton value={key}>{icon}</ToggleGroupButton>
+              <ToggleGroupButton value={key} aria-label={label}>
+                {icon}
+              </ToggleGroupButton>
             </Tooltip>
           ))}
         </ToggleGroup>

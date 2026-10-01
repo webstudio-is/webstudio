@@ -100,6 +100,14 @@ When a submission is successful, users will see a success message. To customize 
 2. Change the **State** from "Initial" to "Success."
 3. Edit the success message directly on the canvas.
 
+#### Success redirect
+
+To send visitors to a thank-you page or a brochure after submission, select the Webhook Form and open **Settings > Success redirect**. Use the same controls as a link's **Href**: choose a page and optional section, enter a URL, select an attachment, or bind the destination to a variable. Email and phone links open the visitor's configured app.
+
+The destination opens in the current tab only after the submission succeeds. With multiple actions, every action must succeed first. Errors and partial deliveries keep the visitor on the form so they can read the error and decide whether to retry.
+
+Leave **Success redirect** empty to keep the inline success message. Invalid URLs and unsupported URL schemes also keep the success message. Changing **State** to **Success** in Builder lets you style that message without redirecting. Test the redirect on the published site.
+
 #### Error Message
 
 If there’s an error during submission, users will see an error message. To modify it:

@@ -10,4 +10,11 @@ export const props: Record<string, PropMeta> = {
     defaultValue: "initial",
     options: ["initial", "success", "error"],
   },
+  successRedirect: {
+    description:
+      "Open this destination after a successful submission. Leave empty to show the success message.",
+    required: false,
+    control: "text",
+    type: "string",
+  },
 };

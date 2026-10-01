@@ -11,6 +11,7 @@ import {
   formBotFieldName,
   isBraveBrowser,
 } from "@webstudio-is/sdk/runtime";
+import { resolveRedirectUrl } from "@webstudio-is/sdk/link-utils";
 
 export const defaultTag = "form";
 
@@ -88,10 +89,19 @@ export const WebhookForm = forwardRef<
     encType?: FormProps["encType"];
     onStateChange?: (state: State) => void;
     action?: string;
+    successRedirect?: string;
   }
 >(
   (
-    { children, action, method, state = "initial", onStateChange, ...rest },
+    {
+      children,
+      action,
+      method,
+      successRedirect,
+      state = "initial",
+      onStateChange,
+      ...rest
+    },
     ref
   ) => {
     const fetcher = useFetcher<{
@@ -103,6 +113,15 @@ export const WebhookForm = forwardRef<
     useOnFetchEnd(fetcher, (data) => {
       const state: State = data?.success === true ? "success" : "error";
       onStateChange?.(state);
+      if (data?.success === true) {
+        const destination = resolveRedirectUrl(
+          successRedirect,
+          window.location.href
+        );
+        if (destination !== undefined) {
+          window.location.assign(destination);
+        }
+      }
     });
 
     /**

@@ -13,9 +13,17 @@ export const meta: WsComponentMeta = {
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },
   ],
-  initialProps: ["id", "class", "state", "action"],
+  initialProps: ["id", "class", "state", "action", "successRedirect"],
   props: {
     ...props,
+    successRedirect: {
+      description: props.successRedirect.description,
+      type: "string",
+      control: "url",
+      label: "Success redirect",
+      required: false,
+      contentMode: true,
+    },
     action: {
       type: "resource",
       control: "resource",
