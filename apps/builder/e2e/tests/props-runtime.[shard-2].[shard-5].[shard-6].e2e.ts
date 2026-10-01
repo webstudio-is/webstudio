@@ -23,6 +23,9 @@ import { withGeneratedPreview } from "../flows/generated-app";
 import { test } from "../test";
 import { measure } from "../perf";
 
+// Each test owns its project and webhook server, so shards can split this file.
+test.describe.configure({ mode: "parallel" });
+
 const openComponentsPanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Components" }).click();
   await page.getByPlaceholder("Find components").waitFor();
