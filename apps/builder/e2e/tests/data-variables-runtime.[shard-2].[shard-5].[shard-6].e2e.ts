@@ -4,6 +4,7 @@ import {
   bindSelectedTextContentToExpression,
   createGraphqlResourceVariable,
   createHttpResourceVariable,
+  createStringVariable,
   createSystemResourceVariable,
   selectContentInstance,
 } from "../flows/data-variables";
@@ -57,16 +58,6 @@ const getVariableForm = (page: Page) =>
     .filter({ has: page.locator('input[name="name"]') })
     .last();
 
-const fillVariableName = async ({
-  page,
-  name,
-}: {
-  page: Page;
-  name: string;
-}) => {
-  await getVariableForm(page).locator('input[name="name"]').fill(name);
-};
-
 const getVariableIdByName = async ({
   fixture,
   name,
@@ -90,27 +81,6 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
     .getByText("New variable", { exact: true })
     .waitFor({ state: "hidden" });
   await waitForSyncStatus({ page, status: "idle" });
-};
-
-const openNewVariablePanel = async ({ page }: { page: Page }) => {
-  await page.getByRole("tab", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Add data variable" }).click();
-  await page.getByText("New variable", { exact: true }).waitFor();
-};
-
-const createStringVariable = async ({
-  page,
-  name,
-  value,
-}: {
-  page: Page;
-  name: string;
-  value: string;
-}) => {
-  await openNewVariablePanel({ page });
-  await fillVariableName({ page, name });
-  await page.getByLabel("Value").last().fill(value);
-  await closeVariablePanelAndWaitForSave({ page });
 };
 
 const editStringVariable = async ({

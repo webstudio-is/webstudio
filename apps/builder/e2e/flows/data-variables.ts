@@ -98,6 +98,21 @@ export const bindSelectedTextContentToExpression = async ({
   await page.keyboard.press("Escape");
 };
 
+export const createStringVariable = async ({
+  page,
+  name,
+  value,
+}: {
+  page: Page;
+  name: string;
+  value: string;
+}) => {
+  await openNewVariablePanel({ page });
+  await fillVariableName({ page, name });
+  await page.getByLabel("Value").last().fill(value);
+  await closeVariablePanelAndWaitForSave({ page });
+};
+
 export const createHttpResourceVariable = async ({
   page,
   name,

@@ -3974,3 +3974,46 @@ test("counts form actions as Resource variable usages and preserves their reques
     value: resource.id,
   });
 });
+
+test("form variables do not rebind a Resource owned by an ancestor", () => {
+  const parent = new Variable("endpoint", "https://example.com/shared");
+  const child = new Variable("endpoint", "https://example.com/local");
+  const data = renderData(
+    <Body ws:id="body" data-parent={expression`${parent}`}>
+      <Box ws:id="form" data-child={expression`${child}`} />
+    </Body>
+  );
+  const [parentId] = data.dataSources.keys();
+  const value = encodeDataVariableId(parentId);
+  const resource: Resource = {
+    id: "request",
+    name: "Shared request",
+    method: "post",
+    url: value,
+    headers: [{ name: "X-Endpoint", value }],
+    searchParams: [{ name: "endpoint", value }],
+    body: `{ endpoint: ${value} }`,
+  };
+  const original = structuredClone(resource);
+  data.resources.set(resource.id, resource);
+  data.dataSources.set("request-variable", {
+    id: "request-variable",
+    type: "resource",
+    name: resource.name,
+    scopeInstanceId: "body",
+    resourceId: resource.id,
+  });
+  data.props.set("action", {
+    id: "action",
+    instanceId: "form",
+    name: "action",
+    type: "resource",
+    value: resource.id,
+  });
+  rebindTreeVariablesMutable({
+    ...data,
+    pages: undefined,
+    startingInstanceId: "form",
+  });
+  expect(data.resources.get(resource.id)).toEqual(original);
+});

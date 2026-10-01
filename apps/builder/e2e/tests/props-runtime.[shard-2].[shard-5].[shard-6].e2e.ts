@@ -1,7 +1,11 @@
 import { createServer } from "node:http";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
+import { encodeDataVariableId } from "@webstudio-is/sdk";
 import { loadDevBuild } from "../db";
-import { createHttpResourceVariable } from "../flows/data-variables";
+import {
+  createHttpResourceVariable,
+  createStringVariable,
+} from "../flows/data-variables";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { openNavigatorPanel } from "../flows/navigator";
@@ -174,14 +178,21 @@ const expectPersistedActionResource = async ({
     url: string;
   }>;
   const dataSources = JSON.parse(build.dataSources) as Array<{
+    id: string;
+    name: string;
     type: string;
+    value?: { value: string };
     resourceId?: string;
   }>;
+  const endpoint = dataSources.find(
+    (source) => source.name === "Endpoint" && source.value?.value === url
+  );
   const resource = resources.find(
     (resource) =>
       resource.name === name &&
       resource.method === "post" &&
-      resource.url === JSON.stringify(url)
+      resource.url ===
+        (endpoint ? encodeDataVariableId(endpoint.id) : JSON.stringify(url))
   );
   const actionProp = props.find(
     (prop) =>
@@ -208,7 +219,12 @@ const expectPersistedActionResource = async ({
 };
 
 const startWebhookServer = async () => {
-  const requests: Array<{ method: string | undefined; body: unknown }> = [];
+  const requests: Array<{
+    method: string | undefined;
+    url: string | undefined;
+    accept: string | undefined;
+    body: unknown;
+  }> = [];
   const server = createServer(async (request, response) => {
     const chunks: Buffer[] = [];
     for await (const chunk of request) {
@@ -217,6 +233,8 @@ const startWebhookServer = async () => {
     const bodyText = Buffer.concat(chunks).toString("utf8");
     requests.push({
       method: request.method,
+      url: request.url,
+      accept: request.headers.accept,
       body: bodyText === "" ? undefined : JSON.parse(bodyText),
     });
     response.writeHead(200, {
@@ -417,15 +435,63 @@ test("Webhook Form Resource variable submits once and persists after reload", as
       await openComponentsPanel({ page });
       await insertComponentPanelOption({ page, name: "Webhook Form" });
     });
-    await selectNavigatorItem({ page, itemName: "Webhook Form" });
+    await selectNavigatorItem({ page, itemName: "Body" });
+    await createStringVariable({ page, name: "Endpoint", value: actionUrl });
 
     await measure("props runtime select Resource variable action", async () => {
       await createHttpResourceVariable({
         page,
         name: resourceName,
-        url: `curl -X POST -H 'Content-Type: application/json' --data '{}' ${actionUrl}`,
+        url: `curl -X POST -H 'Content-Type: application/json' --data '{}' '${actionUrl}?source=review'`,
       });
+      await selectNavigatorItem({ page, itemName: "Webhook Form" });
       await selectResourceAction({ page, name: resourceName });
+      await page
+        .getByRole("button", { name: "Edit Resource variable" })
+        .click();
+      await expect(
+        page.getByRole("textbox", { name: "URL", exact: true })
+      ).toBeFocused();
+      await page.getByRole("button", { name: "Add another header" }).click();
+      await page
+        .locator('input[name="header-name"]:not([type="hidden"])')
+        .fill("Acc");
+      await page.getByRole("option", { name: "Accept", exact: true }).click();
+      await page
+        .locator('input[name="header-value-validator"]')
+        .fill("application/");
+      await page
+        .getByRole("option", { name: "application/json", exact: true })
+        .click();
+      // Bind through the full shared Resource editor, then introduce a same-name
+      // variable on the form. The request must keep its ancestor's binding.
+      await page.getByText("URL", { exact: true }).hover();
+      await page
+        .getByText("URL", { exact: true })
+        .locator("xpath=following::button[@data-variant][1]")
+        .click();
+      const bindingDialog = page.getByRole("dialog", { name: "Binding" });
+      const expressionEditor = bindingDialog.locator(".cm-content").last();
+      await expressionEditor.click();
+      await page.keyboard.press("ControlOrMeta+A");
+      await page.keyboard.insertText("Endpoint");
+      await page.keyboard.press("ControlOrMeta+Enter");
+      await bindingDialog
+        .getByRole("button", { name: "Close", exact: true })
+        .click();
+      await bindingDialog.waitFor({ state: "hidden" });
+      const save = waitForChangeToBeSaved({ page });
+      await page
+        .getByRole("dialog", { name: "Edit variable", exact: true })
+        .getByRole("button", { name: "Close", exact: true })
+        .click();
+      await save;
+      await waitForSyncStatus({ page, status: "idle" });
+      await createStringVariable({
+        page,
+        name: "Endpoint",
+        value: `${actionUrl}/wrong`,
+      });
     });
     await expectPersistedActionResource({
       projectId: fixture.projectId,
@@ -472,6 +538,8 @@ test("Webhook Form Resource variable submits once and persists after reload", as
       JSON.stringify([
         {
           method: "POST",
+          url: "/submit?source=review",
+          accept: "application/json",
           body: { name: "Ada", email: "ada@example.com" },
         },
       ])
@@ -484,6 +552,92 @@ test("Webhook Form Resource variable submits once and persists after reload", as
     await webhook.close();
   }
 });
+
+for (const mode of ["URL", "URL binding"] as const) {
+  test(`Webhook Form ${mode} submits once after reload`, async ({
+    page,
+    context,
+  }) => {
+    const fixture = await createContentModeProject({
+      context,
+      email: `webhook-${mode.replaceAll(" ", "-")}@webstudio.test`,
+      title: `Webhook ${mode}`,
+      assetNamePrefix: "webhook-url-",
+      editorToken: "webhook-url-editor-token",
+      builderToken: "webhook-url-builder-token",
+    });
+    const webhook = await startWebhookServer();
+    try {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+        features: ["resourceProp"],
+      });
+      await waitForCanvasText({ page, text: "Initial content" });
+      await selectCanvasTextInstance({ page, text: "Initial content" });
+      await openComponentsPanel({ page });
+      await insertComponentPanelOption({ page, name: "Webhook Form" });
+      await selectNavigatorItem({ page, itemName: "Webhook Form" });
+      await page.getByRole("tab", { name: "Settings" }).click();
+      if (mode === "URL binding") {
+        await createStringVariable({
+          page,
+          name: "Endpoint",
+          value: webhook.url,
+        });
+        await bindSelectedPropertyToExpression({
+          page,
+          label: "Action",
+          expression: "Endpoint",
+        });
+      } else {
+        const input = page.getByRole("textbox", { name: "Action URL" });
+        await input.fill(webhook.url);
+        const save = waitForChangeToBeSaved({ page });
+        await input.press("Enter");
+        await save;
+        await waitForSyncStatus({ page, status: "idle" });
+      }
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+        features: ["resourceProp"],
+      });
+      await waitForCanvasText({ page, text: "Initial content" });
+      await selectCanvasTextInstance({ page, text: "Submit" });
+      await selectNavigatorItem({ page, itemName: "Webhook Form" });
+      await page.getByRole("tab", { name: "Settings" }).click();
+      await expect(
+        page.getByRole("textbox", { name: "Action URL" })
+      ).toHaveValue(webhook.url);
+      await withGeneratedPreview({
+        projectId: fixture.projectId,
+        callback: async ({ url }) => {
+          await page.goto(url);
+          expect(webhook.requests).toEqual([]);
+          await page.locator('input[name="name"]').fill("Ada");
+          await page.locator('input[name="email"]').fill("ada@example.com");
+          await page.getByRole("button", { name: "Submit" }).click();
+          await page
+            .getByText("Thank you for getting in touch!", { exact: true })
+            .waitFor();
+          expect(webhook.requests).toEqual([
+            {
+              method: "POST",
+              url: "/submit",
+              accept: "*/*",
+              body: { name: "Ada", email: "ada@example.com" },
+            },
+          ]);
+        },
+      });
+    } finally {
+      await webhook.close();
+    }
+  });
+}
 
 test("Props panel expression binding persists after reload", async ({
   page,

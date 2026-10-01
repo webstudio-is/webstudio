@@ -883,6 +883,11 @@ const traverseExpressions = ({
     }
   }
   const instanceIdByResourceId = new Map<Resource["id"], Instance["id"]>();
+  const variableResourceIds = new Set(
+    Array.from(dataSources.values()).flatMap((dataSource) =>
+      dataSource.type === "resource" ? [dataSource.resourceId] : []
+    )
+  );
 
   for (const instance of instances.values()) {
     if (instanceIds.has(instance.id) === false) {
@@ -924,7 +929,11 @@ const traverseExpressions = ({
     }
     if (prop.type === "resource") {
       onResourceReference?.(prop.value, prop.instanceId);
-      instanceIdByResourceId.set(prop.value, prop.instanceId);
+      // Shared requests belong to their variable's scope. Referencing one from
+      // a form must not rebind its expressions to that form's local variables.
+      if (variableResourceIds.has(prop.value) === false) {
+        instanceIdByResourceId.set(prop.value, prop.instanceId);
+      }
       continue;
     }
   }
