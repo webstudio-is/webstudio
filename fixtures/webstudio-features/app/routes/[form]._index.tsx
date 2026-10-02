@@ -15,9 +15,11 @@ import {
   loadResource,
   loadResources,
   formIdFieldName,
+  managedFormIdFieldName,
   formBotFieldName,
   cachedFetch,
 } from "@webstudio-is/sdk/runtime";
+import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 import { authenticateProjectRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
@@ -36,6 +38,7 @@ import {
 } from "../__generated__/[form]._index";
 import {
   getResources,
+  getManagedFormSubmissions,
   getPageMeta,
   getRemixParams,
   contactEmail,
@@ -259,6 +262,35 @@ export const action = async ({
       origin: url.origin,
       pathname: url.pathname,
     };
+
+    const managedFormIds = formData.getAll(managedFormIdFieldName);
+    if (managedFormIds.length > 0) {
+      const managedFormId = managedFormIds[0];
+      if (managedFormIds.length !== 1 || typeof managedFormId !== "string") {
+        throw new Error("Invalid Form submission");
+      }
+      const configured = getManagedFormSubmissions().get(managedFormId);
+      if (
+        configured === undefined ||
+        isFormSubmission(configured.submission) === false ||
+        configured.submission.mode !== "resources"
+      ) {
+        throw new Error("Form submission settings not found");
+      }
+      const configurationError = validateFormSubmission(configured.submission);
+      if (configurationError !== undefined) {
+        throw new Error(configurationError);
+      }
+      if (
+        configured.resourceIds.length !==
+          configured.submission.destinations.length ||
+        configured.resourceIds.some((resourceId) => resourceId === null)
+      ) {
+        throw new Error("Resource destination not found");
+      }
+      // Submission Resource execution needs a protected outbound fetch path.
+      throw new Error("Resource submission is unavailable");
+    }
 
     const resourceName = formData.get(formIdFieldName);
     const generatedResources = getResources({ system });

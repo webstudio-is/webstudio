@@ -45,5 +45,10 @@ export const getResources = (_props: { system: System; resources?: Record<string
 
       export const getRemixParams = (params: Record<string, string | undefined>) => toWebstudioParams("", params);
 
+      export const getManagedFormSubmissions = () =>
+        new Map<string, { submission: unknown; resourceIds: (string | null)[] }>(
+          []
+        );
+
       export const contactEmail = undefined;
     
