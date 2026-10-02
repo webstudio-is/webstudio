@@ -55,7 +55,7 @@ export const JsonControl = ({
         value={computedValue}
         onChangeValue={(value) => onChange({ type: "json", value })}
         onChangeExpression={(value) => onChange({ type: "expression", value })}
-        onRemove={(value) => onChange({ type: "json", value })}
+        onRemove={(value) => onChange({ type: "json", value: value ?? null })}
         renderControl={({ readOnly }) => (
           <ExpressionEditor
             color={error ? "error" : undefined}
