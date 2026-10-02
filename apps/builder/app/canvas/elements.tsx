@@ -25,6 +25,7 @@ export type WebstudioComponentProps = {
   instance: Instance;
   instanceSelector: Instance["id"][];
   components: Components;
+  pageRootKey?: string;
 };
 
 export const createInstanceElement = ({
@@ -33,6 +34,7 @@ export const createInstanceElement = ({
   instanceSelector,
   Component,
   components,
+  pageRootKey,
   ref,
 }: {
   instances: Instances;
@@ -42,6 +44,7 @@ export const createInstanceElement = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  pageRootKey?: string;
   ref?: RefObject<HTMLElement>;
 }) => {
   const instance = instances.get(instanceId);
@@ -55,6 +58,7 @@ export const createInstanceElement = ({
       instance={instance}
       instanceSelector={instanceSelector}
       components={components}
+      pageRootKey={pageRootKey}
     />
   );
 };

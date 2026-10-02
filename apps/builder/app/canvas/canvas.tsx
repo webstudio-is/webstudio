@@ -66,7 +66,6 @@ import { subscribeGridGuidesOnSelected } from "./grid-guide-utils";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/nano-states";
 import { createInstanceElement } from "./elements";
-import { PageRoot } from "./page-root";
 import { subscribeScrollbarSize } from "./scrollbar-width";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { builderApi } from "~/shared/builder-api";
@@ -112,6 +111,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
   const assets = useStore($assets);
   const assetFolders = useStore($assetFolders);
   const rootInstanceId = page?.rootInstanceId ?? "";
+  const pageRootKey = page ? `${page.id}:${rootInstanceId}` : undefined;
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
@@ -160,6 +160,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
           Component: isPreviewMode
             ? WebstudioComponentPreview
             : WebstudioComponentCanvas,
+          pageRootKey,
           components,
         })}
       </ReactSdkContext.Provider>
@@ -167,6 +168,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
   }, [
     instances,
     rootInstanceId,
+    pageRootKey,
     components,
     isPreviewMode,
     breakpoints,
@@ -292,9 +294,6 @@ export const Canvas = () => {
 
   const selectedPage = useStore($selectedPage);
   const rootInstanceId = selectedPage?.rootInstanceId;
-  const pageRootKey = selectedPage
-    ? `${selectedPage.id}:${selectedPage.rootInstanceId}`
-    : "empty-page";
 
   useEffect(() => {
     if (rootInstanceId !== undefined) {
@@ -336,8 +335,7 @@ export const Canvas = () => {
       <GlobalStyles />
       {/* catch all errors in rendered components */}
       <ErrorBoundary FallbackComponent={FallbackComponent}>
-        {/* A host boundary lets React replace the page without diffing its DOM. */}
-        <PageRoot pageKey={pageRootKey}>{elements}</PageRoot>
+        {elements}
       </ErrorBoundary>
       {
         // Call hooks after render to ensure effects are last.
