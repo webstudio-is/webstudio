@@ -80,7 +80,6 @@ import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
 } from "~/canvas/elements";
-import { getPageRootHostKey } from "~/canvas/page-root";
 import { Block } from "../build-mode/block";
 import { BlockBody } from "../build-mode/block-body";
 import { BlockTemplate } from "../build-mode/block-template";
@@ -696,7 +695,6 @@ const WebstudioComponentCanvasInner = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
-  const { pageRootKey, ...componentRestProps } = restProps;
   const instanceId = instance.id;
   const instances = useStore($instances);
   const allProps = useStore($props);
@@ -803,7 +801,7 @@ const WebstudioComponentCanvasInner = forwardRef<
     Component = BlockTemplate;
   }
 
-  const mergedProps = mergeProps(componentRestProps, instanceProps, "delete");
+  const mergedProps = mergeProps(restProps, instanceProps, "delete");
 
   const props: {
     [componentAttribute]: string;
@@ -839,11 +837,7 @@ const WebstudioComponentCanvasInner = forwardRef<
 
   const instanceElement = (
     <>
-      <Component
-        key={getPageRootHostKey(key, pageRootKey)}
-        {...props}
-        ref={ref}
-      >
+      <Component key={key} {...props} ref={ref}>
         {children}
       </Component>
     </>
@@ -973,7 +967,6 @@ export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, ...props }, ref) => {
-  const { pageRootKey, ...componentProps } = props;
   const instances = useStore($instances);
   const isDesignMode = useStore($isDesignMode);
   const externalContent = isDesignMode
@@ -997,11 +990,10 @@ export const WebstudioComponentCanvas = forwardRef<
         />
       ) : null}
       <WebstudioComponentCanvasInner
-        {...componentProps}
+        {...props}
         ref={ref}
         instance={renderedInstance}
         instanceSelector={renderedInstanceSelector}
-        pageRootKey={pageRootKey}
       />
     </>
   );
@@ -1011,7 +1003,6 @@ const WebstudioComponentPreviewInner = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
-  const { pageRootKey, ...componentRestProps } = restProps;
   const instances = useStore($instances);
   const resourcesState = useStore($resourcesState);
   const { isSafeMode } = useContext(ReactSdkContext);
@@ -1022,7 +1013,7 @@ const WebstudioComponentPreviewInner = forwardRef<
     [idAttribute]: string;
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
-    ...mergeProps(componentRestProps, instanceProps, "merge"),
+    ...mergeProps(restProps, instanceProps, "merge"),
     ...getHtmlEmbedCanvasProps({
       component: instance.component,
       isSafeMode,
@@ -1101,11 +1092,7 @@ const WebstudioComponentPreviewInner = forwardRef<
   }
 
   const element = (
-    <Component
-      key={getPageRootHostKey(instance.id, pageRootKey)}
-      {...props}
-      ref={ref}
-    >
+    <Component {...props} ref={ref}>
       {getTextContent(instanceProps) ??
         createInstanceChildrenElements({
           instances,
@@ -1134,7 +1121,6 @@ export const WebstudioComponentPreview = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, ...props }, ref) => {
-  const { pageRootKey, ...componentProps } = props;
   const instances = useStore($instances);
   const externalContent = getExternalContentInstance({
     sourceInstance: instance,
@@ -1155,11 +1141,10 @@ export const WebstudioComponentPreview = forwardRef<
         />
       ) : null}
       <WebstudioComponentPreviewInner
-        {...componentProps}
+        {...props}
         ref={ref}
         instance={renderedInstance}
         instanceSelector={renderedInstanceSelector}
-        pageRootKey={pageRootKey}
       />
     </>
   );

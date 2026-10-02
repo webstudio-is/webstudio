@@ -1,6 +1,10 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { expectTextHidden } from "../flows/assertions";
-import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
+import {
+  getCanvasFrame,
+  openProjectBuilder,
+  waitForCanvasText,
+} from "../flows/builder";
 import { expectGeneratedAppBuild } from "../flows/generated-app";
 import {
   createFolder,
@@ -309,11 +313,21 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
   await pasteFromClipboardShortcut({ page });
   await waitForPageRow({ page, pageName: copiedPageName });
 
+  const previousCanvas = await getCanvasFrame(page);
+  if (previousCanvas === undefined) {
+    throw new Error("Expected canvas before switching pages");
+  }
+  // Reproduce a component changing React-owned DOM before page teardown.
+  await previousCanvas
+    .getByText(fixture.pageTemplateText, { exact: true })
+    .first()
+    .evaluate((element) => element.remove());
   await openPage({
     page,
     pageName: copiedPageName,
     canvasText: fixture.pageTemplateText,
   });
+  await expect.poll(() => getCanvasFrame(page)).not.toBe(previousCanvas);
 
   await openPageSettings({ page, pageName: renamedPageName });
   await selectHeaderAction({

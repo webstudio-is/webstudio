@@ -111,7 +111,6 @@ const useElementsTree = (components: Components, instances: Instances) => {
   const assets = useStore($assets);
   const assetFolders = useStore($assetFolders);
   const rootInstanceId = page?.rootInstanceId ?? "";
-  const pageRootKey = page ? `${page.id}:${rootInstanceId}` : undefined;
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
@@ -160,7 +159,6 @@ const useElementsTree = (components: Components, instances: Instances) => {
           Component: isPreviewMode
             ? WebstudioComponentPreview
             : WebstudioComponentCanvas,
-          pageRootKey,
           components,
         })}
       </ReactSdkContext.Provider>
@@ -168,7 +166,6 @@ const useElementsTree = (components: Components, instances: Instances) => {
   }, [
     instances,
     rootInstanceId,
-    pageRootKey,
     components,
     isPreviewMode,
     breakpoints,

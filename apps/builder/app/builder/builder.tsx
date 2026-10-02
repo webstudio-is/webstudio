@@ -37,6 +37,7 @@ import {
   $stagingUsername,
   $stagingPassword,
   $user,
+  $selectedPageId,
 } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { $settings, type Settings } from "./shared/client-settings";
@@ -337,6 +338,7 @@ export const Builder = (props: BuilderProps) => {
   }, [publish]);
 
   const project = useStore($project);
+  const selectedPageId = useStore($selectedPageId);
 
   usePreventUnload();
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
@@ -440,8 +442,11 @@ export const Builder = (props: BuilderProps) => {
           {/* Main must be after left sidebar panels because in content mode the Plus button must be above the left sidebar, otherwise it won't be visible when content is full width */}
           <Main>
             <Workspace>
+              {/* Recreate the document when the page changes. Canvas components
+                  can alter DOM that React would otherwise reconcile. */}
               {dataLoadingState === "loaded" && project && (
                 <CanvasIframe
+                  key={selectedPageId}
                   ref={iframeRefCallback}
                   src={canvasUrl}
                   title={project.title}
