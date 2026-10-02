@@ -1823,6 +1823,7 @@ export const prebuild = async (options: {
       /* This is a auto generated file for building the project */ \n
 
       import type { PageMeta } from "@webstudio-is/sdk";
+      import { toWebstudioParams } from "@webstudio-is/react-sdk";
       ${generateResources({
         scope,
         // XML generation removes the body wrapper from the instance map.

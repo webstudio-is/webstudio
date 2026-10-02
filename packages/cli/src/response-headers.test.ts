@@ -21,6 +21,7 @@ test("compiles configured values and route rules as data", () => {
       value: "frame-ancestors https://example.com",
     },
     { route: "/docs/*", name: "Referrer-Policy", value: "no-referrer" },
+    { route: "/%2A", name: "X-Legacy-Route", value: "literal" },
     { name: "Cache-Control", value: "public, max-age=60" },
   ];
   expect(
