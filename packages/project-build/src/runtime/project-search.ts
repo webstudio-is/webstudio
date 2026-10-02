@@ -1,4 +1,3 @@
-import { getPropResourceIds } from "@webstudio-is/sdk";
 import { z } from "zod";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
@@ -446,13 +445,6 @@ const getReference = ({
       target = { namespace: "instances", entityType: "instance" };
     }
   } else if (
-    namespace === "props" &&
-    parentField === "resourceIds" &&
-    path.at(-3) === "value" &&
-    state.props?.get(String(path[0]))?.type === "resource"
-  ) {
-    target = { namespace: "resources", entityType: "resource" };
-  } else if (
     namespace === "instances" &&
     field === "value" &&
     path.at(-3) === "children" &&
@@ -610,13 +602,11 @@ const getPageContext = (state: BuilderState) => {
   }
   for (const prop of state.props?.values() ?? []) {
     if (prop.type === "resource") {
-      for (const resourceId of getPropResourceIds(prop)) {
-        addPageIds(
-          recordPageIds,
-          `resources:${resourceId}`,
-          fromInstance(prop.instanceId)
-        );
-      }
+      addPageIds(
+        recordPageIds,
+        `resources:${prop.value}`,
+        fromInstance(prop.instanceId)
+      );
     }
   }
   for (const [selectionId, selection] of state.styleSourceSelections ?? []) {

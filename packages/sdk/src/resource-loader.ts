@@ -97,12 +97,7 @@ export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
   dependencies: readonly string[];
-  /** Dependencies used only by the configured body, which a form may replace. */
-  bodyDependencies?: readonly string[];
-  createRequest: (
-    documents: ReadonlyMap<string, unknown>,
-    bodyOverride?: { value: unknown }
-  ) => ResourceRequest;
+  createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
 }>;
 
 export type ResourceRequestGraph = Readonly<{
@@ -341,13 +336,7 @@ export const loadResource = async (
       requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
-      if (body instanceof FormData) {
-        // Fetch must generate the Content-Type boundary for this FormData.
-        requestHeaders.delete("Content-Type");
-        requestInit.body = body;
-      } else {
-        requestInit.body = serializeValue(body);
-      }
+      requestInit.body = serializeValue(body);
     }
     const response = await awaitWithSignal(
       customFetch(href, requestInit),

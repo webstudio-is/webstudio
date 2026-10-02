@@ -2,7 +2,6 @@ import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import type { Resource, Resources } from "./schema/resources";
 import type { Prop, Props } from "./schema/props";
-import { getPropResourceIds } from "./resource-prop-utils";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
@@ -20,10 +19,8 @@ const generateResourceRequestFields = ({
   dataSources,
   usedDataSources,
   scope,
-  bodyOverride,
 }: {
   resource: Resource;
-  bodyOverride?: string;
   indent: string;
   dataSources: DataSources;
   usedDataSources: DataSources;
@@ -71,7 +68,7 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}body: ${bodyOverride ? `${bodyOverride} ? ${bodyOverride}.value : (${body})` : body},\n`;
+    generated += `${indent}body: ${body},\n`;
   }
   return generated;
 };
@@ -111,10 +108,10 @@ export const generateResources = ({
     (prop): prop is Extract<Prop, { type: "resource" }> =>
       (instances.size === 0 || pageInstanceIds.has(prop.instanceId)) &&
       prop.type === "resource" &&
-      (typeof prop.value !== "string" || resources.has(prop.value))
+      resources.has(prop.value)
   );
   const actionResourceIds = new Set(
-    actionResourceProps.flatMap(getPropResourceIds)
+    actionResourceProps.map((prop) => prop.value)
   );
   const resourceDataSourceByResourceId = new Map(
     Array.from(dataSources.values())
@@ -195,47 +192,19 @@ export const generateResources = ({
     addResourceAndDependencies(resourceId);
   }
 
-  // A read request must never dispatch a selected form mutation during loading.
-  const checkedPageResourceIds = new Set<string>();
-  const checkPageDependencies = (resourceId: string) => {
-    if (actionResourceIds.has(resourceId)) {
-      throw new Error("Page Resources cannot depend on a form action Resource");
-    }
-    if (checkedPageResourceIds.has(resourceId)) {
-      return;
-    }
-    checkedPageResourceIds.add(resourceId);
-    for (const dependencyId of resourceDependencies.get(resourceId) ?? []) {
-      checkPageDependencies(dependencyId);
-    }
-  };
-  for (const resourceId of rootResourceIds) {
-    if (
-      !actionResourceIds.has(resourceId) &&
-      !selectedResourceIds.has(resourceId)
-    ) {
-      checkPageDependencies(resourceId);
-    }
-  }
-
   let generatedRequests = "";
   for (const resource of resources.values()) {
     const resourceName = scope.getName(resource.id, resource.name);
     if (graphResourceIds.has(resource.id)) {
       const requestDataSources: DataSources = new Map();
-      const bodyOverride =
-        actionResourceIds.has(resource.id) && resource.body
-          ? scope.getName(`${resource.id}:body-override`, "bodyOverride")
-          : undefined;
       const fields = generateResourceRequestFields({
         resource,
         indent: "      ",
         dataSources,
         usedDataSources: requestDataSources,
         scope,
-        bodyOverride,
       });
-      let generatedRequest = `  const ${resourceName} = (documents: ReadonlyMap<string, unknown>${bodyOverride ? `, ${bodyOverride}?: { value: unknown }` : ""}): ResourceRequest => {\n`;
+      let generatedRequest = `  const ${resourceName} = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
       for (const dataSource of requestDataSources.values()) {
         usedDataSources.set(dataSource.id, dataSource);
         if (dataSource.type !== "resource") {
@@ -345,20 +314,11 @@ export const generateResources = ({
     }
     const name = scope.getName(resourceId, resource.name);
     const dependencies = resourceDependencies.get(resourceId) ?? [];
-    let bodyDependencies = "";
-    if (actionResourceIds.has(resourceId) && resource.body) {
-      const requiredDependencies = getResourceDependencyIds({
-        resource: { ...resource, body: undefined },
-        dataSources,
-      });
-      // Skip only dependencies used exclusively by the overridden body.
-      bodyDependencies = `bodyDependencies: ${JSON.stringify(dependencies.filter((id) => !requiredDependencies.has(id)))}, `;
-    }
     generated += `      { id: ${JSON.stringify(
       resourceId
     )}, outputName: ${JSON.stringify(name)}, dependencies: ${JSON.stringify(
       dependencies
-    )}, ${bodyDependencies}createRequest: ${name} },\n`;
+    )}, createRequest: ${name} },\n`;
   }
   generated += `    ],\n`;
   generated += `    rootIds: [\n`;
@@ -412,22 +372,11 @@ export const generateResources = ({
     }
   }
 
-  const hasActionGroups = actionResourceProps.some(
-    (prop) => typeof prop.value !== "string"
-  );
-  const actionType = hasActionGroups
-    ? "{ id: string; outputName: string } | { resourceIds: string[]; includeEmail: boolean }"
-    : "{ id: string; outputName: string }";
-  generated += `  const _action = new Map<string, ${actionType}>([\n`;
+  generated += `  const _action = new Map<string, { id: string; outputName: string }>([\n`;
   for (const prop of actionResourceProps) {
-    if (typeof prop.value !== "string") {
-      const name = scope.getName(prop.id, prop.name);
-      generated += `    [${JSON.stringify(name)}, ${JSON.stringify(prop.value)}],\n`;
-      continue;
-    }
     const resource = resources.get(prop.value);
     if (resource === undefined || graphResourceIds.has(prop.value) === false) {
-      throw new Error("Form action references a missing Resource");
+      continue;
     }
     const name = scope.getName(prop.value, prop.name);
     const outputName = scope.getName(prop.value, resource.name);
@@ -437,25 +386,7 @@ export const generateResources = ({
   }
   generated += `  ])\n`;
 
-  // Only legacy email-only forms may submit without an action identifier.
-  const actionPropsByInstanceId = new Map(
-    [...props.values()]
-      .filter((prop) => prop.name === "action")
-      .map((prop) => [prop.instanceId, prop])
-  );
-  const allowDefaultEmail = [...instances.values()].some((instance) => {
-    if (instance.component !== "Form" || !pageInstanceIds.has(instance.id)) {
-      return false;
-    }
-    const action = actionPropsByInstanceId.get(instance.id);
-    return (
-      action === undefined || (action.type === "string" && action.value === "")
-    );
-  });
-  const emailMetadata = hasActionGroups
-    ? `, allowDefaultEmail: ${allowDefaultEmail}`
-    : "";
-  generated += `  return { data: _data, action: _action, contentData: _contentData${emailMetadata} }\n`;
+  generated += `  return { data: _data, action: _action, contentData: _contentData }\n`;
   generated += `}\n`;
 
   return generated;
@@ -507,7 +438,7 @@ export const replaceFormActionsWithResources = ({
     }
     if (
       prop.name === "action" &&
-      (prop.type === "string" || prop.type === "expression") &&
+      prop.type === "string" &&
       prop.value &&
       instances.get(prop.instanceId)?.component === "Form"
     ) {
@@ -516,8 +447,7 @@ export const replaceFormActionsWithResources = ({
         data = {};
         formProps.set(prop.instanceId, data);
       }
-      data.action =
-        prop.type === "string" ? JSON.stringify(prop.value) : prop.value;
+      data.action = prop.value;
       props.set(prop.id, {
         id: prop.id,
         instanceId: prop.instanceId,
@@ -533,7 +463,7 @@ export const replaceFormActionsWithResources = ({
         id: instanceId,
         name: "action",
         method: getMethod(method),
-        url: action,
+        url: JSON.stringify(action),
         headers: [
           { name: "Content-Type", value: JSON.stringify("application/json") },
         ],

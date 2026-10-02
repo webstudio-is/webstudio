@@ -98,21 +98,6 @@ export const bindSelectedTextContentToExpression = async ({
   await page.keyboard.press("Escape");
 };
 
-export const createStringVariable = async ({
-  page,
-  name,
-  value,
-}: {
-  page: Page;
-  name: string;
-  value: string;
-}) => {
-  await openNewVariablePanel({ page });
-  await fillVariableName({ page, name });
-  await page.getByLabel("Value").last().fill(value);
-  await closeVariablePanelAndWaitForSave({ page });
-};
-
 export const createHttpResourceVariable = async ({
   page,
   name,
@@ -125,7 +110,7 @@ export const createHttpResourceVariable = async ({
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: "Resource" });
-  await page.getByRole("textbox", { name: "URL", exact: true }).fill(url);
+  await page.getByRole("textbox", { name: "URL" }).fill(url);
   await closeVariablePanelAndWaitForSave({ page });
 };
 
@@ -143,7 +128,7 @@ export const createGraphqlResourceVariable = async ({
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
   await selectVariableType({ page, next: "GraphQL" });
-  await page.getByRole("textbox", { name: "URL", exact: true }).fill(url);
+  await page.getByRole("textbox", { name: "URL" }).fill(url);
   await page.getByRole("textbox", { name: "Query" }).fill(query);
   await closeVariablePanelAndWaitForSave({ page });
 };

@@ -1,12 +1,10 @@
 {
   "scripts": {
-    "start": "node server.mjs"
+    "start": "react-router-serve ./build/server/index.js"
   },
   "dependencies": {
-    "@react-router/express": "^7.5.3",
     "@react-router/node": "^7.5.3",
-    "compression": "^1.7.4",
-    "express": "^4.21.1",
+    "@react-router/serve": "^7.5.3",
     "h3": "^1.15.1",
     "ipx": "^3.0.3"
   }

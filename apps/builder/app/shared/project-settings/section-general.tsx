@@ -142,7 +142,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
           <Label htmlFor={contactEmailId}>Contact email</Label>
           <Tooltip
             variant="wrapped"
-            content="Recipients for Webhook Form email notifications. Separate multiple addresses with commas."
+            content="Used as the email recipient when submitting a webhook form without an action."
           >
             <InfoCircleIcon
               color={cssVar("--foreground-secondary")}

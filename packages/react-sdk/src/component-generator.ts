@@ -152,12 +152,7 @@ const generatePropValue = ({
     return generateAction({ scope, prop, dataSources, usedDataSources });
   }
   if (prop.type === "resource") {
-    return JSON.stringify(
-      scope.getName(
-        typeof prop.value === "string" ? prop.value : prop.id,
-        prop.name
-      )
-    );
+    return JSON.stringify(scope.getName(prop.value, prop.name));
   }
   prop satisfies never;
 };
@@ -265,8 +260,7 @@ export const generateJsxElement = ({
 
     if (prop.type === "resource") {
       const propMeta = meta?.props?.[prop.name];
-      const resource =
-        typeof prop.value === "string" ? resources?.get(prop.value) : undefined;
+      const resource = resources?.get(prop.value);
       if (propMeta?.type === "resource" && resource !== undefined) {
         for (const propName of propMeta.generatedProps ?? []) {
           const generatedPropName = getGeneratedPropName(propName);

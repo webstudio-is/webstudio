@@ -1,5 +1,4 @@
 import { expect, test } from "vitest";
-import { resolveRedirectUrl } from "./link-utils";
 import {
   isInternalHref,
   isLocalLinkActive,
@@ -143,34 +142,4 @@ test("path local link uses router resolved path", () => {
       resolvedPath
     )
   ).toBe(resolvedPath);
-});
-
-test("redirect destinations resolve like links and exclude executable schemes", () => {
-  const base = "https://example.com/contact/start?old=1";
-  for (const [value, expected] of [
-    ["/thanks?sent=1#brochure", "https://example.com/thanks?sent=1#brochure"],
-    ["../thanks", "https://example.com/thanks"],
-    ["?sent=1", "https://example.com/contact/start?sent=1"],
-    ["#thanks", "https://example.com/contact/start?old=1#thanks"],
-    ["https://other.example/thanks", "https://other.example/thanks"],
-    ["//other.example/thanks", "https://other.example/thanks"],
-    ["/assets/brochure.pdf", "https://example.com/assets/brochure.pdf"],
-    ["mailto:hello@example.com", "mailto:hello@example.com"],
-    ["tel:+15555555555", "tel:+15555555555"],
-  ]) {
-    expect(resolveRedirectUrl(value, base)).toBe(expected);
-  }
-  for (const value of [
-    undefined,
-    "",
-    "   ",
-    "https://[",
-    "javascript:alert(1)",
-    "java\nscript:alert(1)",
-    "data:text/html,hello",
-    "file:///tmp/test",
-    "blob:https://example.com/id",
-  ]) {
-    expect(resolveRedirectUrl(value, base)).toBeUndefined();
-  }
 });

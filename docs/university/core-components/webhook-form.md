@@ -35,51 +35,6 @@ You can also send form submission data to a webhook—an external URL that recei
 
 Once set up, every form submission will send a payload (form fields and values) to the webhook URL.
 
-### Multiple actions
-
-A form can send the same submission to several services and also send an email notification.
-
-1. Create a [Resource variable](../foundations/variables.md) for each service. Configure its URL, method, headers, and any query parameters in the variable editor.
-2. Select the Webhook Form, open **Settings**, and select a Resource in **Action source**.
-3. Choose **Multiple actions**, then use **Add Resource** to select more existing Resources. Each Resource can be selected once.
-4. Enable **Send email** to also notify the recipients in **Project settings > General > Contact email**. Separate multiple recipients with commas; your plan's recipient limit applies. Without a custom recipient, email goes to the project owner.
-5. Publish and submit the form to test every destination.
-
-Use the gear beside a selected Resource to open its full variable editor. Changes apply everywhere that Resource is used. Removing an action from the form keeps its Resource variable available.
-
-Independent actions run at the same time. A Resource that depends on another Resource waits for it, and shared dependencies load once per submission. Each action receives the form fields as its body, replacing its configured body. Multipart submissions send the same files and repeated fields to every selected webhook. GET requests do not send a body.
-
-The form shows success only after every action succeeds. Failed dependencies prevent their dependent actions from being sent; independent actions still finish. Each request has a 30-second timeout. A timeout does not prove that the receiving service rejected the submission.
-
-If some actions succeed and others fail, the form shows an error with retry guidance. Webstudio does not retry automatically or undo successful deliveries. Submitting again sends all actions again and may create duplicates. Use a receiving service's deduplication feature when duplicates would be harmful.
-
-Built-in email requires Webstudio hosting or a configured email adapter in your own server deployment. Selecting email on a deployment without that adapter fails the submission before webhooks are sent. Static exports cannot run these server actions.
-
-### Visitor information
-
-Webhook requests include the visitor's `User-Agent` and `Accept-Language` headers when available. `X-Forwarded-For` contains a single visitor IP supplied by the hosting platform. Headers you configure on a Resource take precedence, regardless of capitalization.
-
-Webstudio hosting and Cloudflare Workers use `CF-Connecting-IP`. Docker exports use the server's client address. If Docker runs behind a reverse proxy, [configure `TRUST_PROXY`](../self-hosting/vps-with-docker.md) for your trusted proxy addresses; otherwise the address is that of the direct connection. Custom server adapters can supply a trusted `clientAddress` in their load context. Other hosts omit `X-Forwarded-For` unless the adapter supplies it. Invalid addresses are omitted, and arbitrary incoming forwarding headers are not copied.
-
-Only these three headers are forwarded automatically to selected webhook actions. The site's cookies and authorization headers are not forwarded. This does not change page-load Resources, dependent Resource reads, or built-in email notifications. Visitor headers are metadata, not proof of identity.
-
-Republish existing sites, or regenerate and redeploy exported sites, to enable this behavior.
-
-### File uploads and repeated fields
-
-Use `multipart/form-data` when your webhook needs files or several values with the same field name. The receiving service must support multipart requests. Other submissions use JSON by default.
-
-1. Select **Webhook Form** and open **Settings**.
-2. Set **Action** to your webhook URL.
-3. Under **Properties & attributes**, add `enctype` and choose `multipart/form-data`.
-4. Add an [Input](input.md) inside **Form Content**. Set its **Type** to `file` and give it a **Name**, such as `attachments`.
-5. To allow several files, add the `multiple` attribute to the Input and enable it.
-6. Publish the site and submit the form with a file selected.
-
-The webhook receives each file with its filename, media type, and contents. Uploads go to the configured webhook; default email notifications do not provide file attachments.
-
-For a group of checkboxes, give each checkbox the same **Name** and a different **Value**. Multipart submissions keep every checked value as a separate field with that name. You do not need to add `[]` to the name.
-
 ## Using the Webhook Form Component
 
 You can add a Webhook Form Component to your canvas from **Components Panel > Data section**.
@@ -109,14 +64,6 @@ When a submission is successful, users will see a success message. To customize 
 1. Select the main "Form" instance and go to **Settings**.
 2. Change the **State** from "Initial" to "Success."
 3. Edit the success message directly on the canvas.
-
-#### Success redirect
-
-To send visitors to a thank-you page or a brochure after submission, select the Webhook Form and open **Settings > Success redirect**. Use the same controls as a link's **Href**: choose a page and optional section, enter a URL, select an attachment, or bind the destination to a variable. Email and phone links open the visitor's configured app.
-
-The destination opens in the current tab only after the submission succeeds. With multiple actions, every action must succeed first. Errors and partial deliveries keep the visitor on the form so they can read the error and decide whether to retry.
-
-Leave **Success redirect** empty to keep the inline success message. Invalid URLs and unsupported URL schemes also keep the success message. Changing **State** to **Success** in Builder lets you style that message without redirecting. Test the redirect on the published site.
 
 #### Error Message
 

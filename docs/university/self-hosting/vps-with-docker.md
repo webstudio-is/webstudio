@@ -85,19 +85,10 @@ docker build -t webstudio-site .
 
 The Webstudio Docker template runs a Node.js server on port **3000**.
 
-For this setup, Nginx runs on the host and forwards requests through Docker's default bridge network. Set `TRUST_PROXY` to the bridge gateway address so the server recognizes HTTPS requests from Nginx. This is required for Webhook Form submissions behind an HTTPS proxy.
-
-```bash
-webstudio_proxy_ip=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
-```
-
-`TRUST_PROXY` accepts comma-separated proxy IP addresses or CIDR ranges. For another network or hosting platform, use the addresses of its reverse proxy. Trust only your proxy, and configure it to overwrite `X-Forwarded-Proto` and `X-Forwarded-Host` and preserve the public `Host`. Leave `TRUST_PROXY` unset when serving HTTP directly.
-
 ```bash
 docker run -d \
   --name webstudio \
-  -p 127.0.0.1:3000:3000 \
-  -e TRUST_PROXY="$webstudio_proxy_ip" \
+  -p 3000:3000 \
   --restart unless-stopped \
   webstudio-site
 ```
@@ -148,7 +139,6 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
     }
 }
 ```
@@ -219,11 +209,7 @@ When you need to update the site:
     docker stop webstudio
     docker rm webstudio
     docker build -t webstudio-site .
-    webstudio_proxy_ip=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
-    docker run -d --name webstudio \
-      -p 127.0.0.1:3000:3000 \
-      -e TRUST_PROXY="$webstudio_proxy_ip" \
-      --restart unless-stopped webstudio-site
+    docker run -d -p 3000:3000 --restart unless-stopped webstudio-site
     ```
 
 ***

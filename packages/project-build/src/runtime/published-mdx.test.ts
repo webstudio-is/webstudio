@@ -1080,25 +1080,6 @@ describe("getUnsafeDynamicPublishedMdxDiagnostic", () => {
     ).toMatchObject({ code: "invalid-mdx", assetId: "article" });
   });
 
-  test("rejects email-only action groups inside dynamic MDX", () => {
-    const root = createRoot();
-    root.fragment.props.push({
-      id: "action",
-      instanceId: "form",
-      name: "action",
-      type: "resource",
-      value: { resourceIds: [], includeEmail: true },
-    });
-    expect(
-      getUnsafeDynamicPublishedMdxDiagnostic({
-        root,
-        route: "/",
-        dataSources: new Map(),
-        props: new Map(),
-      })
-    ).toMatchObject({ code: "invalid-mdx", assetId: "article" });
-  });
-
   test("rejects action Resources inside dynamic MDX", () => {
     const root = createRoot();
     root.fragment.resources.push({

@@ -757,7 +757,7 @@ describe("builder runtime read families", () => {
       })
     ).toMatchObject({
       result: { propIds: ["resourceProp"] },
-      payload: [{ namespace: "props" }],
+      payload: [{ namespace: "props" }, { namespace: "resources" }],
     });
   });
 

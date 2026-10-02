@@ -8988,26 +8988,7 @@ export const runtimeOperationContractData = [
                                 const: "resource",
                               },
                               value: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      resourceIds: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
-                                      },
-                                      includeEmail: {
-                                        type: "boolean",
-                                      },
-                                    },
-                                    required: ["resourceIds", "includeEmail"],
-                                  },
-                                ],
+                                type: "string",
                               },
                             },
                             required: [
@@ -12223,26 +12204,7 @@ export const runtimeOperationContractData = [
                                 const: "resource",
                               },
                               value: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      resourceIds: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
-                                      },
-                                      includeEmail: {
-                                        type: "boolean",
-                                      },
-                                    },
-                                    required: ["resourceIds", "includeEmail"],
-                                  },
-                                ],
+                                type: "string",
                               },
                             },
                             required: [
@@ -15469,26 +15431,7 @@ export const runtimeOperationContractData = [
                                 const: "resource",
                               },
                               value: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      resourceIds: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
-                                      },
-                                      includeEmail: {
-                                        type: "boolean",
-                                      },
-                                    },
-                                    required: ["resourceIds", "includeEmail"],
-                                  },
-                                ],
+                                type: "string",
                               },
                             },
                             required: [
@@ -18704,26 +18647,7 @@ export const runtimeOperationContractData = [
                                 const: "resource",
                               },
                               value: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      resourceIds: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
-                                      },
-                                      includeEmail: {
-                                        type: "boolean",
-                                      },
-                                    },
-                                    required: ["resourceIds", "includeEmail"],
-                                  },
-                                ],
+                                type: "string",
                               },
                             },
                             required: [
@@ -24668,29 +24592,7 @@ export const runtimeOperationContractData = [
                                       const: "resource",
                                     },
                                     value: {
-                                      anyOf: [
-                                        {
-                                          type: "string",
-                                        },
-                                        {
-                                          type: "object",
-                                          properties: {
-                                            resourceIds: {
-                                              type: "array",
-                                              items: {
-                                                type: "string",
-                                              },
-                                            },
-                                            includeEmail: {
-                                              type: "boolean",
-                                            },
-                                          },
-                                          required: [
-                                            "resourceIds",
-                                            "includeEmail",
-                                          ],
-                                        },
-                                      ],
+                                      type: "string",
                                     },
                                   },
                                   required: [
@@ -28114,29 +28016,7 @@ export const runtimeOperationContractData = [
                                       const: "resource",
                                     },
                                     value: {
-                                      anyOf: [
-                                        {
-                                          type: "string",
-                                        },
-                                        {
-                                          type: "object",
-                                          properties: {
-                                            resourceIds: {
-                                              type: "array",
-                                              items: {
-                                                type: "string",
-                                              },
-                                            },
-                                            includeEmail: {
-                                              type: "boolean",
-                                            },
-                                          },
-                                          required: [
-                                            "resourceIds",
-                                            "includeEmail",
-                                          ],
-                                        },
-                                      ],
+                                      type: "string",
                                     },
                                   },
                                   required: [
@@ -31271,26 +31151,7 @@ export const runtimeOperationContractData = [
                     const: "resource",
                   },
                   value: {
-                    anyOf: [
-                      {
-                        type: "string",
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          resourceIds: {
-                            type: "array",
-                            items: {
-                              type: "string",
-                            },
-                          },
-                          includeEmail: {
-                            type: "boolean",
-                          },
-                        },
-                        required: ["resourceIds", "includeEmail"],
-                      },
-                    ],
+                    type: "string",
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -33625,26 +33486,7 @@ export const runtimeOperationContractData = [
                     const: "resource",
                   },
                   value: {
-                    anyOf: [
-                      {
-                        type: "string",
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          resourceIds: {
-                            type: "array",
-                            items: {
-                              type: "string",
-                            },
-                          },
-                          includeEmail: {
-                            type: "boolean",
-                          },
-                        },
-                        required: ["resourceIds", "includeEmail"],
-                      },
-                    ],
+                    type: "string",
                   },
                 },
                 required: ["id", "instanceId", "name", "type", "value"],
@@ -42837,26 +42679,7 @@ export const runtimeOperationContractData = [
                                 const: "resource",
                               },
                               value: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      resourceIds: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
-                                      },
-                                      includeEmail: {
-                                        type: "boolean",
-                                      },
-                                    },
-                                    required: ["resourceIds", "includeEmail"],
-                                  },
-                                ],
+                                type: "string",
                               },
                             },
                             required: [
@@ -46151,26 +45974,7 @@ export const runtimeOperationContractData = [
                                 const: "resource",
                               },
                               value: {
-                                anyOf: [
-                                  {
-                                    type: "string",
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      resourceIds: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
-                                      },
-                                      includeEmail: {
-                                        type: "boolean",
-                                      },
-                                    },
-                                    required: ["resourceIds", "includeEmail"],
-                                  },
-                                ],
+                                type: "string",
                               },
                             },
                             required: [
@@ -48523,26 +48327,7 @@ export const runtimeOperationContractData = [
                         const: "resource",
                       },
                       value: {
-                        anyOf: [
-                          {
-                            type: "string",
-                          },
-                          {
-                            type: "object",
-                            properties: {
-                              resourceIds: {
-                                type: "array",
-                                items: {
-                                  type: "string",
-                                },
-                              },
-                              includeEmail: {
-                                type: "boolean",
-                              },
-                            },
-                            required: ["resourceIds", "includeEmail"],
-                          },
-                        ],
+                        type: "string",
                       },
                     },
                     required: ["type", "value"],
@@ -53210,26 +52995,7 @@ export const runtimeOperationContractData = [
                         const: "resource",
                       },
                       value: {
-                        anyOf: [
-                          {
-                            type: "string",
-                          },
-                          {
-                            type: "object",
-                            properties: {
-                              resourceIds: {
-                                type: "array",
-                                items: {
-                                  type: "string",
-                                },
-                              },
-                              includeEmail: {
-                                type: "boolean",
-                              },
-                            },
-                            required: ["resourceIds", "includeEmail"],
-                          },
-                        ],
+                        type: "string",
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -59140,26 +58906,7 @@ export const runtimeOperationContractData = [
                         const: "resource",
                       },
                       value: {
-                        anyOf: [
-                          {
-                            type: "string",
-                          },
-                          {
-                            type: "object",
-                            properties: {
-                              resourceIds: {
-                                type: "array",
-                                items: {
-                                  type: "string",
-                                },
-                              },
-                              includeEmail: {
-                                type: "boolean",
-                              },
-                            },
-                            required: ["resourceIds", "includeEmail"],
-                          },
-                        ],
+                        type: "string",
                       },
                     },
                     required: ["id", "instanceId", "name", "type", "value"],
@@ -65200,27 +64947,8 @@ export const runtimeOperationContractData = [
                     const: "resource",
                   },
                   value: {
-                    anyOf: [
-                      {
-                        type: "string",
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          resourceIds: {
-                            type: "array",
-                            items: {
-                              type: "string",
-                            },
-                          },
-                          includeEmail: {
-                            type: "boolean",
-                          },
-                        },
-                        required: ["resourceIds", "includeEmail"],
-                      },
-                    ],
-                    description: "Resource id or form action group.",
+                    type: "string",
+                    description: "Resource id.",
                   },
                 },
                 required: ["instanceId", "name", "type", "value"],
@@ -67485,7 +67213,7 @@ export const runtimeOperationContractData = [
       required: ["propIds"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "props", "dataSources"],
+    readNamespaces: ["instances", "props"],
     writeNamespaces: ["props", "resources"],
     invalidatesNamespaces: ["props", "resources"],
     retryOnConflict: false,
@@ -67557,26 +67285,7 @@ export const runtimeOperationContractData = [
                         const: "resource",
                       },
                       value: {
-                        anyOf: [
-                          {
-                            type: "string",
-                          },
-                          {
-                            type: "object",
-                            properties: {
-                              resourceIds: {
-                                type: "array",
-                                items: {
-                                  type: "string",
-                                },
-                              },
-                              includeEmail: {
-                                type: "boolean",
-                              },
-                            },
-                            required: ["resourceIds", "includeEmail"],
-                          },
-                        ],
+                        type: "string",
                       },
                     },
                     required: ["type", "value"],

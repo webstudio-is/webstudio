@@ -2,7 +2,7 @@
   "scripts": {
     "build": "node ./node_modules/@react-router/dev/bin.js build",
     "dev": "node ./node_modules/@react-router/dev/bin.js dev",
-    "start": "node server.mjs",
+    "start": "react-router-serve ./build/server/index.js",
     "typecheck": "tsc --noEmit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "cli:local": "node ../../packages/cli/local.js",
@@ -33,10 +33,7 @@
     "@webstudio-is/wsauth": "workspace:*",
     "@shikijs/langs": "4.4.1",
     "@shikijs/themes": "4.4.1",
-    "shiki": "4.4.1",
-    "@react-router/express": "^7.5.3",
-    "compression": "^1.7.4",
-    "express": "^4.21.1"
+    "shiki": "4.4.1"
   },
   "private": true,
   "sideEffects": false,

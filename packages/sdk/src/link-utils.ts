@@ -52,21 +52,3 @@ export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
     current.hash === target.hash
   );
 };
-
-/** Resolve a configured redirect without allowing executable URL schemes. */
-export const resolveRedirectUrl = (
-  value: string | undefined,
-  baseUrl: string
-) => {
-  if (typeof value !== "string" || value.trim() === "") {
-    return;
-  }
-  try {
-    const url = new URL(value, baseUrl);
-    if (["http:", "https:", "mailto:", "tel:"].includes(url.protocol)) {
-      return url.href;
-    }
-  } catch {
-    // Invalid destinations leave the visitor on the form's success message.
-  }
-};

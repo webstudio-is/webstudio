@@ -15,7 +15,6 @@ test("exposes only authored component content in Content mode", () => {
       "Alert.variant",
       "Button.aria-label",
       "CodeText.language",
-      "Form.successRedirect",
       "HtmlEmbed.code",
       "Image.alt",
       "Image.src",

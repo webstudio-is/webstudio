@@ -1,4 +1,3 @@
-import { getPropResourceIds, resourcePropValue } from "@webstudio-is/sdk";
 import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { getExpressionValueKind } from "@webstudio-is/expression";
@@ -10,7 +9,6 @@ import {
   getExpressionBindingError,
   expressionBindingMode,
   prop as propSchema,
-  type DataSource,
   type Instance,
   type Prop,
   type PropMeta,
@@ -238,7 +236,7 @@ const propValueInputVariants = [
   z.object({
     ...propValueBaseInput,
     type: z.literal("resource"),
-    value: resourcePropValue.describe("Resource id or form action group."),
+    value: z.string().describe("Resource id."),
   }),
   z.object({
     ...propValueBaseInput,
@@ -292,7 +290,7 @@ export const dataPropBindingInput = z.discriminatedUnion("type", [
     mode: expressionBindingMode.optional(),
   }),
   z.object({ type: z.literal("parameter"), value: z.string() }),
-  z.object({ type: z.literal("resource"), value: resourcePropValue }),
+  z.object({ type: z.literal("resource"), value: z.string() }),
 ]);
 
 const actionPropBindingInput = z.object({
@@ -731,49 +729,20 @@ export const getPropDeletePlan = ({
   for (const propId of propIds) {
     const prop = propById.get(propId);
     if (prop?.type === "resource") {
-      for (const resourceId of getPropResourceIds(prop)) {
-        resourceIds.add(resourceId);
-      }
+      resourceIds.add(prop.value);
     }
   }
   return { propIds, resourceIds };
-};
-
-export const getUnreferencedResourceIds = ({
-  resourceIds,
-  props,
-  dataSources,
-}: {
-  resourceIds: Iterable<string>;
-  props: Iterable<Prop>;
-  dataSources: Iterable<DataSource>;
-}) => {
-  const unreferenced = new Set(resourceIds);
-  for (const prop of props) {
-    if (prop.type === "resource") {
-      for (const resourceId of getPropResourceIds(prop)) {
-        unreferenced.delete(resourceId);
-      }
-    }
-  }
-  for (const dataSource of dataSources) {
-    if (dataSource.type === "resource") {
-      unreferenced.delete(dataSource.resourceId);
-    }
-  }
-  return unreferenced;
 };
 
 export const createPropDeletePayload = ({
   deletions,
   instances,
   props,
-  dataSources = [],
 }: {
   deletions: Array<{ instanceId: Instance["id"]; name: Prop["name"] }>;
   instances: Map<Instance["id"], Instance>;
   props: Iterable<Prop>;
-  dataSources?: Iterable<DataSource>;
 }) => {
   const propList = Array.from(props);
   const propIds = new Set<string>();
@@ -801,13 +770,7 @@ export const createPropDeletePayload = ({
     }
   }
   const propIdList = Array.from(propIds);
-  const resourceIdList = Array.from(
-    getUnreferencedResourceIds({
-      resourceIds,
-      props: propList.filter((prop) => !propIds.has(prop.id)),
-      dataSources,
-    })
-  );
+  const resourceIdList = Array.from(resourceIds);
   return {
     propIds: propIdList,
     resourceIds: resourceIdList,
@@ -1138,7 +1101,7 @@ export const bindProps = (
 };
 
 export const deleteProps = (
-  state: Pick<BuilderState, "instances" | "props" | "dataSources">,
+  state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof propDeletionsInput>
 ) => {
   const { instances, props } = getRequiredPropState(state);
@@ -1152,7 +1115,6 @@ export const deleteProps = (
     instances,
     props: props.values(),
     deletions: input.deletions,
-    dataSources: state.dataSources?.values(),
   });
   if (missingInstanceId !== undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");

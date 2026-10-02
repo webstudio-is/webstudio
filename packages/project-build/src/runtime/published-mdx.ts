@@ -1,4 +1,3 @@
-import { getPropResourceIds } from "@webstudio-is/sdk";
 /**
  * Materializes MDX Assets for published builds with the same template and
  * Asset-reference behavior used by the Builder runtime.
@@ -109,15 +108,10 @@ export const getUnsafeDynamicPublishedMdxDiagnostic = ({
   }
   const actionResourceIds = new Set(
     [...props.values(), ...root.fragment.props].flatMap((prop) =>
-      getPropResourceIds(prop)
+      prop.type === "resource" ? [prop.value] : []
     )
   );
-  if (
-    root.fragment.resources.some(({ id }) => actionResourceIds.has(id)) ||
-    root.fragment.props.some(
-      (prop) => prop.type === "resource" && typeof prop.value !== "string"
-    )
-  ) {
+  if (root.fragment.resources.some(({ id }) => actionResourceIds.has(id))) {
     return {
       code: "invalid-mdx",
       severity: "error",

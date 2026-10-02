@@ -1,4 +1,3 @@
-import { getPropResourceIds } from "@webstudio-is/sdk";
 import {
   blockTemplateComponent,
   assignUniqueBlockTemplateNamesMutable,
@@ -55,7 +54,6 @@ import { validatePageSelector } from "./page-selector";
 import {
   createPropClonePatches,
   createPropDeletePayload,
-  getUnreferencedResourceIds,
   createPropRenamePayload,
 } from "./props";
 import {
@@ -1016,22 +1014,17 @@ export const getInstanceDeleteTargets = ({
     instanceIds
   );
 
-  const propList = Array.from(props);
-  const dataSourceList = Array.from(dataSources);
-
-  for (const prop of propList) {
+  for (const prop of props) {
     if (instanceIds.has(prop.instanceId) === false) {
       continue;
     }
     propIds.add(prop.id);
     if (prop.type === "resource") {
-      for (const resourceId of getPropResourceIds(prop)) {
-        resourceIds.add(resourceId);
-      }
+      resourceIds.add(prop.value);
     }
   }
 
-  for (const dataSource of dataSourceList) {
+  for (const dataSource of dataSources) {
     if (instanceIds.has(dataSource.scopeInstanceId ?? "") === false) {
       continue;
     }
@@ -1051,13 +1044,7 @@ export const getInstanceDeleteTargets = ({
     instanceIds,
     propIds,
     dataSourceIds,
-    resourceIds: getUnreferencedResourceIds({
-      resourceIds,
-      props: propList.filter((prop) => !propIds.has(prop.id)),
-      dataSources: dataSourceList.filter(
-        (dataSource) => !dataSourceIds.has(dataSource.id)
-      ),
-    }),
+    resourceIds,
     styleSourceSelectionInstanceIds,
     localStyleSourceIds,
   };
@@ -2578,7 +2565,6 @@ export const convertInstance = (
             deletions: [{ instanceId: selectedInstance.id, name: "tag" }],
             instances: draft.instances,
             props: draft.props.values(),
-            dataSources: draft.dataSources.values(),
           }).payload
         );
         const renames = getStandardPropRenames({
@@ -2689,7 +2675,6 @@ export const convertInstance = (
         deletions: [{ instanceId, name: "tag" }],
         instances,
         props: state.props.values(),
-        dataSources: state.dataSources?.values(),
       }).payload
     );
     const renames = getStandardPropRenames({

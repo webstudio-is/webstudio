@@ -1,7 +1,6 @@
 export * from "./resource-loader";
 export * from "./to-string";
 export * from "./form-fields";
-export * from "./form-actions";
 export * from "./json-ld";
 
 export const tagProperty = "data-ws-tag";
