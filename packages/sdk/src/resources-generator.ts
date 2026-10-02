@@ -56,6 +56,9 @@ export const generateResourceRequestFields = ({
   }
   generated += `${indent}],\n`;
   generated += `${indent}method: ${JSON.stringify(method ?? resource.method)},\n`;
+  if (resource.bodyFormat !== undefined) {
+    generated += `${indent}bodyFormat: ${JSON.stringify(resource.bodyFormat)},\n`;
+  }
   generated += `${indent}headers: [\n`;
   for (const header of resource.headers) {
     const value = generateExpression({

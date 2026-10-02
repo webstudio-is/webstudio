@@ -37,6 +37,7 @@ import {
   sitemapResourceUrl,
   currentDateResourceUrl,
   assetsResourceUrl,
+  getResourceBodyFormatError,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -681,6 +682,7 @@ const BodyField = ({
   scope,
   aliases,
   bodyType,
+  bodyFormat,
   value,
   onChangeStart,
   onChange,
@@ -688,6 +690,7 @@ const BodyField = ({
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
   bodyType: BodyType;
+  bodyFormat: Resource["bodyFormat"];
   value: string;
   onChangeStart?: () => void;
   onChange: (value: string, bodyType: BodyType) => void;
@@ -697,14 +700,35 @@ const BodyField = ({
   );
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const effectiveBodyType = bodyFormat === "auto" ? bodyType : "json";
   useEffect(() => {
-    void validateResourceBodyExpression(value, bodyType, scope).then(
-      (error) => {
-        bodyRef.current?.setCustomValidity(error);
+    let canceled = false;
+    void validateResourceBodyExpression(value, effectiveBodyType, scope).then(
+      async (error) => {
+        let validationError: string = error;
+        if (error === "" && value !== "" && bodyFormat !== "auto") {
+          const body = await evaluateExpressionWithinScope(value, scope);
+          validationError =
+            getResourceBodyFormatError({
+              name: "",
+              method: "post",
+              url: "",
+              searchParams: [],
+              headers: [],
+              body,
+              bodyFormat,
+            }) ?? "";
+        }
+        if (!canceled) {
+          bodyRef.current?.setCustomValidity(validationError);
+        }
       }
     );
     setBodyError("");
-  }, [value, bodyType, scope]);
+    return () => {
+      canceled = true;
+    };
+  }, [value, effectiveBodyType, bodyFormat, scope]);
   const evaluatedValue = useAsyncValue(
     () => evaluateExpressionWithinScope(value, scope),
     [scope, value],
@@ -720,7 +744,7 @@ const BodyField = ({
     onChange(newBody, isBodyObject ? "json" : bodyType);
   };
   const displayedValue =
-    bodyType === "json"
+    effectiveBodyType === "json"
       ? isBodyLiteral
         ? value
         : (JSON.stringify(evaluatedValue, null, 2) ?? "")
@@ -729,18 +753,20 @@ const BodyField = ({
   return (
     <Grid gap={1}>
       <Label>Body</Label>
-      <Select<BodyType | "">
-        placeholder="Type"
-        value={bodyType ?? ""}
-        options={["text", "json"]}
-        onChange={(newBodyType) => {
-          if (newBodyType) {
-            onChangeStart?.();
-            onChange(value, newBodyType);
-          }
-        }}
-      />
-      {bodyType && (
+      {bodyFormat === "auto" && (
+        <Select<BodyType | "">
+          placeholder="Type"
+          value={bodyType ?? ""}
+          options={["text", "json"]}
+          onChange={(newBodyType) => {
+            if (newBodyType) {
+              onChangeStart?.();
+              onChange(value, newBodyType);
+            }
+          }}
+        />
+      )}
+      {bodyFormat === "auto" && bodyType && (
         <>
           <input type="hidden" name="header-name" value="Content-Type" />
           <input
@@ -768,7 +794,9 @@ const BodyField = ({
         scope={scope}
         aliases={aliases}
         onChangeValue={(value) =>
-          updateBody(bodyType === "json" ? value : JSON.stringify(value))
+          updateBody(
+            effectiveBodyType === "json" ? value : JSON.stringify(value)
+          )
         }
         onChangeExpression={(value) => {
           updateBody(value);
@@ -780,7 +808,7 @@ const BodyField = ({
         }}
         renderControl={({ value, readOnly, onChangeValue }) => (
           <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
-            {bodyType === "json" ? (
+            {effectiveBodyType === "json" ? (
               // wrap with div to position error tooltip
               <div>
                 <ExpressionEditor
@@ -867,11 +895,17 @@ export const ResourceForm = forwardRef<
     resource?.searchParams ?? []
   );
   const [headers, setHeaders] = useState<Resource["headers"]>(
-    parsedHeaders.headers
+    resource?.bodyFormat === "json" || resource?.bodyFormat === "multipart"
+      ? parsedHeaders.headers.filter(({ name }) => !isContentType(name))
+      : parsedHeaders.headers
   );
   const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
   const [bodyType, setBodyType] = useState(parsedHeaders.bodyType);
   const [body, setBody] = useState(resource?.body);
+  const [bodyFormat, setBodyFormat] = useState<Resource["bodyFormat"]>(
+    resource?.bodyFormat ?? "auto"
+  );
+  const bodyFormatId = useId();
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
@@ -940,6 +974,7 @@ export const ResourceForm = forwardRef<
             setHeaders(parsedHeaders.headers);
             setBodyType(parsedHeaders.bodyType);
             setBody(JSON.stringify(curl.body));
+            setBodyFormat("auto");
           }}
         />
       </Row>
@@ -975,6 +1010,11 @@ export const ResourceForm = forwardRef<
           headers={headers}
           onChange={(newHeaders) => {
             onChange?.();
+            if (bodyFormat !== "auto") {
+              newHeaders = newHeaders.filter(
+                ({ name }) => !isContentType(name)
+              );
+            }
             // reset dedicated fields
             if (newHeaders.some(({ name }) => isCacheControl(name))) {
               setMaxAge(undefined);
@@ -987,25 +1027,48 @@ export const ResourceForm = forwardRef<
         />
       </Row>
       {method !== "get" && (
-        <Row>
-          <BodyField
-            scope={scope}
-            aliases={aliases}
-            value={body ?? ""}
-            bodyType={bodyType}
-            onChangeStart={onChange}
-            onChange={(newBody, newBodyType) => {
-              setBodyType(newBodyType);
-              // reset header
-              if (newBodyType) {
-                setHeaders((headers) =>
-                  headers.filter(({ name }) => !isContentType(name))
-                );
-              }
-              setBody(newBody);
-            }}
-          />
-        </Row>
+        <>
+          <Row>
+            <Grid gap={1}>
+              <Label htmlFor={bodyFormatId}>Request body format</Label>
+              <Select<NonNullable<Resource["bodyFormat"]>>
+                id={bodyFormatId}
+                value={bodyFormat ?? "auto"}
+                options={["auto", "json", "multipart"]}
+                onChange={(value) => {
+                  onChange?.();
+                  setBodyFormat(value);
+                  if (value !== "auto") {
+                    setHeaders((headers) =>
+                      headers.filter(({ name }) => !isContentType(name))
+                    );
+                  }
+                }}
+              />
+              <input type="hidden" name="body-format" value={bodyFormat} />
+            </Grid>
+          </Row>
+          <Row>
+            <BodyField
+              scope={scope}
+              aliases={aliases}
+              value={body ?? ""}
+              bodyType={bodyType}
+              bodyFormat={bodyFormat}
+              onChangeStart={onChange}
+              onChange={(newBody, newBodyType) => {
+                setBodyType(newBodyType);
+                // reset header
+                if (newBodyType) {
+                  setHeaders((headers) =>
+                    headers.filter(({ name }) => !isContentType(name))
+                  );
+                }
+                setBody(newBody);
+              }}
+            />
+          </Row>
+        </>
       )}
     </>
   );

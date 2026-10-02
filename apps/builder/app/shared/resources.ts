@@ -515,6 +515,9 @@ export const computeResourceRequest = async (
     url,
     searchParams,
     headers,
+    ...(resource.bodyFormat === undefined
+      ? {}
+      : { bodyFormat: resource.bodyFormat }),
   };
   if (resource.body !== undefined) {
     request.body = body;

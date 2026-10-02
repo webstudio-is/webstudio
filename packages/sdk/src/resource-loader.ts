@@ -107,6 +107,31 @@ const toMultipartFormData = (value: object) => {
   return formData;
 };
 
+export const getResourceBodyFormatError = (request: ResourceRequest) => {
+  if (
+    request.method === "get" ||
+    request.bodyFormat === undefined ||
+    request.bodyFormat === "auto"
+  ) {
+    return;
+  }
+  if (request.body instanceof FormData) {
+    return request.bodyFormat === "json"
+      ? "JSON body cannot include form data"
+      : undefined;
+  }
+  if (request.bodyFormat === "json" && containsFile(request.body)) {
+    return "JSON body cannot include uploaded files";
+  }
+  if (request.bodyFormat === "json") {
+    if (isPlainObject(request.body) === false && !Array.isArray(request.body)) {
+      return "JSON body expects an object or array";
+    }
+  } else if (isPlainObject(request.body) === false) {
+    return "Multipart body expects an object of fields";
+  }
+};
+
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
 export const currentDateResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/current-date`;
 export const assetsResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets`;
@@ -147,6 +172,8 @@ export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
   dependencies: readonly string[];
+  usesDefaultFormBody?: boolean;
+  bodyFormat?: ResourceRequest["bodyFormat"];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
 }>;
 
@@ -376,6 +403,22 @@ export const loadResource = async (
         serializeValue(value),
       ])
     );
+    const bodyFormatError = getResourceBodyFormatError(resourceRequest);
+    if (bodyFormatError !== undefined) {
+      return {
+        ok: false,
+        data: {
+          ok: false,
+          error: {
+            code: "INVALID_BODY_FORMAT",
+            message: bodyFormatError,
+            retryable: false,
+          },
+        },
+        status: 400,
+        statusText: bodyFormatError,
+      };
+    }
     const requestInit: RequestInit = {
       method,
       headers: requestHeaders,
@@ -391,17 +434,22 @@ export const loadResource = async (
         requestHeaders.delete("Content-Type");
         requestInit.body = body;
       } else if (isPlainObject(body)) {
-        if (containsFile(body)) {
+        if (resourceRequest.bodyFormat === "multipart" || containsFile(body)) {
           // Form data is JSON by default; preserve upload bytes and repeated
           // values as multipart whenever the body contains a file.
           requestHeaders.delete("Content-Type");
           requestInit.body = toMultipartFormData(body);
         } else {
-          if (requestHeaders.has("Content-Type") === false) {
+          if (resourceRequest.bodyFormat === "json") {
+            requestHeaders.set("Content-Type", "application/json");
+          } else if (requestHeaders.has("Content-Type") === false) {
             requestHeaders.set("Content-Type", "application/json");
           }
           requestInit.body = serializeValue(body);
         }
+      } else if (resourceRequest.bodyFormat === "json" && Array.isArray(body)) {
+        requestHeaders.set("Content-Type", "application/json");
+        requestInit.body = serializeValue(body);
       } else {
         requestInit.body = serializeValue(body);
       }

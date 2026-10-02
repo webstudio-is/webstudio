@@ -3267,6 +3267,7 @@ sitemap.map((page) => page.path);`
             method: "get",
             url: '"https://forms.example/submit"',
             headers: [],
+            bodyFormat: "json",
             body: encodeDataSourceVariable("formData"),
           },
         ],
@@ -3334,7 +3335,7 @@ sitemap.map((page) => page.path);`
           return Response.json({ accepted: true });
         })
       );
-      const submit = () => {
+      const submit = (attachment?: File) => {
         const form = new FormData();
         form.set(managedFormIdFieldName, "root");
         form.set(formBotFieldName, Date.now().toString(16));
@@ -3346,6 +3347,9 @@ sitemap.map((page) => page.path);`
         form.append("tags", "red");
         form.append("tags", "blue");
         form.set("campaign", "conference");
+        if (attachment !== undefined) {
+          form.set("attachment", attachment);
+        }
         return action({
           request: new Request(
             `https://site.example/?source=event&${managedFormRequestParamName}=1`,
@@ -3365,6 +3369,11 @@ sitemap.map((page) => page.path);`
           params: {},
         });
       };
+      await expect(submit(new File(["hello"], "hello.txt"))).resolves.toEqual({
+        success: false,
+        errors: ["JSON body cannot include uploaded files"],
+      });
+      expect(received).toHaveLength(0);
       const submission = submit();
       try {
         await vi.waitFor(() => expect(received).toHaveLength(2));

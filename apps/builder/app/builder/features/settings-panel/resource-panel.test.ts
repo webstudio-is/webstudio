@@ -128,6 +128,95 @@ test("invalidates the preview as soon as a body edit starts", () => {
   });
 });
 
+test("shows and submits the selected HTTP body format", async () => {
+  const resource: Resource = {
+    id: "upload",
+    name: "Upload",
+    method: "post",
+    url: '"https://example.com/upload"',
+    headers: [],
+    bodyFormat: "multipart",
+  };
+  $resources.set(new Map([[resource.id, resource]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(ResourceForm, {
+          variable: {
+            type: "resource",
+            id: "upload-variable",
+            name: "Upload",
+            resourceId: resource.id,
+          },
+        })
+      )
+    );
+  });
+  expect(
+    container.querySelector<HTMLInputElement>('input[name="body-format"]')
+      ?.value
+  ).toBe("multipart");
+  expect(
+    container.querySelector<HTMLInputElement>(
+      'input[name="header-name"][value="Content-Type"]'
+    )
+  ).toBeNull();
+  await act(async () => page.getByLabelText("Request body format").click());
+  await act(async () => page.getByRole("option", { name: "json" }).click());
+  expect(
+    container.querySelector<HTMLInputElement>('input[name="body-format"]')
+      ?.value
+  ).toBe("json");
+  expect(
+    container.querySelector<HTMLInputElement>(
+      'input[name="header-name"][value="Content-Type"]'
+    )
+  ).toBeNull();
+});
+
+test("marks a text body invalid when JSON format is selected", async () => {
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [{ name: "Content-Type", value: '"text/plain"' }],
+    bodyFormat: "json",
+    body: '"plain text"',
+  };
+  $resources.set(new Map([[resource.id, resource]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(ResourceForm, {
+          variable: {
+            type: "resource",
+            id: "request-variable",
+            name: "Request",
+            resourceId: resource.id,
+          },
+        })
+      )
+    );
+  });
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector<HTMLTextAreaElement>('textarea[name="body"]')
+        ?.validationMessage
+    ).toBe("Expected valid JSON object in body")
+  );
+});
+
 test("focuses the resource URL when requested", () => {
   const container = document.createElement("div");
   document.body.appendChild(container);

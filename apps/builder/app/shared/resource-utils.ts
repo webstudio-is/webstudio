@@ -12,6 +12,7 @@ export const getResourceKey = (resource: ResourceRequest) => {
         resource.searchParams,
         resource.headers,
         resource.body,
+        resource.bodyFormat,
       ])
     );
   } catch {

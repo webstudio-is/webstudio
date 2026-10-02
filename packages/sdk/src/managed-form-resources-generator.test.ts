@@ -108,6 +108,7 @@ test("builds a submit-time graph with Form bindings and dependent Resource resul
           name: "Send",
           method: "get",
           url: '"https://example.com/send"',
+          bodyFormat: "json",
           headers: [
             {
               name: "X-Language",
@@ -132,6 +133,8 @@ test("builds a submit-time graph with Form bindings and dependent Resource resul
   ]);
   const lookup = graph?.resources.find(({ id }) => id === "lookup");
   const send = graph?.resources.find(({ id }) => id === "send");
+  expect(send?.bodyFormat).toBe("json");
+  expect(send?.usesDefaultFormBody).toBeUndefined();
   expect(lookup?.createRequest(new Map()).method).toBe("get");
   expect(
     send?.createRequest(new Map([["lookup", { data: { id: 1 } }]]))
@@ -257,6 +260,7 @@ test("a Form-scoped destination defaults its POST body to all formData", () => {
           method: "get",
           url: '"https://example.com/submit"',
           headers: [],
+          bodyFormat: "json",
         },
       ],
     ]),
@@ -267,6 +271,7 @@ test("a Form-scoped destination defaults its POST body to all formData", () => {
     method: "post",
     body: formData,
   });
+  expect(graph?.resources[0].usesDefaultFormBody).toBe(true);
 });
 
 test("a shared outside alias cannot promote a Resource into Form scope", () => {

@@ -244,6 +244,126 @@ test("uses JSON content type for object bodies unless configured otherwise", asy
   expect(contentTypes.sort()).toEqual(["application/json", "text/plain"]);
 });
 
+test("uses an explicit multipart body format for text fields", async () => {
+  let submitted: Request | undefined;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    submitted = new Request(input, init);
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [{ name: "Content-Type", value: "application/json" }],
+    bodyFormat: "multipart",
+    body: { topics: ["design", "development"] },
+  });
+  expect(submitted?.headers.get("content-type")).toMatch(
+    /^multipart\/form-data; boundary=/
+  );
+  expect((await submitted?.formData())?.getAll("topics")).toEqual([
+    "design",
+    "development",
+  ]);
+});
+
+test("rejects explicit JSON with uploaded files without sending a request", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "json",
+    body: { attachment: new File(["hello"], "hello.txt") },
+  });
+  expect(fetch).not.toHaveBeenCalled();
+  expect(result).toMatchObject({
+    ok: false,
+    status: 400,
+    data: { error: { code: "INVALID_BODY_FORMAT" } },
+  });
+});
+
+test("explicit JSON sets JSON content type even after a saved header", async () => {
+  let contentType: string | null = null;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    contentType = request.headers.get("content-type");
+    expect(await request.json()).toEqual({ message: "Hello" });
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [{ name: "Content-Type", value: "text/plain" }],
+    bodyFormat: "json",
+    body: { message: "Hello" },
+  });
+  expect(contentType).toBe("application/json");
+});
+
+test("explicit JSON sends an array body as JSON", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    expect(request.headers.get("content-type")).toBe("application/json");
+    expect(await request.json()).toEqual(["first", "second"]);
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "json",
+    body: ["first", "second"],
+  });
+  expect(fetch).toHaveBeenCalledOnce();
+});
+
+test("rejects multipart with a scalar body without sending a request", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "multipart",
+    body: "plain text",
+  });
+  expect(fetch).not.toHaveBeenCalled();
+  expect(result).toMatchObject({
+    ok: false,
+    status: 400,
+    data: { error: { code: "INVALID_BODY_FORMAT" } },
+  });
+});
+
+test("ignores a stale body format on a GET request", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    expect(request.method).toBe("GET");
+    expect(request.body).toBeNull();
+    return Response.json({ accepted: true });
+  });
+  const result = await loadResource(fetch, {
+    name: "Read",
+    method: "get",
+    url: "https://example.com/read",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "multipart",
+  });
+  expect(result.ok).toBe(true);
+  expect(fetch).toHaveBeenCalledOnce();
+});
+
 test("runs independent resources concurrently while keeping dependency chains serial", async () => {
   const independentIds = Array.from(
     { length: 19 },

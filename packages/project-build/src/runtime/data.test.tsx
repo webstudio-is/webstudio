@@ -2603,6 +2603,24 @@ describe("createResourceValue", () => {
       })
     ).toHaveProperty("body", undefined);
   });
+
+  test("persists the selected HTTP body format", () => {
+    const formData = new FormData();
+    formData.set("name", "Upload");
+    formData.set("method", "post");
+    formData.set("url", '"https://example.com/upload"');
+    formData.set("body-format", "multipart");
+    const fields = createResourceFieldsFromFormData({ formData });
+    expect(fields.bodyFormat).toBe("multipart");
+    const value = createResourceValueFromFormData({
+      id: "upload",
+      formData,
+    });
+    expect(value.bodyFormat).toBe("multipart");
+    expect(createResourceFieldsFromResource(value).bodyFormat).toBe(
+      "multipart"
+    );
+  });
 });
 
 describe("findResource", () => {

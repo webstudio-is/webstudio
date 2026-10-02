@@ -221,7 +221,11 @@ export const generateManagedFormResources = ({
         if (resource === undefined) {
           continue;
         }
-        generated += `          { id: ${JSON.stringify(resourceId)}, outputName: ${JSON.stringify(scope.getName(resourceId, resource.name))}, dependencies: ${JSON.stringify(dependenciesById.get(resourceId) ?? [])}, createRequest: ${scope.getName(resourceId, resource.name)} },\n`;
+        const usesDefaultFormBody =
+          rootIds.includes(resourceId) &&
+          formBoundResourceIds.has(resourceId) &&
+          (resource.body === undefined || resource.body.length === 0);
+        generated += `          { id: ${JSON.stringify(resourceId)}, outputName: ${JSON.stringify(scope.getName(resourceId, resource.name))}, dependencies: ${JSON.stringify(dependenciesById.get(resourceId) ?? [])}, ${usesDefaultFormBody ? "usesDefaultFormBody: true, " : ""}${resource.bodyFormat === undefined ? "" : `bodyFormat: ${JSON.stringify(resource.bodyFormat)}, `}createRequest: ${scope.getName(resourceId, resource.name)} },\n`;
       }
       generated += `        ],\n        rootIds: ${JSON.stringify(rootIds)},\n      };\n    }\n`;
     } catch (error) {

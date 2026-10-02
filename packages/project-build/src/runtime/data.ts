@@ -1987,6 +1987,9 @@ export const createResourceFieldsFromFormData = ({
       .map((name, index) => ({ name, value: headerValues[index] }))
       .filter((item) => String(item.name).trim()),
     body: formData.get("body") || undefined,
+    ...(formData.get("body-format")
+      ? { bodyFormat: formData.get("body-format") }
+      : {}),
   });
 };
 
@@ -2017,6 +2020,7 @@ export const createResourceValue = ({
   method,
   headers,
   body,
+  bodyFormat,
 }: {
   id: Resource["id"];
   control?: unknown;
@@ -2026,6 +2030,7 @@ export const createResourceValue = ({
   method: unknown;
   headers: unknown;
   body?: unknown;
+  bodyFormat?: unknown;
 }): Resource =>
   resource.parse({
     id,
@@ -2036,6 +2041,7 @@ export const createResourceValue = ({
     method,
     headers,
     body: body || undefined,
+    ...(bodyFormat === undefined ? {} : { bodyFormat }),
   });
 
 export const createResourceFieldsFromResource = (
@@ -2048,6 +2054,9 @@ export const createResourceFieldsFromResource = (
   method: resource.method,
   headers: resource.headers,
   body: resource.body,
+  ...(resource.bodyFormat === undefined
+    ? {}
+    : { bodyFormat: resource.bodyFormat }),
 });
 
 export const validateResourceUrlExpression = async (

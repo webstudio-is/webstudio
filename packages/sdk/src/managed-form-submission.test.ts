@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import {
   formBotFieldName,
   formIdFieldName,
@@ -10,7 +10,271 @@ import {
   getManagedFormValues,
   readFormDataWithLimit,
   validateManagedFormBot,
+  validateManagedFormBodyFormats,
 } from "./managed-form-submission";
+import { loadResources } from "./resource-loader";
+
+test("rejects an invalid dependency request before any destination runs", () => {
+  const graph = {
+    rootIds: ["submit"],
+    resources: [
+      {
+        id: "lookup",
+        outputName: "Lookup",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Lookup",
+          method: "post" as const,
+          url: "https://example.com/lookup",
+          searchParams: [],
+          headers: [],
+          bodyFormat: "multipart" as const,
+          body: "invalid scalar",
+        }),
+      },
+      {
+        id: "submit",
+        outputName: "Submit",
+        dependencies: ["lookup"],
+        createRequest: () => {
+          throw new Error("A destination must not run before preflight");
+        },
+      },
+    ],
+  };
+  expect(() => validateManagedFormBodyFormats(graph, new FormData())).toThrow(
+    "Multipart body expects an object of fields"
+  );
+});
+
+test("reuses dependency-free requests after preflight", async () => {
+  const createRequest = vi.fn(() => ({
+    name: "Submit",
+    method: "post" as const,
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [],
+    bodyFormat: "json" as const,
+    body: { message: "Hello" },
+  }));
+  const graph = validateManagedFormBodyFormats(
+    {
+      rootIds: ["submit"],
+      resources: [
+        {
+          id: "submit",
+          outputName: "Submit",
+          dependencies: [],
+          createRequest,
+        },
+      ],
+    },
+    new FormData()
+  );
+  const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    Response.json({ accepted: true })
+  );
+  await loadResources(fetch, graph);
+  expect(createRequest).toHaveBeenCalledOnce();
+  expect(fetch).toHaveBeenCalledOnce();
+
+  const createLookup = vi.fn(() => ({
+    name: "Lookup",
+    method: "get" as const,
+    url: "https://example.com/lookup",
+    searchParams: [],
+    headers: [],
+  }));
+  const dependentGraph = validateManagedFormBodyFormats(
+    {
+      rootIds: ["submit"],
+      resources: [
+        {
+          id: "lookup",
+          outputName: "Lookup",
+          dependencies: [],
+          createRequest: createLookup,
+        },
+        {
+          id: "submit",
+          outputName: "Submit",
+          dependencies: ["lookup"],
+          createRequest: () => ({
+            name: "Submit",
+            method: "post",
+            url: "https://example.com/submit",
+            searchParams: [],
+            headers: [],
+            body: { message: "Hello" },
+          }),
+        },
+      ],
+    },
+    new FormData()
+  );
+  await loadResources(fetch, dependentGraph);
+  expect(createLookup).toHaveBeenCalledOnce();
+});
+
+test("an invalid dependent body never dispatches its destination", async () => {
+  const requestedUrls: string[] = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    requestedUrls.push(String(input));
+    return Response.json({ accepted: true });
+  });
+  const graph = validateManagedFormBodyFormats(
+    {
+      rootIds: ["independent", "dependent"],
+      resources: [
+        {
+          id: "lookup",
+          outputName: "Lookup",
+          dependencies: [],
+          createRequest: () => ({
+            name: "Lookup",
+            method: "get",
+            url: "https://example.com/lookup",
+            searchParams: [],
+            headers: [],
+          }),
+        },
+        {
+          id: "independent",
+          outputName: "Independent",
+          dependencies: [],
+          createRequest: () => ({
+            name: "Independent",
+            method: "post",
+            url: "https://example.com/independent",
+            searchParams: [],
+            headers: [],
+            bodyFormat: "json",
+            body: { message: "Hello" },
+          }),
+        },
+        {
+          id: "dependent",
+          outputName: "Dependent",
+          dependencies: ["lookup"],
+          createRequest: () => ({
+            name: "Dependent",
+            method: "post",
+            url: "https://example.com/dependent",
+            searchParams: [],
+            headers: [],
+            bodyFormat: "json",
+            body: { attachment: new File(["hello"], "hello.txt") },
+          }),
+        },
+      ],
+    },
+    new FormData()
+  );
+  const results = await loadResources(fetch, graph);
+  expect(results).toMatchObject({
+    Independent: { ok: true },
+    Dependent: { ok: false, status: 400 },
+  });
+  expect(requestedUrls.sort()).toEqual([
+    "https://example.com/independent",
+    "https://example.com/lookup",
+  ]);
+});
+
+test("checks each destination body before a managed submission", () => {
+  const file = new File(["hello"], "hello.txt");
+  const formData = new FormData();
+  formData.set("attachment", file);
+  let jsonBody: unknown = { message: "No file here" };
+  const graph = {
+    rootIds: ["json", "multipart"],
+    resources: [
+      {
+        id: "json",
+        outputName: "JSON",
+        dependencies: [],
+        createRequest: () => ({
+          name: "JSON",
+          method: "post" as const,
+          url: "https://example.com/json",
+          searchParams: [],
+          headers: [],
+          bodyFormat: "json" as const,
+          body: jsonBody,
+        }),
+      },
+      {
+        id: "multipart",
+        outputName: "Multipart",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Multipart",
+          method: "post" as const,
+          url: "https://example.com/multipart",
+          searchParams: [],
+          headers: [],
+          bodyFormat: "multipart" as const,
+          body: { attachment: file },
+        }),
+      },
+    ],
+  };
+  expect(() => validateManagedFormBodyFormats(graph, formData)).not.toThrow();
+  jsonBody = { attachment: file };
+  expect(() => validateManagedFormBodyFormats(graph, formData)).toThrow(
+    "JSON body cannot include uploaded files"
+  );
+});
+
+test("ignores an unselected optional file input", () => {
+  const formData = new FormData();
+  formData.set("attachment", new File([], ""));
+  formData.set(managedFormArrayNamesFieldName, "[]");
+  expect(getManagedFormValues(formData)).toEqual({});
+  const graph = {
+    rootIds: ["submit"],
+    resources: [
+      {
+        id: "submit",
+        outputName: "Submit",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Submit",
+          method: "post" as const,
+          url: "https://example.com/submit",
+          searchParams: [],
+          headers: [],
+          bodyFormat: "json" as const,
+          body: getManagedFormValues(formData),
+        }),
+      },
+    ],
+  };
+  expect(() => validateManagedFormBodyFormats(graph, formData)).not.toThrow();
+});
+
+test("catches a JSON default Form body before dependent Resources run", () => {
+  const formData = new FormData();
+  formData.set("attachment", new File(["hello"], "hello.txt"));
+  const graph = {
+    rootIds: ["submit"],
+    resources: [
+      {
+        id: "submit",
+        outputName: "Submit",
+        dependencies: ["lookup"],
+        usesDefaultFormBody: true,
+        bodyFormat: "json" as const,
+        createRequest: () => {
+          throw new Error("Dependent requests cannot be evaluated yet");
+        },
+      },
+    ],
+  };
+  expect(() => validateManagedFormBodyFormats(graph, formData)).toThrow(
+    "JSON body cannot include uploaded files"
+  );
+});
 
 test("parses bounded request bodies and rejects oversized streamed bodies", async () => {
   const formData = new FormData();

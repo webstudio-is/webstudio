@@ -9,6 +9,8 @@ const method = z.union([
   z.literal("delete"),
 ]);
 
+const bodyFormat = z.enum(["auto", "json", "multipart"]);
+
 export const resource = z.object({
   id: resourceId,
   name: z.string(),
@@ -34,6 +36,7 @@ export const resource = z.object({
   ),
   // expression
   body: z.optional(z.string()),
+  bodyFormat: bodyFormat.optional(),
 });
 
 export type Resource = z.infer<typeof resource>;
@@ -59,6 +62,7 @@ export const resourceRequest = z.object({
     })
   ),
   body: z.optional(z.unknown()),
+  bodyFormat: bodyFormat.optional(),
 });
 
 export type ResourceRequest = z.infer<typeof resourceRequest>;

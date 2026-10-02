@@ -4,6 +4,9 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "./form-fields";
+import { getResourceBodyFormatError } from "./resource-loader";
+import type { ResourceRequestGraph } from "./resource-loader";
+import type { ResourceRequest } from "./schema/resources";
 
 export const formDataParameterName = "formData";
 export const browserInfoParameterName = "browserInfo";
@@ -15,6 +18,11 @@ const internalFormFieldNames = new Set([
   formBotFieldName,
 ]);
 const maxFormRequestBytes = 25 * 1024 * 1024;
+const isEmptyFile = (value: FormDataEntryValue) =>
+  typeof File !== "undefined" &&
+  value instanceof File &&
+  value.name === "" &&
+  value.size === 0;
 
 export const readFormDataWithLimit = async (
   request: Request,
@@ -112,6 +120,10 @@ export const getManagedFormValues = (formData: FormData) => {
     if (internalFormFieldNames.has(name)) {
       continue;
     }
+    // Browsers submit an empty File for an unselected optional file input.
+    if (isEmptyFile(value)) {
+      continue;
+    }
     const previous = values[name];
     if (Array.isArray(previous)) {
       previous.push(value);
@@ -122,6 +134,50 @@ export const getManagedFormValues = (formData: FormData) => {
     }
   }
   return values;
+};
+
+export const validateManagedFormBodyFormats = (
+  graph: ResourceRequestGraph,
+  formData: FormData
+): ResourceRequestGraph => {
+  const rootIds = new Set(graph.rootIds);
+  const preparedRequests = new Map<string, ResourceRequest>();
+  const hasUpload = Array.from(formData.values()).some(
+    (value) =>
+      typeof File !== "undefined" &&
+      value instanceof File &&
+      !isEmptyFile(value)
+  );
+  for (const resource of graph.resources) {
+    if (resource.dependencies.length === 0) {
+      const request = resource.createRequest(new Map());
+      const error = getResourceBodyFormatError(request);
+      if (error !== undefined) {
+        throw new Error(error);
+      }
+      preparedRequests.set(resource.id, request);
+      continue;
+    }
+    // A dependency's result is unavailable until it runs. The default body is
+    // still known to contain all submitted fields before any request starts.
+    if (
+      rootIds.has(resource.id) &&
+      resource.usesDefaultFormBody &&
+      resource.bodyFormat === "json" &&
+      hasUpload
+    ) {
+      throw new Error("JSON body cannot include uploaded files");
+    }
+  }
+  return {
+    ...graph,
+    resources: graph.resources.map((resource) => {
+      const request = preparedRequests.get(resource.id);
+      return request === undefined
+        ? resource
+        : { ...resource, createRequest: () => request };
+    }),
+  };
 };
 
 export type ManagedFormBrowserInfo = {
