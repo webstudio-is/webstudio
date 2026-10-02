@@ -23,7 +23,7 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
-import { loadDevBuild } from "../db";
+import { loadDevBuild, updateBuild } from "../db";
 
 let fixture: SeededContentModeProject;
 let pasteFixture: SeededContentModeProject;
