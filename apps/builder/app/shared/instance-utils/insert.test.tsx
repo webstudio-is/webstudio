@@ -829,6 +829,17 @@ describe("insert webstudio component at", () => {
         ({ instanceId }) => instanceId === formId
       );
       expect(formProps.find(({ name }) => name === "action")).toBeUndefined();
+      for (const name of ["formData", "browserInfo"]) {
+        const prop = formProps.find((prop) => prop.name === name);
+        expect(prop?.type).toBe("parameter");
+        if (prop?.type === "parameter") {
+          expect($dataSources.get().get(prop.value)).toMatchObject({
+            type: "parameter",
+            name,
+            scopeInstanceId: formId,
+          });
+        }
+      }
       const childIds = Array.from($instances.get().values())
         .filter(
           ({ component }) => component === "Input" || component === "Button"

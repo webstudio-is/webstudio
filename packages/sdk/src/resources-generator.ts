@@ -121,6 +121,29 @@ export const generateResources = ({
       )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
   );
+  // Submission values exist only after the browser submits the Form. A Resource
+  // that reads them must not be resolved during the page's normal data load.
+  const formParameterIds = new Set(
+    Array.from(dataSources.values())
+      .filter(
+        (dataSource) =>
+          dataSource.type === "parameter" &&
+          (dataSource.name === "formData" ||
+            dataSource.name === "browserInfo") &&
+          instances.get(dataSource.scopeInstanceId ?? "")?.component ===
+            "NativeForm"
+      )
+      .map(({ id }) => id)
+  );
+  const submissionResourceIds = new Set(
+    Array.from(resources.values())
+      .filter((resource) =>
+        Array.from(getResourceDataSourceIds(resource)).some((id) =>
+          formParameterIds.has(id)
+        )
+      )
+      .map(({ id }) => id)
+  );
   const rootResourceIds = getPageResourceRootIds({
     page,
     instances,
@@ -158,6 +181,9 @@ export const generateResources = ({
   const graphResourceIds = new Set<Resource["id"]>();
   const resourceDependencies = new Map<Resource["id"], Resource["id"][]>();
   const addResourceAndDependencies = (resourceId: Resource["id"]) => {
+    if (submissionResourceIds.has(resourceId)) {
+      return;
+    }
     if (graphResourceIds.has(resourceId)) {
       return;
     }

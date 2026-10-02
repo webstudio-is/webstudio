@@ -44,6 +44,7 @@ import {
   createResourceValueFromFormData,
   decodeDataVariableName,
   deleteResource,
+  deleteDataVariable,
   deleteVariableMutable,
   deleteUnusedDataVariables,
   encodeDataVariableName,
@@ -82,6 +83,112 @@ const Box = createTemplateComponentFixture("Box");
 const Fragment = createTemplateComponentFixture("Fragment");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
+const NativeForm = createTemplateComponentFixture("NativeForm");
+
+test("deleting a Resource removes it from a new Form's destinations", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("resourceVariable", {
+    type: "resource",
+    id: "resourceVariable",
+    name: "Submission",
+    scopeInstanceId: "formId",
+    resourceId: "resource",
+  });
+  data.resources.set("resource", {
+    id: "resource",
+    name: "Submission",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [],
+  });
+  data.props.set("submission", {
+    id: "submission",
+    instanceId: "formId",
+    name: "submission",
+    type: "json",
+    value: { mode: "resources", destinations: ["resourceVariable"] },
+  });
+
+  deleteVariableMutable(data, "resourceVariable");
+
+  expect(data.props.get("submission")).toMatchObject({
+    value: { mode: "resources", destinations: [] },
+  });
+});
+
+test("a Form can select ancestor and local Resources, while Form data stays local", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+      <Box ws:id="siblingId" />
+    </Body>
+  );
+  for (const [id, scopeInstanceId] of [
+    ["globalResource", "bodyId"],
+    ["localResource", "formId"],
+    ["siblingResource", "siblingId"],
+  ]) {
+    data.dataSources.set(id, {
+      type: "resource",
+      id,
+      name: id,
+      scopeInstanceId,
+      resourceId: id,
+    });
+  }
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+
+  const availableToForm = findAvailableVariables({
+    startingInstanceId: "formId",
+    instances: data.instances,
+    dataSources: data.dataSources,
+  });
+  expect(availableToForm.map(({ id }) => id)).toContain("globalResource");
+  expect(availableToForm.map(({ id }) => id)).toContain("localResource");
+  expect(availableToForm.map(({ id }) => id)).not.toContain("siblingResource");
+  const availableToOutside = findAvailableVariables({
+    startingInstanceId: "siblingId",
+    instances: data.instances,
+    dataSources: data.dataSources,
+  });
+  expect(availableToOutside.map(({ id }) => id)).not.toContain("formData");
+});
+
+test("Form submission parameters cannot be renamed or deleted", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+  const state = {
+    ...data,
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+  };
+  expect(() =>
+    updateDataVariable(state, {
+      dataSourceId: "formData",
+      values: { name: "renamed" },
+    })
+  ).toThrow("Form submission variables cannot be edited");
+  expect(() => deleteDataVariable(state, { dataSourceId: "formData" })).toThrow(
+    "Form submission variables cannot be deleted"
+  );
+});
 
 test("creates Map-backed patches without mutating caller-owned data", () => {
   const before = {
@@ -3812,6 +3919,47 @@ describe("resource patch helpers", () => {
       dataSourceIds: ["data-source"],
       propIds: ["prop"],
       isUsed: false,
+    });
+  });
+
+  test("guards a Form destination and removes its selection on forced deletion", () => {
+    const submission: Prop = {
+      id: "submission",
+      instanceId: "form",
+      name: "submission",
+      type: "json",
+      value: { mode: "resources", destinations: ["data-source"] },
+    };
+    const dataSource: DataSource = {
+      id: "data-source",
+      scopeInstanceId: "form",
+      name: "Submission",
+      type: "resource",
+      resourceId: resource.id,
+    };
+    expect(
+      createResourceDeletePayload({
+        resource,
+        props: [submission],
+        dataSources: [dataSource],
+      }).isUsed
+    ).toBe(true);
+    expect(
+      createResourceDeletePayload({
+        resource,
+        props: [submission],
+        dataSources: [dataSource],
+        force: true,
+      }).payload
+    ).toContainEqual({
+      namespace: "props",
+      patches: [
+        {
+          op: "replace",
+          path: ["submission", "value"],
+          value: { mode: "resources", destinations: [] },
+        },
+      ],
     });
   });
 

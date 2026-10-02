@@ -868,11 +868,13 @@ const VariablePreview = ({
 const VariablePopoverContent = ({
   formRef,
   variable,
+  defaultType,
   isOpen,
   onClose,
 }: {
   formRef: RefObject<HTMLFormElement>;
   variable?: DataSource;
+  defaultType?: VariableType;
   isOpen: boolean;
   onClose: () => void;
 }) => {
@@ -885,7 +887,12 @@ const VariablePopoverContent = ({
     (element: HTMLDivElement | null) => setQuerySourceContainer(element),
     []
   );
-  const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
+  const isSystemVariable =
+    variable?.id === SYSTEM_VARIABLE_ID ||
+    (variable?.type === "parameter" &&
+      (variable.name === "formData" || variable.name === "browserInfo") &&
+      $instances.get().get(variable.scopeInstanceId ?? "")?.component ===
+        "NativeForm");
   const previewReleaseRef = useRef<(() => void) | undefined>(undefined);
   const previewRevisionRef = useRef(0);
   const [showSavedResourceRequest, setShowSavedResourceRequest] =
@@ -922,7 +929,7 @@ const VariablePopoverContent = ({
       }
       return "json";
     }
-    return "string";
+    return defaultType ?? "string";
   });
 
   const cancelPreview = () => {
@@ -1171,9 +1178,11 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
 
 export const VariablePopoverTrigger = ({
   variable,
+  defaultType,
   children,
 }: {
   variable?: DataSource;
+  defaultType?: VariableType;
   children: ReactNode;
 }) => {
   const [isOpen, setOpen] = useState(false);
@@ -1206,6 +1215,7 @@ export const VariablePopoverTrigger = ({
         <VariablePopoverContent
           formRef={formRef}
           variable={variable}
+          defaultType={defaultType}
           isOpen={isOpen}
           onClose={() => setOpen(false)}
         />

@@ -17,6 +17,45 @@ import type { DataSource } from "./schema/data-sources";
 const Body = createTemplateComponentFixture("Body");
 const Form = createTemplateComponentFixture("Form");
 
+test("does not fetch a Form-bound Resource during page load", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "form" } as Page,
+    instances: toMap([
+      { type: "instance", id: "form", component: "NativeForm", children: [] },
+    ]),
+    dataSources: toMap([
+      {
+        id: "formDataId",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+      {
+        id: "resourceVariableId",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Submission",
+        resourceId: "resourceId",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "resourceId",
+        name: "Submission",
+        method: "post",
+        url: '"https://example.com"',
+        headers: [],
+        body: encodeDataSourceVariable("formDataId"),
+      },
+    ]),
+    props: new Map(),
+  });
+
+  expect(generated).not.toContain('id: "resourceId"');
+  expect(generated).not.toContain("formDataId");
+});
+
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
 

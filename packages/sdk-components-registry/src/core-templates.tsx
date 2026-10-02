@@ -33,6 +33,8 @@ import { componentsById } from "./components";
 
 const BlockTemplate = ws.blockTemplate;
 const blockDocument = new Parameter(contentBlockDocumentProp);
+const formData = new Parameter("formData");
+const browserInfo = new Parameter("browserInfo");
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
   ({ resolutionKey }) => resolutionKey === "element:li"
@@ -210,7 +212,7 @@ export const coreTemplates = {
     category: "forms",
     description: "Collect information with a native HTML form.",
     template: (
-      <NativeForm>
+      <NativeForm formData={formData} browserInfo={browserInfo}>
         <Label>
           {new PlaceholderValue("Name")}
           <Input name="name" autoComplete="name" required />

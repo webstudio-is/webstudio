@@ -10,6 +10,7 @@ import {
   blockComponent,
   contentBlockSourceProp,
   descendantComponent,
+  isFormSubmission,
 } from "@webstudio-is/sdk";
 import {
   canHaveTextContent,
@@ -194,12 +195,27 @@ export const usePropsLogic = ({
         styleSources,
       })
     : undefined;
+  const resourcesMode =
+    instance.component === "NativeForm" &&
+    props.some(
+      (prop) =>
+        prop.name === "submission" &&
+        prop.type === "json" &&
+        isFormSubmission(prop.value) &&
+        prop.value.mode === "resources"
+    );
 
   /**
    * In content edit mode we show only props marked with contentMode: true
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
+    if (
+      resourcesMode &&
+      (propName === "action" || propName === "method" || propName === "encType")
+    ) {
+      return false;
+    }
     if (!isContentMode) {
       return true;
     }

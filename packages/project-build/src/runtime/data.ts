@@ -11,6 +11,7 @@ import {
   getAllPages,
   getStyleDeclKey,
   isAssetsResource,
+  isFormSubmission,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -1154,6 +1155,21 @@ export const deleteVariableMutable = (
     return;
   }
   data.dataSources.delete(variableId);
+  for (const prop of data.props.values()) {
+    if (
+      prop.type !== "json" ||
+      prop.name !== "submission" ||
+      data.instances.get(prop.instanceId)?.component !== "NativeForm" ||
+      !isFormSubmission(prop.value) ||
+      !prop.value.destinations.includes(variableId)
+    ) {
+      continue;
+    }
+    prop.value = {
+      ...prop.value,
+      destinations: prop.value.destinations.filter((id) => id !== variableId),
+    };
+  }
   if (dataSource.type === "resource") {
     data.resources.delete(dataSource.resourceId);
   }
@@ -1571,6 +1587,17 @@ export const updateDataVariable = (
   if (dataSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Variable not found");
   }
+  if (
+    dataSource.type === "parameter" &&
+    (dataSource.name === "formData" || dataSource.name === "browserInfo") &&
+    state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
+      "NativeForm"
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Form submission variables cannot be edited"
+    );
+  }
   const scopeInstanceId =
     input.values.scopeInstanceId ?? dataSource.scopeInstanceId;
   if (scopeInstanceId === undefined) {
@@ -1639,6 +1666,18 @@ export const deleteDataVariable = (
   >,
   input: z.infer<typeof dataVariableDeleteInput>
 ) => {
+  const dataSource = state.dataSources?.get(input.dataSourceId);
+  if (
+    dataSource?.type === "parameter" &&
+    (dataSource.name === "formData" || dataSource.name === "browserInfo") &&
+    state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
+      "NativeForm"
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Form submission variables cannot be deleted"
+    );
+  }
   const { payload, deletedVariable } = createDataVariableDeletePayload({
     variableId: input.dataSourceId,
     pages: state.pages,
@@ -2551,16 +2590,34 @@ export const createResourceDeletePayload = ({
   propIds: Prop["id"][];
   isUsed: boolean;
 } => {
-  const resourceProps = Array.from(props).filter(
+  const propList = Array.from(props);
+  const resourceProps = propList.filter(
     (prop) => prop.type === "resource" && prop.value === resource.id
   );
-  if (resourceProps.length > 0 && force !== true) {
-    return { payload: [], dataSourceIds: [], propIds: [], isUsed: true };
-  }
   const resourceDataSources = Array.from(dataSources).filter(
     (dataSource) =>
       dataSource.type === "resource" && dataSource.resourceId === resource.id
   );
+  const resourceDataSourceIds = new Set(
+    resourceDataSources.map(({ id }) => id)
+  );
+  const formSubmissionProps = propList.flatMap((prop) => {
+    if (
+      prop.type !== "json" ||
+      prop.name !== "submission" ||
+      !isFormSubmission(prop.value) ||
+      !prop.value.destinations.some((id) => resourceDataSourceIds.has(id))
+    ) {
+      return [];
+    }
+    return [{ id: prop.id, value: prop.value }];
+  });
+  if (
+    (resourceProps.length > 0 || formSubmissionProps.length > 0) &&
+    force !== true
+  ) {
+    return { payload: [], dataSourceIds: [], propIds: [], isUsed: true };
+  }
   const payload: BuilderPatchChange[] = [
     {
       namespace: "resources",
@@ -2576,13 +2633,25 @@ export const createResourceDeletePayload = ({
       })),
     });
   }
-  if (resourceProps.length > 0) {
+  if (resourceProps.length > 0 || formSubmissionProps.length > 0) {
     payload.push({
       namespace: "props",
-      patches: resourceProps.map((prop) => ({
-        op: "remove" as const,
-        path: [prop.id],
-      })),
+      patches: [
+        ...resourceProps.map((prop) => ({
+          op: "remove" as const,
+          path: [prop.id],
+        })),
+        ...formSubmissionProps.map((prop) => ({
+          op: "replace" as const,
+          path: [prop.id, "value"],
+          value: {
+            ...prop.value,
+            destinations: prop.value.destinations.filter(
+              (id) => resourceDataSourceIds.has(id) === false
+            ),
+          },
+        })),
+      ],
     });
   }
 

@@ -3017,28 +3017,69 @@ sitemap.map((page) => page.path);`
   }, 30_000);
 
   test("prerenders the new Form as plain HTML", async () => {
-    await writeSiteData(
-      createSiteData({
-        instances: [
-          [
-            "root",
-            {
-              id: "root",
-              component: "Box",
-              children: [{ type: "id", value: "form" }],
-            },
-          ],
-          [
-            "form",
-            {
-              id: "form",
-              component: "NativeForm",
-              children: [],
-            },
-          ],
+    const siteData = createSiteData({
+      instances: [
+        [
+          "root",
+          {
+            id: "root",
+            component: "Box",
+            children: [{ type: "id", value: "form" }],
+          },
         ],
-      })
-    );
+        [
+          "form",
+          {
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ],
+    });
+    siteData.build.dataSources = [
+      [
+        "formData",
+        {
+          type: "parameter",
+          id: "formData",
+          name: "formData",
+          scopeInstanceId: "form",
+        },
+      ],
+      [
+        "browserInfo",
+        {
+          type: "parameter",
+          id: "browserInfo",
+          name: "browserInfo",
+          scopeInstanceId: "form",
+        },
+      ],
+    ] as never;
+    siteData.build.props = [
+      [
+        "formData",
+        {
+          id: "formData",
+          instanceId: "form",
+          name: "formData",
+          type: "parameter",
+          value: "formData",
+        },
+      ],
+      [
+        "browserInfo",
+        {
+          id: "browserInfo",
+          instanceId: "form",
+          name: "browserInfo",
+          type: "parameter",
+          value: "browserInfo",
+        },
+      ],
+    ];
+    await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");

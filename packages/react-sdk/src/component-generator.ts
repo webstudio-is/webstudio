@@ -723,6 +723,17 @@ export const generateWebstudioComponent = ({
 
   let generatedDataSources = "";
   for (const dataSource of usedDataSources.values()) {
+    if (
+      dataSource.type === "parameter" &&
+      (dataSource.name === "formData" || dataSource.name === "browserInfo") &&
+      instances.get(dataSource.scopeInstanceId ?? "")?.component ===
+        "NativeForm"
+    ) {
+      // Form submission values are resolved only when a managed submit runs.
+      // A page render must not read visitor data or require it as page props.
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      generatedDataSources += `const ${valueName}: any = undefined\n`;
+    }
     if (dataSource.type === "variable") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
       const setterName = scope.getName(

@@ -22,6 +22,7 @@ import {
   findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   getHomePage,
+  isFormSubmission,
   portalComponent,
   webstudioFragment,
 } from "@webstudio-is/sdk";
@@ -869,6 +870,9 @@ export const insertWebstudioFragmentCopy = ({
     ) {
       continue;
     }
+    const isNativeFormSubmission =
+      prop.name === "submission" &&
+      fragmentInstances.get(prop.instanceId)?.component === "NativeForm";
     prop = clonePropForInstance({
       prop: unwrap(prop),
       propId: createId(),
@@ -895,6 +899,18 @@ export const insertWebstudioFragmentCopy = ({
     }
     if (prop.type === "parameter") {
       prop.value = newDataSourceIds.get(prop.value) ?? prop.value;
+    }
+    if (
+      prop.type === "json" &&
+      isNativeFormSubmission &&
+      isFormSubmission(prop.value)
+    ) {
+      prop.value = {
+        ...prop.value,
+        destinations: prop.value.destinations.map(
+          (id) => newDataSourceIds.get(id) ?? id
+        ),
+      };
     }
     if (prop.type === "resource") {
       const newResourceId = createId();
