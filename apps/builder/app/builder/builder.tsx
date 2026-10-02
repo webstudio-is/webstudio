@@ -92,7 +92,6 @@ import { useDisableContextMenu } from "./shared/use-disable-context-menu";
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
-  const selectedPageId = useStore($selectedPageId);
   useEffect(() => {
     document.title = `${project?.title} | Webstudio`;
   }, [project?.title]);
@@ -339,6 +338,7 @@ export const Builder = (props: BuilderProps) => {
   }, [publish]);
 
   const project = useStore($project);
+  const selectedPageId = useStore($selectedPageId);
 
   usePreventUnload();
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
