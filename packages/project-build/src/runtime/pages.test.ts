@@ -834,6 +834,70 @@ describe("serialized page helpers", () => {
     });
   });
 
+  test("looks up pages with published route ranking and wildcard behavior", () => {
+    const pages = migratePages({
+      meta: {},
+      homePage: {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeBody",
+      },
+      pages: [
+        {
+          id: "docs-splat",
+          name: "Docs splat",
+          path: "/docs/*",
+          title: `"Docs splat"`,
+          meta: {},
+          rootInstanceId: "docsSplatBody",
+        },
+        {
+          id: "docs-optional",
+          name: "Docs optional",
+          path: "/docs/:slug?",
+          title: `"Docs optional"`,
+          meta: {},
+          rootInstanceId: "docsOptionalBody",
+        },
+        {
+          id: "docs-static",
+          name: "Docs static",
+          path: "/docs/guide",
+          title: `"Docs static"`,
+          meta: {},
+          rootInstanceId: "docsStaticBody",
+        },
+      ],
+      folders: [
+        createRootFolder([
+          "home",
+          "docs-splat",
+          "docs-optional",
+          "docs-static",
+        ]),
+      ],
+    });
+    const serializedPages = getSerializedPages({ pages });
+
+    for (const [path, expectedPageId] of [
+      ["/docs", "docs-optional"],
+      ["/docs/guide", "docs-static"],
+      ["/docs/other", "docs-optional"],
+      ["/docs/a/b", "docs-splat"],
+      ["/DOCS/GUIDE", "docs-static"],
+    ]) {
+      expect(
+        findSerializedPageByInput(serializedPages, { pagePath: path })?.id
+      ).toBe(expectedPageId);
+    }
+    expect(
+      findSerializedPageByInput(serializedPages, { pagePath: "/docs/*" })?.id
+    ).toBe("docs-splat");
+  });
+
   test("serializes page summary and details with parent folder", () => {
     const pages = createDefaultPages({
       rootInstanceId: "root",

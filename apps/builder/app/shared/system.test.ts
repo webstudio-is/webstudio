@@ -45,6 +45,30 @@ const getInitialPages = (page: Page): Pages => ({
   ]),
 });
 
+const getPagesInBlogFolder = (page: Page): Pages => ({
+  ...getInitialPages(page),
+  folders: new Map([
+    [
+      "rootId",
+      {
+        id: "rootId",
+        name: "",
+        slug: "",
+        children: ["homeId", "folderId"],
+      },
+    ],
+    [
+      "folderId",
+      {
+        id: "folderId",
+        name: "Blog",
+        slug: "blog",
+        children: ["dynamicId"],
+      },
+    ],
+  ]),
+});
+
 describe("history", () => {
   test("add new path at the start", () => {
     $pages.set(
@@ -100,36 +124,16 @@ describe("history", () => {
 });
 
 test("system pathname includes parent folder slug", () => {
-  $pages.set({
-    ...getInitialPages({
+  $pages.set(
+    getPagesInBlogFolder({
       id: "dynamicId",
       path: "/post/:slug",
       name: "",
       title: "",
       meta: {},
       rootInstanceId: "",
-    }),
-    folders: new Map([
-      [
-        "rootId",
-        {
-          id: "rootId",
-          name: "",
-          slug: "",
-          children: ["homeId", "folderId"],
-        },
-      ],
-      [
-        "folderId",
-        {
-          id: "folderId",
-          name: "Blog",
-          slug: "blog",
-          children: ["dynamicId"],
-        },
-      ],
-    ]),
-  });
+    })
+  );
   selectPage("dynamicId");
 
   updateCurrentSystem({
@@ -143,8 +147,8 @@ test("system pathname includes parent folder slug", () => {
 });
 
 test("system params support legacy history without parent folder slug", () => {
-  $pages.set({
-    ...getInitialPages({
+  $pages.set(
+    getPagesInBlogFolder({
       id: "dynamicId",
       path: "/post/:slug",
       name: "",
@@ -152,32 +156,29 @@ test("system params support legacy history without parent folder slug", () => {
       meta: {},
       rootInstanceId: "",
       history: ["/post/my-post"],
-    }),
-    folders: new Map([
-      [
-        "rootId",
-        {
-          id: "rootId",
-          name: "",
-          slug: "",
-          children: ["homeId", "folderId"],
-        },
-      ],
-      [
-        "folderId",
-        {
-          id: "folderId",
-          name: "Blog",
-          slug: "blog",
-          children: ["dynamicId"],
-        },
-      ],
-    ]),
-  });
+    })
+  );
   selectPage("dynamicId");
 
   expect($currentSystem.get()).toMatchObject({
     params: { slug: "my-post" },
     pathname: "/blog/post/my-post",
   });
+});
+
+test("system params decode history paths with an encoded folder slug", () => {
+  $pages.set(
+    getPagesInBlogFolder({
+      id: "dynamicId",
+      path: "/post/:slug",
+      name: "",
+      title: "",
+      meta: {},
+      rootInstanceId: "",
+      history: ["/%62log/post/caf%C3%A9"],
+    })
+  );
+  selectPage("dynamicId");
+
+  expect($currentSystem.get().params).toEqual({ slug: "café" });
 });

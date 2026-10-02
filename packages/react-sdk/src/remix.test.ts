@@ -1,5 +1,9 @@
 import { expect, test, describe } from "vitest";
-import { generateRemixParams, generateRemixRoute } from "./remix";
+import {
+  generateRemixParams,
+  generateRemixRoute,
+  toWebstudioParams,
+} from "./remix";
 import { STATIC_PATHS } from "@webstudio-is/sdk/router-path-test-data";
 
 /**
@@ -87,33 +91,20 @@ test("convert named groups to remix route", () => {
   );
 });
 
-test("generate remix params for static pathname", () => {
-  expect("\n" + generateRemixParams("/blog/my-post")).toEqual(`
-type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params
-}
-`);
+test("maps Remix splats to Webstudio page parameter names", () => {
+  expect(toWebstudioParams("/blog/:name*", { "*": "a/b" })).toEqual({
+    name: "a/b",
+  });
+  expect(toWebstudioParams("/blog/*", { "*": "a/b" })).toEqual({
+    0: "a/b",
+  });
+  expect(toWebstudioParams("/blog/:slug", { slug: "post" })).toEqual({
+    slug: "post",
+  });
 });
 
-test("generate remix params converter with wildcard", () => {
-  expect("\n" + generateRemixParams("/blog/*")).toEqual(`
-type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  params[0] = params["*"]
-  delete params["*"]
-  return params
-}
-`);
-});
-
-test("generate remix params converter with named group and * modifier", () => {
-  expect("\n" + generateRemixParams("/blog/:name*")).toEqual(`
-type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  params["name"] = params["*"]
-  delete params["*"]
-  return params
-}
-`);
+test("generated pages call the shared parameter adapter", () => {
+  expect(generateRemixParams("/docs/:rest*")).toContain(
+    'toWebstudioParams("/docs/:rest*", params)'
+  );
 });
