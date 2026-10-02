@@ -691,6 +691,24 @@ const getUpdatedText = (
   return visit(rootInstanceId);
 };
 
+const getCanvasPageChildren = (
+  instance: Instance,
+  instanceSelector: InstanceSelector,
+  children: ReactNode
+) => {
+  if (
+    instanceSelector.length !== 1 ||
+    instance.component !== elementComponent ||
+    instance.tag !== "body"
+  ) {
+    return children;
+  }
+
+  // React keeps <body> mounted across page changes. Give its authored content
+  // one removable host node so teardown does not visit component-mutated DOM.
+  return <div style={{ display: "contents" }}>{children}</div>;
+};
+
 const WebstudioComponentCanvasInner = forwardRef<
   HTMLElement,
   WebstudioComponentProps
@@ -838,7 +856,7 @@ const WebstudioComponentCanvasInner = forwardRef<
   const instanceElement = (
     <>
       <Component key={key} {...props} ref={ref}>
-        {children}
+        {getCanvasPageChildren(instance, instanceSelector, children)}
       </Component>
     </>
   );
@@ -1093,14 +1111,18 @@ const WebstudioComponentPreviewInner = forwardRef<
 
   const element = (
     <Component {...props} ref={ref}>
-      {getTextContent(instanceProps) ??
-        createInstanceChildrenElements({
-          instances,
-          instanceSelector,
-          children: instance.children,
-          Component: WebstudioComponentPreview,
-          components,
-        })}
+      {getCanvasPageChildren(
+        instance,
+        instanceSelector,
+        getTextContent(instanceProps) ??
+          createInstanceChildrenElements({
+            instances,
+            instanceSelector,
+            children: instance.children,
+            Component: WebstudioComponentPreview,
+            components,
+          })
+      )}
     </Component>
   );
 
