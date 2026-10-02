@@ -5,6 +5,7 @@ import { expect, test, vi } from "vitest";
 import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
+  managedFormRequestParamName,
 } from "@webstudio-is/sdk/runtime";
 import { NativeForm } from "./native-form";
 
@@ -14,36 +15,41 @@ import { NativeForm } from "./native-form";
 
 test("managed Form posts its server identity and shows the action error", async () => {
   const submissions: FormData[] = [];
+  const requestUrls: string[] = [];
   const action = vi.fn(async ({ request }: { request: Request }) => {
+    requestUrls.push(request.url);
     submissions.push(await request.formData());
-    return { success: false, errors: ["Resource submission is unavailable"] };
+    return { success: false, errors: ["Resource request failed (422)"] };
   });
-  const router = createMemoryRouter([
-    {
-      path: "/",
-      element: (
-        <NativeForm
-          data-ws-managed-form-id="form-instance"
-          submission={{ mode: "resources", destinations: ["resource-id"] }}
-        >
-          <input name="message" defaultValue="Hello" />
-          <input name="tag" defaultValue="first" />
-          <input name="tag" defaultValue="second" />
-          <input
-            type="checkbox"
-            name="selected"
-            value="chosen"
-            defaultChecked
-          />
-          <input type="checkbox" name="selected" value="other" />
-          <input type="checkbox" name="empty" value="unused" />
-          <input type="file" name="uploads" multiple />
-          <button type="submit">Send</button>
-        </NativeForm>
-      ),
-      action,
-    },
-  ]);
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: (
+          <NativeForm
+            data-ws-managed-form-id="form-instance"
+            submission={{ mode: "resources", destinations: ["resource-id"] }}
+          >
+            <input name="message" defaultValue="Hello" />
+            <input name="tag" defaultValue="first" />
+            <input name="tag" defaultValue="second" />
+            <input
+              type="checkbox"
+              name="selected"
+              value="chosen"
+              defaultChecked
+            />
+            <input type="checkbox" name="selected" value="other" />
+            <input type="checkbox" name="empty" value="unused" />
+            <input type="file" name="uploads" multiple />
+            <button type="submit">Send</button>
+          </NativeForm>
+        ),
+        action,
+      },
+    ],
+    { initialEntries: ["/?source=staging"] }
+  );
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -64,6 +70,9 @@ test("managed Form posts its server identity and shows the action error", async 
       container.querySelector("button")?.click();
       await vi.waitFor(() => expect(submissions).toHaveLength(1));
     });
+    const requestUrl = new URL(requestUrls[0]);
+    expect(requestUrl.searchParams.get("source")).toBe("staging");
+    expect(requestUrl.searchParams.get(managedFormRequestParamName)).toBe("1");
     expect(submissions[0].get(managedFormIdFieldName)).toBe("form-instance");
     expect(submissions[0].get("message")).toBe("Hello");
     expect(submissions[0].getAll("tag")).toEqual(["first", "second"]);
@@ -81,7 +90,7 @@ test("managed Form posts its server identity and shows the action error", async 
     expect(await (uploaded as File).text()).toBe("original bytes");
     await vi.waitFor(() =>
       expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-        "Resource submission is unavailable"
+        "Resource request failed (422)"
       )
     );
   } finally {
