@@ -33,6 +33,7 @@ export const createInstanceElement = ({
   instanceSelector,
   Component,
   components,
+  instanceKey,
   ref,
 }: {
   instances: Instances;
@@ -42,6 +43,7 @@ export const createInstanceElement = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  instanceKey?: string;
   ref?: RefObject<HTMLElement>;
 }) => {
   const instance = instances.get(instanceId);
@@ -51,7 +53,7 @@ export const createInstanceElement = ({
   return (
     <Component
       ref={ref}
-      key={instance.id}
+      key={instanceKey ?? instance.id}
       instance={instance}
       instanceSelector={instanceSelector}
       components={components}

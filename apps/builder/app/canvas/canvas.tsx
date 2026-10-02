@@ -111,6 +111,8 @@ const useElementsTree = (components: Components, instances: Instances) => {
   const assets = useStore($assets);
   const assetFolders = useStore($assetFolders);
   const rootInstanceId = page?.rootInstanceId ?? "";
+  const pageRootKey =
+    page === undefined ? undefined : `${page.id}:${rootInstanceId}`;
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
@@ -156,6 +158,10 @@ const useElementsTree = (components: Components, instances: Instances) => {
           instances,
           instanceId: rootInstanceId,
           instanceSelector: [rootInstanceId],
+          // Tear down the previous page at its host root. Canvas components can
+          // mutate descendants directly, so reconciling those descendants across
+          // pages can make React remove nodes that are no longer in their parent.
+          instanceKey: pageRootKey,
           Component: isPreviewMode
             ? WebstudioComponentPreview
             : WebstudioComponentCanvas,
@@ -166,6 +172,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
   }, [
     instances,
     rootInstanceId,
+    pageRootKey,
     components,
     isPreviewMode,
     breakpoints,
