@@ -318,6 +318,7 @@ export const Canvas = () => {
   const components = useStore($registeredComponents);
   const instances = useStore($instances);
   const elements = useElementsTree(components, instances);
+  const selectedPageId = selectedPage?.id;
 
   const [isInitialized, setInitialized] = useState(false);
   useEffect(() => {
@@ -327,18 +328,18 @@ export const Canvas = () => {
   useEffect(() => {
     if (
       !isInitialized ||
-      selectedPage === undefined ||
+      selectedPageId === undefined ||
       components.size === 0 ||
       instances.size === 0
     ) {
       return;
     }
     const frame = window.frameElement;
-    if (frame?.getAttribute("data-ws-page-id") !== selectedPage.id) {
+    if (frame?.getAttribute("data-ws-page-id") !== selectedPageId) {
       return;
     }
     frame.dispatchEvent(new Event(canvasRenderedEvent));
-  }, [isInitialized, selectedPage?.id, components, instances]);
+  }, [isInitialized, selectedPageId, components, instances]);
 
   if (components.size === 0 || instances.size === 0) {
     return;
