@@ -5,7 +5,7 @@ import {
   type getFormDataValue,
   useManagedFormResult,
 } from "@webstudio-is/sdk-components-react";
-import { managedFormRequestParamName } from "@webstudio-is/sdk";
+import { managedFormRequestParamName } from "@webstudio-is/sdk/form-fields";
 import { NativeForm as BaseNativeForm } from "@webstudio-is/sdk-components-react/components";
 
 type Props = ComponentProps<typeof BaseNativeForm> & {

@@ -4,7 +4,7 @@ import {
   isBraveBrowser,
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
-} from "@webstudio-is/sdk/runtime";
+} from "@webstudio-is/sdk/form-fields";
 
 const internalFormFieldNames = new Set([
   formBotFieldName,

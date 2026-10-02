@@ -24,8 +24,9 @@ import {
   managedFormIdFieldName,
   formBotFieldName,
   cachedFetch,
+  isFormSubmission,
+  validateFormSubmission,
 } from "@webstudio-is/sdk/runtime";
-import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 import { authenticateProjectRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,

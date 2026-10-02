@@ -8701,6 +8701,10 @@ export const runtimeOperationContractData = [
                           body: {
                             type: "string",
                           },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
+                          },
                         },
                         required: ["id", "name", "method", "url", "headers"],
                       },
@@ -11916,6 +11920,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -15144,6 +15152,10 @@ export const runtimeOperationContractData = [
                           body: {
                             type: "string",
                           },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
+                          },
                         },
                         required: ["id", "name", "method", "url", "headers"],
                       },
@@ -18359,6 +18371,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -24294,6 +24310,10 @@ export const runtimeOperationContractData = [
                                 body: {
                                   type: "string",
                                 },
+                                bodyFormat: {
+                                  type: "string",
+                                  enum: ["auto", "json", "multipart"],
+                                },
                               },
                               required: [
                                 "id",
@@ -27717,6 +27737,10 @@ export const runtimeOperationContractData = [
                                 },
                                 body: {
                                   type: "string",
+                                },
+                                bodyFormat: {
+                                  type: "string",
+                                  enum: ["auto", "json", "multipart"],
                                 },
                               },
                               required: [
@@ -41690,6 +41714,10 @@ export const runtimeOperationContractData = [
                     description:
                       'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
+                  },
                 },
                 required: ["name", "method", "url", "headers"],
               },
@@ -42391,6 +42419,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -45686,6 +45718,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -52750,6 +52786,10 @@ export const runtimeOperationContractData = [
                   body: {
                     type: "string",
                   },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
+                  },
                 },
                 required: ["id", "name", "method", "url", "headers"],
               },
@@ -58660,6 +58700,10 @@ export const runtimeOperationContractData = [
                   },
                   body: {
                     type: "string",
+                  },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
                   },
                 },
                 required: ["id", "name", "method", "url", "headers"],
@@ -75567,6 +75611,10 @@ export const runtimeOperationContractData = [
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
+            },
           },
           required: ["name", "method", "url", "headers"],
         },
@@ -75823,6 +75871,10 @@ export const runtimeOperationContractData = [
               ],
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
             },
           },
           required: [],
@@ -76182,6 +76234,10 @@ export const runtimeOperationContractData = [
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
+            },
           },
           required: ["name", "method", "url", "headers"],
         },
@@ -76384,6 +76440,10 @@ export const runtimeOperationContractData = [
               ],
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
             },
           },
           required: ["name", "method", "url", "headers"],

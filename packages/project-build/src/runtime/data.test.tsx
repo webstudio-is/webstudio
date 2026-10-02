@@ -2852,6 +2852,7 @@ describe("resource patch helpers", () => {
             },
           ],
           body: { type: "literal", value: "request body" },
+          bodyFormat: "json",
         }),
       },
       { createId: () => "resource-id" }
@@ -2872,6 +2873,7 @@ describe("resource patch helpers", () => {
             searchParams: [{ name: "status", value: '"active"' }],
             headers: [{ name: "Content-Type", value: '"application/json"' }],
             body: '"request body"',
+            bodyFormat: "json",
           },
         },
       ],
@@ -3346,6 +3348,69 @@ describe("resource patch helpers", () => {
     });
   });
 
+  test("preserves body format in a resource create payload", () => {
+    const result = createResourceCreatePayload({
+      resourceId: "resource",
+      resource: { ...resource, bodyFormat: "multipart" },
+      resources: [],
+      dataSources: [],
+    });
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource"],
+          value: expect.objectContaining({ bodyFormat: "multipart" }),
+        },
+      ],
+    });
+  });
+
+  test("persists body format selected in the Resource editor through upsert", () => {
+    const formData = new FormData();
+    formData.set("name", "Upload");
+    formData.set("method", "post");
+    formData.set("url", '"https://example.com/upload"');
+    formData.set("body-format", "multipart");
+    const body: Instance = {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    };
+
+    const result = upsertResource(
+      {
+        pages: createDefaultPages({ rootInstanceId: body.id }),
+        instances: new Map([[body.id, body]]),
+        props: new Map(),
+        dataSources: new Map(),
+        resources: new Map(),
+        breakpoints: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+        styles: new Map(),
+      },
+      {
+        scopeInstanceId: body.id,
+        resource: createResourceFieldsFromFormData({ formData }),
+      },
+      { createId: () => "resource-id" }
+    );
+
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource-id"],
+          value: expect.objectContaining({ bodyFormat: "multipart" }),
+        },
+      ],
+    });
+  });
+
   test("upserts resource and preserves existing data source id", () => {
     const body: Instance = {
       type: "instance",
@@ -3581,6 +3646,7 @@ describe("resource patch helpers", () => {
           method: "post",
           url: "https://example.com/submit",
           headers: [],
+          bodyFormat: "multipart",
         }),
       },
       { createId: () => ids.shift() ?? "extra-id" }
@@ -3626,6 +3692,7 @@ describe("resource patch helpers", () => {
             searchParams: undefined,
             headers: [],
             body: undefined,
+            bodyFormat: "multipart",
           },
         },
       ],

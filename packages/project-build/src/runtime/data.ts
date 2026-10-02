@@ -2515,6 +2515,7 @@ export const createResourceCreatePayload = ({
             searchParams: resourceInput.searchParams,
             headers: resourceInput.headers,
             body: resourceInput.body,
+            bodyFormat: resourceInput.bodyFormat,
           }),
         },
       ],
@@ -2805,6 +2806,7 @@ export const createResource = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
   });
   const warnings = getResourceWarnings({
     fields: resource,
@@ -3071,6 +3073,7 @@ export const upsertResource = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
   });
 
   return createRuntimeMutation({
@@ -3138,6 +3141,7 @@ export const upsertResourceProp = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
   });
   const existingProp = findProp(build.props, input.instanceId, input.propName);
   const nextProp = createValidatedPropValueFromInput(

@@ -6,7 +6,10 @@ import {
   type ElementRef,
   type FormEvent,
 } from "react";
-import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
+import {
+  isFormSubmission,
+  validateFormSubmission,
+} from "@webstudio-is/sdk/form-submission";
 import { getFormDataValue } from "./form-submission";
 
 export const defaultTag = "form";
