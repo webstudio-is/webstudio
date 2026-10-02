@@ -420,43 +420,27 @@ export const createObjectPool = () => {
 };
 
 declare global {
-  interface Window {
-    __webstudioSharedSyncEmitter__: SyncEmitter | undefined;
+  interface HTMLIFrameElement {
+    __webstudioSharedSyncEmitter__?: SyncEmitter;
   }
 }
 
-/**
- * prevent syncEmitter interception from embedded scripts on canvas
- * i.e., `globalThis.syncEmitter = () => console.log('INTERCEPTED');`,
- */
 const sharedSyncEmitter = (() => {
   if (typeof window === "undefined") {
     return;
   }
-  if (window.__webstudioSharedSyncEmitter__) {
-    return window.__webstudioSharedSyncEmitter__;
-  }
   try {
-    if (window.parent !== window) {
-      return window.parent.__webstudioSharedSyncEmitter__;
+    const frame = window.frameElement as HTMLIFrameElement | null;
+    // Capture the bridge before authored scripts run, then remove its handle.
+    const emitter = frame?.__webstudioSharedSyncEmitter__;
+    if (frame) {
+      delete frame.__webstudioSharedSyncEmitter__;
     }
+    return emitter;
   } catch {
     // A standalone Canvas can be embedded from another origin.
   }
 })();
-if (typeof window !== "undefined") {
-  delete window.__webstudioSharedSyncEmitter__;
-  try {
-    if (
-      window.parent !== window &&
-      window.parent.__webstudioSharedSyncEmitter__ === sharedSyncEmitter
-    ) {
-      delete window.parent.__webstudioSharedSyncEmitter__;
-    }
-  } catch {
-    // The parent is not accessible to a cross-origin standalone Canvas.
-  }
-}
 
 export const useCanvasStore = () => {
   useEffect(() => {

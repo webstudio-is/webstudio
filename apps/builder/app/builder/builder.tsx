@@ -355,19 +355,18 @@ export const Builder = (props: BuilderProps) => {
     return mergeRefs((element: HTMLIFrameElement | null) => {
       disposeSyncEmitter();
       disposeSyncEmitter = () => {};
-      if (element?.contentWindow) {
+      if (element) {
         const client = getSyncClient();
         if (client) {
           const scoped = createScopedSyncEmitter(client.emitter);
           disposeSyncEmitter = () => {
             scoped.dispose();
-            if (window.__webstudioSharedSyncEmitter__ === scoped.emitter) {
-              delete window.__webstudioSharedSyncEmitter__;
+            if (element.__webstudioSharedSyncEmitter__ === scoped.emitter) {
+              delete element.__webstudioSharedSyncEmitter__;
             }
           };
-          window.__webstudioSharedSyncEmitter__ = scoped.emitter;
-          // The Canvas captures this before embedded scripts can replace it.
-          element.contentWindow.__webstudioSharedSyncEmitter__ = scoped.emitter;
+          // The frame element survives navigation to /canvas.
+          element.__webstudioSharedSyncEmitter__ = scoped.emitter;
         }
       }
     }, publishRef);
