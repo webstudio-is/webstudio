@@ -3,6 +3,7 @@
 
 
       import type { PageMeta } from "@webstudio-is/sdk";
+      import { toWebstudioParams } from "@webstudio-is/react-sdk";
       import type { System, ResourceRequest } from "@webstudio-is/sdk";
 import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";
 export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {
@@ -42,11 +43,7 @@ export const getResources = (_props: { system: System; resources?: Record<string
 };
 
 
-      type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params
-}
-
+      export const getRemixParams = (params: Record<string, string | undefined>) => toWebstudioParams("/duration", params);
 
       export const contactEmail = "hello@webstudio.is";
     

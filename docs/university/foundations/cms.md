@@ -44,7 +44,7 @@ Similar to a static page, the path includes dynamic parameters, like a post slug
 
 Adding parameters to a page path will automatically turn the page into a Dynamic Page.
 
-The path can include dynamic parameters like `:name`, which could be made optional using `:name?`, or have a wildcard such as `/*` or `/:name*` to store the whole remaining part at the end of the URL.
+Use a [path pattern](path-patterns.md) to define which URLs use the Dynamic Page. For example, `/post/:slug` provides the value of `slug` from the URL.
 
 The value of the parameter comes from whatever is in the URL. If the path is `/post/:slug` and somebody views `/post/hello-world` then `hello-world` is the value used in your Resource.
 
