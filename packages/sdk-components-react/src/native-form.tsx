@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useEffect,
   useState,
   type ComponentProps,
   type ElementRef,
@@ -33,6 +34,8 @@ export const NativeForm = forwardRef<
     ref
   ) => {
     const [error, setError] = useState<string>();
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => setHydrated(true), []);
     const validSubmission = isFormSubmission(submission);
     const managed =
       submission !== undefined &&
@@ -74,7 +77,13 @@ export const NativeForm = forwardRef<
         ref={ref}
         onSubmit={managed ? handleManagedSubmit : onSubmit}
       >
-        {children}
+        {managed ? (
+          <fieldset disabled={!hydrated} style={{ display: "contents" }}>
+            <div style={{ display: "contents" }}>{children}</div>
+          </fieldset>
+        ) : (
+          children
+        )}
         {(configurationError || error) && (
           <div role="alert">{error ?? configurationError}</div>
         )}

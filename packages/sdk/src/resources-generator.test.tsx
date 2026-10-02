@@ -54,6 +54,82 @@ test("does not fetch a Form-bound Resource during page load", () => {
 
   expect(generated).not.toContain('id: "resourceId"');
   expect(generated).not.toContain("formDataId");
+  expect(generated).not.toContain("formData");
+});
+
+test("excludes transitive Form-only Resources and rejects Dynamic Content Block selection", () => {
+  const input = {
+    page: { rootInstanceId: "form" } as Page,
+    instances: toMap([
+      {
+        type: "instance" as const,
+        id: "form",
+        component: "NativeForm",
+        children: [],
+      },
+    ]),
+    dataSources: toMap([
+      {
+        id: "formDataId",
+        type: "parameter" as const,
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+      {
+        id: "directResourceVariableId",
+        type: "resource" as const,
+        scopeInstanceId: "form",
+        name: "Direct",
+        resourceId: "directResourceId",
+      },
+      {
+        id: "derivedResourceVariableId",
+        type: "resource" as const,
+        scopeInstanceId: "form",
+        name: "Derived",
+        resourceId: "derivedResourceId",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "directResourceId",
+        name: "Direct",
+        method: "post" as const,
+        url: '"https://example.com/direct"',
+        headers: [],
+        body: encodeDataSourceVariable("formDataId"),
+      },
+      {
+        id: "derivedResourceId",
+        name: "Derived",
+        method: "post" as const,
+        url: '"https://example.com/derived"',
+        headers: [],
+        body: encodeDataSourceVariable("directResourceVariableId"),
+      },
+    ]),
+    props: new Map(),
+  };
+  const generated = generateResources({ scope: createScope(), ...input });
+  expect(generated).not.toContain("directResourceId");
+  expect(generated).not.toContain("derivedResourceId");
+
+  expect(() =>
+    generateResources({
+      scope: createScope(),
+      ...input,
+      contentBlockResourceSelections: [
+        {
+          sourceExpression: '"choice"',
+          candidates: [
+            { assetId: "choice", resourceIds: ["derivedResourceId"] },
+          ],
+        },
+      ],
+    })
+  ).toThrow(
+    "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+  );
 });
 
 const toMap = <T extends { id: string }>(list: T[]) =>

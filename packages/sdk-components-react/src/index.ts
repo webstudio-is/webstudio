@@ -3,6 +3,7 @@ import { LinkCurrentUrlContext } from "./link-current-url";
 
 export { createLink, LinkCurrentUrlContext, type LinkProps };
 export {
+  createManagedSubmissionFormData,
   getBrowserInfo,
   getFormDataValue,
   type BrowserInfo,

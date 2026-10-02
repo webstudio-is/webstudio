@@ -1,4 +1,17 @@
-import { formBotFieldName, formIdFieldName } from "@webstudio-is/sdk/runtime";
+import {
+  formBotFieldName,
+  formIdFieldName,
+  isBraveBrowser,
+  managedFormArrayNamesFieldName,
+  managedFormIdFieldName,
+} from "@webstudio-is/sdk/runtime";
+
+const internalFormFieldNames = new Set([
+  formBotFieldName,
+  formIdFieldName,
+  managedFormArrayNamesFieldName,
+  managedFormIdFieldName,
+]);
 
 /** Match native FormData order while retaining repeated names and File values. */
 export const getFormDataValue = (
@@ -8,18 +21,15 @@ export const getFormDataValue = (
   const values: Record<string, FormDataEntryValue | FormDataEntryValue[]> =
     Object.create(null);
   const repeatedNames = new Set<string>();
-  const counts = new Map<string, number>();
   for (const control of form.elements) {
     if (
       (control instanceof HTMLInputElement ||
         control instanceof HTMLSelectElement ||
         control instanceof HTMLTextAreaElement) &&
       control.name &&
-      control.name !== formBotFieldName &&
-      control.name !== formIdFieldName &&
+      !internalFormFieldNames.has(control.name) &&
       !control.matches(":disabled")
     ) {
-      counts.set(control.name, (counts.get(control.name) ?? 0) + 1);
       if (
         control instanceof HTMLInputElement &&
         (control.type === "checkbox" ||
@@ -34,16 +44,20 @@ export const getFormDataValue = (
       }
     }
   }
+  const formData = submitter
+    ? new FormData(form, submitter)
+    : new FormData(form);
+  const counts = new Map<string, number>();
+  for (const [name] of formData) {
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
   for (const [name, count] of counts) {
     if (count > 1) {
       repeatedNames.add(name);
     }
   }
-  const formData = submitter
-    ? new FormData(form, submitter)
-    : new FormData(form);
   for (const [name, value] of formData) {
-    if (name === formBotFieldName || name === formIdFieldName) {
+    if (internalFormFieldNames.has(name)) {
       continue;
     }
     if (repeatedNames.has(name)) {
@@ -58,6 +72,33 @@ export const getFormDataValue = (
     values[name] = value;
   }
   return values;
+};
+
+/** Preserve list shape across multipart submission, including empty groups. */
+export const createManagedSubmissionFormData = ({
+  values,
+  managedFormId,
+}: {
+  values: ReturnType<typeof getFormDataValue>;
+  managedFormId: string;
+}) => {
+  const formData = new FormData();
+  const arrayNames: string[] = [];
+  for (const [name, value] of Object.entries(values)) {
+    if (Array.isArray(value)) {
+      arrayNames.push(name);
+    }
+    for (const item of Array.isArray(value) ? value : [value]) {
+      formData.append(name, item);
+    }
+  }
+  formData.set(managedFormArrayNamesFieldName, JSON.stringify(arrayNames));
+  formData.set(managedFormIdFieldName, managedFormId);
+  formData.set(
+    formBotFieldName,
+    isBraveBrowser() ? "brave" : Date.now().toString(16)
+  );
+  return formData;
 };
 
 export type BrowserInfo = {

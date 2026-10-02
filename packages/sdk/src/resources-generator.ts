@@ -144,6 +144,30 @@ export const generateResources = ({
       )
       .map(({ id }) => id)
   );
+  let foundSubmissionDependency = true;
+  while (foundSubmissionDependency) {
+    foundSubmissionDependency = false;
+    for (const resource of resources.values()) {
+      if (submissionResourceIds.has(resource.id)) {
+        continue;
+      }
+      const dependsOnSubmission = Array.from(
+        getResourceDependencyIds({ resource, dataSources })
+      ).some((dependencyId) => submissionResourceIds.has(dependencyId));
+      if (dependsOnSubmission === false) {
+        continue;
+      }
+      submissionResourceIds.add(resource.id);
+      foundSubmissionDependency = true;
+    }
+  }
+  for (const resourceId of selectedResourceIds) {
+    if (submissionResourceIds.has(resourceId)) {
+      throw new Error(
+        "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+      );
+    }
+  }
   const rootResourceIds = getPageResourceRootIds({
     page,
     instances,
@@ -152,8 +176,18 @@ export const generateResources = ({
   });
   for (const { sourceExpression } of contentBlockResourceSelections) {
     for (const dataSourceId of getExpressionDataSourceIds([sourceExpression])) {
+      if (formParameterIds.has(dataSourceId)) {
+        throw new Error(
+          "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+        );
+      }
       const dataSource = dataSources.get(dataSourceId);
       if (dataSource?.type === "resource") {
+        if (submissionResourceIds.has(dataSource.resourceId)) {
+          throw new Error(
+            "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+          );
+        }
         rootResourceIds.add(dataSource.resourceId);
         contentInputDataSourceIds.add(dataSource.id);
       }
@@ -220,6 +254,9 @@ export const generateResources = ({
 
   let generatedRequests = "";
   for (const resource of resources.values()) {
+    if (submissionResourceIds.has(resource.id)) {
+      continue;
+    }
     const resourceName = scope.getName(resource.id, resource.name);
     if (graphResourceIds.has(resource.id)) {
       const requestDataSources: DataSources = new Map();

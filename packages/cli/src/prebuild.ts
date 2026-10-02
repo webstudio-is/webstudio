@@ -61,6 +61,7 @@ import {
   type Pages,
   type ComponentBuildContribution,
   isPublishedDeployment,
+  isFormSubmission,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
@@ -1699,6 +1700,26 @@ export const prebuild = async (options: {
       resources,
       props,
     });
+    const managedFormSubmissions = Array.from(instances.values())
+      .filter((instance) => instance.component === "NativeForm")
+      .map((instance) => {
+        const submissionProp = Array.from(props.values()).find(
+          (prop) =>
+            prop.instanceId === instance.id && prop.name === "submission"
+        );
+        const submission =
+          submissionProp?.type === "json" ? submissionProp.value : undefined;
+        const resourceIds = isFormSubmission(submission)
+          ? submission.destinations.map((id) => {
+              const dataSource = dataSources.get(id);
+              return dataSource?.type === "resource" &&
+                resources.has(dataSource.resourceId)
+                ? dataSource.resourceId
+                : null;
+            })
+          : [];
+        return [instance.id, { submission, resourceIds }] as const;
+      });
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
@@ -1859,6 +1880,11 @@ export const prebuild = async (options: {
       })}
 
       ${generateRemixParams(page.path)}
+
+      export const getManagedFormSubmissions = () =>
+        new Map<string, { submission: unknown; resourceIds: (string | null)[] }>(
+          ${JSON.stringify(managedFormSubmissions)}
+        );
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;

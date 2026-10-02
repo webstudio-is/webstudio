@@ -22,6 +22,7 @@ import {
   descendantComponent,
   getIndexesWithinAncestors,
   elementComponent,
+  isFormSubmission,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
@@ -231,7 +232,9 @@ export const generateJsxElement = ({
   for (const prop of props.values()) {
     if (
       prop.instanceId !== instance.id ||
-      isAttributeNameSafe(prop.name) === false
+      isAttributeNameSafe(prop.name) === false ||
+      (instance.component === "NativeForm" &&
+        prop.name.toLowerCase() === "data-ws-managed-form-id")
     ) {
       continue;
     }
@@ -241,6 +244,15 @@ export const generateJsxElement = ({
       continue;
     }
     propsByGeneratedName.set(name, prop);
+  }
+  const submissionProp = propsByGeneratedName.get("submission");
+  if (
+    instance.component === "NativeForm" &&
+    submissionProp?.type === "json" &&
+    isFormSubmission(submissionProp.value) &&
+    submissionProp.value.mode === "resources"
+  ) {
+    generatedProps += `\ndata-ws-managed-form-id=${JSON.stringify(instance.id)}`;
   }
   const generatedPropNames = new Set([
     ...propsByGeneratedName.keys(),

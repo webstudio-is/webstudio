@@ -163,3 +163,78 @@ test("a Form can switch to Resources and select an in-scope destination", async 
     )
   ).toBe(false);
 });
+
+test("a Form can select a Resource defined outside its scope", async () => {
+  $instances.set(
+    new Map([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [{ type: "id", value: "form" }],
+        },
+      ],
+      [
+        "form",
+        { type: "instance", id: "form", component: "NativeForm", children: [] },
+      ],
+    ])
+  );
+  $dataSources.set(
+    new Map([
+      [
+        "externalResourceId",
+        {
+          type: "resource",
+          id: "externalResourceId",
+          scopeInstanceId: "body",
+          name: "Shared request",
+          resourceId: "requestId",
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onChange = vi.fn();
+  await act(async () => {
+    root?.render(
+      <TooltipProvider>
+        <FormSubmissionControl
+          instanceId="form"
+          propName="submission"
+          prop={{
+            id: "submission",
+            instanceId: "form",
+            name: "submission",
+            type: "json",
+            value: { mode: "resources", destinations: [] },
+          }}
+          computedValue={{ mode: "resources", destinations: [] }}
+          meta={{ type: "json", control: "form-submission", required: false }}
+          onChange={onChange}
+        />
+      </TooltipProvider>
+    );
+  });
+
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[role="combobox"]')?.click()
+  );
+  const requestOption = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((option) => option.textContent?.includes("Shared request"));
+  expect(requestOption).toBeDefined();
+  await act(async () => requestOption?.click());
+  const addButton = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === "Add"
+  );
+  await act(async () => addButton?.click());
+  expect(onChange).toHaveBeenLastCalledWith({
+    type: "json",
+    value: { mode: "resources", destinations: ["externalResourceId"] },
+  });
+});

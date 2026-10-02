@@ -130,6 +130,39 @@ test("an empty managed Form cannot natively submit without hydration", async () 
   }
 });
 
+test("managed mode blocks submitter overrides before hydration", async () => {
+  const html = renderToStaticMarkup(
+    <NativeForm
+      action="/__must_not_navigate__/form"
+      method="post"
+      submission={{ mode: "resources", destinations: [] }}
+    >
+      <legend>
+        <button
+          type="submit"
+          formAction="/__must_not_navigate__/button"
+          formMethod="get"
+        >
+          Send
+        </button>
+      </legend>
+    </NativeForm>
+  );
+  const iframe = document.createElement("iframe");
+  document.body.append(iframe);
+  try {
+    await new Promise<void>((resolve) => {
+      iframe.addEventListener("load", () => resolve(), { once: true });
+      iframe.srcdoc = html;
+    });
+    iframe.contentDocument?.querySelector("button")?.click();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(iframe.contentWindow?.location.href).toBe("about:srcdoc");
+  } finally {
+    iframe.remove();
+  }
+});
+
 test("managed mode passes one structured submission to its dispatcher", async () => {
   const container = document.createElement("div");
   document.body.append(container);

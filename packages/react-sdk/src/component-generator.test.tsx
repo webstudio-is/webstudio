@@ -70,6 +70,46 @@ test("Form submission parameters are unavailable during page render", () => {
   expect(generated).toContain("const browserInfo: any = undefined");
   expect(isValidJSX(generated)).toBe(true);
 });
+
+test("only managed Forms receive a server identity that custom props cannot override", () => {
+  const data = renderData(
+    <Body ws:id="body">
+      <NativeForm ws:id="form" />
+    </Body>
+  );
+  data.props.set("custom-id", {
+    id: "custom-id",
+    instanceId: "form",
+    name: "data-ws-managed-form-id",
+    type: "string",
+    value: "spoofed",
+  });
+  const generate = () =>
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      metas: new Map(),
+      ...data,
+    });
+
+  const native = generate();
+  expect(native).not.toContain("data-ws-managed-form-id");
+  data.props.set("submission", {
+    id: "submission",
+    instanceId: "form",
+    name: "submission",
+    type: "json",
+    value: { mode: "resources", destinations: ["request"] },
+  });
+  const managed = generate();
+  expect(managed.match(/data-ws-managed-form-id/g)).toHaveLength(1);
+  expect(managed).toContain('data-ws-managed-form-id="form"');
+  expect(managed).not.toContain("spoofed");
+  expect(isValidJSX(managed)).toBe(true);
+});
 const virtualConfig = `${virtualRoot}/tsconfig.json`;
 const virtualFile = `${virtualRoot}/virtual.tsx`;
 let virtualCode = "";

@@ -44,7 +44,11 @@ import {
   type Resource,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { formBotFieldName, formIdFieldName } from "@webstudio-is/sdk/runtime";
+import {
+  formBotFieldName,
+  formIdFieldName,
+  managedFormIdFieldName,
+} from "@webstudio-is/sdk/runtime";
 import {
   generateRedirectsModule,
   getAssetResourcePrerenderPaths,
@@ -2951,6 +2955,134 @@ sitemap.map((page) => page.path);`
           body: { message: "Hello" },
         },
       ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "rejects invalid managed Form destinations before any request (%s)",
+    async (template) => {
+      const configurations = [
+        ["empty", { mode: "resources", destinations: [] }],
+        [
+          "too-many",
+          { mode: "resources", destinations: Array(6).fill("destination") },
+        ],
+        [
+          "duplicate",
+          { mode: "resources", destinations: ["destination", "destination"] },
+        ],
+        ["missing", { mode: "resources", destinations: ["missing"] }],
+        ["malformed", { mode: "resources", destinations: "destination" }],
+        ["valid", { mode: "resources", destinations: ["destination"] }],
+      ] as const;
+      const siteData = createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: configurations.map(([id]) => ({
+                type: "id",
+                value: id,
+              })),
+            },
+          ],
+          ...configurations.map(
+            ([id]) =>
+              [id, { id, component: "NativeForm", children: [] }] as [
+                string,
+                Omit<Instance, "type">,
+              ]
+          ),
+        ],
+        props: configurations.map(([id, value]) => [
+          `${id}-submission`,
+          {
+            id: `${id}-submission`,
+            instanceId: id,
+            name: "submission",
+            type: "json",
+            value,
+          },
+        ]),
+      });
+      siteData.build.dataSources = [
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "remote",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "remote",
+          {
+            id: "remote",
+            name: "Remote",
+            method: "post",
+            url: '"https://example.com/endpoint"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "action.mjs")).href
+      );
+      const outgoingFetch = vi.fn(async () => Response.json({ ok: true }));
+      vi.stubGlobal("fetch", outgoingFetch);
+      const submit = (id: string) => {
+        const form = new FormData();
+        form.set(managedFormIdFieldName, id);
+        form.set("message", "Hello");
+        return action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: form,
+          }),
+          context: {},
+        });
+      };
+
+      for (const [id, error] of [
+        ["unknown", "Form submission settings not found"],
+        ["empty", "Select at least one Resource destination"],
+        ["too-many", "Select no more than 5 Resource destinations"],
+        ["duplicate", "Select each Resource only once"],
+        ["missing", "Resource destination not found"],
+        ["malformed", "Form submission settings not found"],
+      ]) {
+        await expect(submit(id)).resolves.toEqual({
+          success: false,
+          errors: [error],
+        });
+      }
+      await expect(submit("valid")).resolves.toEqual({
+        success: false,
+        errors: ["Resource submission is unavailable"],
+      });
+      expect(outgoingFetch).not.toHaveBeenCalled();
     }
   );
 

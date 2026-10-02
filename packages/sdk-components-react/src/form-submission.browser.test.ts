@@ -1,12 +1,18 @@
 import { expect, test } from "vitest";
 import { getFormDataValue } from "./form-submission";
-import { formBotFieldName } from "@webstudio-is/sdk/runtime";
+import {
+  formBotFieldName,
+  managedFormArrayNamesFieldName,
+  managedFormIdFieldName,
+} from "@webstudio-is/sdk/runtime";
 
 test("preserves repeated controls, unchecked groups, hidden values and files", () => {
   const form = document.createElement("form");
   form.innerHTML = `
     <input type="hidden" name="source" value="campaign" />
     <input type="hidden" name="${formBotFieldName}" value="internal" />
+    <input type="hidden" name="${managedFormIdFieldName}" value="forged" />
+    <input type="hidden" name="${managedFormArrayNamesFieldName}" value="forged" />
     <input type="checkbox" name="colors" value="red" checked />
     <input type="checkbox" name="colors" value="blue" checked />
     <input type="checkbox" name="colors" value="green" />
@@ -56,4 +62,17 @@ test("keeps HTML names that overlap with object properties as form values", () =
   expect(Object.getPrototypeOf(values)).toBeNull();
   expect(values["__proto__"]).toBe("submitted");
   expect(values.constructor).toBe("form value");
+});
+
+test("preserves a same-name submit button after the field value", () => {
+  const form = document.createElement("form");
+  form.innerHTML = `
+    <input name="intent" value="message" />
+    <button type="submit" name="intent" value="send">Send</button>
+  `;
+
+  const submitter = form.querySelector("button") ?? undefined;
+  expect(getFormDataValue(form, submitter)).toEqual({
+    intent: ["message", "send"],
+  });
 });
