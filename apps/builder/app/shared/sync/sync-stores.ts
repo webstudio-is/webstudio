@@ -1,6 +1,7 @@
 import { Store, type Change } from "immerhin";
 import { enableMapSet, setAutoFreeze } from "immer";
 import { useEffect } from "react";
+import { flushSync } from "react-dom";
 import { batched } from "nanostores";
 import { createId } from "@webstudio-is/sdk";
 import { $project } from "./data-stores";
@@ -207,6 +208,8 @@ class SelectedPageAndInstanceSyncObject {
   private lastSelectionRevision = $instanceSelectionUpdate.get().revision;
   private lastSelectedPageId = $selectedPageId.get();
 
+  constructor(private readonly flushPageChanges = false) {}
+
   getState() {
     return $selectedPageAndInstance.get().state;
   }
@@ -268,7 +271,8 @@ class SelectedPageAndInstanceSyncObject {
     this.operation = operation;
     try {
       const appliedState = this.setSelectedPageAndInstance(
-        operation === "add" ? structuredClone(state) : state
+        operation === "add" ? structuredClone(state) : state,
+        operation === "add" && this.flushPageChanges
       );
       if (appliedState !== undefined) {
         this.stateToIgnore = appliedState;
@@ -281,7 +285,8 @@ class SelectedPageAndInstanceSyncObject {
   }
 
   private setSelectedPageAndInstance(
-    state: unknown
+    state: unknown,
+    flushPageChange = false
   ): SelectedPageAndInstance | undefined {
     if (typeof state !== "object" || state === null) {
       return;
@@ -306,7 +311,11 @@ class SelectedPageAndInstanceSyncObject {
     ) {
       return;
     }
-    $selectedPageId.set(selectedPageId);
+    if (flushPageChange && selectedPageId !== $selectedPageId.get()) {
+      flushSync(() => $selectedPageId.set(selectedPageId));
+    } else {
+      $selectedPageId.set(selectedPageId);
+    }
     if (allSelectedInstanceSelectors !== undefined) {
       selectInstances(allSelectedInstanceSelectors);
     } else {
@@ -324,7 +333,7 @@ export const __testing__ = {
   SelectedPageAndInstanceSyncObject,
 };
 
-export const createObjectPool = () => {
+export const createObjectPool = (options?: { flushPageChanges?: boolean }) => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore, {
       onRevert: (changes) => {
@@ -335,7 +344,7 @@ export const createObjectPool = () => {
     }),
     new ImmerhinSyncObject("externalContent", externalContentSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
-    new SelectedPageAndInstanceSyncObject(),
+    new SelectedPageAndInstanceSyncObject(options?.flushPageChanges),
     new NanostoresSyncObject("pointerPosition", $pointerPosition),
     new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
 
@@ -435,7 +444,7 @@ export const useCanvasStore = () => {
   useEffect(() => {
     const canvasClient = new SyncClient({
       role: "follower",
-      object: createObjectPool(),
+      object: createObjectPool({ flushPageChanges: true }),
       emitter: sharedSyncEmitter,
     });
 
