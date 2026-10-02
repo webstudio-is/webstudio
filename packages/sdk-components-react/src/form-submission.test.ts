@@ -1,26 +1,29 @@
 import { expect, test } from "vitest";
 import { getBrowserInfo } from "./form-submission";
-import { validateFormSubmission } from "@webstudio-is/sdk";
+import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 
-test("limits Resource destinations and rejects empty managed mode", () => {
-  expect(
-    validateFormSubmission({ mode: "native", destinations: [] })
-  ).toBeUndefined();
-  expect(
-    validateFormSubmission({ mode: "resources", destinations: [] })
-  ).toMatch(/at least one/);
+test("requires and limits Resource destinations", () => {
+  expect(validateFormSubmission({ destinations: [] })).toMatch(/at least one/);
   expect(
     validateFormSubmission({
-      mode: "resources",
       destinations: ["a", "b", "c", "d", "e"],
     })
   ).toBeUndefined();
   expect(
     validateFormSubmission({
-      mode: "resources",
       destinations: ["a", "b", "c", "d", "e", "f"],
     })
   ).toMatch(/no more than 5/);
+});
+
+test("rejects legacy native-mode settings instead of dispatching destinations", () => {
+  expect(
+    isFormSubmission({ mode: "native", destinations: ["old-resource"] })
+  ).toBe(false);
+  expect(
+    isFormSubmission({ mode: "resources", destinations: ["resource"] })
+  ).toBe(true);
+  expect(isFormSubmission({ destinations: ["resource"] })).toBe(true);
 });
 
 test("browser info excludes cookies, auth, and untrusted IP headers", () => {

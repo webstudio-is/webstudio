@@ -89,7 +89,6 @@ test("copying a Form remaps its local Resource destinations", () => {
     name: "submission",
     type: "json",
     value: {
-      mode: "resources",
       destinations: ["localResourceVariable"],
     },
   });

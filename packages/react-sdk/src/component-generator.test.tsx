@@ -102,7 +102,7 @@ test("only managed Forms receive a server identity that custom props cannot over
     instanceId: "form",
     name: "submission",
     type: "json",
-    value: { mode: "resources", destinations: ["request"] },
+    value: { destinations: ["request"] },
   });
   const managed = generate();
   expect(managed.match(/data-ws-managed-form-id/g)).toHaveLength(1);

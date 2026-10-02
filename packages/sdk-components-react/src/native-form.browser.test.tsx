@@ -8,7 +8,7 @@ import { NativeForm } from "./native-form";
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-test("uses browser validation and navigates with a native GET submission", async () => {
+test("an unconfigured Form blocks native navigation", async () => {
   const action = new URL("/__native_form_submission__", window.location.origin);
   const html = renderToStaticMarkup(
     <NativeForm action={action.href} method="get">
@@ -32,26 +32,18 @@ test("uses browser validation and navigates with a native GET submission", async
       throw new Error("Native form did not render in the browser");
     }
 
-    button.click();
-    expect(form.checkValidity()).toBe(false);
-    expect(frame.location.href).toBe("about:srcdoc");
-
     input.value = "person@example.com";
-    const navigated = new Promise<void>((resolve) => {
-      iframe.addEventListener("load", () => resolve(), { once: true });
-    });
     button.click();
-    await navigated;
-
-    const submitted = new URL(frame.location.href);
-    expect(submitted.pathname).toBe("/__native_form_submission__");
-    expect(submitted.searchParams.get("email")).toBe("person@example.com");
+    expect(frame.location.href).toBe("about:srcdoc");
+    expect(
+      iframe.contentDocument?.querySelector('[role="alert"]')?.textContent
+    ).toMatch(/Select at least one Resource/);
   } finally {
     iframe.remove();
   }
 });
 
-test("managed mode blocks native navigation and reports an empty selection", async () => {
+test("resource-only Form blocks native navigation and reports an empty selection", async () => {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -60,7 +52,7 @@ test("managed mode blocks native navigation and reports an empty selection", asy
       root.render(
         <NativeForm
           action="/__must_not_navigate__"
-          submission={{ mode: "resources", destinations: [] }}
+          submission={{ destinations: [] }}
         >
           <button type="submit">Send</button>
         </NativeForm>
@@ -87,7 +79,7 @@ test("malformed submission settings do not fall back to native delivery", async 
       root.render(
         <NativeForm
           action="/__must_not_navigate__"
-          submission={{ mode: "resources" }}
+          submission={{ destinations: "invalid" }}
         >
           <button type="submit">Send</button>
         </NativeForm>
@@ -104,12 +96,41 @@ test("malformed submission settings do not fall back to native delivery", async 
   }
 });
 
+test("legacy native-mode settings do not activate saved Resource destinations", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onManagedSubmit = vi.fn();
+  try {
+    await act(async () => {
+      root.render(
+        <NativeForm
+          action="/__must_not_navigate__"
+          submission={{ mode: "native", destinations: ["legacy-resource"] }}
+          onManagedSubmit={onManagedSubmit}
+        >
+          <button type="submit">Send</button>
+        </NativeForm>
+      );
+    });
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "Invalid Form submission settings"
+    );
+    await act(async () => container.querySelector("button")?.click());
+    expect(onManagedSubmit).not.toHaveBeenCalled();
+    expect(window.location.pathname).not.toBe("/__must_not_navigate__");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
 test("an empty managed Form cannot natively submit without hydration", async () => {
   const html = renderToStaticMarkup(
     <NativeForm
       action="/__must_not_navigate__"
       method="post"
-      submission={{ mode: "resources", destinations: [] }}
+      submission={{ destinations: [] }}
     >
       <input name="email" defaultValue="person@example.com" />
       <button type="submit">Send</button>
@@ -132,21 +153,23 @@ test("an empty managed Form cannot natively submit without hydration", async () 
 
 test("managed mode blocks submitter overrides before hydration", async () => {
   const html = renderToStaticMarkup(
-    <NativeForm
-      action="/__must_not_navigate__/form"
-      method="post"
-      submission={{ mode: "resources", destinations: [] }}
-    >
-      <legend>
-        <button
-          type="submit"
-          formAction="/__must_not_navigate__/button"
-          formMethod="get"
-        >
-          Send
-        </button>
-      </legend>
-    </NativeForm>
+    <>
+      <NativeForm
+        id="managed-form"
+        action="/__must_not_navigate__/form"
+        method="post"
+      >
+        <input name="email" defaultValue="person@example.com" />
+      </NativeForm>
+      <button
+        type="submit"
+        form="managed-form"
+        formAction="https://example.com/__must_not_navigate__/outside"
+        formMethod="get"
+      >
+        Send
+      </button>
+    </>
   );
   const iframe = document.createElement("iframe");
   document.body.append(iframe);
@@ -155,6 +178,7 @@ test("managed mode blocks submitter overrides before hydration", async () => {
       iframe.addEventListener("load", () => resolve(), { once: true });
       iframe.srcdoc = html;
     });
+    expect(iframe.contentDocument?.querySelector("form")?.id).toBe("");
     iframe.contentDocument?.querySelector("button")?.click();
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(iframe.contentWindow?.location.href).toBe("about:srcdoc");
@@ -163,7 +187,39 @@ test("managed mode blocks submitter overrides before hydration", async () => {
   }
 });
 
-test("managed mode passes one structured submission to its dispatcher", async () => {
+test("a hydrated Form handles submit buttons associated by form id", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onManagedSubmit = vi.fn();
+  try {
+    await act(async () => {
+      root.render(
+        <>
+          <NativeForm
+            id="managed-form"
+            submission={{ destinations: ["resource-one"] }}
+            onManagedSubmit={onManagedSubmit}
+          >
+            <input name="email" defaultValue="person@example.com" />
+          </NativeForm>
+          <button type="submit" form="managed-form">
+            Send
+          </button>
+        </>
+      );
+    });
+    await act(async () => container.querySelector("button")?.click());
+    expect(onManagedSubmit).toHaveBeenCalledExactlyOnceWith({
+      email: "person@example.com",
+    });
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+test("Form passes one structured submission to its dispatcher", async () => {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -173,7 +229,7 @@ test("managed mode passes one structured submission to its dispatcher", async ()
       root.render(
         <NativeForm
           action="/__must_not_navigate__"
-          submission={{ mode: "resources", destinations: ["resource-one"] }}
+          submission={{ destinations: ["resource-one"] }}
           onManagedSubmit={onManagedSubmit}
         >
           <input name="name" defaultValue="Ada" />

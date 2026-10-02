@@ -21,7 +21,7 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("a Form can switch to Resources and select an in-scope destination", async () => {
+test("a Form starts with an empty Resource list and can select an in-scope destination", async () => {
   $instances.set(
     new Map([
       [
@@ -74,16 +74,10 @@ test("a Form can switch to Resources and select an in-scope destination", async 
   await act(async () => render());
   expect(
     container.querySelector('[aria-label="Native browser form"]')
-  ).not.toBeNull();
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>('[aria-label="Resources"]')
-      ?.click()
+  ).toBeNull();
+  expect(container.textContent).toContain(
+    "Select at least one Resource destination"
   );
-  expect(onChange).toHaveBeenLastCalledWith({
-    type: "json",
-    value: { mode: "resources", destinations: [] },
-  });
 
   await act(async () =>
     render({
@@ -91,7 +85,7 @@ test("a Form can switch to Resources and select an in-scope destination", async 
       instanceId: "form",
       name: "submission",
       type: "json",
-      value: { mode: "resources", destinations: [] },
+      value: { destinations: [] },
     })
   );
   expect(container.textContent).toContain(
@@ -110,7 +104,7 @@ test("a Form can switch to Resources and select an in-scope destination", async 
   await act(async () => addButton?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { mode: "resources", destinations: ["resourceDataSource"] },
+    value: { destinations: ["resourceDataSource"] },
   });
 
   await act(async () =>
@@ -119,7 +113,7 @@ test("a Form can switch to Resources and select an in-scope destination", async 
       instanceId: "form",
       name: "submission",
       type: "json",
-      value: { mode: "resources", destinations: ["resourceDataSource"] },
+      value: { destinations: ["resourceDataSource"] },
     })
   );
   await act(async () =>
@@ -141,7 +135,7 @@ test("a Form can switch to Resources and select an in-scope destination", async 
   expect(container.textContent).toContain("Renamed request");
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { mode: "resources", destinations: ["resourceDataSource"] },
+    value: { destinations: ["resourceDataSource"] },
   });
 
   await act(async () =>
@@ -151,7 +145,6 @@ test("a Form can switch to Resources and select an in-scope destination", async 
       name: "submission",
       type: "json",
       value: {
-        mode: "resources",
         destinations: ["one", "two", "three", "four", "five"],
       },
     })
@@ -211,9 +204,9 @@ test("a Form can select a Resource defined outside its scope", async () => {
             instanceId: "form",
             name: "submission",
             type: "json",
-            value: { mode: "resources", destinations: [] },
+            value: { destinations: [] },
           }}
-          computedValue={{ mode: "resources", destinations: [] }}
+          computedValue={{ destinations: [] }}
           meta={{ type: "json", control: "form-submission", required: false }}
           onChange={onChange}
         />
@@ -235,7 +228,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
   await act(async () => addButton?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { mode: "resources", destinations: ["externalResourceId"] },
+    value: { destinations: ["externalResourceId"] },
   });
 });
 
@@ -276,7 +269,7 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
     instanceId: "form",
     name: "submission",
     type: "json",
-    value: { mode: "resources", destinations: ["resource-id"] },
+    value: { destinations: ["resource-id"] },
   };
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -308,6 +301,6 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
   await act(async () => removeButton?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { mode: "resources", destinations: [] },
+    value: { destinations: [] },
   });
 });

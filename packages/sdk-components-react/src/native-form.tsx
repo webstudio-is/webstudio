@@ -23,6 +23,7 @@ export const NativeForm = forwardRef<
 >(
   (
     {
+      id,
       submission,
       onManagedSubmit,
       onSubmit,
@@ -37,15 +38,11 @@ export const NativeForm = forwardRef<
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => setHydrated(true), []);
     const validSubmission = isFormSubmission(submission);
-    const managed =
-      submission !== undefined &&
-      (validSubmission === false || submission.mode === "resources");
-    const configurationError =
-      submission !== undefined && validSubmission === false
-        ? "Invalid Form submission settings"
-        : validSubmission
-          ? validateFormSubmission(submission)
-          : undefined;
+    const configurationError = validSubmission
+      ? validateFormSubmission(submission)
+      : submission === undefined
+      ? validateFormSubmission({ destinations: [] })
+      : "Invalid Form submission settings";
     const handleManagedSubmit = (event: FormEvent<HTMLFormElement>) => {
       onSubmit?.(event);
       if (event.defaultPrevented) {
@@ -72,18 +69,16 @@ export const NativeForm = forwardRef<
     return (
       <form
         {...props}
-        action={managed ? undefined : props.action}
-        method={managed ? "dialog" : props.method}
+        id={hydrated ? id : undefined}
+        action={undefined}
+        method="dialog"
+        encType={undefined}
         ref={ref}
-        onSubmit={managed ? handleManagedSubmit : onSubmit}
+        onSubmit={handleManagedSubmit}
       >
-        {managed ? (
-          <fieldset disabled={!hydrated} style={{ display: "contents" }}>
-            <div style={{ display: "contents" }}>{children}</div>
-          </fieldset>
-        ) : (
-          children
-        )}
+        <fieldset disabled={!hydrated} style={{ display: "contents" }}>
+          <div style={{ display: "contents" }}>{children}</div>
+        </fieldset>
         {(configurationError || error) && (
           <div role="alert">{error ?? configurationError}</div>
         )}

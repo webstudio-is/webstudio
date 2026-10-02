@@ -210,7 +210,7 @@ export const coreTemplates = {
   ...intrinsicCoreTemplates,
   form: {
     category: "forms",
-    description: "Collect information with a native HTML form.",
+    description: "Collect information and submit it to Resource destinations.",
     template: (
       <NativeForm formData={formData} browserInfo={browserInfo}>
         <Label>

@@ -249,8 +249,7 @@ export const generateJsxElement = ({
   if (
     instance.component === "NativeForm" &&
     submissionProp?.type === "json" &&
-    isFormSubmission(submissionProp.value) &&
-    submissionProp.value.mode === "resources"
+    isFormSubmission(submissionProp.value)
   ) {
     generatedProps += `\ndata-ws-managed-form-id=${JSON.stringify(instance.id)}`;
   }

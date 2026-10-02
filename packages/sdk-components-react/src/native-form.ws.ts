@@ -13,14 +13,14 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   label: "Form",
   presetStyle,
-  initialProps: ["id", "class", "submission", "action", "method", "encType"],
+  initialProps: ["id", "class", "submission"],
   props: {
     ...props,
     submission: {
       type: "json",
       control: "form-submission",
       required: false,
-      description: "Choose native browser submission or Resource destinations.",
+      description: "Choose up to 5 Resource destinations for this Form.",
     },
   },
 };

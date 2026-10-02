@@ -2962,18 +2962,12 @@ sitemap.map((page) => page.path);`
     "rejects invalid managed Form destinations before any request (%s)",
     async (template) => {
       const configurations = [
-        ["empty", { mode: "resources", destinations: [] }],
-        [
-          "too-many",
-          { mode: "resources", destinations: Array(6).fill("destination") },
-        ],
-        [
-          "duplicate",
-          { mode: "resources", destinations: ["destination", "destination"] },
-        ],
-        ["missing", { mode: "resources", destinations: ["missing"] }],
-        ["malformed", { mode: "resources", destinations: "destination" }],
-        ["valid", { mode: "resources", destinations: ["destination"] }],
+        ["empty", { destinations: [] }],
+        ["too-many", { destinations: Array(6).fill("destination") }],
+        ["duplicate", { destinations: ["destination", "destination"] }],
+        ["missing", { destinations: ["missing"] }],
+        ["malformed", { destinations: "destination" }],
+        ["valid", { destinations: ["destination"] }],
       ] as const;
       const siteData = createSiteData({
         instances: [
@@ -3136,7 +3130,7 @@ sitemap.map((page) => page.path);`
             instanceId: "root",
             name: "submission",
             type: "json",
-            value: { mode: "resources", destinations: ["destination"] },
+            value: { destinations: ["destination"] },
           },
         ],
       ],
@@ -3218,7 +3212,6 @@ sitemap.map((page) => page.path);`
               name: "submission",
               type: "json",
               value: {
-                mode: "resources",
                 destinations: ["form-destination", "browser-destination"],
               },
             },
@@ -3470,7 +3463,7 @@ sitemap.map((page) => page.path);`
     ).toMatchObject({ method: "post" });
   }, 30_000);
 
-  test("prerenders the new Form as plain HTML", async () => {
+  test("prerenders the new Form without native submission attributes", async () => {
     const siteData = createSiteData({
       instances: [
         [
@@ -3543,7 +3536,11 @@ sitemap.map((page) => page.path);`
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
     const [form] = findElementsByTagName(html, "form");
     expect(form).toBeDefined();
-    expect(form?.attrs.map(({ name }) => name)).toEqual(["class"]);
+    expect(form?.attrs.map(({ name }) => name)).toEqual(["class", "method"]);
+    expect(form?.attrs.find(({ name }) => name === "method")?.value).toBe(
+      "dialog"
+    );
+    expect(form?.attrs.some(({ name }) => name === "action")).toBe(false);
   }, 30_000);
 
   test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {

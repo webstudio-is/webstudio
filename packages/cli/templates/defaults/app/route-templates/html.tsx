@@ -306,8 +306,7 @@ export const action = async ({
       const configured = getManagedFormSubmissions().get(managedFormId);
       if (
         configured === undefined ||
-        isFormSubmission(configured.submission) === false ||
-        configured.submission.mode !== "resources"
+        isFormSubmission(configured.submission) === false
       ) {
         throw new Error("Form submission settings not found");
       }

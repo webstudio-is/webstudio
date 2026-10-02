@@ -546,7 +546,6 @@ describe("insert webstudio fragment copy", () => {
             name: "submission",
             type: "json",
             value: {
-              mode: "resources",
               destinations: ["scoped-source", "external-source"],
             },
           },
@@ -572,7 +571,6 @@ describe("insert webstudio fragment copy", () => {
     ).toMatchObject({
       type: "json",
       value: {
-        mode: "resources",
         destinations: [copiedScopedId, "external-source"],
       },
     });

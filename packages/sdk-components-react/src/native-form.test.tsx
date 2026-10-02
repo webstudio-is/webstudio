@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
 import { NativeForm } from "./native-form";
 
-test("renders native form attributes without managed submission behavior", () => {
+test("Form suppresses native submission attributes", () => {
   const html = renderToStaticMarkup(
     <NativeForm action="/contact" method="post" encType="multipart/form-data">
       <input name="message" />
@@ -10,9 +10,10 @@ test("renders native form attributes without managed submission behavior", () =>
     </NativeForm>
   );
 
-  expect(html).toBe(
-    '<form action="/contact" encType="multipart/form-data" method="post"><input name="message"/><button type="submit">Send</button></form>'
-  );
+  expect(html).toContain('<form method="dialog">');
+  expect(html).not.toContain("/contact");
+  expect(html).not.toContain("multipart/form-data");
+  expect(html).toContain('<input name="message"/>');
 });
 
 test("server rendering blocks an over-limit managed Form", () => {
@@ -20,7 +21,6 @@ test("server rendering blocks an over-limit managed Form", () => {
     <NativeForm
       action="https://example.com/old-action"
       submission={{
-        mode: "resources",
         destinations: ["one", "two", "three", "four", "five", "six"],
       }}
     >
