@@ -5,10 +5,6 @@ export const defaultTag = "form";
 export const NativeForm = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag>
->(({ children, ...props }, ref) => (
-  <form {...props} ref={ref}>
-    {children}
-  </form>
-));
+>((props, ref) => <form {...props} ref={ref} />);
 
 NativeForm.displayName = "NativeForm";
