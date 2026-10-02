@@ -27,6 +27,7 @@ import { serializePages } from "@webstudio-is/project-migrations/pages";
 import * as bcp47 from "bcp-47";
 import slugify from "slugify";
 import { z } from "zod";
+import { matchPathnameRoutes } from "@webstudio-is/wsauth";
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
@@ -151,40 +152,17 @@ export const getSerializedPagePath = (
 export const normalizeSerializedPagePath = (path: string) =>
   path === "/" ? "" : path;
 
-const escapeRegExp = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const isSerializedPagePathMatch = (pattern: string, path: string) => {
-  if (pattern === path) {
-    return true;
-  }
-  const segments = pattern.split("/");
-  const pathSegments = path.split("/");
-  const regexParts = segments.map((segment, index) => {
-    if (segment === "*") {
-      return index === segments.length - 1 ? ".*" : "[^/]+";
-    }
-    const param = segment.match(/^:(\w+)([?*]?)$/);
-    if (param === null) {
-      return escapeRegExp(segment);
-    }
-    const modifier = param[2];
-    if (modifier === "?") {
-      return "[^/]*";
-    }
-    if (modifier === "*") {
-      return index === segments.length - 1 ? ".*" : "[^/]+";
-    }
-    return "[^/]+";
-  });
-  if (
-    segments.length !== pathSegments.length &&
-    pattern.endsWith("*") === false
-  ) {
-    return false;
-  }
-  return new RegExp(`^${regexParts.join("/")}$`).test(path);
-};
+const findMatchingSerializedPageByPath = (
+  pages: SerializedPages,
+  path: string
+) =>
+  matchPathnameRoutes(
+    pages.pages.map((page) => ({
+      pattern: getSerializedPagePath(pages, page),
+      value: page,
+    })),
+    normalizeSerializedPagePath(path)
+  )?.value;
 
 export const serializePageSummary = (
   pages: SerializedPages,
@@ -236,12 +214,7 @@ export const findSerializedPageByInput = (
     const exactPage = pages.pages.find(
       (page) => getSerializedPagePath(pages, page) === pagePath
     );
-    return (
-      exactPage ??
-      pages.pages.find((page) =>
-        isSerializedPagePathMatch(getSerializedPagePath(pages, page), pagePath)
-      )
-    );
+    return exactPage ?? findMatchingSerializedPageByPath(pages, pagePath);
   }
 };
 
@@ -252,16 +225,6 @@ const findExactSerializedPageByPath = (
   const pagePath = normalizeSerializedPagePath(path);
   return pages.pages.find(
     (page) => getSerializedPagePath(pages, page) === pagePath
-  );
-};
-
-const findMatchingSerializedPageByPath = (
-  pages: SerializedPages,
-  path: string
-) => {
-  const pagePath = normalizeSerializedPagePath(path);
-  return pages.pages.find((page) =>
-    isSerializedPagePathMatch(getSerializedPagePath(pages, page), pagePath)
   );
 };
 

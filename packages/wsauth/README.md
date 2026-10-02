@@ -37,29 +37,10 @@ Version 1 uses JSON with route strings as keys:
 }
 ```
 
-Routes use the same path pattern syntax Webstudio uses for pages:
-
-- Static segment: `/about`
-- Named parameter: `/blog/:slug`
-- Optional named parameter: `/blog/:slug?`
-- Wildcard: `/docs/*`
-- Named wildcard: `/docs/:path*`
-
-Route rules:
-
-- A route must start with `/`.
-- A route must not contain repeating `/`.
-- A route must not end with `/`, except the root route `/`.
-- `*` and `:name*` wildcard segments must be the final segment.
-- Named parameters use `:name`, `:name?`, or `:name*`.
-- Parameter names must contain word characters only, matching `\w+`.
-- `?` is only allowed on a named parameter. URL-encoded `:`, `*`, and `?`
-  cannot be used as route syntax.
-
-Matching follows the router used by published dynamic sites. It ignores letter
-case, decodes URL path segments, and matches a trailing splat at its base path:
-`/docs/*` matches both `/docs` and `/docs/guide`. Authentication keeps the
-first matching rule when several rules cover one URL.
+Routes use Webstudio's [path pattern syntax](https://github.com/webstudio-is/webstudio/blob/main/docs/university/foundations/path-patterns.md).
+The guide covers validation, matching, and the differences between page paths
+and project rules. Authentication keeps the first matching rule when several
+rules cover one URL.
 
 ## Basic Auth
 

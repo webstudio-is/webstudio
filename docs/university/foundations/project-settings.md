@@ -117,7 +117,7 @@ To add a protected route:
 4. Click **Add**
 5. Publish the site
 
-Routes use the shared [path pattern syntax](path-patterns.md), including static paths, dynamic segments, optional segments, and wildcards. In project settings, `/private/*` matches both `/private` and paths below it.
+Routes use the shared [path pattern syntax](path-patterns.md). The guide explains how static paths, parameters, and wildcards match URLs.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-authentication-dark.png">
