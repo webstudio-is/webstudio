@@ -238,3 +238,79 @@ test("a Form can select a Resource defined outside its scope", async () => {
     value: { mode: "resources", destinations: ["externalResourceId"] },
   });
 });
+
+test("saved Form selection reloads and a deleted Resource can be removed", async () => {
+  $instances.set(
+    new Map([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [{ type: "id", value: "form" }],
+        },
+      ],
+      [
+        "form",
+        { type: "instance", id: "form", component: "NativeForm", children: [] },
+      ],
+    ])
+  );
+  $dataSources.set(
+    new Map([
+      [
+        "resource-id",
+        {
+          type: "resource",
+          id: "resource-id",
+          scopeInstanceId: "form",
+          name: "Send request",
+          resourceId: "request-id",
+        },
+      ],
+    ])
+  );
+  const savedProp: Prop = JSON.parse(
+    JSON.stringify({
+      id: "submission",
+      instanceId: "form",
+      name: "submission",
+      type: "json",
+      value: { mode: "resources", destinations: ["resource-id"] },
+    })
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onChange = vi.fn();
+  await act(async () => {
+    root?.render(
+      <TooltipProvider>
+        <FormSubmissionControl
+          instanceId="form"
+          propName="submission"
+          prop={savedProp}
+          computedValue={
+            savedProp.type === "json" ? savedProp.value : undefined
+          }
+          meta={{ type: "json", control: "form-submission", required: false }}
+          onChange={onChange}
+        />
+      </TooltipProvider>
+    );
+  });
+  expect(container.textContent).toContain("Send request");
+  expect(container.querySelector('[aria-label="Resources"]')).not.toBeNull();
+
+  await act(async () => $dataSources.set(new Map()));
+  expect(container.textContent).toContain("Deleted Resource");
+  const removeButton = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === "Remove"
+  );
+  await act(async () => removeButton?.click());
+  expect(onChange).toHaveBeenLastCalledWith({
+    type: "json",
+    value: { mode: "resources", destinations: [] },
+  });
+});
