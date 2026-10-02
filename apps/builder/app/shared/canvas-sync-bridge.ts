@@ -1,5 +1,7 @@
 import type { SyncEmitter } from "@webstudio-is/sync-client";
 
+export const canvasRenderedEvent = "webstudio-canvas-rendered";
+
 export type CanvasSyncFrame = HTMLIFrameElement & {
   __webstudioSharedSyncEmitter__?: SyncEmitter;
 };

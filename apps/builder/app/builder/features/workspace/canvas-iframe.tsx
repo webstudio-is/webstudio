@@ -1,12 +1,26 @@
-import { forwardRef, useMemo, useRef, type JSX, type RefObject } from "react";
+import {
+  forwardRef,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useState,
+  useCallback,
+  useEffect,
+  type JSX,
+  type RefObject,
+} from "react";
 import {
   canvasPointerEventsPropertyName,
   css,
   cssVar,
 } from "@webstudio-is/design-system";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
-import { $canvasIframeState } from "~/shared/nano-states";
-import { useCallback, useEffect, useState } from "react";
+import { $canvasIframeState, $selectedPageId } from "~/shared/nano-states";
+import { getSyncClient } from "~/shared/sync/sync-client";
+import {
+  attachCanvasSyncEmitter,
+  canvasRenderedEvent,
+} from "~/shared/canvas-sync-bridge";
 import {
   $scale,
   $canvasWidth,
@@ -86,11 +100,6 @@ export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
 
     const merrgedRef = useMemo(() => mergeRefs(ref, iframeRef), [ref]);
 
-    useUnmount(() => {
-      // Unmount does't work inside iframe.
-      $canvasIframeState.set("idle");
-    });
-
     return (
       <>
         <iframe
@@ -106,3 +115,108 @@ export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
 );
 
 CanvasIframe.displayName = "CanvasIframe";
+
+const CanvasFrame = ({
+  pageId,
+  src,
+  title,
+  isVisible,
+  isInteractive,
+  onReady,
+  publishRef,
+}: {
+  pageId: string | undefined;
+  src: string;
+  title: string;
+  isVisible: boolean;
+  isInteractive: boolean;
+  onReady: (pageId: string | undefined) => void;
+  publishRef: (element: HTMLIFrameElement | null) => void;
+}) => {
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const disposeSyncEmitter = useRef<(() => void) | undefined>(undefined);
+  const handleReady = useCallback(() => onReady(pageId), [onReady, pageId]);
+
+  const setFrameRef = useCallback(
+    (frame: HTMLIFrameElement | null) => {
+      frameRef.current?.removeEventListener(canvasRenderedEvent, handleReady);
+      disposeSyncEmitter.current?.();
+      frameRef.current = frame;
+      disposeSyncEmitter.current = undefined;
+      if (frame) {
+        const emitter = getSyncClient()?.emitter;
+        if (emitter) {
+          disposeSyncEmitter.current = attachCanvasSyncEmitter(frame, emitter);
+        }
+        frame.addEventListener(canvasRenderedEvent, handleReady);
+      }
+    },
+    [handleReady]
+  );
+
+  useLayoutEffect(() => {
+    if (isVisible) {
+      publishRef(frameRef.current);
+      return () => publishRef(null);
+    }
+  }, [isVisible, publishRef]);
+
+  return (
+    <CanvasIframe
+      ref={setFrameRef}
+      src={src}
+      title={title}
+      data-ws-page-id={pageId ?? ""}
+      aria-hidden={!isVisible}
+      tabIndex={isInteractive ? undefined : -1}
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: isVisible ? 1 : 0,
+        pointerEvents: isInteractive ? undefined : "none",
+      }}
+    />
+  );
+};
+
+export const CanvasFrameSwitcher = ({
+  pageId,
+  src,
+  title,
+  publishRef,
+}: {
+  pageId: string | undefined;
+  src: string;
+  title: string;
+  publishRef: (element: HTMLIFrameElement | null) => void;
+}) => {
+  const [visiblePageId, setVisiblePageId] = useState(pageId);
+  const handleReady = useCallback((readyPageId: string | undefined) => {
+    if (readyPageId === $selectedPageId.get()) {
+      setVisiblePageId(readyPageId);
+    }
+  }, []);
+
+  useUnmount(() => {
+    // Cleanup from a detached Canvas document does not run reliably.
+    $canvasIframeState.set("idle");
+  });
+
+  const displayedPageId =
+    pageId === undefined ? undefined : (visiblePageId ?? pageId);
+  const framePageIds =
+    displayedPageId === pageId ? [pageId] : [displayedPageId, pageId];
+
+  return framePageIds.map((framePageId) => (
+    <CanvasFrame
+      key={framePageId ?? ""}
+      pageId={framePageId}
+      src={src}
+      title={title}
+      isVisible={framePageId === displayedPageId}
+      isInteractive={framePageId === pageId && framePageId === displayedPageId}
+      onReady={handleReady}
+      publishRef={publishRef}
+    />
+  ));
+};

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type JSX, type ReactNode } from "react";
+import { useEffect, useState, type JSX, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
@@ -13,15 +13,14 @@ import {
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { Role } from "@webstudio-is/project";
-import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
-import { attachCanvasSyncEmitter } from "~/shared/canvas-sync-bridge";
+import { initializeClientSync } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
 import { Topbar } from "./shared/topbar";
 import { Footer } from "./features/footer";
 import {
-  CanvasIframe,
+  CanvasFrameSwitcher,
   CanvasToolsContainer,
   Workspace,
 } from "./features/workspace";
@@ -63,7 +62,6 @@ import { useToastErrors } from "~/shared/error/toast-error";
 import { initBuilderApi } from "~/shared/builder-api";
 import { migrateLoadedWebstudioData } from "~/shared/instance-utils/data";
 import { Loading, LoadingBackground } from "./shared/loading";
-import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
 import { DeleteUnusedTokensDialog } from "~/builder/shared/style-source-actions";
 import { DeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
@@ -350,18 +348,6 @@ export const Builder = (props: BuilderProps) => {
 
   useSetWindowTitle();
 
-  const iframeRefCallback = useMemo(() => {
-    let disposeSyncEmitter: (() => void) | undefined;
-    return mergeRefs((element: HTMLIFrameElement | null) => {
-      disposeSyncEmitter?.();
-      const emitter = element && getSyncClient()?.emitter;
-      disposeSyncEmitter =
-        element && emitter
-          ? attachCanvasSyncEmitter(element, emitter)
-          : undefined;
-    }, publishRef);
-  }, [publishRef]);
-
   const { navigatorLayout } = useStore($settings);
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
 
@@ -439,12 +425,11 @@ export const Builder = (props: BuilderProps) => {
           {/* Main must be after left sidebar panels because in content mode the Plus button must be above the left sidebar, otherwise it won't be visible when content is full width */}
           <Main>
             <Workspace>
-              {/* Page changes recreate the Canvas document after the old frame
-                  has skipped the incoming page selection transaction. */}
               {dataLoadingState === "loaded" && project && (
-                <CanvasIframe
-                  key={selectedPageId}
-                  ref={iframeRefCallback}
+                <CanvasFrameSwitcher
+                  key={project.id}
+                  pageId={selectedPageId}
+                  publishRef={publishRef}
                   src={canvasUrl}
                   title={project.title}
                 />

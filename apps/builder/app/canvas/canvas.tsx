@@ -60,6 +60,7 @@ import { subscribeInterceptedEvents } from "./interceptor";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { initCanvasApi } from "~/shared/canvas-api";
+import { canvasRenderedEvent } from "~/shared/canvas-sync-bridge";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { subscribeSelected } from "./selected-instance-effects";
 import { subscribeGridGuidesOnSelected } from "./grid-guide-utils";
@@ -322,6 +323,22 @@ export const Canvas = () => {
   useEffect(() => {
     setInitialized(true);
   }, []);
+
+  useEffect(() => {
+    if (
+      !isInitialized ||
+      selectedPage === undefined ||
+      components.size === 0 ||
+      instances.size === 0
+    ) {
+      return;
+    }
+    const frame = window.frameElement;
+    if (frame?.getAttribute("data-ws-page-id") !== selectedPage.id) {
+      return;
+    }
+    frame.dispatchEvent(new Event(canvasRenderedEvent));
+  }, [isInitialized, selectedPage?.id, components, instances]);
 
   if (components.size === 0 || instances.size === 0) {
     return;
