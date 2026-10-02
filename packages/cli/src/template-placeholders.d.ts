@@ -13,6 +13,14 @@ declare module "__ASSET_QUERY_RUNTIME__" {
   }) => Promise<typeof fetch>;
 }
 
+declare module "__MANAGED_FORM_FETCH__" {
+  export const createManagedFormResourceFetch: (options: {
+    request: Request;
+    context: unknown;
+    projectDomain?: string;
+  }) => typeof fetch;
+}
+
 declare module "__ASSET_RESOURCE_FETCH__" {
   import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 

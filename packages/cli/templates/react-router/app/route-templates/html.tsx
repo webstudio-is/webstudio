@@ -14,6 +14,11 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
+  getManagedFormBrowserInfo,
+  getManagedFormValues,
+  readFormDataWithLimit,
+  managedFormRequestParamName,
+  validateManagedFormBot,
   formIdFieldName,
   managedFormIdFieldName,
   formBotFieldName,
@@ -39,6 +44,7 @@ import {
 import {
   getResources,
   getManagedFormSubmissions,
+  getManagedFormResourceGraph,
   getPageMeta,
   getRemixParams,
   contactEmail,
@@ -48,6 +54,7 @@ import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 import { authRoutes } from "__AUTH__";
 import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
+import { createManagedFormResourceFetch } from "__MANAGED_FORM_FETCH__";
 import { assetUrlsByPath } from "__ASSETS__";
 
 const customFetch: typeof fetch = (input, init) => {
@@ -245,6 +252,7 @@ const getRequestHost = (request: Request): string =>
 export const action = async ({
   request,
   context,
+  params,
 }: ActionFunctionArgs): Promise<
   { success: true } | { success: false; errors: string[] }
 > => {
@@ -252,9 +260,14 @@ export const action = async ({
 
   try {
     const url = new URL(request.url);
+    const isManagedFormRequest =
+      url.searchParams.get(managedFormRequestParamName) === "1";
+    url.searchParams.delete(managedFormRequestParamName);
     url.host = getRequestHost(request);
 
-    const formData = await request.formData();
+    const formData = isManagedFormRequest
+      ? await readFormDataWithLimit(request)
+      : await request.formData();
 
     const system = {
       params: {},
@@ -264,6 +277,12 @@ export const action = async ({
     };
 
     const managedFormIds = formData.getAll(managedFormIdFieldName);
+    if (
+      (isManagedFormRequest && managedFormIds.length !== 1) ||
+      (!isManagedFormRequest && managedFormIds.length > 0)
+    ) {
+      throw new Error("Invalid Form submission");
+    }
     if (managedFormIds.length > 0) {
       const managedFormId = managedFormIds[0];
       if (managedFormIds.length !== 1 || typeof managedFormId !== "string") {
@@ -282,13 +301,80 @@ export const action = async ({
         throw new Error(configurationError);
       }
       if (
-        configured.resourceIds.length !== configured.submission.destinations.length ||
+        configured.resourceIds.length !==
+          configured.submission.destinations.length ||
         configured.resourceIds.some((resourceId) => resourceId === null)
       ) {
         throw new Error("Resource destination not found");
       }
-      // Submission Resource execution needs a protected outbound fetch path.
-      throw new Error("Resource submission is unavailable");
+      validateManagedFormBot(formData);
+      const graph = getManagedFormResourceGraph(managedFormId, {
+        system: {
+          params: getRemixParams(params ?? {}),
+          search: Object.fromEntries(url.searchParams),
+          origin: url.origin,
+          pathname: url.pathname,
+        },
+        formData: getManagedFormValues(formData),
+        browserInfo: getManagedFormBrowserInfo(
+          request,
+          typeof context === "object" &&
+            context !== null &&
+            "cloudflare" in context
+            ? request.headers.get("cf-connecting-ip") ?? undefined
+            : undefined
+        ),
+      });
+      if (graph === undefined || graph.rootIds.length === 0) {
+        throw new Error("Form Resource graph not found");
+      }
+      const protectedFetch = createManagedFormResourceFetch({
+        request,
+        context,
+        projectDomain,
+      });
+      const results = await loadResources(protectedFetch, graph, url, {
+        signal: request.signal,
+        timeoutMs: 10_000,
+      });
+      const outcomes = Object.values(results);
+      if (outcomes.length !== graph.rootIds.length) {
+        throw new Error("Form Resource results are incomplete");
+      }
+      const errors = outcomes.flatMap((result) => {
+        if (
+          typeof result === "object" &&
+          result !== null &&
+          "ok" in result &&
+          result.ok === true
+        ) {
+          return [];
+        }
+        const statusText =
+          typeof result === "object" &&
+          result !== null &&
+          "statusText" in result &&
+          typeof result.statusText === "string"
+            ? result.statusText.trim()
+            : "";
+        const status =
+          typeof result === "object" &&
+          result !== null &&
+          "status" in result &&
+          typeof result.status === "number"
+            ? result.status
+            : undefined;
+        return [
+          statusText ||
+            (status === undefined
+              ? "Resource request failed"
+              : `Resource request failed (${status})`),
+        ];
+      });
+      if (errors.length > 0) {
+        return { success: false, errors };
+      }
+      return { success: true };
     }
 
     const resourceName = formData.get(formIdFieldName);
@@ -298,28 +384,7 @@ export const action = async ({
         ? generatedResources.action.get(resourceName)
         : undefined;
 
-    const formBotValue = formData.get(formBotFieldName);
-
-    if (formBotValue == null || typeof formBotValue !== "string") {
-      throw new Error("Form bot field not found");
-    }
-
-    // Skip timestamp validation for Brave browser
-    // Brave Shields blocks matchMedia fingerprinting detection used in bot protection
-    // See: https://github.com/brave/brave-browser/issues/46541
-    if (formBotValue !== "brave") {
-      const submitTime = parseInt(formBotValue, 16);
-      // Assumes that the difference between the server time and the form submission time,
-      // including any client-server time drift, is within a 5-minute range.
-      // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
-      // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
-      if (
-        Number.isNaN(submitTime) ||
-        Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
-      ) {
-        throw new Error(`Form bot value invalid ${formBotValue}`);
-      }
-    }
+    validateManagedFormBot(formData);
 
     formData.delete(formIdFieldName);
     formData.delete(formBotFieldName);

@@ -13,18 +13,20 @@ import {
   getResourceDataSourceIds,
 } from "./resource-dependencies";
 
-const generateResourceRequestFields = ({
+export const generateResourceRequestFields = ({
   resource,
   indent,
   dataSources,
   usedDataSources,
   scope,
+  method,
 }: {
   resource: Resource;
   indent: string;
   dataSources: DataSources;
   usedDataSources: DataSources;
   scope: Scope;
+  method?: Resource["method"];
 }) => {
   let generated = "";
   generated += `${indent}name: ${JSON.stringify(resource.name)},\n`;
@@ -46,10 +48,10 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}  { name: "${searchParam.name}", value: ${value} },\n`;
+    generated += `${indent}  { name: ${JSON.stringify(searchParam.name)}, value: ${value} },\n`;
   }
   generated += `${indent}],\n`;
-  generated += `${indent}method: "${resource.method}",\n`;
+  generated += `${indent}method: ${JSON.stringify(method ?? resource.method)},\n`;
   generated += `${indent}headers: [\n`;
   for (const header of resource.headers) {
     const value = generateExpression({
@@ -58,7 +60,7 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}  { name: "${header.name}", value: ${value} },\n`;
+    generated += `${indent}  { name: ${JSON.stringify(header.name)}, value: ${value} },\n`;
   }
   generated += `${indent}],\n`;
   if (resource.body !== undefined && resource.body.length > 0) {

@@ -1,9 +1,10 @@
 import { forwardRef, type ComponentProps, type ElementRef } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLocation } from "react-router";
 import {
   createManagedSubmissionFormData,
   type getFormDataValue,
 } from "@webstudio-is/sdk-components-react";
+import { managedFormRequestParamName } from "@webstudio-is/sdk";
 import { NativeForm as BaseNativeForm } from "@webstudio-is/sdk-components-react/components";
 
 type Props = ComponentProps<typeof BaseNativeForm> & {
@@ -21,6 +22,7 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
     ref
   ) => {
     const fetcher = useFetcher<{ success: boolean; errors?: string[] }>();
+    const location = useLocation();
     const handleManagedSubmit = (
       values: ReturnType<typeof getFormDataValue>
     ) => {
@@ -28,9 +30,12 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
       if (managedFormId === undefined) {
         return;
       }
+      const search = new URLSearchParams(location.search);
+      search.set(managedFormRequestParamName, "1");
       fetcher.submit(
         createManagedSubmissionFormData({ values, managedFormId }),
         {
+          action: `${location.pathname}?${search.toString()}`,
           method: "post",
           encType: "multipart/form-data",
         }

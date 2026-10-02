@@ -31,6 +31,7 @@ import {
   getPagePath,
   getPublishablePages,
   generateResources,
+  generateManagedFormResources,
   generatePageMeta,
   getStaticSiteMapXml,
   replaceFormActionsWithResources,
@@ -1019,6 +1020,46 @@ export const prebuild = async (options: {
     return true;
   };
 
+  const managedFormResourceFetchFile = join(
+    generatedDir,
+    "$resources.managed-form-fetch.server.ts"
+  );
+  const isCloudflareTemplate = options.template.some((template) =>
+    ["cloudflare", "cloudflare-new", "react-router-cloudflare"].includes(
+      template
+    )
+  );
+  await writeGeneratedFile(
+    managedFormResourceFetchFile,
+    isCloudflareTemplate
+      ? `import {
+  createCloudflareProtectedResourceFetch,
+  getDeniedResourceHostnames,
+} from "@webstudio-is/sdk/protected-resource-fetch";
+export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+  void context;
+  return createCloudflareProtectedResourceFetch({
+    ownZoneHostnames: getDeniedResourceHostnames([
+      new URL(request.url).hostname,
+      projectDomain,
+    ]) as [string, ...string[]],
+  });
+};
+`
+      : `import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
+import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
+export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+  void context;
+  return createNodeProtectedResourceFetch({
+    deniedHostnames: getDeniedResourceHostnames([
+      new URL(request.url).hostname,
+      projectDomain,
+    ]),
+  });
+};
+`
+  );
+
   // force npm to install with not matching peer dependencies
   await writeFile(join(cwd(), ".npmrc"), npmrc);
 
@@ -1720,6 +1761,14 @@ export const prebuild = async (options: {
           : [];
         return [instance.id, { submission, resourceIds }] as const;
       });
+    const managedFormResourceSelections = managedFormSubmissions.map(
+      ([formId, { submission }]) => ({
+        formId,
+        destinationDataSourceIds: isFormSubmission(submission)
+          ? submission.destinations
+          : [],
+      })
+    );
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
@@ -1872,6 +1921,14 @@ export const prebuild = async (options: {
         ),
       })}
 
+      ${generateManagedFormResources({
+        scope,
+        instances,
+        dataSources,
+        resources,
+        forms: managedFormResourceSelections,
+      })}
+
       ${generatePageMeta({
         globalScope: scope,
         page,
@@ -1928,6 +1985,13 @@ export const prebuild = async (options: {
         .replaceAll(
           "__ASSET_QUERY_RUNTIME__",
           importFrom(`./app/__generated__/$resources.asset-query-runtime`, file)
+        )
+        .replaceAll(
+          "__MANAGED_FORM_FETCH__",
+          importFrom(
+            "./app/__generated__/$resources.managed-form-fetch.server",
+            file
+          )
         )
         .replaceAll(
           "__ASSET_RESOURCE_FETCH__",
