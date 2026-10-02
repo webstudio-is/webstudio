@@ -254,7 +254,15 @@ export class SyncClient {
     });
   }
 
-  connect({ signal, onReady }: { signal: AbortSignal; onReady?: () => void }) {
+  connect({
+    signal,
+    onReady,
+    shouldApplyTransaction,
+  }: {
+    signal: AbortSignal;
+    onReady?: () => void;
+    shouldApplyTransaction?: (transaction: Transaction) => boolean;
+  }) {
     const off = this.emitter.on((message) => {
       // ignore own messages
       if (this.clientId === message.clientId) {
@@ -278,6 +286,9 @@ export class SyncClient {
         this.object.setState(message.state);
       }
       if (message.type === "apply") {
+        if (shouldApplyTransaction?.(message.transaction) === false) {
+          return;
+        }
         this.object.applyTransaction(message.transaction);
         if (this.role === "leader") {
           for (const storage of this.storages) {

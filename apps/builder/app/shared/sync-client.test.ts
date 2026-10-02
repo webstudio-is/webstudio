@@ -283,6 +283,37 @@ test("merge state in pool object to partially restore from storage", () => {
 });
 
 describe("nanostores sync object", () => {
+  test("can skip an incoming transaction before applying it", () => {
+    const emitter = new NanoEventsSyncEmitter();
+    const $leader = atom(1);
+    const $follower = atom(0);
+    const shouldApplyTransaction = vi
+      .fn()
+      .mockReturnValueOnce(false)
+      .mockReturnValue(true);
+
+    new SyncClient({
+      role: "leader",
+      object: new NanostoresSyncObject("my-data", $leader),
+      emitter,
+    }).connect({ signal: new AbortController().signal });
+    new SyncClient({
+      role: "follower",
+      object: new NanostoresSyncObject("my-data", $follower),
+      emitter,
+    }).connect({
+      signal: new AbortController().signal,
+      shouldApplyTransaction,
+    });
+
+    expect($follower.get()).toBe(1);
+    $leader.set(2);
+    expect($follower.get()).toBe(1);
+    $leader.set(3);
+    expect($follower.get()).toBe(3);
+    expect(shouldApplyTransaction).toHaveBeenCalledTimes(2);
+  });
+
   test("sync initial state and exchange transactions", () => {
     const emitter = new NanoEventsSyncEmitter();
     const $leader = atom(1);

@@ -92,6 +92,7 @@ import { useDisableContextMenu } from "./shared/use-disable-context-menu";
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
+  const selectedPageId = useStore($selectedPageId);
   useEffect(() => {
     document.title = `${project?.title} | Webstudio`;
   }, [project?.title]);
@@ -338,7 +339,6 @@ export const Builder = (props: BuilderProps) => {
   }, [publish]);
 
   const project = useStore($project);
-  const selectedPageId = useStore($selectedPageId);
 
   usePreventUnload();
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
@@ -442,8 +442,8 @@ export const Builder = (props: BuilderProps) => {
           {/* Main must be after left sidebar panels because in content mode the Plus button must be above the left sidebar, otherwise it won't be visible when content is full width */}
           <Main>
             <Workspace>
-              {/* Recreate the document when the page changes. Canvas components
-                  can alter DOM that React would otherwise reconcile. */}
+              {/* Page changes recreate the Canvas document after the old frame
+                  has skipped the incoming page selection transaction. */}
               {dataLoadingState === "loaded" && project && (
                 <CanvasIframe
                   key={selectedPageId}

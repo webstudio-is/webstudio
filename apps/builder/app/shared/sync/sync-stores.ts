@@ -440,7 +440,21 @@ export const useCanvasStore = () => {
     });
 
     const controller = new AbortController();
-    canvasClient.connect({ signal: controller.signal });
+    canvasClient.connect({
+      signal: controller.signal,
+      shouldApplyTransaction(transaction) {
+        if (transaction.object === "selectedPageAndInstance") {
+          const nextPageId = (transaction.payload as SelectedPageAndInstance)
+            .selectedPageId;
+          if (nextPageId !== $selectedPageId.get()) {
+            // The Builder replaces this iframe. Keep the old page's React tree
+            // untouched until its document is discarded.
+            return false;
+          }
+        }
+        return true;
+      },
+    });
     return () => {
       controller.abort();
     };
