@@ -37,7 +37,9 @@ import {
 import { z } from "zod";
 import { produceWithPatches } from "immer";
 import {
+  browserInfoParameterName,
   createJsonStringifyProxy,
+  formDataParameterName,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
@@ -1589,7 +1591,8 @@ export const updateDataVariable = (
   }
   if (
     dataSource.type === "parameter" &&
-    (dataSource.name === "formData" || dataSource.name === "browserInfo") &&
+    (dataSource.name === formDataParameterName ||
+      dataSource.name === browserInfoParameterName) &&
     state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
       "NativeForm"
   ) {
@@ -1669,7 +1672,8 @@ export const deleteDataVariable = (
   const dataSource = state.dataSources?.get(input.dataSourceId);
   if (
     dataSource?.type === "parameter" &&
-    (dataSource.name === "formData" || dataSource.name === "browserInfo") &&
+    (dataSource.name === formDataParameterName ||
+      dataSource.name === browserInfoParameterName) &&
     state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
       "NativeForm"
   ) {

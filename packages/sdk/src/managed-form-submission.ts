@@ -5,6 +5,9 @@ import {
   managedFormIdFieldName,
 } from "./form-fields";
 
+export const formDataParameterName = "formData";
+export const browserInfoParameterName = "browserInfo";
+
 const internalFormFieldNames = new Set([
   formIdFieldName,
   managedFormIdFieldName,

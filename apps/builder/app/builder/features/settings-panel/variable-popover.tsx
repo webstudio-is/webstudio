@@ -45,7 +45,11 @@ import {
   SYSTEM_VARIABLE_ID,
   resourceRequest,
 } from "@webstudio-is/sdk";
-import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+  isAssetsResourceRequest,
+} from "@webstudio-is/sdk/runtime";
 import {
   ExpressionEditor,
   formatValue,
@@ -890,7 +894,8 @@ const VariablePopoverContent = ({
   const isSystemVariable =
     variable?.id === SYSTEM_VARIABLE_ID ||
     (variable?.type === "parameter" &&
-      (variable.name === "formData" || variable.name === "browserInfo") &&
+      (variable.name === formDataParameterName ||
+        variable.name === browserInfoParameterName) &&
       $instances.get().get(variable.scopeInstanceId ?? "")?.component ===
         "NativeForm");
   const previewReleaseRef = useRef<(() => void) | undefined>(undefined);

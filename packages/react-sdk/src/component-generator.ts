@@ -25,7 +25,12 @@ import {
   isFormSubmission,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
-import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+  indexProperty,
+  tagProperty,
+} from "@webstudio-is/sdk/runtime";
 import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import { isAttributeNameSafe, showAttribute } from "./props";
 import { generateCollectionIterationCode } from "./collection-utils";
@@ -736,7 +741,8 @@ export const generateWebstudioComponent = ({
   for (const dataSource of usedDataSources.values()) {
     if (
       dataSource.type === "parameter" &&
-      (dataSource.name === "formData" || dataSource.name === "browserInfo") &&
+      (dataSource.name === formDataParameterName ||
+        dataSource.name === browserInfoParameterName) &&
       instances.get(dataSource.scopeInstanceId ?? "")?.component ===
         "NativeForm"
     ) {

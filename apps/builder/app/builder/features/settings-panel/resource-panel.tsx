@@ -31,6 +31,8 @@ import {
   parseExpressionObject,
 } from "@webstudio-is/expression";
 import {
+  browserInfoParameterName,
+  formDataParameterName,
   serializeValue,
   sitemapResourceUrl,
   currentDateResourceUrl,
@@ -494,7 +496,8 @@ export const getResourceScopeForInstance = ({
       dataSource.type === "parameter" &&
       !(
         dataSource.scopeInstanceId === formScopeInstanceId &&
-        (dataSource.name === "formData" || dataSource.name === "browserInfo")
+        (dataSource.name === formDataParameterName ||
+          dataSource.name === browserInfoParameterName)
       )
     ) {
       hiddenDataSourceIds.add(dataSource.id);
@@ -514,13 +517,14 @@ export const getResourceScopeForInstance = ({
       if (
         dataSource.type !== "parameter" ||
         dataSource.scopeInstanceId !== formScopeInstanceId ||
-        (dataSource.name !== "formData" && dataSource.name !== "browserInfo")
+        (dataSource.name !== formDataParameterName &&
+          dataSource.name !== browserInfoParameterName)
       ) {
         continue;
       }
       const name = encodeDataVariableId(dataSource.id);
       const value =
-        dataSource.name === "formData"
+        dataSource.name === formDataParameterName
           ? {}
           : {
               ip: "",
@@ -547,7 +551,8 @@ export const getResourceScopeForInstance = ({
         if (
           dataSource.type === "parameter" &&
           dataSource.scopeInstanceId === formScopeInstanceId &&
-          (dataSource.name === "formData" || dataSource.name === "browserInfo")
+          (dataSource.name === formDataParameterName ||
+            dataSource.name === browserInfoParameterName)
         ) {
           continue;
         }

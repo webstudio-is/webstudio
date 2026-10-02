@@ -5,6 +5,10 @@ import type { Prop, Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "./managed-form-submission";
 import { findTreeInstanceIds } from "./instances-utils";
 import {
   getExpressionDataSourceIds,
@@ -130,8 +134,8 @@ export const generateResources = ({
       .filter(
         (dataSource) =>
           dataSource.type === "parameter" &&
-          (dataSource.name === "formData" ||
-            dataSource.name === "browserInfo") &&
+          (dataSource.name === formDataParameterName ||
+            dataSource.name === browserInfoParameterName) &&
           instances.get(dataSource.scopeInstanceId ?? "")?.component ===
             "NativeForm"
       )

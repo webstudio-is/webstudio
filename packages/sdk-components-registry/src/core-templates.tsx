@@ -12,6 +12,10 @@ import {
 } from "@webstudio-is/sdk";
 import { intrinsicCoreTemplates } from "@webstudio-is/sdk/core-templates";
 import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "@webstudio-is/sdk/runtime";
+import {
   ActionValue,
   css,
   expression,
@@ -36,8 +40,8 @@ import { componentsById } from "./components";
 
 const BlockTemplate = ws.blockTemplate;
 const blockDocument = new Parameter(contentBlockDocumentProp);
-const formData = new Parameter("formData");
-const browserInfo = new Parameter("browserInfo");
+const formData = new Parameter(formDataParameterName);
+const browserInfo = new Parameter(browserInfoParameterName);
 const formState = new Variable("formState", "initial");
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(

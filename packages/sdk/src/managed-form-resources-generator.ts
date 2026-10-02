@@ -3,6 +3,10 @@ import type { Instances } from "./schema/instances";
 import type { Resources } from "./schema/resources";
 import type { Scope } from "./scope";
 import { SYSTEM_VARIABLE_ID } from "./expression";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "./managed-form-submission";
 import { findTreeInstanceIds } from "./instances-utils";
 import {
   getResourceDataSourceIds,
@@ -38,7 +42,7 @@ export const generateManagedFormResources = ({
     "_managedFormDocuments"
   );
   // generateResources supplies the type imports in the same server module.
-  let generated = `export const getManagedFormResourceGraph = (formId: string, ${propsName}: { system: System; formData: unknown; browserInfo: unknown }): ResourceRequestGraph | undefined => {\n`;
+  let generated = `export const getManagedFormResourceGraph = (formId: string, ${propsName}: { system: System; ${formDataParameterName}: unknown; ${browserInfoParameterName}: unknown }): ResourceRequestGraph | undefined => {\n`;
   generated += `  switch (formId) {\n`;
 
   for (const { formId, destinationDataSourceIds } of forms) {
@@ -132,8 +136,8 @@ export const generateManagedFormResources = ({
           return (
             dataSource?.type === "parameter" &&
             dataSource.scopeInstanceId === formId &&
-            (dataSource.name === "formData" ||
-              dataSource.name === "browserInfo")
+            (dataSource.name === formDataParameterName ||
+              dataSource.name === browserInfoParameterName)
           );
         });
         if (
@@ -168,7 +172,7 @@ export const generateManagedFormResources = ({
           rootIds.includes(resourceId) &&
           formBoundResourceIds.has(resourceId) &&
           (resource.body === undefined || resource.body.length === 0)
-            ? `        body: ${propsName}.formData,\n`
+            ? `        body: ${propsName}.${formDataParameterName},\n`
             : "";
         const requestName = scope.getName(resource.id, resource.name);
         generatedRequests += `    const ${requestName} = (${documentsName}: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
@@ -196,8 +200,8 @@ export const generateManagedFormResources = ({
           const formInstance = instances.get(dataSource.scopeInstanceId ?? "");
           const isFormParameter =
             formInstance?.component === "NativeForm" &&
-            (dataSource.name === "formData" ||
-              dataSource.name === "browserInfo");
+            (dataSource.name === formDataParameterName ||
+              dataSource.name === browserInfoParameterName);
           if (isFormParameter && dataSource.scopeInstanceId === formId) {
             generatedVariables += `    const ${name} = ${propsName}.${dataSource.name};\n`;
             continue;
