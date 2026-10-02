@@ -1,5 +1,9 @@
-import type { Locator } from "@playwright/test";
-import { openBuilderUrl, waitForCanvasFrame } from "../flows/builder";
+import { expect, type Locator } from "@playwright/test";
+import {
+  getCanvasFrame,
+  openBuilderUrl,
+  waitForCanvasFrame,
+} from "../flows/builder";
 import {
   expectGeneratedAppNavigation,
   expectGeneratedAppToRender,
@@ -343,7 +347,9 @@ test("Preview links expose current page state for components and element anchors
     active: false,
   });
 
+  const previousCanvas = canvas;
   await canvas.getByRole("link", { name: previewLinkText.pageLink }).click();
+  expect(await getCanvasFrame(page)).toBe(previousCanvas);
   canvas = await waitForCanvasFrame({ page });
   await expectActiveLink({
     canvas,

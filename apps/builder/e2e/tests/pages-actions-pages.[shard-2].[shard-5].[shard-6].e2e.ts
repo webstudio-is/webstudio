@@ -1,6 +1,10 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { expectTextHidden } from "../flows/assertions";
-import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
+import {
+  getCanvasFrame,
+  openProjectBuilder,
+  waitForCanvasText,
+} from "../flows/builder";
 import { expectGeneratedAppBuild } from "../flows/generated-app";
 import {
   createFolder,
@@ -19,7 +23,7 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
-import { loadDevBuild } from "../db";
+import { loadDevBuild, updateBuild } from "../db";
 
 let fixture: SeededContentModeProject;
 let pasteFixture: SeededContentModeProject;
@@ -63,6 +67,11 @@ const waitForFolderRow = async ({
     .waitFor();
 };
 
+const getTreeButton = ({ page, itemName }: { page: Page; itemName: string }) =>
+  page
+    .locator("[data-tree-button]")
+    .filter({ has: page.getByText(itemName, { exact: true }) });
+
 const waitForTemplate = async ({
   page,
   templateName,
@@ -70,7 +79,7 @@ const waitForTemplate = async ({
   page: Page;
   templateName: string;
 }) => {
-  await page.getByText(templateName, { exact: true }).first().waitFor();
+  await getTreeButton({ page, itemName: templateName }).waitFor();
 };
 
 const waitForCopiedPageTransferData = async ({ page }: { page: Page }) => {
@@ -177,9 +186,7 @@ const selectContextAction = async ({
   itemName: string;
   action: "Paste" | "Copy" | "Duplicate" | "Delete";
 }) => {
-  await page.getByText(itemName, { exact: true }).first().click({
-    button: "right",
-  });
+  await getTreeButton({ page, itemName }).click({ button: "right" });
   await page.getByRole("menuitem", { name: action }).click();
 };
 
@@ -220,6 +227,95 @@ test.beforeAll(async ({ browser }, workerInfo) => {
       builderToken: `pages-actions-pages-paste-${workerSuffix}-builder-token`,
     });
   });
+});
+
+test("Canvas switches away from text animation without reloading", async ({
+  browser,
+  page,
+}, workerInfo) => {
+  const animationFixture = await withBrowserContext(browser, (context) =>
+    createContentModeProject({
+      context,
+      email: `pages-animation-${workerInfo.parallelIndex}@webstudio.test`,
+      title: "Animated Page Switch E2E",
+      assetNamePrefix: `pages-animation-${workerInfo.parallelIndex}-`,
+      editorToken: `pages-animation-${workerInfo.parallelIndex}-editor-token`,
+      builderToken: `pages-animation-${workerInfo.parallelIndex}-builder-token`,
+    })
+  );
+  const build = await loadDevBuild({ projectId: animationFixture.projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    type: "instance";
+    id: string;
+    component: string;
+    tag?: string;
+    children: Array<{ type: "id" | "text"; value: string }>;
+  }>;
+  const templateRoot = instances.find(
+    (instance) => instance.id === "content-page-template-root"
+  );
+  if (templateRoot === undefined) {
+    throw new Error("Expected page template root");
+  }
+  templateRoot.children.push({ type: "id", value: "animated-children" });
+  instances.push(
+    {
+      type: "instance",
+      id: "animated-children",
+      component: "@webstudio-is/sdk-components-animation:AnimateChildren",
+      children: [{ type: "id", value: "animated-text" }],
+    },
+    {
+      type: "instance",
+      id: "animated-text",
+      component: "@webstudio-is/sdk-components-animation:AnimateText",
+      children: [{ type: "id", value: "animated-inner" }],
+    },
+    {
+      type: "instance",
+      id: "animated-inner",
+      component: "ws:element",
+      tag: "div",
+      children: [{ type: "id", value: "animated-span" }],
+    },
+    {
+      type: "instance",
+      id: "animated-span",
+      component: "ws:element",
+      tag: "span",
+      children: [{ type: "text", value: "Animated page text" }],
+    }
+  );
+  await updateBuild(build.id, { instances: JSON.stringify(instances) });
+
+  await openProjectBuilder({
+    page,
+    projectId: animationFixture.projectId,
+    authToken: animationFixture.builderToken,
+  });
+  await createPageFromTemplate({
+    page,
+    templateName: animationFixture.pageTemplateName,
+    pageName: "Animated Page",
+    canvasText: "Animated page text",
+  });
+  const canvas = await getCanvasFrame(page);
+  if (canvas === undefined) {
+    throw new Error("Expected canvas frame");
+  }
+  await canvas.locator("[data-ws-text-animate]").first().waitFor();
+  await openPage({
+    page,
+    pageName: "Home",
+    canvasText: animationFixture.shareLinkEditableText,
+  });
+  expect(await getCanvasFrame(page)).toBe(canvas);
+  await openPage({
+    page,
+    pageName: "Animated Page",
+    canvasText: "Animated page text",
+  });
+  expect(await getCanvasFrame(page)).toBe(canvas);
 });
 
 test("Builder can draft, stage, copy, duplicate, and delete a page from the header menu", async ({
@@ -309,11 +405,21 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
   await pasteFromClipboardShortcut({ page });
   await waitForPageRow({ page, pageName: copiedPageName });
 
+  const previousCanvas = await getCanvasFrame(page);
+  if (previousCanvas === undefined) {
+    throw new Error("Expected canvas before switching pages");
+  }
+  // Reproduce a component changing React-owned DOM before page teardown.
+  await previousCanvas
+    .getByText(fixture.pageTemplateText, { exact: true })
+    .first()
+    .evaluate((element) => element.remove());
   await openPage({
     page,
     pageName: copiedPageName,
     canvasText: fixture.pageTemplateText,
   });
+  expect(await getCanvasFrame(page)).toBe(previousCanvas);
 
   await openPageSettings({ page, pageName: renamedPageName });
   await selectHeaderAction({

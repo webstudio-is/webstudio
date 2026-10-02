@@ -331,7 +331,10 @@ export const Canvas = () => {
     <>
       <GlobalStyles />
       {/* catch all errors in rendered components */}
-      <ErrorBoundary FallbackComponent={FallbackComponent}>
+      <ErrorBoundary
+        key={selectedPage?.id}
+        FallbackComponent={FallbackComponent}
+      >
         {elements}
       </ErrorBoundary>
       {
