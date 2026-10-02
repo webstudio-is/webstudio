@@ -33,7 +33,21 @@ blockedIPv6.addSubnet("3fff::", 20, "ipv6");
 
 const isPublicAddress = (address: string, family: number) => {
   if (family === 4) {
+    // Builder E2E fixtures run on loopback; production never enables this.
+    if (
+      process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS === "true" &&
+      blockedIPv4.check(address, "ipv4") &&
+      address.startsWith("127.")
+    ) {
+      return true;
+    }
     return blockedIPv4.check(address, "ipv4") === false;
+  }
+  if (
+    process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS === "true" &&
+    address === "::1"
+  ) {
+    return true;
   }
   return (
     globallyRoutableIPv6.check(address, "ipv6") &&
