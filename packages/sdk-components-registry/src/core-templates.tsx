@@ -21,8 +21,12 @@ import {
   ws,
 } from "@webstudio-is/template";
 import {
+  Button,
   CodeText,
   HtmlEmbed,
+  Input,
+  Label,
+  NativeForm,
   Paragraph,
 } from "@webstudio-is/sdk-components-react/components";
 import { componentsById } from "./components";
@@ -202,6 +206,23 @@ const builtWithWebstudioMeta: TemplateMeta = {
 
 export const coreTemplates = {
   ...intrinsicCoreTemplates,
+  form: {
+    category: "forms",
+    description: "Collect information with a native HTML form.",
+    template: (
+      <NativeForm>
+        <Label>
+          {new PlaceholderValue("Name")}
+          <Input name="name" autoComplete="name" required />
+        </Label>
+        <Label>
+          {new PlaceholderValue("Email")}
+          <Input name="email" type="email" autoComplete="email" required />
+        </Label>
+        <Button type="submit">{new PlaceholderValue("Submit")}</Button>
+      </NativeForm>
+    ),
+  },
   [blockComponent]: blockMeta,
   code_text: {
     category: "typography",
