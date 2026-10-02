@@ -229,6 +229,95 @@ test.beforeAll(async ({ browser }, workerInfo) => {
   });
 });
 
+test("Canvas switches away from text animation without reloading", async ({
+  browser,
+  page,
+}, workerInfo) => {
+  const animationFixture = await withBrowserContext(browser, (context) =>
+    createContentModeProject({
+      context,
+      email: `pages-animation-${workerInfo.parallelIndex}@webstudio.test`,
+      title: "Animated Page Switch E2E",
+      assetNamePrefix: `pages-animation-${workerInfo.parallelIndex}-`,
+      editorToken: `pages-animation-${workerInfo.parallelIndex}-editor-token`,
+      builderToken: `pages-animation-${workerInfo.parallelIndex}-builder-token`,
+    })
+  );
+  const build = await loadDevBuild({ projectId: animationFixture.projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    type: "instance";
+    id: string;
+    component: string;
+    tag?: string;
+    children: Array<{ type: "id" | "text"; value: string }>;
+  }>;
+  const templateRoot = instances.find(
+    (instance) => instance.id === "content-page-template-root"
+  );
+  if (templateRoot === undefined) {
+    throw new Error("Expected page template root");
+  }
+  templateRoot.children.push({ type: "id", value: "animated-children" });
+  instances.push(
+    {
+      type: "instance",
+      id: "animated-children",
+      component: "@webstudio-is/sdk-components-animation:AnimateChildren",
+      children: [{ type: "id", value: "animated-text" }],
+    },
+    {
+      type: "instance",
+      id: "animated-text",
+      component: "@webstudio-is/sdk-components-animation:AnimateText",
+      children: [{ type: "id", value: "animated-inner" }],
+    },
+    {
+      type: "instance",
+      id: "animated-inner",
+      component: "ws:element",
+      tag: "div",
+      children: [{ type: "id", value: "animated-span" }],
+    },
+    {
+      type: "instance",
+      id: "animated-span",
+      component: "ws:element",
+      tag: "span",
+      children: [{ type: "text", value: "Animated page text" }],
+    }
+  );
+  await updateBuild(build.id, { instances: JSON.stringify(instances) });
+
+  await openProjectBuilder({
+    page,
+    projectId: animationFixture.projectId,
+    authToken: animationFixture.builderToken,
+  });
+  await createPageFromTemplate({
+    page,
+    templateName: animationFixture.pageTemplateName,
+    pageName: "Animated Page",
+    canvasText: "Animated page text",
+  });
+  const canvas = await getCanvasFrame(page);
+  if (canvas === undefined) {
+    throw new Error("Expected canvas frame");
+  }
+  await canvas.locator("[data-ws-text-animate]").first().waitFor();
+  await openPage({
+    page,
+    pageName: "Home",
+    canvasText: animationFixture.shareLinkEditableText,
+  });
+  expect(await getCanvasFrame(page)).toBe(canvas);
+  await openPage({
+    page,
+    pageName: "Animated Page",
+    canvasText: "Animated page text",
+  });
+  expect(await getCanvasFrame(page)).toBe(canvas);
+});
+
 test("Builder can draft, stage, copy, duplicate, and delete a page from the header menu", async ({
   page,
 }) => {
