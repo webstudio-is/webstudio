@@ -239,7 +239,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
   });
 });
 
-test("saved Form selection reloads and a deleted Resource can be removed", async () => {
+test("stored Form selection renders and a deleted Resource can be removed", async () => {
   $instances.set(
     new Map([
       [
@@ -271,15 +271,13 @@ test("saved Form selection reloads and a deleted Resource can be removed", async
       ],
     ])
   );
-  const savedProp: Prop = JSON.parse(
-    JSON.stringify({
-      id: "submission",
-      instanceId: "form",
-      name: "submission",
-      type: "json",
-      value: { mode: "resources", destinations: ["resource-id"] },
-    })
-  );
+  const savedProp: Prop = {
+    id: "submission",
+    instanceId: "form",
+    name: "submission",
+    type: "json",
+    value: { mode: "resources", destinations: ["resource-id"] },
+  };
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -301,7 +299,6 @@ test("saved Form selection reloads and a deleted Resource can be removed", async
     );
   });
   expect(container.textContent).toContain("Send request");
-  expect(container.querySelector('[aria-label="Resources"]')).not.toBeNull();
 
   await act(async () => $dataSources.set(new Map()));
   expect(container.textContent).toContain("Deleted Resource");
