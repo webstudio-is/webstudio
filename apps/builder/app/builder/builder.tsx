@@ -14,6 +14,7 @@ import {
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { Role } from "@webstudio-is/project";
 import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
+import { createScopedSyncEmitter } from "~/shared/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
@@ -349,21 +350,28 @@ export const Builder = (props: BuilderProps) => {
 
   useSetWindowTitle();
 
-  const iframeRefCallback = useMemo(
-    () =>
-      mergeRefs((element: HTMLIFrameElement | null) => {
-        if (element?.contentWindow) {
-          const client = getSyncClient();
-          if (client) {
-            // added to iframe window and stored in local variable right away to prevent
-            // overriding in emebedded scripts on canvas
-            element.contentWindow.__webstudioSharedSyncEmitter__ =
-              client.emitter;
-          }
+  const iframeRefCallback = useMemo(() => {
+    let disposeSyncEmitter: () => void = () => {};
+    return mergeRefs((element: HTMLIFrameElement | null) => {
+      disposeSyncEmitter();
+      disposeSyncEmitter = () => {};
+      if (element?.contentWindow) {
+        const client = getSyncClient();
+        if (client) {
+          const scoped = createScopedSyncEmitter(client.emitter);
+          disposeSyncEmitter = () => {
+            scoped.dispose();
+            if (window.__webstudioSharedSyncEmitter__ === scoped.emitter) {
+              delete window.__webstudioSharedSyncEmitter__;
+            }
+          };
+          window.__webstudioSharedSyncEmitter__ = scoped.emitter;
+          // The Canvas captures this before embedded scripts can replace it.
+          element.contentWindow.__webstudioSharedSyncEmitter__ = scoped.emitter;
         }
-      }, publishRef),
-    [publishRef]
-  );
+      }
+    }, publishRef);
+  }, [publishRef]);
 
   const { navigatorLayout } = useStore($settings);
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
