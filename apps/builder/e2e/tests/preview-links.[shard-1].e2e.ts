@@ -349,7 +349,7 @@ test("Preview links expose current page state for components and element anchors
 
   const previousCanvas = canvas;
   await canvas.getByRole("link", { name: previewLinkText.pageLink }).click();
-  await expect.poll(() => getCanvasFrame(page)).not.toBe(previousCanvas);
+  expect(await getCanvasFrame(page)).toBe(previousCanvas);
   canvas = await waitForCanvasFrame({ page });
   await expectActiveLink({
     canvas,

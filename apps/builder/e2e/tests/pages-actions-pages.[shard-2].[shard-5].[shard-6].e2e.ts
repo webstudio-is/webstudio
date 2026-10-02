@@ -330,7 +330,7 @@ test("Builder can draft, stage, copy, duplicate, and delete a page from the head
     pageName: copiedPageName,
     canvasText: fixture.pageTemplateText,
   });
-  await expect.poll(() => getCanvasFrame(page)).not.toBe(previousCanvas);
+  expect(await getCanvasFrame(page)).toBe(previousCanvas);
 
   await openPageSettings({ page, pageName: renamedPageName });
   await selectHeaderAction({

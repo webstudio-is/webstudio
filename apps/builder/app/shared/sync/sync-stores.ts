@@ -52,9 +52,9 @@ import {
 } from "../sync-client";
 import type {
   RevertedTransaction,
+  SyncEmitter,
   Transaction,
 } from "@webstudio-is/sync-client";
-import { takeCanvasSyncEmitter } from "../canvas-sync-bridge";
 import { $canvasScrollbarSize } from "~/builder/shared/nano-states";
 import {
   $pages,
@@ -155,12 +155,6 @@ type SelectedPageAndInstance = {
   allSelectedInstanceSelectors: InstanceSelector[];
 };
 
-const readSelectedPageAndInstance = (): SelectedPageAndInstance => ({
-  selectedPageId: $selectedPageId.get(),
-  selectedInstanceSelector: $selectedInstanceSelector.get(),
-  allSelectedInstanceSelectors: $allSelectedInstanceSelectors.get(),
-});
-
 const isInstanceSelector = (value: unknown): value is InstanceSelector =>
   Array.isArray(value) && value.every((id) => typeof id === "string");
 
@@ -212,16 +206,9 @@ class SelectedPageAndInstanceSyncObject {
   private stateToIgnore: SelectedPageAndInstance | undefined;
   private lastSelectionRevision = $instanceSelectionUpdate.get().revision;
   private lastSelectedPageId = $selectedPageId.get();
-  private readonly ignoreRemotePageChanges: boolean;
-
-  constructor(ignoreRemotePageChanges = false) {
-    this.ignoreRemotePageChanges = ignoreRemotePageChanges;
-  }
 
   getState() {
-    // A new Canvas can connect in the same turn as the page switch, before the
-    // batched store has published its next value.
-    return readSelectedPageAndInstance();
+    return $selectedPageAndInstance.get().state;
   }
 
   setState(state: unknown) {
@@ -229,13 +216,6 @@ class SelectedPageAndInstanceSyncObject {
   }
 
   applyTransaction(transaction: Transaction) {
-    const nextPageId = (transaction.payload as SelectedPageAndInstance)
-      ?.selectedPageId;
-    if (this.ignoreRemotePageChanges && nextPageId !== $selectedPageId.get()) {
-      // The Builder replaces this iframe. Leave its React tree on the old page
-      // until the document is discarded.
-      return;
-    }
     this.applyRemoteState(transaction.payload, "add");
   }
 
@@ -332,7 +312,11 @@ class SelectedPageAndInstanceSyncObject {
     } else {
       selectInstance(selectedInstanceSelector);
     }
-    return readSelectedPageAndInstance();
+    return {
+      selectedPageId: $selectedPageId.get(),
+      selectedInstanceSelector: $selectedInstanceSelector.get(),
+      allSelectedInstanceSelectors: $allSelectedInstanceSelectors.get(),
+    };
   }
 }
 
@@ -340,9 +324,7 @@ export const __testing__ = {
   SelectedPageAndInstanceSyncObject,
 };
 
-export const createObjectPool = (options?: {
-  ignoreRemotePageChanges?: boolean;
-}) => {
+export const createObjectPool = () => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore, {
       onRevert: (changes) => {
@@ -353,7 +335,7 @@ export const createObjectPool = (options?: {
     }),
     new ImmerhinSyncObject("externalContent", externalContentSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
-    new SelectedPageAndInstanceSyncObject(options?.ignoreRemotePageChanges),
+    new SelectedPageAndInstanceSyncObject(),
     new NanostoresSyncObject("pointerPosition", $pointerPosition),
     new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
 
@@ -431,14 +413,29 @@ export const createObjectPool = (options?: {
   ]);
 };
 
+declare global {
+  interface Window {
+    __webstudioSharedSyncEmitter__: SyncEmitter | undefined;
+  }
+}
+
+/**
+ * prevent syncEmitter interception from embedded scripts on canvas
+ * i.e., `globalThis.syncEmitter = () => console.log('INTERCEPTED');`,
+ */
 const sharedSyncEmitter =
-  typeof window === "undefined" ? undefined : takeCanvasSyncEmitter();
+  typeof window === "undefined"
+    ? undefined
+    : window.__webstudioSharedSyncEmitter__;
+if (typeof window !== "undefined") {
+  delete window.__webstudioSharedSyncEmitter__;
+}
 
 export const useCanvasStore = () => {
   useEffect(() => {
     const canvasClient = new SyncClient({
       role: "follower",
-      object: createObjectPool({ ignoreRemotePageChanges: true }),
+      object: createObjectPool(),
       emitter: sharedSyncEmitter,
     });
 

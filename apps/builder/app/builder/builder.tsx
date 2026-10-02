@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type JSX, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
@@ -13,14 +13,14 @@ import {
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { Role } from "@webstudio-is/project";
-import { initializeClientSync } from "~/shared/sync/sync-client";
+import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
 import { Topbar } from "./shared/topbar";
 import { Footer } from "./features/footer";
 import {
-  CanvasFrameSwitcher,
+  CanvasIframe,
   CanvasToolsContainer,
   Workspace,
 } from "./features/workspace";
@@ -37,7 +37,6 @@ import {
   $stagingUsername,
   $stagingPassword,
   $user,
-  $selectedPageId,
 } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { $settings, type Settings } from "./shared/client-settings";
@@ -62,6 +61,7 @@ import { useToastErrors } from "~/shared/error/toast-error";
 import { initBuilderApi } from "~/shared/builder-api";
 import { migrateLoadedWebstudioData } from "~/shared/instance-utils/data";
 import { Loading, LoadingBackground } from "./shared/loading";
+import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
 import { DeleteUnusedTokensDialog } from "~/builder/shared/style-source-actions";
 import { DeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
@@ -337,7 +337,6 @@ export const Builder = (props: BuilderProps) => {
   }, [publish]);
 
   const project = useStore($project);
-  const selectedPageId = useStore($selectedPageId);
 
   usePreventUnload();
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
@@ -347,6 +346,22 @@ export const Builder = (props: BuilderProps) => {
   const isContentMode = useStore($isContentMode);
 
   useSetWindowTitle();
+
+  const iframeRefCallback = useMemo(
+    () =>
+      mergeRefs((element: HTMLIFrameElement | null) => {
+        if (element?.contentWindow) {
+          const client = getSyncClient();
+          if (client) {
+            // added to iframe window and stored in local variable right away to prevent
+            // overriding in emebedded scripts on canvas
+            element.contentWindow.__webstudioSharedSyncEmitter__ =
+              client.emitter;
+          }
+        }
+      }, publishRef),
+    [publishRef]
+  );
 
   const { navigatorLayout } = useStore($settings);
   const [loadingState, setLoadingState] = useState(() => $loadingState.get());
@@ -426,10 +441,8 @@ export const Builder = (props: BuilderProps) => {
           <Main>
             <Workspace>
               {dataLoadingState === "loaded" && project && (
-                <CanvasFrameSwitcher
-                  key={project.id}
-                  pageId={selectedPageId}
-                  publishRef={publishRef}
+                <CanvasIframe
+                  ref={iframeRefCallback}
                   src={canvasUrl}
                   title={project.title}
                 />

@@ -60,7 +60,6 @@ import { subscribeInterceptedEvents } from "./interceptor";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { initCanvasApi } from "~/shared/canvas-api";
-import { canvasRenderedEvent } from "~/shared/canvas-sync-bridge";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { subscribeSelected } from "./selected-instance-effects";
 import { subscribeGridGuidesOnSelected } from "./grid-guide-utils";
@@ -318,28 +317,11 @@ export const Canvas = () => {
   const components = useStore($registeredComponents);
   const instances = useStore($instances);
   const elements = useElementsTree(components, instances);
-  const selectedPageId = selectedPage?.id;
 
   const [isInitialized, setInitialized] = useState(false);
   useEffect(() => {
     setInitialized(true);
   }, []);
-
-  useEffect(() => {
-    if (
-      !isInitialized ||
-      selectedPageId === undefined ||
-      components.size === 0 ||
-      instances.size === 0
-    ) {
-      return;
-    }
-    const frame = window.frameElement;
-    if (frame?.getAttribute("data-ws-page-id") !== selectedPageId) {
-      return;
-    }
-    frame.dispatchEvent(new Event(canvasRenderedEvent));
-  }, [isInitialized, selectedPageId, components, instances]);
 
   if (components.size === 0 || instances.size === 0) {
     return;
@@ -349,7 +331,10 @@ export const Canvas = () => {
     <>
       <GlobalStyles />
       {/* catch all errors in rendered components */}
-      <ErrorBoundary FallbackComponent={FallbackComponent}>
+      <ErrorBoundary
+        key={selectedPage?.id}
+        FallbackComponent={FallbackComponent}
+      >
         {elements}
       </ErrorBoundary>
       {
