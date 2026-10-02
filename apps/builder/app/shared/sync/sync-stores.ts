@@ -212,8 +212,11 @@ class SelectedPageAndInstanceSyncObject {
   private stateToIgnore: SelectedPageAndInstance | undefined;
   private lastSelectionRevision = $instanceSelectionUpdate.get().revision;
   private lastSelectedPageId = $selectedPageId.get();
+  private readonly ignoreRemotePageChanges: boolean;
 
-  constructor(private readonly ignoreRemotePageChanges = false) {}
+  constructor(ignoreRemotePageChanges = false) {
+    this.ignoreRemotePageChanges = ignoreRemotePageChanges;
+  }
 
   getState() {
     // A new Canvas can connect in the same turn as the page switch, before the
