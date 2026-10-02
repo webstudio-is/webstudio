@@ -649,7 +649,8 @@ export const projectContentDatabaseDocument = ({
   if (plan === undefined) {
     return document;
   }
-  const includeContentIdentity = requiresHydratedContent(plan);
+  const includeContentIdentity =
+    requiresHydratedContent(plan) || document.extension.toLowerCase() === "mdx";
   const properties =
     plan.structuredPropertyPaths === "all"
       ? document.properties
@@ -661,7 +662,9 @@ export const projectContentDatabaseDocument = ({
     _id: document._id,
     ...selectAssetDocumentFields({
       document,
-      includes: (field) => hasField(plan.standardFields, field),
+      includes: (field) =>
+        hasField(plan.standardFields, field) ||
+        (includeContentIdentity && field === "revision"),
     }),
     ...(includeContentIdentity ? { contentRef: document.contentRef } : {}),
     ...(plan.structuredPropertyPaths === "all" ||
