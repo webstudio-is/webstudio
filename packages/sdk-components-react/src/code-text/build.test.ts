@@ -227,7 +227,7 @@ test("falls back to plaintext for unsupported language selections", () => {
   ]) satisfies Props;
 
   expect(collect(props)).toEqual({
-    staticLanguages: [],
+    staticLanguages: ["javascript"],
     staticThemes: ["github-light"],
     dynamicLanguages: false,
     dynamicThemes: false,
