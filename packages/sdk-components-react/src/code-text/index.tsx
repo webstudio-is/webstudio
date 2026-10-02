@@ -227,13 +227,7 @@ export const createCodeText = ({
       didCommit.current = true;
     }, []);
 
-    const requestedLanguage = language ?? codeTextDefaultLanguage;
-    const effectiveLanguage =
-      requestedLanguage !== "plaintext" &&
-      loaders?.language === undefined &&
-      highlighter.getLoadedLanguages().includes(requestedLanguage) === false
-        ? "plaintext"
-        : requestedLanguage;
+    const effectiveLanguage = language ?? codeTextDefaultLanguage;
     const effectiveTheme = theme ?? codeTextDefaultTheme;
     const assetsReady = isSelectionLoaded(effectiveLanguage, effectiveTheme);
     if (suspense && didCommit.current === false && assetsReady === false) {

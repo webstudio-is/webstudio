@@ -202,7 +202,7 @@ test("marks expression-bound selections as dynamic", () => {
   });
 });
 
-test("rejects selections outside the component metadata", () => {
+test("falls back to plaintext for unsupported language selections", () => {
   const props = new Map([
     [
       "code-1-language",
@@ -226,7 +226,10 @@ test("rejects selections outside the component metadata", () => {
     ],
   ]) satisfies Props;
 
-  expect(() => collect(props)).toThrow(
-    'Code Text "code-1" has an unsupported language selection "ruby".'
-  );
+  expect(collect(props)).toEqual({
+    staticLanguages: [],
+    staticThemes: ["github-light"],
+    dynamicLanguages: false,
+    dynamicThemes: false,
+  });
 });
