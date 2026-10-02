@@ -31,11 +31,10 @@ const renderAndSwitchPage = async (keyPageBoundary: boolean) => {
     );
   };
   const renderPage = () =>
-    createElement(
-      PageRoot,
-      { pageKey: keyPageBoundary ? pageId : "stable-page-boundary" },
-      createElement(PageContent, { pageKey: pageId })
-    );
+    createElement(PageRoot, {
+      pageKey: keyPageBoundary ? pageId : "stable-page-boundary",
+      children: createElement(PageContent, { pageKey: pageId }),
+    });
 
   await act(async () => root.render(renderPage()));
   expect(container.querySelector("span")).toBeNull();
