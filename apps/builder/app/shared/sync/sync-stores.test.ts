@@ -67,6 +67,18 @@ afterEach(() => {
 });
 
 describe("SelectedPageAndInstanceSyncObject", () => {
+  test("initial state uses the current page before the batched update", () => {
+    const syncObject = new SelectedPageAndInstanceSyncObject();
+    $selectedPageId.set("next-page");
+    selectInstance(["next-body"]);
+
+    expect(syncObject.getState()).toEqual({
+      selectedPageId: "next-page",
+      selectedInstanceSelector: ["next-body"],
+      allSelectedInstanceSelectors: [["next-body"]],
+    });
+  });
+
   test("does not publish selection pruned by an instance update", async () => {
     setTestInstances("box");
     selectInstance(["box", "body"]);

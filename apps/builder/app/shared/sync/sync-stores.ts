@@ -208,7 +208,13 @@ class SelectedPageAndInstanceSyncObject {
   private lastSelectedPageId = $selectedPageId.get();
 
   getState() {
-    return $selectedPageAndInstance.get().state;
+    // A new Canvas can connect in the same turn as the page switch, before the
+    // batched store has published its next value.
+    return {
+      selectedPageId: $selectedPageId.get(),
+      selectedInstanceSelector: $selectedInstanceSelector.get(),
+      allSelectedInstanceSelectors: $allSelectedInstanceSelectors.get(),
+    } satisfies SelectedPageAndInstance;
   }
 
   setState(state: unknown) {
