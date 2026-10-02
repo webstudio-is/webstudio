@@ -54,6 +54,13 @@ export const getResources = (_props: { system: System; resources?: Record<string
 }
 
 
+      export const getManagedFormResourceGraph = (formId: string, _managedFormProps: { system: System; formData: unknown; browserInfo: unknown }): ResourceRequestGraph | undefined => {
+  switch (formId) {
+    default: return undefined;
+  }
+};
+
+
       export const getPageMeta = ({
   system,
   resources,

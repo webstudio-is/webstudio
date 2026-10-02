@@ -93,7 +93,9 @@ export const createNodeProtectedResourceFetch = ({
           dispatcher: agent,
         });
         return {
-          response: response as Response,
+          // Undici's Response implements the Fetch API, but its iterator
+          // declarations differ from TypeScript's DOM types.
+          response: response as unknown as Response,
           release: async () => {
             await agent.close();
           },

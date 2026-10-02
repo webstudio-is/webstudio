@@ -24,8 +24,6 @@ import {
   managedFormIdFieldName,
   formBotFieldName,
   cachedFetch,
-} from "@webstudio-is/sdk/runtime";
-import {
   isFormSubmission,
   validateFormSubmission,
 } from "@webstudio-is/sdk/runtime";
