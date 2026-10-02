@@ -154,6 +154,96 @@ test("applies action request overrides after resolving remote dependencies", asy
   ]);
 });
 
+test("sends file bodies as multipart and preserves repeated fields and bytes", async () => {
+  const bytes = new Uint8Array([0, 128, 255]);
+  const file = new File([bytes], "file.bin", {
+    type: "application/octet-stream",
+  });
+  let submitted: Request | undefined;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    submitted = new Request(input, init);
+    return Response.json({ accepted: true });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "upload",
+        outputName: "Upload",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Upload",
+          method: "post",
+          url: "https://example.com/upload",
+          searchParams: [],
+          headers: [{ name: "Content-Type", value: '"application/json"' }],
+          body: {
+            topics: ["design", "development"],
+            attachment: file,
+          },
+        }),
+      },
+    ],
+    rootIds: ["upload"],
+  };
+
+  await expect(loadResources(fetch, graph)).resolves.toMatchObject({
+    Upload: { ok: true, data: { accepted: true } },
+  });
+  expect(submitted?.headers.get("content-type")).toMatch(
+    /^multipart\/form-data; boundary=/
+  );
+  const multipart = await submitted?.formData();
+  expect(multipart?.getAll("topics")).toEqual(["design", "development"]);
+  const submittedFile = multipart?.get("attachment") as File;
+  expect(submittedFile.name).toBe("file.bin");
+  expect(submittedFile.type).toBe("application/octet-stream");
+  expect(new Uint8Array(await submittedFile.arrayBuffer())).toEqual(bytes);
+});
+
+test("uses JSON content type for object bodies unless configured otherwise", async () => {
+  const contentTypes: Array<string | null> = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    const request = new Request(input, init);
+    contentTypes.push(request.headers.get("content-type"));
+    expect(await request.json()).toEqual({ message: "Hello" });
+    return Response.json({ accepted: true });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "default-type",
+        outputName: "DefaultType",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Default type",
+          method: "post",
+          url: "https://example.com/default",
+          searchParams: [],
+          headers: [],
+          body: { message: "Hello" },
+        }),
+      },
+      {
+        id: "custom-type",
+        outputName: "CustomType",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Custom type",
+          method: "post",
+          url: "https://example.com/custom",
+          searchParams: [],
+          headers: [{ name: "Content-Type", value: "text/plain" }],
+          body: { message: "Hello" },
+        }),
+      },
+    ],
+    rootIds: ["default-type", "custom-type"],
+  };
+
+  await loadResources(fetch, graph);
+  expect(contentTypes.sort()).toEqual(["application/json", "text/plain"]);
+});
+
 test("runs independent resources concurrently while keeping dependency chains serial", async () => {
   const independentIds = Array.from(
     { length: 19 },

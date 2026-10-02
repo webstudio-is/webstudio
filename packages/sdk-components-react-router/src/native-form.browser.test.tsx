@@ -16,6 +16,7 @@ import { NativeForm } from "./native-form";
 test("managed Form posts its server identity and shows the action error", async () => {
   const submissions: FormData[] = [];
   const requestUrls: string[] = [];
+  const stateChanges: string[] = [];
   const action = vi.fn(async ({ request }: { request: Request }) => {
     requestUrls.push(request.url);
     submissions.push(await request.formData());
@@ -29,6 +30,7 @@ test("managed Form posts its server identity and shows the action error", async 
           <NativeForm
             data-ws-managed-form-id="form-instance"
             submission={{ mode: "resources", destinations: ["resource-id"] }}
+            onStateChange={(state) => stateChanges.push(state)}
           >
             <input name="message" defaultValue="Hello" />
             <input name="tag" defaultValue="first" />
@@ -93,6 +95,46 @@ test("managed Form posts its server identity and shows the action error", async 
         "Resource request failed (422)"
       )
     );
+    expect(stateChanges).toEqual(["initial", "error"]);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+test("managed Form reports success after the action succeeds", async () => {
+  const stateChanges: string[] = [];
+  const action = vi.fn(async () => ({ success: true }));
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: (
+          <NativeForm
+            data-ws-managed-form-id="form-instance"
+            submission={{ destinations: ["resource-id"] }}
+            onStateChange={(state) => stateChanges.push(state)}
+          >
+            <input name="message" defaultValue="Hello" />
+            <button type="submit">Send</button>
+          </NativeForm>
+        ),
+        action,
+      },
+    ],
+    { initialEntries: ["/"] }
+  );
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+
+  try {
+    await act(async () => root.render(<RouterProvider router={router} />));
+    await act(async () => {
+      container.querySelector("button")?.click();
+      await vi.waitFor(() => expect(action).toHaveBeenCalledOnce());
+    });
+    await vi.waitFor(() => expect(stateChanges).toContain("success"));
   } finally {
     await act(async () => root.unmount());
     container.remove();

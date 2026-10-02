@@ -164,6 +164,12 @@ export const generateManagedFormResources = ({
           scope,
           method: rootIds.includes(resourceId) ? "post" : undefined,
         });
+        const defaultFormBody =
+          rootIds.includes(resourceId) &&
+          formBoundResourceIds.has(resourceId) &&
+          (resource.body === undefined || resource.body.length === 0)
+            ? `        body: ${propsName}.formData,\n`
+            : "";
         const requestName = scope.getName(resource.id, resource.name);
         generatedRequests += `    const ${requestName} = (${documentsName}: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
         for (const dataSource of requestDataSources.values()) {
@@ -173,7 +179,7 @@ export const generateManagedFormResources = ({
             generatedRequests += `      const ${name} = ${documentsName}.get(${JSON.stringify(dataSource.resourceId)});\n`;
           }
         }
-        generatedRequests += `      return {\n${fields}      };\n    };\n`;
+        generatedRequests += `      return {\n${fields}${defaultFormBody}      };\n    };\n`;
       }
 
       let generatedVariables = "";

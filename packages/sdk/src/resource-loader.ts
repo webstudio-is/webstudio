@@ -5,7 +5,7 @@ import {
   type Resource,
 } from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
-import { serializeValue } from "./to-string";
+import { isPlainObject, serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
 const RESOURCE_ERROR_DETAIL_LIMIT = 2000;
@@ -55,6 +55,56 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
   }
 
   return segments.join("/") === `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;
+};
+
+const containsFile = (value: unknown): boolean => {
+  if (
+    (typeof File !== "undefined" && value instanceof File) ||
+    (typeof Blob !== "undefined" && value instanceof Blob)
+  ) {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.some(containsFile);
+  }
+  if (isPlainObject(value)) {
+    return Object.values(value).some(containsFile);
+  }
+  return false;
+};
+
+const toMultipartFormData = (value: object) => {
+  const formData = new FormData();
+  const append = (name: string, item: unknown) => {
+    if (item === undefined || item === null) {
+      return;
+    }
+    if (typeof File !== "undefined" && item instanceof File) {
+      formData.append(name, item, item.name);
+      return;
+    }
+    if (typeof Blob !== "undefined" && item instanceof Blob) {
+      formData.append(name, item);
+      return;
+    }
+    if (Array.isArray(item)) {
+      for (const value of item) {
+        append(name, value);
+      }
+      return;
+    }
+    if (isPlainObject(item) && containsFile(item)) {
+      for (const [key, value] of Object.entries(item)) {
+        append(`${name}[${key}]`, value);
+      }
+      return;
+    }
+    formData.append(name, serializeValue(item));
+  };
+  for (const [name, fieldValue] of Object.entries(value)) {
+    append(name, fieldValue);
+  }
+  return formData;
 };
 
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
@@ -336,7 +386,25 @@ export const loadResource = async (
       requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
-      requestInit.body = serializeValue(body);
+      if (body instanceof FormData) {
+        // Fetch must generate the Content-Type boundary for this FormData.
+        requestHeaders.delete("Content-Type");
+        requestInit.body = body;
+      } else if (isPlainObject(body)) {
+        if (containsFile(body)) {
+          // Form data is JSON by default; preserve upload bytes and repeated
+          // values as multipart whenever the body contains a file.
+          requestHeaders.delete("Content-Type");
+          requestInit.body = toMultipartFormData(body);
+        } else {
+          if (requestHeaders.has("Content-Type") === false) {
+            requestHeaders.set("Content-Type", "application/json");
+          }
+          requestInit.body = serializeValue(body);
+        }
+      } else {
+        requestInit.body = serializeValue(body);
+      }
     }
     const response = await awaitWithSignal(
       customFetch(href, requestInit),

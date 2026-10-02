@@ -227,6 +227,48 @@ test("an external Resource can be selected without gaining access to Form data",
   ).toBeUndefined();
 });
 
+test("a Form-scoped destination defaults its POST body to all formData", () => {
+  const formData = { name: "Ada", interests: ["design", "code"] };
+  const graph = getGeneratedGraph({
+    instances: new Map([
+      [
+        "form",
+        { type: "instance", id: "form", component: "NativeForm", children: [] },
+      ],
+    ]),
+    dataSources: new Map([
+      [
+        "destination",
+        {
+          id: "destination",
+          type: "resource",
+          scopeInstanceId: "form",
+          name: "Destination",
+          resourceId: "submit",
+        },
+      ],
+    ]),
+    resources: new Map([
+      [
+        "submit",
+        {
+          id: "submit",
+          name: "Submit",
+          method: "get",
+          url: '"https://example.com/submit"',
+          headers: [],
+        },
+      ],
+    ]),
+    forms: [{ formId: "form", destinationDataSourceIds: ["destination"] }],
+  })("form", { system: {}, formData, browserInfo: {} });
+
+  expect(graph?.resources[0].createRequest(new Map())).toMatchObject({
+    method: "post",
+    body: formData,
+  });
+});
+
 test("a shared outside alias cannot promote a Resource into Form scope", () => {
   const instances: Instances = new Map([
     [

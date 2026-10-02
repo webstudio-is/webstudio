@@ -8,3 +8,7 @@ export {
   getFormDataValue,
   type BrowserInfo,
 } from "./form-submission";
+export {
+  useManagedFormResult,
+  type ManagedFormResult,
+} from "./managed-form-result";

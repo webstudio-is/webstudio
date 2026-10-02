@@ -829,6 +829,9 @@ describe("insert webstudio component at", () => {
         ({ instanceId }) => instanceId === formId
       );
       expect(formProps.find(({ name }) => name === "action")).toBeUndefined();
+      expect(
+        formProps.some(({ name }) => name === "onStateChange")
+      ).toBe(true);
       for (const name of ["formData", "browserInfo"]) {
         const prop = formProps.find((prop) => prop.name === name);
         expect(prop?.type).toBe("parameter");

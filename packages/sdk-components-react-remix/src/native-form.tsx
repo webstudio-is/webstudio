@@ -3,6 +3,7 @@ import { useFetcher, useLocation } from "@remix-run/react";
 import {
   createManagedSubmissionFormData,
   type getFormDataValue,
+  useManagedFormResult,
 } from "@webstudio-is/sdk-components-react";
 import { managedFormRequestParamName } from "@webstudio-is/sdk";
 import { NativeForm as BaseNativeForm } from "@webstudio-is/sdk-components-react/components";
@@ -15,6 +16,9 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
   (
     {
       "data-ws-managed-form-id": managedFormId,
+      onStateChange,
+      successRedirect,
+      state,
       onManagedSubmit,
       children,
       ...props
@@ -23,6 +27,12 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
   ) => {
     const fetcher = useFetcher<{ success: boolean; errors?: string[] }>();
     const location = useLocation();
+    useManagedFormResult({
+      state: fetcher.state,
+      data: fetcher.data,
+      onStateChange,
+      successRedirect,
+    });
     const handleManagedSubmit = (
       values: ReturnType<typeof getFormDataValue>
     ) => {
@@ -46,6 +56,8 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
       <BaseNativeForm
         {...props}
         data-ws-managed-form-id={managedFormId}
+        state={state}
+        onStateChange={onStateChange}
         ref={ref}
         onManagedSubmit={
           managedFormId === undefined ? undefined : handleManagedSubmit

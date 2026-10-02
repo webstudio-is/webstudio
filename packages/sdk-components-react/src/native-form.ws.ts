@@ -12,8 +12,12 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   label: "Form",
+  states: [
+    { label: "Success", selector: "[data-state=success]" },
+    { label: "Error", selector: "[data-state=error]" },
+  ],
   presetStyle,
-  initialProps: ["id", "class", "submission"],
+  initialProps: ["id", "class", "submission", "successRedirect"],
   props: {
     ...props,
     submission: {
@@ -21,6 +25,12 @@ export const meta: WsComponentMeta = {
       control: "form-submission",
       required: false,
       description: "Choose up to 5 Resource destinations for this Form.",
+    },
+    successRedirect: {
+      type: "string",
+      control: "url",
+      required: false,
+      description: "Redirect visitors here after every Resource succeeds.",
     },
   },
 };

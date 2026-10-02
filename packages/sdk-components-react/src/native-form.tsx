@@ -15,6 +15,9 @@ export const NativeForm = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     submission?: unknown;
+    successRedirect?: string;
+    state?: "initial" | "success" | "error";
+    onStateChange?: (state: "initial" | "success" | "error") => void;
     onManagedSubmit?: (formData: ReturnType<typeof getFormDataValue>) => void;
     // These parameters define Resource expression scope in Builder.
     formData?: unknown;
@@ -25,6 +28,8 @@ export const NativeForm = forwardRef<
     {
       id,
       submission,
+      state,
+      onStateChange,
       onManagedSubmit,
       onSubmit,
       formData,
@@ -41,8 +46,8 @@ export const NativeForm = forwardRef<
     const configurationError = validSubmission
       ? validateFormSubmission(submission)
       : submission === undefined
-      ? validateFormSubmission({ destinations: [] })
-      : "Invalid Form submission settings";
+        ? validateFormSubmission({ destinations: [] })
+        : "Invalid Form submission settings";
     const handleManagedSubmit = (event: FormEvent<HTMLFormElement>) => {
       onSubmit?.(event);
       if (event.defaultPrevented) {
@@ -51,13 +56,16 @@ export const NativeForm = forwardRef<
       event.preventDefault();
       if (configurationError) {
         setError(configurationError);
+        onStateChange?.("error");
         return;
       }
       if (onManagedSubmit === undefined) {
         setError("Resource submission is unavailable");
+        onStateChange?.("error");
         return;
       }
       setError(undefined);
+      onStateChange?.("initial");
       const submitter = (event.nativeEvent as SubmitEvent).submitter;
       onManagedSubmit(
         getFormDataValue(
@@ -70,6 +78,7 @@ export const NativeForm = forwardRef<
       <form
         {...props}
         id={hydrated ? id : undefined}
+        data-state={state}
         action={undefined}
         method="dialog"
         encType={undefined}
