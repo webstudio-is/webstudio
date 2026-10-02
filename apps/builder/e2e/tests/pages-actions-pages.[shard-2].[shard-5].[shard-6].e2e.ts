@@ -496,12 +496,15 @@ test("Builder can copy, duplicate, and delete a page template from actions menus
   await waitForTemplate({ page, templateName: copiedTemplateName });
 
   await openTemplateSettings({ page, templateName: renamedTemplateName });
+  const previousCanvas = await getCanvasFrame(page);
   await selectHeaderAction({
     page,
     menuLabel: "Template actions",
     action: "Duplicate",
   });
   await waitForTemplate({ page, templateName: duplicatedTemplateName });
+  await expect.poll(() => getCanvasFrame(page)).not.toBe(previousCanvas);
+  await waitForCanvasText({ page, text: "Content page template heading" });
 
   await selectContextAction({
     page,
