@@ -35,6 +35,10 @@ import {
   transpileExpression,
 } from "@webstudio-is/expression";
 import { z } from "zod";
+import {
+  validateContactEmail,
+  validateEmailSender,
+} from "../contracts/project-settings";
 import { produceWithPatches } from "immer";
 import {
   browserInfoParameterName,
@@ -1788,7 +1792,7 @@ const resourceExpressionEntryInput = z.object({
 });
 
 const resourceFieldsInputBase = resource.omit({ id: true }).extend({
-  control: z.enum(["system", "graphql"]).optional(),
+  control: z.enum(["system", "graphql", "email"]).optional(),
   url: z.preprocess(
     (value) =>
       typeof value === "string" ? normalizeResourceUrlInput(value) : value,
@@ -1799,8 +1803,52 @@ const resourceFieldsInputBase = resource.omit({ id: true }).extend({
   body: resourceExpressionInput.optional(),
 });
 
+const addEmailResourceIssues = (
+  fields: { control?: Resource["control"]; email?: Resource["email"] },
+  context: z.RefinementCtx,
+  allowPartial = false
+) => {
+  if (fields.control !== "email") {
+    if (
+      fields.email !== undefined &&
+      (!allowPartial || fields.control !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["email"],
+        message: "Email settings require an Email Resource.",
+      });
+    }
+    if (fields.email === undefined) {
+      return;
+    }
+  }
+  const settings = fields.email;
+  if (
+    settings?.recipientMode === "custom" &&
+    (!settings.recipients || validateContactEmail(settings.recipients))
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["email", "recipients"],
+      message: "Enter a valid recipient list.",
+    });
+  }
+  if (
+    settings?.sender !== undefined &&
+    (settings.sender === "" || validateEmailSender(settings.sender))
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["email", "sender"],
+      message: "Sender must contain exactly one valid email address.",
+    });
+  }
+};
+
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
+    addEmailResourceIssues(fields, context);
     const normalizedFields = normalizeResourceFieldsInput(fields);
     addExpressionIssues(
       context,
@@ -1808,7 +1856,9 @@ export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
     );
     addExpressionIssues(
       context,
-      getResourceLiteralUrlValidationIssues(normalizedFields)
+      getResourceLiteralUrlValidationIssues(
+        fields.control === "email" ? {} : normalizedFields
+      )
     );
   }
 );
@@ -1816,6 +1866,7 @@ export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
 export const resourceFieldsUpdateInput = resourceFieldsInputBase
   .partial()
   .superRefine((fields, context) => {
+    addEmailResourceIssues(fields, context, true);
     const normalizedFields = normalizeResourceFieldsUpdateInput(fields);
     addExpressionIssues(
       context,
@@ -1823,7 +1874,9 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
     );
     addExpressionIssues(
       context,
-      getResourceLiteralUrlValidationIssues(normalizedFields)
+      getResourceLiteralUrlValidationIssues(
+        fields.control === "email" ? {} : normalizedFields
+      )
     );
   });
 
@@ -1990,6 +2043,9 @@ export const createResourceFieldsFromFormData = ({
     ...(formData.get("body-format")
       ? { bodyFormat: formData.get("body-format") }
       : {}),
+    ...(control === "email"
+      ? { email: JSON.parse(String(formData.get("email-settings") ?? "{}")) }
+      : {}),
   });
 };
 
@@ -2021,6 +2077,7 @@ export const createResourceValue = ({
   headers,
   body,
   bodyFormat,
+  email,
 }: {
   id: Resource["id"];
   control?: unknown;
@@ -2031,6 +2088,7 @@ export const createResourceValue = ({
   headers: unknown;
   body?: unknown;
   bodyFormat?: unknown;
+  email?: unknown;
 }): Resource =>
   resource.parse({
     id,
@@ -2042,6 +2100,7 @@ export const createResourceValue = ({
     headers,
     body: body || undefined,
     ...(bodyFormat === undefined ? {} : { bodyFormat }),
+    ...(email === undefined ? {} : { email }),
   });
 
 export const createResourceFieldsFromResource = (
@@ -2057,6 +2116,7 @@ export const createResourceFieldsFromResource = (
   ...(resource.bodyFormat === undefined
     ? {}
     : { bodyFormat: resource.bodyFormat }),
+  ...(resource.email === undefined ? {} : { email: resource.email }),
 });
 
 export const validateResourceUrlExpression = async (
@@ -2098,7 +2158,7 @@ export const validateResourceBodyExpression = async (
 };
 
 type ResourceExpressionFields = Partial<
-  Pick<Resource, "url" | "body" | "headers" | "searchParams">
+  Pick<Resource, "url" | "body" | "headers" | "searchParams" | "email">
 >;
 
 export const listResourceExpressions = (
@@ -2111,6 +2171,22 @@ export const listResourceExpressions = (
   ...(fields.body === undefined
     ? []
     : [{ path: [...pathPrefix, "body"], expression: fields.body }]),
+  ...(fields.email?.subject === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "subject"],
+          expression: fields.email.subject,
+        },
+      ]),
+  ...(fields.email?.body === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "body"],
+          expression: fields.email.body,
+        },
+      ]),
   ...(fields.headers ?? []).map((header, index) => ({
     path: [...pathPrefix, "headers", String(index), "value"],
     expression: header.value,
@@ -2139,7 +2215,7 @@ const getResourceWarnings = ({
 }: {
   fields: Pick<
     Resource,
-    "control" | "method" | "url" | "body" | "headers" | "searchParams"
+    "control" | "method" | "url" | "body" | "headers" | "searchParams" | "email"
   >;
   state: Pick<BuilderState, "instances" | "dataSources">;
   scopeInstanceId?: string;
@@ -2185,7 +2261,9 @@ const getResourceWarnings = ({
 };
 
 export const getResourceExpressionErrors = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
+  fields: Partial<
+    Pick<Resource, "url" | "body" | "headers" | "searchParams" | "email">
+  >
 ) =>
   formatValidationIssueMessages(getResourceExpressionValidationIssues(fields))
     .split("\n")
@@ -2255,12 +2333,19 @@ const getResourceLiteralUrlValidationIssues = (
 };
 
 const validateResourceFields = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>,
+  fields: Partial<
+    Pick<
+      Resource,
+      "control" | "url" | "body" | "headers" | "searchParams" | "email"
+    >
+  >,
   pathPrefix: readonly string[] = []
 ) => {
   const issues = [
     ...getResourceExpressionValidationIssues(fields),
-    ...getResourceLiteralUrlValidationIssues(fields),
+    ...getResourceLiteralUrlValidationIssues(
+      fields.control === "email" ? {} : fields
+    ),
   ];
   if (issues.length > 0) {
     return throwBuilderValidationError(
@@ -2516,6 +2601,7 @@ export const createResourceCreatePayload = ({
             headers: resourceInput.headers,
             body: resourceInput.body,
             bodyFormat: resourceInput.bodyFormat,
+            email: resourceInput.email,
           }),
         },
       ],
@@ -2807,6 +2893,7 @@ export const createResource = (
     headers: resourceInput.headers,
     body: resourceInput.body,
     bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
   const warnings = getResourceWarnings({
     fields: resource,
@@ -2887,6 +2974,12 @@ export const updateResource = (
     ...values,
     ...(clearBody ? { body: undefined } : {}),
   });
+  if (nextResource.control !== "email" && nextResource.email !== undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Email settings require an Email Resource."
+    );
+  }
   const dataSource = build.dataSources.find(
     (dataSource) =>
       dataSource.type === "resource" && dataSource.resourceId === resource.id
@@ -3074,6 +3167,7 @@ export const upsertResource = (
     headers: resourceInput.headers,
     body: resourceInput.body,
     bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
 
   return createRuntimeMutation({
@@ -3142,6 +3236,7 @@ export const upsertResourceProp = (
     headers: resourceInput.headers,
     body: resourceInput.body,
     bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
   const existingProp = findProp(build.props, input.instanceId, input.propName);
   const nextProp = createValidatedPropValueFromInput(

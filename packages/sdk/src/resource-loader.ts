@@ -172,6 +172,7 @@ export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
   dependencies: readonly string[];
+  control?: ResourceRequest["control"];
   usesDefaultFormBody?: boolean;
   bodyFormat?: ResourceRequest["bodyFormat"];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
@@ -355,6 +356,21 @@ export const loadResource = async (
   baseUrl?: string | URL,
   options: ResourceLoadOptions = {}
 ) => {
+  if (resourceRequest.control === "email") {
+    return {
+      ok: false,
+      status: 501,
+      statusText: "Email delivery requires Webstudio Cloud",
+      data: {
+        ok: false,
+        error: {
+          code: "EMAIL_NOT_CONFIGURED",
+          message: "Email delivery requires Webstudio Cloud",
+          retryable: false,
+        },
+      },
+    };
+  }
   const controller = new AbortController();
   let didTimeout = false;
   const cancel = () => controller.abort(options.signal?.reason);

@@ -24,6 +24,7 @@ import {
 import { $isDesignMode } from "~/shared/nano-states";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 import { SectionGeneral } from "./section-general";
+import { SectionEmails } from "./section-emails";
 import { SectionAgents } from "./section-agents";
 import { SectionAuth } from "./section-auth";
 import { SectionHeaders } from "./section-headers";
@@ -38,6 +39,7 @@ const sections = new Map<
   FunctionComponent<{ projectId?: string }>
 >([
   ["general", SectionGeneral],
+  ["emails", SectionEmails],
   ["agents", SectionAgents],
   ["redirects", SectionRedirects],
   ["publish", SectionPublish],

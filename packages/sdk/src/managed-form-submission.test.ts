@@ -14,6 +14,34 @@ import {
 } from "./managed-form-submission";
 import { loadResources } from "./resource-loader";
 
+test("an Email destination fails preflight before another Resource dispatches", () => {
+  const httpRequest = vi.fn();
+  const graph = {
+    rootIds: ["http", "email"],
+    resources: [
+      {
+        id: "http",
+        outputName: "HTTP",
+        dependencies: [],
+        createRequest: httpRequest,
+      },
+      {
+        id: "email",
+        outputName: "Email",
+        dependencies: [],
+        control: "email" as const,
+        createRequest: () => {
+          throw new Error("Email must not run before preflight");
+        },
+      },
+    ],
+  };
+  expect(() => validateManagedFormBodyFormats(graph, new FormData())).toThrow(
+    "Email delivery requires Webstudio Cloud"
+  );
+  expect(httpRequest).not.toHaveBeenCalled();
+});
+
 test("rejects an invalid dependency request before any destination runs", () => {
   const graph = {
     rootIds: ["submit"],

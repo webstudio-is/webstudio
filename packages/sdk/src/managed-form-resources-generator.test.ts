@@ -2,16 +2,23 @@ import { transformSync } from "esbuild";
 import { expect, test } from "vitest";
 import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
+import { getDefaultFormEmailBodyExpression } from "./email-resource";
 import { generateManagedFormResources } from "./managed-form-resources-generator";
 import type { DataSources } from "./schema/data-sources";
-import type { Instances } from "./schema/instances";
+import type { Instance, Instances } from "./schema/instances";
 import type { Resources } from "./schema/resources";
+import type { Props } from "./schema/props";
+import type { ProjectMeta } from "./schema/pages";
 import type { ResourceRequestGraph } from "./resource-loader";
+import { createJsonStringifyProxy } from "./to-string";
 
 const getGeneratedGraph = (input: {
   instances: Instances;
   dataSources: DataSources;
   resources: Resources;
+  props?: Props;
+  projectMeta?: ProjectMeta;
+  ownerEmail?: string;
   forms: readonly {
     formId: string;
     destinationDataSourceIds: readonly string[];
@@ -23,12 +30,536 @@ const getGeneratedGraph = (input: {
   });
   const { code } = transformSync(source, { loader: "ts", format: "cjs" });
   const module = { exports: {} as Record<string, unknown> };
-  new Function("module", "exports", code)(module, module.exports);
+  new Function("module", "exports", "require", code)(
+    module,
+    module.exports,
+    (specifier: string) => {
+      if (specifier === "@webstudio-is/sdk/to-string") {
+        return { createJsonStringifyProxy };
+      }
+      throw new Error(`Unexpected import ${specifier}`);
+    }
+  );
   return module.exports.getManagedFormResourceGraph as (
     formId: string,
     props: { system: unknown; formData: unknown; browserInfo: unknown }
   ) => ResourceRequestGraph | undefined;
 };
+
+test("a Form-scoped Email Resource gets the automatic form text and a typed email request", () => {
+  const dataSources: DataSources = new Map([
+    [
+      "formData",
+      {
+        id: "formData",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+    ],
+    [
+      "browserInfo",
+      {
+        id: "browserInfo",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "browserInfo",
+      },
+    ],
+    [
+      "emailDataSource",
+      {
+        id: "emailDataSource",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "email",
+        resourceId: "email",
+      },
+    ],
+  ]);
+  const resources: Resources = new Map([
+    [
+      "email",
+      {
+        id: "email",
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+        email: { subject: '"Custom subject"' },
+      },
+    ],
+  ]);
+  const getGraph = getGeneratedGraph({
+    instances: new Map([
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "NativeForm",
+          children: [{ type: "id", value: "password-input" }],
+        },
+      ],
+      [
+        "password-input",
+        {
+          type: "instance",
+          id: "password-input",
+          component: "Input",
+          children: [],
+        },
+      ],
+    ]),
+    dataSources,
+    resources,
+    props: new Map([
+      [
+        "password-name",
+        {
+          id: "password-name",
+          instanceId: "password-input",
+          name: "name",
+          type: "string",
+          value: "password",
+        },
+      ],
+      [
+        "password-type",
+        {
+          id: "password-type",
+          instanceId: "password-input",
+          name: "type",
+          type: "string",
+          value: "password",
+        },
+      ],
+    ]),
+    forms: [{ formId: "form", destinationDataSourceIds: ["emailDataSource"] }],
+    projectMeta: {
+      emailBody: "Intro",
+      contactEmail: '"Team, West" <team@example.com>',
+      emailSender: "Owner <owner@example.com>",
+    },
+  });
+  const graph = getGraph("form", {
+    system: {},
+    formData: {
+      hidden: "yes",
+      name: "Ada",
+      password: "secret",
+      "ws--form-bot": "internal",
+      upload: new File(["abc"], "notes.txt", { type: "text/plain" }),
+    },
+    browserInfo: { language: "en" },
+  });
+  expect(graph?.resources[0].control).toBe("email");
+  expect(graph?.resources[0].createRequest(new Map()).email).toMatchObject({
+    subject: "Custom subject",
+    body: expect.stringContaining('"hidden": "yes"'),
+    recipients: [{ name: "Team, West", address: "team@example.com" }],
+    sender: { name: "Owner", address: "owner@example.com" },
+  });
+  expect(graph?.resources[0].createRequest(new Map()).email?.body).toContain(
+    '"language": "en"'
+  );
+  expect(
+    graph?.resources[0].createRequest(new Map()).email?.body
+  ).not.toContain("secret");
+  expect(
+    graph?.resources[0].createRequest(new Map()).email?.body
+  ).not.toContain("ws--form-bot");
+  expect(graph?.resources[0].createRequest(new Map()).email?.body).toContain(
+    '"name": "notes.txt"'
+  );
+});
+
+test("an edited default Email body formats Form values and preserves field access", () => {
+  const formDataExpression = encodeDataSourceVariable("formData");
+  const body = getDefaultFormEmailBodyExpression(
+    formDataExpression,
+    encodeDataSourceVariable("browserInfo")
+  )
+    .replace("Form data:", "Submitted fields:")
+    .replace(
+      "Browser info:",
+      `Submitter: \${${formDataExpression}.name}\nUploaded: \${${formDataExpression}.upload.name}\n\nBrowser info:`
+    );
+  const getGraph = getGeneratedGraph({
+    instances: new Map([
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "NativeForm",
+          children: [{ type: "id", value: "password-input" }],
+        },
+      ],
+      [
+        "password-input",
+        {
+          type: "instance",
+          id: "password-input",
+          component: "Input",
+          children: [],
+        },
+      ],
+    ]),
+    dataSources: new Map([
+      [
+        "formData",
+        {
+          id: "formData",
+          type: "parameter",
+          scopeInstanceId: "form",
+          name: "formData",
+        },
+      ],
+      [
+        "browserInfo",
+        {
+          id: "browserInfo",
+          type: "parameter",
+          scopeInstanceId: "form",
+          name: "browserInfo",
+        },
+      ],
+      [
+        "emailDataSource",
+        {
+          id: "emailDataSource",
+          type: "resource",
+          scopeInstanceId: "form",
+          name: "email",
+          resourceId: "email",
+        },
+      ],
+    ]),
+    resources: new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: { body },
+        },
+      ],
+    ]),
+    props: new Map([
+      [
+        "password-name",
+        {
+          id: "password-name",
+          instanceId: "password-input",
+          name: "name",
+          type: "string",
+          value: "password",
+        },
+      ],
+      [
+        "password-type",
+        {
+          id: "password-type",
+          instanceId: "password-input",
+          name: "type",
+          type: "string",
+          value: "password",
+        },
+      ],
+    ]),
+    forms: [{ formId: "form", destinationDataSourceIds: ["emailDataSource"] }],
+  });
+  const request = getGraph("form", {
+    system: {},
+    formData: {
+      name: "Ada",
+      password: "secret",
+      upload: new File(["abc"], "notes.txt"),
+    },
+    browserInfo: { language: "en" },
+  })?.resources[0].createRequest(new Map());
+  expect(request?.email?.body).toContain('"name": "Ada"');
+  expect(request?.email?.body).toContain('"name": "notes.txt"');
+  expect(request?.email?.body).toContain('"language": "en"');
+  expect(request?.email?.body).toContain("Submitter: Ada");
+  expect(request?.email?.body).toContain("Uploaded: notes.txt");
+  expect(request?.email?.body).not.toContain("[object Object]");
+  expect(request?.email?.body).not.toContain("secret");
+});
+
+test("automatic Email body redacts Element passwords and unknown input types", () => {
+  const dataSources: DataSources = new Map([
+    [
+      "formData",
+      {
+        id: "formData",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+    ],
+    [
+      "emailDataSource",
+      {
+        id: "emailDataSource",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "email",
+        resourceId: "email",
+      },
+    ],
+  ]);
+  const resources: Resources = new Map([
+    [
+      "email",
+      {
+        id: "email",
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+      },
+    ],
+  ]);
+  const getBody = (input: {
+    instance: Instance;
+    inputProps: Props;
+    editedBody?: string;
+  }) => {
+    const graph = getGeneratedGraph({
+      instances: new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [{ type: "id", value: "input" }],
+          },
+        ],
+        ["input", input.instance],
+      ]),
+      dataSources,
+      resources:
+        input.editedBody === undefined
+          ? resources
+          : new Map([
+              [
+                "email",
+                {
+                  ...resources.get("email")!,
+                  email: { body: input.editedBody },
+                },
+              ],
+            ]),
+      props: input.inputProps,
+      forms: [
+        { formId: "form", destinationDataSourceIds: ["emailDataSource"] },
+      ],
+    })("form", {
+      system: {},
+      formData: { name: "Ada", password: "secret" },
+      browserInfo: {},
+    });
+    return graph?.resources[0].createRequest(new Map()).email?.body;
+  };
+  const elementBody = getBody({
+    instance: {
+      type: "instance",
+      id: "input",
+      component: "Element",
+      tag: "input",
+      children: [],
+    },
+    inputProps: new Map([
+      [
+        "name",
+        {
+          id: "name",
+          instanceId: "input",
+          name: "name",
+          type: "string",
+          value: "password",
+        },
+      ],
+      [
+        "type",
+        {
+          id: "type",
+          instanceId: "input",
+          name: "type",
+          type: "string",
+          value: "password",
+        },
+      ],
+    ]),
+  });
+  expect(elementBody).toContain('"name": "Ada"');
+  expect(elementBody).not.toContain("secret");
+
+  const dynamicTypeBody = getBody({
+    instance: {
+      type: "instance",
+      id: "input",
+      component: "Input",
+      children: [],
+    },
+    inputProps: new Map([
+      [
+        "name",
+        {
+          id: "name",
+          instanceId: "input",
+          name: "name",
+          type: "string",
+          value: "password",
+        },
+      ],
+      [
+        "type",
+        {
+          id: "type",
+          instanceId: "input",
+          name: "type",
+          type: "parameter",
+          value: "inputType",
+        },
+      ],
+    ]),
+  });
+  expect(dynamicTypeBody).toContain("Form fields omitted");
+  expect(dynamicTypeBody).not.toContain("Ada");
+  expect(dynamicTypeBody).not.toContain("secret");
+  const editedBody = getDefaultFormEmailBodyExpression(
+    encodeDataSourceVariable("formData")
+  ).replace("Form data:", "Edited fields:");
+  const editedDynamicTypeBody = getBody({
+    instance: {
+      type: "instance",
+      id: "input",
+      component: "Input",
+      children: [],
+    },
+    inputProps: new Map([
+      [
+        "name",
+        {
+          id: "name",
+          instanceId: "input",
+          name: "name",
+          type: "string",
+          value: "password",
+        },
+      ],
+      [
+        "type",
+        {
+          id: "type",
+          instanceId: "input",
+          name: "type",
+          type: "parameter",
+          value: "inputType",
+        },
+      ],
+    ]),
+    editedBody,
+  });
+  expect(editedDynamicTypeBody).toContain("Edited fields:");
+  expect(editedDynamicTypeBody).toContain("Form fields omitted");
+  expect(editedDynamicTypeBody).not.toContain("Ada");
+  expect(editedDynamicTypeBody).not.toContain("secret");
+  const editedDynamicNameBody = getBody({
+    instance: {
+      type: "instance",
+      id: "input",
+      component: "Input",
+      children: [],
+    },
+    inputProps: new Map([
+      [
+        "name",
+        {
+          id: "name",
+          instanceId: "input",
+          name: "name",
+          type: "parameter",
+          value: "inputName",
+        },
+      ],
+      [
+        "type",
+        {
+          id: "type",
+          instanceId: "input",
+          name: "type",
+          type: "string",
+          value: "password",
+        },
+      ],
+    ]),
+    editedBody,
+  });
+  expect(editedDynamicNameBody).toContain("Form fields omitted");
+  expect(editedDynamicNameBody).not.toContain("Ada");
+  expect(editedDynamicNameBody).not.toContain("secret");
+});
+
+test("an external Email Resource cannot read a Form-only binding", () => {
+  const graph = getGeneratedGraph({
+    instances: new Map([
+      [
+        "form",
+        { type: "instance", id: "form", component: "NativeForm", children: [] },
+      ],
+    ]),
+    dataSources: new Map([
+      [
+        "formData",
+        {
+          id: "formData",
+          type: "parameter",
+          scopeInstanceId: "form",
+          name: "formData",
+        },
+      ],
+      [
+        "external",
+        {
+          id: "external",
+          type: "resource",
+          scopeInstanceId: "other",
+          name: "External email",
+          resourceId: "email",
+        },
+      ],
+    ]),
+    resources: new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: { body: encodeDataSourceVariable("formData") },
+        },
+      ],
+    ]),
+    forms: [{ formId: "form", destinationDataSourceIds: ["external"] }],
+  });
+  expect(
+    graph("form", { system: {}, formData: { secret: "no" }, browserInfo: {} })
+  ).toBeUndefined();
+});
 
 test("builds a submit-time graph with Form bindings and dependent Resource results", () => {
   const formData = { name: "Ada" };

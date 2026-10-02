@@ -23,6 +23,27 @@ import {
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 
+test("Email Resources cannot be sent through the HTTP loader", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResource(fetch, {
+    name: "Owner email",
+    control: "email",
+    method: "post",
+    url: "",
+    searchParams: [],
+    headers: [],
+    email: {
+      recipientMode: "project",
+      recipients: [{ address: "owner@example.com" }],
+      subject: "New submission",
+      body: "Text",
+      includeAttachments: true,
+    },
+  });
+  expect(result).toMatchObject({ ok: false, status: 501 });
+  expect(fetch).not.toHaveBeenCalled();
+});
+
 test("resolves request resources after their dependency documents", async () => {
   const requestedUrls: string[] = [];
   const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {

@@ -11,7 +11,7 @@ import type { ResourceRequest } from "./schema/resources";
 export const formDataParameterName = "formData";
 export const browserInfoParameterName = "browserInfo";
 
-const internalFormFieldNames = new Set([
+export const internalFormFieldNames = new Set([
   formIdFieldName,
   managedFormIdFieldName,
   managedFormArrayNamesFieldName,
@@ -140,6 +140,16 @@ export const validateManagedFormBodyFormats = (
   graph: ResourceRequestGraph,
   formData: FormData
 ): ResourceRequestGraph => {
+  if (
+    graph.resources.some(
+      (resource) =>
+        graph.rootIds.includes(resource.id) && resource.control === "email"
+    )
+  ) {
+    throw new Error(
+      "Email delivery requires Webstudio Cloud and is not configured yet"
+    );
+  }
   const rootIds = new Set(graph.rootIds);
   const preparedRequests = new Map<string, ResourceRequest>();
   const hasUpload = Array.from(formData.values()).some(

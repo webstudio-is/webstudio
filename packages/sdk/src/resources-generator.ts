@@ -1,5 +1,6 @@
 import type { DataSource, DataSources } from "./schema/data-sources";
-import type { Page } from "./schema/pages";
+import type { Page, ProjectMeta } from "./schema/pages";
+import { resolveEmailResourceSettings } from "./email-resource";
 import type { Resource, Resources } from "./schema/resources";
 import type { Prop, Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
@@ -24,6 +25,9 @@ export const generateResourceRequestFields = ({
   usedDataSources,
   scope,
   method,
+  emailBodyCode,
+  projectMeta,
+  ownerEmail,
 }: {
   resource: Resource;
   indent: string;
@@ -31,6 +35,9 @@ export const generateResourceRequestFields = ({
   usedDataSources: DataSources;
   scope: Scope;
   method?: Resource["method"];
+  emailBodyCode?: string;
+  projectMeta?: ProjectMeta;
+  ownerEmail?: string;
 }) => {
   let generated = "";
   generated += `${indent}name: ${JSON.stringify(resource.name)},\n`;
@@ -78,6 +85,48 @@ export const generateResourceRequestFields = ({
       scope,
     });
     generated += `${indent}body: ${body},\n`;
+  }
+  if (resource.control === "email") {
+    const email = resource.email ?? {};
+    const resolved = resolveEmailResourceSettings({
+      settings: email,
+      projectMeta,
+      ownerEmail,
+    });
+    generated += `${indent}email: {\n`;
+    generated += `${indent}  recipientMode: ${JSON.stringify(resolved.recipientMode)},\n`;
+    generated += `${indent}  recipients: ${JSON.stringify(resolved.recipients ?? [])},\n`;
+    if (resolved.sender) {
+      generated += `${indent}  sender: ${JSON.stringify(resolved.sender)},\n`;
+    }
+    generated += `${indent}  includeAttachments: ${resolved.includeAttachments},\n`;
+    const subject = generateExpression({
+      expression: resolved.subject,
+      dataSources,
+      usedDataSources,
+      scope,
+    });
+    generated += `${indent}  subject: ${subject},\n`;
+    if (email.body !== undefined) {
+      const body = generateExpression({
+        expression: email.body,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generated += `${indent}  body: ${body},\n`;
+    } else if (emailBodyCode !== undefined) {
+      generated += `${indent}  body: ${emailBodyCode},\n`;
+    } else {
+      const body = generateExpression({
+        expression: resolved.body,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generated += `${indent}  body: ${body},\n`;
+    }
+    generated += `${indent}},\n`;
   }
   return generated;
 };

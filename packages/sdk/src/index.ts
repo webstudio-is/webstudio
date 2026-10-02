@@ -7,6 +7,8 @@ export * from "./schema/instances";
 export * from "./schema/expression";
 export * from "./schema/data-sources";
 export * from "./schema/resources";
+export * from "./email-addresses";
+export * from "./email-resource";
 export * from "./schema/props";
 export * from "./schema/breakpoints";
 export * from "./schema/style-sources";

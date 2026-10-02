@@ -1,4 +1,6 @@
 export * from "./resource-loader";
+export * from "./email-addresses";
+export * from "./email-resource";
 export * from "./to-string";
 export * from "./form-fields";
 export * from "./managed-form-submission";

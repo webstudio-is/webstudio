@@ -10,9 +10,14 @@ import {
 } from "@webstudio-is/sdk";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { FloatingPanel, TooltipProvider } from "@webstudio-is/design-system";
-import { $resources } from "~/shared/sync/data-stores";
+import {
+  $dataSources,
+  $projectSettings,
+  $resources,
+} from "~/shared/sync/data-stores";
 import {
   getResourceScopeForInstance,
+  EmailResourceForm,
   Headers,
   ResourceForm,
   UrlField,
@@ -24,11 +29,132 @@ import {
 
 let root: Root | undefined;
 const initialResources = $resources.get();
+const initialDataSources = $dataSources.get();
+const initialProjectSettings = $projectSettings.get();
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   $resources.set(initialResources);
+  $dataSources.set(initialDataSources);
+  $projectSettings.set(initialProjectSettings);
   document.body.innerHTML = "";
+});
+
+test("Email Resource Sender override can be reset to the project default", async () => {
+  $projectSettings.set({
+    meta: { emailSender: "Project <project@example.com>" },
+    compiler: {},
+  });
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Notify",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: { sender: "Custom <custom@example.com>" },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "data-source",
+            type: "resource",
+            name: "Notify",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+  expect(container.querySelector("textarea")?.value).toBe(
+    "Custom <custom@example.com>"
+  );
+  const reset = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent?.includes("Reset to project default")
+  );
+  expect(reset).toBeDefined();
+  await act(async () => userEvent.click(reset!));
+  expect(container.querySelector("textarea")?.value).toBe(
+    "Project <project@example.com>"
+  );
+  expect(
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')
+        ?.value ?? "{}"
+    )
+  ).not.toHaveProperty("sender");
+});
+
+test("external Email Resource marks an unavailable Form binding as invalid", async () => {
+  $dataSources.set(
+    new Map([
+      [
+        "form-data",
+        {
+          id: "form-data",
+          type: "parameter",
+          name: "formData",
+          scopeInstanceId: "form",
+        },
+      ],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "External email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            body: `\`Private: \${${encodeDataVariableId("form-data")}}\``,
+          },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "external",
+            type: "resource",
+            name: "External email",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+  expect(container.textContent).toContain(
+    "This Form binding is unavailable outside its Form."
+  );
 });
 
 test("includes resource documents when building another resource expression", () => {

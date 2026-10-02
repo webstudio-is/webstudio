@@ -1927,6 +1927,9 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         dataSources,
         resources,
         forms: managedFormResourceSelections,
+        projectMeta,
+        props,
+        ownerEmail: siteData.user?.email ?? undefined,
       })}
 
       ${generatePageMeta({
@@ -1944,6 +1947,18 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         );
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
+      export const emailDefaults = ${JSON.stringify({
+        sender: projectMeta?.emailSender || siteData.user?.email || "",
+        recipients: projectMeta?.contactEmail || siteData.user?.email || "",
+        subject: projectMeta?.emailSubject || "New form submission",
+        body: projectMeta?.emailBody || "",
+        confirmationSubject:
+          projectMeta?.emailConfirmationSubject ||
+          "We received your submission",
+        confirmationBody:
+          projectMeta?.emailConfirmationBody ||
+          "Thank you. Your submission was received.",
+      })};
     `;
 
     const generatedBasename = generateRemixRoute(pagePath);

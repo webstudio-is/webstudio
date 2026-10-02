@@ -1,27 +1,20 @@
-import { z } from "zod";
+import { parseEmailMailboxes, parseEmailSender } from "@webstudio-is/sdk";
 import {
   findWsAuthRoute,
   parseWsAuth,
   type WsAuthRoute,
 } from "@webstudio-is/wsauth";
 
-const emailAddress = z.string().email();
-
-const getContactEmails = (contactEmail: string) => {
-  const trimmedContactEmail = contactEmail.trim();
-  if (trimmedContactEmail.length === 0) {
-    return [];
-  }
-  return trimmedContactEmail.split(/\s*,\s*/);
-};
-
 export const validateContactEmail = (
   contactEmail: string,
   maxContactEmailsPerProject?: number
 ) => {
-  const emails = getContactEmails(contactEmail);
-  if (emails.length === 0) {
+  const emails = parseEmailMailboxes(contactEmail);
+  if (emails?.length === 0) {
     return;
+  }
+  if (emails === undefined) {
+    return "Contact email is invalid.";
   }
   if (
     maxContactEmailsPerProject !== undefined &&
@@ -32,12 +25,22 @@ export const validateContactEmail = (
     }
     return `Only ${maxContactEmailsPerProject} emails are allowed.`;
   }
-  if (
-    emails.every((email) => emailAddress.safeParse(email).success) === false
-  ) {
-    return "Contact email is invalid.";
-  }
 };
+
+export const validateEmailSender = (sender: string) =>
+  sender.trim() === "" || parseEmailSender(sender)
+    ? undefined
+    : "Sender must contain exactly one valid email address.";
+
+export const validateEmailText = (
+  value: string,
+  label: string,
+  multiline = false
+) =>
+  // eslint-disable-next-line no-control-regex
+  /[\u0000-\u001f\u007f]/.test(multiline ? value.replaceAll("\n", "") : value)
+    ? `${label} contains an invalid control character.`
+    : undefined;
 
 export const validateProjectAuth = (auth: string) => {
   const result = parseWsAuth(auth);

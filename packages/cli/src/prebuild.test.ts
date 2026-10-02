@@ -794,6 +794,36 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("publishes Email defaults while preserving the legacy Contact recipients", async () => {
+    const siteData = createSiteData({
+      pageMeta: {
+        contactEmail: '"Team, West" <team@example.com>',
+        emailSender: "Owner <owner@example.com>",
+        emailSubject: "New request",
+        emailBody: "Thanks for contacting us.",
+        emailConfirmationSubject: "Received",
+        emailConfirmationBody: "We received your request.",
+      },
+    });
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    const generated = await readFile(
+      "app/__generated__/_index.server.tsx",
+      "utf8"
+    );
+    expect(generated).toContain(
+      'export const contactEmail = "\\\"Team, West\\\" <team@example.com>"'
+    );
+    expect(generated).toContain('"sender":"Owner <owner@example.com>"');
+    expect(generated).toContain('"subject":"New request"');
+    expect(generated).toContain(
+      '"confirmationBody":"We received your request."'
+    );
+  });
   test("rejects Assets queries without a content database without changing generated files", async () => {
     const siteData = createSiteData();
     siteData.build.resources = [["posts", createQueryResource()]] as never;
@@ -3203,6 +3233,101 @@ sitemap.map((page) => page.path);`
       body: formData,
     });
   });
+
+  test(
+    "typechecks a generated site with an edited Email Resource body",
+    async () => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["emailDestination"] },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "formData",
+          {
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "emailDestination",
+          {
+            id: "emailDestination",
+            name: "Email",
+            type: "resource",
+            resourceId: "email",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              body: `\`Submitted fields: \${${encodeDataSourceVariable("formData")}}\``,
+            },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: ["react-router"] });
+      await writeFile(
+        "email-typecheck.ts",
+        'export { getManagedFormResourceGraph } from "./app/__generated__/_index.server";'
+      );
+      await linkPackagedPreviewDependencies();
+      await runGeneratedCommand("tsc", [
+        "--ignoreConfig",
+        "--noEmit",
+        "--strict",
+        "--skipLibCheck",
+        "--moduleResolution",
+        "bundler",
+        "--customConditions",
+        "webstudio",
+        "--module",
+        "esnext",
+        "--target",
+        "es2023",
+        "--types",
+        "node",
+        "--typeRoots",
+        join(originalCwd, "../../node_modules/@types"),
+        "--jsx",
+        "react-jsx",
+        "email-typecheck.ts",
+      ]).catch((error: unknown) => {
+        throw new Error(
+          error instanceof Error && "stdout" in error
+            ? String(error.stdout)
+            : String(error)
+        );
+      });
+    },
+    slowPrebuildTestTimeout
+  );
 
   test.each(["defaults", "react-router"])(
     "submits selected Form Resources in parallel with scoped values (%s)",

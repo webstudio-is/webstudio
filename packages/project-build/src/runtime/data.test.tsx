@@ -2712,6 +2712,43 @@ describe("createResourceValue", () => {
       "multipart"
     );
   });
+
+  test("persists Email Resource overrides through form data and resource value", () => {
+    const formData = new FormData();
+    formData.set("name", "Notify team");
+    formData.set("method", "post");
+    formData.set("url", '""');
+    formData.set(
+      "email-settings",
+      JSON.stringify({
+        recipientMode: "custom",
+        recipients: '"Team, West" <team@example.com>',
+        sender: "Owner <owner@example.com>",
+        subject: '"New submission"',
+        body: "`Submission: ${formData.name}`",
+        includeAttachments: false,
+      })
+    );
+    const fields = createResourceFieldsFromFormData({
+      control: "email",
+      formData,
+    });
+    expect(fields.email).toMatchObject({
+      recipients: '"Team, West" <team@example.com>',
+      includeAttachments: false,
+    });
+    const value = createResourceValue({ id: "email-id", ...fields });
+    expect(createResourceFieldsFromResource(value).email).toEqual(fields.email);
+    expect(
+      resourceFieldsInput.safeParse({ ...fields, control: undefined }).success
+    ).toBe(false);
+    expect(
+      resourceFieldsInput.safeParse({
+        ...fields,
+        email: { ...fields.email, sender: "a@example.com, b@example.com" },
+      }).success
+    ).toBe(false);
+  });
 });
 
 describe("findResource", () => {

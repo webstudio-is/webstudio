@@ -14,18 +14,23 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   encodeDataVariableId,
+  decodeDataVariableId,
+  getDefaultFormEmailBodyExpression,
+  defaultEmailBody,
   getResourceCycleDataSourceIds,
   isAssetsResource as isAssetsResourceRecord,
   SYSTEM_VARIABLE_ID,
   systemParameter,
   type DataSources,
   type Resource,
+  type EmailResourceSettings,
   type DataSource,
   type Page,
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import {
   generateObjectExpression,
+  getExpressionIdentifiers,
   isLiteralExpression,
   parseStringLiteralExpression,
   parseExpressionObject,
@@ -41,6 +46,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
+  Button,
   Combobox,
   Flex,
   Grid,
@@ -66,7 +72,11 @@ import {
   $variableValuesByInstanceSelector,
   getInstanceKey,
 } from "~/shared/nano-states";
-import { $dataSources, $resources } from "~/shared/sync/data-stores";
+import {
+  $dataSources,
+  $resources,
+  $projectSettings,
+} from "~/shared/sync/data-stores";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
@@ -81,11 +91,17 @@ import { useAsyncValue } from "~/shared/use-async-value";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
   createResourceFieldsFromFormData,
+  getExpressionErrorMessages,
+  getResourceExpressionErrors,
   validateResourceBodyExpression,
   validateResourceUrlExpression,
   type InstancePath,
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
+import {
+  validateContactEmail,
+  validateEmailSender,
+} from "@webstudio-is/project-build/contracts";
 import { parseCurl, type CurlRequest } from "./curl";
 import {
   getRequestHeaderValueSuggestions,
@@ -1074,6 +1090,272 @@ export const ResourceForm = forwardRef<
   );
 });
 ResourceForm.displayName = "ResourceForm";
+
+export const EmailResourceForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; onChange?: () => void }
+>(({ variable, onChange }, ref) => {
+  const { scope, aliases } = useResourceScope({ variable });
+  const resources = useStore($resources);
+  const dataSources = useStore($dataSources);
+  const projectMeta = useStore($projectSettings)?.meta;
+  const resource =
+    variable?.type === "resource"
+      ? resources.get(variable.resourceId)
+      : undefined;
+  const [settings, setSettings] = useState<EmailResourceSettings>(
+    resource?.email ?? {}
+  );
+  const formDataIdentifier = Array.from(aliases).find(
+    ([, alias]) => alias === formDataParameterName
+  )?.[0];
+  const browserInfoIdentifier = Array.from(aliases).find(
+    ([, alias]) => alias === browserInfoParameterName
+  )?.[0];
+  const defaultBody = formDataIdentifier
+    ? getDefaultFormEmailBodyExpression(
+        formDataIdentifier,
+        browserInfoIdentifier,
+        projectMeta?.emailBody
+      )
+    : JSON.stringify(projectMeta?.emailBody || defaultEmailBody);
+  const setField = <K extends keyof EmailResourceSettings>(
+    key: K,
+    value: EmailResourceSettings[K]
+  ) => {
+    onChange?.();
+    setSettings((previous) => ({ ...previous, [key]: value }));
+  };
+  const resetField = (key: keyof EmailResourceSettings) => {
+    onChange?.();
+    setSettings((previous) => {
+      const next = { ...previous };
+      delete next[key];
+      return next;
+    });
+  };
+  const senderError =
+    settings.sender === undefined
+      ? undefined
+      : settings.sender === ""
+        ? "Sender is required."
+        : validateEmailSender(settings.sender);
+  const recipientError =
+    settings.recipientMode !== "custom"
+      ? undefined
+      : (validateContactEmail(settings.recipients ?? "") ??
+        (settings.recipients ? undefined : "Enter at least one recipient."));
+  const unavailableFormBinding = (expression: string) =>
+    Array.from(getExpressionIdentifiers(expression)).some((identifier) => {
+      const id = decodeDataVariableId(identifier);
+      const dataSource = id ? dataSources.get(id) : undefined;
+      return (
+        dataSource?.type === "parameter" &&
+        (dataSource.name === formDataParameterName ||
+          dataSource.name === browserInfoParameterName) &&
+        aliases.has(identifier) === false
+      );
+    })
+      ? "This Form binding is unavailable outside its Form."
+      : undefined;
+  const subjectError =
+    settings.subject === undefined
+      ? undefined
+      : (unavailableFormBinding(settings.subject) ??
+        getResourceExpressionErrors({
+          email: { subject: settings.subject },
+        })[0] ??
+        getExpressionErrorMessages({
+          expression: settings.subject,
+          availableVariables: new Set(aliases.keys()),
+        })[0]);
+  const bodyError =
+    settings.body === undefined
+      ? undefined
+      : (unavailableFormBinding(settings.body) ??
+        getResourceExpressionErrors({ email: { body: settings.body } })[0] ??
+        getExpressionErrorMessages({
+          expression: settings.body,
+          availableVariables: new Set(aliases.keys()),
+        })[0]);
+  useImperativeHandle(ref, () => ({
+    save: (formData) => {
+      if (senderError || recipientError || subjectError || bodyError) {
+        return false;
+      }
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
+        return;
+      }
+      const parsedSettings = JSON.parse(
+        String(formData.get("email-settings") ?? "{}")
+      ) as EmailResourceSettings;
+      const resourceFields = createResourceFieldsFromFormData({
+        control: "email",
+        formData,
+      });
+      executeRuntimeMutation({
+        id: "resources.upsert",
+        input: {
+          resourceId: resource?.id,
+          resource: { ...resourceFields, email: parsedSettings },
+          dataSourceId: variable?.id,
+          scopeInstanceId,
+          dataSourceName: resourceFields.name,
+        },
+      });
+    },
+  }));
+  const textField = (
+    key: "sender" | "subject" | "body",
+    label: string,
+    value: string,
+    placeholder: string,
+    error?: string
+  ) => (
+    <Row key={key}>
+      <Grid gap={1}>
+        <Flex align="center" justify="between">
+          <Label>{label}</Label>
+          {settings[key] !== undefined && (
+            <Button type="button" color="ghost" onClick={() => resetField(key)}>
+              Reset to project default
+            </Button>
+          )}
+        </Flex>
+        <InputErrorsTooltip errors={error ? [error] : undefined}>
+          {key === "sender" ? (
+            <TextArea
+              rows={1}
+              autoGrow
+              value={value}
+              placeholder={placeholder}
+              color={error ? "error" : undefined}
+              onChange={(next) => setField(key, next)}
+            />
+          ) : (
+            <ExpressionEditor
+              scope={scope}
+              aliases={aliases}
+              value={value}
+              color={error ? "error" : undefined}
+              onChange={(next) => setField(key, next)}
+              onChangeComplete={() => {}}
+            />
+          )}
+        </InputErrorsTooltip>
+        {error && <Text color="destructive">{error}</Text>}
+      </Grid>
+    </Row>
+  );
+  return (
+    <>
+      <input type="hidden" name="method" value="post" />
+      <input type="hidden" name="url" value={'""'} />
+      <input
+        type="hidden"
+        name="email-settings"
+        value={JSON.stringify(settings)}
+      />
+      <Row>
+        <Grid gap={1}>
+          <Label>Team recipients</Label>
+          <Select<"project" | "custom">
+            options={["project", "custom"]}
+            value={settings.recipientMode ?? "project"}
+            getLabel={(value: "project" | "custom") =>
+              value === "project"
+                ? "Project recipients (or owner)"
+                : "Custom recipients"
+            }
+            onChange={(value: "project" | "custom") =>
+              setField("recipientMode", value)
+            }
+          />
+        </Grid>
+      </Row>
+      {settings.recipientMode === "custom" && (
+        <Row>
+          <Grid gap={1}>
+            <Flex align="center" justify="between">
+              <Label>Recipients</Label>
+              <Button
+                type="button"
+                color="ghost"
+                onClick={() => {
+                  resetField("recipientMode");
+                  resetField("recipients");
+                }}
+              >
+                Reset to project default
+              </Button>
+            </Flex>
+            <InputErrorsTooltip
+              errors={recipientError ? [recipientError] : undefined}
+            >
+              <TextArea
+                rows={1}
+                autoGrow
+                value={settings.recipients ?? ""}
+                placeholder="Olegs Isonen <oleg008@gmail.com>, team@example.com"
+                color={recipientError ? "error" : undefined}
+                onChange={(value) => setField("recipients", value)}
+              />
+            </InputErrorsTooltip>
+          </Grid>
+        </Row>
+      )}
+      {textField(
+        "sender",
+        "Sender",
+        settings.sender ?? projectMeta?.emailSender ?? "",
+        "Olegs Isonen <oleg008@gmail.com>",
+        senderError
+      )}
+      <Row>
+        <Text color="subtle">
+          Emails are sent through Webstudio. Replies go to this address.
+        </Text>
+      </Row>
+      {textField(
+        "subject",
+        "Subject expression",
+        settings.subject ??
+          JSON.stringify(projectMeta?.emailSubject || "New form submission"),
+        '"New form submission"',
+        subjectError
+      )}
+      {textField(
+        "body",
+        "Plain-text body expression",
+        settings.body ?? defaultBody,
+        "Add text or a JavaScript expression",
+        bodyError
+      )}
+      <Row>
+        <Grid gap={1}>
+          <Label>Attachments</Label>
+          <Select<"include" | "exclude">
+            options={["include", "exclude"]}
+            value={
+              settings.includeAttachments === false ? "exclude" : "include"
+            }
+            getLabel={(value: "include" | "exclude") =>
+              value === "include"
+                ? "Attach submitted files"
+                : "Do not attach files"
+            }
+            onChange={(value: "include" | "exclude") =>
+              setField("includeAttachments", value === "include")
+            }
+          />
+        </Grid>
+      </Row>
+    </>
+  );
+});
+EmailResourceForm.displayName = "EmailResourceForm";
 
 type SystemResourceFormProps = {
   variable?: DataSource;

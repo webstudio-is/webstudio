@@ -216,6 +216,11 @@ export const projectMeta = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
   contactEmail: z.string().optional(),
+  emailSender: z.string().optional(),
+  emailSubject: z.string().optional(),
+  emailBody: z.string().optional(),
+  emailConfirmationSubject: z.string().optional(),
+  emailConfirmationBody: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
   agentInstructions: z.string().optional(),

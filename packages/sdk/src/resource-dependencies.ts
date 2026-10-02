@@ -32,6 +32,8 @@ export const getResourceDataSourceIds = (resource: Resource) => {
     ...(resource.searchParams ?? []).map(({ value }) => value),
     ...resource.headers.map(({ value }) => value),
     resource.body,
+    resource.email?.subject,
+    resource.email?.body,
   ]);
 };
 
