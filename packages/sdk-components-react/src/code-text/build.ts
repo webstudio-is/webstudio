@@ -46,6 +46,9 @@ const readSelection = ({
     );
   }
   if (supportedValues.has(prop.value) === false) {
+    if (label === "Language") {
+      return "plaintext";
+    }
     throw new Error(
       `Code Text "${instanceId}" has an unsupported ${label.toLowerCase()} selection "${prop.value}".`
     );
