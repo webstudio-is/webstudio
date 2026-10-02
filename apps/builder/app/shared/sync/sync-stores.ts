@@ -155,6 +155,12 @@ type SelectedPageAndInstance = {
   allSelectedInstanceSelectors: InstanceSelector[];
 };
 
+const readSelectedPageAndInstance = (): SelectedPageAndInstance => ({
+  selectedPageId: $selectedPageId.get(),
+  selectedInstanceSelector: $selectedInstanceSelector.get(),
+  allSelectedInstanceSelectors: $allSelectedInstanceSelectors.get(),
+});
+
 const isInstanceSelector = (value: unknown): value is InstanceSelector =>
   Array.isArray(value) && value.every((id) => typeof id === "string");
 
@@ -207,14 +213,12 @@ class SelectedPageAndInstanceSyncObject {
   private lastSelectionRevision = $instanceSelectionUpdate.get().revision;
   private lastSelectedPageId = $selectedPageId.get();
 
+  constructor(private readonly ignoreRemotePageChanges = false) {}
+
   getState() {
     // A new Canvas can connect in the same turn as the page switch, before the
     // batched store has published its next value.
-    return {
-      selectedPageId: $selectedPageId.get(),
-      selectedInstanceSelector: $selectedInstanceSelector.get(),
-      allSelectedInstanceSelectors: $allSelectedInstanceSelectors.get(),
-    } satisfies SelectedPageAndInstance;
+    return readSelectedPageAndInstance();
   }
 
   setState(state: unknown) {
@@ -222,6 +226,13 @@ class SelectedPageAndInstanceSyncObject {
   }
 
   applyTransaction(transaction: Transaction) {
+    const nextPageId = (transaction.payload as SelectedPageAndInstance)
+      ?.selectedPageId;
+    if (this.ignoreRemotePageChanges && nextPageId !== $selectedPageId.get()) {
+      // The Builder replaces this iframe. Leave its React tree on the old page
+      // until the document is discarded.
+      return;
+    }
     this.applyRemoteState(transaction.payload, "add");
   }
 
@@ -318,11 +329,7 @@ class SelectedPageAndInstanceSyncObject {
     } else {
       selectInstance(selectedInstanceSelector);
     }
-    return {
-      selectedPageId: $selectedPageId.get(),
-      selectedInstanceSelector: $selectedInstanceSelector.get(),
-      allSelectedInstanceSelectors: $allSelectedInstanceSelectors.get(),
-    };
+    return readSelectedPageAndInstance();
   }
 }
 
@@ -330,7 +337,9 @@ export const __testing__ = {
   SelectedPageAndInstanceSyncObject,
 };
 
-export const createObjectPool = () => {
+export const createObjectPool = (options?: {
+  ignoreRemotePageChanges?: boolean;
+}) => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore, {
       onRevert: (changes) => {
@@ -341,7 +350,7 @@ export const createObjectPool = () => {
     }),
     new ImmerhinSyncObject("externalContent", externalContentSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
-    new SelectedPageAndInstanceSyncObject(),
+    new SelectedPageAndInstanceSyncObject(options?.ignoreRemotePageChanges),
     new NanostoresSyncObject("pointerPosition", $pointerPosition),
     new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
 
@@ -426,26 +435,12 @@ export const useCanvasStore = () => {
   useEffect(() => {
     const canvasClient = new SyncClient({
       role: "follower",
-      object: createObjectPool(),
+      object: createObjectPool({ ignoreRemotePageChanges: true }),
       emitter: sharedSyncEmitter,
     });
 
     const controller = new AbortController();
-    canvasClient.connect({
-      signal: controller.signal,
-      shouldApplyTransaction(transaction) {
-        if (transaction.object === "selectedPageAndInstance") {
-          const nextPageId = (transaction.payload as SelectedPageAndInstance)
-            .selectedPageId;
-          if (nextPageId !== $selectedPageId.get()) {
-            // The Builder replaces this iframe. Keep the old page's React tree
-            // untouched until its document is discarded.
-            return false;
-          }
-        }
-        return true;
-      },
-    });
+    canvasClient.connect({ signal: controller.signal });
     return () => {
       controller.abort();
     };

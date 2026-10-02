@@ -1,15 +1,13 @@
 import type { SyncEmitter } from "@webstudio-is/sync-client";
 
-declare global {
-  interface HTMLIFrameElement {
-    __webstudioSharedSyncEmitter__?: SyncEmitter;
-  }
-}
+export type CanvasSyncFrame = HTMLIFrameElement & {
+  __webstudioSharedSyncEmitter__?: SyncEmitter;
+};
 
 // The iframe element survives navigation to /canvas. Its emitter reference is
 // consumed during Canvas startup, before authored scripts can access it.
 export const attachCanvasSyncEmitter = (
-  frame: HTMLIFrameElement,
+  frame: CanvasSyncFrame,
   upstream: SyncEmitter
 ) => {
   const subscriptions = new Set<() => void>();
@@ -49,7 +47,7 @@ export const attachCanvasSyncEmitter = (
 
 export const takeCanvasSyncEmitter = () => {
   try {
-    const frame = window.frameElement as HTMLIFrameElement | null;
+    const frame = window.frameElement as CanvasSyncFrame | null;
     const emitter = frame?.__webstudioSharedSyncEmitter__;
     if (frame) {
       delete frame.__webstudioSharedSyncEmitter__;

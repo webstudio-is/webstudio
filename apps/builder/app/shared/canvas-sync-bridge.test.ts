@@ -1,10 +1,13 @@
 import { expect, test, vi } from "vitest";
 import { NanoEventsSyncEmitter } from "./sync-client";
-import { attachCanvasSyncEmitter } from "./canvas-sync-bridge";
+import {
+  attachCanvasSyncEmitter,
+  type CanvasSyncFrame,
+} from "./canvas-sync-bridge";
 
 test("iframe sync bridge releases listeners on disposal", () => {
   const upstream = new NanoEventsSyncEmitter();
-  const frame = {} as HTMLIFrameElement;
+  const frame = {} as CanvasSyncFrame;
   const dispose = attachCanvasSyncEmitter(frame, upstream);
   const emitter = frame.__webstudioSharedSyncEmitter__;
   if (emitter === undefined) {
