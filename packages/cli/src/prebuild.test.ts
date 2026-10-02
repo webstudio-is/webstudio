@@ -2967,6 +2967,7 @@ sitemap.map((page) => page.path);`
         ["duplicate", { destinations: ["destination", "destination"] }],
         ["missing", { destinations: ["missing"] }],
         ["malformed", { destinations: "destination" }],
+        ["native", { mode: "native", destinations: ["destination"] }],
         ["valid", { destinations: ["destination"] }],
       ] as const;
       const siteData = createSiteData({
@@ -3072,6 +3073,7 @@ sitemap.map((page) => page.path);`
         ["duplicate", "Select each Resource only once"],
         ["missing", "Resource destination not found"],
         ["malformed", "Form submission settings not found"],
+        ["native", "Form submission settings not found"],
       ]) {
         await expect(submit(id)).resolves.toEqual({
           success: false,

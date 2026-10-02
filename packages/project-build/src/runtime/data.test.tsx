@@ -21,6 +21,7 @@ import {
   type Resource,
 } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { applyBuilderPatchPayloadMutable } from "../state/patch";
 import {
   computeExpression,
   computeExpressionWithinScope,
@@ -161,6 +162,96 @@ test("a Form can select ancestor and local Resources, while Form data stays loca
     dataSources: data.dataSources,
   });
   expect(availableToOutside.map(({ id }) => id)).not.toContain("formData");
+});
+
+test("Form-scoped Resource bindings and destination survive edit, save, and reload", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+  data.dataSources.set("browserInfo", {
+    type: "parameter",
+    id: "browserInfo",
+    name: "browserInfo",
+    scopeInstanceId: "formId",
+  });
+  data.dataSources.set("destination", {
+    type: "resource",
+    id: "destination",
+    name: "Submission",
+    resourceId: "resource",
+    scopeInstanceId: "formId",
+  });
+  data.resources.set("resource", {
+    id: "resource",
+    name: "Submission",
+    method: "post",
+    url: '"https://example.com/submit"',
+    headers: [],
+  });
+  data.props.set("submission", {
+    id: "submission",
+    instanceId: "formId",
+    name: "submission",
+    type: "json",
+    value: { destinations: ["destination"] },
+  });
+
+  const bodyExpression = `({ email: ${encodeDataVariableId("formData")}.email })`;
+  const headerExpression = `${encodeDataVariableId("browserInfo")}.language`;
+  const editorData = new FormData();
+  editorData.set("name", "Submission");
+  editorData.set("method", "post");
+  editorData.set("url", '"https://example.com/submit"');
+  editorData.set("header-name", "X-Language");
+  editorData.set("header-value", headerExpression);
+  editorData.set("body", bodyExpression);
+  const mutation = upsertResource(
+    {
+      ...data,
+      pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    },
+    {
+      resourceId: "resource",
+      dataSourceId: "destination",
+      scopeInstanceId: "formId",
+      resource: createResourceFieldsFromFormData({ formData: editorData }),
+    },
+    { createId: () => "unused" }
+  );
+  applyBuilderPatchPayloadMutable(
+    (namespace) => data[namespace as keyof typeof data],
+    mutation.payload
+  );
+
+  const saved = JSON.parse(
+    JSON.stringify({
+      dataSources: [...data.dataSources],
+      resources: [...data.resources],
+      props: [...data.props],
+    })
+  );
+  const reloadedResources = new Map<string, Resource>(saved.resources);
+  const reloadedDataSources = new Map<string, DataSource>(saved.dataSources);
+  const reloadedProps = new Map<string, Prop>(saved.props);
+  expect(reloadedResources.get("resource")).toMatchObject({
+    body: bodyExpression,
+    headers: [{ name: "X-Language", value: headerExpression }],
+  });
+  expect(reloadedDataSources.get("destination")).toMatchObject({
+    resourceId: "resource",
+    scopeInstanceId: "formId",
+  });
+  expect(reloadedProps.get("submission")).toMatchObject({
+    value: { destinations: ["destination"] },
+  });
 });
 
 test("Form submission parameters cannot be renamed or deleted", () => {
