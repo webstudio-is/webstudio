@@ -52,9 +52,9 @@ import {
 } from "../sync-client";
 import type {
   RevertedTransaction,
-  SyncEmitter,
   Transaction,
 } from "@webstudio-is/sync-client";
+import { takeCanvasSyncEmitter } from "../canvas-sync-bridge";
 import { $canvasScrollbarSize } from "~/builder/shared/nano-states";
 import {
   $pages,
@@ -419,28 +419,8 @@ export const createObjectPool = () => {
   ]);
 };
 
-declare global {
-  interface HTMLIFrameElement {
-    __webstudioSharedSyncEmitter__?: SyncEmitter;
-  }
-}
-
-const sharedSyncEmitter = (() => {
-  if (typeof window === "undefined") {
-    return;
-  }
-  try {
-    const frame = window.frameElement as HTMLIFrameElement | null;
-    // Capture the bridge before authored scripts run, then remove its handle.
-    const emitter = frame?.__webstudioSharedSyncEmitter__;
-    if (frame) {
-      delete frame.__webstudioSharedSyncEmitter__;
-    }
-    return emitter;
-  } catch {
-    // A standalone Canvas can be embedded from another origin.
-  }
-})();
+const sharedSyncEmitter =
+  typeof window === "undefined" ? undefined : takeCanvasSyncEmitter();
 
 export const useCanvasStore = () => {
   useEffect(() => {

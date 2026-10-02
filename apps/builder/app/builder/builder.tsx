@@ -14,7 +14,7 @@ import {
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { Role } from "@webstudio-is/project";
 import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
-import { createScopedSyncEmitter } from "~/shared/sync-client";
+import { attachCanvasSyncEmitter } from "~/shared/canvas-sync-bridge";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
@@ -351,24 +351,14 @@ export const Builder = (props: BuilderProps) => {
   useSetWindowTitle();
 
   const iframeRefCallback = useMemo(() => {
-    let disposeSyncEmitter: () => void = () => {};
+    let disposeSyncEmitter: (() => void) | undefined;
     return mergeRefs((element: HTMLIFrameElement | null) => {
-      disposeSyncEmitter();
-      disposeSyncEmitter = () => {};
-      if (element) {
-        const client = getSyncClient();
-        if (client) {
-          const scoped = createScopedSyncEmitter(client.emitter);
-          disposeSyncEmitter = () => {
-            scoped.dispose();
-            if (element.__webstudioSharedSyncEmitter__ === scoped.emitter) {
-              delete element.__webstudioSharedSyncEmitter__;
-            }
-          };
-          // The frame element survives navigation to /canvas.
-          element.__webstudioSharedSyncEmitter__ = scoped.emitter;
-        }
-      }
+      disposeSyncEmitter?.();
+      const emitter = element && getSyncClient()?.emitter;
+      disposeSyncEmitter =
+        element && emitter
+          ? attachCanvasSyncEmitter(element, emitter)
+          : undefined;
     }, publishRef);
   }, [publishRef]);
 

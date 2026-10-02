@@ -223,39 +223,6 @@ export class NanoEventsSyncEmitter implements SyncEmitter {
   }
 }
 
-export const createScopedSyncEmitter = (upstream: SyncEmitter) => {
-  const subscriptions = new Set<() => void>();
-  let disposed = false;
-  return {
-    emitter: {
-      emit(message) {
-        if (disposed === false) {
-          upstream.emit(message);
-        }
-      },
-      on(handler) {
-        if (disposed) {
-          return () => {};
-        }
-        const unsubscribe = upstream.on(handler);
-        subscriptions.add(unsubscribe);
-        return () => {
-          if (subscriptions.delete(unsubscribe)) {
-            unsubscribe();
-          }
-        };
-      },
-    } satisfies SyncEmitter,
-    dispose() {
-      disposed = true;
-      for (const unsubscribe of subscriptions) {
-        unsubscribe();
-      }
-      subscriptions.clear();
-    },
-  };
-};
-
 type SyncClientOptions = {
   role: "leader" | "follower";
   object: SyncObject;

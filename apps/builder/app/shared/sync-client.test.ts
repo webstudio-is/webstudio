@@ -6,27 +6,12 @@ import {
   ImmerhinSyncObject,
   NanostoresSyncObject,
   NanoEventsSyncEmitter,
-  createScopedSyncEmitter,
   SyncClient,
   SyncObjectPool,
   type SyncStorage,
 } from "./sync-client";
 
 enableMapSet();
-
-test("scoped sync emitter releases iframe listeners on disposal", () => {
-  const upstream = new NanoEventsSyncEmitter();
-  const { emitter, dispose } = createScopedSyncEmitter(upstream);
-  const onMessage = vi.fn();
-  emitter.on(onMessage);
-  upstream.emit({ clientId: "leader", type: "connect" });
-  expect(onMessage).toHaveBeenCalledTimes(1);
-
-  dispose();
-  upstream.emit({ clientId: "leader", type: "connect" });
-  emitter.emit({ clientId: "canvas", type: "connect" });
-  expect(onMessage).toHaveBeenCalledTimes(1);
-});
 
 const createFollowerStore = () => {
   const followerStore = new Store();
