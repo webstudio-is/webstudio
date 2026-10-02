@@ -3016,6 +3016,41 @@ sitemap.map((page) => page.path);`
     ).toMatchObject({ method: "post" });
   }, 30_000);
 
+  test("prerenders the new Form as plain HTML", async () => {
+    await writeSiteData(
+      createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: [{ type: "id", value: "form" }],
+            },
+          ],
+          [
+            "form",
+            {
+              id: "form",
+              component: "NativeForm",
+              children: [],
+            },
+          ],
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+
+    const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
+    const [form] = findElementsByTagName(html, "form");
+    expect(form).toBeDefined();
+    expect(form?.attrs.map(({ name }) => name)).toEqual(["class"]);
+  }, 30_000);
+
   test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {
     await writeSiteData(
       createSiteData({

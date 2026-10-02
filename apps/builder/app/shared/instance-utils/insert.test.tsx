@@ -21,6 +21,8 @@ import {
   token,
 } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
+import { coreTemplates } from "@webstudio-is/sdk-components-registry/core-templates";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import type { WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   blockBodyComponent,
@@ -787,6 +789,70 @@ describe("insert webstudio component at", () => {
     $resources.set(new Map());
     $props.set(new Map());
     $assets.set(new Map());
+  });
+
+  test("inserts the Forms tile as a native form with named controls", async () => {
+    const previousTemplates = $registeredTemplates.get();
+    $registeredTemplates.set(
+      new Map([
+        [
+          "form",
+          {
+            category: "forms",
+            template: renderTemplate(
+              coreTemplates.form.template,
+              undefined,
+              [],
+              {
+                componentIds,
+                componentMetas: defaultMetasMap,
+              }
+            ),
+          },
+        ],
+      ])
+    );
+
+    try {
+      expect(
+        await insertWebstudioComponentAt("form", {
+          parentSelector: ["bodyId"],
+          position: "end",
+        })
+      ).toBe(true);
+
+      const body = $instances.get().get("bodyId");
+      const formId =
+        body?.children[0]?.type === "id" ? body.children[0].value : "";
+      expect($instances.get().get(formId)?.component).toBe("NativeForm");
+      const formProps = Array.from($props.get().values()).filter(
+        ({ instanceId }) => instanceId === formId
+      );
+      expect(formProps.find(({ name }) => name === "action")).toBeUndefined();
+      const childIds = Array.from($instances.get().values())
+        .filter(
+          ({ component }) => component === "Input" || component === "Button"
+        )
+        .map(({ id }) => id);
+      expect(
+        Array.from($props.get().values())
+          .filter(
+            ({ instanceId, name }) =>
+              childIds.includes(instanceId) && name === "name"
+          )
+          .map(({ value }) => value)
+      ).toEqual(["name", "email"]);
+      expect(
+        Array.from($props.get().values()).some(
+          ({ instanceId, name, value }) =>
+            childIds.includes(instanceId) &&
+            name === "type" &&
+            value === "submit"
+        )
+      ).toBe(true);
+    } finally {
+      $registeredTemplates.set(previousTemplates);
+    }
   });
 
   test("inserts component through runtime template application", async () => {

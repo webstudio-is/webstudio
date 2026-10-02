@@ -57,4 +57,23 @@ test("the Forms section inserts only the new Form", () => {
       firstInstance: expect.objectContaining({ component: "NativeForm" }),
     }),
   ]);
+
+  const formTemplate = $registeredTemplates.get().get("form")?.template;
+  expect(formTemplate?.instances[0]?.component).toBe("NativeForm");
+  expect(formTemplate?.instances.map(({ component }) => component)).toEqual([
+    "NativeForm",
+    "Label",
+    "Input",
+    "Label",
+    "Input",
+    "Button",
+  ]);
+  expect(formTemplate?.props.some(({ name }) => name === "action")).toBe(false);
+
+  // Saved instances keep their original component IDs and implementations.
+  expect($registeredComponents.get().has("Form")).toBe(true);
+  expect($registeredComponents.get().has("RemixForm")).toBe(true);
+  expect(
+    $registeredTemplates.get().get("Form")?.template.instances[0]?.component
+  ).toBe("Form");
 });
