@@ -343,13 +343,16 @@ export const validateManagedFormBodyFormats = (
   };
 };
 
-/** Resolve dependencies, validate every selected request, then dispatch them together. */
+/** Resolve dependencies, preflight selected body formats and URL policy, then dispatch. */
 export const loadManagedFormResources = async (
   customFetch: typeof fetch,
   graph: ResourceRequestGraph,
   baseUrl?: string | URL,
-  options?: ResourceGraphLoadOptions
+  options?: ResourceGraphLoadOptions & {
+    validateDestination?: (url: URL) => void;
+  }
 ) => {
+  const { validateDestination, ...loadOptions } = options ?? {};
   const roots = new Set(graph.rootIds);
   const resourcesById = new Map(
     graph.resources.map((resource) => [resource.id, resource])
@@ -382,25 +385,27 @@ export const loadManagedFormResources = async (
   for (const rootId of graph.rootIds) {
     visit(rootId);
   }
-  if (dependencyIds.size === 0) {
-    return loadResources(customFetch, graph, baseUrl, options);
-  }
-
   // Dependency Resources can make outbound requests. Only selected primary
-  // destinations have the all-or-none preflight guarantee.
-  const dependencies = await loadResources(
-    customFetch,
-    {
-      resources: graph.resources.map((resource) => ({
-        ...resource,
-        outputName: resource.id,
-      })),
-      rootIds: [...dependencyIds],
-    },
-    baseUrl,
-    { ...options, retryFailedRoots: false }
-  );
-  const documents = new Map(Object.entries(dependencies));
+  // destinations have this deterministic preflight guarantee.
+  const documents =
+    dependencyIds.size === 0
+      ? new Map<string, unknown>()
+      : new Map(
+          Object.entries(
+            await loadResources(
+              customFetch,
+              {
+                resources: graph.resources.map((resource) => ({
+                  ...resource,
+                  outputName: resource.id,
+                })),
+                rootIds: [...dependencyIds],
+              },
+              baseUrl,
+              { ...loadOptions, retryFailedRoots: false }
+            )
+          )
+        );
   const preparedRoots = graph.rootIds.map((rootId) => {
     const resource = resourcesById.get(rootId)!;
     const request = resource.createRequest(
@@ -410,13 +415,18 @@ export const loadManagedFormResources = async (
     if (error !== undefined) {
       throw new Error(error);
     }
+    if (validateDestination !== undefined) {
+      const resolutionBase =
+        baseUrl === undefined ? undefined : new URL("/", baseUrl);
+      validateDestination(new URL(request.url.trim(), resolutionBase));
+    }
     return { ...resource, dependencies: [], createRequest: () => request };
   });
   return loadResources(
     customFetch,
     { resources: preparedRoots, rootIds: graph.rootIds },
     baseUrl,
-    options
+    loadOptions
   );
 };
 

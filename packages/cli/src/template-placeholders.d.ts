@@ -14,11 +14,13 @@ declare module "__ASSET_QUERY_RUNTIME__" {
 }
 
 declare module "__MANAGED_FORM_FETCH__" {
+  import type { ProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
+
   export const createManagedFormResourceFetch: (options: {
     request: Request;
     context: unknown;
     projectDomain?: string;
-  }) => typeof fetch;
+  }) => ProtectedResourceFetch;
 }
 
 declare module "__ASSET_RESOURCE_FETCH__" {

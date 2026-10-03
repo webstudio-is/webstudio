@@ -2,7 +2,10 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import ipaddr from "ipaddr.js";
 import { Agent, fetch as undiciFetch } from "undici";
-import { createProtectedResourceFetch } from "./protected-resource-fetch";
+import {
+  createProtectedResourceFetch,
+  type ProtectedResourceFetch,
+} from "./protected-resource-fetch";
 
 const benchmarkV4 = ipaddr.IPv4.parse("198.18.0.0");
 const globalUnicastV6 = ipaddr.IPv6.parse("2000::");
@@ -59,7 +62,7 @@ export const createNodeProtectedResourceFetch = ({
   deniedHostnames = [],
 }: {
   deniedHostnames?: readonly string[];
-} = {}): typeof fetch =>
+} = {}): ProtectedResourceFetch =>
   createProtectedResourceFetch({
     deniedHostnames,
     transport: async ({ url, method, headers, body, signal }) => {

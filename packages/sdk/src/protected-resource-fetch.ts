@@ -13,6 +13,10 @@ export type ProtectedResourceTransport = (
   hop: ProtectedResourceHop
 ) => Promise<{ response: Response; release?: () => Promise<void> }>;
 
+export type ProtectedResourceFetch = typeof fetch & {
+  validateDestination: (url: URL) => void;
+};
+
 const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const defaultMaxRedirects = 3;
 const maxRequestBytes = 25 * 1024 * 1024;
@@ -67,7 +71,11 @@ const readLimitedBytes = async (
   return bytes;
 };
 
-const validateDestination = (url: URL, deniedHostnames: readonly string[]) => {
+/** Deterministic destination policy; connection and redirect checks stay in the transport. */
+export const validateProtectedResourceDestination = (
+  url: URL,
+  deniedHostnames: readonly string[]
+) => {
   if (
     (url.protocol !== "http:" && url.protocol !== "https:") ||
     url.username !== "" ||
@@ -101,8 +109,8 @@ export const createProtectedResourceFetch = ({
   transport: ProtectedResourceTransport;
   deniedHostnames: readonly string[];
   maxRedirects?: number;
-}): typeof fetch => {
-  return async (input, init) => {
+}): ProtectedResourceFetch => {
+  const protectedFetch: typeof fetch = async (input, init) => {
     const original = new Request(input, init);
     const body = await readLimitedBytes(original.body, maxRequestBytes);
     const headers = new Headers(original.headers);
@@ -113,7 +121,7 @@ export const createProtectedResourceFetch = ({
     let redirects = 0;
 
     while (true) {
-      validateDestination(url, deniedHostnames);
+      validateProtectedResourceDestination(url, deniedHostnames);
       const { response, release } = await transport({
         url,
         method: original.method,
@@ -139,7 +147,7 @@ export const createProtectedResourceFetch = ({
             );
           }
           const next = new URL(location, url);
-          validateDestination(next, deniedHostnames);
+          validateProtectedResourceDestination(next, deniedHostnames);
           if (next.origin !== url.origin) {
             throw new Error(
               "Resource destination redirected to another origin"
@@ -167,6 +175,10 @@ export const createProtectedResourceFetch = ({
       }
     }
   };
+  return Object.assign(protectedFetch, {
+    validateDestination: (url: URL) =>
+      validateProtectedResourceDestination(url, deniedHostnames),
+  });
 };
 
 /** Cloudflare's outbound proxy checks the destination at each fetch hop. */
@@ -178,7 +190,7 @@ export const createCloudflareProtectedResourceFetch = ({
   // origins. The caller must supply every zone hosted by this Worker.
   ownZoneHostnames: readonly [string, ...string[]];
   workerFetch?: typeof fetch;
-}): typeof fetch => {
+}): ProtectedResourceFetch => {
   if (
     ownZoneHostnames.length === 0 ||
     ownZoneHostnames.some((host) => host === "")

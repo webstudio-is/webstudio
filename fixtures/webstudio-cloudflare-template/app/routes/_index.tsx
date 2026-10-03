@@ -373,6 +373,7 @@ export const action = async ({
           signal: request.signal,
           timeoutMs: 10_000,
           retryFailedRoots: true,
+          validateDestination: protectedFetch.validateDestination,
         }
       );
       return getManagedFormResponse(graph, results);

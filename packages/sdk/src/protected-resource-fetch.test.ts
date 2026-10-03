@@ -6,6 +6,30 @@ import {
 } from "./protected-resource-fetch";
 
 describe("protected Resource fetch", () => {
+  test("preflights allowed and denied URL policy without opening a connection", () => {
+    const transport = vi.fn();
+    const protectedFetch = createProtectedResourceFetch({
+      deniedHostnames: ["site.example", "webstudio.is"],
+      transport,
+    });
+    expect(() =>
+      protectedFetch.validateDestination(
+        new URL("https://api.example.net/submit")
+      )
+    ).not.toThrow();
+    for (const destination of [
+      "https://site.example/submit",
+      "https://sub.webstudio.is/submit",
+      "https://user:password@api.example.net/submit",
+      "ftp://api.example.net/submit",
+    ]) {
+      expect(() =>
+        protectedFetch.validateDestination(new URL(destination))
+      ).toThrow();
+    }
+    expect(transport).not.toHaveBeenCalled();
+  });
+
   test("requires an explicit Worker zone and blocks its own origin", async () => {
     expect(() =>
       createCloudflareProtectedResourceFetch({ ownZoneHostnames: [""] })

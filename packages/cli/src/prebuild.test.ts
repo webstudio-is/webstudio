@@ -53,6 +53,7 @@ import {
   managedFormIdFieldName,
   managedFormRequestParamName,
 } from "@webstudio-is/sdk/runtime";
+import { createProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
 import {
   generateRedirectsModule,
   getAssetResourcePrerenderPaths,
@@ -5214,6 +5215,126 @@ sitemap.map((page) => page.path);`
         ],
       });
       expectAttempts(2);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "rejects a denied selected destination before a valid sibling POST (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["valid-source", "denied-source"] },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "valid-source",
+          {
+            id: "valid-source",
+            name: "Valid",
+            type: "resource",
+            resourceId: "valid",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "denied-source",
+          {
+            id: "denied-source",
+            name: "Denied",
+            type: "resource",
+            resourceId: "denied",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "valid",
+          {
+            id: "valid",
+            name: "Valid",
+            method: "post",
+            url: '"https://api.example.net/submit"',
+            headers: [],
+          },
+        ],
+        [
+          "denied",
+          {
+            id: "denied",
+            name: "Denied",
+            method: "post",
+            url: '"https://webstudio.is/blocked"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "url-preflight-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "url-preflight-action.mjs")).href
+      );
+      const received: string[] = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        createProtectedResourceFetch({
+          deniedHostnames: ["webstudio.is"],
+          transport: async ({ url }) => {
+            received.push(url.href);
+            return { response: Response.json({ accepted: true }) };
+          },
+        })
+      );
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            { method: "POST", headers: { host: "example.com" }, body: formData }
+          ),
+          context: {},
+          params: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("Resource destination is not allowed")
+      );
+      expect(received).toEqual([]);
     }
   );
 
