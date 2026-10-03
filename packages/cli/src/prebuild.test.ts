@@ -3250,6 +3250,35 @@ sitemap.map((page) => page.path);`
           return Response.json({ id: "author-123" });
         }
       );
+      const expired = (Date.now() - 300_001).toString(16);
+      const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        for (const [botValues, error] of [
+          [[], "Form bot field not found"],
+          [["malformed"], "Form bot value invalid malformed"],
+          [[expired], `Form bot value invalid ${expired}`],
+          [["stale", Date.now().toString(16)], "Form bot value invalid stale"],
+        ] as const) {
+          const invalidForm = new FormData();
+          invalidForm.set(formIdFieldName, "action");
+          for (const value of botValues) {
+            invalidForm.append(formBotFieldName, value);
+          }
+          await expect(
+            action({
+              request: new Request("https://example.com/", {
+                method: "POST",
+                headers: { host: "example.com" },
+                body: invalidForm,
+              }),
+              context: {},
+            })
+          ).resolves.toEqual({ success: false, errors: [error] });
+        }
+      } finally {
+        errorLog.mockRestore();
+      }
+      expect(received).toHaveLength(0);
       for (let index = 0; index < 2; index += 1) {
         const form = new FormData();
         form.set(formIdFieldName, "action");

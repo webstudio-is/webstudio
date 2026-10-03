@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
+import {
+  formBotFieldName,
+  validateManagedFormBot,
+} from "@webstudio-is/sdk/runtime";
 import { NativeForm } from "./native-form";
 import { WebhookForm } from "./webhook-form";
 
@@ -10,7 +14,10 @@ import { WebhookForm } from "./webhook-form";
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-const renderRoute = async (element: React.ReactNode, action: () => unknown) => {
+const renderRoute = async (
+  element: React.ReactNode,
+  action: (args: { request: Request }) => unknown
+) => {
   const router = createMemoryRouter([{ path: "/", element, action }]);
   const container = document.createElement("div");
   document.body.append(container);
@@ -266,3 +273,88 @@ test("managed Form follows a valid success redirect without scrolling feedback",
     window.history.replaceState(null, "", previousUrl);
   }
 });
+
+test.each(["browser", "brave"] as const)(
+  "saved Router Webhook Form sends one current bot field across aged %s retries",
+  async (browser) => {
+    const originalBrave = Object.getOwnPropertyDescriptor(navigator, "brave");
+    if (browser === "brave") {
+      Object.defineProperty(navigator, "brave", {
+        configurable: true,
+        value: { isBrave: () => true },
+      });
+    } else {
+      vi.spyOn(window, "matchMedia").mockImplementation(
+        (query) =>
+          ({
+            matches:
+              query.startsWith("(device-aspect-ratio:") ||
+              query ===
+                `(device-width: ${screen.width}px) and (device-height: ${screen.height}px)` ||
+              query === "(prefers-color-scheme: light)",
+          }) as MediaQueryList
+      );
+    }
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const start = 1_700_000_000_000;
+    vi.setSystemTime(start);
+    const received: FormData[] = [];
+    const destination = vi.fn();
+    const action = vi.fn(async ({ request }: { request: Request }) => {
+      const formData = await request.formData();
+      received.push(formData);
+      validateManagedFormBot(formData);
+      destination();
+      return { success: false };
+    });
+    const Form = () => {
+      const [state, setState] = useState<"initial" | "success" | "error">(
+        "initial"
+      );
+      return (
+        <WebhookForm
+          action="saved-webhook"
+          state={state}
+          onStateChange={setState}
+        >
+          <input name="message" defaultValue="Hello" />
+          <button type="submit">Send</button>
+          {state === "error" && <div>Try again</div>}
+        </WebhookForm>
+      );
+    };
+    const view = await renderRoute(<Form />, action);
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          vi.setSystemTime(start + attempt * 300_001);
+        }
+        await act(async () => view.container.querySelector("button")?.click());
+        await vi.waitFor(() =>
+          expect(destination).toHaveBeenCalledTimes(attempt + 1)
+        );
+        const botFields = received[attempt].getAll(formBotFieldName);
+        expect(botFields).toHaveLength(1);
+        if (browser === "brave") {
+          expect(botFields).toEqual(["brave"]);
+        } else {
+          const submittedTime = parseInt(String(botFields[0]), 16);
+          expect(submittedTime).toBeGreaterThanOrEqual(
+            start + attempt * 300_001
+          );
+          expect(submittedTime).toBeLessThan(start + attempt * 300_001 + 1000);
+        }
+        expect(received[attempt].get("message")).toBe("Hello");
+      }
+      expect(action).toHaveBeenCalledTimes(3);
+    } finally {
+      await view.cleanup();
+      vi.useRealTimers();
+      if (originalBrave) {
+        Object.defineProperty(navigator, "brave", originalBrave);
+      } else {
+        Reflect.deleteProperty(navigator, "brave");
+      }
+    }
+  }
+);

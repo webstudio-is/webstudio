@@ -133,6 +133,11 @@ export const WebhookForm = forwardRef<
     ) => {
       prepareFeedback();
       onStateChange?.("initial");
+      for (const field of event.currentTarget.querySelectorAll(
+        `[name="${formBotFieldName}"]`
+      )) {
+        field.remove();
+      }
       const hiddenInput = document.createElement("input");
       hiddenInput.type = "hidden";
       hiddenInput.name = formBotFieldName;
