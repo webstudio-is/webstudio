@@ -20,9 +20,13 @@ Project settings are located in the top left by clicking the Webstudio logo > Pr
 
 ## Emails
 
-Configure the recipients, Sender (the address replies would go to), owner notification subject and plain-text body, and visitor confirmation subject and plain-text body for Email Resources. Recipients can be plain email addresses or `Name <address@example.com>` entries separated by commas. When the recipients list is empty, new Email Resources use the project owner's address as their default. The owner body is the complete plain-text message: setting it replaces the default Form data and browser information text. For a Form-scoped Email Resource, leave the project body empty to use that automatic text, or edit the Resource's body expression to include selected Form bindings in a custom message. Resetting a Resource body override restores the project body.
+Configure recipients, Sender, owner notification subject and plain-text body, and visitor confirmation subject and fixed plain-text body here. Recipients are comma-separated mailboxes such as `team@example.com` or `Name <address@example.com>`; quote a display name that contains a comma. When the list is empty, new Email Resources fall back to the project owner's address. An Email Resource can inherit these recipients or use its own fixed recipient list; submitted Form values cannot choose team recipients.
 
-Email Resources inherit these project defaults unless you override a setting on the Resource. Reset an override on the Resource to use the project value again. Republish to update the settings included in a published site. Email Resource delivery is not configured yet, so saving or publishing these settings does not send email. The existing Contact email recipient setting also continues to serve legacy Webhook Forms.
+Sender accepts one mailbox, with or without a display name: `Olegs Isonen <oleg008@gmail.com>` or `oleg008@gmail.com`. Its address is for replies, and its optional name is the display name. Webstudio's authenticated From address stays fixed. Each Email Resource can inherit Sender or override it.
+
+The project owner body is the **complete** plain-text message. A nonempty body replaces the automatic Form data and browser information text and is used literally; it does not evaluate bindings typed into Project Settings. Leave it empty to use automatic text for a Form-scoped Email Resource, or edit that Resource's body expression to select Form fields and use bindings. A Resource outside the Form cannot bind that Form's data. Resetting a Resource body override restores inheritance of the project body.
+
+Email Resources inherit project defaults until you override individual settings. Reset an override on the Resource to use the project value again. Republish to update the settings included in a published site. New Email Resource and visitor-confirmation delivery are not connected to a provider yet, including on Webstudio Cloud; saving or publishing these settings does not send email. The existing Contact email recipient setting continues to serve legacy Webhook Forms.
 
 ## Publishing
 
