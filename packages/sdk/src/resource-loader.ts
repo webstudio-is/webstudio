@@ -162,6 +162,8 @@ export type ResourceLoadOptions = {
 };
 
 export type ResourceGraphLoadOptions = ResourceLoadOptions & {
+  /** Retry a failed selected root once, without resolving its dependencies again. */
+  retryFailedRoots?: boolean;
   requestOverrides?: ReadonlyMap<
     string,
     Partial<ResourceRequest> & { fetch?: typeof fetch }
@@ -556,11 +558,13 @@ export const loadResources = async (
         rootIds: Array.from(requests.keys()),
       }
     : requests;
+  const rootIds = new Set(graph.rootIds);
   const resources: Resource<unknown>[] = graph.resources.map((resource) => ({
     id: resource.id,
     dependencies: resource.dependencies,
     resolve: ({ documents, signal }) => {
-      const { requestOverrides, ...loadOptions } = options ?? {};
+      const { requestOverrides, retryFailedRoots, ...loadOptions } =
+        options ?? {};
       const { fetch: requestFetch = customFetch, ...overrides } =
         requestOverrides?.get(resource.id) ?? {};
       const request = resource.createRequest(documents);
@@ -568,10 +572,20 @@ export const loadResources = async (
         ...request,
         ...overrides,
       };
-      return loadResource(requestFetch, resolvedRequest, baseUrl, {
-        ...loadOptions,
-        signal: signal ?? options?.signal,
-      });
+      const load = () =>
+        loadResource(requestFetch, resolvedRequest, baseUrl, {
+          ...loadOptions,
+          signal: signal ?? options?.signal,
+        });
+      return load().then((result) =>
+        retryFailedRoots === true &&
+        rootIds.has(resource.id) &&
+        result.ok === false &&
+        !signal?.aborted &&
+        !options?.signal?.aborted
+          ? load()
+          : result
+      );
     },
   }));
   const resolved = await resolveResourceGraph({

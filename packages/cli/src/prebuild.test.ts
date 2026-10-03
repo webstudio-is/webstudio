@@ -3885,6 +3885,202 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
+    "retries only a failed managed Form destination per submission (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["failed-source", "sibling-source"] },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "dependency-source",
+          {
+            id: "dependency-source",
+            name: "Dependency",
+            type: "resource",
+            resourceId: "dependency",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "failed-source",
+          {
+            id: "failed-source",
+            name: "Failed",
+            type: "resource",
+            resourceId: "failed",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "sibling-source",
+          {
+            id: "sibling-source",
+            name: "Sibling",
+            type: "resource",
+            resourceId: "sibling",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "dependency",
+          {
+            id: "dependency",
+            name: "Dependency",
+            method: "get",
+            url: '"https://receiver.example/dependency"',
+            headers: [],
+          },
+        ],
+        [
+          "failed",
+          {
+            id: "failed",
+            name: "Failed",
+            method: "post",
+            url: `"https://receiver.example/failed/" + ${encodeDataSourceVariable("dependency-source")}.data.id`,
+            headers: [],
+          },
+        ],
+        [
+          "sibling",
+          {
+            id: "sibling",
+            name: "Sibling",
+            method: "post",
+            url: '"https://receiver.example/sibling"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "retry-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "retry-action.mjs")).href
+      );
+      const attempts = new Map<string, number>();
+      let failure: "status" | "network" | "timeout" | "persistent" = "status";
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          const attempt = (attempts.get(url) ?? 0) + 1;
+          attempts.set(url, attempt);
+          if (url.endsWith("/dependency")) {
+            return Response.json({ id: "resolved" });
+          }
+          if (url.endsWith("/sibling")) {
+            return Response.json({ accepted: true });
+          }
+          if (failure === "persistent") {
+            return new Response("Still failed", { status: 422 });
+          }
+          if (attempt === 1) {
+            if (failure === "status") {
+              return new Response("Temporary failure", { status: 503 });
+            }
+            if (failure === "network") {
+              throw new Error("Connection lost");
+            }
+            return new Promise<Response>((_resolve, reject) => {
+              init?.signal?.addEventListener("abort", () =>
+                reject(new DOMException("Aborted", "AbortError"))
+              );
+            });
+          }
+          return Response.json({ accepted: true });
+        })
+      );
+      const submit = () => {
+        const form = new FormData();
+        form.set(managedFormIdFieldName, "root");
+        form.set(managedFormArrayNamesFieldName, "[]");
+        form.set(formBotFieldName, "brave");
+        return action({
+          request: new Request(
+            `https://site.example/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "site.example" },
+              body: form,
+            }
+          ),
+          context: {},
+        });
+      };
+      const expectAttempts = (failed: number) => {
+        expect(attempts.get("https://receiver.example/dependency")).toBe(1);
+        expect(attempts.get("https://receiver.example/sibling")).toBe(1);
+        expect(attempts.get("https://receiver.example/failed/resolved")).toBe(
+          failed
+        );
+      };
+
+      await expect(submit()).resolves.toEqual({ success: true });
+      expectAttempts(2);
+      attempts.clear();
+      failure = "network";
+      const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+      await expect(submit()).resolves.toEqual({ success: true });
+      expectAttempts(2);
+      errorLog.mockRestore();
+      attempts.clear();
+      failure = "timeout";
+      vi.useFakeTimers();
+      try {
+        const pending = submit();
+        await vi.advanceTimersByTimeAsync(10_000);
+        await expect(pending).resolves.toEqual({ success: true });
+        expectAttempts(2);
+      } finally {
+        vi.useRealTimers();
+      }
+      attempts.clear();
+      failure = "persistent";
+      await expect(submit()).resolves.toEqual({
+        success: false,
+        errors: ["Resource request failed (422)"],
+      });
+      expectAttempts(2);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
     "submits selected Form Resources in parallel with scoped values (%s)",
     async (template) => {
       const siteData = createSiteData({

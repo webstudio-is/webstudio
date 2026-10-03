@@ -355,6 +355,7 @@ export const action = async ({
       const results = await loadResources(protectedFetch, validatedGraph, url, {
         signal: request.signal,
         timeoutMs: 10_000,
+        retryFailedRoots: true,
       });
       const outcomes = Object.values(results);
       if (outcomes.length !== graph.rootIds.length) {

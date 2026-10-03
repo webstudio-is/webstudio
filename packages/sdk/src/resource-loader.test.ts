@@ -112,6 +112,146 @@ test("resolves request resources after their dependency documents", async () => 
   ]);
 });
 
+test("retries only failed roots without replaying successful siblings or dependencies", async () => {
+  const calls: string[] = [];
+  let failingAttempts = 0;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.endsWith("/failed")) {
+      failingAttempts += 1;
+      return failingAttempts === 1
+        ? new Response("Temporary failure", { status: 503 })
+        : Response.json({ recovered: true });
+    }
+    return Response.json({ id: "dependency-id" });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "dependency",
+        outputName: "Dependency",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Dependency",
+          method: "get",
+          url: "https://example.com/dependency",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+      ...["failed", "succeeded"].map((id) => ({
+        id,
+        outputName: id,
+        dependencies: ["dependency"],
+        createRequest: (documents: ReadonlyMap<string, unknown>) => ({
+          name: id,
+          method: "post" as const,
+          url: `https://example.com/${id}`,
+          searchParams: [],
+          headers: [],
+          body: (documents.get("dependency") as { data: unknown }).data,
+        }),
+      })),
+    ],
+    rootIds: ["failed", "succeeded"],
+  };
+
+  await expect(
+    loadResources(fetch, graph, undefined, { retryFailedRoots: true })
+  ).resolves.toMatchObject({
+    failed: { ok: true, data: { recovered: true } },
+    succeeded: { ok: true },
+  });
+  expect(calls.filter((url) => url.endsWith("/dependency"))).toHaveLength(1);
+  expect(calls.filter((url) => url.endsWith("/failed"))).toHaveLength(2);
+  expect(calls.filter((url) => url.endsWith("/succeeded"))).toHaveLength(1);
+});
+
+test("a second failed root attempt is final and cancellation is not retried", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(
+    async () => new Response("Still failing", { status: 422 })
+  );
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "root",
+        outputName: "Root",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Root",
+          method: "post",
+          url: "https://example.com/root",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+    ],
+    rootIds: ["root"],
+  };
+  await expect(
+    loadResources(fetch, graph, undefined, { retryFailedRoots: true })
+  ).resolves.toMatchObject({ Root: { ok: false, status: 422 } });
+  expect(fetch).toHaveBeenCalledTimes(2);
+
+  fetch.mockClear();
+  const controller = new AbortController();
+  controller.abort();
+  await expect(
+    loadResources(
+      fetch,
+      new Map([["Root", graph.resources[0].createRequest(new Map())]]),
+      undefined,
+      {
+        retryFailedRoots: true,
+        signal: controller.signal,
+      }
+    )
+  ).resolves.toMatchObject({ Root: { status: 499 } });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("cancelling a graph root during its first attempt does not retry", async () => {
+  const controller = new AbortController();
+  let requestStarted = () => {};
+  const started = new Promise<void>((resolve) => {
+    requestStarted = resolve;
+  });
+  const fetch = vi.fn<typeof globalThis.fetch>(async (_input, init) => {
+    requestStarted();
+    return new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () =>
+        reject(new DOMException("Aborted", "AbortError"))
+      );
+    });
+  });
+  const graph: ResourceRequestGraph = {
+    resources: [
+      {
+        id: "root",
+        outputName: "Root",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Root",
+          method: "post",
+          url: "https://example.com/root",
+          searchParams: [],
+          headers: [],
+        }),
+      },
+    ],
+    rootIds: ["root"],
+  };
+  const pending = loadResources(fetch, graph, undefined, {
+    retryFailedRoots: true,
+    signal: controller.signal,
+  });
+  await started;
+  controller.abort();
+  await expect(pending).rejects.toMatchObject({ code: "REQUEST_CANCELLED" });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
 test("applies action request overrides after resolving remote dependencies", async () => {
   const requests: Array<{ url: string; body: string | null }> = [];
   const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
