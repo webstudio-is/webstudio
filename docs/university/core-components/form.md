@@ -37,6 +37,8 @@ Add inputs from **Components > Forms**. Each value you want to send needs a **Na
 
 For uploads, add **File Input** and set **Name**, **Required**, **Accept**, and **Multiple** in Settings. **Accept** guides the browser's file picker; it does not validate file types on the server. A required empty file input blocks submission. An optional empty file input submits without a file.
 
+The entire managed Form request is limited to **25 MiB**, including all selected files, other fields, and multipart encoding. This is a combined limit, not an allowance for each file: selecting multiple files can exceed it even when each file is smaller than 25 MiB. If the request is too large, the server rejects it before sending to any Resource and the Form reports `Form submission is too large`. Reduce the number or size of files and submit again. Outbound HTTP Resource request bodies have a separate 25 MiB limit, and the receiving service may impose a lower limit. New Email Resource delivery, including file attachments, is not connected to a provider yet.
+
 The inserted Form has **Form Content**, **Success Message**, and **Error Message** sections. When every destination succeeds, the success state appears; otherwise the error state appears. The Form exposes an aggregate `status`, ordered `results` with each Resource's status code and response body, and `errors` for failed destinations. A configured **Success Redirect** runs only after overall success. Without a redirect, successful submissions refresh the current page's Resources without a full-page reload or a second submission.
 
 ## Hosting and plain HTML forms
