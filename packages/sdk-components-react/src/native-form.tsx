@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useEffect,
+  useRef,
   useState,
   type ComponentProps,
   type ElementRef,
@@ -11,7 +12,10 @@ import {
   validateFormSubmission,
 } from "@webstudio-is/sdk/form-submission";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
+import { resolveRedirectUrl } from "@webstudio-is/sdk/link-utils";
 import { getFormDataValue } from "./form-submission";
+import { submitManagedForm } from "./managed-form-client";
+import { useFormFeedbackScroll } from "./form-feedback-scroll";
 
 export const defaultTag = "form";
 
@@ -19,6 +23,7 @@ export const NativeForm = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     submission?: unknown;
+    "data-ws-managed-form-id"?: string;
     successRedirect?: string;
     state?: "initial" | "success" | "error";
     onStateChange?: (state: "initial" | "success" | "error") => void;
@@ -33,6 +38,8 @@ export const NativeForm = forwardRef<
     {
       id,
       submission,
+      "data-ws-managed-form-id": managedFormId,
+      successRedirect,
       state,
       onStateChange,
       onResultChange,
@@ -46,8 +53,21 @@ export const NativeForm = forwardRef<
     ref
   ) => {
     const [error, setError] = useState<string>();
+    const [result, setResult] = useState<ManagedFormResponse>();
+    const [pending, setPending] = useState(false);
+    const [internalState, setInternalState] = useState<
+      "initial" | "success" | "error"
+    >("initial");
+    const activeRequest = useRef<AbortController>();
+    const { setFormRef, prepareFeedback, revealFeedback } =
+      useFormFeedbackScroll(ref, state ?? internalState);
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => setHydrated(true), []);
+    useEffect(() => () => activeRequest.current?.abort(), []);
+    const reportState = (nextState: "initial" | "success" | "error") => {
+      setInternalState(nextState);
+      onStateChange?.(nextState);
+    };
     const validSubmission = isFormSubmission(submission);
     const configurationError = validSubmission
       ? validateFormSubmission(submission)
@@ -60,6 +80,10 @@ export const NativeForm = forwardRef<
         return;
       }
       event.preventDefault();
+      if (activeRequest.current) {
+        return;
+      }
+      prepareFeedback();
       if (configurationError) {
         setError(configurationError);
         onResultChange?.({
@@ -68,10 +92,11 @@ export const NativeForm = forwardRef<
           results: [],
           errors: [{ status: 400, body: null, message: configurationError }],
         });
-        onStateChange?.("error");
+        reportState("error");
+        revealFeedback();
         return;
       }
-      if (onManagedSubmit === undefined) {
+      if (onManagedSubmit === undefined && managedFormId === undefined) {
         setError("Resource submission is unavailable");
         onResultChange?.({
           success: false,
@@ -85,28 +110,69 @@ export const NativeForm = forwardRef<
             },
           ],
         });
-        onStateChange?.("error");
+        reportState("error");
+        revealFeedback();
         return;
       }
       setError(undefined);
-      onStateChange?.("initial");
+      reportState("initial");
       const submitter = (event.nativeEvent as SubmitEvent).submitter;
-      onManagedSubmit(
-        getFormDataValue(
-          event.currentTarget,
-          submitter instanceof HTMLElement ? submitter : undefined
-        )
+      const values = getFormDataValue(
+        event.currentTarget,
+        submitter instanceof HTMLElement ? submitter : undefined
       );
+      if (onManagedSubmit) {
+        onManagedSubmit(values);
+        return;
+      }
+      const controller = new AbortController();
+      activeRequest.current = controller;
+      setPending(true);
+      void submitManagedForm({
+        values,
+        managedFormId: managedFormId!,
+        location: window.location.href,
+        signal: controller.signal,
+      })
+        .then((response) => {
+          if (controller.signal.aborted) {
+            return;
+          }
+          setPending(false);
+          setResult(response);
+          onResultChange?.(response);
+          reportState(response.success ? "success" : "error");
+          const destination = response.success
+            ? resolveRedirectUrl(successRedirect, window.location.href)
+            : undefined;
+          if (destination) {
+            window.location.assign(destination);
+          } else {
+            revealFeedback();
+          }
+        })
+        .catch(() => {
+          // Unmounting aborts a request without reporting a submission error.
+        })
+        .finally(() => {
+          if (activeRequest.current === controller) {
+            activeRequest.current = undefined;
+          }
+        });
     };
     return (
       <form
         {...props}
         id={hydrated ? id : undefined}
-        data-state={state}
+        data-ws-managed-form-id={managedFormId}
+        data-state={
+          state ?? (internalState === "initial" ? undefined : internalState)
+        }
+        aria-busy={pending || undefined}
         action={undefined}
         method="dialog"
         encType={undefined}
-        ref={ref}
+        ref={setFormRef}
         onSubmit={handleManagedSubmit}
       >
         <fieldset disabled={!hydrated} style={{ display: "contents" }}>
@@ -117,6 +183,16 @@ export const NativeForm = forwardRef<
             {error ?? configurationError}
           </div>
         )}
+        {result?.errors.map((failure, index) => (
+          <div
+            role="alert"
+            data-ws-form-feedback=""
+            key={index}
+            style={pending ? { display: "none" } : undefined}
+          >
+            {failure.message}
+          </div>
+        ))}
       </form>
     );
   }

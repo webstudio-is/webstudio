@@ -43,7 +43,8 @@ import {
   SYSTEM_VARIABLE_ID,
   type Resource,
 } from "@webstudio-is/sdk";
-import { showAttribute } from "@webstudio-is/react-sdk";
+import { generateRemixRoute, showAttribute } from "@webstudio-is/react-sdk";
+import { submitManagedForm } from "@webstudio-is/sdk-components-react";
 import {
   formBotFieldName,
   formIdFieldName,
@@ -83,7 +84,7 @@ const elementComponent = "ws:element";
 const slowPrebuildTestTimeout = 15_000;
 
 const runGeneratedCommand = async (
-  command: "react-router" | "tsc" | "vite" | "vike",
+  command: "react-router" | "remix" | "tsc" | "vite" | "vike",
   args: string[]
 ) => {
   const env = { ...process.env };
@@ -3379,10 +3380,18 @@ sitemap.map((page) => page.path);`
       ] as never;
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
         stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
+          contents: `export { action } from "./app/routes/_index";
+            export { action as endpointAction } from "./app/routes/${generateRemixRoute("/__ws-form")}";`,
           resolveDir: tempDir,
         },
         outfile: join(tempDir, "action.mjs"),
@@ -3392,11 +3401,11 @@ sitemap.map((page) => page.path);`
         packages: "external",
         loader: { ".css": "text" },
       });
-      const { action } = await import(
+      const { action, endpointAction } = await import(
         pathToFileURL(join(tempDir, "action.mjs")).href
       );
       const outgoingFetch = vi.fn(async () => Response.json({ ok: true }));
-      vi.stubGlobal("fetch", outgoingFetch);
+      vi.stubGlobal("__testManagedFormFetch", outgoingFetch);
       const submit = (id: string, fields: Record<string, string> = {}) => {
         const form = new FormData();
         form.set(managedFormIdFieldName, id);
@@ -3457,8 +3466,481 @@ sitemap.map((page) => page.path);`
         errors: ["Invalid Form submission"],
       });
       expect(outgoingFetch).not.toHaveBeenCalled();
+      vi.stubGlobal("navigator", { brave: { isBrave: () => true } });
+      await expect(
+        submitManagedForm({
+          values: { message: "Hello" },
+          managedFormId: "valid",
+          location: "https://example.com/?source=staging",
+          fetch: async (input, init) => {
+            const response: Response = await endpointAction({
+              request: new Request(input, {
+                ...init,
+                headers: { host: "example.com" },
+              }),
+              context: {},
+            });
+            expect(response.headers.get("content-type")).toContain(
+              "application/json"
+            );
+            return response;
+          },
+        })
+      ).resolves.toEqual({
+        success: true,
+        status: 200,
+        results: [{ resourceId: "remote", status: 200, body: { ok: true } }],
+        errors: [],
+      });
+      expect(outgoingFetch).toHaveBeenCalledOnce();
     }
   );
+
+  test.each(["defaults", "react-router"])(
+    "serves managed Form results as JSON through the framework HTTP handler (%s)",
+    async (template) => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "help",
+              name: "Help",
+              title: "Help",
+              path: "/help/contact",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "product",
+              name: "Product",
+              title: "Product",
+              path: "/products/:slug",
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+          props: [
+            [
+              "submission",
+              {
+                id: "submission",
+                instanceId: "root",
+                name: "submission",
+                type: "json",
+                value: { destinations: [] },
+              },
+            ],
+          ],
+        })
+      );
+      await prebuild({ assets: false, template: [template] });
+      if (template === "react-router") {
+        await linkPackagedPreviewDependencies();
+        await runGeneratedCommand("react-router", ["build"]);
+      } else {
+        await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+        const viteConfig = await readFile("vite.config.ts", "utf8");
+        await writeFile(
+          "vite.config.ts",
+          viteConfig
+            .replaceAll(
+              'conditions: ["browser", "development|production"]',
+              'conditions: ["webstudio", "browser", "development|production"]'
+            )
+            .replaceAll(
+              'conditions: ["node", "development|production"]',
+              'conditions: ["webstudio", "node", "development|production"]'
+            )
+        );
+        await runGeneratedCommand("remix", ["vite:build"]);
+      }
+      const serverEntry = pathToFileURL(
+        join(tempDir, "build/server/index.js")
+      ).href;
+      const handlerPackage =
+        template === "react-router"
+          ? "react-router"
+          : "@remix-run/server-runtime";
+      const runner = `
+        import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
+        const serverBuild = await import(${JSON.stringify(serverEntry)});
+        const handleRequest = createRequestHandler(serverBuild, "production");
+        const results = [];
+        for (const path of ["/__ws-form", "/__ws-form/help/contact", "/__ws-form/products/chair"]) {
+          const form = new FormData();
+          form.set(${JSON.stringify(managedFormIdFieldName)}, "root");
+          form.set(${JSON.stringify(formBotFieldName)}, "brave");
+          form.set(${JSON.stringify(managedFormArrayNamesFieldName)}, "[]");
+          const response = await handleRequest(new Request(
+            new URL(path, "https://example.com"),
+            { method: "POST", body: form, headers: { host: "example.com" } }
+          ));
+          results.push({
+            status: response.status,
+            contentType: response.headers.get("content-type"),
+            body: await response.json(),
+          });
+        }
+        process.stdout.write(JSON.stringify(results));
+      `;
+      const { stdout } = await execFileAsync(
+        process.execPath,
+        [
+          "--import",
+          pathToFileURL(
+            join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
+          ).href,
+          "--input-type=module",
+          "-e",
+          runner,
+        ],
+        {
+          cwd: tempDir,
+          env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
+        }
+      );
+      const results = JSON.parse(stdout) as {
+        status: number;
+        contentType: string;
+        body: unknown;
+      }[];
+      expect(results).toHaveLength(3);
+      for (const result of results) {
+        expect(result.status).toBe(400);
+        expect(result.contentType).toContain("application/json");
+        expect(result.body).toEqual(
+          getManagedFormFailure("Select at least one Resource destination")
+        );
+      }
+    },
+    60_000
+  );
+
+  test.each(["defaults", "react-router"])(
+    "generates managed Form endpoints for root, nested, and dynamic pages (%s)",
+    async (template) => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "help",
+              name: "Help",
+              title: "Help",
+              path: "/help/contact",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "product",
+              name: "Product",
+              title: "Product",
+              path: "/products/:slug",
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+        })
+      );
+      await prebuild({ assets: false, template: [template] });
+      for (const path of ["/", "/help/contact", "/products/:slug"]) {
+        const endpointPath = path === "/" ? "/__ws-form" : `/__ws-form${path}`;
+        await expect(
+          readFile(
+            join("app/routes", `${generateRemixRoute(endpointPath)}.tsx`),
+            "utf8"
+          )
+        ).resolves.toContain("return Response.json(result");
+      }
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "returns successful Resource results through the framework HTTP handler (%s)",
+    async (template) => {
+      const received: string[] = [];
+      const receiver = createServer((request, response) => {
+        received.push(request.url ?? "");
+        response.writeHead(201, { "content-type": "application/json" });
+        response.end(JSON.stringify({ accepted: true }));
+      });
+      await new Promise<void>((resolve) =>
+        receiver.listen(0, "127.0.0.1", resolve)
+      );
+      try {
+        const address = receiver.address();
+        if (address === null || typeof address === "string") {
+          throw new Error("Mock Resource server did not start");
+        }
+        const siteData = createSiteData({
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+          props: [
+            [
+              "submission",
+              {
+                id: "submission",
+                instanceId: "root",
+                name: "submission",
+                type: "json",
+                value: { destinations: ["destination"] },
+              },
+            ],
+          ],
+        });
+        siteData.build.dataSources = [
+          [
+            "destination",
+            {
+              id: "destination",
+              name: "Destination",
+              type: "resource",
+              resourceId: "remote",
+              scopeInstanceId: "root",
+            },
+          ],
+        ] as never;
+        siteData.build.resources = [
+          [
+            "remote",
+            {
+              id: "remote",
+              name: "Remote",
+              method: "post",
+              url: JSON.stringify(`http://127.0.0.1:${address.port}/accept`),
+              headers: [],
+            },
+          ],
+        ] as never;
+        await writeSiteData(siteData);
+        await prebuild({ assets: false, template: [template] });
+        // The production module blocks loopback; this test replaces only the
+        // temporary site's fetch provider to exercise an actual local server.
+        await writeFile(
+          join(
+            tempDir,
+            "app/__generated__/$resources.managed-form-fetch.server.ts"
+          ),
+          "export const createManagedFormResourceFetch = () => fetch;\n"
+        );
+        if (template === "react-router") {
+          await linkPackagedPreviewDependencies();
+          await runGeneratedCommand("react-router", ["build"]);
+        } else {
+          await symlink(
+            join(originalCwd, "node_modules"),
+            "node_modules",
+            "dir"
+          );
+          const viteConfig = await readFile("vite.config.ts", "utf8");
+          await writeFile(
+            "vite.config.ts",
+            viteConfig
+              .replaceAll(
+                'conditions: ["browser", "development|production"]',
+                'conditions: ["webstudio", "browser", "development|production"]'
+              )
+              .replaceAll(
+                'conditions: ["node", "development|production"]',
+                'conditions: ["webstudio", "node", "development|production"]'
+              )
+          );
+          await runGeneratedCommand("remix", ["vite:build"]);
+        }
+        const serverEntry = pathToFileURL(
+          join(tempDir, "build/server/index.js")
+        ).href;
+        const handlerPackage =
+          template === "react-router"
+            ? "react-router"
+            : "@remix-run/server-runtime";
+        const runner = `
+          import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
+          const build = await import(${JSON.stringify(serverEntry)});
+          const handleRequest = createRequestHandler(build, "production");
+          const form = new FormData();
+          form.set(${JSON.stringify(managedFormIdFieldName)}, "root");
+          form.set(${JSON.stringify(formBotFieldName)}, "brave");
+          form.set(${JSON.stringify(managedFormArrayNamesFieldName)}, "[]");
+          form.set("message", "Hello");
+          const response = await handleRequest(new Request("https://example.com/__ws-form", {
+            method: "POST", body: form, headers: { host: "example.com" },
+          }));
+          process.stdout.write(JSON.stringify({
+            status: response.status,
+            contentType: response.headers.get("content-type"),
+            body: await response.json(),
+          }));
+        `;
+        const { stdout } = await execFileAsync(
+          process.execPath,
+          [
+            "--import",
+            pathToFileURL(
+              join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
+            ).href,
+            "--input-type=module",
+            "-e",
+            runner,
+          ],
+          {
+            cwd: tempDir,
+            env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
+          }
+        );
+        const result = JSON.parse(stdout) as {
+          status: number;
+          contentType: string;
+          body: unknown;
+        };
+        expect(result.status).toBe(200);
+        expect(result.contentType).toContain("application/json");
+        expect(result.body).toEqual({
+          success: true,
+          status: 200,
+          results: [
+            { resourceId: "remote", status: 201, body: { accepted: true } },
+          ],
+          errors: [],
+        });
+        expect(received).toEqual(["/accept"]);
+      } finally {
+        await new Promise<void>((resolve) => receiver.close(() => resolve()));
+      }
+    },
+    60_000
+  );
+
+  test.each(["/__ws-form", "/__ws-form/submissions", "/__ws-form/:slug"])(
+    "rejects a page under the reserved managed Form endpoint (%s)",
+    async (path) => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "reserved",
+              name: "Reserved",
+              title: "Reserved",
+              path,
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+        })
+      );
+      await expect(
+        prebuild({ assets: false, template: ["react-router"] })
+      ).rejects.toThrow("uses the reserved Form endpoint");
+    }
+  );
+
+  test("keeps an authored reserved-prefix page when no managed Form is present", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "reserved",
+            name: "Reserved",
+            title: "Reserved",
+            path: "/__ws-form",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      })
+    );
+    await expect(
+      prebuild({ assets: false, template: ["react-router"] })
+    ).resolves.toBeUndefined();
+  });
+
+  test("keeps a published reserved-prefix page when only a draft has a managed Form", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "reserved",
+            name: "Reserved",
+            title: "Reserved",
+            path: "/__ws-form",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "draft",
+            name: "Draft",
+            title: "Draft",
+            path: "/draft",
+            rootInstanceId: "draft-form",
+            meta: {},
+            isDraft: true,
+          },
+        ],
+        instances: [
+          ["root", { id: "root", component: "Box", children: [] }],
+          [
+            "draft-form",
+            { id: "draft-form", component: "NativeForm", children: [] },
+          ],
+        ],
+      })
+    );
+    await expect(
+      prebuild({ assets: false, template: ["react-router"] })
+    ).resolves.toBeUndefined();
+    await expect(
+      readFile("app/routes/[__ws-form]._index.tsx", "utf8")
+    ).resolves.toContain("export default");
+  });
 
   test.each([
     ["defaults", 2],

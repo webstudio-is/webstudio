@@ -14,7 +14,10 @@ import { NativeForm } from "./native-form";
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 test("managed Remix Form scrolls partial failure and reveals visible success", async () => {
   const action = vi
@@ -41,6 +44,7 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
       results: [],
       errors: [],
     });
+  vi.stubGlobal("fetch", async () => Response.json(await action()));
   const Form = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"

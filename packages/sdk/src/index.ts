@@ -43,7 +43,10 @@ export {
 } from "./resources-generator";
 export * from "./managed-form-resources-generator";
 export * from "./form-submission";
-export { managedFormRequestParamName } from "./form-fields";
+export {
+  managedFormEndpointPrefix,
+  managedFormRequestParamName,
+} from "./form-fields";
 export * from "./resource-dependencies";
 export * from "./page-meta-generator";
 export * from "./url-pattern";

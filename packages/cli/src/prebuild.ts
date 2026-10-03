@@ -30,6 +30,8 @@ import {
   isAssetsResource,
   getPagePath,
   getPublishablePages,
+  managedFormEndpointPrefix,
+  managedFormRequestParamName,
   generateResources,
   generateManagedFormResources,
   defaultEmailSubject,
@@ -2031,6 +2033,44 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           importFrom(`./app/__generated__/index.css`, file)
         );
       await writeGeneratedFile(file, content);
+    }
+    if (
+      isStaticBuild === false &&
+      documentType === "html" &&
+      managedFormSubmissions.length > 0
+    ) {
+      for (const authoredPage of generatedPages) {
+        const path = getPagePath(authoredPage.id, pages);
+        const lowerPath = path.toLowerCase();
+        if (
+          lowerPath === managedFormEndpointPrefix ||
+          lowerPath.startsWith(`${managedFormEndpointPrefix}/`)
+        ) {
+          throw new Error(
+            `Page path ${path} uses the reserved Form endpoint ${managedFormEndpointPrefix}`
+          );
+        }
+      }
+      const endpointRoute = generateRemixRoute(
+        pagePath === "/"
+          ? managedFormEndpointPrefix
+          : `${managedFormEndpointPrefix}${pagePath}`
+      );
+      const endpointFile = join(routesDir, `${endpointRoute}.tsx`);
+      await writeGeneratedFile(
+        endpointFile,
+        `import { action as pageAction } from "./${generatedBasename}";
+
+export const action = async (args: Parameters<typeof pageAction>[0]) => {
+  const url = new URL(args.request.url);
+  url.pathname = url.pathname.slice(${managedFormEndpointPrefix.length}) || "/";
+  url.searchParams.set(${JSON.stringify(managedFormRequestParamName)}, "1");
+  const request = new Request(url, args.request);
+  const result = await pageAction({ ...args, request });
+  return Response.json(result, { status: "status" in result ? result.status : 200 });
+};
+`
+      );
     }
   }
 

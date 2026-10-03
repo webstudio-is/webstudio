@@ -32,7 +32,14 @@ const renderRoute = async (
   };
 };
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+const mockManagedHttpAction = (action: () => Promise<unknown>) => {
+  vi.stubGlobal("fetch", async () => Response.json(await action()));
+};
 
 test("managed Form reveals partial failure and leaves visible success feedback in place", async () => {
   const action = vi
@@ -59,6 +66,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
       results: [],
       errors: [],
     });
+  mockManagedHttpAction(action);
   const Form = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
@@ -158,6 +166,7 @@ test("managed Form reveals a reused built-in error on repeated failures", async 
       { resourceId: "first", status: 502, body: "failed", message: "failed" },
     ],
   }));
+  mockManagedHttpAction(action);
   const Form = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
@@ -234,6 +243,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
   const action = vi
     .fn()
     .mockResolvedValue({ success: true, status: 200, results: [], errors: [] });
+  mockManagedHttpAction(action);
   const Form = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"

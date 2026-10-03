@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
 import { NativeForm } from "./native-form";
+import {
+  managedFormRequestParamName,
+  managedFormIdFieldName,
+} from "@webstudio-is/sdk/runtime";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -258,5 +262,164 @@ test("Form passes one structured submission to its dispatcher", async () => {
   } finally {
     await act(async () => root.unmount());
     container.remove();
+  }
+});
+
+test("managed Form submits by HTTP outside a router provider and reports pending and results", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const states: string[] = [];
+  const results: unknown[] = [];
+  let finish!: (response: Response) => void;
+  const request = vi.fn(
+    (_input: RequestInfo | URL, _init?: RequestInit) =>
+      new Promise<Response>((resolve) => {
+        finish = resolve;
+      })
+  );
+  vi.stubGlobal("fetch", request);
+  try {
+    await act(async () =>
+      root.render(
+        <NativeForm
+          data-ws-managed-form-id="form-one"
+          submission={{ destinations: ["destination"] }}
+          onStateChange={(state) => states.push(state)}
+          onResultChange={(result) => results.push(result)}
+        >
+          <input name="tag" defaultValue="a" />
+          <input name="tag" defaultValue="b" />
+          <input name="upload" type="file" />
+          <button type="submit">Send</button>
+        </NativeForm>
+      )
+    );
+    const files = new DataTransfer();
+    files.items.add(new File(["contents"], "note.txt", { type: "text/plain" }));
+    container.querySelector<HTMLInputElement>('input[type="file"]')!.files =
+      files.files;
+    await act(async () => container.querySelector("button")?.click());
+    expect(request).toHaveBeenCalledOnce();
+    expect(container.querySelector("form")?.getAttribute("aria-busy")).toBe(
+      "true"
+    );
+    const [url, init] = request.mock.calls[0];
+    const endpoint = new URL(String(url));
+    expect(endpoint.searchParams.get(managedFormRequestParamName)).toBe("1");
+    expect(endpoint.pathname).toBe(
+      window.location.pathname === "/"
+        ? "/__ws-form"
+        : `/__ws-form${window.location.pathname}`
+    );
+    expect(init?.method).toBe("POST");
+    expect(init?.credentials).toBe("same-origin");
+    const body = init?.body as FormData;
+    expect(body.get(managedFormIdFieldName)).toBe("form-one");
+    expect(body.getAll("tag")).toEqual(["a", "b"]);
+    expect(await (body.get("upload") as File).text()).toBe("contents");
+    await act(async () =>
+      finish(
+        Response.json({
+          success: true,
+          status: 200,
+          results: [
+            { resourceId: "destination", status: 201, body: { id: 1 } },
+          ],
+          errors: [],
+        })
+      )
+    );
+    await vi.waitFor(() => expect(states).toEqual(["initial", "success"]));
+    expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
+      false
+    );
+    expect(results).toEqual([
+      {
+        success: true,
+        status: 200,
+        results: [{ resourceId: "destination", status: 201, body: { id: 1 } }],
+        errors: [],
+      },
+    ]);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+test("managed Form reports HTTP and network failures without native navigation", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const results: unknown[] = [];
+  const request = vi
+    .fn()
+    .mockRejectedValueOnce(new TypeError("offline"))
+    .mockResolvedValueOnce(
+      Response.json(
+        {
+          success: false,
+          status: 502,
+          results: [
+            { resourceId: "destination", status: 422, body: "Rejected" },
+          ],
+          errors: [
+            {
+              resourceId: "destination",
+              status: 422,
+              body: "Rejected",
+              message: "Rejected",
+            },
+          ],
+        },
+        { status: 502 }
+      )
+    );
+  vi.stubGlobal("fetch", request);
+  const originalUrl = window.location.href;
+  try {
+    await act(async () =>
+      root.render(
+        <NativeForm
+          action="/__must_not_navigate__"
+          data-ws-managed-form-id="form-one"
+          submission={{ destinations: ["destination"] }}
+          onResultChange={(result) => results.push(result)}
+        >
+          <button type="submit">Send</button>
+        </NativeForm>
+      )
+    );
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() => expect(results).toHaveLength(1));
+    expect(results[0]).toEqual({
+      success: false,
+      status: 502,
+      results: [],
+      errors: [{ status: 502, body: null, message: "Form submission failed" }],
+    });
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() => expect(results).toHaveLength(2));
+    expect(results[1]).toEqual({
+      success: false,
+      status: 502,
+      results: [{ resourceId: "destination", status: 422, body: "Rejected" }],
+      errors: [
+        {
+          resourceId: "destination",
+          status: 422,
+          body: "Rejected",
+          message: "Rejected",
+        },
+      ],
+    });
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(window.location.href).toBe(originalUrl);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
   }
 });

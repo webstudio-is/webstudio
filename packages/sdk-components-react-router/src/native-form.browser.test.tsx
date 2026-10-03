@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
@@ -12,6 +12,8 @@ import { NativeForm } from "./native-form";
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
+
+afterEach(() => vi.unstubAllGlobals());
 
 test("managed Form posts its server identity and shows the action error", async () => {
   const submissions: FormData[] = [];
@@ -35,6 +37,9 @@ test("managed Form posts its server identity and shows the action error", async 
       ],
     };
   });
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) =>
+    Response.json(await action({ request: new Request(input, init) }))
+  );
   const router = createMemoryRouter(
     [
       {
@@ -87,7 +92,6 @@ test("managed Form posts its server identity and shows the action error", async 
       await vi.waitFor(() => expect(submissions).toHaveLength(1));
     });
     const requestUrl = new URL(requestUrls[0]);
-    expect(requestUrl.searchParams.get("source")).toBe("staging");
     expect(requestUrl.searchParams.get(managedFormRequestParamName)).toBe("1");
     expect(submissions[0].get(managedFormIdFieldName)).toBe("form-instance");
     expect(submissions[0].get("message")).toBe("Hello");
@@ -126,6 +130,7 @@ test("managed Form reports success after the action succeeds", async () => {
     results: [{ resourceId: "resource-id", status: 201, body: { id: 1 } }],
     errors: [],
   }));
+  vi.stubGlobal("fetch", async () => Response.json(await action()));
   const router = createMemoryRouter(
     [
       {
