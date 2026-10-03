@@ -18,6 +18,7 @@ import {
   getManagedFormBrowserInfo,
   getManagedFormFailure,
   getManagedFormResponse,
+  getLegacyFormResponse,
   getManagedFormValues,
   readFormDataWithLimit,
   managedFormRequestParamName,
@@ -299,8 +300,14 @@ export const action = async ({
     };
 
     const managedFormIds = formData.getAll(managedFormIdFieldName);
+    const legacyFormIds = formData.getAll(formIdFieldName);
+    const hasOneEndpointForm =
+      (managedFormIds.length === 1 && legacyFormIds.length === 0) ||
+      (managedFormIds.length === 0 &&
+        legacyFormIds.length === 1 &&
+        typeof legacyFormIds[0] === "string");
     if (
-      (isManagedFormRequest && managedFormIds.length !== 1) ||
+      (isManagedFormRequest && !hasOneEndpointForm) ||
       (!isManagedFormRequest && managedFormIds.length > 0)
     ) {
       throw new Error("Invalid Form submission");
@@ -417,6 +424,9 @@ export const action = async ({
         throw Error("Resource not found");
       }
       result = actionResult as Awaited<ReturnType<typeof loadResource>>;
+    }
+    if (isManagedFormRequest) {
+      return getLegacyFormResponse(result);
     }
     const { ok, statusText } = result;
     if (ok) {

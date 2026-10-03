@@ -3979,6 +3979,208 @@ sitemap.map((page) => page.path);`
     60_000
   );
 
+  test.each(["defaults", "react-router"])(
+    "serves saved Webhook Forms through generated HTTP routes (%s)",
+    async (template) => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "help",
+              name: "Help",
+              title: "Help",
+              path: "/help/contact",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "product",
+              name: "Product",
+              title: "Product",
+              path: "/products/:slug",
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+          instances: [
+            ["root", { id: "root", component: "Form", children: [] }],
+          ],
+          props: [
+            [
+              "action",
+              {
+                id: "action",
+                instanceId: "root",
+                name: "action",
+                type: "string",
+                value: "https://receiver.example/legacy",
+              },
+            ],
+          ],
+        })
+      );
+      await prebuild({ assets: false, template: [template] });
+      if (template === "react-router") {
+        await linkPackagedPreviewDependencies();
+        await runGeneratedCommand("react-router", ["build"]);
+      } else {
+        await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+        const viteConfig = await readFile("vite.config.ts", "utf8");
+        await writeFile(
+          "vite.config.ts",
+          viteConfig
+            .replaceAll(
+              'conditions: ["browser", "development|production"]',
+              'conditions: ["webstudio", "browser", "development|production"]'
+            )
+            .replaceAll(
+              'conditions: ["node", "development|production"]',
+              'conditions: ["webstudio", "node", "development|production"]'
+            )
+        );
+        await runGeneratedCommand("remix", ["vite:build"]);
+      }
+      const serverEntry = pathToFileURL(
+        join(tempDir, "build/server/index.js")
+      ).href;
+      const handlerPackage =
+        template === "react-router"
+          ? "react-router"
+          : "@remix-run/server-runtime";
+      const runner = `
+        import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
+        const received = [];
+        globalThis.fetch = async (input, init) => {
+          const request = new Request(input, init);
+          const body = await request.json();
+          received.push({ url: request.url, method: request.method, body });
+          if (body.message === "reject") {
+            return Response.json({ private: "do not expose" }, { status: 422, statusText: "Rejected" });
+          }
+          return Response.json({ accepted: true });
+        };
+        const serverBuild = await import(${JSON.stringify(serverEntry)});
+        const handleRequest = createRequestHandler(serverBuild, "production");
+        const results = [];
+        for (const path of ["/__ws-form", "/__ws-form/help/contact", "/__ws-form/products/chair"]) {
+          const form = new FormData();
+          form.set(${JSON.stringify(formIdFieldName)}, "action");
+          form.set(${JSON.stringify(formBotFieldName)}, "brave");
+          form.set("message", path);
+          const response = await handleRequest(new Request(
+            new URL(path, "https://example.com"),
+            { method: "POST", body: form, headers: { host: "example.com" } }
+          ));
+          results.push({ status: response.status, contentType: response.headers.get("content-type"), body: await response.json() });
+        }
+        const missingBot = new FormData();
+        missingBot.set(${JSON.stringify(formIdFieldName)}, "action");
+        const invalidResponse = await handleRequest(new Request("https://example.com/__ws-form", {
+          method: "POST", body: missingBot, headers: { host: "example.com" }
+        }));
+        const rejected = new FormData();
+        rejected.set(${JSON.stringify(formIdFieldName)}, "action");
+        rejected.set(${JSON.stringify(formBotFieldName)}, "brave");
+        rejected.set("message", "reject");
+        const rejectedResponse = await handleRequest(new Request("https://example.com/__ws-form", {
+          method: "POST", body: rejected, headers: { host: "example.com" }
+        }));
+        const defaultEmail = new FormData();
+        defaultEmail.set(${JSON.stringify(formIdFieldName)}, "");
+        defaultEmail.set(${JSON.stringify(formBotFieldName)}, "brave");
+        const defaultEmailResponse = await handleRequest(new Request("https://example.com/__ws-form", {
+          method: "POST", body: defaultEmail, headers: { host: "example.com" }
+        }));
+        const duplicateId = new FormData();
+        duplicateId.append(${JSON.stringify(formIdFieldName)}, "action");
+        duplicateId.append(${JSON.stringify(formIdFieldName)}, "action");
+        duplicateId.set(${JSON.stringify(formBotFieldName)}, "brave");
+        const duplicateResponse = await handleRequest(new Request("https://example.com/__ws-form", {
+          method: "POST", body: duplicateId, headers: { host: "example.com" }
+        }));
+        results.push({ status: invalidResponse.status, body: await invalidResponse.json() });
+        results.push({ status: rejectedResponse.status, body: await rejectedResponse.json() });
+        results.push({ status: defaultEmailResponse.status, body: await defaultEmailResponse.json() });
+        results.push({ status: duplicateResponse.status, body: await duplicateResponse.json() });
+        process.stdout.write(JSON.stringify({ results, received }));
+      `;
+      const { stdout } = await execFileAsync(
+        process.execPath,
+        [
+          "--import",
+          pathToFileURL(
+            join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
+          ).href,
+          "--input-type=module",
+          "-e",
+          runner,
+        ],
+        {
+          cwd: tempDir,
+          env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
+        }
+      );
+      const { results, received } = JSON.parse(stdout) as {
+        results: Array<{ status: number; contentType: string; body: unknown }>;
+        received: Array<{ url: string; method: string; body: unknown }>;
+      };
+      expect(results).toHaveLength(7);
+      for (const result of results.slice(0, 3)) {
+        expect(result.status).toBe(200);
+        expect(result.contentType).toContain("application/json");
+        expect(result.body).toEqual({
+          success: true,
+          status: 200,
+          results: [],
+          errors: [],
+        });
+      }
+      expect(results[3]).toMatchObject({
+        status: 400,
+        body: getManagedFormFailure("Form bot field not found"),
+      });
+      expect(results[4]).toMatchObject({
+        status: 502,
+        body: {
+          success: false,
+          status: 502,
+          results: [],
+          errors: [{ status: 422, body: null, message: "Rejected" }],
+        },
+      });
+      expect(results[5]).toMatchObject({
+        status: 400,
+        body: getManagedFormFailure("Resource not found"),
+      });
+      expect(results[6]).toMatchObject({
+        status: 400,
+        body: getManagedFormFailure("Invalid Form submission"),
+      });
+      expect(received).toEqual(
+        ["/__ws-form", "/__ws-form/help/contact", "/__ws-form/products/chair"]
+          .map((path) => ({
+            url: "https://receiver.example/legacy",
+            method: "POST",
+            body: { message: path },
+          }))
+          .concat({
+            url: "https://receiver.example/legacy",
+            method: "POST",
+            body: { message: "reject" },
+          })
+      );
+    },
+    60_000
+  );
+
   test.each(["/__ws-form", "/__ws-form/submissions", "/__ws-form/:slug"])(
     "rejects a page under the reserved managed Form endpoint (%s)",
     async (path) => {
@@ -4012,6 +4214,35 @@ sitemap.map((page) => page.path);`
       ).rejects.toThrow("uses the reserved Form endpoint");
     }
   );
+
+  test("rejects reserved Form routes for a saved Webhook Form", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "reserved",
+            name: "Reserved",
+            title: "Reserved",
+            path: "/__ws-form/contact",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+      })
+    );
+    await expect(
+      prebuild({ assets: false, template: ["react-router"] })
+    ).rejects.toThrow("uses the reserved Form endpoint");
+  });
 
   test("keeps an authored reserved-prefix page when no managed Form is present", async () => {
     await writeSiteData(

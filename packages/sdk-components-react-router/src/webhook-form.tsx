@@ -1,5 +1,10 @@
 import { type ElementRef, type ComponentProps, forwardRef } from "react";
-import { useFetcher, type FormProps } from "react-router";
+import {
+  useLocation,
+  useNavigation,
+  useRevalidator,
+  type FormProps,
+} from "react-router";
 import { formIdFieldName } from "@webstudio-is/sdk/runtime";
 import {
   useLegacyWebhookSubmission,
@@ -31,18 +36,20 @@ export const WebhookForm = forwardRef<
     },
     ref
   ) => {
-    const fetcher = useFetcher<{ success: boolean }>();
+    const location = useLocation();
+    const navigation = useNavigation();
+    const revalidator = useRevalidator();
     const submission = useLegacyWebhookSubmission({
-      transportState: fetcher.state,
-      result: fetcher.data,
       state,
       onStateChange,
       successRedirect,
       forwardedRef: ref,
+      navigationToken: `${location.key}:${navigation.location?.key ?? ""}`,
+      onSubmissionSuccess: () => revalidator.revalidate(),
     });
 
     return (
-      <fetcher.Form
+      <form
         {...rest}
         method="post"
         data-state={submission.state}
@@ -56,7 +63,7 @@ export const WebhookForm = forwardRef<
           value={action?.toString()}
         />
         {children}
-      </fetcher.Form>
+      </form>
     );
   }
 );

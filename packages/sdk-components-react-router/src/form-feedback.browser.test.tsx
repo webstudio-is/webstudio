@@ -41,6 +41,25 @@ const mockManagedHttpAction = (action: () => Promise<unknown>) => {
   vi.stubGlobal("fetch", async () => Response.json(await action()));
 };
 
+const mockLegacyHttpAction = (
+  action: (args: { request: Request }) => Promise<{ success: boolean }>
+) => {
+  vi.stubGlobal(
+    "fetch",
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const result = await action({ request: new Request(input, init) });
+      return Response.json({
+        success: result.success,
+        status: result.success ? 200 : 502,
+        results: [],
+        errors: result.success
+          ? []
+          : [{ status: 502, body: null, message: "Rejected" }],
+      });
+    }
+  );
+};
+
 test("managed Form reveals partial failure and leaves visible success feedback in place", async () => {
   const action = vi
     .fn()
@@ -119,6 +138,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
 
 test("saved Webhook Form reveals feedback on repeated errors", async () => {
   const action = vi.fn().mockResolvedValue({ success: false });
+  mockLegacyHttpAction(action);
   const Form = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
@@ -317,6 +337,7 @@ test.each(["browser", "brave"] as const)(
       destination();
       return { success: false };
     });
+    mockLegacyHttpAction(action);
     const Form = () => {
       const [state, setState] = useState<"initial" | "success" | "error">(
         "initial"
@@ -342,6 +363,11 @@ test.each(["browser", "brave"] as const)(
         await act(async () => view.container.querySelector("button")?.click());
         await vi.waitFor(() =>
           expect(destination).toHaveBeenCalledTimes(attempt + 1)
+        );
+        await vi.waitFor(() =>
+          expect(
+            view.container.querySelector("form")?.getAttribute("data-state")
+          ).toBe("error")
         );
         const botFields = received[attempt].getAll(formBotFieldName);
         expect(botFields).toHaveLength(1);

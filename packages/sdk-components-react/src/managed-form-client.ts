@@ -39,16 +39,14 @@ const isManagedFormResponse = (value: unknown): value is ManagedFormResponse =>
       "body" in error
   );
 
-/** Submit to the current page's managed Form HTTP action without a router provider. */
-export const submitManagedForm = async ({
-  values,
-  managedFormId,
+/** Send either Form component through the current page's HTTP action. */
+export const submitFormData = async ({
+  formData,
   location,
   signal,
   fetch: request = fetch,
 }: {
-  values: ReturnType<typeof getFormDataValue>;
-  managedFormId: string;
+  formData: FormData;
   location: string;
   signal?: AbortSignal;
   fetch?: typeof fetch;
@@ -62,7 +60,7 @@ export const submitManagedForm = async ({
   try {
     const response = await request(endpoint, {
       method: "POST",
-      body: createManagedSubmissionFormData({ values, managedFormId }),
+      body: formData,
       credentials: "same-origin",
       signal,
     });
@@ -77,3 +75,24 @@ export const submitManagedForm = async ({
     return failure(502, "Form submission failed");
   }
 };
+
+/** Submit a Resource Form without a router provider. */
+export const submitManagedForm = ({
+  values,
+  managedFormId,
+  location,
+  signal,
+  fetch,
+}: {
+  values: ReturnType<typeof getFormDataValue>;
+  managedFormId: string;
+  location: string;
+  signal?: AbortSignal;
+  fetch?: typeof globalThis.fetch;
+}): Promise<ManagedFormResponse> =>
+  submitFormData({
+    formData: createManagedSubmissionFormData({ values, managedFormId }),
+    location,
+    signal,
+    fetch,
+  });

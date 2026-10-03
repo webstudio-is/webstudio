@@ -1740,7 +1740,8 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
-    const managedFormSubmissions = Array.from(instances.values())
+    const formInstances = Array.from(instances.values());
+    const managedFormSubmissions = formInstances
       .filter((instance) => instance.component === "NativeForm")
       .map((instance) => {
         const submissionProp = Array.from(props.values()).find(
@@ -1760,6 +1761,9 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           : [];
         return [instance.id, { submission, resourceIds }] as const;
       });
+    const hasLegacyWebhookForms = formInstances.some(
+      (instance) => instance.component === "Form"
+    );
     const managedFormResourceSelections = managedFormSubmissions.map(
       ([formId, { submission }]) => ({
         formId,
@@ -2031,7 +2035,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     if (
       isStaticBuild === false &&
       documentType === "html" &&
-      managedFormSubmissions.length > 0
+      (managedFormSubmissions.length > 0 || hasLegacyWebhookForms)
     ) {
       for (const authoredPage of generatedPages) {
         const path = getPagePath(authoredPage.id, pages);

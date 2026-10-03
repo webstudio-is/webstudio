@@ -20,8 +20,28 @@ import { WebhookForm } from "./webhook-form";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   vi.useRealTimers();
 });
+
+const mockLegacyHttpAction = (
+  action: (args: { request: Request }) => Promise<{ success: boolean }>
+) => {
+  vi.stubGlobal(
+    "fetch",
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const result = await action({ request: new Request(input, init) });
+      return Response.json({
+        success: result.success,
+        status: result.success ? 200 : 502,
+        results: [],
+        errors: result.success
+          ? []
+          : [{ status: 502, body: null, message: "Rejected" }],
+      });
+    }
+  );
+};
 
 test.each(["saved-string-action", "saved-resource-action"])(
   "saved legacy %s keeps payload, lifecycle, retries, and loader refresh",
@@ -48,6 +68,7 @@ test.each(["saved-string-action", "saved-resource-action"])(
       pageValue = "after";
       return { success: true };
     });
+    mockLegacyHttpAction(action);
     const Page = () => {
       const { value } = useLoaderData() as { value: string };
       const [state, setState] = useState<"initial" | "success" | "error">(
@@ -131,7 +152,7 @@ test.each(["saved-string-action", "saved-resource-action"])(
       expect(submissions).toHaveLength(2);
       expect(submissions[1].getAll(formBotFieldName)).toHaveLength(1);
       expect(submissions[1].get(formIdFieldName)).toBe(actionId);
-      expect(loader).toHaveBeenCalledTimes(3);
+      expect(loader).toHaveBeenCalledTimes(2);
       expect(stateChanges).toEqual(["initial", "error", "initial", "success"]);
       expect(action).toHaveBeenCalledTimes(2);
     } finally {
@@ -147,6 +168,7 @@ test("legacy redirect happens only after success", async () => {
     .fn()
     .mockResolvedValueOnce({ success: false })
     .mockResolvedValueOnce({ success: true });
+  mockLegacyHttpAction(action);
   const router = createMemoryRouter([
     {
       path: "/",
