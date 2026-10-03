@@ -7,7 +7,7 @@ description: >-
 # ✍️ Webhook Form
 
 {% hint style="info" %}
-**Name change:** Webhook Forms used to be called "Forms." However, [Forms](form.md) are now a different component intended for building searches and filters.
+This page covers existing Webhook Form instances. The new [Form](form.md) submits to configured Resource destinations. Use an **Element** with tag `form` for plain browser form behavior such as searches and filters.
 {% endhint %}
 
 {% embed url="https://www.youtube.com/watch?v=eE-CkewQHMs" %}
@@ -109,7 +109,7 @@ Webstudio forms include built-in bot protection to prevent spam submissions. Thi
 
 ## Related
 
-- [Form](form.md) – Standard HTML forms
+- [Form](form.md) – Submit to configured Resources
 - [Input](input.md) – Text input fields
 - [Button](button.md) – Submit buttons
 - [n8n Integration](../integrations/n8n.md) – Automate form workflows
