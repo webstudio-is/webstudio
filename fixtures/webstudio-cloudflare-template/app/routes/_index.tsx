@@ -29,6 +29,7 @@ import {
   managedFormIdFieldName,
   formBotFieldName,
   getSystemSearch,
+  isPlainObject,
   type ManagedFormResponse,
 } from "@webstudio-is/sdk/runtime";
 import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
@@ -408,6 +409,23 @@ export const action = async ({
         actionFetch,
         {
           ...generatedResources.data,
+          resources: generatedResources.data.resources.map((resource) =>
+            resource.id === actionResource.id
+              ? {
+                  ...resource,
+                  createRequest: (documents) => {
+                    const request = resource.createRequest(documents);
+                    return {
+                      ...request,
+                      body: {
+                        ...(isPlainObject(request.body) ? request.body : {}),
+                        ...Object.fromEntries(formData),
+                      },
+                    };
+                  },
+                }
+              : resource
+          ),
           rootIds: [actionResource.id],
         },
         url,
@@ -415,7 +433,7 @@ export const action = async ({
           requestOverrides: new Map([
             // Mutations must reach the backend on every submission, even when
             // the resource has caching enabled. Dependencies can stay cached.
-            [actionResource.id, { body: Object.fromEntries(formData), fetch }],
+            [actionResource.id, { fetch }],
           ]),
         }
       );
