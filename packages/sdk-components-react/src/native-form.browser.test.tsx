@@ -265,6 +265,58 @@ test("Form passes one structured submission to its dispatcher", async () => {
   }
 });
 
+test("file-input settings enforce required uploads and keep optional or multiple files", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onManagedSubmit = vi.fn();
+  const render = async (required: boolean) =>
+    act(async () =>
+      root.render(
+        <NativeForm
+          submission={{ destinations: ["resource-one"] }}
+          onManagedSubmit={onManagedSubmit}
+        >
+          <input
+            type="file"
+            name="attachments"
+            accept="image/*,.pdf"
+            multiple
+            required={required}
+          />
+          <button type="submit">Send</button>
+        </NativeForm>
+      )
+    );
+  try {
+    await render(true);
+    const input = container.querySelector<HTMLInputElement>("input")!;
+    expect(input.accept).toBe("image/*,.pdf");
+    expect(input.multiple).toBe(true);
+    await act(async () => container.querySelector("button")?.click());
+    expect(onManagedSubmit).not.toHaveBeenCalled();
+
+    const files = new DataTransfer();
+    const first = new File(["one"], "one.png", { type: "image/png" });
+    const second = new File(["two"], "two.pdf", { type: "application/pdf" });
+    files.items.add(first);
+    files.items.add(second);
+    input.files = files.files;
+    await act(async () => container.querySelector("button")?.click());
+    expect(onManagedSubmit).toHaveBeenLastCalledWith({
+      attachments: [first, second],
+    });
+
+    await render(false);
+    container.querySelector<HTMLInputElement>("input")!.value = "";
+    await act(async () => container.querySelector("button")?.click());
+    expect(onManagedSubmit).toHaveBeenCalledTimes(2);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
 test("managed Form submits by HTTP outside a router provider and reports pending and results", async () => {
   const container = document.createElement("div");
   document.body.append(container);

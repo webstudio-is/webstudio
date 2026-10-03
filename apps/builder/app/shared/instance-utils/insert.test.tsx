@@ -20,11 +20,12 @@ import {
   renderTemplate,
   renderData,
   token,
+  type TemplateMeta,
 } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { coreTemplates } from "@webstudio-is/sdk-components-registry/core-templates";
 import { componentIds } from "@webstudio-is/sdk-components-registry/components";
-import type { WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
+import type { Prop, WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   blockBodyComponent,
   blockComponent,
@@ -60,6 +61,7 @@ import { $propValuesByInstanceSelector } from "../nano-states/props";
 import { $dataSourceVariables } from "../nano-states/variables";
 import { $selectedPageId } from "../nano-states/pages";
 import { expectSlotsShareFragment } from "../slot-test-utils";
+import { $selectedInstanceInitialPropNames } from "~/builder/features/settings-panel/shared";
 
 const Body = createTemplateComponentFixture("Body");
 const Bold = createTemplateComponentFixture("Bold");
@@ -796,6 +798,103 @@ describe("insert webstudio component at", () => {
     $resources.set(new Map());
     $props.set(new Map());
     $assets.set(new Map());
+  });
+
+  test("inserts a File Input and keeps its upload controls after reopening saved props", async () => {
+    const previousTemplates = $registeredTemplates.get();
+    $registeredTemplates.set(
+      new Map([
+        [
+          "file_input",
+          {
+            category: "forms",
+            template: renderTemplate(
+              (coreTemplates as Record<string, TemplateMeta>).file_input
+                .template,
+              undefined,
+              [],
+              {
+                componentIds,
+                componentMetas: defaultMetasMap,
+              }
+            ),
+          },
+        ],
+      ])
+    );
+    try {
+      expect(
+        await insertWebstudioComponentAt("file_input", {
+          parentSelector: ["bodyId"],
+          position: "end",
+        })
+      ).toBe(true);
+      const child = $instances.get().get("bodyId")?.children[0];
+      const inputId = child?.type === "id" ? child.value : "";
+      expect($instances.get().get(inputId)).toMatchObject({
+        component: elementComponent,
+        tag: "input",
+        label: "File Input",
+      });
+      const configuredProps = new Map($props.get());
+      const nameProp = Array.from(configuredProps.values()).find(
+        ({ instanceId, name }) => instanceId === inputId && name === "name"
+      );
+      if (nameProp?.type !== "string") {
+        throw new Error("Expected a named file input");
+      }
+      configuredProps.set(nameProp.id, { ...nameProp, value: "attachments" });
+      for (const prop of [
+        {
+          id: "upload-accept",
+          instanceId: inputId,
+          name: "accept",
+          type: "string" as const,
+          value: "image/*,.pdf",
+        },
+        ...(["required", "multiple"] as const).map((name) => ({
+          id: `upload-${name}`,
+          instanceId: inputId,
+          name,
+          type: "boolean" as const,
+          value: true,
+        })),
+      ]) {
+        configuredProps.set(prop.id, prop);
+      }
+      $props.set(configuredProps);
+      const savedProps = new Map(
+        JSON.parse(JSON.stringify(Array.from($props.get()))) as Array<
+          [string, Prop]
+        >
+      );
+      $props.set(savedProps);
+      expect(
+        Array.from(savedProps.values())
+          .filter(({ instanceId }) => instanceId === inputId)
+          .map(({ name, value }) => [name, value])
+      ).toEqual(
+        expect.arrayContaining([
+          ["type", "file"],
+          ["name", "attachments"],
+          ["accept", "image/*,.pdf"],
+          ["required", true],
+          ["multiple", true],
+        ])
+      );
+      selectInstance([inputId, "bodyId"]);
+      expect(Array.from($selectedInstanceInitialPropNames.get())).toEqual(
+        expect.arrayContaining([
+          "type",
+          "name",
+          "required",
+          "accept",
+          "multiple",
+        ])
+      );
+    } finally {
+      $registeredTemplates.set(previousTemplates);
+    }
   });
 
   test("inserts the Forms tile as a native form with named controls", async () => {

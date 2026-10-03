@@ -796,6 +796,74 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("publishes configured file-input attributes", async () => {
+    await writeSiteData(
+      createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "NativeForm",
+              children: [{ type: "id", value: "upload" }],
+            },
+          ],
+          [
+            "upload",
+            {
+              id: "upload",
+              component: "ws:element",
+              tag: "input",
+              children: [],
+            },
+          ],
+        ],
+        props: [
+          ...(["type", "name", "accept"] as const).map(
+            (name) =>
+              [
+                name,
+                {
+                  id: name,
+                  instanceId: "upload",
+                  name,
+                  type: "string" as const,
+                  value:
+                    name === "type"
+                      ? "file"
+                      : name === "name"
+                        ? "attachments"
+                        : "image/*,.pdf",
+                },
+              ] as [string, Prop]
+          ),
+          ...(["required", "multiple"] as const).map(
+            (name) =>
+              [
+                name,
+                {
+                  id: name,
+                  instanceId: "upload",
+                  name,
+                  type: "boolean" as const,
+                  value: true,
+                },
+              ] as [string, Prop]
+          ),
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const page = await readFile("app/__generated__/_index.tsx", "utf8");
+    expect(page).toContain('type={"file"}');
+    expect(page).toContain('name={"attachments"}');
+    expect(page).toContain('accept={"image/*,.pdf"}');
+    expect(page).toContain("required={true}");
+    expect(page).toContain("multiple={true}");
+  });
+
   test("publishes Email defaults while preserving the legacy Contact recipients", async () => {
     const siteData = createSiteData({
       pageMeta: {
