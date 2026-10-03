@@ -109,4 +109,23 @@ describe("Email Resource defaults", () => {
     expect(expression).toContain("${browserInfo}");
     expect(expression).toContain("Introduction");
   });
+
+  test("treats the project body introduction as text, not an expression", () => {
+    const expression = getDefaultFormEmailBodyExpression(
+      "formData",
+      "browserInfo",
+      "Hello ${secrets}\\ world `quoted`"
+    );
+    expect(expression).toContain("Hello \\${secrets}\\\\ world \\`quoted\\`");
+    expect(expression).toContain("${formData}");
+    expect(expression).toContain("${browserInfo}");
+    const render = new Function(
+      "formData",
+      "browserInfo",
+      `return ${expression}`
+    ) as (formData: string, browserInfo: string) => string;
+    expect(render("name: Ada", "language: en")).toContain(
+      "Hello ${secrets}\\ world `quoted`\n\nForm data:\nname: Ada"
+    );
+  });
 });

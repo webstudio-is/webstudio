@@ -21,9 +21,8 @@ Webhook Forms are used when you need to send form submission data to an external
 By default, submissions are sent to the Project owner.
 
 {% hint style="info" %}
-**Pro feature:** You can customize the recipient of email notifications by navigating to **Project settings > General**.
+**Pro feature:** You can customize the recipient of email notifications by navigating to **Project settings > Emails**.
 
-<img src="../../.gitbook/assets/form-recipient.png" alt="Field to customize the recipient of the form submissions" data-size="original">
 {% endhint %}
 
 ### Webhooks

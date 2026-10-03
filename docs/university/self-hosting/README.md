@@ -36,6 +36,8 @@ There are two types of exports:
 * **JavaScript application** – Builds a dynamic [Remix app](https://remix.run/). This is the default behavior of Webstudio Cloud and provides the most functionality, but it requires hosting that works with apps.
 * **Static site** – Outputs a static site (HTML/CSS/JS) with limited functionality, but has more versatile hosting options.
 
+Email Resources are intended to use Webstudio Cloud's email service. Delivery is not configured yet, including on Webstudio Cloud. Neither a self-hosted JavaScript application nor a static export provides that service; saving Email Resource settings does not enable delivery.
+
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.
 {% endhint %}
