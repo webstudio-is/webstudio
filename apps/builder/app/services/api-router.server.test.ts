@@ -2,6 +2,13 @@ import { access } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import {
+  createTestServer,
+  db as postgrestDb,
+  json,
+  testContext,
+} from "@webstudio-is/postgrest/testing";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
@@ -37,6 +44,7 @@ import {
 } from "./api-permits.server";
 
 const servicesDir = new URL(".", import.meta.url);
+const server = createTestServer();
 
 const { assertContentOrBuildPayload, assertApiPublishDomains } = __testing__;
 
@@ -46,14 +54,22 @@ const createContext = (
     type: "token",
     authToken: "secret-token",
     ownerId: "user-1",
-  }
+  },
+  maxContactEmailsPerProject = 5,
+  ownerMaxContactEmailsPerProject = maxContactEmailsPerProject
 ) =>
   ({
+    ...testContext,
     authorization,
     planFeatures: {
       allowAdditionalPermissions,
+      maxContactEmailsPerProject,
     },
-  }) as AppContext;
+    getOwnerPlanFeatures: async () => ({
+      ...defaultPlanFeatures,
+      maxContactEmailsPerProject: ownerMaxContactEmailsPerProject,
+    }),
+  }) as unknown as AppContext;
 
 const createToken = (
   overrides: Partial<Awaited<ReturnType<typeof authDb.getTokenInfo>>> = {}
@@ -79,6 +95,69 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("enforces plan contact-address limits through project settings updates", async () => {
+    server.use(postgrestDb.get("Project", () => json({ userId: "owner-1" })));
+    const build = {
+      id: "build-1",
+      projectId: "project-1",
+      version: 1,
+      pages: createDefaultPages({ rootInstanceId: "root" }),
+      projectSettings: { meta: {}, compiler: {} },
+    } as unknown as Awaited<
+      ReturnType<typeof projectBuild.loadDevBuildByProjectId>
+    >;
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 2 });
+
+    const freeCaller = createCaller(createContext(true, undefined, 5, 0));
+    await expect(
+      freeCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: { contactEmail: "team@example.com" },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(patchBuild).not.toHaveBeenCalled();
+
+    const paidCaller = createCaller(createContext(true, undefined, 0, 2));
+    await expect(
+      paidCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: {
+          contactEmail:
+            '"Team, West" <team@example.com>, team@example.com, third@example.com',
+        },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(patchBuild).not.toHaveBeenCalled();
+
+    await expect(
+      paidCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: {
+          contactEmail: '"Team, West" <team@example.com>, team@example.com',
+        },
+      })
+    ).resolves.toMatchObject({ version: 2, updated: true });
+    expect(patchBuild).toHaveBeenCalledTimes(1);
+
+    build.projectSettings.meta.contactEmail = "legacy@example.com";
+    const downgradedCaller = createCaller(createContext(true, undefined, 0, 0));
+    await expect(
+      downgradedCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: {
+          contactEmail: "legacy@example.com",
+          siteName: "Updated site",
+        },
+      })
+    ).resolves.toMatchObject({ version: 2, updated: true });
+    expect(patchBuild).toHaveBeenCalledTimes(2);
+  });
+
   test("submits only configured marketplace products for review", async () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
