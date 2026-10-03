@@ -5245,6 +5245,156 @@ sitemap.map((page) => page.path);`
     }
   );
 
+  test.each(["defaults", "react-router"])(
+    "sends configured browserInfo headers from a trusted Cloudflare request (%s)",
+    async (template) => {
+      const browserInfo = encodeDataSourceVariable("browserInfo");
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["destination"] },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "browserInfo",
+          {
+            id: "browserInfo",
+            name: "browserInfo",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "receiver",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "receiver",
+          {
+            id: "receiver",
+            name: "Receiver",
+            method: "post",
+            url: '"https://receiver.example/submit"',
+            headers: [
+              { name: "X-Forwarded-For", value: `${browserInfo}.ip` },
+              { name: "User-Agent", value: `${browserInfo}.userAgent` },
+              { name: "Accept-Language", value: `${browserInfo}.language` },
+            ],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "managed-browser-headers-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "managed-browser-headers-action.mjs")).href
+      );
+      const received: Headers[] = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          received.push(new Headers(new Request(input, init).headers));
+          return Response.json({ accepted: true });
+        })
+      );
+      const form = new FormData();
+      form.set(managedFormIdFieldName, "root");
+      form.set(formBotFieldName, Date.now().toString(16));
+      form.set(managedFormArrayNamesFieldName, "[]");
+      const response = await action({
+        request: new Request(
+          `https://site.example/?${managedFormRequestParamName}=1`,
+          {
+            method: "POST",
+            headers: {
+              host: "site.example",
+              "cf-connecting-ip": "198.51.100.42",
+              "x-forwarded-for": "203.0.113.200",
+              "x-real-ip": "203.0.113.201",
+              "user-agent": "Visitor Browser",
+              "accept-language": "fr-CA,fr;q=0.9",
+              cookie: "session=secret",
+              authorization: "Bearer secret",
+            },
+            body: form,
+          }
+        ),
+        context: { cloudflare: {} },
+        params: {},
+      });
+      expect(response.success).toBe(true);
+      expect(received).toHaveLength(1);
+      expect(received[0].get("X-Forwarded-For")).toBe("198.51.100.42");
+      expect(received[0].get("User-Agent")).toBe("Visitor Browser");
+      expect(received[0].get("Accept-Language")).toBe("fr-CA,fr;q=0.9");
+      expect(received[0].has("Cookie")).toBe(false);
+      expect(received[0].has("Authorization")).toBe(false);
+      expect(received[0].has("X-Real-IP")).toBe(false);
+
+      const nodeResponse = await action({
+        request: new Request(
+          `https://site.example/?${managedFormRequestParamName}=1`,
+          {
+            method: "POST",
+            headers: {
+              host: "site.example",
+              "cf-connecting-ip": "203.0.113.202",
+              "x-forwarded-for": "203.0.113.200",
+              "x-real-ip": "203.0.113.201",
+              "user-agent": "Visitor Browser",
+              "accept-language": "fr-CA,fr;q=0.9",
+            },
+            body: form,
+          }
+        ),
+        context: {},
+        params: {},
+      });
+      expect(nodeResponse.success).toBe(true);
+      expect(received).toHaveLength(2);
+      expect(received[1].has("X-Forwarded-For")).toBe(false);
+    }
+  );
+
   test("prerenders the configured Webhook Form method", async () => {
     const siteData = createSiteData({
       instances: [

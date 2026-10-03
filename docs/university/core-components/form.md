@@ -17,6 +17,18 @@ The Form starts independent destinations in parallel. An empty destination list 
 
 By default, a Form-scoped HTTP Resource forwards all submitted fields. It sends JSON for text values and multipart data when files are included. Edit the Resource body to choose or transform fields, or set its body format if the receiving service requires one. An external Resource uses its own configured body.
 
+### Send browser information to a destination
+
+In a Resource created inside the Form, add these headers in the Resource editor when your destination needs them:
+
+| Header | Value expression |
+| --- | --- |
+| `X-Forwarded-For` | `browserInfo.ip` |
+| `User-Agent` | `browserInfo.userAgent` |
+| `Accept-Language` | `browserInfo.language` |
+
+These values are sent only when you configure the headers. `browserInfo` also provides `referrer`. It does not expose cookies, authorization, or raw request headers. On Cloudflare Workers, `browserInfo.ip` comes from Cloudflare's `CF-Connecting-IP` request header. The generated React Router Cloudflare Worker supplies the Cloudflare hosting context; the Remix Cloudflare adapter also supplies it. On Node-based hosts, including the generated Docker, Netlify, and Vercel adapters, no trusted visitor-IP source is configured, so `browserInfo.ip` is absent. The Form does not derive it from visitor-supplied `X-Forwarded-For` or `X-Real-IP` headers. If an IP header is required on another host, configure a trusted source at the hosting boundary before relying on it.
+
 Email Resource settings can be edited, but new Email Resource delivery is not connected to a provider yet, including on Webstudio Cloud. Selecting one returns an error rather than claiming delivery. [Existing Webhook Forms](webhook-form.md) keep their separate behavior.
 
 ## Inputs and responses

@@ -44,6 +44,26 @@ test("Email Resources cannot be sent through the HTTP loader", async () => {
   expect(fetch).not.toHaveBeenCalled();
 });
 
+test("omits undefined request headers instead of sending the string undefined", async () => {
+  let submitted: Request | undefined;
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    submitted = new Request(input, init);
+    return Response.json({ accepted: true });
+  });
+  await loadResource(fetch, {
+    name: "Submit",
+    method: "post",
+    url: "https://example.com/submit",
+    searchParams: [],
+    headers: [
+      { name: "X-Forwarded-For", value: undefined },
+      { name: "User-Agent", value: "Visitor Browser" },
+    ],
+  });
+  expect(submitted?.headers.has("X-Forwarded-For")).toBe(false);
+  expect(submitted?.headers.get("User-Agent")).toBe("Visitor Browser");
+});
+
 test("resolves request resources after their dependency documents", async () => {
   const requestedUrls: string[] = [];
   const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {

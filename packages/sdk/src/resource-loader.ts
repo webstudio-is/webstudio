@@ -418,10 +418,12 @@ export const loadResource = async (
       // empty block
     }
     const requestHeaders = new Headers(
-      headers.map(({ name, value }): [string, string] => [
-        name,
-        serializeValue(value),
-      ])
+      headers
+        .filter(({ value }) => value !== undefined)
+        .map(({ name, value }): [string, string] => [
+          name,
+          serializeValue(value),
+        ])
     );
     const bodyFormatError = getResourceBodyFormatError(resourceRequest);
     if (bodyFormatError !== undefined) {
