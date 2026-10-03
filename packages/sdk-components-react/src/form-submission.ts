@@ -5,6 +5,10 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "@webstudio-is/sdk/form-fields";
+import {
+  getManagedFormBrowserInfo,
+  type ManagedFormBrowserInfo,
+} from "@webstudio-is/sdk/runtime";
 
 const internalFormFieldNames = new Set([
   formBotFieldName,
@@ -129,12 +133,7 @@ export const createManagedSubmissionFormData = ({
   return formData;
 };
 
-export type BrowserInfo = {
-  ip?: string;
-  userAgent?: string;
-  language?: string;
-  referrer?: string;
-};
+export type BrowserInfo = ManagedFormBrowserInfo;
 
 /** The caller supplies IP from a trusted platform source, never from visitor headers. */
 export const getBrowserInfo = ({
@@ -143,15 +142,4 @@ export const getBrowserInfo = ({
 }: {
   request: Request;
   trustedIp?: string;
-}): BrowserInfo => ({
-  ...(trustedIp ? { ip: trustedIp } : {}),
-  ...(request.headers.get("user-agent")
-    ? { userAgent: request.headers.get("user-agent") ?? undefined }
-    : {}),
-  ...(request.headers.get("accept-language")
-    ? { language: request.headers.get("accept-language") ?? undefined }
-    : {}),
-  ...(request.headers.get("referer")
-    ? { referrer: request.headers.get("referer") ?? undefined }
-    : {}),
-});
+}): BrowserInfo => getManagedFormBrowserInfo(request, trustedIp);

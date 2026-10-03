@@ -43,4 +43,9 @@ test("browser info excludes cookies, auth, and untrusted IP headers", () => {
     language: "en-US",
     referrer: "https://example.com/from",
   });
+  expect(getBrowserInfo({ request })).toEqual({
+    userAgent: "Example Browser",
+    language: "en-US",
+    referrer: "https://example.com/from",
+  });
 });
