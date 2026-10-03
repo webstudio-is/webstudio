@@ -19,6 +19,7 @@ import {
   readFormDataWithLimit,
   managedFormRequestParamName,
   validateManagedFormBot,
+  validateManagedFormRecipientLimit,
   validateManagedFormBodyFormats,
   formIdFieldName,
   managedFormIdFieldName,
@@ -330,6 +331,7 @@ export const action = async ({
       if (graph === undefined || graph.rootIds.length === 0) {
         throw new Error("Form Resource graph not found");
       }
+      validateManagedFormRecipientLimit(graph);
       const validatedGraph = validateManagedFormBodyFormats(graph, formData);
       const protectedFetch = createManagedFormResourceFetch({
         request,

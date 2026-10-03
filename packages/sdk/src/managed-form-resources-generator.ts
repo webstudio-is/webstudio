@@ -5,7 +5,10 @@ import type { Resources } from "./schema/resources";
 import type { ProjectMeta } from "./schema/pages";
 import type { Scope } from "./scope";
 import { SYSTEM_VARIABLE_ID } from "./expression";
-import { getDefaultFormEmailBodyExpression } from "./email-resource";
+import {
+  getDefaultFormEmailBodyExpression,
+  resolveEmailResourceSettings,
+} from "./email-resource";
 import {
   browserInfoParameterName,
   formDataParameterName,
@@ -217,6 +220,7 @@ export const generateManagedFormResources = ({
       }
 
       const usedDataSources: DataSources = new Map();
+      const emailRecipientCounts = new Map<string, number>();
       let generatedRequests = "";
       for (const resourceId of graphResourceIds) {
         const resource = resources.get(resourceId);
@@ -236,6 +240,25 @@ export const generateManagedFormResources = ({
             dataSource.scopeInstanceId === formId &&
             dataSource.name === browserInfoParameterName
         );
+        const resolvedEmailSettings =
+          resource.control === "email"
+            ? resolveEmailResourceSettings({
+                settings: resource.email,
+                projectMeta,
+                ownerEmail,
+              })
+            : undefined;
+        if (resolvedEmailSettings !== undefined) {
+          if (resolvedEmailSettings.recipients === undefined) {
+            throw new InvalidManagedFormGraph(
+              `Managed Form Email Resource ${resourceId} has invalid recipients`
+            );
+          }
+          emailRecipientCounts.set(
+            resourceId,
+            resolvedEmailSettings.recipients.length
+          );
+        }
         const emailBodyCode =
           resource.control === "email" &&
           rootIds.includes(resourceId) &&
@@ -257,6 +280,7 @@ export const generateManagedFormResources = ({
           scope,
           method: rootIds.includes(resourceId) ? "post" : undefined,
           emailBodyCode,
+          resolvedEmailSettings,
           projectMeta,
           ownerEmail,
         });
@@ -333,7 +357,8 @@ export const generateManagedFormResources = ({
           rootIds.includes(resourceId) &&
           formBoundResourceIds.has(resourceId) &&
           (resource.body === undefined || resource.body.length === 0);
-        generated += `          { id: ${JSON.stringify(resourceId)}, outputName: ${JSON.stringify(scope.getName(resourceId, resource.name))}, dependencies: ${JSON.stringify(dependenciesById.get(resourceId) ?? [])}, ${resource.control === "email" ? 'control: "email", ' : ""}${usesDefaultFormBody ? "usesDefaultFormBody: true, " : ""}${resource.bodyFormat === undefined ? "" : `bodyFormat: ${JSON.stringify(resource.bodyFormat)}, `}createRequest: ${scope.getName(resourceId, resource.name)} },\n`;
+        const emailRecipientCount = emailRecipientCounts.get(resourceId);
+        generated += `          { id: ${JSON.stringify(resourceId)}, outputName: ${JSON.stringify(scope.getName(resourceId, resource.name))}, dependencies: ${JSON.stringify(dependenciesById.get(resourceId) ?? [])}, ${emailRecipientCount === undefined ? "" : `control: "email", emailRecipientCount: ${emailRecipientCount}, `}${usesDefaultFormBody ? "usesDefaultFormBody: true, " : ""}${resource.bodyFormat === undefined ? "" : `bodyFormat: ${JSON.stringify(resource.bodyFormat)}, `}createRequest: ${scope.getName(resourceId, resource.name)} },\n`;
       }
       generated += `        ],\n        rootIds: ${JSON.stringify(rootIds)},\n      };\n    }\n`;
     } catch (error) {

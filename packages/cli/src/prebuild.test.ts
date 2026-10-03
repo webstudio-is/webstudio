@@ -3440,6 +3440,276 @@ sitemap.map((page) => page.path);`
     }
   );
 
+  test.each([
+    ["defaults", 2],
+    ["defaults", 3],
+    ["react-router", 2],
+    ["react-router", 3],
+  ] as const)(
+    "preflights Email deliveries before sibling HTTP dispatch (%s, %i project recipients)",
+    async (template, projectRecipientCount) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: {
+                destinations: [
+                  "http-source",
+                  "project-source",
+                  "custom-source",
+                ],
+              },
+            },
+          ],
+        ],
+        pageMeta: {
+          contactEmail:
+            projectRecipientCount === 2
+              ? "first@example.com, first@example.com"
+              : "first@example.com, first@example.com, third@example.com",
+        },
+      });
+      siteData.build.dataSources = [
+        [
+          "http-source",
+          {
+            id: "http-source",
+            name: "HTTP",
+            type: "resource",
+            resourceId: "http",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "project-source",
+          {
+            id: "project-source",
+            name: "Project Email",
+            type: "resource",
+            resourceId: "project-email",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "custom-source",
+          {
+            id: "custom-source",
+            name: "Custom Email",
+            type: "resource",
+            resourceId: "custom-email",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://example.com/submit"',
+            headers: [],
+          },
+        ],
+        [
+          "project-email",
+          {
+            id: "project-email",
+            name: "Project Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+          },
+        ],
+        [
+          "custom-email",
+          {
+            id: "custom-email",
+            name: "Custom Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients:
+                "fourth@example.com, fifth@example.com, fifth@example.com",
+            },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "recipient-limit-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "recipient-limit-action.mjs")).href
+      );
+      const outgoingFetch = vi.fn(async () => Response.json({ ok: true }));
+      vi.stubGlobal("fetch", outgoingFetch);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      formData.set("message", "Hello");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toEqual({
+        success: false,
+        errors: [
+          projectRecipientCount === 2
+            ? "Email delivery requires Webstudio Cloud and is not configured yet"
+            : "Select no more than 5 team email recipients per Form submission",
+        ],
+      });
+      expect(outgoingFetch).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "preflights a dependent Email before HTTP dispatch (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["http-source"] },
+            },
+          ],
+        ],
+        pageMeta: { contactEmail: "owner@example.com" },
+      });
+      siteData.build.dataSources = [
+        [
+          "email-source",
+          {
+            id: "email-source",
+            name: "Email",
+            type: "resource",
+            resourceId: "email",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "http-source",
+          {
+            id: "http-source",
+            name: "HTTP",
+            type: "resource",
+            resourceId: "http",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+          },
+        ],
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://example.com/submit"',
+            headers: [],
+            body: encodeDataSourceVariable("email-source"),
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "dependent-email-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "dependent-email-action.mjs")).href
+      );
+      const outgoingFetch = vi.fn(async () => Response.json({ ok: true }));
+      vi.stubGlobal("fetch", outgoingFetch);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toEqual({
+        success: false,
+        errors: [
+          "Email delivery requires Webstudio Cloud and is not configured yet",
+        ],
+      });
+      expect(outgoingFetch).not.toHaveBeenCalled();
+    }
+  );
+
   test("generates submit-time Resource requests with Form parameters", async () => {
     const siteData = createSiteData({
       instances: [

@@ -11,8 +11,155 @@ import {
   readFormDataWithLimit,
   validateManagedFormBot,
   validateManagedFormBodyFormats,
+  validateManagedFormRecipientLimit,
 } from "./managed-form-submission";
 import { loadResources } from "./resource-loader";
+
+test("allows five team deliveries across Email Resources and counts duplicate recipients", () => {
+  const graph = {
+    rootIds: ["project-email", "custom-email", "http"],
+    resources: [
+      {
+        id: "project-email",
+        outputName: "Project email",
+        dependencies: [],
+        control: "email" as const,
+        emailRecipientCount: 2,
+        createRequest: vi.fn(),
+      },
+      {
+        id: "custom-email",
+        outputName: "Custom email",
+        dependencies: [],
+        control: "email" as const,
+        // Includes a recipient also listed in the project email.
+        emailRecipientCount: 3,
+        createRequest: vi.fn(),
+      },
+      {
+        id: "http",
+        outputName: "HTTP",
+        dependencies: [],
+        createRequest: vi.fn(),
+      },
+    ],
+  };
+  expect(() => validateManagedFormRecipientLimit(graph)).not.toThrow();
+  for (const resource of graph.resources) {
+    expect(resource.createRequest).not.toHaveBeenCalled();
+  }
+});
+
+test("rejects six team deliveries before any HTTP or Email destination runs", () => {
+  const httpRequest = vi.fn();
+  const emailRequest = vi.fn();
+  const graph = {
+    rootIds: ["http", "first-email", "second-email"],
+    resources: [
+      {
+        id: "http",
+        outputName: "HTTP",
+        dependencies: [],
+        createRequest: httpRequest,
+      },
+      {
+        id: "first-email",
+        outputName: "First email",
+        dependencies: [],
+        control: "email" as const,
+        emailRecipientCount: 3,
+        createRequest: emailRequest,
+      },
+      {
+        id: "second-email",
+        outputName: "Second email",
+        dependencies: [],
+        control: "email" as const,
+        emailRecipientCount: 3,
+        createRequest: emailRequest,
+      },
+    ],
+  };
+  expect(() => validateManagedFormRecipientLimit(graph)).toThrow(
+    "Select no more than 5 team email recipients"
+  );
+  expect(httpRequest).not.toHaveBeenCalled();
+  expect(emailRequest).not.toHaveBeenCalled();
+});
+
+test("rejects Email roots without a trusted recipient count", () => {
+  expect(() =>
+    validateManagedFormRecipientLimit({
+      rootIds: ["email"],
+      resources: [
+        {
+          id: "email",
+          outputName: "Email",
+          dependencies: [],
+          control: "email",
+          createRequest: vi.fn(),
+        },
+      ],
+    })
+  ).toThrow("Invalid Email Resource recipient count");
+});
+
+test("rejects an Email Resource with no resolved recipient", () => {
+  expect(() =>
+    validateManagedFormRecipientLimit({
+      rootIds: ["email"],
+      resources: [
+        {
+          id: "email",
+          outputName: "Email",
+          dependencies: [],
+          control: "email",
+          emailRecipientCount: 0,
+          createRequest: vi.fn(),
+        },
+      ],
+    })
+  ).toThrow("Invalid Email Resource recipient count");
+});
+
+test("counts Email dependencies once and blocks an HTTP root before side effects", () => {
+  const httpRequest = vi.fn();
+  const emailRequest = vi.fn();
+  const emailResource = {
+    id: "email",
+    outputName: "Email",
+    dependencies: [],
+    control: "email" as const,
+    emailRecipientCount: 6,
+    createRequest: emailRequest,
+  };
+  const graph = {
+    rootIds: ["http", "other-http"],
+    resources: [
+      {
+        id: "http",
+        outputName: "HTTP",
+        dependencies: ["email"],
+        createRequest: httpRequest,
+      },
+      {
+        id: "other-http",
+        outputName: "Other HTTP",
+        dependencies: ["email"],
+        createRequest: httpRequest,
+      },
+      emailResource,
+    ],
+  };
+  expect(() => validateManagedFormRecipientLimit(graph)).toThrow(
+    "Select no more than 5 team email recipients"
+  );
+  expect(httpRequest).not.toHaveBeenCalled();
+  expect(emailRequest).not.toHaveBeenCalled();
+
+  emailResource.emailRecipientCount = 5;
+  expect(() => validateManagedFormRecipientLimit(graph)).not.toThrow();
+});
 
 test("an Email destination fails preflight before another Resource dispatches", () => {
   const httpRequest = vi.fn();
@@ -40,6 +187,35 @@ test("an Email destination fails preflight before another Resource dispatches", 
     "Email delivery requires Webstudio Cloud"
   );
   expect(httpRequest).not.toHaveBeenCalled();
+});
+
+test("an Email dependency fails preflight before its HTTP destination dispatches", () => {
+  const httpRequest = vi.fn();
+  const emailRequest = vi.fn();
+  const graph = {
+    rootIds: ["http"],
+    resources: [
+      {
+        id: "http",
+        outputName: "HTTP",
+        dependencies: ["email"],
+        createRequest: httpRequest,
+      },
+      {
+        id: "email",
+        outputName: "Email",
+        dependencies: [],
+        control: "email" as const,
+        emailRecipientCount: 1,
+        createRequest: emailRequest,
+      },
+    ],
+  };
+  expect(() => validateManagedFormBodyFormats(graph, new FormData())).toThrow(
+    "Email delivery requires Webstudio Cloud"
+  );
+  expect(httpRequest).not.toHaveBeenCalled();
+  expect(emailRequest).not.toHaveBeenCalled();
 });
 
 test("rejects an invalid dependency request before any destination runs", () => {

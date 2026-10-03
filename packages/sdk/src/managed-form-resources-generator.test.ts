@@ -4,6 +4,7 @@ import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
 import { getDefaultFormEmailBodyExpression } from "./email-resource";
 import { generateManagedFormResources } from "./managed-form-resources-generator";
+import { validateManagedFormRecipientLimit } from "./managed-form-submission";
 import type { DataSources } from "./schema/data-sources";
 import type { Instance, Instances } from "./schema/instances";
 import type { Resources } from "./schema/resources";
@@ -155,6 +156,7 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
     browserInfo: { language: "en" },
   });
   expect(graph?.resources[0].control).toBe("email");
+  expect(graph?.resources[0].emailRecipientCount).toBe(1);
   expect(graph?.resources[0].createRequest(new Map()).email).toMatchObject({
     subject: "Custom subject",
     body: expect.stringContaining('"hidden": "yes"'),
@@ -172,6 +174,189 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
   ).not.toContain("ws--form-bot");
   expect(graph?.resources[0].createRequest(new Map()).email?.body).toContain(
     '"name": "notes.txt"'
+  );
+});
+
+test("counts project and custom Email recipients across a Form, including duplicate addresses", () => {
+  const makeGraph = (projectRecipients: string) => {
+    const getGraph = getGeneratedGraph({
+      instances: new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "project-source",
+          {
+            id: "project-source",
+            type: "resource",
+            name: "Project email",
+            resourceId: "project-email",
+            scopeInstanceId: "form",
+          },
+        ],
+        [
+          "custom-source",
+          {
+            id: "custom-source",
+            type: "resource",
+            name: "Custom email",
+            resourceId: "custom-email",
+            scopeInstanceId: "form",
+          },
+        ],
+      ]),
+      resources: new Map([
+        [
+          "project-email",
+          {
+            id: "project-email",
+            name: "Project email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+          },
+        ],
+        [
+          "custom-email",
+          {
+            id: "custom-email",
+            name: "Custom email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients:
+                "team@example.com, other@example.com, third@example.com",
+            },
+          },
+        ],
+      ]),
+      forms: [
+        {
+          formId: "form",
+          destinationDataSourceIds: ["project-source", "custom-source"],
+        },
+      ],
+      projectMeta: { contactEmail: projectRecipients },
+      ownerEmail: "owner@example.com",
+    });
+    return getGraph("form", {
+      system: {},
+      formData: {},
+      browserInfo: {},
+    });
+  };
+
+  const atLimit = makeGraph("team@example.com, team@example.com");
+  expect(
+    atLimit?.resources.map((resource) => resource.emailRecipientCount)
+  ).toEqual([2, 3]);
+  expect(() => validateManagedFormRecipientLimit(atLimit!)).not.toThrow();
+
+  const overLimit = makeGraph(
+    "team@example.com, team@example.com, fourth@example.com"
+  );
+  expect(() => validateManagedFormRecipientLimit(overLimit!)).toThrow(
+    "Select no more than 5 team email recipients"
+  );
+
+  const ownerFallback = makeGraph("");
+  expect(ownerFallback?.resources[0].emailRecipientCount).toBe(1);
+  expect(makeGraph("not-an-email")).toBeUndefined();
+});
+
+test("counts an Email dependency of a selected HTTP Resource", () => {
+  const makeGraph = (recipients: string) =>
+    getGeneratedGraph({
+      instances: new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "email-source",
+          {
+            id: "email-source",
+            type: "resource",
+            scopeInstanceId: "form",
+            name: "Email",
+            resourceId: "email",
+          },
+        ],
+        [
+          "http-source",
+          {
+            id: "http-source",
+            type: "resource",
+            scopeInstanceId: "form",
+            name: "HTTP",
+            resourceId: "http",
+          },
+        ],
+      ]),
+      resources: new Map([
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+          },
+        ],
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://example.com/submit"',
+            headers: [],
+            body: encodeDataSourceVariable("email-source"),
+          },
+        ],
+      ]),
+      forms: [{ formId: "form", destinationDataSourceIds: ["http-source"] }],
+      projectMeta: { contactEmail: recipients },
+    })("form", { system: {}, formData: {}, browserInfo: {} });
+
+  const atLimit = makeGraph(
+    "a@example.com,b@example.com,c@example.com,d@example.com,e@example.com"
+  );
+  expect(atLimit?.rootIds).toEqual(["http"]);
+  expect(
+    atLimit?.resources.map(({ id, dependencies }) => [id, dependencies])
+  ).toEqual([
+    ["http", ["email"]],
+    ["email", []],
+  ]);
+  expect(() => validateManagedFormRecipientLimit(atLimit!)).not.toThrow();
+
+  const overLimit = makeGraph(
+    "a@example.com,b@example.com,c@example.com,d@example.com,e@example.com,f@example.com"
+  );
+  expect(() => validateManagedFormRecipientLimit(overLimit!)).toThrow(
+    "Select no more than 5 team email recipients"
   );
 });
 

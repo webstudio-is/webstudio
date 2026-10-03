@@ -26,6 +26,7 @@ export const generateResourceRequestFields = ({
   scope,
   method,
   emailBodyCode,
+  resolvedEmailSettings,
   projectMeta,
   ownerEmail,
 }: {
@@ -36,6 +37,7 @@ export const generateResourceRequestFields = ({
   scope: Scope;
   method?: Resource["method"];
   emailBodyCode?: string;
+  resolvedEmailSettings?: ReturnType<typeof resolveEmailResourceSettings>;
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
 }) => {
@@ -88,11 +90,13 @@ export const generateResourceRequestFields = ({
   }
   if (resource.control === "email") {
     const email = resource.email ?? {};
-    const resolved = resolveEmailResourceSettings({
-      settings: email,
-      projectMeta,
-      ownerEmail,
-    });
+    const resolved =
+      resolvedEmailSettings ??
+      resolveEmailResourceSettings({
+        settings: email,
+        projectMeta,
+        ownerEmail,
+      });
     generated += `${indent}email: {\n`;
     generated += `${indent}  recipientMode: ${JSON.stringify(resolved.recipientMode)},\n`;
     generated += `${indent}  recipients: ${JSON.stringify(resolved.recipients ?? [])},\n`;

@@ -173,6 +173,8 @@ export type ResourceRequestResource = Readonly<{
   outputName: string;
   dependencies: readonly string[];
   control?: ResourceRequest["control"];
+  /** Trusted, published team-recipient count for an Email destination. */
+  emailRecipientCount?: number;
   usesDefaultFormBody?: boolean;
   bodyFormat?: ResourceRequest["bodyFormat"];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;

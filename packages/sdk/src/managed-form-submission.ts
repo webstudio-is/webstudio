@@ -5,7 +5,10 @@ import {
   managedFormIdFieldName,
 } from "./form-fields";
 import { getResourceBodyFormatError } from "./resource-loader";
-import type { ResourceRequestGraph } from "./resource-loader";
+import type {
+  ResourceRequestGraph,
+  ResourceRequestResource,
+} from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 
 export const formDataParameterName = "formData";
@@ -18,6 +21,7 @@ export const internalFormFieldNames = new Set([
   formBotFieldName,
 ]);
 const maxFormRequestBytes = 25 * 1024 * 1024;
+export const maxFormTeamEmailDeliveries = 5;
 const isEmptyFile = (value: FormDataEntryValue) =>
   typeof File !== "undefined" &&
   value instanceof File &&
@@ -136,14 +140,60 @@ export const getManagedFormValues = (formData: FormData) => {
   return values;
 };
 
+const getReachableResources = (graph: ResourceRequestGraph) => {
+  const resourcesById = new Map(
+    graph.resources.map((resource) => [resource.id, resource])
+  );
+  const visited = new Set<string>();
+  const reachable: ResourceRequestResource[] = [];
+  const visit = (resourceId: string) => {
+    if (visited.has(resourceId)) {
+      return;
+    }
+    visited.add(resourceId);
+    const resource = resourcesById.get(resourceId);
+    if (resource === undefined) {
+      return;
+    }
+    reachable.push(resource);
+    for (const dependency of resource.dependencies) {
+      visit(dependency);
+    }
+  };
+  for (const rootId of graph.rootIds) {
+    visit(rootId);
+  }
+  return reachable;
+};
+
+/** Reject the whole submission before any destination or dependency runs. */
+export const validateManagedFormRecipientLimit = (
+  graph: ResourceRequestGraph
+) => {
+  let deliveries = 0;
+  for (const resource of getReachableResources(graph)) {
+    if (resource.control === "email") {
+      const count = resource.emailRecipientCount;
+      if (count === undefined || !Number.isSafeInteger(count) || count < 1) {
+        throw new Error("Invalid Email Resource recipient count");
+      }
+      deliveries += count;
+      if (deliveries > maxFormTeamEmailDeliveries) {
+        throw new Error(
+          `Select no more than ${maxFormTeamEmailDeliveries} team email recipients per Form submission`
+        );
+      }
+    }
+  }
+};
+
 export const validateManagedFormBodyFormats = (
   graph: ResourceRequestGraph,
   formData: FormData
 ): ResourceRequestGraph => {
   if (
-    graph.resources.some(
-      (resource) =>
-        graph.rootIds.includes(resource.id) && resource.control === "email"
+    getReachableResources(graph).some(
+      (resource) => resource.control === "email"
     )
   ) {
     throw new Error(
