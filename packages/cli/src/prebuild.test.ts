@@ -3412,11 +3412,13 @@ sitemap.map((page) => page.path);`
         }
       );
       const expired = (Date.now() - 300_001).toString(16);
+      const malformedHex = `${Date.now().toString(16)}not-hex`;
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
       try {
         for (const [botValues, error] of [
           [[], "Form bot field not found"],
           [["malformed"], "Form bot value invalid malformed"],
+          [[malformedHex], `Form bot value invalid ${malformedHex}`],
           [[expired], `Form bot value invalid ${expired}`],
           [["stale", Date.now().toString(16)], "Form bot value invalid stale"],
         ] as const) {
@@ -3603,6 +3605,12 @@ sitemap.map((page) => page.path);`
       await expect(
         submit("valid", { [formBotFieldName]: "stale" })
       ).resolves.toEqual(getManagedFormFailure("Form bot value invalid stale"));
+      const malformedHex = `${Date.now().toString(16)}not-hex`;
+      await expect(
+        submit("valid", { [formBotFieldName]: malformedHex })
+      ).resolves.toEqual(
+        getManagedFormFailure(`Form bot value invalid ${malformedHex}`)
+      );
       await expect(
         submit("valid", {
           [formBotFieldName]: "brave",

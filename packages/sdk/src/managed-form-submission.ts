@@ -181,9 +181,11 @@ export const validateManagedFormBot = (formData: FormData) => {
   }
   // Brave Shields blocks the matchMedia detection used by the Form.
   if (formBotValue !== "brave") {
-    const submitTime = parseInt(formBotValue, 16);
+    const submitTime = /^[0-9a-f]+$/i.test(formBotValue)
+      ? Number.parseInt(formBotValue, 16)
+      : Number.NaN;
     if (
-      Number.isNaN(submitTime) ||
+      !Number.isSafeInteger(submitTime) ||
       Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
     ) {
       throw new Error(`Form bot value invalid ${formBotValue}`);

@@ -568,9 +568,16 @@ test("validates the managed Form bot field and keeps the Brave exception", () =>
   );
   formData.set(formBotFieldName, "brave");
   expect(() => validateManagedFormBot(formData)).not.toThrow();
+  formData.set(formBotFieldName, Date.now().toString(16));
+  expect(() => validateManagedFormBot(formData)).not.toThrow();
   formData.set(formBotFieldName, "stale");
   expect(() => validateManagedFormBot(formData)).toThrow(
     "Form bot value invalid stale"
+  );
+  const malformed = `${Date.now().toString(16)}not-hex`;
+  formData.set(formBotFieldName, malformed);
+  expect(() => validateManagedFormBot(formData)).toThrow(
+    `Form bot value invalid ${malformed}`
   );
 });
 
