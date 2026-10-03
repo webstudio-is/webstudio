@@ -58,4 +58,5 @@ export const getResources = (_props: { system: System; resources?: Record<string
         );
 
       export const contactEmail = undefined;
+      export const emailDefaults = {"sender":"","recipients":"","subject":"New form submission","body":"","confirmationSubject":"We received your submission","confirmationBody":"Thank you. Your submission was received."};
     

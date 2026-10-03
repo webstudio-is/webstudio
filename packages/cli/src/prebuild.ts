@@ -32,6 +32,9 @@ import {
   getPublishablePages,
   generateResources,
   generateManagedFormResources,
+  defaultEmailSubject,
+  defaultEmailConfirmationSubject,
+  defaultEmailConfirmationBody,
   generatePageMeta,
   getStaticSiteMapXml,
   replaceFormActionsWithResources,
@@ -1950,14 +1953,13 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       export const emailDefaults = ${JSON.stringify({
         sender: projectMeta?.emailSender || siteData.user?.email || "",
         recipients: projectMeta?.contactEmail || siteData.user?.email || "",
-        subject: projectMeta?.emailSubject || "New form submission",
+        subject: projectMeta?.emailSubject || defaultEmailSubject,
         body: projectMeta?.emailBody || "",
         confirmationSubject:
           projectMeta?.emailConfirmationSubject ||
-          "We received your submission",
+          defaultEmailConfirmationSubject,
         confirmationBody:
-          projectMeta?.emailConfirmationBody ||
-          "Thank you. Your submission was received.",
+          projectMeta?.emailConfirmationBody || defaultEmailConfirmationBody,
       })};
     `;
 

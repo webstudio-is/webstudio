@@ -1267,6 +1267,53 @@ describe("project session mcp adapter", () => {
     ).toBeGreaterThan(JSON.stringify(tool?.inputSchema).length);
   });
 
+  test("defers the nested Email Resource schema in upsert-resource-prop", async () => {
+    const contract = runtimeContractById.get("resources.upsertProp");
+    if (contract === undefined) {
+      throw new Error("Resource prop contract not found");
+    }
+    const operation = publicOperation({
+      command: contract.command,
+      id: contract.id,
+      description: contract.command,
+      inputSchema: contract.inputSchema,
+    });
+    const [tool] = listProjectSessionMcpTools([operation]);
+    expect(
+      JSON.stringify(tool?.inputSchema.properties?.resource).length
+    ).toBeLessThan(500);
+    expect(
+      getDetailedProjectSessionMcpInputSchema(tool!).properties?.resource
+    ).toHaveProperty("properties.email");
+
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const details = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: ["upsert-resource-prop"] },
+    });
+    expect(details.structuredContent.data).toEqual(
+      expect.objectContaining({
+        tools: [
+          expect.objectContaining({
+            inputSchema: expect.objectContaining({
+              properties: expect.objectContaining({
+                resource: expect.objectContaining({
+                  properties: expect.objectContaining({
+                    email: expect.any(Object),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        ],
+      })
+    );
+  });
+
   test("keeps array items valid when deferring an oversized schema", () => {
     const operation = publicOperation({
       command: "large-array-input",
