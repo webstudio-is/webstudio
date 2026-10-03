@@ -29,6 +29,8 @@ export const NativeForm = forwardRef<
     onStateChange?: (state: "initial" | "success" | "error") => void;
     onResultChange?: (result: ManagedFormResponse) => void;
     onManagedSubmit?: (formData: ReturnType<typeof getFormDataValue>) => void;
+    onSubmissionSuccess?: () => void | Promise<void>;
+    navigationToken?: string;
     // These parameters define Resource expression scope in Builder.
     formData?: unknown;
     browserInfo?: unknown;
@@ -44,6 +46,8 @@ export const NativeForm = forwardRef<
       onStateChange,
       onResultChange,
       onManagedSubmit,
+      onSubmissionSuccess,
+      navigationToken,
       onSubmit,
       formData,
       browserInfo,
@@ -64,6 +68,17 @@ export const NativeForm = forwardRef<
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => setHydrated(true), []);
     useEffect(() => () => activeRequest.current?.abort(), []);
+    const previousNavigationToken = useRef(navigationToken);
+    const currentNavigationToken = useRef(navigationToken);
+    currentNavigationToken.current = navigationToken;
+    useEffect(() => {
+      if (previousNavigationToken.current !== navigationToken) {
+        activeRequest.current?.abort();
+        activeRequest.current = undefined;
+        setPending(false);
+        previousNavigationToken.current = navigationToken;
+      }
+    }, [navigationToken]);
     const reportState = (nextState: "initial" | "success" | "error") => {
       setInternalState(nextState);
       onStateChange?.(nextState);
@@ -126,16 +141,22 @@ export const NativeForm = forwardRef<
         return;
       }
       const controller = new AbortController();
+      const submittedNavigationToken = navigationToken;
+      const submittedLocation = window.location.href;
       activeRequest.current = controller;
       setPending(true);
       void submitManagedForm({
         values,
         managedFormId: managedFormId!,
-        location: window.location.href,
+        location: submittedLocation,
         signal: controller.signal,
       })
         .then((response) => {
-          if (controller.signal.aborted) {
+          if (
+            controller.signal.aborted ||
+            submittedNavigationToken !== currentNavigationToken.current ||
+            submittedLocation !== window.location.href
+          ) {
             return;
           }
           setPending(false);
@@ -149,6 +170,17 @@ export const NativeForm = forwardRef<
             window.location.assign(destination);
           } else {
             revealFeedback();
+            if (response.success) {
+              // Refresh is a separate GET. Its failure must not change the
+              // completed submission result or repeat the POST.
+              try {
+                void Promise.resolve(onSubmissionSuccess?.()).catch(
+                  console.error
+                );
+              } catch (error) {
+                console.error(error);
+              }
+            }
           }
         })
         .catch(() => {
