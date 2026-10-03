@@ -11,6 +11,7 @@ import { encodeDataSourceVariable } from "./expression";
 import {
   generateResources,
   replaceFormActionsWithResources,
+  normalizeLegacyFormBuildData,
 } from "./resources-generator";
 import type { DataSource } from "./schema/data-sources";
 
@@ -1051,6 +1052,28 @@ test("replace form action with resource", () => {
       },
     ])
   );
+});
+
+test("normalize legacy form action for build without mutating saved props and resources", () => {
+  const saved = renderData(
+    <Form ws:id="formId" action="https://my-url.com" method="put"></Form>
+  );
+  const propsBefore = new Map(saved.props);
+  const resourcesBefore = new Map(saved.resources);
+  const normalized = normalizeLegacyFormBuildData(saved);
+
+  expect(saved.props).toEqual(propsBefore);
+  expect(saved.resources).toEqual(resourcesBefore);
+  expect(
+    Array.from(normalized.props.values()).find((prop) => prop.name === "action")
+  ).toMatchObject({ type: "resource", value: "formId" });
+  expect(
+    Array.from(normalized.props.values()).find((prop) => prop.name === "method")
+  ).toBeUndefined();
+  expect(normalized.resources.get("formId")).toMatchObject({
+    method: "put",
+    url: '"https://my-url.com"',
+  });
 });
 
 test("ignore empty form action", () => {

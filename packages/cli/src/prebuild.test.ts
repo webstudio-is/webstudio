@@ -3101,6 +3101,84 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
+    "builds and submits saved legacy string-action Form settings (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "string",
+              value: "https://receiver.example/legacy",
+            },
+          ],
+          [
+            "method",
+            {
+              id: "method",
+              instanceId: "root",
+              name: "method",
+              type: "string",
+              value: "put",
+            },
+          ],
+        ],
+      });
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      const client = await readFile("app/__generated__/_index.tsx", "utf8");
+      expect(client).toContain('action={"action"}');
+      expect(client).toContain('method={"put"}');
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "legacy-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "legacy-action.mjs")).href
+      );
+      const received: Array<{ url: string; method: string }> = [];
+      vi.stubGlobal(
+        "fetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({ url: request.url, method: request.method });
+          return Response.json({ ok: true });
+        }
+      );
+      const form = new FormData();
+      form.set(formIdFieldName, "action");
+      form.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request("https://site.example/", {
+            method: "POST",
+            headers: { host: "site.example" },
+            body: form,
+          }),
+          context: {},
+          params: {},
+        })
+      ).resolves.toEqual({ success: true });
+      expect(received).toEqual([
+        { url: "https://receiver.example/legacy", method: "PUT" },
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
     "uses the current page params and query in a legacy Webhook Form action (%s)",
     async (template) => {
       const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);

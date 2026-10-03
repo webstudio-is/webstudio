@@ -39,7 +39,6 @@ import {
   defaultEmailConfirmationBody,
   generatePageMeta,
   getStaticSiteMapXml,
-  replaceFormActionsWithResources,
   isCoreComponent,
   coreMetas,
   decodeDataSourceVariable,
@@ -1741,11 +1740,6 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
-    replaceFormActionsWithResources({
-      instances,
-      resources,
-      props,
-    });
     const managedFormSubmissions = Array.from(instances.values())
       .filter((instance) => instance.component === "NativeForm")
       .map((instance) => {

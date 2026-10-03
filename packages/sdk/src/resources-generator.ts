@@ -158,6 +158,11 @@ export const generateResources = ({
     }[];
   }[];
 }) => {
+  ({ props, resources } = normalizeLegacyFormBuildData({
+    props,
+    resources,
+    instances,
+  }));
   const usedDataSources: DataSources = new Map();
   const contentInputDataSourceIds = new Set<string>();
   const selectedResourceIds = new Set(
@@ -530,10 +535,7 @@ const getMethod = (value: string | undefined) => {
   }
 };
 
-/**
- * migrate webhook forms to resource action
- * @todo move to client migrations eventually
- */
+/** Preserve saved Form string actions when building client and server output. */
 export const replaceFormActionsWithResources = ({
   props,
   instances,
@@ -595,4 +597,23 @@ export const replaceFormActionsWithResources = ({
       });
     }
   }
+};
+
+export const normalizeLegacyFormBuildData = ({
+  props,
+  resources,
+  instances,
+}: {
+  props: Props;
+  resources: Resources;
+  instances: Instances;
+}) => {
+  const normalizedProps = new Map(props);
+  const normalizedResources = new Map(resources);
+  replaceFormActionsWithResources({
+    props: normalizedProps,
+    resources: normalizedResources,
+    instances,
+  });
+  return { props: normalizedProps, resources: normalizedResources };
 };
