@@ -190,8 +190,11 @@ GraphQL-style resource, usually POST with a query body; `system` marks a
 resource intended to use the built-in `system` parameter or one of the built-in
 local resource URLs: `"/$resources/sitemap.xml"`,
 `"/$resources/current-date"`, and `"/$resources/assets"`. The system parameter
-fields are `system.origin`, `system.pathname`, `system.params`, and
-`system.search`.
+fields are `system.origin`, `system.pathname`, `system.params`,
+`system.search`, and `system.searchAll`. For a query such as
+`?tag=red&tag=blue`, `system.search.tag` remains `"blue"` for compatibility,
+while `system.searchAll.tag` is `["red", "blue"]`. A single value is a
+one-element array in `searchAll`; missing keys are absent.
 
 Use prop bindings for dynamic values that read variables or resources; use
 direct props for static values.

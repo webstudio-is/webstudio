@@ -23,6 +23,7 @@ import {
   formIdFieldName,
   managedFormIdFieldName,
   formBotFieldName,
+  getSystemSearch,
   cachedFetch,
   isFormSubmission,
   validateFormSubmission,
@@ -110,7 +111,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   const params = getRemixParams(arg.params);
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };
@@ -272,8 +273,8 @@ export const action = async ({
       : await request.formData();
 
     const system = {
-      params: {},
-      search: {},
+      params: getRemixParams(params ?? {}),
+      ...getSystemSearch(url.searchParams),
       origin: url.origin,
       pathname: url.pathname,
     };
@@ -312,7 +313,7 @@ export const action = async ({
       const graph = getManagedFormResourceGraph(managedFormId, {
         system: {
           params: getRemixParams(params ?? {}),
-          search: Object.fromEntries(url.searchParams),
+          ...getSystemSearch(url.searchParams),
           origin: url.origin,
           pathname: url.pathname,
         },

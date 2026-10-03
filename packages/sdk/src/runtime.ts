@@ -1,4 +1,5 @@
 export * from "./resource-loader";
+export * from "./system-search";
 export * from "./email-addresses";
 export * from "./email-resource";
 export * from "./to-string";

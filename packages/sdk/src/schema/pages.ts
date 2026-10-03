@@ -5,6 +5,8 @@ import { customResponseHeaders } from "./response-headers";
 export type System = {
   params: Record<string, string | undefined>;
   search: Record<string, string | undefined>;
+  /** All values for each query key, in their original order. */
+  searchAll?: Record<string, string[]>;
   pathname: string;
   origin: string;
 };

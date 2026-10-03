@@ -2874,6 +2874,291 @@ sitemap.map((page) => page.path);`
   });
 
   test.each(["defaults", "react-router"])(
+    "uses page params and all query values in a managed Form Resource (%s)",
+    async (template) => {
+      const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
+      const siteData = createSiteData({
+        pages: [
+          {
+            id: "product",
+            name: "Product",
+            title: "Product",
+            path: "/products/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["destination"] },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          SYSTEM_VARIABLE_ID,
+          { id: SYSTEM_VARIABLE_ID, name: "system", type: "parameter" },
+        ],
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "submit",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "submit",
+          {
+            id: "submit",
+            name: "Submit",
+            method: "post",
+            url: `"https://receiver.example/" + ${system}.params.slug + "?source=" + ${system}.search.source`,
+            headers: [
+              { name: "X-Selected", value: `${system}.searchAll.tag[0]` },
+            ],
+            body: `{ slug: ${system}.params.slug, tags: ${system}.searchAll.tag }`,
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents:
+            'export { action } from "./app/routes/[products].$slug._index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "managed-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "managed-action.mjs")).href
+      );
+      const received: Array<{
+        url: string;
+        selected: string | null;
+        body: unknown;
+      }> = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({
+            url: request.url,
+            selected: request.headers.get("X-Selected"),
+            body: await request.json(),
+          });
+          return Response.json({ accepted: true });
+        })
+      );
+      const form = new FormData();
+      form.set(managedFormIdFieldName, "root");
+      form.set(formBotFieldName, "brave");
+      form.set(managedFormArrayNamesFieldName, "[]");
+      form.set("message", "Hello");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/products/chair?source=newsletter&tag=&tag=red%2Cblue&tag=red%2Cblue&${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: form,
+            }
+          ),
+          context: {},
+          params: { slug: "chair" },
+        })
+      ).resolves.toEqual({ success: true });
+      const nextForm = new FormData();
+      nextForm.set(managedFormIdFieldName, "root");
+      nextForm.set(formBotFieldName, "brave");
+      nextForm.set(managedFormArrayNamesFieldName, "[]");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/products/table?source=direct&tag=last&${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: nextForm,
+            }
+          ),
+          context: {},
+          params: { slug: "table" },
+        })
+      ).resolves.toEqual({ success: true });
+      expect(received).toEqual([
+        {
+          url: "https://receiver.example/chair?source=newsletter",
+          selected: "",
+          body: { slug: "chair", tags: ["", "red,blue", "red,blue"] },
+        },
+        {
+          url: "https://receiver.example/table?source=direct",
+          selected: "last",
+          body: { slug: "table", tags: ["last"] },
+        },
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "uses the current page params and query in a legacy Webhook Form action (%s)",
+    async (template) => {
+      const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
+      const siteData = createSiteData({
+        pages: [
+          {
+            id: "product",
+            name: "Product",
+            title: "Product",
+            path: "/products/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "resource",
+              value: "submit",
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          SYSTEM_VARIABLE_ID,
+          { id: SYSTEM_VARIABLE_ID, name: "system", type: "parameter" },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "submit",
+          {
+            id: "submit",
+            name: "Submit",
+            method: "post",
+            url: `"https://receiver.example/" + ${system}.params.slug + "?source=" + ${system}.search.source`,
+            headers: [
+              { name: "X-Selected", value: `${system}.searchAll.tag[0]` },
+            ],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents:
+            'export { action } from "./app/routes/[products].$slug._index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "action.mjs")).href
+      );
+      const received: Array<{ url: string; selected: string | null }> = [];
+      vi.stubGlobal(
+        "fetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({
+            url: request.url,
+            selected: request.headers.get("X-Selected"),
+          });
+          return Response.json({ ok: true });
+        }
+      );
+      const form = new FormData();
+      form.set(formIdFieldName, "action");
+      form.set(formBotFieldName, "brave");
+      form.set("message", "Hello");
+      await expect(
+        action({
+          request: new Request(
+            "https://example.com/products/chair?source=newsletter&tag=&tag=second",
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: form,
+            }
+          ),
+          context: {},
+          params: { slug: "chair" },
+        })
+      ).resolves.toEqual({ success: true });
+      const nextForm = new FormData();
+      nextForm.set(formIdFieldName, "action");
+      nextForm.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request(
+            "https://example.com/products/table?source=direct&tag=last",
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: nextForm,
+            }
+          ),
+          context: {},
+          params: { slug: "table" },
+        })
+      ).resolves.toEqual({ success: true });
+      expect(received).toEqual([
+        {
+          url: "https://receiver.example/chair?source=newsletter",
+          selected: "",
+        },
+        {
+          url: "https://receiver.example/table?source=direct",
+          selected: "last",
+        },
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
     "submits identical forms twice while caching dependencies (%s)",
     async (template) => {
       const siteData = createSiteData({

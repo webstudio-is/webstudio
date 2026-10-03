@@ -1,5 +1,5 @@
 import type { PageContextServer } from "vike/types";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
+import { isLocalResource, loadResources, getSystemSearch } from "@webstudio-is/sdk/runtime";
 import { getPageMeta, getResources } from "__SERVER__";
 import { assets } from "__ASSETS__";
 import {
@@ -57,7 +57,7 @@ export const data = async (pageContext: PageContextServer) => {
   const params = pageContext.routeParams;
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };
