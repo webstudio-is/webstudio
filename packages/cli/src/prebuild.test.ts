@@ -3224,6 +3224,7 @@ sitemap.map((page) => page.path);`
             headers: [
               { name: "X-Selected", value: `${system}.searchAll.tag[0]` },
             ],
+            body: `{ slug: ${system}.params.slug, source: ${system}.search.source, tags: ${system}.searchAll.tag, missing: ${system}.search.missing }`,
           },
         ],
       ] as never;
@@ -3246,7 +3247,11 @@ sitemap.map((page) => page.path);`
       const { action } = await import(
         pathToFileURL(join(tempDir, "action.mjs")).href
       );
-      const received: Array<{ url: string; selected: string | null }> = [];
+      const received: Array<{
+        url: string;
+        selected: string | null;
+        body: unknown;
+      }> = [];
       vi.stubGlobal(
         "fetch",
         async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -3254,6 +3259,7 @@ sitemap.map((page) => page.path);`
           received.push({
             url: request.url,
             selected: request.headers.get("X-Selected"),
+            body: await request.json(),
           });
           return Response.json({ ok: true });
         }
@@ -3262,6 +3268,7 @@ sitemap.map((page) => page.path);`
       form.set(formIdFieldName, "action");
       form.set(formBotFieldName, "brave");
       form.set("message", "Hello");
+      form.set("slug", "submitted-slug");
       await expect(
         action({
           request: new Request(
@@ -3297,10 +3304,17 @@ sitemap.map((page) => page.path);`
         {
           url: "https://receiver.example/chair?source=newsletter",
           selected: "",
+          body: {
+            slug: "submitted-slug",
+            source: "newsletter",
+            tags: ["", "second"],
+            message: "Hello",
+          },
         },
         {
           url: "https://receiver.example/table?source=direct",
           selected: "last",
+          body: { slug: "table", source: "direct", tags: ["last"] },
         },
       ]);
     }

@@ -196,6 +196,16 @@ fields are `system.origin`, `system.pathname`, `system.params`,
 while `system.searchAll.tag` is `["red", "blue"]`. A single value is a
 one-element array in `searchAll`; missing keys are absent.
 
+For a saved Webhook Form on `/products/:slug`, a Resource URL can use
+`"https://api.example.com/products/" + system.params.slug + "/comments"`.
+On `/products/chair?source=newsletter&tag=red&tag=blue`, use
+`system.search.source` for `"newsletter"` and `system.searchAll.tag` for
+`["red", "blue"]` in a header or object body expression. A missing key stays
+absent; use `system.search.source ?? "direct"` when a fallback is needed.
+These values come from the page being submitted, including after navigation.
+For a saved Webhook Form action, object body bindings are combined with the
+submitted fields; a submitted field wins when both use the same key.
+
 Use prop bindings for dynamic values that read variables or resources; use
 direct props for static values.
 
