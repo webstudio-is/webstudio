@@ -43,6 +43,9 @@ const blockDocument = new Parameter(contentBlockDocumentProp);
 const formData = new Parameter(formDataParameterName);
 const browserInfo = new Parameter(browserInfoParameterName);
 const formState = new Variable("formState", "initial");
+const formStatus = new Variable("status", 0);
+const formResults = new Variable("results", []);
+const formErrors = new Variable("errors", []);
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
   ({ resolutionKey }) => resolutionKey === "element:li"
@@ -226,6 +229,12 @@ export const coreTemplates = {
         state={expression`${formState}`}
         onStateChange={
           new ActionValue(["state"], expression`${formState} = state`)
+        }
+        onResultChange={
+          new ActionValue(
+            ["result"],
+            expression`({status: ${formStatus} = result.status, results: ${formResults} = result.results, errors: ${formErrors} = result.errors})`
+          )
         }
       >
         {setInstanceMeta(

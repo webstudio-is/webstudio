@@ -9,6 +9,7 @@ import { insertWebstudioElementAt } from "./insert";
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import { toast } from "@webstudio-is/design-system";
+import { lintExpression } from "@webstudio-is/expression";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
@@ -29,6 +30,7 @@ import {
   blockComponent,
   coreMetas,
   elementComponent,
+  encodeDataSourceVariable,
 } from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
@@ -48,9 +50,14 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
-import { getInstancePath } from "@webstudio-is/project-build/runtime";
-import { selectPage } from "../nano-states";
+import {
+  findAvailableVariables,
+  getInstancePath,
+} from "@webstudio-is/project-build/runtime";
+import { getInstanceKey, selectPage } from "../nano-states";
 import { selectInstance } from "../nano-states";
+import { $propValuesByInstanceSelector } from "../nano-states/props";
+import { $dataSourceVariables } from "../nano-states/variables";
 import { $selectedPageId } from "../nano-states/pages";
 import { expectSlotsShareFragment } from "../slot-test-utils";
 
@@ -830,6 +837,88 @@ describe("insert webstudio component at", () => {
       );
       expect(formProps.find(({ name }) => name === "action")).toBeUndefined();
       expect(formProps.some(({ name }) => name === "onStateChange")).toBe(true);
+      const resultProp = formProps.find(
+        ({ name }) => name === "onResultChange"
+      );
+      expect(resultProp?.type).toBe("action");
+      if (resultProp?.type !== "action") {
+        throw new Error("Expected a Form result action");
+      }
+      const [resultAction] = resultProp.value;
+      expect(resultAction?.type).toBe("execute");
+      if (resultAction?.type !== "execute") {
+        throw new Error("Expected an executable Form result action");
+      }
+      expect(
+        lintExpression({
+          expression: resultAction.code,
+          allowAssignment: true,
+          availableVariables: new Set([
+            "result",
+            ...Array.from($dataSources.get().keys()).map(
+              encodeDataSourceVariable
+            ),
+          ]),
+        })
+      ).toEqual([]);
+      for (const name of ["status", "results", "errors"]) {
+        expect(
+          Array.from($dataSources.get().values()).some(
+            (dataSource) =>
+              dataSource.type === "variable" && dataSource.name === name
+          )
+        ).toBe(true);
+      }
+      const result = {
+        success: false,
+        status: 502,
+        results: [{ resourceId: "first", status: 200, body: "ok" }],
+        errors: [
+          {
+            resourceId: "second",
+            status: 502,
+            body: "failed",
+            message: "failed",
+          },
+        ],
+      };
+      await vi.waitFor(() => {
+        expect(
+          $propValuesByInstanceSelector
+            .get()
+            .get(getInstanceKey([formId, "bodyId"]))
+            ?.get("onResultChange")
+        ).toBeTypeOf("function");
+      });
+      const onResultChange = $propValuesByInstanceSelector
+        .get()
+        .get(getInstanceKey([formId, "bodyId"]))
+        ?.get("onResultChange") as (value: unknown) => void;
+      onResultChange(result);
+      const variables = new Map(
+        Array.from($dataSources.get().values())
+          .filter((dataSource) => dataSource.type === "variable")
+          .map((dataSource) => [
+            dataSource.name,
+            $dataSourceVariables.get().get(dataSource.id),
+          ])
+      );
+      expect(variables.get("status")).toBe(result.status);
+      expect(variables.get("results")).toBe(result.results);
+      expect(variables.get("errors")).toBe(result.errors);
+      for (const child of $instances.get().get(formId)?.children ?? []) {
+        if (child.type !== "id") {
+          continue;
+        }
+        const availableNames = findAvailableVariables({
+          startingInstanceId: child.value,
+          instances: $instances.get(),
+          dataSources: $dataSources.get(),
+        }).map(({ name }) => name);
+        expect(availableNames).toEqual(
+          expect.arrayContaining(["status", "results", "errors"])
+        );
+      }
       for (const name of ["formData", "browserInfo"]) {
         const prop = formProps.find((prop) => prop.name === name);
         expect(prop?.type).toBe("parameter");

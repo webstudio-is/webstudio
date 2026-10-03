@@ -47,12 +47,14 @@ test("resource-only Form blocks native navigation and reports an empty selection
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
+  const onResultChange = vi.fn();
   try {
     await act(async () => {
       root.render(
         <NativeForm
           action="/__must_not_navigate__"
           submission={{ destinations: [] }}
+          onResultChange={onResultChange}
         >
           <button type="submit">Send</button>
         </NativeForm>
@@ -64,6 +66,18 @@ test("resource-only Form blocks native navigation and reports an empty selection
     expect(container.querySelector('[role="alert"]')?.textContent).toMatch(
       /Select at least one Resource/
     );
+    expect(onResultChange).toHaveBeenCalledExactlyOnceWith({
+      success: false,
+      status: 400,
+      results: [],
+      errors: [
+        {
+          status: 400,
+          body: null,
+          message: "Select at least one Resource destination",
+        },
+      ],
+    });
   } finally {
     await act(async () => root.unmount());
     container.remove();

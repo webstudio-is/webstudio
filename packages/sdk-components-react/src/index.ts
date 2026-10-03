@@ -10,5 +10,6 @@ export {
 } from "./form-submission";
 export {
   useManagedFormResult,
+  type ManagedFormActionResult,
   type ManagedFormResult,
 } from "./managed-form-result";

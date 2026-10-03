@@ -16,6 +16,8 @@ import {
   loadResources,
   cachedFetch,
   getManagedFormBrowserInfo,
+  getManagedFormFailure,
+  getManagedFormResponse,
   getManagedFormValues,
   readFormDataWithLimit,
   managedFormRequestParamName,
@@ -26,6 +28,7 @@ import {
   managedFormIdFieldName,
   formBotFieldName,
   getSystemSearch,
+  type ManagedFormResponse,
 } from "@webstudio-is/sdk/runtime";
 import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 import { authenticateRequest } from "@webstudio-is/wsauth";
@@ -272,13 +275,14 @@ export const action = async ({
   context,
   params,
 }: ActionFunctionArgs): Promise<
-  { success: true } | { success: false; errors: string[] }
+  { success: true } | { success: false; errors: string[] } | ManagedFormResponse
 > => {
   authenticateProductionRequest(request);
 
+  let isManagedFormRequest = false;
   try {
     const url = new URL(request.url);
-    const isManagedFormRequest =
+    isManagedFormRequest =
       url.searchParams.get(managedFormRequestParamName) === "1";
     url.searchParams.delete(managedFormRequestParamName);
     url.host = getRequestHost(request);
@@ -357,44 +361,7 @@ export const action = async ({
         timeoutMs: 10_000,
         retryFailedRoots: true,
       });
-      const outcomes = Object.values(results);
-      if (outcomes.length !== graph.rootIds.length) {
-        throw new Error("Form Resource results are incomplete");
-      }
-      const errors = outcomes.flatMap((result) => {
-        if (
-          typeof result === "object" &&
-          result !== null &&
-          "ok" in result &&
-          result.ok === true
-        ) {
-          return [];
-        }
-        const statusText =
-          typeof result === "object" &&
-          result !== null &&
-          "statusText" in result &&
-          typeof result.statusText === "string"
-            ? result.statusText.trim()
-            : "";
-        const status =
-          typeof result === "object" &&
-          result !== null &&
-          "status" in result &&
-          typeof result.status === "number"
-            ? result.status
-            : undefined;
-        return [
-          statusText ||
-            (status === undefined
-              ? "Resource request failed"
-              : `Resource request failed (${status})`),
-        ];
-      });
-      if (errors.length > 0) {
-        return { success: false, errors };
-      }
-      return { success: true };
+      return getManagedFormResponse(graph, results);
     }
 
     const resourceName = formData.get(formIdFieldName);
@@ -459,9 +426,13 @@ export const action = async ({
   } catch (error) {
     console.error(error);
 
+    const message = error instanceof Error ? error.message : "Unknown error";
+    if (isManagedFormRequest) {
+      return getManagedFormFailure(message);
+    }
     return {
       success: false,
-      errors: [error instanceof Error ? error.message : "Unknown error"],
+      errors: [message],
     };
   }
 };

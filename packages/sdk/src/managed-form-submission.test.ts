@@ -7,6 +7,7 @@ import {
 } from "./form-fields";
 import {
   getManagedFormBrowserInfo,
+  getManagedFormResponse,
   getManagedFormValues,
   readFormDataWithLimit,
   validateManagedFormBot,
@@ -14,6 +15,66 @@ import {
   validateManagedFormRecipientLimit,
 } from "./managed-form-submission";
 import { loadResources } from "./resource-loader";
+
+test("formats ordered final outcomes without response headers", () => {
+  const graph = {
+    rootIds: ["second", "first"],
+    resources: [
+      {
+        id: "first",
+        outputName: "First",
+        dependencies: [],
+        createRequest: vi.fn(),
+      },
+      {
+        id: "second",
+        outputName: "Second",
+        dependencies: [],
+        createRequest: vi.fn(),
+      },
+    ],
+  };
+  expect(
+    getManagedFormResponse(graph, {
+      First: {
+        ok: true,
+        status: 201,
+        statusText: "Created",
+        data: { id: 1 },
+        headers: { authorization: "private" },
+      },
+      Second: {
+        ok: false,
+        status: 422,
+        statusText: "Invalid submission",
+        data: { reason: "missing field" },
+        headers: { "set-cookie": "private" },
+      },
+    })
+  ).toEqual({
+    success: false,
+    status: 502,
+    results: [
+      {
+        resourceId: "second",
+        status: 422,
+        body: { reason: "missing field" },
+      },
+      { resourceId: "first", status: 201, body: { id: 1 } },
+    ],
+    errors: [
+      {
+        resourceId: "second",
+        status: 422,
+        body: { reason: "missing field" },
+        message: "Invalid submission",
+      },
+    ],
+  });
+  expect(() => getManagedFormResponse(graph, { First: {} })).toThrow(
+    "Form Resource results are incomplete"
+  );
+});
 
 test("allows five team deliveries across Email Resources and counts duplicate recipients", () => {
   const graph = {

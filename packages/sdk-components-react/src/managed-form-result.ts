@@ -1,26 +1,32 @@
 import { useEffect, useRef } from "react";
 import { resolveRedirectUrl } from "@webstudio-is/sdk/link-utils";
+import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 
-export type ManagedFormResult = {
+export type ManagedFormActionResult = {
   success: boolean;
-  errors?: string[];
+  errors?: string[] | ManagedFormResponse["errors"];
 };
+
+/** Kept for callers of the original form result hook. */
+export type ManagedFormResult = ManagedFormActionResult;
 
 /** Applies the shared completion behavior for Router and Remix Forms. */
 export const useManagedFormResult = ({
   state,
   data,
   onStateChange,
+  onResultChange,
   successRedirect,
 }: {
   state: "idle" | "submitting" | "loading";
-  data?: ManagedFormResult;
+  data?: ManagedFormActionResult;
   onStateChange?: (state: "initial" | "success" | "error") => void;
+  onResultChange?: (result: ManagedFormResponse) => void;
   successRedirect?: string;
 }) => {
   const previousData = useRef(data);
-  const callbacks = useRef({ onStateChange, successRedirect });
-  callbacks.current = { onStateChange, successRedirect };
+  const callbacks = useRef({ onStateChange, onResultChange, successRedirect });
+  callbacks.current = { onStateChange, onResultChange, successRedirect };
   useEffect(() => {
     if (
       state !== "idle" ||
@@ -30,7 +36,11 @@ export const useManagedFormResult = ({
       return;
     }
     previousData.current = data;
-    const { onStateChange, successRedirect } = callbacks.current;
+    const { onStateChange, onResultChange, successRedirect } =
+      callbacks.current;
+    if ("results" in data && "status" in data) {
+      onResultChange?.(data as ManagedFormResponse);
+    }
     onStateChange?.(data.success ? "success" : "error");
     if (data.success) {
       const destination = resolveRedirectUrl(

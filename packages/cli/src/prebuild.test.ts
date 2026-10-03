@@ -47,6 +47,7 @@ import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   formBotFieldName,
   formIdFieldName,
+  getManagedFormFailure,
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
   managedFormRequestParamName,
@@ -816,7 +817,7 @@ describe("prebuild", () => {
       "utf8"
     );
     expect(generated).toContain(
-      'export const contactEmail = "\\\"Team, West\\\" <team@example.com>"'
+      'export const contactEmail = "\\"Team, West\\" <team@example.com>"'
     );
     expect(generated).toContain('"sender":"Owner <owner@example.com>"');
     expect(generated).toContain('"subject":"New request"');
@@ -2996,7 +2997,7 @@ sitemap.map((page) => page.path);`
           context: {},
           params: { slug: "chair" },
         })
-      ).resolves.toEqual({ success: true });
+      ).resolves.toMatchObject({ success: true });
       const nextForm = new FormData();
       nextForm.set(managedFormIdFieldName, "root");
       nextForm.set(formBotFieldName, "brave");
@@ -3014,7 +3015,7 @@ sitemap.map((page) => page.path);`
           context: {},
           params: { slug: "table" },
         })
-      ).resolves.toEqual({ success: true });
+      ).resolves.toMatchObject({ success: true });
       expect(received).toEqual([
         {
           url: "https://receiver.example/chair?source=newsletter",
@@ -3396,30 +3397,20 @@ sitemap.map((page) => page.path);`
         ["malformed", "Form submission settings not found"],
         ["native", "Form submission settings not found"],
       ]) {
-        await expect(submit(id)).resolves.toEqual({
-          success: false,
-          errors: [error],
-        });
+        await expect(submit(id)).resolves.toEqual(getManagedFormFailure(error));
       }
-      await expect(submit("valid")).resolves.toEqual({
-        success: false,
-        errors: ["Form bot field not found"],
-      });
+      await expect(submit("valid")).resolves.toEqual(
+        getManagedFormFailure("Form bot field not found")
+      );
       await expect(
         submit("valid", { [formBotFieldName]: "stale" })
-      ).resolves.toEqual({
-        success: false,
-        errors: ["Form bot value invalid stale"],
-      });
+      ).resolves.toEqual(getManagedFormFailure("Form bot value invalid stale"));
       await expect(
         submit("valid", {
           [formBotFieldName]: "brave",
           [managedFormArrayNamesFieldName]: "not-json",
         })
-      ).resolves.toEqual({
-        success: false,
-        errors: ["Invalid Form field groups"],
-      });
+      ).resolves.toEqual(getManagedFormFailure("Invalid Form field groups"));
       const unmarked = new FormData();
       unmarked.set(managedFormIdFieldName, "valid");
       unmarked.set(formBotFieldName, "brave");
@@ -3585,14 +3576,13 @@ sitemap.map((page) => page.path);`
           ),
           context: {},
         })
-      ).resolves.toEqual({
-        success: false,
-        errors: [
+      ).resolves.toEqual(
+        getManagedFormFailure(
           projectRecipientCount === 2
             ? "Email delivery requires Webstudio Cloud and is not configured yet"
-            : "Select no more than 5 team email recipients per Form submission",
-        ],
-      });
+            : "Select no more than 5 team email recipients per Form submission"
+        )
+      );
       expect(outgoingFetch).not.toHaveBeenCalled();
     }
   );
@@ -3700,12 +3690,11 @@ sitemap.map((page) => page.path);`
           ),
           context: {},
         })
-      ).resolves.toEqual({
-        success: false,
-        errors: [
-          "Email delivery requires Webstudio Cloud and is not configured yet",
-        ],
-      });
+      ).resolves.toEqual(
+        getManagedFormFailure(
+          "Email delivery requires Webstudio Cloud and is not configured yet"
+        )
+      );
       expect(outgoingFetch).not.toHaveBeenCalled();
     }
   );
@@ -3841,7 +3830,9 @@ sitemap.map((page) => page.path);`
             url: '""',
             headers: [],
             email: {
-              body: `\`Submitted fields: \${${encodeDataSourceVariable("formData")}}\``,
+              body: `\`Submitted fields: \${${encodeDataSourceVariable(
+                "formData"
+              )}}\``,
             },
           },
         ],
@@ -3899,7 +3890,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "submission",
               type: "json",
-              value: { destinations: ["failed-source", "sibling-source"] },
+              value: { destinations: ["sibling-source", "failed-source"] },
             },
           ],
         ],
@@ -3953,7 +3944,9 @@ sitemap.map((page) => page.path);`
             id: "failed",
             name: "Failed",
             method: "post",
-            url: `"https://receiver.example/failed/" + ${encodeDataSourceVariable("dependency-source")}.data.id`,
+            url: `"https://receiver.example/failed/" + ${encodeDataSourceVariable(
+              "dependency-source"
+            )}.data.id`,
             headers: [],
           },
         ],
@@ -4005,7 +3998,10 @@ sitemap.map((page) => page.path);`
             return Response.json({ id: "resolved" });
           }
           if (url.endsWith("/sibling")) {
-            return Response.json({ accepted: true });
+            return Response.json(
+              { accepted: true },
+              { headers: { "Set-Cookie": "private" } }
+            );
           }
           if (failure === "persistent") {
             return new Response("Still failed", { status: 422 });
@@ -4051,12 +4047,36 @@ sitemap.map((page) => page.path);`
         );
       };
 
-      await expect(submit()).resolves.toEqual({ success: true });
+      await expect(submit()).resolves.toEqual({
+        success: true,
+        status: 200,
+        results: [
+          {
+            resourceId: "sibling",
+            status: 200,
+            body: { accepted: true },
+          },
+          {
+            resourceId: "failed",
+            status: 200,
+            body: { accepted: true },
+          },
+        ],
+        errors: [],
+      });
       expectAttempts(2);
       attempts.clear();
       failure = "network";
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
-      await expect(submit()).resolves.toEqual({ success: true });
+      await expect(submit()).resolves.toMatchObject({
+        success: true,
+        status: 200,
+        results: [
+          { resourceId: "sibling", status: 200, body: { accepted: true } },
+          { resourceId: "failed", status: 200, body: { accepted: true } },
+        ],
+        errors: [],
+      });
       expectAttempts(2);
       errorLog.mockRestore();
       attempts.clear();
@@ -4065,7 +4085,15 @@ sitemap.map((page) => page.path);`
       try {
         const pending = submit();
         await vi.advanceTimersByTimeAsync(10_000);
-        await expect(pending).resolves.toEqual({ success: true });
+        await expect(pending).resolves.toMatchObject({
+          success: true,
+          status: 200,
+          results: [
+            { resourceId: "sibling", status: 200, body: { accepted: true } },
+            { resourceId: "failed", status: 200, body: { accepted: true } },
+          ],
+          errors: [],
+        });
         expectAttempts(2);
       } finally {
         vi.useRealTimers();
@@ -4074,7 +4102,23 @@ sitemap.map((page) => page.path);`
       failure = "persistent";
       await expect(submit()).resolves.toEqual({
         success: false,
-        errors: ["Resource request failed (422)"],
+        status: 502,
+        results: [
+          {
+            resourceId: "sibling",
+            status: 200,
+            body: { accepted: true },
+          },
+          { resourceId: "failed", status: 422, body: "Still failed" },
+        ],
+        errors: [
+          {
+            resourceId: "failed",
+            status: 422,
+            body: "Still failed",
+            message: "Resource request failed (422)",
+          },
+        ],
       });
       expectAttempts(2);
     }
@@ -4253,10 +4297,9 @@ sitemap.map((page) => page.path);`
           params: {},
         });
       };
-      await expect(submit(new File(["hello"], "hello.txt"))).resolves.toEqual({
-        success: false,
-        errors: ["JSON body cannot include uploaded files"],
-      });
+      await expect(submit(new File(["hello"], "hello.txt"))).resolves.toEqual(
+        getManagedFormFailure("JSON body cannot include uploaded files")
+      );
       expect(received).toHaveLength(0);
       const submission = submit();
       try {
@@ -4264,7 +4307,11 @@ sitemap.map((page) => page.path);`
       } finally {
         releaseRequests();
       }
-      await expect(submission).resolves.toEqual({ success: true });
+      await expect(submission).resolves.toMatchObject({
+        success: true,
+        status: 200,
+        errors: [],
+      });
       expect(received).toEqual([
         {
           url: "https://forms.example/submit",
@@ -4289,7 +4336,23 @@ sitemap.map((page) => page.path);`
       failBrowserResource = true;
       await expect(submit()).resolves.toEqual({
         success: false,
-        errors: ["Resource request failed (422)"],
+        status: 502,
+        results: [
+          {
+            resourceId: "form-resource",
+            status: 200,
+            body: { accepted: true },
+          },
+          { resourceId: "browser-resource", status: 422, body: "Rejected" },
+        ],
+        errors: [
+          {
+            resourceId: "browser-resource",
+            status: 422,
+            body: "Rejected",
+            message: "Resource request failed (422)",
+          },
+        ],
       });
     }
   );

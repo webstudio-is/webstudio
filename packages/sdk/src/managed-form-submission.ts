@@ -22,6 +22,82 @@ export const internalFormFieldNames = new Set([
 ]);
 const maxFormRequestBytes = 25 * 1024 * 1024;
 export const maxFormTeamEmailDeliveries = 5;
+
+export type ManagedFormResult = {
+  resourceId: string;
+  status: number;
+  body: unknown;
+};
+
+export type ManagedFormError = Omit<ManagedFormResult, "resourceId"> & {
+  resourceId?: string;
+  message: string;
+};
+
+export type ManagedFormResponse = {
+  success: boolean;
+  status: number;
+  results: ManagedFormResult[];
+  errors: ManagedFormError[];
+};
+
+export const getManagedFormFailure = (
+  message: string
+): ManagedFormResponse => ({
+  success: false,
+  status: 400,
+  results: [],
+  errors: [{ status: 400, body: null, message }],
+});
+
+/** Keep only final destination status and body in the public Form response. */
+export const getManagedFormResponse = (
+  graph: ResourceRequestGraph,
+  outcomes: Record<string, unknown>
+): ManagedFormResponse => {
+  const resourcesById = new Map(
+    graph.resources.map((resource) => [resource.id, resource])
+  );
+  const results: ManagedFormResult[] = [];
+  const errors: ManagedFormError[] = [];
+  for (const resourceId of graph.rootIds) {
+    const resource = resourcesById.get(resourceId);
+    const outcome = resource && outcomes[resource.outputName];
+    if (
+      typeof outcome !== "object" ||
+      outcome === null ||
+      !("ok" in outcome) ||
+      typeof outcome.ok !== "boolean" ||
+      !("status" in outcome) ||
+      typeof outcome.status !== "number" ||
+      !("data" in outcome)
+    ) {
+      throw new Error("Form Resource results are incomplete");
+    }
+    const result = {
+      resourceId,
+      status: outcome.status,
+      body: outcome.data,
+    };
+    results.push(result);
+    if (outcome.ok === false) {
+      const statusText =
+        "statusText" in outcome && typeof outcome.statusText === "string"
+          ? outcome.statusText.trim()
+          : "";
+      errors.push({
+        ...result,
+        message: statusText || `Resource request failed (${outcome.status})`,
+      });
+    }
+  }
+  return {
+    success: errors.length === 0,
+    status: errors.length === 0 ? 200 : 502,
+    results,
+    errors,
+  };
+};
 const isEmptyFile = (value: FormDataEntryValue) =>
   typeof File !== "undefined" &&
   value instanceof File &&

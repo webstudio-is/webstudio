@@ -10,6 +10,7 @@ import {
   isFormSubmission,
   validateFormSubmission,
 } from "@webstudio-is/sdk/form-submission";
+import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 import { getFormDataValue } from "./form-submission";
 
 export const defaultTag = "form";
@@ -21,6 +22,7 @@ export const NativeForm = forwardRef<
     successRedirect?: string;
     state?: "initial" | "success" | "error";
     onStateChange?: (state: "initial" | "success" | "error") => void;
+    onResultChange?: (result: ManagedFormResponse) => void;
     onManagedSubmit?: (formData: ReturnType<typeof getFormDataValue>) => void;
     // These parameters define Resource expression scope in Builder.
     formData?: unknown;
@@ -33,6 +35,7 @@ export const NativeForm = forwardRef<
       submission,
       state,
       onStateChange,
+      onResultChange,
       onManagedSubmit,
       onSubmit,
       formData,
@@ -59,11 +62,29 @@ export const NativeForm = forwardRef<
       event.preventDefault();
       if (configurationError) {
         setError(configurationError);
+        onResultChange?.({
+          success: false,
+          status: 400,
+          results: [],
+          errors: [{ status: 400, body: null, message: configurationError }],
+        });
         onStateChange?.("error");
         return;
       }
       if (onManagedSubmit === undefined) {
         setError("Resource submission is unavailable");
+        onResultChange?.({
+          success: false,
+          status: 400,
+          results: [],
+          errors: [
+            {
+              status: 400,
+              body: null,
+              message: "Resource submission is unavailable",
+            },
+          ],
+        });
         onStateChange?.("error");
         return;
       }

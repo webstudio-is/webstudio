@@ -2,6 +2,7 @@ import { forwardRef, type ComponentProps, type ElementRef } from "react";
 import { useFetcher, useLocation } from "@remix-run/react";
 import {
   createManagedSubmissionFormData,
+  type ManagedFormActionResult,
   type getFormDataValue,
   useManagedFormResult,
 } from "@webstudio-is/sdk-components-react";
@@ -17,6 +18,7 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
     {
       "data-ws-managed-form-id": managedFormId,
       onStateChange,
+      onResultChange,
       successRedirect,
       state,
       onManagedSubmit,
@@ -25,12 +27,13 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
     },
     ref
   ) => {
-    const fetcher = useFetcher<{ success: boolean; errors?: string[] }>();
+    const fetcher = useFetcher<ManagedFormActionResult>();
     const location = useLocation();
     useManagedFormResult({
       state: fetcher.state,
-      data: fetcher.data,
+      data: fetcher.data as ManagedFormActionResult | undefined,
       onStateChange,
+      onResultChange,
       successRedirect,
     });
     const handleManagedSubmit = (
@@ -58,6 +61,7 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
         data-ws-managed-form-id={managedFormId}
         state={state}
         onStateChange={onStateChange}
+        onResultChange={onResultChange}
         ref={ref}
         onManagedSubmit={
           managedFormId === undefined ? undefined : handleManagedSubmit
@@ -66,7 +70,7 @@ export const NativeForm = forwardRef<ElementRef<typeof BaseNativeForm>, Props>(
         {children}
         {fetcher.data?.errors?.map((error, index) => (
           <div role="alert" key={index}>
-            {error}
+            {typeof error === "string" ? error : error.message}
           </div>
         ))}
       </BaseNativeForm>

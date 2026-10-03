@@ -17,10 +17,23 @@ test("managed Form posts its server identity and shows the action error", async 
   const submissions: FormData[] = [];
   const requestUrls: string[] = [];
   const stateChanges: string[] = [];
+  const resultChanges: unknown[] = [];
   const action = vi.fn(async ({ request }: { request: Request }) => {
     requestUrls.push(request.url);
     submissions.push(await request.formData());
-    return { success: false, errors: ["Resource request failed (422)"] };
+    return {
+      success: false,
+      status: 502,
+      results: [{ resourceId: "resource-id", status: 422, body: "Rejected" }],
+      errors: [
+        {
+          resourceId: "resource-id",
+          status: 422,
+          body: "Rejected",
+          message: "Resource request failed (422)",
+        },
+      ],
+    };
   });
   const router = createMemoryRouter(
     [
@@ -31,6 +44,7 @@ test("managed Form posts its server identity and shows the action error", async 
             data-ws-managed-form-id="form-instance"
             submission={{ mode: "resources", destinations: ["resource-id"] }}
             onStateChange={(state) => stateChanges.push(state)}
+            onResultChange={(result) => resultChanges.push(result)}
           >
             <input name="message" defaultValue="Hello" />
             <input name="tag" defaultValue="first" />
@@ -96,6 +110,7 @@ test("managed Form posts its server identity and shows the action error", async 
       )
     );
     expect(stateChanges).toEqual(["initial", "error"]);
+    expect(resultChanges).toEqual([await action.mock.results[0].value]);
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -104,7 +119,13 @@ test("managed Form posts its server identity and shows the action error", async 
 
 test("managed Form reports success after the action succeeds", async () => {
   const stateChanges: string[] = [];
-  const action = vi.fn(async () => ({ success: true }));
+  const resultChanges: unknown[] = [];
+  const action = vi.fn(async () => ({
+    success: true,
+    status: 200,
+    results: [{ resourceId: "resource-id", status: 201, body: { id: 1 } }],
+    errors: [],
+  }));
   const router = createMemoryRouter(
     [
       {
@@ -114,6 +135,7 @@ test("managed Form reports success after the action succeeds", async () => {
             data-ws-managed-form-id="form-instance"
             submission={{ destinations: ["resource-id"] }}
             onStateChange={(state) => stateChanges.push(state)}
+            onResultChange={(result) => resultChanges.push(result)}
           >
             <input name="message" defaultValue="Hello" />
             <button type="submit">Send</button>
@@ -135,6 +157,7 @@ test("managed Form reports success after the action succeeds", async () => {
       await vi.waitFor(() => expect(action).toHaveBeenCalledOnce());
     });
     await vi.waitFor(() => expect(stateChanges).toContain("success"));
+    expect(resultChanges).toEqual([await action.mock.results[0].value]);
   } finally {
     await act(async () => root.unmount());
     container.remove();
