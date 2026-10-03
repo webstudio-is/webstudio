@@ -17,16 +17,28 @@ export const useManagedFormResult = ({
   onStateChange,
   onResultChange,
   successRedirect,
+  revealFeedback,
 }: {
   state: "idle" | "submitting" | "loading";
   data?: ManagedFormActionResult;
   onStateChange?: (state: "initial" | "success" | "error") => void;
   onResultChange?: (result: ManagedFormResponse) => void;
   successRedirect?: string;
+  revealFeedback?: () => void;
 }) => {
   const previousData = useRef(data);
-  const callbacks = useRef({ onStateChange, onResultChange, successRedirect });
-  callbacks.current = { onStateChange, onResultChange, successRedirect };
+  const callbacks = useRef({
+    onStateChange,
+    onResultChange,
+    successRedirect,
+    revealFeedback,
+  });
+  callbacks.current = {
+    onStateChange,
+    onResultChange,
+    successRedirect,
+    revealFeedback,
+  };
   useEffect(() => {
     if (
       state !== "idle" ||
@@ -36,20 +48,19 @@ export const useManagedFormResult = ({
       return;
     }
     previousData.current = data;
-    const { onStateChange, onResultChange, successRedirect } =
+    const { onStateChange, onResultChange, successRedirect, revealFeedback } =
       callbacks.current;
     if ("results" in data && "status" in data) {
       onResultChange?.(data as ManagedFormResponse);
     }
+    const destination = data.success
+      ? resolveRedirectUrl(successRedirect, window.location.href)
+      : undefined;
     onStateChange?.(data.success ? "success" : "error");
-    if (data.success) {
-      const destination = resolveRedirectUrl(
-        successRedirect,
-        window.location.href
-      );
-      if (destination !== undefined) {
-        window.location.assign(destination);
-      }
+    if (destination !== undefined) {
+      window.location.assign(destination);
+    } else {
+      revealFeedback?.();
     }
   }, [data, state]);
 };

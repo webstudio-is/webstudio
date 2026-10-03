@@ -113,7 +113,9 @@ export const NativeForm = forwardRef<
           <div style={{ display: "contents" }}>{children}</div>
         </fieldset>
         {(configurationError || error) && (
-          <div role="alert">{error ?? configurationError}</div>
+          <div role="alert" data-ws-form-feedback="">
+            {error ?? configurationError}
+          </div>
         )}
       </form>
     );

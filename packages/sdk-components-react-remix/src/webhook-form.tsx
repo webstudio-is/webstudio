@@ -11,6 +11,8 @@ import {
   formBotFieldName,
   isBraveBrowser,
 } from "@webstudio-is/sdk/runtime";
+import { resolveRedirectUrl } from "@webstudio-is/sdk/link-utils";
+import { useFormFeedbackScroll } from "@webstudio-is/sdk-components-react";
 
 export const defaultTag = "form";
 
@@ -87,18 +89,38 @@ export const WebhookForm = forwardRef<
     state?: State;
     encType?: FormProps["encType"];
     onStateChange?: (state: State) => void;
+    successRedirect?: string;
     action?: string;
   }
 >(
   (
-    { children, action, method, state = "initial", onStateChange, ...rest },
+    {
+      children,
+      action,
+      method,
+      state = "initial",
+      onStateChange,
+      successRedirect,
+      ...rest
+    },
     ref
   ) => {
     const fetcher = useFetcher<{ success: boolean }>();
+    const { setFormRef, prepareFeedback, revealFeedback } =
+      useFormFeedbackScroll(ref, state);
 
     useOnFetchEnd(fetcher, (data) => {
       const state: State = data?.success === true ? "success" : "error";
+      const destination =
+        data?.success === true
+          ? resolveRedirectUrl(successRedirect, window.location.href)
+          : undefined;
       onStateChange?.(state);
+      if (destination !== undefined) {
+        window.location.assign(destination);
+      } else {
+        revealFeedback();
+      }
     });
 
     /**
@@ -109,6 +131,8 @@ export const WebhookForm = forwardRef<
     const handleSubmitAndAddHiddenJsField = (
       event: React.FormEvent<HTMLFormElement>
     ) => {
+      prepareFeedback();
+      onStateChange?.("initial");
       const hiddenInput = document.createElement("input");
       hiddenInput.type = "hidden";
       hiddenInput.name = formBotFieldName;
@@ -127,7 +151,7 @@ export const WebhookForm = forwardRef<
         {...rest}
         method="post"
         data-state={state}
-        ref={ref}
+        ref={setFormRef}
         onSubmit={handleSubmitAndAddHiddenJsField}
       >
         <input

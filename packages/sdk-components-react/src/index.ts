@@ -13,3 +13,4 @@ export {
   type ManagedFormActionResult,
   type ManagedFormResult,
 } from "./managed-form-result";
+export { useFormFeedbackScroll } from "./form-feedback-scroll";
