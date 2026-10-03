@@ -4195,6 +4195,189 @@ sitemap.map((page) => page.path);`
     60_000
   );
 
+  test.each(["defaults", "react-router"])(
+    "sends saved Webhook Form files through the framework HTTP handler (%s)",
+    async (template) => {
+      const received: Array<{
+        method: string | undefined;
+        contentType: string | undefined;
+        message: FormDataEntryValue | null;
+        configured: FormDataEntryValue | null;
+        upload: { name: string; type: string; bytes: number[] };
+      }> = [];
+      const receiver = createServer(async (request, response) => {
+        try {
+          const chunks: Buffer[] = [];
+          for await (const chunk of request) {
+            chunks.push(Buffer.from(chunk));
+          }
+          const outbound = new Request("http://receiver.example/accept", {
+            method: "POST",
+            headers: request.headers as HeadersInit,
+            body: Buffer.concat(chunks),
+          });
+          const fields = await outbound.formData();
+          const upload = fields.get("upload");
+          if (!(upload instanceof File)) {
+            throw new Error("Uploaded file not found");
+          }
+          received.push({
+            method: request.method,
+            contentType: request.headers["content-type"],
+            message: fields.get("message"),
+            configured: fields.get("configured"),
+            upload: {
+              name: upload.name,
+              type: upload.type,
+              bytes: Array.from(new Uint8Array(await upload.arrayBuffer())),
+            },
+          });
+          response.writeHead(201, { "content-type": "application/json" });
+          response.end(JSON.stringify({ accepted: true }));
+        } catch {
+          response.writeHead(500);
+          response.end();
+        }
+      });
+      await new Promise<void>((resolve) =>
+        receiver.listen(0, "127.0.0.1", resolve)
+      );
+      try {
+        const address = receiver.address();
+        if (address === null || typeof address === "string") {
+          throw new Error("Mock Resource server did not start");
+        }
+        const siteData = createSiteData({
+          instances: [
+            ["root", { id: "root", component: "Form", children: [] }],
+          ],
+          props: [
+            [
+              "action",
+              {
+                id: "action",
+                instanceId: "root",
+                name: "action",
+                type: "resource",
+                value: "submit",
+              },
+            ],
+          ],
+        });
+        siteData.build.resources = [
+          [
+            "submit",
+            {
+              id: "submit",
+              name: "Submit",
+              method: "post",
+              url: JSON.stringify(`http://127.0.0.1:${address.port}/accept`),
+              headers: [],
+              bodyFormat: "multipart",
+              body: '{ configured: "saved" }',
+            },
+          ],
+        ] as never;
+        await writeSiteData(siteData);
+        await prebuild({ assets: false, template: [template] });
+        if (template === "react-router") {
+          await linkPackagedPreviewDependencies();
+          await runGeneratedCommand("react-router", ["build"]);
+        } else {
+          await symlink(
+            join(originalCwd, "node_modules"),
+            "node_modules",
+            "dir"
+          );
+          const viteConfig = await readFile("vite.config.ts", "utf8");
+          await writeFile(
+            "vite.config.ts",
+            viteConfig
+              .replaceAll(
+                'conditions: ["browser", "development|production"]',
+                'conditions: ["webstudio", "browser", "development|production"]'
+              )
+              .replaceAll(
+                'conditions: ["node", "development|production"]',
+                'conditions: ["webstudio", "node", "development|production"]'
+              )
+          );
+          await runGeneratedCommand("remix", ["vite:build"]);
+        }
+        const serverEntry = pathToFileURL(
+          join(tempDir, "build/server/index.js")
+        ).href;
+        const handlerPackage =
+          template === "react-router"
+            ? "react-router"
+            : "@remix-run/server-runtime";
+        const runner = `
+          import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
+          const build = await import(${JSON.stringify(serverEntry)});
+          const handleRequest = createRequestHandler(build, "production");
+          const form = new FormData();
+          form.set(${JSON.stringify(formIdFieldName)}, "action");
+          form.set(${JSON.stringify(formBotFieldName)}, "brave");
+          form.set("message", "Hello");
+          form.set("upload", new File([new Uint8Array([0, 128, 255])], "photo.bin", { type: "application/octet-stream" }));
+          const response = await handleRequest(new Request("https://example.com/__ws-form", {
+            method: "POST", body: form, headers: { host: "example.com" },
+          }));
+          process.stdout.write(JSON.stringify({
+            status: response.status,
+            contentType: response.headers.get("content-type"),
+            body: await response.json(),
+          }));
+        `;
+        const { stdout } = await execFileAsync(
+          process.execPath,
+          [
+            "--import",
+            pathToFileURL(
+              join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
+            ).href,
+            "--input-type=module",
+            "-e",
+            runner,
+          ],
+          {
+            cwd: tempDir,
+            env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
+          }
+        );
+        const result = JSON.parse(stdout) as {
+          status: number;
+          contentType: string;
+          body: unknown;
+        };
+        expect(result.status).toBe(200);
+        expect(result.contentType).toContain("application/json");
+        expect(result.body).toEqual({
+          success: true,
+          status: 200,
+          results: [],
+          errors: [],
+        });
+        expect(received).toEqual([
+          {
+            method: "POST",
+            contentType: expect.stringContaining("multipart/form-data"),
+            message: "Hello",
+            configured: "saved",
+            upload: {
+              name: "photo.bin",
+              type: "application/octet-stream",
+              bytes: [0, 128, 255],
+            },
+          },
+        ]);
+      } finally {
+        await new Promise<void>((resolve) => receiver.close(() => resolve()));
+      }
+    },
+    60_000
+  );
+
   test.each(["/__ws-form", "/__ws-form/submissions", "/__ws-form/:slug"])(
     "rejects a page under the reserved managed Form endpoint (%s)",
     async (path) => {
