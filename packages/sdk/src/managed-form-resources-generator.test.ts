@@ -2,7 +2,10 @@ import { transformSync } from "esbuild";
 import { expect, test } from "vitest";
 import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
-import { getDefaultFormEmailBodyExpression } from "./email-resource";
+import {
+  getDefaultFormEmailBodyExpression,
+  resetEmailResourceSetting,
+} from "./email-resource";
 import { generateManagedFormResources } from "./managed-form-resources-generator";
 import { validateManagedFormRecipientLimit } from "./managed-form-submission";
 import type { DataSources } from "./schema/data-sources";
@@ -139,7 +142,6 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
     ]),
     forms: [{ formId: "form", destinationDataSourceIds: ["emailDataSource"] }],
     projectMeta: {
-      emailBody: "Intro",
       contactEmail: '"Team, West" <team@example.com>',
       emailSender: "Owner <owner@example.com>",
     },
@@ -175,6 +177,83 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
   expect(graph?.resources[0].createRequest(new Map()).email?.body).toContain(
     '"name": "notes.txt"'
   );
+});
+
+test("a translated project body survives Email Resource override and reset", () => {
+  const getBody = (resourceBody?: string) => {
+    const getGraph = getGeneratedGraph({
+      instances: new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "formData",
+          {
+            id: "formData",
+            type: "parameter",
+            scopeInstanceId: "form",
+            name: "formData",
+          },
+        ],
+        [
+          "emailDataSource",
+          {
+            id: "emailDataSource",
+            type: "resource",
+            scopeInstanceId: "form",
+            name: "email",
+            resourceId: "email",
+          },
+        ],
+      ]),
+      resources: new Map([
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email:
+              resourceBody === undefined ? undefined : { body: resourceBody },
+          },
+        ],
+      ]),
+      forms: [
+        { formId: "form", destinationDataSourceIds: ["emailDataSource"] },
+      ],
+      projectMeta: {
+        contactEmail: "team@example.com",
+        emailBody: "Solicitud recibida. Incluiremos los detalles por separado.",
+      },
+    });
+    const graph = getGraph("form", {
+      system: {},
+      formData: { nombre: "Ana" },
+      browserInfo: { language: "es" },
+    });
+    return graph?.resources[0].createRequest(new Map()).email?.body;
+  };
+  const projectBody =
+    "Solicitud recibida. Incluiremos los detalles por separado.";
+  const inherited = getBody();
+  expect(inherited).toBe(projectBody);
+  expect(inherited).not.toContain("Form data:");
+  expect(inherited).not.toContain("Browser info:");
+  const override = { body: '"Mensaje del recurso"' };
+  expect(getBody(override.body)).toBe("Mensaje del recurso");
+  const reset = resetEmailResourceSetting(override, "body");
+  expect(getBody(reset.body)).toBe(projectBody);
 });
 
 test("counts project and custom Email recipients across a Form, including duplicate addresses", () => {

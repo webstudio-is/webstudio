@@ -34,7 +34,8 @@ const fields = [
   {
     key: "emailBody",
     label: "Owner plain-text body",
-    placeholder: "A new form was submitted.",
+    placeholder: "Write the complete owner message",
+    help: "Leave empty for the default message. Form-scoped Email Resources include submitted fields and browser information by default. Edit an Email Resource body expression to use bindings in a custom message.",
   },
   {
     key: "emailConfirmationSubject",

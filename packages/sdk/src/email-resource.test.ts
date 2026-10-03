@@ -44,7 +44,7 @@ describe("Email Resource defaults", () => {
     contactEmail: '"Team, West" <team@example.com>',
     emailSender: "Owner Name <owner@example.com>",
     emailSubject: "Project subject",
-    emailBody: "Project introduction",
+    emailBody: "Project body",
   };
 
   test("inherits project recipients and Sender, then resets each override", () => {
@@ -57,13 +57,14 @@ describe("Email Resource defaults", () => {
       recipients: [{ name: "Team, West", address: "team@example.com" }],
       sender: { name: "Owner Name", address: "owner@example.com" },
       subject: '"Project subject"',
-      body: '"Project introduction"',
+      body: '"Project body"',
     });
     const settings = {
       recipientMode: "custom" as const,
       recipients: "custom@example.com",
       sender: "Custom <custom@example.com>",
       subject: '"Custom subject"',
+      body: '"Resource body"',
     };
     expect(
       resolveEmailResourceSettings({
@@ -75,10 +76,14 @@ describe("Email Resource defaults", () => {
       recipients: [{ address: "custom@example.com" }],
       sender: { name: "Custom", address: "custom@example.com" },
       subject: '"Custom subject"',
+      body: '"Resource body"',
     });
     const reset = resetEmailResourceSetting(
-      resetEmailResourceSetting(settings, "sender"),
-      "subject"
+      resetEmailResourceSetting(
+        resetEmailResourceSetting(settings, "sender"),
+        "subject"
+      ),
+      "body"
     );
     expect(
       resolveEmailResourceSettings({
@@ -89,6 +94,7 @@ describe("Email Resource defaults", () => {
     ).toMatchObject({
       sender: { name: "Owner Name", address: "owner@example.com" },
       subject: '"Project subject"',
+      body: '"Project body"',
     });
   });
 
@@ -101,31 +107,26 @@ describe("Email Resource defaults", () => {
     });
     const expression = getDefaultFormEmailBodyExpression(
       "formData",
-      "browserInfo",
-      "Introduction"
+      "browserInfo"
     );
     expect(expression).toContain("Form data:");
     expect(expression).toContain("${formData}");
     expect(expression).toContain("${browserInfo}");
-    expect(expression).toContain("Introduction");
   });
 
-  test("treats the project body introduction as text, not an expression", () => {
+  test("uses a translated project body as the complete literal message", () => {
     const expression = getDefaultFormEmailBodyExpression(
       "formData",
       "browserInfo",
-      "Hello ${secrets}\\ world `quoted`"
+      "Solicitud recibida. ${secrets}\\ `citado`"
     );
-    expect(expression).toContain("Hello \\${secrets}\\\\ world \\`quoted\\`");
-    expect(expression).toContain("${formData}");
-    expect(expression).toContain("${browserInfo}");
     const render = new Function(
       "formData",
       "browserInfo",
       `return ${expression}`
     ) as (formData: string, browserInfo: string) => string;
-    expect(render("name: Ada", "language: en")).toContain(
-      "Hello ${secrets}\\ world `quoted`\n\nForm data:\nname: Ada"
+    expect(render("nombre: Ana", "idioma: es")).toBe(
+      "Solicitud recibida. ${secrets}\\ `citado`"
     );
   });
 });

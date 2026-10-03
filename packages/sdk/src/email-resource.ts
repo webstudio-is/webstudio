@@ -11,13 +11,15 @@ export const defaultEmailConfirmationBody =
 export const getDefaultFormEmailBodyExpression = (
   formDataIdentifier: string,
   browserInfoIdentifier?: string,
-  introduction?: string
+  projectBody?: string
 ) =>
-  `\`${introduction ? `${introduction.replaceAll("\\", "\\\\").replaceAll("`", "\\`").replaceAll("${", "\\${")}\n\n` : ""}Form data:\n\${${formDataIdentifier}}` +
-  (browserInfoIdentifier
-    ? `\n\nBrowser info:\n\${${browserInfoIdentifier}}`
-    : "") +
-  "\`";
+  projectBody
+    ? JSON.stringify(projectBody)
+    : `\`Form data:\n\${${formDataIdentifier}}` +
+      (browserInfoIdentifier
+        ? `\n\nBrowser info:\n\${${browserInfoIdentifier}}`
+        : "") +
+      "\`";
 
 /** Inheritance is represented by an absent field, so reset removes an override. */
 export const resolveEmailResourceSettings = ({
