@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   AuthorizationError,
   authorizeProject,
+  getProjectPlanFeatures,
   procedure,
   router,
   type AppContext,
@@ -72,6 +73,7 @@ import {
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
   runtimeOperationContracts,
+  validateContactEmail,
   type RuntimeOperationId,
 } from "@webstudio-is/project-build/contracts";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
@@ -444,13 +446,31 @@ const runtimeBuildMutation = <Result extends Record<string, unknown> = {}>(
 ) =>
   buildMutation(
     runtimeMutationInput(id, requiresConfirm),
-    async ({ input, build, commit }) =>
-      commitRuntimeMutation<Result>({
+    async ({ ctx, input, build, commit }) => {
+      if (id === "projectSettings.update") {
+        const contactEmail = (input as { meta?: { contactEmail?: unknown } })
+          .meta?.contactEmail;
+        if (
+          typeof contactEmail === "string" &&
+          contactEmail !== build.projectSettings.meta.contactEmail
+        ) {
+          const ownerPlan = await getProjectPlanFeatures(input.projectId, ctx);
+          const error = validateContactEmail(
+            contactEmail,
+            ownerPlan.maxContactEmailsPerProject
+          );
+          if (error !== undefined) {
+            return throwApiError("BAD_REQUEST", error);
+          }
+        }
+      }
+      return commitRuntimeMutation<Result>({
         id,
         build,
         input,
         commit,
-      })
+      });
+    }
   );
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
