@@ -1,10 +1,69 @@
-import { expect, test } from "vitest";
-import { getFormDataValue } from "./form-submission";
+import { afterEach, expect, test, vi } from "vitest";
+import {
+  createManagedSubmissionFormData,
+  getFormDataValue,
+} from "./form-submission";
 import {
   formBotFieldName,
+  getManagedFormValues,
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
+  validateManagedFormBot,
 } from "@webstudio-is/sdk/runtime";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+const submit = () =>
+  createManagedSubmissionFormData({
+    values: { name: "Visitor" },
+    managedFormId: "form",
+  });
+
+test("generates one fresh bot field for each managed submission", () => {
+  const { width, height } = screen;
+  const divisor = (a: number, b: number): number =>
+    b === 0 ? a : divisor(b, a % b);
+  const commonDivisor = divisor(width, height);
+  const ratio = `${width / commonDivisor}/${height / commonDivisor}`;
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches:
+      query === `(device-aspect-ratio: ${ratio})` ||
+      query === `(device-width: ${width}px) and (device-height: ${height}px)` ||
+      query === "(prefers-color-scheme: light)",
+  }));
+  const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+
+  const first = submit();
+  now.mockReturnValue(1_300_001);
+  const second = submit();
+  expect(first.getAll(formBotFieldName)).toEqual(["f4240"]);
+  expect(second.getAll(formBotFieldName)).toEqual(["13d621"]);
+  expect(() => validateManagedFormBot(first)).toThrow("Form bot value invalid");
+  expect(() => validateManagedFormBot(second)).not.toThrow();
+  expect(getManagedFormValues(second)).toEqual({ name: "Visitor" });
+});
+
+test("rejects a broken matchMedia browser like the legacy Webhook Form", () => {
+  vi.stubGlobal("matchMedia", () => ({ matches: false }));
+  const formData = submit();
+  expect(formData.getAll(formBotFieldName)).toEqual(["jsdom"]);
+  expect(() => validateManagedFormBot(formData)).toThrow(
+    "Form bot value invalid"
+  );
+});
+
+test("keeps the Brave bypass when matchMedia is blocked", () => {
+  vi.stubGlobal("navigator", { brave: { isBrave: () => true } });
+  vi.stubGlobal("matchMedia", () => {
+    throw new Error("Brave Shields blocked matchMedia");
+  });
+  const formData = submit();
+  expect(formData.getAll(formBotFieldName)).toEqual(["brave"]);
+  expect(() => validateManagedFormBot(formData)).not.toThrow();
+});
 
 test("preserves repeated controls, unchecked groups, hidden values and files", () => {
   const form = document.createElement("form");

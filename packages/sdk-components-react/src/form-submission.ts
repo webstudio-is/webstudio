@@ -13,6 +13,30 @@ const internalFormFieldNames = new Set([
   managedFormIdFieldName,
 ]);
 
+// The legacy Webhook Form rejects simple headless environments whose
+// matchMedia implementation reports inconsistent device and color settings.
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+
+const hasWorkingBrowserMediaQueries = () => {
+  if (typeof matchMedia === "undefined") {
+    return false;
+  }
+
+  const { width, height } = screen;
+  const divisor = gcd(width, height);
+  const ratio = `${width / divisor}/${height / divisor}`;
+  return (
+    matchMedia(`(device-aspect-ratio: ${ratio})`).matches &&
+    matchMedia(`(device-width: ${width}px) and (device-height: ${height}px)`)
+      .matches &&
+    !matchMedia(
+      `(device-width: ${width - 1}px) and (device-height: ${height}px)`
+    ).matches &&
+    matchMedia("(prefers-color-scheme: light)").matches !==
+      matchMedia("(prefers-color-scheme: dark)").matches
+  );
+};
+
 /** Match native FormData order while retaining repeated names and File values. */
 export const getFormDataValue = (
   form: HTMLFormElement,
@@ -96,7 +120,11 @@ export const createManagedSubmissionFormData = ({
   formData.set(managedFormIdFieldName, managedFormId);
   formData.set(
     formBotFieldName,
-    isBraveBrowser() ? "brave" : Date.now().toString(16)
+    isBraveBrowser()
+      ? "brave"
+      : hasWorkingBrowserMediaQueries()
+        ? Date.now().toString(16)
+        : "jsdom"
   );
   return formData;
 };
