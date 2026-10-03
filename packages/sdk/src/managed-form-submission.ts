@@ -4,8 +4,9 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "./form-fields";
-import { getResourceBodyFormatError } from "./resource-loader";
+import { getResourceBodyFormatError, loadResources } from "./resource-loader";
 import type {
+  ResourceGraphLoadOptions,
   ResourceRequestGraph,
   ResourceRequestResource,
 } from "./resource-loader";
@@ -340,6 +341,83 @@ export const validateManagedFormBodyFormats = (
         : { ...resource, createRequest: () => request };
     }),
   };
+};
+
+/** Resolve dependencies, validate every selected request, then dispatch them together. */
+export const loadManagedFormResources = async (
+  customFetch: typeof fetch,
+  graph: ResourceRequestGraph,
+  baseUrl?: string | URL,
+  options?: ResourceGraphLoadOptions
+) => {
+  const roots = new Set(graph.rootIds);
+  const resourcesById = new Map(
+    graph.resources.map((resource) => [resource.id, resource])
+  );
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const dependencyIds = new Set<string>();
+  const visit = (resourceId: string, dependency = false) => {
+    if (dependency && roots.has(resourceId)) {
+      throw new Error("Selected Form Resources cannot depend on one another");
+    }
+    if (visiting.has(resourceId)) {
+      throw new Error("Form Resource graph contains a cycle");
+    }
+    if (visited.has(resourceId)) {
+      return;
+    }
+    const resource = resourcesById.get(resourceId);
+    if (resource === undefined) {
+      throw new Error(`Form Resource ${resourceId} not found`);
+    }
+    visiting.add(resourceId);
+    for (const childId of resource.dependencies) {
+      dependencyIds.add(childId);
+      visit(childId, true);
+    }
+    visiting.delete(resourceId);
+    visited.add(resourceId);
+  };
+  for (const rootId of graph.rootIds) {
+    visit(rootId);
+  }
+  if (dependencyIds.size === 0) {
+    return loadResources(customFetch, graph, baseUrl, options);
+  }
+
+  // Dependency Resources can make outbound requests. Only selected primary
+  // destinations have the all-or-none preflight guarantee.
+  const dependencies = await loadResources(
+    customFetch,
+    {
+      resources: graph.resources.map((resource) => ({
+        ...resource,
+        outputName: resource.id,
+      })),
+      rootIds: [...dependencyIds],
+    },
+    baseUrl,
+    { ...options, retryFailedRoots: false }
+  );
+  const documents = new Map(Object.entries(dependencies));
+  const preparedRoots = graph.rootIds.map((rootId) => {
+    const resource = resourcesById.get(rootId)!;
+    const request = resource.createRequest(
+      new Map(resource.dependencies.map((id) => [id, documents.get(id)]))
+    );
+    const error = getResourceBodyFormatError(request);
+    if (error !== undefined) {
+      throw new Error(error);
+    }
+    return { ...resource, dependencies: [], createRequest: () => request };
+  });
+  return loadResources(
+    customFetch,
+    { resources: preparedRoots, rootIds: graph.rootIds },
+    baseUrl,
+    options
+  );
 };
 
 export type ManagedFormBrowserInfo = {

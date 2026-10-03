@@ -9,6 +9,7 @@ import {
   getManagedFormBrowserInfo,
   getManagedFormResponse,
   getManagedFormValues,
+  loadManagedFormResources,
   readFormDataWithLimit,
   validateManagedFormBot,
   validateManagedFormBodyFormats,
@@ -381,7 +382,7 @@ test("reuses dependency-free requests after preflight", async () => {
   expect(createLookup).toHaveBeenCalledOnce();
 });
 
-test("an invalid dependent body never dispatches its destination", async () => {
+test("an invalid dependent body prevents every selected destination", async () => {
   const requestedUrls: string[] = [];
   const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
     requestedUrls.push(String(input));
@@ -435,15 +436,60 @@ test("an invalid dependent body never dispatches its destination", async () => {
     },
     new FormData()
   );
-  const results = await loadResources(fetch, graph);
-  expect(results).toMatchObject({
-    Independent: { ok: true },
-    Dependent: { ok: false, status: 400 },
+  await expect(loadManagedFormResources(fetch, graph)).rejects.toThrow(
+    "JSON body cannot include uploaded files"
+  );
+  expect(requestedUrls).toEqual(["https://example.com/lookup"]);
+});
+
+test("rejects selected-root dependencies and cycles before any outbound request", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({}));
+  const request = () => ({
+    name: "Resource",
+    method: "post" as const,
+    url: "https://example.com/resource",
+    searchParams: [],
+    headers: [],
   });
-  expect(requestedUrls.sort()).toEqual([
-    "https://example.com/independent",
-    "https://example.com/lookup",
-  ]);
+  await expect(
+    loadManagedFormResources(fetch, {
+      rootIds: ["first", "second"],
+      resources: [
+        {
+          id: "first",
+          outputName: "First",
+          dependencies: ["second"],
+          createRequest: request,
+        },
+        {
+          id: "second",
+          outputName: "Second",
+          dependencies: [],
+          createRequest: request,
+        },
+      ],
+    })
+  ).rejects.toThrow("Selected Form Resources cannot depend on one another");
+  await expect(
+    loadManagedFormResources(fetch, {
+      rootIds: ["first"],
+      resources: [
+        {
+          id: "first",
+          outputName: "First",
+          dependencies: ["lookup"],
+          createRequest: request,
+        },
+        {
+          id: "lookup",
+          outputName: "Lookup",
+          dependencies: ["lookup"],
+          createRequest: request,
+        },
+      ],
+    })
+  ).rejects.toThrow("Form Resource graph contains a cycle");
+  expect(fetch).not.toHaveBeenCalled();
 });
 
 test("checks each destination body before a managed submission", () => {

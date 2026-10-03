@@ -5218,6 +5218,177 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
+    "preflights dependent bodies before any selected Form destination (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: {
+                destinations: ["independent-source", "dependent-source"],
+              },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "formData",
+          {
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "lookup-source",
+          {
+            id: "lookup-source",
+            name: "Lookup",
+            type: "resource",
+            resourceId: "lookup",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "independent-source",
+          {
+            id: "independent-source",
+            name: "Independent",
+            type: "resource",
+            resourceId: "independent",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "dependent-source",
+          {
+            id: "dependent-source",
+            name: "Dependent",
+            type: "resource",
+            resourceId: "dependent",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "lookup",
+          {
+            id: "lookup",
+            name: "Lookup",
+            method: "get",
+            url: '"https://example.com/lookup"',
+            headers: [],
+          },
+        ],
+        [
+          "independent",
+          {
+            id: "independent",
+            name: "Independent",
+            method: "post",
+            url: '"https://example.com/independent"',
+            headers: [],
+            bodyFormat: "json",
+            body: '{ message: "Hello" }',
+          },
+        ],
+        [
+          "dependent",
+          {
+            id: "dependent",
+            name: "Dependent",
+            method: "post",
+            url: '"https://example.com/dependent"',
+            headers: [],
+            bodyFormat: "json",
+            body: `{ attachment: ${encodeDataSourceVariable("formData")}.attachment, lookup: ${encodeDataSourceVariable("lookup-source")}.data }`,
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "preflight-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "preflight-action.mjs")).href
+      );
+      const received: string[] = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push(request.url);
+          return Response.json({ id: "looked-up" });
+        })
+      );
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      formData.set("attachment", new File(["hello"], "hello.txt"));
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            { method: "POST", headers: { host: "example.com" }, body: formData }
+          ),
+          context: {},
+          params: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("JSON body cannot include uploaded files")
+      );
+      expect(received).toEqual(["https://example.com/lookup"]);
+
+      formData.set("attachment", "text attachment");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            { method: "POST", headers: { host: "example.com" }, body: formData }
+          ),
+          context: {},
+          params: {},
+        })
+      ).resolves.toMatchObject({ success: true, status: 200 });
+      expect(received.slice(1).sort()).toEqual([
+        "https://example.com/dependent",
+        "https://example.com/independent",
+        "https://example.com/lookup",
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
     "submits selected Form Resources in parallel with scoped values (%s)",
     async (template) => {
       const siteData = createSiteData({

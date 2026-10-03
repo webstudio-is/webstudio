@@ -14,6 +14,7 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
+  loadManagedFormResources,
   getManagedFormBrowserInfo,
   getManagedFormFailure,
   getManagedFormResponse,
@@ -350,7 +351,7 @@ export const action = async ({
         context,
         projectDomain,
       });
-      const results = await loadResources(protectedFetch, validatedGraph, url, {
+      const results = await loadManagedFormResources(protectedFetch, validatedGraph, url, {
         signal: request.signal,
         timeoutMs: 10_000,
         retryFailedRoots: true,
