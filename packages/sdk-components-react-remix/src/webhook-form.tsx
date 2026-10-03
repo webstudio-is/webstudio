@@ -1,94 +1,20 @@
+import { type ElementRef, type ComponentProps, forwardRef } from "react";
+import { useFetcher, type FormProps } from "@remix-run/react";
+import { formIdFieldName } from "@webstudio-is/sdk/runtime";
 import {
-  type ElementRef,
-  type ComponentProps,
-  forwardRef,
-  useRef,
-  useEffect,
-} from "react";
-import { useFetcher, type Fetcher, type FormProps } from "@remix-run/react";
-import {
-  formIdFieldName,
-  formBotFieldName,
-  isBraveBrowser,
-} from "@webstudio-is/sdk/runtime";
-import { resolveRedirectUrl } from "@webstudio-is/sdk/link-utils";
-import { useFormFeedbackScroll } from "@webstudio-is/sdk-components-react";
+  useLegacyWebhookSubmission,
+  type LegacyWebhookState,
+} from "@webstudio-is/sdk-components-react";
 
 export const defaultTag = "form";
-
-const useOnFetchEnd = <Data,>(
-  fetcher: Fetcher<Data>,
-  handler: (data: Data) => void
-) => {
-  const latestHandler = useRef(handler);
-  latestHandler.current = handler;
-
-  const prevFetcher = useRef(fetcher);
-  useEffect(() => {
-    if (
-      prevFetcher.current.state !== fetcher.state &&
-      fetcher.state === "idle" &&
-      fetcher.data !== undefined
-    ) {
-      latestHandler.current(fetcher.data);
-    }
-    prevFetcher.current = fetcher;
-  }, [fetcher]);
-};
-
-type State = "initial" | "success" | "error";
-
-// gcd - greatest common divisor
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-
-const getAspectRatioString = (width: number, height: number) => {
-  const r = gcd(width, height);
-  const aspectRatio = `${width / r}/${height / r}`;
-  return aspectRatio;
-};
-
-/**
- * jsdom detector, trying to check that matchMedia is working (jsdom has no support of matchMedia and usually simple stub is used)
- */
-const isJSDom = () => {
-  if (typeof matchMedia === "undefined") {
-    return true;
-  }
-
-  const { width, height } = screen;
-  const deviceAspectRatio = getAspectRatioString(width, height);
-
-  const matchAspectRatio = matchMedia(
-    `(device-aspect-ratio: ${deviceAspectRatio})`
-  ).matches;
-
-  const matchWidthHeight = matchMedia(
-    `(device-width: ${width}px) and (device-height: ${height}px)`
-  ).matches;
-
-  const matchWidthHeightFail = matchMedia(
-    `(device-width: ${width - 1}px) and (device-height: ${height}px)`
-  ).matches;
-
-  const matchLight = matchMedia("(prefers-color-scheme: light)").matches;
-  const matchDark = matchMedia("(prefers-color-scheme: dark)").matches;
-
-  const hasMatchMedia =
-    matchAspectRatio &&
-    matchWidthHeight &&
-    !matchWidthHeightFail &&
-    matchLight !== matchDark;
-
-  return hasMatchMedia === false;
-};
 
 export const WebhookForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
     /** Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully. */
-    state?: State;
+    state?: LegacyWebhookState;
     encType?: FormProps["encType"];
-    onStateChange?: (state: State) => void;
+    onStateChange?: (state: LegacyWebhookState) => void;
     successRedirect?: string;
     action?: string;
   }
@@ -98,7 +24,7 @@ export const WebhookForm = forwardRef<
       children,
       action,
       method,
-      state = "initial",
+      state,
       onStateChange,
       successRedirect,
       ...rest
@@ -106,58 +32,23 @@ export const WebhookForm = forwardRef<
     ref
   ) => {
     const fetcher = useFetcher<{ success: boolean }>();
-    const { setFormRef, prepareFeedback, revealFeedback } =
-      useFormFeedbackScroll(ref, state);
-
-    useOnFetchEnd(fetcher, (data) => {
-      const state: State = data?.success === true ? "success" : "error";
-      const destination =
-        data?.success === true
-          ? resolveRedirectUrl(successRedirect, window.location.href)
-          : undefined;
-      onStateChange?.(state);
-      if (destination !== undefined) {
-        window.location.assign(destination);
-      } else {
-        revealFeedback();
-      }
+    const submission = useLegacyWebhookSubmission({
+      transportState: fetcher.state,
+      result: fetcher.data,
+      state,
+      onStateChange,
+      successRedirect,
+      forwardedRef: ref,
     });
-
-    /**
-     * Add hidden field generated using js with simple jsdom detector.
-     * This is used to protect form submission against very simple bots.
-     * Skipped for Brave browser due to: https://github.com/brave/brave-browser/issues/46541
-     */
-    const handleSubmitAndAddHiddenJsField = (
-      event: React.FormEvent<HTMLFormElement>
-    ) => {
-      prepareFeedback();
-      onStateChange?.("initial");
-      for (const field of event.currentTarget.querySelectorAll(
-        `[name="${formBotFieldName}"]`
-      )) {
-        field.remove();
-      }
-      const hiddenInput = document.createElement("input");
-      hiddenInput.type = "hidden";
-      hiddenInput.name = formBotFieldName;
-      // Skip bot detection for Brave - Shields blocks matchMedia fingerprinting detection
-      if (isBraveBrowser()) {
-        hiddenInput.value = "brave";
-      } else {
-        // Non-numeric values are utilized for logging purposes.
-        hiddenInput.value = isJSDom() ? "jsdom" : Date.now().toString(16);
-      }
-      event.currentTarget.appendChild(hiddenInput);
-    };
 
     return (
       <fetcher.Form
         {...rest}
         method="post"
-        data-state={state}
-        ref={setFormRef}
-        onSubmit={handleSubmitAndAddHiddenJsField}
+        data-state={submission.state}
+        aria-busy={submission.pending || undefined}
+        ref={submission.setFormRef}
+        onSubmit={submission.handleSubmit}
       >
         <input
           type="hidden"

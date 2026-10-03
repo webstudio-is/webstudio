@@ -14,4 +14,8 @@ export {
   type ManagedFormResult,
 } from "./managed-form-result";
 export { useFormFeedbackScroll } from "./form-feedback-scroll";
+export {
+  useLegacyWebhookSubmission,
+  type LegacyWebhookState,
+} from "./legacy-webhook-submission";
 export { submitManagedForm } from "./managed-form-client";
