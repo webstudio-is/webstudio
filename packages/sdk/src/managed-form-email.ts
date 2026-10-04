@@ -269,12 +269,12 @@ export const createCloudflareManagedFormEmailSender = (
       return timedOut
         ? failure(504, "EMAIL_TIMEOUT", "Email delivery timed out")
         : options.signal?.aborted
-        ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
-        : failure(
-            502,
-            "EMAIL_SERVICE_UNAVAILABLE",
-            "Email service is unavailable"
-          );
+          ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
+          : failure(
+              502,
+              "EMAIL_SERVICE_UNAVAILABLE",
+              "Email service is unavailable"
+            );
     } finally {
       if (timeout !== undefined) {
         clearTimeout(timeout);
