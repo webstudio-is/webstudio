@@ -94,7 +94,7 @@ export const issueReportEntityId = z
   .object({ field: issueReportEntityIdField, id: issueReportId })
   .strict();
 
-const issueReportRecentFailure = z
+export const issueReportRecentFailureSchema = z
   .object({
     tool: z.string().trim().min(1).max(160),
     code: z.string().trim().min(1).max(160),
@@ -148,7 +148,7 @@ const issueReportRuntime = z
     apiContractVersion: z.string().trim().min(1).max(100),
     bundleVersion: z.string().trim().min(1).max(100).optional(),
     projectId: issueReportId.optional(),
-    recentFailure: issueReportRecentFailure.optional(),
+    recentFailure: issueReportRecentFailureSchema.optional(),
     session: issueReportSession.optional(),
     preview: issueReportPreview.optional(),
   })
@@ -205,4 +205,6 @@ export const issueReportResult = z
 export type IssueReportInput = z.infer<typeof issueReportInput>;
 export type IssueReportResult = z.infer<typeof issueReportResult>;
 export type IssueReportRuntime = z.infer<typeof issueReportRuntime>;
-export type IssueReportRecentFailure = z.infer<typeof issueReportRecentFailure>;
+export type IssueReportRecentFailure = z.infer<
+  typeof issueReportRecentFailureSchema
+>;

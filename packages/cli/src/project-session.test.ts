@@ -238,6 +238,15 @@ test("keeps a failed mutation available after a successful diagnostic read", () 
   tracker.record("screenshot", new Error("Browser failed"), 120);
   tracker.succeed("report-issue");
   expect(tracker.get()).toBeUndefined();
+
+  const restored = createIssueReportFailureTracker(() => now);
+  restored.restore({ tool: "update-text", code: "MCP_TOOL_FAILED" }, now + 1);
+  expect(restored.get()).toBeUndefined();
+  restored.restore(
+    { tool: "update-text", code: "MCP_TOOL_FAILED" },
+    now - 10 * 60_000 - 1
+  );
+  expect(restored.get()).toBeUndefined();
 });
 
 test("reports only the shape of an untransformable server response", () => {
