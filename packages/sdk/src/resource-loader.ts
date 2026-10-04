@@ -160,6 +160,16 @@ export const assetsQuerySchemaApiUrl = `${assetsApiUrl}/query-schema.json`;
 export type ResourceLoadOptions = {
   signal?: AbortSignal;
   timeoutMs?: number;
+  /** Supplied only by the published site's server runtime. */
+  sendEmail?: (
+    request: ResourceRequest,
+    options: ResourceLoadOptions
+  ) => Promise<{
+    ok: boolean;
+    status: number;
+    statusText: string;
+    data: unknown;
+  }>;
 };
 
 export type ResourceGraphLoadOptions = ResourceLoadOptions & {
@@ -363,6 +373,9 @@ export const loadResource = async (
 ) => {
   if (resourceRequest.control === "email") {
     validateEmailSubject(resourceRequest.email?.subject);
+    if (options.sendEmail !== undefined) {
+      return options.sendEmail(resourceRequest, options);
+    }
     return {
       ok: false,
       status: 501,

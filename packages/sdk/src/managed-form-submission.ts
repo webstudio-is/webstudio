@@ -293,9 +293,11 @@ export const validateManagedFormRecipientLimit = (
 
 export const validateManagedFormBodyFormats = (
   graph: ResourceRequestGraph,
-  formData: FormData
+  formData: FormData,
+  emailConfigured = false
 ): ResourceRequestGraph => {
   if (
+    emailConfigured === false &&
     getReachableResources(graph).some(
       (resource) => resource.control === "email"
     )
@@ -351,9 +353,22 @@ export const loadManagedFormResources = async (
   baseUrl?: string | URL,
   options?: ResourceGraphLoadOptions & {
     validateDestination?: (url: URL) => void;
+    validateEmail?: (request: ResourceRequest) => void;
   }
 ) => {
-  const { validateDestination, ...loadOptions } = options ?? {};
+  const { validateDestination, validateEmail, ...loadOptions } = options ?? {};
+  options?.signal?.throwIfAborted();
+  if (new Set(graph.rootIds).size !== graph.rootIds.length) {
+    throw new Error(
+      "Form Resource graph contains duplicate selected destinations"
+    );
+  }
+  if (
+    new Set(graph.resources.map((resource) => resource.id)).size !==
+    graph.resources.length
+  ) {
+    throw new Error("Form Resource graph contains duplicate resource IDs");
+  }
   const roots = new Set(graph.rootIds);
   const resourcesById = new Map(
     graph.resources.map((resource) => [resource.id, resource])
@@ -386,6 +401,33 @@ export const loadManagedFormResources = async (
   for (const rootId of graph.rootIds) {
     visit(rootId);
   }
+  const preparedEmailRequests = new Map<string, ResourceRequest>();
+  for (const resource of getReachableResources(graph)) {
+    if (resource.control !== "email") continue;
+    if (resource.dependencies.length > 0) {
+      throw new Error("Email Resources cannot depend on other Resources");
+    }
+    const request = resource.createRequest(new Map());
+    validateEmailSubject(request.email?.subject);
+    if (
+      request.email === undefined ||
+      request.email.recipients.length === 0 ||
+      typeof request.email.body !== "string"
+    ) {
+      throw new Error("Email settings are invalid");
+    }
+    validateEmail?.(request);
+    preparedEmailRequests.set(resource.id, request);
+  }
+  const preparedResources = graph.resources.map((resource) => {
+    const request = preparedEmailRequests.get(resource.id);
+    return request === undefined
+      ? resource
+      : { ...resource, createRequest: () => request };
+  });
+  const preparedById = new Map(
+    preparedResources.map((resource) => [resource.id, resource])
+  );
   // Dependency Resources can make outbound requests. Only selected primary
   // destinations have this deterministic preflight guarantee.
   const documents =
@@ -396,7 +438,7 @@ export const loadManagedFormResources = async (
             await loadResources(
               customFetch,
               {
-                resources: graph.resources.map((resource) => ({
+                resources: preparedResources.map((resource) => ({
                   ...resource,
                   outputName: resource.id,
                 })),
@@ -408,18 +450,26 @@ export const loadManagedFormResources = async (
           )
         );
   const preparedRoots = graph.rootIds.map((rootId) => {
-    const resource = resourcesById.get(rootId)!;
+    options?.signal?.throwIfAborted();
+    const resource = preparedById.get(rootId)!;
     const request = resource.createRequest(
       new Map(resource.dependencies.map((id) => [id, documents.get(id)]))
     );
     if (resource.control === "email") {
       validateEmailSubject(request.email?.subject);
+      if (
+        request.email === undefined ||
+        request.email.recipients.length === 0 ||
+        typeof request.email.body !== "string"
+      ) {
+        throw new Error("Email settings are invalid");
+      }
     }
     const error = getResourceBodyFormatError(request);
     if (error !== undefined) {
       throw new Error(error);
     }
-    if (validateDestination !== undefined) {
+    if (request.control !== "email" && validateDestination !== undefined) {
       const resolutionBase =
         baseUrl === undefined ? undefined : new URL("/", baseUrl);
       validateDestination(new URL(request.url.trim(), resolutionBase));

@@ -14,6 +14,14 @@ declare module "__ASSET_QUERY_RUNTIME__" {
 }
 
 declare module "__MANAGED_FORM_FETCH__" {
+  export const createManagedFormEmailSender: (options: {
+    context: unknown;
+    formData: FormData;
+  }) => import("@webstudio-is/sdk/runtime").ResourceLoadOptions["sendEmail"];
+  export const validateManagedFormEmail: (
+    request: import("@webstudio-is/sdk/runtime").ResourceRequest,
+    formData: FormData
+  ) => void;
   import type { ProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
 
   export const createManagedFormResourceFetch: (options: {

@@ -280,6 +280,39 @@ test("an Email dependency fails preflight before its HTTP destination dispatches
   expect(emailRequest).not.toHaveBeenCalled();
 });
 
+test("configured Email can pass preflight without an HTTP URL", () => {
+  const graph = {
+    rootIds: ["email"],
+    resources: [
+      {
+        id: "email",
+        outputName: "Email",
+        dependencies: [],
+        control: "email" as const,
+        emailRecipientCount: 1,
+        createRequest: () => ({
+          name: "Email",
+          control: "email" as const,
+          method: "post" as const,
+          url: "",
+          searchParams: [],
+          headers: [],
+          email: {
+            recipientMode: "project" as const,
+            recipients: [{ address: "team@example.com" }],
+            subject: "Hello",
+            body: "Message",
+            includeAttachments: false,
+          },
+        }),
+      },
+    ],
+  };
+  expect(
+    validateManagedFormBodyFormats(graph, new FormData(), true).rootIds
+  ).toEqual(["email"]);
+});
+
 test("rejects an invalid dependency request before any destination runs", () => {
   const graph = {
     rootIds: ["submit"],
@@ -442,7 +475,7 @@ test("an invalid dependent body prevents every selected destination", async () =
   expect(requestedUrls).toEqual(["https://example.com/lookup"]);
 });
 
-test("a dependency-bound Email subject is rejected before selected destinations dispatch", async () => {
+test("an Email dependency is rejected before its lookup or destinations dispatch", async () => {
   const requestedUrls: string[] = [];
   const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
     requestedUrls.push(String(input));
@@ -501,8 +534,45 @@ test("a dependency-bound Email subject is rejected before selected destinations 
         },
       ],
     })
-  ).rejects.toThrow("Email subject must be text without line breaks");
-  expect(requestedUrls).toEqual(["https://example.com/lookup"]);
+  ).rejects.toThrow("Email Resources cannot depend on other Resources");
+  expect(requestedUrls).toEqual([]);
+});
+
+test("rejects duplicate IDs and cancellation before outbound requests", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({}));
+  const resource = {
+    id: "first",
+    outputName: "First",
+    dependencies: [],
+    createRequest: () => ({
+      name: "First",
+      method: "post" as const,
+      url: "https://example.com",
+      searchParams: [],
+      headers: [],
+    }),
+  };
+  await expect(
+    loadManagedFormResources(fetch, {
+      rootIds: ["first", "first"],
+      resources: [resource],
+    })
+  ).rejects.toThrow("duplicate selected destinations");
+  await expect(
+    loadManagedFormResources(fetch, {
+      rootIds: ["first"],
+      resources: [resource, resource],
+    })
+  ).rejects.toThrow("duplicate resource IDs");
+  await expect(
+    loadManagedFormResources(
+      fetch,
+      { rootIds: ["first"], resources: [resource] },
+      undefined,
+      { signal: AbortSignal.abort() }
+    )
+  ).rejects.toThrow();
+  expect(fetch).not.toHaveBeenCalled();
 });
 
 test("rejects selected-root dependencies and cycles before any outbound request", async () => {

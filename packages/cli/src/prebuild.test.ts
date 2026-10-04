@@ -797,6 +797,31 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("generates a private Email binding adapter only for Cloudflare sites", async () => {
+    await prebuild({
+      assets: false,
+      template: ["react-router", "react-router-cloudflare"],
+    });
+    const cloudflareAdapter = await readFile(
+      "app/__generated__/$resources.managed-form-fetch.server.ts",
+      "utf8"
+    );
+    expect(cloudflareAdapter).toContain("cloudflare?.env?.EMAIL_SERVICE");
+    expect(cloudflareAdapter).toContain(
+      "createCloudflareManagedFormEmailSender"
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+    const nodeAdapter = await readFile(
+      "app/__generated__/$resources.managed-form-fetch.server.ts",
+      "utf8"
+    );
+    expect(nodeAdapter).toContain(
+      "createManagedFormEmailSender = () => undefined"
+    );
+    expect(nodeAdapter).not.toContain("EMAIL_SERVICE");
+  });
+
   test("publishes configured file-input attributes", async () => {
     await writeSiteData(
       createSiteData({
@@ -3013,7 +3038,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -3548,7 +3573,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -3912,7 +3937,7 @@ sitemap.map((page) => page.path);`
             tempDir,
             "app/__generated__/$resources.managed-form-fetch.server.ts"
           ),
-          "export const createManagedFormResourceFetch = () => fetch;\n"
+          "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => fetch;\n"
         );
         if (template === "react-router") {
           await linkPackagedPreviewDependencies();
@@ -5062,7 +5087,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -5289,7 +5314,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -5444,7 +5469,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -5605,7 +5630,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -5804,7 +5829,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -5947,7 +5972,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({

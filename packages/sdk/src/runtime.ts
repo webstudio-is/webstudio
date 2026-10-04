@@ -5,6 +5,7 @@ export * from "./email-resource";
 export * from "./to-string";
 export * from "./form-fields";
 export * from "./managed-form-submission";
+export * from "./managed-form-email";
 export * from "./form-submission";
 export * from "./json-ld";
 
