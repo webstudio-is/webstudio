@@ -17,6 +17,7 @@ import {
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
+import { createIssueReportFailureTracker } from "../project-session";
 import {
   __testing__,
   mcpOptions,
@@ -26,6 +27,9 @@ import {
 
 const {
   getMcpDownloadAsset,
+  getIssueReportFailureFile,
+  persistIssueReportFailure,
+  restoreIssueReportFailure,
   assertSingleOpCallToolSupported,
   applyMcpRunOptions,
   createMcpResourceErrorPayload,
@@ -232,6 +236,39 @@ afterEach(async () => {
   await Promise.all(
     tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
   );
+});
+
+test("persists sanitized issue-report failure diagnostics for the next CLI process", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-issue-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const firstProcess = createIssueReportFailureTracker();
+  firstProcess.record(
+    "update-text",
+    new Error("Unable to transform response from server"),
+    125,
+    { instanceId: "instance-1", text: "private customer content" }
+  );
+
+  await persistIssueReportFailure(filePath, firstProcess.snapshot());
+
+  const secondProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, secondProcess);
+  expect(secondProcess.get()).toMatchObject({
+    tool: "update-text",
+    elapsedMs: 125,
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  expect(await readFile(filePath, "utf8")).not.toContain(
+    "private customer content"
+  );
+
+  await persistIssueReportFailure(filePath, undefined);
+  const clearedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, clearedProcess);
+  expect(clearedProcess.get()).toBeUndefined();
 });
 
 const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {
