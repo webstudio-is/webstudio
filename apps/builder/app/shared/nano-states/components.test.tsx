@@ -61,6 +61,13 @@ test("the Forms section inserts only the new Form", () => {
   // Saved instances keep their original component IDs and implementations.
   expect($registeredComponents.get().has("Form")).toBe(true);
   expect($registeredComponents.get().has("RemixForm")).toBe(true);
+  expect($registeredComponentMetas.get().get("Form")?.deprecated).toBe(true);
+  expect($registeredComponentMetas.get().get("RemixForm")?.deprecated).toBe(
+    true
+  );
+  expect($registeredComponentMetas.get().get("NativeForm")?.deprecated).toBe(
+    undefined
+  );
   expect(
     $registeredTemplates.get().get("Form")?.template.instances[0]?.component
   ).toBe("Form");
