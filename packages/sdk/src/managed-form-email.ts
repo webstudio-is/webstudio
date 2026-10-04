@@ -86,6 +86,18 @@ export const validateCloudflareManagedFormEmail = (
   if (files.length > maxEmailAttachments) {
     throw new Error("Email has too many attachments");
   }
+  for (const file of files) {
+    const contentType = file.type || "application/octet-stream";
+    if (
+      file.name.length === 0 ||
+      file.name.length > 255 ||
+      /[\r\n]/.test(file.name) ||
+      contentType.length > 255 ||
+      /[\r\n]/.test(contentType)
+    ) {
+      throw new Error("Email attachment metadata is invalid");
+    }
+  }
   if (getEncodedMimeUpperBound(email, files) > maxEmailContentBytes) {
     throw new Error("Email content is too large");
   }
