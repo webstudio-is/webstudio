@@ -1581,6 +1581,15 @@ export const createDataVariable = (
   });
 };
 
+const isManagedFormParameter = (
+  dataSource: DataSource | undefined,
+  instances: BuilderState["instances"]
+) =>
+  dataSource?.type === "parameter" &&
+  (dataSource.name === formDataParameterName ||
+    dataSource.name === browserInfoParameterName) &&
+  instances?.get(dataSource.scopeInstanceId ?? "")?.component === "NativeForm";
+
 export const updateDataVariable = (
   state: Pick<
     BuilderState,
@@ -1593,13 +1602,7 @@ export const updateDataVariable = (
   if (dataSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Variable not found");
   }
-  if (
-    dataSource.type === "parameter" &&
-    (dataSource.name === formDataParameterName ||
-      dataSource.name === browserInfoParameterName) &&
-    state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
-      "NativeForm"
-  ) {
+  if (isManagedFormParameter(dataSource, state.instances)) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Form submission variables cannot be edited"
@@ -1674,13 +1677,7 @@ export const deleteDataVariable = (
   input: z.infer<typeof dataVariableDeleteInput>
 ) => {
   const dataSource = state.dataSources?.get(input.dataSourceId);
-  if (
-    dataSource?.type === "parameter" &&
-    (dataSource.name === formDataParameterName ||
-      dataSource.name === browserInfoParameterName) &&
-    state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
-      "NativeForm"
-  ) {
+  if (isManagedFormParameter(dataSource, state.instances)) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Form submission variables cannot be deleted"

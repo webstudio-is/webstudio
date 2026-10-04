@@ -173,24 +173,18 @@ export const generateManagedFormResources = ({
       for (const rootId of externalRootIds) {
         markExternalClosure(rootId);
       }
-      const formBoundResourceIds = new Set(
-        Array.from(dataSources.values()).flatMap((dataSource) =>
-          dataSource.type === "resource" &&
-          formTreeIds.has(dataSource.scopeInstanceId ?? "")
-            ? [dataSource.resourceId]
-            : []
-        )
-      );
+      const formBoundResourceIds = new Set<string>();
       // A Resource shared through an outside alias is not owned by this Form.
       // Its request definition must not gain access to this Form's parameters.
-      const externalResourceIds = new Set(
-        Array.from(dataSources.values()).flatMap((dataSource) =>
-          dataSource.type === "resource" &&
-          formTreeIds.has(dataSource.scopeInstanceId ?? "") === false
-            ? [dataSource.resourceId]
-            : []
-        )
-      );
+      const externalResourceIds = new Set<string>();
+      for (const dataSource of dataSources.values()) {
+        if (dataSource.type === "resource") {
+          const ids = formTreeIds.has(dataSource.scopeInstanceId ?? "")
+            ? formBoundResourceIds
+            : externalResourceIds;
+          ids.add(dataSource.resourceId);
+        }
+      }
       for (const resourceId of graphResourceIds) {
         const resource = resources.get(resourceId);
         if (resource === undefined) {
@@ -222,24 +216,24 @@ export const generateManagedFormResources = ({
       const usedDataSources: DataSources = new Map();
       const emailRecipientCounts = new Map<string, number>();
       let generatedRequests = "";
+      const formDataSource = Array.from(dataSources.values()).find(
+        (dataSource) =>
+          dataSource.type === "parameter" &&
+          dataSource.scopeInstanceId === formId &&
+          dataSource.name === formDataParameterName
+      );
+      const browserInfoSource = Array.from(dataSources.values()).find(
+        (dataSource) =>
+          dataSource.type === "parameter" &&
+          dataSource.scopeInstanceId === formId &&
+          dataSource.name === browserInfoParameterName
+      );
       for (const resourceId of graphResourceIds) {
         const resource = resources.get(resourceId);
         if (resource === undefined) {
           continue;
         }
         const requestDataSources: DataSources = new Map();
-        const formDataSource = Array.from(dataSources.values()).find(
-          (dataSource) =>
-            dataSource.type === "parameter" &&
-            dataSource.scopeInstanceId === formId &&
-            dataSource.name === formDataParameterName
-        );
-        const browserInfoSource = Array.from(dataSources.values()).find(
-          (dataSource) =>
-            dataSource.type === "parameter" &&
-            dataSource.scopeInstanceId === formId &&
-            dataSource.name === browserInfoParameterName
-        );
         const resolvedEmailSettings =
           resource.control === "email"
             ? resolveEmailResourceSettings({

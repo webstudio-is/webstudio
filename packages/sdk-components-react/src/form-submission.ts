@@ -1,21 +1,14 @@
 import {
   formBotFieldName,
-  formIdFieldName,
   isBraveBrowser,
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "@webstudio-is/sdk/form-fields";
 import {
   getManagedFormBrowserInfo,
+  internalFormFieldNames,
   type ManagedFormBrowserInfo,
 } from "@webstudio-is/sdk/runtime";
-
-const internalFormFieldNames = new Set([
-  formBotFieldName,
-  formIdFieldName,
-  managedFormArrayNamesFieldName,
-  managedFormIdFieldName,
-]);
 
 // The legacy Webhook Form rejects simple headless environments whose
 // matchMedia implementation reports inconsistent device and color settings.

@@ -1165,26 +1165,22 @@ export const EmailResourceForm = forwardRef<
     })
       ? "This Form binding is unavailable outside its Form."
       : undefined;
-  const subjectError =
-    settings.subject === undefined
-      ? undefined
-      : (unavailableFormBinding(settings.subject) ??
-        getResourceExpressionErrors({
-          email: { subject: settings.subject },
-        })[0] ??
-        getExpressionErrorMessages({
-          expression: settings.subject,
-          availableVariables: new Set(aliases.keys()),
-        })[0]);
-  const bodyError =
-    settings.body === undefined
-      ? undefined
-      : (unavailableFormBinding(settings.body) ??
-        getResourceExpressionErrors({ email: { body: settings.body } })[0] ??
-        getExpressionErrorMessages({
-          expression: settings.body,
-          availableVariables: new Set(aliases.keys()),
-        })[0]);
+  const getEmailExpressionError = (key: "subject" | "body") => {
+    const expression = settings[key];
+    if (expression === undefined) {
+      return;
+    }
+    return (
+      unavailableFormBinding(expression) ??
+      getResourceExpressionErrors({ email: { [key]: expression } })[0] ??
+      getExpressionErrorMessages({
+        expression,
+        availableVariables: new Set(aliases.keys()),
+      })[0]
+    );
+  };
+  const subjectError = getEmailExpressionError("subject");
+  const bodyError = getEmailExpressionError("body");
   useImperativeHandle(ref, () => ({
     save: (formData) => {
       if (senderError || recipientError || subjectError || bodyError) {

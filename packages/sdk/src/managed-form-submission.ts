@@ -460,16 +460,6 @@ export const loadManagedFormResources = async (
     const request = resource.createRequest(
       new Map(resource.dependencies.map((id) => [id, documents.get(id)]))
     );
-    if (resource.control === "email") {
-      validateEmailSubject(request.email?.subject);
-      if (
-        request.email === undefined ||
-        request.email.recipients.length === 0 ||
-        typeof request.email.body !== "string"
-      ) {
-        throw new Error("Email settings are invalid");
-      }
-    }
     const error = getResourceBodyFormatError(request);
     if (error !== undefined) {
       throw new Error(error);

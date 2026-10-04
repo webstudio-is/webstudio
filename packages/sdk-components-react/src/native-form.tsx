@@ -83,6 +83,17 @@ export const NativeForm = forwardRef<
       setInternalState(nextState);
       onStateChange?.(nextState);
     };
+    const reportFailure = (message: string) => {
+      setError(message);
+      onResultChange?.({
+        success: false,
+        status: 400,
+        results: [],
+        errors: [{ status: 400, body: null, message }],
+      });
+      reportState("error");
+      revealFeedback();
+    };
     const validSubmission = isFormSubmission(submission);
     const configurationError = validSubmission
       ? validateFormSubmission(submission)
@@ -100,33 +111,11 @@ export const NativeForm = forwardRef<
       }
       prepareFeedback();
       if (configurationError) {
-        setError(configurationError);
-        onResultChange?.({
-          success: false,
-          status: 400,
-          results: [],
-          errors: [{ status: 400, body: null, message: configurationError }],
-        });
-        reportState("error");
-        revealFeedback();
+        reportFailure(configurationError);
         return;
       }
       if (onManagedSubmit === undefined && managedFormId === undefined) {
-        setError("Resource submission is unavailable");
-        onResultChange?.({
-          success: false,
-          status: 400,
-          results: [],
-          errors: [
-            {
-              status: 400,
-              body: null,
-              message: "Resource submission is unavailable",
-            },
-          ],
-        });
-        reportState("error");
-        revealFeedback();
+        reportFailure("Resource submission is unavailable");
         return;
       }
       setError(undefined);
