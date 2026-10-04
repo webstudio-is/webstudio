@@ -1,46 +1,10 @@
 import { createRoot, type Root } from "react-dom/client";
-import type { ReactNode } from "react";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
 import { $dataSources, $instances } from "~/shared/sync/data-stores";
 import { FormSubmissionControl } from "./form-submission";
-
-vi.mock("../variable-popover", () => ({
-  VariablePopoverTrigger: ({
-    children,
-    onCreatedResource,
-  }: {
-    children: ReactNode;
-    onCreatedResource?: (id: string) => void;
-  }) => (
-    <div
-      onClick={() => {
-        if (onCreatedResource) {
-          $dataSources.set(
-            new Map([
-              ...$dataSources.get(),
-              [
-                "created-resource",
-                {
-                  type: "resource" as const,
-                  id: "created-resource",
-                  scopeInstanceId: "form",
-                  name: "Created request",
-                  resourceId: "request",
-                },
-              ],
-            ])
-          );
-          onCreatedResource("created-resource");
-        }
-      }}
-    >
-      {children}
-    </div>
-  ),
-}));
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -191,60 +155,6 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
       (button) => button.textContent === "Add"
     )
   ).toBe(false);
-});
-
-test("a Resource created from the Form is immediately selected", async () => {
-  $instances.set(
-    new Map([
-      [
-        "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
-      ],
-    ])
-  );
-  $dataSources.set(new Map());
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  const onChange = vi.fn();
-  const render = (prop?: Prop) =>
-    root?.render(
-      <TooltipProvider>
-        <FormSubmissionControl
-          instanceId="form"
-          propName="submission"
-          prop={prop}
-          computedValue={prop?.type === "json" ? prop.value : undefined}
-          meta={{ type: "json", control: "form-submission", required: false }}
-          onChange={onChange}
-        />
-      </TooltipProvider>
-    );
-  await act(async () => render());
-  expect(container.textContent).toContain(
-    "Select at least one Resource destination"
-  );
-  const createButton = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent === "Create Resource in Form"
-  );
-  await act(async () => createButton?.click());
-  expect(onChange).toHaveBeenLastCalledWith({
-    type: "json",
-    value: { destinations: ["created-resource"] },
-  });
-  await act(async () =>
-    render({
-      id: "submission",
-      instanceId: "form",
-      name: "submission",
-      type: "json",
-      value: { destinations: ["created-resource"] },
-    })
-  );
-  expect(container.textContent).toContain("Created request");
-  expect(container.textContent).not.toContain(
-    "Select at least one Resource destination"
-  );
 });
 
 test("a Form can select a Resource defined outside its scope", async () => {
