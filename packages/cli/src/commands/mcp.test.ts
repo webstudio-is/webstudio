@@ -269,6 +269,20 @@ test("persists sanitized issue-report failure diagnostics for the next CLI proce
   const clearedProcess = createIssueReportFailureTracker();
   await restoreIssueReportFailure(filePath, clearedProcess);
   expect(clearedProcess.get()).toBeUndefined();
+
+  await writeFile(
+    filePath,
+    JSON.stringify({
+      at: Date.now(),
+      failure: { tool: "update-text", code: "MCP_TOOL_FAILED", private: true },
+    })
+  );
+  const malformedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, malformedProcess);
+  expect(malformedProcess.get()).toBeUndefined();
+  await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
 });
 
 const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {

@@ -8972,6 +8972,47 @@ describe("project session mcp adapter", () => {
     }
   });
 
+  test("waits for failure diagnostics persistence before returning the tool error", async () => {
+    const error = new Error("operation failed");
+    let finishPersistence: () => void = () => undefined;
+    let callbackStarted = false;
+    let callbackFinished = false;
+    const persistence = new Promise<void>((resolve) => {
+      finishPersistence = resolve;
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(async () => {
+        throw error;
+      }),
+      onToolFailure: async () => {
+        callbackStarted = true;
+        await persistence;
+        callbackFinished = true;
+      },
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      let callFinished = false;
+      const call = client
+        .callTool({ name: "list-pages", arguments: {} })
+        .finally(() => {
+          callFinished = true;
+        });
+      await vi.waitFor(() => expect(callbackStarted).toBe(true));
+      expect(callbackFinished).toBe(false);
+      expect(callFinished).toBe(false);
+      finishPersistence();
+      await call;
+      expect(callbackFinished).toBe(true);
+    } finally {
+      finishPersistence();
+      await close();
+    }
+  });
+
   test("returns expected input examples for SDK zod tool errors", async () => {
     const inputSchema = z.object({
       email: z.email(),

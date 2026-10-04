@@ -450,6 +450,13 @@ export const createIssueReportFailure = (
 
 export const createIssueReportFailureTracker = (now = Date.now) => {
   let recent: { failure: IssueReportRecentFailure; at: number } | undefined;
+  const getRecent = () => {
+    if (recent === undefined) {
+      return;
+    }
+    const age = now() - recent.at;
+    return age >= 0 && age <= 10 * 60_000 ? recent : undefined;
+  };
   return {
     record(tool: string, error: unknown, elapsedMs?: number, input?: unknown) {
       recent = {
@@ -458,19 +465,16 @@ export const createIssueReportFailureTracker = (now = Date.now) => {
       };
     },
     get() {
-      return recent !== undefined && now() - recent.at <= 10 * 60_000
-        ? recent.failure
-        : undefined;
+      return getRecent()?.failure;
     },
     restore(failure: IssueReportRecentFailure, at: number) {
-      if (now() - at <= 10 * 60_000) {
+      const age = now() - at;
+      if (age >= 0 && age <= 10 * 60_000) {
         recent = { failure, at };
       }
     },
     snapshot() {
-      return recent !== undefined && now() - recent.at <= 10 * 60_000
-        ? recent
-        : undefined;
+      return getRecent();
     },
     succeed(tool: string) {
       if (tool === "report-issue") {

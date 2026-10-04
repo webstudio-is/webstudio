@@ -29,6 +29,7 @@ import { diffPngFiles } from "@webstudio-is/vision/diff";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
+  issueReportRecentFailureSchema,
   type IssueReportRecentFailure,
 } from "@webstudio-is/protocol";
 import * as httpClient from "@webstudio-is/http-client";
@@ -1872,16 +1873,16 @@ const restoreIssueReportFailure = async (
     if (
       isPlainRecord(value) &&
       typeof value.at === "number" &&
-      Number.isFinite(value.at) &&
-      isPlainRecord(value.failure) &&
-      typeof value.failure.tool === "string" &&
-      typeof value.failure.code === "string"
+      Number.isSafeInteger(value.at)
     ) {
-      failureTracker.restore(
-        value.failure as unknown as IssueReportRecentFailure,
-        value.at
-      );
-      if (failureTracker.snapshot() === undefined) {
+      const failure = issueReportRecentFailureSchema.safeParse(value.failure);
+      if (failure.success) {
+        failureTracker.restore(failure.data, value.at);
+      }
+      if (
+        failure.success === false ||
+        failureTracker.snapshot() === undefined
+      ) {
         await rm(filePath, { force: true }).catch(() => undefined);
       }
     } else {
@@ -1890,6 +1891,7 @@ const restoreIssueReportFailure = async (
   } catch {
     // Issue reporting is best effort; absent or malformed local diagnostics
     // must not prevent a project session from starting.
+    await rm(filePath, { force: true }).catch(() => undefined);
   }
 };
 
@@ -2431,11 +2433,22 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           }
         }
         const callStartedAt = Date.now();
-        const result = await core.callTool({
-          name: tool,
-          input,
-          dryRun: options.dryRun,
-        });
+        let result: Awaited<ReturnType<typeof core.callTool>>;
+        try {
+          result = await core.callTool({
+            name: tool,
+            input,
+            dryRun: options.dryRun,
+          });
+        } catch (error) {
+          await recordToolFailure(
+            tool,
+            error,
+            Date.now() - callStartedAt,
+            input
+          );
+          throw error;
+        }
         if (didTerminate) {
           throw new HandledCliError();
         }
