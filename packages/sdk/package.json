@@ -18,6 +18,31 @@
       "types": "./lib/types/runtime.d.ts",
       "import": "./lib/runtime.js"
     },
+    "./form-fields": {
+      "webstudio": "./src/form-fields.ts",
+      "types": "./lib/types/form-fields.d.ts",
+      "import": "./lib/form-fields.js"
+    },
+    "./form-submission": {
+      "webstudio": "./src/form-submission.ts",
+      "types": "./lib/types/form-submission.d.ts",
+      "import": "./lib/form-submission.js"
+    },
+    "./to-string": {
+      "webstudio": "./src/to-string.ts",
+      "types": "./lib/types/to-string.d.ts",
+      "import": "./lib/to-string.js"
+    },
+    "./protected-resource-fetch": {
+      "webstudio": "./src/protected-resource-fetch.ts",
+      "types": "./lib/types/protected-resource-fetch.d.ts",
+      "import": "./lib/protected-resource-fetch.js"
+    },
+    "./protected-resource-fetch-node": {
+      "webstudio": "./src/protected-resource-fetch-node.ts",
+      "types": "./lib/types/protected-resource-fetch-node.d.ts",
+      "import": "./lib/protected-resource-fetch-node.js"
+    },
     "./asset-resource-limits": {
       "webstudio": "./src/asset-resource-limits.ts",
       "types": "./lib/types/asset-resource-limits.d.ts",
@@ -63,23 +88,27 @@
     "test": "vitest run",
     "build:schema-org-data": "tsx scripts/schema-org-data.ts && oxfmt src/__generated__/schema-org-data.ts",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && oxfmt src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/form-fields.ts src/form-submission.ts src/to-string.ts src/protected-resource-fetch.ts src/protected-resource-fetch-node.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@webstudio-is/content-engine": "workspace:*",
-    "@webstudio-is/expression": "workspace:*",
     "@emotion/hash": "^0.9.2",
+    "@webstudio-is/content-engine": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
+    "@webstudio-is/expression": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
     "change-case": "^5.4.4",
+    "email-addresses": "^5.0.0",
+    "ipaddr.js": "^1.9.1",
     "json-schema-typed": "^8.0.2",
     "nanoid": "^5.1.5",
     "reserved-identifiers": "^1.0.0",
+    "tldts": "^7.0.28",
     "type-fest": "^4.37.0",
+    "undici": "^7.29.0",
     "warn-once": "^0.1.1",
     "zod": "^4.4.3"
   },

@@ -33,8 +33,10 @@ If you are self-hosting the Builder, then please use the [Webstudio CLI](../cli.
 
 There are two types of exports:
 
-* **JavaScript application** – Builds a dynamic [Remix app](https://remix.run/). This is the default behavior of Webstudio Cloud and provides the most functionality, but it requires hosting that works with apps.
+* **JavaScript application** – Builds a dynamic app with server routes. This is the default behavior of Webstudio Cloud and provides the most functionality, but it requires hosting that runs the app.
 * **Static site** – Outputs a static site (HTML/CSS/JS) with limited functionality, but has more versatile hosting options.
+
+Email Resources are intended to use Webstudio Cloud's email service. Delivery is not configured yet, including on Webstudio Cloud. Neither a self-hosted JavaScript application nor a static export provides that service; saving Email Resource settings does not enable delivery.
 
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.
@@ -44,9 +46,15 @@ If you want the export to contain human-readable class names, disable atomic CSS
 
 This is the default behavior if you were to publish to Webstudio Cloud.
 
-The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), Webhook forms, [image optimization](../core-components/image.md#optimize), redirects, and more.
+The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), [Forms](../core-components/form.md) with HTTP Resource destinations, Webhook Forms, [image optimization](../core-components/image.md#optimize), and redirects.
 
 JavaScript applications require a hosting environment that handles server-side code execution, fetching data from CMS integrations, and more.
+
+#### Form submission endpoint
+
+The new **Form** submits to a generated same-origin HTTP endpoint. For the home page, the endpoint is `POST /__ws-form`; for a page such as `/contact`, it is `POST /__ws-form/contact`. The app handles the submitted fields and files, validates the request, and sends HTTP Resource requests from the server. Keep the generated routes available when configuring your host or reverse proxy. A successful submission can then refresh page Resources without a full-page reload.
+
+A static export has no Form endpoint. If you need native browser submission on a static site, use an **Element** with tag `form` and an `action` that your chosen service handles. This does not use Webstudio's managed Resource destinations.
 
 #### Platforms for JavaScript applications
 
@@ -107,6 +115,7 @@ While static site exporting and hosting are less technical, this comes at the co
 * Statuses
 * Client navigation
 * Webhook form
+* Form submission to Resource destinations
 * Image optimization
 * No robots.txt
 * No sitemap.xml

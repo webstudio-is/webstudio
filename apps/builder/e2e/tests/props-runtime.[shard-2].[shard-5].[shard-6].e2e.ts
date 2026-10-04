@@ -1,8 +1,8 @@
 import { createServer } from "node:http";
 import type { Page } from "@playwright/test";
-import { loadDevBuild } from "../db";
+import { createId, type Instance } from "@webstudio-is/sdk";
+import { loadDevBuild, updateBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
-import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { openNavigatorPanel } from "../flows/navigator";
 import {
   resetSelectedProperty,
@@ -40,6 +40,73 @@ const insertComponentPanelOption = async ({
       : page.locator(`[data-drag-component="${component}"]`);
   await option.click();
   await waitForSyncStatus({ page, status: "idle" });
+};
+
+const seedSavedWebhookForm = async (projectId: string) => {
+  const build = await loadDevBuild({ projectId });
+  const instances = JSON.parse(build.instances) as Instance[];
+  const body = instances.find((instance) => instance.id === "body");
+  if (body === undefined) {
+    throw new Error("Expected the fixture's body instance");
+  }
+  const formId = createId("nano");
+  const nameId = createId("nano");
+  const emailId = createId("nano");
+  const buttonId = createId("nano");
+  body.children.push({ type: "id", value: formId });
+  instances.push(
+    {
+      type: "instance",
+      id: formId,
+      component: "Form",
+      children: [
+        { type: "id", value: nameId },
+        { type: "id", value: emailId },
+        { type: "id", value: buttonId },
+      ],
+    },
+    {
+      type: "instance",
+      id: nameId,
+      component: "ws:element",
+      tag: "input",
+      children: [],
+    },
+    {
+      type: "instance",
+      id: emailId,
+      component: "ws:element",
+      tag: "input",
+      children: [],
+    },
+    {
+      type: "instance",
+      id: buttonId,
+      component: "ws:element",
+      tag: "button",
+      children: [{ type: "text", value: "Submit" }],
+    }
+  );
+  await updateBuild(build.id, {
+    instances: JSON.stringify(instances),
+    props: JSON.stringify([
+      ...JSON.parse(build.props),
+      {
+        id: createId("nano"),
+        instanceId: nameId,
+        name: "name",
+        type: "string",
+        value: "name",
+      },
+      {
+        id: createId("nano"),
+        instanceId: emailId,
+        name: "name",
+        type: "string",
+        value: "email",
+      },
+    ]),
+  });
 };
 
 const selectNavigatorItem = async ({
@@ -404,6 +471,7 @@ test("Webhook Form action submits once and persists after reload", async ({
   const actionUrl = webhook.url;
 
   try {
+    await seedSavedWebhookForm(fixture.projectId);
     await measure("props runtime open builder", async () => {
       await openProjectBuilder({
         page,
@@ -413,12 +481,6 @@ test("Webhook Form action submits once and persists after reload", async ({
       });
     });
     await waitForCanvasText({ page, text });
-    await selectCanvasTextInstance({ page, text });
-
-    await measure("props runtime insert webhook form", async () => {
-      await openComponentsPanel({ page });
-      await insertComponentPanelOption({ page, name: "Webhook Form" });
-    });
     await selectNavigatorItem({ page, itemName: "Webhook Form" });
 
     await measure("props runtime update resource action", async () => {
@@ -456,9 +518,7 @@ test("Webhook Form action submits once and persists after reload", async ({
           await page.locator('input[name="name"]').fill("Ada");
           await page.locator('input[name="email"]').fill("ada@example.com");
           await page.getByRole("button", { name: "Submit" }).click();
-          await page
-            .getByText("Thank you for getting in touch!", { exact: true })
-            .waitFor();
+          await page.locator('form[data-state="success"]').waitFor();
         },
       });
     });

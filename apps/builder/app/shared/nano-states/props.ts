@@ -138,7 +138,7 @@ const generateAction = (prop: Extract<Prop, { type: "action" }>) => {
   let gettersCode = "";
   for (const dataSourceId of getters) {
     const valueName = encodeDataSourceVariable(dataSourceId);
-    gettersCode += `let ${valueName} = _getVariable("${dataSourceId}")\n`;
+    gettersCode += `let ${valueName} = _getVariable("${dataSourceId}");\n`;
   }
   let settersCode = "";
   for (const dataSourceId of setters) {

@@ -7,7 +7,7 @@ description: >-
 # ✍️ Webhook Form
 
 {% hint style="info" %}
-**Name change:** Webhook Forms used to be called "Forms." However, [Forms](form.md) are now a different component intended for building searches and filters.
+This page covers existing Webhook Form instances. The new [Form](form.md) submits to configured Resource destinations. Use an **Element** with tag `form` for plain browser form behavior such as searches and filters.
 {% endhint %}
 
 {% embed url="https://www.youtube.com/watch?v=eE-CkewQHMs" %}
@@ -21,9 +21,8 @@ Webhook Forms are used when you need to send form submission data to an external
 By default, submissions are sent to the Project owner.
 
 {% hint style="info" %}
-**Pro feature:** You can customize the recipient of email notifications by navigating to **Project settings > General**.
+**Pro feature:** You can customize the recipient of email notifications by navigating to **Project settings > Emails**.
 
-<img src="../../.gitbook/assets/form-recipient.png" alt="Field to customize the recipient of the form submissions" data-size="original">
 {% endhint %}
 
 ### Webhooks
@@ -110,7 +109,7 @@ Webstudio forms include built-in bot protection to prevent spam submissions. Thi
 
 ## Related
 
-- [Form](form.md) – Standard HTML forms
+- [Form](form.md) – Submit to configured Resources
 - [Input](input.md) – Text input fields
 - [Button](button.md) – Submit buttons
 - [n8n Integration](../integrations/n8n.md) – Automate form workflows

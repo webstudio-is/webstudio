@@ -101,6 +101,12 @@ There are several fields available to configure the fetch request.
 
 {% include "../../.gitbook/includes/the-requests-including-any....md" %}
 
+#### Submit a Form to a Resource
+
+In the [Form](../core-components/form.md), open **Settings > Submission** and select an existing Resource or **Create Resource in Form**. A Resource created inside the Form can bind its URL, headers, and body to that Form's `formData` and safe `browserInfo` values. A Resource defined elsewhere can be selected, but cannot bind that Form's submission values. HTTP destinations in a Form always send POST requests, regardless of the Resource's method used for ordinary data loading.
+
+For a Form-scoped HTTP Resource, leave the body unset to forward every named Form field. **Request body format** defaults to **Auto**: text-only data is JSON; a body containing uploaded files becomes multipart. Choose **JSON** or **Multipart** when the receiving API requires that format. JSON rejects uploaded files instead of dropping them. Multipart sends repeated values under the same field name and includes uploaded files with their filenames and bytes. Use the [Form upload guide](../core-components/form.md#inputs-and-responses) for file inputs and the combined request limit.
+
 #### Response
 
 Once the Resource fetches data, you'll use the [Expression editor](expression-editor.md) to bind data from the response to your website. See [Binding](expression-editor.md#binding) for more information.

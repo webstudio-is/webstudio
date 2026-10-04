@@ -47,6 +47,16 @@ declare module "__SERVER__" {
     contentData?: Map<string, ResourceRequest>;
   };
 
+  export const getManagedFormSubmissions: () => Map<
+    string,
+    { submission: unknown; resourceIds: (string | null)[] }
+  >;
+
+  export const getManagedFormResourceGraph: (
+    formId: string,
+    props: { system: System; formData: unknown; browserInfo: unknown }
+  ) => ResourceRequestGraph | undefined;
+
   export const getPageMeta: (props: {
     system: System;
     resources: Record<string, any>;

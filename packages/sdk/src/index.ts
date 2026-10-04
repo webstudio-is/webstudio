@@ -2,11 +2,14 @@ export * from "./schema/assets";
 export * from "./schema/asset-resource";
 export * from "./schema/asset-folders";
 export * from "./schema/pages";
+export * from "./system-search";
 export * from "./schema/response-headers";
 export * from "./schema/instances";
 export * from "./schema/expression";
 export * from "./schema/data-sources";
 export * from "./schema/resources";
+export * from "./email-addresses";
+export * from "./email-resource";
 export * from "./schema/props";
 export * from "./schema/breakpoints";
 export * from "./schema/style-sources";
@@ -34,7 +37,17 @@ export type {
   ComponentBuildImport,
 } from "./component-build";
 export * from "./expression";
-export * from "./resources-generator";
+export {
+  generateResources,
+  replaceFormActionsWithResources,
+  normalizeLegacyFormBuildData,
+} from "./resources-generator";
+export * from "./managed-form-resources-generator";
+export * from "./form-submission";
+export {
+  managedFormEndpointPrefix,
+  managedFormRequestParamName,
+} from "./form-fields";
 export * from "./resource-dependencies";
 export * from "./page-meta-generator";
 export * from "./url-pattern";

@@ -1,10 +1,15 @@
 import type { DataSource, DataSources } from "./schema/data-sources";
-import type { Page } from "./schema/pages";
+import type { Page, ProjectMeta } from "./schema/pages";
+import { resolveEmailResourceSettings } from "./email-resource";
 import type { Resource, Resources } from "./schema/resources";
 import type { Prop, Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "./managed-form-submission";
 import { findTreeInstanceIds } from "./instances-utils";
 import {
   getExpressionDataSourceIds,
@@ -13,18 +18,28 @@ import {
   getResourceDataSourceIds,
 } from "./resource-dependencies";
 
-const generateResourceRequestFields = ({
+export const generateResourceRequestFields = ({
   resource,
   indent,
   dataSources,
   usedDataSources,
   scope,
+  method,
+  emailBodyCode,
+  resolvedEmailSettings,
+  projectMeta,
+  ownerEmail,
 }: {
   resource: Resource;
   indent: string;
   dataSources: DataSources;
   usedDataSources: DataSources;
   scope: Scope;
+  method?: Resource["method"];
+  emailBodyCode?: string;
+  resolvedEmailSettings?: ReturnType<typeof resolveEmailResourceSettings>;
+  projectMeta?: ProjectMeta;
+  ownerEmail?: string;
 }) => {
   let generated = "";
   generated += `${indent}name: ${JSON.stringify(resource.name)},\n`;
@@ -46,10 +61,13 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}  { name: "${searchParam.name}", value: ${value} },\n`;
+    generated += `${indent}  { name: ${JSON.stringify(searchParam.name)}, value: ${value} },\n`;
   }
   generated += `${indent}],\n`;
-  generated += `${indent}method: "${resource.method}",\n`;
+  generated += `${indent}method: ${JSON.stringify(method ?? resource.method)},\n`;
+  if (resource.bodyFormat !== undefined) {
+    generated += `${indent}bodyFormat: ${JSON.stringify(resource.bodyFormat)},\n`;
+  }
   generated += `${indent}headers: [\n`;
   for (const header of resource.headers) {
     const value = generateExpression({
@@ -58,7 +76,7 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}  { name: "${header.name}", value: ${value} },\n`;
+    generated += `${indent}  { name: ${JSON.stringify(header.name)}, value: ${value} },\n`;
   }
   generated += `${indent}],\n`;
   if (resource.body !== undefined && resource.body.length > 0) {
@@ -69,6 +87,50 @@ const generateResourceRequestFields = ({
       scope,
     });
     generated += `${indent}body: ${body},\n`;
+  }
+  if (resource.control === "email") {
+    const email = resource.email ?? {};
+    const resolved =
+      resolvedEmailSettings ??
+      resolveEmailResourceSettings({
+        settings: email,
+        projectMeta,
+        ownerEmail,
+      });
+    generated += `${indent}email: {\n`;
+    generated += `${indent}  recipientMode: ${JSON.stringify(resolved.recipientMode)},\n`;
+    generated += `${indent}  recipients: ${JSON.stringify(resolved.recipients ?? [])},\n`;
+    if (resolved.sender) {
+      generated += `${indent}  sender: ${JSON.stringify(resolved.sender)},\n`;
+    }
+    generated += `${indent}  includeAttachments: ${resolved.includeAttachments},\n`;
+    const subject = generateExpression({
+      expression: resolved.subject,
+      dataSources,
+      usedDataSources,
+      scope,
+    });
+    generated += `${indent}  subject: ${subject},\n`;
+    if (email.body !== undefined) {
+      const body = generateExpression({
+        expression: email.body,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generated += `${indent}  body: ${body},\n`;
+    } else if (emailBodyCode !== undefined) {
+      generated += `${indent}  body: ${emailBodyCode},\n`;
+    } else {
+      const body = generateExpression({
+        expression: resolved.body,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generated += `${indent}  body: ${body},\n`;
+    }
+    generated += `${indent}},\n`;
   }
   return generated;
 };
@@ -96,6 +158,11 @@ export const generateResources = ({
     }[];
   }[];
 }) => {
+  ({ props, resources } = normalizeLegacyFormBuildData({
+    props,
+    resources,
+    instances,
+  }));
   const usedDataSources: DataSources = new Map();
   const contentInputDataSourceIds = new Set<string>();
   const selectedResourceIds = new Set(
@@ -121,6 +188,53 @@ export const generateResources = ({
       )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
   );
+  // Submission values exist only after the browser submits the Form. A Resource
+  // that reads them must not be resolved during the page's normal data load.
+  const formParameterIds = new Set(
+    Array.from(dataSources.values())
+      .filter(
+        (dataSource) =>
+          dataSource.type === "parameter" &&
+          (dataSource.name === formDataParameterName ||
+            dataSource.name === browserInfoParameterName) &&
+          instances.get(dataSource.scopeInstanceId ?? "")?.component ===
+            "NativeForm"
+      )
+      .map(({ id }) => id)
+  );
+  const submissionResourceIds = new Set(
+    Array.from(resources.values())
+      .filter((resource) =>
+        Array.from(getResourceDataSourceIds(resource)).some((id) =>
+          formParameterIds.has(id)
+        )
+      )
+      .map(({ id }) => id)
+  );
+  let foundSubmissionDependency = true;
+  while (foundSubmissionDependency) {
+    foundSubmissionDependency = false;
+    for (const resource of resources.values()) {
+      if (submissionResourceIds.has(resource.id)) {
+        continue;
+      }
+      const dependsOnSubmission = Array.from(
+        getResourceDependencyIds({ resource, dataSources })
+      ).some((dependencyId) => submissionResourceIds.has(dependencyId));
+      if (dependsOnSubmission === false) {
+        continue;
+      }
+      submissionResourceIds.add(resource.id);
+      foundSubmissionDependency = true;
+    }
+  }
+  for (const resourceId of selectedResourceIds) {
+    if (submissionResourceIds.has(resourceId)) {
+      throw new Error(
+        "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+      );
+    }
+  }
   const rootResourceIds = getPageResourceRootIds({
     page,
     instances,
@@ -129,8 +243,18 @@ export const generateResources = ({
   });
   for (const { sourceExpression } of contentBlockResourceSelections) {
     for (const dataSourceId of getExpressionDataSourceIds([sourceExpression])) {
+      if (formParameterIds.has(dataSourceId)) {
+        throw new Error(
+          "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+        );
+      }
       const dataSource = dataSources.get(dataSourceId);
       if (dataSource?.type === "resource") {
+        if (submissionResourceIds.has(dataSource.resourceId)) {
+          throw new Error(
+            "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+          );
+        }
         rootResourceIds.add(dataSource.resourceId);
         contentInputDataSourceIds.add(dataSource.id);
       }
@@ -158,6 +282,9 @@ export const generateResources = ({
   const graphResourceIds = new Set<Resource["id"]>();
   const resourceDependencies = new Map<Resource["id"], Resource["id"][]>();
   const addResourceAndDependencies = (resourceId: Resource["id"]) => {
+    if (submissionResourceIds.has(resourceId)) {
+      return;
+    }
     if (graphResourceIds.has(resourceId)) {
       return;
     }
@@ -194,6 +321,9 @@ export const generateResources = ({
 
   let generatedRequests = "";
   for (const resource of resources.values()) {
+    if (submissionResourceIds.has(resource.id)) {
+      continue;
+    }
     const resourceName = scope.getName(resource.id, resource.name);
     if (graphResourceIds.has(resource.id)) {
       const requestDataSources: DataSources = new Map();
@@ -405,10 +535,7 @@ const getMethod = (value: string | undefined) => {
   }
 };
 
-/**
- * migrate webhook forms to resource action
- * @todo move to client migrations eventually
- */
+/** Preserve saved Form string actions when building client and server output. */
 export const replaceFormActionsWithResources = ({
   props,
   instances,
@@ -470,4 +597,23 @@ export const replaceFormActionsWithResources = ({
       });
     }
   }
+};
+
+export const normalizeLegacyFormBuildData = ({
+  props,
+  resources,
+  instances,
+}: {
+  props: Props;
+  resources: Resources;
+  instances: Instances;
+}) => {
+  const normalizedProps = new Map(props);
+  const normalizedResources = new Map(resources);
+  replaceFormActionsWithResources({
+    props: normalizedProps,
+    resources: normalizedResources,
+    instances,
+  });
+  return { props: normalizedProps, resources: normalizedResources };
 };

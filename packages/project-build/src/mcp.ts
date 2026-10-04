@@ -4036,6 +4036,8 @@ const mcpOperationSchemaInlineSizes = new Map<string, number>([
   ["edit-content-block-source", 0],
   ["update-content-block-frontmatter", 0],
   ["insert-fragment", 1_000],
+  // The nested Resource schema is available through meta.get-more-tools.
+  ["upsert-resource-prop", 2_000],
   ["create-assets-resource", 2_500],
   ["update-assets-resource", 2_500],
   ["validate-asset-query", 2_500],

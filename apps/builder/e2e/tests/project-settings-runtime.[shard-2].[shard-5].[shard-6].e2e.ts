@@ -18,6 +18,7 @@ import {
   expectGeneratedRedirects,
 } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
+import { e2eEmailPlanName } from "../plans";
 import { test } from "../test";
 import { measure } from "../perf";
 
@@ -32,7 +33,12 @@ type PersistedPages = {
 
 type PersistedProjectSettings = {
   compiler: { atomicStyles?: boolean };
-  meta: { auth?: string | null; siteName?: string };
+  meta: {
+    auth?: string | null;
+    siteName?: string;
+    contactEmail?: string;
+    emailSender?: string;
+  };
 };
 
 const getPersistedPages = async ({ projectId }: { projectId: string }) => {
@@ -379,6 +385,72 @@ test("Project settings site name and redirects persist after reload", async ({
   await page.getByText(redirect.from, { exact: true }).waitFor({
     state: "hidden",
   });
+});
+
+test("Project Emails Sender and named recipients persist after reload", async ({
+  page,
+  context,
+}) => {
+  const email = "project-emails-runtime@webstudio.test";
+  const fixture = await createContentModeProject({
+    context,
+    email,
+    title: "Project Emails Runtime",
+    devPlan: e2eEmailPlanName,
+    assetNamePrefix: "project-emails-runtime-",
+    editorToken: "project-emails-runtime-editor-token",
+    builderToken: "project-emails-runtime-builder-token",
+  });
+  const recipients =
+    '"Team, West" <team@example.com>, Owner <owner@example.com>';
+  const sender = "Project Team <sender@example.com>";
+
+  await loginWithSecret({ page, email, devPlan: e2eEmailPlanName });
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
+  await openProjectSettings({ page });
+  await page.getByRole("option", { name: "Emails" }).click();
+
+  let save = waitForChangeToBeSaved({ page });
+  await page.getByLabel("Recipients").fill(recipients);
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+
+  save = waitForChangeToBeSaved({ page });
+  await page.getByLabel("Sender").fill(sender);
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+
+  const persisted = await getPersistedProjectSettings({
+    projectId: fixture.projectId,
+  });
+  if (
+    persisted.meta.contactEmail !== recipients ||
+    persisted.meta.emailSender !== sender
+  ) {
+    throw new Error(
+      `Expected saved Project Emails settings, received ${JSON.stringify(persisted.meta)}.`
+    );
+  }
+
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.builderToken,
+  });
+  await waitForCanvasText({ page, text: "Initial content" });
+  await openProjectSettings({ page });
+  await page.getByRole("option", { name: "Emails" }).click();
+  if (
+    (await page.getByLabel("Recipients").inputValue()) !== recipients ||
+    (await page.getByLabel("Sender").inputValue()) !== sender
+  ) {
+    throw new Error("Expected Project Emails settings to survive reload.");
+  }
 });
 
 test("Marketplace page settings persist after reload", async ({

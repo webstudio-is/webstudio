@@ -277,6 +277,75 @@ describe("project settings runtime", () => {
     expect(
       validateContactEmail("hello@webstudio.is, support@webstudio.is", 1)
     ).toBe("Only 1 emails are allowed.");
+    expect(
+      validateContactEmail(
+        '"Isonen, Olegs" <oleg008@gmail.com>, team@example.com',
+        2
+      )
+    ).toBeUndefined();
+    expect(
+      validateContactEmail(
+        '"Isonen, Olegs" <oleg008@gmail.com>, team@example.com, team@example.com',
+        2
+      )
+    ).toBe("Only 2 emails are allowed.");
+    expect(validateContactEmail("a@example.com\r\nBcc: b@example.com")).toBe(
+      "Contact email is invalid."
+    );
+  });
+
+  test("validates Sender and rejects line breaks in email subjects", () => {
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { emailSender: "Olegs Isonen <oleg008@gmail.com>" },
+      })
+    ).not.toThrow();
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { emailSender: "a@example.com, b@example.com" },
+      })
+    ).toThrow();
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { emailSubject: "Hello\nBcc: attacker@example.com" },
+      })
+    ).toThrow();
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { emailConfirmationSubject: "Hello\rInjected" },
+      })
+    ).toThrow();
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { emailBody: "Hello\nWorld" },
+      })
+    ).not.toThrow();
+  });
+
+  test("saves Email defaults beside the unchanged legacy Contact list", () => {
+    const state = createState();
+    state.projectSettings!.meta.contactEmail = "legacy@example.com";
+    const input = projectSettingsUpdateInput.parse({
+      meta: {
+        emailSender: "Owner <owner@example.com>",
+        emailSubject: "A submission",
+        emailBody: "First line\nSecond line",
+        emailConfirmationSubject: "Thank you",
+        emailConfirmationBody: "We received it.",
+      },
+    });
+    const patches = updateProjectSettings(state, input).payload[0]?.patches;
+    expect(patches).toContainEqual({
+      op: "add",
+      path: ["meta", "emailSender"],
+      value: "Owner <owner@example.com>",
+    });
+    expect(patches).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ["meta", "contactEmail"] }),
+      ])
+    );
+    expect(state.projectSettings!.meta.contactEmail).toBe("legacy@example.com");
   });
 
   test("rejects invalid project contact email updates", () => {

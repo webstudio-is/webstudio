@@ -30,6 +30,7 @@ const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
 const Button = createTemplateComponentFixture("Button");
 const Form = createTemplateComponentFixture("Form");
+const NativeForm = createTemplateComponentFixture("NativeForm");
 const Fragment = createTemplateComponentFixture("Fragment");
 const HeadSlot = createTemplateComponentFixture("HeadSlot");
 const Heading = createTemplateComponentFixture("Heading");
@@ -44,6 +45,71 @@ const Text = createTemplateComponentFixture("Text");
 const Vimeo = createTemplateComponentFixture("Vimeo");
 
 const virtualRoot = "/component-generator-test";
+
+test("Form submission parameters are unavailable during page render", () => {
+  const formData = new Parameter("formData");
+  const browserInfo = new Parameter("browserInfo");
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map(),
+    ...renderData(
+      <Body ws:id="body">
+        <NativeForm
+          ws:id="form"
+          formData={formData}
+          browserInfo={browserInfo}
+        />
+      </Body>
+    ),
+  });
+  expect(generated).toContain("const formData: any = undefined");
+  expect(generated).toContain("const browserInfo: any = undefined");
+  expect(isValidJSX(generated)).toBe(true);
+});
+
+test("only managed Forms receive a server identity that custom props cannot override", () => {
+  const data = renderData(
+    <Body ws:id="body">
+      <NativeForm ws:id="form" />
+    </Body>
+  );
+  data.props.set("custom-id", {
+    id: "custom-id",
+    instanceId: "form",
+    name: "data-ws-managed-form-id",
+    type: "string",
+    value: "spoofed",
+  });
+  const generate = () =>
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      metas: new Map(),
+      ...data,
+    });
+
+  const native = generate();
+  expect(native).not.toContain("data-ws-managed-form-id");
+  data.props.set("submission", {
+    id: "submission",
+    instanceId: "form",
+    name: "submission",
+    type: "json",
+    value: { destinations: ["request"] },
+  });
+  const managed = generate();
+  expect(managed.match(/data-ws-managed-form-id/g)).toHaveLength(1);
+  expect(managed).toContain('data-ws-managed-form-id="form"');
+  expect(managed).not.toContain("spoofed");
+  expect(isValidJSX(managed)).toBe(true);
+});
 const virtualConfig = `${virtualRoot}/tsconfig.json`;
 const virtualFile = `${virtualRoot}/virtual.tsx`;
 let virtualCode = "";
@@ -1210,7 +1276,7 @@ test("generate resource prop with configured form method", () => {
     method={"get"} />
     <Form
     action={"action"}
-    method={"get"} />
+    method={"post"} />
     </Body>
     }
     "

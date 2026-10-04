@@ -11,11 +11,127 @@ import { encodeDataSourceVariable } from "./expression";
 import {
   generateResources,
   replaceFormActionsWithResources,
+  normalizeLegacyFormBuildData,
 } from "./resources-generator";
 import type { DataSource } from "./schema/data-sources";
 
 const Body = createTemplateComponentFixture("Body");
 const Form = createTemplateComponentFixture("Form");
+
+test("does not fetch a Form-bound Resource during page load", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "form" } as Page,
+    instances: toMap([
+      { type: "instance", id: "form", component: "NativeForm", children: [] },
+    ]),
+    dataSources: toMap([
+      {
+        id: "formDataId",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+      {
+        id: "resourceVariableId",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Submission",
+        resourceId: "resourceId",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "resourceId",
+        name: "Submission",
+        method: "post",
+        url: '"https://example.com"',
+        headers: [],
+        body: encodeDataSourceVariable("formDataId"),
+      },
+    ]),
+    props: new Map(),
+  });
+
+  expect(generated).not.toContain('id: "resourceId"');
+  expect(generated).not.toContain("formDataId");
+  expect(generated).not.toContain("formData");
+});
+
+test("excludes transitive Form-only Resources and rejects Dynamic Content Block selection", () => {
+  const input = {
+    page: { rootInstanceId: "form" } as Page,
+    instances: toMap([
+      {
+        type: "instance" as const,
+        id: "form",
+        component: "NativeForm",
+        children: [],
+      },
+    ]),
+    dataSources: toMap([
+      {
+        id: "formDataId",
+        type: "parameter" as const,
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+      {
+        id: "directResourceVariableId",
+        type: "resource" as const,
+        scopeInstanceId: "form",
+        name: "Direct",
+        resourceId: "directResourceId",
+      },
+      {
+        id: "derivedResourceVariableId",
+        type: "resource" as const,
+        scopeInstanceId: "form",
+        name: "Derived",
+        resourceId: "derivedResourceId",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "directResourceId",
+        name: "Direct",
+        method: "post" as const,
+        url: '"https://example.com/direct"',
+        headers: [],
+        body: encodeDataSourceVariable("formDataId"),
+      },
+      {
+        id: "derivedResourceId",
+        name: "Derived",
+        method: "post" as const,
+        url: '"https://example.com/derived"',
+        headers: [],
+        body: encodeDataSourceVariable("directResourceVariableId"),
+      },
+    ]),
+    props: new Map(),
+  };
+  const generated = generateResources({ scope: createScope(), ...input });
+  expect(generated).not.toContain("directResourceId");
+  expect(generated).not.toContain("derivedResourceId");
+
+  expect(() =>
+    generateResources({
+      scope: createScope(),
+      ...input,
+      contentBlockResourceSelections: [
+        {
+          sourceExpression: '"choice"',
+          candidates: [
+            { assetId: "choice", resourceIds: ["derivedResourceId"] },
+          ],
+        },
+      ],
+    })
+  ).toThrow(
+    "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+  );
+});
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -936,6 +1052,28 @@ test("replace form action with resource", () => {
       },
     ])
   );
+});
+
+test("normalize legacy form action for build without mutating saved props and resources", () => {
+  const saved = renderData(
+    <Form ws:id="formId" action="https://my-url.com" method="put"></Form>
+  );
+  const propsBefore = new Map(saved.props);
+  const resourcesBefore = new Map(saved.resources);
+  const normalized = normalizeLegacyFormBuildData(saved);
+
+  expect(saved.props).toEqual(propsBefore);
+  expect(saved.resources).toEqual(resourcesBefore);
+  expect(
+    Array.from(normalized.props.values()).find((prop) => prop.name === "action")
+  ).toMatchObject({ type: "resource", value: "formId" });
+  expect(
+    Array.from(normalized.props.values()).find((prop) => prop.name === "method")
+  ).toBeUndefined();
+  expect(normalized.resources.get("formId")).toMatchObject({
+    method: "put",
+    url: '"https://my-url.com"',
+  });
 });
 
 test("ignore empty form action", () => {

@@ -11,6 +11,7 @@ import {
   getAllPages,
   getStyleDeclKey,
   isAssetsResource,
+  isFormSubmission,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -34,9 +35,15 @@ import {
   transpileExpression,
 } from "@webstudio-is/expression";
 import { z } from "zod";
+import {
+  validateContactEmail,
+  validateEmailSender,
+} from "../contracts/project-settings";
 import { produceWithPatches } from "immer";
 import {
+  browserInfoParameterName,
   createJsonStringifyProxy,
+  formDataParameterName,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
@@ -1154,6 +1161,21 @@ export const deleteVariableMutable = (
     return;
   }
   data.dataSources.delete(variableId);
+  for (const prop of data.props.values()) {
+    if (
+      prop.type !== "json" ||
+      prop.name !== "submission" ||
+      data.instances.get(prop.instanceId)?.component !== "NativeForm" ||
+      !isFormSubmission(prop.value) ||
+      !prop.value.destinations.includes(variableId)
+    ) {
+      continue;
+    }
+    prop.value = {
+      ...prop.value,
+      destinations: prop.value.destinations.filter((id) => id !== variableId),
+    };
+  }
   if (dataSource.type === "resource") {
     data.resources.delete(dataSource.resourceId);
   }
@@ -1571,6 +1593,18 @@ export const updateDataVariable = (
   if (dataSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Variable not found");
   }
+  if (
+    dataSource.type === "parameter" &&
+    (dataSource.name === formDataParameterName ||
+      dataSource.name === browserInfoParameterName) &&
+    state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
+      "NativeForm"
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Form submission variables cannot be edited"
+    );
+  }
   const scopeInstanceId =
     input.values.scopeInstanceId ?? dataSource.scopeInstanceId;
   if (scopeInstanceId === undefined) {
@@ -1639,6 +1673,19 @@ export const deleteDataVariable = (
   >,
   input: z.infer<typeof dataVariableDeleteInput>
 ) => {
+  const dataSource = state.dataSources?.get(input.dataSourceId);
+  if (
+    dataSource?.type === "parameter" &&
+    (dataSource.name === formDataParameterName ||
+      dataSource.name === browserInfoParameterName) &&
+    state.instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
+      "NativeForm"
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Form submission variables cannot be deleted"
+    );
+  }
   const { payload, deletedVariable } = createDataVariableDeletePayload({
     variableId: input.dataSourceId,
     pages: state.pages,
@@ -1745,7 +1792,7 @@ const resourceExpressionEntryInput = z.object({
 });
 
 const resourceFieldsInputBase = resource.omit({ id: true }).extend({
-  control: z.enum(["system", "graphql"]).optional(),
+  control: z.enum(["system", "graphql", "email"]).optional(),
   url: z.preprocess(
     (value) =>
       typeof value === "string" ? normalizeResourceUrlInput(value) : value,
@@ -1756,8 +1803,52 @@ const resourceFieldsInputBase = resource.omit({ id: true }).extend({
   body: resourceExpressionInput.optional(),
 });
 
+const addEmailResourceIssues = (
+  fields: { control?: Resource["control"]; email?: Resource["email"] },
+  context: z.RefinementCtx,
+  allowPartial = false
+) => {
+  if (fields.control !== "email") {
+    if (
+      fields.email !== undefined &&
+      (!allowPartial || fields.control !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["email"],
+        message: "Email settings require an Email Resource.",
+      });
+    }
+    if (fields.email === undefined) {
+      return;
+    }
+  }
+  const settings = fields.email;
+  if (
+    settings?.recipientMode === "custom" &&
+    (!settings.recipients || validateContactEmail(settings.recipients))
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["email", "recipients"],
+      message: "Enter a valid recipient list.",
+    });
+  }
+  if (
+    settings?.sender !== undefined &&
+    (settings.sender === "" || validateEmailSender(settings.sender))
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["email", "sender"],
+      message: "Sender must contain exactly one valid email address.",
+    });
+  }
+};
+
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
+    addEmailResourceIssues(fields, context);
     const normalizedFields = normalizeResourceFieldsInput(fields);
     addExpressionIssues(
       context,
@@ -1765,7 +1856,9 @@ export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
     );
     addExpressionIssues(
       context,
-      getResourceLiteralUrlValidationIssues(normalizedFields)
+      getResourceLiteralUrlValidationIssues(
+        fields.control === "email" ? {} : normalizedFields
+      )
     );
   }
 );
@@ -1773,6 +1866,7 @@ export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
 export const resourceFieldsUpdateInput = resourceFieldsInputBase
   .partial()
   .superRefine((fields, context) => {
+    addEmailResourceIssues(fields, context, true);
     const normalizedFields = normalizeResourceFieldsUpdateInput(fields);
     addExpressionIssues(
       context,
@@ -1780,7 +1874,9 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
     );
     addExpressionIssues(
       context,
-      getResourceLiteralUrlValidationIssues(normalizedFields)
+      getResourceLiteralUrlValidationIssues(
+        fields.control === "email" ? {} : normalizedFields
+      )
     );
   });
 
@@ -1944,6 +2040,12 @@ export const createResourceFieldsFromFormData = ({
       .map((name, index) => ({ name, value: headerValues[index] }))
       .filter((item) => String(item.name).trim()),
     body: formData.get("body") || undefined,
+    ...(formData.get("body-format")
+      ? { bodyFormat: formData.get("body-format") }
+      : {}),
+    ...(control === "email"
+      ? { email: JSON.parse(String(formData.get("email-settings") ?? "{}")) }
+      : {}),
   });
 };
 
@@ -1974,6 +2076,8 @@ export const createResourceValue = ({
   method,
   headers,
   body,
+  bodyFormat,
+  email,
 }: {
   id: Resource["id"];
   control?: unknown;
@@ -1983,6 +2087,8 @@ export const createResourceValue = ({
   method: unknown;
   headers: unknown;
   body?: unknown;
+  bodyFormat?: unknown;
+  email?: unknown;
 }): Resource =>
   resource.parse({
     id,
@@ -1993,6 +2099,8 @@ export const createResourceValue = ({
     method,
     headers,
     body: body || undefined,
+    ...(bodyFormat === undefined ? {} : { bodyFormat }),
+    ...(email === undefined ? {} : { email }),
   });
 
 export const createResourceFieldsFromResource = (
@@ -2005,6 +2113,10 @@ export const createResourceFieldsFromResource = (
   method: resource.method,
   headers: resource.headers,
   body: resource.body,
+  ...(resource.bodyFormat === undefined
+    ? {}
+    : { bodyFormat: resource.bodyFormat }),
+  ...(resource.email === undefined ? {} : { email: resource.email }),
 });
 
 export const validateResourceUrlExpression = async (
@@ -2046,7 +2158,7 @@ export const validateResourceBodyExpression = async (
 };
 
 type ResourceExpressionFields = Partial<
-  Pick<Resource, "url" | "body" | "headers" | "searchParams">
+  Pick<Resource, "url" | "body" | "headers" | "searchParams" | "email">
 >;
 
 export const listResourceExpressions = (
@@ -2059,6 +2171,22 @@ export const listResourceExpressions = (
   ...(fields.body === undefined
     ? []
     : [{ path: [...pathPrefix, "body"], expression: fields.body }]),
+  ...(fields.email?.subject === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "subject"],
+          expression: fields.email.subject,
+        },
+      ]),
+  ...(fields.email?.body === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "body"],
+          expression: fields.email.body,
+        },
+      ]),
   ...(fields.headers ?? []).map((header, index) => ({
     path: [...pathPrefix, "headers", String(index), "value"],
     expression: header.value,
@@ -2087,7 +2215,7 @@ const getResourceWarnings = ({
 }: {
   fields: Pick<
     Resource,
-    "control" | "method" | "url" | "body" | "headers" | "searchParams"
+    "control" | "method" | "url" | "body" | "headers" | "searchParams" | "email"
   >;
   state: Pick<BuilderState, "instances" | "dataSources">;
   scopeInstanceId?: string;
@@ -2133,7 +2261,9 @@ const getResourceWarnings = ({
 };
 
 export const getResourceExpressionErrors = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
+  fields: Partial<
+    Pick<Resource, "url" | "body" | "headers" | "searchParams" | "email">
+  >
 ) =>
   formatValidationIssueMessages(getResourceExpressionValidationIssues(fields))
     .split("\n")
@@ -2203,12 +2333,19 @@ const getResourceLiteralUrlValidationIssues = (
 };
 
 const validateResourceFields = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>,
+  fields: Partial<
+    Pick<
+      Resource,
+      "control" | "url" | "body" | "headers" | "searchParams" | "email"
+    >
+  >,
   pathPrefix: readonly string[] = []
 ) => {
   const issues = [
     ...getResourceExpressionValidationIssues(fields),
-    ...getResourceLiteralUrlValidationIssues(fields),
+    ...getResourceLiteralUrlValidationIssues(
+      fields.control === "email" ? {} : fields
+    ),
   ];
   if (issues.length > 0) {
     return throwBuilderValidationError(
@@ -2463,6 +2600,8 @@ export const createResourceCreatePayload = ({
             searchParams: resourceInput.searchParams,
             headers: resourceInput.headers,
             body: resourceInput.body,
+            bodyFormat: resourceInput.bodyFormat,
+            email: resourceInput.email,
           }),
         },
       ],
@@ -2551,16 +2690,34 @@ export const createResourceDeletePayload = ({
   propIds: Prop["id"][];
   isUsed: boolean;
 } => {
-  const resourceProps = Array.from(props).filter(
+  const propList = Array.from(props);
+  const resourceProps = propList.filter(
     (prop) => prop.type === "resource" && prop.value === resource.id
   );
-  if (resourceProps.length > 0 && force !== true) {
-    return { payload: [], dataSourceIds: [], propIds: [], isUsed: true };
-  }
   const resourceDataSources = Array.from(dataSources).filter(
     (dataSource) =>
       dataSource.type === "resource" && dataSource.resourceId === resource.id
   );
+  const resourceDataSourceIds = new Set(
+    resourceDataSources.map(({ id }) => id)
+  );
+  const formSubmissionProps = propList.flatMap((prop) => {
+    if (
+      prop.type !== "json" ||
+      prop.name !== "submission" ||
+      !isFormSubmission(prop.value) ||
+      !prop.value.destinations.some((id) => resourceDataSourceIds.has(id))
+    ) {
+      return [];
+    }
+    return [{ id: prop.id, value: prop.value }];
+  });
+  if (
+    (resourceProps.length > 0 || formSubmissionProps.length > 0) &&
+    force !== true
+  ) {
+    return { payload: [], dataSourceIds: [], propIds: [], isUsed: true };
+  }
   const payload: BuilderPatchChange[] = [
     {
       namespace: "resources",
@@ -2576,13 +2733,25 @@ export const createResourceDeletePayload = ({
       })),
     });
   }
-  if (resourceProps.length > 0) {
+  if (resourceProps.length > 0 || formSubmissionProps.length > 0) {
     payload.push({
       namespace: "props",
-      patches: resourceProps.map((prop) => ({
-        op: "remove" as const,
-        path: [prop.id],
-      })),
+      patches: [
+        ...resourceProps.map((prop) => ({
+          op: "remove" as const,
+          path: [prop.id],
+        })),
+        ...formSubmissionProps.map((prop) => ({
+          op: "replace" as const,
+          path: [prop.id, "value"],
+          value: {
+            ...prop.value,
+            destinations: prop.value.destinations.filter(
+              (id) => resourceDataSourceIds.has(id) === false
+            ),
+          },
+        })),
+      ],
     });
   }
 
@@ -2723,6 +2892,8 @@ export const createResource = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
   const warnings = getResourceWarnings({
     fields: resource,
@@ -2803,6 +2974,12 @@ export const updateResource = (
     ...values,
     ...(clearBody ? { body: undefined } : {}),
   });
+  if (nextResource.control !== "email" && nextResource.email !== undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Email settings require an Email Resource."
+    );
+  }
   const dataSource = build.dataSources.find(
     (dataSource) =>
       dataSource.type === "resource" && dataSource.resourceId === resource.id
@@ -2989,6 +3166,8 @@ export const upsertResource = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
 
   return createRuntimeMutation({
@@ -3056,6 +3235,8 @@ export const upsertResourceProp = (
     searchParams: resourceInput.searchParams,
     headers: resourceInput.headers,
     body: resourceInput.body,
+    bodyFormat: resourceInput.bodyFormat,
+    email: resourceInput.email,
   });
   const existingProp = findProp(build.props, input.instanceId, input.propName);
   const nextProp = createValidatedPropValueFromInput(

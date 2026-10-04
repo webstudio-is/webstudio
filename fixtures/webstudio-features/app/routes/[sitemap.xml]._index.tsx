@@ -1,6 +1,10 @@
 import { renderToString } from "react-dom/server";
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
+import {
+  isLocalResource,
+  loadResources,
+  getSystemSearch,
+} from "@webstudio-is/sdk/runtime";
 import { authenticateProjectRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
@@ -73,7 +77,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
 
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };

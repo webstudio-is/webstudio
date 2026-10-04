@@ -180,6 +180,22 @@ const forms: Record<string, TemplateMeta> = {
     ),
   },
 
+  file_input: {
+    category: "forms",
+    description:
+      "Let visitors upload one or more files with a form. Set the name, required state, accepted file types, and multiple-file selection in Settings.",
+    template: setInstanceMeta(
+      { label: "File Input" },
+      <input
+        type="file"
+        name="files"
+        ws:style={css`
+          display: block;
+        `}
+      />
+    ),
+  },
+
   text_area: {
     category: "forms",
     description:

@@ -194,12 +194,17 @@ export const usePropsLogic = ({
         styleSources,
       })
     : undefined;
-
   /**
    * In content edit mode we show only props marked with contentMode: true
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
+    if (
+      instance.component === "NativeForm" &&
+      (propName === "action" || propName === "method" || propName === "encType")
+    ) {
+      return false;
+    }
     if (!isContentMode) {
       return true;
     }

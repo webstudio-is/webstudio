@@ -35,6 +35,7 @@ import {
   Select,
   SplitView,
   Switch,
+  Text,
   TextArea,
   Tooltip,
   theme,
@@ -45,7 +46,11 @@ import {
   SYSTEM_VARIABLE_ID,
   resourceRequest,
 } from "@webstudio-is/sdk";
-import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+  isAssetsResourceRequest,
+} from "@webstudio-is/sdk/runtime";
 import {
   ExpressionEditor,
   formatValue,
@@ -78,6 +83,7 @@ import {
 import { parseJsonExpression } from "@webstudio-is/expression";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
+  EmailResourceForm,
   GraphqlResourceForm,
   ResourceForm,
   SystemResourceForm,
@@ -196,6 +202,7 @@ type VariableType =
   | "boolean"
   | "json"
   | "resource"
+  | "email-resource"
   | "graphql-resource"
   | "system-resource";
 
@@ -243,6 +250,12 @@ const TypeField = ({
       ),
       description:
         "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
+    },
+    {
+      value: "email-resource",
+      label: "Email",
+      description:
+        "Send a plain-text email through Webstudio Cloud when a Form is submitted.",
     },
     {
       value: "graphql-resource",
@@ -636,6 +649,13 @@ const VariablePanelForm = forwardRef<
               onChange={onResourceChange}
             />
           )}
+          {variableType === "email-resource" && (
+            <EmailResourceForm
+              ref={ref}
+              variable={variable}
+              onChange={onResourceChange}
+            />
+          )}
           {variableType === "graphql-resource" && (
             <GraphqlResourceForm
               ref={ref}
@@ -712,7 +732,11 @@ const VariablePreview = ({
       setResolvedResourceRequest(parsedResourceRequest);
       return;
     }
-    if (variable?.type !== "resource" || !showSavedResourceRequest) {
+    if (
+      variableType === "email-resource" ||
+      variable?.type !== "resource" ||
+      !showSavedResourceRequest
+    ) {
       setResolvedResourceRequest(undefined);
       return;
     }
@@ -741,6 +765,7 @@ const VariablePreview = ({
     resources,
     resourceScope.variableValues,
     variable,
+    variableType,
     variableValue,
     showSavedResourceRequest,
   ]);
@@ -792,6 +817,15 @@ const VariablePreview = ({
     onChange: () => {},
     onChangeComplete: () => {},
   };
+  if (variableType === "email-resource") {
+    return (
+      <Flex justify="center" align="center" css={{ height: "100%" }}>
+        <Text color="subtle">
+          Email delivery is available after publishing to Webstudio Cloud.
+        </Text>
+      </Flex>
+    );
+  }
   const previewContent = (
     <Grid
       align="stretch"
@@ -868,11 +902,13 @@ const VariablePreview = ({
 const VariablePopoverContent = ({
   formRef,
   variable,
+  defaultType,
   isOpen,
   onClose,
 }: {
   formRef: RefObject<HTMLFormElement>;
   variable?: DataSource;
+  defaultType?: VariableType;
   isOpen: boolean;
   onClose: () => void;
 }) => {
@@ -885,7 +921,13 @@ const VariablePopoverContent = ({
     (element: HTMLDivElement | null) => setQuerySourceContainer(element),
     []
   );
-  const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
+  const isSystemVariable =
+    variable?.id === SYSTEM_VARIABLE_ID ||
+    (variable?.type === "parameter" &&
+      (variable.name === formDataParameterName ||
+        variable.name === browserInfoParameterName) &&
+      $instances.get().get(variable.scopeInstanceId ?? "")?.component ===
+        "NativeForm");
   const previewReleaseRef = useRef<(() => void) | undefined>(undefined);
   const previewRevisionRef = useRef(0);
   const [showSavedResourceRequest, setShowSavedResourceRequest] =
@@ -910,6 +952,9 @@ const VariablePopoverContent = ({
       if (resource?.control === "graphql") {
         return "graphql-resource";
       }
+      if (resource?.control === "email") {
+        return "email-resource";
+      }
       return "resource";
     }
     if (variable?.type === "parameter") {
@@ -922,7 +967,7 @@ const VariablePopoverContent = ({
       }
       return "json";
     }
-    return "string";
+    return defaultType ?? "string";
   });
 
   const cancelPreview = () => {
@@ -955,6 +1000,7 @@ const VariablePopoverContent = ({
     setValue((prev: unknown) => {
       if (
         variableType === "resource" ||
+        variableType === "email-resource" ||
         variableType === "graphql-resource" ||
         variableType === "system-resource"
       ) {
@@ -1171,9 +1217,11 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
 
 export const VariablePopoverTrigger = ({
   variable,
+  defaultType,
   children,
 }: {
   variable?: DataSource;
+  defaultType?: VariableType;
   children: ReactNode;
 }) => {
   const [isOpen, setOpen] = useState(false);
@@ -1206,6 +1254,7 @@ export const VariablePopoverTrigger = ({
         <VariablePopoverContent
           formRef={formRef}
           variable={variable}
+          defaultType={defaultType}
           isOpen={isOpen}
           onClose={() => setOpen(false)}
         />

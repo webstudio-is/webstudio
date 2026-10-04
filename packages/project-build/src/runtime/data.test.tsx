@@ -21,6 +21,7 @@ import {
   type Resource,
 } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { applyBuilderPatchPayloadMutable } from "../state/patch";
 import {
   computeExpression,
   computeExpressionWithinScope,
@@ -44,6 +45,7 @@ import {
   createResourceValueFromFormData,
   decodeDataVariableName,
   deleteResource,
+  deleteDataVariable,
   deleteVariableMutable,
   deleteUnusedDataVariables,
   encodeDataVariableName,
@@ -82,6 +84,202 @@ const Box = createTemplateComponentFixture("Box");
 const Fragment = createTemplateComponentFixture("Fragment");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
+const NativeForm = createTemplateComponentFixture("NativeForm");
+
+test("deleting a Resource removes it from a new Form's destinations", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("resourceVariable", {
+    type: "resource",
+    id: "resourceVariable",
+    name: "Submission",
+    scopeInstanceId: "formId",
+    resourceId: "resource",
+  });
+  data.resources.set("resource", {
+    id: "resource",
+    name: "Submission",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [],
+  });
+  data.props.set("submission", {
+    id: "submission",
+    instanceId: "formId",
+    name: "submission",
+    type: "json",
+    value: { destinations: ["resourceVariable"] },
+  });
+
+  deleteVariableMutable(data, "resourceVariable");
+
+  expect(data.props.get("submission")).toMatchObject({
+    value: { destinations: [] },
+  });
+});
+
+test("a Form can select ancestor and local Resources, while Form data stays local", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+      <Box ws:id="siblingId" />
+    </Body>
+  );
+  for (const [id, scopeInstanceId] of [
+    ["globalResource", "bodyId"],
+    ["localResource", "formId"],
+    ["siblingResource", "siblingId"],
+  ]) {
+    data.dataSources.set(id, {
+      type: "resource",
+      id,
+      name: id,
+      scopeInstanceId,
+      resourceId: id,
+    });
+  }
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+
+  const availableToForm = findAvailableVariables({
+    startingInstanceId: "formId",
+    instances: data.instances,
+    dataSources: data.dataSources,
+  });
+  expect(availableToForm.map(({ id }) => id)).toContain("globalResource");
+  expect(availableToForm.map(({ id }) => id)).toContain("localResource");
+  expect(availableToForm.map(({ id }) => id)).not.toContain("siblingResource");
+  const availableToOutside = findAvailableVariables({
+    startingInstanceId: "siblingId",
+    instances: data.instances,
+    dataSources: data.dataSources,
+  });
+  expect(availableToOutside.map(({ id }) => id)).not.toContain("formData");
+});
+
+test("Form-scoped Resource bindings and destination survive edit, save, and reload", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+  data.dataSources.set("browserInfo", {
+    type: "parameter",
+    id: "browserInfo",
+    name: "browserInfo",
+    scopeInstanceId: "formId",
+  });
+  data.dataSources.set("destination", {
+    type: "resource",
+    id: "destination",
+    name: "Submission",
+    resourceId: "resource",
+    scopeInstanceId: "formId",
+  });
+  data.resources.set("resource", {
+    id: "resource",
+    name: "Submission",
+    method: "post",
+    url: '"https://example.com/submit"',
+    headers: [],
+  });
+  data.props.set("submission", {
+    id: "submission",
+    instanceId: "formId",
+    name: "submission",
+    type: "json",
+    value: { destinations: ["destination"] },
+  });
+
+  const bodyExpression = `({ email: ${encodeDataVariableId("formData")}.email })`;
+  const headerExpression = `${encodeDataVariableId("browserInfo")}.language`;
+  const editorData = new FormData();
+  editorData.set("name", "Submission");
+  editorData.set("method", "post");
+  editorData.set("url", '"https://example.com/submit"');
+  editorData.set("header-name", "X-Language");
+  editorData.set("header-value", headerExpression);
+  editorData.set("body", bodyExpression);
+  const mutation = upsertResource(
+    {
+      ...data,
+      pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    },
+    {
+      resourceId: "resource",
+      dataSourceId: "destination",
+      scopeInstanceId: "formId",
+      resource: createResourceFieldsFromFormData({ formData: editorData }),
+    },
+    { createId: () => "unused" }
+  );
+  applyBuilderPatchPayloadMutable(
+    (namespace) => data[namespace as keyof typeof data],
+    mutation.payload
+  );
+
+  const saved = JSON.parse(
+    JSON.stringify({
+      dataSources: [...data.dataSources],
+      resources: [...data.resources],
+      props: [...data.props],
+    })
+  );
+  const reloadedResources = new Map<string, Resource>(saved.resources);
+  const reloadedDataSources = new Map<string, DataSource>(saved.dataSources);
+  const reloadedProps = new Map<string, Prop>(saved.props);
+  expect(reloadedResources.get("resource")).toMatchObject({
+    body: bodyExpression,
+    headers: [{ name: "X-Language", value: headerExpression }],
+  });
+  expect(reloadedDataSources.get("destination")).toMatchObject({
+    resourceId: "resource",
+    scopeInstanceId: "formId",
+  });
+  expect(reloadedProps.get("submission")).toMatchObject({
+    value: { destinations: ["destination"] },
+  });
+});
+
+test("Form submission parameters cannot be renamed or deleted", () => {
+  const data = renderData(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("formData", {
+    type: "parameter",
+    id: "formData",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+  const state = {
+    ...data,
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+  };
+  expect(() =>
+    updateDataVariable(state, {
+      dataSourceId: "formData",
+      values: { name: "renamed" },
+    })
+  ).toThrow("Form submission variables cannot be edited");
+  expect(() => deleteDataVariable(state, { dataSourceId: "formData" })).toThrow(
+    "Form submission variables cannot be deleted"
+  );
+});
 
 test("creates Map-backed patches without mutating caller-owned data", () => {
   const before = {
@@ -2496,6 +2694,61 @@ describe("createResourceValue", () => {
       })
     ).toHaveProperty("body", undefined);
   });
+
+  test("persists the selected HTTP body format", () => {
+    const formData = new FormData();
+    formData.set("name", "Upload");
+    formData.set("method", "post");
+    formData.set("url", '"https://example.com/upload"');
+    formData.set("body-format", "multipart");
+    const fields = createResourceFieldsFromFormData({ formData });
+    expect(fields.bodyFormat).toBe("multipart");
+    const value = createResourceValueFromFormData({
+      id: "upload",
+      formData,
+    });
+    expect(value.bodyFormat).toBe("multipart");
+    expect(createResourceFieldsFromResource(value).bodyFormat).toBe(
+      "multipart"
+    );
+  });
+
+  test("persists Email Resource overrides through form data and resource value", () => {
+    const formData = new FormData();
+    formData.set("name", "Notify team");
+    formData.set("method", "post");
+    formData.set("url", '""');
+    formData.set(
+      "email-settings",
+      JSON.stringify({
+        recipientMode: "custom",
+        recipients: '"Team, West" <team@example.com>',
+        sender: "Owner <owner@example.com>",
+        subject: '"New submission"',
+        body: "`Submission: ${formData.name}`",
+        includeAttachments: false,
+      })
+    );
+    const fields = createResourceFieldsFromFormData({
+      control: "email",
+      formData,
+    });
+    expect(fields.email).toMatchObject({
+      recipients: '"Team, West" <team@example.com>',
+      includeAttachments: false,
+    });
+    const value = createResourceValue({ id: "email-id", ...fields });
+    expect(createResourceFieldsFromResource(value).email).toEqual(fields.email);
+    expect(
+      resourceFieldsInput.safeParse({ ...fields, control: undefined }).success
+    ).toBe(false);
+    expect(
+      resourceFieldsInput.safeParse({
+        ...fields,
+        email: { ...fields.email, sender: "a@example.com, b@example.com" },
+      }).success
+    ).toBe(false);
+  });
 });
 
 describe("findResource", () => {
@@ -2636,6 +2889,7 @@ describe("resource patch helpers", () => {
             },
           ],
           body: { type: "literal", value: "request body" },
+          bodyFormat: "json",
         }),
       },
       { createId: () => "resource-id" }
@@ -2656,6 +2910,7 @@ describe("resource patch helpers", () => {
             searchParams: [{ name: "status", value: '"active"' }],
             headers: [{ name: "Content-Type", value: '"application/json"' }],
             body: '"request body"',
+            bodyFormat: "json",
           },
         },
       ],
@@ -3130,6 +3385,69 @@ describe("resource patch helpers", () => {
     });
   });
 
+  test("preserves body format in a resource create payload", () => {
+    const result = createResourceCreatePayload({
+      resourceId: "resource",
+      resource: { ...resource, bodyFormat: "multipart" },
+      resources: [],
+      dataSources: [],
+    });
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource"],
+          value: expect.objectContaining({ bodyFormat: "multipart" }),
+        },
+      ],
+    });
+  });
+
+  test("persists body format selected in the Resource editor through upsert", () => {
+    const formData = new FormData();
+    formData.set("name", "Upload");
+    formData.set("method", "post");
+    formData.set("url", '"https://example.com/upload"');
+    formData.set("body-format", "multipart");
+    const body: Instance = {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    };
+
+    const result = upsertResource(
+      {
+        pages: createDefaultPages({ rootInstanceId: body.id }),
+        instances: new Map([[body.id, body]]),
+        props: new Map(),
+        dataSources: new Map(),
+        resources: new Map(),
+        breakpoints: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+        styles: new Map(),
+      },
+      {
+        scopeInstanceId: body.id,
+        resource: createResourceFieldsFromFormData({ formData }),
+      },
+      { createId: () => "resource-id" }
+    );
+
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource-id"],
+          value: expect.objectContaining({ bodyFormat: "multipart" }),
+        },
+      ],
+    });
+  });
+
   test("upserts resource and preserves existing data source id", () => {
     const body: Instance = {
       type: "instance",
@@ -3365,6 +3683,7 @@ describe("resource patch helpers", () => {
           method: "post",
           url: "https://example.com/submit",
           headers: [],
+          bodyFormat: "multipart",
         }),
       },
       { createId: () => ids.shift() ?? "extra-id" }
@@ -3410,6 +3729,7 @@ describe("resource patch helpers", () => {
             searchParams: undefined,
             headers: [],
             body: undefined,
+            bodyFormat: "multipart",
           },
         },
       ],
@@ -3812,6 +4132,47 @@ describe("resource patch helpers", () => {
       dataSourceIds: ["data-source"],
       propIds: ["prop"],
       isUsed: false,
+    });
+  });
+
+  test("guards a Form destination and removes its selection on forced deletion", () => {
+    const submission: Prop = {
+      id: "submission",
+      instanceId: "form",
+      name: "submission",
+      type: "json",
+      value: { destinations: ["data-source"] },
+    };
+    const dataSource: DataSource = {
+      id: "data-source",
+      scopeInstanceId: "form",
+      name: "Submission",
+      type: "resource",
+      resourceId: resource.id,
+    };
+    expect(
+      createResourceDeletePayload({
+        resource,
+        props: [submission],
+        dataSources: [dataSource],
+      }).isUsed
+    ).toBe(true);
+    expect(
+      createResourceDeletePayload({
+        resource,
+        props: [submission],
+        dataSources: [dataSource],
+        force: true,
+      }).payload
+    ).toContainEqual({
+      namespace: "props",
+      patches: [
+        {
+          op: "replace",
+          path: ["submission", "value"],
+          value: { destinations: [] },
+        },
+      ],
     });
   });
 

@@ -2,6 +2,14 @@
  * Used to identify form inside server handler
  */
 export const formIdFieldName = `ws--form-id`;
+/** Identifies a managed NativeForm without accepting destinations from the visitor. */
+export const managedFormIdFieldName = `ws--managed-form-id`;
+/** Query marker lets the server apply managed-only parsing limits before parsing. */
+export const managedFormRequestParamName = `ws--managed-form-request`;
+/** Resource route prefix for JSON Form submissions on dynamic sites. */
+export const managedFormEndpointPrefix = "/__ws-form";
+/** Names whose submitted values are lists, including empty checkbox groups. */
+export const managedFormArrayNamesFieldName = `ws--managed-form-array-names`;
 /**
  * Used for simlpe protection against non js bots
  */

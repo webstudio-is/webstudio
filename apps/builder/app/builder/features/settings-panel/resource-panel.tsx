@@ -14,30 +14,40 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   encodeDataVariableId,
+  decodeDataVariableId,
+  getDefaultFormEmailBodyExpression,
+  defaultEmailBody,
   getResourceCycleDataSourceIds,
   isAssetsResource as isAssetsResourceRecord,
   SYSTEM_VARIABLE_ID,
   systemParameter,
   type DataSources,
   type Resource,
+  type EmailResourceSettings,
   type DataSource,
   type Page,
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import {
   generateObjectExpression,
+  getExpressionIdentifiers,
   isLiteralExpression,
   parseStringLiteralExpression,
   parseExpressionObject,
 } from "@webstudio-is/expression";
 import {
+  browserInfoParameterName,
+  formDataParameterName,
   serializeValue,
   sitemapResourceUrl,
   currentDateResourceUrl,
   assetsResourceUrl,
+  getResourceBodyFormatError,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
+  Button,
+  Combobox,
   Flex,
   Grid,
   InputErrorsTooltip,
@@ -62,7 +72,11 @@ import {
   $variableValuesByInstanceSelector,
   getInstanceKey,
 } from "~/shared/nano-states";
-import { $dataSources, $resources } from "~/shared/sync/data-stores";
+import {
+  $dataSources,
+  $resources,
+  $projectSettings,
+} from "~/shared/sync/data-stores";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
@@ -77,12 +91,22 @@ import { useAsyncValue } from "~/shared/use-async-value";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
   createResourceFieldsFromFormData,
+  getExpressionErrorMessages,
+  getResourceExpressionErrors,
   validateResourceBodyExpression,
   validateResourceUrlExpression,
   type InstancePath,
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
+import {
+  validateContactEmail,
+  validateEmailSender,
+} from "@webstudio-is/project-build/contracts";
 import { parseCurl, type CurlRequest } from "./curl";
+import {
+  getRequestHeaderValueSuggestions,
+  requestHeaderNames,
+} from "./request-header-suggestions";
 import { CenteredPanelMessage, Row } from "./shared";
 const AssetQueryForm = lazy(() =>
   import("./asset-query-form").then(({ AssetQueryForm }) => ({
@@ -96,6 +120,7 @@ export const UrlField = ({
   value,
   onChange,
   onCurlPaste,
+  autoFocus,
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
@@ -105,6 +130,7 @@ export const UrlField = ({
     searchParams?: Resource["searchParams"]
   ) => void;
   onCurlPaste: (curl: CurlRequest) => void;
+  autoFocus?: boolean;
 }) => {
   const urlId = useId();
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -154,6 +180,7 @@ export const UrlField = ({
           <InputErrorsTooltip errors={error ? [error] : undefined}>
             <TextArea
               ref={ref}
+              autoFocus={autoFocus}
               name="url-validator"
               id={urlId}
               rows={1}
@@ -228,6 +255,8 @@ const ExpressionNameValuePair = ({
   value,
   onChange,
   onDelete,
+  suggestHeaders,
+  autoFocusName,
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
@@ -236,6 +265,8 @@ const ExpressionNameValuePair = ({
   value: string;
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
+  suggestHeaders?: boolean;
+  autoFocusName: boolean;
 }) => {
   const evaluatedValue = useAsyncValue(
     () => evaluateExpressionWithinScope(value, scope),
@@ -243,20 +274,42 @@ const ExpressionNameValuePair = ({
     undefined
   );
   const isValueString = typeof evaluatedValue === "string";
+  const valueSuggestions =
+    kind === "header" && suggestHeaders
+      ? getRequestHeaderValueSuggestions(name)
+      : [];
   return (
     <Grid
       gap={2}
       align="center"
       css={{ gridTemplateColumns: `120px 1fr min-content` }}
     >
-      <InputField
-        // autofocus only new fields
-        autoFocus={name === ""}
-        placeholder="Name"
-        name={kind === "header" ? "header-name" : "search-param-name"}
-        value={name}
-        onChange={(event) => onChange(event.target.value, value)}
-      />
+      {kind === "header" && suggestHeaders ? (
+        <Combobox<string>
+          modal={false}
+          autoFocus={autoFocusName}
+          placeholder="Name"
+          name="header-name"
+          value={name}
+          getItems={() => [...requestHeaderNames]}
+          itemToString={(item) => item ?? ""}
+          onItemSelect={(selected) => onChange(selected, value)}
+          onChange={(nextName) => {
+            if (nextName !== undefined) {
+              onChange(nextName, value);
+            }
+          }}
+        />
+      ) : (
+        <InputField
+          // autofocus only new fields
+          autoFocus={autoFocusName}
+          placeholder="Name"
+          name={kind === "header" ? "header-name" : "search-param-name"}
+          value={name}
+          onChange={(event) => onChange(event.target.value, value)}
+        />
+      )}
       <input
         type="hidden"
         readOnly={true}
@@ -265,26 +318,44 @@ const ExpressionNameValuePair = ({
       />
       <BindableExpressionControl
         expression={value}
-        value={serializeValue(evaluatedValue)}
+        value={serializeValue(evaluatedValue) ?? ""}
         bound={isLiteralExpression(value) === false}
         scope={scope}
         aliases={aliases}
         onChangeValue={(value) => onChange(name, JSON.stringify(value))}
         onChangeExpression={(value) => onChange(name, value)}
         onRemove={(value) => onChange(name, JSON.stringify(value))}
-        renderControl={({ value, readOnly, onChangeValue }) => (
-          <InputField
-            placeholder="Value"
-            name={
-              kind === "header"
-                ? "header-value-validator"
-                : "search-param-value-literal"
-            }
-            disabled={readOnly || !isValueString}
-            value={value}
-            onChange={(event) => onChangeValue(event.target.value)}
-          />
-        )}
+        renderControl={({ value, readOnly, onChangeValue }) =>
+          valueSuggestions.length > 0 ? (
+            <Combobox<string>
+              modal={false}
+              placeholder="Value"
+              name="header-value-validator"
+              disabled={readOnly || !isValueString}
+              value={value}
+              getItems={() => [...valueSuggestions]}
+              itemToString={(item) => item ?? ""}
+              onItemSelect={onChangeValue}
+              onChange={(nextValue) => {
+                if (nextValue !== undefined) {
+                  onChangeValue(nextValue);
+                }
+              }}
+            />
+          ) : (
+            <InputField
+              placeholder="Value"
+              name={
+                kind === "header"
+                  ? "header-value-validator"
+                  : "search-param-value-literal"
+              }
+              disabled={readOnly || !isValueString}
+              value={value}
+              onChange={(event) => onChangeValue(event.target.value)}
+            />
+          )
+        }
       />
       <SmallIconButton
         aria-label={`Delete ${kind}`}
@@ -302,14 +373,20 @@ const ExpressionPairs = ({
   kind,
   values,
   onChange,
+  suggestHeaders,
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
   kind: "header" | "search param";
   values: ExpressionPair[];
   onChange: (values: ExpressionPair[]) => void;
+  suggestHeaders?: boolean;
 }) => {
   const label = kind === "header" ? "Headers" : "Search params";
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    hasMounted.current = true;
+  }, []);
   return (
     <Grid gap={1}>
       <Flex justify="between" align="center">
@@ -328,6 +405,10 @@ const ExpressionPairs = ({
             scope={scope}
             aliases={aliases}
             kind={kind}
+            suggestHeaders={suggestHeaders}
+            autoFocusName={
+              item.name === "" && (!suggestHeaders || hasMounted.current)
+            }
             name={item.name}
             value={item.value}
             onChange={(name, value) => {
@@ -368,6 +449,7 @@ export const Headers = ({
   scope: Record<string, unknown>;
   headers: Resource["headers"];
   onChange: (headers: Resource["headers"]) => void;
+  suggestHeaders?: boolean;
 }) => <ExpressionPairs {...props} kind="header" values={headers} />;
 
 const CacheMaxAge = ({
@@ -410,12 +492,14 @@ export const getResourceScopeForInstance = ({
   dataSources,
   variableValuesByInstanceSelector,
   includeResourceDataSources = false,
+  formScopeInstanceId,
 }: {
   page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
   dataSources: DataSources;
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
   includeResourceDataSources?: boolean;
+  formScopeInstanceId?: string;
 }) => {
   const scope: Record<string, unknown> = {};
   const aliases = new Map<string, string>();
@@ -425,7 +509,14 @@ export const getResourceScopeForInstance = ({
     // Hide collection/component parameters from resource expressions. They are
     // internal scoped runtime values, and exposing them here would invite
     // request waterfalls/loops and complicate generated resource code.
-    if (dataSource.type === "parameter") {
+    if (
+      dataSource.type === "parameter" &&
+      !(
+        dataSource.scopeInstanceId === formScopeInstanceId &&
+        (dataSource.name === formDataParameterName ||
+          dataSource.name === browserInfoParameterName)
+      )
+    ) {
       hiddenDataSourceIds.add(dataSource.id);
     }
     if (
@@ -438,6 +529,31 @@ export const getResourceScopeForInstance = ({
   if (page?.systemDataSourceId) {
     hiddenDataSourceIds.delete(page.systemDataSourceId);
   }
+  if (formScopeInstanceId) {
+    for (const dataSource of dataSources.values()) {
+      if (
+        dataSource.type !== "parameter" ||
+        dataSource.scopeInstanceId !== formScopeInstanceId ||
+        (dataSource.name !== formDataParameterName &&
+          dataSource.name !== browserInfoParameterName)
+      ) {
+        continue;
+      }
+      const name = encodeDataVariableId(dataSource.id);
+      const value =
+        dataSource.name === formDataParameterName
+          ? {}
+          : {
+              ip: "",
+              userAgent: "",
+              language: "",
+              referrer: "",
+            };
+      scope[name] = value;
+      aliases.set(name, dataSource.name);
+      variableValues.set(dataSource.id, value);
+    }
+  }
   const values = variableValuesByInstanceSelector.get(instanceKey ?? "");
   if (values) {
     for (const [dataSourceId, value] of values) {
@@ -449,6 +565,14 @@ export const getResourceScopeForInstance = ({
         dataSource = systemParameter;
       }
       if (dataSource) {
+        if (
+          dataSource.type === "parameter" &&
+          dataSource.scopeInstanceId === formScopeInstanceId &&
+          (dataSource.name === formDataParameterName ||
+            dataSource.name === browserInfoParameterName)
+        ) {
+          continue;
+        }
         const name = encodeDataVariableId(dataSourceId);
         scope[name] = value;
         aliases.set(name, dataSource.name);
@@ -498,6 +622,19 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
             dataSources,
             resources
           ) => {
+            const variablePathIndex =
+              variable === undefined
+                ? 0
+                : (instancePath?.findIndex(
+                    ({ instance }) => instance.id === variable.scopeInstanceId
+                  ) ?? -1);
+            const formScopeInstanceId =
+              variablePathIndex < 0
+                ? undefined
+                : instancePath
+                    ?.slice(variablePathIndex)
+                    .find(({ instance }) => instance.component === "NativeForm")
+                    ?.instance.id;
             const { scope, aliases, variableValues } =
               getResourceScopeForInstance({
                 page,
@@ -508,6 +645,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
                 dataSources,
                 variableValuesByInstanceSelector,
                 includeResourceDataSources: true,
+                formScopeInstanceId,
               });
             // Prevent showing dependencies that would create a cycle.
             const newScope = { ...scope };
@@ -560,6 +698,7 @@ const BodyField = ({
   scope,
   aliases,
   bodyType,
+  bodyFormat,
   value,
   onChangeStart,
   onChange,
@@ -567,6 +706,7 @@ const BodyField = ({
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
   bodyType: BodyType;
+  bodyFormat: Resource["bodyFormat"];
   value: string;
   onChangeStart?: () => void;
   onChange: (value: string, bodyType: BodyType) => void;
@@ -576,14 +716,35 @@ const BodyField = ({
   );
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const effectiveBodyType = bodyFormat === "auto" ? bodyType : "json";
   useEffect(() => {
-    void validateResourceBodyExpression(value, bodyType, scope).then(
-      (error) => {
-        bodyRef.current?.setCustomValidity(error);
+    let canceled = false;
+    void validateResourceBodyExpression(value, effectiveBodyType, scope).then(
+      async (error) => {
+        let validationError: string = error;
+        if (error === "" && value !== "" && bodyFormat !== "auto") {
+          const body = await evaluateExpressionWithinScope(value, scope);
+          validationError =
+            getResourceBodyFormatError({
+              name: "",
+              method: "post",
+              url: "",
+              searchParams: [],
+              headers: [],
+              body,
+              bodyFormat,
+            }) ?? "";
+        }
+        if (!canceled) {
+          bodyRef.current?.setCustomValidity(validationError);
+        }
       }
     );
     setBodyError("");
-  }, [value, bodyType, scope]);
+    return () => {
+      canceled = true;
+    };
+  }, [value, effectiveBodyType, bodyFormat, scope]);
   const evaluatedValue = useAsyncValue(
     () => evaluateExpressionWithinScope(value, scope),
     [scope, value],
@@ -599,7 +760,7 @@ const BodyField = ({
     onChange(newBody, isBodyObject ? "json" : bodyType);
   };
   const displayedValue =
-    bodyType === "json"
+    effectiveBodyType === "json"
       ? isBodyLiteral
         ? value
         : (JSON.stringify(evaluatedValue, null, 2) ?? "")
@@ -608,18 +769,20 @@ const BodyField = ({
   return (
     <Grid gap={1}>
       <Label>Body</Label>
-      <Select<BodyType | "">
-        placeholder="Type"
-        value={bodyType ?? ""}
-        options={["text", "json"]}
-        onChange={(newBodyType) => {
-          if (newBodyType) {
-            onChangeStart?.();
-            onChange(value, newBodyType);
-          }
-        }}
-      />
-      {bodyType && (
+      {bodyFormat === "auto" && (
+        <Select<BodyType | "">
+          placeholder="Type"
+          value={bodyType ?? ""}
+          options={["text", "json"]}
+          onChange={(newBodyType) => {
+            if (newBodyType) {
+              onChangeStart?.();
+              onChange(value, newBodyType);
+            }
+          }}
+        />
+      )}
+      {bodyFormat === "auto" && bodyType && (
         <>
           <input type="hidden" name="header-name" value="Content-Type" />
           <input
@@ -647,7 +810,9 @@ const BodyField = ({
         scope={scope}
         aliases={aliases}
         onChangeValue={(value) =>
-          updateBody(bodyType === "json" ? value : JSON.stringify(value))
+          updateBody(
+            effectiveBodyType === "json" ? value : JSON.stringify(value)
+          )
         }
         onChangeExpression={(value) => {
           updateBody(value);
@@ -659,7 +824,7 @@ const BodyField = ({
         }}
         renderControl={({ value, readOnly, onChangeValue }) => (
           <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
-            {bodyType === "json" ? (
+            {effectiveBodyType === "json" ? (
               // wrap with div to position error tooltip
               <div>
                 <ExpressionEditor
@@ -746,11 +911,17 @@ export const ResourceForm = forwardRef<
     resource?.searchParams ?? []
   );
   const [headers, setHeaders] = useState<Resource["headers"]>(
-    parsedHeaders.headers
+    resource?.bodyFormat === "json" || resource?.bodyFormat === "multipart"
+      ? parsedHeaders.headers.filter(({ name }) => !isContentType(name))
+      : parsedHeaders.headers
   );
   const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
   const [bodyType, setBodyType] = useState(parsedHeaders.bodyType);
   const [body, setBody] = useState(resource?.body);
+  const [bodyFormat, setBodyFormat] = useState<Resource["bodyFormat"]>(
+    resource?.bodyFormat ?? "auto"
+  );
+  const bodyFormatId = useId();
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
@@ -787,6 +958,7 @@ export const ResourceForm = forwardRef<
       </Row>
       <Row>
         <UrlField
+          autoFocus
           scope={scope}
           aliases={aliases}
           value={url}
@@ -818,6 +990,7 @@ export const ResourceForm = forwardRef<
             setHeaders(parsedHeaders.headers);
             setBodyType(parsedHeaders.bodyType);
             setBody(JSON.stringify(curl.body));
+            setBodyFormat("auto");
           }}
         />
       </Row>
@@ -847,11 +1020,17 @@ export const ResourceForm = forwardRef<
       </Row>
       <Row>
         <Headers
+          suggestHeaders
           scope={scope}
           aliases={aliases}
           headers={headers}
           onChange={(newHeaders) => {
             onChange?.();
+            if (bodyFormat !== "auto") {
+              newHeaders = newHeaders.filter(
+                ({ name }) => !isContentType(name)
+              );
+            }
             // reset dedicated fields
             if (newHeaders.some(({ name }) => isCacheControl(name))) {
               setMaxAge(undefined);
@@ -864,30 +1043,319 @@ export const ResourceForm = forwardRef<
         />
       </Row>
       {method !== "get" && (
-        <Row>
-          <BodyField
-            scope={scope}
-            aliases={aliases}
-            value={body ?? ""}
-            bodyType={bodyType}
-            onChangeStart={onChange}
-            onChange={(newBody, newBodyType) => {
-              setBodyType(newBodyType);
-              // reset header
-              if (newBodyType) {
-                setHeaders((headers) =>
-                  headers.filter(({ name }) => !isContentType(name))
-                );
-              }
-              setBody(newBody);
-            }}
-          />
-        </Row>
+        <>
+          <Row>
+            <Grid gap={1}>
+              <Label htmlFor={bodyFormatId}>Request body format</Label>
+              <Select<NonNullable<Resource["bodyFormat"]>>
+                id={bodyFormatId}
+                value={bodyFormat ?? "auto"}
+                options={["auto", "json", "multipart"]}
+                onChange={(value) => {
+                  onChange?.();
+                  setBodyFormat(value);
+                  if (value !== "auto") {
+                    setHeaders((headers) =>
+                      headers.filter(({ name }) => !isContentType(name))
+                    );
+                  }
+                }}
+              />
+              <input type="hidden" name="body-format" value={bodyFormat} />
+            </Grid>
+          </Row>
+          <Row>
+            <BodyField
+              scope={scope}
+              aliases={aliases}
+              value={body ?? ""}
+              bodyType={bodyType}
+              bodyFormat={bodyFormat}
+              onChangeStart={onChange}
+              onChange={(newBody, newBodyType) => {
+                setBodyType(newBodyType);
+                // reset header
+                if (newBodyType) {
+                  setHeaders((headers) =>
+                    headers.filter(({ name }) => !isContentType(name))
+                  );
+                }
+                setBody(newBody);
+              }}
+            />
+          </Row>
+        </>
       )}
     </>
   );
 });
 ResourceForm.displayName = "ResourceForm";
+
+export const EmailResourceForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; onChange?: () => void }
+>(({ variable, onChange }, ref) => {
+  const { scope, aliases } = useResourceScope({ variable });
+  const resources = useStore($resources);
+  const dataSources = useStore($dataSources);
+  const projectMeta = useStore($projectSettings)?.meta;
+  const resource =
+    variable?.type === "resource"
+      ? resources.get(variable.resourceId)
+      : undefined;
+  const [settings, setSettings] = useState<EmailResourceSettings>(
+    resource?.email ?? {}
+  );
+  const formDataIdentifier = Array.from(aliases).find(
+    ([, alias]) => alias === formDataParameterName
+  )?.[0];
+  const browserInfoIdentifier = Array.from(aliases).find(
+    ([, alias]) => alias === browserInfoParameterName
+  )?.[0];
+  const defaultBody = formDataIdentifier
+    ? getDefaultFormEmailBodyExpression(
+        formDataIdentifier,
+        browserInfoIdentifier,
+        projectMeta?.emailBody
+      )
+    : JSON.stringify(projectMeta?.emailBody || defaultEmailBody);
+  const setField = <K extends keyof EmailResourceSettings>(
+    key: K,
+    value: EmailResourceSettings[K]
+  ) => {
+    onChange?.();
+    setSettings((previous) => ({ ...previous, [key]: value }));
+  };
+  const resetField = (key: keyof EmailResourceSettings) => {
+    onChange?.();
+    setSettings((previous) => {
+      const next = { ...previous };
+      delete next[key];
+      return next;
+    });
+  };
+  const senderError =
+    settings.sender === undefined
+      ? undefined
+      : settings.sender === ""
+        ? "Sender is required."
+        : validateEmailSender(settings.sender);
+  const recipientError =
+    settings.recipientMode !== "custom"
+      ? undefined
+      : (validateContactEmail(settings.recipients ?? "") ??
+        (settings.recipients ? undefined : "Enter at least one recipient."));
+  const unavailableFormBinding = (expression: string) =>
+    Array.from(getExpressionIdentifiers(expression)).some((identifier) => {
+      const id = decodeDataVariableId(identifier);
+      const dataSource = id ? dataSources.get(id) : undefined;
+      return (
+        dataSource?.type === "parameter" &&
+        (dataSource.name === formDataParameterName ||
+          dataSource.name === browserInfoParameterName) &&
+        aliases.has(identifier) === false
+      );
+    })
+      ? "This Form binding is unavailable outside its Form."
+      : undefined;
+  const subjectError =
+    settings.subject === undefined
+      ? undefined
+      : (unavailableFormBinding(settings.subject) ??
+        getResourceExpressionErrors({
+          email: { subject: settings.subject },
+        })[0] ??
+        getExpressionErrorMessages({
+          expression: settings.subject,
+          availableVariables: new Set(aliases.keys()),
+        })[0]);
+  const bodyError =
+    settings.body === undefined
+      ? undefined
+      : (unavailableFormBinding(settings.body) ??
+        getResourceExpressionErrors({ email: { body: settings.body } })[0] ??
+        getExpressionErrorMessages({
+          expression: settings.body,
+          availableVariables: new Set(aliases.keys()),
+        })[0]);
+  useImperativeHandle(ref, () => ({
+    save: (formData) => {
+      if (senderError || recipientError || subjectError || bodyError) {
+        return false;
+      }
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
+        return;
+      }
+      const parsedSettings = JSON.parse(
+        String(formData.get("email-settings") ?? "{}")
+      ) as EmailResourceSettings;
+      const resourceFields = createResourceFieldsFromFormData({
+        control: "email",
+        formData,
+      });
+      executeRuntimeMutation({
+        id: "resources.upsert",
+        input: {
+          resourceId: resource?.id,
+          resource: { ...resourceFields, email: parsedSettings },
+          dataSourceId: variable?.id,
+          scopeInstanceId,
+          dataSourceName: resourceFields.name,
+        },
+      });
+    },
+  }));
+  const textField = (
+    key: "sender" | "subject" | "body",
+    label: string,
+    value: string,
+    placeholder: string,
+    error?: string
+  ) => (
+    <Row key={key}>
+      <Grid gap={1}>
+        <Flex align="center" justify="between">
+          <Label>{label}</Label>
+          {settings[key] !== undefined && (
+            <Button type="button" color="ghost" onClick={() => resetField(key)}>
+              Reset to project default
+            </Button>
+          )}
+        </Flex>
+        <InputErrorsTooltip errors={error ? [error] : undefined}>
+          {key === "sender" ? (
+            <TextArea
+              rows={1}
+              autoGrow
+              value={value}
+              placeholder={placeholder}
+              color={error ? "error" : undefined}
+              onChange={(next) => setField(key, next)}
+            />
+          ) : (
+            <ExpressionEditor
+              scope={scope}
+              aliases={aliases}
+              value={value}
+              color={error ? "error" : undefined}
+              onChange={(next) => setField(key, next)}
+              onChangeComplete={() => {}}
+            />
+          )}
+        </InputErrorsTooltip>
+        {error && <Text color="destructive">{error}</Text>}
+      </Grid>
+    </Row>
+  );
+  return (
+    <>
+      <input type="hidden" name="method" value="post" />
+      <input type="hidden" name="url" value={'""'} />
+      <input
+        type="hidden"
+        name="email-settings"
+        value={JSON.stringify(settings)}
+      />
+      <Row>
+        <Grid gap={1}>
+          <Label>Team recipients</Label>
+          <Select<"project" | "custom">
+            options={["project", "custom"]}
+            value={settings.recipientMode ?? "project"}
+            getLabel={(value: "project" | "custom") =>
+              value === "project"
+                ? "Project recipients (or owner)"
+                : "Custom recipients"
+            }
+            onChange={(value: "project" | "custom") =>
+              setField("recipientMode", value)
+            }
+          />
+        </Grid>
+      </Row>
+      {settings.recipientMode === "custom" && (
+        <Row>
+          <Grid gap={1}>
+            <Flex align="center" justify="between">
+              <Label>Recipients</Label>
+              <Button
+                type="button"
+                color="ghost"
+                onClick={() => {
+                  resetField("recipientMode");
+                  resetField("recipients");
+                }}
+              >
+                Reset to project default
+              </Button>
+            </Flex>
+            <InputErrorsTooltip
+              errors={recipientError ? [recipientError] : undefined}
+            >
+              <TextArea
+                rows={1}
+                autoGrow
+                value={settings.recipients ?? ""}
+                placeholder="Olegs Isonen <oleg008@gmail.com>, team@example.com"
+                color={recipientError ? "error" : undefined}
+                onChange={(value) => setField("recipients", value)}
+              />
+            </InputErrorsTooltip>
+          </Grid>
+        </Row>
+      )}
+      {textField(
+        "sender",
+        "Sender",
+        settings.sender ?? projectMeta?.emailSender ?? "",
+        "Olegs Isonen <oleg008@gmail.com>",
+        senderError
+      )}
+      <Row>
+        <Text color="subtle">
+          Emails are sent through Webstudio. Replies go to this address.
+        </Text>
+      </Row>
+      {textField(
+        "subject",
+        "Subject expression",
+        settings.subject ??
+          JSON.stringify(projectMeta?.emailSubject || "New form submission"),
+        '"New form submission"',
+        subjectError
+      )}
+      {textField(
+        "body",
+        "Plain-text body expression",
+        settings.body ?? defaultBody,
+        "Add text or a JavaScript expression",
+        bodyError
+      )}
+      <Row>
+        <Grid gap={1}>
+          <Label>Attachments</Label>
+          <Select<"include" | "exclude">
+            options={["include", "exclude"]}
+            value={
+              settings.includeAttachments === false ? "exclude" : "include"
+            }
+            getLabel={(value: "include" | "exclude") =>
+              value === "include"
+                ? "Attach submitted files"
+                : "Do not attach files"
+            }
+            onChange={(value: "include" | "exclude") =>
+              setField("includeAttachments", value === "include")
+            }
+          />
+        </Grid>
+      </Row>
+    </>
+  );
+});
+EmailResourceForm.displayName = "EmailResourceForm";
 
 type SystemResourceFormProps = {
   variable?: DataSource;

@@ -12,23 +12,40 @@ import {
 } from "@webstudio-is/sdk";
 import { intrinsicCoreTemplates } from "@webstudio-is/sdk/core-templates";
 import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "@webstudio-is/sdk/runtime";
+import {
+  ActionValue,
   css,
+  expression,
   Parameter,
   PlaceholderValue,
   setInstanceMeta,
   setTemplateMeta,
   type TemplateMeta,
+  Variable,
   ws,
 } from "@webstudio-is/template";
 import {
+  Button,
   CodeText,
   HtmlEmbed,
+  Input,
+  Label,
+  NativeForm,
   Paragraph,
 } from "@webstudio-is/sdk-components-react/components";
 import { componentsById } from "./components";
 
 const BlockTemplate = ws.blockTemplate;
 const blockDocument = new Parameter(contentBlockDocumentProp);
+const formData = new Parameter(formDataParameterName);
+const browserInfo = new Parameter(browserInfoParameterName);
+const formState = new Variable("formState", "initial");
+const formStatus = new Variable("status", 0);
+const formResults = new Variable("results", []);
+const formErrors = new Variable("errors", []);
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
   ({ resolutionKey }) => resolutionKey === "element:li"
@@ -202,6 +219,55 @@ const builtWithWebstudioMeta: TemplateMeta = {
 
 export const coreTemplates = {
   ...intrinsicCoreTemplates,
+  form: {
+    category: "forms",
+    description: "Collect information and submit it to Resource destinations.",
+    template: (
+      <NativeForm
+        formData={formData}
+        browserInfo={browserInfo}
+        state={expression`${formState}`}
+        onStateChange={
+          new ActionValue(["state"], expression`${formState} = state`)
+        }
+        onResultChange={
+          new ActionValue(
+            ["result"],
+            expression`({status: ${formStatus} = result.status, results: ${formResults} = result.results, errors: ${formErrors} = result.errors})`
+          )
+        }
+      >
+        {setInstanceMeta(
+          { label: "Form Content" },
+          <div
+            ws:show={expression`${formState} === 'initial' || ${formState} === 'error'`}
+          >
+            <Label>
+              {new PlaceholderValue("Name")}
+              <Input name="name" autoComplete="name" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Email")}
+              <Input name="email" type="email" autoComplete="email" required />
+            </Label>
+            <Button type="submit">{new PlaceholderValue("Submit")}</Button>
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Success Message" },
+          <div ws:show={expression`${formState} === 'success'`}>
+            {new PlaceholderValue("Thank you for your submission!")}
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Error Message" },
+          <div ws:show={expression`${formState} === 'error'`}>
+            {new PlaceholderValue("Sorry, something went wrong.")}
+          </div>
+        )}
+      </NativeForm>
+    ),
+  },
   [blockComponent]: blockMeta,
   code_text: {
     category: "typography",

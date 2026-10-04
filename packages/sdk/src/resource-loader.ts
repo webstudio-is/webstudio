@@ -5,7 +5,8 @@ import {
   type Resource,
 } from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
-import { serializeValue } from "./to-string";
+import { validateEmailSubject } from "./email-resource";
+import { isPlainObject, serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
 const RESOURCE_ERROR_DETAIL_LIMIT = 2000;
@@ -57,6 +58,81 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
   return segments.join("/") === `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;
 };
 
+const containsFile = (value: unknown): boolean => {
+  if (
+    (typeof File !== "undefined" && value instanceof File) ||
+    (typeof Blob !== "undefined" && value instanceof Blob)
+  ) {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.some(containsFile);
+  }
+  if (isPlainObject(value)) {
+    return Object.values(value).some(containsFile);
+  }
+  return false;
+};
+
+const toMultipartFormData = (value: object) => {
+  const formData = new FormData();
+  const append = (name: string, item: unknown) => {
+    if (item === undefined || item === null) {
+      return;
+    }
+    if (typeof File !== "undefined" && item instanceof File) {
+      formData.append(name, item, item.name);
+      return;
+    }
+    if (typeof Blob !== "undefined" && item instanceof Blob) {
+      formData.append(name, item);
+      return;
+    }
+    if (Array.isArray(item)) {
+      for (const value of item) {
+        append(name, value);
+      }
+      return;
+    }
+    if (isPlainObject(item) && containsFile(item)) {
+      for (const [key, value] of Object.entries(item)) {
+        append(`${name}[${key}]`, value);
+      }
+      return;
+    }
+    formData.append(name, serializeValue(item));
+  };
+  for (const [name, fieldValue] of Object.entries(value)) {
+    append(name, fieldValue);
+  }
+  return formData;
+};
+
+export const getResourceBodyFormatError = (request: ResourceRequest) => {
+  if (
+    request.method === "get" ||
+    request.bodyFormat === undefined ||
+    request.bodyFormat === "auto"
+  ) {
+    return;
+  }
+  if (request.body instanceof FormData) {
+    return request.bodyFormat === "json"
+      ? "JSON body cannot include form data"
+      : undefined;
+  }
+  if (request.bodyFormat === "json" && containsFile(request.body)) {
+    return "JSON body cannot include uploaded files";
+  }
+  if (request.bodyFormat === "json") {
+    if (isPlainObject(request.body) === false && !Array.isArray(request.body)) {
+      return "JSON body expects an object or array";
+    }
+  } else if (isPlainObject(request.body) === false) {
+    return "Multipart body expects an object of fields";
+  }
+};
+
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
 export const currentDateResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/current-date`;
 export const assetsResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets`;
@@ -87,6 +163,8 @@ export type ResourceLoadOptions = {
 };
 
 export type ResourceGraphLoadOptions = ResourceLoadOptions & {
+  /** Retry a failed selected root once, without resolving its dependencies again. */
+  retryFailedRoots?: boolean;
   requestOverrides?: ReadonlyMap<
     string,
     Partial<ResourceRequest> & { fetch?: typeof fetch }
@@ -97,6 +175,11 @@ export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
   dependencies: readonly string[];
+  control?: ResourceRequest["control"];
+  /** Trusted, published team-recipient count for an Email destination. */
+  emailRecipientCount?: number;
+  usesDefaultFormBody?: boolean;
+  bodyFormat?: ResourceRequest["bodyFormat"];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
 }>;
 
@@ -278,6 +361,22 @@ export const loadResource = async (
   baseUrl?: string | URL,
   options: ResourceLoadOptions = {}
 ) => {
+  if (resourceRequest.control === "email") {
+    validateEmailSubject(resourceRequest.email?.subject);
+    return {
+      ok: false,
+      status: 501,
+      statusText: "Email delivery requires Webstudio Cloud",
+      data: {
+        ok: false,
+        error: {
+          code: "EMAIL_NOT_CONFIGURED",
+          message: "Email delivery requires Webstudio Cloud",
+          retryable: false,
+        },
+      },
+    };
+  }
   const controller = new AbortController();
   let didTimeout = false;
   const cancel = () => controller.abort(options.signal?.reason);
@@ -321,11 +420,29 @@ export const loadResource = async (
       // empty block
     }
     const requestHeaders = new Headers(
-      headers.map(({ name, value }): [string, string] => [
-        name,
-        serializeValue(value),
-      ])
+      headers
+        .filter(({ value }) => value !== undefined)
+        .map(({ name, value }): [string, string] => [
+          name,
+          serializeValue(value),
+        ])
     );
+    const bodyFormatError = getResourceBodyFormatError(resourceRequest);
+    if (bodyFormatError !== undefined) {
+      return {
+        ok: false,
+        data: {
+          ok: false,
+          error: {
+            code: "INVALID_BODY_FORMAT",
+            message: bodyFormatError,
+            retryable: false,
+          },
+        },
+        status: 400,
+        statusText: bodyFormatError,
+      };
+    }
     const requestInit: RequestInit = {
       method,
       headers: requestHeaders,
@@ -336,7 +453,30 @@ export const loadResource = async (
       requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
-      requestInit.body = serializeValue(body);
+      if (body instanceof FormData) {
+        // Fetch must generate the Content-Type boundary for this FormData.
+        requestHeaders.delete("Content-Type");
+        requestInit.body = body;
+      } else if (isPlainObject(body)) {
+        if (resourceRequest.bodyFormat === "multipart" || containsFile(body)) {
+          // Form data is JSON by default; preserve upload bytes and repeated
+          // values as multipart whenever the body contains a file.
+          requestHeaders.delete("Content-Type");
+          requestInit.body = toMultipartFormData(body);
+        } else {
+          if (resourceRequest.bodyFormat === "json") {
+            requestHeaders.set("Content-Type", "application/json");
+          } else if (requestHeaders.has("Content-Type") === false) {
+            requestHeaders.set("Content-Type", "application/json");
+          }
+          requestInit.body = serializeValue(body);
+        }
+      } else if (resourceRequest.bodyFormat === "json" && Array.isArray(body)) {
+        requestHeaders.set("Content-Type", "application/json");
+        requestInit.body = serializeValue(body);
+      } else {
+        requestInit.body = serializeValue(body);
+      }
     }
     const response = await awaitWithSignal(
       customFetch(href, requestInit),
@@ -422,11 +562,13 @@ export const loadResources = async (
         rootIds: Array.from(requests.keys()),
       }
     : requests;
+  const rootIds = new Set(graph.rootIds);
   const resources: Resource<unknown>[] = graph.resources.map((resource) => ({
     id: resource.id,
     dependencies: resource.dependencies,
     resolve: ({ documents, signal }) => {
-      const { requestOverrides, ...loadOptions } = options ?? {};
+      const { requestOverrides, retryFailedRoots, ...loadOptions } =
+        options ?? {};
       const { fetch: requestFetch = customFetch, ...overrides } =
         requestOverrides?.get(resource.id) ?? {};
       const request = resource.createRequest(documents);
@@ -434,10 +576,20 @@ export const loadResources = async (
         ...request,
         ...overrides,
       };
-      return loadResource(requestFetch, resolvedRequest, baseUrl, {
-        ...loadOptions,
-        signal: signal ?? options?.signal,
-      });
+      const load = () =>
+        loadResource(requestFetch, resolvedRequest, baseUrl, {
+          ...loadOptions,
+          signal: signal ?? options?.signal,
+        });
+      return load().then((result) =>
+        retryFailedRoots === true &&
+        rootIds.has(resource.id) &&
+        result.ok === false &&
+        !signal?.aborted &&
+        !options?.signal?.aborted
+          ? load()
+          : result
+      );
     },
   }));
   const resolved = await resolveResourceGraph({

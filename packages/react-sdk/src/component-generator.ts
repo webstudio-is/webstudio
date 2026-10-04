@@ -22,9 +22,16 @@ import {
   descendantComponent,
   getIndexesWithinAncestors,
   elementComponent,
+  isFormSubmission,
+  normalizeLegacyFormBuildData,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
-import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
+import {
+  browserInfoParameterName,
+  formDataParameterName,
+  indexProperty,
+  tagProperty,
+} from "@webstudio-is/sdk/runtime";
 import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import { isAttributeNameSafe, showAttribute } from "./props";
 import { generateCollectionIterationCode } from "./collection-utils";
@@ -231,7 +238,9 @@ export const generateJsxElement = ({
   for (const prop of props.values()) {
     if (
       prop.instanceId !== instance.id ||
-      isAttributeNameSafe(prop.name) === false
+      isAttributeNameSafe(prop.name) === false ||
+      (instance.component === "NativeForm" &&
+        prop.name.toLowerCase() === "data-ws-managed-form-id")
     ) {
       continue;
     }
@@ -241,6 +250,14 @@ export const generateJsxElement = ({
       continue;
     }
     propsByGeneratedName.set(name, prop);
+  }
+  const submissionProp = propsByGeneratedName.get("submission");
+  if (
+    instance.component === "NativeForm" &&
+    submissionProp?.type === "json" &&
+    isFormSubmission(submissionProp.value)
+  ) {
+    generatedProps += `\ndata-ws-managed-form-id=${JSON.stringify(instance.id)}`;
   }
   const generatedPropNames = new Set([
     ...propsByGeneratedName.keys(),
@@ -662,6 +679,11 @@ export const generateWebstudioComponent = ({
    */
   tagsOverrides?: Record<string, string>;
 }) => {
+  ({ props, resources } = normalizeLegacyFormBuildData({
+    props,
+    resources: resources ?? new Map(),
+    instances,
+  }));
   const instance = instances.get(rootInstanceId);
   const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
     rootInstanceId,
@@ -723,6 +745,18 @@ export const generateWebstudioComponent = ({
 
   let generatedDataSources = "";
   for (const dataSource of usedDataSources.values()) {
+    if (
+      dataSource.type === "parameter" &&
+      (dataSource.name === formDataParameterName ||
+        dataSource.name === browserInfoParameterName) &&
+      instances.get(dataSource.scopeInstanceId ?? "")?.component ===
+        "NativeForm"
+    ) {
+      // Form submission values are resolved only when a managed submit runs.
+      // A page render must not read visitor data or require it as page props.
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      generatedDataSources += `const ${valueName}: any = undefined\n`;
+    }
     if (dataSource.type === "variable") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
       const setterName = scope.getName(

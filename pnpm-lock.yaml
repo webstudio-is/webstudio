@@ -2587,6 +2587,12 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
+      email-addresses:
+        specifier: ^5.0.0
+        version: 5.0.0
+      ipaddr.js:
+        specifier: ^1.9.1
+        version: 1.9.1
       json-schema-typed:
         specifier: ^8.0.2
         version: 8.0.2
@@ -2596,9 +2602,15 @@ importers:
       reserved-identifiers:
         specifier: ^1.0.0
         version: 1.0.0
+      tldts:
+        specifier: ^7.0.28
+        version: 7.0.28
       type-fest:
         specifier: ^4.37.0
         version: 4.37.0
+      undici:
+        specifier: ^7.29.0
+        version: 7.29.0
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
@@ -2971,18 +2983,30 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@vitest/browser':
+        specifier: 3.1.1
+        version: 3.1.1(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(vitest@3.1.1)
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      playwright:
+        specifier: 1.50.1
+        version: 1.50.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      react-router-dom:
+        specifier: 6.30.0
+        version: 6.30.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       typescript:
         specifier: 7.0.2
         version: 7.0.2
+      vitest:
+        specifier: 3.1.1
+        version: 3.1.1(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.1)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
 
   packages/sdk-components-react-router:
     dependencies:
@@ -8524,6 +8548,9 @@ packages:
 
   electron-to-chromium@1.5.76:
     resolution: {integrity: sha512-CjVQyG7n7Sr+eBXE86HIulnL5N8xZY1sgmOPGuq/F0Rr0FJq63lg0kEtOIDfZBk44FnDLf6FUJ+dsJcuiUDdDQ==}
+
+  email-addresses@5.0.0:
+    resolution: {integrity: sha512-4OIPYlA6JXqtVn8zpHpGiI7vE6EQOAg16aGnDMIAlZVinnoZ8208tW1hAbjWydgN/4PLTT9q+O1K6AH/vALJGw==}
 
   emittery@0.12.1:
     resolution: {integrity: sha512-pYyW59MIZo0HxPFf+Vb3+gacUu0gxVS3TZwB2ClwkEZywgF9f9OJDoVmNLojTn0vKX3tO9LC+pdQEcLP4Oz/bQ==}
@@ -18303,6 +18330,8 @@ snapshots:
   electron-to-chromium@1.5.387: {}
 
   electron-to-chromium@1.5.76: {}
+
+  email-addresses@5.0.0: {}
 
   emittery@0.12.1: {}
 

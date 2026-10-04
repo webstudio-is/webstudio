@@ -1,15 +1,27 @@
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
+import { page, userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   encodeDataVariableId,
   type DataSources,
   type Resource,
 } from "@webstudio-is/sdk";
-import { TooltipProvider } from "@webstudio-is/design-system";
-import { $resources } from "~/shared/sync/data-stores";
-import { getResourceScopeForInstance, ResourceForm } from "./resource-panel";
+import { computeExpression } from "@webstudio-is/project-build/runtime";
+import { FloatingPanel, TooltipProvider } from "@webstudio-is/design-system";
+import {
+  $dataSources,
+  $projectSettings,
+  $resources,
+} from "~/shared/sync/data-stores";
+import {
+  getResourceScopeForInstance,
+  EmailResourceForm,
+  Headers,
+  ResourceForm,
+  UrlField,
+} from "./resource-panel";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -17,11 +29,132 @@ import { getResourceScopeForInstance, ResourceForm } from "./resource-panel";
 
 let root: Root | undefined;
 const initialResources = $resources.get();
+const initialDataSources = $dataSources.get();
+const initialProjectSettings = $projectSettings.get();
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   $resources.set(initialResources);
+  $dataSources.set(initialDataSources);
+  $projectSettings.set(initialProjectSettings);
   document.body.innerHTML = "";
+});
+
+test("Email Resource Sender override can be reset to the project default", async () => {
+  $projectSettings.set({
+    meta: { emailSender: "Project <project@example.com>" },
+    compiler: {},
+  });
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Notify",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: { sender: "Custom <custom@example.com>" },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "data-source",
+            type: "resource",
+            name: "Notify",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+  expect(container.querySelector("textarea")?.value).toBe(
+    "Custom <custom@example.com>"
+  );
+  const reset = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent?.includes("Reset to project default")
+  );
+  expect(reset).toBeDefined();
+  await act(async () => userEvent.click(reset!));
+  expect(container.querySelector("textarea")?.value).toBe(
+    "Project <project@example.com>"
+  );
+  expect(
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')
+        ?.value ?? "{}"
+    )
+  ).not.toHaveProperty("sender");
+});
+
+test("external Email Resource marks an unavailable Form binding as invalid", async () => {
+  $dataSources.set(
+    new Map([
+      [
+        "form-data",
+        {
+          id: "form-data",
+          type: "parameter",
+          name: "formData",
+          scopeInstanceId: "form",
+        },
+      ],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "External email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            body: `\`Private: \${${encodeDataVariableId("form-data")}}\``,
+          },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "external",
+            type: "resource",
+            name: "External email",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+  expect(container.textContent).toContain(
+    "This Form binding is unavailable outside its Form."
+  );
 });
 
 test("includes resource documents when building another resource expression", () => {
@@ -119,4 +252,285 @@ test("invalidates the preview as soon as a body edit starts", () => {
     body?.dispatchEvent(new Event("input", { bubbles: true }));
     expect(onChange).toHaveBeenCalledOnce();
   });
+});
+
+test("shows and submits the selected HTTP body format", async () => {
+  const resource: Resource = {
+    id: "upload",
+    name: "Upload",
+    method: "post",
+    url: '"https://example.com/upload"',
+    headers: [],
+    bodyFormat: "multipart",
+  };
+  $resources.set(new Map([[resource.id, resource]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(ResourceForm, {
+          variable: {
+            type: "resource",
+            id: "upload-variable",
+            name: "Upload",
+            resourceId: resource.id,
+          },
+        })
+      )
+    );
+  });
+  expect(
+    container.querySelector<HTMLInputElement>('input[name="body-format"]')
+      ?.value
+  ).toBe("multipart");
+  expect(
+    container.querySelector<HTMLInputElement>(
+      'input[name="header-name"][value="Content-Type"]'
+    )
+  ).toBeNull();
+  await act(async () => page.getByLabelText("Request body format").click());
+  await act(async () => page.getByRole("option", { name: "json" }).click());
+  expect(
+    container.querySelector<HTMLInputElement>('input[name="body-format"]')
+      ?.value
+  ).toBe("json");
+  expect(
+    container.querySelector<HTMLInputElement>(
+      'input[name="header-name"][value="Content-Type"]'
+    )
+  ).toBeNull();
+});
+
+test("marks a text body invalid when JSON format is selected", async () => {
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [{ name: "Content-Type", value: '"text/plain"' }],
+    bodyFormat: "json",
+    body: '"plain text"',
+  };
+  $resources.set(new Map([[resource.id, resource]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(ResourceForm, {
+          variable: {
+            type: "resource",
+            id: "request-variable",
+            name: "Request",
+            resourceId: resource.id,
+          },
+        })
+      )
+    );
+  });
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector<HTMLTextAreaElement>('textarea[name="body"]')
+        ?.validationMessage
+    ).toBe("Expected valid JSON object in body")
+  );
+});
+
+test("focuses the resource URL when requested", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(FloatingPanel, {
+          title: "Edit resource",
+          open: true,
+          children: createElement("button", undefined, "Edit resource"),
+          content: createElement(
+            "div",
+            undefined,
+            createElement(UrlField, {
+              autoFocus: true,
+              aliases: new Map(),
+              scope: {},
+              value: '"https://example.com"',
+              onChange: vi.fn(),
+              onCurlPaste: vi.fn(),
+            }),
+            createElement(Headers, {
+              aliases: new Map(),
+              scope: {},
+              headers: [{ name: "", value: '""' }],
+              onChange: vi.fn(),
+              suggestHeaders: true,
+            })
+          ),
+        })
+      )
+    );
+  });
+  expect(document.activeElement).toBe(
+    document.querySelector('textarea[name="url-validator"]')
+  );
+});
+
+test("selecting a header suggestion with Enter does not submit the resource", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onSubmit = vi.fn();
+  const onChange = vi.fn();
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(FloatingPanel, {
+          title: "Edit resource",
+          open: true,
+          children: createElement("button", undefined, "Edit resource"),
+          content: createElement(
+            "form",
+            {
+              onSubmit: (event) => {
+                event.preventDefault();
+                onSubmit();
+              },
+            },
+            createElement("button", { hidden: true }),
+            createElement(Headers, {
+              aliases: new Map(),
+              scope: {},
+              headers: [{ name: "", value: '""' }],
+              onChange,
+              suggestHeaders: true,
+            })
+          ),
+        })
+      )
+    );
+  });
+
+  await act(async () => page.getByPlaceholder("Name").fill("Auth"));
+  await act(async () => userEvent.keyboard("{ArrowDown}{Enter}"));
+  expect(onChange).toHaveBeenCalledWith([
+    { name: "Authorization", value: '""' },
+  ]);
+  expect(onSubmit).not.toHaveBeenCalled();
+});
+
+test("suggests request header names and known values", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onChange = vi.fn();
+  const onOpenChange = vi.fn();
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(FloatingPanel, {
+          title: "Edit resource",
+          open: true,
+          onOpenChange,
+          children: createElement("button", undefined, "Edit resource"),
+          content: createElement(Headers, {
+            aliases: new Map(),
+            scope: {},
+            headers: [{ name: "Content-Type", value: '"application/json"' }],
+            onChange,
+            suggestHeaders: true,
+          }),
+        })
+      )
+    );
+  });
+  await act(async () => page.getByPlaceholder("Value").fill("text"));
+  expect(
+    Array.from(document.querySelectorAll('[role="option"]')).map(
+      (option) => option.textContent
+    )
+  ).toContain("text/plain");
+  await act(async () =>
+    page.getByRole("option", { name: "text/plain", exact: true }).click()
+  );
+  expect(onChange).toHaveBeenCalledWith([
+    { name: "Content-Type", value: '"text/plain"' },
+  ]);
+  expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  expect(page.getByRole("dialog")).toBeVisible();
+
+  await act(async () => page.getByPlaceholder("Name").fill("Auth"));
+  expect(
+    Array.from(document.querySelectorAll('[role="option"]')).map(
+      (option) => option.textContent
+    )
+  ).toContain("Authorization");
+
+  await act(async () => page.getByPlaceholder("Name").fill("X-Custom"));
+  expect(onChange).toHaveBeenCalledWith([
+    { name: "X-Custom", value: '"application/json"' },
+  ]);
+});
+
+test("only Form-scoped Resources can bind submission values", async () => {
+  const dataSources: DataSources = new Map([
+    [
+      "formDataId",
+      {
+        type: "parameter",
+        id: "formDataId",
+        name: "formData",
+        scopeInstanceId: "form",
+      },
+    ],
+    [
+      "browserInfoId",
+      {
+        type: "parameter",
+        id: "browserInfoId",
+        name: "browserInfo",
+        scopeInstanceId: "form",
+      },
+    ],
+  ]);
+  const input = {
+    page: undefined,
+    instanceKey: "form",
+    dataSources,
+    variableValuesByInstanceSelector: new Map<string, Map<string, unknown>>([
+      ["form", new Map([["formDataId", undefined]])],
+    ]),
+  };
+  const internal = getResourceScopeForInstance({
+    ...input,
+    formScopeInstanceId: "form",
+  });
+  expect(internal.aliases.get(encodeDataVariableId("formDataId"))).toBe(
+    "formData"
+  );
+  expect(internal.scope[encodeDataVariableId("formDataId")]).toEqual({});
+  expect(internal.aliases.get(encodeDataVariableId("browserInfoId"))).toBe(
+    "browserInfo"
+  );
+  expect(
+    await computeExpression(
+      `${encodeDataVariableId("formDataId")}.email`,
+      new Map([["formDataId", { email: "person@example.com" }]])
+    )
+  ).toBe("person@example.com");
+  const external = getResourceScopeForInstance(input);
+  expect(external.scope[encodeDataVariableId("formDataId")]).toBeUndefined();
+  expect(external.scope[encodeDataVariableId("browserInfoId")]).toBeUndefined();
 });

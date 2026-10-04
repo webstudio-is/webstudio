@@ -18,6 +18,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { showAttributeMeta } from "@webstudio-is/project-build/runtime";
 import {
+  elementComponent,
   encodeDataSourceVariable,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -40,7 +41,7 @@ import {
   $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
+import { $dataSources, $props } from "~/shared/sync/data-stores";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $selectedInstance,
@@ -339,6 +340,49 @@ const $contentModePropNamesByTag = computed(
   getContentModePropNamesByTag
 );
 
+const getInitialPropNames = (
+  selectedInstance: ReturnType<typeof $selectedInstance.get>,
+  metas: ReturnType<typeof $registeredComponentMetas.get>,
+  instancePropsMetas: Map<string, PropMeta>,
+  props: ReturnType<typeof $props.get>
+) => {
+  const initialPropNames = new Set<string>();
+  if (selectedInstance) {
+    const initialProps =
+      metas.get(selectedInstance.component)?.initialProps ?? [];
+    for (const propName of initialProps) {
+      const htmlName = reactPropsToStandardAttributes[propName];
+      initialPropNames.add(
+        htmlName && instancePropsMetas.has(htmlName) ? htmlName : propName
+      );
+    }
+    if (
+      (selectedInstance.component === "Input" ||
+        (selectedInstance.component === elementComponent &&
+          selectedInstance.tag === "input")) &&
+      Array.from(props.values()).some(
+        (prop) =>
+          prop.instanceId === selectedInstance.id &&
+          prop.name === "type" &&
+          prop.type === "string" &&
+          prop.value === "file"
+      )
+    ) {
+      initialPropNames.add("type");
+      initialPropNames.add("name");
+      initialPropNames.add("required");
+      initialPropNames.add("accept");
+      initialPropNames.add("multiple");
+    }
+  }
+  for (const [propName, propMeta] of instancePropsMetas) {
+    if (propName !== showAttribute && propMeta.required) {
+      initialPropNames.add(propName);
+    }
+  }
+  return initialPropNames;
+};
+
 export const $selectedInstancePropsMetas = computed(
   [
     $selectedInstance,
@@ -410,30 +454,11 @@ export const $selectedInstancePropsMetas = computed(
 );
 
 export const $selectedInstanceInitialPropNames = computed(
-  [$selectedInstance, $registeredComponentMetas, $selectedInstancePropsMetas],
-  (selectedInstance, metas, instancePropsMetas) => {
-    const initialPropNames = new Set<string>();
-    if (selectedInstance) {
-      const initialProps =
-        metas.get(selectedInstance.component)?.initialProps ?? [];
-      for (const propName of initialProps) {
-        // className -> class
-        if (instancePropsMetas.has(reactPropsToStandardAttributes[propName])) {
-          initialPropNames.add(reactPropsToStandardAttributes[propName]);
-        } else {
-          initialPropNames.add(propName);
-        }
-      }
-    }
-    for (const [propName, propMeta] of instancePropsMetas) {
-      // skip show attribute which is added as system prop
-      if (propName === showAttribute) {
-        continue;
-      }
-      if (propMeta.required) {
-        initialPropNames.add(propName);
-      }
-    }
-    return initialPropNames;
-  }
+  [
+    $selectedInstance,
+    $registeredComponentMetas,
+    $selectedInstancePropsMetas,
+    $props,
+  ],
+  getInitialPropNames
 );

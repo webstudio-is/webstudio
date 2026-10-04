@@ -1,134 +1,61 @@
+import { type ElementRef, type ComponentProps, forwardRef } from "react";
 import {
-  type ElementRef,
-  type ComponentProps,
-  forwardRef,
-  useRef,
-  useEffect,
-} from "react";
-import { useFetcher, type Fetcher, type FormProps } from "react-router";
+  useLocation,
+  useNavigation,
+  useRevalidator,
+  type FormProps,
+} from "react-router";
+import { formIdFieldName } from "@webstudio-is/sdk/runtime";
 import {
-  formIdFieldName,
-  formBotFieldName,
-  isBraveBrowser,
-} from "@webstudio-is/sdk/runtime";
+  useLegacyWebhookSubmission,
+  type LegacyWebhookState,
+} from "@webstudio-is/sdk-components-react";
 
 export const defaultTag = "form";
-
-const useOnFetchEnd = <Data,>(
-  fetcher: Fetcher<Data>,
-  handler: (data: Data) => void
-) => {
-  const latestHandler = useRef(handler);
-  latestHandler.current = handler;
-
-  const prevFetcher = useRef(fetcher);
-  useEffect(() => {
-    if (
-      prevFetcher.current.state !== fetcher.state &&
-      fetcher.state === "idle" &&
-      fetcher.data !== undefined
-    ) {
-      latestHandler.current(fetcher.data);
-    }
-    prevFetcher.current = fetcher;
-  }, [fetcher]);
-};
-
-type State = "initial" | "success" | "error";
-
-// gcd - greatest common divisor
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-
-const getAspectRatioString = (width: number, height: number) => {
-  const r = gcd(width, height);
-  const aspectRatio = `${width / r}/${height / r}`;
-  return aspectRatio;
-};
-
-/**
- * jsdom detector, trying to check that matchMedia is working (jsdom has no support of matchMedia and usually simple stub is used)
- */
-const isJSDom = () => {
-  if (typeof matchMedia === "undefined") {
-    return true;
-  }
-
-  const { width, height } = screen;
-  const deviceAspectRatio = getAspectRatioString(width, height);
-
-  const matchAspectRatio = matchMedia(
-    `(device-aspect-ratio: ${deviceAspectRatio})`
-  ).matches;
-
-  const matchWidthHeight = matchMedia(
-    `(device-width: ${width}px) and (device-height: ${height}px)`
-  ).matches;
-
-  const matchWidthHeightFail = matchMedia(
-    `(device-width: ${width - 1}px) and (device-height: ${height}px)`
-  ).matches;
-
-  const matchLight = matchMedia("(prefers-color-scheme: light)").matches;
-  const matchDark = matchMedia("(prefers-color-scheme: dark)").matches;
-
-  const hasMatchMedia =
-    matchAspectRatio &&
-    matchWidthHeight &&
-    !matchWidthHeightFail &&
-    matchLight !== matchDark;
-
-  return hasMatchMedia === false;
-};
 
 export const WebhookForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
     /** Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully. */
-    state?: State;
+    state?: LegacyWebhookState;
     encType?: FormProps["encType"];
-    onStateChange?: (state: State) => void;
+    onStateChange?: (state: LegacyWebhookState) => void;
+    successRedirect?: string;
     action?: string;
   }
 >(
   (
-    { children, action, method, state = "initial", onStateChange, ...rest },
+    {
+      children,
+      action,
+      method,
+      state,
+      onStateChange,
+      successRedirect,
+      ...rest
+    },
     ref
   ) => {
-    const fetcher = useFetcher<{ success: boolean }>();
-
-    useOnFetchEnd(fetcher, (data) => {
-      const state: State = data?.success === true ? "success" : "error";
-      onStateChange?.(state);
+    const location = useLocation();
+    const navigation = useNavigation();
+    const revalidator = useRevalidator();
+    const submission = useLegacyWebhookSubmission({
+      state,
+      onStateChange,
+      successRedirect,
+      forwardedRef: ref,
+      navigationToken: `${location.key}:${navigation.location?.key ?? ""}`,
+      onSubmissionSuccess: () => revalidator.revalidate(),
     });
 
-    /**
-     * Add hidden field generated using js with simple jsdom detector.
-     * This is used to protect form submission against very simple bots.
-     * Skipped for Brave browser due to: https://github.com/brave/brave-browser/issues/46541
-     */
-    const handleSubmitAndAddHiddenJsField = (
-      event: React.FormEvent<HTMLFormElement>
-    ) => {
-      const hiddenInput = document.createElement("input");
-      hiddenInput.type = "hidden";
-      hiddenInput.name = formBotFieldName;
-      // Skip bot detection for Brave - Shields blocks matchMedia fingerprinting detection
-      if (isBraveBrowser()) {
-        hiddenInput.value = "brave";
-      } else {
-        // Non-numeric values are utilized for logging purposes.
-        hiddenInput.value = isJSDom() ? "jsdom" : Date.now().toString(16);
-      }
-      event.currentTarget.appendChild(hiddenInput);
-    };
-
     return (
-      <fetcher.Form
+      <form
         {...rest}
         method="post"
-        data-state={state}
-        ref={ref}
-        onSubmit={handleSubmitAndAddHiddenJsField}
+        data-state={submission.state}
+        aria-busy={submission.pending || undefined}
+        ref={submission.setFormRef}
+        onSubmit={submission.handleSubmit}
       >
         <input
           type="hidden"
@@ -136,7 +63,7 @@ export const WebhookForm = forwardRef<
           value={action?.toString()}
         />
         {children}
-      </fetcher.Form>
+      </form>
     );
   }
 );

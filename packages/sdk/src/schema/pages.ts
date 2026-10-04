@@ -5,6 +5,8 @@ import { customResponseHeaders } from "./response-headers";
 export type System = {
   params: Record<string, string | undefined>;
   search: Record<string, string | undefined>;
+  /** All values for each query key, in their original order. */
+  searchAll?: Record<string, string[]>;
   pathname: string;
   origin: string;
 };
@@ -216,6 +218,11 @@ export const projectMeta = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
   contactEmail: z.string().optional(),
+  emailSender: z.string().optional(),
+  emailSubject: z.string().optional(),
+  emailBody: z.string().optional(),
+  emailConfirmationSubject: z.string().optional(),
+  emailConfirmationBody: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
   agentInstructions: z.string().optional(),

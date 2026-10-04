@@ -14,10 +14,26 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
+  loadManagedFormResources,
   cachedFetch,
+  getManagedFormBrowserInfo,
+  getManagedFormFailure,
+  getManagedFormResponse,
+  getLegacyFormResponse,
+  getManagedFormValues,
+  readFormDataWithLimit,
+  managedFormRequestParamName,
+  validateManagedFormBot,
+  validateManagedFormRecipientLimit,
+  validateManagedFormBodyFormats,
   formIdFieldName,
+  managedFormIdFieldName,
   formBotFieldName,
+  getSystemSearch,
+  isPlainObject,
+  type ManagedFormResponse,
 } from "@webstudio-is/sdk/runtime";
+import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
@@ -37,6 +53,8 @@ import {
 } from "../__generated__/[another-page]._index";
 import {
   getResources,
+  getManagedFormSubmissions,
+  getManagedFormResourceGraph,
   getPageMeta,
   getRemixParams,
   contactEmail,
@@ -46,6 +64,7 @@ import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
 import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";
+import { createManagedFormResourceFetch } from "../__generated__/$resources.managed-form-fetch.server";
 import { assetUrlsByPath } from "../__generated__/$resources.assets";
 
 const authenticateProductionRequest = (request: Request) => {
@@ -113,7 +132,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   const params = getRemixParams(arg.params);
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };
@@ -257,23 +276,108 @@ const getRequestHost = (request: Request): string =>
 export const action = async ({
   request,
   context,
+  params,
 }: ActionFunctionArgs): Promise<
-  { success: true } | { success: false; errors: string[] }
+  { success: true } | { success: false; errors: string[] } | ManagedFormResponse
 > => {
   authenticateProductionRequest(request);
 
+  let isManagedFormRequest = false;
   try {
     const url = new URL(request.url);
+    isManagedFormRequest =
+      url.searchParams.get(managedFormRequestParamName) === "1";
+    url.searchParams.delete(managedFormRequestParamName);
     url.host = getRequestHost(request);
 
-    const formData = await request.formData();
+    const formData = isManagedFormRequest
+      ? await readFormDataWithLimit(request)
+      : await request.formData();
 
     const system = {
-      params: {},
-      search: {},
+      params: getRemixParams(params ?? {}),
+      ...getSystemSearch(url.searchParams),
       origin: url.origin,
       pathname: url.pathname,
     };
+
+    const managedFormIds = formData.getAll(managedFormIdFieldName);
+    const legacyFormIds = formData.getAll(formIdFieldName);
+    const hasOneEndpointForm =
+      (managedFormIds.length === 1 && legacyFormIds.length === 0) ||
+      (managedFormIds.length === 0 &&
+        legacyFormIds.length === 1 &&
+        typeof legacyFormIds[0] === "string");
+    if (
+      (isManagedFormRequest && !hasOneEndpointForm) ||
+      (!isManagedFormRequest && managedFormIds.length > 0)
+    ) {
+      throw new Error("Invalid Form submission");
+    }
+    if (managedFormIds.length > 0) {
+      const managedFormId = managedFormIds[0];
+      if (managedFormIds.length !== 1 || typeof managedFormId !== "string") {
+        throw new Error("Invalid Form submission");
+      }
+      const configured = getManagedFormSubmissions().get(managedFormId);
+      if (
+        configured === undefined ||
+        isFormSubmission(configured.submission) === false
+      ) {
+        throw new Error("Form submission settings not found");
+      }
+      const configurationError = validateFormSubmission(configured.submission);
+      if (configurationError !== undefined) {
+        throw new Error(configurationError);
+      }
+      if (
+        configured.resourceIds.length !==
+          configured.submission.destinations.length ||
+        configured.resourceIds.some((resourceId) => resourceId === null)
+      ) {
+        throw new Error("Resource destination not found");
+      }
+      validateManagedFormBot(formData);
+      const graph = getManagedFormResourceGraph(managedFormId, {
+        system: {
+          params: getRemixParams(params ?? {}),
+          ...getSystemSearch(url.searchParams),
+          origin: url.origin,
+          pathname: url.pathname,
+        },
+        formData: getManagedFormValues(formData),
+        browserInfo: getManagedFormBrowserInfo(
+          request,
+          typeof context === "object" &&
+            context !== null &&
+            "cloudflare" in context
+            ? (request.headers.get("cf-connecting-ip") ?? undefined)
+            : undefined
+        ),
+      });
+      if (graph === undefined || graph.rootIds.length === 0) {
+        throw new Error("Form Resource graph not found");
+      }
+      validateManagedFormRecipientLimit(graph);
+      const validatedGraph = validateManagedFormBodyFormats(graph, formData);
+      const protectedFetch = createManagedFormResourceFetch({
+        request,
+        context,
+        projectDomain,
+      });
+      const results = await loadManagedFormResources(
+        protectedFetch,
+        validatedGraph,
+        url,
+        {
+          signal: request.signal,
+          timeoutMs: 10_000,
+          retryFailedRoots: true,
+          validateDestination: protectedFetch.validateDestination,
+        }
+      );
+      return getManagedFormResponse(graph, results);
+    }
 
     const resourceName = formData.get(formIdFieldName);
     const generatedResources = getResources({ system });
@@ -282,28 +386,7 @@ export const action = async ({
         ? generatedResources.action.get(resourceName)
         : undefined;
 
-    const formBotValue = formData.get(formBotFieldName);
-
-    if (formBotValue == null || typeof formBotValue !== "string") {
-      throw new Error("Form bot field not found");
-    }
-
-    // Skip timestamp validation for Brave browser
-    // Brave Shields blocks matchMedia fingerprinting detection used in bot protection
-    // See: https://github.com/brave/brave-browser/issues/46541
-    if (formBotValue !== "brave") {
-      const submitTime = parseInt(formBotValue, 16);
-      // Assumes that the difference between the server time and the form submission time,
-      // including any client-server time drift, is within a 5-minute range.
-      // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
-      // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
-      if (
-        Number.isNaN(submitTime) ||
-        Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
-      ) {
-        throw new Error(`Form bot value invalid ${formBotValue}`);
-      }
-    }
+    validateManagedFormBot(formData);
 
     formData.delete(formIdFieldName);
     formData.delete(formBotFieldName);
@@ -333,6 +416,23 @@ export const action = async ({
         actionFetch,
         {
           ...generatedResources.data,
+          resources: generatedResources.data.resources.map((resource) =>
+            resource.id === actionResource.id
+              ? {
+                  ...resource,
+                  createRequest: (documents) => {
+                    const request = resource.createRequest(documents);
+                    return {
+                      ...request,
+                      body: {
+                        ...(isPlainObject(request.body) ? request.body : {}),
+                        ...Object.fromEntries(formData),
+                      },
+                    };
+                  },
+                }
+              : resource
+          ),
           rootIds: [actionResource.id],
         },
         url,
@@ -340,7 +440,7 @@ export const action = async ({
           requestOverrides: new Map([
             // Mutations must reach the backend on every submission, even when
             // the resource has caching enabled. Dependencies can stay cached.
-            [actionResource.id, { body: Object.fromEntries(formData), fetch }],
+            [actionResource.id, { fetch }],
           ]),
         }
       );
@@ -350,6 +450,9 @@ export const action = async ({
       }
       result = actionResult as Awaited<ReturnType<typeof loadResource>>;
     }
+    if (isManagedFormRequest) {
+      return getLegacyFormResponse(result);
+    }
     const { ok, statusText } = result;
     if (ok) {
       return { success: true };
@@ -358,9 +461,13 @@ export const action = async ({
   } catch (error) {
     console.error(error);
 
+    const message = error instanceof Error ? error.message : "Unknown error";
+    if (isManagedFormRequest) {
+      return getManagedFormFailure(message);
+    }
     return {
       success: false,
-      errors: [error instanceof Error ? error.message : "Unknown error"],
+      errors: [message],
     };
   }
 };
