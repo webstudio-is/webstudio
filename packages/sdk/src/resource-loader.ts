@@ -5,6 +5,7 @@ import {
   type Resource,
 } from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
+import { validateEmailSubject } from "./email-resource";
 import { isPlainObject, serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
@@ -361,6 +362,7 @@ export const loadResource = async (
   options: ResourceLoadOptions = {}
 ) => {
   if (resourceRequest.control === "email") {
+    validateEmailSubject(resourceRequest.email?.subject);
     return {
       ok: false,
       status: 501,

@@ -44,6 +44,31 @@ test("Email Resources cannot be sent through the HTTP loader", async () => {
   expect(fetch).not.toHaveBeenCalled();
 });
 
+test.each(["\r", "\n", "\r\n"])(
+  "rejects a resolved Email subject containing %j before the provider path",
+  async (lineBreak) => {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    await expect(
+      loadResource(fetch, {
+        name: "Owner email",
+        control: "email",
+        method: "post",
+        url: "",
+        searchParams: [],
+        headers: [],
+        email: {
+          recipientMode: "project",
+          recipients: [{ address: "owner@example.com" }],
+          subject: `Hello${lineBreak}Bcc: intruder@example.com`,
+          body: "Text",
+          includeAttachments: true,
+        },
+      })
+    ).rejects.toThrow("Email subject must be text without line breaks");
+    expect(fetch).not.toHaveBeenCalled();
+  }
+);
+
 test("omits undefined request headers instead of sending the string undefined", async () => {
   let submitted: Request | undefined;
   const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {

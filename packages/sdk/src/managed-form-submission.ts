@@ -5,6 +5,7 @@ import {
   managedFormIdFieldName,
 } from "./form-fields";
 import { getResourceBodyFormatError, loadResources } from "./resource-loader";
+import { validateEmailSubject } from "./email-resource";
 import type {
   ResourceGraphLoadOptions,
   ResourceRequestGraph,
@@ -411,6 +412,9 @@ export const loadManagedFormResources = async (
     const request = resource.createRequest(
       new Map(resource.dependencies.map((id) => [id, documents.get(id)]))
     );
+    if (resource.control === "email") {
+      validateEmailSubject(request.email?.subject);
+    }
     const error = getResourceBodyFormatError(request);
     if (error !== undefined) {
       throw new Error(error);

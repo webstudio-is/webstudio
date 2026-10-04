@@ -442,6 +442,69 @@ test("an invalid dependent body prevents every selected destination", async () =
   expect(requestedUrls).toEqual(["https://example.com/lookup"]);
 });
 
+test("a dependency-bound Email subject is rejected before selected destinations dispatch", async () => {
+  const requestedUrls: string[] = [];
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    requestedUrls.push(String(input));
+    return Response.json({ subject: "Hello\nBcc: intruder@example.com" });
+  });
+  await expect(
+    loadManagedFormResources(fetch, {
+      rootIds: ["http", "email"],
+      resources: [
+        {
+          id: "lookup",
+          outputName: "Lookup",
+          dependencies: [],
+          createRequest: () => ({
+            name: "Lookup",
+            method: "get",
+            url: "https://example.com/lookup",
+            searchParams: [],
+            headers: [],
+          }),
+        },
+        {
+          id: "http",
+          outputName: "HTTP",
+          dependencies: [],
+          createRequest: () => ({
+            name: "HTTP",
+            method: "post",
+            url: "https://example.com/destination",
+            searchParams: [],
+            headers: [],
+          }),
+        },
+        {
+          id: "email",
+          outputName: "Email",
+          dependencies: ["lookup"],
+          control: "email",
+          createRequest: (documents) => ({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: "",
+            searchParams: [],
+            headers: [],
+            email: {
+              recipientMode: "project",
+              recipients: [{ address: "owner@example.com" }],
+              subject: (
+                documents.get("lookup") as { data: { subject: string } }
+              ).data.subject,
+              body: "Text",
+              includeAttachments: true,
+            },
+          }),
+        },
+      ],
+    })
+  ).rejects.toThrow("Email subject must be text without line breaks");
+  expect(requestedUrls).toEqual(["https://example.com/lookup"]);
+});
+
 test("rejects selected-root dependencies and cycles before any outbound request", async () => {
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({}));
   const request = () => ({

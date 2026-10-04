@@ -8,6 +8,13 @@ export const defaultEmailConfirmationSubject = "We received your submission";
 export const defaultEmailConfirmationBody =
   "Thank you. Your submission was received.";
 
+/** Check the evaluated subject, including values supplied by Form bindings. */
+export const validateEmailSubject = (subject: unknown) => {
+  if (typeof subject !== "string" || /[\r\n]/.test(subject)) {
+    throw new Error("Email subject must be text without line breaks");
+  }
+};
+
 export const getDefaultFormEmailBodyExpression = (
   formDataIdentifier: string,
   browserInfoIdentifier?: string,

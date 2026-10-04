@@ -1,5 +1,5 @@
 import { transformSync } from "esbuild";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
 import {
@@ -7,7 +7,10 @@ import {
   resetEmailResourceSetting,
 } from "./email-resource";
 import { generateManagedFormResources } from "./managed-form-resources-generator";
-import { validateManagedFormRecipientLimit } from "./managed-form-submission";
+import {
+  loadManagedFormResources,
+  validateManagedFormRecipientLimit,
+} from "./managed-form-submission";
 import type { DataSources } from "./schema/data-sources";
 import type { Instance, Instances } from "./schema/instances";
 import type { Resources } from "./schema/resources";
@@ -178,6 +181,114 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
     '"name": "notes.txt"'
   );
 });
+
+test.each([
+  { binding: "formData", lineBreak: "\r" },
+  { binding: "formData", lineBreak: "\n" },
+  { binding: "formData", lineBreak: "\r\n" },
+  { binding: "browserInfo", lineBreak: "\n" },
+] as const)(
+  "rejects a resolved $binding Email subject containing $lineBreak before destinations dispatch",
+  async ({ binding, lineBreak }) => {
+    const getGraph = getGeneratedGraph({
+      instances: new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "formData",
+          {
+            id: "formData",
+            type: "parameter",
+            scopeInstanceId: "form",
+            name: "formData",
+          },
+        ],
+        [
+          "browserInfo",
+          {
+            id: "browserInfo",
+            type: "parameter",
+            scopeInstanceId: "form",
+            name: "browserInfo",
+          },
+        ],
+        [
+          "email-source",
+          {
+            id: "email-source",
+            type: "resource",
+            scopeInstanceId: "form",
+            name: "Email",
+            resourceId: "email",
+          },
+        ],
+        [
+          "http-source",
+          {
+            id: "http-source",
+            type: "resource",
+            scopeInstanceId: "form",
+            name: "HTTP",
+            resourceId: "http",
+          },
+        ],
+      ]),
+      resources: new Map([
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              subject: `${encodeDataSourceVariable(binding)}.subject`,
+            },
+          },
+        ],
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://example.com/destination"',
+            headers: [],
+          },
+        ],
+      ]),
+      forms: [
+        {
+          formId: "form",
+          destinationDataSourceIds: ["http-source", "email-source"],
+        },
+      ],
+      ownerEmail: "owner@example.com",
+    });
+    const graph = getGraph("form", {
+      system: {},
+      formData: { subject: `Hello${lineBreak}Bcc: intruder@example.com` },
+      browserInfo: { subject: `Hello${lineBreak}Bcc: intruder@example.com` },
+    });
+    expect(graph).toBeDefined();
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    await expect(loadManagedFormResources(fetch, graph!)).rejects.toThrow(
+      "Email subject must be text without line breaks"
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  }
+);
 
 test("a translated project body survives Email Resource override and reset", () => {
   const getBody = (resourceBody?: string) => {
