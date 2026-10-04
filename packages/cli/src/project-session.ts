@@ -462,6 +462,16 @@ export const createIssueReportFailureTracker = (now = Date.now) => {
         ? recent.failure
         : undefined;
     },
+    restore(failure: IssueReportRecentFailure, at: number) {
+      if (now() - at <= 10 * 60_000) {
+        recent = { failure, at };
+      }
+    },
+    snapshot() {
+      return recent !== undefined && now() - recent.at <= 10 * 60_000
+        ? recent
+        : undefined;
+    },
     succeed(tool: string) {
       if (tool === "report-issue") {
         recent = undefined;
