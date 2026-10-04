@@ -18,7 +18,7 @@ import {
   expectGeneratedRedirects,
 } from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { e2ePaidPlanName } from "../plans";
+import { e2eEmailPlanName } from "../plans";
 import { test } from "../test";
 import { measure } from "../perf";
 
@@ -396,7 +396,7 @@ test("Project Emails Sender and named recipients persist after reload", async ({
     context,
     email,
     title: "Project Emails Runtime",
-    devPlan: e2ePaidPlanName,
+    devPlan: e2eEmailPlanName,
     assetNamePrefix: "project-emails-runtime-",
     editorToken: "project-emails-runtime-editor-token",
     builderToken: "project-emails-runtime-builder-token",
@@ -405,7 +405,7 @@ test("Project Emails Sender and named recipients persist after reload", async ({
     '"Team, West" <team@example.com>, Owner <owner@example.com>';
   const sender = "Project Team <sender@example.com>";
 
-  await loginWithSecret({ page, email, devPlan: e2ePaidPlanName });
+  await loginWithSecret({ page, email, devPlan: e2eEmailPlanName });
   await openProjectBuilder({
     page,
     projectId: fixture.projectId,

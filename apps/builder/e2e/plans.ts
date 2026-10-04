@@ -17,3 +17,18 @@ const getE2ePaidPlanName = () => {
 };
 
 export const e2ePaidPlanName = getE2ePaidPlanName();
+
+const getE2eEmailPlanName = () => {
+  const planName = [...plans.values()].find(
+    ({ features }) =>
+      features.allowContentMode && features.maxContactEmailsPerProject >= 2
+  )?.name;
+  if (planName !== undefined) {
+    return planName;
+  }
+  throw new Error(
+    "Expected PLANS to include a plan with content mode and at least 2 contact emails for e2e"
+  );
+};
+
+export const e2eEmailPlanName = getE2eEmailPlanName();
