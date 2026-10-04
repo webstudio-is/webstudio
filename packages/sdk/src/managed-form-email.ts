@@ -37,7 +37,7 @@ const getEncodedMimeUpperBound = (
   files: File[]
 ) => {
   const headers = [
-    "forms@webstudio.email",
+    "forms@forms.webstudio.is",
     email.subject,
     ...email.recipients.flatMap(({ address, name }) => [address, name ?? ""]),
     email.sender?.address ?? "",
