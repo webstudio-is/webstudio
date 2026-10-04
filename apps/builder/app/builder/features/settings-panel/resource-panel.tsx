@@ -680,7 +680,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
 };
 
 type PanelApi = {
-  save: (formData: FormData) => void | false;
+  save: (formData: FormData) => void | false | { dataSourceId: string };
 };
 
 type BodyType = ResourceBodyInputType;
@@ -892,8 +892,8 @@ const parseHeaders = (headers: Resource["headers"]) => {
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; onChange?: () => void }
->(({ variable, onChange }, ref) => {
+  { variable?: DataSource; onChange?: () => void; formDestination?: boolean }
+>(({ variable, onChange, formDestination = false }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
 
   const resources = useStore($resources);
@@ -932,7 +932,7 @@ export const ResourceForm = forwardRef<
         return;
       }
       const resourceFields = createResourceFieldsFromFormData({ formData });
-      executeRuntimeMutation({
+      return executeRuntimeMutation({
         id: "resources.upsert",
         input: {
           resourceId: resource?.id,
@@ -941,7 +941,7 @@ export const ResourceForm = forwardRef<
           scopeInstanceId,
           dataSourceName: resourceFields.name,
         },
-      });
+      })?.result;
     },
   }));
 
@@ -956,6 +956,13 @@ export const ResourceForm = forwardRef<
           }}
         />
       </Row>
+      {formDestination && (
+        <Row>
+          <Text color="subtle">
+            Form submissions use POST. This method applies elsewhere.
+          </Text>
+        </Row>
+      )}
       <Row>
         <UrlField
           autoFocus
@@ -1042,7 +1049,7 @@ export const ResourceForm = forwardRef<
           }}
         />
       </Row>
-      {method !== "get" && (
+      {(method !== "get" || formDestination) && (
         <>
           <Row>
             <Grid gap={1}>
@@ -1195,7 +1202,7 @@ export const EmailResourceForm = forwardRef<
         control: "email",
         formData,
       });
-      executeRuntimeMutation({
+      return executeRuntimeMutation({
         id: "resources.upsert",
         input: {
           resourceId: resource?.id,
@@ -1204,7 +1211,7 @@ export const EmailResourceForm = forwardRef<
           scopeInstanceId,
           dataSourceName: resourceFields.name,
         },
-      });
+      })?.result;
     },
   }));
   const textField = (
@@ -1469,6 +1476,7 @@ export const SystemResourceForm = forwardRef<
         // server. Refresh again once merged-database planning sees the save.
         onNextTransactionComplete(invalidateAssets);
       }
+      return result?.result;
     },
   }));
 
@@ -1594,7 +1602,7 @@ export const GraphqlResourceForm = forwardRef<
         control: "graphql",
         formData,
       });
-      executeRuntimeMutation({
+      return executeRuntimeMutation({
         id: "resources.upsert",
         input: {
           resourceId: resource?.id,
@@ -1603,7 +1611,7 @@ export const GraphqlResourceForm = forwardRef<
           scopeInstanceId,
           dataSourceName: resourceFields.name,
         },
-      });
+      })?.result;
     },
   }));
 

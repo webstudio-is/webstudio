@@ -207,6 +207,50 @@ test("notifies the preview when a resource field changes", () => {
   expect(onChange).toHaveBeenCalledOnce();
 });
 
+test("a GET Resource in a Form shows its effective POST body controls", () => {
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    method: "get",
+    url: '"https://example.com"',
+    headers: [],
+  };
+  $resources.set(new Map([[resource.id, resource]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const variable = {
+    type: "resource" as const,
+    id: "request-variable",
+    name: "Request",
+    resourceId: resource.id,
+  };
+  act(() => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(ResourceForm, { variable })
+      )
+    );
+  });
+  expect(container.textContent).not.toContain("Form submissions use POST");
+  expect(container.querySelector('[name="body-format"]')).toBeNull();
+  act(() => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(ResourceForm, { variable, formDestination: true })
+      )
+    );
+  });
+  expect(container.textContent).toContain("Form submissions use POST");
+  expect(container.querySelector('[name="body-format"]')).not.toBeNull();
+  expect(container.querySelector('textarea[name="body"]')).not.toBeNull();
+  expect(resource.method).toBe("get");
+});
+
 test("invalidates the preview as soon as a body edit starts", () => {
   const resource: Resource = {
     id: "request",

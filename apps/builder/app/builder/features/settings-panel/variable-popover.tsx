@@ -304,7 +304,7 @@ const TypeField = ({
 };
 
 type PanelApi = {
-  save: (formData: FormData) => void | false;
+  save: (formData: FormData) => void | false | { dataSourceId: string };
 };
 
 const ParameterForm = forwardRef<
@@ -559,6 +559,7 @@ const VariablePanelForm = forwardRef<
     value: unknown;
     onValueChange: (value: unknown) => void;
     onResourceChange: () => void;
+    formDestination?: boolean;
     querySourceContainer: Element | null;
     onQueryActiveChange: (active: boolean) => void;
     onQueryPendingChange: (pending: boolean) => void;
@@ -572,6 +573,7 @@ const VariablePanelForm = forwardRef<
       value,
       onValueChange,
       onResourceChange,
+      formDestination,
       querySourceContainer,
       onQueryActiveChange,
       onQueryPendingChange,
@@ -647,6 +649,7 @@ const VariablePanelForm = forwardRef<
               ref={ref}
               variable={variable}
               onChange={onResourceChange}
+              formDestination={formDestination}
             />
           )}
           {variableType === "email-resource" && (
@@ -905,12 +908,16 @@ const VariablePopoverContent = ({
   defaultType,
   isOpen,
   onClose,
+  formDestination,
+  onCreatedResource,
 }: {
   formRef: RefObject<HTMLFormElement>;
   variable?: DataSource;
   defaultType?: VariableType;
   isOpen: boolean;
   onClose: () => void;
+  formDestination?: boolean;
+  onCreatedResource?: (dataSourceId: string) => void;
 }) => {
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const [queryActive, setQueryActive] = useState(false);
@@ -1105,6 +1112,13 @@ const VariablePopoverContent = ({
                 ) {
                   const formData = new FormData(event.currentTarget);
                   const saved = panelRef.current?.save(formData);
+                  if (
+                    variable === undefined &&
+                    saved &&
+                    typeof saved === "object"
+                  ) {
+                    onCreatedResource?.(saved.dataSourceId);
+                  }
                   // close popover whenever new variable is created
                   // to prevent creating duplicated variable
                   if (variable === undefined && saved !== false) {
@@ -1128,6 +1142,7 @@ const VariablePopoverContent = ({
                   value={value}
                   onValueChange={setValue}
                   onResourceChange={onResourceChange}
+                  formDestination={formDestination}
                   querySourceContainer={querySourceContainer}
                   onQueryActiveChange={setQueryActive}
                   onQueryPendingChange={setQueryPending}
@@ -1218,10 +1233,14 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
 export const VariablePopoverTrigger = ({
   variable,
   defaultType,
+  formDestination,
+  onCreatedResource,
   children,
 }: {
   variable?: DataSource;
   defaultType?: VariableType;
+  formDestination?: boolean;
+  onCreatedResource?: (dataSourceId: string) => void;
   children: ReactNode;
 }) => {
   const [isOpen, setOpen] = useState(false);
@@ -1255,6 +1274,8 @@ export const VariablePopoverTrigger = ({
           formRef={formRef}
           variable={variable}
           defaultType={defaultType}
+          formDestination={formDestination}
+          onCreatedResource={onCreatedResource}
           isOpen={isOpen}
           onClose={() => setOpen(false)}
         />

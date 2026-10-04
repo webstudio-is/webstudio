@@ -51,7 +51,7 @@ export const FormSubmissionControl = ({
             <Flex key={id} align="center" justify="between">
               <Text>{variable?.name ?? "Deleted Resource"}</Text>
               {variable?.type === "resource" && (
-                <VariablePopoverTrigger variable={variable}>
+                <VariablePopoverTrigger variable={variable} formDestination>
                   <Button type="button" color="ghost">
                     Edit
                   </Button>
@@ -108,7 +108,21 @@ export const FormSubmissionControl = ({
                 </Button>
               </Flex>
             )}
-            <VariablePopoverTrigger defaultType="resource">
+            <VariablePopoverTrigger
+              defaultType="resource"
+              formDestination
+              onCreatedResource={(id) => {
+                if (
+                  submission.destinations.length < maxFormDestinations &&
+                  submission.destinations.includes(id) === false
+                ) {
+                  update({
+                    ...submission,
+                    destinations: [...submission.destinations, id],
+                  });
+                }
+              }}
+            >
               <Button type="button" color="ghost">
                 Create Resource in Form
               </Button>
