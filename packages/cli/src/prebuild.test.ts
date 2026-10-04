@@ -5742,133 +5742,145 @@ sitemap.map((page) => page.path);`
     }
   );
 
-  test("forwards repeated managed Form fields as standard multipart entries through the generated endpoint", async () => {
-    const siteData = createSiteData({
-      instances: [
-        ["root", { id: "root", component: "NativeForm", children: [] }],
-      ],
-      props: [
+  test.each(["defaults", "react-router"])(
+    "forwards repeated managed Form fields as standard multipart entries through the generated endpoint (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["destination"] },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
         [
-          "submission",
+          "formData",
           {
-            id: "submission",
-            instanceId: "root",
-            name: "submission",
-            type: "json",
-            value: { destinations: ["destination"] },
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
           },
         ],
-      ],
-    });
-    siteData.build.dataSources = [
-      [
-        "formData",
-        {
-          id: "formData",
-          name: "formData",
-          type: "parameter",
-          scopeInstanceId: "root",
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "remote",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "remote",
+          {
+            id: "remote",
+            name: "Remote",
+            method: "post",
+            url: '"https://receiver.example/submit"',
+            headers: [],
+            bodyFormat: "multipart",
+            body: encodeDataSourceVariable("formData"),
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: `export { action } from "./app/routes/${generateRemixRoute("/__ws-form")}";`,
+          resolveDir: tempDir,
         },
-      ],
-      [
-        "destination",
-        {
-          id: "destination",
-          name: "Destination",
-          type: "resource",
-          resourceId: "remote",
-          scopeInstanceId: "root",
-        },
-      ],
-    ] as never;
-    siteData.build.resources = [
-      [
-        "remote",
-        {
-          id: "remote",
-          name: "Remote",
-          method: "post",
-          url: '"https://receiver.example/submit"',
-          headers: [],
-          bodyFormat: "multipart",
-          body: encodeDataSourceVariable("formData"),
-        },
-      ],
-    ] as never;
-    await writeSiteData(siteData);
-    await prebuild({ assets: false, template: ["react-router"] });
-    await writeFile(
-      join(
-        tempDir,
-        "app/__generated__/$resources.managed-form-fetch.server.ts"
-      ),
-      "export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
-    );
-    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await build({
-      stdin: {
-        contents: `export { action } from "./app/routes/${generateRemixRoute("/__ws-form")}";`,
-        resolveDir: tempDir,
-      },
-      outfile: join(tempDir, "multipart-action.mjs"),
-      bundle: true,
-      platform: "node",
-      format: "esm",
-      packages: "external",
-      loader: { ".css": "text" },
-    });
-    const { action } = await import(
-      pathToFileURL(join(tempDir, "multipart-action.mjs")).href
-    );
-    const outbound = vi.fn(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
-        const request = new Request(input, init);
-        expect(request.url).toBe("https://receiver.example/submit");
-        expect(request.method).toBe("POST");
-        expect(request.headers.get("content-type")).toContain(
-          "multipart/form-data"
-        );
-        const fields = await request.formData();
-        expect(fields.getAll("tags")).toEqual(["red", "blue", "red"]);
-        expect(fields.getAll("attachments")).toMatchObject([
-          { name: "first.txt" },
-          { name: "second.txt" },
-        ]);
-        expect(await (fields.getAll("attachments")[0] as File).text()).toBe(
-          "one"
-        );
-        expect(await (fields.getAll("attachments")[1] as File).text()).toBe(
-          "two"
-        );
-        return Response.json({ accepted: true });
-      }
-    );
-    vi.stubGlobal("__testManagedFormFetch", outbound);
-    const form = new FormData();
-    form.set(managedFormIdFieldName, "root");
-    form.set(formBotFieldName, "brave");
-    form.set(
-      managedFormArrayNamesFieldName,
-      JSON.stringify(["tags", "attachments"])
-    );
-    form.append("tags", "red");
-    form.append("tags", "blue");
-    form.append("tags", "red");
-    form.append("attachments", new File(["one"], "first.txt"));
-    form.append("attachments", new File(["two"], "second.txt"));
-    const response: Response = await action({
-      request: new Request("https://site.example/__ws-form", {
-        method: "POST",
-        headers: { host: "site.example" },
-        body: form,
-      }),
-      context: {},
-      params: {},
-    });
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({ success: true });
-    expect(outbound).toHaveBeenCalledOnce();
-  });
+        outfile: join(tempDir, "multipart-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "multipart-action.mjs")).href
+      );
+      const outbound = vi.fn(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          expect(request.url).toBe("https://receiver.example/submit");
+          expect(request.method).toBe("POST");
+          expect(request.headers.get("content-type")).toContain(
+            "multipart/form-data"
+          );
+          const fields = await request.formData();
+          expect(fields.getAll("tags")).toEqual(["red", "blue", "red"]);
+          const attachments = fields.getAll("attachments") as File[];
+          expect(attachments).toMatchObject([
+            { name: "first.bin", type: "application/octet-stream" },
+            { name: "second.txt", type: "text/plain" },
+          ]);
+          expect(new Uint8Array(await attachments[0].arrayBuffer())).toEqual(
+            new Uint8Array([0, 128, 255])
+          );
+          expect(new Uint8Array(await attachments[1].arrayBuffer())).toEqual(
+            new Uint8Array([115, 101, 99, 111, 110, 100])
+          );
+          return Response.json({ accepted: true });
+        }
+      );
+      vi.stubGlobal("__testManagedFormFetch", outbound);
+      const form = new FormData();
+      form.set(managedFormIdFieldName, "root");
+      form.set(formBotFieldName, "brave");
+      form.set(
+        managedFormArrayNamesFieldName,
+        JSON.stringify(["tags", "attachments"])
+      );
+      form.append("tags", "red");
+      form.append("tags", "blue");
+      form.append("tags", "red");
+      form.append(
+        "attachments",
+        new File([new Uint8Array([0, 128, 255])], "first.bin", {
+          type: "application/octet-stream",
+        })
+      );
+      form.append(
+        "attachments",
+        new File(["second"], "second.txt", { type: "text/plain" })
+      );
+      const response: Response = await action({
+        request: new Request("https://site.example/__ws-form", {
+          method: "POST",
+          headers: { host: "site.example" },
+          body: form,
+        }),
+        context: {},
+        params: {},
+      });
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({ success: true });
+      expect(outbound).toHaveBeenCalledOnce();
+    }
+  );
 
   test.each(["defaults", "react-router"])(
     "sends configured browserInfo headers from a trusted Cloudflare request (%s)",
