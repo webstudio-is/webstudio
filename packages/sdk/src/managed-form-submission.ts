@@ -403,7 +403,9 @@ export const loadManagedFormResources = async (
   }
   const preparedEmailRequests = new Map<string, ResourceRequest>();
   for (const resource of getReachableResources(graph)) {
-    if (resource.control !== "email") continue;
+    if (resource.control !== "email") {
+      continue;
+    }
     // Managed Form destinations run in parallel. An Email dependency could
     // dispatch a lookup before we can validate the resolved message, so Email
     // must use Form and Project values available during this preflight.

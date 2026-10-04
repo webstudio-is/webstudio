@@ -44,7 +44,9 @@ const getEncodedMimeUpperBound = (
     email.sender?.name ?? "",
   ];
   let size = mimeEnvelopeBytes + encodedTextUpperBound(email.body);
-  for (const header of headers) size += encodedTextUpperBound(header);
+  for (const header of headers) {
+    size += encodedTextUpperBound(header);
+  }
   for (const file of files) {
     size += encodedTextUpperBound(file.name);
     size += encodedTextUpperBound(file.type || "application/octet-stream");
