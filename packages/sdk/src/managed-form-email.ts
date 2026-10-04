@@ -219,9 +219,18 @@ export const createCloudflareManagedFormEmailSender = (
         response.ok &&
         typeof data === "object" &&
         data !== null &&
-        "id" in data
+        "id" in data &&
+        typeof data.id === "string" &&
+        data.id.trim().length > 0
       ) {
         return { ok: true, status: response.status, statusText: "OK", data };
+      }
+      if (response.ok) {
+        return failure(
+          502,
+          "EMAIL_SERVICE_ERROR",
+          "Email service returned an invalid response"
+        );
       }
       if (
         typeof data === "object" &&

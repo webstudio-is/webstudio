@@ -87,6 +87,25 @@ test("omits attachments when disabled and preserves worker errors", async () => 
   expect(JSON.parse(init.body as string)).not.toHaveProperty("attachments");
 });
 
+test.each([undefined, null, "", "   ", 123])(
+  "treats malformed successful Email ID %s as a provider error",
+  async (id) => {
+    const fetch = vi.fn(async () =>
+      Response.json(id === undefined ? {} : { id })
+    );
+    const sendEmail = createCloudflareManagedFormEmailSender(
+      { fetch },
+      new FormData()
+    )!;
+    const result = await sendEmail(request, {});
+    expect(result).toMatchObject({
+      ok: false,
+      status: 502,
+      data: { error: { code: "EMAIL_SERVICE_ERROR" } },
+    });
+  }
+);
+
 test("rejects malformed recipient addresses during preflight", () => {
   expect(() =>
     validateCloudflareManagedFormEmail(
