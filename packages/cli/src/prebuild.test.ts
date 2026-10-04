@@ -817,7 +817,7 @@ describe("prebuild", () => {
       "utf8"
     );
     expect(nodeAdapter).toContain(
-      "createManagedFormEmailSender = () => undefined"
+      "createManagedFormEmailSender = (_input: { context: unknown; formData: FormData }) => undefined"
     );
     expect(nodeAdapter).not.toContain("EMAIL_SERVICE");
   });

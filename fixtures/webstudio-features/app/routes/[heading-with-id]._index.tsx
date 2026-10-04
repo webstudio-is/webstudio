@@ -64,7 +64,11 @@ import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
 import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";
-import { createManagedFormResourceFetch } from "../__generated__/$resources.managed-form-fetch.server";
+import {
+  createManagedFormEmailSender,
+  createManagedFormResourceFetch,
+  validateManagedFormEmail,
+} from "../__generated__/$resources.managed-form-fetch.server";
 import { assetUrlsByPath } from "../__generated__/$resources.assets";
 
 const customFetch: typeof fetch = (input, init) => {
@@ -345,7 +349,12 @@ export const action = async ({
         throw new Error("Form Resource graph not found");
       }
       validateManagedFormRecipientLimit(graph);
-      const validatedGraph = validateManagedFormBodyFormats(graph, formData);
+      const sendEmail = createManagedFormEmailSender({ context, formData });
+      const validatedGraph = validateManagedFormBodyFormats(
+        graph,
+        formData,
+        sendEmail !== undefined
+      );
       const protectedFetch = createManagedFormResourceFetch({
         request,
         context,
@@ -359,6 +368,12 @@ export const action = async ({
           signal: request.signal,
           timeoutMs: 10_000,
           retryFailedRoots: true,
+          sendEmail,
+          validateEmail:
+            sendEmail === undefined
+              ? undefined
+              : (emailRequest) =>
+                  validateManagedFormEmail(emailRequest, formData),
           validateDestination: protectedFetch.validateDestination,
         }
       );
