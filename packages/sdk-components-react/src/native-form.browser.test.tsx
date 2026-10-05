@@ -113,6 +113,54 @@ test("malformed submission settings do not fall back to native delivery", async 
   }
 });
 
+test("a throwing submit callback cannot trigger native delivery", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onManagedSubmit = vi.fn();
+  try {
+    await act(async () => {
+      root.render(
+        <NativeForm
+          action="/__must_not_navigate__"
+          submission={{ destinations: ["resource-one"] }}
+          onSubmit={() => {
+            throw new Error("Submit callback failed");
+          }}
+          onManagedSubmit={onManagedSubmit}
+        >
+          <button
+            type="submit"
+            formAction="/__must_not_navigate__"
+            formMethod="get"
+          >
+            Send
+          </button>
+        </NativeForm>
+      );
+    });
+    const form = container.querySelector("form");
+    if (form === null) {
+      throw new Error("Expected Form element");
+    }
+    let submit: SubmitEvent | undefined;
+    form.addEventListener("submit", (event) => {
+      submit = event;
+    });
+    await act(async () => {
+      container.querySelector("button")?.click();
+    });
+    expect(submit?.defaultPrevented).toBe(true);
+    expect(onManagedSubmit).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "Submit callback failed"
+    );
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
 test("legacy native-mode settings do not activate saved Resource destinations", async () => {
   const container = document.createElement("div");
   document.body.append(container);

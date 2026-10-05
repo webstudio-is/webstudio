@@ -110,7 +110,17 @@ export const NativeForm = forwardRef<
         ? validateFormSubmission({ destinations: [] })
         : "Invalid Form submission settings";
     const handleManagedSubmit = (event: FormEvent<HTMLFormElement>) => {
-      onSubmit?.(event);
+      try {
+        onSubmit?.(event);
+      } catch (error) {
+        // A user callback must not restore the browser's native submit path.
+        event.preventDefault();
+        reportFailure(
+          error instanceof Error ? error.message : "Form submission failed",
+          500
+        );
+        return;
+      }
       if (event.defaultPrevented) {
         return;
       }
