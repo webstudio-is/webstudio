@@ -167,4 +167,10 @@ test("creating a Form Resource selects it only after the editor saves", async ()
   if (created.type === "resource") {
     expect($resources.get().has(created.resourceId)).toBe(true);
   }
+  await act(async () => {
+    await userEvent.click(container.querySelector('[data-list-item="true"]')!);
+  });
+  await vi.waitFor(() => {
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  });
 });

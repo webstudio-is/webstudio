@@ -1,5 +1,6 @@
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
+import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
@@ -387,13 +388,26 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
     );
   });
   expect(container.textContent).toContain("Send request");
+  expect(container.querySelectorAll('[data-list-item="true"]')).toHaveLength(1);
+  expect(
+    container.querySelector('[aria-label="Dynamic data variable"]')
+  ).not.toBeNull();
 
   await act(async () => $dataSources.set(new Map()));
   expect(container.textContent).toContain("Deleted Resource");
-  const removeButton = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent === "Remove"
-  );
-  await act(async () => removeButton?.click());
+  const row = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Remove missing action"]'
+  )!;
+  await act(async () => {
+    row.focus();
+    expect(document.activeElement).toBe(row);
+    await userEvent.keyboard("{Enter}");
+  });
+  const removeAction = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  ).find((item) => item.textContent === "Remove action");
+  expect(removeAction).toBeDefined();
+  await act(async () => userEvent.keyboard("{Enter}"));
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: { destinations: [] },

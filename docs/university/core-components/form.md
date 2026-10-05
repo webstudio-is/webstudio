@@ -6,10 +6,10 @@ description: Collect form fields and submit them to HTTP or Email Resources.
 
 Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/cms.md#resources). Add it from **Components > Forms**. The inserted Form includes named inputs, a submit button, and editable success and error messages.
 
-## Configure submission
+## Configure actions
 
-1. Select the Form and open **Settings > Submission**.
-2. Choose an existing Resource or select **Create Resource in Form**. Add up to five destinations.
+1. Select the Form and open **Settings > Actions**.
+2. Choose an existing Resource or select **Create Resource in Form**. Add up to five actions. Select an action in the list to edit its Resource, or use its menu to remove it.
 3. Give each input a **Name**. Its name identifies the submitted value in `formData`.
 4. Publish the site and submit the form there to test it.
 

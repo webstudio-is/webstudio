@@ -23,6 +23,7 @@ export const meta: WsComponentMeta = {
     submission: {
       type: "json",
       control: "form-submission",
+      label: "Actions",
       required: false,
       description: "Choose up to 5 Resource destinations for this Form.",
     },

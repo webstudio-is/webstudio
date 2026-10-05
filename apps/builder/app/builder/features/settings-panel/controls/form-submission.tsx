@@ -1,18 +1,104 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import { Button, Flex, Select, Text } from "@webstudio-is/design-system";
+import {
+  Button,
+  Chip,
+  CssValueListArrowFocus,
+  CssValueListItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Flex,
+  Label,
+  Select,
+  SmallIconButton,
+  Text,
+} from "@webstudio-is/design-system";
+import { EllipsesIcon } from "@webstudio-is/icons";
 import {
   isFormSubmission,
   maxFormDestinations,
   validateFormSubmission,
   type FormSubmission,
   findTreeInstanceIds,
+  type DataSource,
 } from "@webstudio-is/sdk";
 import { findAvailableVariables } from "@webstudio-is/project-build/runtime";
 import { $dataSources, $instances, $props } from "~/shared/sync/data-stores";
 import { VariablePopoverTrigger } from "../variable-popover";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";
+
+const ActionItem = ({
+  id,
+  index,
+  variable,
+  formInstanceId,
+  onRemove,
+}: {
+  id: string;
+  index: number;
+  variable?: DataSource;
+  formInstanceId: string;
+  onRemove: () => void;
+}) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isResource = variable?.type === "resource";
+  const name = isResource ? variable.name : "Deleted Resource";
+  const source = isResource
+    ? variable.scopeInstanceId === formInstanceId
+      ? "local"
+      : "remote"
+    : "default";
+  const item = (
+    <CssValueListItem
+      id={id}
+      index={index}
+      aria-label={isResource ? `Edit action ${name}` : `Remove missing action`}
+      onClick={isResource ? undefined : () => setIsMenuOpen(true)}
+      data-state={isMenuOpen ? "open" : undefined}
+      label={
+        <Label tag="label" color={source} truncate>
+          {name}
+        </Label>
+      }
+      suffix={
+        isResource ? (
+          <Chip
+            title="Dynamic data variable"
+            aria-label="Dynamic data variable"
+          >
+            D
+          </Chip>
+        ) : undefined
+      }
+      buttons={
+        <DropdownMenu modal open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <SmallIconButton
+              tabIndex={-1}
+              aria-label={`Open action menu for ${name}`}
+              icon={<EllipsesIcon />}
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={onRemove}>
+              Remove action
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      }
+    />
+  );
+  return isResource ? (
+    <VariablePopoverTrigger variable={variable} formDestination>
+      {item}
+    </VariablePopoverTrigger>
+  ) : (
+    item
+  );
+};
 
 export const FormSubmissionControl = ({
   instanceId,
@@ -80,22 +166,16 @@ export const FormSubmissionControl = ({
   return (
     <VerticalLayout label={<PropertyLabel name="submission" />}>
       <Flex direction="column" gap="2">
-        {submission.destinations.map((id) => {
-          const variable = dataSources.get(id);
-          return (
-            <Flex key={id} align="center" justify="between">
-              <Text>{variable?.name ?? "Deleted Resource"}</Text>
-              {variable?.type === "resource" && (
-                <VariablePopoverTrigger variable={variable} formDestination>
-                  <Button type="button" color="ghost">
-                    Edit
-                  </Button>
-                </VariablePopoverTrigger>
-              )}
-              <Button
-                type="button"
-                color="ghost"
-                onClick={() =>
+        {submission.destinations.length > 0 && (
+          <CssValueListArrowFocus>
+            {submission.destinations.map((id, index) => (
+              <ActionItem
+                key={id}
+                id={id}
+                index={index}
+                variable={dataSources.get(id)}
+                formInstanceId={instanceId}
+                onRemove={() =>
                   update({
                     ...submission,
                     destinations: submission.destinations.filter(
@@ -103,12 +183,10 @@ export const FormSubmissionControl = ({
                     ),
                   })
                 }
-              >
-                Remove
-              </Button>
-            </Flex>
-          );
-        })}
+              />
+            ))}
+          </CssValueListArrowFocus>
+        )}
         {submission.destinations.length < maxFormDestinations && (
           <Flex direction="column" gap="2">
             {available.length > 0 && (
