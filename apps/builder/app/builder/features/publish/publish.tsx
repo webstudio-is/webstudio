@@ -827,6 +827,13 @@ const Publish = ({
       return;
     }
 
+    const localFindings = getPrePublishAuditFindings();
+    setPublishFindings(localFindings);
+    if (localFindings.some(({ severity }) => severity === "error")) {
+      onValidationStateChange("idle");
+      return;
+    }
+
     startTransition(async () => {
       setIsPublishing(true);
       await runPublishAfterBestEffortChecks({
@@ -959,6 +966,12 @@ const PublishStatic = ({
           onClick={() => {
             setPublishError(undefined);
             setPublishFindings([]);
+
+            const localFindings = getPrePublishAuditFindings();
+            setPublishFindings(localFindings);
+            if (localFindings.some(({ severity }) => severity === "error")) {
+              return;
+            }
 
             startTransition(async () => {
               try {
