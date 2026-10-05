@@ -112,7 +112,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
   }
 });
 
-test("managed Form reveals a reused built-in error on repeated failures", async () => {
+test("managed Form reveals a built-in error on repeated failures", async () => {
   const action = vi.fn().mockImplementation(async () => ({
     success: false,
     status: 502,
@@ -153,9 +153,13 @@ test("managed Form reveals a reused built-in error on repeated failures", async 
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
     const alert = view.container.querySelector('[role="alert"]');
     expect(alert).not.toBeNull();
+    expect(alert?.textContent).toBe("failed");
     await act(async () => view.container.querySelector("button")?.click());
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
-    expect(view.container.querySelector('[role="alert"]')).toBe(alert);
+    expect(view.container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
+      "failed"
+    );
     expect(action).toHaveBeenCalledTimes(2);
   } finally {
     await view.cleanup();
