@@ -232,7 +232,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
       ({
         top: window.innerHeight + 30,
         bottom: window.innerHeight + 60,
-      } as DOMRect)
+      }) as DOMRect
   );
   const view = await renderRoute(<Form />, action);
   try {

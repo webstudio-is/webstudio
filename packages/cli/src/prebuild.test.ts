@@ -869,8 +869,8 @@ describe("prebuild", () => {
                     name === "type"
                       ? "file"
                       : name === "name"
-                      ? "attachments"
-                      : "image/*,.pdf",
+                        ? "attachments"
+                        : "image/*,.pdf",
                 },
               ] as [string, Prop]
           ),
@@ -1258,7 +1258,7 @@ describe("prebuild", () => {
           (id) =>
             [id, { id, component: "ws:block", children: [] }] as [
               string,
-              Omit<Instance, "type">
+              Omit<Instance, "type">,
             ]
         ),
       ],
@@ -2544,7 +2544,9 @@ sitemap.map((page) => page.path);`
       await runGeneratedCommand("react-router", ["build"]);
       const serverBundle = (
         await Promise.all(
-          (await getFilePaths("build/server"))
+          (
+            await getFilePaths("build/server")
+          )
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2554,7 +2556,9 @@ sitemap.map((page) => page.path);`
       expect(serverBundle).toContain("post-revision");
       const clientBundle = (
         await Promise.all(
-          (await getFilePaths("build/client"))
+          (
+            await getFilePaths("build/client")
+          )
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2893,7 +2897,9 @@ sitemap.map((page) => page.path);`
 
     const serverBundle = (
       await Promise.all(
-        (await getFilePaths("build/server"))
+        (
+          await getFilePaths("build/server")
+        )
           .filter((path) => path.endsWith(".js"))
           .map((path) => readFile(path, "utf8"))
       )
@@ -3306,7 +3312,7 @@ sitemap.map((page) => page.path);`
             ([id]) =>
               [id, { id, component: "NativeForm", children: [] }] as [
                 string,
-                Omit<Instance, "type">
+                Omit<Instance, "type">,
               ]
           ),
         ],
@@ -5918,7 +5924,9 @@ export const createManagedFormResourceFetch = () => {
     ).resolves.toContain("<!DOCTYPE html>");
     const staticRuntimeOutput = (
       await Promise.all(
-        (await getFilePaths("dist/client"))
+        (
+          await getFilePaths("dist/client")
+        )
           .filter((path) => path.endsWith(".js") || path.endsWith(".json"))
           .map((path) => readFile(path, "utf8"))
       )
