@@ -116,7 +116,9 @@ export const getManagedFormResponse = (
     };
     results.push(result);
     if (outcome.ok === false) {
-      if (resource?.nonfatal !== true) hasFatalError = true;
+      if (resource?.nonfatal !== true) {
+        hasFatalError = true;
+      }
       const statusText =
         "statusText" in outcome && typeof outcome.statusText === "string"
           ? outcome.statusText.trim()

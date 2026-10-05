@@ -79,15 +79,22 @@ export const createManagedFormDraftGraph = ({
           (tag !== undefined &&
             tag.type !== "string" &&
             (name !== undefined || type !== undefined))));
-    if (!isInput) continue;
-    if (type !== undefined && type.type !== "string")
-      omitDefaultFormData = true;
-    if (type?.type === "string" && type.value.toLowerCase() === "password") {
-      if (name?.type === "string") passwordNames.push(name.value);
-      else omitDefaultFormData = true;
+    if (!isInput) {
+      continue;
     }
-    if (name !== undefined && name.type !== "string")
+    if (type !== undefined && type.type !== "string") {
       omitDefaultFormData = true;
+    }
+    if (type?.type === "string" && type.value.toLowerCase() === "password") {
+      if (name?.type === "string") {
+        passwordNames.push(name.value);
+      } else {
+        omitDefaultFormData = true;
+      }
+    }
+    if (name !== undefined && name.type !== "string") {
+      omitDefaultFormData = true;
+    }
   }
   const formDataStringifyOptions = omitDefaultFormData
     ? {
@@ -138,26 +145,38 @@ export const createManagedFormDraftGraph = ({
   const resourceIds = new Set<string>();
   const dependenciesById = new Map<string, string[]>();
   const visit = (id: string) => {
-    if (resourceIds.has(id)) return;
+    if (resourceIds.has(id)) {
+      return;
+    }
     const resource = resources.get(id);
-    if (resource === undefined)
+    if (resource === undefined) {
       throw new Error(`Form Resource ${id} not found`);
+    }
     resourceIds.add(id);
     const dependencies = Array.from(
       getResourceDependencyIds({ resource, dataSources })
     );
     dependenciesById.set(id, dependencies);
-    for (const dependency of dependencies) visit(dependency);
+    for (const dependency of dependencies) {
+      visit(dependency);
+    }
   };
-  for (const id of rootIds) visit(id);
+  for (const id of rootIds) {
+    visit(id);
+  }
   const externalClosureIds = new Set<string>();
   const markExternal = (id: string) => {
-    if (externalClosureIds.has(id)) return;
+    if (externalClosureIds.has(id)) {
+      return;
+    }
     externalClosureIds.add(id);
-    for (const dependency of dependenciesById.get(id) ?? [])
+    for (const dependency of dependenciesById.get(id) ?? []) {
       markExternal(dependency);
+    }
   };
-  for (const id of externalRootIds) markExternal(id);
+  for (const id of externalRootIds) {
+    markExternal(id);
+  }
   const formBoundIds = new Set<string>();
   const externallyScopedIds = new Set<string>();
   for (const dataSource of dataSources.values()) {
@@ -229,40 +248,49 @@ export const createManagedFormDraftGraph = ({
     ): ResourceRequest => {
       const values = new Map<string, unknown>();
       values.set(encodeDataVariableId(SYSTEM_VARIABLE_ID), system);
-      if (formDataSource)
+      if (formDataSource) {
         values.set(
           encodeDataVariableId(formDataSource.id),
           resource.control === "email" ? formDataProxy : formData
         );
-      if (browserInfoSource)
+      }
+      if (browserInfoSource) {
         values.set(
           encodeDataVariableId(browserInfoSource.id),
           resource.control === "email" ? browserInfoProxy : browserInfo
         );
+      }
       for (const sourceId of getResourceDataSourceIds(resource)) {
         const source = dataSources.get(sourceId);
-        if (source === undefined) continue;
+        if (source === undefined) {
+          continue;
+        }
         let value: unknown;
-        if (source.type === "variable") value = source.value.value;
-        if (source.type === "resource")
+        if (source.type === "variable") {
+          value = source.value.value;
+        }
+        if (source.type === "resource") {
           value = documents.get(source.resourceId);
+        }
         if (source.type === "parameter") {
-          if (source.id === SYSTEM_VARIABLE_ID) value = system;
-          else if (
+          if (source.id === SYSTEM_VARIABLE_ID) {
+            value = system;
+          } else if (
             source.scopeInstanceId === formId &&
             source.name === formDataParameterName
-          )
+          ) {
             value = resource.control === "email" ? formDataProxy : formData;
-          else if (
+          } else if (
             source.scopeInstanceId === formId &&
             source.name === browserInfoParameterName
-          )
+          ) {
             value =
               resource.control === "email" ? browserInfoProxy : browserInfo;
-          else
+          } else {
             throw new Error(
               `Managed Form ${formId} cannot resolve parameter ${source.id}`
             );
+          }
         }
         values.set(encodeDataVariableId(source.id), value);
       }

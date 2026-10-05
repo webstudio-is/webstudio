@@ -129,7 +129,9 @@ export const FormSubmissionControl = ({
     instances,
     dataSources,
   }).filter((variable) => {
-    if (variable.type !== "resource") return false;
+    if (variable.type !== "resource") {
+      return false;
+    }
     const resource = resourcesById.get(variable.resourceId);
     return resource !== undefined && resource.control !== "system";
   });
@@ -202,8 +204,11 @@ export const FormSubmissionControl = ({
                     active={dragItemId === id}
                     onToggle={() => {
                       const disabled = new Set(submission.disabledDestinations);
-                      if (disabled.has(id)) disabled.delete(id);
-                      else disabled.add(id);
+                      if (disabled.has(id)) {
+                        disabled.delete(id);
+                      } else {
+                        disabled.add(id);
+                      }
                       update({
                         ...submission,
                         disabledDestinations:

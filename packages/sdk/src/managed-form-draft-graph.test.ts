@@ -198,8 +198,9 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
     module,
     module.exports,
     (specifier: string) => {
-      if (specifier === "@webstudio-is/sdk/to-string")
+      if (specifier === "@webstudio-is/sdk/to-string") {
         return { createJsonStringifyProxy };
+      }
       throw new Error(`Unexpected import ${specifier}`);
     }
   );
@@ -376,8 +377,9 @@ test("draft graph keeps scoped dependencies and external Resource roots in publi
     module,
     module.exports,
     (specifier: string) => {
-      if (specifier === "@webstudio-is/sdk/to-string")
+      if (specifier === "@webstudio-is/sdk/to-string") {
         return { createJsonStringifyProxy };
+      }
       throw new Error(`Unexpected import ${specifier}`);
     }
   );

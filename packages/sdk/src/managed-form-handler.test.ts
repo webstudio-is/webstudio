@@ -280,7 +280,9 @@ test.each([undefined, "invalid-address"])(
     data.set(managedFormIdFieldName, "form");
     data.set(managedFormArrayNamesFieldName, "[]");
     data.set(formBotFieldName, "brave");
-    if (address !== undefined) data.set("email", address);
+    if (address !== undefined) {
+      data.set("email", address);
+    }
     const resourceFetch = vi.fn(async () =>
       Response.json({ accepted: true }, { status: 201 })
     );

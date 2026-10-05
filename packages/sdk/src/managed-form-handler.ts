@@ -113,7 +113,9 @@ export const handleManagedFormSubmission = async ({
           );
           return [{ ...resource, createRequest: () => request }];
         } catch (error) {
-          if (!(error instanceof VisitorEmailAddressError)) throw error;
+          if (!(error instanceof VisitorEmailAddressError)) {
+            throw error;
+          }
           invalidVisitorIds.add(resource.id);
           invalidVisitorResults[resource.outputName] = {
             ok: false,

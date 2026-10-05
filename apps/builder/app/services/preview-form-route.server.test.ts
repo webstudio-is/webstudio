@@ -41,7 +41,9 @@ const request = (file?: File, headers?: HeadersInit) => {
   formData.set("ws--managed-form-array-names", "[]");
   formData.set("ws--form-bot", Date.now().toString(16));
   formData.set("email", "ada@example.com");
-  if (file) formData.set("attachment", file);
+  if (file) {
+    formData.set("attachment", file);
+  }
   return new Request(url, { method: "POST", body: formData, headers });
 };
 

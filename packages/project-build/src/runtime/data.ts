@@ -519,7 +519,9 @@ export const evaluateExpressionSync = (
     const result = getCompiledExpression(expression)({ get: getVariable });
     return result;
   } catch (error) {
-    if (throwOnError) throw error;
+    if (throwOnError) {
+      throw error;
+    }
     return undefined;
   }
 };
