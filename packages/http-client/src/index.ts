@@ -1208,26 +1208,6 @@ export const deleteProjectAssetFolder = async (
   );
 };
 
-const normalizeLegacyJsonProps = (project: unknown) => {
-  if (typeof project !== "object" || project === null) {
-    return project;
-  }
-  const props = (
-    project as {
-      build?: { props?: [string, { type?: string; value?: unknown }][] };
-    }
-  ).build?.props;
-  if (Array.isArray(props) === false) {
-    return project;
-  }
-  for (const [, prop] of props) {
-    if (prop.type === "json" && prop.value === undefined) {
-      prop.value = null;
-    }
-  }
-  return project;
-};
-
 export const loadProjectBundleByBuildId = async (
   params: {
     buildId: string;
@@ -1258,7 +1238,12 @@ export const loadProjectBundleByBuildId = async (
     bundleVersion: currentBundleVersion,
     contentIndex: params.contentIndex,
   });
-  return publishedProjectBundle.parse(normalizeLegacyJsonProps(data));
+  for (const [, prop] of (data as PublishedProjectBundle).build.props) {
+    if (prop.type === "json" && prop.value === undefined) {
+      prop.value = null;
+    }
+  }
+  return publishedProjectBundle.parse(data);
 };
 
 export const loadProjectBundleByProjectId = async (
@@ -1269,7 +1254,7 @@ export const loadProjectBundleByProjectId = async (
     projectId: params.projectId,
     bundleVersion: currentBundleVersion,
   });
-  return publishedProjectBundle.parse(normalizeLegacyJsonProps(data));
+  return publishedProjectBundle.parse(data);
 };
 
 export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
