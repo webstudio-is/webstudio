@@ -103,7 +103,7 @@ There are several fields available to configure the fetch request.
 
 #### Submit a Form to a Resource
 
-Create a Resource in **Data variables** on the [Form](../core-components/form.md) or an ancestor. Then use **Properties & Attributes > Actions** on the Form to select it. A Resource created on the Form can bind its URL, headers, and body to that Form's `formData` and safe `browserInfo` values. A Resource on an ancestor can be selected, but cannot bind the descendant Form's submission values. HTTP destinations in a Form always send POST requests, regardless of the Resource's method used for ordinary data loading.
+Create a Resource in **Data variables** on the [Form](../core-components/form.md) or an ancestor. Then use **Properties & Attributes > Action** on the Form to select it. A Resource created on the Form can bind its URL, headers, and body to that Form's `formData` and safe `browserInfo` values. A Resource on an ancestor can be selected, but cannot bind the descendant Form's submission values. HTTP destinations in a Form always send POST requests, regardless of the Resource's method used for ordinary data loading.
 
 For a Form-scoped HTTP Resource, leave the body unset to forward every named Form field. **Request body format** defaults to **Auto**: text-only data is JSON; a body containing uploaded files becomes multipart. Choose **JSON** or **Multipart** when the receiving API requires that format. JSON rejects uploaded files instead of dropping them. Multipart sends repeated values under the same field name and includes uploaded files with their filenames and bytes. Use the [Form upload guide](../core-components/form.md#inputs-and-responses) for file inputs and the combined request limit.
 

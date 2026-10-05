@@ -9,7 +9,7 @@ Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/c
 ## Configure actions
 
 1. Create HTTP, Email, or GraphQL Resources in **Data variables**, on the Form or an ancestor.
-2. Select the Form. In **Properties & Attributes > Actions**, use the plus menu to choose up to five visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Data variables**.
+2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to five visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Data variables**.
 3. Give each input a **Name**. Its name identifies the submitted value in `formData`.
 4. Submit the Form in Builder Preview to test the current draft, or publish and test the deployed site.
 
@@ -33,7 +33,7 @@ On a published Webstudio Cloud site, an Email Resource sends through Webstudio's
 
 Each owner notification keeps its configured subject text and adds a short, unique reference in brackets. Two submissions with the same values, even close together, receive different references. A retry within one submission keeps the same reference. Visitor-addressed emails keep their configured subject without this suffix.
 
-To email a visitor, add another Email Resource in **Data variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Actions. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. Visitor-addressed email does not include attachments. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
+To email a visitor, add another Email Resource in **Data variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Action. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. Visitor-addressed email does not include attachments. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
 
 ## Inputs and responses
 
