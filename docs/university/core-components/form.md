@@ -8,12 +8,12 @@ Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/c
 
 ## Configure actions
 
-1. Select the Form and open **Settings > Actions**.
-2. Choose an existing Resource or select **Create Resource in Form**. Add up to five actions. Select an action in the list to edit its Resource, or use its menu to remove it.
+1. Create HTTP, Email, or GraphQL Resources in **Data variables**, on the Form or an ancestor.
+2. Select the Form. In **Properties & Attributes > Actions**, use the plus menu to choose up to five visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Data variables**.
 3. Give each input a **Name**. Its name identifies the submitted value in `formData`.
-4. Publish the site and submit the form there to test it.
+4. Submit the Form in Builder Preview to test the current draft, or publish and test the deployed site.
 
-The Form starts independent destinations in parallel. An empty destination list is reported in Settings and shows an error if a visitor tries to submit; it does not dispatch or navigate. Every HTTP destination receives a POST request. A Resource created inside the Form can bind `formData` and the safe `browserInfo` values (visitor IP, user agent, language, and referrer). A Resource created elsewhere can still be selected, but cannot bind that Form's data.
+The Form starts independent destinations in parallel. An empty destination list shows an error only when someone tries to submit; it does not dispatch or navigate. Every HTTP destination receives a POST request. A Resource created inside the Form can bind `formData` and the safe `browserInfo` values (visitor IP, user agent, language, and referrer). A Resource on an ancestor can be selected, but cannot bind that Form's data.
 
 By default, a Form-scoped HTTP Resource forwards all submitted fields. It sends JSON for text values and multipart data when files are included. Edit the Resource body to choose or transform fields, or set its body format if the receiving service requires one. An external Resource uses its own configured body.
 
@@ -31,9 +31,9 @@ These values are sent only when you configure the headers. `browserInfo` also pr
 
 On a published Webstudio Cloud site, an Email Resource sends through Webstudio's private Cloudflare Email Service when the `EMAIL_SERVICE` binding is configured. Set recipients, Sender, subject, and body in [Project Settings](../foundations/project-settings.md#emails) or override them on the Resource. The server rejects a submission if an Email Resource cannot send because the binding is missing. Other hosts need their own server-side email integration; a static export cannot send managed Form email. [Existing Webhook Forms](webhook-form.md) keep their separate behavior.
 
-Each owner notification keeps its configured subject text and adds a short, unique reference in brackets. Two submissions with the same values, even close together, receive different references. A retry within one submission keeps the same reference. Visitor confirmations keep their fixed subject without this suffix.
+Each owner notification keeps its configured subject text and adds a short, unique reference in brackets. Two submissions with the same values, even close together, receive different references. A retry within one submission keeps the same reference. Visitor-addressed emails keep their configured subject without this suffix.
 
-The Form's **Visitor confirmation email field** setting is off by default. Select a named email input inside that Form to address one acknowledgement to the submitted email value. The server requires exactly one valid address in that field. It sends confirmation only after every selected Resource succeeds. Project Settings supplies its fixed subject and plain-text body; the default body includes the published site URL. An explicitly saved body is sent literally, even when its text matches the default. Submitted fields, browser information, and files are never included. A confirmation delivery error appears in `errors` without changing a successful primary submission into a failure. Confirmation requires Webstudio Cloud email service configuration.
+To email a visitor, add another Email Resource in **Data variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Actions. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. Visitor-addressed email does not include attachments. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
 
 ## Inputs and responses
 

@@ -36,7 +36,7 @@ There are two types of exports:
 * **JavaScript application** – Builds a dynamic app with server routes. This is the default behavior of Webstudio Cloud and provides the most functionality, but it requires hosting that runs the app.
 * **Static site** – Outputs a static site (HTML/CSS/JS) with limited functionality, but has more versatile hosting options.
 
-On Webstudio Cloud, a published Cloudflare-hosted site can send Email Resources through Webstudio's private Email Service when its `EMAIL_SERVICE` binding is configured. That binding and service are not included in an export. A self-hosted JavaScript application needs a custom server-side email integration before Email Resources or visitor confirmations can send; without one, delivery fails explicitly. A static export has no managed Form submission endpoint and cannot send them.
+On Webstudio Cloud, a published Cloudflare-hosted site can send Email Resources through Webstudio's private Email Service when its `EMAIL_SERVICE` binding is configured. That binding and service are not included in an export. A self-hosted JavaScript application needs a custom server-side email integration before Email Resources, including visitor-addressed ones, can send; without one, delivery fails explicitly. A static export has no managed Form submission endpoint and cannot send them.
 
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.

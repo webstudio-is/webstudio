@@ -807,9 +807,18 @@ describe("prebuild", () => {
       "app/__generated__/$resources.managed-form-fetch.server.ts",
       "utf8"
     );
-    expect(cloudflareAdapter).toContain("cloudflare?.env?.EMAIL_SERVICE");
+    expect(cloudflareAdapter).toContain("cloudflare?.env;");
+    expect(cloudflareAdapter).toContain("env?.EMAIL_SERVICE;");
     expect(cloudflareAdapter).toContain(
       "createCloudflareManagedFormEmailSender"
+    );
+    expect(cloudflareAdapter).toContain("EMAIL_SERVICE_URL");
+    expect(cloudflareAdapter).toContain("EMAIL_SERVICE_TOKEN");
+    expect(cloudflareAdapter).toContain(
+      "createCloudflareManagedFormEmailSenderWithUrl"
+    );
+    expect(cloudflareAdapter.indexOf("EMAIL_SERVICE_URL")).toBeLessThan(
+      cloudflareAdapter.indexOf("EMAIL_SERVICE;")
     );
     expect(cloudflareAdapter).toContain("service, formData, projectId");
 

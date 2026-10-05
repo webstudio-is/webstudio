@@ -7,6 +7,10 @@ import { parseEmailSender } from "./email-addresses";
 type EmailService = {
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 };
+type EmailServiceFetch = (
+  input: RequestInfo | URL,
+  init?: RequestInit
+) => Promise<Response>;
 
 const maxEmailContentBytes = 5 * 1024 * 1024;
 const maxEmailAttachments = 32;
@@ -196,13 +200,12 @@ const encodeFile = async (file: File) => {
   };
 };
 
-/** Create an Email sender only when the published server has the private binding. */
-export const createCloudflareManagedFormEmailSender = (
-  service: EmailService | undefined,
+const createCloudflareManagedFormEmailSenderWithFetch = (
+  sendRequest: EmailServiceFetch | undefined,
   formData: FormData,
   projectId: string
 ): ResourceLoadOptions["sendEmail"] | undefined => {
-  if (service === undefined) {
+  if (sendRequest === undefined) {
     return;
   }
   if (projectId.length === 0) {
@@ -260,7 +263,7 @@ export const createCloudflareManagedFormEmailSender = (
       if (options.signal?.aborted) {
         return failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled");
       }
-      const response = await service.fetch(
+      const response = await sendRequest(
         "https://email-service.internal/v1/send",
         {
           method: "POST",
@@ -340,4 +343,51 @@ export const createCloudflareManagedFormEmailSender = (
       options.signal?.removeEventListener("abort", cancel);
     }
   };
+};
+
+/** Create an Email sender only when the published server has the private binding. */
+export const createCloudflareManagedFormEmailSender = (
+  service: EmailService | undefined,
+  formData: FormData,
+  projectId: string
+): ResourceLoadOptions["sendEmail"] | undefined =>
+  createCloudflareManagedFormEmailSenderWithFetch(
+    service?.fetch.bind(service),
+    formData,
+    projectId
+  );
+
+/** Create a staging-only sender using its private, server-side bearer token. */
+export const createCloudflareManagedFormEmailSenderWithUrl = (
+  serviceUrl: string | undefined,
+  token: string | undefined,
+  formData: FormData,
+  projectId: string,
+  fetcher: typeof fetch = fetch
+): ResourceLoadOptions["sendEmail"] | undefined => {
+  if (!serviceUrl || !token) {
+    return;
+  }
+  const url = new URL(serviceUrl);
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== "staging-webstudio-email-service.wstd.workers.dev" ||
+    url.port !== "" ||
+    url.pathname !== "/v1/preview-send" ||
+    url.username !== "" ||
+    url.password !== "" ||
+    url.search !== "" ||
+    url.hash !== ""
+  ) {
+    throw new Error("Email Service URL must be the staging Preview endpoint");
+  }
+  return createCloudflareManagedFormEmailSenderWithFetch(
+    (_input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set("authorization", `Bearer ${token}`);
+      return fetcher(url, { ...init, headers, redirect: "error" });
+    },
+    formData,
+    projectId
+  );
 };

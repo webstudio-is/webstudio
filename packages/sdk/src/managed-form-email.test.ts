@@ -1,6 +1,7 @@
 import { expect, test, vi } from "vitest";
 import {
   createCloudflareManagedFormEmailSender as createEmailSender,
+  createCloudflareManagedFormEmailSenderWithUrl,
   prepareVisitorEmailRequest,
   validateCloudflareManagedFormEmail,
 } from "./managed-form-email";
@@ -125,6 +126,83 @@ test("sends the private worker envelope with files and no form internals", async
       },
     ],
   });
+});
+
+test("sends staging email to the Preview URL with server-only authorization", async () => {
+  const fetcher = vi.fn(async () => Response.json({ id: "preview-sent" }));
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
+    "worker-secret",
+    new FormData(),
+    projectId,
+    fetcher
+  )!;
+
+  const result = await sendEmail(request, {});
+
+  expect(result).toMatchObject({
+    ok: true,
+    status: 200,
+    data: { id: "preview-sent" },
+  });
+  expect(fetcher).toHaveBeenCalledOnce();
+  const [url, init] = fetcher.mock.calls[0] as unknown as [
+    URL,
+    RequestInit & { redirect: RequestRedirect },
+  ];
+  expect(url.href).toBe(
+    "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send"
+  );
+  expect(init.method).toBe("POST");
+  expect(init.redirect).toBe("error");
+  const headers = new Headers(init.headers);
+  expect(headers.get("authorization")).toBe("Bearer worker-secret");
+  expect(headers.get("x-webstudio-project-id")).toBe(projectId);
+  expect(JSON.parse(init.body as string)).toMatchObject({
+    to: [{ address: "team@example.com", name: "Team" }],
+    subject: "New submission",
+    text: "Text body",
+  });
+});
+
+test("does not create staging sender without both URL and token", () => {
+  expect(
+    createCloudflareManagedFormEmailSenderWithUrl(
+      "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
+      undefined,
+      new FormData(),
+      projectId
+    )
+  ).toBeUndefined();
+  expect(
+    createCloudflareManagedFormEmailSenderWithUrl(
+      undefined,
+      "worker-secret",
+      new FormData(),
+      projectId
+    )
+  ).toBeUndefined();
+});
+
+test("rejects insecure or credential-bearing Preview service URLs", () => {
+  for (const url of [
+    "http://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
+    "https://user:password@staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
+    "https://staging-webstudio-email-service.wstd.workers.dev/prefix",
+    "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send?token=secret",
+    "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send#secret",
+    "https://staging-webstudio-email-service.wstd.workers.dev:8443/v1/preview-send",
+    "https://another-account.workers.dev/v1/preview-send",
+  ]) {
+    expect(() =>
+      createCloudflareManagedFormEmailSenderWithUrl(
+        url,
+        "worker-secret",
+        new FormData(),
+        projectId
+      )
+    ).toThrow("staging Preview endpoint");
+  }
 });
 
 test("keeps an address-only Reply-To without a display name", async () => {

@@ -14,7 +14,7 @@ import {
 } from "@webstudio-is/sdk";
 import { createManagedFormDraftGraph } from "@webstudio-is/sdk/managed-form-draft-graph";
 import {
-  createCloudflareManagedFormEmailSender,
+  createCloudflareManagedFormEmailSenderWithUrl,
   getManagedFormFailure,
   getSystemSearch,
   handleManagedFormSubmission,
@@ -164,22 +164,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ),
         { throwOnError: true }
       );
-    const emailService =
-      env.FORM_PREVIEW_EMAIL_SERVICE_URL && env.FORM_PREVIEW_EMAIL_SERVICE_TOKEN
-        ? {
-            fetch: (_input: RequestInfo | URL, init?: RequestInit) => {
-              const headers = new Headers(init?.headers);
-              headers.set(
-                "authorization",
-                `Bearer ${env.FORM_PREVIEW_EMAIL_SERVICE_TOKEN}`
-              );
-              return fetch(env.FORM_PREVIEW_EMAIL_SERVICE_URL!, {
-                ...init,
-                headers,
-              });
-            },
-          }
-        : undefined;
     const result = await handleManagedFormSubmission({
       request,
       formData,
@@ -203,7 +187,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           evaluateExpression,
         }),
       createEmailSender: (data) =>
-        createCloudflareManagedFormEmailSender(emailService, data, projectId),
+        createCloudflareManagedFormEmailSenderWithUrl(
+          env.FORM_PREVIEW_EMAIL_SERVICE_URL,
+          env.FORM_PREVIEW_EMAIL_SERVICE_TOKEN,
+          data,
+          projectId
+        ),
       validateEmail: validateCloudflareManagedFormEmail,
       resourceFetch,
       validateDestination: resourceFetch.validateDestination,

@@ -26,7 +26,7 @@ vi.mock("~/env/env.server", () => ({
   default: {
     PUBLISHER_HOST: "wstd.work",
     FORM_PREVIEW_EMAIL_SERVICE_URL:
-      "https://forms.webstudio.is/v1/preview-send",
+      "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
     FORM_PREVIEW_EMAIL_SERVICE_TOKEN: "server-only-test-token",
   },
 }));
@@ -304,10 +304,11 @@ test("Preview email uses the private Email Service credential and forwards uploa
     expect(((await response.json()) as { success: boolean }).success).toBe(
       true
     );
-    expect(send).toHaveBeenCalledWith(
-      "https://forms.webstudio.is/v1/preview-send",
-      expect.objectContaining({ method: "POST" })
+    expect(send).toHaveBeenCalledOnce();
+    expect(String(send.mock.calls[0][0])).toBe(
+      "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send"
     );
+    expect(send.mock.calls[0][1]).toMatchObject({ method: "POST" });
   } finally {
     vi.unstubAllGlobals();
   }
