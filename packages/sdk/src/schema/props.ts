@@ -30,11 +30,13 @@ export const prop = z.union([
     type: z.literal("boolean"),
     value: z.boolean(),
   }),
-  z.object({
-    ...baseProp,
-    type: z.literal("json"),
-    value: z.unknown(),
-  }),
+  z
+    .object({
+      ...baseProp,
+      type: z.literal("json"),
+      value: z.unknown().optional(),
+    })
+    .transform((value) => ({ ...value, value: value.value ?? null })),
   z.object({
     ...baseProp,
     type: z.literal("asset"),
