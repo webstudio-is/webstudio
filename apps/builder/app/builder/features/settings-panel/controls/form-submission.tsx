@@ -71,11 +71,11 @@ export const FormSubmissionControl = ({
   const emailFieldOptions = Array.from(new Set(emailFields));
   const error = invalidSavedValue
     ? "Invalid Form submission settings"
-    : validateFormSubmission(submission) ??
+    : (validateFormSubmission(submission) ??
       (submission.confirmationEmailField &&
       !emailFieldOptions.includes(submission.confirmationEmailField)
         ? "Selected visitor confirmation email field is unavailable"
-        : undefined);
+        : undefined));
 
   return (
     <VerticalLayout label={<PropertyLabel name="submission" />}>
