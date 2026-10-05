@@ -1303,10 +1303,21 @@ test("loads project bundle by build id without auth headers", async () => {
   );
 });
 
-test("normalizes legacy json props without a value when loading a project bundle", async () => {
+test("reports json props without a value when loading a published bundle", async () => {
   const project = JSON.parse(
     JSON.stringify(createPublishedProjectBundleFixture())
   );
+  project.build.instances = [
+    [
+      "instance-id",
+      {
+        id: "instance-id",
+        type: "instance",
+        component: "ws:collection",
+        label: "Projects",
+      },
+    ],
+  ];
   project.build.props = [
     [
       "json-prop-id",
@@ -1325,23 +1336,23 @@ test("normalizes legacy json props without a value when loading a project bundle
   );
   vi.stubGlobal("fetch", fetch);
 
-  const loaded = await loadProjectBundleByBuildId({
-    buildId: project.build.id,
-    origin: "https://example.com",
-  });
-
-  expect(loaded.build.props).toEqual([
-    [
-      "json-prop-id",
+  await expect(
+    loadProjectBundleByBuildId({
+      buildId: project.build.id,
+      origin: "https://example.com",
+    })
+  ).rejects.toMatchObject({
+    name: "MissingJsonPropValueError",
+    total: 1,
+    diagnostics: [
       {
-        id: "json-prop-id",
+        propName: "data",
         instanceId: "instance-id",
-        name: "data",
-        type: "json",
-        value: null,
+        instanceLabel: "Projects",
+        component: "ws:collection",
       },
     ],
-  ]);
+  });
 });
 
 test("requests local content preparation for the publish runner", async () => {
