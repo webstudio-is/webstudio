@@ -110,6 +110,12 @@ import {
 import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-source-utils";
 import { $resourcesState } from "~/shared/resources";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import { submitManagedForm } from "@webstudio-is/sdk-components-react";
+import { fetch as builderFetch } from "~/shared/fetch.client";
+import { switchPageAndUpdateSystem } from "~/canvas/interceptor";
+import { $hasUnsavedSyncChanges } from "@webstudio-is/sync-client";
+import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
+import { navigatePreviewFormSuccess } from "./form-success-redirect";
 
 const getHtmlEmbedCanvasProps = ({
   component,
@@ -1041,6 +1047,54 @@ const WebstudioComponentPreviewInner = forwardRef<
     [componentAttribute]: instance.component,
     [selectorIdAttribute]: instanceSelector.join(","),
   };
+  if (instance.component === "NativeForm") {
+    props["data-ws-managed-form-id"] = instance.id;
+    props.previewSubmission = true;
+    props.onManagedSubmit = (
+      values: Parameters<typeof submitManagedForm>[0]["values"],
+      signal: AbortSignal
+    ): Promise<ManagedFormResponse> => {
+      if ($hasUnsavedSyncChanges.get()) {
+        return Promise.resolve({
+          success: false,
+          status: 409,
+          results: [],
+          errors: [
+            {
+              status: 409,
+              body: null,
+              message: "Save changes to test the current Preview Form.",
+            },
+          ],
+        });
+      }
+      const currentUrl = getPreviewCurrentUrl(
+        $currentSystem.get(),
+        $selectedPageHash.get().hash
+      );
+      const endpoint = new URL("/rest/preview-form", window.location.href);
+      endpoint.searchParams.set(
+        "path",
+        currentUrl.pathname + currentUrl.search
+      );
+      return submitManagedForm({
+        values,
+        managedFormId: instance.id,
+        location: window.location.href,
+        endpoint: endpoint.href,
+        fetch: builderFetch,
+        signal,
+      });
+    };
+    props.onSuccessRedirect = (destination: string) => {
+      navigatePreviewFormSuccess(
+        destination,
+        window.location.href,
+        switchPageAndUpdateSystem,
+        (href) => window.location.assign(href)
+      );
+    };
+  }
   if (show === false) {
     return <></>;
   }

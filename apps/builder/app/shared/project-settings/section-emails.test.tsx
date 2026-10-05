@@ -62,3 +62,11 @@ test("shows the free and paid address limits in Project Emails", async () => {
   ).toBeVisible();
   expect($projectSettings.get()?.meta.contactEmail).toBeUndefined();
 });
+
+test("visitor email body is configured on its Email Resource", () => {
+  act(() => root.render(<SectionEmails />));
+  expect(document.body.textContent).toContain("Visitor email subject");
+  expect(document.body.textContent).not.toContain(
+    "Visitor confirmation plain-text body"
+  );
+});

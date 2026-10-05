@@ -39,13 +39,8 @@ const fields = [
   },
   {
     key: "emailConfirmationSubject",
-    label: "Visitor confirmation subject",
+    label: "Visitor email subject",
     placeholder: "We received your submission",
-  },
-  {
-    key: "emailConfirmationBody",
-    label: "Visitor confirmation plain-text body",
-    placeholder: "Thank you. Your submission was received.",
   },
 ] as const;
 
@@ -64,11 +59,7 @@ export const SectionEmails = () => {
         ? validateContactEmail(value, maxContactEmailsPerProject)
         : key === "emailSender"
           ? validateEmailSender(value)
-          : validateEmailText(
-              value,
-              String(key),
-              key === "emailBody" || key === "emailConfirmationBody"
-            );
+          : validateEmailText(value, String(key), key === "emailBody");
     if (error === undefined) {
       executeRuntimeMutation({
         id: "projectSettings.update",
@@ -111,11 +102,7 @@ export const SectionEmails = () => {
         const error =
           key === "emailSender"
             ? validateEmailSender(meta[key] ?? "")
-            : validateEmailText(
-                meta[key] ?? "",
-                label,
-                key === "emailBody" || key === "emailConfirmationBody"
-              );
+            : validateEmailText(meta[key] ?? "", label, key === "emailBody");
         return (
           <Grid key={key} gap={1} css={sectionSpacing}>
             <Label htmlFor={`project-${key}`}>{label}</Label>

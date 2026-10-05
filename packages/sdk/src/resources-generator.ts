@@ -99,6 +99,9 @@ export const generateResourceRequestFields = ({
       });
     generated += `${indent}email: {\n`;
     generated += `${indent}  recipientMode: ${JSON.stringify(resolved.recipientMode)},\n`;
+    if (resolved.visitorEmailField !== undefined) {
+      generated += `${indent}  visitorEmailField: ${JSON.stringify(resolved.visitorEmailField)},\n`;
+    }
     generated += `${indent}  recipients: ${JSON.stringify(resolved.recipients ?? [])},\n`;
     if (resolved.sender) {
       generated += `${indent}  sender: ${JSON.stringify(resolved.sender)},\n`;

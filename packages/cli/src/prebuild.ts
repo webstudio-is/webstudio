@@ -34,9 +34,6 @@ import {
   managedFormRequestParamName,
   generateResources,
   generateManagedFormResources,
-  defaultEmailSubject,
-  defaultEmailConfirmationSubject,
-  defaultEmailConfirmationBody,
   generatePageMeta,
   getStaticSiteMapXml,
   isCoreComponent,
@@ -67,6 +64,7 @@ import {
   type ComponentBuildContribution,
   isPublishedDeployment,
   isFormSubmission,
+  getEnabledFormDestinations,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
@@ -1042,12 +1040,12 @@ export const prebuild = async (options: {
 } from "@webstudio-is/sdk/protected-resource-fetch";
 import { createCloudflareManagedFormEmailSender, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/runtime";
 export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
-export const createManagedFormEmailSender = ({ context, formData }: { context: unknown; formData: FormData }) => {
+export const createManagedFormEmailSender = ({ context, formData, projectId }: { context: unknown; formData: FormData; projectId: string }) => {
   const binding = (context as { cloudflare?: { env?: { EMAIL_SERVICE?: unknown } } } | null)?.cloudflare?.env?.EMAIL_SERVICE;
   const service = binding !== null && typeof binding === "object" && "fetch" in binding && typeof binding.fetch === "function"
     ? binding as { fetch: typeof fetch }
     : undefined;
-  return createCloudflareManagedFormEmailSender(service, formData);
+  return createCloudflareManagedFormEmailSender(service, formData, projectId);
 };
 export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
   void context;
@@ -1061,7 +1059,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 `
       : `import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
-export const createManagedFormEmailSender = (_input: { context: unknown; formData: FormData }) => undefined;
+export const createManagedFormEmailSender = (_input: { context: unknown; formData: FormData; projectId: string }) => undefined;
 export const validateManagedFormEmail = (_request: unknown, _formData: FormData) => undefined;
 export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
   void context;
@@ -1762,7 +1760,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         const submission =
           submissionProp?.type === "json" ? submissionProp.value : undefined;
         const resourceIds = isFormSubmission(submission)
-          ? submission.destinations.map((id) => {
+          ? getEnabledFormDestinations(submission).map((id) => {
               const dataSource = dataSources.get(id);
               return dataSource?.type === "resource" &&
                 resources.has(dataSource.resourceId)
@@ -1779,7 +1777,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       ([formId, { submission }]) => ({
         formId,
         destinationDataSourceIds: isFormSubmission(submission)
-          ? submission.destinations
+          ? getEnabledFormDestinations(submission)
           : [],
       })
     );
@@ -1961,18 +1959,6 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         );
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
-      export const emailDefaults = ${JSON.stringify({
-        sender: projectMeta?.emailSender || siteData.user?.email || "",
-        recipients: projectMeta?.contactEmail || siteData.user?.email || "",
-        subject: projectMeta?.emailSubject || defaultEmailSubject,
-        body: projectMeta?.emailBody || "",
-        confirmationSubject:
-          projectMeta?.emailConfirmationSubject ||
-          defaultEmailConfirmationSubject,
-        confirmationBody:
-          projectMeta?.emailConfirmationBody || defaultEmailConfirmationBody,
-        confirmationBodyIsDefault: !projectMeta?.emailConfirmationBody,
-      })};
     `;
 
     const generatedBasename = generateRemixRoute(pagePath);

@@ -227,9 +227,12 @@ test("a hydrated Form handles submit buttons associated by form id", async () =>
       );
     });
     await act(async () => container.querySelector("button")?.click());
-    expect(onManagedSubmit).toHaveBeenCalledExactlyOnceWith({
-      email: "person@example.com",
-    });
+    expect(onManagedSubmit).toHaveBeenCalledExactlyOnceWith(
+      {
+        email: "person@example.com",
+      },
+      expect.any(AbortSignal)
+    );
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -257,7 +260,10 @@ test("Form passes one structured submission to its dispatcher", async () => {
     await act(async () => {
       container.querySelector("button")?.click();
     });
-    expect(onManagedSubmit).toHaveBeenCalledExactlyOnceWith({ name: "Ada" });
+    expect(onManagedSubmit).toHaveBeenCalledExactlyOnceWith(
+      { name: "Ada" },
+      expect.any(AbortSignal)
+    );
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -302,9 +308,12 @@ test("file-input settings enforce required uploads and keep optional or multiple
     files.items.add(second);
     input.files = files.files;
     await act(async () => container.querySelector("button")?.click());
-    expect(onManagedSubmit).toHaveBeenLastCalledWith({
-      attachments: [first, second],
-    });
+    expect(onManagedSubmit).toHaveBeenLastCalledWith(
+      {
+        attachments: [first, second],
+      },
+      expect.any(AbortSignal)
+    );
 
     await render(false);
     container.querySelector<HTMLInputElement>("input")!.value = "";
@@ -393,6 +402,53 @@ test("managed Form submits by HTTP outside a router provider and reports pending
         errors: [],
       },
     ]);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+test("Preview runs the supplied submission and reports its result without the published endpoint", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const fetch = vi.fn();
+  const onManagedSubmit = vi.fn(async () => ({
+    success: true,
+    status: 200,
+    results: [{ resourceId: "email", status: 200, body: { sent: true } }],
+    errors: [],
+  }));
+  const onResultChange = vi.fn();
+  vi.stubGlobal("fetch", fetch);
+  try {
+    await act(async () =>
+      root.render(
+        <NativeForm
+          submission={{ destinations: ["email"] }}
+          previewSubmission
+          onManagedSubmit={onManagedSubmit}
+          onResultChange={onResultChange}
+        >
+          <input name="email" defaultValue="ada@example.com" />
+          <button type="submit">Send</button>
+        </NativeForm>
+      )
+    );
+    expect(container.querySelector('[role="note"]')?.textContent).toContain(
+      "real emails"
+    );
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() => expect(onResultChange).toHaveBeenCalledOnce());
+    expect(onManagedSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "ada@example.com" }),
+      expect.any(AbortSignal)
+    );
+    expect(onResultChange).toHaveBeenCalledWith(
+      expect.objectContaining({ success: true })
+    );
+    expect(fetch).not.toHaveBeenCalled();
   } finally {
     await act(async () => root.unmount());
     container.remove();

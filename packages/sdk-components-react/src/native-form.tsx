@@ -29,7 +29,12 @@ export const NativeForm = forwardRef<
     state?: "initial" | "success" | "error";
     onStateChange?: (state: "initial" | "success" | "error") => void;
     onResultChange?: (result: ManagedFormResponse) => void;
-    onManagedSubmit?: (formData: ReturnType<typeof getFormDataValue>) => void;
+    onManagedSubmit?: (
+      formData: ReturnType<typeof getFormDataValue>,
+      signal: AbortSignal
+    ) => void | Promise<ManagedFormResponse>;
+    previewSubmission?: boolean;
+    onSuccessRedirect?: (destination: string) => void;
     onSubmissionSuccess?: () => void | Promise<void>;
     navigationToken?: string;
     // These parameters define Resource expression scope in Builder.
@@ -47,6 +52,8 @@ export const NativeForm = forwardRef<
       onStateChange,
       onResultChange,
       onManagedSubmit,
+      previewSubmission,
+      onSuccessRedirect,
       onSubmissionSuccess,
       navigationToken,
       onSubmit,
@@ -127,20 +134,37 @@ export const NativeForm = forwardRef<
         submitter instanceof HTMLElement ? submitter : undefined
       );
       if (onManagedSubmit) {
-        onManagedSubmit(values);
-        return;
+        const controller = new AbortController();
+        const submission = onManagedSubmit(values, controller.signal);
+        if (submission === undefined) {
+          return;
+        }
+        return handleSubmission(submission, controller);
       }
       const controller = new AbortController();
       const submittedNavigationToken = navigationToken;
       const submittedLocation = window.location.href;
+      return handleSubmission(
+        submitManagedForm({
+          values,
+          managedFormId: managedFormId!,
+          location: submittedLocation,
+          signal: controller.signal,
+        }),
+        controller,
+        submittedNavigationToken,
+        submittedLocation
+      );
+    };
+    const handleSubmission = (
+      submission: Promise<ManagedFormResponse>,
+      controller = new AbortController(),
+      submittedNavigationToken = navigationToken,
+      submittedLocation = window.location.href
+    ) => {
       activeRequest.current = controller;
       setPending(true);
-      void submitManagedForm({
-        values,
-        managedFormId: managedFormId!,
-        location: submittedLocation,
-        signal: controller.signal,
-      })
+      void submission
         .then((response) => {
           if (
             controller.signal.aborted ||
@@ -157,7 +181,11 @@ export const NativeForm = forwardRef<
             ? resolveRedirectUrl(successRedirect, window.location.href)
             : undefined;
           if (destination) {
-            window.location.assign(destination);
+            if (onSuccessRedirect) {
+              onSuccessRedirect(destination);
+            } else {
+              window.location.assign(destination);
+            }
           } else {
             revealFeedback();
             if (response.success) {
@@ -197,6 +225,11 @@ export const NativeForm = forwardRef<
         ref={setFormRef}
         onSubmit={handleManagedSubmit}
       >
+        {previewSubmission && (
+          <div role="note" data-ws-form-preview-note="">
+            Preview sends real emails and webhook requests.
+          </div>
+        )}
         <fieldset disabled={!hydrated} style={{ display: "contents" }}>
           <div style={{ display: "contents" }}>{children}</div>
         </fieldset>

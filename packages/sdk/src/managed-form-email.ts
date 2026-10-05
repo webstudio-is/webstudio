@@ -1,9 +1,8 @@
 import type { ResourceLoadOptions } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
-import { maxEmailSubjectLength, validateEmailSubject } from "./email-resource";
+import { maxEmailSubjectLength } from "./email-resource";
 import { parseEmailSender } from "./email-addresses";
-import type { ManagedFormResponse } from "./managed-form-submission";
 
 type EmailService = {
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -68,29 +67,22 @@ const getEmailFiles = (formData: FormData) =>
       : []
   );
 
-/** Resolve only the named email input; no other submitted value enters confirmation. */
-export const prepareVisitorConfirmation = ({
-  fieldName,
-  formData,
-  subject,
-  body,
-  isDefaultBody,
-  siteUrl,
-  sender,
-}: {
-  fieldName: string | undefined;
-  formData: FormData;
-  subject: string;
-  body: string;
-  isDefaultBody: boolean;
-  siteUrl: string;
-  sender?: string;
-}): ResourceRequest | undefined => {
-  if (fieldName === undefined || fieldName === "") {
-    return;
+/** Invalid submitted visitor addresses fail only their Email action. */
+export class VisitorEmailAddressError extends Error {}
+
+/** Visitor addressing is resolved from the submitted form, never from an arbitrary expression. */
+export const prepareVisitorEmailRequest = (
+  request: ResourceRequest,
+  formData: FormData,
+  siteUrl: string
+): ResourceRequest => {
+  const email = request.email;
+  if (email?.recipientMode !== "visitor") {
+    return request;
   }
-  if (internalFormFieldNames.has(fieldName)) {
-    throw new Error("Visitor confirmation email field is invalid");
+  const fieldName = email.visitorEmailField;
+  if (!fieldName || internalFormFieldNames.has(fieldName)) {
+    throw new Error("Visitor email field is invalid");
   }
   const values = formData.getAll(fieldName);
   const address = values[0];
@@ -99,64 +91,19 @@ export const prepareVisitorConfirmation = ({
     typeof address !== "string" ||
     parseEmailSender(address)?.address !== address
   ) {
-    throw new Error("Visitor confirmation requires one valid email field");
+    throw new VisitorEmailAddressError(
+      "Visitor email requires one valid email field"
+    );
   }
-  validateEmailSubject(subject);
-  if (typeof body !== "string") {
-    throw new Error("Visitor confirmation body must be text");
-  }
-  const parsedSender = sender ? parseEmailSender(sender) : undefined;
-  if (sender && parsedSender === undefined) {
-    throw new Error("Visitor confirmation Sender is invalid");
-  }
-  const text = isDefaultBody ? `${body}\n\n${siteUrl}` : body;
-  const request: ResourceRequest = {
-    name: "Visitor confirmation",
-    control: "email",
-    method: "post",
-    url: "",
-    searchParams: [],
-    headers: [],
+  const preamble = `We received your request from ${siteUrl}.`;
+  return {
+    ...request,
     email: {
-      recipientMode: "custom",
+      ...email,
       recipients: [{ address }],
-      ...(parsedSender === undefined ? {} : { sender: parsedSender }),
-      subject,
-      body: text,
+      body: email.body ? `${preamble}\n\n${email.body}` : preamble,
       includeAttachments: false,
     },
-  };
-  validateCloudflareManagedFormEmail(request, formData);
-  return request;
-};
-
-export const sendVisitorConfirmation = async (
-  response: ManagedFormResponse,
-  request: ResourceRequest | undefined,
-  sendEmail: ResourceLoadOptions["sendEmail"] | undefined,
-  signal?: AbortSignal
-): Promise<ManagedFormResponse> => {
-  if (!response.success || request === undefined) {
-    return response;
-  }
-  if (sendEmail === undefined) {
-    throw new Error("Visitor confirmation requires Webstudio Cloud email");
-  }
-  const outcome = await sendEmail(request, { signal, timeoutMs: 10_000 });
-  if (outcome.ok) {
-    return response;
-  }
-  return {
-    ...response,
-    errors: [
-      ...response.errors,
-      {
-        resourceId: "visitor-confirmation",
-        status: outcome.status,
-        body: outcome.data,
-        message: outcome.statusText || "Visitor confirmation failed",
-      },
-    ],
   };
 };
 
@@ -252,10 +199,14 @@ const encodeFile = async (file: File) => {
 /** Create an Email sender only when the published server has the private binding. */
 export const createCloudflareManagedFormEmailSender = (
   service: EmailService | undefined,
-  formData: FormData
+  formData: FormData,
+  projectId: string
 ): ResourceLoadOptions["sendEmail"] | undefined => {
   if (service === undefined) {
     return;
+  }
+  if (projectId.length === 0) {
+    throw new Error("Email Service project ID is required");
   }
   return async (request: ResourceRequest, options: ResourceLoadOptions) => {
     if (options.signal?.aborted) {
@@ -313,7 +264,10 @@ export const createCloudflareManagedFormEmailSender = (
         "https://email-service.internal/v1/send",
         {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: {
+            "content-type": "application/json",
+            "x-webstudio-project-id": projectId,
+          },
           body: JSON.stringify({
             to: email.recipients,
             subject: email.subject,

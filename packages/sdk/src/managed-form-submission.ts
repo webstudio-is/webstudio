@@ -94,6 +94,7 @@ export const getManagedFormResponse = (
   );
   const results: ManagedFormResult[] = [];
   const errors: ManagedFormError[] = [];
+  let hasFatalError = false;
   for (const resourceId of graph.rootIds) {
     const resource = resourcesById.get(resourceId);
     const outcome = resource && outcomes[resource.outputName];
@@ -115,6 +116,7 @@ export const getManagedFormResponse = (
     };
     results.push(result);
     if (outcome.ok === false) {
+      if (resource?.nonfatal !== true) hasFatalError = true;
       const statusText =
         "statusText" in outcome && typeof outcome.statusText === "string"
           ? outcome.statusText.trim()
@@ -126,8 +128,8 @@ export const getManagedFormResponse = (
     }
   }
   return {
-    success: errors.length === 0,
-    status: errors.length === 0 ? 200 : 502,
+    success: !hasFatalError,
+    status: hasFatalError ? 502 : 200,
     results,
     errors,
   };
@@ -288,6 +290,12 @@ export const validateManagedFormRecipientLimit = (
       const count = resource.emailRecipientCount;
       if (count === undefined || !Number.isSafeInteger(count) || count < 1) {
         throw new Error("Invalid Email Resource recipient count");
+      }
+      if (resource.nonfatal) {
+        if (count !== 1) {
+          throw new Error("Visitor Email Resource must have one recipient");
+        }
+        continue;
       }
       deliveries += count;
       if (deliveries > maxFormTeamEmailDeliveries) {

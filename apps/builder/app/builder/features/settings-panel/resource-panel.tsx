@@ -16,6 +16,8 @@ import {
   encodeDataVariableId,
   decodeDataVariableId,
   getDefaultFormEmailBodyExpression,
+  findTreeInstanceIds,
+  getFormEmailFieldNames,
   defaultEmailBody,
   getResourceCycleDataSourceIds,
   isAssetsResource as isAssetsResourceRecord,
@@ -74,6 +76,8 @@ import {
 } from "~/shared/nano-states";
 import {
   $dataSources,
+  $instances,
+  $props,
   $resources,
   $projectSettings,
 } from "~/shared/sync/data-stores";
@@ -770,17 +774,20 @@ const BodyField = ({
     <Grid gap={1}>
       <Label>Body</Label>
       {bodyFormat === "auto" && (
-        <Select<BodyType | "">
-          placeholder="Type"
-          value={bodyType ?? ""}
-          options={["text", "json"]}
-          onChange={(newBodyType) => {
-            if (newBodyType) {
-              onChangeStart?.();
-              onChange(value, newBodyType);
-            }
-          }}
-        />
+        <Grid gap={1}>
+          <Label>Manual body content type</Label>
+          <Select<BodyType | "">
+            placeholder="Type"
+            value={bodyType ?? ""}
+            options={["text", "json"]}
+            onChange={(newBodyType) => {
+              if (newBodyType) {
+                onChangeStart?.();
+                onChange(value, newBodyType);
+              }
+            }}
+          />
+        </Grid>
       )}
       {bodyFormat === "auto" && bodyType && (
         <>
@@ -1053,7 +1060,11 @@ export const ResourceForm = forwardRef<
         <>
           <Row>
             <Grid gap={1}>
-              <Label htmlFor={bodyFormatId}>Request body format</Label>
+              <Label htmlFor={bodyFormatId}>Request encoding</Label>
+              <Text color="subtle">
+                Applies to this Resource's POST body, including Form actions.
+                Auto sends JSON or multipart when files are present.
+              </Text>
               <Select<NonNullable<Resource["bodyFormat"]>>
                 id={bodyFormatId}
                 value={bodyFormat ?? "auto"}
@@ -1105,11 +1116,25 @@ export const EmailResourceForm = forwardRef<
   const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
   const dataSources = useStore($dataSources);
+  const instances = useStore($instances);
+  const props = useStore($props);
   const projectMeta = useStore($projectSettings)?.meta;
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
+  const scopeInstanceId =
+    variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+  const formId = Array.from(instances.values()).find(
+    (instance) =>
+      instance.component === "NativeForm" &&
+      scopeInstanceId !== undefined &&
+      findTreeInstanceIds(instances, instance.id).has(scopeInstanceId)
+  )?.id;
+  const emailFields =
+    formId === undefined
+      ? []
+      : getFormEmailFieldNames(instances, props, formId);
   const [settings, setSettings] = useState<EmailResourceSettings>(
     resource?.email ?? {}
   );
@@ -1119,13 +1144,16 @@ export const EmailResourceForm = forwardRef<
   const browserInfoIdentifier = Array.from(aliases).find(
     ([, alias]) => alias === browserInfoParameterName
   )?.[0];
-  const defaultBody = formDataIdentifier
-    ? getDefaultFormEmailBodyExpression(
-        formDataIdentifier,
-        browserInfoIdentifier,
-        projectMeta?.emailBody
-      )
-    : JSON.stringify(projectMeta?.emailBody || defaultEmailBody);
+  const defaultBody =
+    settings.recipientMode === "visitor"
+      ? JSON.stringify("")
+      : formDataIdentifier
+        ? getDefaultFormEmailBodyExpression(
+            formDataIdentifier,
+            browserInfoIdentifier,
+            projectMeta?.emailBody
+          )
+        : JSON.stringify(projectMeta?.emailBody || defaultEmailBody);
   const setField = <K extends keyof EmailResourceSettings>(
     key: K,
     value: EmailResourceSettings[K]
@@ -1148,10 +1176,15 @@ export const EmailResourceForm = forwardRef<
         ? "Sender is required."
         : validateEmailSender(settings.sender);
   const recipientError =
-    settings.recipientMode !== "custom"
-      ? undefined
-      : (validateContactEmail(settings.recipients ?? "") ??
-        (settings.recipients ? undefined : "Enter at least one recipient."));
+    settings.recipientMode === "visitor"
+      ? !settings.visitorEmailField ||
+        !emailFields.includes(settings.visitorEmailField)
+        ? "Select one named email input in this Form."
+        : undefined
+      : settings.recipientMode !== "custom"
+        ? undefined
+        : (validateContactEmail(settings.recipients ?? "") ??
+          (settings.recipients ? undefined : "Enter at least one recipient."));
   const unavailableFormBinding = (expression: string) =>
     Array.from(getExpressionIdentifiers(expression)).some((identifier) => {
       const id = decodeDataVariableId(identifier);
@@ -1263,16 +1296,22 @@ export const EmailResourceForm = forwardRef<
       />
       <Row>
         <Grid gap={1}>
-          <Label>Team recipients</Label>
-          <Select<"project" | "custom">
-            options={["project", "custom"]}
+          <Label>Recipients</Label>
+          <Select<"project" | "custom" | "visitor">
+            options={
+              formId === undefined
+                ? ["project", "custom"]
+                : ["project", "custom", "visitor"]
+            }
             value={settings.recipientMode ?? "project"}
-            getLabel={(value: "project" | "custom") =>
+            getLabel={(value: "project" | "custom" | "visitor") =>
               value === "project"
                 ? "Project recipients (or owner)"
-                : "Custom recipients"
+                : value === "custom"
+                  ? "Custom recipients"
+                  : "Visitor email field"
             }
-            onChange={(value: "project" | "custom") =>
+            onChange={(value: "project" | "custom" | "visitor") =>
               setField("recipientMode", value)
             }
           />
@@ -1309,6 +1348,27 @@ export const EmailResourceForm = forwardRef<
           </Grid>
         </Row>
       )}
+      {settings.recipientMode === "visitor" && (
+        <Row>
+          <Grid gap={1}>
+            <Label>Visitor email field</Label>
+            <Select
+              fullWidth
+              value={settings.visitorEmailField}
+              placeholder="Select an email field"
+              options={emailFields}
+              getLabel={(name) => name}
+              onChange={(name) => setField("visitorEmailField", name)}
+            />
+            {recipientError && (
+              <Text color="destructive">{recipientError}</Text>
+            )}
+            <Text color="subtle">
+              A fixed receipt with the site URL is added before the body.
+            </Text>
+          </Grid>
+        </Row>
+      )}
       {textField(
         "sender",
         "Sender",
@@ -1325,7 +1385,12 @@ export const EmailResourceForm = forwardRef<
         "subject",
         "Subject expression",
         settings.subject ??
-          JSON.stringify(projectMeta?.emailSubject || "New form submission"),
+          JSON.stringify(
+            settings.recipientMode === "visitor"
+              ? projectMeta?.emailConfirmationSubject ||
+                  "We received your submission"
+              : projectMeta?.emailSubject || "New form submission"
+          ),
         '"New form submission"',
         subjectError
       )}

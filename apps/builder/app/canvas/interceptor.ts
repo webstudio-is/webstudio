@@ -27,7 +27,7 @@ const getSelectedPagePathname = () => {
   }
 };
 
-const switchPageAndUpdateSystem = (
+export const switchPageAndUpdateSystem = (
   href: string,
   formData?: FormData,
   controlNames?: Iterable<string>
@@ -148,6 +148,10 @@ export const subscribeInterceptedEvents = () => {
       const form =
         event.target instanceof HTMLFormElement ? event.target : undefined;
       if (form === undefined) {
+        return;
+      }
+      if (form.hasAttribute("data-ws-managed-form-id")) {
+        // NativeForm handles managed submissions and their feedback in Preview.
         return;
       }
       // use attribute instead of form.action to get raw unresolved value

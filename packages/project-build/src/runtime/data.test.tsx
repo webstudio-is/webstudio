@@ -24,6 +24,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { applyBuilderPatchPayloadMutable } from "../state/patch";
 import {
   computeExpression,
+  evaluateExpressionSync,
   computeExpressionWithinScope,
   computeStringExpression,
   bindExpressionToInstanceScope,
@@ -1210,6 +1211,32 @@ test("compute expression with decoded ids", async () => {
   await expect(
     computeExpression("$ws$dataSource$myId", new Map([["myId", "value"]]))
   ).resolves.toEqual("value");
+});
+
+test("the synchronous Form evaluator shares Builder binding semantics", async () => {
+  const values = new Map<string, unknown>([
+    ["formData", { email: "ada@example.com", tags: ["a", "b"] }],
+  ]);
+  const expressions = [
+    `${encodeDataVariableId("formData")}.email.toUpperCase()`,
+    `\`Email: \${${encodeDataVariableId("formData")}.email}\``,
+    `${encodeDataVariableId("formData")}.tags.join(",")`,
+    `${encodeDataVariableId("formData")}.missing.deep ?? "fallback"`,
+  ];
+  for (const expression of expressions) {
+    expect(evaluateExpressionSync(expression, values)).toEqual(
+      await computeExpression(expression, values)
+    );
+  }
+});
+
+test("the synchronous Form evaluator can surface the same errors Builder bindings suppress", async () => {
+  const expression = "missingFunction()";
+  expect(await computeExpression(expression, new Map())).toBeUndefined();
+  expect(evaluateExpressionSync(expression, new Map())).toBeUndefined();
+  expect(() =>
+    evaluateExpressionSync(expression, new Map(), { throwOnError: true })
+  ).toThrow();
 });
 
 test("compute expression asynchronously resolves only referenced data sources", async () => {

@@ -42,6 +42,7 @@ import {
   encodeDataVariableId,
   SYSTEM_VARIABLE_ID,
   type Resource,
+  type ResourceRequest,
 } from "@webstudio-is/sdk";
 import { generateRemixRoute, showAttribute } from "@webstudio-is/react-sdk";
 import { submitManagedForm } from "@webstudio-is/sdk-components-react";
@@ -810,6 +811,7 @@ describe("prebuild", () => {
     expect(cloudflareAdapter).toContain(
       "createCloudflareManagedFormEmailSender"
     );
+    expect(cloudflareAdapter).toContain("service, formData, projectId");
 
     await prebuild({ assets: false, template: ["react-router"] });
     const nodeAdapter = await readFile(
@@ -817,7 +819,7 @@ describe("prebuild", () => {
       "utf8"
     );
     expect(nodeAdapter).toContain(
-      "createManagedFormEmailSender = (_input: { context: unknown; formData: FormData }) => undefined"
+      "createManagedFormEmailSender = (_input: { context: unknown; formData: FormData; projectId: string }) => undefined"
     );
     expect(nodeAdapter).not.toContain("EMAIL_SERVICE");
   });
@@ -890,7 +892,7 @@ describe("prebuild", () => {
     expect(page).toContain("multiple={true}");
   });
 
-  test("publishes Email defaults while preserving the legacy Contact recipients", async () => {
+  test("preserves the legacy Contact recipients without a separate Form confirmation", async () => {
     const siteData = createSiteData({
       pageMeta: {
         contactEmail: '"Team, West" <team@example.com>',
@@ -914,32 +916,7 @@ describe("prebuild", () => {
     expect(generated).toContain(
       'export const contactEmail = "\\"Team, West\\" <team@example.com>"'
     );
-    expect(generated).toContain('"sender":"Owner <owner@example.com>"');
-    expect(generated).toContain('"subject":"New request"');
-    expect(generated).toContain(
-      '"confirmationBody":"We received your request."'
-    );
-    expect(generated).toContain('"confirmationBodyIsDefault":false');
-  });
-  test("distinguishes the default confirmation body from identical saved text", async () => {
-    const siteData = createSiteData();
-    await writeSiteData(siteData);
-    await prebuild({ assets: false, template: ["react-router"] });
-    expect(
-      await readFile("app/__generated__/_index.server.tsx", "utf8")
-    ).toContain('"confirmationBodyIsDefault":true');
-
-    await writeSiteData(
-      createSiteData({
-        pageMeta: {
-          emailConfirmationBody: "Thank you. Your submission was received.",
-        },
-      })
-    );
-    await prebuild({ assets: false, template: ["react-router"] });
-    expect(
-      await readFile("app/__generated__/_index.server.tsx", "utf8")
-    ).toContain('"confirmationBodyIsDefault":false');
+    expect(generated).not.toContain("export const emailDefaults");
   });
   test("rejects Assets queries without a content database without changing generated files", async () => {
     const siteData = createSiteData();
@@ -5021,208 +4998,23 @@ sitemap.map((page) => page.path);`
     slowPrebuildTestTimeout
   );
 
-  test.each([
-    ["defaults", "Webstudio Team <reply@example.com>", "Webstudio Team"],
-    ["defaults", "reply@example.com", undefined],
-    ["react-router", "Webstudio Team <reply@example.com>", "Webstudio Team"],
-    ["react-router", "reply@example.com", undefined],
-  ] as const)(
-    "sends visitor confirmation through the generated route (%s, %s)",
-    async (template, sender, fromName) => {
-      const siteData = createSiteData({
-        instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
-        ],
-        props: [
-          [
-            "submission",
-            {
-              id: "submission",
-              instanceId: "root",
-              name: "submission",
-              type: "json",
-              value: {
-                destinations: ["http-source"],
-                confirmationEmailField: "visitorEmail",
-              },
-            },
-          ],
-        ],
-        pageMeta: {
-          emailSender: sender,
-          emailConfirmationSubject: "Receipt",
-          emailConfirmationBody: "Fixed confirmation text.",
-        },
-      });
-      siteData.build.dataSources = [
-        [
-          "http-source",
-          {
-            id: "http-source",
-            name: "HTTP",
-            type: "resource",
-            resourceId: "http",
-            scopeInstanceId: "root",
-          },
-        ],
-      ] as never;
-      siteData.build.resources = [
-        [
-          "http",
-          {
-            id: "http",
-            name: "HTTP",
-            method: "post",
-            url: '"https://receiver.example/submit"',
-            headers: [],
-          },
-        ],
-      ] as never;
-      await writeSiteData(siteData);
-      await prebuild({ assets: false, template: [template] });
-      const adapterPath = join(
-        tempDir,
-        "app/__generated__/$resources.managed-form-fetch.server.ts"
-      );
-      const nodeAdapter = await readFile(adapterPath, "utf8");
-      await writeFile(
-        adapterPath,
-        `import { createCloudflareManagedFormEmailSender, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/runtime";
-export const createManagedFormEmailSender = ({ formData }) => createCloudflareManagedFormEmailSender({ fetch: globalThis.__testEmailServiceFetch }, formData);
-export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
-export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;
-`
-      );
-      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-      await build({
-        stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "confirmation-action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action } = await import(
-        pathToFileURL(join(tempDir, "confirmation-action.mjs")).href
-      );
-      const events: string[] = [];
-      let httpStatus = 200;
-      let emailStatus = 200;
-      vi.stubGlobal(
-        "__testManagedFormFetch",
-        vi.fn(async () => {
-          events.push("http");
-          return Response.json({ accepted: true }, { status: httpStatus });
-        })
-      );
-      const emailFetch = vi.fn(
-        async (_input: RequestInfo | URL, init?: RequestInit) => {
-          events.push("email");
-          const envelope = JSON.parse(init?.body as string);
-          expect(envelope).toEqual({
-            to: [{ address: "visitor@example.com" }],
-            subject: "Receipt",
-            text: "Fixed confirmation text.",
-            replyTo: {
-              address: "reply@example.com",
-              ...(fromName === undefined ? {} : { name: fromName }),
-            },
-            ...(fromName === undefined ? {} : { fromName }),
-          });
-          return emailStatus === 200
-            ? Response.json({ id: "sent" })
-            : Response.json(
-                { error: { code: "EMAIL_QUOTA", message: "Quota exceeded" } },
-                { status: emailStatus }
-              );
-        }
-      );
-      vi.stubGlobal("__testEmailServiceFetch", emailFetch);
-      const submit = (routeAction = action) => {
-        const formData = new FormData();
-        formData.set(managedFormIdFieldName, "root");
-        formData.set(managedFormArrayNamesFieldName, "[]");
-        formData.set(formBotFieldName, "brave");
-        formData.set("visitorEmail", "visitor@example.com");
-        formData.set("password", "private");
-        return routeAction({
-          request: new Request(
-            `https://site.example/?${managedFormRequestParamName}=1`,
-            {
-              method: "POST",
-              headers: { host: "site.example" },
-              body: formData,
-            }
-          ),
-          context: {},
-        });
-      };
-      await expect(submit()).resolves.toMatchObject({
-        success: true,
-        status: 200,
-        errors: [],
-      });
-      expect(events).toEqual(["http", "email"]);
-      events.length = 0;
-      httpStatus = 422;
-      await expect(submit()).resolves.toMatchObject({
-        success: false,
-        status: 502,
-      });
-      expect(events).toEqual(["http", "http"]);
-      events.length = 0;
-      httpStatus = 200;
-      emailStatus = 429;
-      await expect(submit()).resolves.toMatchObject({
-        success: true,
-        status: 200,
-        errors: [
-          {
-            resourceId: "visitor-confirmation",
-            status: 429,
-            message: "Quota exceeded",
-          },
-        ],
-      });
-      expect(events).toEqual(["http", "email"]);
-      expect(emailFetch).toHaveBeenCalledTimes(2);
-      await writeFile(adapterPath, nodeAdapter);
-      await build({
-        stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "confirmation-node-action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action: nodeAction } = await import(
-        pathToFileURL(join(tempDir, "confirmation-node-action.mjs")).href
-      );
-      events.length = 0;
-      await expect(submit(nodeAction)).resolves.toEqual(
-        getManagedFormFailure(
-          "Visitor confirmation requires Webstudio Cloud email"
-        )
-      );
-      expect(events).toEqual([]);
-    },
-    slowPrebuildTestTimeout
-  );
-
   test.each(["defaults", "react-router"])(
-    "rejects an invalid visitor confirmation subject before generated route dispatch (%s)",
+    "runs a visitor Email Resource from the generated Form route (%s)",
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          [
+            "root",
+            {
+              id: "root",
+              component: "NativeForm",
+              children: [{ type: "id", value: "email-input" }],
+            },
+          ],
+          [
+            "email-input",
+            { id: "email-input", component: "Input", children: [] },
+          ],
         ],
         props: [
           [
@@ -5232,46 +5024,66 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
               instanceId: "root",
               name: "submission",
               type: "json",
-              value: {
-                destinations: ["http-source"],
-                confirmationEmailField: "visitorEmail",
-              },
+              value: { destinations: ["visitor-source"] },
+            },
+          ],
+          [
+            "email-name",
+            {
+              id: "email-name",
+              instanceId: "email-input",
+              name: "name",
+              type: "string",
+              value: "visitorEmail",
+            },
+          ],
+          [
+            "email-type",
+            {
+              id: "email-type",
+              instanceId: "email-input",
+              name: "type",
+              type: "string",
+              value: "email",
             },
           ],
         ],
-        pageMeta: { emailConfirmationSubject: "Bad\nsubject" },
       });
       siteData.build.dataSources = [
         [
-          "http-source",
+          "visitor-source",
           {
-            id: "http-source",
-            name: "HTTP",
+            id: "visitor-source",
+            name: "Receipt",
             type: "resource",
-            resourceId: "http",
+            resourceId: "visitor-email",
             scopeInstanceId: "root",
           },
         ],
       ] as never;
       siteData.build.resources = [
         [
-          "http",
+          "visitor-email",
           {
-            id: "http",
-            name: "HTTP",
+            id: "visitor-email",
+            name: "Receipt",
+            control: "email",
             method: "post",
-            url: '"https://receiver.example/submit"',
+            url: '""',
             headers: [],
+            email: {
+              recipientMode: "visitor",
+              visitorEmailField: "visitorEmail",
+              subject: '"Receipt"',
+              body: '"Custom text"',
+            },
           },
         ],
       ] as never;
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
       await writeFile(
-        join(
-          tempDir,
-          "app/__generated__/$resources.managed-form-fetch.server.ts"
-        ),
+        "app/__generated__/$resources.managed-form-fetch.server.ts",
         `export const createManagedFormEmailSender = () => globalThis.__testSendEmail;
 export const validateManagedFormEmail = () => undefined;
 export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;
@@ -5283,7 +5095,7 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
           contents: 'export { action } from "./app/routes/_index"',
           resolveDir: tempDir,
         },
-        outfile: join(tempDir, "invalid-confirmation-action.mjs"),
+        outfile: join(tempDir, "visitor-email-action.mjs"),
         bundle: true,
         platform: "node",
         format: "esm",
@@ -5291,17 +5103,17 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
         loader: { ".css": "text" },
       });
       const { action } = await import(
-        pathToFileURL(join(tempDir, "invalid-confirmation-action.mjs")).href
+        pathToFileURL(join(tempDir, "visitor-email-action.mjs")).href
       );
-      const httpFetch = vi.fn(async () => Response.json({ ok: true }));
-      const emailSend = vi.fn(async () => ({
+      const sendEmail = vi.fn(async (_request: ResourceRequest) => ({
         ok: true,
         status: 200,
         statusText: "OK",
         data: { id: "sent" },
       }));
+      const httpFetch = vi.fn(async () => Response.json({ accepted: true }));
+      vi.stubGlobal("__testSendEmail", sendEmail);
       vi.stubGlobal("__testManagedFormFetch", httpFetch);
-      vi.stubGlobal("__testSendEmail", emailSend);
       const formData = new FormData();
       formData.set(managedFormIdFieldName, "root");
       formData.set(managedFormArrayNamesFieldName, "[]");
@@ -5319,11 +5131,14 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
           ),
           context: {},
         })
-      ).resolves.toEqual(
-        getManagedFormFailure("Email subject must be text without line breaks")
-      );
+      ).resolves.toMatchObject({ success: true, status: 200 });
+      expect(sendEmail).toHaveBeenCalledOnce();
+      expect(sendEmail.mock.calls[0][0].email).toMatchObject({
+        recipients: [{ address: "visitor@example.com" }],
+        body: "We received your request from https://site.example.\n\nCustom text",
+        includeAttachments: false,
+      });
       expect(httpFetch).not.toHaveBeenCalled();
-      expect(emailSend).not.toHaveBeenCalled();
     },
     slowPrebuildTestTimeout
   );

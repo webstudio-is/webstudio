@@ -188,6 +188,8 @@ export type ResourceRequestResource = Readonly<{
   control?: ResourceRequest["control"];
   /** Trusted, published team-recipient count for an Email destination. */
   emailRecipientCount?: number;
+  /** Visitor-directed email failure is reported but does not fail the Form. */
+  nonfatal?: boolean;
   usesDefaultFormBody?: boolean;
   bodyFormat?: ResourceRequest["bodyFormat"];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
@@ -598,6 +600,9 @@ export const loadResources = async (
         retryFailedRoots === true &&
         rootIds.has(resource.id) &&
         result.ok === false &&
+        // A per-site Email Service quota rejection cannot succeed on an
+        // immediate retry; preserve the result for the Form error UI.
+        !(resolvedRequest.control === "email" && result.status === 429) &&
         !signal?.aborted &&
         !options?.signal?.aborted
           ? load()

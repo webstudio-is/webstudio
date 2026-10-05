@@ -44,6 +44,7 @@ export {
 } from "./resources-generator";
 export * from "./managed-form-resources-generator";
 export * from "./form-submission";
+export * from "./form-email-fields";
 export {
   managedFormEndpointPrefix,
   managedFormRequestParamName,

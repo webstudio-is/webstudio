@@ -15,8 +15,9 @@ const bodyFormat = z.enum(["auto", "json", "multipart"]);
 // recipient and Sender values must be nonempty, and subject and body overrides
 // must be valid, nonempty expressions.
 export const emailResourceSettings = z.object({
-  recipientMode: z.enum(["project", "custom"]).optional(),
+  recipientMode: z.enum(["project", "custom", "visitor"]).optional(),
   recipients: z.string().optional(),
+  visitorEmailField: z.string().optional(),
   sender: z.string().optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
@@ -25,7 +26,8 @@ export const emailResourceSettings = z.object({
 export type EmailResourceSettings = z.infer<typeof emailResourceSettings>;
 
 export const emailRequestSettings = z.object({
-  recipientMode: z.enum(["project", "custom"]),
+  recipientMode: z.enum(["project", "custom", "visitor"]),
+  visitorEmailField: z.string().optional(),
   recipients: z.array(
     z.object({ name: z.string().optional(), address: z.string() })
   ),

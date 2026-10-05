@@ -5,8 +5,6 @@ import { parseEmailMailboxes, parseEmailSender } from "./email-addresses";
 export const defaultEmailSubject = "New form submission";
 export const defaultEmailBody = "A new form was submitted.";
 export const defaultEmailConfirmationSubject = "We received your submission";
-export const defaultEmailConfirmationBody =
-  "Thank you. Your submission was received.";
 export const maxEmailSubjectLength = 998;
 
 /** Check the evaluated subject, including values supplied by Form bindings. */
@@ -42,26 +40,33 @@ export const resolveEmailResourceSettings = ({
   const recipientsText =
     settings.recipientMode === "custom"
       ? (settings.recipients ?? "")
-      : projectMeta.contactEmail || ownerEmail || "";
+      : settings.recipientMode === "visitor"
+        ? ""
+        : projectMeta.contactEmail || ownerEmail || "";
   const senderText =
     settings.sender ?? (projectMeta.emailSender || ownerEmail || "");
   const recipients = parseEmailMailboxes(recipientsText);
   const sender = parseEmailSender(senderText);
   return {
     recipientMode: settings.recipientMode ?? "project",
-    recipients,
+    recipients: settings.recipientMode === "visitor" ? [] : recipients,
+    visitorEmailField: settings.visitorEmailField,
     sender,
     subject:
       settings.subject ??
-      JSON.stringify(projectMeta.emailSubject || defaultEmailSubject),
+      JSON.stringify(
+        settings.recipientMode === "visitor"
+          ? projectMeta.emailConfirmationSubject ||
+              defaultEmailConfirmationSubject
+          : projectMeta.emailSubject || defaultEmailSubject
+      ),
     body:
       settings.body ??
-      JSON.stringify(projectMeta.emailBody || defaultEmailBody),
-    includeAttachments: settings.includeAttachments ?? true,
-    confirmationSubject:
-      projectMeta.emailConfirmationSubject || defaultEmailConfirmationSubject,
-    confirmationBody:
-      projectMeta.emailConfirmationBody || defaultEmailConfirmationBody,
+      (settings.recipientMode === "visitor"
+        ? JSON.stringify("")
+        : JSON.stringify(projectMeta.emailBody || defaultEmailBody)),
+    includeAttachments:
+      settings.includeAttachments ?? settings.recipientMode !== "visitor",
   };
 };
 

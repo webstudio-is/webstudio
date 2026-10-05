@@ -494,9 +494,11 @@ export const replaceDataSourcesInExpression = (
   }
 };
 
-const evaluateExpression = (
+/** Evaluate already-resolved values with the same compiler used by Builder bindings. */
+export const evaluateExpressionSync = (
   expression: string,
-  variables: ReadonlyMap<DataSource["name"], unknown>
+  variables: ReadonlyMap<DataSource["name"], unknown>,
+  { throwOnError = false }: { throwOnError?: boolean } = {}
 ) => {
   try {
     const proxiedVariables = new Map<DataSource["name"], unknown>();
@@ -516,7 +518,8 @@ const evaluateExpression = (
 
     const result = getCompiledExpression(expression)({ get: getVariable });
     return result;
-  } catch {
+  } catch (error) {
+    if (throwOnError) throw error;
     return undefined;
   }
 };
@@ -560,7 +563,7 @@ export const computeExpression = async (
   resolveDataSource: ResolveExpressionDataSource = (_dataSourceId, value) =>
     value
 ) =>
-  evaluateExpression(
+  evaluateExpressionSync(
     expression,
     await resolveExpressionVariables({
       expression,

@@ -43,20 +43,24 @@ const isManagedFormResponse = (value: unknown): value is ManagedFormResponse =>
 export const submitFormData = async ({
   formData,
   location,
+  endpoint: endpointOverride,
   signal,
   fetch: request = fetch,
 }: {
   formData: FormData;
   location: string;
+  endpoint?: string;
   signal?: AbortSignal;
   fetch?: typeof fetch;
 }): Promise<ManagedFormResponse> => {
-  const endpoint = new URL(location);
-  endpoint.pathname =
-    endpoint.pathname === "/"
-      ? managedFormEndpointPrefix
-      : `${managedFormEndpointPrefix}${endpoint.pathname}`;
-  endpoint.searchParams.set(managedFormRequestParamName, "1");
+  const endpoint = new URL(endpointOverride ?? location, location);
+  if (endpointOverride === undefined) {
+    endpoint.pathname =
+      endpoint.pathname === "/"
+        ? managedFormEndpointPrefix
+        : `${managedFormEndpointPrefix}${endpoint.pathname}`;
+    endpoint.searchParams.set(managedFormRequestParamName, "1");
+  }
   try {
     const response = await request(endpoint, {
       method: "POST",
@@ -81,18 +85,21 @@ export const submitManagedForm = ({
   values,
   managedFormId,
   location,
+  endpoint,
   signal,
   fetch,
 }: {
   values: ReturnType<typeof getFormDataValue>;
   managedFormId: string;
   location: string;
+  endpoint?: string;
   signal?: AbortSignal;
   fetch?: typeof globalThis.fetch;
 }): Promise<ManagedFormResponse> =>
   submitFormData({
     formData: createManagedSubmissionFormData({ values, managedFormId }),
     location,
+    endpoint,
     signal,
     fetch,
   });

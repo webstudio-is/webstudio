@@ -4,7 +4,12 @@ import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
-import { $dataSources, $instances, $props } from "~/shared/sync/data-stores";
+import {
+  $dataSources,
+  $instances,
+  $props,
+  $resources,
+} from "~/shared/sync/data-stores";
 import { FormSubmissionControl } from "./form-submission";
 
 (
@@ -15,109 +20,30 @@ let root: Root | undefined;
 const previousInstances = $instances.get();
 const previousDataSources = $dataSources.get();
 const previousProps = $props.get();
+const previousResources = $resources.get();
+const requestResource = (
+  id: string,
+  control?: "email" | "graphql" | "system"
+) => ({
+  id,
+  name: id,
+  control,
+  method: "post" as const,
+  url: '"https://example.com"',
+  headers: [],
+});
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   $instances.set(previousInstances);
   $dataSources.set(previousDataSources);
   $props.set(previousProps);
+  $resources.set(previousResources);
   document.body.innerHTML = "";
 });
 
-test.each(["Input", "ws:element"] as const)(
-  "visitor confirmation selects a named email input in this Form (%s)",
-  async (component) => {
-    $instances.set(
-      new Map([
-        [
-          "form",
-          {
-            type: "instance",
-            id: "form",
-            component: "NativeForm",
-            children: [{ type: "id", value: "email" }],
-          },
-        ],
-        ["email", { type: "instance", id: "email", component, children: [] }],
-      ])
-    );
-    $dataSources.set(new Map());
-    $props.set(
-      new Map([
-        [
-          "tag",
-          {
-            id: "tag",
-            instanceId: "email",
-            name: "tag",
-            type: "string",
-            value: "input",
-          },
-        ],
-        [
-          "name",
-          {
-            id: "name",
-            instanceId: "email",
-            name: "name",
-            type: "string",
-            value: "visitorEmail",
-          },
-        ],
-        [
-          "type",
-          {
-            id: "type",
-            instanceId: "email",
-            name: "type",
-            type: "string",
-            value: "email",
-          },
-        ],
-      ])
-    );
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    root = createRoot(container);
-    const onChange = vi.fn();
-    await act(async () =>
-      root?.render(
-        <TooltipProvider>
-          <FormSubmissionControl
-            instanceId="form"
-            propName="submission"
-            prop={{
-              id: "submission",
-              instanceId: "form",
-              name: "submission",
-              type: "json",
-              value: { destinations: ["resource"] },
-            }}
-            computedValue={{ destinations: ["resource"] }}
-            meta={{ type: "json", control: "form-submission", required: false }}
-            onChange={onChange}
-          />
-        </TooltipProvider>
-      )
-    );
-    await act(async () =>
-      container.querySelector<HTMLButtonElement>('[role="combobox"]')?.click()
-    );
-    const option = Array.from(
-      document.querySelectorAll<HTMLElement>('[role="option"]')
-    ).find((item) => item.textContent === "visitorEmail");
-    await act(async () => option?.click());
-    expect(onChange).toHaveBeenCalledWith({
-      type: "json",
-      value: {
-        destinations: ["resource"],
-        confirmationEmailField: "visitorEmail",
-      },
-    });
-  }
-);
-
 test("a Form starts with an empty Resource list and can select an in-scope destination", async () => {
+  $resources.set(new Map([["resource", requestResource("resource")]]));
   $instances.set(
     new Map([
       [
@@ -188,16 +114,14 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
     "Select at least one Resource destination"
   );
   await act(async () =>
-    container.querySelector<HTMLButtonElement>('[role="combobox"]')?.click()
+    userEvent.click(
+      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
+    )
   );
   const requestOption = Array.from(
-    document.querySelectorAll<HTMLElement>('[role="option"]')
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
   ).find((option) => option.textContent?.includes("Send request"));
   await act(async () => requestOption?.click());
-  const addButton = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent === "Add"
-  );
-  await act(async () => addButton?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: { destinations: ["resourceDataSource"] },
@@ -247,13 +171,13 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   );
   expect(container.textContent).not.toContain("Create Resource in Form");
   expect(
-    Array.from(container.querySelectorAll("button")).some(
-      (button) => button.textContent === "Add"
-    )
-  ).toBe(false);
+    container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')
+      ?.disabled
+  ).toBe(true);
 });
 
 test("a Form can select a Resource defined outside its scope", async () => {
+  $resources.set(new Map([["requestId", requestResource("requestId")]]));
   $instances.set(
     new Map([
       [
@@ -311,17 +235,15 @@ test("a Form can select a Resource defined outside its scope", async () => {
   });
 
   await act(async () =>
-    container.querySelector<HTMLButtonElement>('[role="combobox"]')?.click()
+    userEvent.click(
+      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
+    )
   );
   const requestOption = Array.from(
-    document.querySelectorAll<HTMLElement>('[role="option"]')
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
   ).find((option) => option.textContent?.includes("Shared request"));
   expect(requestOption).toBeDefined();
   await act(async () => requestOption?.click());
-  const addButton = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent === "Add"
-  );
-  await act(async () => addButton?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: { destinations: ["externalResourceId"] },
@@ -329,6 +251,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
 });
 
 test("stored Form selection renders and a deleted Resource can be removed", async () => {
+  $resources.set(new Map([["request-id", requestResource("request-id")]]));
   $instances.set(
     new Map([
       [
@@ -389,27 +312,228 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
   });
   expect(container.textContent).toContain("Send request");
   expect(container.querySelectorAll('[data-list-item="true"]')).toHaveLength(1);
-  expect(
-    container.querySelector('[aria-label="Dynamic data variable"]')
-  ).not.toBeNull();
 
   await act(async () => $dataSources.set(new Map()));
   expect(container.textContent).toContain("Deleted Resource");
   const row = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Remove missing action"]'
+    '[aria-label="Remove action Deleted Resource"]'
   )!;
   await act(async () => {
-    row.focus();
-    expect(document.activeElement).toBe(row);
-    await userEvent.keyboard("{Enter}");
+    row.click();
   });
-  const removeAction = Array.from(
-    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
-  ).find((item) => item.textContent === "Remove action");
-  expect(removeAction).toBeDefined();
-  await act(async () => userEvent.keyboard("{Enter}"));
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: { destinations: [] },
+  });
+});
+
+test("Actions only offers eligible in-scope Resources and disables an added one", async () => {
+  $instances.set(
+    new Map([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "form" },
+            { type: "id", value: "sibling" },
+          ],
+        },
+      ],
+      [
+        "form",
+        { type: "instance", id: "form", component: "NativeForm", children: [] },
+      ],
+      [
+        "sibling",
+        { type: "instance", id: "sibling", component: "Box", children: [] },
+      ],
+    ])
+  );
+  const source = (id: string, scopeInstanceId: string, resourceId: string) => ({
+    type: "resource" as const,
+    id,
+    scopeInstanceId,
+    name: id,
+    resourceId,
+  });
+  $dataSources.set(
+    new Map([
+      ["http", source("http", "form", "http-resource")],
+      ["email", source("email", "body", "email-resource")],
+      ["graphql", source("graphql", "form", "graphql-resource")],
+      ["system", source("system", "form", "system-resource")],
+      ["sibling", source("sibling", "sibling", "sibling-resource")],
+    ])
+  );
+  $resources.set(
+    new Map([
+      ["http-resource", requestResource("http-resource")],
+      ["email-resource", requestResource("email-resource", "email")],
+      ["graphql-resource", requestResource("graphql-resource", "graphql")],
+      ["system-resource", requestResource("system-resource", "system")],
+      ["sibling-resource", requestResource("sibling-resource")],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onChange = vi.fn();
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <FormSubmissionControl
+          instanceId="form"
+          propName="submission"
+          prop={{
+            id: "submission",
+            instanceId: "form",
+            name: "submission",
+            type: "json",
+            value: { destinations: ["http"] },
+          }}
+          computedValue={{ destinations: ["http"] }}
+          meta={{ type: "json", control: "form-submission", required: false }}
+          onChange={onChange}
+        />
+      </TooltipProvider>
+    )
+  );
+  await act(
+    async () =>
+      await userEvent.click(
+        container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
+      )
+  );
+  const items = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  );
+  expect(items.map((item) => item.textContent)).toEqual([
+    "email",
+    "http",
+    "graphql",
+  ]);
+  expect(
+    items
+      .find((item) => item.textContent === "http")
+      ?.getAttribute("data-disabled")
+  ).not.toBeNull();
+  await act(
+    async () =>
+      await userEvent.click(items.find((item) => item.textContent === "email")!)
+  );
+  expect(onChange).toHaveBeenLastCalledWith({
+    type: "json",
+    value: { destinations: ["http", "email"] },
+  });
+});
+
+test("a disabled Action stays visible and can be enabled or removed", async () => {
+  $instances.set(
+    new Map([
+      [
+        "form",
+        { type: "instance", id: "form", component: "NativeForm", children: [] },
+      ],
+    ])
+  );
+  $dataSources.set(
+    new Map([
+      [
+        "send",
+        {
+          type: "resource",
+          id: "send",
+          scopeInstanceId: "form",
+          name: "Send request",
+          resourceId: "request",
+        },
+      ],
+    ])
+  );
+  $resources.set(new Map([["request", requestResource("request")]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onChange = vi.fn();
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <FormSubmissionControl
+          instanceId="form"
+          propName="submission"
+          prop={{
+            id: "submission",
+            instanceId: "form",
+            name: "submission",
+            type: "json",
+            value: { destinations: ["send"] },
+          }}
+          computedValue={{ destinations: ["send"] }}
+          meta={{ type: "json", control: "form-submission", required: false }}
+          onChange={onChange}
+        />
+      </TooltipProvider>
+    )
+  );
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Disable action Send request"]'
+      )
+      ?.click()
+  );
+  expect(onChange).toHaveBeenLastCalledWith({
+    type: "json",
+    value: { destinations: ["send"], disabledDestinations: ["send"] },
+  });
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <FormSubmissionControl
+          instanceId="form"
+          propName="submission"
+          prop={{
+            id: "submission",
+            instanceId: "form",
+            name: "submission",
+            type: "json",
+            value: { destinations: ["send"], disabledDestinations: ["send"] },
+          }}
+          computedValue={{
+            destinations: ["send"],
+            disabledDestinations: ["send"],
+          }}
+          meta={{ type: "json", control: "form-submission", required: false }}
+          onChange={onChange}
+        />
+      </TooltipProvider>
+    )
+  );
+  const row = container.querySelector<HTMLElement>('[data-list-item="true"]');
+  expect(row?.getClientRects().length).toBeGreaterThan(0);
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Enable action Send request"]'
+      )
+      ?.click()
+  );
+  expect(onChange).toHaveBeenLastCalledWith({
+    type: "json",
+    value: { destinations: ["send"], disabledDestinations: undefined },
+  });
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Remove action Send request"]'
+      )
+      ?.click()
+  );
+  expect(onChange).toHaveBeenLastCalledWith({
+    type: "json",
+    value: { destinations: [], disabledDestinations: [] },
   });
 });

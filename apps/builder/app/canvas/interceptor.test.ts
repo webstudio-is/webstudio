@@ -98,3 +98,21 @@ test("preview GET form preserves repeated selected query values", () => {
     unsubscribe();
   }
 });
+
+test("preview leaves managed Form submissions to React", () => {
+  $builderMode.set("preview");
+  const unsubscribe = subscribeInterceptedEvents();
+  try {
+    const form = document.createElement("form");
+    form.setAttribute("data-ws-managed-form-id", "published-form");
+    document.body.appendChild(form);
+    const event = new SubmitEvent("submit", {
+      bubbles: true,
+      cancelable: true,
+    });
+    form.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  } finally {
+    unsubscribe();
+  }
+});

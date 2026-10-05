@@ -1,8 +1,7 @@
 import { expect, test, vi } from "vitest";
 import {
-  createCloudflareManagedFormEmailSender,
-  prepareVisitorConfirmation,
-  sendVisitorConfirmation,
+  createCloudflareManagedFormEmailSender as createEmailSender,
+  prepareVisitorEmailRequest,
   validateCloudflareManagedFormEmail,
 } from "./managed-form-email";
 import {
@@ -11,7 +10,12 @@ import {
 } from "./managed-form-submission";
 import { loadResources } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
-import { defaultEmailConfirmationBody } from "./email-resource";
+
+const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
+const createCloudflareManagedFormEmailSender = (
+  service: Parameters<typeof createEmailSender>[0],
+  formData: FormData
+) => createEmailSender(service, formData, projectId);
 
 const request: ResourceRequest = {
   name: "Team email",
@@ -30,201 +34,60 @@ const request: ResourceRequest = {
   },
 };
 
-const prepareConfirmation = (formData: FormData, fieldName = "email") =>
-  prepareVisitorConfirmation({
-    fieldName,
-    formData,
-    subject: "We received your submission",
-    body: "Thank you.",
-    isDefaultBody: false,
-    siteUrl: "https://published.example",
-  });
+const visitorRequest = (body = ""): ResourceRequest => ({
+  ...request,
+  email: {
+    ...request.email!,
+    recipientMode: "visitor",
+    visitorEmailField: "email",
+    recipients: [],
+    body,
+    includeAttachments: false,
+  },
+});
 
-test("visitor confirmation is off by default and uses only one named email field", () => {
+test("visitor Email Resource uses one submitted address and prepends the site receipt", () => {
   const formData = new FormData();
   formData.append("email", "visitor@example.com");
   formData.append("password", "private value");
   formData.append("upload", new File(["secret"], "private.txt"));
-  expect(prepareConfirmation(formData, "")).toBeUndefined();
-  expect(prepareConfirmation(formData)).toMatchObject({
-    email: {
-      recipients: [{ address: "visitor@example.com" }],
-      subject: "We received your submission",
-      body: "Thank you.",
-      includeAttachments: false,
-    },
+  const prepared = prepareVisitorEmailRequest(
+    visitorRequest("Custom text"),
+    formData,
+    "https://published.example"
+  );
+  expect(prepared.email).toMatchObject({
+    recipients: [{ address: "visitor@example.com" }],
+    body: "We received your request from https://published.example.\n\nCustom text",
+    includeAttachments: false,
   });
-  expect(JSON.stringify(prepareConfirmation(formData))).not.toContain(
-    "private value"
-  );
-  expect(JSON.stringify(prepareConfirmation(formData))).not.toContain(
-    "private.txt"
-  );
+  expect(JSON.stringify(prepared)).not.toContain("private value");
+  expect(JSON.stringify(prepared)).not.toContain("private.txt");
+  expect(
+    prepareVisitorEmailRequest(
+      visitorRequest(),
+      formData,
+      "https://published.example"
+    ).email?.body
+  ).toBe("We received your request from https://published.example.");
 });
 
-test("visitor confirmation rejects repeated, missing, and invalid email fields", () => {
+test("visitor Email Resource rejects repeated, missing, and invalid addresses", () => {
   const formData = new FormData();
-  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+  const prepare = () =>
+    prepareVisitorEmailRequest(
+      visitorRequest(),
+      formData,
+      "https://published.example"
+    );
+  expect(prepare).toThrow("one valid email field");
   formData.set("email", "Name <visitor@example.com>");
-  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+  expect(prepare).toThrow("one valid email field");
   formData.set("email", "visitor@example.com, other@example.com");
-  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
-  formData.append("email", "invalid");
-  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+  expect(prepare).toThrow("one valid email field");
   formData.set("email", "visitor@example.com");
   formData.append("email", "other@example.com");
-  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
-});
-
-test("default confirmation mentions the published site and custom text stays literal", () => {
-  const formData = new FormData();
-  formData.append("email", "visitor@example.com");
-  const defaults = prepareVisitorConfirmation({
-    fieldName: "email",
-    formData,
-    subject: "Received",
-    body: defaultEmailConfirmationBody,
-    isDefaultBody: true,
-    siteUrl: "https://published.example",
-  });
-  expect(defaults?.email?.body).toContain("https://published.example");
-  const explicitlySavedDefaultText = prepareVisitorConfirmation({
-    fieldName: "email",
-    formData,
-    subject: "Received",
-    body: defaultEmailConfirmationBody,
-    isDefaultBody: false,
-    siteUrl: "https://published.example",
-  });
-  expect(explicitlySavedDefaultText?.email?.body).toBe(
-    defaultEmailConfirmationBody
-  );
-  expect(prepareConfirmation(formData)?.email?.body).toBe("Thank you.");
-});
-
-test("visitor confirmation subject rejects line breaks before delivery", () => {
-  const formData = new FormData();
-  formData.append("email", "visitor@example.com");
-  expect(() =>
-    prepareVisitorConfirmation({
-      fieldName: "email",
-      formData,
-      subject: "Thanks\nBcc: other@example.com",
-      body: "Thank you.",
-      isDefaultBody: false,
-      siteUrl: "https://published.example",
-    })
-  ).toThrow("Email subject must be text without line breaks");
-});
-
-test("visitor confirmation follows primary success and failure stays nonfatal", async () => {
-  const formData = new FormData();
-  formData.append("email", "visitor@example.com");
-  const confirmation = prepareConfirmation(formData)!;
-  const send = vi.fn(async () => ({
-    ok: false,
-    status: 429,
-    statusText: "Quota exceeded",
-    data: { error: { code: "EMAIL_QUOTA" } },
-  }));
-  const primaryFailure = {
-    success: false,
-    status: 502,
-    results: [],
-    errors: [{ status: 502, body: null, message: "Primary failed" }],
-  };
-  expect(
-    await sendVisitorConfirmation(primaryFailure, confirmation, send)
-  ).toEqual(primaryFailure);
-  expect(send).not.toHaveBeenCalled();
-  const response = await sendVisitorConfirmation(
-    { success: true, status: 200, results: [], errors: [] },
-    confirmation,
-    send
-  );
-  expect(send).toHaveBeenCalledTimes(1);
-  expect(response).toMatchObject({
-    success: true,
-    status: 200,
-    errors: [
-      {
-        resourceId: "visitor-confirmation",
-        status: 429,
-        message: "Quota exceeded",
-      },
-    ],
-  });
-});
-
-test("provider fake receives one private visitor envelope without attachments", async () => {
-  const formData = new FormData();
-  formData.append("email", "visitor@example.com");
-  formData.append("upload", new File(["private"], "private.txt"));
-  const fetch = vi.fn(async () => Response.json({ id: "confirmation-sent" }));
-  const send = createCloudflareManagedFormEmailSender({ fetch }, formData);
-  const response = await sendVisitorConfirmation(
-    { success: true, status: 200, results: [], errors: [] },
-    prepareConfirmation(formData),
-    send
-  );
-  expect(response).toMatchObject({ success: true, errors: [] });
-  expect(fetch).toHaveBeenCalledTimes(1);
-  const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-  expect(JSON.parse(init.body as string)).toEqual({
-    to: [{ address: "visitor@example.com" }],
-    subject: "We received your submission",
-    text: "Thank you.",
-  });
-});
-
-test.each([
-  [
-    "Webstudio Team <reply@example.com>",
-    { address: "reply@example.com", name: "Webstudio Team" },
-    "Webstudio Team",
-  ],
-  ["reply@example.com", { address: "reply@example.com" }, undefined],
-] as const)(
-  "visitor confirmation forwards project Sender %s",
-  async (sender, replyTo, fromName) => {
-    const formData = new FormData();
-    formData.set("email", "visitor@example.com");
-    const fetch = vi.fn(async () => Response.json({ id: "sent" }));
-    const send = createCloudflareManagedFormEmailSender({ fetch }, formData);
-    await sendVisitorConfirmation(
-      { success: true, status: 200, results: [], errors: [] },
-      prepareVisitorConfirmation({
-        fieldName: "email",
-        formData,
-        subject: "Receipt",
-        body: "Thanks",
-        isDefaultBody: false,
-        siteUrl: "https://published.example",
-        sender,
-      }),
-      send
-    );
-    const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-    const envelope = JSON.parse(init.body as string);
-    expect(envelope.replyTo).toEqual(replyTo);
-    expect(envelope.fromName).toBe(fromName);
-  }
-);
-
-test("invalid confirmation Sender fails before delivery", () => {
-  const formData = new FormData();
-  formData.set("email", "visitor@example.com");
-  expect(() =>
-    prepareVisitorConfirmation({
-      fieldName: "email",
-      formData,
-      subject: "Receipt",
-      body: "Thanks",
-      isDefaultBody: false,
-      siteUrl: "https://published.example",
-      sender: "bad\nBcc: victim@example.com",
-    })
-  ).toThrow("Visitor confirmation Sender is invalid");
+  expect(prepare).toThrow("one valid email field");
 });
 
 test("sends the private worker envelope with files and no form internals", async () => {
@@ -245,6 +108,9 @@ test("sends the private worker envelope with files and no form internals", async
   const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
   expect(url).toBe("https://email-service.internal/v1/send");
   expect(init.method).toBe("POST");
+  expect(new Headers(init.headers).get("x-webstudio-project-id")).toBe(
+    projectId
+  );
   expect(JSON.parse(init.body as string)).toEqual({
     to: [{ address: "team@example.com", name: "Team" }],
     subject: "New submission",
@@ -309,6 +175,31 @@ test("omits attachments when disabled and preserves worker errors", async () => 
   });
   const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
   expect(JSON.parse(init.body as string)).not.toHaveProperty("attachments");
+});
+
+test("passes the Email Service per-site delivery limit back as a failed send", async () => {
+  const fetch = vi.fn(async () =>
+    Response.json(
+      {
+        error: {
+          code: "email_rate_limited",
+          message: "Email sending limit reached",
+        },
+      },
+      { status: 429 }
+    )
+  );
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { fetch },
+    new FormData()
+  )!;
+  expect(await sendEmail(request, {})).toMatchObject({
+    ok: false,
+    status: 429,
+    statusText: "Email sending limit reached",
+    data: { error: { code: "email_rate_limited" } },
+  });
+  expect(fetch).toHaveBeenCalledOnce();
 });
 
 test.each([undefined, null, "", "   ", 123])(

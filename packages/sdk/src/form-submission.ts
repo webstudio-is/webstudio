@@ -5,8 +5,8 @@ export const emptyFormDestinationMessage =
 export type FormSubmission = {
   /** Resource data source IDs, stable across renames. */
   destinations: string[];
-  /** An empty field disables the optional visitor acknowledgement. */
-  confirmationEmailField?: string;
+  /** Selected Resources kept in the editor but omitted from submission. */
+  disabledDestinations?: string[];
 };
 
 export const isFormSubmission = (value: unknown): value is FormSubmission => {
@@ -21,22 +21,24 @@ export const isFormSubmission = (value: unknown): value is FormSubmission => {
     (submission.mode === undefined || submission.mode === "resources") &&
     Array.isArray(submission.destinations) &&
     submission.destinations.every((id) => typeof id === "string") &&
-    (submission.confirmationEmailField === undefined ||
-      typeof submission.confirmationEmailField === "string")
+    (submission.disabledDestinations === undefined ||
+      (Array.isArray(submission.disabledDestinations) &&
+        submission.disabledDestinations.every((id) => typeof id === "string")))
   );
 };
 
 export const validateFormSubmission = (submission: FormSubmission) => {
   if (
-    submission.confirmationEmailField !== undefined &&
-    submission.confirmationEmailField !== "" &&
-    (submission.confirmationEmailField.trim() !==
-      submission.confirmationEmailField ||
-      submission.confirmationEmailField.length > 256)
+    submission.disabledDestinations !== undefined &&
+    (new Set(submission.disabledDestinations).size !==
+      submission.disabledDestinations.length ||
+      submission.disabledDestinations.some(
+        (id) => submission.destinations.includes(id) === false
+      ))
   ) {
-    return "Select a valid email field for visitor confirmation";
+    return "Disabled Resource destinations are invalid";
   }
-  if (submission.destinations.length === 0) {
+  if (getEnabledFormDestinations(submission).length === 0) {
     return emptyFormDestinationMessage;
   }
   if (submission.destinations.length > maxFormDestinations) {
@@ -48,3 +50,8 @@ export const validateFormSubmission = (submission: FormSubmission) => {
     return "Select each Resource only once";
   }
 };
+
+export const getEnabledFormDestinations = (submission: FormSubmission) =>
+  submission.destinations.filter(
+    (id) => submission.disabledDestinations?.includes(id) !== true
+  );

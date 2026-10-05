@@ -1,7 +1,6 @@
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { form } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./native-form";
-import { props } from "./__generated__/form.props";
 
 const presetStyle = {
   form: [
@@ -17,9 +16,8 @@ export const meta: WsComponentMeta = {
     { label: "Error", selector: "[data-state=error]" },
   ],
   presetStyle,
-  initialProps: ["id", "class", "submission", "successRedirect"],
+  initialProps: ["submission", "successRedirect"],
   props: {
-    ...props,
     submission: {
       type: "json",
       control: "form-submission",

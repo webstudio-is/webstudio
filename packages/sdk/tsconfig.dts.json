@@ -4,6 +4,7 @@
     "../../@types/**/*.d.ts",
     "src/index.ts",
     "src/runtime.ts",
+    "src/managed-form-draft-graph.ts",
     "src/form-fields.ts",
     "src/form-submission.ts",
     "src/link-utils.ts",

@@ -18,6 +18,11 @@
       "types": "./lib/types/runtime.d.ts",
       "import": "./lib/runtime.js"
     },
+    "./managed-form-draft-graph": {
+      "webstudio": "./src/managed-form-draft-graph.ts",
+      "types": "./lib/types/managed-form-draft-graph.d.ts",
+      "import": "./lib/managed-form-draft-graph.js"
+    },
     "./form-fields": {
       "webstudio": "./src/form-fields.ts",
       "types": "./lib/types/form-fields.d.ts",
@@ -88,7 +93,7 @@
     "test": "vitest run",
     "build:schema-org-data": "tsx scripts/schema-org-data.ts && oxfmt src/__generated__/schema-org-data.ts",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && oxfmt src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/form-fields.ts src/form-submission.ts src/to-string.ts src/protected-resource-fetch.ts src/protected-resource-fetch-node.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/managed-form-draft-graph.ts src/form-fields.ts src/form-submission.ts src/to-string.ts src/protected-resource-fetch.ts src/protected-resource-fetch-node.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {

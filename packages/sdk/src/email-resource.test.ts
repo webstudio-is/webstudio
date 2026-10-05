@@ -114,6 +114,26 @@ describe("Email Resource defaults", () => {
     expect(expression).toContain("${browserInfo}");
   });
 
+  test("visitor mode uses one runtime recipient, empty body, and visitor subject", () => {
+    expect(
+      resolveEmailResourceSettings({
+        settings: { recipientMode: "visitor", visitorEmailField: "email" },
+        projectMeta: {
+          contactEmail: "team@example.com",
+          emailBody: "Owner message",
+          emailConfirmationSubject: "We got it",
+        },
+      })
+    ).toMatchObject({
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      recipients: [],
+      subject: '"We got it"',
+      body: '""',
+      includeAttachments: false,
+    });
+  });
+
   test("uses a translated project body as the complete literal message", () => {
     const expression = getDefaultFormEmailBodyExpression(
       "formData",

@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  Button,
-  Chip,
+  Box,
   CssValueListArrowFocus,
   CssValueListItem,
   DropdownMenu,
@@ -10,40 +8,56 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Flex,
+  Grid,
   Label,
-  Select,
   SmallIconButton,
+  SmallToggleButton,
   Text,
+  Tooltip,
+  useSortable,
+  theme,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon } from "@webstudio-is/icons";
+import {
+  EyeClosedIcon,
+  EyeOpenIcon,
+  MinusIcon,
+  PlusIcon,
+} from "@webstudio-is/icons";
 import {
   isFormSubmission,
   maxFormDestinations,
   validateFormSubmission,
   type FormSubmission,
-  findTreeInstanceIds,
   type DataSource,
 } from "@webstudio-is/sdk";
 import { findAvailableVariables } from "@webstudio-is/project-build/runtime";
-import { $dataSources, $instances, $props } from "~/shared/sync/data-stores";
+import {
+  $dataSources,
+  $instances,
+  $resources,
+} from "~/shared/sync/data-stores";
 import { VariablePopoverTrigger } from "../variable-popover";
-import { type ControlProps, VerticalLayout } from "../shared";
-import { PropertyLabel } from "../property-label";
+import { type ControlProps } from "../shared";
 
 const ActionItem = ({
   id,
   index,
   variable,
   formInstanceId,
+  isEnabled,
+  active,
+  onToggle,
   onRemove,
 }: {
   id: string;
   index: number;
   variable?: DataSource;
   formInstanceId: string;
+  isEnabled: boolean;
+  active: boolean;
+  onToggle: () => void;
   onRemove: () => void;
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isResource = variable?.type === "resource";
   const name = isResource ? variable.name : "Deleted Resource";
   const source = isResource
@@ -56,38 +70,33 @@ const ActionItem = ({
       id={id}
       index={index}
       aria-label={isResource ? `Edit action ${name}` : `Remove missing action`}
-      onClick={isResource ? undefined : () => setIsMenuOpen(true)}
-      data-state={isMenuOpen ? "open" : undefined}
+      draggable
+      active={active}
       label={
         <Label tag="label" color={source} truncate>
           {name}
         </Label>
       }
-      suffix={
-        isResource ? (
-          <Chip
-            title="Dynamic data variable"
-            aria-label="Dynamic data variable"
-          >
-            D
-          </Chip>
-        ) : undefined
-      }
       buttons={
-        <DropdownMenu modal open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <SmallIconButton
+        <>
+          <Tooltip content={isEnabled ? "Disable action" : "Enable action"}>
+            <SmallToggleButton
               tabIndex={-1}
-              aria-label={`Open action menu for ${name}`}
-              icon={<EllipsesIcon />}
+              variant="normal"
+              pressed={!isEnabled}
+              aria-label={`${isEnabled ? "Disable" : "Enable"} action ${name}`}
+              icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
+              onPressedChange={onToggle}
             />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onSelect={onRemove}>
-              Remove action
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Tooltip>
+          <SmallIconButton
+            tabIndex={-1}
+            variant="destructive"
+            aria-label={`Remove action ${name}`}
+            icon={<MinusIcon />}
+            onClick={onRemove}
+          />
+        </>
       }
     />
   );
@@ -107,8 +116,7 @@ export const FormSubmissionControl = ({
 }: ControlProps<"form-submission">) => {
   const instances = useStore($instances);
   const dataSources = useStore($dataSources);
-  const props = useStore($props);
-  const [selectedId, setSelectedId] = useState<string>();
+  const resourcesById = useStore($resources);
   const invalidSavedValue =
     prop !== undefined &&
     (prop.type !== "json" || isFormSubmission(prop.value) === false);
@@ -120,154 +128,112 @@ export const FormSubmissionControl = ({
     startingInstanceId: instanceId,
     instances,
     dataSources,
-  }).filter((variable) => variable.type === "resource");
-  const available = resources.filter(
-    ({ id }) => submission.destinations.includes(id) === false
-  );
+  }).filter((variable) => {
+    if (variable.type !== "resource") return false;
+    const resource = resourcesById.get(variable.resourceId);
+    return resource !== undefined && resource.control !== "system";
+  });
   const update = (next: FormSubmission) =>
     onChange({ type: "json", value: next });
-  const descendantIds = new Set(findTreeInstanceIds(instances, instanceId));
-  const attributes = new Map<
-    string,
-    { name?: string; type?: string; tag?: string }
-  >();
-  for (const fieldProp of props.values()) {
-    if (
-      descendantIds.has(fieldProp.instanceId) &&
-      fieldProp.type === "string" &&
-      (fieldProp.name === "name" ||
-        fieldProp.name === "type" ||
-        fieldProp.name === "tag")
-    ) {
-      const entry = attributes.get(fieldProp.instanceId) ?? {};
-      entry[fieldProp.name] = fieldProp.value;
-      attributes.set(fieldProp.instanceId, entry);
-    }
-  }
-  const emailFields = Array.from(attributes.entries())
-    .filter(
-      ([id, attributes]) =>
-        (instances.get(id)?.tag === "input" ||
-          attributes.tag === "input" ||
-          instances.get(id)?.component === "Input") &&
-        attributes.type === "email" &&
-        Boolean(attributes.name)
-    )
-    .map(([, attributes]) => attributes.name!);
-  const emailFieldOptions = Array.from(new Set(emailFields));
+  const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
+    items: submission.destinations.map((id) => ({ id })),
+    onSort: (newIndex, oldIndex) => {
+      const destinations = [...submission.destinations];
+      const [moved] = destinations.splice(oldIndex, 1);
+      destinations.splice(newIndex, 0, moved);
+      update({ ...submission, destinations });
+    },
+  });
   const error = invalidSavedValue
     ? "Invalid Form submission settings"
-    : (validateFormSubmission(submission) ??
-      (submission.confirmationEmailField &&
-      !emailFieldOptions.includes(submission.confirmationEmailField)
-        ? "Selected visitor confirmation email field is unavailable"
-        : undefined));
+    : validateFormSubmission(submission);
 
   return (
-    <VerticalLayout label={<PropertyLabel name="submission" />}>
-      <Flex direction="column" gap="2">
-        {submission.destinations.length > 0 && (
-          <CssValueListArrowFocus>
-            {submission.destinations.map((id, index) => (
-              <ActionItem
-                key={id}
-                id={id}
-                index={index}
-                variable={dataSources.get(id)}
-                formInstanceId={instanceId}
-                onRemove={() =>
-                  update({
-                    ...submission,
-                    destinations: submission.destinations.filter(
-                      (selected) => selected !== id
-                    ),
-                  })
-                }
-              />
-            ))}
-          </CssValueListArrowFocus>
-        )}
-        {submission.destinations.length < maxFormDestinations && (
-          <Flex direction="column" gap="2">
-            {available.length > 0 && (
-              <Flex gap="2">
-                <Select
-                  fullWidth
-                  value={selectedId}
-                  placeholder="Select Resource"
-                  options={available.map(({ id }) => id)}
-                  getLabel={(id) =>
-                    dataSources.get(id)?.name ?? "Deleted Resource"
+    <Box>
+      <Flex align="center" justify="between">
+        <Label>Actions</Label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SmallIconButton
+              aria-label="Add action"
+              disabled={
+                submission.destinations.length >= maxFormDestinations ||
+                resources.length === 0
+              }
+              icon={<PlusIcon />}
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {resources.map((variable) => (
+              <DropdownMenuItem
+                key={variable.id}
+                disabled={submission.destinations.includes(variable.id)}
+                onSelect={() => {
+                  if (
+                    submission.destinations.length < maxFormDestinations &&
+                    !submission.destinations.includes(variable.id)
+                  ) {
+                    update({
+                      ...submission,
+                      destinations: [...submission.destinations, variable.id],
+                    });
                   }
-                  onChange={setSelectedId}
-                />
-                <Button
-                  type="button"
-                  disabled={!selectedId}
-                  onClick={() => {
-                    if (
-                      selectedId &&
-                      available.some(({ id }) => id === selectedId)
-                    ) {
+                }}
+              >
+                {variable.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </Flex>
+      <Box css={{ py: theme.spacing[2] }}>
+        <Flex direction="column" gap="2">
+          {submission.destinations.length > 0 && (
+            <CssValueListArrowFocus dragItemId={dragItemId}>
+              <Grid ref={sortableRefCallback}>
+                {submission.destinations.map((id, index) => (
+                  <ActionItem
+                    key={id}
+                    id={id}
+                    index={index}
+                    variable={dataSources.get(id)}
+                    formInstanceId={instanceId}
+                    isEnabled={!submission.disabledDestinations?.includes(id)}
+                    active={dragItemId === id}
+                    onToggle={() => {
+                      const disabled = new Set(submission.disabledDestinations);
+                      if (disabled.has(id)) disabled.delete(id);
+                      else disabled.add(id);
                       update({
                         ...submission,
-                        destinations: [...submission.destinations, selectedId],
+                        disabledDestinations:
+                          disabled.size === 0 ? undefined : [...disabled],
                       });
-                      setSelectedId(undefined);
+                    }}
+                    onRemove={() =>
+                      update({
+                        ...submission,
+                        destinations: submission.destinations.filter(
+                          (selected) => selected !== id
+                        ),
+                        disabledDestinations:
+                          submission.disabledDestinations?.filter(
+                            (selected) => selected !== id
+                          ),
+                      })
                     }
-                  }}
-                >
-                  Add
-                </Button>
-              </Flex>
-            )}
-            <VariablePopoverTrigger
-              defaultType="resource"
-              formDestination
-              onCreatedResource={(id) => {
-                if (
-                  submission.destinations.length < maxFormDestinations &&
-                  submission.destinations.includes(id) === false
-                ) {
-                  update({
-                    ...submission,
-                    destinations: [...submission.destinations, id],
-                  });
-                }
-              }}
-            >
-              <Button type="button" color="ghost">
-                Create Resource in Form
-              </Button>
-            </VariablePopoverTrigger>
-          </Flex>
-        )}
-        <Text>Visitor confirmation email field (optional)</Text>
-        {emailFieldOptions.length > 0 && (
-          <Select
-            fullWidth
-            value={submission.confirmationEmailField || undefined}
-            placeholder="Off"
-            options={emailFieldOptions}
-            getLabel={(name) => name}
-            onChange={(name) =>
-              update({ ...submission, confirmationEmailField: name })
-            }
-          />
-        )}
-        {submission.confirmationEmailField && (
-          <Button
-            type="button"
-            color="ghost"
-            onClick={() =>
-              update({ ...submission, confirmationEmailField: undefined })
-            }
-          >
-            Turn confirmation off
-          </Button>
-        )}
-        {error && <Text>{error}</Text>}
-      </Flex>
-    </VerticalLayout>
+                  />
+                ))}
+                {placementIndicator}
+              </Grid>
+            </CssValueListArrowFocus>
+          )}
+          {resources.length === 0 && (
+            <Text>Create a Resource in Data variables to add an action.</Text>
+          )}
+          {error && <Text>{error}</Text>}
+        </Flex>
+      </Box>
+    </Box>
   );
 };

@@ -38,7 +38,7 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("creating a Form Resource selects it only after the editor saves", async () => {
+test("Actions references an existing Resource without creating another", async () => {
   serverSyncStore.transactionManager.currentStack = [];
   serverSyncStore.transactionManager.undoneStack = [];
   serverSyncStore.popAll();
@@ -75,8 +75,34 @@ test("creating a Form Resource selects it only after the editor saves", async ()
   $styleSourceSelections.set(new Map());
   $styleSources.set(new Map());
   $styles.set(new Map());
-  $dataSources.set(new Map());
-  $resources.set(new Map());
+  $dataSources.set(
+    new Map([
+      [
+        "send",
+        {
+          type: "resource" as const,
+          id: "send",
+          scopeInstanceId: "form",
+          name: "Send request",
+          resourceId: "request",
+        },
+      ],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [
+        "request",
+        {
+          id: "request",
+          name: "Send request",
+          method: "post" as const,
+          url: '"https://example.com/submit"',
+          headers: [],
+        },
+      ],
+    ])
+  );
   $assets.set(new Map());
   $projectSettings.set({ meta: {}, compiler: {} });
   selectInstance(["form"]);
@@ -113,64 +139,26 @@ test("creating a Form Resource selects it only after the editor saves", async ()
     );
   };
   await act(async () => root?.render(<Harness />));
+  expect(container.textContent).toContain(
+    "Select at least one Resource destination"
+  );
+  expect(container.textContent).not.toContain("Create Resource in Form");
   await act(async () => {
     await userEvent.click(
-      Array.from(container.querySelectorAll("button")).find(
-        (button) => button.textContent === "Create Resource in Form"
-      )!
+      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
     );
   });
-  const dialog = await vi.waitFor(() => {
-    const element = document.querySelector<HTMLElement>('[role="dialog"]');
-    expect(element).not.toBeNull();
-    return element!;
-  });
-  expect(container.textContent).toContain(
-    "Select at least one Resource destination"
-  );
-  expect($dataSources.get().size).toBe(0);
-
-  await act(async () => dialog.querySelector("form")?.requestSubmit());
-  expect($dataSources.get().size).toBe(0);
-  expect(container.textContent).toContain(
-    "Select at least one Resource destination"
-  );
-
-  await act(async () => {
-    await userEvent.fill(
-      dialog.querySelector<HTMLInputElement>('input[name="name"]')!,
-      "Send request"
-    );
-    await userEvent.fill(
-      dialog.querySelector<HTMLTextAreaElement>(
-        'textarea[name="url-validator"]'
-      )!,
-      "https://example.com/submit"
-    );
-  });
-  expect($dataSources.get().size).toBe(0);
-  expect(container.textContent).toContain(
-    "Select at least one Resource destination"
-  );
-
-  await act(async () => dialog.querySelector("form")?.requestSubmit());
+  const action = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  ).find((item) => item.textContent === "Send request");
+  expect(action).toBeDefined();
+  await act(async () => await userEvent.click(action!));
   await vi.waitFor(() => {
-    expect($dataSources.get().size).toBe(1);
-    expect(container.textContent).toContain("Send request");
-    expect(container.textContent).not.toContain(
-      "Select at least one Resource destination"
-    );
+    expect(container.querySelector('[data-list-item="true"]')).not.toBeNull();
   });
-  const [created] = $dataSources.get().values();
-  expect(created.type).toBe("resource");
-  expect(created.scopeInstanceId).toBe("form");
-  if (created.type === "resource") {
-    expect($resources.get().has(created.resourceId)).toBe(true);
-  }
-  await act(async () => {
-    await userEvent.click(container.querySelector('[data-list-item="true"]')!);
-  });
-  await vi.waitFor(() => {
-    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
-  });
+  expect($dataSources.get().size).toBe(1);
+  expect($resources.get().size).toBe(1);
+  expect(container.textContent).not.toContain(
+    "Select at least one Resource destination"
+  );
 });

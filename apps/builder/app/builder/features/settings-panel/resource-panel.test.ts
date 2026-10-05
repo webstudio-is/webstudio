@@ -12,7 +12,9 @@ import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { FloatingPanel, TooltipProvider } from "@webstudio-is/design-system";
 import {
   $dataSources,
+  $instances,
   $projectSettings,
+  $props,
   $resources,
 } from "~/shared/sync/data-stores";
 import {
@@ -31,12 +33,16 @@ let root: Root | undefined;
 const initialResources = $resources.get();
 const initialDataSources = $dataSources.get();
 const initialProjectSettings = $projectSettings.get();
+const initialInstances = $instances.get();
+const initialProps = $props.get();
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   $resources.set(initialResources);
   $dataSources.set(initialDataSources);
   $projectSettings.set(initialProjectSettings);
+  $instances.set(initialInstances);
+  $props.set(initialProps);
   document.body.innerHTML = "";
 });
 
@@ -154,6 +160,102 @@ test("external Email Resource marks an unavailable Form binding as invalid", asy
   });
   expect(container.textContent).toContain(
     "This Form binding is unavailable outside its Form."
+  );
+});
+
+test("visitor Email Resource selects a named Form email field", () => {
+  $instances.set(
+    new Map([
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "NativeForm",
+          children: [{ type: "id", value: "email-input" }],
+        },
+      ],
+      [
+        "email-input",
+        {
+          type: "instance",
+          id: "email-input",
+          component: "Input",
+          children: [],
+        },
+      ],
+    ])
+  );
+  $props.set(
+    new Map([
+      [
+        "name",
+        {
+          id: "name",
+          instanceId: "email-input",
+          name: "name",
+          type: "string",
+          value: "visitorEmail",
+        },
+      ],
+      [
+        "type",
+        {
+          id: "type",
+          instanceId: "email-input",
+          name: "type",
+          type: "string",
+          value: "email",
+        },
+      ],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Receipt",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            recipientMode: "visitor",
+            visitorEmailField: "visitorEmail",
+          },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() =>
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "resource",
+            type: "resource",
+            name: "Receipt",
+            scopeInstanceId: "form",
+            resourceId: "email",
+          },
+        })
+      )
+    )
+  );
+  expect(container.textContent).toContain("Visitor email field");
+  expect(container.textContent).toContain("visitorEmail");
+  expect(container.textContent).toContain(
+    "A fixed receipt with the site URL is added before the body."
+  );
+  expect(container.textContent).not.toContain(
+    "Select one named email input in this Form."
   );
 });
 
@@ -283,6 +385,9 @@ test("invalidates the preview as soon as a body edit starts", () => {
     );
   });
 
+  expect(container.textContent).toContain("Request encoding");
+  expect(container.textContent).toContain("Manual body content type");
+
   const body = container.querySelector<HTMLTextAreaElement>(
     "textarea:not([name])"
   );
@@ -336,7 +441,8 @@ test("shows and submits the selected HTTP body format", async () => {
       'input[name="header-name"][value="Content-Type"]'
     )
   ).toBeNull();
-  await act(async () => page.getByLabelText("Request body format").click());
+  expect(container.textContent).toContain("Request encoding");
+  await act(async () => page.getByLabelText("Request encoding").click());
   await act(async () => page.getByRole("option", { name: "json" }).click());
   expect(
     container.querySelector<HTMLInputElement>('input[name="body-format"]')
