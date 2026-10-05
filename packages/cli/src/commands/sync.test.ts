@@ -801,17 +801,9 @@ test("explains unpublished project bundle errors when synchronizing by build id"
 
 test("shows actionable diagnostics for JSON props with no value", async () => {
   loadProjectBundleByBuildId.mockRejectedValue(
-    new MissingJsonPropValueError(
-      [
-        {
-          propName: "data",
-          instanceId: "instance-id",
-          instanceLabel: "Projects",
-          component: "ws:collection",
-        },
-      ],
-      1
-    )
+    new MissingJsonPropValueError([
+      "“Projects” (ws:collection): JSON prop “data” has no value",
+    ])
   );
 
   await expect(

@@ -115,39 +115,31 @@ const createApiResponseErrorMessage = async (
     .join("\n");
 };
 
-export type MissingJsonPropValueDiagnostic = {
-  propName: string;
-  instanceId: string;
-  instanceLabel?: string;
-  component?: string;
-};
-
 export class MissingJsonPropValueError extends Error {
-  readonly diagnostics: MissingJsonPropValueDiagnostic[];
-  readonly total: number;
+  readonly diagnostics: string[];
 
-  constructor(diagnostics: MissingJsonPropValueDiagnostic[], total: number) {
+  constructor(diagnostics: string[]) {
     super("Published build contains JSON props without a value");
     this.name = "MissingJsonPropValueError";
     this.diagnostics = diagnostics;
-    this.total = total;
   }
 }
 
 const getMissingJsonPropValueDiagnostics = (data: unknown) => {
-  if (typeof data !== "object" || data === null || !("build" in data)) {
+  if (typeof data !== "object" || data === null) {
     return;
   }
-  const build = data.build;
+  const build = (data as { build?: unknown }).build;
   if (typeof build !== "object" || build === null) {
     return;
   }
-  const props = "props" in build ? build.props : undefined;
-  const instances = "instances" in build ? build.instances : undefined;
+  const props = (build as { props?: unknown }).props;
   if (!Array.isArray(props)) {
     return;
   }
+
   const instanceById = new Map<string, Record<string, unknown>>();
+  const instances = (build as { instances?: unknown }).instances;
   if (Array.isArray(instances)) {
     for (const entry of instances) {
       if (
@@ -161,8 +153,7 @@ const getMissingJsonPropValueDiagnostics = (data: unknown) => {
     }
   }
 
-  const diagnostics: MissingJsonPropValueDiagnostic[] = [];
-  let total = 0;
+  const diagnostics: string[] = [];
   for (const entry of props) {
     if (
       !Array.isArray(entry) ||
@@ -175,25 +166,21 @@ const getMissingJsonPropValueDiagnostics = (data: unknown) => {
     if (prop.type !== "json" || prop.value !== undefined) {
       continue;
     }
-    total += 1;
-    if (diagnostics.length === 10) {
-      continue;
-    }
     const instanceId =
       typeof prop.instanceId === "string" ? prop.instanceId : "unknown";
     const instance = instanceById.get(instanceId);
-    diagnostics.push({
-      propName: typeof prop.name === "string" ? prop.name : "unknown",
-      instanceId,
-      ...(typeof instance?.label === "string"
-        ? { instanceLabel: instance.label }
-        : {}),
-      ...(typeof instance?.component === "string"
-        ? { component: instance.component }
-        : {}),
-    });
+    const target =
+      typeof instance?.label === "string"
+        ? `“${instance.label}”`
+        : `instance ${instanceId}`;
+    const component =
+      typeof instance?.component === "string" ? ` (${instance.component})` : "";
+    const propName = typeof prop.name === "string" ? prop.name : "unknown";
+    diagnostics.push(
+      `${target}${component}: JSON prop “${propName}” has no value`
+    );
   }
-  return total === 0 ? undefined : { diagnostics, total };
+  return diagnostics.length === 0 ? undefined : diagnostics;
 };
 
 const fetchJsonResponse: typeof fetch = async (request, init) => {
@@ -1325,10 +1312,7 @@ export const loadProjectBundleByBuildId = async (
   });
   const missingJsonPropValues = getMissingJsonPropValueDiagnostics(data);
   if (missingJsonPropValues !== undefined) {
-    throw new MissingJsonPropValueError(
-      missingJsonPropValues.diagnostics,
-      missingJsonPropValues.total
-    );
+    throw new MissingJsonPropValueError(missingJsonPropValues);
   }
   return publishedProjectBundle.parse(data);
 };

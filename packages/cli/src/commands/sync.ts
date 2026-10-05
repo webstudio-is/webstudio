@@ -155,22 +155,9 @@ const isUnpublishedProjectBundleError = (error: unknown) => {
 };
 
 const getMissingJsonPropValueMessage = (error: MissingJsonPropValueError) => {
-  const diagnostics = error.diagnostics.map((diagnostic) => {
-    const target = diagnostic.instanceLabel
-      ? `“${diagnostic.instanceLabel}”`
-      : `instance ${diagnostic.instanceId}`;
-    const component = diagnostic.component ? ` (${diagnostic.component})` : "";
-    return `- ${target}${component}: JSON prop “${diagnostic.propName}” has no value`;
-  });
-  const remaining = error.total - diagnostics.length;
-  if (remaining > 0) {
-    diagnostics.push(
-      `- and ${remaining} more JSON prop${remaining === 1 ? "" : "s"}`
-    );
-  }
   return [
     "This build cannot be published because it contains JSON props with no value:",
-    ...diagnostics,
+    ...error.diagnostics.map((diagnostic) => `- ${diagnostic}`),
     "Open the project in Webstudio, set or reset the affected prop, then publish again.",
   ].join("\n");
 };

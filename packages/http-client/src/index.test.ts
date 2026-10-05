@@ -1343,15 +1343,7 @@ test("reports json props without a value when loading a published bundle", async
     })
   ).rejects.toMatchObject({
     name: "MissingJsonPropValueError",
-    total: 1,
-    diagnostics: [
-      {
-        propName: "data",
-        instanceId: "instance-id",
-        instanceLabel: "Projects",
-        component: "ws:collection",
-      },
-    ],
+    diagnostics: ["“Projects” (ws:collection): JSON prop “data” has no value"],
   });
 });
 
