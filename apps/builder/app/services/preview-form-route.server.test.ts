@@ -200,11 +200,13 @@ test("Preview uses changed draft Resource settings without republishing", async 
 test("Preview executes draft Resource bindings with existing expression methods", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
-    resources: [{
-      ...draftBuild.resources[0],
-      url: '`https://example.com/${$ws$dataSource$formData.email.split("@")[0].toUpperCase()}`',
-      body: '({ email: $ws$dataSource$formData.email.toUpperCase() })',
-    }],
+    resources: [
+      {
+        ...draftBuild.resources[0],
+        url: '`https://example.com/${$ws$dataSource$formData.email.split("@")[0].toUpperCase()}`',
+        body: "({ email: $ws$dataSource$formData.email.toUpperCase() })",
+      },
+    ],
   } as never);
   const response = await action({ request: request() } as never);
   expect(await response.json()).toMatchObject({ success: true });
@@ -219,10 +221,12 @@ test("Preview executes draft Resource bindings with existing expression methods"
 test("draft expression failures do not execute a Resource", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
-    resources: [{
-      ...draftBuild.resources[0],
-      body: "(() => { throw new Error('bad expression'); })()",
-    }],
+    resources: [
+      {
+        ...draftBuild.resources[0],
+        body: "(() => { throw new Error('bad expression'); })()",
+      },
+    ],
   } as never);
   const response = await action({ request: request() } as never);
   expect(await response.json()).toMatchObject({
@@ -230,8 +234,9 @@ test("draft expression failures do not execute a Resource", async () => {
     status: 400,
     errors: [{ message: expect.any(String) }],
   });
-  expect(vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value)
-    .not.toHaveBeenCalled();
+  expect(
+    vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
+  ).not.toHaveBeenCalled();
 });
 
 test("a webhook-only Form is independent of Email Service availability", async () => {
