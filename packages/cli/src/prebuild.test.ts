@@ -5021,9 +5021,14 @@ sitemap.map((page) => page.path);`
     slowPrebuildTestTimeout
   );
 
-  test.each(["defaults", "react-router"])(
-    "sends visitor confirmation only after primary success through the generated route (%s)",
-    async (template) => {
+  test.each([
+    ["defaults", "Webstudio Team <reply@example.com>", "Webstudio Team"],
+    ["defaults", "reply@example.com", undefined],
+    ["react-router", "Webstudio Team <reply@example.com>", "Webstudio Team"],
+    ["react-router", "reply@example.com", undefined],
+  ] as const)(
+    "sends visitor confirmation through the generated route (%s, %s)",
+    async (template, sender, fromName) => {
       const siteData = createSiteData({
         instances: [
           ["root", { id: "root", component: "NativeForm", children: [] }],
@@ -5044,6 +5049,7 @@ sitemap.map((page) => page.path);`
           ],
         ],
         pageMeta: {
+          emailSender: sender,
           emailConfirmationSubject: "Receipt",
           emailConfirmationBody: "Fixed confirmation text.",
         },
@@ -5121,6 +5127,11 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
             to: [{ address: "visitor@example.com" }],
             subject: "Receipt",
             text: "Fixed confirmation text.",
+            replyTo: {
+              address: "reply@example.com",
+              ...(fromName === undefined ? {} : { name: fromName }),
+            },
+            ...(fromName === undefined ? {} : { fromName }),
           });
           return emailStatus === 200
             ? Response.json({ id: "sent" })
@@ -5313,6 +5324,113 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
       );
       expect(httpFetch).not.toHaveBeenCalled();
       expect(emailSend).not.toHaveBeenCalled();
+    },
+    slowPrebuildTestTimeout
+  );
+
+  test.each(["defaults", "react-router"])(
+    "ignores a spoofed forwarded host when resolving a managed relative Resource (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["destination"] },
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "relative",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "relative",
+          {
+            id: "relative",
+            name: "Relative",
+            method: "post",
+            url: '"/receive"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        `export const createManagedFormEmailSender = () => undefined;
+export const validateManagedFormEmail = () => undefined;
+export const createManagedFormResourceFetch = () => {
+  const protectedFetch = globalThis.__testManagedFormFetch;
+  protectedFetch.validateDestination = (url) => {
+    if (url.hostname === "site.example") throw new Error("Resource destination is not allowed");
+  };
+  return protectedFetch;
+};
+`
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "spoofed-host-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "spoofed-host-action.mjs")).href
+      );
+      const outbound = vi.fn(async () => Response.json({ accepted: true }));
+      vi.stubGlobal("__testManagedFormFetch", outbound);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request(
+            `https://site.example/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: {
+                host: "site.example",
+                "x-forwarded-host": "attacker.example",
+              },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("Resource destination is not allowed")
+      );
+      expect(outbound).not.toHaveBeenCalled();
     },
     slowPrebuildTestTimeout
   );

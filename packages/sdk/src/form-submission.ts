@@ -1,4 +1,6 @@
 export const maxFormDestinations = 5;
+export const emptyFormDestinationMessage =
+  "Select at least one Resource destination";
 
 export type FormSubmission = {
   /** Resource data source IDs, stable across renames. */
@@ -35,7 +37,7 @@ export const validateFormSubmission = (submission: FormSubmission) => {
     return "Select a valid email field for visitor confirmation";
   }
   if (submission.destinations.length === 0) {
-    return "Select at least one Resource destination";
+    return emptyFormDestinationMessage;
   }
   if (submission.destinations.length > maxFormDestinations) {
     return `Select no more than ${maxFormDestinations} Resource destinations`;

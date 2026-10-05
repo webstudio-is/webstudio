@@ -76,6 +76,7 @@ export const prepareVisitorConfirmation = ({
   body,
   isDefaultBody,
   siteUrl,
+  sender,
 }: {
   fieldName: string | undefined;
   formData: FormData;
@@ -83,6 +84,7 @@ export const prepareVisitorConfirmation = ({
   body: string;
   isDefaultBody: boolean;
   siteUrl: string;
+  sender?: string;
 }): ResourceRequest | undefined => {
   if (fieldName === undefined || fieldName === "") {
     return;
@@ -103,6 +105,10 @@ export const prepareVisitorConfirmation = ({
   if (typeof body !== "string") {
     throw new Error("Visitor confirmation body must be text");
   }
+  const parsedSender = sender ? parseEmailSender(sender) : undefined;
+  if (sender && parsedSender === undefined) {
+    throw new Error("Visitor confirmation Sender is invalid");
+  }
   const text = isDefaultBody ? `${body}\n\n${siteUrl}` : body;
   const request: ResourceRequest = {
     name: "Visitor confirmation",
@@ -114,6 +120,7 @@ export const prepareVisitorConfirmation = ({
     email: {
       recipientMode: "custom",
       recipients: [{ address }],
+      ...(parsedSender === undefined ? {} : { sender: parsedSender }),
       subject,
       body: text,
       includeAttachments: false,

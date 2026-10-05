@@ -281,7 +281,11 @@ export const action = async ({
     isManagedFormRequest =
       url.searchParams.get(managedFormRequestParamName) === "1";
     url.searchParams.delete(managedFormRequestParamName);
-    url.host = getRequestHost(request);
+    // Managed Resource requests use the ingress URL as their resolution base.
+    // A client-supplied forwarded host must not choose an egress destination.
+    if (!isManagedFormRequest) {
+      url.host = getRequestHost(request);
+    }
 
     const formData = isManagedFormRequest
       ? await readFormDataWithLimit(request)
@@ -360,6 +364,7 @@ export const action = async ({
         body: emailDefaults.confirmationBody,
         isDefaultBody: emailDefaults.confirmationBodyIsDefault,
         siteUrl: url.origin,
+        sender: emailDefaults.sender,
       });
       if (confirmation !== undefined && sendEmail === undefined) {
         throw new Error("Visitor confirmation requires Webstudio Cloud email");

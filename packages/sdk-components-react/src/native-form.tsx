@@ -8,6 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import {
+  emptyFormDestinationMessage,
   isFormSubmission,
   validateFormSubmission,
 } from "@webstudio-is/sdk/form-submission";
@@ -199,7 +200,10 @@ export const NativeForm = forwardRef<
         <fieldset disabled={!hydrated} style={{ display: "contents" }}>
           <div style={{ display: "contents" }}>{children}</div>
         </fieldset>
-        {(configurationError || error) && (
+        {(error ||
+          (configurationError === emptyFormDestinationMessage
+            ? undefined
+            : configurationError)) && (
           <div role="alert" data-ws-form-feedback="">
             {error ?? configurationError}
           </div>

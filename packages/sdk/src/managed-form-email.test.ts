@@ -177,6 +177,56 @@ test("provider fake receives one private visitor envelope without attachments", 
   });
 });
 
+test.each([
+  [
+    "Webstudio Team <reply@example.com>",
+    { address: "reply@example.com", name: "Webstudio Team" },
+    "Webstudio Team",
+  ],
+  ["reply@example.com", { address: "reply@example.com" }, undefined],
+] as const)(
+  "visitor confirmation forwards project Sender %s",
+  async (sender, replyTo, fromName) => {
+    const formData = new FormData();
+    formData.set("email", "visitor@example.com");
+    const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+    const send = createCloudflareManagedFormEmailSender({ fetch }, formData);
+    await sendVisitorConfirmation(
+      { success: true, status: 200, results: [], errors: [] },
+      prepareVisitorConfirmation({
+        fieldName: "email",
+        formData,
+        subject: "Receipt",
+        body: "Thanks",
+        isDefaultBody: false,
+        siteUrl: "https://published.example",
+        sender,
+      }),
+      send
+    );
+    const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    const envelope = JSON.parse(init.body as string);
+    expect(envelope.replyTo).toEqual(replyTo);
+    expect(envelope.fromName).toBe(fromName);
+  }
+);
+
+test("invalid confirmation Sender fails before delivery", () => {
+  const formData = new FormData();
+  formData.set("email", "visitor@example.com");
+  expect(() =>
+    prepareVisitorConfirmation({
+      fieldName: "email",
+      formData,
+      subject: "Receipt",
+      body: "Thanks",
+      isDefaultBody: false,
+      siteUrl: "https://published.example",
+      sender: "bad\nBcc: victim@example.com",
+    })
+  ).toThrow("Visitor confirmation Sender is invalid");
+});
+
 test("sends the private worker envelope with files and no form internals", async () => {
   const formData = new FormData();
   formData.append(

@@ -39,9 +39,7 @@ test("an unconfigured Form blocks native navigation", async () => {
     input.value = "person@example.com";
     button.click();
     expect(frame.location.href).toBe("about:srcdoc");
-    expect(
-      iframe.contentDocument?.querySelector('[role="alert"]')?.textContent
-    ).toMatch(/Select at least one Resource/);
+    expect(iframe.contentDocument?.querySelector('[role="alert"]')).toBeNull();
   } finally {
     iframe.remove();
   }
@@ -64,6 +62,7 @@ test("resource-only Form blocks native navigation and reports an empty selection
         </NativeForm>
       );
     });
+    expect(container.querySelector('[role="alert"]')).toBeNull();
     await act(async () => {
       container.querySelector("button")?.click();
     });
