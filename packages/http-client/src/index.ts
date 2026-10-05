@@ -1212,37 +1212,20 @@ const normalizeLegacyJsonProps = (project: unknown) => {
   if (typeof project !== "object" || project === null) {
     return project;
   }
-  const build = (project as { build?: unknown }).build;
-  if (typeof build !== "object" || build === null) {
-    return project;
-  }
-  const props = (build as { props?: unknown }).props;
+  const props = (
+    project as {
+      build?: { props?: [string, { type?: string; value?: unknown }][] };
+    }
+  ).build?.props;
   if (Array.isArray(props) === false) {
     return project;
   }
-
-  let changed = false;
-  const normalizedProps = props.map((entry) => {
-    if (Array.isArray(entry) === false || entry.length !== 2) {
-      return entry;
+  for (const [, prop] of props) {
+    if (prop.type === "json" && prop.value === undefined) {
+      prop.value = null;
     }
-    const [id, prop] = entry;
-    if (
-      typeof prop !== "object" ||
-      prop === null ||
-      !("type" in prop) ||
-      prop.type !== "json" ||
-      "value" in prop
-    ) {
-      return entry;
-    }
-    changed = true;
-    return [id, { ...prop, value: null }];
-  });
-
-  return changed
-    ? { ...project, build: { ...build, props: normalizedProps } }
-    : project;
+  }
+  return project;
 };
 
 export const loadProjectBundleByBuildId = async (
