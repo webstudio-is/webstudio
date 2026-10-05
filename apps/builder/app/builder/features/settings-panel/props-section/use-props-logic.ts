@@ -167,10 +167,14 @@ const canShowTextContent = ({
   return canHaveTextContent(input);
 };
 
+const isManagedFormProperty = (name: string) =>
+  name === showAttribute || name === "submission" || name === "successRedirect";
+
 export const __testing__ = {
   isPropVisibleInContentMode,
   getAndDelete,
   canShowTextContent,
+  isManagedFormProperty,
 };
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
@@ -201,7 +205,7 @@ export const usePropsLogic = ({
   const isPropVisible = (propName: string) => {
     if (
       instance.component === "NativeForm" &&
-      (propName === "action" || propName === "method" || propName === "encType")
+      !isManagedFormProperty(propName)
     ) {
       return false;
     }

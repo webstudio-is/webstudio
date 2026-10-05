@@ -139,7 +139,7 @@ test("Actions references an existing Resource without creating another", async (
     );
   };
   await act(async () => root?.render(<Harness />));
-  expect(container.textContent).toContain(
+  expect(container.textContent).not.toContain(
     "Select at least one Resource destination"
   );
   expect(container.textContent).not.toContain("Create Resource in Form");

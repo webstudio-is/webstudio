@@ -121,6 +121,9 @@ const shouldShowPropertiesSection = ({
   return isDesignMode || (isContentMode && hasProperties);
 };
 
+const canAddPropertyOrAttribute = (component: Instance["component"]) =>
+  component !== "NativeForm";
+
 const shouldRenderPropsSectionContainer = ({
   component,
   propsMetasSize,
@@ -351,7 +354,9 @@ export const PropsSection = (props: PropsSectionProps) => {
   const addedProps = logic.addedProps;
   const initialProps = logic.initialProps;
   const hasProperties = addedProps.length > 0 || initialProps.length > 0;
-  const hasItems = hasProperties || (isDesignMode && addingProp);
+  const canAddProperty =
+    isDesignMode && canAddPropertyOrAttribute(props.component);
+  const hasItems = hasProperties || (canAddProperty && addingProp);
 
   const animationAction = logic.initialProps.find(
     (prop) => prop.meta.type === "animationAction"
@@ -431,11 +436,11 @@ export const PropsSection = (props: PropsSectionProps) => {
       {showPropertiesSection && (
         <CollapsibleSectionWithAddButton
           label="Properties & attributes"
-          onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
+          onAdd={canAddProperty ? () => setAddingProp(true) : undefined}
           hasItems={hasItems}
         >
           <Flex gap="1" direction="column">
-            {isDesignMode && addingProp && (
+            {canAddProperty && addingProp && (
               <AddPropertyOrAttribute
                 onPropSelected={(propName) => {
                   setAddingProp(false);
@@ -454,6 +459,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
 export const __testing__ = {
   shouldShowPropertiesSection,
+  canAddPropertyOrAttribute,
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,

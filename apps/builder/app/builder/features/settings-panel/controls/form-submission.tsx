@@ -25,6 +25,7 @@ import {
 } from "@webstudio-is/icons";
 import {
   isFormSubmission,
+  emptyFormDestinationMessage,
   maxFormDestinations,
   validateFormSubmission,
   type FormSubmission,
@@ -36,8 +37,8 @@ import {
   $instances,
   $resources,
 } from "~/shared/sync/data-stores";
-import { VariablePopoverTrigger } from "../variable-popover";
 import { type ControlProps } from "../shared";
+import { FieldLabel } from "../property-label";
 
 const ActionItem = ({
   id,
@@ -58,11 +59,11 @@ const ActionItem = ({
 }) => {
   const isResource = variable?.type === "resource";
   const name = isResource ? variable.name : "Deleted Resource";
-  const item = (
+  return (
     <CssValueListItem
       id={id}
       index={index}
-      aria-label={isResource ? `Edit action ${name}` : `Remove missing action`}
+      aria-label={`Action ${name}`}
       draggable
       active={active}
       hidden={!isEnabled}
@@ -93,13 +94,6 @@ const ActionItem = ({
         </>
       }
     />
-  );
-  return isResource ? (
-    <VariablePopoverTrigger variable={variable} formDestination>
-      {item}
-    </VariablePopoverTrigger>
-  ) : (
-    item
   );
 };
 
@@ -147,7 +141,12 @@ export const FormSubmissionControl = ({
   return (
     <Box>
       <Flex align="center" justify="between">
-        <Label>Actions</Label>
+        <FieldLabel
+          resettable={invalidSavedValue || submission.destinations.length > 0}
+          onReset={() => update({ destinations: [] })}
+        >
+          Actions
+        </FieldLabel>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SmallIconButton
@@ -231,10 +230,9 @@ export const FormSubmissionControl = ({
               </Grid>
             </CssValueListArrowFocus>
           )}
-          {resources.length === 0 && (
-            <Text>Create a Resource in Data variables to add an action.</Text>
+          {error && error !== emptyFormDestinationMessage && (
+            <Text>{error}</Text>
           )}
-          {error && <Text>{error}</Text>}
         </Flex>
       </Box>
     </Box>

@@ -10,8 +10,20 @@ import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
-const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
-  __testing__;
+const {
+  isPropVisibleInContentMode,
+  getAndDelete,
+  canShowTextContent,
+  isManagedFormProperty,
+} = __testing__;
+
+test("managed Form hides native form attributes from its property list", () => {
+  expect(isManagedFormProperty("submission")).toBe(true);
+  expect(isManagedFormProperty("successRedirect")).toBe(true);
+  for (const name of ["id", "class", "action", "method", "target", "encType"]) {
+    expect(isManagedFormProperty(name)).toBe(false);
+  }
+});
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}

@@ -4,11 +4,17 @@ import { __testing__ } from "./props-section";
 
 const {
   shouldShowPropertiesSection,
+  canAddPropertyOrAttribute,
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
   shouldWriteBoundValue,
 } = __testing__;
+
+test("managed Form has no generic property or attribute picker", () => {
+  expect(canAddPropertyOrAttribute("NativeForm")).toBe(false);
+  expect(canAddPropertyOrAttribute("Box")).toBe(true);
+});
 
 test("finds a legacy React-named expression by its standard attribute name", () => {
   const className: Prop = {

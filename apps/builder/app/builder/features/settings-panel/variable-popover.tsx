@@ -252,12 +252,6 @@ const TypeField = ({
         "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
     },
     {
-      value: "email-resource",
-      label: "Email",
-      description:
-        "Send a plain-text email through Webstudio Cloud when a Form is submitted.",
-    },
-    {
       value: "graphql-resource",
       label: (
         <Flex direction="row" gap="2" align="center">
@@ -295,13 +289,40 @@ const TypeField = ({
             {options.get(option)?.description}
           </Box>
         )}
-        value={value}
+        value={value === "email-resource" ? "system-resource" : value}
         name="type"
         onChange={onChange}
       />
     </Grid>
   );
 };
+
+const SystemResourceKindField = ({
+  value,
+  onChange,
+}: {
+  value: "system-resource" | "email-resource";
+  onChange: (value: VariableType) => void;
+}) => (
+  <Row>
+    <Grid gap="1">
+      <Label>System resource</Label>
+      <Select<"system-resource" | "email-resource">
+        options={["system-resource", "email-resource"]}
+        getLabel={(option: "system-resource" | "email-resource") =>
+          option === "email-resource" ? "Email" : "Webstudio data"
+        }
+        getDescription={(option: "system-resource" | "email-resource") =>
+          option === "email-resource"
+            ? "Send a plain-text email through Webstudio Cloud when a Form is submitted."
+            : "Use data provided by Webstudio."
+        }
+        value={value}
+        onChange={onChange}
+      />
+    </Grid>
+  </Row>
+);
 
 type PanelApi = {
   save: (formData: FormData) => void | false | { dataSourceId: string };
@@ -600,6 +621,13 @@ const VariablePanelForm = forwardRef<
             <Row>
               <TypeField value={variableType} onChange={onVariableTypeChange} />
             </Row>
+          )}
+          {(variableType === "system-resource" ||
+            variableType === "email-resource") && (
+            <SystemResourceKindField
+              value={variableType}
+              onChange={onVariableTypeChange}
+            />
           )}
           {variableType === "parameter" && (
             <ParameterForm ref={ref} variable={variable} />
@@ -1296,4 +1324,8 @@ const getReloadableResourceFormData = (form: HTMLFormElement | null) => {
   return formData;
 };
 
-export const __testing__ = { getReloadableResourceFormData };
+export const __testing__ = {
+  getReloadableResourceFormData,
+  TypeField,
+  SystemResourceKindField,
+};

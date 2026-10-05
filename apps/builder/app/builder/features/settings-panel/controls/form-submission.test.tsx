@@ -97,8 +97,11 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   expect(
     container.querySelector('[aria-label="Native browser form"]')
   ).toBeNull();
-  expect(container.textContent).toContain(
+  expect(container.textContent).not.toContain(
     "Select at least one Resource destination"
+  );
+  expect(container.textContent).not.toContain(
+    "Create a Resource in Data variables to add an action."
   );
 
   await act(async () =>
@@ -110,7 +113,7 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
       value: { destinations: [] },
     })
   );
-  expect(container.textContent).toContain(
+  expect(container.textContent).not.toContain(
     "Select at least one Resource destination"
   );
   await act(async () =>
@@ -404,6 +407,15 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
   await act(
     async () =>
       await userEvent.click(
+        container.querySelector<HTMLButtonElement>(
+          '[aria-label="Action http"]'
+        )!
+      )
+  );
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  await act(
+    async () =>
+      await userEvent.click(
         container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
       )
   );
@@ -540,5 +552,18 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: { destinations: [], disabledDestinations: [] },
+  });
+  const actionsLabel = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === "Actions"
+  );
+  expect(actionsLabel).toBeDefined();
+  await act(async () =>
+    actionsLabel?.dispatchEvent(
+      new MouseEvent("click", { altKey: true, bubbles: true })
+    )
+  );
+  expect(onChange).toHaveBeenLastCalledWith({
+    type: "json",
+    value: { destinations: [] },
   });
 });
