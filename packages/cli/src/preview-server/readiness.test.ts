@@ -242,7 +242,7 @@ test("rejects stale preview servers that serve a previous build", async () => {
   ).rejects.toMatchObject({
     code: "PREVIEW_ASSETS_STALE",
     message: expect.stringContaining(
-      "The preview server did not serve the latest generated build assets."
+      "The preview server did not serve the latest generated build assets. Stop the existing preview server on this port, then retry."
     ),
     issues: [
       {

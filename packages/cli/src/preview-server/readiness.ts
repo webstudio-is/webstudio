@@ -222,7 +222,7 @@ export const waitForPreviewReady = async (
     throw createPreviewReadinessError(url, "PREVIEW_PROJECT_MISMATCH", {
       code: "preview_project_mismatch",
       message:
-        "The preview server did not serve the generated project version just prepared.",
+        "The preview server did not serve the generated project version just prepared. Stop the existing preview server on this port, then retry.",
       constraint: "latest_generated_project_served",
     });
   }
@@ -230,7 +230,7 @@ export const waitForPreviewReady = async (
     throw createPreviewReadinessError(url, "PREVIEW_ASSETS_STALE", {
       code: "preview_assets_stale",
       message:
-        "The preview server did not serve the latest generated build assets.",
+        "The preview server did not serve the latest generated build assets. Stop the existing preview server on this port, then retry.",
       constraint: "latest_generated_assets_served",
     });
   }
