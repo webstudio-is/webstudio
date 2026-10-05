@@ -182,6 +182,38 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   expect(response.headers.get("cache-control")).toContain("no-store");
 });
 
+const expiredBotValue = (Date.now() - 6 * 60 * 1000).toString(16);
+
+test.each([
+  [undefined, "Form bot field not found"],
+  ["jsdom", "Form bot value invalid jsdom"],
+  [expiredBotValue, `Form bot value invalid ${expiredBotValue}`],
+])(
+  "Preview rejects invalid bot field %s before Resource egress",
+  async (value, message) => {
+    const validRequest = request();
+    const formData = await validRequest.formData();
+    formData.delete("ws--form-bot");
+    if (value !== undefined) {
+      formData.set("ws--form-bot", value);
+    }
+    const response = await action({
+      request: new Request(validRequest.url, {
+        method: "POST",
+        body: formData,
+      }),
+    } as never);
+    expect(await response.json()).toMatchObject({
+      success: false,
+      status: 400,
+      errors: [{ message }],
+    });
+    expect(
+      vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
+    ).not.toHaveBeenCalled();
+  }
+);
+
 test("Preview uses changed draft Resource settings without republishing", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
