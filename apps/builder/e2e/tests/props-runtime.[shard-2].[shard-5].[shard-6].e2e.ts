@@ -1,6 +1,10 @@
 import { createServer } from "node:http";
 import type { Page } from "@playwright/test";
-import { createId, type Instance } from "@webstudio-is/sdk";
+import { createId } from "@webstudio-is/sdk";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { Form as webhookFormTemplate } from "@webstudio-is/sdk-components-react/templates";
+import { renderTemplate } from "@webstudio-is/template";
 import { loadDevBuild, updateBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { openNavigatorPanel } from "../flows/navigator";
@@ -44,67 +48,39 @@ const insertComponentPanelOption = async ({
 
 const seedSavedWebhookForm = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
-  const instances = JSON.parse(build.instances) as Instance[];
-  const body = instances.find((instance) => instance.id === "body");
-  if (body === undefined) {
-    throw new Error("Expected the fixture's body instance");
-  }
-  const formId = createId("nano");
-  const nameId = createId("nano");
-  const emailId = createId("nano");
-  const buttonId = createId("nano");
-  body.children.push({ type: "id", value: formId });
-  instances.push(
-    {
-      type: "instance",
-      id: formId,
-      component: "Form",
-      children: [
-        { type: "id", value: nameId },
-        { type: "id", value: emailId },
-        { type: "id", value: buttonId },
-      ],
-    },
-    {
-      type: "instance",
-      id: nameId,
-      component: "ws:element",
-      tag: "input",
-      children: [],
-    },
-    {
-      type: "instance",
-      id: emailId,
-      component: "ws:element",
-      tag: "input",
-      children: [],
-    },
-    {
-      type: "instance",
-      id: buttonId,
-      component: "ws:element",
-      tag: "button",
-      children: [{ type: "text", value: "Submit" }],
-    }
+  const fragment = renderTemplate(
+    webhookFormTemplate.template,
+    () => createId("nano"),
+    JSON.parse(build.breakpoints),
+    { componentIds, componentMetas }
   );
+  const instances = JSON.parse(build.instances) as typeof fragment.instances;
+  const body = instances.find((instance) => instance.id === "body");
+  const root = fragment.children[0];
+  if (body === undefined || root?.type !== "id") {
+    throw new Error("Expected the fixture body and legacy Form template root");
+  }
+  body.children.push(root);
+
   await updateBuild(build.id, {
-    instances: JSON.stringify(instances),
-    props: JSON.stringify([
-      ...JSON.parse(build.props),
-      {
-        id: createId("nano"),
-        instanceId: nameId,
-        name: "name",
-        type: "string",
-        value: "name",
-      },
-      {
-        id: createId("nano"),
-        instanceId: emailId,
-        name: "name",
-        type: "string",
-        value: "email",
-      },
+    instances: JSON.stringify([...instances, ...fragment.instances]),
+    props: JSON.stringify([...JSON.parse(build.props), ...fragment.props]),
+    dataSources: JSON.stringify([
+      ...JSON.parse(build.dataSources),
+      ...fragment.dataSources,
+    ]),
+    resources: JSON.stringify([
+      ...JSON.parse(build.resources),
+      ...fragment.resources,
+    ]),
+    styles: JSON.stringify([...JSON.parse(build.styles), ...fragment.styles]),
+    styleSources: JSON.stringify([
+      ...JSON.parse(build.styleSources),
+      ...fragment.styleSources,
+    ]),
+    styleSourceSelections: JSON.stringify([
+      ...JSON.parse(build.styleSourceSelections),
+      ...fragment.styleSourceSelections,
     ]),
   });
 };
@@ -518,7 +494,9 @@ test("Webhook Form action submits once and persists after reload", async ({
           await page.locator('input[name="name"]').fill("Ada");
           await page.locator('input[name="email"]').fill("ada@example.com");
           await page.getByRole("button", { name: "Submit" }).click();
-          await page.locator('form[data-state="success"]').waitFor();
+          await page
+            .getByText("Thank you for getting in touch!", { exact: true })
+            .waitFor();
         },
       });
     });
