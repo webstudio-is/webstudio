@@ -1,10 +1,10 @@
 import { createServer } from "node:http";
 import type { Page } from "@playwright/test";
-import { createId } from "@webstudio-is/sdk";
-import { componentIds } from "@webstudio-is/sdk-components-registry/components";
-import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { Form as webhookFormTemplate } from "@webstudio-is/sdk-components-react/templates";
-import { renderTemplate } from "@webstudio-is/template";
+import {
+  createId,
+  encodeDataSourceVariable,
+  type Instance,
+} from "@webstudio-is/sdk";
 import { loadDevBuild, updateBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { openNavigatorPanel } from "../flows/navigator";
@@ -48,39 +48,225 @@ const insertComponentPanelOption = async ({
 
 const seedSavedWebhookForm = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
-  const fragment = renderTemplate(
-    webhookFormTemplate.template,
-    () => createId("nano"),
-    JSON.parse(build.breakpoints),
-    { componentIds, componentMetas }
-  );
-  const instances = JSON.parse(build.instances) as typeof fragment.instances;
+  const instances = JSON.parse(build.instances) as Instance[];
   const body = instances.find((instance) => instance.id === "body");
-  const root = fragment.children[0];
-  if (body === undefined || root?.type !== "id") {
-    throw new Error("Expected the fixture body and legacy Form template root");
+  if (body === undefined) {
+    throw new Error("Expected the fixture's body instance");
   }
-  body.children.push(root);
+  const id = () => createId("nano");
+  const formId = id();
+  const stateId = id();
+  const contentId = id();
+  const nameLabelId = id();
+  const nameInputId = id();
+  const emailLabelId = id();
+  const emailInputId = id();
+  const buttonId = id();
+  const successId = id();
+  const errorId = id();
+  const formState = encodeDataSourceVariable(stateId);
+  const nameStyleId = `${nameLabelId}:ws:style`;
+  const nameInputStyleId = `${nameInputId}:ws:style`;
+  const emailStyleId = `${emailLabelId}:ws:style`;
+  const emailInputStyleId = `${emailInputId}:ws:style`;
+  const breakpoints = JSON.parse(build.breakpoints) as Array<{
+    id: string;
+    label?: string;
+    minWidth?: number;
+    maxWidth?: number;
+  }>;
+  const baseBreakpoint = breakpoints.find(
+    ({ minWidth, maxWidth }) => minWidth === undefined && maxWidth === undefined
+  );
+  const breakpointId = baseBreakpoint?.id ?? "base";
+  if (baseBreakpoint === undefined) {
+    breakpoints.push({ id: breakpointId, label: "" });
+  }
+  const instancesToAdd: Instance[] = [
+    {
+      type: "instance",
+      id: formId,
+      component: "Form",
+      children: [contentId, successId, errorId].map((value) => ({
+        type: "id",
+        value,
+      })),
+    },
+    {
+      type: "instance",
+      id: contentId,
+      component: "ws:element",
+      tag: "div",
+      label: "Form Content",
+      children: [
+        nameLabelId,
+        nameInputId,
+        emailLabelId,
+        emailInputId,
+        buttonId,
+      ].map((value) => ({
+        type: "id",
+        value,
+      })),
+    },
+    {
+      type: "instance",
+      id: nameLabelId,
+      component: "ws:element",
+      tag: "label",
+      children: [{ type: "text", value: "Name", placeholder: true }],
+    },
+    {
+      type: "instance",
+      id: nameInputId,
+      component: "ws:element",
+      tag: "input",
+      children: [],
+    },
+    {
+      type: "instance",
+      id: emailLabelId,
+      component: "ws:element",
+      tag: "label",
+      children: [{ type: "text", value: "Email", placeholder: true }],
+    },
+    {
+      type: "instance",
+      id: emailInputId,
+      component: "ws:element",
+      tag: "input",
+      children: [],
+    },
+    {
+      type: "instance",
+      id: buttonId,
+      component: "ws:element",
+      tag: "button",
+      children: [{ type: "text", value: "Submit", placeholder: true }],
+    },
+    {
+      type: "instance",
+      id: successId,
+      component: "ws:element",
+      tag: "div",
+      label: "Success Message",
+      children: [
+        {
+          type: "text",
+          value: "Thank you for getting in touch!",
+          placeholder: true,
+        },
+      ],
+    },
+    {
+      type: "instance",
+      id: errorId,
+      component: "ws:element",
+      tag: "div",
+      label: "Error Message",
+      children: [
+        {
+          type: "text",
+          value: "Sorry, something went wrong.",
+          placeholder: true,
+        },
+      ],
+    },
+  ];
+  body.children.push({ type: "id", value: formId });
+  const makePropId = (instanceId: string, name: string) =>
+    `${instanceId}:${name}`;
+  const expressionProp = (instanceId: string, name: string, value: string) => ({
+    id: makePropId(instanceId, name),
+    instanceId,
+    name,
+    type: "expression" as const,
+    value,
+    mode: "read" as const,
+  });
+  const dataSources = JSON.parse(build.dataSources) as unknown[];
+  const props = JSON.parse(build.props) as unknown[];
+  const styleSources = JSON.parse(build.styleSources) as unknown[];
+  const styleSourceSelections = JSON.parse(
+    build.styleSourceSelections
+  ) as unknown[];
+  const styles = JSON.parse(build.styles) as unknown[];
 
   await updateBuild(build.id, {
-    instances: JSON.stringify([...instances, ...fragment.instances]),
-    props: JSON.stringify([...JSON.parse(build.props), ...fragment.props]),
+    instances: JSON.stringify([...instances, ...instancesToAdd]),
+    breakpoints: JSON.stringify(breakpoints),
     dataSources: JSON.stringify([
-      ...JSON.parse(build.dataSources),
-      ...fragment.dataSources,
+      ...dataSources,
+      {
+        type: "variable",
+        id: stateId,
+        scopeInstanceId: formId,
+        name: "formState",
+        value: { type: "string", value: "initial" },
+      },
     ]),
-    resources: JSON.stringify([
-      ...JSON.parse(build.resources),
-      ...fragment.resources,
+    props: JSON.stringify([
+      ...props,
+      expressionProp(formId, "state", formState),
+      {
+        id: makePropId(formId, "onStateChange"),
+        instanceId: formId,
+        name: "onStateChange",
+        type: "action",
+        value: [
+          {
+            type: "execute",
+            args: ["state"],
+            code: `${formState} = state`,
+          },
+        ],
+      },
+      expressionProp(
+        contentId,
+        "data-ws-show",
+        `${formState} === 'initial' || ${formState} === 'error'`
+      ),
+      expressionProp(successId, "data-ws-show", `${formState} === 'success'`),
+      expressionProp(errorId, "data-ws-show", `${formState} === 'error'`),
+      {
+        id: makePropId(nameInputId, "name"),
+        instanceId: nameInputId,
+        name: "name",
+        type: "string",
+        value: "name",
+      },
+      {
+        id: makePropId(emailInputId, "name"),
+        instanceId: emailInputId,
+        name: "name",
+        type: "string",
+        value: "email",
+      },
     ]),
-    styles: JSON.stringify([...JSON.parse(build.styles), ...fragment.styles]),
     styleSources: JSON.stringify([
-      ...JSON.parse(build.styleSources),
-      ...fragment.styleSources,
+      ...styleSources,
+      { type: "local", id: nameStyleId },
+      { type: "local", id: nameInputStyleId },
+      { type: "local", id: emailStyleId },
+      { type: "local", id: emailInputStyleId },
     ]),
     styleSourceSelections: JSON.stringify([
-      ...JSON.parse(build.styleSourceSelections),
-      ...fragment.styleSourceSelections,
+      ...styleSourceSelections,
+      { instanceId: nameLabelId, values: [nameStyleId] },
+      { instanceId: nameInputId, values: [nameInputStyleId] },
+      { instanceId: emailLabelId, values: [emailStyleId] },
+      { instanceId: emailInputId, values: [emailInputStyleId] },
+    ]),
+    styles: JSON.stringify([
+      ...styles,
+      ...[nameStyleId, nameInputStyleId, emailStyleId, emailInputStyleId].map(
+        (styleSourceId) => ({
+          styleSourceId,
+          breakpointId,
+          property: "display",
+          value: { type: "keyword", value: "block" },
+        })
+      ),
     ]),
   });
 };
