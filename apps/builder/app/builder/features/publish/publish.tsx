@@ -239,6 +239,14 @@ const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
   });
 };
 
+const blockPublishOnLocalErrors = (
+  setFindings: (findings: PublishValidationFinding[]) => void
+) => {
+  const findings = getPrePublishAuditFindings();
+  setFindings(findings);
+  return findings.some(({ severity }) => severity === "error");
+};
+
 const runPublishDiagnostics = async (
   projectId: Project["id"],
   domains?: string[]
@@ -827,9 +835,7 @@ const Publish = ({
       return;
     }
 
-    const localFindings = getPrePublishAuditFindings();
-    setPublishFindings(localFindings);
-    if (localFindings.some(({ severity }) => severity === "error")) {
+    if (blockPublishOnLocalErrors(setPublishFindings)) {
       onValidationStateChange("idle");
       return;
     }
@@ -967,9 +973,7 @@ const PublishStatic = ({
             setPublishError(undefined);
             setPublishFindings([]);
 
-            const localFindings = getPrePublishAuditFindings();
-            setPublishFindings(localFindings);
-            if (localFindings.some(({ severity }) => severity === "error")) {
+            if (blockPublishOnLocalErrors(setPublishFindings)) {
               return;
             }
 
