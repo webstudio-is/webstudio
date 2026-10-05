@@ -91,13 +91,14 @@ export const NativeForm = forwardRef<
       setInternalState(nextState);
       onStateChange?.(nextState);
     };
-    const reportFailure = (message: string) => {
+    const reportFailure = (message: string, status = 400) => {
       setError(message);
+      setResult(undefined);
       onResultChange?.({
         success: false,
-        status: 400,
+        status,
         results: [],
-        errors: [{ status: 400, body: null, message }],
+        errors: [{ status, body: null, message }],
       });
       reportState("error");
       revealFeedback();
@@ -117,6 +118,7 @@ export const NativeForm = forwardRef<
       if (activeRequest.current) {
         return;
       }
+      setResult(undefined);
       prepareFeedback();
       if (configurationError) {
         reportFailure(configurationError);
@@ -135,7 +137,12 @@ export const NativeForm = forwardRef<
       );
       if (onManagedSubmit) {
         const controller = new AbortController();
-        const submission = onManagedSubmit(values, controller.signal);
+        let submission: void | Promise<ManagedFormResponse>;
+        try {
+          submission = onManagedSubmit(values, controller.signal);
+        } catch (error) {
+          submission = Promise.reject(error);
+        }
         if (submission === undefined) {
           return;
         }
@@ -201,12 +208,22 @@ export const NativeForm = forwardRef<
             }
           }
         })
-        .catch(() => {
-          // Unmounting aborts a request without reporting a submission error.
+        .catch((error: unknown) => {
+          if (
+            controller.signal.aborted ||
+            submittedNavigationToken !== currentNavigationToken.current ||
+            submittedLocation !== window.location.href
+          ) {
+            return;
+          }
+          const message =
+            error instanceof Error ? error.message : "Form submission failed";
+          reportFailure(message, 500);
         })
         .finally(() => {
           if (activeRequest.current === controller) {
             activeRequest.current = undefined;
+            setPending(false);
           }
         });
     };

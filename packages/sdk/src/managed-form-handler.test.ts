@@ -273,6 +273,87 @@ test("a visitor Email Resource sends in parallel and a failed delivery remains n
   });
 });
 
+test("two visitor Email Resources fail preflight before any action runs", async () => {
+  const data = new FormData();
+  data.set(managedFormIdFieldName, "form");
+  data.set(managedFormArrayNamesFieldName, "[]");
+  data.set(formBotFieldName, "brave");
+  data.set("email", "visitor@example.com");
+  const resourceFetch = vi.fn();
+  const sendEmail = vi.fn();
+  const createEmailSender = vi.fn(() => sendEmail);
+  const resourceIds = ["webhook", "visitor-1", "visitor-2"];
+  const visitor = (id: string) => ({
+    id,
+    outputName: id,
+    dependencies: [],
+    control: "email" as const,
+    emailRecipientCount: 1,
+    nonfatal: true,
+    createRequest: () => ({
+      name: "Receipt",
+      control: "email" as const,
+      method: "post" as const,
+      url: "",
+      headers: [],
+      searchParams: [],
+      email: {
+        recipientMode: "visitor" as const,
+        visitorEmailField: "email",
+        recipients: [],
+        subject: "Received",
+        body: "",
+        includeAttachments: false,
+      },
+    }),
+  });
+
+  await expect(
+    handleManagedFormSubmission({
+      request: new Request("https://site.example/contact", {
+        method: "POST",
+        body: data,
+      }),
+      system: {
+        origin: "https://site.example",
+        pathname: "/contact",
+        params: {},
+        search: {},
+      },
+      configuration: () => ({
+        submission: { destinations: resourceIds },
+        resourceIds,
+      }),
+      getGraph: () => ({
+        rootIds: resourceIds,
+        resources: [
+          {
+            id: "webhook",
+            outputName: "webhook",
+            dependencies: [],
+            createRequest: () => ({
+              name: "Webhook",
+              method: "post" as const,
+              url: "https://api.example/submit",
+              headers: [],
+              searchParams: [],
+            }),
+          },
+          visitor("visitor-1"),
+          visitor("visitor-2"),
+        ],
+      }),
+      createEmailSender,
+      resourceFetch,
+    })
+  ).rejects.toThrow(
+    "Select no more than one visitor Email Resource per Form submission"
+  );
+  expect(createEmailSender).not.toHaveBeenCalled();
+  expect(resourceFetch).not.toHaveBeenCalled();
+  expect(sendEmail).not.toHaveBeenCalled();
+});
+
 test.each([undefined, "invalid-address"])(
   "an invalid visitor address %s fails only its Email action",
   async (address) => {

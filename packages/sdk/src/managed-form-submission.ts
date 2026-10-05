@@ -263,6 +263,7 @@ export const validateManagedFormRecipientLimit = (
   graph: ResourceRequestGraph
 ) => {
   let deliveries = 0;
+  let visitorDeliveries = 0;
   for (const resource of getReachableResources(graph)) {
     if (resource.control === "email") {
       const count = resource.emailRecipientCount;
@@ -272,6 +273,12 @@ export const validateManagedFormRecipientLimit = (
       if (resource.nonfatal) {
         if (count !== 1) {
           throw new Error("Visitor Email Resource must have one recipient");
+        }
+        visitorDeliveries += 1;
+        if (visitorDeliveries > 1) {
+          throw new Error(
+            "Select no more than one visitor Email Resource per Form submission"
+          );
         }
         continue;
       }

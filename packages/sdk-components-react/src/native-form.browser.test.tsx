@@ -456,6 +456,83 @@ test("Preview runs the supplied submission and reports its result without the pu
   }
 });
 
+test("Preview reports rejected submissions as failures and clears pending state", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onManagedSubmit = vi
+    .fn()
+    .mockResolvedValueOnce({
+      success: false,
+      status: 429,
+      results: [],
+      errors: [
+        { status: 429, body: null, message: "Previous submission failed" },
+      ],
+    })
+    .mockRejectedValueOnce(new Error("Preview submission failed"));
+  const onResultChange = vi.fn();
+  const states: string[] = [];
+  try {
+    await act(async () =>
+      root.render(
+        <NativeForm
+          submission={{ destinations: ["email"] }}
+          onManagedSubmit={onManagedSubmit}
+          onResultChange={onResultChange}
+          onStateChange={(state) => states.push(state)}
+        >
+          <button type="submit">Send</button>
+        </NativeForm>
+      )
+    );
+
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() => {
+      expect(onResultChange).toHaveBeenCalledOnce();
+      expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
+        false
+      );
+    });
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "Previous submission failed"
+    );
+
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() => {
+      expect(onResultChange).toHaveBeenCalledTimes(2);
+      expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
+        false
+      );
+    });
+    expect(onResultChange).toHaveBeenCalledWith({
+      success: false,
+      status: 500,
+      results: [],
+      errors: [
+        {
+          status: 500,
+          body: null,
+          message: "Preview submission failed",
+        },
+      ],
+    });
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "Preview submission failed"
+    );
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(states).toEqual(["initial", "error", "initial", "error"]);
+    expect(onManagedSubmit).toHaveBeenCalledTimes(2);
+    expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
+      false
+    );
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
 test("managed Form reports HTTP and network failures without native navigation", async () => {
   const container = document.createElement("div");
   document.body.append(container);
