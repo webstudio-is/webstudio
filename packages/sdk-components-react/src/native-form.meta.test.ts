@@ -7,4 +7,5 @@ test("Form exposes managed actions and redirect rather than native form attribut
     "submission",
     "successRedirect",
   ]);
+  expect(meta.props?.submission?.label).toBe("Action");
 });
