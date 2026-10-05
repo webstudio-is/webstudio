@@ -1276,7 +1276,7 @@ test("generate resource prop with configured form method", () => {
     method={"get"} />
     <Form
     action={"action"}
-    method={"post"} />
+    method={"get"} />
     </Body>
     }
     "
