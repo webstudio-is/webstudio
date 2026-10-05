@@ -115,6 +115,42 @@ const createApiResponseErrorMessage = async (
     .join("\n");
 };
 
+export class MissingJsonPropValueError extends Error {
+  constructor(diagnostics: string[]) {
+    super(
+      [
+        "This build cannot be published because it contains JSON props with no value:",
+        ...diagnostics.map((diagnostic) => `- ${diagnostic}`),
+        "Open the project in Webstudio, set or reset the affected prop, then publish again.",
+      ].join("\n")
+    );
+    this.name = "MissingJsonPropValueError";
+  }
+}
+
+const getMissingJsonPropValueDiagnostics = (data: unknown) => {
+  const build = (data as { build?: PublishedProjectBundle["build"] } | null)
+    ?.build;
+  if (!Array.isArray(build?.props)) {
+    return;
+  }
+
+  const instances = new Map(
+    Array.isArray(build.instances) ? build.instances : []
+  );
+  const diagnostics = build.props.flatMap((entry) => {
+    const prop = Array.isArray(entry) ? entry[1] : undefined;
+    if (!prop || prop.type !== "json" || prop.value !== undefined) {
+      return [];
+    }
+    const instance = instances.get(prop.instanceId);
+    const target = instance?.label ?? `instance ${prop.instanceId}`;
+    const component = instance?.component ? ` (${instance.component})` : "";
+    return [`“${target}”${component}: JSON prop “${prop.name}” has no value`];
+  });
+  return diagnostics.length > 0 ? diagnostics : undefined;
+};
+
 const fetchJsonResponse: typeof fetch = async (request, init) => {
   const response = await fetch(request, init);
   const contentType = response.headers.get("content-type");
@@ -443,7 +479,9 @@ class AssetUploadRetryError extends Error {
   constructor(assetName: string, cause: unknown) {
     const status = getErrorStatus(cause);
     super(
-      `Asset "${assetName}" failed after 2 attempts${status === undefined ? "" : ` (HTTP ${status})`}. Retry this file by itself. If it still fails, verify that it opens and matches its declared format, then report ${assetUploadRetryExhaustedCode} and the HTTP status.`,
+      `Asset "${assetName}" failed after 2 attempts${
+        status === undefined ? "" : ` (HTTP ${status})`
+      }. Retry this file by itself. If it still fails, verify that it opens and matches its declared format, then report ${assetUploadRetryExhaustedCode} and the HTTP status.`,
       { cause }
     );
     this.status = status;
@@ -680,7 +718,9 @@ const toUploadAsset = ({
       descriptor.format === undefined
     ) {
       throw new Error(
-        `${descriptor.type === "image" ? "Image" : "Video"} asset "${descriptor.name}" requires format, meta.width, and meta.height.`
+        `${descriptor.type === "image" ? "Image" : "Video"} asset "${
+          descriptor.name
+        }" requires format, meta.width, and meta.height.`
       );
     }
     return {
@@ -1238,6 +1278,10 @@ export const loadProjectBundleByBuildId = async (
     bundleVersion: currentBundleVersion,
     contentIndex: params.contentIndex,
   });
+  const missingJsonPropValues = getMissingJsonPropValueDiagnostics(data);
+  if (missingJsonPropValues !== undefined) {
+    throw new MissingJsonPropValueError(missingJsonPropValues);
+  }
   return publishedProjectBundle.parse(data);
 };
 
@@ -1323,7 +1367,9 @@ const parseRestorePointPatchTransactions = (transactions: unknown) => {
   const result = restorePointPatchTransaction.array().safeParse(transactions);
   if (result.success === false) {
     throw new Error(
-      `Invalid restore point transaction: ${formatSchemaIssues(result.error.issues)}`
+      `Invalid restore point transaction: ${formatSchemaIssues(
+        result.error.issues
+      )}`
     );
   }
   return result.data;
@@ -2407,7 +2453,9 @@ const uploadProjectBundleData = async (
   const data = JSON.stringify(portableData);
   if (new TextEncoder().encode(data).byteLength > maxProjectBundleSize) {
     throw new Error(
-      `Project bundle is too large to import. Maximum size is ${formatMebibytes(maxProjectBundleSize)}.`
+      `Project bundle is too large to import. Maximum size is ${formatMebibytes(
+        maxProjectBundleSize
+      )}.`
     );
   }
   const file =
