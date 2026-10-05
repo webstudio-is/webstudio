@@ -129,61 +129,26 @@ export class MissingJsonPropValueError extends Error {
 }
 
 const getMissingJsonPropValueDiagnostics = (data: unknown) => {
-  if (typeof data !== "object" || data === null) {
-    return;
-  }
-  const build = (data as { build?: unknown }).build;
-  if (typeof build !== "object" || build === null) {
-    return;
-  }
-  const props = (build as { props?: unknown }).props;
-  if (!Array.isArray(props)) {
+  const build = (data as { build?: PublishedProjectBundle["build"] } | null)
+    ?.build;
+  if (!Array.isArray(build?.props)) {
     return;
   }
 
-  const instanceById = new Map<string, Record<string, unknown>>();
-  const instances = (build as { instances?: unknown }).instances;
-  if (Array.isArray(instances)) {
-    for (const entry of instances) {
-      if (
-        Array.isArray(entry) &&
-        typeof entry[0] === "string" &&
-        typeof entry[1] === "object" &&
-        entry[1] !== null
-      ) {
-        instanceById.set(entry[0], entry[1] as Record<string, unknown>);
-      }
+  const instances = new Map(
+    Array.isArray(build.instances) ? build.instances : []
+  );
+  const diagnostics = build.props.flatMap((entry) => {
+    const prop = Array.isArray(entry) ? entry[1] : undefined;
+    if (!prop || prop.type !== "json" || prop.value !== undefined) {
+      return [];
     }
-  }
-
-  const diagnostics: string[] = [];
-  for (const entry of props) {
-    if (
-      !Array.isArray(entry) ||
-      typeof entry[1] !== "object" ||
-      entry[1] === null
-    ) {
-      continue;
-    }
-    const prop = entry[1] as Record<string, unknown>;
-    if (prop.type !== "json" || prop.value !== undefined) {
-      continue;
-    }
-    const instanceId =
-      typeof prop.instanceId === "string" ? prop.instanceId : "unknown";
-    const instance = instanceById.get(instanceId);
-    const target =
-      typeof instance?.label === "string"
-        ? `“${instance.label}”`
-        : `instance ${instanceId}`;
-    const component =
-      typeof instance?.component === "string" ? ` (${instance.component})` : "";
-    const propName = typeof prop.name === "string" ? prop.name : "unknown";
-    diagnostics.push(
-      `${target}${component}: JSON prop “${propName}” has no value`
-    );
-  }
-  return diagnostics.length === 0 ? undefined : diagnostics;
+    const instance = instances.get(prop.instanceId);
+    const target = instance?.label ?? `instance ${prop.instanceId}`;
+    const component = instance?.component ? ` (${instance.component})` : "";
+    return [`“${target}”${component}: JSON prop “${prop.name}” has no value`];
+  });
+  return diagnostics.length > 0 ? diagnostics : undefined;
 };
 
 const fetchJsonResponse: typeof fetch = async (request, init) => {
