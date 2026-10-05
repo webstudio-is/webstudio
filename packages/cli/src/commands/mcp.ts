@@ -1,9 +1,11 @@
 import { cwd, stdin, stdout, stderr } from "node:process";
+import { randomUUID } from "node:crypto";
 import {
   copyFile,
   mkdir,
   mkdtemp,
   readFile,
+  rename,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -27,6 +29,8 @@ import { diffPngFiles } from "@webstudio-is/vision/diff";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
+  issueReportRecentFailureSchema,
+  type IssueReportRecentFailure,
 } from "@webstudio-is/protocol";
 import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
@@ -96,7 +100,7 @@ import { printJson } from "../json-output";
 import { isPlainRecord } from "../type-utils";
 import { withTimeout } from "../async-utils";
 import { checkForCliUpdate, type CliUpdate } from "../cli-update";
-import { LOCAL_DATA_FILE } from "../config";
+import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "../config";
 import {
   assertMcpBatchMutationApproved,
   isMcpProjectsManifest,
@@ -1836,6 +1840,61 @@ const getMcpDownloadAsset = async (
   return asset;
 };
 
+const getIssueReportFailureFile = (projectRoot: string, projectId?: string) =>
+  path.join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    "issue-report-failure.json"
+  );
+
+const persistIssueReportFailure = async (
+  filePath: string,
+  snapshot: { failure: IssueReportRecentFailure; at: number } | undefined
+) => {
+  if (snapshot === undefined) {
+    await rm(filePath, { force: true }).catch(() => undefined);
+    return;
+  }
+  const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
+  try {
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(temporaryPath, JSON.stringify(snapshot), "utf8");
+    await rename(temporaryPath, filePath);
+  } catch {
+    await rm(temporaryPath, { force: true }).catch(() => undefined);
+  }
+};
+
+const restoreIssueReportFailure = async (
+  filePath: string,
+  failureTracker: ReturnType<typeof createIssueReportFailureTracker>
+) => {
+  try {
+    const value: unknown = JSON.parse(await readFile(filePath, "utf8"));
+    if (
+      isPlainRecord(value) &&
+      typeof value.at === "number" &&
+      Number.isSafeInteger(value.at)
+    ) {
+      const failure = issueReportRecentFailureSchema.safeParse(value.failure);
+      if (failure.success) {
+        failureTracker.restore(failure.data, value.at);
+      }
+      if (
+        failure.success === false ||
+        failureTracker.snapshot() === undefined
+      ) {
+        await rm(filePath, { force: true }).catch(() => undefined);
+      }
+    } else {
+      await rm(filePath, { force: true }).catch(() => undefined);
+    }
+  } catch {
+    // Issue reporting is best effort; absent or malformed local diagnostics
+    // must not prevent a project session from starting.
+    await rm(filePath, { force: true }).catch(() => undefined);
+  }
+};
+
 const createCliMcpHost = async ({
   projectRoot = cwd(),
   projectId,
@@ -1867,6 +1926,11 @@ const createCliMcpHost = async ({
   const apiContract = await getCliServerApiContract(apiConnection);
   const operations = getSupportedPublicApiOperations(apiContract);
   const failureTracker = createIssueReportFailureTracker();
+  const issueReportFailureFile = getIssueReportFailureFile(
+    projectRoot,
+    connection.projectId
+  );
+  await restoreIssueReportFailure(issueReportFailureFile, failureTracker);
   const session = createCliProjectSession({
     connection: apiConnection,
     projectRoot,
@@ -2189,7 +2253,7 @@ const createCliMcpHost = async ({
     host,
     apiContract,
     toolCount: operations.length,
-    recordToolFailure(
+    async recordToolFailure(
       canonicalTool: string,
       error: unknown,
       elapsedMs: number,
@@ -2197,10 +2261,17 @@ const createCliMcpHost = async ({
     ) {
       if (canonicalTool !== "report-issue") {
         failureTracker.record(canonicalTool, error, elapsedMs, input);
+        await persistIssueReportFailure(
+          issueReportFailureFile,
+          failureTracker.snapshot()
+        );
       }
     },
-    recordToolSuccess(canonicalTool: string) {
+    async recordToolSuccess(canonicalTool: string) {
       failureTracker.succeed(canonicalTool);
+      if (canonicalTool === "report-issue") {
+        await persistIssueReportFailure(issueReportFailureFile, undefined);
+      }
     },
     reportLog(message: string) {
       if (message.startsWith("ready with ")) {
@@ -2331,7 +2402,13 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
         }
         return mcpHost;
       },
-      async ({ host, apiContract, scope }) => {
+      async ({
+        host,
+        apiContract,
+        scope,
+        recordToolFailure,
+        recordToolSuccess,
+      }) => {
         assertMcpToolServerSupport(tool, apiContract);
         const core = createCliMcpCore(host);
         const persistedCheckpoint =
@@ -2355,15 +2432,33 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
             throw new HandledCliError();
           }
         }
-        const result = await core.callTool({
-          name: tool,
-          input,
-          dryRun: options.dryRun,
-        });
+        const callStartedAt = Date.now();
+        let result: Awaited<ReturnType<typeof core.callTool>>;
+        try {
+          result = await core.callTool({
+            name: tool,
+            input,
+            dryRun: options.dryRun,
+          });
+        } catch (error) {
+          await recordToolFailure(
+            tool,
+            error,
+            Date.now() - callStartedAt,
+            input
+          );
+          throw error;
+        }
         if (didTerminate) {
           throw new HandledCliError();
         }
         if (isMcpToolCallFailure(result)) {
+          await recordToolFailure(
+            tool,
+            getMcpToolCallError(result),
+            Date.now() - callStartedAt,
+            input
+          );
           activeCall = undefined;
           stderr.write(
             `${formatMcpStatusLine(
@@ -2373,6 +2468,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           printJson(result.structuredContent);
           throw new HandledCliError();
         }
+        await recordToolSuccess(tool);
         if (
           tool === "checkpoint.ack" &&
           persistedCheckpoint?.nextCommand !== undefined &&
@@ -2464,7 +2560,7 @@ const runMcpProjectsBatch = async ({
       );
       await withMcpHost(
         () => createCliMcpHost({ projectRoot: project.root }),
-        async ({ host, apiContract }) => {
+        async ({ host, apiContract, recordToolFailure, recordToolSuccess }) => {
           const core = createCliMcpCore(host);
           const tools = new Map(
             core.listTools().map((tool) => [tool.name, tool])
@@ -2482,16 +2578,29 @@ const runMcpProjectsBatch = async ({
           for (let index = startCall; index < project.calls.length; index++) {
             const call = project.calls[index]!;
             const tool = tools.get(call.tool);
+            const callStartedAt = Date.now();
             await callStarted(
               index,
               call.dryRun || tool?.annotations.method !== "mutation"
             );
-            const { checkpoint } = await executeMcpRunCall({
-              core,
-              call,
-              scope: { projectRoot: project.root },
-            });
+            let checkpoint: PersistedMcpCheckpoint | undefined;
+            try {
+              ({ checkpoint } = await executeMcpRunCall({
+                core,
+                call,
+                scope: { projectRoot: project.root },
+              }));
+            } catch (error) {
+              await recordToolFailure(
+                call.tool,
+                error,
+                Date.now() - callStartedAt,
+                call.input
+              );
+              throw error;
+            }
             await callSucceeded(index + 1);
+            await recordToolSuccess(call.tool);
             const nextTool = project.calls[index + 1]?.tool;
             if (
               checkpoint !== undefined &&
@@ -2574,6 +2683,15 @@ export const mcpRun = async (options: McpRunOptions) => {
   const results: unknown[] = [];
   let core: ReturnType<typeof createProjectSessionMcpCore<PublicApiCommand>>;
   let scope: McpProjectScope = {};
+  let recordToolFailure:
+    | ((
+        tool: string,
+        error: unknown,
+        elapsedMs: number,
+        input: unknown
+      ) => Promise<void>)
+    | undefined;
+  let recordToolSuccess: ((tool: string) => Promise<void>) | undefined;
   let disposeHost: () => Promise<void> = async () => undefined;
   try {
     const mcpHost = await createCliMcpHost({
@@ -2581,6 +2699,8 @@ export const mcpRun = async (options: McpRunOptions) => {
       managePreviewProcessSignals: false,
     });
     const { host, apiContract } = mcpHost;
+    recordToolFailure = mcpHost.recordToolFailure;
+    recordToolSuccess = mcpHost.recordToolSuccess;
     disposeHost = mcpHost.dispose;
     scope = mcpHost.scope;
     for (const call of calls) {
@@ -2607,6 +2727,7 @@ export const mcpRun = async (options: McpRunOptions) => {
   try {
     for (const [index, call] of calls.entries()) {
       const callNumber = index + 1;
+      const callStartedAt = Date.now();
       activeCall = { number: callNumber, tool: call.tool };
       stderr.write(
         `${formatMcpStatusLine(
@@ -2620,6 +2741,7 @@ export const mcpRun = async (options: McpRunOptions) => {
           scope,
         });
         const session = result.structuredContent.meta.session;
+        await recordToolSuccess?.(call.tool);
         const committed =
           session === undefined ? "" : `; committed=${session.committed}`;
         stderr.write(
@@ -2661,6 +2783,12 @@ export const mcpRun = async (options: McpRunOptions) => {
         if (error instanceof McpRunCheckpointStop) {
           throw new HandledCliError();
         }
+        await recordToolFailure?.(
+          call.tool,
+          error,
+          Date.now() - callStartedAt,
+          call.input
+        );
         const structuredError = getMcpRunError(error);
         results.push({
           tool: call.tool,
@@ -2822,6 +2950,9 @@ export const mcp = async (
 
 export const __testing__ = {
   getMcpDownloadAsset,
+  getIssueReportFailureFile,
+  persistIssueReportFailure,
+  restoreIssueReportFailure,
   getCliUpdateInstructions,
   createMcpStatusReporter,
   formatMcpStatusLine,

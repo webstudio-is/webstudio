@@ -1303,6 +1303,54 @@ test("loads project bundle by build id without auth headers", async () => {
   );
 });
 
+test("reports json props without a value when loading a published bundle", async () => {
+  const project = JSON.parse(
+    JSON.stringify(createPublishedProjectBundleFixture())
+  );
+  project.build.instances = [
+    [
+      "instance-id",
+      {
+        id: "instance-id",
+        type: "instance",
+        component: "ws:collection",
+        label: "Projects",
+      },
+    ],
+  ];
+  project.build.props = [
+    [
+      "json-prop-id",
+      {
+        id: "json-prop-id",
+        instanceId: "instance-id",
+        name: "data",
+        type: "json",
+      },
+    ],
+  ];
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    loadProjectBundleByBuildId({
+      buildId: project.build.id,
+      origin: "https://example.com",
+    })
+  ).rejects.toMatchObject({
+    name: "MissingJsonPropValueError",
+    message: [
+      "This build cannot be published because it contains JSON props with no value:",
+      "- “Projects” (ws:collection): JSON prop “data” has no value",
+      "Open the project in Webstudio, set or reset the affected prop, then publish again.",
+    ].join("\n"),
+  });
+});
+
 test("requests local content preparation for the publish runner", async () => {
   const project = createPublishedProjectBundleFixture();
   const fetch = vi.fn().mockResolvedValue(
