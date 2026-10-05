@@ -165,6 +165,23 @@ test("sends staging email to the Preview URL with server-only authorization", as
   });
 });
 
+test("accepts the production Builder Preview endpoint", async () => {
+  const fetcher = vi.fn(async () => Response.json({ id: "preview-sent" }));
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://apps.webstudio.is/v1/preview-send",
+    "worker-secret",
+    new FormData(),
+    projectId,
+    fetcher
+  )!;
+  await sendEmail(request, {});
+  expect(fetcher).toHaveBeenCalledOnce();
+  const [url] = fetcher.mock.calls[0] as unknown as [URL];
+  expect(String(url)).toBe(
+    "https://apps.webstudio.is/v1/preview-send"
+  );
+});
+
 test("does not create staging sender without both URL and token", () => {
   expect(
     createCloudflareManagedFormEmailSenderWithUrl(
@@ -201,7 +218,7 @@ test("rejects insecure or credential-bearing Preview service URLs", () => {
         new FormData(),
         projectId
       )
-    ).toThrow("staging Preview endpoint");
+    ).toThrow("approved Preview endpoint");
   }
 });
 

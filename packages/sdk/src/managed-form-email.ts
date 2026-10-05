@@ -371,7 +371,8 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
   const url = new URL(serviceUrl);
   if (
     url.protocol !== "https:" ||
-    url.hostname !== "staging-webstudio-email-service.wstd.workers.dev" ||
+    (url.hostname !== "staging-webstudio-email-service.wstd.workers.dev" &&
+      url.hostname !== "apps.webstudio.is") ||
     url.port !== "" ||
     url.pathname !== "/v1/preview-send" ||
     url.username !== "" ||
@@ -379,7 +380,7 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
     url.search !== "" ||
     url.hash !== ""
   ) {
-    throw new Error("Email Service URL must be the staging Preview endpoint");
+    throw new Error("Email Service URL must be an approved Preview endpoint");
   }
   return createCloudflareManagedFormEmailSenderWithFetch(
     (_input, init) => {
