@@ -357,7 +357,7 @@ export const createCloudflareManagedFormEmailSender = (
     projectId
   );
 
-/** Create a staging-only sender using its private, server-side bearer token. */
+/** Create an approved Preview sender using a private, server-side bearer token. */
 export const createCloudflareManagedFormEmailSenderWithUrl = (
   serviceUrl: string | undefined,
   token: string | undefined,

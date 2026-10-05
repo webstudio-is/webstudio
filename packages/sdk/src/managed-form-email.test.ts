@@ -177,12 +177,10 @@ test("accepts the production Builder Preview endpoint", async () => {
   await sendEmail(request, {});
   expect(fetcher).toHaveBeenCalledOnce();
   const [url] = fetcher.mock.calls[0] as unknown as [URL];
-  expect(String(url)).toBe(
-    "https://apps.webstudio.is/v1/preview-send"
-  );
+  expect(String(url)).toBe("https://apps.webstudio.is/v1/preview-send");
 });
 
-test("does not create staging sender without both URL and token", () => {
+test("does not create a Preview sender without both URL and token", () => {
   expect(
     createCloudflareManagedFormEmailSenderWithUrl(
       "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
