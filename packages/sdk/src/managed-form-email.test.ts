@@ -479,6 +479,140 @@ test("a failed Email root retries once and keeps sibling results", async () => {
   });
 });
 
+test.each(["New form submission", "Custom owner subject"])(
+  "owner subject %s keeps one reference on retry and changes for another submission",
+  async (subject) => {
+    const sendEmail = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Unavailable",
+        data: null,
+      })
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        data: { id: "sent" },
+      });
+    const graph = {
+      rootIds: ["email"],
+      resources: [
+        {
+          id: "email",
+          outputName: "Email",
+          control: "email" as const,
+          dependencies: [],
+          createRequest: () => ({
+            ...request,
+            email: { ...request.email!, subject },
+          }),
+        },
+      ],
+    };
+    const options = {
+      sendEmail,
+      retryFailedRoots: true,
+      validateEmail: (emailRequest: ResourceRequest) =>
+        validateCloudflareManagedFormEmail(emailRequest, new FormData()),
+    };
+    const now = vi.spyOn(Date, "now").mockReturnValue(123456789);
+    try {
+      await loadManagedFormResources(vi.fn(), graph, undefined, options);
+      await loadManagedFormResources(vi.fn(), graph, undefined, options);
+    } finally {
+      now.mockRestore();
+    }
+    const subjects = sendEmail.mock.calls.map(
+      ([emailRequest]) => emailRequest.email!.subject
+    );
+    expect(subjects).toHaveLength(3);
+    expect(subjects[0]).toMatch(
+      new RegExp(`^${subject} \\[([0-9a-f]{16})\\]$`)
+    );
+    expect(subjects[1]).toBe(subjects[0]);
+    expect(subjects[2]).not.toBe(subjects[0]);
+  }
+);
+
+test.each([
+  { name: "empty", subject: "" },
+  { name: "too long after suffix", subject: "a".repeat(980) },
+])(
+  "$name owner subject blocks every destination before dispatch",
+  async ({ subject }) => {
+    const httpFetch = vi.fn(async () => Response.json({ ok: true }));
+    const sendEmail = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      data: null,
+    }));
+    const graph = {
+      rootIds: ["http", "email"],
+      resources: [
+        {
+          id: "http",
+          outputName: "HTTP",
+          dependencies: [],
+          createRequest: () => ({
+            ...request,
+            control: undefined,
+            url: "https://example.com/submit",
+          }),
+        },
+        {
+          id: "email",
+          outputName: "Email",
+          control: "email" as const,
+          dependencies: [],
+          createRequest: () => ({
+            ...request,
+            email: { ...request.email!, subject },
+          }),
+        },
+      ],
+    };
+    await expect(
+      loadManagedFormResources(httpFetch, graph, undefined, { sendEmail })
+    ).rejects.toThrow("Email subject is invalid");
+    expect(httpFetch).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
+  }
+);
+
+test("owner subject fits the maximum length with its reference", async () => {
+  const sendEmail = vi.fn(async (_emailRequest: ResourceRequest) => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: null,
+  }));
+  await loadManagedFormResources(
+    vi.fn(),
+    {
+      rootIds: ["email"],
+      resources: [
+        {
+          id: "email",
+          outputName: "Email",
+          control: "email",
+          dependencies: [],
+          createRequest: () => ({
+            ...request,
+            email: { ...request.email!, subject: "a".repeat(979) },
+          }),
+        },
+      ],
+    },
+    undefined,
+    { sendEmail }
+  );
+  expect(sendEmail).toHaveBeenCalledOnce();
+  expect(sendEmail.mock.calls[0][0].email?.subject).toHaveLength(998);
+});
+
 test("oversize Email preflight stops both Email and HTTP destinations", async () => {
   const formData = new FormData();
   formData.append(

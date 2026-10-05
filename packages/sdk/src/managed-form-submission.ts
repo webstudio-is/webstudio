@@ -5,7 +5,7 @@ import {
   managedFormIdFieldName,
 } from "./form-fields";
 import { getResourceBodyFormatError, loadResources } from "./resource-loader";
-import { validateEmailSubject } from "./email-resource";
+import { maxEmailSubjectLength, validateEmailSubject } from "./email-resource";
 import type {
   ResourceGraphLoadOptions,
   ResourceRequestGraph,
@@ -24,6 +24,14 @@ export const internalFormFieldNames = new Set([
 ]);
 const maxFormRequestBytes = 25 * 1024 * 1024;
 export const maxFormTeamEmailDeliveries = 5;
+const submissionReferenceBytes = 8;
+const submissionReferenceSuffixLength = 3 + submissionReferenceBytes * 2;
+
+const createSubmissionReference = () =>
+  Array.from(
+    crypto.getRandomValues(new Uint8Array(submissionReferenceBytes)),
+    (byte) => byte.toString(16).padStart(2, "0")
+  ).join("");
 
 export type ManagedFormResult = {
   resourceId: string;
@@ -402,6 +410,7 @@ export const loadManagedFormResources = async (
     visit(rootId);
   }
   const preparedEmailRequests = new Map<string, ResourceRequest>();
+  let submissionReference: string | undefined;
   for (const resource of getReachableResources(graph)) {
     if (resource.control !== "email") {
       continue;
@@ -421,8 +430,23 @@ export const loadManagedFormResources = async (
     ) {
       throw new Error("Email settings are invalid");
     }
-    validateEmail?.(request);
-    preparedEmailRequests.set(resource.id, request);
+    if (
+      request.email.subject.length === 0 ||
+      request.email.subject.length >
+        maxEmailSubjectLength - submissionReferenceSuffixLength
+    ) {
+      throw new Error("Email subject is invalid");
+    }
+    submissionReference ??= createSubmissionReference();
+    const preparedRequest = {
+      ...request,
+      email: {
+        ...request.email,
+        subject: `${request.email.subject} [${submissionReference}]`,
+      },
+    };
+    validateEmail?.(preparedRequest);
+    preparedEmailRequests.set(resource.id, preparedRequest);
   }
   const preparedResources = graph.resources.map((resource) => {
     const request = preparedEmailRequests.get(resource.id);

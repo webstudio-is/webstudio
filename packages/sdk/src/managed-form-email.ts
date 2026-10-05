@@ -1,7 +1,7 @@
 import type { ResourceLoadOptions } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
-import { validateEmailSubject } from "./email-resource";
+import { maxEmailSubjectLength, validateEmailSubject } from "./email-resource";
 import { parseEmailSender } from "./email-addresses";
 import type { ManagedFormResponse } from "./managed-form-submission";
 
@@ -174,7 +174,7 @@ export const validateCloudflareManagedFormEmail = (
     (email.sender !== undefined && !isValidMailbox(email.sender)) ||
     typeof email.subject !== "string" ||
     email.subject.length === 0 ||
-    email.subject.length > 998 ||
+    email.subject.length > maxEmailSubjectLength ||
     /[\r\n]/.test(email.subject) ||
     typeof email.body !== "string"
   ) {

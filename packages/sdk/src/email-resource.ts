@@ -7,6 +7,7 @@ export const defaultEmailBody = "A new form was submitted.";
 export const defaultEmailConfirmationSubject = "We received your submission";
 export const defaultEmailConfirmationBody =
   "Thank you. Your submission was received.";
+export const maxEmailSubjectLength = 998;
 
 /** Check the evaluated subject, including values supplied by Form bindings. */
 export const validateEmailSubject = (subject: unknown) => {
