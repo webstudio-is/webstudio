@@ -1,9 +1,11 @@
 import { encodeDataVariableId, SYSTEM_VARIABLE_ID } from "./expression";
-import { getFormEmailFieldNames } from "./form-email-fields";
+import {
+  getFormEmailFieldNames,
+  getFormEmailStringifyOptions,
+} from "./form-email-fields";
 import {
   browserInfoParameterName,
   formDataParameterName,
-  internalFormFieldNames,
 } from "./managed-form-submission";
 import {
   getDefaultFormEmailBodyExpression,
@@ -57,55 +59,11 @@ export const createManagedFormDraftGraph = ({
   if (instances.get(formId)?.component !== "NativeForm") {
     throw new Error("Form not found");
   }
-  const inputProps = Array.from(props.values()).filter((prop) =>
-    formTreeIds.has(prop.instanceId)
+  const formDataStringifyOptions = getFormEmailStringifyOptions(
+    instances,
+    props,
+    formId
   );
-  const passwordNames: string[] = [];
-  let omitDefaultFormData = false;
-  for (const instanceId of formTreeIds) {
-    const instance = instances.get(instanceId);
-    const getProp = (name: string) =>
-      inputProps.find(
-        (prop) => prop.instanceId === instanceId && prop.name === name
-      );
-    const name = getProp("name");
-    const type = getProp("type");
-    const tag = getProp("tag");
-    const isInput =
-      instance?.component === "Input" ||
-      instance?.tag?.toLowerCase() === "input" ||
-      (instance?.component === "Element" &&
-        ((tag?.type === "string" && tag.value.toLowerCase() === "input") ||
-          (tag !== undefined &&
-            tag.type !== "string" &&
-            (name !== undefined || type !== undefined))));
-    if (!isInput) {
-      continue;
-    }
-    if (type !== undefined && type.type !== "string") {
-      omitDefaultFormData = true;
-    }
-    if (type?.type === "string" && type.value.toLowerCase() === "password") {
-      if (name?.type === "string") {
-        passwordNames.push(name.value);
-      } else {
-        omitDefaultFormData = true;
-      }
-    }
-    if (name !== undefined && name.type !== "string") {
-      omitDefaultFormData = true;
-    }
-  }
-  const formDataStringifyOptions = omitDefaultFormData
-    ? {
-        stringifyAs:
-          "Form fields omitted because an input has a dynamic name or type.",
-      }
-    : {
-        space: 2,
-        excludeKeys: [...internalFormFieldNames, ...passwordNames],
-        fileMetadata: true,
-      };
   const formDataProxy = createJsonStringifyProxy(
     formData,
     formDataStringifyOptions

@@ -5,7 +5,10 @@ import type { Resources } from "./schema/resources";
 import type { ProjectMeta } from "./schema/pages";
 import type { Scope } from "./scope";
 import { SYSTEM_VARIABLE_ID } from "./expression";
-import { getFormEmailFieldNames } from "./form-email-fields";
+import {
+  getFormEmailFieldNames,
+  getFormEmailStringifyOptions,
+} from "./form-email-fields";
 import {
   getDefaultFormEmailBodyExpression,
   resolveEmailResourceSettings,
@@ -13,7 +16,6 @@ import {
 import {
   browserInfoParameterName,
   formDataParameterName,
-  internalFormFieldNames,
 } from "./managed-form-submission";
 import { findTreeInstanceIds } from "./instances-utils";
 import {
@@ -62,60 +64,11 @@ export const generateManagedFormResources = ({
   for (const { formId, destinationDataSourceIds } of forms) {
     try {
       const formTreeIds = findTreeInstanceIds(instances, formId);
-      const inputProps = Array.from(props?.values() ?? []).filter((prop) =>
-        formTreeIds.has(prop.instanceId)
+      const formDataStringifyOptions = getFormEmailStringifyOptions(
+        instances,
+        props ?? new Map(),
+        formId
       );
-      const passwordFieldNames: string[] = [];
-      let omitDefaultEmailFormData = false;
-      for (const instanceId of formTreeIds) {
-        const instance = instances.get(instanceId);
-        const name = inputProps.find(
-          (prop) => prop.instanceId === instanceId && prop.name === "name"
-        );
-        const type = inputProps.find(
-          (prop) => prop.instanceId === instanceId && prop.name === "type"
-        );
-        const tag = inputProps.find(
-          (prop) => prop.instanceId === instanceId && prop.name === "tag"
-        );
-        const isInput =
-          instance?.component === "Input" ||
-          instance?.tag?.toLowerCase() === "input" ||
-          (instance?.component === "Element" &&
-            ((tag?.type === "string" && tag.value.toLowerCase() === "input") ||
-              (tag !== undefined &&
-                tag.type !== "string" &&
-                (name !== undefined || type !== undefined))));
-        if (!isInput) {
-          continue;
-        }
-        if (type !== undefined && type.type !== "string") {
-          omitDefaultEmailFormData = true;
-        }
-        if (
-          type?.type === "string" &&
-          type.value.toLowerCase() === "password"
-        ) {
-          if (name?.type === "string") {
-            passwordFieldNames.push(name.value);
-          } else {
-            omitDefaultEmailFormData = true;
-          }
-        }
-        if (name !== undefined && name.type !== "string") {
-          omitDefaultEmailFormData = true;
-        }
-      }
-      const formDataStringifyOptions = omitDefaultEmailFormData
-        ? {
-            stringifyAs:
-              "Form fields omitted because an input has a dynamic name or type.",
-          }
-        : {
-            space: 2,
-            excludeKeys: [...internalFormFieldNames, ...passwordFieldNames],
-            fileMetadata: true,
-          };
       const rootIds: string[] = [];
       const seenRootIds = new Set<string>();
       const externalRootIds = new Set<string>();
