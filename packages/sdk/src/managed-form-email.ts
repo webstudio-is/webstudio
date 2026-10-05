@@ -48,6 +48,7 @@ const getEncodedMimeUpperBound = (
     ...email.recipients.flatMap(({ address, name }) => [address, name ?? ""]),
     email.sender?.address ?? "",
     email.sender?.name ?? "",
+    email.sender?.name ?? "",
   ];
   let size = mimeEnvelopeBytes + encodedTextUpperBound(email.body);
   for (const header of headers) {
@@ -198,6 +199,9 @@ export const validateCloudflareManagedFormEmail = (
     subject: email.subject,
     text: email.body,
     ...(email.sender === undefined ? {} : { replyTo: email.sender }),
+    ...(email.sender?.name === undefined
+      ? {}
+      : { fromName: email.sender.name }),
     ...(files.length === 0
       ? {}
       : {
@@ -310,6 +314,9 @@ export const createCloudflareManagedFormEmailSender = (
             subject: email.subject,
             text: email.body,
             ...(email.sender === undefined ? {} : { replyTo: email.sender }),
+            ...(email.sender?.name === undefined
+              ? {}
+              : { fromName: email.sender.name }),
             ...(attachments.length === 0 ? {} : { attachments }),
           }),
           signal: controller.signal,

@@ -186,6 +186,7 @@ test("sends the private worker envelope with files and no form internals", async
     subject: "New submission",
     text: "Text body",
     replyTo: { address: "reply@example.com", name: "Visitor replies" },
+    fromName: "Visitor replies",
     attachments: [
       {
         filename: "hello.txt",
@@ -194,6 +195,29 @@ test("sends the private worker envelope with files and no form internals", async
       },
     ],
   });
+});
+
+test("keeps an address-only Reply-To without a display name", async () => {
+  const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { fetch },
+    new FormData()
+  )!;
+  await sendEmail(
+    {
+      ...request,
+      email: {
+        ...request.email!,
+        sender: { address: "reply@example.com" },
+      },
+    },
+    {}
+  );
+  const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+  expect(JSON.parse(init.body as string)).toMatchObject({
+    replyTo: { address: "reply@example.com" },
+  });
+  expect(JSON.parse(init.body as string)).not.toHaveProperty("fromName");
 });
 
 test("omits attachments when disabled and preserves worker errors", async () => {
