@@ -1971,6 +1971,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           defaultEmailConfirmationSubject,
         confirmationBody:
           projectMeta?.emailConfirmationBody || defaultEmailConfirmationBody,
+        confirmationBodyIsDefault: !projectMeta?.emailConfirmationBody,
       })};
     `;
 

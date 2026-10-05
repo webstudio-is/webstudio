@@ -919,6 +919,27 @@ describe("prebuild", () => {
     expect(generated).toContain(
       '"confirmationBody":"We received your request."'
     );
+    expect(generated).toContain('"confirmationBodyIsDefault":false');
+  });
+  test("distinguishes the default confirmation body from identical saved text", async () => {
+    const siteData = createSiteData();
+    await writeSiteData(siteData);
+    await prebuild({ assets: false, template: ["react-router"] });
+    expect(
+      await readFile("app/__generated__/_index.server.tsx", "utf8")
+    ).toContain('"confirmationBodyIsDefault":true');
+
+    await writeSiteData(
+      createSiteData({
+        pageMeta: {
+          emailConfirmationBody: "Thank you. Your submission was received.",
+        },
+      })
+    );
+    await prebuild({ assets: false, template: ["react-router"] });
+    expect(
+      await readFile("app/__generated__/_index.server.tsx", "utf8")
+    ).toContain('"confirmationBodyIsDefault":false');
   });
   test("rejects Assets queries without a content database without changing generated files", async () => {
     const siteData = createSiteData();

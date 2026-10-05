@@ -1,10 +1,7 @@
 import type { ResourceLoadOptions } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
-import {
-  defaultEmailConfirmationBody,
-  validateEmailSubject,
-} from "./email-resource";
+import { validateEmailSubject } from "./email-resource";
 import { parseEmailSender } from "./email-addresses";
 import type { ManagedFormResponse } from "./managed-form-submission";
 
@@ -77,12 +74,14 @@ export const prepareVisitorConfirmation = ({
   formData,
   subject,
   body,
+  isDefaultBody,
   siteUrl,
 }: {
   fieldName: string | undefined;
   formData: FormData;
   subject: string;
   body: string;
+  isDefaultBody: boolean;
   siteUrl: string;
 }): ResourceRequest | undefined => {
   if (fieldName === undefined || fieldName === "") {
@@ -104,8 +103,7 @@ export const prepareVisitorConfirmation = ({
   if (typeof body !== "string") {
     throw new Error("Visitor confirmation body must be text");
   }
-  const text =
-    body === defaultEmailConfirmationBody ? `${body}\n\n${siteUrl}` : body;
+  const text = isDefaultBody ? `${body}\n\n${siteUrl}` : body;
   const request: ResourceRequest = {
     name: "Visitor confirmation",
     control: "email",

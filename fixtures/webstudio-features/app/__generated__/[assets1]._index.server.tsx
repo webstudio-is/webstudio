@@ -93,5 +93,5 @@ export const getManagedFormResourceGraph = (formId: string, _managedFormProps: {
         );
 
       export const contactEmail = "hello@webstudio.is";
-      export const emailDefaults = {"sender":"hello@webstudio.is","recipients":"hello@webstudio.is","subject":"New form submission","body":"","confirmationSubject":"We received your submission","confirmationBody":"Thank you. Your submission was received."};
+      export const emailDefaults = {"sender":"hello@webstudio.is","recipients":"hello@webstudio.is","subject":"New form submission","body":"","confirmationSubject":"We received your submission","confirmationBody":"Thank you. Your submission was received.","confirmationBodyIsDefault":true};
     

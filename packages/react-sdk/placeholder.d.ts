@@ -73,6 +73,7 @@ declare module "__SERVER__" {
     body: string;
     confirmationSubject: string;
     confirmationBody: string;
+    confirmationBodyIsDefault: boolean;
   };
 }
 

@@ -1,10 +1,10 @@
 ---
-description: Collect form fields and submit them to HTTP Resources.
+description: Collect form fields and submit them to HTTP or Email Resources.
 ---
 
 # Form
 
-Use **Form** to send visitor input to an HTTP [Resource](../foundations/cms.md#resources). Add it from **Components > Forms**. The inserted Form includes named inputs, a submit button, and editable success and error messages.
+Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/cms.md#resources). Add it from **Components > Forms**. The inserted Form includes named inputs, a submit button, and editable success and error messages.
 
 ## Configure submission
 
@@ -29,9 +29,9 @@ In a Resource created inside the Form, add these headers in the Resource editor 
 
 These values are sent only when you configure the headers. `browserInfo` also provides `referrer`. It does not expose cookies, authorization, or raw request headers. On Cloudflare Workers, `browserInfo.ip` comes from Cloudflare's `CF-Connecting-IP` request header. The generated React Router Cloudflare Worker supplies the Cloudflare hosting context; the Remix Cloudflare adapter also supplies it. On Node-based hosts, including the generated Docker, Netlify, and Vercel adapters, no trusted visitor-IP source is configured, so `browserInfo.ip` is absent. The Form does not derive it from visitor-supplied `X-Forwarded-For` or `X-Real-IP` headers. If an IP header is required on another host, configure a trusted source at the hosting boundary before relying on it.
 
-Email Resource settings can be edited, but new Email Resource delivery is not connected to a provider yet, including on Webstudio Cloud. Selecting one returns an error rather than claiming delivery. [Existing Webhook Forms](webhook-form.md) keep their separate behavior.
+On a published Webstudio Cloud site, an Email Resource sends through Webstudio's private Cloudflare Email Service when the `EMAIL_SERVICE` binding is configured. Set recipients, Sender, subject, and body in [Project Settings](../foundations/project-settings.md#emails) or override them on the Resource. The server rejects a submission if an Email Resource cannot send because the binding is missing. Other hosts need their own server-side email integration; a static export cannot send managed Form email. [Existing Webhook Forms](webhook-form.md) keep their separate behavior.
 
-The Form's **Visitor confirmation email field** setting is off by default. Select a named Email Input inside that Form to address one acknowledgement to the submitted email value. The server requires exactly one valid address in that field. It sends confirmation only after every selected Resource succeeds. Project Settings supplies its fixed subject and plain-text body; the default body includes the published site URL. A custom body is sent literally. Submitted fields, browser information, and files are never included. A confirmation delivery error appears in `errors` without changing a successful primary submission into a failure. Confirmation requires Webstudio Cloud email service configuration.
+The Form's **Visitor confirmation email field** setting is off by default. Select a named email input inside that Form to address one acknowledgement to the submitted email value. The server requires exactly one valid address in that field. It sends confirmation only after every selected Resource succeeds. Project Settings supplies its fixed subject and plain-text body; the default body includes the published site URL. An explicitly saved body is sent literally, even when its text matches the default. Submitted fields, browser information, and files are never included. A confirmation delivery error appears in `errors` without changing a successful primary submission into a failure. Confirmation requires Webstudio Cloud email service configuration.
 
 ## Inputs and responses
 
@@ -39,7 +39,7 @@ Add inputs from **Components > Forms**. Each value you want to send needs a **Na
 
 For uploads, add **File Input** and set **Name**, **Required**, **Accept**, and **Multiple** in Settings. **Accept** guides the browser's file picker; it does not validate file types on the server. A required empty file input blocks submission. An optional empty file input submits without a file.
 
-The entire managed Form request is limited to **25 MiB**, including all selected files, other fields, and multipart encoding. This is a combined limit, not an allowance for each file: selecting multiple files can exceed it even when each file is smaller than 25 MiB. If the request is too large, the server rejects it before sending to any Resource and the Form reports `Form submission is too large`. Reduce the number or size of files and submit again. Outbound HTTP Resource request bodies have a separate 25 MiB limit, and the receiving service may impose a lower limit. New Email Resource delivery, including file attachments, is not connected to a provider yet.
+The entire managed Form request is limited to **25 MiB**, including all selected files, other fields, and multipart encoding. This is a combined limit, not an allowance for each file: selecting multiple files can exceed it even when each file is smaller than 25 MiB. If the request is too large, the server rejects it before sending to any Resource and the Form reports `Form submission is too large`. Reduce the number or size of files and submit again. Outbound HTTP Resource request bodies have a separate 25 MiB limit, and the receiving service may impose a lower limit. Cloud Email Resources have additional limits of 32 attachments, 5 MiB of encoded email content, and a 7 MiB service request. The server checks these limits before sending to any selected destination.
 
 The inserted Form has **Form Content**, **Success Message**, and **Error Message** sections. When every destination succeeds, the success state appears; otherwise the error state appears. The Form exposes an aggregate `status`, ordered `results` with each Resource's status code and response body, and `errors` for failed destinations. A configured **Success Redirect** runs only after overall success. Without a redirect, successful submissions refresh the current page's Resources without a full-page reload or a second submission.
 

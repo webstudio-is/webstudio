@@ -36,6 +36,7 @@ const prepareConfirmation = (formData: FormData, fieldName = "email") =>
     formData,
     subject: "We received your submission",
     body: "Thank you.",
+    isDefaultBody: false,
     siteUrl: "https://published.example",
   });
 
@@ -83,9 +84,21 @@ test("default confirmation mentions the published site and custom text stays lit
     formData,
     subject: "Received",
     body: defaultEmailConfirmationBody,
+    isDefaultBody: true,
     siteUrl: "https://published.example",
   });
   expect(defaults?.email?.body).toContain("https://published.example");
+  const explicitlySavedDefaultText = prepareVisitorConfirmation({
+    fieldName: "email",
+    formData,
+    subject: "Received",
+    body: defaultEmailConfirmationBody,
+    isDefaultBody: false,
+    siteUrl: "https://published.example",
+  });
+  expect(explicitlySavedDefaultText?.email?.body).toBe(
+    defaultEmailConfirmationBody
+  );
   expect(prepareConfirmation(formData)?.email?.body).toBe("Thank you.");
 });
 
@@ -98,6 +111,7 @@ test("visitor confirmation subject rejects line breaks before delivery", () => {
       formData,
       subject: "Thanks\nBcc: other@example.com",
       body: "Thank you.",
+      isDefaultBody: false,
       siteUrl: "https://published.example",
     })
   ).toThrow("Email subject must be text without line breaks");

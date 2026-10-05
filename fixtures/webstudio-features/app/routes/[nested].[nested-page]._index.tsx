@@ -358,6 +358,7 @@ export const action = async ({
         formData,
         subject: emailDefaults.confirmationSubject,
         body: emailDefaults.confirmationBody,
+        isDefaultBody: emailDefaults.confirmationBodyIsDefault,
         siteUrl: url.origin,
       });
       if (confirmation !== undefined && sendEmail === undefined) {
