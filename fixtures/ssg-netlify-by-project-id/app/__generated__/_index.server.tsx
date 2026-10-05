@@ -59,5 +59,4 @@ export const getManagedFormResourceGraph = (formId: string, _managedFormProps: {
         );
 
       export const contactEmail = undefined;
-      export const emailDefaults = {"sender":"","recipients":"","subject":"New form submission","body":"","confirmationSubject":"We received your submission","confirmationBody":"Thank you. Your submission was received.","confirmationBodyIsDefault":true};
     

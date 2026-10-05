@@ -14,27 +14,18 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
-  loadManagedFormResources,
-  getManagedFormBrowserInfo,
+  handleManagedFormSubmission,
   getManagedFormFailure,
-  getManagedFormResponse,
-  prepareVisitorConfirmation,
-  sendVisitorConfirmation,
   getLegacyFormResponse,
-  getManagedFormValues,
   readFormDataWithLimit,
   managedFormRequestParamName,
   validateManagedFormBot,
-  validateManagedFormRecipientLimit,
-  validateManagedFormBodyFormats,
   formIdFieldName,
   managedFormIdFieldName,
   formBotFieldName,
   getSystemSearch,
   isPlainObject,
   cachedFetch,
-  isFormSubmission,
-  validateFormSubmission,
   type ManagedFormResponse,
 } from "@webstudio-is/sdk/runtime";
 import { authenticateProjectRequest } from "@webstudio-is/wsauth";
@@ -60,7 +51,6 @@ import {
   getPageMeta,
   getRemixParams,
   contactEmail,
-  emailDefaults,
 } from "../__generated__/[resources]._index.server";
 import * as constants from "../constants.mjs";
 import css from "../__generated__/index.css?url";
@@ -312,96 +302,30 @@ export const action = async ({
       throw new Error("Invalid Form submission");
     }
     if (managedFormIds.length > 0) {
-      const managedFormId = managedFormIds[0];
-      if (managedFormIds.length !== 1 || typeof managedFormId !== "string") {
-        throw new Error("Invalid Form submission");
-      }
-      const configured = getManagedFormSubmissions().get(managedFormId);
-      if (
-        configured === undefined ||
-        isFormSubmission(configured.submission) === false
-      ) {
-        throw new Error("Form submission settings not found");
-      }
-      const configurationError = validateFormSubmission(configured.submission);
-      if (configurationError !== undefined) {
-        throw new Error(configurationError);
-      }
-      if (
-        configured.resourceIds.length !==
-          configured.submission.destinations.length ||
-        configured.resourceIds.some((resourceId) => resourceId === null)
-      ) {
-        throw new Error("Resource destination not found");
-      }
-      validateManagedFormBot(formData);
-      const graph = getManagedFormResourceGraph(managedFormId, {
-        system: {
-          params: getRemixParams(params ?? {}),
-          ...getSystemSearch(url.searchParams),
-          origin: url.origin,
-          pathname: url.pathname,
-        },
-        formData: getManagedFormValues(formData),
-        browserInfo: getManagedFormBrowserInfo(
-          request,
-          typeof context === "object" &&
-            context !== null &&
-            "cloudflare" in context
-            ? (request.headers.get("cf-connecting-ip") ?? undefined)
-            : undefined
-        ),
-      });
-      if (graph === undefined || graph.rootIds.length === 0) {
-        throw new Error("Form Resource graph not found");
-      }
-      validateManagedFormRecipientLimit(graph);
-      const sendEmail = createManagedFormEmailSender({ context, formData });
-      const confirmation = prepareVisitorConfirmation({
-        fieldName: configured.submission.confirmationEmailField,
-        formData,
-        subject: emailDefaults.confirmationSubject,
-        body: emailDefaults.confirmationBody,
-        isDefaultBody: emailDefaults.confirmationBodyIsDefault,
-        siteUrl: url.origin,
-        sender: emailDefaults.sender,
-      });
-      if (confirmation !== undefined && sendEmail === undefined) {
-        throw new Error("Visitor confirmation requires Webstudio Cloud email");
-      }
-      const validatedGraph = validateManagedFormBodyFormats(
-        graph,
-        formData,
-        sendEmail !== undefined
-      );
       const protectedFetch = createManagedFormResourceFetch({
         request,
         context,
         projectDomain,
       });
-      const results = await loadManagedFormResources(
-        protectedFetch,
-        validatedGraph,
+      return await handleManagedFormSubmission({
+        request,
+        formData,
         url,
-        {
-          signal: request.signal,
-          timeoutMs: 10_000,
-          retryFailedRoots: true,
-          sendEmail,
-          validateEmail:
-            sendEmail === undefined
-              ? undefined
-              : (emailRequest) =>
-                  validateManagedFormEmail(emailRequest, formData),
-          validateDestination: protectedFetch.validateDestination,
-        }
-      );
-      return sendVisitorConfirmation(
-        getManagedFormResponse(graph, results),
-        confirmation,
-        sendEmail,
-        request.signal
-      );
+        system,
+        configuration: (formId) => getManagedFormSubmissions().get(formId),
+        getGraph: getManagedFormResourceGraph,
+        createEmailSender: (formData) =>
+          createManagedFormEmailSender({ context, formData, projectId }),
+        validateEmail: validateManagedFormEmail,
+        resourceFetch: protectedFetch,
+        validateDestination: protectedFetch.validateDestination,
+        trustedIp:
+          typeof context === "object" &&
+          context !== null &&
+          "cloudflare" in context
+            ? (request.headers.get("cf-connecting-ip") ?? undefined)
+            : undefined,
+      });
     }
 
     const resourceName = formData.get(formIdFieldName);

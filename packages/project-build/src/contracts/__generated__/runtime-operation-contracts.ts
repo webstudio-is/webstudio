@@ -8719,9 +8719,12 @@ export const runtimeOperationContractData = [
                             properties: {
                               recipientMode: {
                                 type: "string",
-                                enum: ["project", "custom"],
+                                enum: ["project", "custom", "visitor"],
                               },
                               recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
                                 type: "string",
                               },
                               sender: {
@@ -11968,9 +11971,12 @@ export const runtimeOperationContractData = [
                             properties: {
                               recipientMode: {
                                 type: "string",
-                                enum: ["project", "custom"],
+                                enum: ["project", "custom", "visitor"],
                               },
                               recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
                                 type: "string",
                               },
                               sender: {
@@ -15228,9 +15234,12 @@ export const runtimeOperationContractData = [
                             properties: {
                               recipientMode: {
                                 type: "string",
-                                enum: ["project", "custom"],
+                                enum: ["project", "custom", "visitor"],
                               },
                               recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
                                 type: "string",
                               },
                               sender: {
@@ -18477,9 +18486,12 @@ export const runtimeOperationContractData = [
                             properties: {
                               recipientMode: {
                                 type: "string",
-                                enum: ["project", "custom"],
+                                enum: ["project", "custom", "visitor"],
                               },
                               recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
                                 type: "string",
                               },
                               sender: {
@@ -24444,9 +24456,12 @@ export const runtimeOperationContractData = [
                                   properties: {
                                     recipientMode: {
                                       type: "string",
-                                      enum: ["project", "custom"],
+                                      enum: ["project", "custom", "visitor"],
                                     },
                                     recipients: {
+                                      type: "string",
+                                    },
+                                    visitorEmailField: {
                                       type: "string",
                                     },
                                     sender: {
@@ -27901,9 +27916,12 @@ export const runtimeOperationContractData = [
                                   properties: {
                                     recipientMode: {
                                       type: "string",
-                                      enum: ["project", "custom"],
+                                      enum: ["project", "custom", "visitor"],
                                     },
                                     recipients: {
+                                      type: "string",
+                                    },
+                                    visitorEmailField: {
                                       type: "string",
                                     },
                                     sender: {
@@ -41845,9 +41863,12 @@ export const runtimeOperationContractData = [
                     properties: {
                       recipientMode: {
                         type: "string",
-                        enum: ["project", "custom"],
+                        enum: ["project", "custom", "visitor"],
                       },
                       recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
                         type: "string",
                       },
                       sender: {
@@ -42637,9 +42658,12 @@ export const runtimeOperationContractData = [
                             properties: {
                               recipientMode: {
                                 type: "string",
-                                enum: ["project", "custom"],
+                                enum: ["project", "custom", "visitor"],
                               },
                               recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
                                 type: "string",
                               },
                               sender: {
@@ -45965,9 +45989,12 @@ export const runtimeOperationContractData = [
                             properties: {
                               recipientMode: {
                                 type: "string",
-                                enum: ["project", "custom"],
+                                enum: ["project", "custom", "visitor"],
                               },
                               recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
                                 type: "string",
                               },
                               sender: {
@@ -53061,9 +53088,12 @@ export const runtimeOperationContractData = [
                     properties: {
                       recipientMode: {
                         type: "string",
-                        enum: ["project", "custom"],
+                        enum: ["project", "custom", "visitor"],
                       },
                       recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
                         type: "string",
                       },
                       sender: {
@@ -59005,9 +59035,12 @@ export const runtimeOperationContractData = [
                     properties: {
                       recipientMode: {
                         type: "string",
-                        enum: ["project", "custom"],
+                        enum: ["project", "custom", "visitor"],
                       },
                       recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
                         type: "string",
                       },
                       sender: {
@@ -75883,9 +75916,12 @@ export const runtimeOperationContractData = [
               properties: {
                 recipientMode: {
                   type: "string",
-                  enum: ["project", "custom"],
+                  enum: ["project", "custom", "visitor"],
                 },
                 recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
                   type: "string",
                 },
                 sender: {
@@ -76169,9 +76205,12 @@ export const runtimeOperationContractData = [
               properties: {
                 recipientMode: {
                   type: "string",
-                  enum: ["project", "custom"],
+                  enum: ["project", "custom", "visitor"],
                 },
                 recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
                   type: "string",
                 },
                 sender: {
@@ -76556,9 +76595,12 @@ export const runtimeOperationContractData = [
               properties: {
                 recipientMode: {
                   type: "string",
-                  enum: ["project", "custom"],
+                  enum: ["project", "custom", "visitor"],
                 },
                 recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
                   type: "string",
                 },
                 sender: {
@@ -76788,9 +76830,12 @@ export const runtimeOperationContractData = [
               properties: {
                 recipientMode: {
                   type: "string",
-                  enum: ["project", "custom"],
+                  enum: ["project", "custom", "visitor"],
                 },
                 recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
                   type: "string",
                 },
                 sender: {
