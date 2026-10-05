@@ -1303,6 +1303,47 @@ test("loads project bundle by build id without auth headers", async () => {
   );
 });
 
+test("normalizes legacy json props without a value when loading a project bundle", async () => {
+  const project = JSON.parse(
+    JSON.stringify(createPublishedProjectBundleFixture())
+  );
+  project.build.props = [
+    [
+      "json-prop-id",
+      {
+        id: "json-prop-id",
+        instanceId: "instance-id",
+        name: "data",
+        type: "json",
+      },
+    ],
+  ];
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  const loaded = await loadProjectBundleByBuildId({
+    buildId: project.build.id,
+    origin: "https://example.com",
+  });
+
+  expect(loaded.build.props).toEqual([
+    [
+      "json-prop-id",
+      {
+        id: "json-prop-id",
+        instanceId: "instance-id",
+        name: "data",
+        type: "json",
+        value: null,
+      },
+    ],
+  ]);
+});
+
 test("requests local content preparation for the publish runner", async () => {
   const project = createPublishedProjectBundleFixture();
   const fetch = vi.fn().mockResolvedValue(
