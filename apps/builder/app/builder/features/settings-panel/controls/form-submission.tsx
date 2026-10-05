@@ -43,7 +43,6 @@ const ActionItem = ({
   id,
   index,
   variable,
-  formInstanceId,
   isEnabled,
   active,
   onToggle,
@@ -52,7 +51,6 @@ const ActionItem = ({
   id: string;
   index: number;
   variable?: DataSource;
-  formInstanceId: string;
   isEnabled: boolean;
   active: boolean;
   onToggle: () => void;
@@ -60,11 +58,6 @@ const ActionItem = ({
 }) => {
   const isResource = variable?.type === "resource";
   const name = isResource ? variable.name : "Deleted Resource";
-  const source = isResource
-    ? variable.scopeInstanceId === formInstanceId
-      ? "local"
-      : "remote"
-    : "default";
   const item = (
     <CssValueListItem
       id={id}
@@ -72,8 +65,9 @@ const ActionItem = ({
       aria-label={isResource ? `Edit action ${name}` : `Remove missing action`}
       draggable
       active={active}
+      hidden={!isEnabled}
       label={
-        <Label tag="label" color={source} truncate>
+        <Label tag="label" truncate>
           {name}
         </Label>
       }
@@ -192,14 +186,18 @@ export const FormSubmissionControl = ({
         <Flex direction="column" gap="2">
           {submission.destinations.length > 0 && (
             <CssValueListArrowFocus dragItemId={dragItemId}>
-              <Grid ref={sortableRefCallback}>
+              <Grid
+                ref={sortableRefCallback}
+                css={{
+                  marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
+                }}
+              >
                 {submission.destinations.map((id, index) => (
                   <ActionItem
                     key={id}
                     id={id}
                     index={index}
                     variable={dataSources.get(id)}
-                    formInstanceId={instanceId}
                     isEnabled={!submission.disabledDestinations?.includes(id)}
                     active={dragItemId === id}
                     onToggle={() => {
