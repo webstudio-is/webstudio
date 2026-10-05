@@ -16,15 +16,12 @@ import {
   loadResources,
   handleManagedFormSubmission,
   getManagedFormFailure,
-  getLegacyFormResponse,
   readFormDataWithLimit,
   managedFormRequestParamName,
-  validateManagedFormBot,
   formIdFieldName,
   managedFormIdFieldName,
   formBotFieldName,
   getSystemSearch,
-  isPlainObject,
   cachedFetch,
   type ManagedFormResponse,
 } from "@webstudio-is/sdk/runtime";
@@ -271,37 +268,35 @@ export const action = async ({
     isManagedFormRequest =
       url.searchParams.get(managedFormRequestParamName) === "1";
     url.searchParams.delete(managedFormRequestParamName);
-    // Managed Resource requests use the ingress URL as their resolution base.
-    // A client-supplied forwarded host must not choose an egress destination.
     if (!isManagedFormRequest) {
       url.host = getRequestHost(request);
     }
-
     const formData = isManagedFormRequest
       ? await readFormDataWithLimit(request)
       : await request.formData();
 
-    const system = {
-      params: getRemixParams(params ?? {}),
-      ...getSystemSearch(url.searchParams),
-      origin: url.origin,
-      pathname: url.pathname,
-    };
+    const system = isManagedFormRequest
+      ? {
+          params: getRemixParams(params ?? {}),
+          ...getSystemSearch(url.searchParams),
+          origin: url.origin,
+          pathname: url.pathname,
+        }
+      : {
+          params: {},
+          search: {},
+          origin: url.origin,
+          pathname: url.pathname,
+        };
 
     const managedFormIds = formData.getAll(managedFormIdFieldName);
-    const legacyFormIds = formData.getAll(formIdFieldName);
-    const hasOneEndpointForm =
-      (managedFormIds.length === 1 && legacyFormIds.length === 0) ||
-      (managedFormIds.length === 0 &&
-        legacyFormIds.length === 1 &&
-        typeof legacyFormIds[0] === "string");
-    if (
-      (isManagedFormRequest && !hasOneEndpointForm) ||
-      (!isManagedFormRequest && managedFormIds.length > 0)
-    ) {
+    if (!isManagedFormRequest && managedFormIds.length > 0) {
       throw new Error("Invalid Form submission");
     }
-    if (managedFormIds.length > 0) {
+    if (isManagedFormRequest) {
+      if (managedFormIds.length !== 1 || formData.has(formIdFieldName)) {
+        throw new Error("Invalid Form submission");
+      }
       const protectedFetch = createManagedFormResourceFetch({
         request,
         context,
@@ -335,7 +330,28 @@ export const action = async ({
         ? generatedResources.action.get(resourceName)
         : undefined;
 
-    validateManagedFormBot(formData);
+    const formBotValue = formData.get(formBotFieldName);
+
+    if (formBotValue == null || typeof formBotValue !== "string") {
+      throw new Error("Form bot field not found");
+    }
+
+    // Skip timestamp validation for Brave browser
+    // Brave Shields blocks matchMedia fingerprinting detection used in bot protection
+    // See: https://github.com/brave/brave-browser/issues/46541
+    if (formBotValue !== "brave") {
+      const submitTime = parseInt(formBotValue, 16);
+      // Assumes that the difference between the server time and the form submission time,
+      // including any client-server time drift, is within a 5-minute range.
+      // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
+      // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
+      if (
+        Number.isNaN(submitTime) ||
+        Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
+      ) {
+        throw new Error(`Form bot value invalid ${formBotValue}`);
+      }
+    }
 
     formData.delete(formIdFieldName);
     formData.delete(formBotFieldName);
@@ -365,23 +381,6 @@ export const action = async ({
         actionFetch,
         {
           ...generatedResources.data,
-          resources: generatedResources.data.resources.map((resource) =>
-            resource.id === actionResource.id
-              ? {
-                  ...resource,
-                  createRequest: (documents) => {
-                    const request = resource.createRequest(documents);
-                    return {
-                      ...request,
-                      body: {
-                        ...(isPlainObject(request.body) ? request.body : {}),
-                        ...Object.fromEntries(formData),
-                      },
-                    };
-                  },
-                }
-              : resource
-          ),
           rootIds: [actionResource.id],
         },
         url,
@@ -389,7 +388,7 @@ export const action = async ({
           requestOverrides: new Map([
             // Mutations must reach the backend on every submission, even when
             // the resource has caching enabled. Dependencies can stay cached.
-            [actionResource.id, { fetch }],
+            [actionResource.id, { body: Object.fromEntries(formData), fetch }],
           ]),
         }
       );
@@ -399,9 +398,6 @@ export const action = async ({
       }
       result = actionResult as Awaited<ReturnType<typeof loadResource>>;
     }
-    if (isManagedFormRequest) {
-      return getLegacyFormResponse(result);
-    }
     const { ok, statusText } = result;
     if (ok) {
       return { success: true };
@@ -410,13 +406,14 @@ export const action = async ({
   } catch (error) {
     console.error(error);
 
-    const message = error instanceof Error ? error.message : "Unknown error";
     if (isManagedFormRequest) {
-      return getManagedFormFailure(message);
+      return getManagedFormFailure(
+        error instanceof Error ? error.message : "Unknown error"
+      );
     }
     return {
       success: false,
-      errors: [message],
+      errors: [error instanceof Error ? error.message : "Unknown error"],
     };
   }
 };

@@ -40,7 +40,6 @@ export * from "./expression";
 export {
   generateResources,
   replaceFormActionsWithResources,
-  normalizeLegacyFormBuildData,
 } from "./resources-generator";
 export * from "./managed-form-resources-generator";
 export * from "./form-submission";

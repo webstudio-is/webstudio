@@ -20,8 +20,6 @@ Webhook Forms are used when you need to send form submission data to an external
 
 By default, submissions are sent to the Project owner.
 
-Existing Webhook Forms use their separate N8N notification path. After a site is republished with the updated Cloud worker, its default notification subject gains a short reference so separate submissions have distinct subjects. Already published workers keep their previous behavior until republished. Custom Webhook actions are unchanged.
-
 {% hint style="info" %}
 **Pro feature:** You can customize the recipient of email notifications by navigating to **Project settings > Emails**.
 

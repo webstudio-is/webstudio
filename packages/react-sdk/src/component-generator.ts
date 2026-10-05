@@ -23,7 +23,6 @@ import {
   getIndexesWithinAncestors,
   elementComponent,
   isFormSubmission,
-  normalizeLegacyFormBuildData,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import {
@@ -679,11 +678,6 @@ export const generateWebstudioComponent = ({
    */
   tagsOverrides?: Record<string, string>;
 }) => {
-  ({ props, resources } = normalizeLegacyFormBuildData({
-    props,
-    resources: resources ?? new Map(),
-    instances,
-  }));
   const instance = instances.get(rootInstanceId);
   const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
     rootInstanceId,

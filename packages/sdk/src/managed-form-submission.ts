@@ -60,30 +60,6 @@ export const getManagedFormFailure = (
   errors: [{ status: 400, body: null, message }],
 });
 
-/** Keep saved Webhook Form delivery on the shared JSON endpoint. */
-export const getLegacyFormResponse = (outcome: {
-  ok: boolean;
-  status: number;
-  statusText: string;
-}): ManagedFormResponse => {
-  return {
-    success: outcome.ok,
-    status: outcome.ok ? 200 : 502,
-    results: [],
-    errors: outcome.ok
-      ? []
-      : [
-          {
-            status: outcome.status,
-            body: null,
-            message:
-              outcome.statusText.trim() ||
-              `Resource request failed (${outcome.status})`,
-          },
-        ],
-  };
-};
-
 /** Keep only final destination status and body in the public Form response. */
 export const getManagedFormResponse = (
   graph: ResourceRequestGraph,

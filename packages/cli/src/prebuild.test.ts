@@ -869,8 +869,8 @@ describe("prebuild", () => {
                     name === "type"
                       ? "file"
                       : name === "name"
-                        ? "attachments"
-                        : "image/*,.pdf",
+                      ? "attachments"
+                      : "image/*,.pdf",
                 },
               ] as [string, Prop]
           ),
@@ -1258,7 +1258,7 @@ describe("prebuild", () => {
           (id) =>
             [id, { id, component: "ws:block", children: [] }] as [
               string,
-              Omit<Instance, "type">,
+              Omit<Instance, "type">
             ]
         ),
       ],
@@ -2544,9 +2544,7 @@ sitemap.map((page) => page.path);`
       await runGeneratedCommand("react-router", ["build"]);
       const serverBundle = (
         await Promise.all(
-          (
-            await getFilePaths("build/server")
-          )
+          (await getFilePaths("build/server"))
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2556,9 +2554,7 @@ sitemap.map((page) => page.path);`
       expect(serverBundle).toContain("post-revision");
       const clientBundle = (
         await Promise.all(
-          (
-            await getFilePaths("build/client")
-          )
+          (await getFilePaths("build/client"))
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2897,9 +2893,7 @@ sitemap.map((page) => page.path);`
 
     const serverBundle = (
       await Promise.all(
-        (
-          await getFilePaths("build/server")
-        )
+        (await getFilePaths("build/server"))
           .filter((path) => path.endsWith(".js"))
           .map((path) => readFile(path, "utf8"))
       )
@@ -3134,226 +3128,6 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
-    "builds and submits saved legacy string-action Form settings (%s)",
-    async (template) => {
-      const siteData = createSiteData({
-        instances: [["root", { id: "root", component: "Form", children: [] }]],
-        props: [
-          [
-            "action",
-            {
-              id: "action",
-              instanceId: "root",
-              name: "action",
-              type: "string",
-              value: "https://receiver.example/legacy",
-            },
-          ],
-          [
-            "method",
-            {
-              id: "method",
-              instanceId: "root",
-              name: "method",
-              type: "string",
-              value: "put",
-            },
-          ],
-        ],
-      });
-      await writeSiteData(siteData);
-      await prebuild({ assets: false, template: [template] });
-      const client = await readFile("app/__generated__/_index.tsx", "utf8");
-      expect(client).toContain('action={"action"}');
-      expect(client).toContain('method={"put"}');
-      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-      await build({
-        stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "legacy-action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action } = await import(
-        pathToFileURL(join(tempDir, "legacy-action.mjs")).href
-      );
-      const received: Array<{ url: string; method: string }> = [];
-      vi.stubGlobal(
-        "fetch",
-        async (input: RequestInfo | URL, init?: RequestInit) => {
-          const request = new Request(input, init);
-          received.push({ url: request.url, method: request.method });
-          return Response.json({ ok: true });
-        }
-      );
-      const form = new FormData();
-      form.set(formIdFieldName, "action");
-      form.set(formBotFieldName, "brave");
-      await expect(
-        action({
-          request: new Request("https://site.example/", {
-            method: "POST",
-            headers: { host: "site.example" },
-            body: form,
-          }),
-          context: {},
-          params: {},
-        })
-      ).resolves.toEqual({ success: true });
-      expect(received).toEqual([
-        { url: "https://receiver.example/legacy", method: "PUT" },
-      ]);
-    }
-  );
-
-  test.each(["defaults", "react-router"])(
-    "uses the current page params and query in a legacy Webhook Form action (%s)",
-    async (template) => {
-      const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
-      const siteData = createSiteData({
-        pages: [
-          {
-            id: "product",
-            name: "Product",
-            title: "Product",
-            path: "/products/:slug",
-            rootInstanceId: "root",
-            meta: {},
-          },
-        ],
-        instances: [["root", { id: "root", component: "Form", children: [] }]],
-        props: [
-          [
-            "action",
-            {
-              id: "action",
-              instanceId: "root",
-              name: "action",
-              type: "resource",
-              value: "submit",
-            },
-          ],
-        ],
-      });
-      siteData.build.dataSources = [
-        [
-          SYSTEM_VARIABLE_ID,
-          { id: SYSTEM_VARIABLE_ID, name: "system", type: "parameter" },
-        ],
-      ] as never;
-      siteData.build.resources = [
-        [
-          "submit",
-          {
-            id: "submit",
-            name: "Submit",
-            method: "post",
-            url: `"https://receiver.example/" + ${system}.params.slug + "?source=" + ${system}.search.source`,
-            headers: [
-              { name: "X-Selected", value: `${system}.searchAll.tag[0]` },
-            ],
-            body: `{ slug: ${system}.params.slug, source: ${system}.search.source, tags: ${system}.searchAll.tag, missing: ${system}.search.missing }`,
-          },
-        ],
-      ] as never;
-      await writeSiteData(siteData);
-      await prebuild({ assets: false, template: [template] });
-      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-      await build({
-        stdin: {
-          contents:
-            'export { action } from "./app/routes/[products].$slug._index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action } = await import(
-        pathToFileURL(join(tempDir, "action.mjs")).href
-      );
-      const received: Array<{
-        url: string;
-        selected: string | null;
-        body: unknown;
-      }> = [];
-      vi.stubGlobal(
-        "fetch",
-        async (input: RequestInfo | URL, init?: RequestInit) => {
-          const request = new Request(input, init);
-          received.push({
-            url: request.url,
-            selected: request.headers.get("X-Selected"),
-            body: await request.json(),
-          });
-          return Response.json({ ok: true });
-        }
-      );
-      const form = new FormData();
-      form.set(formIdFieldName, "action");
-      form.set(formBotFieldName, "brave");
-      form.set("message", "Hello");
-      form.set("slug", "submitted-slug");
-      await expect(
-        action({
-          request: new Request(
-            "https://example.com/products/chair?source=newsletter&tag=&tag=second",
-            {
-              method: "POST",
-              headers: { host: "example.com" },
-              body: form,
-            }
-          ),
-          context: {},
-          params: { slug: "chair" },
-        })
-      ).resolves.toEqual({ success: true });
-      const nextForm = new FormData();
-      nextForm.set(formIdFieldName, "action");
-      nextForm.set(formBotFieldName, "brave");
-      await expect(
-        action({
-          request: new Request(
-            "https://example.com/products/table?source=direct&tag=last",
-            {
-              method: "POST",
-              headers: { host: "example.com" },
-              body: nextForm,
-            }
-          ),
-          context: {},
-          params: { slug: "table" },
-        })
-      ).resolves.toEqual({ success: true });
-      expect(received).toEqual([
-        {
-          url: "https://receiver.example/chair?source=newsletter",
-          selected: "",
-          body: {
-            slug: "submitted-slug",
-            source: "newsletter",
-            tags: ["", "second"],
-            message: "Hello",
-          },
-        },
-        {
-          url: "https://receiver.example/table?source=direct",
-          selected: "last",
-          body: { slug: "table", source: "direct", tags: ["last"] },
-        },
-      ]);
-    }
-  );
-
-  test.each(["defaults", "react-router"])(
     "submits identical forms twice while caching dependencies (%s)",
     async (template) => {
       const siteData = createSiteData({
@@ -3445,13 +3219,11 @@ sitemap.map((page) => page.path);`
         }
       );
       const expired = (Date.now() - 300_001).toString(16);
-      const malformedHex = `${Date.now().toString(16)}not-hex`;
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
       try {
         for (const [botValues, error] of [
           [[], "Form bot field not found"],
           [["malformed"], "Form bot value invalid malformed"],
-          [[malformedHex], `Form bot value invalid ${malformedHex}`],
           [[expired], `Form bot value invalid ${expired}`],
           [["stale", Date.now().toString(16)], "Form bot value invalid stale"],
         ] as const) {
@@ -3534,7 +3306,7 @@ sitemap.map((page) => page.path);`
             ([id]) =>
               [id, { id, component: "NativeForm", children: [] }] as [
                 string,
-                Omit<Instance, "type">,
+                Omit<Instance, "type">
               ]
           ),
         ],
@@ -4038,393 +3810,6 @@ sitemap.map((page) => page.path);`
     60_000
   );
 
-  test.each(["defaults", "react-router"])(
-    "serves saved Webhook Forms through generated HTTP routes (%s)",
-    async (template) => {
-      await writeSiteData(
-        createSiteData({
-          pages: [
-            {
-              id: "home",
-              name: "Home",
-              title: "Home",
-              path: "",
-              rootInstanceId: "root",
-              meta: {},
-            },
-            {
-              id: "help",
-              name: "Help",
-              title: "Help",
-              path: "/help/contact",
-              rootInstanceId: "root",
-              meta: {},
-            },
-            {
-              id: "product",
-              name: "Product",
-              title: "Product",
-              path: "/products/:slug",
-              rootInstanceId: "root",
-              meta: {},
-            },
-          ],
-          instances: [
-            ["root", { id: "root", component: "Form", children: [] }],
-          ],
-          props: [
-            [
-              "action",
-              {
-                id: "action",
-                instanceId: "root",
-                name: "action",
-                type: "string",
-                value: "https://receiver.example/legacy",
-              },
-            ],
-          ],
-        })
-      );
-      await prebuild({ assets: false, template: [template] });
-      if (template === "react-router") {
-        await linkPackagedPreviewDependencies();
-        await runGeneratedCommand("react-router", ["build"]);
-      } else {
-        await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-        const viteConfig = await readFile("vite.config.ts", "utf8");
-        await writeFile(
-          "vite.config.ts",
-          viteConfig
-            .replaceAll(
-              'conditions: ["browser", "development|production"]',
-              'conditions: ["webstudio", "browser", "development|production"]'
-            )
-            .replaceAll(
-              'conditions: ["node", "development|production"]',
-              'conditions: ["webstudio", "node", "development|production"]'
-            )
-        );
-        await runGeneratedCommand("remix", ["vite:build"]);
-      }
-      const serverEntry = pathToFileURL(
-        join(tempDir, "build/server/index.js")
-      ).href;
-      const handlerPackage =
-        template === "react-router"
-          ? "react-router"
-          : "@remix-run/server-runtime";
-      const runner = `
-        import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
-        const received = [];
-        globalThis.fetch = async (input, init) => {
-          const request = new Request(input, init);
-          const body = await request.json();
-          received.push({ url: request.url, method: request.method, body });
-          if (body.message === "reject") {
-            return Response.json({ private: "do not expose" }, { status: 422, statusText: "Rejected" });
-          }
-          return Response.json({ accepted: true });
-        };
-        const serverBuild = await import(${JSON.stringify(serverEntry)});
-        const handleRequest = createRequestHandler(serverBuild, "production");
-        const results = [];
-        for (const path of ["/__ws-form", "/__ws-form/help/contact", "/__ws-form/products/chair"]) {
-          const form = new FormData();
-          form.set(${JSON.stringify(formIdFieldName)}, "action");
-          form.set(${JSON.stringify(formBotFieldName)}, "brave");
-          form.set("message", path);
-          const response = await handleRequest(new Request(
-            new URL(path, "https://example.com"),
-            { method: "POST", body: form, headers: { host: "example.com" } }
-          ));
-          results.push({ status: response.status, contentType: response.headers.get("content-type"), body: await response.json() });
-        }
-        const missingBot = new FormData();
-        missingBot.set(${JSON.stringify(formIdFieldName)}, "action");
-        const invalidResponse = await handleRequest(new Request("https://example.com/__ws-form", {
-          method: "POST", body: missingBot, headers: { host: "example.com" }
-        }));
-        const rejected = new FormData();
-        rejected.set(${JSON.stringify(formIdFieldName)}, "action");
-        rejected.set(${JSON.stringify(formBotFieldName)}, "brave");
-        rejected.set("message", "reject");
-        const rejectedResponse = await handleRequest(new Request("https://example.com/__ws-form", {
-          method: "POST", body: rejected, headers: { host: "example.com" }
-        }));
-        const defaultEmail = new FormData();
-        defaultEmail.set(${JSON.stringify(formIdFieldName)}, "");
-        defaultEmail.set(${JSON.stringify(formBotFieldName)}, "brave");
-        const defaultEmailResponse = await handleRequest(new Request("https://example.com/__ws-form", {
-          method: "POST", body: defaultEmail, headers: { host: "example.com" }
-        }));
-        const duplicateId = new FormData();
-        duplicateId.append(${JSON.stringify(formIdFieldName)}, "action");
-        duplicateId.append(${JSON.stringify(formIdFieldName)}, "action");
-        duplicateId.set(${JSON.stringify(formBotFieldName)}, "brave");
-        const duplicateResponse = await handleRequest(new Request("https://example.com/__ws-form", {
-          method: "POST", body: duplicateId, headers: { host: "example.com" }
-        }));
-        results.push({ status: invalidResponse.status, body: await invalidResponse.json() });
-        results.push({ status: rejectedResponse.status, body: await rejectedResponse.json() });
-        results.push({ status: defaultEmailResponse.status, body: await defaultEmailResponse.json() });
-        results.push({ status: duplicateResponse.status, body: await duplicateResponse.json() });
-        process.stdout.write(JSON.stringify({ results, received }));
-      `;
-      const { stdout } = await execFileAsync(
-        process.execPath,
-        [
-          "--import",
-          pathToFileURL(
-            join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
-          ).href,
-          "--input-type=module",
-          "-e",
-          runner,
-        ],
-        {
-          cwd: tempDir,
-          env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
-        }
-      );
-      const { results, received } = JSON.parse(stdout) as {
-        results: Array<{ status: number; contentType: string; body: unknown }>;
-        received: Array<{ url: string; method: string; body: unknown }>;
-      };
-      expect(results).toHaveLength(7);
-      for (const result of results.slice(0, 3)) {
-        expect(result.status).toBe(200);
-        expect(result.contentType).toContain("application/json");
-        expect(result.body).toEqual({
-          success: true,
-          status: 200,
-          results: [],
-          errors: [],
-        });
-      }
-      expect(results[3]).toMatchObject({
-        status: 400,
-        body: getManagedFormFailure("Form bot field not found"),
-      });
-      expect(results[4]).toMatchObject({
-        status: 502,
-        body: {
-          success: false,
-          status: 502,
-          results: [],
-          errors: [{ status: 422, body: null, message: "Rejected" }],
-        },
-      });
-      expect(results[5]).toMatchObject({
-        status: 400,
-        body: getManagedFormFailure("Resource not found"),
-      });
-      expect(results[6]).toMatchObject({
-        status: 400,
-        body: getManagedFormFailure("Invalid Form submission"),
-      });
-      expect(received).toEqual(
-        ["/__ws-form", "/__ws-form/help/contact", "/__ws-form/products/chair"]
-          .map((path) => ({
-            url: "https://receiver.example/legacy",
-            method: "POST",
-            body: { message: path },
-          }))
-          .concat({
-            url: "https://receiver.example/legacy",
-            method: "POST",
-            body: { message: "reject" },
-          })
-      );
-    },
-    60_000
-  );
-
-  test.each(["defaults", "react-router"])(
-    "sends saved Webhook Form files through the framework HTTP handler (%s)",
-    async (template) => {
-      const received: Array<{
-        method: string | undefined;
-        contentType: string | undefined;
-        message: FormDataEntryValue | null;
-        configured: FormDataEntryValue | null;
-        upload: { name: string; type: string; bytes: number[] };
-      }> = [];
-      const receiver = createServer(async (request, response) => {
-        try {
-          const chunks: Buffer[] = [];
-          for await (const chunk of request) {
-            chunks.push(Buffer.from(chunk));
-          }
-          const outbound = new Request("http://receiver.example/accept", {
-            method: "POST",
-            headers: request.headers as HeadersInit,
-            body: Buffer.concat(chunks),
-          });
-          const fields = await outbound.formData();
-          const upload = fields.get("upload");
-          if (!(upload instanceof File)) {
-            throw new Error("Uploaded file not found");
-          }
-          received.push({
-            method: request.method,
-            contentType: request.headers["content-type"],
-            message: fields.get("message"),
-            configured: fields.get("configured"),
-            upload: {
-              name: upload.name,
-              type: upload.type,
-              bytes: Array.from(new Uint8Array(await upload.arrayBuffer())),
-            },
-          });
-          response.writeHead(201, { "content-type": "application/json" });
-          response.end(JSON.stringify({ accepted: true }));
-        } catch {
-          response.writeHead(500);
-          response.end();
-        }
-      });
-      await new Promise<void>((resolve) =>
-        receiver.listen(0, "127.0.0.1", resolve)
-      );
-      try {
-        const address = receiver.address();
-        if (address === null || typeof address === "string") {
-          throw new Error("Mock Resource server did not start");
-        }
-        const siteData = createSiteData({
-          instances: [
-            ["root", { id: "root", component: "Form", children: [] }],
-          ],
-          props: [
-            [
-              "action",
-              {
-                id: "action",
-                instanceId: "root",
-                name: "action",
-                type: "resource",
-                value: "submit",
-              },
-            ],
-          ],
-        });
-        siteData.build.resources = [
-          [
-            "submit",
-            {
-              id: "submit",
-              name: "Submit",
-              method: "post",
-              url: JSON.stringify(`http://127.0.0.1:${address.port}/accept`),
-              headers: [],
-              bodyFormat: "multipart",
-              body: '{ configured: "saved" }',
-            },
-          ],
-        ] as never;
-        await writeSiteData(siteData);
-        await prebuild({ assets: false, template: [template] });
-        if (template === "react-router") {
-          await linkPackagedPreviewDependencies();
-          await runGeneratedCommand("react-router", ["build"]);
-        } else {
-          await symlink(
-            join(originalCwd, "node_modules"),
-            "node_modules",
-            "dir"
-          );
-          const viteConfig = await readFile("vite.config.ts", "utf8");
-          await writeFile(
-            "vite.config.ts",
-            viteConfig
-              .replaceAll(
-                'conditions: ["browser", "development|production"]',
-                'conditions: ["webstudio", "browser", "development|production"]'
-              )
-              .replaceAll(
-                'conditions: ["node", "development|production"]',
-                'conditions: ["webstudio", "node", "development|production"]'
-              )
-          );
-          await runGeneratedCommand("remix", ["vite:build"]);
-        }
-        const serverEntry = pathToFileURL(
-          join(tempDir, "build/server/index.js")
-        ).href;
-        const handlerPackage =
-          template === "react-router"
-            ? "react-router"
-            : "@remix-run/server-runtime";
-        const runner = `
-          import { createRequestHandler } from ${JSON.stringify(
-            handlerPackage
-          )};
-          const build = await import(${JSON.stringify(serverEntry)});
-          const handleRequest = createRequestHandler(build, "production");
-          const form = new FormData();
-          form.set(${JSON.stringify(formIdFieldName)}, "action");
-          form.set(${JSON.stringify(formBotFieldName)}, "brave");
-          form.set("message", "Hello");
-          form.set("upload", new File([new Uint8Array([0, 128, 255])], "photo.bin", { type: "application/octet-stream" }));
-          const response = await handleRequest(new Request("https://example.com/__ws-form", {
-            method: "POST", body: form, headers: { host: "example.com" },
-          }));
-          process.stdout.write(JSON.stringify({
-            status: response.status,
-            contentType: response.headers.get("content-type"),
-            body: await response.json(),
-          }));
-        `;
-        const { stdout } = await execFileAsync(
-          process.execPath,
-          [
-            "--import",
-            pathToFileURL(
-              join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
-            ).href,
-            "--input-type=module",
-            "-e",
-            runner,
-          ],
-          {
-            cwd: tempDir,
-            env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
-          }
-        );
-        const result = JSON.parse(stdout) as {
-          status: number;
-          contentType: string;
-          body: unknown;
-        };
-        expect(result.status).toBe(200);
-        expect(result.contentType).toContain("application/json");
-        expect(result.body).toEqual({
-          success: true,
-          status: 200,
-          results: [],
-          errors: [],
-        });
-        expect(received).toEqual([
-          {
-            method: "POST",
-            contentType: expect.stringContaining("multipart/form-data"),
-            message: "Hello",
-            configured: "saved",
-            upload: {
-              name: "photo.bin",
-              type: "application/octet-stream",
-              bytes: [0, 128, 255],
-            },
-          },
-        ]);
-      } finally {
-        await new Promise<void>((resolve) => receiver.close(() => resolve()));
-      }
-    },
-    60_000
-  );
-
   test.each(["/__ws-form", "/__ws-form/submissions", "/__ws-form/:slug"])(
     "rejects a page under the reserved managed Form endpoint (%s)",
     async (path) => {
@@ -4458,35 +3843,6 @@ sitemap.map((page) => page.path);`
       ).rejects.toThrow("uses the reserved Form endpoint");
     }
   );
-
-  test("rejects reserved Form routes for a saved Webhook Form", async () => {
-    await writeSiteData(
-      createSiteData({
-        pages: [
-          {
-            id: "home",
-            name: "Home",
-            title: "Home",
-            path: "",
-            rootInstanceId: "root",
-            meta: {},
-          },
-          {
-            id: "reserved",
-            name: "Reserved",
-            title: "Reserved",
-            path: "/__ws-form/contact",
-            rootInstanceId: "root",
-            meta: {},
-          },
-        ],
-        instances: [["root", { id: "root", component: "Form", children: [] }]],
-      })
-    );
-    await expect(
-      prebuild({ assets: false, template: ["react-router"] })
-    ).rejects.toThrow("uses the reserved Form endpoint");
-  });
 
   test("keeps an authored reserved-prefix page when no managed Form is present", async () => {
     await writeSiteData(
@@ -6328,68 +5684,6 @@ export const createManagedFormResourceFetch = () => {
     }
   );
 
-  test("prerenders the configured Webhook Form method", async () => {
-    const siteData = createSiteData({
-      instances: [
-        [
-          "root",
-          {
-            id: "root",
-            component: "Box",
-            children: [{ type: "id", value: "form" }],
-          },
-        ],
-        [
-          "form",
-          {
-            id: "form",
-            component: "Form",
-            children: [],
-          },
-        ],
-      ],
-      props: [
-        [
-          "form-action",
-          {
-            id: "form-action",
-            instanceId: "form",
-            name: "action",
-            type: "resource",
-            value: "webhook",
-          },
-        ],
-      ],
-    });
-    siteData.build.resources = [
-      [
-        "webhook",
-        {
-          id: "webhook",
-          name: "action",
-          method: "post",
-          url: '"https://example.com/webhook"',
-          headers: [],
-        },
-      ],
-    ] as never;
-    await writeSiteData(siteData);
-
-    await prebuild({ assets: false, template: ["ssg"] });
-    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
-
-    const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
-    const [form] = findElementsByTagName(html, "form");
-    if (form === undefined) {
-      throw new Error("Expected a prerendered Webhook Form");
-    }
-    expect(
-      Object.fromEntries(form.attrs.map(({ name, value }) => [name, value]))
-    ).toMatchObject({ method: "post" });
-  }, 30_000);
-
   test("prerenders the new Form without native submission attributes", async () => {
     const siteData = createSiteData({
       instances: [
@@ -6624,9 +5918,7 @@ export const createManagedFormResourceFetch = () => {
     ).resolves.toContain("<!DOCTYPE html>");
     const staticRuntimeOutput = (
       await Promise.all(
-        (
-          await getFilePaths("dist/client")
-        )
+        (await getFilePaths("dist/client"))
           .filter((path) => path.endsWith(".js") || path.endsWith(".json"))
           .map((path) => readFile(path, "utf8"))
       )
