@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
   Flex,
   Grid,
-  Label,
   SmallIconButton,
   SmallToggleButton,
   Text,
@@ -68,9 +67,9 @@ const ActionItem = ({
       active={active}
       hidden={!isEnabled}
       label={
-        <Label tag="label" truncate>
+        <Text variant="labels" truncate>
           {name}
-        </Label>
+        </Text>
       }
       buttons={
         <>

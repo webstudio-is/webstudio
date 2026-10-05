@@ -525,6 +525,9 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
     )
   );
   const row = container.querySelector<HTMLElement>('[data-list-item="true"]');
+  expect(row?.getAttribute("aria-label")).toBe("Action Send request");
+  expect(row?.textContent).toContain("Send request");
+  expect(row?.querySelector("label")).toBeNull();
   expect(row?.getClientRects().length).toBeGreaterThan(0);
   expect(getComputedStyle(row!).opacity).toBe("0.2");
   expect(row?.hasAttribute("disabled")).toBe(true);
