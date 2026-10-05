@@ -557,7 +557,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
     value: { destinations: [], disabledDestinations: [] },
   });
   const actionsLabel = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent === "Actions"
+    (button) => button.textContent === "Action"
   );
   expect(actionsLabel).toBeDefined();
   await act(async () =>

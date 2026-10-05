@@ -144,7 +144,7 @@ export const FormSubmissionControl = ({
           resettable={invalidSavedValue || submission.destinations.length > 0}
           onReset={() => update({ destinations: [] })}
         >
-          Actions
+          Action
         </FieldLabel>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
