@@ -1,6 +1,8 @@
 import { expect, test, vi } from "vitest";
 import {
   createCloudflareManagedFormEmailSender,
+  prepareVisitorConfirmation,
+  sendVisitorConfirmation,
   validateCloudflareManagedFormEmail,
 } from "./managed-form-email";
 import {
@@ -9,6 +11,7 @@ import {
 } from "./managed-form-submission";
 import { loadResources } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
+import { defaultEmailConfirmationBody } from "./email-resource";
 
 const request: ResourceRequest = {
   name: "Team email",
@@ -26,6 +29,139 @@ const request: ResourceRequest = {
     includeAttachments: true,
   },
 };
+
+const prepareConfirmation = (formData: FormData, fieldName = "email") =>
+  prepareVisitorConfirmation({
+    fieldName,
+    formData,
+    subject: "We received your submission",
+    body: "Thank you.",
+    siteUrl: "https://published.example",
+  });
+
+test("visitor confirmation is off by default and uses only one named email field", () => {
+  const formData = new FormData();
+  formData.append("email", "visitor@example.com");
+  formData.append("password", "private value");
+  formData.append("upload", new File(["secret"], "private.txt"));
+  expect(prepareConfirmation(formData, "")).toBeUndefined();
+  expect(prepareConfirmation(formData)).toMatchObject({
+    email: {
+      recipients: [{ address: "visitor@example.com" }],
+      subject: "We received your submission",
+      body: "Thank you.",
+      includeAttachments: false,
+    },
+  });
+  expect(JSON.stringify(prepareConfirmation(formData))).not.toContain(
+    "private value"
+  );
+  expect(JSON.stringify(prepareConfirmation(formData))).not.toContain(
+    "private.txt"
+  );
+});
+
+test("visitor confirmation rejects repeated, missing, and invalid email fields", () => {
+  const formData = new FormData();
+  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+  formData.set("email", "Name <visitor@example.com>");
+  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+  formData.set("email", "visitor@example.com, other@example.com");
+  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+  formData.append("email", "invalid");
+  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+  formData.set("email", "visitor@example.com");
+  formData.append("email", "other@example.com");
+  expect(() => prepareConfirmation(formData)).toThrow("one valid email field");
+});
+
+test("default confirmation mentions the published site and custom text stays literal", () => {
+  const formData = new FormData();
+  formData.append("email", "visitor@example.com");
+  const defaults = prepareVisitorConfirmation({
+    fieldName: "email",
+    formData,
+    subject: "Received",
+    body: defaultEmailConfirmationBody,
+    siteUrl: "https://published.example",
+  });
+  expect(defaults?.email?.body).toContain("https://published.example");
+  expect(prepareConfirmation(formData)?.email?.body).toBe("Thank you.");
+});
+
+test("visitor confirmation subject rejects line breaks before delivery", () => {
+  const formData = new FormData();
+  formData.append("email", "visitor@example.com");
+  expect(() =>
+    prepareVisitorConfirmation({
+      fieldName: "email",
+      formData,
+      subject: "Thanks\nBcc: other@example.com",
+      body: "Thank you.",
+      siteUrl: "https://published.example",
+    })
+  ).toThrow("Email subject must be text without line breaks");
+});
+
+test("visitor confirmation follows primary success and failure stays nonfatal", async () => {
+  const formData = new FormData();
+  formData.append("email", "visitor@example.com");
+  const confirmation = prepareConfirmation(formData)!;
+  const send = vi.fn(async () => ({
+    ok: false,
+    status: 429,
+    statusText: "Quota exceeded",
+    data: { error: { code: "EMAIL_QUOTA" } },
+  }));
+  const primaryFailure = {
+    success: false,
+    status: 502,
+    results: [],
+    errors: [{ status: 502, body: null, message: "Primary failed" }],
+  };
+  expect(
+    await sendVisitorConfirmation(primaryFailure, confirmation, send)
+  ).toEqual(primaryFailure);
+  expect(send).not.toHaveBeenCalled();
+  const response = await sendVisitorConfirmation(
+    { success: true, status: 200, results: [], errors: [] },
+    confirmation,
+    send
+  );
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(response).toMatchObject({
+    success: true,
+    status: 200,
+    errors: [
+      {
+        resourceId: "visitor-confirmation",
+        status: 429,
+        message: "Quota exceeded",
+      },
+    ],
+  });
+});
+
+test("provider fake receives one private visitor envelope without attachments", async () => {
+  const formData = new FormData();
+  formData.append("email", "visitor@example.com");
+  formData.append("upload", new File(["private"], "private.txt"));
+  const fetch = vi.fn(async () => Response.json({ id: "confirmation-sent" }));
+  const send = createCloudflareManagedFormEmailSender({ fetch }, formData);
+  const response = await sendVisitorConfirmation(
+    { success: true, status: 200, results: [], errors: [] },
+    prepareConfirmation(formData),
+    send
+  );
+  expect(response).toMatchObject({ success: true, errors: [] });
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+  expect(JSON.parse(init.body as string)).toEqual({
+    to: [{ address: "visitor@example.com" }],
+    subject: "We received your submission",
+    text: "Thank you.",
+  });
+});
 
 test("sends the private worker envelope with files and no form internals", async () => {
   const formData = new FormData();

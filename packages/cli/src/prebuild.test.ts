@@ -858,8 +858,8 @@ describe("prebuild", () => {
                     name === "type"
                       ? "file"
                       : name === "name"
-                        ? "attachments"
-                        : "image/*,.pdf",
+                      ? "attachments"
+                      : "image/*,.pdf",
                 },
               ] as [string, Prop]
           ),
@@ -1251,7 +1251,7 @@ describe("prebuild", () => {
           (id) =>
             [id, { id, component: "ws:block", children: [] }] as [
               string,
-              Omit<Instance, "type">,
+              Omit<Instance, "type">
             ]
         ),
       ],
@@ -2537,9 +2537,7 @@ sitemap.map((page) => page.path);`
       await runGeneratedCommand("react-router", ["build"]);
       const serverBundle = (
         await Promise.all(
-          (
-            await getFilePaths("build/server")
-          )
+          (await getFilePaths("build/server"))
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2549,9 +2547,7 @@ sitemap.map((page) => page.path);`
       expect(serverBundle).toContain("post-revision");
       const clientBundle = (
         await Promise.all(
-          (
-            await getFilePaths("build/client")
-          )
+          (await getFilePaths("build/client"))
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2890,9 +2886,7 @@ sitemap.map((page) => page.path);`
 
     const serverBundle = (
       await Promise.all(
-        (
-          await getFilePaths("build/server")
-        )
+        (await getFilePaths("build/server"))
           .filter((path) => path.endsWith(".js"))
           .map((path) => readFile(path, "utf8"))
       )
@@ -3527,7 +3521,7 @@ sitemap.map((page) => page.path);`
             ([id]) =>
               [id, { id, component: "NativeForm", children: [] }] as [
                 string,
-                Omit<Instance, "type">,
+                Omit<Instance, "type">
               ]
           ),
         ],
@@ -3579,7 +3573,9 @@ sitemap.map((page) => page.path);`
       await build({
         stdin: {
           contents: `export { action } from "./app/routes/_index";
-            export { action as endpointAction } from "./app/routes/${generateRemixRoute("/__ws-form")}";`,
+            export { action as endpointAction } from "./app/routes/${generateRemixRoute(
+              "/__ws-form"
+            )}";`,
           resolveDir: tempDir,
         },
         outfile: join(tempDir, "action.mjs"),
@@ -3971,7 +3967,9 @@ sitemap.map((page) => page.path);`
             ? "react-router"
             : "@remix-run/server-runtime";
         const runner = `
-          import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
+          import { createRequestHandler } from ${JSON.stringify(
+            handlerPackage
+          )};
           const build = await import(${JSON.stringify(serverEntry)});
           const handleRequest = createRequestHandler(build, "production");
           const form = new FormData();
@@ -4346,7 +4344,9 @@ sitemap.map((page) => page.path);`
             ? "react-router"
             : "@remix-run/server-runtime";
         const runner = `
-          import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
+          import { createRequestHandler } from ${JSON.stringify(
+            handlerPackage
+          )};
           const build = await import(${JSON.stringify(serverEntry)});
           const handleRequest = createRequestHandler(build, "production");
           const form = new FormData();
@@ -4995,6 +4995,302 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
+    "sends visitor confirmation only after primary success through the generated route (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: {
+                destinations: ["http-source"],
+                confirmationEmailField: "visitorEmail",
+              },
+            },
+          ],
+        ],
+        pageMeta: {
+          emailConfirmationSubject: "Receipt",
+          emailConfirmationBody: "Fixed confirmation text.",
+        },
+      });
+      siteData.build.dataSources = [
+        [
+          "http-source",
+          {
+            id: "http-source",
+            name: "HTTP",
+            type: "resource",
+            resourceId: "http",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://receiver.example/submit"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      const adapterPath = join(
+        tempDir,
+        "app/__generated__/$resources.managed-form-fetch.server.ts"
+      );
+      const nodeAdapter = await readFile(adapterPath, "utf8");
+      await writeFile(
+        adapterPath,
+        `import { createCloudflareManagedFormEmailSender, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/runtime";
+export const createManagedFormEmailSender = ({ formData }) => createCloudflareManagedFormEmailSender({ fetch: globalThis.__testEmailServiceFetch }, formData);
+export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
+export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;
+`
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "confirmation-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "confirmation-action.mjs")).href
+      );
+      const events: string[] = [];
+      let httpStatus = 200;
+      let emailStatus = 200;
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async () => {
+          events.push("http");
+          return Response.json({ accepted: true }, { status: httpStatus });
+        })
+      );
+      const emailFetch = vi.fn(
+        async (_input: RequestInfo | URL, init?: RequestInit) => {
+          events.push("email");
+          const envelope = JSON.parse(init?.body as string);
+          expect(envelope).toEqual({
+            to: [{ address: "visitor@example.com" }],
+            subject: "Receipt",
+            text: "Fixed confirmation text.",
+          });
+          return emailStatus === 200
+            ? Response.json({ id: "sent" })
+            : Response.json(
+                { error: { code: "EMAIL_QUOTA", message: "Quota exceeded" } },
+                { status: emailStatus }
+              );
+        }
+      );
+      vi.stubGlobal("__testEmailServiceFetch", emailFetch);
+      const submit = (routeAction = action) => {
+        const formData = new FormData();
+        formData.set(managedFormIdFieldName, "root");
+        formData.set(managedFormArrayNamesFieldName, "[]");
+        formData.set(formBotFieldName, "brave");
+        formData.set("visitorEmail", "visitor@example.com");
+        formData.set("password", "private");
+        return routeAction({
+          request: new Request(
+            `https://site.example/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "site.example" },
+              body: formData,
+            }
+          ),
+          context: {},
+        });
+      };
+      await expect(submit()).resolves.toMatchObject({
+        success: true,
+        status: 200,
+        errors: [],
+      });
+      expect(events).toEqual(["http", "email"]);
+      events.length = 0;
+      httpStatus = 422;
+      await expect(submit()).resolves.toMatchObject({
+        success: false,
+        status: 502,
+      });
+      expect(events).toEqual(["http", "http"]);
+      events.length = 0;
+      httpStatus = 200;
+      emailStatus = 429;
+      await expect(submit()).resolves.toMatchObject({
+        success: true,
+        status: 200,
+        errors: [
+          {
+            resourceId: "visitor-confirmation",
+            status: 429,
+            message: "Quota exceeded",
+          },
+        ],
+      });
+      expect(events).toEqual(["http", "email"]);
+      expect(emailFetch).toHaveBeenCalledTimes(2);
+      await writeFile(adapterPath, nodeAdapter);
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "confirmation-node-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action: nodeAction } = await import(
+        pathToFileURL(join(tempDir, "confirmation-node-action.mjs")).href
+      );
+      events.length = 0;
+      await expect(submit(nodeAction)).resolves.toEqual(
+        getManagedFormFailure(
+          "Visitor confirmation requires Webstudio Cloud email"
+        )
+      );
+      expect(events).toEqual([]);
+    },
+    slowPrebuildTestTimeout
+  );
+
+  test.each(["defaults", "react-router"])(
+    "rejects an invalid visitor confirmation subject before generated route dispatch (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "submission",
+            {
+              id: "submission",
+              instanceId: "root",
+              name: "submission",
+              type: "json",
+              value: {
+                destinations: ["http-source"],
+                confirmationEmailField: "visitorEmail",
+              },
+            },
+          ],
+        ],
+        pageMeta: { emailConfirmationSubject: "Bad\nsubject" },
+      });
+      siteData.build.dataSources = [
+        [
+          "http-source",
+          {
+            id: "http-source",
+            name: "HTTP",
+            type: "resource",
+            resourceId: "http",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://receiver.example/submit"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        `export const createManagedFormEmailSender = () => globalThis.__testSendEmail;
+export const validateManagedFormEmail = () => undefined;
+export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;
+`
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "invalid-confirmation-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "invalid-confirmation-action.mjs")).href
+      );
+      const httpFetch = vi.fn(async () => Response.json({ ok: true }));
+      const emailSend = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        data: { id: "sent" },
+      }));
+      vi.stubGlobal("__testManagedFormFetch", httpFetch);
+      vi.stubGlobal("__testSendEmail", emailSend);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      formData.set("visitorEmail", "visitor@example.com");
+      await expect(
+        action({
+          request: new Request(
+            `https://site.example/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "site.example" },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("Email subject must be text without line breaks")
+      );
+      expect(httpFetch).not.toHaveBeenCalled();
+      expect(emailSend).not.toHaveBeenCalled();
+    },
+    slowPrebuildTestTimeout
+  );
+
+  test.each(["defaults", "react-router"])(
     "retries only a failed managed Form destination per submission (%s)",
     async (template) => {
       const siteData = createSiteData({
@@ -5458,7 +5754,11 @@ sitemap.map((page) => page.path);`
             url: '"https://example.com/dependent"',
             headers: [],
             bodyFormat: "json",
-            body: `{ attachment: ${encodeDataSourceVariable("formData")}.attachment, lookup: ${encodeDataSourceVariable("lookup-source")}.data }`,
+            body: `{ attachment: ${encodeDataSourceVariable(
+              "formData"
+            )}.attachment, lookup: ${encodeDataSourceVariable(
+              "lookup-source"
+            )}.data }`,
           },
         ],
       ] as never;
@@ -5834,7 +6134,9 @@ sitemap.map((page) => page.path);`
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
         stdin: {
-          contents: `export { action } from "./app/routes/${generateRemixRoute("/__ws-form")}";`,
+          contents: `export { action } from "./app/routes/${generateRemixRoute(
+            "/__ws-form"
+          )}";`,
           resolveDir: tempDir,
         },
         outfile: join(tempDir, "multipart-action.mjs"),
@@ -6353,9 +6655,7 @@ sitemap.map((page) => page.path);`
     ).resolves.toContain("<!DOCTYPE html>");
     const staticRuntimeOutput = (
       await Promise.all(
-        (
-          await getFilePaths("dist/client")
-        )
+        (await getFilePaths("dist/client"))
           .filter((path) => path.endsWith(".js") || path.endsWith(".json"))
           .map((path) => readFile(path, "utf8"))
       )

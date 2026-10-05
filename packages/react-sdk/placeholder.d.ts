@@ -66,6 +66,14 @@ declare module "__SERVER__" {
   export const getRemixParams: ({ ...params }: Params) => Params;
 
   export const contactEmail: undefined | string;
+  export const emailDefaults: {
+    sender: string;
+    recipients: string;
+    subject: string;
+    body: string;
+    confirmationSubject: string;
+    confirmationBody: string;
+  };
 }
 
 declare module "__AUTH__" {

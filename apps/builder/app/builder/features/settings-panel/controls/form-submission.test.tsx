@@ -3,7 +3,7 @@ import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
-import { $dataSources, $instances } from "~/shared/sync/data-stores";
+import { $dataSources, $instances, $props } from "~/shared/sync/data-stores";
 import { FormSubmissionControl } from "./form-submission";
 
 (
@@ -13,13 +13,108 @@ import { FormSubmissionControl } from "./form-submission";
 let root: Root | undefined;
 const previousInstances = $instances.get();
 const previousDataSources = $dataSources.get();
+const previousProps = $props.get();
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   $instances.set(previousInstances);
   $dataSources.set(previousDataSources);
+  $props.set(previousProps);
   document.body.innerHTML = "";
 });
+
+test.each(["Input", "ws:element"] as const)(
+  "visitor confirmation selects a named email input in this Form (%s)",
+  async (component) => {
+    $instances.set(
+      new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [{ type: "id", value: "email" }],
+          },
+        ],
+        ["email", { type: "instance", id: "email", component, children: [] }],
+      ])
+    );
+    $dataSources.set(new Map());
+    $props.set(
+      new Map([
+        [
+          "tag",
+          {
+            id: "tag",
+            instanceId: "email",
+            name: "tag",
+            type: "string",
+            value: "input",
+          },
+        ],
+        [
+          "name",
+          {
+            id: "name",
+            instanceId: "email",
+            name: "name",
+            type: "string",
+            value: "visitorEmail",
+          },
+        ],
+        [
+          "type",
+          {
+            id: "type",
+            instanceId: "email",
+            name: "type",
+            type: "string",
+            value: "email",
+          },
+        ],
+      ])
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    const onChange = vi.fn();
+    await act(async () =>
+      root?.render(
+        <TooltipProvider>
+          <FormSubmissionControl
+            instanceId="form"
+            propName="submission"
+            prop={{
+              id: "submission",
+              instanceId: "form",
+              name: "submission",
+              type: "json",
+              value: { destinations: ["resource"] },
+            }}
+            computedValue={{ destinations: ["resource"] }}
+            meta={{ type: "json", control: "form-submission", required: false }}
+            onChange={onChange}
+          />
+        </TooltipProvider>
+      )
+    );
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[role="combobox"]')?.click()
+    );
+    const option = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="option"]')
+    ).find((item) => item.textContent === "visitorEmail");
+    await act(async () => option?.click());
+    expect(onChange).toHaveBeenCalledWith({
+      type: "json",
+      value: {
+        destinations: ["resource"],
+        confirmationEmailField: "visitorEmail",
+      },
+    });
+  }
+);
 
 test("a Form starts with an empty Resource list and can select an in-scope destination", async () => {
   $instances.set(

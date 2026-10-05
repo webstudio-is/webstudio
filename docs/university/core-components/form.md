@@ -31,6 +31,8 @@ These values are sent only when you configure the headers. `browserInfo` also pr
 
 Email Resource settings can be edited, but new Email Resource delivery is not connected to a provider yet, including on Webstudio Cloud. Selecting one returns an error rather than claiming delivery. [Existing Webhook Forms](webhook-form.md) keep their separate behavior.
 
+The Form's **Visitor confirmation email field** setting is off by default. Select a named Email Input inside that Form to address one acknowledgement to the submitted email value. The server requires exactly one valid address in that field. It sends confirmation only after every selected Resource succeeds. Project Settings supplies its fixed subject and plain-text body; the default body includes the published site URL. A custom body is sent literally. Submitted fields, browser information, and files are never included. A confirmation delivery error appears in `errors` without changing a successful primary submission into a failure. Confirmation requires Webstudio Cloud email service configuration.
+
 ## Inputs and responses
 
 Add inputs from **Components > Forms**. Each value you want to send needs a **Name**. Inputs with the same name keep all their selected values in form order. An unchecked checkbox group remains an empty list.

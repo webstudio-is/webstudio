@@ -6,9 +6,10 @@ import {
   maxFormDestinations,
   validateFormSubmission,
   type FormSubmission,
+  findTreeInstanceIds,
 } from "@webstudio-is/sdk";
 import { findAvailableVariables } from "@webstudio-is/project-build/runtime";
-import { $dataSources, $instances } from "~/shared/sync/data-stores";
+import { $dataSources, $instances, $props } from "~/shared/sync/data-stores";
 import { VariablePopoverTrigger } from "../variable-popover";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";
@@ -20,6 +21,7 @@ export const FormSubmissionControl = ({
 }: ControlProps<"form-submission">) => {
   const instances = useStore($instances);
   const dataSources = useStore($dataSources);
+  const props = useStore($props);
   const [selectedId, setSelectedId] = useState<string>();
   const invalidSavedValue =
     prop !== undefined &&
@@ -38,9 +40,42 @@ export const FormSubmissionControl = ({
   );
   const update = (next: FormSubmission) =>
     onChange({ type: "json", value: next });
+  const descendantIds = new Set(findTreeInstanceIds(instances, instanceId));
+  const attributes = new Map<
+    string,
+    { name?: string; type?: string; tag?: string }
+  >();
+  for (const fieldProp of props.values()) {
+    if (
+      descendantIds.has(fieldProp.instanceId) &&
+      fieldProp.type === "string" &&
+      (fieldProp.name === "name" ||
+        fieldProp.name === "type" ||
+        fieldProp.name === "tag")
+    ) {
+      const entry = attributes.get(fieldProp.instanceId) ?? {};
+      entry[fieldProp.name] = fieldProp.value;
+      attributes.set(fieldProp.instanceId, entry);
+    }
+  }
+  const emailFields = Array.from(attributes.entries())
+    .filter(
+      ([id, attributes]) =>
+        (instances.get(id)?.tag === "input" ||
+          attributes.tag === "input" ||
+          instances.get(id)?.component === "Input") &&
+        attributes.type === "email" &&
+        Boolean(attributes.name)
+    )
+    .map(([, attributes]) => attributes.name!);
+  const emailFieldOptions = Array.from(new Set(emailFields));
   const error = invalidSavedValue
     ? "Invalid Form submission settings"
-    : validateFormSubmission(submission);
+    : validateFormSubmission(submission) ??
+      (submission.confirmationEmailField &&
+      !emailFieldOptions.includes(submission.confirmationEmailField)
+        ? "Selected visitor confirmation email field is unavailable"
+        : undefined);
 
   return (
     <VerticalLayout label={<PropertyLabel name="submission" />}>
@@ -128,6 +163,30 @@ export const FormSubmissionControl = ({
               </Button>
             </VariablePopoverTrigger>
           </Flex>
+        )}
+        <Text>Visitor confirmation email field (optional)</Text>
+        {emailFieldOptions.length > 0 && (
+          <Select
+            fullWidth
+            value={submission.confirmationEmailField || undefined}
+            placeholder="Off"
+            options={emailFieldOptions}
+            getLabel={(name) => name}
+            onChange={(name) =>
+              update({ ...submission, confirmationEmailField: name })
+            }
+          />
+        )}
+        {submission.confirmationEmailField && (
+          <Button
+            type="button"
+            color="ghost"
+            onClick={() =>
+              update({ ...submission, confirmationEmailField: undefined })
+            }
+          >
+            Turn confirmation off
+          </Button>
         )}
         {error && <Text>{error}</Text>}
       </Flex>

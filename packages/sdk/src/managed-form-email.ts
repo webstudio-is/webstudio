@@ -1,6 +1,12 @@
 import type { ResourceLoadOptions } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
+import {
+  defaultEmailConfirmationBody,
+  validateEmailSubject,
+} from "./email-resource";
+import { parseEmailSender } from "./email-addresses";
+import type { ManagedFormResponse } from "./managed-form-submission";
 
 type EmailService = {
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -63,6 +69,90 @@ const getEmailFiles = (formData: FormData) =>
       ? [value]
       : []
   );
+
+/** Resolve only the named email input; no other submitted value enters confirmation. */
+export const prepareVisitorConfirmation = ({
+  fieldName,
+  formData,
+  subject,
+  body,
+  siteUrl,
+}: {
+  fieldName: string | undefined;
+  formData: FormData;
+  subject: string;
+  body: string;
+  siteUrl: string;
+}): ResourceRequest | undefined => {
+  if (fieldName === undefined || fieldName === "") {
+    return;
+  }
+  if (internalFormFieldNames.has(fieldName)) {
+    throw new Error("Visitor confirmation email field is invalid");
+  }
+  const values = formData.getAll(fieldName);
+  const address = values[0];
+  if (
+    values.length !== 1 ||
+    typeof address !== "string" ||
+    parseEmailSender(address)?.address !== address
+  ) {
+    throw new Error("Visitor confirmation requires one valid email field");
+  }
+  validateEmailSubject(subject);
+  if (typeof body !== "string") {
+    throw new Error("Visitor confirmation body must be text");
+  }
+  const text =
+    body === defaultEmailConfirmationBody ? `${body}\n\n${siteUrl}` : body;
+  const request: ResourceRequest = {
+    name: "Visitor confirmation",
+    control: "email",
+    method: "post",
+    url: "",
+    searchParams: [],
+    headers: [],
+    email: {
+      recipientMode: "custom",
+      recipients: [{ address }],
+      subject,
+      body: text,
+      includeAttachments: false,
+    },
+  };
+  validateCloudflareManagedFormEmail(request, formData);
+  return request;
+};
+
+export const sendVisitorConfirmation = async (
+  response: ManagedFormResponse,
+  request: ResourceRequest | undefined,
+  sendEmail: ResourceLoadOptions["sendEmail"] | undefined,
+  signal?: AbortSignal
+): Promise<ManagedFormResponse> => {
+  if (!response.success || request === undefined) {
+    return response;
+  }
+  if (sendEmail === undefined) {
+    throw new Error("Visitor confirmation requires Webstudio Cloud email");
+  }
+  const outcome = await sendEmail(request, { signal, timeoutMs: 10_000 });
+  if (outcome.ok) {
+    return response;
+  }
+  return {
+    ...response,
+    errors: [
+      ...response.errors,
+      {
+        resourceId: "visitor-confirmation",
+        status: outcome.status,
+        body: outcome.data,
+        message: outcome.statusText || "Visitor confirmation failed",
+      },
+    ],
+  };
+};
 
 /** The private Worker applies the same limits; check before any destination runs. */
 export const validateCloudflareManagedFormEmail = (
@@ -271,12 +361,12 @@ export const createCloudflareManagedFormEmailSender = (
       return timedOut
         ? failure(504, "EMAIL_TIMEOUT", "Email delivery timed out")
         : options.signal?.aborted
-          ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
-          : failure(
-              502,
-              "EMAIL_SERVICE_UNAVAILABLE",
-              "Email service is unavailable"
-            );
+        ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
+        : failure(
+            502,
+            "EMAIL_SERVICE_UNAVAILABLE",
+            "Email service is unavailable"
+          );
     } finally {
       if (timeout !== undefined) {
         clearTimeout(timeout);

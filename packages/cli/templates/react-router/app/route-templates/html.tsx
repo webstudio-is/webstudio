@@ -18,6 +18,8 @@ import {
   getManagedFormBrowserInfo,
   getManagedFormFailure,
   getManagedFormResponse,
+  prepareVisitorConfirmation,
+  sendVisitorConfirmation,
   getLegacyFormResponse,
   getManagedFormValues,
   readFormDataWithLimit,
@@ -58,13 +60,18 @@ import {
   getPageMeta,
   getRemixParams,
   contactEmail,
+  emailDefaults,
 } from "__SERVER__";
 import * as constants from "__CONSTANTS__";
 import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 import { authRoutes } from "__AUTH__";
 import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
-import { createManagedFormEmailSender, createManagedFormResourceFetch, validateManagedFormEmail } from "__MANAGED_FORM_FETCH__";
+import {
+  createManagedFormEmailSender,
+  createManagedFormResourceFetch,
+  validateManagedFormEmail,
+} from "__MANAGED_FORM_FETCH__";
 import { assetUrlsByPath } from "__ASSETS__";
 
 const customFetch: typeof fetch = (input, init) => {
@@ -346,21 +353,49 @@ export const action = async ({
       }
       validateManagedFormRecipientLimit(graph);
       const sendEmail = createManagedFormEmailSender({ context, formData });
-      const validatedGraph = validateManagedFormBodyFormats(graph, formData, sendEmail !== undefined);
+      const confirmation = prepareVisitorConfirmation({
+        fieldName: configured.submission.confirmationEmailField,
+        formData,
+        subject: emailDefaults.confirmationSubject,
+        body: emailDefaults.confirmationBody,
+        siteUrl: url.origin,
+      });
+      if (confirmation !== undefined && sendEmail === undefined) {
+        throw new Error("Visitor confirmation requires Webstudio Cloud email");
+      }
+      const validatedGraph = validateManagedFormBodyFormats(
+        graph,
+        formData,
+        sendEmail !== undefined
+      );
       const protectedFetch = createManagedFormResourceFetch({
         request,
         context,
         projectDomain,
       });
-      const results = await loadManagedFormResources(protectedFetch, validatedGraph, url, {
-        signal: request.signal,
-        timeoutMs: 10_000,
-        retryFailedRoots: true,
+      const results = await loadManagedFormResources(
+        protectedFetch,
+        validatedGraph,
+        url,
+        {
+          signal: request.signal,
+          timeoutMs: 10_000,
+          retryFailedRoots: true,
+          sendEmail,
+          validateEmail:
+            sendEmail === undefined
+              ? undefined
+              : (emailRequest) =>
+                  validateManagedFormEmail(emailRequest, formData),
+          validateDestination: protectedFetch.validateDestination,
+        }
+      );
+      return sendVisitorConfirmation(
+        getManagedFormResponse(graph, results),
+        confirmation,
         sendEmail,
-        validateEmail: sendEmail === undefined ? undefined : (emailRequest) => validateManagedFormEmail(emailRequest, formData),
-        validateDestination: protectedFetch.validateDestination,
-      });
-      return getManagedFormResponse(graph, results);
+        request.signal
+      );
     }
 
     const resourceName = formData.get(formIdFieldName);
