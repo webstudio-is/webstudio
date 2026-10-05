@@ -246,12 +246,19 @@ test("managed Form reveals a persistent configuration error", async () => {
     }
   );
   try {
-    const alert = view.container.querySelector('[role="alert"]');
-    expect(alert).not.toBeNull();
+    expect(view.container.querySelector('[role="alert"]')).toBeNull();
+    let alert: Element | null = null;
     for (let attempt = 1; attempt <= 2; attempt++) {
       await act(async () => view.container.querySelector("button")?.click());
       await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(attempt));
-      expect(view.container.querySelector('[role="alert"]')).toBe(alert);
+      const currentAlert = view.container.querySelector('[role="alert"]');
+      expect(currentAlert?.textContent).toContain(
+        "Select at least one Resource destination"
+      );
+      if (alert !== null) {
+        expect(currentAlert).toBe(alert);
+      }
+      alert = currentAlert;
     }
     expect(action).not.toHaveBeenCalled();
   } finally {
