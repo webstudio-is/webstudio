@@ -148,6 +148,7 @@ const getPreviewCurrentUrl = (
   currentSystem: {
     pathname: string;
     search: Record<string, string | undefined>;
+    searchAll?: Record<string, string[]>;
   },
   hash: string
 ) => {
@@ -156,11 +157,21 @@ const getPreviewCurrentUrl = (
   // from the selected page system data so :local-link state matches preview
   // navigation, including query params and hash-only links.
   const currentUrl = new URL(currentSystem.pathname, "https://webstudio.local");
-  currentUrl.search = new URLSearchParams(
-    Object.entries(currentSystem.search).filter(
-      (entry): entry is [string, string] => entry[1] !== undefined
-    )
-  ).toString();
+  const searchParams = new URLSearchParams();
+  if (currentSystem.searchAll !== undefined) {
+    for (const [name, values] of Object.entries(currentSystem.searchAll)) {
+      for (const value of values) {
+        searchParams.append(name, value);
+      }
+    }
+  } else {
+    for (const [name, value] of Object.entries(currentSystem.search)) {
+      if (value !== undefined) {
+        searchParams.append(name, value);
+      }
+    }
+  }
+  currentUrl.search = searchParams.toString();
   currentUrl.hash = hash;
   return currentUrl;
 };
@@ -1048,8 +1059,11 @@ const WebstudioComponentPreviewInner = forwardRef<
     [selectorIdAttribute]: instanceSelector.join(","),
   };
   if (instance.component === "NativeForm") {
+    const getPreviewUrl = () =>
+      getPreviewCurrentUrl($currentSystem.get(), $selectedPageHash.get().hash);
     props["data-ws-managed-form-id"] = instance.id;
     props.previewSubmission = true;
+    props.getRedirectBaseUrl = () => getPreviewUrl().href;
     props.onManagedSubmit = (
       values: Parameters<typeof submitManagedForm>[0]["values"],
       signal: AbortSignal
@@ -1068,10 +1082,7 @@ const WebstudioComponentPreviewInner = forwardRef<
           ],
         });
       }
-      const currentUrl = getPreviewCurrentUrl(
-        $currentSystem.get(),
-        $selectedPageHash.get().hash
-      );
+      const currentUrl = getPreviewUrl();
       const endpoint = new URL("/rest/preview-form", window.location.href);
       endpoint.searchParams.set(
         "path",
@@ -1089,7 +1100,7 @@ const WebstudioComponentPreviewInner = forwardRef<
     props.onSuccessRedirect = (destination: string) => {
       navigatePreviewFormSuccess(
         destination,
-        window.location.href,
+        getPreviewUrl().href,
         switchPageAndUpdateSystem,
         (href) => window.location.assign(href)
       );

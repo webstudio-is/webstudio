@@ -14,6 +14,19 @@ test("internal Preview success redirects switch pages", () => {
   expect(navigateExternal).not.toHaveBeenCalled();
 });
 
+test("relative Preview success redirect uses the Preview page path", () => {
+  const navigateInternal = vi.fn();
+  const navigateExternal = vi.fn();
+  navigatePreviewFormSuccess(
+    "https://webstudio.local/thanks",
+    "https://webstudio.local/contact",
+    navigateInternal,
+    navigateExternal
+  );
+  expect(navigateInternal).toHaveBeenCalledExactlyOnceWith("/thanks");
+  expect(navigateExternal).not.toHaveBeenCalled();
+});
+
 test.each([
   "https://other.example/thanks",
   "mailto:team@example.com",

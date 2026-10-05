@@ -126,4 +126,18 @@ describe("getPreviewCurrentUrl", () => {
     expect(url.search).toBe("?tag=blue&empty=");
     expect(url.hash).toBe("#section");
   });
+
+  test("preserves repeated query values for Preview Form submissions", () => {
+    const url = getPreviewCurrentUrl(
+      {
+        pathname: "/contact",
+        search: { choice: "b", source: "newsletter" },
+        searchAll: { choice: ["a", "b"], source: ["newsletter"] },
+      },
+      ""
+    );
+
+    expect(url.searchParams.getAll("choice")).toEqual(["a", "b"]);
+    expect(url.search).toBe("?choice=a&choice=b&source=newsletter");
+  });
 });

@@ -34,6 +34,7 @@ export const NativeForm = forwardRef<
       signal: AbortSignal
     ) => void | Promise<ManagedFormResponse>;
     previewSubmission?: boolean;
+    getRedirectBaseUrl?: () => string;
     onSuccessRedirect?: (destination: string) => void;
     onSubmissionSuccess?: () => void | Promise<void>;
     navigationToken?: string;
@@ -53,6 +54,7 @@ export const NativeForm = forwardRef<
       onResultChange,
       onManagedSubmit,
       previewSubmission,
+      getRedirectBaseUrl,
       onSuccessRedirect,
       onSubmissionSuccess,
       navigationToken,
@@ -195,7 +197,10 @@ export const NativeForm = forwardRef<
           onResultChange?.(response);
           reportState(response.success ? "success" : "error");
           const destination = response.success
-            ? resolveRedirectUrl(successRedirect, window.location.href)
+            ? resolveRedirectUrl(
+                successRedirect,
+                getRedirectBaseUrl?.() ?? window.location.href
+              )
             : undefined;
           if (destination) {
             if (onSuccessRedirect) {

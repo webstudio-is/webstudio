@@ -318,6 +318,40 @@ test("Form passes one structured submission to its dispatcher", async () => {
   }
 });
 
+test("Form resolves Preview success redirects against the Preview page", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onSuccessRedirect = vi.fn();
+  try {
+    await act(async () => {
+      root.render(
+        <NativeForm
+          submission={{ destinations: ["resource-one"] }}
+          successRedirect="thanks"
+          getRedirectBaseUrl={() => "https://webstudio.local/contact"}
+          onManagedSubmit={async () => ({
+            success: true,
+            status: 200,
+            results: [{ resourceId: "resource-one", status: 200, body: null }],
+            errors: [],
+          })}
+          onSuccessRedirect={onSuccessRedirect}
+        >
+          <button type="submit">Send</button>
+        </NativeForm>
+      );
+    });
+    await act(async () => container.querySelector("button")?.click());
+    expect(onSuccessRedirect).toHaveBeenCalledExactlyOnceWith(
+      "https://webstudio.local/thanks"
+    );
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
 test("file-input settings enforce required uploads and keep optional or multiple files", async () => {
   const container = document.createElement("div");
   document.body.append(container);
