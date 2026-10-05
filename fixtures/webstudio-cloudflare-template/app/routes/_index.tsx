@@ -19,6 +19,8 @@ import {
   getManagedFormBrowserInfo,
   getManagedFormFailure,
   getManagedFormResponse,
+  prepareVisitorConfirmation,
+  sendVisitorConfirmation,
   getLegacyFormResponse,
   getManagedFormValues,
   readFormDataWithLimit,
@@ -58,6 +60,7 @@ import {
   getPageMeta,
   getRemixParams,
   contactEmail,
+  emailDefaults,
 } from "../__generated__/_index.server";
 import * as constants from "../constants.mjs";
 import css from "../__generated__/index.css?url";
@@ -364,6 +367,16 @@ export const action = async ({
       }
       validateManagedFormRecipientLimit(graph);
       const sendEmail = createManagedFormEmailSender({ context, formData });
+      const confirmation = prepareVisitorConfirmation({
+        fieldName: configured.submission.confirmationEmailField,
+        formData,
+        subject: emailDefaults.confirmationSubject,
+        body: emailDefaults.confirmationBody,
+        siteUrl: url.origin,
+      });
+      if (confirmation !== undefined && sendEmail === undefined) {
+        throw new Error("Visitor confirmation requires Webstudio Cloud email");
+      }
       const validatedGraph = validateManagedFormBodyFormats(
         graph,
         formData,
@@ -391,7 +404,12 @@ export const action = async ({
           validateDestination: protectedFetch.validateDestination,
         }
       );
-      return getManagedFormResponse(graph, results);
+      return sendVisitorConfirmation(
+        getManagedFormResponse(graph, results),
+        confirmation,
+        sendEmail,
+        request.signal
+      );
     }
 
     const resourceName = formData.get(formIdFieldName);
