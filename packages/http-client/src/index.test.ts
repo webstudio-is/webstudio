@@ -1343,7 +1343,11 @@ test("reports json props without a value when loading a published bundle", async
     })
   ).rejects.toMatchObject({
     name: "MissingJsonPropValueError",
-    diagnostics: ["“Projects” (ws:collection): JSON prop “data” has no value"],
+    message: [
+      "This build cannot be published because it contains JSON props with no value:",
+      "- “Projects” (ws:collection): JSON prop “data” has no value",
+      "Open the project in Webstudio, set or reset the affected prop, then publish again.",
+    ].join("\n"),
   });
 });
 

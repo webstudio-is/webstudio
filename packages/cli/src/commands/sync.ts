@@ -154,14 +154,6 @@ const isUnpublishedProjectBundleError = (error: unknown) => {
   return getApiErrorCode(error) === "PROJECT_NOT_PUBLISHED";
 };
 
-const getMissingJsonPropValueMessage = (error: MissingJsonPropValueError) => {
-  return [
-    "This build cannot be published because it contains JSON props with no value:",
-    ...error.diagnostics.map((diagnostic) => `- ${diagnostic}`),
-    "Open the project in Webstudio, set or reset the affected prop, then publish again.",
-  ].join("\n");
-};
-
 export const sync = async (
   options: SyncOptions,
   dependencies = defaultSyncDependencies
@@ -176,7 +168,7 @@ export const sync = async (
       throw new HandledCliError();
     }
     if (error instanceof MissingJsonPropValueError) {
-      syncing.stop(getMissingJsonPropValueMessage(error), 2);
+      syncing.stop(error.message, 2);
       throw new HandledCliError();
     }
     const compatibilityMessage = stopSpinnerWithError(

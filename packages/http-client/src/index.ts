@@ -116,12 +116,15 @@ const createApiResponseErrorMessage = async (
 };
 
 export class MissingJsonPropValueError extends Error {
-  readonly diagnostics: string[];
-
   constructor(diagnostics: string[]) {
-    super("Published build contains JSON props without a value");
+    super(
+      [
+        "This build cannot be published because it contains JSON props with no value:",
+        ...diagnostics.map((diagnostic) => `- ${diagnostic}`),
+        "Open the project in Webstudio, set or reset the affected prop, then publish again.",
+      ].join("\n")
+    );
     this.name = "MissingJsonPropValueError";
-    this.diagnostics = diagnostics;
   }
 }
 
