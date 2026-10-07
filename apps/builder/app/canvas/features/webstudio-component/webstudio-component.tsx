@@ -110,8 +110,8 @@ import {
 import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-source-utils";
 import { $resourcesState } from "~/shared/resources";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { submitManagedForm } from "@webstudio-is/sdk-components-react";
-import { fetch as builderFetch } from "~/shared/fetch.client";
+import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
+import { submitPreviewForm } from "~/shared/preview-form-bridge";
 import { switchPageAndUpdateSystem } from "~/canvas/interceptor";
 import { $hasUnsavedSyncChanges } from "@webstudio-is/sync-client";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
@@ -1083,17 +1083,10 @@ const WebstudioComponentPreviewInner = forwardRef<
         });
       }
       const currentUrl = getPreviewUrl();
-      const endpoint = new URL("/rest/preview-form", window.location.href);
-      endpoint.searchParams.set(
-        "path",
-        currentUrl.pathname + currentUrl.search
-      );
-      return submitManagedForm({
+      return submitPreviewForm({
         values,
         managedFormId: instance.id,
-        location: window.location.href,
-        endpoint: endpoint.href,
-        fetch: builderFetch,
+        path: currentUrl.pathname + currentUrl.search,
         signal,
       });
     };

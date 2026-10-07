@@ -16,6 +16,7 @@ import type { Role } from "@webstudio-is/project";
 import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
+import { subscribePreviewFormRequests } from "~/shared/preview-form-parent";
 import { Inspector } from "./inspector";
 import { Topbar } from "./shared/topbar";
 import { Footer } from "./features/footer";
@@ -335,6 +336,7 @@ export const Builder = (props: BuilderProps) => {
   useEffect(() => {
     $publisher.set({ publish });
   }, [publish]);
+  useEffect(() => subscribePreviewFormRequests(publish), [publish]);
 
   const project = useStore($project);
 
