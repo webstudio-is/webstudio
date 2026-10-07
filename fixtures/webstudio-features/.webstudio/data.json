@@ -7326,7 +7326,8 @@
   ],
   "assetFolders": [],
   "user": {
-    "email": "hello@webstudio.is"
+    "email": "hello@webstudio.is",
+    "username": "admin"
   },
   "projectDomain": "webstudio-fixture-project-a-0su3o",
   "projectTitle": "webstudio-fixture-project-a",
