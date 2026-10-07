@@ -953,30 +953,17 @@ export const materializeMdxAuthoredContent = ({
               let kind: "element" | "component";
               let authoredJsxPropNames: readonly string[];
               let componentPropNames: readonly string[];
-              const namedComponent =
-                authored.child.type === "template" &&
-                authored.child.name === instance.component;
-              if (adapted?.component === instance.component || namedComponent) {
+              if (adapted?.component === instance.component) {
                 kind = "component";
-                authoredProps =
-                  adapted?.props.map(({ prop }) => prop) ??
-                  (authored.child.type === "template"
-                    ? authored.child.props
-                    : []);
-                authoredJsxPropNames =
-                  adapted?.props.map(({ prop, source }) =>
-                    getSourcePropName({
-                      node: authored.child,
-                      source,
-                      fallback: prop.name,
-                    })
-                  ) ?? authoredProps.map(({ name }) => name);
-                propBindings =
-                  adapted?.props ??
-                  authoredProps.map((prop, propIndex) => ({
-                    prop,
-                    source: { nodePath: [], propIndex },
-                  }));
+                authoredProps = adapted.props.map(({ prop }) => prop);
+                authoredJsxPropNames = adapted.props.map(({ prop, source }) =>
+                  getSourcePropName({
+                    node: authored.child,
+                    source,
+                    fallback: prop.name,
+                  })
+                );
+                propBindings = adapted.props;
                 componentPropNames = Object.keys(
                   metas?.get(instance.component)?.props ?? {}
                 );
@@ -2085,58 +2072,21 @@ export const reconcileMdxAuthoredContent = ({
   indexOriginal(root.document.children, []);
 
   const templatesExpandedToAuthoredChildren = new Set<Instance["id"]>();
-  const shallowTemplateChildIds = new Set<Instance["id"]>();
-  const getShallowComponentChildIds = (
-    rootInstance: Instance,
-    descendantIds: readonly Instance["id"][]
-  ) => {
-    const changedPropInstanceIds = descendantIds.filter(
-      (id) =>
-        equal(
-          propsByInstanceId.get(id) ?? [],
-          originalPropsByInstanceId.get(id) ?? []
-        ) === false
-    );
-    const directChildIds = new Set(
-      rootInstance.children.flatMap((child) =>
-        child.type === "id" ? [child.value] : []
-      )
-    );
-    const hasOnlyComponentChildren =
-      directChildIds.size === rootInstance.children.length &&
-      Array.from(directChildIds).every((id) => {
-        const child = originalInstanceById.get(id);
-        return (
-          child !== undefined &&
-          child.component !== elementComponent &&
-          child.component.startsWith("ws:") === false
-        );
-      });
-    if (
-      hasOnlyComponentChildren &&
-      changedPropInstanceIds.every((id) => directChildIds.has(id))
-    ) {
-      return directChildIds;
-    }
-  };
   for (const provenance of root.provenance.nodes) {
     if (provenance.type !== "template") {
       continue;
     }
     if (provenance.overlaysTemplateChildren) {
       templatesExpandedToAuthoredChildren.add(provenance.instanceId);
+      continue;
     }
     const originalNode = originalNodeByPath.get(pathKey(provenance.path));
     if (
-      provenance.overlaysTemplateChildren === false &&
-      (originalNode?.type !== "template" ||
-        isSelfClosingTemplateNode(originalNode) === false)
+      originalNode?.type !== "template" ||
+      isSelfClosingTemplateNode(originalNode) === false
     ) {
       continue;
     }
-    const descendantIds = provenance.expandedInstanceIds.filter(
-      (id) => id !== provenance.instanceId
-    );
     const originalRoot = originalInstanceById.get(provenance.instanceId);
     const nextRoot = instanceById.get(provenance.instanceId);
     if (originalRoot === undefined || nextRoot === undefined) {
@@ -2148,6 +2098,9 @@ export const reconcileMdxAuthoredContent = ({
     if (rootShellChanged) {
       continue;
     }
+    const descendantIds = provenance.expandedInstanceIds.filter(
+      (id) => id !== provenance.instanceId
+    );
     const childrenChanged =
       equal(nextRoot.children, originalRoot.children) === false;
     const descendantInstancesChanged = descendantIds.some(
@@ -2167,44 +2120,6 @@ export const reconcileMdxAuthoredContent = ({
       descendantPropsChanged
     ) {
       templatesExpandedToAuthoredChildren.add(provenance.instanceId);
-    }
-    if (
-      templatesExpandedToAuthoredChildren.has(provenance.instanceId) ===
-        false ||
-      childrenChanged ||
-      descendantInstancesChanged
-    ) {
-      continue;
-    }
-    const directChildIds = getShallowComponentChildIds(
-      originalRoot,
-      descendantIds
-    );
-    if (directChildIds === undefined) {
-      continue;
-    }
-    if (provenance.overlaysTemplateChildren) {
-      const overlaidDescendantById = new Map(
-        provenance.overlaidDescendants.map((descendant) => [
-          descendant.instanceId,
-          descendant,
-        ])
-      );
-      if (
-        Array.from(directChildIds).some((id) => {
-          const descendant = overlaidDescendantById.get(id);
-          const node =
-            descendant === undefined
-              ? undefined
-              : originalNodeByPath.get(pathKey(descendant.path));
-          return node?.type !== "template" || !isSelfClosingTemplateNode(node);
-        })
-      ) {
-        continue;
-      }
-    }
-    for (const id of directChildIds) {
-      shallowTemplateChildIds.add(id);
     }
   }
 
@@ -2380,15 +2295,6 @@ export const reconcileMdxAuthoredContent = ({
     }
   }
   const serializedInstanceIds = new Set<string>();
-  const markDescendantsSerialized = (instanceId: Instance["id"]) => {
-    for (const child of instanceById.get(instanceId)?.children ?? []) {
-      if (child.type !== "id") {
-        continue;
-      }
-      serializedInstanceIds.add(child.value);
-      markDescendantsSerialized(child.value);
-    }
-  };
   const usesPhrasingContent = (tag: string) =>
     elementsByTag[tag]?.categories.includes("phrasing") === true;
   const getInsertedNodeMode = (children: Instance["children"]): MdxMode =>
@@ -2722,13 +2628,9 @@ export const reconcileMdxAuthoredContent = ({
         descendantProvenance?.kind === "component" && originalNode !== undefined
           ? materializeMdxComponent(originalNode)
           : undefined;
-      const originalNamedComponent =
-        originalNode?.type === "template" &&
-        originalNode.name === instance.component;
       if (
         descendantProvenance?.kind === "component" &&
-        originalComponent?.component !== instance.component &&
-        originalNamedComponent === false
+        originalComponent?.component !== instance.component
       ) {
         throw new Error("Overlaid template component provenance is invalid");
       }
@@ -2736,10 +2638,7 @@ export const reconcileMdxAuthoredContent = ({
         originalNode === undefined
           ? []
           : descendantProvenance?.kind === "component"
-            ? (originalComponent?.props.map(({ prop }) => prop) ??
-              (originalNamedComponent && originalNode.type === "template"
-                ? originalNode.props
-                : []))
+            ? (originalComponent?.props.map(({ prop }) => prop) ?? [])
             : mapAttributeNames({
                 attributes: originalNode.props,
                 direction: "jsx-to-instance",
@@ -2795,10 +2694,6 @@ export const reconcileMdxAuthoredContent = ({
       if (serializedInstanceIds.has(instanceId)) {
         throw new Error(`Authored MDX instance "${instanceId}" is reused`);
       }
-      const isShallowTemplateChild = shallowTemplateChildIds.has(instanceId);
-      if (isShallowTemplateChild) {
-        markDescendantsSerialized(instanceId);
-      }
       serializedInstanceIds.add(instanceId);
       if (descendantProvenance?.kind === "component") {
         const componentNode =
@@ -2816,13 +2711,6 @@ export const reconcileMdxAuthoredContent = ({
                   originalNode?.type === "template"
                     ? originalNode.mdxMode
                     : mode,
-                children: isShallowTemplateChild
-                  ? []
-                  : originalNode?.type === "template"
-                    ? isSelfClosingTemplateNode(originalNode)
-                      ? []
-                      : originalNode.children
-                    : undefined,
               })
             : (serializeMdxComponent({
                 instance,
@@ -2852,20 +2740,17 @@ export const reconcileMdxAuthoredContent = ({
           `Template descendant "${instanceId}" has no deterministic HTML tag`
         );
       }
-      let children: MdxAuthoredNode[] = [];
-      if (isShallowTemplateChild === false) {
-        active.add(instanceId);
-        children = reconcileChildren({
-          original: originalNode?.children ?? [],
-          children: instance.children,
-          mode:
-            elementsByTag[tag]?.children.includes("phrasing") === true
-              ? "text"
-              : "flow",
-          active,
-        });
-        active.delete(instanceId);
-      }
+      active.add(instanceId);
+      const children = reconcileChildren({
+        original: originalNode?.children ?? [],
+        children: instance.children,
+        mode:
+          elementsByTag[tag]?.children.includes("phrasing") === true
+            ? "text"
+            : "flow",
+        active,
+      });
+      active.delete(instanceId);
       const props = mapAttributeNames({
         attributes: authoredProps,
         direction: "instance-to-jsx",
@@ -2874,27 +2759,6 @@ export const reconcileMdxAuthoredContent = ({
           descendantProvenance?.componentPropNames ?? []
         ),
       });
-      if (isShallowTemplateChild) {
-        const componentNode = serializeMdxComponentFallback({
-          instance,
-          props: authoredProps,
-          instanceProps: currentProps,
-          templateName: instance.component,
-          mdxMode: mode,
-          children: [],
-        });
-        if (componentNode !== undefined) {
-          return componentNode;
-        }
-        return {
-          type: "element",
-          syntax: "mdx",
-          tag,
-          props,
-          children: [],
-          mdxMode: mode,
-        };
-      }
       return {
         type: "element",
         syntax: "mdx",

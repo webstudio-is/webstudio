@@ -103,30 +103,6 @@ const createInstances = (): Instances =>
   ]);
 
 describe("resolveMdxTemplates", () => {
-  test("warns when named component children cannot overlay a template", async () => {
-    const document = await parseMdxDocument({
-      source: "<Card><Badge /><Badge /></Card>\n",
-    });
-
-    const result = resolveMdxTemplates({
-      document,
-      identity,
-      instances: createInstances(),
-      metas,
-    });
-
-    expect(result.diagnostics).toEqual([
-      expect.objectContaining({
-        code: "unresolved-template",
-        templateName: "Badge",
-      }),
-      expect.objectContaining({
-        code: "unresolved-template",
-        templateName: "Badge",
-      }),
-    ]);
-  });
-
   test("reaches every standard template through authored Markdown", async () => {
     const instances = createInstances();
     const templates = instances.get("templates");
@@ -303,6 +279,36 @@ describe("resolveMdxTemplates", () => {
       syntax: "jsx",
       name: "Card",
     });
+  });
+
+  test("keeps raw HTML inside a named template from matching other templates", async () => {
+    const instances = createInstances();
+    const templates = instances.get("templates");
+    if (templates === undefined) {
+      throw new Error("Expected Templates container");
+    }
+    for (const id of ["first-div", "second-div"]) {
+      instances.set(id, createInstance(id, elementComponent, { tag: "div" }));
+      templates.children.push({ type: "id", value: id });
+    }
+    const document = await parseMdxDocument({
+      source: "<Card><div><Card /></div></Card>\n<div />\n",
+    });
+
+    const result = resolveMdxTemplates({
+      document,
+      identity,
+      instances,
+      metas,
+    });
+
+    expect(result.references.map(({ path }) => path)).toEqual([[0], [0, 0, 0]]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "ambiguous-template",
+        semanticKey: "element:div",
+      }),
+    ]);
   });
 
   test("reads a legacy label alias and resolves it to the stable name", async () => {

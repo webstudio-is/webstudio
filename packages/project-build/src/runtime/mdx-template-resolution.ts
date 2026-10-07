@@ -166,20 +166,20 @@ export const resolveMdxTemplates = ({
   const visit = (
     nodes: readonly MdxAuthoredNode[],
     parentPath: readonly number[],
-    parentTemplate?: Instance
+    withinNamedTemplate = false
   ) => {
-    const contentNodes: MdxAuthoredNode[] = [];
-    for (const node of nodes) {
-      if (
-        node.type !== "comment" &&
-        (node.type !== "text" || contentNodes.at(-1)?.type !== "text")
-      ) {
-        contentNodes.push(node);
-      }
-    }
     for (const [index, node] of nodes.entries()) {
       const path = [...parentPath, index];
-      let resolvedTemplate: Instance | undefined;
+      // A <div> inside <Video> belongs to Video, not an unrelated div template.
+      if (
+        withinNamedTemplate &&
+        node.type === "element" &&
+        node.syntax === "mdx"
+      ) {
+        visit(node.children, path, true);
+        continue;
+      }
+      let resolvedNamedTemplate = false;
       if (node.type === "template") {
         const standard = getMdxStandardTemplateBinding(node);
         const templateIds =
@@ -187,21 +187,6 @@ export const resolveMdxTemplates = ({
           (node.syntax !== "jsx"
             ? legacyTemplateIdsByLabel.get(node.name)
             : undefined);
-        const overlayChild =
-          parentTemplate?.children[contentNodes.indexOf(node)];
-        if (
-          parentTemplate?.children.length === contentNodes.length &&
-          overlayChild?.type === "id" &&
-          instances.get(overlayChild.value)?.component === node.name &&
-          templateIds === undefined &&
-          node.selfClosing &&
-          metas.has(node.name)
-        ) {
-          // In a Video template, <VimeoPreviewImage src="/new.png" />
-          // changes the matching default child. It is not a separate
-          // Content Block template.
-          continue;
-        }
         if ((templateIds?.length ?? 0) > 1) {
           references.push({
             type: "unresolved-template",
@@ -225,8 +210,8 @@ export const resolveMdxTemplates = ({
           continue;
         }
         if (templateIds?.length === 1) {
+          resolvedNamedTemplate = true;
           const templateInstance = instances.get(templateIds[0]);
-          resolvedTemplate = templateInstance;
           const componentBinding =
             templateInstance === undefined
               ? undefined
@@ -358,7 +343,11 @@ export const resolveMdxTemplates = ({
         node.type !== "comment" &&
         node.type !== "opaque"
       ) {
-        visit(node.children, path, resolvedTemplate);
+        visit(
+          node.children,
+          path,
+          withinNamedTemplate || resolvedNamedTemplate
+        );
       }
     }
   };

@@ -194,13 +194,7 @@ describe("materializeMdxSource", () => {
       fragment: edited,
     });
 
-    expect(serialized).toContain(
-      '<VimeoPreviewImage src="/replacement.png" />'
-    );
-    expect(serialized).not.toContain("<img");
-    expect(serialized).toContain("<VimeoSpinner />");
-    expect(serialized).toContain("<VimeoPlayButton />");
-    expect(serialized).not.toContain("<div");
+    expect(serialized).toContain('<img src="/replacement.png" />');
 
     const reloaded = await materializeMdxSource({
       source: serialized,
