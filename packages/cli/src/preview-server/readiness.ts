@@ -152,6 +152,8 @@ export const waitForPreviewReady = async (
   dependencies = defaultPreviewServerDependencies
 ) => {
   const deadline = Date.now() + timeoutMs;
+  const usesIdentityProbe =
+    requiredProject !== undefined && requiredAssetNames.length === 0;
   let sawStaleServer = false;
   let sawUnexpectedProject = false;
   let lastProbeFailure: PreviewProbeFailure | undefined;
@@ -162,8 +164,6 @@ export const waitForPreviewReady = async (
       );
     }
     try {
-      const usesIdentityProbe =
-        requiredProject !== undefined && requiredAssetNames.length === 0;
       const probeUrl = usesIdentityProbe
         ? new URL("/__webstudio/preview.json", url)
         : url;
@@ -220,7 +220,7 @@ export const waitForPreviewReady = async (
           sawUnexpectedProject = true;
         }
       }
-      if (usesIdentityProbe === false && response.status < 500) {
+      if (!usesIdentityProbe && response.status < 500) {
         if (requiredAssetNames.length === 0 && requiredProject === undefined) {
           return;
         }
