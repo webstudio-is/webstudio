@@ -146,6 +146,17 @@ export const assertCliServerOperationSupported = (
   );
 };
 
+export const requiresCliEditingContract = (
+  operation: Pick<
+    (typeof publicApiOperations)[number],
+    "method" | "writeNamespaces"
+  >,
+  dryRun = false
+) =>
+  dryRun === false &&
+  operation.method === "mutation" &&
+  operation.writeNamespaces.length > 0;
+
 export const assertCliEditingContractVersion = (
   contract: CliServerApiContract
 ) => {

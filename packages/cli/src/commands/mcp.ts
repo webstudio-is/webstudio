@@ -73,6 +73,7 @@ import {
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
   getSupportedPublicApiOperations,
+  requiresCliEditingContract,
   type CliServerApiContract,
   writeCliProjectSessionPreviewDataFile,
   type CliProjectSession,
@@ -2048,6 +2049,7 @@ const createCliMcpHost = async ({
         input: operationInput,
         connection: apiConnection,
         createProjectSession: () => session,
+        apiContract,
         dryRun,
       });
       if (dryRun !== true && shouldInvalidatePreview(command)) {
@@ -2323,11 +2325,7 @@ const assertMcpToolServerSupport = (
   if (operation === undefined) {
     return;
   }
-  if (
-    dryRun === false &&
-    operation.method === "mutation" &&
-    operation.writeNamespaces.length > 0
-  ) {
+  if (requiresCliEditingContract(operation, dryRun)) {
     assertCliEditingContractVersion(contract);
   }
   if (publicApiOperationRequiresServerSupport(operation)) {
