@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
@@ -36,7 +36,7 @@ import { getUserById } from "~/shared/db/user.server";
 import env from "~/env/env.server";
 
 const respond = (body: ManagedFormResponse) =>
-  Response.json(body, {
+  json(body, {
     status: body.status,
     headers: privateNoStoreResponseHeaders,
   });

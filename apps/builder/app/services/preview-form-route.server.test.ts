@@ -180,6 +180,46 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   expect(response.headers.get("cache-control")).toContain("no-store");
 });
 
+test("Preview returns JSON when Remix's Response has no static json method", async () => {
+  vi.mocked(createNodeProtectedResourceFetch).mockReturnValue(
+    Object.assign(
+      vi.fn(async () => new Response('{"accepted":true}', { status: 201 })),
+      { validateDestination: vi.fn() }
+    ) as never
+  );
+  const originalResponse = globalThis.Response;
+  vi.stubGlobal(
+    "Response",
+    new Proxy(originalResponse, {
+      get: (target, property, receiver) =>
+        property === "json"
+          ? undefined
+          : Reflect.get(target, property, receiver),
+    })
+  );
+  try {
+    const success = await action({ request: request() } as never);
+    expect(success.status).toBe(200);
+    expect(success.headers.get("content-type")).toContain("application/json");
+    expect(success.headers.get("cache-control")).toContain("no-store");
+    expect(await success.json()).toMatchObject({ success: true, errors: [] });
+
+    const invalid = request();
+    const formData = await invalid.formData();
+    formData.delete("ws--form-bot");
+    const failure = await action({
+      request: new Request(invalid.url, { method: "POST", body: formData }),
+    } as never);
+    expect(failure.status).toBe(400);
+    expect(await failure.json()).toMatchObject({
+      success: false,
+      errors: [{ message: "Form bot field not found" }],
+    });
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
 const expiredBotValue = (Date.now() - 6 * 60 * 1000).toString(16);
 
 test.each([
