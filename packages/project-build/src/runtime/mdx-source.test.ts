@@ -9,8 +9,8 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { renderTemplate } from "@webstudio-is/template";
-import { componentIds } from "../../../sdk-components-registry/src/components";
 import { meta as youtubeTemplate } from "../../../sdk-components-react/src/youtube.template";
 import {
   rebaseMdxAuthoredContent,

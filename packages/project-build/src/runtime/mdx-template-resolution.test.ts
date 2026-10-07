@@ -103,6 +103,30 @@ const createInstances = (): Instances =>
   ]);
 
 describe("resolveMdxTemplates", () => {
+  test("warns when named component children cannot overlay a template", async () => {
+    const document = await parseMdxDocument({
+      source: "<Card><Badge /><Badge /></Card>\n",
+    });
+
+    const result = resolveMdxTemplates({
+      document,
+      identity,
+      instances: createInstances(),
+      metas,
+    });
+
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "unresolved-template",
+        templateName: "Badge",
+      }),
+      expect.objectContaining({
+        code: "unresolved-template",
+        templateName: "Badge",
+      }),
+    ]);
+  });
+
   test("reaches every standard template through authored Markdown", async () => {
     const instances = createInstances();
     const templates = instances.get("templates");

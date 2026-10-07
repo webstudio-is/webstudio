@@ -977,11 +977,6 @@ export const materializeMdxAuthoredContent = ({
                     prop,
                     source: { nodePath: [], propIndex },
                   }));
-                authoredGrandchildren =
-                  authored.child.type === "template" &&
-                  isSelfClosingTemplateNode(authored.child) === false
-                    ? authored.child.children
-                    : undefined;
                 componentPropNames = Object.keys(
                   metas?.get(instance.component)?.props ?? {}
                 );
@@ -2090,11 +2085,8 @@ export const reconcileMdxAuthoredContent = ({
   indexOriginal(root.document.children, []);
 
   const templatesExpandedToAuthoredChildren = new Set<Instance["id"]>();
-  const templatesWithDirectPropOverrides = new Map<
-    Instance["id"],
-    Set<Instance["id"]>
-  >();
-  const getDirectComponentChildIdsWithPropOverrides = (
+  const shallowTemplateChildIds = new Set<Instance["id"]>();
+  const getShallowComponentChildIds = (
     rootInstance: Instance,
     descendantIds: readonly Instance["id"][]
   ) => {
@@ -2131,49 +2123,21 @@ export const reconcileMdxAuthoredContent = ({
     if (provenance.type !== "template") {
       continue;
     }
-    const originalRoot = originalInstanceById.get(provenance.instanceId);
-    const descendantIds = provenance.expandedInstanceIds.filter(
-      (id) => id !== provenance.instanceId
-    );
     if (provenance.overlaysTemplateChildren) {
       templatesExpandedToAuthoredChildren.add(provenance.instanceId);
-      if (originalRoot !== undefined) {
-        const directChildIds = getDirectComponentChildIdsWithPropOverrides(
-          originalRoot,
-          descendantIds
-        );
-        const overlaidDescendantById = new Map(
-          provenance.overlaidDescendants.map((descendant) => [
-            descendant.instanceId,
-            descendant,
-          ])
-        );
-        const directChildrenAreSelfClosing =
-          directChildIds !== undefined &&
-          Array.from(directChildIds).every((id) => {
-            const descendant = overlaidDescendantById.get(id);
-            const node =
-              descendant === undefined
-                ? undefined
-                : originalNodeByPath.get(pathKey(descendant.path));
-            return node?.type === "template" && isSelfClosingTemplateNode(node);
-          });
-        if (directChildrenAreSelfClosing && directChildIds !== undefined) {
-          templatesWithDirectPropOverrides.set(
-            provenance.instanceId,
-            directChildIds
-          );
-        }
-      }
-      continue;
     }
     const originalNode = originalNodeByPath.get(pathKey(provenance.path));
     if (
-      originalNode?.type !== "template" ||
-      isSelfClosingTemplateNode(originalNode) === false
+      provenance.overlaysTemplateChildren === false &&
+      (originalNode?.type !== "template" ||
+        isSelfClosingTemplateNode(originalNode) === false)
     ) {
       continue;
     }
+    const descendantIds = provenance.expandedInstanceIds.filter(
+      (id) => id !== provenance.instanceId
+    );
+    const originalRoot = originalInstanceById.get(provenance.instanceId);
     const nextRoot = instanceById.get(provenance.instanceId);
     if (originalRoot === undefined || nextRoot === undefined) {
       continue;
@@ -2203,18 +2167,44 @@ export const reconcileMdxAuthoredContent = ({
       descendantPropsChanged
     ) {
       templatesExpandedToAuthoredChildren.add(provenance.instanceId);
-      if (childrenChanged === false && descendantInstancesChanged === false) {
-        const directChildIds = getDirectComponentChildIdsWithPropOverrides(
-          originalRoot,
-          descendantIds
-        );
-        if (directChildIds !== undefined) {
-          templatesWithDirectPropOverrides.set(
-            provenance.instanceId,
-            directChildIds
-          );
-        }
+    }
+    if (
+      templatesExpandedToAuthoredChildren.has(provenance.instanceId) ===
+        false ||
+      childrenChanged ||
+      descendantInstancesChanged
+    ) {
+      continue;
+    }
+    const directChildIds = getShallowComponentChildIds(
+      originalRoot,
+      descendantIds
+    );
+    if (directChildIds === undefined) {
+      continue;
+    }
+    if (provenance.overlaysTemplateChildren) {
+      const overlaidDescendantById = new Map(
+        provenance.overlaidDescendants.map((descendant) => [
+          descendant.instanceId,
+          descendant,
+        ])
+      );
+      if (
+        Array.from(directChildIds).some((id) => {
+          const descendant = overlaidDescendantById.get(id);
+          const node =
+            descendant === undefined
+              ? undefined
+              : originalNodeByPath.get(pathKey(descendant.path));
+          return node?.type !== "template" || !isSelfClosingTemplateNode(node);
+        })
+      ) {
+        continue;
       }
+    }
+    for (const id of directChildIds) {
+      shallowTemplateChildIds.add(id);
     }
   }
 
@@ -2805,11 +2795,8 @@ export const reconcileMdxAuthoredContent = ({
       if (serializedInstanceIds.has(instanceId)) {
         throw new Error(`Authored MDX instance "${instanceId}" is reused`);
       }
-      const isDirectComponentPropOverride =
-        templatesWithDirectPropOverrides
-          .get(owningTemplate.instanceId)
-          ?.has(instanceId) === true;
-      if (isDirectComponentPropOverride) {
+      const isShallowTemplateChild = shallowTemplateChildIds.has(instanceId);
+      if (isShallowTemplateChild) {
         markDescendantsSerialized(instanceId);
       }
       serializedInstanceIds.add(instanceId);
@@ -2829,7 +2816,7 @@ export const reconcileMdxAuthoredContent = ({
                   originalNode?.type === "template"
                     ? originalNode.mdxMode
                     : mode,
-                children: isDirectComponentPropOverride
+                children: isShallowTemplateChild
                   ? []
                   : originalNode?.type === "template"
                     ? isSelfClosingTemplateNode(originalNode)
@@ -2865,12 +2852,8 @@ export const reconcileMdxAuthoredContent = ({
           `Template descendant "${instanceId}" has no deterministic HTML tag`
         );
       }
-      const hasDirectPropOverride =
-        templatesWithDirectPropOverrides
-          .get(owningTemplate.instanceId)
-          ?.has(instanceId) === true;
       let children: MdxAuthoredNode[] = [];
-      if (hasDirectPropOverride === false) {
+      if (isShallowTemplateChild === false) {
         active.add(instanceId);
         children = reconcileChildren({
           original: originalNode?.children ?? [],
@@ -2891,23 +2874,17 @@ export const reconcileMdxAuthoredContent = ({
           descendantProvenance?.componentPropNames ?? []
         ),
       });
-      if (hasDirectPropOverride) {
-        markDescendantsSerialized(instanceId);
-        if (
-          instance.component !== elementComponent &&
-          instance.component.startsWith("ws:") === false
-        ) {
-          const componentNode = serializeMdxComponentFallback({
-            instance,
-            props: authoredProps,
-            instanceProps: currentProps,
-            templateName: instance.component,
-            mdxMode: mode,
-            children: [],
-          });
-          if (componentNode !== undefined) {
-            return componentNode;
-          }
+      if (isShallowTemplateChild) {
+        const componentNode = serializeMdxComponentFallback({
+          instance,
+          props: authoredProps,
+          instanceProps: currentProps,
+          templateName: instance.component,
+          mdxMode: mode,
+          children: [],
+        });
+        if (componentNode !== undefined) {
+          return componentNode;
         }
         return {
           type: "element",
