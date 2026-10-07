@@ -277,19 +277,19 @@ export const createManagedFormDraftGraph = ({
           resource.email?.body !== undefined
             ? (evaluate(resource.email.body) as string)
             : resolvedEmail.recipientMode !== "visitor" &&
-              isRoot &&
-              isFormBound &&
-              formDataSource
-            ? (evaluateExpression(
-                getDefaultFormEmailBodyExpression(
-                  encodeDataVariableId(formDataSource.id),
-                  browserInfoSource &&
-                    encodeDataVariableId(browserInfoSource.id),
-                  projectMeta?.emailBody
-                ),
-                values
-              ) as string)
-            : (evaluate(resolvedEmail.body) as string),
+                isRoot &&
+                isFormBound &&
+                formDataSource
+              ? (evaluateExpression(
+                  getDefaultFormEmailBodyExpression(
+                    encodeDataVariableId(formDataSource.id),
+                    browserInfoSource &&
+                      encodeDataVariableId(browserInfoSource.id),
+                    projectMeta?.emailBody
+                  ),
+                  values
+                ) as string)
+              : (evaluate(resolvedEmail.body) as string),
       };
       return {
         name: resource.name,
@@ -308,8 +308,8 @@ export const createManagedFormDraftGraph = ({
         ...(resource.body !== undefined && resource.body.length > 0
           ? { body: evaluate(resource.body) }
           : usesDefaultFormBody
-          ? { body: formData }
-          : {}),
+            ? { body: formData }
+            : {}),
         ...(email ? { email } : {}),
       };
     };

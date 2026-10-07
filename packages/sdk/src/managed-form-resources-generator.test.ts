@@ -1497,9 +1497,8 @@ test.each([
 ] as const)(
   "draft and published Actions enforce scope %s",
   async (scopeInstanceId, allowed) => {
-    const { createManagedFormDraftGraph } = await import(
-      "./managed-form-draft-graph"
-    );
+    const { createManagedFormDraftGraph } =
+      await import("./managed-form-draft-graph");
     const instances: Instances = new Map([
       [
         "page",
@@ -1593,12 +1592,10 @@ test.each([
 test.each(["field", "external-binding", "missing-dependency"])(
   "draft and published visitor %s configuration fails only that action",
   async (failure) => {
-    const { createManagedFormDraftGraph } = await import(
-      "./managed-form-draft-graph"
-    );
-    const { handleManagedFormSubmission } = await import(
-      "./managed-form-handler"
-    );
+    const { createManagedFormDraftGraph } =
+      await import("./managed-form-draft-graph");
+    const { handleManagedFormSubmission } =
+      await import("./managed-form-handler");
     const instances: Instances = new Map([
       [
         "page",
@@ -1682,8 +1679,8 @@ test.each(["field", "external-binding", "missing-dependency"])(
               failure === "external-binding"
                 ? encodeDataSourceVariable("formData")
                 : failure === "missing-dependency"
-                ? encodeDataSourceVariable("missing")
-                : '""',
+                  ? encodeDataSourceVariable("missing")
+                  : '""',
           },
         },
       ],
@@ -1747,9 +1744,8 @@ test.each(["field", "external-binding", "missing-dependency"])(
 test.each(["http", "email", "visitor"] as const)(
   "an ancestor %s Action alias cannot inherit Form bindings from a local alias",
   async (kind) => {
-    const { createManagedFormDraftGraph } = await import(
-      "./managed-form-draft-graph"
-    );
+    const { createManagedFormDraftGraph } =
+      await import("./managed-form-draft-graph");
     const instances: Instances = new Map([
       [
         "page",

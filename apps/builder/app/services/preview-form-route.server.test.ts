@@ -150,9 +150,8 @@ test("an unauthenticated request cannot load the project draft", async () => {
 });
 
 test("a cross-origin request cannot reach project authorization or actions", async () => {
-  const { preventCrossOriginCookie } = await import(
-    "~/services/no-cross-origin-cookie"
-  );
+  const { preventCrossOriginCookie } =
+    await import("~/services/no-cross-origin-cookie");
   vi.mocked(preventCrossOriginCookie).mockImplementationOnce(() => {
     throw new Response("Cross-origin request", { status: 403 });
   });
