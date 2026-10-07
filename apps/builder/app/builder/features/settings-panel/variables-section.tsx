@@ -33,7 +33,7 @@ import {
 } from "~/builder/shared/collapsible-section";
 import { formatValuePreview } from "~/builder/shared/expression-editor";
 import { VariablePopoverTrigger } from "./variable-popover";
-import { VariableMenu } from "./variable-menu";
+import { VariableContextMenu, VariableMenu } from "./variable-menu";
 import { $highlightedVariable } from "./variable-navigation";
 import { StyleSourceBadge } from "../style-panel/style-source";
 import {
@@ -374,44 +374,45 @@ export const VariablesSection = () => {
     }
   }, [highlighted, setIsOpen]);
   return (
-    <CollapsibleSectionRoot
-      label={label}
-      fullWidth={true}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      trigger={
-        <SectionTitle
-          suffix={
-            <Flex align="center">
-              <VariableMenu />
-              <VariablePopoverTrigger>
-                <SectionTitleButton
-                  type="button"
-                  aria-label="Add variable"
-                  prefix={<PlusIcon />}
-                  onPointerDown={(event) => {
-                    event.stopPropagation();
-                  }}
-                  // open panel when adding a new variable
-                  onClick={() => {
-                    if (isOpen === false) {
-                      setIsOpen(true);
-                    }
-                  }}
-                />
-              </VariablePopoverTrigger>
-            </Flex>
-          }
-        >
-          <SectionTitleLabel>Variables</SectionTitleLabel>
-        </SectionTitle>
-      }
-    >
-      {/* prevent applyig gap to list items */}
-      <div>
-        <VariablesList />
-      </div>
-    </CollapsibleSectionRoot>
+    <VariableContextMenu>
+      <CollapsibleSectionRoot
+        label={label}
+        fullWidth={true}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        trigger={
+          <SectionTitle
+            suffix={
+              <Flex align="center">
+                <VariablePopoverTrigger>
+                  <SectionTitleButton
+                    type="button"
+                    aria-label="Add variable"
+                    prefix={<PlusIcon />}
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                    }}
+                    // open panel when adding a new variable
+                    onClick={() => {
+                      if (isOpen === false) {
+                        setIsOpen(true);
+                      }
+                    }}
+                  />
+                </VariablePopoverTrigger>
+              </Flex>
+            }
+          >
+            <SectionTitleLabel>Variables</SectionTitleLabel>
+          </SectionTitle>
+        }
+      >
+        {/* prevent applyig gap to list items */}
+        <div>
+          <VariablesList />
+        </div>
+      </CollapsibleSectionRoot>
+    </VariableContextMenu>
   );
 };
 

@@ -12,7 +12,7 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { VariableMenu } from "./variable-menu";
+import { VariableContextMenu, VariableMenu } from "./variable-menu";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -118,4 +118,172 @@ test("copy and paste on the same instance creates a unique variable and Resource
   expect(resource?.id).not.toBe("request");
   expect(resource?.name).toBe("Request 3");
   expect(resource?.url).toBe('\"https://example.com\"');
+});
+
+test("the Variables context menu offers variable actions on rows and Paste elsewhere", async () => {
+  const variable: DataSource = {
+    id: "variable",
+    type: "variable",
+    name: "Request body",
+    scopeInstanceId: "scope",
+    value: { type: "string", value: "{}" },
+  };
+  $instances.set(
+    new Map([
+      [
+        "scope",
+        { id: "scope", type: "instance", component: "Box", children: [] },
+      ],
+    ])
+  );
+  $pages.set(createDefaultPages({ rootInstanceId: "scope" }));
+  $selectedPageId.set("home");
+  selectInstance(["scope"]);
+  $dataSources.set(new Map([[variable.id, variable]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <VariableContextMenu>
+        <button data-id="variable">Request body row</button>
+        <button onPointerDown={(event) => event.stopPropagation()}>
+          Add variable
+        </button>
+      </VariableContextMenu>
+    )
+  );
+
+  const openContextMenu = async (element: HTMLElement) => {
+    await act(async () => {
+      element.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 2,
+          pointerType: "mouse",
+        })
+      );
+      element.dispatchEvent(
+        new MouseEvent("contextmenu", {
+          bubbles: true,
+          button: 2,
+          clientX: 20,
+          clientY: 20,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1));
+    });
+  };
+
+  await openContextMenu(container.querySelector('[data-id="variable"]')!);
+  const menuItems = () =>
+    Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+  expect(menuItems().map((item) => item.textContent)).toEqual([
+    "Delete",
+    "Copy",
+    "Paste",
+  ]);
+  expect(menuItems()[0]?.getAttribute("aria-disabled")).not.toBe("true");
+  await act(async () => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  });
+
+  // A keyboard-triggered contextmenu has no pointerdown event.
+  const row = container.querySelector('[data-id="variable"]')!;
+  await act(async () => {
+    row.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        button: 2,
+        clientX: 20,
+        clientY: 20,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  });
+  expect(menuItems()[0]?.getAttribute("aria-disabled")).not.toBe("true");
+  await act(async () => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  });
+
+  // The Add button stops pointerdown, but its contextmenu must clear the row target.
+  await openContextMenu(container.querySelectorAll("button")[1]!);
+  expect(menuItems().map((item) => item.textContent)).toEqual([
+    "Delete",
+    "Copy",
+    "Paste",
+  ]);
+  expect(menuItems()[0]?.getAttribute("aria-disabled")).toBe("true");
+  expect(menuItems()[1]?.getAttribute("aria-disabled")).toBe("true");
+  expect(menuItems()[2]?.getAttribute("aria-disabled")).not.toBe("true");
+});
+
+test("an inherited page variable cannot be deleted from the context menu", async () => {
+  const variable: DataSource = {
+    id: "variable",
+    type: "parameter",
+    name: "System data",
+    scopeInstanceId: "parent",
+  };
+  $instances.set(
+    new Map([
+      [
+        "parent",
+        {
+          id: "parent",
+          type: "instance",
+          component: "Box",
+          children: [{ type: "id", value: "child" }],
+        },
+      ],
+      [
+        "child",
+        { id: "child", type: "instance", component: "Box", children: [] },
+      ],
+    ])
+  );
+  $pages.set(
+    createDefaultPages({
+      rootInstanceId: "parent",
+      homePageId: "home",
+      systemDataSourceId: variable.id,
+    })
+  );
+  $selectedPageId.set("home");
+  selectInstance(["child"]);
+  $dataSources.set(new Map([[variable.id, variable]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <VariableContextMenu>
+        <button data-id="variable">System data row</button>
+      </VariableContextMenu>
+    )
+  );
+
+  const row = container.querySelector('[data-id="variable"]')!;
+  await act(async () => {
+    row.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 2,
+        pointerType: "mouse",
+      })
+    );
+    row.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        button: 2,
+        clientX: 20,
+        clientY: 20,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  });
+  const deleteItem = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  ).find((item) => item.textContent === "Delete");
+  expect(deleteItem?.getAttribute("aria-disabled")).toBe("true");
 });

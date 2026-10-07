@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -13,7 +17,7 @@ import {
   findAvailableVariables,
   findUsedVariables,
 } from "@webstudio-is/project-build/runtime";
-import { $selectedInstance } from "~/shared/nano-states";
+import { $selectedInstance, $selectedPage } from "~/shared/nano-states";
 import {
   $dataSources,
   $instances,
@@ -30,6 +34,102 @@ import {
 } from "~/builder/shared/data-variable-utils";
 import { serializeVariable, deserializeVariable } from "./variable-clipboard";
 
+type VariableToDelete = { id: string; name: string; usages: number };
+
+const getVariableToDelete = (variable: DataSource): VariableToDelete => {
+  const instance = $selectedInstance.get();
+  const usages = instance
+    ? (findUsedVariables({
+        startingInstanceId: instance.id,
+        instances: $instances.get(),
+        pages: $pages.get(),
+        props: $props.get(),
+        dataSources: $dataSources.get(),
+        resources: $resources.get(),
+      }).get(variable.id) ?? 0)
+    : 0;
+  return { id: variable.id, name: variable.name, usages };
+};
+
+const copyVariable = async (variable: DataSource) => {
+  try {
+    await navigator.clipboard.writeText(
+      serializeVariable(variable, $resources.get(), $dataSources.get())
+    );
+  } catch (error) {
+    toast.error(
+      error instanceof Error ? error.message : "Unable to copy variable"
+    );
+  }
+};
+
+const pasteVariable = async () => {
+  const text = await readClipboardText();
+  const instance = $selectedInstance.get();
+  if (text === undefined || !instance) {
+    return;
+  }
+  try {
+    const copied = deserializeVariable(
+      text,
+      instance.id,
+      new Map(
+        findAvailableVariables({
+          startingInstanceId: instance.id,
+          instances: $instances.get(),
+          dataSources: $dataSources.get(),
+        }).map((variable) => [variable.id, variable])
+      )
+    );
+    const originalName = copied.variable.name;
+    let suffix = 2;
+    let error = validateDataVariableName(
+      copied.variable.name,
+      undefined,
+      instance.id
+    );
+    while (error?.type === "duplicate") {
+      copied.variable.name = `${originalName} ${suffix++}`;
+      error = validateDataVariableName(
+        copied.variable.name,
+        undefined,
+        instance.id
+      );
+    }
+    if (error) {
+      throw Error(error.message);
+    }
+    if (copied.resource) {
+      copied.resource.name = copied.variable.name;
+    }
+    serverSyncStore.createTransaction(
+      [$dataSources, $resources],
+      (dataSources, resources) => {
+        dataSources.set(copied.variable.id, copied.variable);
+        if (copied.resource) {
+          resources.set(copied.resource.id, copied.resource);
+        }
+      }
+    );
+  } catch (error) {
+    toast.error(
+      error instanceof Error ? error.message : "Unable to paste variable"
+    );
+  }
+};
+
+const canDeleteVariable = (variable: DataSource | undefined) => {
+  if (!variable) {
+    return false;
+  }
+  const isLocal = variable.scopeInstanceId === $selectedInstance.get()?.id;
+  return (
+    isLocal &&
+    (variable.type !== "parameter" ||
+      variable.id === $selectedPage.get()?.systemDataSourceId)
+  );
+};
+
 export const VariableMenu = ({
   variable,
   canDelete = false,
@@ -41,17 +141,14 @@ export const VariableMenu = ({
   onDelete?: () => void;
   onOpenChange?: (open: boolean) => void;
 }) => {
-  const [deleting, setDeleting] = useState<{
-    id: string;
-    name: string;
-    usages: number;
-  }>();
+  const [deleting, setDeleting] = useState<VariableToDelete>();
   return (
     <>
       <DropdownMenu modal onOpenChange={onOpenChange}>
         <DropdownMenuTrigger asChild>
           <SmallIconButton
             aria-label="Open variable menu"
+            data-variable-id={variable?.id}
             icon={<EllipsesIcon />}
             onClick={() => {}}
           />
@@ -65,18 +162,7 @@ export const VariableMenu = ({
               if (!variable) {
                 return;
               }
-              const instance = $selectedInstance.get();
-              const usages = instance
-                ? (findUsedVariables({
-                    startingInstanceId: instance.id,
-                    instances: $instances.get(),
-                    pages: $pages.get(),
-                    props: $props.get(),
-                    dataSources: $dataSources.get(),
-                    resources: $resources.get(),
-                  }).get(variable.id) ?? 0)
-                : 0;
-              setDeleting({ id: variable.id, name: variable.name, usages });
+              setDeleting(getVariableToDelete(variable));
             }}
           >
             Delete
@@ -87,81 +173,14 @@ export const VariableMenu = ({
               if (!variable) {
                 return;
               }
-              try {
-                await navigator.clipboard.writeText(
-                  serializeVariable(
-                    variable,
-                    $resources.get(),
-                    $dataSources.get()
-                  )
-                );
-              } catch (error) {
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Unable to copy variable"
-                );
-              }
+              await copyVariable(variable);
             }}
           >
             Copy
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={async () => {
-              const text = await readClipboardText();
-              const instance = $selectedInstance.get();
-              if (text === undefined || !instance) {
-                return;
-              }
-              try {
-                const copied = deserializeVariable(
-                  text,
-                  instance.id,
-                  new Map(
-                    findAvailableVariables({
-                      startingInstanceId: instance.id,
-                      instances: $instances.get(),
-                      dataSources: $dataSources.get(),
-                    }).map((variable) => [variable.id, variable])
-                  )
-                );
-                const originalName = copied.variable.name;
-                let suffix = 2;
-                let error = validateDataVariableName(
-                  copied.variable.name,
-                  undefined,
-                  instance.id
-                );
-                while (error?.type === "duplicate") {
-                  copied.variable.name = `${originalName} ${suffix++}`;
-                  error = validateDataVariableName(
-                    copied.variable.name,
-                    undefined,
-                    instance.id
-                  );
-                }
-                if (error) {
-                  throw Error(error.message);
-                }
-                if (copied.resource) {
-                  copied.resource.name = copied.variable.name;
-                }
-                serverSyncStore.createTransaction(
-                  [$dataSources, $resources],
-                  (dataSources, resources) => {
-                    dataSources.set(copied.variable.id, copied.variable);
-                    if (copied.resource) {
-                      resources.set(copied.resource.id, copied.resource);
-                    }
-                  }
-                );
-              } catch (error) {
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Unable to paste variable"
-                );
-              }
+              await pasteVariable();
             }}
           >
             Paste
@@ -174,6 +193,81 @@ export const VariableMenu = ({
         onConfirm={(id) => {
           deleteDataVariable(id);
           onDelete?.();
+        }}
+      />
+    </>
+  );
+};
+
+export const VariableContextMenu = ({ children }: { children: ReactNode }) => {
+  const [targetId, setTargetId] = useState<string>();
+  const [deleting, setDeleting] = useState<VariableToDelete>();
+  const variable = targetId ? $dataSources.get().get(targetId) : undefined;
+  const setTargetFromEvent = (target: EventTarget | null) => {
+    const item =
+      target instanceof Element
+        ? target.closest<HTMLElement>("[data-id], [data-variable-id]")
+        : null;
+    setTargetId(
+      item?.getAttribute("data-variable-id") ??
+        item?.getAttribute("data-id") ??
+        undefined
+    );
+  };
+  return (
+    <>
+      <ContextMenu
+        onOpenChange={(open) => {
+          if (!open) {
+            setTargetId(undefined);
+          }
+        }}
+      >
+        <ContextMenuTrigger
+          asChild
+          onPointerDown={(event) => {
+            if (event.button === 2) {
+              setTargetFromEvent(event.target);
+            }
+          }}
+          onContextMenu={(event) => {
+            setTargetFromEvent(event.target);
+          }}
+        >
+          <div style={{ display: "contents" }}>{children}</div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem
+            disabled={!canDeleteVariable(variable)}
+            onSelect={() => {
+              if (variable && canDeleteVariable(variable)) {
+                setDeleting(getVariableToDelete(variable));
+              }
+            }}
+          >
+            Delete
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={!variable || variable.type === "parameter"}
+            onSelect={() => {
+              if (variable && variable.type !== "parameter") {
+                void copyVariable(variable);
+              }
+            }}
+          >
+            Copy
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => void pasteVariable()}>
+            Paste
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+      <DeleteDataVariableDialog
+        variable={deleting}
+        onClose={() => setDeleting(undefined)}
+        onConfirm={(id) => {
+          deleteDataVariable(id);
+          setDeleting(undefined);
         }}
       />
     </>
