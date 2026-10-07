@@ -264,6 +264,16 @@ export const validateManagedFormDestinationDependencies = (
 ) => {
   const roots = new Set(graph.rootIds);
   for (const resource of getReachableResources(graph)) {
+    // Visitor Email configuration failures are isolated to that destination.
+    // Its own dependency is rejected during visitor preflight, so it must not
+    // make otherwise independent selected Actions fail first.
+    if (
+      roots.has(resource.id) &&
+      resource.control === "email" &&
+      resource.nonfatal === true
+    ) {
+      continue;
+    }
     if (resource.dependencies.some((id) => roots.has(id))) {
       throw new Error("Selected Form Resources cannot depend on one another");
     }

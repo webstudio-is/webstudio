@@ -1,4 +1,4 @@
-import { getManagedFormResourceRoots } from "./managed-form-graph";
+import { getManagedFormResourcePlan } from "./managed-form-graph";
 import { encodeDataVariableId, SYSTEM_VARIABLE_ID } from "./expression";
 import {
   getFormEmailFieldNames,
@@ -12,11 +12,7 @@ import {
   getDefaultFormEmailBodyExpression,
   resolveEmailResourceSettings,
 } from "./email-resource";
-import {
-  getResourceDataSourceIds,
-  getResourceDependencyIds,
-} from "./resource-dependencies";
-import { findTreeInstanceIds } from "./instances-utils";
+import { getResourceDataSourceIds } from "./resource-dependencies";
 import { createJsonStringifyProxy } from "./to-string";
 import type { DataSources } from "./schema/data-sources";
 import type { Instances } from "./schema/instances";
@@ -58,7 +54,6 @@ export const createManagedFormDraftGraph = ({
     values: ReadonlyMap<string, unknown>
   ) => unknown;
 }): ResourceRequestGraph => {
-  const formTreeIds = findTreeInstanceIds(instances, formId);
   if (instances.get(formId)?.component !== "NativeForm") {
     throw new Error("Form not found");
   }
@@ -85,93 +80,19 @@ export const createManagedFormDraftGraph = ({
       source.name === browserInfoParameterName
   );
 
-  const { rootIds, externalRootIds } = getManagedFormResourceRoots({
+  const {
+    rootIds,
+    resourceIds,
+    dependenciesById,
+    formBoundIds,
+    requestErrors,
+  } = getManagedFormResourcePlan({
     formId,
     destinationDataSourceIds,
     instances,
     dataSources,
     resources,
   });
-  const resourceIds = new Set<string>();
-  const dependenciesById = new Map<string, string[]>();
-  const visit = (id: string) => {
-    if (resourceIds.has(id)) {
-      return;
-    }
-    const resource = resources.get(id);
-    if (resource === undefined) {
-      throw new Error(`Form Resource ${id} not found`);
-    }
-    resourceIds.add(id);
-    const dependencies = Array.from(
-      getResourceDependencyIds({ resource, dataSources })
-    );
-    dependenciesById.set(id, dependencies);
-    if (
-      !(rootIds.includes(id) && resource.email?.recipientMode === "visitor")
-    ) {
-      for (const dependency of dependencies) {
-        visit(dependency);
-      }
-    }
-  };
-  for (const id of rootIds) {
-    visit(id);
-  }
-  const externalClosureIds = new Set<string>();
-  const markExternal = (id: string) => {
-    if (externalClosureIds.has(id)) {
-      return;
-    }
-    externalClosureIds.add(id);
-    for (const dependency of dependenciesById.get(id) ?? []) {
-      markExternal(dependency);
-    }
-  };
-  for (const id of externalRootIds) {
-    markExternal(id);
-  }
-  const formBoundIds = new Set<string>();
-  const externallyScopedIds = new Set<string>();
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "resource") {
-      (formTreeIds.has(dataSource.scopeInstanceId ?? "")
-        ? formBoundIds
-        : externallyScopedIds
-      ).add(dataSource.resourceId);
-    }
-  }
-  // The selected alias owns the Action scope, even when another alias is local.
-  for (const id of externalRootIds) {
-    formBoundIds.delete(id);
-  }
-  const requestErrors = new Map<string, string>();
-  for (const id of resourceIds) {
-    const resource = resources.get(id)!;
-    const sourceIds = getResourceDataSourceIds(resource);
-    const usesFormData = Array.from(sourceIds).some((sourceId) => {
-      const source = dataSources.get(sourceId);
-      return (
-        source?.type === "parameter" &&
-        source.scopeInstanceId === formId &&
-        (source.name === formDataParameterName ||
-          source.name === browserInfoParameterName)
-      );
-    });
-    if (
-      usesFormData &&
-      (!formBoundIds.has(id) ||
-        externallyScopedIds.has(id) ||
-        externalClosureIds.has(id))
-    ) {
-      const message = `External Resource ${id} cannot bind Form data`;
-      if (rootIds.includes(id) && resource.email?.recipientMode === "visitor") {
-        requestErrors.set(id, message);
-      } else {
-        throw new Error(message);
-      }
-    }
-  }
 
   const graphResources = Array.from(resourceIds, (id) => {
     const resource = resources.get(id)!;

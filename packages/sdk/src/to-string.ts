@@ -17,14 +17,12 @@ export const createJsonStringifyProxy = <T extends object>(
           if (options === undefined) {
             return JSON.stringify(target);
           }
-          const visible = Object.fromEntries(
-            Object.entries(target).filter(
-              ([key]) => !options.excludeKeys?.includes(key)
-            )
-          );
           return JSON.stringify(
-            visible,
-            (_key, value) => {
+            target,
+            (key, value) => {
+              if (options.excludeKeys?.includes(key)) {
+                return undefined;
+              }
               if (
                 options.fileMetadata &&
                 typeof File !== "undefined" &&

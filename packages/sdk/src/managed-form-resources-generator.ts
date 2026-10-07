@@ -1,5 +1,5 @@
 import {
-  getManagedFormResourceRoots,
+  getManagedFormResourcePlan,
   InvalidManagedFormGraph,
 } from "./managed-form-graph";
 import type { DataSources } from "./schema/data-sources";
@@ -21,11 +21,6 @@ import {
   browserInfoParameterName,
   formDataParameterName,
 } from "./managed-form-submission";
-import { findTreeInstanceIds } from "./instances-utils";
-import {
-  getResourceDataSourceIds,
-  getResourceDependencyIds,
-} from "./resource-dependencies";
 import { generateResourceRequestFields } from "./resources-generator";
 
 /**
@@ -67,114 +62,24 @@ export const generateManagedFormResources = ({
 
   for (const { formId, destinationDataSourceIds } of forms) {
     try {
-      const formTreeIds = findTreeInstanceIds(instances, formId);
       const formDataStringifyOptions = getFormEmailStringifyOptions(
         instances,
         props ?? new Map(),
         formId
       );
-      const { rootIds, externalRootIds } = getManagedFormResourceRoots({
+      const {
+        rootIds,
+        resourceIds: graphResourceIds,
+        dependenciesById,
+        formBoundIds: formBoundResourceIds,
+        requestErrors,
+      } = getManagedFormResourcePlan({
         formId,
         destinationDataSourceIds,
         instances,
         dataSources,
         resources,
       });
-
-      const graphResourceIds = new Set<string>();
-      const externalClosureIds = new Set<string>();
-      const dependenciesById = new Map<string, string[]>();
-      const addResource = (resourceId: string) => {
-        if (graphResourceIds.has(resourceId)) {
-          return;
-        }
-        const resource = resources.get(resourceId);
-        if (resource === undefined) {
-          throw new InvalidManagedFormGraph(
-            `Managed Form Resource ${resourceId} is missing`
-          );
-        }
-        graphResourceIds.add(resourceId);
-        const dependencies = Array.from(
-          getResourceDependencyIds({ resource, dataSources })
-        );
-        dependenciesById.set(resourceId, dependencies);
-        if (
-          !(
-            rootIds.includes(resourceId) &&
-            resource.email?.recipientMode === "visitor"
-          )
-        ) {
-          for (const dependencyId of dependencies) {
-            addResource(dependencyId);
-          }
-        }
-      };
-      for (const rootId of rootIds) {
-        addResource(rootId);
-      }
-      const markExternalClosure = (resourceId: string) => {
-        if (externalClosureIds.has(resourceId)) {
-          return;
-        }
-        externalClosureIds.add(resourceId);
-        for (const dependencyId of dependenciesById.get(resourceId) ?? []) {
-          markExternalClosure(dependencyId);
-        }
-      };
-      for (const rootId of externalRootIds) {
-        markExternalClosure(rootId);
-      }
-      const formBoundResourceIds = new Set<string>();
-      // A Resource shared through an outside alias is not owned by this Form.
-      // Its request definition must not gain access to this Form's parameters.
-      const externalResourceIds = new Set<string>();
-      for (const dataSource of dataSources.values()) {
-        if (dataSource.type === "resource") {
-          const ids = formTreeIds.has(dataSource.scopeInstanceId ?? "")
-            ? formBoundResourceIds
-            : externalResourceIds;
-          ids.add(dataSource.resourceId);
-        }
-      }
-      // The selected alias owns the Action scope, even when another alias is local.
-      for (const id of externalRootIds) {
-        formBoundResourceIds.delete(id);
-      }
-      const requestErrors = new Map<string, string>();
-      for (const resourceId of graphResourceIds) {
-        const resource = resources.get(resourceId);
-        if (resource === undefined) {
-          continue;
-        }
-        const usesFormParameter = Array.from(
-          getResourceDataSourceIds(resource)
-        ).some((dataSourceId) => {
-          const dataSource = dataSources.get(dataSourceId);
-          return (
-            dataSource?.type === "parameter" &&
-            dataSource.scopeInstanceId === formId &&
-            (dataSource.name === formDataParameterName ||
-              dataSource.name === browserInfoParameterName)
-          );
-        });
-        if (
-          usesFormParameter &&
-          (formBoundResourceIds.has(resourceId) === false ||
-            externalResourceIds.has(resourceId) ||
-            externalClosureIds.has(resourceId))
-        ) {
-          const message = `External Resource ${resourceId} cannot bind Form data`;
-          if (
-            rootIds.includes(resourceId) &&
-            resource.email?.recipientMode === "visitor"
-          ) {
-            requestErrors.set(resourceId, message);
-          } else {
-            throw new InvalidManagedFormGraph(message);
-          }
-        }
-      }
 
       const usedDataSources: DataSources = new Map();
       const emailRecipientCounts = new Map<string, number>();

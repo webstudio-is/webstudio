@@ -112,13 +112,19 @@ test("deleting a Resource removes it from a new Form's destinations", () => {
     instanceId: "formId",
     name: "submission",
     type: "json",
-    value: { destinations: ["resourceVariable"] },
+    value: {
+      destinations: ["resourceVariable", "otherResourceVariable"],
+      disabledDestinations: ["resourceVariable"],
+    },
   });
 
   deleteVariableMutable(data, "resourceVariable");
 
   expect(data.props.get("submission")).toMatchObject({
-    value: { destinations: [] },
+    value: {
+      destinations: ["otherResourceVariable"],
+      disabledDestinations: [],
+    },
   });
 });
 
@@ -4168,7 +4174,10 @@ describe("resource patch helpers", () => {
       instanceId: "form",
       name: "submission",
       type: "json",
-      value: { destinations: ["data-source"] },
+      value: {
+        destinations: ["data-source"],
+        disabledDestinations: ["data-source"],
+      },
     };
     const dataSource: DataSource = {
       id: "data-source",
@@ -4197,7 +4206,7 @@ describe("resource patch helpers", () => {
         {
           op: "replace",
           path: ["submission", "value"],
-          value: { destinations: [] },
+          value: { destinations: [], disabledDestinations: [] },
         },
       ],
     });

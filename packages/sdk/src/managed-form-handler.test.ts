@@ -459,6 +459,7 @@ test.each([
   "body-format",
   "unconfigured",
   "dependency",
+  "selected-dependency",
 ])(
   "visitor Email %s failure preserves HTTP siblings and its ordered result",
   async (failure) => {
@@ -504,7 +505,12 @@ test.each([
           {
             id: "visitor",
             outputName: "visitor",
-            dependencies: failure === "dependency" ? ["lookup"] : [],
+            dependencies:
+              failure === "dependency"
+                ? ["lookup"]
+                : failure === "selected-dependency"
+                  ? ["http"]
+                  : [],
             control: "email",
             nonfatal: true,
             emailRecipientCount: 1,

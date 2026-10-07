@@ -1130,6 +1130,25 @@ export const rebindTreeVariablesMutable = ({
   });
 };
 
+const removeFormDestinations = <
+  T extends { destinations: string[]; disabledDestinations?: string[] },
+>(
+  submission: T,
+  removedIds: ReadonlySet<string>
+): T => {
+  const destinations = submission.destinations.filter(
+    (id) => !removedIds.has(id)
+  );
+  const disabledDestinations = submission.disabledDestinations?.filter((id) =>
+    destinations.includes(id)
+  );
+  return {
+    ...submission,
+    destinations,
+    ...(disabledDestinations === undefined ? {} : { disabledDestinations }),
+  };
+};
+
 export const deleteVariableMutable = (
   data: Pick<
     BuilderState,
@@ -1152,20 +1171,19 @@ export const deleteVariableMutable = (
     return;
   }
   data.dataSources.delete(variableId);
+  const removedIds = new Set([variableId]);
   for (const prop of data.props.values()) {
     if (
       prop.type !== "json" ||
       prop.name !== "submission" ||
       data.instances.get(prop.instanceId)?.component !== "NativeForm" ||
       !isFormSubmission(prop.value) ||
-      !prop.value.destinations.includes(variableId)
+      (!prop.value.destinations.includes(variableId) &&
+        !prop.value.disabledDestinations?.includes(variableId))
     ) {
       continue;
     }
-    prop.value = {
-      ...prop.value,
-      destinations: prop.value.destinations.filter((id) => id !== variableId),
-    };
+    prop.value = removeFormDestinations(prop.value, removedIds);
   }
   if (dataSource.type === "resource") {
     data.resources.delete(dataSource.resourceId);
@@ -2732,12 +2750,7 @@ export const createResourceDeletePayload = ({
         ...formSubmissionProps.map((prop) => ({
           op: "replace" as const,
           path: [prop.id, "value"],
-          value: {
-            ...prop.value,
-            destinations: prop.value.destinations.filter(
-              (id) => resourceDataSourceIds.has(id) === false
-            ),
-          },
+          value: removeFormDestinations(prop.value, resourceDataSourceIds),
         })),
       ],
     });
