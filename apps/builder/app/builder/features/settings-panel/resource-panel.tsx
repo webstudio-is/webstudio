@@ -1383,28 +1383,28 @@ export const EmailResourceForm = forwardRef<
                   ? "Custom recipients"
                   : "Visitor email field"
             }
-            onChange={(value: "project" | "custom" | "visitor") =>
-              setField("recipientMode", value)
-            }
+            onChange={(value: "project" | "custom" | "visitor") => {
+              if (value === "project") {
+                onChange?.();
+                setSettings((previous) => {
+                  const next = { ...previous };
+                  delete next.recipientMode;
+                  delete next.recipients;
+                  return next;
+                });
+              } else if (value === "visitor") {
+                onChange?.();
+                setSettings((previous) => {
+                  const next = { ...previous, recipientMode: value };
+                  delete next.recipients;
+                  return next;
+                });
+              } else {
+                setField("recipientMode", value);
+              }
+            }}
           />
-        </Grid>
-      </Row>
-      {settings.recipientMode === "custom" && (
-        <Row>
-          <Grid gap={1}>
-            <Flex align="center" justify="between">
-              <Label>Recipients</Label>
-              <Button
-                type="button"
-                color="ghost"
-                onClick={() => {
-                  resetField("recipientMode");
-                  resetField("recipients");
-                }}
-              >
-                Reset to project default
-              </Button>
-            </Flex>
+          {settings.recipientMode === "custom" && (
             <InputErrorsTooltip
               errors={recipientError ? [recipientError] : undefined}
             >
@@ -1417,27 +1417,24 @@ export const EmailResourceForm = forwardRef<
                 onChange={(value) => setField("recipients", value)}
               />
             </InputErrorsTooltip>
-          </Grid>
-        </Row>
-      )}
+          )}
+        </Grid>
+      </Row>
       {settings.recipientMode === "visitor" && (
         <Row>
           <Grid gap={1}>
-            <Label>Visitor email field</Label>
-            <Select
-              fullWidth
-              value={settings.visitorEmailField}
-              placeholder="Select an email field"
-              options={emailFields}
-              getLabel={(name) => name}
-              onChange={(name) => setField("visitorEmailField", name)}
-            />
-            {recipientError && (
-              <Text color="destructive">{recipientError}</Text>
-            )}
-            <Text color="subtle">
-              A fixed receipt with the site URL is added before the body.
-            </Text>
+            <InputErrorsTooltip
+              errors={recipientError ? [recipientError] : undefined}
+            >
+              <Select
+                fullWidth
+                value={settings.visitorEmailField}
+                placeholder="Select an email field"
+                options={emailFields}
+                getLabel={(name) => name}
+                onChange={(name) => setField("visitorEmailField", name)}
+              />
+            </InputErrorsTooltip>
           </Grid>
         </Row>
       )}

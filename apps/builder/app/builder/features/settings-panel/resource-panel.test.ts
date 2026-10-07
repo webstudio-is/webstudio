@@ -5,6 +5,7 @@ import { page, userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   encodeDataVariableId,
+  resolveEmailResourceSettings,
   type DataSources,
   type Resource,
 } from "@webstudio-is/sdk";
@@ -273,7 +274,7 @@ test("visitor Email Resource selects a named Form email field", async () => {
       .click()
   );
   expect(container.textContent).not.toContain("Attachments");
-  expect(container.textContent).toContain(
+  expect(container.textContent).not.toContain(
     "A fixed receipt with the site URL is added before the body."
   );
   expect(container.textContent).not.toContain(
@@ -904,5 +905,168 @@ test.each([
             ?.validationMessage
       )
       .toBe("");
+  }
+);
+
+test.each(["project", "visitor"] as const)(
+  "Email %s mode clears custom recipients without the redundant reset button",
+  async (mode) => {
+    $instances.set(
+      new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance",
+            component: "NativeForm",
+            children: [{ type: "id", value: "contact-input" }],
+          },
+        ],
+        [
+          "contact-input",
+          {
+            id: "contact-input",
+            type: "instance",
+            component: "Input",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "contact-name",
+          {
+            id: "contact-name",
+            instanceId: "contact-input",
+            name: "name",
+            type: "string",
+            value: "contact",
+          },
+        ],
+        [
+          "contact-type",
+          {
+            id: "contact-type",
+            instanceId: "contact-input",
+            name: "type",
+            type: "string",
+            value: "email",
+          },
+        ],
+      ])
+    );
+    $projectSettings.set({
+      meta: { contactEmail: "project@example.com" },
+      compiler: {},
+    });
+    $resources.set(
+      new Map([
+        [
+          "email",
+          {
+            id: "email",
+            name: "Notify",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients: "custom@example.com",
+              visitorEmailField: "contact",
+            },
+          },
+        ],
+      ])
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        createElement(
+          TooltipProvider,
+          undefined,
+          createElement(EmailResourceForm, {
+            variable: {
+              id: "variable",
+              name: "Notify",
+              type: "resource",
+              scopeInstanceId: "form",
+              resourceId: "email",
+            },
+          })
+        )
+      )
+    );
+    expect(container.textContent).not.toContain("Reset to project default");
+    const recipientLabels = Array.from(
+      container.querySelectorAll("label")
+    ).filter((label) => label.textContent === "Recipients");
+    expect(recipientLabels).toHaveLength(1);
+    expect(
+      recipientLabels[0].parentElement?.contains(
+        container.querySelector("textarea")
+      )
+    ).toBe(true);
+    expect(container.querySelector("textarea")?.value).toBe(
+      "custom@example.com"
+    );
+    const select =
+      container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+    await act(async () => await userEvent.click(select));
+    const option = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="option"]')
+    ).find(
+      (option) =>
+        option.textContent ===
+        (mode === "project"
+          ? "Project recipients (or owner)"
+          : "Visitor email field")
+    )!;
+    await act(async () => await userEvent.click(option));
+    const settings = JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')!
+        .value
+    );
+    expect(settings.recipientMode).toBe(
+      mode === "project" ? undefined : "visitor"
+    );
+    expect(settings).not.toHaveProperty("recipients");
+    expect(settings.visitorEmailField).toBe("contact");
+    if (mode === "project") {
+      expect(
+        resolveEmailResourceSettings({
+          settings,
+          projectMeta: { contactEmail: "project@example.com" },
+        }).recipients
+      ).toMatchObject([{ address: "project@example.com" }]);
+      expect(
+        resolveEmailResourceSettings({
+          settings,
+          ownerEmail: "owner@example.com",
+        }).recipients
+      ).toMatchObject([{ address: "owner@example.com" }]);
+      expect(container.textContent).toContain("Project recipients (or owner)");
+    } else {
+      expect(container.textContent).toContain("Visitor email field");
+      expect(container.textContent).toContain("contact");
+      expect(
+        Array.from(container.querySelectorAll("label")).some(
+          (label) => label.textContent === "Visitor email field"
+        )
+      ).toBe(false);
+      expect(container.textContent).not.toContain(
+        "A fixed receipt with the site URL is added before the body."
+      );
+    }
+    expect(
+      Array.from(
+        container.querySelectorAll("textarea"),
+        (textarea) => textarea.value
+      )
+    ).not.toContain("custom@example.com");
   }
 );

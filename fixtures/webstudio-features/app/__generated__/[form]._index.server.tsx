@@ -68,7 +68,7 @@ export const getManagedFormResourceGraph = (formId: string, _managedFormProps: {
       export const getRemixParams = (params: Record<string, string | undefined>) => toWebstudioParams("/form", params);
 
       export const getManagedFormSubmissions = () =>
-        new Map<string, { submission: unknown; resourceIds: (string | null)[] }>(
+        new Map<string, { action: unknown; resourceIds: (string | null)[] }>(
           []
         );
 

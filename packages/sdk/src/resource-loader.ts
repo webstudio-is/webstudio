@@ -530,7 +530,8 @@ export const loadResource = async (
       options.onExchange && !isLocalResource(href)
         ? new Request(href, requestInit)
         : undefined;
-    inspectionRequest = outgoing?.clone();
+    // Cloudflare adds generic metadata to clone(); inspection uses Web Request fields.
+    inspectionRequest = outgoing?.clone() as Request | undefined;
     const response = await awaitWithSignal(
       outgoing === undefined
         ? customFetch(href, requestInit)
