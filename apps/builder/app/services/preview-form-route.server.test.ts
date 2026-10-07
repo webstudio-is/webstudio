@@ -1,3 +1,7 @@
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
+import { build } from "esbuild";
+import { chromium } from "playwright";
 import { beforeEach, expect, test, vi } from "vitest";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
@@ -178,6 +182,137 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
     projectId
   );
   expect(response.headers.get("cache-control")).toContain("no-store");
+});
+
+test("a Preview Form reaches the Builder action over local HTTP", async () => {
+  const componentSource = new URL(
+    "../../../../packages/sdk-components-react/src",
+    import.meta.url
+  ).pathname;
+  const bundle = await build({
+    stdin: {
+      contents: `
+        import { createElement } from "react";
+        import { createRoot } from "react-dom/client";
+        import { NativeForm } from "./native-form";
+        import { submitManagedForm } from "./managed-form-client";
+
+        createRoot(document.getElementById("root")).render(
+          createElement(NativeForm, {
+            submission: { destinations: ["destination"] },
+            onManagedSubmit: (values, signal) => submitManagedForm({
+              values,
+              managedFormId: "form",
+              location: window.location.href,
+              endpoint: new URL("/rest/preview-form?path=%2Fcontact", window.location.href).href,
+              signal,
+              fetch: (input, init = {}) => {
+                const headers = new Headers(init.headers);
+                headers.set("X-CSRF-Token", "local-test-csrf");
+                headers.set("X-Auth-Token", "local-test-auth");
+                return fetch(input, { ...init, headers });
+              },
+            }),
+          },
+            createElement("input", { name: "email", defaultValue: "ada@example.com" }),
+            createElement("button", { type: "submit" }, "Submit Preview")
+          )
+        );
+      `,
+      resolveDir: componentSource,
+      sourcefile: "preview-form-e2e-entry.tsx",
+      loader: "tsx",
+    },
+    bundle: true,
+    write: false,
+    format: "iife",
+    platform: "browser",
+    target: "es2022",
+    conditions: ["webstudio"],
+  });
+  const script = bundle.outputFiles[0].text;
+  const requests: string[] = [];
+  let submittedFormData: FormData | undefined;
+  let routeError: unknown;
+  const server = createServer(async (request, response) => {
+    if (request.url?.startsWith("/rest/preview-form?")) {
+      try {
+        requests.push(request.method ?? "");
+        const chunks: Buffer[] = [];
+        for await (const chunk of request) {
+          chunks.push(Buffer.from(chunk));
+        }
+        const incoming = new Request(
+          `http://${request.headers.host}${request.url}`,
+          {
+            method: request.method,
+            headers: request.headers as HeadersInit,
+            body: Buffer.concat(chunks),
+          }
+        );
+        submittedFormData = await incoming.clone().formData();
+        const routeResponse = await action({ request: incoming } as never);
+        response.writeHead(routeResponse.status, {
+          "content-type":
+            routeResponse.headers.get("content-type") ?? "application/json",
+          "cache-control":
+            routeResponse.headers.get("cache-control") ?? "no-store",
+        });
+        response.end(Buffer.from(await routeResponse.arrayBuffer()));
+      } catch (error) {
+        routeError = error;
+        response.writeHead(500, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify({
+            success: false,
+            status: 500,
+            results: [],
+            errors: [
+              { status: 500, body: null, message: "Local route failed" },
+            ],
+          })
+        );
+      }
+      return;
+    }
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<div id="root"></div><script>${script}</script>`);
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address() as AddressInfo;
+  const url = `http://p-${projectId}.localhost:${port}`;
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage();
+    await page.goto(url);
+    await page.getByRole("button", { name: "Submit Preview" }).click();
+    await page
+      .locator('form[data-state="success"], form[data-state="error"]')
+      .waitFor();
+
+    expect(requests).toEqual(["POST"]);
+    expect(routeError).toBeUndefined();
+    expect(await page.locator("form").getAttribute("data-state")).toBe(
+      "success"
+    );
+    expect(submittedFormData?.get("email")).toBe("ada@example.com");
+    expect(submittedFormData?.get("ws--managed-form-id")).toBe("form");
+    expect(createContext).toHaveBeenCalledOnce();
+    expect(loadDevBuildByProjectId).toHaveBeenCalledWith(
+      expect.anything(),
+      projectId
+    );
+    const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
+      .results[0].value;
+    expect(resourceFetch).toHaveBeenCalledWith(
+      expect.stringContaining("https://example.com/contact"),
+      expect.anything()
+    );
+  } finally {
+    await browser?.close();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
 });
 
 test("Preview returns JSON when Remix's Response has no static json method", async () => {
