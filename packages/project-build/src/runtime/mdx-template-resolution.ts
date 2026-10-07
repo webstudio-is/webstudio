@@ -197,9 +197,9 @@ export const resolveMdxTemplates = ({
           node.selfClosing &&
           metas.has(node.name)
         ) {
-          // Composite template overlays use nested component names to target
-          // their matching defaults; the parent template materializer applies
-          // these props, so the names are not standalone templates to resolve.
+          // In a Video template, <VimeoPreviewImage src="/new.png" />
+          // changes the matching default child. It is not a separate
+          // Content Block template.
           continue;
         }
         if ((templateIds?.length ?? 0) > 1) {
