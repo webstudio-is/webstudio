@@ -34,7 +34,7 @@ import {
 import { formatValuePreview } from "~/builder/shared/expression-editor";
 import { VariablePopoverTrigger } from "./variable-popover";
 import { VariableContextMenu, VariableMenu } from "./variable-menu";
-import { $highlightedVariable } from "./variable-navigation";
+import { $variableToFocus } from "./variable-navigation";
 import { StyleSourceBadge } from "../style-panel/style-source";
 import {
   getFormDataPreview,
@@ -159,21 +159,25 @@ const VariablesItem = ({
   index,
   value,
   usageCount,
+  isOpen = true,
 }: {
   variable: DataSource;
   source: "local" | "remote";
   index: number;
   value: unknown;
   usageCount: number;
+  isOpen?: boolean;
 }) => {
   const selectedPage = useStore($selectedPage);
-  const highlighted = useStore($highlightedVariable);
+  const variableToFocus = useStore($variableToFocus);
   const rowRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (highlighted?.id === variable.id) {
+    if (isOpen && variableToFocus === variable.id) {
       rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      rowRef.current?.focus({ preventScroll: true });
+      $variableToFocus.set(undefined);
     }
-  }, [highlighted, variable.id]);
+  }, [isOpen, variableToFocus, variable.id]);
   const instances = useStore($instances);
   const props = useStore($props);
   const liveFormValues = useStore($livePreviewFormValues);
@@ -224,7 +228,6 @@ const VariablesItem = ({
     <VariablePopoverTrigger key={variable.id} variable={variable}>
       <CssValueListItem
         ref={rowRef}
-        active={highlighted?.id === variable.id}
         aria-label={`Variable ${variable.name}`}
         id={variable.id}
         index={index}
@@ -332,7 +335,7 @@ const VariablesItem = ({
   );
 };
 
-const VariablesList = () => {
+const VariablesList = ({ isOpen }: { isOpen: boolean }) => {
   const instance = useStore($selectedInstance);
   const availableVariables = useStore($availableVariables);
   const variableValues = useStore($instanceVariableValues);
@@ -355,6 +358,7 @@ const VariablesList = () => {
           variable={variable}
           index={index}
           usageCount={usedVariables.get(variable.id) ?? 0}
+          isOpen={isOpen}
         />
       ))}
     </CssValueListArrowFocus>
@@ -364,15 +368,34 @@ const VariablesList = () => {
 const label = "Variables";
 
 export const VariablesSection = () => {
-  const highlighted = useStore($highlightedVariable);
-  const handledHighlight = useRef<typeof highlighted>();
+  const variableToFocus = useStore($variableToFocus);
+  const availableVariables = useStore($availableVariables);
+  const selectedInstance = useStore($selectedInstance);
+  const previousInstanceId = useRef(selectedInstance?.id);
   const [isOpen, setIsOpen] = useOpenState(label);
   useEffect(() => {
-    if (highlighted && handledHighlight.current !== highlighted) {
-      handledHighlight.current = highlighted;
-      setIsOpen(true);
+    if (previousInstanceId.current !== selectedInstance?.id) {
+      previousInstanceId.current = selectedInstance?.id;
+      $variableToFocus.set(undefined);
+      return;
     }
-  }, [highlighted, setIsOpen]);
+    if (variableToFocus === undefined) {
+      return;
+    }
+    if (availableVariables.some(({ id }) => id === variableToFocus)) {
+      if (isOpen === false) {
+        setIsOpen(true);
+      }
+    } else {
+      $variableToFocus.set(undefined);
+    }
+  }, [
+    availableVariables,
+    isOpen,
+    selectedInstance?.id,
+    setIsOpen,
+    variableToFocus,
+  ]);
   return (
     <VariableContextMenu>
       <CollapsibleSectionRoot
@@ -409,7 +432,7 @@ export const VariablesSection = () => {
       >
         {/* prevent applyig gap to list items */}
         <div>
-          <VariablesList />
+          <VariablesList isOpen={isOpen} />
         </div>
       </CollapsibleSectionRoot>
     </VariableContextMenu>

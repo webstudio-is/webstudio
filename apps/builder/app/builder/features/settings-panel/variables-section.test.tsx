@@ -3,17 +3,18 @@ import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import {
   $selectedInstanceSelector,
   $selectedPageId,
   selectInstance,
 } from "~/shared/nano-states";
-import { $pages, $resources } from "~/shared/sync/data-stores";
+import { $pages, $props, $resources } from "~/shared/sync/data-stores";
 import { FormSubmissionControl } from "./controls/form-submission";
-import { $highlightedVariable } from "./variable-navigation";
+import { $variableToFocus } from "./variable-navigation";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { $instances, $dataSources } from "~/shared/sync/data-stores";
-import { __testing__ } from "./variables-section";
+import { __testing__, VariablesSection } from "./variables-section";
 import { __testing__ as popoverTesting } from "./variable-popover";
 
 (
@@ -24,9 +25,10 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
-  $highlightedVariable.set(undefined);
+  $variableToFocus.set(undefined);
   selectInstance(undefined);
   $pages.set(undefined);
+  $props.set(new Map());
   $resources.set(new Map());
   $instances.set(new Map());
   $dataSources.set(new Map());
@@ -132,7 +134,7 @@ test("name shadow warning appears for an existing shadow and renamed ancestor na
   expect(container.querySelector("svg")).toBeNull();
 });
 
-test("clicking an Action highlights its Resource without navigating or opening the editor", async () => {
+test("clicking an Action focuses its Resource without navigating or opening the editor", async () => {
   const { container, local } = setup();
   const resourceVariable = {
     id: local.id,
@@ -198,8 +200,103 @@ test("clicking an Action highlights its Resource without navigating or opening t
   const row = container.querySelector<HTMLButtonElement>(
     '[aria-label="Variable Request"]'
   )!;
-  expect(row.getAttribute("data-active")).toBe("true");
-  expect(document.activeElement).not.toBe(row);
+  expect(row.getAttribute("data-active")).not.toBe("true");
+  expect(document.activeElement).toBe(row);
+  expect($variableToFocus.get()).toBeUndefined();
   expect(document.querySelector('[role="dialog"]')).toBeNull();
   expect(document.body.textContent).not.toContain("Edit variable");
+});
+
+test("an unavailable Action Resource does not reopen Variables or retain focus", async () => {
+  const { container } = setup();
+  const parentResource = {
+    id: "parent-resource",
+    scopeInstanceId: "parent",
+    type: "resource" as const,
+    name: "Request",
+    resourceId: "parent-request",
+  };
+  const localResource = {
+    ...parentResource,
+    id: "local-resource",
+    scopeInstanceId: "child",
+    resourceId: "local-request",
+  };
+  $dataSources.set(
+    new Map([
+      [parentResource.id, parentResource],
+      [localResource.id, localResource],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [
+        parentResource.resourceId,
+        {
+          id: parentResource.resourceId,
+          name: "parent-request",
+          method: "post",
+          url: '"https://example.com"',
+          headers: [],
+        },
+      ],
+      [
+        localResource.resourceId,
+        {
+          id: localResource.resourceId,
+          name: "local-request",
+          method: "post",
+          url: '"https://example.com"',
+          headers: [],
+        },
+      ],
+    ])
+  );
+  $pages.set(createDefaultPages({ rootInstanceId: "parent" }));
+  $selectedPageId.set("home");
+  $props.set(new Map());
+  selectInstance(["child"]);
+
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <CollapsibleProvider initialOpen="Variables">
+          <FormSubmissionControl
+            instanceId="child"
+            propName="action"
+            prop={{
+              id: "action",
+              instanceId: "child",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: parentResource.id, enabled: true }],
+            }}
+            computedValue={[]}
+            meta={{ type: "json", control: "form-submission", required: false }}
+            onChange={() => {}}
+          />
+          <VariablesSection />
+        </CollapsibleProvider>
+      </TooltipProvider>
+    )
+  );
+  await act(async () => {});
+
+  const sectionButton = container.querySelector<HTMLButtonElement>(
+    'button[data-state="open"]'
+  )!;
+  await act(async () => await userEvent.click(sectionButton));
+  expect(sectionButton.getAttribute("data-state")).toBe("closed");
+
+  await act(
+    async () =>
+      await userEvent.click(
+        container.querySelector<HTMLButtonElement>(
+          '[aria-label="Action Request"]'
+        )!
+      )
+  );
+
+  expect($variableToFocus.get()).toBeUndefined();
+  expect(sectionButton.getAttribute("data-state")).toBe("closed");
 });
