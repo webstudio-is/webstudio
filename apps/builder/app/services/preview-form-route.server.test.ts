@@ -25,8 +25,6 @@ vi.mock("~/services/csrf-session.server", () => ({ checkCsrf: vi.fn() }));
 vi.mock("~/env/env.server", () => ({
   default: {
     PUBLISHER_HOST: "wstd.work",
-    FORM_PREVIEW_EMAIL_SERVICE_URL:
-      "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
     TRPC_SERVER_API_TOKEN: "server-only-test-token",
   },
 }));
@@ -274,17 +272,11 @@ test("draft expression failures do not execute a Resource", async () => {
 });
 
 test("a webhook-only Form is independent of Email Service availability", async () => {
-  const url = env.FORM_PREVIEW_EMAIL_SERVICE_URL;
-  env.FORM_PREVIEW_EMAIL_SERVICE_URL = undefined;
-  try {
-    const response = await action({ request: request() } as never);
-    expect(await response.json()).toMatchObject({ success: true });
-    expect(
-      vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
-    ).toHaveBeenCalledOnce();
-  } finally {
-    env.FORM_PREVIEW_EMAIL_SERVICE_URL = url;
-  }
+  const response = await action({ request: request() } as never);
+  expect(await response.json()).toMatchObject({ success: true });
+  expect(
+    vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
+  ).toHaveBeenCalledOnce();
 });
 
 test("Preview email uses the private Email Service credential and forwards uploaded files", async () => {
@@ -338,7 +330,7 @@ test("Preview email uses the private Email Service credential and forwards uploa
     );
     expect(send).toHaveBeenCalledOnce();
     expect(String(send.mock.calls[0][0])).toBe(
-      "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send"
+      "https://apps.webstudio.is/v1/preview-send"
     );
     expect(send.mock.calls[0][1]).toMatchObject({ method: "POST" });
   } finally {
@@ -360,8 +352,8 @@ test("an unavailable Email Service fails before any action is sent", async () =>
       },
     ],
   } as never);
-  const url = env.FORM_PREVIEW_EMAIL_SERVICE_URL;
-  env.FORM_PREVIEW_EMAIL_SERVICE_URL = undefined;
+  const token = env.TRPC_SERVER_API_TOKEN;
+  env.TRPC_SERVER_API_TOKEN = undefined;
   try {
     const response = await action({ request: request() } as never);
     expect(await response.json()).toMatchObject({ success: false });
@@ -370,7 +362,7 @@ test("an unavailable Email Service fails before any action is sent", async () =>
       .results[0].value;
     expect(resourceFetch).not.toHaveBeenCalled();
   } finally {
-    env.FORM_PREVIEW_EMAIL_SERVICE_URL = url;
+    env.TRPC_SERVER_API_TOKEN = token;
   }
 });
 

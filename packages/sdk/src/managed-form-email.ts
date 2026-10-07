@@ -16,6 +16,8 @@ const maxEmailContentBytes = 5 * 1024 * 1024;
 const maxEmailAttachments = 32;
 const maxEmailRequestBytes = 7 * 1024 * 1024;
 const mimeEnvelopeBytes = 16 * 1024;
+export const cloudflareManagedFormPreviewEmailServiceUrl =
+  "https://apps.webstudio.is/v1/preview-send";
 const emailPattern = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 const isValidMailboxName = (name: unknown) =>
   typeof name === "string" && name.length <= 256 && !/[\r\n]/.test(name);
@@ -368,8 +370,7 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
   const url = new URL(serviceUrl);
   if (
     url.protocol !== "https:" ||
-    (url.hostname !== "staging-webstudio-email-service.wstd.workers.dev" &&
-      url.hostname !== "apps.webstudio.is") ||
+    url.hostname !== "apps.webstudio.is" ||
     url.port !== "" ||
     url.pathname !== "/v1/preview-send" ||
     url.username !== "" ||

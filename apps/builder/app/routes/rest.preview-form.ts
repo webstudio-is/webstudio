@@ -14,6 +14,7 @@ import {
 } from "@webstudio-is/sdk";
 import { createManagedFormDraftGraph } from "@webstudio-is/sdk/managed-form-draft-graph";
 import {
+  cloudflareManagedFormPreviewEmailServiceUrl,
   createCloudflareManagedFormEmailSenderWithUrl,
   getManagedFormFailure,
   getSystemSearch,
@@ -190,7 +191,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }),
       createEmailSender: (data) =>
         createCloudflareManagedFormEmailSenderWithUrl(
-          env.FORM_PREVIEW_EMAIL_SERVICE_URL,
+          cloudflareManagedFormPreviewEmailServiceUrl,
           env.TRPC_SERVER_API_TOKEN,
           data,
           projectId
