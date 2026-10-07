@@ -1,4 +1,5 @@
 import {
+  getManagedFormParameterBinding,
   getManagedFormResourcePlan,
   InvalidManagedFormGraph,
 } from "./managed-form-graph";
@@ -8,7 +9,6 @@ import type { Props } from "./schema/props";
 import type { Resources } from "./schema/resources";
 import type { ProjectMeta } from "./schema/pages";
 import type { Scope } from "./scope";
-import { SYSTEM_VARIABLE_ID } from "./expression";
 import {
   getFormEmailFieldNames,
   getFormEmailStringifyOptions,
@@ -185,31 +185,29 @@ export const generateManagedFormResources = ({
         let visitorParameterError: string | undefined;
         for (const dataSource of requestDataSources.values()) {
           if (dataSource.type === "parameter") {
-            const isFormParameter =
-              dataSource.scopeInstanceId === formId &&
-              instances.get(formId)?.component === "NativeForm" &&
-              (dataSource.name === formDataParameterName ||
-                dataSource.name === browserInfoParameterName);
-            const code =
-              dataSource.id === SYSTEM_VARIABLE_ID
-                ? `${propsName}.system`
-                : isFormParameter
-                  ? `${propsName}.${dataSource.name}`
-                  : undefined;
-            if (code === undefined) {
-              const message = `Managed Form ${formId} cannot resolve parameter ${dataSource.id}`;
+            let binding: ReturnType<typeof getManagedFormParameterBinding>;
+            try {
+              binding = getManagedFormParameterBinding(
+                dataSource,
+                formId,
+                instances
+              );
+            } catch (error) {
+              if (!(error instanceof InvalidManagedFormGraph)) {
+                throw error;
+              }
               if (
                 resolvedEmailSettings?.recipientMode === "visitor" &&
                 rootIds.includes(resourceId)
               ) {
                 // Keep optional visitor configuration errors inside its request,
                 // where the shared handler can report them without blocking peers.
-                visitorParameterError = message;
+                visitorParameterError = error.message;
                 continue;
               }
-              throw new InvalidManagedFormGraph(message);
+              throw error;
             }
-            parameterCodeById.set(dataSource.id, code);
+            parameterCodeById.set(dataSource.id, `${propsName}.${binding}`);
           }
           usedDataSources.set(dataSource.id, dataSource);
           if (dataSource.type === "resource") {

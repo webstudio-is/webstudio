@@ -53,6 +53,7 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
   managedFormRequestParamName,
+  type ResourceLoadOptions,
 } from "@webstudio-is/sdk/runtime";
 import { createProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
 import {
@@ -798,6 +799,84 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test("uses the private Email binding when a TRPC token is present without an Email Service URL", async () => {
+    await prebuild({
+      assets: false,
+      template: ["react-router", "react-router-cloudflare"],
+    });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    const adapterBundle = await build({
+      entryPoints: [
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+      ],
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      conditions: ["webstudio"],
+      write: false,
+    });
+    const adapter = (await import(
+      /* @vite-ignore */
+      `data:text/javascript;base64,${Buffer.from(
+        adapterBundle.outputFiles[0].text
+      ).toString("base64")}`
+    )) as {
+      createManagedFormEmailSender: (input: {
+        context: unknown;
+        formData: FormData;
+        projectId: string;
+      }) => ResourceLoadOptions["sendEmail"];
+    };
+    const bindingFetch = vi
+      .fn()
+      .mockResolvedValue(Response.json({ id: "sent" }));
+    const sendEmail = adapter.createManagedFormEmailSender({
+      context: {
+        cloudflare: {
+          env: {
+            EMAIL_SERVICE: { fetch: bindingFetch },
+            TRPC_SERVER_API_TOKEN: "unrelated-trpc-token",
+          },
+        },
+      },
+      formData: new FormData(),
+      projectId: "project-id",
+    });
+    expect(sendEmail).toBeDefined();
+    await expect(
+      sendEmail!(
+        {
+          name: "Email",
+          url: "",
+          method: "post",
+          searchParams: [],
+          headers: [],
+          control: "email",
+          email: {
+            recipientMode: "project",
+            recipients: [{ address: "owner@example.com" }],
+            subject: "Submission",
+            body: "Submitted fields",
+            includeAttachments: false,
+          },
+        },
+        {}
+      )
+    ).resolves.toMatchObject({ ok: true, data: { id: "sent" } });
+    expect(bindingFetch).toHaveBeenCalledExactlyOnceWith(
+      "https://email-service.internal/v1/send",
+      expect.objectContaining({
+        headers: {
+          "content-type": "application/json",
+          "x-webstudio-project-id": "project-id",
+        },
+      })
+    );
+  });
+
   test("generates a private Email binding adapter only for Cloudflare sites", async () => {
     await prebuild({
       assets: false,

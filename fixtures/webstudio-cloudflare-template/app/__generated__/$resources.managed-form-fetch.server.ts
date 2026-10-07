@@ -6,7 +6,7 @@ import { createCloudflareManagedFormEmailSender, createCloudflareManagedFormEmai
 export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
 export const createManagedFormEmailSender = ({ context, formData, projectId }: { context: unknown; formData: FormData; projectId: string }) => {
   const env = (context as { cloudflare?: { env?: { EMAIL_SERVICE?: unknown; EMAIL_SERVICE_URL?: string; TRPC_SERVER_API_TOKEN?: string } } } | null)?.cloudflare?.env;
-  if (env?.EMAIL_SERVICE_URL !== undefined || env?.TRPC_SERVER_API_TOKEN !== undefined) {
+  if (env?.EMAIL_SERVICE_URL !== undefined) {
     return createCloudflareManagedFormEmailSenderWithUrl(env.EMAIL_SERVICE_URL, env.TRPC_SERVER_API_TOKEN, formData, projectId);
   }
   const binding = env?.EMAIL_SERVICE;

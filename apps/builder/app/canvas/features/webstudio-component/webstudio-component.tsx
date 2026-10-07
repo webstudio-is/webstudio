@@ -11,6 +11,8 @@ import {
   Fragment,
   type ReactNode,
   type JSX,
+  type ComponentProps,
+  type ElementRef,
 } from "react";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { computed } from "nanostores";
@@ -111,6 +113,7 @@ import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-sou
 import { $resourcesState } from "~/shared/resources";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
+import { NativeForm } from "@webstudio-is/sdk-components-react/components";
 import { submitPreviewForm } from "~/shared/preview-form-bridge";
 import { switchPageAndUpdateSystem } from "~/canvas/interceptor";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
@@ -193,7 +196,23 @@ const submitManagedFormFromPreview = (
   });
 };
 
+const PreviewNativeForm = forwardRef<
+  ElementRef<typeof NativeForm>,
+  ComponentProps<typeof NativeForm>
+>((props, ref) => {
+  const system = useStore($currentSystem);
+  const { hash } = useStore($selectedPageHash);
+  return (
+    <NativeForm
+      {...props}
+      ref={ref}
+      navigationToken={getPreviewCurrentUrl(system, hash).href}
+    />
+  );
+});
+
 export const __testing__ = {
+  PreviewNativeForm,
   submitManagedFormFromPreview,
   computeComponentKey,
   getPreviewCurrentUrl,
@@ -1131,6 +1150,10 @@ const WebstudioComponentPreviewInner = forwardRef<
   let Component: undefined | string | AnyComponent = components.get(
     instance.component
   );
+
+  if (instance.component === "NativeForm") {
+    Component = PreviewNativeForm as AnyComponent;
+  }
 
   if (instance.component === elementComponent) {
     Component = instance.tag ?? "div";

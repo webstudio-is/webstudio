@@ -12,10 +12,33 @@ import {
   formDataParameterName,
 } from "./managed-form-submission";
 import type { Instances } from "./schema/instances";
-import type { DataSources } from "./schema/data-sources";
+import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Resources } from "./schema/resources";
+import { SYSTEM_VARIABLE_ID } from "./expression";
 
 export class InvalidManagedFormGraph extends Error {}
+
+/** Resolve the parameters available to both Preview and published submissions. */
+export const getManagedFormParameterBinding = (
+  source: Extract<DataSource, { type: "parameter" }>,
+  formId: string,
+  instances: Instances
+): "system" | "formData" | "browserInfo" => {
+  if (source.id === SYSTEM_VARIABLE_ID) {
+    return "system";
+  }
+  if (
+    source.scopeInstanceId === formId &&
+    instances.get(formId)?.component === "NativeForm" &&
+    (source.name === formDataParameterName ||
+      source.name === browserInfoParameterName)
+  ) {
+    return source.name;
+  }
+  throw new InvalidManagedFormGraph(
+    `Managed Form ${formId} cannot resolve parameter ${source.id}`
+  );
+};
 
 /** Both draft and published Actions follow the Builder's variable ancestry. */
 export const getManagedFormResourceRoots = ({

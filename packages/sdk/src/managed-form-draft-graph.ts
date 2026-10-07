@@ -1,4 +1,7 @@
-import { getManagedFormResourcePlan } from "./managed-form-graph";
+import {
+  getManagedFormParameterBinding,
+  getManagedFormResourcePlan,
+} from "./managed-form-graph";
 import { encodeDataVariableId, SYSTEM_VARIABLE_ID } from "./expression";
 import {
   getFormEmailFieldNames,
@@ -163,24 +166,17 @@ export const createManagedFormDraftGraph = ({
           value = documents.get(source.resourceId);
         }
         if (source.type === "parameter") {
-          if (source.id === SYSTEM_VARIABLE_ID) {
-            value = system;
-          } else if (
-            source.scopeInstanceId === formId &&
-            source.name === formDataParameterName
-          ) {
-            value = resource.control === "email" ? formDataProxy : formData;
-          } else if (
-            source.scopeInstanceId === formId &&
-            source.name === browserInfoParameterName
-          ) {
-            value =
-              resource.control === "email" ? browserInfoProxy : browserInfo;
-          } else {
-            throw new Error(
-              `Managed Form ${formId} cannot resolve parameter ${source.id}`
-            );
-          }
+          const binding = getManagedFormParameterBinding(
+            source,
+            formId,
+            instances
+          );
+          value = {
+            system,
+            formData: resource.control === "email" ? formDataProxy : formData,
+            browserInfo:
+              resource.control === "email" ? browserInfoProxy : browserInfo,
+          }[binding];
         }
         values.set(encodeDataVariableId(source.id), value);
       }

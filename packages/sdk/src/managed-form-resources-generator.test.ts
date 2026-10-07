@@ -54,6 +54,75 @@ const getGeneratedGraph = (input: {
   ) => ResourceRequestGraph | undefined;
 };
 
+test.each([
+  { name: "formData", scopeInstanceId: "other-form" },
+  { name: "browserInfo", scopeInstanceId: "other-form" },
+  { name: "state", scopeInstanceId: "form" },
+])(
+  "Preview and published graphs reject unavailable parameter $name in $scopeInstanceId",
+  async (parameter) => {
+    const { createManagedFormDraftGraph } = await import(
+      "./managed-form-draft-graph"
+    );
+    const instances: Instances = new Map([
+      [
+        "form",
+        { id: "form", type: "instance", component: "NativeForm", children: [] },
+      ],
+    ]);
+    const dataSources: DataSources = new Map([
+      [
+        "destination",
+        {
+          id: "destination",
+          type: "resource",
+          name: "Action",
+          scopeInstanceId: "form",
+          resourceId: "action",
+        },
+      ],
+      ["unavailable", { id: "unavailable", type: "parameter", ...parameter }],
+    ]);
+    const resources: Resources = new Map([
+      [
+        "action",
+        {
+          id: "action",
+          name: "Action",
+          method: "post",
+          url: '"https://example.com"',
+          headers: [],
+          body: encodeDataSourceVariable("unavailable"),
+        },
+      ],
+    ]);
+    const input = {
+      formId: "form",
+      destinationDataSourceIds: ["destination"],
+      instances,
+      dataSources,
+      resources,
+      props: new Map(),
+      system: {
+        params: {},
+        search: {},
+        origin: "https://site.example",
+        pathname: "/",
+      },
+      formData: {},
+      browserInfo: {},
+      evaluateExpression: () => undefined,
+    };
+    expect(
+      getGeneratedGraph({ ...input, forms: [input] })("form", input)
+    ).toBeUndefined();
+    const draft = createManagedFormDraftGraph(input);
+    expect(() => draft.resources[0].createRequest(new Map())).toThrow(
+      "Managed Form form cannot resolve parameter unavailable"
+    );
+  }
+);
+
 test("a Form-scoped Email Resource gets the automatic form text and a typed email request", () => {
   const dataSources: DataSources = new Map([
     [
