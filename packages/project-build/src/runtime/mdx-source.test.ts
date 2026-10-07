@@ -204,6 +204,15 @@ describe("materializeMdxSource", () => {
       projectId: "project",
     });
     expect(reloaded.diagnostics).toEqual([]);
+    expect(
+      reloaded.root.fragment.instances.map(({ component }) => component)
+    ).toEqual(
+      expect.arrayContaining([
+        "VimeoPreviewImage",
+        "VimeoSpinner",
+        "VimeoPlayButton",
+      ])
+    );
     expect(reloaded.root.fragment.props).toContainEqual(
       expect.objectContaining({
         instanceId: reloaded.root.fragment.instances.find(
