@@ -149,8 +149,9 @@ test("an unauthenticated request cannot load the project draft", async () => {
 });
 
 test("a cross-origin request cannot reach project authorization or actions", async () => {
-  const { preventCrossOriginCookie } =
-    await import("~/services/no-cross-origin-cookie");
+  const { preventCrossOriginCookie } = await import(
+    "~/services/no-cross-origin-cookie"
+  );
   vi.mocked(preventCrossOriginCookie).mockImplementationOnce(() => {
     throw new Response("Cross-origin request", { status: 403 });
   });
@@ -185,59 +186,103 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
 });
 
 test("a Preview Form reaches the Builder action over local HTTP", async () => {
+  const appSource = new URL("../", import.meta.url).pathname;
   const componentSource = new URL(
     "../../../../packages/sdk-components-react/src",
     import.meta.url
   ).pathname;
-  const bundle = await build({
-    stdin: {
-      contents: `
-        import { createElement } from "react";
-        import { createRoot } from "react-dom/client";
-        import { NativeForm } from "./native-form";
-        import { submitManagedForm } from "./managed-form-client";
-
-        createRoot(document.getElementById("root")).render(
-          createElement(NativeForm, {
-            submission: { destinations: ["destination"] },
-            onManagedSubmit: (values, signal) => submitManagedForm({
-              values,
-              managedFormId: "form",
-              location: window.location.href,
-              endpoint: new URL("/rest/preview-form?path=%2Fcontact", window.location.href).href,
-              signal,
-              fetch: (input, init = {}) => {
-                const headers = new Headers(init.headers);
-                headers.set("X-CSRF-Token", "local-test-csrf");
-                headers.set("X-Auth-Token", "local-test-auth");
-                return fetch(input, { ...init, headers });
-              },
-            }),
-          },
-            createElement("input", { name: "email", defaultValue: "ada@example.com" }),
-            createElement("button", { type: "submit" }, "Submit Preview")
-          )
-        );
-      `,
-      resolveDir: componentSource,
-      sourcefile: "preview-form-e2e-entry.tsx",
-      loader: "tsx",
-    },
+  const sharedBuildOptions = {
     bundle: true,
     write: false,
-    format: "iife",
-    platform: "browser",
+    format: "iife" as const,
+    platform: "browser" as const,
     target: "es2022",
-    conditions: ["webstudio"],
-  });
-  const script = bundle.outputFiles[0].text;
+    conditions: ["webstudio", "browser"],
+    define: {
+      "process.env.NODE_ENV": '"development"',
+      "import.meta.env": '{"GITHUB_SHA":"local"}',
+    },
+  };
+  const [parentBundle, canvasBundle] = await Promise.all([
+    build({
+      ...sharedBuildOptions,
+      stdin: {
+        contents: `
+          import { createElement, useEffect } from "react";
+          import { createRoot } from "react-dom/client";
+          import { usePublish } from "~/shared/pubsub";
+          import { updateCsrfToken } from "~/shared/csrf.client";
+          import { $authToken } from "~/shared/nano-states/misc";
+          import { subscribePreviewFormRequests } from "~/shared/preview-form-parent";
+
+          updateCsrfToken("local-test-csrf");
+          $authToken.set("local-test-auth");
+          const App = () => {
+            const [publish, iframeRef] = usePublish();
+            useEffect(() => subscribePreviewFormRequests(publish), [publish]);
+            return createElement("iframe", { ref: iframeRef, src: "/canvas", title: "Canvas" });
+          };
+          createRoot(document.getElementById("root")).render(createElement(App));
+        `,
+        resolveDir: appSource,
+        sourcefile: "preview-parent-entry.tsx",
+        loader: "tsx",
+      },
+      alias: { "~": appSource },
+    }),
+    build({
+      ...sharedBuildOptions,
+      stdin: {
+        contents: `
+          import { createElement } from "react";
+          import { createRoot } from "react-dom/client";
+          import { NativeForm } from "./native-form";
+          import { submitPreviewForm } from "~/shared/preview-form-bridge";
+
+          createRoot(document.getElementById("root")).render(
+            createElement(NativeForm, {
+              "data-ws-managed-form-id": "form",
+              submission: { destinations: ["destination"] },
+              onManagedSubmit: (values, signal) => submitPreviewForm({
+                values,
+                managedFormId: "form",
+                path: "/contact",
+                signal,
+              }),
+            },
+              createElement("input", { name: "email", defaultValue: "ada@example.com" }),
+              createElement("button", { type: "submit" }, "Submit Preview")
+            )
+          );
+        `,
+        resolveDir: componentSource,
+        sourcefile: "preview-canvas-entry.tsx",
+        loader: "tsx",
+      },
+      alias: { "~": appSource },
+    }),
+  ]);
+  const getScript = (result: Awaited<ReturnType<typeof build>>) => {
+    const script = result.outputFiles?.[0]?.text;
+    if (script === undefined) {
+      throw new Error("Preview test bundle was not generated");
+    }
+    return script;
+  };
+  const parentScript = getScript(parentBundle);
+  const canvasScript = getScript(canvasBundle);
   const requests: string[] = [];
+  let receivedHeaders: { auth?: string; csrf?: string } | undefined;
   let submittedFormData: FormData | undefined;
   let routeError: unknown;
   const server = createServer(async (request, response) => {
     if (request.url?.startsWith("/rest/preview-form?")) {
       try {
         requests.push(request.method ?? "");
+        receivedHeaders = {
+          auth: String(request.headers["x-auth-token"] ?? ""),
+          csrf: String(request.headers["x-csrf-token"] ?? ""),
+        };
         const chunks: Buffer[] = [];
         for await (const chunk of request) {
           chunks.push(Buffer.from(chunk));
@@ -276,7 +321,11 @@ test("a Preview Form reaches the Builder action over local HTTP", async () => {
       return;
     }
     response.writeHead(200, { "content-type": "text/html" });
-    response.end(`<div id="root"></div><script>${script}</script>`);
+    response.end(
+      request.url === "/canvas"
+        ? `<div id="root"></div><script>${canvasScript}</script>`
+        : `<div id="root"></div><script>${parentScript}</script>`
+    );
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;
@@ -285,15 +334,23 @@ test("a Preview Form reaches the Builder action over local HTTP", async () => {
   try {
     browser = await chromium.launch();
     const page = await browser.newPage();
+    const pageErrors: Error[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error));
     await page.goto(url);
-    await page.getByRole("button", { name: "Submit Preview" }).click();
-    await page
+    const canvas = page.frameLocator('iframe[title="Canvas"]');
+    await canvas.getByRole("button", { name: "Submit Preview" }).click();
+    await canvas
       .locator('form[data-state="success"], form[data-state="error"]')
       .waitFor();
 
     expect(requests).toEqual(["POST"]);
+    expect(receivedHeaders).toEqual({
+      auth: "local-test-auth",
+      csrf: "local-test-csrf",
+    });
+    expect(pageErrors).toEqual([]);
     expect(routeError).toBeUndefined();
-    expect(await page.locator("form").getAttribute("data-state")).toBe(
+    expect(await canvas.locator("form").getAttribute("data-state")).toBe(
       "success"
     );
     expect(submittedFormData?.get("email")).toBe("ada@example.com");
@@ -313,7 +370,7 @@ test("a Preview Form reaches the Builder action over local HTTP", async () => {
     await browser?.close();
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
-});
+}, 30_000);
 
 test("Preview returns JSON when Remix's Response has no static json method", async () => {
   vi.mocked(createNodeProtectedResourceFetch).mockReturnValue(
