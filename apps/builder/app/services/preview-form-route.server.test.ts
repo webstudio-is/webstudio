@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
+import { createRequire } from "node:module";
 import type { AddressInfo } from "node:net";
 import { build } from "esbuild";
-import { chromium } from "playwright";
 import { beforeEach, expect, test, vi } from "vitest";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
@@ -34,6 +34,7 @@ vi.mock("~/env/env.server", () => ({
 }));
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
+const require = createRequire(import.meta.url);
 const request = (file?: File, headers?: HeadersInit) => {
   const url = new URL(
     `https://p-${projectId}.localhost/rest/preview-form?path=%2Fcontact`
@@ -149,9 +150,8 @@ test("an unauthenticated request cannot load the project draft", async () => {
 });
 
 test("a cross-origin request cannot reach project authorization or actions", async () => {
-  const { preventCrossOriginCookie } = await import(
-    "~/services/no-cross-origin-cookie"
-  );
+  const { preventCrossOriginCookie } =
+    await import("~/services/no-cross-origin-cookie");
   vi.mocked(preventCrossOriginCookie).mockImplementationOnce(() => {
     throw new Response("Cross-origin request", { status: 403 });
   });
@@ -330,6 +330,7 @@ test("a Preview Form reaches the Builder action over local HTTP", async () => {
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;
   const url = `http://p-${projectId}.localhost:${port}`;
+  const { chromium } = require("playwright") as typeof import("playwright");
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
   try {
     browser = await chromium.launch();

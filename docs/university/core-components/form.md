@@ -35,6 +35,8 @@ Each owner notification keeps its configured subject text and adds a short, uniq
 
 To email a visitor, add another Email Resource in **Data variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Action. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. Visitor-addressed email does not include attachments. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
 
+A Form can send up to **five team-recipient deliveries** across all of its Email Resources. Duplicate addresses count as separate deliveries; one visitor-addressed Email Resource is allowed in addition. The server checks this total before running any destination. Webstudio Cloud also limits email to **50 recipient deliveries per project, per Cloudflare location, in a rolling 60-second window**. A rate-limited primary Email Resource fails before delivery and makes the Form show its error state; a visitor-addressed Email Resource failure remains nonfatal. Other parallel destinations may still finish.
+
 ## Inputs and responses
 
 Add inputs from **Components > Forms**. Each value you want to send needs a **Name**. Inputs with the same name keep all their selected values in form order. An unchecked checkbox group remains an empty list.
@@ -45,7 +47,7 @@ The entire managed Form request is limited to **25 MiB**, including all selected
 
 Cloud email can also fail because the provider rejects a recipient or Sender, suppresses a recipient, reaches an account sending limit, or is temporarily unavailable. The Form reports the resulting Resource error and does not claim successful owner delivery. A timeout may leave delivery uncertain; its single retry can produce a duplicate email with the same submission reference.
 
-The inserted Form has **Form Content**, **Success Message**, and **Error Message** sections. When every destination succeeds, the success state appears; otherwise the error state appears. The Form exposes an aggregate `status`, ordered `results` with each Resource's status code and response body, and `errors` for failed destinations. A configured **Success Redirect** runs only after overall success. Without a redirect, successful submissions refresh the current page's Resources without a full-page reload or a second submission.
+The inserted Form has **Form Content**, **Success Message**, and **Error Message** sections. When every primary destination succeeds, the success state appears; otherwise the error state appears. A failed visitor-addressed Email Resource is reported in `errors` but does not change the overall success state. The Form exposes an aggregate `status`, ordered `results` with each Resource's status code and response body, and `errors` for failed destinations. A configured **Success Redirect** runs only after overall success. Without a redirect, successful submissions refresh the current page's Resources without a full-page reload or a second submission.
 
 ## Hosting and plain HTML forms
 
