@@ -37,6 +37,7 @@ const {
   createMcpRunErrorPayload,
   createMcpSingleOpCallErrorPayload,
   createMcpStatusReporter,
+  assertMcpToolServerSupport,
   getCliUpdateInstructions,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
@@ -67,6 +68,26 @@ test("instructs connected agents to update an outdated MCP CLI", () => {
     "This MCP server runs Webstudio CLI 0.299.0, but 0.301.0 is available. Tell the user before editing and recommend restarting this MCP server with the latest CLI, for example `npx -y webstudio@latest mcp`. Do not try to update or restart the CLI yourself. The existing API compatibility check remains the authority for whether writes are supported."
   );
   expect(getCliUpdateInstructions(undefined)).toBeUndefined();
+});
+
+test("checks API contract compatibility before committing MCP edits", () => {
+  const contract = {
+    clientVersion: "public-api:client",
+    serverVersion: "public-api:server",
+    supportedOperationIds: new Set<string>(),
+    missingServerOperationIds: [],
+    negotiated: true,
+  } as const;
+
+  expect(() => assertMcpToolServerSupport("update-page", contract)).toThrow(
+    /Restart the MCP server with the latest CLI/
+  );
+  expect(() =>
+    assertMcpToolServerSupport("update-page", contract, true)
+  ).not.toThrow();
+  expect(() =>
+    assertMcpToolServerSupport("list-pages", contract)
+  ).not.toThrow();
 });
 
 test("disposes an MCP host when its operation fails", async () => {

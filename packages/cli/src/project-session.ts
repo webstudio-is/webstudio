@@ -146,6 +146,35 @@ export const assertCliServerOperationSupported = (
   );
 };
 
+export const requiresCliEditingContract = (
+  operation: Pick<
+    (typeof publicApiOperations)[number],
+    "method" | "writeNamespaces"
+  >,
+  dryRun = false
+) =>
+  dryRun === false &&
+  operation.method === "mutation" &&
+  operation.writeNamespaces.length > 0;
+
+export const assertCliEditingContractVersion = (
+  contract: CliServerApiContract
+) => {
+  if (
+    contract.negotiated === false ||
+    contract.serverVersion === contract.clientVersion
+  ) {
+    return;
+  }
+
+  throw Object.assign(
+    new Error(
+      `The Webstudio CLI and API use different editing contracts. Expected ${contract.serverVersion}, received ${contract.clientVersion}. Restart the MCP server with the latest CLI; if it is already current, retry after the Webstudio API deployment is updated.`
+    ),
+    { code: "API_CONTRACT_MISMATCH" }
+  );
+};
+
 type PublicBuildSnapshot = Omit<
   BuilderBuildDataSnapshot,
   "dataSources" | "pages"

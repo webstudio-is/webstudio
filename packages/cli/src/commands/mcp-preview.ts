@@ -218,6 +218,7 @@ const createScreenshotTimeoutError = (timeout: number) =>
     new Error(`Screenshot capture did not finish within ${timeout}ms.`),
     { code: "SCREENSHOT_TIMEOUT" }
   );
+const screenshotTimeoutGraceMs = 1_000;
 const getPreviewSource = (source: PreviewSource | undefined): PreviewSource =>
   source ?? defaultPreviewSource;
 
@@ -318,8 +319,10 @@ export const createMcpPreviewHandlers = ({
     resetSession?: () => Promise<void>
   ) => {
     try {
-      return await withTimeout(operation(), timeout, () =>
-        createScreenshotTimeoutError(timeout)
+      return await withTimeout(
+        operation(),
+        timeout + screenshotTimeoutGraceMs,
+        () => createScreenshotTimeoutError(timeout)
       );
     } catch (error) {
       if (resetSession !== undefined) {

@@ -64,6 +64,7 @@ import {
 import { HandledCliError, isHandledCliError } from "../errors";
 import { loadJSONFile } from "../fs-utils";
 import {
+  assertCliEditingContractVersion,
   assertCliServerOperationSupported,
   createCliProjectRestorePointStorage,
   createCliProjectSession,
@@ -72,6 +73,7 @@ import {
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
   getSupportedPublicApiOperations,
+  requiresCliEditingContract,
   type CliServerApiContract,
   writeCliProjectSessionPreviewDataFile,
   type CliProjectSession,
@@ -2034,6 +2036,7 @@ const createCliMcpHost = async ({
     createProjectSession: () => session,
     onProjectSessionChange: previewFreshness.markStale,
     executeOperation: async ({ command, input, dryRun }) => {
+      assertMcpToolServerSupport(command, apiContract, dryRun === true);
       const operationInput = getMcpOperationInput(command, input);
       const textAssetFeedback = await prepareTextAssetWriteFeedback({
         command,
@@ -2046,6 +2049,7 @@ const createCliMcpHost = async ({
         input: operationInput,
         connection: apiConnection,
         createProjectSession: () => session,
+        apiContract,
         dryRun,
       });
       if (dryRun !== true && shouldInvalidatePreview(command)) {
@@ -2314,13 +2318,17 @@ type CliMcpCore = ReturnType<
 
 const assertMcpToolServerSupport = (
   tool: string,
-  contract: CliServerApiContract
+  contract: CliServerApiContract,
+  dryRun = false
 ) => {
   const operation = publicApiOperationByCommand.get(tool as PublicApiCommand);
-  if (
-    operation !== undefined &&
-    publicApiOperationRequiresServerSupport(operation)
-  ) {
+  if (operation === undefined) {
+    return;
+  }
+  if (requiresCliEditingContract(operation, dryRun)) {
+    assertCliEditingContractVersion(contract);
+  }
+  if (publicApiOperationRequiresServerSupport(operation)) {
     assertCliServerOperationSupported(operation.id, contract);
   }
 };
@@ -2409,7 +2417,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
         recordToolFailure,
         recordToolSuccess,
       }) => {
-        assertMcpToolServerSupport(tool, apiContract);
+        assertMcpToolServerSupport(tool, apiContract, options.dryRun === true);
         const core = createCliMcpCore(host);
         const persistedCheckpoint =
           tool === "checkpoint.ack"
@@ -2566,7 +2574,11 @@ const runMcpProjectsBatch = async ({
             core.listTools().map((tool) => [tool.name, tool])
           );
           for (const call of project.calls.slice(startCall)) {
-            assertMcpToolServerSupport(call.tool, apiContract);
+            assertMcpToolServerSupport(
+              call.tool,
+              apiContract,
+              call.dryRun === true
+            );
             const tool = tools.get(call.tool);
             assertMcpBatchMutationApproved({
               projectId: project.id,
@@ -2704,7 +2716,7 @@ export const mcpRun = async (options: McpRunOptions) => {
     disposeHost = mcpHost.dispose;
     scope = mcpHost.scope;
     for (const call of calls) {
-      assertMcpToolServerSupport(call.tool, apiContract);
+      assertMcpToolServerSupport(call.tool, apiContract, call.dryRun === true);
     }
     core = createCliMcpCore(host);
   } catch (error) {
@@ -2956,6 +2968,7 @@ export const __testing__ = {
   getCliUpdateInstructions,
   createMcpStatusReporter,
   formatMcpStatusLine,
+  assertMcpToolServerSupport,
   assertSingleOpCallToolSupported,
   createMcpSingleOpCallErrorPayload,
   createMcpResourceErrorPayload: (error: unknown, elapsedMs: number) => ({
