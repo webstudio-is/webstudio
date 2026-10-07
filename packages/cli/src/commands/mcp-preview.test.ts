@@ -746,6 +746,33 @@ test("times out a stalled screenshot after preview start and releases its sessio
   expect(stop).toHaveBeenCalledOnce();
 });
 
+test("preserves browser phase timeout details instead of the outer watchdog", async () => {
+  const phaseError = Object.assign(
+    new Error("Page did not reach load within 5ms."),
+    { code: "SCREENSHOT_TIMEOUT" }
+  );
+  const captureScreenshot = vi.fn(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    throw phaseError;
+  });
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({ running: false as const })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    },
+    captureScreenshot,
+  });
+
+  await expect(
+    handlers.captureScreenshot({
+      url: "https://example.com",
+      viewport: { width: 1280, height: 720 },
+      timeout: 5,
+    })
+  ).rejects.toBe(phaseError);
+});
+
 test("leaves time to start a fallback browser within the MCP timeout", async () => {
   const createBrowserScreenshotSession = vi.fn(async (options) => {
     if (options.browserPath === "/usr/bin/chromium") {

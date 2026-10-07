@@ -17,6 +17,7 @@ import {
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
+import { createIssueReportFailureTracker } from "../project-session";
 import {
   __testing__,
   mcpOptions,
@@ -26,6 +27,9 @@ import {
 
 const {
   getMcpDownloadAsset,
+  getIssueReportFailureFile,
+  persistIssueReportFailure,
+  restoreIssueReportFailure,
   assertSingleOpCallToolSupported,
   applyMcpRunOptions,
   createMcpResourceErrorPayload,
@@ -33,6 +37,7 @@ const {
   createMcpRunErrorPayload,
   createMcpSingleOpCallErrorPayload,
   createMcpStatusReporter,
+  assertMcpToolServerSupport,
   getCliUpdateInstructions,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
@@ -63,6 +68,26 @@ test("instructs connected agents to update an outdated MCP CLI", () => {
     "This MCP server runs Webstudio CLI 0.299.0, but 0.301.0 is available. Tell the user before editing and recommend restarting this MCP server with the latest CLI, for example `npx -y webstudio@latest mcp`. Do not try to update or restart the CLI yourself. The existing API compatibility check remains the authority for whether writes are supported."
   );
   expect(getCliUpdateInstructions(undefined)).toBeUndefined();
+});
+
+test("checks API contract compatibility before committing MCP edits", () => {
+  const contract = {
+    clientVersion: "public-api:client",
+    serverVersion: "public-api:server",
+    supportedOperationIds: new Set<string>(),
+    missingServerOperationIds: [],
+    negotiated: true,
+  } as const;
+
+  expect(() => assertMcpToolServerSupport("update-page", contract)).toThrow(
+    /Restart the MCP server with the latest CLI/
+  );
+  expect(() =>
+    assertMcpToolServerSupport("update-page", contract, true)
+  ).not.toThrow();
+  expect(() =>
+    assertMcpToolServerSupport("list-pages", contract)
+  ).not.toThrow();
 });
 
 test("disposes an MCP host when its operation fails", async () => {
@@ -232,6 +257,53 @@ afterEach(async () => {
   await Promise.all(
     tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
   );
+});
+
+test("persists sanitized issue-report failure diagnostics for the next CLI process", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-issue-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const firstProcess = createIssueReportFailureTracker();
+  firstProcess.record(
+    "update-text",
+    new Error("Unable to transform response from server"),
+    125,
+    { instanceId: "instance-1", text: "private customer content" }
+  );
+
+  await persistIssueReportFailure(filePath, firstProcess.snapshot());
+
+  const secondProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, secondProcess);
+  expect(secondProcess.get()).toMatchObject({
+    tool: "update-text",
+    elapsedMs: 125,
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  expect(await readFile(filePath, "utf8")).not.toContain(
+    "private customer content"
+  );
+
+  await persistIssueReportFailure(filePath, undefined);
+  const clearedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, clearedProcess);
+  expect(clearedProcess.get()).toBeUndefined();
+
+  await writeFile(
+    filePath,
+    JSON.stringify({
+      at: Date.now(),
+      failure: { tool: "update-text", code: "MCP_TOOL_FAILED", private: true },
+    })
+  );
+  const malformedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, malformedProcess);
+  expect(malformedProcess.get()).toBeUndefined();
+  await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
 });
 
 const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {

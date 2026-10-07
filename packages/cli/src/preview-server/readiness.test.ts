@@ -138,9 +138,15 @@ test("requires the exact generated project even when build assets match", async 
       },
       createDependencies({ fetch })
     )
-  ).rejects.toThrow(
-    "Preview server at http://127.0.0.1:5173/ did not serve the expected generated project."
-  );
+  ).rejects.toMatchObject({
+    code: "PREVIEW_PROJECT_MISMATCH",
+    issues: [
+      {
+        code: "preview_project_mismatch",
+        constraint: "latest_generated_project_served",
+      },
+    ],
+  });
 });
 
 test("accepts the generated preview with the expected project marker", async () => {
@@ -233,7 +239,50 @@ test("rejects stale preview servers that serve a previous build", async () => {
       },
       createDependencies({ fetch })
     )
-  ).rejects.toThrow(
-    "Preview server at http://127.0.0.1:5173/ did not serve the latest build assets."
+  ).rejects.toMatchObject({
+    code: "PREVIEW_ASSETS_STALE",
+    message: expect.stringContaining(
+      "The preview server did not serve the latest generated build assets. Stop the existing preview server on this port, then retry."
+    ),
+    issues: [
+      {
+        code: "preview_assets_stale",
+        path: [],
+        constraint: "latest_generated_assets_served",
+      },
+    ],
+  });
+});
+
+test("reports when a regenerated session version is not served", async () => {
+  const fetch = vi.fn(
+    async () =>
+      new Response(
+        '<html data-ws-project="project" data-ws-version="4"></html>'
+      )
   );
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/",
+      {
+        timeoutMs: 1,
+        intervalMs: 5,
+        requiredProject: { projectId: "project", version: 5 },
+      },
+      createDependencies({ fetch })
+    )
+  ).rejects.toMatchObject({
+    code: "PREVIEW_PROJECT_MISMATCH",
+    message: expect.stringContaining(
+      "The preview server did not serve the generated project version just prepared."
+    ),
+    issues: [
+      {
+        code: "preview_project_mismatch",
+        path: [],
+        constraint: "latest_generated_project_served",
+      },
+    ],
+  });
 });

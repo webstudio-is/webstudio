@@ -11,6 +11,7 @@ import {
   getApiErrorCode,
   loadProjectBundleByBuildId,
   loadBuilderDataByProjectId,
+  MissingJsonPropValueError,
   toLocalProjectBundle,
 } from "@webstudio-is/http-client";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
@@ -164,6 +165,10 @@ export const sync = async (
   const handleProjectBundleError = (error: unknown): never => {
     if (isUnpublishedProjectBundleError(error)) {
       syncing.stop(unpublishedProjectBundleMessage, 2);
+      throw new HandledCliError();
+    }
+    if (error instanceof MissingJsonPropValueError) {
+      syncing.stop(error.message, 2);
       throw new HandledCliError();
     }
     const compatibilityMessage = stopSpinnerWithError(

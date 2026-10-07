@@ -146,6 +146,35 @@ export const assertCliServerOperationSupported = (
   );
 };
 
+export const requiresCliEditingContract = (
+  operation: Pick<
+    (typeof publicApiOperations)[number],
+    "method" | "writeNamespaces"
+  >,
+  dryRun = false
+) =>
+  dryRun === false &&
+  operation.method === "mutation" &&
+  operation.writeNamespaces.length > 0;
+
+export const assertCliEditingContractVersion = (
+  contract: CliServerApiContract
+) => {
+  if (
+    contract.negotiated === false ||
+    contract.serverVersion === contract.clientVersion
+  ) {
+    return;
+  }
+
+  throw Object.assign(
+    new Error(
+      `The Webstudio CLI and API use different editing contracts. Expected ${contract.serverVersion}, received ${contract.clientVersion}. Restart the MCP server with the latest CLI; if it is already current, retry after the Webstudio API deployment is updated.`
+    ),
+    { code: "API_CONTRACT_MISMATCH" }
+  );
+};
+
 type PublicBuildSnapshot = Omit<
   BuilderBuildDataSnapshot,
   "dataSources" | "pages"
@@ -450,6 +479,13 @@ export const createIssueReportFailure = (
 
 export const createIssueReportFailureTracker = (now = Date.now) => {
   let recent: { failure: IssueReportRecentFailure; at: number } | undefined;
+  const getRecent = () => {
+    if (recent === undefined) {
+      return;
+    }
+    const age = now() - recent.at;
+    return age >= 0 && age <= 10 * 60_000 ? recent : undefined;
+  };
   return {
     record(tool: string, error: unknown, elapsedMs?: number, input?: unknown) {
       recent = {
@@ -458,9 +494,16 @@ export const createIssueReportFailureTracker = (now = Date.now) => {
       };
     },
     get() {
-      return recent !== undefined && now() - recent.at <= 10 * 60_000
-        ? recent.failure
-        : undefined;
+      return getRecent()?.failure;
+    },
+    restore(failure: IssueReportRecentFailure, at: number) {
+      const age = now() - at;
+      if (age >= 0 && age <= 10 * 60_000) {
+        recent = { failure, at };
+      }
+    },
+    snapshot() {
+      return getRecent();
     },
     succeed(tool: string) {
       if (tool === "report-issue") {

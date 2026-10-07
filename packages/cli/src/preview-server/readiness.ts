@@ -69,7 +69,12 @@ type PreviewProbeFailure = {
 
 const createPreviewReadinessError = (
   url: string,
-  code: "PREVIEW_HTTP_ERROR" | "PREVIEW_READINESS_FAILED",
+  code:
+    | "PREVIEW_HTTP_ERROR"
+    | "PREVIEW_READINESS_FAILED"
+    | "PREVIEW_ASSETS_STALE"
+    | "PREVIEW_PROJECT_MISMATCH"
+    | "PREVIEW_READINESS_TIMEOUT",
   issue: PreviewProbeFailure
 ) =>
   Object.assign(new Error(`${issue.message} Preview URL: ${url}`), {
@@ -214,14 +219,20 @@ export const waitForPreviewReady = async (
     await dependencies.sleep(intervalMs);
   }
   if (sawUnexpectedProject) {
-    throw new Error(
-      `Preview server at ${url} did not serve the expected generated project. Stop the existing preview server on this port, then retry.`
-    );
+    throw createPreviewReadinessError(url, "PREVIEW_PROJECT_MISMATCH", {
+      code: "preview_project_mismatch",
+      message:
+        "The preview server did not serve the generated project version just prepared. Stop the existing preview server on this port, then retry.",
+      constraint: "latest_generated_project_served",
+    });
   }
   if (sawStaleServer) {
-    throw new Error(
-      `Preview server at ${url} did not serve the latest build assets. Stop the existing preview server on this port, then retry.`
-    );
+    throw createPreviewReadinessError(url, "PREVIEW_ASSETS_STALE", {
+      code: "preview_assets_stale",
+      message:
+        "The preview server did not serve the latest generated build assets. Stop the existing preview server on this port, then retry.",
+      constraint: "latest_generated_assets_served",
+    });
   }
   if (lastProbeFailure !== undefined) {
     throw createPreviewReadinessError(
@@ -232,7 +243,11 @@ export const waitForPreviewReady = async (
       lastProbeFailure
     );
   }
-  throw new Error(`Preview server did not become ready at ${url}.`);
+  throw createPreviewReadinessError(url, "PREVIEW_READINESS_TIMEOUT", {
+    code: "preview_readiness_timeout",
+    message: `The preview server did not become ready within ${timeoutMs}ms.`,
+    constraint: "preview_server_ready",
+  });
 };
 
 export const getPreviewCssAssetNames = async (

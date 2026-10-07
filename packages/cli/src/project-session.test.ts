@@ -14,6 +14,7 @@ import {
   createIssueReportFailure,
   createIssueReportFailureTracker,
   addIssueReportRuntime,
+  assertCliEditingContractVersion,
   getCliServerApiContract,
   getCliProjectSessionFile,
   getCliProjectRestorePointsFile,
@@ -238,6 +239,15 @@ test("keeps a failed mutation available after a successful diagnostic read", () 
   tracker.record("screenshot", new Error("Browser failed"), 120);
   tracker.succeed("report-issue");
   expect(tracker.get()).toBeUndefined();
+
+  const restored = createIssueReportFailureTracker(() => now);
+  restored.restore({ tool: "update-text", code: "MCP_TOOL_FAILED" }, now + 1);
+  expect(restored.get()).toBeUndefined();
+  restored.restore(
+    { tool: "update-text", code: "MCP_TOOL_FAILED" },
+    now - 10 * 60_000 - 1
+  );
+  expect(restored.get()).toBeUndefined();
 });
 
 test("reports only the shape of an untransformable server response", () => {
@@ -677,6 +687,38 @@ describe("CLI/server operation contract", () => {
       operations.some((operation) => operation.command === "insert-fragment")
     ).toBe(false);
     expect(operations.some((operation) => operation.serverOnly)).toBe(false);
+  });
+
+  test("rejects edits early when the MCP CLI uses a different API contract", () => {
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        serverVersion: "public-api:server",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: true,
+      })
+    ).toThrow(
+      "The Webstudio CLI and API use different editing contracts. Expected public-api:server, received public-api:client. Restart the MCP server with the latest CLI; if it is already current, retry after the Webstudio API deployment is updated."
+    );
+
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        serverVersion: "public-api:client",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: true,
+      })
+    ).not.toThrow();
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: false,
+      })
+    ).not.toThrow();
   });
 });
 

@@ -11,9 +11,12 @@ import {
   type ProjectSessionDiagnostic,
 } from "@webstudio-is/project-build/project-session";
 import {
+  assertCliEditingContractVersion,
   assertCliServerOperationSupported,
   createCliProjectSession,
   getCliServerApiContract,
+  requiresCliEditingContract,
+  type CliServerApiContract,
 } from "./project-session";
 import type { ApiConnection } from "./api-connection";
 
@@ -75,6 +78,7 @@ export const executeProjectSessionApiOperation = async ({
   connection,
   createProjectSession = createCliProjectSession,
   getServerApiContract = getCliServerApiContract,
+  apiContract,
   dryRun = false,
   refresh = false,
 }: {
@@ -83,6 +87,7 @@ export const executeProjectSessionApiOperation = async ({
   connection: ApiConnection;
   createProjectSession?: CreateProjectSession;
   getServerApiContract?: typeof getCliServerApiContract;
+  apiContract?: CliServerApiContract;
   dryRun?: boolean;
   refresh?: boolean;
 }) => {
@@ -101,11 +106,18 @@ export const executeProjectSessionApiOperation = async ({
   const requiresServerSupport =
     runtimeOperationId === undefined ||
     publicApiOperationRequiresServerSupport(operation);
-  const contract = requiresServerSupport
-    ? await getServerApiContract(connection)
-    : undefined;
-  if (requiresServerSupport && contract !== undefined) {
-    assertCliServerOperationSupported(operation.id, contract);
+  const requiresEditingContract = requiresCliEditingContract(operation, dryRun);
+  const contract =
+    requiresServerSupport || requiresEditingContract
+      ? (apiContract ?? (await getServerApiContract(connection)))
+      : undefined;
+  if (contract !== undefined) {
+    if (requiresServerSupport) {
+      assertCliServerOperationSupported(operation.id, contract);
+    }
+    if (requiresEditingContract) {
+      assertCliEditingContractVersion(contract);
+    }
   }
   const session = createProjectSession({ connection });
   await session.initialize();
