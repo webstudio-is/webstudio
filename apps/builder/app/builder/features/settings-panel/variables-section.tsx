@@ -172,7 +172,6 @@ const VariablesItem = ({
   useEffect(() => {
     if (highlighted?.id === variable.id) {
       rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      rowRef.current?.focus({ preventScroll: true });
     }
   }, [highlighted, variable.id]);
   const instances = useStore($instances);

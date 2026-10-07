@@ -132,7 +132,7 @@ test("name shadow warning appears for an existing shadow and renamed ancestor na
   expect(container.querySelector("svg")).toBeNull();
 });
 
-test("clicking an Action navigates to and highlights its Resource without opening the editor", async () => {
+test("clicking an Action highlights its Resource without navigating or opening the editor", async () => {
   const { container, local } = setup();
   const resourceVariable = {
     id: local.id,
@@ -194,12 +194,12 @@ test("clicking an Action navigates to and highlights its Resource without openin
         )!
       )
   );
-  expect($selectedInstanceSelector.get()?.[0]).toBe("child");
+  expect($selectedInstanceSelector.get()?.[0]).toBe("parent");
   const row = container.querySelector<HTMLButtonElement>(
     '[aria-label="Variable Request"]'
   )!;
   expect(row.getAttribute("data-active")).toBe("true");
-  expect(document.activeElement).toBe(row);
+  expect(document.activeElement).not.toBe(row);
   expect(document.querySelector('[role="dialog"]')).toBeNull();
   expect(document.body.textContent).not.toContain("Edit variable");
 });

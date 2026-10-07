@@ -5,4 +5,5 @@ test("Form exposes managed actions and redirect rather than native form attribut
   expect(meta.initialProps).toEqual(["action", "successRedirect"]);
   expect(Object.keys(meta.props ?? {})).toEqual(["action", "successRedirect"]);
   expect(meta.props?.action?.label).toBe("Action");
+  expect(meta.props?.successRedirect?.label).toBe("Success redirect");
 });

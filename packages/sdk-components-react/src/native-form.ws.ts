@@ -28,6 +28,7 @@ export const meta: WsComponentMeta = {
     successRedirect: {
       type: "string",
       control: "url",
+      label: "Success redirect",
       required: false,
       description: "Redirect visitors here after every Resource succeeds.",
     },
