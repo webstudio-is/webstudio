@@ -189,7 +189,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       createEmailSender: (data) =>
         createCloudflareManagedFormEmailSenderWithUrl(
           env.FORM_PREVIEW_EMAIL_SERVICE_URL,
-          env.FORM_PREVIEW_EMAIL_SERVICE_TOKEN,
+          env.TRPC_SERVER_API_TOKEN,
           data,
           projectId
         ),

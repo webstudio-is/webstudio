@@ -27,7 +27,7 @@ vi.mock("~/env/env.server", () => ({
     PUBLISHER_HOST: "wstd.work",
     FORM_PREVIEW_EMAIL_SERVICE_URL:
       "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
-    FORM_PREVIEW_EMAIL_SERVICE_TOKEN: "server-only-test-token",
+    TRPC_SERVER_API_TOKEN: "server-only-test-token",
   },
 }));
 

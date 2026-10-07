@@ -48,7 +48,6 @@ const environment = z.object({
 
   PUBLISHER_HOST: z.string().default("wstd.work"),
   FORM_PREVIEW_EMAIL_SERVICE_URL: z.string().url().optional(),
-  FORM_PREVIEW_EMAIL_SERVICE_TOKEN: z.string().optional(),
 
   STAGING_USERNAME: z.string().default("admin"),
   STAGING_PASSWORD: z.string().default("webstudio"),
@@ -111,8 +110,6 @@ const rawEnv = {
   ENTRI_SECRET: process.env.ENTRI_SECRET,
   PUBLISHER_HOST: process.env.PUBLISHER_HOST,
   FORM_PREVIEW_EMAIL_SERVICE_URL: process.env.FORM_PREVIEW_EMAIL_SERVICE_URL,
-  FORM_PREVIEW_EMAIL_SERVICE_TOKEN:
-    process.env.FORM_PREVIEW_EMAIL_SERVICE_TOKEN,
   STAGING_USERNAME: process.env.STAGING_USERNAME,
   STAGING_PASSWORD: process.env.STAGING_PASSWORD,
   FEATURE_FLAGS: process.env.FEATURE_FLAGS,
