@@ -61,9 +61,8 @@ test.each([
 ])(
   "Preview and published graphs reject unavailable parameter $name in $scopeInstanceId",
   async (parameter) => {
-    const { createManagedFormDraftGraph } = await import(
-      "./managed-form-draft-graph"
-    );
+    const { createManagedFormDraftGraph } =
+      await import("./managed-form-draft-graph");
     const instances: Instances = new Map([
       [
         "form",
