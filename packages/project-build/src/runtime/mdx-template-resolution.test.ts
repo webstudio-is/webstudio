@@ -281,6 +281,36 @@ describe("resolveMdxTemplates", () => {
     });
   });
 
+  test("keeps raw HTML inside a named template from matching other templates", async () => {
+    const instances = createInstances();
+    const templates = instances.get("templates");
+    if (templates === undefined) {
+      throw new Error("Expected Templates container");
+    }
+    for (const id of ["first-div", "second-div"]) {
+      instances.set(id, createInstance(id, elementComponent, { tag: "div" }));
+      templates.children.push({ type: "id", value: id });
+    }
+    const document = await parseMdxDocument({
+      source: "<Card><div><Card /></div></Card>\n<div />\n",
+    });
+
+    const result = resolveMdxTemplates({
+      document,
+      identity,
+      instances,
+      metas,
+    });
+
+    expect(result.references.map(({ path }) => path)).toEqual([[0], [0, 0, 0]]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "ambiguous-template",
+        semanticKey: "element:div",
+      }),
+    ]);
+  });
+
   test("reads a legacy label alias and resolves it to the stable name", async () => {
     const instances = createInstances();
     const card = instances.get("card");
