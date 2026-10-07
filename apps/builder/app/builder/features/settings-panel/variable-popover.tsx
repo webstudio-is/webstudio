@@ -849,7 +849,8 @@ const VariablePreview = ({
     return (
       <Flex justify="center" align="center" css={{ height: "100%" }}>
         <Text color="subtle">
-          Email delivery is available after publishing to Webstudio Cloud.
+          Email delivery is available in Preview and on sites published to
+          Webstudio Cloud.
         </Text>
       </Flex>
     );
@@ -930,17 +931,13 @@ const VariablePreview = ({
 const VariablePopoverContent = ({
   formRef,
   variable,
-  defaultType,
   isOpen,
   onClose,
-  onCreatedResource,
 }: {
   formRef: RefObject<HTMLFormElement>;
   variable?: DataSource;
-  defaultType?: VariableType;
   isOpen: boolean;
   onClose: () => void;
-  onCreatedResource?: (dataSourceId: string) => void;
 }) => {
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const [queryActive, setQueryActive] = useState(false);
@@ -997,7 +994,7 @@ const VariablePopoverContent = ({
       }
       return "json";
     }
-    return defaultType ?? "string";
+    return "string";
   });
 
   const cancelPreview = () => {
@@ -1135,13 +1132,6 @@ const VariablePopoverContent = ({
                 ) {
                   const formData = new FormData(event.currentTarget);
                   const saved = panelRef.current?.save(formData);
-                  if (
-                    variable === undefined &&
-                    saved &&
-                    typeof saved === "object"
-                  ) {
-                    onCreatedResource?.(saved.dataSourceId);
-                  }
                   // close popover whenever new variable is created
                   // to prevent creating duplicated variable
                   if (variable === undefined && saved !== false) {
@@ -1254,13 +1244,9 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
 
 export const VariablePopoverTrigger = ({
   variable,
-  defaultType,
-  onCreatedResource,
   children,
 }: {
   variable?: DataSource;
-  defaultType?: VariableType;
-  onCreatedResource?: (dataSourceId: string) => void;
   children: ReactNode;
 }) => {
   const [isOpen, setOpen] = useState(false);
@@ -1293,8 +1279,6 @@ export const VariablePopoverTrigger = ({
         <VariablePopoverContent
           formRef={formRef}
           variable={variable}
-          defaultType={defaultType}
-          onCreatedResource={onCreatedResource}
           isOpen={isOpen}
           onClose={() => setOpen(false)}
         />

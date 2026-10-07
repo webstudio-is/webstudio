@@ -455,30 +455,9 @@ export const extractWebstudioFragment = (
       continue;
     }
     const newResource = structuredClone(unwrap(resource));
-    newResource.url = unsetExpressionVariables({
-      expression: newResource.url,
-      unsetNameById,
-    });
-    for (const header of newResource.headers) {
-      header.value = unsetExpressionVariables({
-        expression: header.value,
-        unsetNameById,
-      });
-    }
-    if (newResource.searchParams) {
-      for (const searchParam of newResource.searchParams) {
-        searchParam.value = unsetExpressionVariables({
-          expression: searchParam.value,
-          unsetNameById,
-        });
-      }
-    }
-    if (newResource.body) {
-      newResource.body = unsetExpressionVariables({
-        expression: newResource.body,
-        unsetNameById,
-      });
-    }
+    mapResourceExpressionsMutable(newResource, (expression) =>
+      unsetExpressionVariables({ expression, unsetNameById })
+    );
     fragmentResources.push(newResource);
   }
 

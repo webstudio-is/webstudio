@@ -1589,7 +1589,12 @@ test.each([
   }
 );
 
-test.each(["field", "external-binding", "missing-dependency"])(
+test.each([
+  "field",
+  "external-binding",
+  "missing-dependency",
+  "unsupported-parameter",
+])(
   "draft and published visitor %s configuration fails only that action",
   async (failure) => {
     const { createManagedFormDraftGraph } =
@@ -1652,6 +1657,12 @@ test.each(["field", "external-binding", "missing-dependency"])(
         },
       ],
     ]);
+    dataSources.set("unsupported", {
+      id: "unsupported",
+      name: "unsupported",
+      type: "parameter",
+      scopeInstanceId: "page",
+    });
     const resources: Resources = new Map([
       [
         "http",
@@ -1674,14 +1685,46 @@ test.each(["field", "external-binding", "missing-dependency"])(
           control: "email",
           email: {
             recipientMode: "visitor",
-            visitorEmailField: "missing-field",
+            visitorEmailField:
+              failure === "unsupported-parameter" ? "email" : "missing-field",
             body:
               failure === "external-binding"
                 ? encodeDataSourceVariable("formData")
                 : failure === "missing-dependency"
                   ? encodeDataSourceVariable("missing")
-                  : '""',
+                  : failure === "unsupported-parameter"
+                    ? encodeDataSourceVariable("unsupported")
+                    : '""',
           },
+        },
+      ],
+    ]);
+    instances.set("email-input", {
+      type: "instance",
+      id: "email-input",
+      component: "Input",
+      children: [],
+    });
+    instances.get("form")!.children.push({ type: "id", value: "email-input" });
+    const props: Props = new Map([
+      [
+        "email-name",
+        {
+          id: "email-name",
+          instanceId: "email-input",
+          name: "name",
+          type: "string",
+          value: "email",
+        },
+      ],
+      [
+        "email-type",
+        {
+          id: "email-type",
+          instanceId: "email-input",
+          name: "type",
+          type: "string",
+          value: "email",
         },
       ],
     ]);
@@ -1691,7 +1734,7 @@ test.each(["field", "external-binding", "missing-dependency"])(
       instances,
       dataSources,
       resources,
-      props: new Map(),
+      props,
       system: {
         params: {},
         search: {},
@@ -1708,6 +1751,7 @@ test.each(["field", "external-binding", "missing-dependency"])(
     ];
     for (const graph of graphs) {
       const data = new FormData();
+      data.set("email", "visitor@example.com");
       data.set("ws--managed-form-id", "form");
       data.set("ws--managed-form-array-names", "[]");
       data.set("ws--form-bot", Date.now().toString(16));
@@ -1737,6 +1781,11 @@ test.each(["field", "external-binding", "missing-dependency"])(
       });
       expect(resourceFetch).toHaveBeenCalledOnce();
       expect(sendEmail).not.toHaveBeenCalled();
+      if (failure === "unsupported-parameter") {
+        expect(result.errors[0].message).toContain(
+          "cannot resolve parameter unsupported"
+        );
+      }
     }
   }
 );

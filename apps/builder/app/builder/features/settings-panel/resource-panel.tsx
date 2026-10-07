@@ -1414,25 +1414,27 @@ export const EmailResourceForm = forwardRef<
         "Add text or a JavaScript expression",
         bodyError
       )}
-      <Row>
-        <Grid gap={1}>
-          <Label>Attachments</Label>
-          <Select<"include" | "exclude">
-            options={["include", "exclude"]}
-            value={
-              settings.includeAttachments === false ? "exclude" : "include"
-            }
-            getLabel={(value: "include" | "exclude") =>
-              value === "include"
-                ? "Attach submitted files"
-                : "Do not attach files"
-            }
-            onChange={(value: "include" | "exclude") =>
-              setField("includeAttachments", value === "include")
-            }
-          />
-        </Grid>
-      </Row>
+      {settings.recipientMode !== "visitor" && (
+        <Row>
+          <Grid gap={1}>
+            <Label>Attachments</Label>
+            <Select<"include" | "exclude">
+              options={["include", "exclude"]}
+              value={
+                settings.includeAttachments === false ? "exclude" : "include"
+              }
+              getLabel={(value: "include" | "exclude") =>
+                value === "include"
+                  ? "Attach submitted files"
+                  : "Do not attach files"
+              }
+              onChange={(value: "include" | "exclude") =>
+                setField("includeAttachments", value === "include")
+              }
+            />
+          </Grid>
+        </Row>
+      )}
     </>
   );
 });

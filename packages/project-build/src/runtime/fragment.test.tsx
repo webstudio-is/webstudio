@@ -49,6 +49,51 @@ const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
 const NativeForm = createTemplateComponentFixture("NativeForm");
 
+test("copying Email Resources restores parent bindings by name in the target scope", () => {
+  const parentVariable = new Variable("Owner", "Source owner");
+  const emailVariable = new ResourceValue("Email", {
+    method: "post",
+    url: expression`""`,
+    headers: [],
+  });
+  const source = renderData(
+    <Body ws:id="bodyId" vars={expression`${parentVariable}`}>
+      <NativeForm ws:id="formId" vars={expression`${emailVariable}`} />
+    </Body>
+  );
+  const originalResource = Array.from(source.resources.values())[0];
+  originalResource.control = "email";
+  originalResource.email = {
+    subject: encodeDataVariableId("0"),
+    body: encodeDataVariableId("0"),
+  };
+  const fragment = extractWebstudioFragment(source, "formId");
+  expect(fragment.resources[0].email).toEqual({
+    subject: "Owner",
+    body: "Owner",
+  });
+
+  const target = createStub(<Body ws:id="targetBody" />);
+  const targetVariable = {
+    id: "targetOwner",
+    type: "variable" as const,
+    name: "Owner",
+    scopeInstanceId: "targetBody",
+    value: { type: "string" as const, value: "Target owner" },
+  };
+  target.dataSources.set(targetVariable.id, targetVariable);
+  insertWebstudioFragmentCopy({
+    data: target,
+    fragment,
+    availableVariables: [targetVariable],
+    projectId: "",
+  });
+  expect(Array.from(target.resources.values())[0].email).toEqual({
+    subject: encodeDataVariableId("targetOwner"),
+    body: encodeDataVariableId("targetOwner"),
+  });
+});
+
 test("copying a Form remaps its local Resource destinations", () => {
   const data = createStub(
     <Body ws:id="bodyId">

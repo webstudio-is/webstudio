@@ -163,7 +163,7 @@ test("external Email Resource marks an unavailable Form binding as invalid", asy
   );
 });
 
-test("visitor Email Resource selects a named Form email field", () => {
+test("visitor Email Resource selects a named Form email field", async () => {
   $instances.set(
     new Map([
       [
@@ -251,6 +251,28 @@ test("visitor Email Resource selects a named Form email field", () => {
   );
   expect(container.textContent).toContain("Visitor email field");
   expect(container.textContent).toContain("visitorEmail");
+  expect(container.textContent).not.toContain("Attachments");
+  await act(async () =>
+    userEvent.click(container.querySelector('[role="combobox"]')!)
+  );
+  await act(async () =>
+    page
+      .getByRole("option", {
+        name: "Project recipients (or owner)",
+        exact: true,
+      })
+      .click()
+  );
+  expect(container.textContent).toContain("Attach submitted files");
+  await act(async () =>
+    userEvent.click(container.querySelector('[role="combobox"]')!)
+  );
+  await act(async () =>
+    page
+      .getByRole("option", { name: "Visitor email field", exact: true })
+      .click()
+  );
+  expect(container.textContent).not.toContain("Attachments");
   expect(container.textContent).toContain(
     "A fixed receipt with the site URL is added before the body."
   );

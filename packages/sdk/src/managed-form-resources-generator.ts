@@ -82,6 +82,7 @@ export const generateManagedFormResources = ({
       });
 
       const usedDataSources: DataSources = new Map();
+      const parameterCodeById = new Map<string, string>();
       const emailRecipientCounts = new Map<string, number>();
       let generatedRequests = "";
       const formDataSource = Array.from(dataSources.values()).find(
@@ -181,7 +182,35 @@ export const generateManagedFormResources = ({
             `Managed Form Email Resource ${resourceId} has invalid visitor email field`
           )});\n`;
         }
+        let visitorParameterError: string | undefined;
         for (const dataSource of requestDataSources.values()) {
+          if (dataSource.type === "parameter") {
+            const isFormParameter =
+              dataSource.scopeInstanceId === formId &&
+              instances.get(formId)?.component === "NativeForm" &&
+              (dataSource.name === formDataParameterName ||
+                dataSource.name === browserInfoParameterName);
+            const code =
+              dataSource.id === SYSTEM_VARIABLE_ID
+                ? `${propsName}.system`
+                : isFormParameter
+                  ? `${propsName}.${dataSource.name}`
+                  : undefined;
+            if (code === undefined) {
+              const message = `Managed Form ${formId} cannot resolve parameter ${dataSource.id}`;
+              if (
+                resolvedEmailSettings?.recipientMode === "visitor" &&
+                rootIds.includes(resourceId)
+              ) {
+                // Keep optional visitor configuration errors inside its request,
+                // where the shared handler can report them without blocking peers.
+                visitorParameterError = message;
+                continue;
+              }
+              throw new InvalidManagedFormGraph(message);
+            }
+            parameterCodeById.set(dataSource.id, code);
+          }
           usedDataSources.set(dataSource.id, dataSource);
           if (dataSource.type === "resource") {
             const name = scope.getName(dataSource.id, dataSource.name);
@@ -206,6 +235,10 @@ export const generateManagedFormResources = ({
             } as object, ${JSON.stringify(options)});\n`;
           }
         }
+        if (visitorParameterError) {
+          generatedRequests += `      throw new Error(${JSON.stringify(visitorParameterError)});\n    };\n`;
+          continue;
+        }
         generatedRequests += `      return {\n${fields}${defaultFormBody}      };\n    };\n`;
       }
 
@@ -218,22 +251,7 @@ export const generateManagedFormResources = ({
           )};\n`;
         }
         if (dataSource.type === "parameter") {
-          if (dataSource.id === SYSTEM_VARIABLE_ID) {
-            generatedVariables += `    const ${name} = ${propsName}.system;\n`;
-            continue;
-          }
-          const formInstance = instances.get(dataSource.scopeInstanceId ?? "");
-          const isFormParameter =
-            formInstance?.component === "NativeForm" &&
-            (dataSource.name === formDataParameterName ||
-              dataSource.name === browserInfoParameterName);
-          if (isFormParameter && dataSource.scopeInstanceId === formId) {
-            generatedVariables += `    const ${name} = ${propsName}.${dataSource.name};\n`;
-            continue;
-          }
-          throw new InvalidManagedFormGraph(
-            `Managed Form ${formId} cannot resolve parameter ${dataSource.id}`
-          );
+          generatedVariables += `    const ${name} = ${parameterCodeById.get(dataSource.id)};\n`;
         }
       }
 
