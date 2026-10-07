@@ -1692,7 +1692,15 @@ test("rejects after the DevTools socket closes twice", async () => {
       },
       dependencies
     )
-  ).rejects.toThrow("Browser DevTools connection closed.");
+  ).rejects.toMatchObject({
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        code: "browser_devtools_connection_closed",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
 
   expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
   expect(firstProcess.kill).toHaveBeenCalledOnce();

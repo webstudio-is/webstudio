@@ -312,6 +312,32 @@ test("reports browser family and exit signal without executable paths", () => {
   ).toEqual({ tool: "screenshot", code: "BROWSER_STARTUP_FAILED" });
 });
 
+test("reports a browser DevTools disconnect without including private details", () => {
+  const failure = createIssueReportFailure("verify-page-responsive", {
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        code: "browser_devtools_connection_closed",
+        path: [],
+        message: "The browser DevTools connection closed during capture.",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
+
+  expect(failure).toEqual({
+    tool: "verify-page-responsive",
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        path: [],
+        code: "browser_devtools_connection_closed",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
+});
+
 test("scopes project session files for explicitly selected projects", () => {
   expect(getCliProjectSessionFile("/workspace", "project/a")).toBe(
     "/workspace/.webstudio/projects/project%2Fa/project-session.json"

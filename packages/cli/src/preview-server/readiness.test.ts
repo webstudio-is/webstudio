@@ -172,10 +172,9 @@ test("accepts the generated preview with the expected project marker", async () 
 });
 
 test("uses the static identity marker when page authentication blocks readiness", async () => {
-  const fetch = vi
-    .fn()
-    .mockResolvedValueOnce(new Response("Unauthorized", { status: 401 }))
-    .mockResolvedValueOnce(Response.json({ projectId: "project", version: 5 }));
+  const fetch = vi.fn(async () =>
+    Response.json({ projectId: "project", version: 5 })
+  );
 
   await expect(
     waitForPreviewReady(
@@ -187,8 +186,8 @@ test("uses the static identity marker when page authentication blocks readiness"
       createDependencies({ fetch })
     )
   ).resolves.toBeUndefined();
-  expect(fetch).toHaveBeenNthCalledWith(
-    2,
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(fetch).toHaveBeenCalledWith(
     new URL("http://127.0.0.1:5173/__webstudio/preview.json"),
     expect.objectContaining({ method: "GET" })
   );
@@ -197,16 +196,8 @@ test("uses the static identity marker when page authentication blocks readiness"
 test("waits for the exact generated session version", async () => {
   const fetch = vi
     .fn()
-    .mockResolvedValueOnce(
-      new Response(
-        '<html data-ws-project="project" data-ws-version="4"></html>'
-      )
-    )
-    .mockResolvedValueOnce(
-      new Response(
-        '<html data-ws-project="project" data-ws-version="5"></html>'
-      )
-    );
+    .mockResolvedValueOnce(Response.json({ projectId: "project", version: 4 }))
+    .mockResolvedValueOnce(Response.json({ projectId: "project", version: 5 }));
 
   await waitForPreviewReady(
     "http://127.0.0.1:5173/",
@@ -219,6 +210,27 @@ test("waits for the exact generated session version", async () => {
   );
 
   expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test("does not compile a cold application route to confirm iterative readiness", async () => {
+  const fetch = vi.fn(async () =>
+    Response.json({ projectId: "project", version: 5 })
+  );
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/newly-authored-route",
+      {
+        requiredProject: { projectId: "project", version: 5 },
+      },
+      createDependencies({ fetch })
+    )
+  ).resolves.toBeUndefined();
+
+  expect(fetch).toHaveBeenCalledWith(
+    new URL("http://127.0.0.1:5173/__webstudio/preview.json"),
+    expect.objectContaining({ method: "GET" })
+  );
 });
 
 test("rejects stale preview servers that serve a previous build", async () => {
@@ -255,11 +267,8 @@ test("rejects stale preview servers that serve a previous build", async () => {
 });
 
 test("reports when a regenerated session version is not served", async () => {
-  const fetch = vi.fn(
-    async () =>
-      new Response(
-        '<html data-ws-project="project" data-ws-version="4"></html>'
-      )
+  const fetch = vi.fn(async () =>
+    Response.json({ projectId: "project", version: 4 })
   );
 
   await expect(

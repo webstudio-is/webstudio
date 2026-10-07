@@ -177,16 +177,24 @@ type BrowserProcessExit = { code?: number; signal?: string };
 export class BrowserSessionClosedError extends Error {
   readonly code = "BROWSER_SESSION_CLOSED";
   readonly diagnostic?: BrowserStartupDiagnostic;
-  readonly processExit?: BrowserProcessExit;
+  processExit?: BrowserProcessExit;
+  readonly issues?: Array<{
+    code: string;
+    path: string[];
+    message: string;
+    constraint: string;
+  }>;
 
   constructor(
     message: string,
     diagnostic?: BrowserStartupDiagnostic,
-    processExit?: BrowserProcessExit
+    processExit?: BrowserProcessExit,
+    issues?: BrowserSessionClosedError["issues"]
   ) {
     super(message);
     this.diagnostic = diagnostic;
     this.processExit = processExit;
+    this.issues = issues;
   }
 }
 
@@ -215,7 +223,19 @@ class CdpSession {
     this.#socket = socket;
     this.#socket.addEventListener("close", () => {
       this.#rejectPending(
-        new BrowserSessionClosedError("Browser DevTools connection closed.")
+        new BrowserSessionClosedError(
+          "Browser DevTools connection closed.",
+          undefined,
+          undefined,
+          [
+            {
+              code: "browser_devtools_connection_closed",
+              path: [],
+              message: "The browser DevTools connection closed during capture.",
+              constraint: "devtools_connection_available",
+            },
+          ]
+        )
       );
     });
     this.#socket.addEventListener("message", (event) => {
@@ -1386,6 +1406,7 @@ type BrowserRuntime = {
   browserClosed: Promise<string | undefined>;
   port: string;
   running: boolean;
+  processExit?: BrowserProcessExit;
   close: () => Promise<void>;
 };
 
@@ -1521,6 +1542,9 @@ const startBrowserRuntimeOnce = async (
       port,
       get running() {
         return running;
+      },
+      get processExit() {
+        return processExit;
       },
       close: async () => {
         closePromise ??= (async () => {
@@ -2086,6 +2110,9 @@ export const createBrowserScreenshotSession = async (
       try {
         return await capture(activeRuntime);
       } catch (error) {
+        if (error instanceof BrowserSessionClosedError) {
+          error.processExit ??= activeRuntime.processExit;
+        }
         if (
           closed ||
           attempt === 1 ||

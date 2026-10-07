@@ -10,6 +10,7 @@ export const contentEngineLimits = {
   resultCount: 1000,
   resultBytes: 16 * 1024 * 1024,
   candidateDocuments: 1000,
+  documentGraphDocuments: 2000,
   databaseBytes: 500 * 1024,
   frontmatterBytes: 64 * 1024,
   frontmatterDepth: 8,
