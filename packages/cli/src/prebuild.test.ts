@@ -94,6 +94,23 @@ const runGeneratedCommand = async (
   });
 };
 
+const runGeneratedNodeCommand = async (entry: string, args: string[]) => {
+  const env = { ...process.env };
+  for (const name of Object.keys(env)) {
+    if (name.startsWith("VITEST")) {
+      delete env[name];
+    }
+  }
+  env.NODE_ENV = "production";
+  env.NODE_OPTIONS = "--conditions=webstudio";
+  env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED = "1";
+  await execFileAsync(
+    process.execPath,
+    [join(originalCwd, "node_modules", entry), ...args],
+    { cwd: tempDir, env }
+  );
+};
+
 const linkPackagedPreviewDependencies = async () => {
   const sourceNodeModules = join(originalCwd, "node_modules");
   const targetNodeModules = join(tempDir, "node_modules");
@@ -3828,6 +3845,69 @@ sitemap.map((page) => page.path);`
       readFile("app/__generated__/[sitemap.xml]._index.server.tsx", "utf8")
     ).resolves.toContain('rootIds: [\n      "sitemap-resource"');
   });
+
+  test("emits static text pages at their configured paths", async () => {
+    const robots = "User-agent: *\nDisallow: /private";
+    const security = "Contact: mailto:security@example.com\n";
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "robots",
+            name: "Robots",
+            title: "Robots",
+            path: "/robots.txt",
+            rootInstanceId: "root",
+            meta: {
+              documentType: "text",
+              content: JSON.stringify(robots),
+            },
+          },
+          {
+            id: "security",
+            name: "Security",
+            title: "Security",
+            path: "/.well-known/security.txt",
+            rootInstanceId: "root",
+            meta: {
+              documentType: "text",
+              content: JSON.stringify(security),
+            },
+          },
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await symlink(
+      join(originalCwd, "node_modules"),
+      "node_modules",
+      "junction"
+    );
+    await runGeneratedNodeCommand("vite/bin/vite.js", ["build"]);
+    await runGeneratedNodeCommand("vike/node/cli/bin.js", ["prerender"]);
+    await execFileAsync(process.execPath, ["write-static-text-pages.mjs"], {
+      cwd: tempDir,
+    });
+
+    await expect(readFile("dist/client/robots.txt", "utf8")).resolves.toBe(
+      robots
+    );
+    await expect(
+      readFile("dist/client/.well-known/security.txt", "utf8")
+    ).resolves.toBe(security);
+    await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(
+      "<!DOCTYPE html>"
+    );
+  }, 30_000);
 
   test("generates html, xml, and text document routes", async () => {
     await writeSiteData(
