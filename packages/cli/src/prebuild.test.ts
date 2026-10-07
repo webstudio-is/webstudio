@@ -814,6 +814,7 @@ describe("prebuild", () => {
     );
     expect(cloudflareAdapter).toContain("EMAIL_SERVICE_URL");
     expect(cloudflareAdapter).toContain("TRPC_SERVER_API_TOKEN");
+    expect(cloudflareAdapter).not.toContain("EMAIL_SERVICE_TOKEN");
     expect(cloudflareAdapter).toContain(
       "createCloudflareManagedFormEmailSenderWithUrl"
     );
