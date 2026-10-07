@@ -29,6 +29,7 @@ import {
 
 import {
   findAvailableVariables,
+  mapResourceExpressionsMutable,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
@@ -905,11 +906,16 @@ export const insertWebstudioFragmentCopy = ({
       isNativeFormSubmission &&
       isFormSubmission(prop.value)
     ) {
+      const remapDestination = (id: string) => newDataSourceIds.get(id) ?? id;
       prop.value = {
         ...prop.value,
-        destinations: prop.value.destinations.map(
-          (id) => newDataSourceIds.get(id) ?? id
-        ),
+        destinations: prop.value.destinations.map(remapDestination),
+        ...(prop.value.disabledDestinations === undefined
+          ? {}
+          : {
+              disabledDestinations:
+                prop.value.disabledDestinations.map(remapDestination),
+            }),
       };
     }
     if (prop.type === "resource") {
@@ -927,46 +933,12 @@ export const insertWebstudioFragmentCopy = ({
       }
       resource = structuredClone(unwrap(resource));
       resource.id = newResourceIds.get(resource.id) ?? resource.id;
-      resource.url = restoreExpressionVariables({
-        expression: resource.url,
-        maskedIdByName,
-      });
-      resource.url = replaceDataSourcesInExpression(
-        resource.url,
-        newDataSourceIds
+      mapResourceExpressionsMutable(resource, (expression) =>
+        replaceDataSourcesInExpression(
+          restoreExpressionVariables({ expression, maskedIdByName }),
+          newDataSourceIds
+        )
       );
-      for (const header of resource.headers) {
-        header.value = restoreExpressionVariables({
-          expression: header.value,
-          maskedIdByName,
-        });
-        header.value = replaceDataSourcesInExpression(
-          header.value,
-          newDataSourceIds
-        );
-      }
-      if (resource.searchParams) {
-        for (const searchParam of resource.searchParams) {
-          searchParam.value = restoreExpressionVariables({
-            expression: searchParam.value,
-            maskedIdByName,
-          });
-          searchParam.value = replaceDataSourcesInExpression(
-            searchParam.value,
-            newDataSourceIds
-          );
-        }
-      }
-      if (resource.body) {
-        resource.body = restoreExpressionVariables({
-          expression: resource.body,
-          maskedIdByName,
-        });
-        resource.body = replaceDataSourcesInExpression(
-          resource.body,
-          newDataSourceIds
-        );
-      }
       resources.set(resource.id, resource);
     }
   }

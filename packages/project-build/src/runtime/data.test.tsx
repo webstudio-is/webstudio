@@ -1411,6 +1411,7 @@ test("find unset variable names", () => {
     searchParams: [{ name: "filter", value: expression`seven` }],
     headers: [{ name: "auth", value: expression`eight` }],
     body: expression`nine`,
+    control: "email",
   });
   const resourceProp = new ResourceValue("resourceProp", {
     url: expression`ten`,
@@ -1431,6 +1432,12 @@ test("find unset variable names", () => {
       </Box>
     </Body>
   );
+  const emailResource = Array.from(data.resources.values()).find(
+    (resource) => resource.name === "resourceVariable"
+  )!;
+  emailResource.email = { subject: "fourteen", body: "fifteen" };
+  Object.freeze(emailResource.email);
+  Object.freeze(emailResource);
   expect(
     findUnsetVariableNames({ startingInstanceId: "body", ...data })
   ).toEqual([
@@ -1442,6 +1449,8 @@ test("find unset variable names", () => {
     "eight",
     "seven",
     "nine",
+    "fourteen",
+    "fifteen",
     "ten",
     "twelve",
     "eleven",

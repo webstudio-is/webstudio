@@ -757,6 +757,34 @@ export const bindExpressionToInstanceScope = ({
   return boundExpression;
 };
 
+/** Apply expression rebinding consistently to every Resource expression field. */
+export const mapResourceExpressionsMutable = (
+  resource: Resource,
+  map: (expression: string) => void | string
+) => {
+  const update = (expression: string, set: (value: string) => void) => {
+    const next = map(expression);
+    if (next !== undefined) {
+      set(next);
+    }
+  };
+  update(resource.url, (value) => (resource.url = value));
+  for (const entry of [...resource.headers, ...(resource.searchParams ?? [])]) {
+    update(entry.value, (value) => (entry.value = value));
+  }
+  if (resource.body !== undefined) {
+    update(resource.body, (value) => (resource.body = value));
+  }
+  if (resource.email) {
+    for (const key of ["subject", "body"] as const) {
+      const expression = resource.email[key];
+      if (expression !== undefined) {
+        update(expression, (value) => (resource.email![key] = value));
+      }
+    }
+  }
+};
+
 const traverseExpressions = ({
   startingInstanceId,
   pages,
@@ -932,34 +960,9 @@ const traverseExpressions = ({
     if (instanceId === undefined) {
       continue;
     }
-    updateExpression({
-      expression: resource.url,
-      instanceId,
-      set: (expression) => (resource.url = expression),
-    });
-    for (const header of resource.headers) {
-      updateExpression({
-        expression: header.value,
-        instanceId,
-        set: (expression) => (header.value = expression),
-      });
-    }
-    if (resource.searchParams) {
-      for (const searchParam of resource.searchParams) {
-        updateExpression({
-          expression: searchParam.value,
-          instanceId,
-          set: (expression) => (searchParam.value = expression),
-        });
-      }
-    }
-    if (resource.body) {
-      updateExpression({
-        expression: resource.body,
-        instanceId,
-        set: (expression) => (resource.body = expression),
-      });
-    }
+    mapResourceExpressionsMutable(resource, (expression) =>
+      update(expression, instanceId)
+    );
   }
 };
 

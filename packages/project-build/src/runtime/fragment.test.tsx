@@ -75,6 +75,11 @@ test("copying a Form remaps its local Resource destinations", () => {
     url: '"https://example.com"',
     headers: [],
     body: encodeDataVariableId("formDataVariable"),
+    control: "email",
+    email: {
+      subject: `\`Submission \${${encodeDataVariableId("formDataVariable")}.name}\``,
+      body: encodeDataVariableId("formDataVariable"),
+    },
   });
   data.props.set("formData", {
     id: "formData",
@@ -90,6 +95,7 @@ test("copying a Form remaps its local Resource destinations", () => {
     type: "json",
     value: {
       destinations: ["localResourceVariable"],
+      disabledDestinations: ["localResourceVariable"],
     },
   });
 
@@ -114,6 +120,9 @@ test("copying a Form remaps its local Resource destinations", () => {
     const destinationId = (copiedSubmission.value as { destinations: string[] })
       .destinations[0];
     expect(destinationId).not.toBe("localResourceVariable");
+    expect(copiedSubmission.value).toMatchObject({
+      disabledDestinations: [destinationId],
+    });
     expect(data.dataSources.get(destinationId)).toMatchObject({
       scopeInstanceId: copiedForm?.id,
       resourceId: expect.not.stringMatching(/^localResource$/),
@@ -129,6 +138,10 @@ test("copying a Form remaps its local Resource destinations", () => {
     expect(copiedResource?.body).toBe(
       encodeDataVariableId(copiedParameter?.id ?? "")
     );
+    expect(copiedResource?.email).toEqual({
+      subject: `\`Submission \${${encodeDataVariableId(copiedParameter?.id ?? "")}?.name}\``,
+      body: encodeDataVariableId(copiedParameter?.id ?? ""),
+    });
   }
 });
 

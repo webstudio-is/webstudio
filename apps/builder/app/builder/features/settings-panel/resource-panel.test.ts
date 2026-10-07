@@ -339,12 +339,32 @@ test("a GET Resource in a Form shows its effective POST body controls", () => {
   expect(container.textContent).not.toContain("Form submissions use POST");
   expect(container.querySelector('[name="body-format"]')).toBeNull();
   act(() => {
-    root?.render(
-      createElement(
-        TooltipProvider,
-        undefined,
-        createElement(ResourceForm, { variable, formDestination: true })
-      )
+    $instances.set(
+      new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "submission",
+          {
+            id: "submission",
+            instanceId: "form",
+            name: "submission",
+            type: "json",
+            value: { destinations: [variable.id] },
+          },
+        ],
+      ])
     );
   });
   expect(container.textContent).toContain("Form submissions use POST");

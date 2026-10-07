@@ -21,6 +21,7 @@ import {
   defaultEmailBody,
   getResourceCycleDataSourceIds,
   isAssetsResource as isAssetsResourceRecord,
+  isFormSubmission,
   SYSTEM_VARIABLE_ID,
   systemParameter,
   type DataSources,
@@ -899,9 +900,21 @@ const parseHeaders = (headers: Resource["headers"]) => {
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; onChange?: () => void; formDestination?: boolean }
->(({ variable, onChange, formDestination = false }, ref) => {
+  { variable?: DataSource; onChange?: () => void }
+>(({ variable, onChange }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
+  const props = useStore($props);
+  const instances = useStore($instances);
+  const formDestination =
+    variable !== undefined &&
+    Array.from(props.values()).some(
+      (prop) =>
+        instances.get(prop.instanceId)?.component === "NativeForm" &&
+        prop.name === "submission" &&
+        prop.type === "json" &&
+        isFormSubmission(prop.value) &&
+        prop.value.destinations.includes(variable.id)
+    );
 
   const resources = useStore($resources);
   const resource =
