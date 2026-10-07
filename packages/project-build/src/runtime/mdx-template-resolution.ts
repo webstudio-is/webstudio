@@ -165,10 +165,12 @@ export const resolveMdxTemplates = ({
 
   const visit = (
     nodes: readonly MdxAuthoredNode[],
-    parentPath: readonly number[]
+    parentPath: readonly number[],
+    insideResolvedTemplate = false
   ) => {
     for (const [index, node] of nodes.entries()) {
       const path = [...parentPath, index];
+      let isResolvedTemplate = false;
       if (node.type === "template") {
         const standard = getMdxStandardTemplateBinding(node);
         const templateIds =
@@ -176,6 +178,17 @@ export const resolveMdxTemplates = ({
           (node.syntax !== "jsx"
             ? legacyTemplateIdsByLabel.get(node.name)
             : undefined);
+        if (
+          insideResolvedTemplate &&
+          templateIds === undefined &&
+          node.selfClosing &&
+          metas?.has(node.name)
+        ) {
+          // Composite template overlays use nested component names to target
+          // their matching defaults; the parent template materializer applies
+          // these props, so the names are not standalone templates to resolve.
+          continue;
+        }
         if ((templateIds?.length ?? 0) > 1) {
           references.push({
             type: "unresolved-template",
@@ -199,6 +212,7 @@ export const resolveMdxTemplates = ({
           continue;
         }
         if (templateIds?.length === 1) {
+          isResolvedTemplate = true;
           const templateInstance = instances.get(templateIds[0]);
           const componentBinding =
             templateInstance === undefined
@@ -331,7 +345,7 @@ export const resolveMdxTemplates = ({
         node.type !== "comment" &&
         node.type !== "opaque"
       ) {
-        visit(node.children, path);
+        visit(node.children, path, isResolvedTemplate);
       }
     }
   };
