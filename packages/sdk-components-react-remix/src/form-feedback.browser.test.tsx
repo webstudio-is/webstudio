@@ -21,12 +21,18 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
       success: false,
       status: 502,
       results: [
-        { resourceId: "first", status: 200, body: "ok" },
-        { resourceId: "second", status: 422, body: "failed" },
+        { resourceId: "first", resourceName: "first", status: 200, body: "ok" },
+        {
+          resourceId: "second",
+          resourceName: "second",
+          status: 422,
+          body: "failed",
+        },
       ],
       errors: [
         {
           resourceId: "second",
+          resourceName: "second",
           status: 422,
           body: "failed",
           message: "failed",
@@ -47,7 +53,10 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
     return (
       <NativeForm
         data-ws-managed-form-id="saved-managed-form"
-        submission={{ destinations: ["first", "second"] }}
+        action={[
+          { dataSourceId: "first", enabled: true },
+          { dataSourceId: "second", enabled: true },
+        ]}
         state={state}
         onStateChange={setState}
       >

@@ -17,7 +17,14 @@ afterEach(() => vi.unstubAllGlobals());
 const success = {
   success: true,
   status: 200,
-  results: [{ resourceId: "resource", status: 200, body: { saved: true } }],
+  results: [
+    {
+      resourceId: "resource",
+      resourceName: "resource",
+      status: 200,
+      body: { saved: true },
+    },
+  ],
   errors: [],
 };
 
@@ -47,7 +54,7 @@ test("managed submission refreshes mutable page data once without replaying POST
         <output>{value}</output>
         <NativeForm
           data-ws-managed-form-id="form"
-          submission={{ destinations: ["resource"] }}
+          action={[{ dataSourceId: "resource", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
@@ -104,7 +111,7 @@ test("failed submissions skip refresh and a later successful submission refreshe
         <output>{value}</output>
         <NativeForm
           data-ws-managed-form-id="form"
-          submission={{ destinations: ["resource"] }}
+          action={[{ dataSourceId: "resource", enabled: true }]}
         >
           <button type="submit">Send</button>
         </NativeForm>
@@ -145,7 +152,7 @@ test("a redirect skips refresh", async () => {
       element: (
         <NativeForm
           data-ws-managed-form-id="form"
-          submission={{ destinations: ["resource"] }}
+          action={[{ dataSourceId: "resource", enabled: true }]}
           successRedirect="#done"
         >
           <button type="submit">Send</button>
@@ -188,7 +195,7 @@ test("navigation ignores an in-flight submission from the old page", async () =>
       element: (
         <NativeForm
           data-ws-managed-form-id="form"
-          submission={{ destinations: ["resource"] }}
+          action={[{ dataSourceId: "resource", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
@@ -248,7 +255,7 @@ test("refresh failure retains the completed success result and does not replay P
         <output>{value}</output>
         <NativeForm
           data-ws-managed-form-id="form"
-          submission={{ destinations: ["resource"] }}
+          action={[{ dataSourceId: "resource", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>

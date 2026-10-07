@@ -55,11 +55,11 @@ test("Preview Form posts to the authenticated Builder and displays the server re
     props: JSON.stringify([
       ...JSON.parse(build.props),
       {
-        id: `${formId}:submission`,
+        id: `${formId}:action`,
         instanceId: formId,
-        name: "submission",
+        name: "action",
         type: "json",
-        value: { destinations: [variableId] },
+        value: [{ dataSourceId: variableId, enabled: true }],
       },
       {
         id: `${inputId}:name`,

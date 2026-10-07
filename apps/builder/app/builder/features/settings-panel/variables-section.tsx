@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { $livePreviewFormValues } from "~/shared/preview-form-values";
+import { useEffect, useRef, useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -7,20 +8,16 @@ import {
   css,
   CssValueListArrowFocus,
   CssValueListItem,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   Flex,
   Label,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
-  SmallIconButton,
   Text,
-  theme,
+  Tooltip,
+  Kbd,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
+import { AlertIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
@@ -36,6 +33,13 @@ import {
 } from "~/builder/shared/collapsible-section";
 import { formatValuePreview } from "~/builder/shared/expression-editor";
 import { VariablePopoverTrigger } from "./variable-popover";
+import { VariableMenu } from "./variable-menu";
+import { $highlightedVariable } from "./variable-navigation";
+import { StyleSourceBadge } from "../style-panel/style-source";
+import {
+  getFormDataPreview,
+  getBrowserInfoPreview,
+} from "./form-context-preview";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
@@ -101,14 +105,14 @@ const EmptyVariables = () => (
   <Flex direction="column" gap="2">
     <Flex justify="center" align="center">
       <Text variant="labels" align="center">
-        No data variables created
+        No variables created
         <br /> on this instance
       </Text>
     </Flex>
     <Flex justify="center" align="center">
       <VariablePopoverTrigger>
         <Button color="primary" type="button" prefix={<PlusIcon />}>
-          Create data variable
+          Create variable
         </Button>
       </VariablePopoverTrigger>
     </Flex>
@@ -131,7 +135,7 @@ const getVariableBadge = (variable: DataSource) => {
   }
   if (variable.type === "resource") {
     return {
-      label: "Dynamic data variable",
+      label: "Dynamic variable",
       text: "D",
     };
   }
@@ -163,6 +167,54 @@ const VariablesItem = ({
   usageCount: number;
 }) => {
   const selectedPage = useStore($selectedPage);
+  const highlighted = useStore($highlightedVariable);
+  const rowRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (highlighted?.id === variable.id) {
+      rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      rowRef.current?.focus({ preventScroll: true });
+    }
+  }, [highlighted, variable.id]);
+  const instances = useStore($instances);
+  const props = useStore($props);
+  const liveFormValues = useStore($livePreviewFormValues);
+  const dataSources = useStore($dataSources);
+  const shadowed =
+    source === "local" && variable.scopeInstanceId
+      ? findAvailableVariables({
+          startingInstanceId: variable.scopeInstanceId,
+          instances,
+          dataSources: new Map(
+            [...dataSources].filter(
+              ([, other]) => other.scopeInstanceId !== variable.scopeInstanceId
+            )
+          ),
+        }).find(
+          (other) =>
+            other.scopeInstanceId !== variable.scopeInstanceId &&
+            other.name === variable.name
+        )
+      : undefined;
+  if (
+    variable.type === "parameter" &&
+    instances.get(variable.scopeInstanceId ?? "")?.component === "NativeForm"
+  ) {
+    if (variable.name === "formData") {
+      value =
+        liveFormValues.get(variable.scopeInstanceId!) ??
+        getFormDataPreview(instances, props, variable.scopeInstanceId!);
+    }
+    if (variable.name === "browserInfo") {
+      value = getBrowserInfoPreview();
+    }
+  }
+  const canDelete = source === "local" && variable.type !== "parameter";
+  const requestDelete = () =>
+    setVariableToDelete({
+      id: variable.id,
+      name: variable.name,
+      usages: usageCount,
+    });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [variableToDelete, setVariableToDelete] = useState<{
     id: string;
@@ -172,13 +224,76 @@ const VariablesItem = ({
   return (
     <VariablePopoverTrigger key={variable.id} variable={variable}>
       <CssValueListItem
+        ref={rowRef}
+        active={highlighted?.id === variable.id}
+        aria-label={`Variable ${variable.name}`}
         id={variable.id}
         index={index}
         label={
           <Flex align="center">
-            <Label tag="label" color={source}>
-              {variable.name}
-            </Label>
+            <Tooltip
+              onPointerDown={(event) => event.preventDefault()}
+              triggerProps={{
+                onClick: (event) => {
+                  if (event.altKey && canDelete) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    requestDelete();
+                  }
+                },
+              }}
+              content={
+                <Flex direction="column" gap="2">
+                  <Text variant="labels">{variable.name}</Text>
+                  <Text>
+                    {variable.type === "variable"
+                      ? `${variable.value.type === "json" ? "JSON" : variable.value.type} · Static`
+                      : variable.type === "resource"
+                        ? "Resource · Dynamic"
+                        : "JSON · Dynamic parameter"}
+                  </Text>
+                  <Text color="moreSubtle">Value comes from</Text>
+                  <Flex gap="1" wrap="wrap">
+                    {source === "local" && (
+                      <StyleSourceBadge source="local" variant="small">
+                        Local
+                      </StyleSourceBadge>
+                    )}
+                    <StyleSourceBadge source="instance" variant="small">
+                      {instances.get(variable.scopeInstanceId ?? "")?.label ??
+                        instances.get(variable.scopeInstanceId ?? "")
+                          ?.component ??
+                        "System"}
+                    </StyleSourceBadge>
+                  </Flex>
+                  {canDelete && (
+                    <Button
+                      color="neutral-destructive"
+                      prefix={<TrashIcon />}
+                      suffix={
+                        <Kbd value={["alt", "click"]} color="moreSubtle" />
+                      }
+                      onClick={requestDelete}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Flex>
+              }
+            >
+              <Label tag="label" color={source}>
+                {variable.name}
+              </Label>
+            </Tooltip>
+            {shadowed && (
+              <Tooltip
+                content={`This variable shadows ${shadowed.name} from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Delete the local variable to reveal it.`}
+              >
+                <span style={{ color: "#e8b400", display: "flex" }}>
+                  <AlertIcon />
+                </span>
+              </Tooltip>
+            )}
             {value !== undefined && (
               <span className={variableLabelStyle.toString()}>
                 &nbsp;
@@ -191,52 +306,15 @@ const VariablesItem = ({
         suffix={<DataVariableBadge variable={variable} />}
         buttons={
           <>
-            {((source === "local" && variable.type !== "parameter") ||
-              (source === "local" &&
-                variable.id === selectedPage?.systemDataSourceId)) && (
-              <DropdownMenu modal onOpenChange={setIsMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                  {/* a11y is completely broken here
-                      focus is not restored to button invoker
-                      @todo fix it eventually and consider restoring from closed value preview dialog
-                  */}
-                  <SmallIconButton
-                    tabIndex={-1}
-                    aria-label="Open variable menu"
-                    icon={<EllipsesIcon />}
-                    onClick={() => {}}
-                  />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  css={{ width: theme.spacing[28] }}
-                  onCloseAutoFocus={(event) => event.preventDefault()}
-                >
-                  {source === "local" && variable.type !== "parameter" && (
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setVariableToDelete({
-                          id: variable.id,
-                          name: variable.name,
-                          usages: usageCount,
-                        });
-                      }}
-                    >
-                      Delete {usageCount > 0 && `(${usageCount} bindings)`}
-                    </DropdownMenuItem>
-                  )}
-                  {source === "local" &&
-                    variable.id === selectedPage?.systemDataSourceId && (
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          deleteDataVariable(variable.id);
-                        }}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <VariableMenu
+              variable={variable}
+              canDelete={
+                canDelete ||
+                (source === "local" &&
+                  variable.id === selectedPage?.systemDataSourceId)
+              }
+              onOpenChange={setIsMenuOpen}
+            />
 
             <DeleteDataVariableDialog
               variable={variableToDelete}
@@ -284,10 +362,18 @@ const VariablesList = () => {
   );
 };
 
-const label = "Data variables";
+const label = "Variables";
 
 export const VariablesSection = () => {
+  const highlighted = useStore($highlightedVariable);
+  const handledHighlight = useRef<typeof highlighted>();
   const [isOpen, setIsOpen] = useOpenState(label);
+  useEffect(() => {
+    if (highlighted && handledHighlight.current !== highlighted) {
+      handledHighlight.current = highlighted;
+      setIsOpen(true);
+    }
+  }, [highlighted, setIsOpen]);
   return (
     <CollapsibleSectionRoot
       label={label}
@@ -297,25 +383,28 @@ export const VariablesSection = () => {
       trigger={
         <SectionTitle
           suffix={
-            <VariablePopoverTrigger>
-              <SectionTitleButton
-                type="button"
-                aria-label="Add data variable"
-                prefix={<PlusIcon />}
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                }}
-                // open panel when adding a new variable
-                onClick={() => {
-                  if (isOpen === false) {
-                    setIsOpen(true);
-                  }
-                }}
-              />
-            </VariablePopoverTrigger>
+            <Flex align="center">
+              <VariableMenu />
+              <VariablePopoverTrigger>
+                <SectionTitleButton
+                  type="button"
+                  aria-label="Add variable"
+                  prefix={<PlusIcon />}
+                  onPointerDown={(event) => {
+                    event.stopPropagation();
+                  }}
+                  // open panel when adding a new variable
+                  onClick={() => {
+                    if (isOpen === false) {
+                      setIsOpen(true);
+                    }
+                  }}
+                />
+              </VariablePopoverTrigger>
+            </Flex>
           }
         >
-          <SectionTitleLabel>Data variables</SectionTitleLabel>
+          <SectionTitleLabel>Variables</SectionTitleLabel>
         </SectionTitle>
       }
     >
@@ -326,3 +415,5 @@ export const VariablesSection = () => {
     </CollapsibleSectionRoot>
   );
 };
+
+export const __testing__ = { VariablesItem };

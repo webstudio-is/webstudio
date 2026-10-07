@@ -47,7 +47,7 @@ test("the shared handler executes a Form graph from the supplied runtime configu
       search: {},
     },
     configuration: () => ({
-      submission: { destinations: ["source"] },
+      action: [{ dataSourceId: "source", enabled: true }],
       resourceIds: ["http"],
     }),
     getGraph,
@@ -63,7 +63,14 @@ test("the shared handler executes a Form graph from the supplied runtime configu
   expect(result).toEqual({
     success: true,
     status: 200,
-    results: [{ resourceId: "http", status: 201, body: { accepted: true } }],
+    results: [
+      {
+        resourceId: "http",
+        resourceName: expect.any(String),
+        status: 201,
+        body: { accepted: true },
+      },
+    ],
     errors: [],
   });
 });
@@ -141,7 +148,10 @@ test("three webhooks complete when the Email Service rate-limits one destination
       search: {},
     },
     configuration: () => ({
-      submission: { destinations: graph.rootIds },
+      action: graph.rootIds.map((dataSourceId) => ({
+        dataSourceId,
+        enabled: true,
+      })),
       resourceIds: graph.rootIds,
     }),
     getGraph: () => graph,
@@ -159,6 +169,7 @@ test("three webhooks complete when the Email Service rate-limits one destination
       { resourceId: "webhook-3", status: 201 },
       {
         resourceId: "email",
+        resourceName: expect.any(String),
         status: 429,
         body: { error: { code: "email_rate_limited" } },
       },
@@ -207,7 +218,10 @@ test("a visitor Email Resource sends in parallel and a failed delivery remains n
       search: {},
     },
     configuration: () => ({
-      submission: { destinations: ["http", "visitor"] },
+      action: [
+        { dataSourceId: "http", enabled: true },
+        { dataSourceId: "visitor", enabled: true },
+      ],
       resourceIds: ["http", "visitor"],
     }),
     getGraph: () => ({
@@ -321,7 +335,10 @@ test("two visitor Email Resources fail preflight before any action runs", async 
         search: {},
       },
       configuration: () => ({
-        submission: { destinations: resourceIds },
+        action: resourceIds.map((dataSourceId) => ({
+          dataSourceId,
+          enabled: true,
+        })),
         resourceIds,
       }),
       getGraph: () => ({
@@ -380,7 +397,10 @@ test.each([undefined, "invalid-address"])(
         search: {},
       },
       configuration: () => ({
-        submission: { destinations: ["http", "visitor"] },
+        action: [
+          { dataSourceId: "http", enabled: true },
+          { dataSourceId: "visitor", enabled: true },
+        ],
         resourceIds: ["http", "visitor"],
       }),
       getGraph: () => ({
@@ -436,6 +456,7 @@ test.each([undefined, "invalid-address"])(
         { resourceId: "http", status: 201 },
         {
           resourceId: "visitor",
+          resourceName: expect.any(String),
           status: 400,
           body: { error: { code: "invalid_visitor_email" } },
         },
@@ -484,7 +505,10 @@ test.each([
         pathname: "/",
       },
       configuration: () => ({
-        submission: { destinations: ["visitor", "http"] },
+        action: [
+          { dataSourceId: "visitor", enabled: true },
+          { dataSourceId: "http", enabled: true },
+        ],
         resourceIds: ["visitor", "http"],
       }),
       getGraph: () => ({
@@ -606,7 +630,10 @@ test.each([false, true])(
           pathname: "/",
         },
         configuration: () => ({
-          submission: { destinations: ["http", "visitor"] },
+          action: [
+            { dataSourceId: "http", enabled: true },
+            { dataSourceId: "visitor", enabled: true },
+          ],
           resourceIds: ["http", "visitor"],
         }),
         getGraph: () => ({

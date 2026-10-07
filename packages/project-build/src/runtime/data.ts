@@ -287,7 +287,9 @@ export const validateDataVariableNameWithSources = ({
 
   for (const dataSource of dataSources) {
     if (
-      dataSource.type === "variable" &&
+      (dataSource.type === "variable" ||
+        dataSource.type === "resource" ||
+        dataSource.type === "parameter") &&
       dataSource.scopeInstanceId === scopeInstanceId &&
       dataSource.name === name &&
       dataSource.id !== variableId
@@ -1134,23 +1136,11 @@ export const rebindTreeVariablesMutable = ({
 };
 
 const removeFormDestinations = <
-  T extends { destinations: string[]; disabledDestinations?: string[] },
+  T extends { dataSourceId: string; enabled: boolean },
 >(
-  submission: T,
+  actions: T[],
   removedIds: ReadonlySet<string>
-): T => {
-  const destinations = submission.destinations.filter(
-    (id) => !removedIds.has(id)
-  );
-  const disabledDestinations = submission.disabledDestinations?.filter((id) =>
-    destinations.includes(id)
-  );
-  return {
-    ...submission,
-    destinations,
-    ...(disabledDestinations === undefined ? {} : { disabledDestinations }),
-  };
-};
+): T[] => actions.filter((action) => !removedIds.has(action.dataSourceId));
 
 export const deleteVariableMutable = (
   data: Pick<
@@ -1178,11 +1168,10 @@ export const deleteVariableMutable = (
   for (const prop of data.props.values()) {
     if (
       prop.type !== "json" ||
-      prop.name !== "submission" ||
+      prop.name !== "action" ||
       data.instances.get(prop.instanceId)?.component !== "NativeForm" ||
       !isFormSubmission(prop.value) ||
-      (!prop.value.destinations.includes(variableId) &&
-        !prop.value.disabledDestinations?.includes(variableId))
+      !prop.value.some((action) => action.dataSourceId === variableId)
     ) {
       continue;
     }
@@ -2713,9 +2702,11 @@ export const createResourceDeletePayload = ({
   const formSubmissionProps = propList.flatMap((prop) => {
     if (
       prop.type !== "json" ||
-      prop.name !== "submission" ||
+      prop.name !== "action" ||
       !isFormSubmission(prop.value) ||
-      !prop.value.destinations.some((id) => resourceDataSourceIds.has(id))
+      !prop.value.some((action) =>
+        resourceDataSourceIds.has(action.dataSourceId)
+      )
     ) {
       return [];
     }

@@ -23,13 +23,15 @@ test("formats ordered final outcomes without response headers", () => {
     resources: [
       {
         id: "first",
-        outputName: "First",
+        outputName: "firstOutput",
+        name: "First Resource",
         dependencies: [],
         createRequest: vi.fn(),
       },
       {
         id: "second",
-        outputName: "Second",
+        outputName: "secondOutput",
+        name: "Second Resource",
         dependencies: [],
         createRequest: vi.fn(),
       },
@@ -37,14 +39,14 @@ test("formats ordered final outcomes without response headers", () => {
   };
   expect(
     getManagedFormResponse(graph, {
-      First: {
+      firstOutput: {
         ok: true,
         status: 201,
         statusText: "Created",
         data: { id: 1 },
         headers: { authorization: "private" },
       },
-      Second: {
+      secondOutput: {
         ok: false,
         status: 422,
         statusText: "Invalid submission",
@@ -58,21 +60,28 @@ test("formats ordered final outcomes without response headers", () => {
     results: [
       {
         resourceId: "second",
+        resourceName: "Second Resource",
         status: 422,
         body: { reason: "missing field" },
       },
-      { resourceId: "first", status: 201, body: { id: 1 } },
+      {
+        resourceId: "first",
+        resourceName: "First Resource",
+        status: 201,
+        body: { id: 1 },
+      },
     ],
     errors: [
       {
         resourceId: "second",
+        resourceName: "Second Resource",
         status: 422,
         body: { reason: "missing field" },
         message: "Invalid submission",
       },
     ],
   });
-  expect(() => getManagedFormResponse(graph, { First: {} })).toThrow(
+  expect(() => getManagedFormResponse(graph, { firstOutput: {} })).toThrow(
     "Form Resource results are incomplete"
   );
 });

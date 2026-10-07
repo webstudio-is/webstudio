@@ -8,7 +8,6 @@ import {
   type FormEvent,
 } from "react";
 import {
-  emptyFormDestinationMessage,
   isFormSubmission,
   validateFormSubmission,
 } from "@webstudio-is/sdk/form-submission";
@@ -22,8 +21,8 @@ export const defaultTag = "form";
 
 export const NativeForm = forwardRef<
   ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & {
-    submission?: unknown;
+  Omit<ComponentProps<typeof defaultTag>, "action"> & {
+    action?: unknown;
     "data-ws-managed-form-id"?: string;
     successRedirect?: string;
     state?: "initial" | "success" | "error";
@@ -46,14 +45,14 @@ export const NativeForm = forwardRef<
   (
     {
       id,
-      submission,
+      action,
       "data-ws-managed-form-id": managedFormId,
       successRedirect,
       state,
       onStateChange,
       onResultChange,
       onManagedSubmit,
-      previewSubmission,
+      previewSubmission: _previewSubmission,
       getRedirectBaseUrl,
       onSuccessRedirect,
       onSubmissionSuccess,
@@ -66,8 +65,6 @@ export const NativeForm = forwardRef<
     },
     ref
   ) => {
-    const [error, setError] = useState<string>();
-    const [result, setResult] = useState<ManagedFormResponse>();
     const [pending, setPending] = useState(false);
     const [internalState, setInternalState] = useState<
       "initial" | "success" | "error"
@@ -94,8 +91,6 @@ export const NativeForm = forwardRef<
       onStateChange?.(nextState);
     };
     const reportFailure = (message: string, status = 400) => {
-      setError(message);
-      setResult(undefined);
       onResultChange?.({
         success: false,
         status,
@@ -105,11 +100,11 @@ export const NativeForm = forwardRef<
       reportState("error");
       revealFeedback();
     };
-    const validSubmission = isFormSubmission(submission);
+    const validSubmission = isFormSubmission(action);
     const configurationError = validSubmission
-      ? validateFormSubmission(submission)
-      : submission === undefined
-        ? validateFormSubmission({ destinations: [] })
+      ? validateFormSubmission(action)
+      : action === undefined
+        ? validateFormSubmission([])
         : "Invalid Form submission settings";
     const handleManagedSubmit = (event: FormEvent<HTMLFormElement>) => {
       try {
@@ -130,7 +125,6 @@ export const NativeForm = forwardRef<
       if (activeRequest.current) {
         return;
       }
-      setResult(undefined);
       prepareFeedback();
       if (configurationError) {
         reportFailure(configurationError);
@@ -140,7 +134,6 @@ export const NativeForm = forwardRef<
         reportFailure("Resource submission is unavailable");
         return;
       }
-      setError(undefined);
       reportState("initial");
       const submitter = (event.nativeEvent as SubmitEvent).submitter;
       const values = getFormDataValue(
@@ -193,7 +186,6 @@ export const NativeForm = forwardRef<
             return;
           }
           setPending(false);
-          setResult(response);
           onResultChange?.(response);
           reportState(response.success ? "success" : "error");
           const destination = response.success
@@ -257,32 +249,9 @@ export const NativeForm = forwardRef<
         ref={setFormRef}
         onSubmit={handleManagedSubmit}
       >
-        {previewSubmission && (
-          <div role="note" data-ws-form-preview-note="">
-            Preview sends real emails and webhook requests.
-          </div>
-        )}
         <fieldset disabled={!hydrated} style={{ display: "contents" }}>
           <div style={{ display: "contents" }}>{children}</div>
         </fieldset>
-        {(error ||
-          (configurationError === emptyFormDestinationMessage
-            ? undefined
-            : configurationError)) && (
-          <div role="alert" data-ws-form-feedback="">
-            {error ?? configurationError}
-          </div>
-        )}
-        {result?.errors.map((failure, index) => (
-          <div
-            role="alert"
-            data-ws-form-feedback=""
-            key={index}
-            style={pending ? { display: "none" } : undefined}
-          >
-            {failure.message}
-          </div>
-        ))}
       </form>
     );
   }

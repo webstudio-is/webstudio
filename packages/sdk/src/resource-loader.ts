@@ -158,7 +158,20 @@ export const assetsFieldCatalogApiUrl = `${assetsApiUrl}/field-catalog`;
 export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;
 export const assetsQuerySchemaApiUrl = `${assetsApiUrl}/query-schema.json`;
 
+export type ResourceExchange = {
+  request: Request | ResourceRequest;
+  response: {
+    status: number;
+    statusText: string;
+    headers: Headers;
+    data: unknown;
+    url?: string;
+  };
+};
+
 export type ResourceLoadOptions = {
+  /** Private, opt-in inspection of the same transport attempt; never replays it. */
+  onExchange?: (exchange: ResourceExchange) => void | Promise<void>;
   signal?: AbortSignal;
   timeoutMs?: number;
   /** Supplied only by the published site's server runtime. */
@@ -174,6 +187,10 @@ export type ResourceLoadOptions = {
 };
 
 export type ResourceGraphLoadOptions = ResourceLoadOptions & {
+  onResourceExchange?: (
+    resourceId: string,
+    exchange: ResourceExchange
+  ) => void | Promise<void>;
   /** Retry a failed selected root once, without resolving its dependencies again. */
   retryFailedRoots?: boolean;
   requestOverrides?: ReadonlyMap<
@@ -185,6 +202,7 @@ export type ResourceGraphLoadOptions = ResourceLoadOptions & {
 export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
+  name?: string;
   dependencies: readonly string[];
   control?: ResourceRequest["control"];
   /** Trusted, published team-recipient count for an Email destination. */
@@ -374,10 +392,22 @@ export const loadResource = async (
   baseUrl?: string | URL,
   options: ResourceLoadOptions = {}
 ) => {
+  const observe = async (exchange: ResourceExchange) => {
+    try {
+      await options.onExchange?.(exchange);
+    } catch {
+      /* Inspection must not change delivery outcomes. */
+    }
+  };
   if (resourceRequest.control === "email") {
     validateEmailSubject(resourceRequest.email?.subject);
     if (options.sendEmail !== undefined) {
-      return options.sendEmail(resourceRequest, options);
+      const result = await options.sendEmail(resourceRequest, options);
+      await observe({
+        request: resourceRequest,
+        response: { ...result, headers: new Headers() },
+      });
+      return result;
     }
     return {
       ok: false,
@@ -412,6 +442,8 @@ export const loadResource = async (
           controller.abort();
         }, options.timeoutMs);
 
+  let inspectionRequest: Request | undefined;
+  let inspectionResponse: ResourceExchange["response"] | undefined;
   try {
     const { method, searchParams, headers, body } = resourceRequest;
     let href = resourceRequest.url;
@@ -494,8 +526,15 @@ export const loadResource = async (
         requestInit.body = serializeValue(body);
       }
     }
+    const outgoing =
+      options.onExchange && !isLocalResource(href)
+        ? new Request(href, requestInit)
+        : undefined;
+    inspectionRequest = outgoing?.clone();
     const response = await awaitWithSignal(
-      customFetch(href, requestInit),
+      outgoing === undefined
+        ? customFetch(href, requestInit)
+        : customFetch(outgoing),
       signal
     );
 
@@ -515,6 +554,13 @@ export const loadResource = async (
       );
     }
 
+    inspectionResponse = {
+      status: response.status,
+      statusText: response.statusText,
+      headers: new Headers(response.headers),
+      data,
+      url: response.url || undefined,
+    };
     const result = {
       ok: response.ok,
       status: response.status,
@@ -529,30 +575,38 @@ export const loadResource = async (
     }
     return result;
   } catch (error) {
-    if (didTimeout) {
-      return transportFailure({
-        code: "REQUEST_TIMEOUT",
-        message: `Resource request exceeded ${options.timeoutMs}ms`,
-        retryable: true,
-        status: 504,
-      });
+    const failure = didTimeout
+      ? transportFailure({
+          code: "REQUEST_TIMEOUT",
+          message: `Resource request exceeded ${options.timeoutMs}ms`,
+          retryable: true,
+          status: 504,
+        })
+      : options.signal?.aborted
+        ? transportFailure({
+            code: "REQUEST_CANCELLED",
+            message: "Resource request was cancelled",
+            retryable: false,
+            status: 499,
+          })
+        : transportFailure({
+            code: "NETWORK_ERROR",
+            message: "Resource request failed",
+            retryable: true,
+            status: 502,
+          });
+    if (!didTimeout && !options.signal?.aborted) {
+      console.error("Resource request failed");
     }
-    if (options.signal?.aborted) {
-      return transportFailure({
-        code: "REQUEST_CANCELLED",
-        message: "Resource request was cancelled",
-        retryable: false,
-        status: 499,
-      });
-    }
-    console.error("Resource request failed");
-    return transportFailure({
-      code: "NETWORK_ERROR",
-      message: "Resource request failed",
-      retryable: true,
-      status: 502,
-    });
+    inspectionResponse = { ...failure, headers: new Headers() };
+    return failure;
   } finally {
+    if (inspectionRequest && inspectionResponse) {
+      await observe({
+        request: inspectionRequest,
+        response: inspectionResponse,
+      });
+    }
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
     }
@@ -583,8 +637,12 @@ export const loadResources = async (
     id: resource.id,
     dependencies: resource.dependencies,
     resolve: ({ documents, signal }) => {
-      const { requestOverrides, retryFailedRoots, ...loadOptions } =
-        options ?? {};
+      const {
+        requestOverrides,
+        retryFailedRoots,
+        onResourceExchange,
+        ...loadOptions
+      } = options ?? {};
       const { fetch: requestFetch = customFetch, ...overrides } =
         requestOverrides?.get(resource.id) ?? {};
       const request = resource.createRequest(documents);
@@ -595,6 +653,9 @@ export const loadResources = async (
       const load = () =>
         loadResource(requestFetch, resolvedRequest, baseUrl, {
           ...loadOptions,
+          onExchange: onResourceExchange
+            ? (exchange) => onResourceExchange(resource.id, exchange)
+            : loadOptions.onExchange,
           signal: signal ?? options?.signal,
         });
       return load().then((result) =>

@@ -28,7 +28,7 @@ import type { ResourceRequest } from "./schema/resources";
 import type { System } from "./schema/pages";
 
 export type ManagedFormConfiguration = {
-  submission: unknown;
+  action: unknown;
   resourceIds: (string | null)[];
 };
 
@@ -45,6 +45,7 @@ export const handleManagedFormSubmission = async ({
   resourceFetch,
   validateDestination,
   trustedIp,
+  onResourceExchange,
 }: {
   request: Request;
   formData?: FormData;
@@ -62,6 +63,7 @@ export const handleManagedFormSubmission = async ({
   resourceFetch: typeof fetch;
   validateDestination?: (url: URL) => void;
   trustedIp?: string;
+  onResourceExchange?: ResourceGraphLoadOptions["onResourceExchange"];
 }): Promise<ManagedFormResponse> => {
   const formData = providedFormData ?? (await readFormDataWithLimit(request));
   const ids = formData.getAll(managedFormIdFieldName);
@@ -70,16 +72,16 @@ export const handleManagedFormSubmission = async ({
   }
   const formId = ids[0];
   const configured = configuration(formId);
-  if (configured === undefined || !isFormSubmission(configured.submission)) {
+  if (configured === undefined || !isFormSubmission(configured.action)) {
     throw new Error("Form submission settings not found");
   }
-  const error = validateFormSubmission(configured.submission);
+  const error = validateFormSubmission(configured.action);
   if (error !== undefined) {
     throw new Error(error);
   }
   if (
     configured.resourceIds.length !==
-      getEnabledFormDestinations(configured.submission).length ||
+      getEnabledFormDestinations(configured.action).length ||
     configured.resourceIds.some((id) => id === null)
   ) {
     throw new Error("Resource destination not found");
@@ -163,6 +165,7 @@ export const handleManagedFormSubmission = async ({
       ? {}
       : await loadManagedFormResources(resourceFetch, validatedGraph, url, {
           signal: request.signal,
+          onResourceExchange,
           timeoutMs: 10_000,
           retryFailedRoots: true,
           sendEmail,

@@ -97,12 +97,12 @@ test("only managed Forms receive a server identity that custom props cannot over
 
   const native = generate();
   expect(native).not.toContain("data-ws-managed-form-id");
-  data.props.set("submission", {
-    id: "submission",
+  data.props.set("action", {
+    id: "action",
     instanceId: "form",
-    name: "submission",
+    name: "action",
     type: "json",
-    value: { destinations: ["request"] },
+    value: [{ dataSourceId: "request", enabled: true }],
   });
   const managed = generate();
   expect(managed.match(/data-ws-managed-form-id/g)).toHaveLength(1);
@@ -2134,4 +2134,58 @@ test("overrides some element tags with provided components", () => {
      `)
     )
   );
+});
+
+test("saved managed Form error placeholder generates dynamic messages while preserving the authored element", () => {
+  const slot: import("@webstudio-is/sdk").Instance = {
+    type: "instance",
+    id: "saved-error",
+    component: "ws:element",
+    tag: "div",
+    label: "Error Message",
+    children: [
+      {
+        type: "text",
+        placeholder: true,
+        value: "Sorry, something went wrong.",
+      },
+    ],
+  };
+  const form: import("@webstudio-is/sdk").Instance = {
+    type: "instance",
+    id: "saved-form",
+    component: "NativeForm",
+    children: [{ type: "id", value: slot.id }],
+  };
+  const dataSources: import("@webstudio-is/sdk").DataSources = new Map([
+    [
+      "saved-errors",
+      {
+        id: "saved-errors",
+        name: "errors",
+        scopeInstanceId: form.id,
+        type: "variable",
+        value: { type: "json", value: [] },
+      },
+    ],
+  ]);
+  const usedDataSources = new Map();
+  const generated = generateJsxChildren({
+    scope: createScope(),
+    usedDataSources,
+    indexesWithinAncestors: new Map(),
+    metas: new Map(),
+    props: new Map(),
+    children: [{ type: "id", value: form.id }],
+    instances: new Map([
+      [form.id, form],
+      [slot.id, slot],
+    ]),
+    dataSources,
+  });
+  expect(generated).toContain(".map((error: any) => error?.message)");
+  expect(generated).toContain("<div>");
+  expect(generated).not.toContain("Sorry, something went wrong.");
+  expect(usedDataSources.has("saved-errors")).toBe(true);
+  expect(slot.children[0].type).toBe("text");
 });

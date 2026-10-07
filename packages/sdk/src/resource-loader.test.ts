@@ -1546,3 +1546,78 @@ describe("getResourceCacheKey", () => {
     expect(new Set(keys).size).toBe(requests.length);
   });
 });
+
+test("optional exchange observer records the same serialized fetch and each retry", async () => {
+  const observed: Array<{
+    id: string;
+    method: string;
+    url: string;
+    body: string;
+    status: number;
+    responseHeader: string | null;
+    finalUrl?: string;
+  }> = [];
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementation(async (input) => {
+      expect(input).toBeInstanceOf(Request);
+      const response = Response.json(
+        { accepted: fetch.mock.calls.length > 1 },
+        {
+          status: fetch.mock.calls.length === 1 ? 500 : 201,
+          headers: { "X-Response": "captured" },
+        }
+      );
+      Object.defineProperty(response, "url", {
+        value: "https://example.com/final",
+      });
+      return response;
+    });
+  const graph: ResourceRequestGraph = {
+    rootIds: ["action"],
+    resources: [
+      {
+        id: "action",
+        outputName: "result",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Request",
+          method: "post",
+          url: "https://example.com/send",
+          searchParams: [{ name: "q", value: "submitted" }],
+          headers: [],
+          body: { email: "ada@example.com" },
+        }),
+      },
+    ],
+  };
+  await loadResources(fetch, graph, undefined, {
+    retryFailedRoots: true,
+    onResourceExchange: async (id, exchange) => {
+      if (!(exchange.request instanceof Request)) {
+        throw Error("Expected HTTP transport");
+      }
+      observed.push({
+        id,
+        method: exchange.request.method,
+        url: exchange.request.url,
+        body: await exchange.request.text(),
+        status: exchange.response.status,
+        responseHeader: exchange.response.headers.get("X-Response"),
+        finalUrl: exchange.response.url,
+      });
+    },
+  });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(observed).toEqual(
+    [500, 201].map((status) => ({
+      id: "action",
+      method: "POST",
+      url: "https://example.com/send?q=submitted",
+      body: '{"email":"ada@example.com"}',
+      status,
+      responseHeader: "captured",
+      finalUrl: "https://example.com/final",
+    }))
+  );
+});

@@ -3,27 +3,33 @@ import { getBrowserInfo } from "./form-submission";
 import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 
 test("requires and limits Resource destinations", () => {
-  expect(validateFormSubmission({ destinations: [] })).toMatch(/at least one/);
+  expect(validateFormSubmission([])).toMatch(/at least one/);
   expect(
-    validateFormSubmission({
-      destinations: ["a", "b", "c", "d", "e"],
-    })
+    validateFormSubmission([
+      { dataSourceId: "a", enabled: true },
+      { dataSourceId: "b", enabled: true },
+      { dataSourceId: "c", enabled: true },
+      { dataSourceId: "d", enabled: true },
+      { dataSourceId: "e", enabled: true },
+    ])
   ).toBeUndefined();
   expect(
-    validateFormSubmission({
-      destinations: ["a", "b", "c", "d", "e", "f"],
-    })
+    validateFormSubmission([
+      { dataSourceId: "a", enabled: true },
+      { dataSourceId: "b", enabled: true },
+      { dataSourceId: "c", enabled: true },
+      { dataSourceId: "d", enabled: true },
+      { dataSourceId: "e", enabled: true },
+      { dataSourceId: "f", enabled: true },
+    ])
   ).toMatch(/no more than 5/);
 });
 
-test("rejects legacy native-mode settings instead of dispatching destinations", () => {
-  expect(
-    isFormSubmission({ mode: "native", destinations: ["old-resource"] })
-  ).toBe(false);
-  expect(
-    isFormSubmission({ mode: "resources", destinations: ["resource"] })
-  ).toBe(true);
-  expect(isFormSubmission({ destinations: ["resource"] })).toBe(true);
+test("requires an Action array with explicit enabled state", () => {
+  expect(isFormSubmission({ destinations: ["resource"] })).toBe(false);
+  expect(isFormSubmission([{ dataSourceId: "resource", enabled: true }])).toBe(
+    true
+  );
 });
 
 test("browser info excludes cookies, auth, and untrusted IP headers", () => {

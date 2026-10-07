@@ -850,8 +850,8 @@ export const insertWebstudioFragmentCopy = ({
     ) {
       continue;
     }
-    const isNativeFormSubmission =
-      prop.name === "submission" &&
+    const isNativeFormAction =
+      prop.name === "action" &&
       fragmentInstances.get(prop.instanceId)?.component === "NativeForm";
     prop = clonePropForInstance({
       prop: unwrap(prop),
@@ -882,20 +882,14 @@ export const insertWebstudioFragmentCopy = ({
     }
     if (
       prop.type === "json" &&
-      isNativeFormSubmission &&
+      isNativeFormAction &&
       isFormSubmission(prop.value)
     ) {
-      const remapDestination = (id: string) => newDataSourceIds.get(id) ?? id;
-      prop.value = {
-        ...prop.value,
-        destinations: prop.value.destinations.map(remapDestination),
-        ...(prop.value.disabledDestinations === undefined
-          ? {}
-          : {
-              disabledDestinations:
-                prop.value.disabledDestinations.map(remapDestination),
-            }),
-      };
+      prop.value = prop.value.map((action) => ({
+        ...action,
+        dataSourceId:
+          newDataSourceIds.get(action.dataSourceId) ?? action.dataSourceId,
+      }));
     }
     if (prop.type === "resource") {
       const newResourceId = createId();

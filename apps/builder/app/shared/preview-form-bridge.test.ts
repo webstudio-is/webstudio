@@ -151,3 +151,96 @@ test("failed persistence returns an error without reaching the Preview endpoint"
   expect(builderFetch).not.toHaveBeenCalled();
   unsubscribe();
 });
+
+test("live Preview values update Builder memory without submitting or saving", async () => {
+  const { publish } = await import("./pubsub");
+  const { $livePreviewFormValues } = await import("./preview-form-values");
+  const cleanup = subscribePreviewFormRequests(publish);
+  try {
+    publish({
+      type: "previewFormValues",
+      payload: {
+        formId: "form",
+        values: { text: "", choice: "first", flag: [] },
+      },
+    });
+    expect($livePreviewFormValues.get().get("form")).toEqual({
+      text: "",
+      choice: "first",
+      flag: [],
+    });
+    publish({
+      type: "previewFormValues",
+      payload: {
+        formId: "form",
+        values: { text: "typed", choice: "second", flag: ["yes"] },
+      },
+    });
+    expect($livePreviewFormValues.get().get("form")).toEqual({
+      text: "typed",
+      choice: "second",
+      flag: ["yes"],
+    });
+    expect(builderFetch).not.toHaveBeenCalled();
+    publish({
+      type: "previewFormValues",
+      payload: { formId: "form", values: null },
+    });
+    expect($livePreviewFormValues.get().has("form")).toBe(false);
+  } finally {
+    cleanup();
+  }
+});
+
+test.each(["network", "draft"])(
+  "a caught %s failure clears that Form's previous inspected exchange",
+  async (failure) => {
+    const { $previewFormExchanges, recordPreviewFormExchanges } =
+      await import("./preview-form-inspection");
+    const exchange = {
+      resourceId: "previous",
+      kind: "http" as const,
+      request: {
+        method: "POST",
+        url: "https://example.com",
+        headers: [],
+        body: { old: true },
+        truncated: false,
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: [],
+        body: { old: true },
+        truncated: false,
+      },
+    };
+    recordPreviewFormExchanges("form", [exchange]);
+    recordPreviewFormExchanges("other-form", [
+      { ...exchange, resourceId: "other" },
+    ]);
+    if (failure === "draft") {
+      draftPersistence.begin("project", "failed-edit");
+      draftPersistence.complete("project", "failed-edit", false);
+    } else {
+      vi.mocked(builderFetch).mockRejectedValueOnce(
+        new Error("Fixture network failure")
+      );
+    }
+    const unsubscribe = subscribePreviewFormRequests(sendToCanvas);
+    try {
+      const result = await submitPreviewForm({
+        values: {},
+        managedFormId: "form",
+        path: "/contact",
+        signal: new AbortController().signal,
+      });
+      expect(result.success).toBe(false);
+      expect($previewFormExchanges.get().has("previous")).toBe(false);
+      expect($previewFormExchanges.get().has("other")).toBe(true);
+    } finally {
+      unsubscribe();
+      $previewFormExchanges.set(new Map());
+    }
+  }
+);

@@ -23,6 +23,7 @@ import {
   getIndexesWithinAncestors,
   elementComponent,
   isFormSubmission,
+  resolveManagedFormErrorSlot,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
 import {
@@ -250,11 +251,11 @@ export const generateJsxElement = ({
     }
     propsByGeneratedName.set(name, prop);
   }
-  const submissionProp = propsByGeneratedName.get("submission");
+  const actionProp = propsByGeneratedName.get("action");
   if (
     instance.component === "NativeForm" &&
-    submissionProp?.type === "json" &&
-    isFormSubmission(submissionProp.value)
+    actionProp?.type === "json" &&
+    isFormSubmission(actionProp.value)
   ) {
     generatedProps += `\ndata-ws-managed-form-id=${JSON.stringify(instance.id)}`;
   }
@@ -495,10 +496,15 @@ export const generateJsxChildren = ({
     }
     if (child.type === "id") {
       const instanceId = child.value;
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
+      const authoredInstance = instances.get(instanceId);
+      if (authoredInstance === undefined) {
         continue;
       }
+      const instance = resolveManagedFormErrorSlot(
+        authoredInstance,
+        instances,
+        dataSources
+      );
       const publishedContent = publishedContentBlocks?.get(instance.id);
       let generatedInstanceChildren: string;
       if (contentBodyOverride?.instanceId === instance.id) {
@@ -517,6 +523,17 @@ export const generateJsxChildren = ({
           excludePlaceholders,
           publishedContentBlocks,
         });
+      } else if (
+        instance !== authoredInstance &&
+        instance.children[0].type === "expression"
+      ) {
+        const errorsExpression = generateExpression({
+          expression: instance.children[0].value,
+          dataSources,
+          usedDataSources,
+          scope,
+        });
+        generatedInstanceChildren = `{renderText(${errorsExpression}?.map((error: any) => error?.message).join("\\n"))}\n`;
       } else if (publishedContent === undefined) {
         generatedInstanceChildren = generateJsxChildren({
           classesMap,

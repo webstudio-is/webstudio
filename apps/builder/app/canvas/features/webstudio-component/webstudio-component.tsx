@@ -1,3 +1,7 @@
+import { resolveManagedFormErrorSlot } from "@webstudio-is/sdk";
+import { $isPreviewMode } from "~/shared/nano-states";
+import { publish } from "~/shared/pubsub";
+import { readPreviewFormValues } from "~/shared/preview-form-values";
 import { parseError } from "~/shared/error/error-parse";
 import {
   useEffect,
@@ -63,7 +67,7 @@ import {
   $selectedInstanceRenderState,
   $selectedPageHash,
 } from "~/shared/nano-states";
-import { $project, $props } from "~/shared/sync/data-stores";
+import { $project, $props, $dataSources } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import {
@@ -80,6 +84,7 @@ import { $currentSystem } from "~/shared/system";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   createInstanceChildrenElements,
+  createManagedFormErrorElements,
   type WebstudioComponentProps,
 } from "~/canvas/elements";
 import { Block } from "../build-mode/block";
@@ -202,10 +207,66 @@ const PreviewNativeForm = forwardRef<
 >((props, ref) => {
   const system = useStore($currentSystem);
   const { hash } = useStore($selectedPageHash);
+  const formRef = useRef<HTMLFormElement>(null);
+  const isPreviewMode = useStore($isPreviewMode);
+  const wasPreviewMode = useRef(isPreviewMode);
+  const { onStateChange, state } = props;
+  const [revision, setRevision] = useState(0);
+  useLayoutEffect(() => {
+    if (wasPreviewMode.current && !isPreviewMode) {
+      onStateChange?.("initial");
+      if (state === undefined) {
+        setRevision((value) => value + 1);
+      }
+    }
+    wasPreviewMode.current = isPreviewMode;
+  }, [isPreviewMode, onStateChange, state]);
+  const formId = props["data-ws-managed-form-id"];
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form || !formId) {
+      return;
+    }
+    let active = true;
+    const send = () =>
+      queueMicrotask(() => {
+        if (active) {
+          publish({
+            type: "previewFormValues",
+            payload: { formId, values: readPreviewFormValues(form) },
+          });
+        }
+      });
+    form.addEventListener("input", send);
+    form.addEventListener("change", send);
+    const observer = new MutationObserver(send);
+    observer.observe(form, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: [
+        "value",
+        "checked",
+        "selected",
+        "disabled",
+        "name",
+        "type",
+      ],
+    });
+    send();
+    return () => {
+      active = false;
+      observer.disconnect();
+      form.removeEventListener("input", send);
+      form.removeEventListener("change", send);
+      publish({ type: "previewFormValues", payload: { formId, values: null } });
+    };
+  }, [formId, revision]);
   return (
     <NativeForm
+      key={revision}
       {...props}
-      ref={ref}
+      ref={mergeRefs(ref, formRef)}
       navigationToken={getPreviewCurrentUrl(system, hash).href}
     />
   );
@@ -769,6 +830,12 @@ const WebstudioComponentCanvasInner = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
+  const dataSources = useStore($dataSources);
+  const resolvedInstance = resolveManagedFormErrorSlot(
+    instance,
+    instances,
+    dataSources
+  );
   const allProps = useStore($props);
   const externalContentRoots = useStore($externalContentRoots);
   const metas = useStore($registeredComponentMetas);
@@ -780,14 +847,19 @@ const WebstudioComponentCanvasInner = forwardRef<
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
   const children =
-    getTextContent(instanceProps) ??
-    createInstanceChildrenElements({
-      instances,
-      instanceSelector,
-      children: instance.children,
-      Component: WebstudioComponentCanvas,
-      components,
-    });
+    resolvedInstance !== instance
+      ? createManagedFormErrorElements(
+          resolvedInstance.children[0].value,
+          instanceSelector
+        )
+      : (getTextContent(instanceProps) ??
+        createInstanceChildrenElements({
+          instances,
+          instanceSelector,
+          children: instance.children,
+          Component: WebstudioComponentCanvas,
+          components,
+        }));
   /**
    * Prevents edited element from having a size of 0 on the first render.
    * Directly using `children` in Text Edit

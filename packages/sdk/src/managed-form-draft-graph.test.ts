@@ -166,7 +166,7 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
   const projectMeta = { contactEmail: "team@example.com" };
   const input = {
     formId: "form",
-    destinationDataSourceIds: ["http-source", "email-source"],
+    destinationDataSourceIds: ["email-source", "http-source"],
     instances,
     dataSources,
     resources,
@@ -210,7 +210,16 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
       values: { system: unknown; formData: unknown; browserInfo: unknown }
     ) => ResourceRequestGraph | undefined
   )("form", { system, formData, browserInfo })!;
-  expect(draft.rootIds).toEqual(generated.rootIds);
+  expect(draft.rootIds).toEqual(["email", "http"]);
+  expect(generated.rootIds).toEqual(["email", "http"]);
+  for (const graph of [draft, generated]) {
+    expect(
+      graph.resources.find((resource) => resource.id === "email")?.name
+    ).toBe("Email");
+    expect(
+      graph.resources.find((resource) => resource.id === "http")?.name
+    ).toBe("Webhook");
+  }
   for (const id of draft.rootIds) {
     const draftRequest = draft.resources
       .find((resource) => resource.id === id)!

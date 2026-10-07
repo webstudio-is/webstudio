@@ -118,10 +118,7 @@ export const validateDataVariableName = (
   const dataSources = $dataSources.get();
   const currentVariable = variableId ? dataSources.get(variableId) : undefined;
   const actualScopeInstanceId =
-    scopeInstanceId ??
-    (currentVariable?.type === "variable"
-      ? currentVariable.scopeInstanceId
-      : undefined);
+    scopeInstanceId ?? currentVariable?.scopeInstanceId;
   return validateDataVariableNameWithSources({
     dataSources: dataSources.values(),
     name,
@@ -269,14 +266,14 @@ export const DeleteUnusedDataVariablesDialog = () => {
           event.stopPropagation();
         }}
       >
-        <DialogTitle>Delete unused data variables</DialogTitle>
+        <DialogTitle>Delete unused variables</DialogTitle>
         <PanelContent as={Flex} gap="3" direction="column">
           {unusedVariables.length === 0 ? (
-            <Text>There are no unused data variables to delete.</Text>
+            <Text>There are no unused variables to delete.</Text>
           ) : (
             <>
               <Text>
-                Delete {unusedVariables.length} unused data{" "}
+                Delete {unusedVariables.length} unused{" "}
                 {unusedVariables.length === 1 ? "variable" : "variables"} from
                 the project?
               </Text>
@@ -304,10 +301,10 @@ export const DeleteUnusedDataVariablesDialog = () => {
                 const deletedCount = deleteUnusedDataVariables();
                 handleClose();
                 if (deletedCount === 0) {
-                  toast.info("No unused data variables to delete");
+                  toast.info("No unused variables to delete");
                 } else {
                   toast.success(
-                    `Deleted ${deletedCount} unused data ${deletedCount === 1 ? "variable" : "variables"}`
+                    `Deleted ${deletedCount} unused ${deletedCount === 1 ? "variable" : "variables"}`
                   );
                 }
               }}

@@ -127,7 +127,7 @@ export const DataVariablesGroup = ({
         name="dataVariable"
         heading={
           <CommandGroupHeading>
-            Data variables ({options.length})
+            Variables ({options.length})
           </CommandGroupHeading>
         }
         actions={[

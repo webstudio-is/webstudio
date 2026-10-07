@@ -1,3 +1,4 @@
+import { $previewFormExchanges } from "~/shared/preview-form-inspection";
 import { z } from "zod";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -15,7 +16,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
+import { AlertIcon, CopyIcon, RefreshIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
@@ -63,6 +64,7 @@ import { $dataSources } from "~/shared/sync/data-stores";
 import { $resources, $instances, $props } from "~/shared/sync/data-stores";
 import {
   $selectedInstance,
+  $selectedPage,
   $selectedInstanceKeyWithRoot,
 } from "~/shared/nano-states";
 import {
@@ -74,6 +76,7 @@ import {
 } from "~/shared/code-editor-base";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
+  findAvailableVariables,
   createDataVariableValueFromInput,
   createResourceValueFromFormData,
   findUnsetVariableNames,
@@ -83,7 +86,6 @@ import {
 import { parseJsonExpression } from "@webstudio-is/expression";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
-  EmailResourceForm,
   GraphqlResourceForm,
   ResourceForm,
   SystemResourceForm,
@@ -102,6 +104,7 @@ import {
   loadResourceDiagnostics,
 } from "~/shared/resources";
 import { Row } from "./shared";
+import { VariableMenu } from "./variable-menu";
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import {
   clearSettledDiagnosticsKey,
@@ -138,12 +141,41 @@ const NameField = ({
     [variable, scopeInstanceId]
   );
   const [value, setValue] = useState(defaultValue);
+  const instances = useStore($instances);
+  const dataSources = useStore($dataSources);
+  const shadowed = scopeInstanceId
+    ? [
+        ...findAvailableVariables({
+          startingInstanceId: scopeInstanceId,
+          instances,
+          dataSources: new Map(
+            [...dataSources].filter(
+              ([, source]) => source.scopeInstanceId !== scopeInstanceId
+            )
+          ),
+        }).values(),
+      ].find(
+        (source) =>
+          source.scopeInstanceId !== scopeInstanceId && source.name === value
+      )
+    : undefined;
   useEffect(() => {
     ref.current?.setCustomValidity(validateName(value));
   }, [value, validateName]);
   return (
     <Grid gap={1}>
-      <Label htmlFor={nameId}>Name</Label>
+      <Flex gap="1" align="center">
+        <Label htmlFor={nameId}>Name</Label>
+        {shadowed && (
+          <Tooltip
+            content={`This name shadows a variable from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Both variables are allowed.`}
+          >
+            <span style={{ color: "#e8b400", display: "flex" }}>
+              <AlertIcon />
+            </span>
+          </Tooltip>
+        )}
+      </Flex>
       <InputErrorsTooltip errors={error ? [error] : undefined}>
         <Combobox<string>
           inputRef={ref}
@@ -296,33 +328,6 @@ const TypeField = ({
     </Grid>
   );
 };
-
-const SystemResourceKindField = ({
-  value,
-  onChange,
-}: {
-  value: "system-resource" | "email-resource";
-  onChange: (value: VariableType) => void;
-}) => (
-  <Row>
-    <Grid gap="1">
-      <Label>System resource</Label>
-      <Select<"system-resource" | "email-resource">
-        options={["system-resource", "email-resource"]}
-        getLabel={(option: "system-resource" | "email-resource") =>
-          option === "email-resource" ? "Email" : "Webstudio data"
-        }
-        getDescription={(option: "system-resource" | "email-resource") =>
-          option === "email-resource"
-            ? "Send a plain-text email through Webstudio Cloud when a Form is submitted."
-            : "Use data provided by Webstudio."
-        }
-        value={value}
-        onChange={onChange}
-      />
-    </Grid>
-  </Row>
-);
 
 type PanelApi = {
   save: (formData: FormData) => void | false | { dataSourceId: string };
@@ -620,13 +625,6 @@ const VariablePanelForm = forwardRef<
               <TypeField value={variableType} onChange={onVariableTypeChange} />
             </Row>
           )}
-          {(variableType === "system-resource" ||
-            variableType === "email-resource") && (
-            <SystemResourceKindField
-              value={variableType}
-              onChange={onVariableTypeChange}
-            />
-          )}
           {variableType === "parameter" && (
             <ParameterForm ref={ref} variable={variable} />
           )}
@@ -677,13 +675,6 @@ const VariablePanelForm = forwardRef<
               onChange={onResourceChange}
             />
           )}
-          {variableType === "email-resource" && (
-            <EmailResourceForm
-              ref={ref}
-              variable={variable}
-              onChange={onResourceChange}
-            />
-          )}
           {variableType === "graphql-resource" && (
             <GraphqlResourceForm
               ref={ref}
@@ -691,9 +682,15 @@ const VariablePanelForm = forwardRef<
               onChange={onResourceChange}
             />
           )}
-          {variableType === "system-resource" && (
+          {(variableType === "system-resource" ||
+            variableType === "email-resource") && (
             <SystemResourceForm
               ref={ref}
+              onKindChange={(kind) =>
+                onVariableTypeChange(
+                  kind === "email" ? "email-resource" : "system-resource"
+                )
+              }
               variable={variable}
               onChange={onResourceChange}
               querySourceContainer={querySourceContainer}
@@ -744,6 +741,12 @@ const VariablePreview = ({
   const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
   const variableValues = useStore($instanceVariableValues);
+  const lastExchanges = useStore($previewFormExchanges);
+  const inspection =
+    variable?.type === "resource"
+      ? lastExchanges.get(variable.resourceId)
+      : undefined;
+  const latestExchange = inspection?.attempts.at(-1);
   const resourcesCache = useStore($resourcesCache);
   const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
   const resourceDiagnosticsErrorCache = useStore(
@@ -822,7 +825,10 @@ const VariablePreview = ({
       computedValue = variableValue;
     }
   } else if (variableType === "parameter") {
-    computedValue = variable ? variableValues.get(variable.id) : undefined;
+    computedValue = variable
+      ? (resourceScope.variableValues.get(variable.id) ??
+        variableValues.get(variable.id))
+      : undefined;
   } else {
     if (computedResourceRequest) {
       const resourceKey = getResourceKey(computedResourceRequest);
@@ -832,6 +838,16 @@ const VariablePreview = ({
       resourceDiagnosticsError = resourceDiagnosticsErrorCache.get(resourceKey);
       resourcePerformance = resourcePerformanceCache.get(resourceKey);
     }
+  }
+  if (latestExchange) {
+    computedValue = {
+      ...latestExchange.response,
+      ok: latestExchange.response.status < 400,
+      attempts: inspection?.attempts.map(({ response }, index) => ({
+        attempt: index + 1,
+        ...response,
+      })),
+    };
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
   const editorProps = {
@@ -845,7 +861,7 @@ const VariablePreview = ({
     onChange: () => {},
     onChangeComplete: () => {},
   };
-  if (variableType === "email-resource") {
+  if (variableType === "email-resource" && latestExchange === undefined) {
     return (
       <Flex justify="center" align="center" css={{ height: "100%" }}>
         <Text color="subtle">
@@ -880,10 +896,14 @@ const VariablePreview = ({
       )}
     </Grid>
   );
-  if (isResource === false) {
+  if (isResource === false && latestExchange === undefined) {
     return previewContent;
   }
-  const requestErrorDiagnostics = getRequestErrorDiagnostics(computedValue);
+  const requestErrorDiagnostics = getRequestErrorDiagnostics(
+    latestExchange
+      ? { ...latestExchange.response, data: latestExchange.response.body }
+      : computedValue
+  );
   const diagnosticsRequestError = getRequestErrorDiagnostics(
     resourceDiagnosticsError
   );
@@ -895,8 +915,27 @@ const VariablePreview = ({
     );
   return (
     <RequestInspector
+      previewLabel={
+        variableType === "resource" || latestExchange ? "Response" : "Preview"
+      }
+      request={
+        variableType === "resource" || latestExchange ? (
+          <EditorContent
+            {...editorProps}
+            value={formatValue(
+              inspection?.attempts.map(({ request, kind }, index) => ({
+                attempt: index + 1,
+                kind,
+                ...request,
+              })) ?? null
+            )}
+          />
+        ) : undefined
+      }
       queryContainerRef={queryActive ? queryContainerRef : undefined}
-      preview={preview}
+      preview={
+        variableType === "resource" || latestExchange ? previewContent : preview
+      }
       queryPending={queryPending}
       previewPending={previewPending}
       onDiagnosticsOpen={
@@ -940,6 +979,8 @@ const VariablePopoverContent = ({
   onClose: () => void;
 }) => {
   const panelRef = useRef<undefined | PanelApi>(undefined);
+  const selectedInstance = useStore($selectedInstance);
+  const selectedPage = useStore($selectedPage);
   const [queryActive, setQueryActive] = useState(false);
   const [queryPending, setQueryPending] = useState(false);
   const [querySourceContainer, setQuerySourceContainer] =
@@ -1182,6 +1223,18 @@ const VariablePopoverContent = ({
         maximizable
         suffix={
           <DialogTitleActions>
+            {variable && (
+              <VariableMenu
+                variable={variable}
+                canDelete={
+                  !isSystemVariable &&
+                  variable.scopeInstanceId === selectedInstance?.id &&
+                  (variable.type !== "parameter" ||
+                    variable.id === selectedPage?.systemDataSourceId)
+                }
+                onDelete={onClose}
+              />
+            )}
             {(variableType === "resource" ||
               variableType === "graphql-resource") && (
               <Tooltip content="Copy resource as cURL command" side="bottom">
@@ -1300,7 +1353,8 @@ const getReloadableResourceFormData = (form: HTMLFormElement | null) => {
 };
 
 export const __testing__ = {
+  VariablePreview,
+  NameField,
   getReloadableResourceFormData,
   TypeField,
-  SystemResourceKindField,
 };

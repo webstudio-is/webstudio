@@ -18,9 +18,16 @@ const {
 } = __testing__;
 
 test("managed Form hides native form attributes from its property list", () => {
-  expect(isManagedFormProperty("submission")).toBe(true);
+  expect(isManagedFormProperty("action")).toBe(true);
   expect(isManagedFormProperty("successRedirect")).toBe(true);
-  for (const name of ["id", "class", "action", "method", "target", "encType"]) {
+  for (const name of [
+    "id",
+    "class",
+    "submission",
+    "method",
+    "target",
+    "encType",
+  ]) {
     expect(isManagedFormProperty(name)).toBe(false);
   }
 });

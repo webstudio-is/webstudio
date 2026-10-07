@@ -19,10 +19,14 @@ test("Form suppresses native submission attributes", () => {
 test("server rendering blocks an over-limit managed Form", () => {
   const html = renderToStaticMarkup(
     <NativeForm
-      action="https://example.com/old-action"
-      submission={{
-        destinations: ["one", "two", "three", "four", "five", "six"],
-      }}
+      action={[
+        { dataSourceId: "one", enabled: true },
+        { dataSourceId: "two", enabled: true },
+        { dataSourceId: "three", enabled: true },
+        { dataSourceId: "four", enabled: true },
+        { dataSourceId: "five", enabled: true },
+        { dataSourceId: "six", enabled: true },
+      ]}
     >
       <button type="submit">Send</button>
     </NativeForm>

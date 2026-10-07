@@ -38,6 +38,7 @@ import {
 } from "~/shared/sync/data-stores";
 import { type ControlProps } from "../shared";
 import { FieldLabel } from "../property-label";
+import { showVariable } from "../variable-navigation";
 
 const ActionItem = ({
   id,
@@ -66,6 +67,11 @@ const ActionItem = ({
       draggable
       active={active}
       hidden={!isEnabled}
+      onClick={() => {
+        if (isResource) {
+          showVariable(id);
+        }
+      }}
       label={
         <Text variant="labels" truncate>
           {name}
@@ -80,6 +86,7 @@ const ActionItem = ({
               pressed={!isEnabled}
               aria-label={`${isEnabled ? "Disable" : "Enable"} action ${name}`}
               icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
+              onClick={(event) => event.stopPropagation()}
               onPressedChange={onToggle}
             />
           </Tooltip>
@@ -88,7 +95,10 @@ const ActionItem = ({
             variant="destructive"
             aria-label={`Remove action ${name}`}
             icon={<MinusIcon />}
-            onClick={onRemove}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove();
+            }}
           />
         </>
       }
@@ -107,10 +117,8 @@ export const FormSubmissionControl = ({
   const invalidSavedValue =
     prop !== undefined &&
     (prop.type !== "json" || isFormSubmission(prop.value) === false);
-  const submission: FormSubmission =
-    prop?.type === "json" && isFormSubmission(prop.value)
-      ? prop.value
-      : { destinations: [] };
+  const action: FormSubmission =
+    prop?.type === "json" && isFormSubmission(prop.value) ? prop.value : [];
   const resources = findAvailableVariables({
     startingInstanceId: instanceId,
     instances,
@@ -125,52 +133,60 @@ export const FormSubmissionControl = ({
   const update = (next: FormSubmission) =>
     onChange({ type: "json", value: next });
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
-    items: submission.destinations.map((id) => ({ id })),
+    items: action.map(({ dataSourceId }) => ({ id: dataSourceId })),
     onSort: (newIndex, oldIndex) => {
-      const destinations = [...submission.destinations];
+      const destinations = [...action];
       const [moved] = destinations.splice(oldIndex, 1);
       destinations.splice(newIndex, 0, moved);
-      update({ ...submission, destinations });
+      update(destinations);
     },
   });
   const error = invalidSavedValue
-    ? "Invalid Form submission settings"
-    : validateFormSubmission(submission);
+    ? "Invalid Form action settings"
+    : validateFormSubmission(action);
 
   return (
     <Box>
       <Flex align="center" justify="between">
         <FieldLabel
-          resettable={invalidSavedValue || submission.destinations.length > 0}
-          onReset={() => update({ destinations: [] })}
+          resettable={invalidSavedValue || action.length > 0}
+          onReset={() => update([])}
         >
           Action
         </FieldLabel>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SmallIconButton
-              aria-label="Add action"
-              disabled={
-                submission.destinations.length >= maxFormDestinations ||
-                resources.length === 0
-              }
-              icon={<PlusIcon />}
-            />
-          </DropdownMenuTrigger>
+          <Tooltip content="Add an in-scope HTTP, GraphQL, or Email Resource.">
+            <span style={{ display: "flex" }}>
+              <DropdownMenuTrigger asChild>
+                <SmallIconButton
+                  aria-label="Add action"
+                  disabled={
+                    action.length >= maxFormDestinations ||
+                    resources.length === 0
+                  }
+                  icon={<PlusIcon />}
+                />
+              </DropdownMenuTrigger>
+            </span>
+          </Tooltip>
           <DropdownMenuContent>
             {resources.map((variable) => (
               <DropdownMenuItem
                 key={variable.id}
-                disabled={submission.destinations.includes(variable.id)}
+                disabled={action.some(
+                  ({ dataSourceId }) => dataSourceId === variable.id
+                )}
                 onSelect={() => {
                   if (
-                    submission.destinations.length < maxFormDestinations &&
-                    !submission.destinations.includes(variable.id)
+                    action.length < maxFormDestinations &&
+                    !action.some(
+                      ({ dataSourceId }) => dataSourceId === variable.id
+                    )
                   ) {
-                    update({
-                      ...submission,
-                      destinations: [...submission.destinations, variable.id],
-                    });
+                    update([
+                      ...action,
+                      { dataSourceId: variable.id, enabled: true },
+                    ]);
                   }
                 }}
               >
@@ -182,7 +198,7 @@ export const FormSubmissionControl = ({
       </Flex>
       <Box css={{ py: theme.spacing[2] }}>
         <Flex direction="column" gap="2">
-          {submission.destinations.length > 0 && (
+          {action.length > 0 && (
             <CssValueListArrowFocus dragItemId={dragItemId}>
               <Grid
                 ref={sortableRefCallback}
@@ -190,38 +206,25 @@ export const FormSubmissionControl = ({
                   marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
                 }}
               >
-                {submission.destinations.map((id, index) => (
+                {action.map(({ dataSourceId: id, enabled }, index) => (
                   <ActionItem
                     key={id}
                     id={id}
                     index={index}
                     variable={dataSources.get(id)}
-                    isEnabled={!submission.disabledDestinations?.includes(id)}
+                    isEnabled={enabled}
                     active={dragItemId === id}
-                    onToggle={() => {
-                      const disabled = new Set(submission.disabledDestinations);
-                      if (disabled.has(id)) {
-                        disabled.delete(id);
-                      } else {
-                        disabled.add(id);
-                      }
-                      update({
-                        ...submission,
-                        disabledDestinations:
-                          disabled.size === 0 ? undefined : [...disabled],
-                      });
-                    }}
+                    onToggle={() =>
+                      update(
+                        action.map((item) =>
+                          item.dataSourceId === id
+                            ? { ...item, enabled: !item.enabled }
+                            : item
+                        )
+                      )
+                    }
                     onRemove={() =>
-                      update({
-                        ...submission,
-                        destinations: submission.destinations.filter(
-                          (selected) => selected !== id
-                        ),
-                        disabledDestinations:
-                          submission.disabledDestinations?.filter(
-                            (selected) => selected !== id
-                          ),
-                      })
+                      update(action.filter((item) => item.dataSourceId !== id))
                     }
                   />
                 ))}

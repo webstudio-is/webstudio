@@ -107,24 +107,21 @@ test("deleting a Resource removes it from a new Form's destinations", () => {
     url: '"https://example.com"',
     headers: [],
   });
-  data.props.set("submission", {
-    id: "submission",
+  data.props.set("action", {
+    id: "action",
     instanceId: "formId",
-    name: "submission",
+    name: "action",
     type: "json",
-    value: {
-      destinations: ["resourceVariable", "otherResourceVariable"],
-      disabledDestinations: ["resourceVariable"],
-    },
+    value: [
+      { dataSourceId: "resourceVariable", enabled: false },
+      { dataSourceId: "otherResourceVariable", enabled: true },
+    ],
   });
 
   deleteVariableMutable(data, "resourceVariable");
 
-  expect(data.props.get("submission")).toMatchObject({
-    value: {
-      destinations: ["otherResourceVariable"],
-      disabledDestinations: [],
-    },
+  expect(data.props.get("action")).toMatchObject({
+    value: [{ dataSourceId: "otherResourceVariable", enabled: true }],
   });
 });
 
@@ -203,12 +200,12 @@ test("Form-scoped Resource bindings and destination survive edit, save, and relo
     url: '"https://example.com/submit"',
     headers: [],
   });
-  data.props.set("submission", {
-    id: "submission",
+  data.props.set("action", {
+    id: "action",
     instanceId: "formId",
-    name: "submission",
+    name: "action",
     type: "json",
-    value: { destinations: ["destination"] },
+    value: [{ dataSourceId: "destination", enabled: true }],
   });
 
   const bodyExpression = `({ email: ${encodeDataVariableId("formData")}.email })`;
@@ -256,8 +253,8 @@ test("Form-scoped Resource bindings and destination survive edit, save, and relo
     resourceId: "resource",
     scopeInstanceId: "formId",
   });
-  expect(reloadedProps.get("submission")).toMatchObject({
-    value: { destinations: ["destination"] },
+  expect(reloadedProps.get("action")).toMatchObject({
+    value: [{ dataSourceId: "destination", enabled: true }],
   });
 });
 
@@ -442,7 +439,10 @@ test("validate data variable name", () => {
       name: "existingResource",
       scopeInstanceId: "instance-1",
     })
-  ).toBeUndefined();
+  ).toEqual({
+    type: "duplicate",
+    message: "Name is already used by another variable on this instance",
+  });
   expect(
     validateDataVariableNameWithSources({
       dataSources: [
@@ -4179,14 +4179,11 @@ describe("resource patch helpers", () => {
 
   test("guards a Form destination and removes its selection on forced deletion", () => {
     const submission: Prop = {
-      id: "submission",
+      id: "action",
       instanceId: "form",
-      name: "submission",
+      name: "action",
       type: "json",
-      value: {
-        destinations: ["data-source"],
-        disabledDestinations: ["data-source"],
-      },
+      value: [{ dataSourceId: "data-source", enabled: false }],
     };
     const dataSource: DataSource = {
       id: "data-source",
@@ -4214,8 +4211,8 @@ describe("resource patch helpers", () => {
       patches: [
         {
           op: "replace",
-          path: ["submission", "value"],
-          value: { destinations: [], disabledDestinations: [] },
+          path: ["action", "value"],
+          value: [],
         },
       ],
     });

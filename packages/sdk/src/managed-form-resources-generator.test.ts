@@ -1209,49 +1209,91 @@ test("an external Resource can be selected without gaining access to Form data",
   ).toBeUndefined();
 });
 
-test("a Form-scoped destination defaults its POST body to all formData", () => {
-  const formData = { name: "Ada", interests: ["design", "code"] };
-  const graph = getGeneratedGraph({
-    instances: new Map([
-      [
-        "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
-      ],
-    ]),
-    dataSources: new Map([
-      [
-        "destination",
-        {
-          id: "destination",
-          type: "resource",
-          scopeInstanceId: "form",
-          name: "Destination",
-          resourceId: "submit",
-        },
-      ],
-    ]),
-    resources: new Map([
-      [
-        "submit",
-        {
-          id: "submit",
-          name: "Submit",
-          method: "get",
-          url: '"https://example.com/submit"',
-          headers: [],
-          bodyFormat: "json",
-        },
-      ],
-    ]),
-    forms: [{ formId: "form", destinationDataSourceIds: ["destination"] }],
-  })("form", { system: {}, formData, browserInfo: {} });
+test.each(["form", "page", undefined])(
+  "an Action defined on %s defaults its POST body to submitted formData in draft and published graphs",
+  async (scopeInstanceId) => {
+    const { createManagedFormDraftGraph } =
+      await import("./managed-form-draft-graph");
+    const formData = { name: "Ada", interests: ["design", "code"] };
+    const input: Parameters<typeof getGeneratedGraph>[0] = {
+      instances: new Map([
+        [
+          "page",
+          {
+            type: "instance" as const,
+            id: "page",
+            component: "Body",
+            children: [{ type: "id" as const, value: "form" }],
+          },
+        ],
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "destination",
+          {
+            id: "destination",
+            type: "resource",
+            scopeInstanceId,
+            name: "Destination",
+            resourceId: "submit",
+          },
+        ],
+      ]),
+      resources: new Map([
+        [
+          "submit",
+          {
+            id: "submit",
+            name: "Submit",
+            method: "get",
+            url: '"https://example.com/submit"',
+            headers: [],
+            bodyFormat: "json",
+          },
+        ],
+      ]),
+      forms: [{ formId: "form", destinationDataSourceIds: ["destination"] }],
+    };
+    const system = {
+      params: {},
+      search: {},
+      origin: "https://site.example",
+      pathname: "/",
+    };
+    const graph = getGeneratedGraph(input)("form", {
+      system,
+      formData,
+      browserInfo: {},
+    });
+    const draft = createManagedFormDraftGraph({
+      ...input,
+      formId: "form",
+      destinationDataSourceIds: ["destination"],
+      props: new Map(),
+      system,
+      formData,
+      browserInfo: {},
+      evaluateExpression: (expression) => JSON.parse(expression),
+    });
 
-  expect(graph?.resources[0].createRequest(new Map())).toMatchObject({
-    method: "post",
-    body: formData,
-  });
-  expect(graph?.resources[0].usesDefaultFormBody).toBe(true);
-});
+    for (const current of [graph, draft]) {
+      expect(current?.resources[0].createRequest(new Map())).toMatchObject({
+        method: "post",
+        body: formData,
+      });
+      expect(current?.resources[0].usesDefaultFormBody).toBe(true);
+    }
+  }
+);
 
 test("a shared outside alias cannot promote a Resource into Form scope", () => {
   const instances: Instances = new Map([
@@ -1832,7 +1874,10 @@ test.each([
         }),
         system: input.system,
         configuration: () => ({
-          submission: { destinations: input.destinationDataSourceIds },
+          action: input.destinationDataSourceIds.map((dataSourceId) => ({
+            dataSourceId,
+            enabled: true,
+          })),
           resourceIds: ["http", "visitor"],
         }),
         getGraph: () => graph,
@@ -1998,8 +2043,10 @@ test.each(["http", "email", "visitor"] as const)(
         );
       } else {
         const request = resource.createRequest(new Map());
-        expect(request.body).toBeUndefined();
-        expect(resource.usesDefaultFormBody).toBeFalsy();
+        expect(request.body).toEqual(
+          kind === "http" ? input.formData : undefined
+        );
+        expect(Boolean(resource.usesDefaultFormBody)).toBe(kind === "http");
         if (kind === "email") {
           expect(request.email?.body).toBe("A new form was submitted.");
         }

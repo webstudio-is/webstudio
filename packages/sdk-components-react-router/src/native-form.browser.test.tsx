@@ -26,10 +26,18 @@ test("managed Form posts its server identity and shows the action error", async 
     return {
       success: false,
       status: 502,
-      results: [{ resourceId: "resource-id", status: 422, body: "Rejected" }],
+      results: [
+        {
+          resourceId: "resource-id",
+          resourceName: "resource-id",
+          status: 422,
+          body: "Rejected",
+        },
+      ],
       errors: [
         {
           resourceId: "resource-id",
+          resourceName: "resource-id",
           status: 422,
           body: "Rejected",
           message: "Resource request failed (422)",
@@ -47,7 +55,7 @@ test("managed Form posts its server identity and shows the action error", async 
         element: (
           <NativeForm
             data-ws-managed-form-id="form-instance"
-            submission={{ mode: "resources", destinations: ["resource-id"] }}
+            action={[{ dataSourceId: "resource-id", enabled: true }]}
             onStateChange={(state) => stateChanges.push(state)}
             onResultChange={(result) => resultChanges.push(result)}
           >
@@ -127,7 +135,14 @@ test("managed Form reports success after the action succeeds", async () => {
   const action = vi.fn(async () => ({
     success: true,
     status: 200,
-    results: [{ resourceId: "resource-id", status: 201, body: { id: 1 } }],
+    results: [
+      {
+        resourceId: "resource-id",
+        resourceName: "resource-id",
+        status: 201,
+        body: { id: 1 },
+      },
+    ],
     errors: [],
   }));
   vi.stubGlobal("fetch", async () => Response.json(await action()));
@@ -138,7 +153,7 @@ test("managed Form reports success after the action succeeds", async () => {
         element: (
           <NativeForm
             data-ws-managed-form-id="form-instance"
-            submission={{ destinations: ["resource-id"] }}
+            action={[{ dataSourceId: "resource-id", enabled: true }]}
             onStateChange={(state) => stateChanges.push(state)}
             onResultChange={(result) => resultChanges.push(result)}
           >

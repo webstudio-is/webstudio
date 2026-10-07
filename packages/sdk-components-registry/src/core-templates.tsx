@@ -46,6 +46,7 @@ const formState = new Variable("formState", "initial");
 const formStatus = new Variable("status", 0);
 const formResults = new Variable("results", []);
 const formErrors = new Variable("errors", []);
+const formError = new Parameter("collectionItem");
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
   ({ resolutionKey }) => resolutionKey === "element:li"
@@ -261,8 +262,12 @@ export const coreTemplates = {
         )}
         {setInstanceMeta(
           { label: "Error Message" },
-          <div ws:show={expression`${formState} === 'error'`}>
-            {new PlaceholderValue("Sorry, something went wrong.")}
+          <div ws:show={expression`${formState} === 'error'`} role="alert">
+            <ws.collection data={expression`${formErrors}`} item={formError}>
+              <div>
+                {expression`${formError}.message` as unknown as ReactNode}
+              </div>
+            </ws.collection>
           </div>
         )}
       </NativeForm>

@@ -165,7 +165,6 @@ export const generateManagedFormResources = ({
         const defaultFormBody =
           resource.control !== "email" &&
           rootIds.includes(resourceId) &&
-          formBoundResourceIds.has(resourceId) &&
           (resource.body === undefined || resource.body.length === 0)
             ? `        body: ${propsName}.${formDataParameterName},\n`
             : "";
@@ -265,12 +264,11 @@ export const generateManagedFormResources = ({
         const usesDefaultFormBody =
           resource.control !== "email" &&
           rootIds.includes(resourceId) &&
-          formBoundResourceIds.has(resourceId) &&
           (resource.body === undefined || resource.body.length === 0);
         const emailRecipientCount = emailRecipientCounts.get(resourceId);
         generated += `          { id: ${JSON.stringify(
           resourceId
-        )}, outputName: ${JSON.stringify(
+        )}, name: ${JSON.stringify(resource.name)}, outputName: ${JSON.stringify(
           scope.getName(resourceId, resource.name)
         )}, dependencies: ${JSON.stringify(
           dependenciesById.get(resourceId) ?? []

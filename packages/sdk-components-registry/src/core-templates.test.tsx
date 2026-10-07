@@ -1,6 +1,8 @@
 /** Verifies the registry-owned templates that require real components. */
 import { expect, test } from "vitest";
 import {
+  collectionComponent,
+  encodeDataVariableId,
   blockComponent,
   blockBodyComponent,
   blockTemplateComponent,
@@ -158,4 +160,31 @@ test("generates ordered semantic defaults from their descriptors", () => {
       name: "HtmlEmbed",
     },
   ]);
+});
+
+test("Form Error Message binds all errors through its authored container", () => {
+  const fragment = renderCoreTemplate(coreTemplates.form);
+  const error = fragment.instances.find(
+    ({ label }) => label === "Error Message"
+  )!;
+  const errors = fragment.dataSources?.find(({ name }) => name === "errors")!;
+  const collection = fragment.instances.find(
+    ({ component }) => component === collectionComponent
+  )!;
+  expect(error.children).toContainEqual({ type: "id", value: collection.id });
+  expect(fragment.props).toContainEqual(
+    expect.objectContaining({
+      instanceId: collection.id,
+      name: "data",
+      type: "expression",
+      value: encodeDataVariableId(errors.id),
+    })
+  );
+  expect(JSON.stringify(error.children)).not.toContain("Sorry");
+  const message = fragment.instances.find(({ children }) =>
+    children.some(
+      (child) => child.type === "expression" && child.value.endsWith(".message")
+    )
+  );
+  expect(message).toBeDefined();
 });

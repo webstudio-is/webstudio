@@ -218,6 +218,8 @@ export const RequestInspector = ({
   queryContainerRef,
   preview,
   diagnostics,
+  request,
+  previewLabel = "Preview",
   queryPending = false,
   previewPending = false,
   diagnosticsPending = false,
@@ -226,6 +228,8 @@ export const RequestInspector = ({
   queryContainerRef?: Ref<HTMLDivElement>;
   preview: ReactNode;
   diagnostics?: ReactNode;
+  request?: ReactNode;
+  previewLabel?: "Preview" | "Response";
   queryPending?: boolean;
   previewPending?: boolean;
   diagnosticsPending?: boolean;
@@ -243,14 +247,25 @@ export const RequestInspector = ({
         borderBottom: `1px solid ${cssVar("--border-default")}`,
       }}
     >
+      {request !== undefined && (
+        <PanelTabsTrigger value="request">Request</PanelTabsTrigger>
+      )}
       {queryContainerRef !== undefined && (
         <PanelTabsTrigger value="query">Query</PanelTabsTrigger>
       )}
-      <PanelTabsTrigger value="preview">Preview</PanelTabsTrigger>
+      <PanelTabsTrigger value="preview">{previewLabel}</PanelTabsTrigger>
       <PanelTabsTrigger value="diagnostics" onClick={onDiagnosticsOpen}>
         Diagnostics
       </PanelTabsTrigger>
     </PanelTabsList>
+    {request !== undefined && (
+      <PanelTabsContent
+        value="request"
+        css={{ flex: 1, position: "relative", overflow: "hidden" }}
+      >
+        {request}
+      </PanelTabsContent>
+    )}
     {queryContainerRef !== undefined && (
       <PanelTabsContent
         value="query"
@@ -276,7 +291,15 @@ export const RequestInspector = ({
       css={{ flex: 1, position: "relative", overflow: "hidden" }}
     >
       {preview}
-      {previewPending && <RequestInspectorLoading label="Loading preview…" />}
+      {previewPending && (
+        <RequestInspectorLoading
+          label={
+            previewLabel === "Response"
+              ? "Loading response…"
+              : "Loading preview…"
+          }
+        />
+      )}
     </PanelTabsContent>
     <PanelTabsContent
       value="diagnostics"

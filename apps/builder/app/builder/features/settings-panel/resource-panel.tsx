@@ -1,3 +1,8 @@
+import { $livePreviewFormValues } from "~/shared/preview-form-values";
+import {
+  getFormDataPreview,
+  getBrowserInfoPreview,
+} from "./form-context-preview";
 import { z } from "zod";
 import { computed } from "nanostores";
 import {
@@ -24,6 +29,8 @@ import {
   isFormSubmission,
   SYSTEM_VARIABLE_ID,
   systemParameter,
+  type Instances,
+  type Props,
   type DataSources,
   type Resource,
   type EmailResourceSettings,
@@ -36,6 +43,7 @@ import {
   getExpressionIdentifiers,
   isLiteralExpression,
   parseStringLiteralExpression,
+  parseJsonExpression,
   parseExpressionObject,
 } from "@webstudio-is/expression";
 import {
@@ -65,7 +73,7 @@ import {
   theme,
   cssVar,
 } from "@webstudio-is/design-system";
-import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { MinusIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $permissions,
@@ -232,9 +240,11 @@ export const UrlField = ({
 export const MethodField = ({
   value,
   onChange,
+  formDestination = false,
 }: {
   value: Resource["method"];
   onChange: (value: Resource["method"]) => void;
+  formDestination?: boolean;
 }) => {
   return (
     <Grid gap={1}>
@@ -242,6 +252,11 @@ export const MethodField = ({
       <Select<Resource["method"]>
         options={["get", "post", "put", "delete"]}
         getLabel={humanizeString}
+        getDescription={() =>
+          formDestination
+            ? "Form submissions use POST. This method applies elsewhere."
+            : undefined
+        }
         name="method"
         value={value}
         onChange={onChange}
@@ -365,7 +380,7 @@ const ExpressionNameValuePair = ({
       <SmallIconButton
         aria-label={`Delete ${kind}`}
         variant="destructive"
-        icon={<TrashIcon />}
+        icon={<MinusIcon />}
         onClick={onDelete}
       />
     </Grid>
@@ -396,12 +411,21 @@ const ExpressionPairs = ({
     <Grid gap={1}>
       <Flex justify="between" align="center">
         <Label>{label}</Label>
-        <SmallIconButton
-          aria-label={`Add another ${kind}`}
-          icon={<PlusIcon />}
-          // Use an empty string expression as the default value.
-          onClick={() => onChange([...values, { name: "", value: `""` }])}
-        />
+        <Tooltip
+          disableHoverableContent={true}
+          content={
+            kind === "header"
+              ? "Add a request header."
+              : "Add a URL search parameter."
+          }
+        >
+          <SmallIconButton
+            aria-label={`Add another ${kind}`}
+            icon={<PlusIcon />}
+            // Use an empty string expression as the default value.
+            onClick={() => onChange([...values, { name: "", value: `""` }])}
+          />
+        </Tooltip>
       </Flex>
       <Grid gap={2}>
         {values.map((item, index) => (
@@ -466,7 +490,20 @@ const CacheMaxAge = ({
 }) => {
   return (
     <Grid gap={1}>
-      <Label htmlFor="resource-panel-max-age">Cache max age</Label>
+      <Flex align="center" css={{ gap: theme.spacing[3] }}>
+        <Label htmlFor="resource-panel-max-age">Cache max age</Label>
+        <Tooltip
+          content="How long Webstudio can cache this Resource's response, in seconds."
+          variant="wrapped"
+          disableHoverableContent={true}
+        >
+          <InfoCircleIcon
+            aria-label="About Cache max age"
+            color={cssVar("--foreground-secondary")}
+            tabIndex={0}
+          />
+        </Tooltip>
+      </Flex>
       <InputField
         id="resource-panel-max-age"
         suffix={
@@ -498,6 +535,9 @@ export const getResourceScopeForInstance = ({
   variableValuesByInstanceSelector,
   includeResourceDataSources = false,
   formScopeInstanceId,
+  instances = new Map(),
+  props = new Map(),
+  liveFormValues = new Map(),
 }: {
   page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
@@ -505,6 +545,9 @@ export const getResourceScopeForInstance = ({
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
   includeResourceDataSources?: boolean;
   formScopeInstanceId?: string;
+  instances?: Instances;
+  props?: Props;
+  liveFormValues?: ReadonlyMap<string, Record<string, unknown>>;
 }) => {
   const scope: Record<string, unknown> = {};
   const aliases = new Map<string, string>();
@@ -547,13 +590,9 @@ export const getResourceScopeForInstance = ({
       const name = encodeDataVariableId(dataSource.id);
       const value =
         dataSource.name === formDataParameterName
-          ? {}
-          : {
-              ip: "",
-              userAgent: "",
-              language: "",
-              referrer: "",
-            };
+          ? (liveFormValues.get(formScopeInstanceId) ??
+            getFormDataPreview(instances, props, formScopeInstanceId))
+          : getBrowserInfoPreview();
       scope[name] = value;
       aliases.set(name, dataSource.name);
       variableValues.set(dataSource.id, value);
@@ -619,13 +658,19 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
             $variableValuesByInstanceSelector,
             $dataSources,
             $resources,
+            $instances,
+            $props,
+            $livePreviewFormValues,
           ],
           (
             page,
             instancePath,
             variableValuesByInstanceSelector,
             dataSources,
-            resources
+            resources,
+            instances,
+            props,
+            liveFormValues
           ) => {
             const variablePathIndex =
               variable === undefined
@@ -651,6 +696,9 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
                 variableValuesByInstanceSelector,
                 includeResourceDataSources: true,
                 formScopeInstanceId,
+                instances,
+                props,
+                liveFormValues,
               });
             // Prevent showing dependencies that would create a cycle.
             const newScope = { ...scope };
@@ -699,10 +747,24 @@ const toMime = (bodyType: BodyType) => {
   }
 };
 
+const getBodyType = (value: unknown): BodyType => {
+  if (typeof value === "string") {
+    return "text";
+  }
+  if (
+    value === null ||
+    typeof value === "object" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return "json";
+  }
+};
+
 const BodyField = ({
   scope,
   aliases,
-  bodyType,
+  hasContentTypeHeader = false,
   bodyFormat,
   value,
   onChangeStart,
@@ -710,23 +772,47 @@ const BodyField = ({
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
-  bodyType: BodyType;
+  hasContentTypeHeader?: boolean;
   bodyFormat: Resource["bodyFormat"];
   value: string;
   onChangeStart?: () => void;
-  onChange: (value: string, bodyType: BodyType) => void;
+  onChange: (value: string) => void;
 }) => {
   const [isBodyLiteral, setIsBodyLiteral] = useState(
     () => value === "" || isLiteralExpression(value)
   );
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(value, scope),
+    [scope, value],
+    parseJsonExpression(value)
+  );
+  const inferredBodyType = getBodyType(evaluatedValue);
+  const [lastBodyType, setLastBodyType] = useState(inferredBodyType);
+  useEffect(() => {
+    if (inferredBodyType !== undefined || value === "") {
+      setLastBodyType(inferredBodyType);
+    }
+  }, [inferredBodyType, value]);
+  // Keep the JSON editor while an in-progress edit is temporarily invalid.
+  const bodyType = inferredBodyType ?? lastBodyType;
   const effectiveBodyType = bodyFormat === "auto" ? bodyType : "json";
   useEffect(() => {
     let canceled = false;
     void validateResourceBodyExpression(value, effectiveBodyType, scope).then(
       async (error) => {
         let validationError: string = error;
+        if (bodyFormat === "auto" && value !== "") {
+          const body = await evaluateExpressionWithinScope(value, scope);
+          if (
+            body === null ||
+            typeof body === "number" ||
+            typeof body === "boolean"
+          ) {
+            validationError = "";
+          }
+        }
         if (error === "" && value !== "" && bodyFormat !== "auto") {
           const body = await evaluateExpressionWithinScope(value, scope);
           validationError =
@@ -750,19 +836,9 @@ const BodyField = ({
       canceled = true;
     };
   }, [value, effectiveBodyType, bodyFormat, scope]);
-  const evaluatedValue = useAsyncValue(
-    () => evaluateExpressionWithinScope(value, scope),
-    [scope, value],
-    undefined
-  );
-  const updateBody = async (newBody: string) => {
+  const updateBody = (newBody: string) => {
     onChangeStart?.();
-    const evaluatedValue = await evaluateExpressionWithinScope(newBody, scope);
-    // automatically add Content-Type: application/json header
-    // when value is object
-    const isBodyObject =
-      typeof evaluatedValue === "object" && evaluatedValue !== null;
-    onChange(newBody, isBodyObject ? "json" : bodyType);
+    onChange(newBody);
   };
   const displayedValue =
     effectiveBodyType === "json"
@@ -774,29 +850,17 @@ const BodyField = ({
   return (
     <Grid gap={1}>
       <Label>Body</Label>
-      {bodyFormat === "auto" && (
-        <Grid gap={1}>
-          <Label>Manual body content type</Label>
-          <Select<BodyType | "">
-            placeholder="Type"
-            value={bodyType ?? ""}
-            options={["text", "json"]}
-            onChange={(newBodyType) => {
-              if (newBodyType) {
-                onChangeStart?.();
-                onChange(value, newBodyType);
-              }
-            }}
-          />
-        </Grid>
-      )}
-      {bodyFormat === "auto" && bodyType && (
+      {bodyFormat === "auto" && bodyType && !hasContentTypeHeader && (
         <>
           <input type="hidden" name="header-name" value="Content-Type" />
           <input
             type="hidden"
             name="header-value"
-            value={`"${toMime(bodyType)}"`}
+            value={
+              isLiteralExpression(value)
+                ? JSON.stringify(toMime(bodyType))
+                : `typeof (${value}) === "string" ? "text/plain" : "application/json"`
+            }
           />
         </>
       )}
@@ -866,7 +930,6 @@ const isContentType = (name: string) => name.toLowerCase() === "content-type";
 
 const parseHeaders = (headers: Resource["headers"]) => {
   let maxAge: undefined | string;
-  let bodyType: BodyType;
   const newHeaders = headers.filter((header) => {
     // cast raw expression result to string
     const value = String(
@@ -885,17 +948,15 @@ const parseHeaders = (headers: Resource["headers"]) => {
     // and preserve other types
     if (isContentType(header.name)) {
       if (value === "application/json") {
-        bodyType = "json";
         return false;
       }
       if (value === "text/plain") {
-        bodyType = "text";
         return false;
       }
     }
     return true;
   });
-  return { headers: newHeaders, maxAge, bodyType };
+  return { headers: newHeaders, maxAge };
 };
 
 export const ResourceForm = forwardRef<
@@ -910,10 +971,10 @@ export const ResourceForm = forwardRef<
     Array.from(props.values()).some(
       (prop) =>
         instances.get(prop.instanceId)?.component === "NativeForm" &&
-        prop.name === "submission" &&
+        prop.name === "action" &&
         prop.type === "json" &&
         isFormSubmission(prop.value) &&
-        prop.value.destinations.includes(variable.id)
+        prop.value.some(({ dataSourceId }) => dataSourceId === variable.id)
     );
 
   const resources = useStore($resources);
@@ -936,7 +997,6 @@ export const ResourceForm = forwardRef<
       : parsedHeaders.headers
   );
   const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
-  const [bodyType, setBodyType] = useState(parsedHeaders.bodyType);
   const [body, setBody] = useState(resource?.body);
   const [bodyFormat, setBodyFormat] = useState<Resource["bodyFormat"]>(
     resource?.bodyFormat ?? "auto"
@@ -970,19 +1030,13 @@ export const ResourceForm = forwardRef<
       <Row>
         <MethodField
           value={method}
+          formDestination={formDestination}
           onChange={(value) => {
             onChange?.();
             setMethod(value);
           }}
         />
       </Row>
-      {formDestination && (
-        <Row>
-          <Text color="subtle">
-            Form submissions use POST. This method applies elsewhere.
-          </Text>
-        </Row>
-      )}
       <Row>
         <UrlField
           autoFocus
@@ -1015,7 +1069,6 @@ export const ResourceForm = forwardRef<
             );
             setMaxAge(parsedHeaders.maxAge);
             setHeaders(parsedHeaders.headers);
-            setBodyType(parsedHeaders.bodyType);
             setBody(JSON.stringify(curl.body));
             setBodyFormat("auto");
           }}
@@ -1062,9 +1115,6 @@ export const ResourceForm = forwardRef<
             if (newHeaders.some(({ name }) => isCacheControl(name))) {
               setMaxAge(undefined);
             }
-            if (newHeaders.some(({ name }) => isContentType(name))) {
-              setBodyType(undefined);
-            }
             setHeaders(newHeaders);
           }}
         />
@@ -1073,15 +1123,31 @@ export const ResourceForm = forwardRef<
         <>
           <Row>
             <Grid gap={1}>
-              <Label htmlFor={bodyFormatId}>Request encoding</Label>
-              <Text color="subtle">
-                Applies to this Resource's POST body, including Form actions.
-                Auto sends JSON or multipart when files are present.
-              </Text>
+              <Flex align="center" css={{ gap: theme.spacing[3] }}>
+                <Label htmlFor={bodyFormatId}>Request body format</Label>
+                <Tooltip
+                  content="Applies to this Resource's POST body, including Form actions. Auto sends JSON or multipart when files are present."
+                  variant="wrapped"
+                  disableHoverableContent={true}
+                >
+                  <InfoCircleIcon
+                    aria-label="About request body format"
+                    color={cssVar("--foreground-secondary")}
+                    tabIndex={0}
+                  />
+                </Tooltip>
+              </Flex>
               <Select<NonNullable<Resource["bodyFormat"]>>
                 id={bodyFormatId}
                 value={bodyFormat ?? "auto"}
                 options={["auto", "json", "multipart"]}
+                getLabel={(value: NonNullable<Resource["bodyFormat"]>) =>
+                  ({
+                    auto: "Auto",
+                    json: "application/json",
+                    multipart: "multipart/form-data",
+                  })[value]
+                }
                 onChange={(value) => {
                   onChange?.();
                   setBodyFormat(value);
@@ -1100,19 +1166,12 @@ export const ResourceForm = forwardRef<
               scope={scope}
               aliases={aliases}
               value={body ?? ""}
-              bodyType={bodyType}
+              hasContentTypeHeader={headers.some(({ name }) =>
+                isContentType(name)
+              )}
               bodyFormat={bodyFormat}
               onChangeStart={onChange}
-              onChange={(newBody, newBodyType) => {
-                setBodyType(newBodyType);
-                // reset header
-                if (newBodyType) {
-                  setHeaders((headers) =>
-                    headers.filter(({ name }) => !isContentType(name))
-                  );
-                }
-                setBody(newBody);
-              }}
+              onChange={setBody}
             />
           </Row>
         </>
@@ -1443,6 +1502,7 @@ EmailResourceForm.displayName = "EmailResourceForm";
 type SystemResourceFormProps = {
   variable?: DataSource;
   onChange?: () => void;
+  onKindChange?: (kind: "system" | "email") => void;
   querySourceContainer?: Element | null;
   onQueryActiveChange?: (active: boolean) => void;
   onQueryPendingChange?: (pending: boolean) => void;
@@ -1467,6 +1527,7 @@ export const SystemResourceForm = forwardRef<
   const {
     variable,
     onChange,
+    onKindChange,
     querySourceContainer,
     onQueryActiveChange,
     onQueryPendingChange,
@@ -1488,6 +1549,12 @@ export const SystemResourceForm = forwardRef<
     description:
       "Loads all project assets by default, with optional filters, sorting, pagination, and file content.",
   };
+  const emailLocalResource = {
+    label: "Email",
+    value: "email",
+    description:
+      "Send a plain-text email through Webstudio Cloud when a Form is submitted.",
+  };
   const localResources = [
     {
       label: "Sitemap",
@@ -1501,9 +1568,13 @@ export const SystemResourceForm = forwardRef<
         "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
     assetsLocalResource,
+    emailLocalResource,
   ];
 
   const [localResource, setLocalResource] = useState(() => {
+    if (resource?.control === "email") {
+      return emailLocalResource;
+    }
     if (isStoredAssetQuery) {
       return assetsLocalResource;
     }
@@ -1513,6 +1584,8 @@ export const SystemResourceForm = forwardRef<
       ) ?? localResources[0]
     );
   });
+  const isEmailResource = localResource.value === emailLocalResource.value;
+  const emailFormApi = useRef<undefined | PanelApi>(undefined);
   const isAssetsResource =
     localResource.value === JSON.stringify(assetsResourceUrl);
   useEffect(() => {
@@ -1524,6 +1597,9 @@ export const SystemResourceForm = forwardRef<
   }, [isAssetsResource, onQueryActiveChange, onQueryPendingChange]);
   useImperativeHandle(ref, () => ({
     save: (formData) => {
+      if (isEmailResource) {
+        return emailFormApi.current?.save(formData) ?? false;
+      }
       if (formData.get("asset-query-valid") === "false") {
         return false;
       }
@@ -1560,12 +1636,16 @@ export const SystemResourceForm = forwardRef<
 
   return (
     <>
-      <input
-        type="hidden"
-        name="method"
-        value={isAssetsResource ? "post" : "get"}
-      />
-      <input type="hidden" name="url" value={localResource.value} />
+      {!isEmailResource && (
+        <>
+          <input
+            type="hidden"
+            name="method"
+            value={isAssetsResource ? "post" : "get"}
+          />
+          <input type="hidden" name="url" value={localResource.value} />
+        </>
+      )}
       <Row>
         <Grid gap={1}>
           <Label htmlFor={resourceId}>Resource</Label>
@@ -1590,10 +1670,20 @@ export const SystemResourceForm = forwardRef<
             onChange={(value) => {
               onChange?.();
               setLocalResource(value);
+              onKindChange?.(
+                value.value === emailLocalResource.value ? "email" : "system"
+              );
             }}
           />
         </Grid>
       </Row>
+      {isEmailResource && (
+        <EmailResourceForm
+          ref={emailFormApi}
+          variable={variable}
+          onChange={onChange}
+        />
+      )}
       {isAssetsResource && (
         <Suspense
           fallback={
@@ -1875,3 +1965,5 @@ export const GraphqlResourceForm = forwardRef<
   );
 });
 GraphqlResourceForm.displayName = "GraphqlResourceForm";
+
+export const __testing__ = { BodyField };

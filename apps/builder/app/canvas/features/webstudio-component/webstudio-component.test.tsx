@@ -250,7 +250,7 @@ test.each(["query", "hash", "params"] as const)(
       await act(async () =>
         root.render(
           <PreviewNativeForm
-            submission={{ destinations: ["resource"] }}
+            action={[{ dataSourceId: "resource", enabled: true }]}
             successRedirect="/done"
             onManagedSubmit={(_values, requestSignal) => {
               signal = requestSignal;

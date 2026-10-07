@@ -3076,13 +3076,13 @@ sitemap.map((page) => page.path);`
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["destination"] },
+              value: [{ dataSourceId: "destination", enabled: true }],
             },
           ],
         ],
@@ -3367,13 +3367,24 @@ sitemap.map((page) => page.path);`
     "rejects invalid managed Form destinations before any request (%s)",
     async (template) => {
       const configurations = [
-        ["empty", { destinations: [] }],
-        ["too-many", { destinations: Array(6).fill("destination") }],
-        ["duplicate", { destinations: ["destination", "destination"] }],
-        ["missing", { destinations: ["missing"] }],
+        ["empty", []],
+        [
+          "too-many",
+          Array(6)
+            .fill("destination")
+            .map((dataSourceId) => ({ dataSourceId, enabled: true })),
+        ],
+        [
+          "duplicate",
+          [
+            { dataSourceId: "destination", enabled: true },
+            { dataSourceId: "destination", enabled: true },
+          ],
+        ],
+        ["missing", [{ dataSourceId: "missing", enabled: true }]],
         ["malformed", { destinations: "destination" }],
         ["native", { mode: "native", destinations: ["destination"] }],
-        ["valid", { destinations: ["destination"] }],
+        ["valid", [{ dataSourceId: "destination", enabled: true }]],
       ] as const;
       const siteData = createSiteData({
         instances: [
@@ -3397,11 +3408,11 @@ sitemap.map((page) => page.path);`
           ),
         ],
         props: configurations.map(([id, value]) => [
-          `${id}-submission`,
+          `${id}-action`,
           {
-            id: `${id}-submission`,
+            id: `${id}-action`,
             instanceId: id,
-            name: "submission",
+            name: "action",
             type: "json",
             value,
           },
@@ -3550,7 +3561,14 @@ sitemap.map((page) => page.path);`
       ).resolves.toEqual({
         success: true,
         status: 200,
-        results: [{ resourceId: "remote", status: 200, body: { ok: true } }],
+        results: [
+          {
+            resourceId: "remote",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { ok: true },
+          },
+        ],
         errors: [],
       });
       expect(outgoingFetch).toHaveBeenCalledOnce();
@@ -3593,13 +3611,13 @@ sitemap.map((page) => page.path);`
           ],
           props: [
             [
-              "submission",
+              "action",
               {
-                id: "submission",
+                id: "action",
                 instanceId: "root",
-                name: "submission",
+                name: "action",
                 type: "json",
-                value: { destinations: [] },
+                value: [],
               },
             ],
           ],
@@ -3760,13 +3778,13 @@ sitemap.map((page) => page.path);`
           ],
           props: [
             [
-              "submission",
+              "action",
               {
-                id: "submission",
+                id: "action",
                 instanceId: "root",
-                name: "submission",
+                name: "action",
                 type: "json",
-                value: { destinations: ["destination"] },
+                value: [{ dataSourceId: "destination", enabled: true }],
               },
             ],
           ],
@@ -3884,7 +3902,12 @@ sitemap.map((page) => page.path);`
           success: true,
           status: 200,
           results: [
-            { resourceId: "remote", status: 201, body: { accepted: true } },
+            {
+              resourceId: "remote",
+              resourceName: expect.any(String),
+              status: 201,
+              body: { accepted: true },
+            },
           ],
           errors: [],
         });
@@ -4019,19 +4042,17 @@ sitemap.map((page) => page.path);`
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: {
-                destinations: [
-                  "http-source",
-                  "project-source",
-                  "custom-source",
-                ],
-              },
+              value: [
+                { dataSourceId: "http-source", enabled: true },
+                { dataSourceId: "project-source", enabled: true },
+                { dataSourceId: "custom-source", enabled: true },
+              ],
             },
           ],
         ],
@@ -4170,13 +4191,13 @@ sitemap.map((page) => page.path);`
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["http-source"] },
+              value: [{ dataSourceId: "http-source", enabled: true }],
             },
           ],
         ],
@@ -4280,13 +4301,13 @@ sitemap.map((page) => page.path);`
       ],
       props: [
         [
-          "submission",
+          "action",
           {
-            id: "submission",
+            id: "action",
             instanceId: "root",
-            name: "submission",
+            name: "action",
             type: "json",
-            value: { destinations: ["destination"] },
+            value: [{ dataSourceId: "destination", enabled: true }],
           },
         ],
       ],
@@ -4361,13 +4382,13 @@ sitemap.map((page) => page.path);`
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["emailDestination"] },
+              value: [{ dataSourceId: "emailDestination", enabled: true }],
             },
           ],
         ],
@@ -4469,13 +4490,13 @@ sitemap.map((page) => page.path);`
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["visitor-source"] },
+              value: [{ dataSourceId: "visitor-source", enabled: true }],
             },
           ],
           [
@@ -4603,13 +4624,13 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["destination"] },
+              value: [{ dataSourceId: "destination", enabled: true }],
             },
           ],
         ],
@@ -4710,13 +4731,16 @@ export const createManagedFormResourceFetch = () => {
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["sibling-source", "failed-source"] },
+              value: [
+                { dataSourceId: "sibling-source", enabled: true },
+                { dataSourceId: "failed-source", enabled: true },
+              ],
             },
           ],
         ],
@@ -4879,11 +4903,13 @@ export const createManagedFormResourceFetch = () => {
         results: [
           {
             resourceId: "sibling",
+            resourceName: expect.any(String),
             status: 200,
             body: { accepted: true },
           },
           {
             resourceId: "failed",
+            resourceName: expect.any(String),
             status: 200,
             body: { accepted: true },
           },
@@ -4898,8 +4924,18 @@ export const createManagedFormResourceFetch = () => {
         success: true,
         status: 200,
         results: [
-          { resourceId: "sibling", status: 200, body: { accepted: true } },
-          { resourceId: "failed", status: 200, body: { accepted: true } },
+          {
+            resourceId: "sibling",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { accepted: true },
+          },
+          {
+            resourceId: "failed",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { accepted: true },
+          },
         ],
         errors: [],
       });
@@ -4915,8 +4951,18 @@ export const createManagedFormResourceFetch = () => {
           success: true,
           status: 200,
           results: [
-            { resourceId: "sibling", status: 200, body: { accepted: true } },
-            { resourceId: "failed", status: 200, body: { accepted: true } },
+            {
+              resourceId: "sibling",
+              resourceName: expect.any(String),
+              status: 200,
+              body: { accepted: true },
+            },
+            {
+              resourceId: "failed",
+              resourceName: expect.any(String),
+              status: 200,
+              body: { accepted: true },
+            },
           ],
           errors: [],
         });
@@ -4932,14 +4978,21 @@ export const createManagedFormResourceFetch = () => {
         results: [
           {
             resourceId: "sibling",
+            resourceName: expect.any(String),
             status: 200,
             body: { accepted: true },
           },
-          { resourceId: "failed", status: 422, body: "Still failed" },
+          {
+            resourceId: "failed",
+            resourceName: expect.any(String),
+            status: 422,
+            body: "Still failed",
+          },
         ],
         errors: [
           {
             resourceId: "failed",
+            resourceName: expect.any(String),
             status: 422,
             body: "Still failed",
             message: "Resource request failed (422)",
@@ -4959,13 +5012,16 @@ export const createManagedFormResourceFetch = () => {
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["valid-source", "denied-source"] },
+              value: [
+                { dataSourceId: "valid-source", enabled: true },
+                { dataSourceId: "denied-source", enabled: true },
+              ],
             },
           ],
         ],
@@ -5079,15 +5135,16 @@ export const createManagedFormResourceFetch = () => {
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: {
-                destinations: ["independent-source", "dependent-source"],
-              },
+              value: [
+                { dataSourceId: "independent-source", enabled: true },
+                { dataSourceId: "dependent-source", enabled: true },
+              ],
             },
           ],
         ],
@@ -5254,15 +5311,16 @@ export const createManagedFormResourceFetch = () => {
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: {
-                destinations: ["form-destination", "browser-destination"],
-              },
+              value: [
+                { dataSourceId: "form-destination", enabled: true },
+                { dataSourceId: "browser-destination", enabled: true },
+              ],
             },
           ],
         ],
@@ -5461,14 +5519,21 @@ export const createManagedFormResourceFetch = () => {
         results: [
           {
             resourceId: "form-resource",
+            resourceName: "Form resource",
             status: 200,
             body: { accepted: true },
           },
-          { resourceId: "browser-resource", status: 422, body: "Rejected" },
+          {
+            resourceId: "browser-resource",
+            resourceName: "Browser resource",
+            status: 422,
+            body: "Rejected",
+          },
         ],
         errors: [
           {
             resourceId: "browser-resource",
+            resourceName: "Browser resource",
             status: 422,
             body: "Rejected",
             message: "Resource request failed (422)",
@@ -5487,13 +5552,13 @@ export const createManagedFormResourceFetch = () => {
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["destination"] },
+              value: [{ dataSourceId: "destination", enabled: true }],
             },
           ],
         ],
@@ -5630,13 +5695,13 @@ export const createManagedFormResourceFetch = () => {
         ],
         props: [
           [
-            "submission",
+            "action",
             {
-              id: "submission",
+              id: "action",
               instanceId: "root",
-              name: "submission",
+              name: "action",
               type: "json",
-              value: { destinations: ["destination"] },
+              value: [{ dataSourceId: "destination", enabled: true }],
             },
           ],
         ],

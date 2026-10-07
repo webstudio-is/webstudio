@@ -136,12 +136,9 @@ test("copying a Form remaps its local Resource destinations", () => {
   data.props.set("formSubmission", {
     id: "formSubmission",
     instanceId: "formId",
-    name: "submission",
+    name: "action",
     type: "json",
-    value: {
-      destinations: ["localResourceVariable"],
-      disabledDestinations: ["localResourceVariable"],
-    },
+    value: [{ dataSourceId: "localResourceVariable", enabled: false }],
   });
 
   const fragment = webstudioFragment.parse(
@@ -157,17 +154,17 @@ test("copying a Form remaps its local Resource destinations", () => {
     ({ id, component }) => id !== "formId" && component === "NativeForm"
   );
   const copiedSubmission = Array.from(data.props.values()).find(
-    ({ instanceId, name }) =>
-      instanceId === copiedForm?.id && name === "submission"
+    ({ instanceId, name }) => instanceId === copiedForm?.id && name === "action"
   );
   expect(copiedSubmission?.type).toBe("json");
   if (copiedSubmission?.type === "json") {
-    const destinationId = (copiedSubmission.value as { destinations: string[] })
-      .destinations[0];
+    const destinationId = (
+      copiedSubmission.value as { dataSourceId: string }[]
+    )[0].dataSourceId;
     expect(destinationId).not.toBe("localResourceVariable");
-    expect(copiedSubmission.value).toMatchObject({
-      disabledDestinations: [destinationId],
-    });
+    expect(copiedSubmission.value).toEqual([
+      { dataSourceId: destinationId, enabled: false },
+    ]);
     expect(data.dataSources.get(destinationId)).toMatchObject({
       scopeInstanceId: copiedForm?.id,
       resourceId: expect.not.stringMatching(/^localResource$/),

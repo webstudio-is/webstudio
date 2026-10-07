@@ -35,12 +35,17 @@ const createSubmissionReference = () =>
 
 export type ManagedFormResult = {
   resourceId: string;
+  resourceName: string;
   status: number;
   body: unknown;
 };
 
-export type ManagedFormError = Omit<ManagedFormResult, "resourceId"> & {
+export type ManagedFormError = Omit<
+  ManagedFormResult,
+  "resourceId" | "resourceName"
+> & {
   resourceId?: string;
+  resourceName?: string;
   message: string;
 };
 
@@ -87,6 +92,7 @@ export const getManagedFormResponse = (
     }
     const result = {
       resourceId,
+      resourceName: resource?.name ?? resource?.outputName ?? resourceId,
       status: outcome.status,
       body: outcome.data,
     };

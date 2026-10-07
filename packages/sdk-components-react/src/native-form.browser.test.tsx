@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
@@ -13,9 +14,8 @@ import {
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 test("an unconfigured Form blocks native navigation", async () => {
-  const action = new URL("/__native_form_submission__", window.location.origin);
   const html = renderToStaticMarkup(
-    <NativeForm action={action.href} method="get">
+    <NativeForm method="get">
       <input name="email" type="email" required />
       <button type="submit">Send</button>
     </NativeForm>
@@ -53,11 +53,7 @@ test("resource-only Form blocks native navigation and reports an empty selection
   try {
     await act(async () => {
       root.render(
-        <NativeForm
-          action="/__must_not_navigate__"
-          submission={{ destinations: [] }}
-          onResultChange={onResultChange}
-        >
+        <NativeForm action={[]} onResultChange={onResultChange}>
           <button type="submit">Send</button>
         </NativeForm>
       );
@@ -66,9 +62,7 @@ test("resource-only Form blocks native navigation and reports an empty selection
     await act(async () => {
       container.querySelector("button")?.click();
     });
-    expect(container.querySelector('[role="alert"]')?.textContent).toMatch(
-      /Select at least one Resource/
-    );
+    expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(onResultChange).toHaveBeenCalledExactlyOnceWith({
       success: false,
       status: 400,
@@ -77,7 +71,7 @@ test("resource-only Form blocks native navigation and reports an empty selection
         {
           status: 400,
           body: null,
-          message: "Select at least one Resource destination",
+          message: "Add at least one action",
         },
       ],
     });
@@ -94,17 +88,12 @@ test("malformed submission settings do not fall back to native delivery", async 
   try {
     await act(async () => {
       root.render(
-        <NativeForm
-          action="/__must_not_navigate__"
-          submission={{ destinations: "invalid" }}
-        >
+        <NativeForm action={{ destinations: "invalid" }}>
           <button type="submit">Send</button>
         </NativeForm>
       );
     });
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-      "Invalid Form submission settings"
-    );
+    expect(container.querySelector('[role="alert"]')).toBeNull();
     await act(async () => container.querySelector("button")?.click());
     expect(window.location.pathname).not.toBe("/__must_not_navigate__");
   } finally {
@@ -122,8 +111,7 @@ test("a throwing submit callback cannot trigger native delivery", async () => {
     await act(async () => {
       root.render(
         <NativeForm
-          action="/__must_not_navigate__"
-          submission={{ destinations: ["resource-one"] }}
+          action={[{ dataSourceId: "resource-one", enabled: true }]}
           onSubmit={() => {
             throw new Error("Submit callback failed");
           }}
@@ -152,9 +140,7 @@ test("a throwing submit callback cannot trigger native delivery", async () => {
     });
     expect(submit?.defaultPrevented).toBe(true);
     expect(onManagedSubmit).not.toHaveBeenCalled();
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-      "Submit callback failed"
-    );
+    expect(container.querySelector('[role="alert"]')).toBeNull();
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -170,17 +156,14 @@ test("legacy native-mode settings do not activate saved Resource destinations", 
     await act(async () => {
       root.render(
         <NativeForm
-          action="/__must_not_navigate__"
-          submission={{ mode: "native", destinations: ["legacy-resource"] }}
+          action={{ mode: "native", destinations: ["legacy-resource"] }}
           onManagedSubmit={onManagedSubmit}
         >
           <button type="submit">Send</button>
         </NativeForm>
       );
     });
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-      "Invalid Form submission settings"
-    );
+    expect(container.querySelector('[role="alert"]')).toBeNull();
     await act(async () => container.querySelector("button")?.click());
     expect(onManagedSubmit).not.toHaveBeenCalled();
     expect(window.location.pathname).not.toBe("/__must_not_navigate__");
@@ -192,11 +175,7 @@ test("legacy native-mode settings do not activate saved Resource destinations", 
 
 test("an empty managed Form cannot natively submit without hydration", async () => {
   const html = renderToStaticMarkup(
-    <NativeForm
-      action="/__must_not_navigate__"
-      method="post"
-      submission={{ destinations: [] }}
-    >
+    <NativeForm method="post" action={[]}>
       <input name="email" defaultValue="person@example.com" />
       <button type="submit">Send</button>
     </NativeForm>
@@ -263,7 +242,7 @@ test("a hydrated Form handles submit buttons associated by form id", async () =>
         <>
           <NativeForm
             id="managed-form"
-            submission={{ destinations: ["resource-one"] }}
+            action={[{ dataSourceId: "resource-one", enabled: true }]}
             onManagedSubmit={onManagedSubmit}
           >
             <input name="email" defaultValue="person@example.com" />
@@ -296,8 +275,7 @@ test("Form passes one structured submission to its dispatcher", async () => {
     await act(async () => {
       root.render(
         <NativeForm
-          action="/__must_not_navigate__"
-          submission={{ destinations: ["resource-one"] }}
+          action={[{ dataSourceId: "resource-one", enabled: true }]}
           onManagedSubmit={onManagedSubmit}
         >
           <input name="name" defaultValue="Ada" />
@@ -327,13 +305,20 @@ test("Form resolves Preview success redirects against the Preview page", async (
     await act(async () => {
       root.render(
         <NativeForm
-          submission={{ destinations: ["resource-one"] }}
+          action={[{ dataSourceId: "resource-one", enabled: true }]}
           successRedirect="thanks"
           getRedirectBaseUrl={() => "https://webstudio.local/contact"}
           onManagedSubmit={async () => ({
             success: true,
             status: 200,
-            results: [{ resourceId: "resource-one", status: 200, body: null }],
+            results: [
+              {
+                resourceId: "resource-one",
+                resourceName: "resource-one",
+                status: 200,
+                body: null,
+              },
+            ],
             errors: [],
           })}
           onSuccessRedirect={onSuccessRedirect}
@@ -361,7 +346,7 @@ test("file-input settings enforce required uploads and keep optional or multiple
     act(async () =>
       root.render(
         <NativeForm
-          submission={{ destinations: ["resource-one"] }}
+          action={[{ dataSourceId: "resource-one", enabled: true }]}
           onManagedSubmit={onManagedSubmit}
         >
           <input
@@ -426,7 +411,7 @@ test("managed Form submits by HTTP outside a router provider and reports pending
       root.render(
         <NativeForm
           data-ws-managed-form-id="form-one"
-          submission={{ destinations: ["destination"] }}
+          action={[{ dataSourceId: "destination", enabled: true }]}
           onStateChange={(state) => states.push(state)}
           onResultChange={(result) => results.push(result)}
         >
@@ -466,7 +451,12 @@ test("managed Form submits by HTTP outside a router provider and reports pending
           success: true,
           status: 200,
           results: [
-            { resourceId: "destination", status: 201, body: { id: 1 } },
+            {
+              resourceId: "destination",
+              resourceName: "destination",
+              status: 201,
+              body: { id: 1 },
+            },
           ],
           errors: [],
         })
@@ -480,7 +470,14 @@ test("managed Form submits by HTTP outside a router provider and reports pending
       {
         success: true,
         status: 200,
-        results: [{ resourceId: "destination", status: 201, body: { id: 1 } }],
+        results: [
+          {
+            resourceId: "destination",
+            resourceName: "destination",
+            status: 201,
+            body: { id: 1 },
+          },
+        ],
         errors: [],
       },
     ]);
@@ -499,7 +496,14 @@ test("Preview runs the supplied submission and reports its result without the pu
   const onManagedSubmit = vi.fn(async () => ({
     success: true,
     status: 200,
-    results: [{ resourceId: "email", status: 200, body: { sent: true } }],
+    results: [
+      {
+        resourceId: "email",
+        resourceName: "email",
+        status: 200,
+        body: { sent: true },
+      },
+    ],
     errors: [],
   }));
   const onResultChange = vi.fn();
@@ -508,7 +512,7 @@ test("Preview runs the supplied submission and reports its result without the pu
     await act(async () =>
       root.render(
         <NativeForm
-          submission={{ destinations: ["email"] }}
+          action={[{ dataSourceId: "email", enabled: true }]}
           previewSubmission
           onManagedSubmit={onManagedSubmit}
           onResultChange={onResultChange}
@@ -517,9 +521,6 @@ test("Preview runs the supplied submission and reports its result without the pu
           <button type="submit">Send</button>
         </NativeForm>
       )
-    );
-    expect(container.querySelector('[role="note"]')?.textContent).toContain(
-      "real emails"
     );
     await act(async () => container.querySelector("button")?.click());
     await vi.waitFor(() => expect(onResultChange).toHaveBeenCalledOnce());
@@ -559,7 +560,7 @@ test("Preview reports rejected submissions as failures and clears pending state"
     await act(async () =>
       root.render(
         <NativeForm
-          submission={{ destinations: ["email"] }}
+          action={[{ dataSourceId: "email", enabled: true }]}
           onManagedSubmit={onManagedSubmit}
           onResultChange={onResultChange}
           onStateChange={(state) => states.push(state)}
@@ -576,10 +577,8 @@ test("Preview reports rejected submissions as failures and clears pending state"
         false
       );
     });
-    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-      "Previous submission failed"
-    );
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(0);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
 
     await act(async () => container.querySelector("button")?.click());
     await vi.waitFor(() => {
@@ -600,10 +599,8 @@ test("Preview reports rejected submissions as failures and clears pending state"
         },
       ],
     });
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-      "Preview submission failed"
-    );
-    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(0);
     expect(states).toEqual(["initial", "error", "initial", "error"]);
     expect(onManagedSubmit).toHaveBeenCalledTimes(2);
     expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
@@ -629,11 +626,17 @@ test("managed Form reports HTTP and network failures without native navigation",
           success: false,
           status: 502,
           results: [
-            { resourceId: "destination", status: 422, body: "Rejected" },
+            {
+              resourceId: "destination",
+              resourceName: "destination",
+              status: 422,
+              body: "Rejected",
+            },
           ],
           errors: [
             {
               resourceId: "destination",
+              resourceName: "destination",
               status: 422,
               body: "Rejected",
               message: "Rejected",
@@ -649,9 +652,8 @@ test("managed Form reports HTTP and network failures without native navigation",
     await act(async () =>
       root.render(
         <NativeForm
-          action="/__must_not_navigate__"
           data-ws-managed-form-id="form-one"
-          submission={{ destinations: ["destination"] }}
+          action={[{ dataSourceId: "destination", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
@@ -671,10 +673,18 @@ test("managed Form reports HTTP and network failures without native navigation",
     expect(results[1]).toEqual({
       success: false,
       status: 502,
-      results: [{ resourceId: "destination", status: 422, body: "Rejected" }],
+      results: [
+        {
+          resourceId: "destination",
+          resourceName: "destination",
+          status: 422,
+          body: "Rejected",
+        },
+      ],
       errors: [
         {
           resourceId: "destination",
+          resourceName: "destination",
           status: 422,
           body: "Rejected",
           message: "Rejected",
@@ -689,3 +699,108 @@ test("managed Form reports HTTP and network failures without native navigation",
     vi.unstubAllGlobals();
   }
 });
+
+test.each([
+  [[]],
+  [
+    [
+      {
+        resourceId: "a",
+        resourceName: "A",
+        status: 422,
+        body: null,
+        message: "First actual failure",
+      },
+    ],
+  ],
+  [
+    [
+      {
+        resourceId: "a",
+        resourceName: "A",
+        status: 422,
+        body: null,
+        message: "First actual failure",
+      },
+      {
+        resourceId: "b",
+        resourceName: "B",
+        status: 500,
+        body: null,
+        message: "Second actual failure",
+      },
+    ],
+  ],
+])(
+  "authored Error Message renders actual errors without duplicate raw alerts: %j",
+  async (actionErrors) => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    const events: string[] = [];
+    const Harness = () => {
+      const [state, setState] = useState("initial");
+      const [errors, setErrors] = useState<Array<{ message: string }>>([]);
+      return (
+        <NativeForm
+          action={
+            actionErrors.length
+              ? [{ dataSourceId: "request", enabled: true }]
+              : []
+          }
+          onManagedSubmit={async () => ({
+            success: false,
+            status: 422,
+            results: [],
+            errors: actionErrors,
+          })}
+          onResultChange={(result) => {
+            events.push("result");
+            setErrors(result.errors);
+          }}
+          onStateChange={(state) => {
+            events.push(state);
+            setState(state);
+          }}
+        >
+          <button type="submit">Send</button>
+          {state === "error" && (
+            <div
+              role="alert"
+              className="authored-error"
+              style={{ color: "red" }}
+            >
+              {errors.map(({ message }, index) => (
+                <div key={index}>{message}</div>
+              ))}
+            </div>
+          )}
+        </NativeForm>
+      );
+    };
+    try {
+      await act(async () => root.render(<Harness />));
+      await act(async () => container.querySelector("button")?.click());
+      await vi.waitFor(() =>
+        expect(
+          container.querySelector("form")?.getAttribute("data-state")
+        ).toBe("error")
+      );
+      const message = container.querySelector<HTMLElement>(".authored-error");
+      expect(message).not.toBeNull();
+      expect(message?.style.color).toBe("red");
+      expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+      expect(message?.textContent).toBe(
+        actionErrors.length
+          ? actionErrors.map(({ message }) => message).join("")
+          : "Add at least one action"
+      );
+      expect(events.lastIndexOf("result")).toBeLessThan(
+        events.lastIndexOf("error")
+      );
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+    }
+  }
+);

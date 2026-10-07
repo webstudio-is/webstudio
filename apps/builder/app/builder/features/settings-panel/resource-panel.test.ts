@@ -331,7 +331,7 @@ test("notifies the preview when a resource field changes", () => {
   expect(onChange).toHaveBeenCalledOnce();
 });
 
-test("a GET Resource in a Form shows its effective POST body controls", () => {
+test("body controls follow the effective method for standalone GET and Form Actions", async () => {
   const resource: Resource = {
     id: "request",
     name: "Request",
@@ -360,6 +360,7 @@ test("a GET Resource in a Form shows its effective POST body controls", () => {
   });
   expect(container.textContent).not.toContain("Form submissions use POST");
   expect(container.querySelector('[name="body-format"]')).toBeNull();
+  expect(container.querySelector('textarea[name="body"]')).toBeNull();
   act(() => {
     $instances.set(
       new Map([
@@ -377,19 +378,27 @@ test("a GET Resource in a Form shows its effective POST body controls", () => {
     $props.set(
       new Map([
         [
-          "submission",
+          "action",
           {
-            id: "submission",
+            id: "action",
             instanceId: "form",
-            name: "submission",
+            name: "action",
             type: "json",
-            value: { destinations: [variable.id] },
+            value: [{ dataSourceId: variable.id, enabled: true }],
           },
         ],
       ])
     );
   });
-  expect(container.textContent).toContain("Form submissions use POST");
+  expect(container.textContent).not.toContain("Form submissions use POST");
+  await act(async () =>
+    userEvent.click(container.querySelector('button[role="combobox"]')!)
+  );
+  expect(document.body.textContent).toContain(
+    "Form submissions use POST. This method applies elsewhere."
+  );
+  await act(async () => userEvent.keyboard("{Escape}"));
+  expect(container.textContent).toContain("Request body format");
   expect(container.querySelector('[name="body-format"]')).not.toBeNull();
   expect(container.querySelector('textarea[name="body"]')).not.toBeNull();
   expect(resource.method).toBe("get");
@@ -427,8 +436,14 @@ test("invalidates the preview as soon as a body edit starts", () => {
     );
   });
 
-  expect(container.textContent).toContain("Request encoding");
-  expect(container.textContent).toContain("Manual body content type");
+  expect(container.textContent).toContain("Request body format");
+  expect(container.textContent).not.toContain("Body content type");
+  expect(
+    Array.from(
+      container.querySelectorAll("label"),
+      (label) => label.textContent
+    )
+  ).toContain("Body");
 
   const body = container.querySelector<HTMLTextAreaElement>(
     "textarea:not([name])"
@@ -483,9 +498,37 @@ test("shows and submits the selected HTTP body format", async () => {
       'input[name="header-name"][value="Content-Type"]'
     )
   ).toBeNull();
-  expect(container.textContent).toContain("Request encoding");
-  await act(async () => page.getByLabelText("Request encoding").click());
-  await act(async () => page.getByRole("option", { name: "json" }).click());
+  expect(container.textContent).toContain("Request body format");
+  const explanation =
+    "Applies to this Resource's POST body, including Form actions. Auto sends JSON or multipart when files are present.";
+  expect(container.textContent).not.toContain(explanation);
+  await act(async () =>
+    userEvent.hover(
+      container.querySelector('[aria-label="About request body format"]')!
+    )
+  );
+  await expect
+    .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
+    .toContain(explanation);
+  expect(
+    page
+      .getByRole("combobox", { name: "Request body format", exact: true })
+      .element().textContent
+  ).toContain("multipart/form-data");
+  await act(async () =>
+    page
+      .getByRole("combobox", { name: "Request body format", exact: true })
+      .click()
+  );
+  expect(
+    Array.from(
+      document.querySelectorAll('[role="option"]'),
+      (option) => option.textContent
+    )
+  ).toEqual(["Auto", "application/json", "multipart/form-data"]);
+  await act(async () =>
+    page.getByRole("option", { name: "application/json", exact: true }).click()
+  );
   expect(
     container.querySelector<HTMLInputElement>('input[name="body-format"]')
       ?.value
@@ -726,3 +769,140 @@ test("only Form-scoped Resources can bind submission values", async () => {
   expect(external.scope[encodeDataVariableId("formDataId")]).toBeUndefined();
   expect(external.scope[encodeDataVariableId("browserInfoId")]).toBeUndefined();
 });
+
+test("Resource editor explains caching and add buttons in tooltips and removes pair rows", async () => {
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [{ name: "X-Test", value: '"value"' }],
+    searchParams: [{ name: "q", value: '"term"' }],
+  };
+  $resources.set(new Map([[resource.id, resource]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      createElement(TooltipProvider, {
+        delayDuration: 0,
+        children: createElement(ResourceForm, {
+          variable: {
+            type: "resource",
+            id: "request-variable",
+            name: "Request",
+            resourceId: resource.id,
+          },
+        }),
+      })
+    )
+  );
+  for (const [selector, explanation] of [
+    [
+      '[aria-label="About Cache max age"]',
+      "How long Webstudio can cache this Resource's response, in seconds.",
+    ],
+    ['[aria-label="Add another header"]', "Add a request header."],
+    ['[aria-label="Add another search param"]', "Add a URL search parameter."],
+  ]) {
+    expect(container.textContent).not.toContain(explanation);
+    await act(async () => userEvent.hover(container.querySelector(selector)!));
+    await expect
+      .poll(() =>
+        Array.from(
+          document.querySelectorAll('[role="tooltip"]'),
+          (tooltip) => tooltip.textContent
+        ).join(" ")
+      )
+      .toContain(explanation);
+    await act(async () =>
+      userEvent.unhover(container.querySelector(selector)!)
+    );
+    await expect
+      .poll(() => document.querySelector('[role="tooltip"]'))
+      .toBeNull();
+  }
+  expect(
+    container.querySelector('input[name="header-name"][value="X-Test"]')
+  ).not.toBeNull();
+  await act(async () =>
+    userEvent.click(container.querySelector('[aria-label="Delete header"]')!)
+  );
+  expect(
+    container.querySelector('input[name="header-name"][value="X-Test"]')
+  ).toBeNull();
+  expect(
+    container.querySelector('input[name="search-param-name"][value="q"]')
+  ).not.toBeNull();
+  await act(async () =>
+    userEvent.click(
+      container.querySelector('[aria-label="Delete search param"]')!
+    )
+  );
+  expect(
+    container.querySelector('input[name="search-param-name"][value="q"]')
+  ).toBeNull();
+});
+
+test.each([
+  [JSON.stringify('{"a":1}'), "text/plain", false],
+  [JSON.stringify('{"a":1}'), "text/plain", false],
+  ["{ a: 1 }", "application/json", true],
+  ["[1, 2]", "application/json", true],
+  ["42", "application/json", true],
+  ["true", "application/json", true],
+] as const)(
+  "infers Auto body content type and editor from %s",
+  async (body, mime, jsonEditor) => {
+    $resources.set(
+      new Map([
+        [
+          "request",
+          {
+            id: "request",
+            name: "Request",
+            method: "post",
+            url: '"https://example.com"',
+            headers: [],
+            body,
+          },
+        ],
+      ])
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        createElement(
+          TooltipProvider,
+          undefined,
+          createElement(ResourceForm, {
+            variable: {
+              type: "resource",
+              id: "request-variable",
+              name: "Request",
+              resourceId: "request",
+            },
+          })
+        )
+      )
+    );
+    expect(container.textContent).not.toContain("Body content type");
+    const header = container.querySelector<HTMLInputElement>(
+      'input[name="header-name"][value="Content-Type"]'
+    );
+    await expect
+      .poll(() => (header?.nextElementSibling as HTMLInputElement)?.value)
+      .toBe(JSON.stringify(mime));
+    expect(container.querySelector(".cm-editor") !== null).toBe(jsonEditor);
+    await expect
+      .poll(
+        () =>
+          container.querySelector<HTMLTextAreaElement>('textarea[name="body"]')
+            ?.validationMessage
+      )
+      .toBe("");
+  }
+);

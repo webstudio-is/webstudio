@@ -84,7 +84,7 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
       <TooltipProvider>
         <FormSubmissionControl
           instanceId="form"
-          propName="submission"
+          propName="action"
           prop={prop}
           computedValue={prop?.type === "json" ? prop.value : undefined}
           meta={{ type: "json", control: "form-submission", required: false }}
@@ -106,11 +106,11 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
 
   await act(async () =>
     render({
-      id: "submission",
+      id: "action",
       instanceId: "form",
-      name: "submission",
+      name: "action",
       type: "json",
-      value: { destinations: [] },
+      value: [],
     })
   );
   expect(container.textContent).not.toContain(
@@ -127,16 +127,16 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   await act(async () => requestOption?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: ["resourceDataSource"] },
+    value: [{ dataSourceId: "resourceDataSource", enabled: true }],
   });
 
   await act(async () =>
     render({
-      id: "submission",
+      id: "action",
       instanceId: "form",
-      name: "submission",
+      name: "action",
       type: "json",
-      value: { destinations: ["resourceDataSource"] },
+      value: [{ dataSourceId: "resourceDataSource", enabled: true }],
     })
   );
   await act(async () =>
@@ -158,18 +158,22 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   expect(container.textContent).toContain("Renamed request");
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: ["resourceDataSource"] },
+    value: [{ dataSourceId: "resourceDataSource", enabled: true }],
   });
 
   await act(async () =>
     render({
-      id: "submission",
+      id: "action",
       instanceId: "form",
-      name: "submission",
+      name: "action",
       type: "json",
-      value: {
-        destinations: ["one", "two", "three", "four", "five"],
-      },
+      value: [
+        { dataSourceId: "one", enabled: true },
+        { dataSourceId: "two", enabled: true },
+        { dataSourceId: "three", enabled: true },
+        { dataSourceId: "four", enabled: true },
+        { dataSourceId: "five", enabled: true },
+      ],
     })
   );
   expect(container.textContent).not.toContain("Create Resource in Form");
@@ -221,15 +225,15 @@ test("a Form can select a Resource defined outside its scope", async () => {
       <TooltipProvider>
         <FormSubmissionControl
           instanceId="form"
-          propName="submission"
+          propName="action"
           prop={{
-            id: "submission",
+            id: "action",
             instanceId: "form",
-            name: "submission",
+            name: "action",
             type: "json",
-            value: { destinations: [] },
+            value: [],
           }}
-          computedValue={{ destinations: [] }}
+          computedValue={[]}
           meta={{ type: "json", control: "form-submission", required: false }}
           onChange={onChange}
         />
@@ -249,7 +253,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
   await act(async () => requestOption?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: ["externalResourceId"] },
+    value: [{ dataSourceId: "externalResourceId", enabled: true }],
   });
 });
 
@@ -287,11 +291,11 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
     ])
   );
   const savedProp: Prop = {
-    id: "submission",
+    id: "action",
     instanceId: "form",
-    name: "submission",
+    name: "action",
     type: "json",
-    value: { destinations: ["resource-id"] },
+    value: [{ dataSourceId: "resource-id", enabled: true }],
   };
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -302,7 +306,7 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
       <TooltipProvider>
         <FormSubmissionControl
           instanceId="form"
-          propName="submission"
+          propName="action"
           prop={savedProp}
           computedValue={
             savedProp.type === "json" ? savedProp.value : undefined
@@ -326,7 +330,7 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
   });
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: [] },
+    value: [],
   });
 });
 
@@ -389,15 +393,15 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
       <TooltipProvider>
         <FormSubmissionControl
           instanceId="form"
-          propName="submission"
+          propName="action"
           prop={{
-            id: "submission",
+            id: "action",
             instanceId: "form",
-            name: "submission",
+            name: "action",
             type: "json",
-            value: { destinations: ["http"] },
+            value: [{ dataSourceId: "http", enabled: true }],
           }}
-          computedValue={{ destinations: ["http"] }}
+          computedValue={[{ dataSourceId: "http", enabled: true }]}
           meta={{ type: "json", control: "form-submission", required: false }}
           onChange={onChange}
         />
@@ -413,12 +417,14 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
       )
   );
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  await act(
-    async () =>
-      await userEvent.click(
-        container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
-      )
-  );
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
+  await act(async () => await userEvent.hover(addButton));
+  await expect
+    .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
+    .toContain("Add an in-scope HTTP, GraphQL, or Email Resource.");
+  await act(async () => await userEvent.click(addButton));
   const items = Array.from(
     document.querySelectorAll<HTMLElement>('[role="menuitem"]')
   );
@@ -438,7 +444,10 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
   );
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: ["http", "email"] },
+    value: [
+      { dataSourceId: "http", enabled: true },
+      { dataSourceId: "email", enabled: true },
+    ],
   });
 });
 
@@ -475,15 +484,15 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
       <TooltipProvider>
         <FormSubmissionControl
           instanceId="form"
-          propName="submission"
+          propName="action"
           prop={{
-            id: "submission",
+            id: "action",
             instanceId: "form",
-            name: "submission",
+            name: "action",
             type: "json",
-            value: { destinations: ["send"] },
+            value: [{ dataSourceId: "send", enabled: true }],
           }}
-          computedValue={{ destinations: ["send"] }}
+          computedValue={[{ dataSourceId: "send", enabled: true }]}
           meta={{ type: "json", control: "form-submission", required: false }}
           onChange={onChange}
         />
@@ -499,25 +508,22 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   );
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: ["send"], disabledDestinations: ["send"] },
+    value: [{ dataSourceId: "send", enabled: false }],
   });
   await act(async () =>
     root?.render(
       <TooltipProvider>
         <FormSubmissionControl
           instanceId="form"
-          propName="submission"
+          propName="action"
           prop={{
-            id: "submission",
+            id: "action",
             instanceId: "form",
-            name: "submission",
+            name: "action",
             type: "json",
-            value: { destinations: ["send"], disabledDestinations: ["send"] },
+            value: [{ dataSourceId: "send", enabled: false }],
           }}
-          computedValue={{
-            destinations: ["send"],
-            disabledDestinations: ["send"],
-          }}
+          computedValue={[{ dataSourceId: "send", enabled: false }]}
           meta={{ type: "json", control: "form-submission", required: false }}
           onChange={onChange}
         />
@@ -543,7 +549,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   );
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: ["send"], disabledDestinations: undefined },
+    value: [{ dataSourceId: "send", enabled: true }],
   });
   await act(async () =>
     container
@@ -554,7 +560,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   );
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: [], disabledDestinations: [] },
+    value: [],
   });
   const actionsLabel = Array.from(container.querySelectorAll("button")).find(
     (button) => button.textContent === "Action"
@@ -567,6 +573,6 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   );
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: { destinations: [] },
+    value: [],
   });
 });

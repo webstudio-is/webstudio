@@ -21,7 +21,7 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
         createRoot(document.getElementById("root")).render(
           createElement(NativeForm, {
             "data-ws-managed-form-id": "form-one",
-            submission: { destinations: ["destination"] },
+            action: [{ dataSourceId: "destination", enabled: true }],
             onStateChange: (state) => window.formStates.push(state),
             onResultChange: (result) => window.formResults.push(result),
           },
@@ -82,7 +82,12 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
                 success: true,
                 status: 200,
                 results: [
-                  { resourceId: "destination", status: 201, body: { id: 1 } },
+                  {
+                    resourceId: "destination",
+                    resourceName: "destination",
+                    status: 201,
+                    body: { id: 1 },
+                  },
                 ],
                 errors: [],
               }
@@ -90,11 +95,17 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
                 success: false,
                 status: 422,
                 results: [
-                  { resourceId: "destination", status: 422, body: "Rejected" },
+                  {
+                    resourceId: "destination",
+                    resourceName: "destination",
+                    status: 422,
+                    body: "Rejected",
+                  },
                 ],
                 errors: [
                   {
                     resourceId: "destination",
+                    resourceName: "destination",
                     status: 422,
                     body: "Rejected",
                     message: "Rejected",
@@ -133,7 +144,14 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
       {
         success: true,
         status: 200,
-        results: [{ resourceId: "destination", status: 201, body: { id: 1 } }],
+        results: [
+          {
+            resourceId: "destination",
+            resourceName: "destination",
+            status: 201,
+            body: { id: 1 },
+          },
+        ],
         errors: [],
       },
     ]);
@@ -143,10 +161,18 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
     expect(await page.evaluate("window.formResults[1]")).toEqual({
       success: false,
       status: 422,
-      results: [{ resourceId: "destination", status: 422, body: "Rejected" }],
+      results: [
+        {
+          resourceId: "destination",
+          resourceName: "destination",
+          status: 422,
+          body: "Rejected",
+        },
+      ],
       errors: [
         {
           resourceId: "destination",
+          resourceName: "destination",
           status: 422,
           body: "Rejected",
           message: "Rejected",

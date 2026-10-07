@@ -1763,14 +1763,13 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     const managedFormSubmissions = formInstances
       .filter((instance) => instance.component === "NativeForm")
       .map((instance) => {
-        const submissionProp = Array.from(props.values()).find(
-          (prop) =>
-            prop.instanceId === instance.id && prop.name === "submission"
+        const actionProp = Array.from(props.values()).find(
+          (prop) => prop.instanceId === instance.id && prop.name === "action"
         );
-        const submission =
-          submissionProp?.type === "json" ? submissionProp.value : undefined;
-        const resourceIds = isFormSubmission(submission)
-          ? getEnabledFormDestinations(submission).map((id) => {
+        const action =
+          actionProp?.type === "json" ? actionProp.value : undefined;
+        const resourceIds = isFormSubmission(action)
+          ? getEnabledFormDestinations(action).map((id) => {
               const dataSource = dataSources.get(id);
               return dataSource?.type === "resource" &&
                 resources.has(dataSource.resourceId)
@@ -1778,13 +1777,13 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
                 : null;
             })
           : [];
-        return [instance.id, { submission, resourceIds }] as const;
+        return [instance.id, { action, resourceIds }] as const;
       });
     const managedFormResourceSelections = managedFormSubmissions.map(
-      ([formId, { submission }]) => ({
+      ([formId, { action }]) => ({
         formId,
-        destinationDataSourceIds: isFormSubmission(submission)
-          ? getEnabledFormDestinations(submission)
+        destinationDataSourceIds: isFormSubmission(action)
+          ? getEnabledFormDestinations(action)
           : [],
       })
     );
@@ -1962,7 +1961,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       ${generateRemixParams(page.path)}
 
       export const getManagedFormSubmissions = () =>
-        new Map<string, { submission: unknown; resourceIds: (string | null)[] }>(
+        new Map<string, { action: unknown; resourceIds: (string | null)[] }>(
           ${JSON.stringify(managedFormSubmissions)}
         );
 

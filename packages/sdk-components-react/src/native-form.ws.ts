@@ -16,9 +16,9 @@ export const meta: WsComponentMeta = {
     { label: "Error", selector: "[data-state=error]" },
   ],
   presetStyle,
-  initialProps: ["submission", "successRedirect"],
+  initialProps: ["action", "successRedirect"],
   props: {
-    submission: {
+    action: {
       type: "json",
       control: "form-submission",
       label: "Action",

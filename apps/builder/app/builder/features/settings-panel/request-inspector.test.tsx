@@ -168,3 +168,27 @@ test("keeps preview first when no query editor is available", () => {
   ]);
   expect(tabs[0].getAttribute("data-state")).toBe("active");
 });
+
+test("HTTP response tab names its response and loading state", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <RequestInspector
+        previewLabel="Response"
+        preview={<div>Response body</div>}
+        previewPending
+      />
+    )
+  );
+  expect(
+    Array.from(
+      container.querySelectorAll('[role="tab"]'),
+      (tab) => tab.textContent
+    )
+  ).toEqual(["Response", "Diagnostics"]);
+  expect(
+    container.querySelector('[role="status"]')?.getAttribute("aria-label")
+  ).toBe("Loading response…");
+});

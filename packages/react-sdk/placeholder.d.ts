@@ -49,7 +49,7 @@ declare module "__SERVER__" {
 
   export const getManagedFormSubmissions: () => Map<
     string,
-    { submission: unknown; resourceIds: (string | null)[] }
+    { action: unknown; resourceIds: (string | null)[] }
   >;
 
   export const getManagedFormResourceGraph: (

@@ -117,7 +117,7 @@ test("Actions references an existing Resource without creating another", async (
         <div data-floating-panel-container>
           <FormSubmissionControl
             instanceId="form"
-            propName="submission"
+            propName="action"
             prop={submission}
             computedValue={
               submission?.type === "json" ? submission.value : undefined
@@ -126,9 +126,9 @@ test("Actions references an existing Resource without creating another", async (
             onChange={(value) => {
               if (value.type === "json") {
                 setSubmission({
-                  id: "submission",
+                  id: "action",
                   instanceId: "form",
-                  name: "submission",
+                  name: "action",
                   ...value,
                 });
               }

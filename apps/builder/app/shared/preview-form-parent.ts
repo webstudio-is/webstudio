@@ -1,3 +1,8 @@
+import { $livePreviewFormValues } from "./preview-form-values";
+import {
+  previewFormExchanges,
+  recordPreviewFormExchanges,
+} from "./preview-form-inspection";
 import { draftPersistence } from "./sync/draft-persistence";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import type { Publish } from "~/shared/pubsub";
@@ -9,6 +14,18 @@ import type { PreviewFormRequest } from "./preview-form-bridge";
 /** Keep authenticated Preview requests in the Builder, outside the Canvas. */
 export const subscribePreviewFormRequests = (publish: Publish) => {
   const requests = new Map<string, AbortController>();
+  const unsubscribeValues = subscribe(
+    "previewFormValues",
+    ({ formId, values }) => {
+      const next = new Map($livePreviewFormValues.get());
+      if (values === null) {
+        next.delete(formId);
+      } else {
+        next.set(formId, values);
+      }
+      $livePreviewFormValues.set(next);
+    }
+  );
   const unsubscribeSubmit = subscribe("previewFormSubmit", (payload) => {
     const request: PreviewFormRequest = payload;
     const { id, values, managedFormId, path } = request;
@@ -35,10 +52,21 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
           signal: controller.signal,
         });
         if (!controller.signal.aborted) {
-          publish({ type: "previewFormResult", payload: { id, response } });
+          const { previewExchanges, ...publicResponse } =
+            response as typeof response & { previewExchanges?: unknown };
+          const inspected = previewFormExchanges.safeParse(previewExchanges);
+          recordPreviewFormExchanges(
+            managedFormId,
+            inspected.success ? inspected.data : []
+          );
+          publish({
+            type: "previewFormResult",
+            payload: { id, response: publicResponse },
+          });
         }
       } catch (error) {
         if (!controller.signal.aborted) {
+          recordPreviewFormExchanges(managedFormId, []);
           const message =
             error instanceof Error ? error.message : "Form submission failed";
           publish({
@@ -65,6 +93,8 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
 
   return () => {
     unsubscribeSubmit();
+    unsubscribeValues();
+    $livePreviewFormValues.set(new Map());
     unsubscribeCancel();
     for (const controller of requests.values()) {
       controller.abort();

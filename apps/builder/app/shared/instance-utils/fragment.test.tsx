@@ -541,13 +541,14 @@ describe("insert webstudio fragment copy", () => {
         ],
         props: [
           {
-            id: "submission",
+            id: "action",
             instanceId: "form",
-            name: "submission",
+            name: "action",
             type: "json",
-            value: {
-              destinations: ["scoped-source", "external-source"],
-            },
+            value: [
+              { dataSourceId: "scoped-source", enabled: true },
+              { dataSourceId: "external-source", enabled: true },
+            ],
           },
         ],
       },
@@ -566,13 +567,14 @@ describe("insert webstudio fragment copy", () => {
     );
     expect(
       Array.from(data.props.values()).find(
-        (prop) => prop.instanceId === copiedFormId && prop.name === "submission"
+        (prop) => prop.instanceId === copiedFormId && prop.name === "action"
       )
     ).toMatchObject({
       type: "json",
-      value: {
-        destinations: [copiedScopedId, "external-source"],
-      },
+      value: [
+        { dataSourceId: copiedScopedId, enabled: true },
+        { dataSourceId: "external-source", enabled: true },
+      ],
     });
   });
 

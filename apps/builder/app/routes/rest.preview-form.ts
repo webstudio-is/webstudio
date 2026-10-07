@@ -1,3 +1,6 @@
+import { parseJsonExpression } from "@webstudio-is/expression";
+import { capturePreviewFormExchange } from "~/services/preview-form-inspection.server";
+import type { PreviewFormExchange } from "~/shared/preview-form-inspection";
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
@@ -11,6 +14,7 @@ import {
   isFormSubmission,
   getAllPages,
   getPagePath,
+  getFormEmailStringifyOptions,
 } from "@webstudio-is/sdk";
 import { createManagedFormDraftGraph } from "@webstudio-is/sdk/managed-form-draft-graph";
 import {
@@ -131,13 +135,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const resources = new Map(
       build.resources.map((resource) => [resource.id, resource])
     );
-    const submissionProp = build.props.find(
-      (prop) => prop.instanceId === formId && prop.name === "submission"
+    const actionProp = build.props.find(
+      (prop) => prop.instanceId === formId && prop.name === "action"
     );
-    const submission =
-      submissionProp?.type === "json" ? submissionProp.value : undefined;
-    const destinations = isFormSubmission(submission)
-      ? getEnabledFormDestinations(submission)
+    const action = actionProp?.type === "json" ? actionProp.value : undefined;
+    const destinations = isFormSubmission(action)
+      ? getEnabledFormDestinations(action)
       : [];
     const resourceIds = destinations.map((id) => {
       const source = dataSources.get(id);
@@ -171,13 +174,53 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ),
         { throwOnError: true }
       );
+    const exchanges: PreviewFormExchange[] = [];
+    const privacy = getFormEmailStringifyOptions(instances, props, formId);
+    const sensitiveFields = new Set(privacy.excludeKeys ?? []);
+    const privateValues = new Set<string>([
+      env.TRPC_SERVER_API_TOKEN ?? "",
+      request.url,
+    ]);
+    const publicValues = new Set<string>();
+    const sensitiveName =
+      /authorization|cookie|token|api[-_]?key|secret|password|session|csrf|credential/i;
+    const collect = (value: unknown, target: Set<string>) => {
+      if (value !== null && typeof value === "object") {
+        for (const [name, entry] of Object.entries(value)) {
+          collect(entry, sensitiveName.test(name) ? privateValues : target);
+        }
+      } else if (value !== undefined) {
+        target.add(String(value));
+      }
+    };
+    for (const [name, value] of formData) {
+      if (typeof value === "string") {
+        (sensitiveName.test(name) || sensitiveFields.has(name)
+          ? privateValues
+          : publicValues
+        ).add(value);
+      }
+    }
+    for (const [name, value] of request.headers) {
+      if (sensitiveName.test(name)) {
+        privateValues.add(value);
+      }
+    }
+    for (const source of dataSources.values()) {
+      if (source.type === "variable" && sensitiveName.test(source.name)) {
+        collect(source.value.value, privateValues);
+      }
+    }
+    for (const resource of resources.values()) {
+      collect(parseJsonExpression(resource.body), publicValues);
+    }
     const result = await handleManagedFormSubmission({
       request: formRequest,
       formData,
       url: pageUrl,
       system,
       configuration: (id) =>
-        id === formId ? { submission, resourceIds } : undefined,
+        id === formId ? { action, resourceIds } : undefined,
       getGraph: (id, values) =>
         createManagedFormDraftGraph({
           formId: id,
@@ -203,9 +246,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ),
       validateEmail: validateCloudflareManagedFormEmail,
       resourceFetch,
+      onResourceExchange: async (resourceId, exchange) => {
+        if (!resourceIds.includes(resourceId) || exchanges.length >= 100) {
+          return;
+        }
+        exchanges.push(
+          await capturePreviewFormExchange(resourceId, exchange, {
+            publicValues,
+            privateValues,
+            sensitiveFields,
+            redactAllBody: privacy.stringifyAs !== undefined,
+          })
+        );
+      },
       validateDestination: resourceFetch.validateDestination,
     });
-    return respond(result);
+    return respond({
+      ...result,
+      previewExchanges: exchanges,
+    } as ManagedFormResponse);
   } catch (error) {
     return respond(
       getManagedFormFailure(

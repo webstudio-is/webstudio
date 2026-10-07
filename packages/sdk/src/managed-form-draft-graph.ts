@@ -125,7 +125,6 @@ export const createManagedFormDraftGraph = ({
     const usesDefaultFormBody =
       resource.control !== "email" &&
       isRoot &&
-      isFormBound &&
       (resource.body === undefined || resource.body.length === 0);
     const createRequest = (
       documents: ReadonlyMap<string, unknown>
@@ -233,6 +232,7 @@ export const createManagedFormDraftGraph = ({
     return {
       id,
       outputName: id,
+      name: resource.name,
       dependencies: dependenciesById.get(id) ?? [],
       control: resource.control,
       ...(resolvedEmail

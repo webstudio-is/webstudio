@@ -168,7 +168,7 @@ const canShowTextContent = ({
 };
 
 const isManagedFormProperty = (name: string) =>
-  name === showAttribute || name === "submission" || name === "successRedirect";
+  name === showAttribute || name === "action" || name === "successRedirect";
 
 export const __testing__ = {
   isPropVisibleInContentMode,

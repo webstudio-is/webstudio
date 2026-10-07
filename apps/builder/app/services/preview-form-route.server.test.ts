@@ -73,11 +73,11 @@ const draftBuild = {
   ],
   props: [
     {
-      id: "submission",
+      id: "action",
       instanceId: "form",
-      name: "submission",
+      name: "action",
       type: "json",
-      value: { destinations: ["destination"] },
+      value: [{ dataSourceId: "destination", enabled: true }],
     },
   ],
   dataSources: [
@@ -174,10 +174,10 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   });
   const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
     .results[0].value;
-  expect(resourceFetch).toHaveBeenCalledWith(
-    expect.stringContaining("https://example.com/contact"),
-    expect.anything()
-  );
+  expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
+  const outgoing = resourceFetch.mock.calls[0][0] as Request;
+  expect(outgoing.url).toContain("https://example.com/contact");
+  expect(outgoing.method).toBe("POST");
   expect(loadDevBuildByProjectId).toHaveBeenCalledWith(
     expect.anything(),
     projectId
@@ -250,7 +250,7 @@ test.each([false, true])(
           createRoot(document.getElementById("root")).render(
             createElement(NativeForm, {
               "data-ws-managed-form-id": "form",
-              submission: { destinations: ["destination"] },
+              action: [{ dataSourceId: "destination", enabled: true }],
               onManagedSubmit: (values, signal) => submitPreviewForm({
                 values,
                 managedFormId: "form",
@@ -362,7 +362,10 @@ test.each([false, true])(
         vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
           ...draftBuild,
           props: [
-            { ...draftBuild.props[0], value: { destinations: ["new-email"] } },
+            {
+              ...draftBuild.props[0],
+              value: [{ dataSourceId: "new-email", enabled: true }],
+            },
           ],
           dataSources: [
             {
@@ -422,9 +425,9 @@ test.each([false, true])(
         expect(message.to).toEqual([{ address: "updated@example.com" }]);
         expect(message.text).toContain("Updated draft body");
       } else {
-        expect(resourceFetch).toHaveBeenCalledWith(
-          expect.stringContaining("https://example.com/contact"),
-          expect.anything()
+        expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
+        expect((resourceFetch.mock.calls[0][0] as Request).url).toContain(
+          "https://example.com/contact"
         );
       }
     } finally {
@@ -519,9 +522,9 @@ test("Preview uses changed draft Resource settings without republishing", async 
   expect(((await response.json()) as { success: boolean }).success).toBe(true);
   const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
     .results[0].value;
-  expect(resourceFetch).toHaveBeenCalledWith(
-    expect.stringContaining("https://new.example/updated"),
-    expect.anything()
+  expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
+  expect((resourceFetch.mock.calls[0][0] as Request).url).toContain(
+    "https://new.example/updated"
   );
 });
 
@@ -540,9 +543,9 @@ test("Preview executes draft Resource bindings with existing expression methods"
   expect(await response.json()).toMatchObject({ success: true });
   const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
     .results[0].value;
-  expect(resourceFetch).toHaveBeenCalledWith(
-    "https://example.com/ADA",
-    expect.anything()
+  expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
+  expect((resourceFetch.mock.calls[0][0] as Request).url).toContain(
+    "https://example.com/ADA"
   );
 });
 
@@ -712,4 +715,61 @@ test("Email Service per-site limit fails the email action without HTTP egress", 
   } finally {
     vi.unstubAllGlobals();
   }
+});
+
+test("authenticated Preview returns bounded actual exchange metadata privately without replay", async () => {
+  const response = await action({ request: request() } as never);
+  const body = (await response.json()) as unknown as {
+    previewExchanges: import("~/shared/preview-form-inspection").PreviewFormExchange[];
+  };
+  const fetch = vi.mocked(createNodeProtectedResourceFetch).mock.results[0]
+    .value;
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(body.previewExchanges).toHaveLength(1);
+  expect(body.previewExchanges[0]).toMatchObject({
+    resourceId: "webhook",
+    request: {
+      method: "POST",
+      url: "https://example.com/contact",
+      body: { email: "ada@example.com" },
+    },
+    response: { status: 201, body: { accepted: true } },
+  });
+  expect(JSON.stringify(body.previewExchanges)).not.toContain(
+    "server-only-test-token"
+  );
+  expect(JSON.stringify(body.previewExchanges)).not.toContain(
+    "localhost/rest/preview-form"
+  );
+  expect(response.headers.get("cache-control")).toContain("no-store");
+});
+
+test("a parent-scope Action with no Body sends entered Form values in the actual outgoing request", async () => {
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    dataSources: draftBuild.dataSources.map((source) =>
+      source.type === "resource"
+        ? { ...source, scopeInstanceId: "root-instance" }
+        : source
+    ),
+    resources: draftBuild.resources.map(({ body: _body, ...resource }) => ({
+      ...resource,
+      method: "get",
+    })),
+  } as never);
+  const response = await action({ request: request() } as never);
+  expect(response.status).toBe(200);
+  const fetch = vi.mocked(createNodeProtectedResourceFetch).mock.results[0]
+    .value;
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const outgoing = vi.mocked(fetch).mock.calls[0][0] as Request;
+  expect(outgoing.method).toBe("POST");
+  expect(outgoing.headers.get("content-type")).toBe("application/json");
+  expect(await outgoing.clone().json()).toEqual({ email: "ada@example.com" });
+  const body = (await response.json()) as unknown as {
+    previewExchanges: import("~/shared/preview-form-inspection").PreviewFormExchange[];
+  };
+  expect(body.previewExchanges[0].request.body).toEqual({
+    email: "ada@example.com",
+  });
 });

@@ -43,12 +43,18 @@ test("managed Form reveals partial failure and leaves visible success feedback i
       success: false,
       status: 502,
       results: [
-        { resourceId: "first", status: 200, body: "ok" },
-        { resourceId: "second", status: 422, body: "failed" },
+        { resourceId: "first", resourceName: "first", status: 200, body: "ok" },
+        {
+          resourceId: "second",
+          resourceName: "second",
+          status: 422,
+          body: "failed",
+        },
       ],
       errors: [
         {
           resourceId: "second",
+          resourceName: "second",
           status: 422,
           body: "failed",
           message: "failed",
@@ -69,7 +75,10 @@ test("managed Form reveals partial failure and leaves visible success feedback i
     return (
       <NativeForm
         data-ws-managed-form-id="saved-managed-form"
-        submission={{ destinations: ["first", "second"] }}
+        action={[
+          { dataSourceId: "first", enabled: true },
+          { dataSourceId: "second", enabled: true },
+        ]}
         state={state}
         onStateChange={setState}
       >
@@ -116,9 +125,22 @@ test("managed Form reveals a built-in error on repeated failures", async () => {
   const action = vi.fn().mockImplementation(async () => ({
     success: false,
     status: 502,
-    results: [{ resourceId: "first", status: 502, body: "failed" }],
+    results: [
+      {
+        resourceId: "first",
+        resourceName: "first",
+        status: 502,
+        body: "failed",
+      },
+    ],
     errors: [
-      { resourceId: "first", status: 502, body: "failed", message: "failed" },
+      {
+        resourceId: "first",
+        resourceName: "first",
+        status: 502,
+        body: "failed",
+        message: "failed",
+      },
     ],
   }));
   mockManagedHttpAction(action);
@@ -129,7 +151,7 @@ test("managed Form reveals a built-in error on repeated failures", async () => {
     return (
       <NativeForm
         data-ws-managed-form-id="saved-managed-form"
-        submission={{ destinations: ["first"] }}
+        action={[{ dataSourceId: "first", enabled: true }]}
         state={state}
         onStateChange={setState}
       >
@@ -169,7 +191,7 @@ test("managed Form reveals a built-in error on repeated failures", async () => {
 test("managed Form reveals a persistent configuration error", async () => {
   const action = vi.fn();
   const view = await renderRoute(
-    <NativeForm submission={{ destinations: [] }}>
+    <NativeForm action={[]}>
       <button type="submit">Send</button>
     </NativeForm>,
     action
@@ -217,7 +239,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
     return (
       <NativeForm
         data-ws-managed-form-id="saved-managed-form"
-        submission={{ destinations: ["first"] }}
+        action={[{ dataSourceId: "first", enabled: true }]}
         state={state}
         onStateChange={setState}
         successRedirect="#after-form"
