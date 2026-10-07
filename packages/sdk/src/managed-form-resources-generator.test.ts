@@ -26,6 +26,7 @@ const getGeneratedGraph = (input: {
   props?: Props;
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
+  ownerName?: string;
   forms: readonly {
     formId: string;
     destinationDataSourceIds: readonly string[];
@@ -146,8 +147,9 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
     forms: [{ formId: "form", destinationDataSourceIds: ["emailDataSource"] }],
     projectMeta: {
       contactEmail: '"Team, West" <team@example.com>',
-      emailSender: "Owner <owner@example.com>",
+      emailSender: "owner@example.com",
     },
+    ownerName: "Ada Owner",
   });
   const graph = getGraph("form", {
     system: {},
@@ -166,7 +168,8 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
     subject: "Custom subject",
     body: expect.stringContaining('"hidden": "yes"'),
     recipients: [{ name: "Team, West", address: "team@example.com" }],
-    sender: { name: "Owner", address: "owner@example.com" },
+    sender: { address: "owner@example.com" },
+    fromName: "Ada Owner",
   });
   expect(graph?.resources[0].createRequest(new Map()).email?.body).toContain(
     '"language": "en"'

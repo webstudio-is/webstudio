@@ -17,16 +17,15 @@ const maxEmailAttachments = 32;
 const maxEmailRequestBytes = 7 * 1024 * 1024;
 const mimeEnvelopeBytes = 16 * 1024;
 const emailPattern = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+const isValidMailboxName = (name: unknown) =>
+  typeof name === "string" && name.length <= 256 && !/[\r\n]/.test(name);
 
 const isValidMailbox = (value: { address: string; name?: string }) =>
   typeof value.address === "string" &&
   value.address.length <= 320 &&
   emailPattern.test(value.address) &&
   !/[\r\n]/.test(value.address) &&
-  (value.name === undefined ||
-    (typeof value.name === "string" &&
-      value.name.length <= 256 &&
-      !/[\r\n]/.test(value.name)));
+  (value.name === undefined || isValidMailboxName(value.name));
 
 const utf8Bytes = (value: string) => new TextEncoder().encode(value).byteLength;
 
@@ -47,8 +46,7 @@ const getEncodedMimeUpperBound = (
     email.subject,
     ...email.recipients.flatMap(({ address, name }) => [address, name ?? ""]),
     email.sender?.address ?? "",
-    email.sender?.name ?? "",
-    email.sender?.name ?? "",
+    email.fromName ?? "",
   ];
   let size = mimeEnvelopeBytes + encodedTextUpperBound(email.body);
   for (const header of headers) {
@@ -123,6 +121,7 @@ export const validateCloudflareManagedFormEmail = (
     email.recipients.length > 50 ||
     email.recipients.some((recipient) => !isValidMailbox(recipient)) ||
     (email.sender !== undefined && !isValidMailbox(email.sender)) ||
+    (email.fromName !== undefined && !isValidMailboxName(email.fromName)) ||
     typeof email.subject !== "string" ||
     email.subject.length === 0 ||
     email.subject.length > maxEmailSubjectLength ||
@@ -155,9 +154,7 @@ export const validateCloudflareManagedFormEmail = (
     subject: email.subject,
     text: email.body,
     ...(email.sender === undefined ? {} : { replyTo: email.sender }),
-    ...(email.sender?.name === undefined
-      ? {}
-      : { fromName: email.sender.name }),
+    ...(email.fromName === undefined ? {} : { fromName: email.fromName }),
     ...(files.length === 0
       ? {}
       : {
@@ -276,9 +273,9 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
             subject: email.subject,
             text: email.body,
             ...(email.sender === undefined ? {} : { replyTo: email.sender }),
-            ...(email.sender?.name === undefined
+            ...(email.fromName === undefined
               ? {}
-              : { fromName: email.sender.name }),
+              : { fromName: email.fromName }),
             ...(attachments.length === 0 ? {} : { attachments }),
           }),
           signal: controller.signal,

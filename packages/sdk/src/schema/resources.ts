@@ -34,6 +34,7 @@ export const emailRequestSettings = z.object({
   sender: z
     .object({ name: z.string().optional(), address: z.string() })
     .optional(),
+  fromName: z.string().optional(),
   subject: z.string(),
   body: z.string(),
   includeAttachments: z.boolean(),

@@ -65,13 +65,13 @@ describe("project bundle contract", () => {
     expect(
       publishedProjectBundle.parse(
         createPublishedProjectBundleFixture({
-          user: { email: "user@example.com" },
+          user: { email: "user@example.com", username: "Site Owner" },
         })
       )
     ).toMatchObject({
       projectDomain: "example",
       projectTitle: "Example",
-      user: { email: "user@example.com" },
+      user: { email: "user@example.com", username: "Site Owner" },
     });
   });
 

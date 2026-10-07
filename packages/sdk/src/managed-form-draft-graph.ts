@@ -34,6 +34,7 @@ export const createManagedFormDraftGraph = ({
   props,
   projectMeta,
   ownerEmail,
+  ownerName,
   system,
   formData,
   browserInfo,
@@ -47,6 +48,7 @@ export const createManagedFormDraftGraph = ({
   props: Props;
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
+  ownerName?: string;
   system: System;
   formData: Record<string, unknown>;
   browserInfo: Record<string, unknown>;
@@ -177,6 +179,7 @@ export const createManagedFormDraftGraph = ({
             settings: resource.email,
             projectMeta,
             ownerEmail,
+            ownerName,
           })
         : undefined;
     if (resolvedEmail && !resolvedEmail.recipients) {
@@ -259,6 +262,7 @@ export const createManagedFormDraftGraph = ({
         visitorEmailField: resolvedEmail.visitorEmailField,
         recipients: resolvedEmail.recipients!,
         sender: resolvedEmail.sender,
+        fromName: resolvedEmail.fromName,
         includeAttachments: resolvedEmail.includeAttachments,
         subject: evaluate(resolvedEmail.subject) as string,
         body:

@@ -29,6 +29,7 @@ const request: ResourceRequest = {
     recipientMode: "project",
     recipients: [{ address: "team@example.com", name: "Team" }],
     sender: { address: "reply@example.com", name: "Visitor replies" },
+    fromName: "Visitor replies",
     subject: "New submission",
     body: "Text body",
     includeAttachments: true,
@@ -232,6 +233,7 @@ test("keeps an address-only Reply-To without a display name", async () => {
       email: {
         ...request.email!,
         sender: { address: "reply@example.com" },
+        fromName: undefined,
       },
     },
     {}
@@ -322,6 +324,21 @@ test("rejects malformed recipient addresses during preflight", () => {
         email: {
           ...request.email!,
           recipients: [{ address: "bad\r\nBcc: victim@example.com" }],
+        },
+      },
+      new FormData()
+    )
+  ).toThrow("Email settings are invalid");
+});
+
+test("rejects an invalid From display name during preflight", () => {
+  expect(() =>
+    validateCloudflareManagedFormEmail(
+      {
+        ...request,
+        email: {
+          ...request.email!,
+          fromName: "Owner\r\nBcc: attacker@example.com",
         },
       },
       new FormData()

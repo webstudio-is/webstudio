@@ -139,10 +139,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ? source.resourceId
         : null;
     });
-    const ownerEmail =
+    const owner =
       project.userId === null
         ? undefined
-        : ((await getUserById(context, project.userId)).email ?? undefined);
+        : await getUserById(context, project.userId);
+    const ownerEmail = owner?.email ?? undefined;
     const projectMeta = build.projectSettings?.meta ?? build.pages.meta;
     const resourceFetch = createNodeProtectedResourceFetch({
       deniedHostnames: getDeniedResourceHostnames([
@@ -181,6 +182,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           resources,
           projectMeta,
           ownerEmail,
+          ownerName: owner?.username ?? undefined,
           system: values.system,
           formData: values.formData as Record<string, unknown>,
           browserInfo: values.browserInfo as Record<string, unknown>,

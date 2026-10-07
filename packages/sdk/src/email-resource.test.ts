@@ -52,10 +52,12 @@ describe("Email Resource defaults", () => {
       resolveEmailResourceSettings({
         projectMeta,
         ownerEmail: "fallback@example.com",
+        ownerName: "Site Owner Profile",
       })
     ).toMatchObject({
       recipients: [{ name: "Team, West", address: "team@example.com" }],
       sender: { name: "Owner Name", address: "owner@example.com" },
+      fromName: "Owner Name",
       subject: '"Project subject"',
       body: '"Project body"',
     });
@@ -71,10 +73,12 @@ describe("Email Resource defaults", () => {
         settings,
         projectMeta,
         ownerEmail: "fallback@example.com",
+        ownerName: "Site Owner Profile",
       })
     ).toMatchObject({
       recipients: [{ address: "custom@example.com" }],
       sender: { name: "Custom", address: "custom@example.com" },
+      fromName: "Custom",
       subject: '"Custom subject"',
       body: '"Resource body"',
     });
@@ -100,10 +104,14 @@ describe("Email Resource defaults", () => {
 
   test("falls back to owner for recipients and Sender and keeps a readable Form body", () => {
     expect(
-      resolveEmailResourceSettings({ ownerEmail: "owner@example.com" })
+      resolveEmailResourceSettings({
+        ownerEmail: "owner@example.com",
+        ownerName: "Owner Profile",
+      })
     ).toMatchObject({
       recipients: [{ address: "owner@example.com" }],
       sender: { address: "owner@example.com" },
+      fromName: "Owner Profile",
     });
     const expression = getDefaultFormEmailBodyExpression(
       "formData",
@@ -112,6 +120,10 @@ describe("Email Resource defaults", () => {
     expect(expression).toContain("Form data:");
     expect(expression).toContain("${formData}");
     expect(expression).toContain("${browserInfo}");
+  });
+
+  test("uses Site Owner when no profile name is available", () => {
+    expect(resolveEmailResourceSettings({}).fromName).toBe("Site Owner");
   });
 
   test("visitor mode uses one runtime recipient, empty body, and visitor subject", () => {

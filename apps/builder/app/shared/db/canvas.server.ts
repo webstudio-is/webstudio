@@ -308,7 +308,7 @@ const addProjectMetadata = async (
     assets: publishedAssets,
     assetFolders: publishedAssetFolders,
     bundleVersion,
-    user: user ? { email: user.email } : undefined,
+    user: user ? { email: user.email, username: user.username } : undefined,
     projectDomain: project.domain,
     projectTitle: project.title,
     assetIndex,

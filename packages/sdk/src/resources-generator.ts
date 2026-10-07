@@ -106,6 +106,9 @@ export const generateResourceRequestFields = ({
     if (resolved.sender) {
       generated += `${indent}  sender: ${JSON.stringify(resolved.sender)},\n`;
     }
+    if (resolved.fromName) {
+      generated += `${indent}  fromName: ${JSON.stringify(resolved.fromName)},\n`;
+    }
     generated += `${indent}  includeAttachments: ${resolved.includeAttachments},\n`;
     const subject = generateExpression({
       expression: resolved.subject,

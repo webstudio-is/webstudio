@@ -39,6 +39,7 @@ export const generateManagedFormResources = ({
   projectMeta,
   props,
   ownerEmail,
+  ownerName,
 }: {
   scope: Scope;
   instances: Instances;
@@ -47,6 +48,7 @@ export const generateManagedFormResources = ({
   props?: Props;
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
+  ownerName?: string;
   forms: readonly {
     formId: string;
     destinationDataSourceIds: readonly string[];
@@ -194,6 +196,7 @@ export const generateManagedFormResources = ({
                 settings: resource.email,
                 projectMeta,
                 ownerEmail,
+                ownerName,
               })
             : undefined;
         if (resolvedEmailSettings !== undefined) {
