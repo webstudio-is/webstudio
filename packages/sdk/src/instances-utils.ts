@@ -6,6 +6,21 @@ import { pascalCase } from "change-case";
 
 export const ROOT_INSTANCE_ID = ":root";
 
+export const getParentInstanceById = (instances: Instances) => {
+  const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instances.values()) {
+    if (instance.component === "Slot") {
+      continue;
+    }
+    for (const child of instance.children ?? []) {
+      if (child.type === "id") {
+        parentInstanceById.set(child.value, instance.id);
+      }
+    }
+  }
+  return parentInstanceById;
+};
+
 const traverseInstances = (
   instances: Instances,
   instanceId: Instance["id"],

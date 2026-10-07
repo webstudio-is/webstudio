@@ -68,7 +68,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   try {
-    const formData = await readFormDataWithLimit(request);
+    // This request comes from the Builder, whose URL can contain a build-access
+    // token. Its Referer must never become visitor browserInfo or email content.
+    const formHeaders = new Headers(request.headers);
+    formHeaders.delete("referer");
+    const formRequest = new Request(request, { headers: formHeaders });
+    const formData = await readFormDataWithLimit(formRequest);
     const ids = formData.getAll(managedFormIdFieldName);
     if (ids.length !== 1 || typeof ids[0] !== "string") {
       throw new Error("Invalid Form submission");
@@ -167,7 +172,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         { throwOnError: true }
       );
     const result = await handleManagedFormSubmission({
-      request,
+      request: formRequest,
       formData,
       url: pageUrl,
       system,

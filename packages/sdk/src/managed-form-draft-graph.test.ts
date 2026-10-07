@@ -243,6 +243,8 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
   });
   expect(() =>
     createManagedFormDraftGraph({ ...input, resources: invalidResources })
+      .resources.find((resource) => resource.id === "email")!
+      .createRequest(new Map())
   ).toThrow("invalid visitor email field");
   expect(
     generateManagedFormResources({
@@ -258,7 +260,9 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
         },
       ],
     })
-  ).toContain('case "form": return undefined');
+  ).toContain(
+    'throw new Error("Managed Form Email Resource email has invalid visitor email field")'
+  );
 });
 
 test("draft graph keeps scoped dependencies and external Resource roots in published order", () => {

@@ -258,6 +258,18 @@ const getReachableResources = (graph: ResourceRequestGraph) => {
   return reachable;
 };
 
+/** Validate the original selection before optional visitor roots are removed. */
+export const validateManagedFormDestinationDependencies = (
+  graph: ResourceRequestGraph
+) => {
+  const roots = new Set(graph.rootIds);
+  for (const resource of getReachableResources(graph)) {
+    if (resource.dependencies.some((id) => roots.has(id))) {
+      throw new Error("Selected Form Resources cannot depend on one another");
+    }
+  }
+};
+
 /** Reject the whole submission before any destination or dependency runs. */
 export const validateManagedFormRecipientLimit = (
   graph: ResourceRequestGraph
@@ -300,7 +312,9 @@ export const validateManagedFormBodyFormats = (
   if (
     emailConfigured === false &&
     getReachableResources(graph).some(
-      (resource) => resource.control === "email"
+      (resource) =>
+        resource.control === "email" &&
+        !(resource.nonfatal && graph.rootIds.includes(resource.id))
     )
   ) {
     throw new Error(
@@ -359,6 +373,7 @@ export const loadManagedFormResources = async (
 ) => {
   const { validateDestination, validateEmail, ...loadOptions } = options ?? {};
   options?.signal?.throwIfAborted();
+  validateManagedFormDestinationDependencies(graph);
   if (new Set(graph.rootIds).size !== graph.rootIds.length) {
     throw new Error(
       "Form Resource graph contains duplicate selected destinations"
@@ -377,10 +392,7 @@ export const loadManagedFormResources = async (
   const visiting = new Set<string>();
   const visited = new Set<string>();
   const dependencyIds = new Set<string>();
-  const visit = (resourceId: string, dependency = false) => {
-    if (dependency && roots.has(resourceId)) {
-      throw new Error("Selected Form Resources cannot depend on one another");
-    }
+  const visit = (resourceId: string) => {
     if (visiting.has(resourceId)) {
       throw new Error("Form Resource graph contains a cycle");
     }
@@ -394,7 +406,7 @@ export const loadManagedFormResources = async (
     visiting.add(resourceId);
     for (const childId of resource.dependencies) {
       dependencyIds.add(childId);
-      visit(childId, true);
+      visit(childId);
     }
     visiting.delete(resourceId);
     visited.add(resourceId);
@@ -403,43 +415,86 @@ export const loadManagedFormResources = async (
     visit(rootId);
   }
   const preparedEmailRequests = new Map<string, ResourceRequest>();
+  const failedVisitorIds = new Set<string>();
+  const failedVisitorResults: Record<string, unknown> = {};
   let submissionReference: string | undefined;
   for (const resource of getReachableResources(graph)) {
     if (resource.control !== "email") {
       continue;
     }
-    // Managed Form destinations run in parallel. An Email dependency could
-    // dispatch a lookup before we can validate the resolved message, so Email
-    // must use Form and Project values available during this preflight.
-    if (resource.dependencies.length > 0) {
-      throw new Error("Email Resources cannot depend on other Resources");
+    try {
+      if (
+        loadOptions.sendEmail === undefined &&
+        resource.nonfatal &&
+        roots.has(resource.id)
+      ) {
+        throw new Error(
+          "Email delivery requires Webstudio Cloud and is not configured yet"
+        );
+      }
+      // Managed Form destinations run in parallel. An Email dependency could
+      // dispatch a lookup before we can validate the resolved message, so Email
+      // must use Form and Project values available during this preflight.
+      if (resource.dependencies.length > 0) {
+        throw new Error("Email Resources cannot depend on other Resources");
+      }
+      const request = resource.createRequest(new Map());
+      validateEmailSubject(request.email?.subject);
+      if (
+        request.email === undefined ||
+        request.email.recipients.length === 0 ||
+        typeof request.email.body !== "string"
+      ) {
+        throw new Error("Email settings are invalid");
+      }
+      if (
+        request.email.subject.length === 0 ||
+        request.email.subject.length >
+          maxEmailSubjectLength - submissionReferenceSuffixLength
+      ) {
+        throw new Error("Email subject is invalid");
+      }
+      submissionReference ??= createSubmissionReference();
+      const preparedRequest = {
+        ...request,
+        email: {
+          ...request.email,
+          subject: `${request.email.subject} [${submissionReference}]`,
+        },
+      };
+      validateEmail?.(preparedRequest);
+      preparedEmailRequests.set(resource.id, preparedRequest);
+    } catch (error) {
+      if (!resource.nonfatal || !roots.has(resource.id)) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Visitor Email settings are invalid";
+      failedVisitorIds.add(resource.id);
+      failedVisitorResults[resource.outputName] = {
+        ok: false,
+        status: 400,
+        statusText: message,
+        data: { error: { code: "invalid_visitor_email_resource", message } },
+      };
     }
-    const request = resource.createRequest(new Map());
-    validateEmailSubject(request.email?.subject);
-    if (
-      request.email === undefined ||
-      request.email.recipients.length === 0 ||
-      typeof request.email.body !== "string"
-    ) {
-      throw new Error("Email settings are invalid");
+  }
+  graph = {
+    ...graph,
+    rootIds: graph.rootIds.filter((id) => !failedVisitorIds.has(id)),
+    resources: graph.resources.filter(
+      (resource) => !failedVisitorIds.has(resource.id)
+    ),
+  };
+  const reachableIds = new Set(
+    getReachableResources(graph).map((resource) => resource.id)
+  );
+  for (const id of dependencyIds) {
+    if (!reachableIds.has(id)) {
+      dependencyIds.delete(id);
     }
-    if (
-      request.email.subject.length === 0 ||
-      request.email.subject.length >
-        maxEmailSubjectLength - submissionReferenceSuffixLength
-    ) {
-      throw new Error("Email subject is invalid");
-    }
-    submissionReference ??= createSubmissionReference();
-    const preparedRequest = {
-      ...request,
-      email: {
-        ...request.email,
-        subject: `${request.email.subject} [${submissionReference}]`,
-      },
-    };
-    validateEmail?.(preparedRequest);
-    preparedEmailRequests.set(resource.id, preparedRequest);
   }
   const preparedResources = graph.resources.map((resource) => {
     const request = preparedEmailRequests.get(resource.id);
@@ -488,12 +543,13 @@ export const loadManagedFormResources = async (
     }
     return { ...resource, dependencies: [], createRequest: () => request };
   });
-  return loadResources(
+  const results = await loadResources(
     customFetch,
     { resources: preparedRoots, rootIds: graph.rootIds },
     baseUrl,
     loadOptions
   );
+  return { ...results, ...failedVisitorResults };
 };
 
 export type ManagedFormBrowserInfo = {
@@ -503,19 +559,35 @@ export type ManagedFormBrowserInfo = {
   referrer?: string;
 };
 
+/** Referrers are diagnostic context, never a transport for URL credentials. */
+const getSafeFormReferrer = (value: string | null) => {
+  if (value === null) {
+    return;
+  }
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" || url.protocol === "http:") {
+      return url.origin + url.pathname;
+    }
+  } catch {
+    // Invalid referrers are omitted from bindings and automatic email content.
+  }
+};
+
 /** The caller supplies IP only from a trusted platform header. */
 export const getManagedFormBrowserInfo = (
   request: Request,
   trustedIp?: string
-): ManagedFormBrowserInfo => ({
-  ...(trustedIp ? { ip: trustedIp } : {}),
-  ...(request.headers.get("user-agent")
-    ? { userAgent: request.headers.get("user-agent") ?? undefined }
-    : {}),
-  ...(request.headers.get("accept-language")
-    ? { language: request.headers.get("accept-language") ?? undefined }
-    : {}),
-  ...(request.headers.get("referer")
-    ? { referrer: request.headers.get("referer") ?? undefined }
-    : {}),
-});
+): ManagedFormBrowserInfo => {
+  const referrer = getSafeFormReferrer(request.headers.get("referer"));
+  return {
+    ...(trustedIp ? { ip: trustedIp } : {}),
+    ...(request.headers.get("user-agent")
+      ? { userAgent: request.headers.get("user-agent") ?? undefined }
+      : {}),
+    ...(request.headers.get("accept-language")
+      ? { language: request.headers.get("accept-language") ?? undefined }
+      : {}),
+    ...(referrer ? { referrer } : {}),
+  };
+};

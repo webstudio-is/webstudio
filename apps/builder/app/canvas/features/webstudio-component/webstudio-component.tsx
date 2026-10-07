@@ -113,7 +113,6 @@ import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
 import { submitPreviewForm } from "~/shared/preview-form-bridge";
 import { switchPageAndUpdateSystem } from "~/canvas/interceptor";
-import { $hasUnsavedSyncChanges } from "@webstudio-is/sync-client";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 import { navigatePreviewFormSuccess } from "./form-success-redirect";
 
@@ -176,7 +175,26 @@ const getPreviewCurrentUrl = (
   return currentUrl;
 };
 
+const submitManagedFormFromPreview = (
+  managedFormId: string,
+  values: Parameters<typeof submitManagedForm>[0]["values"],
+  signal: AbortSignal
+) => {
+  const currentUrl = getPreviewCurrentUrl(
+    $currentSystem.get(),
+    $selectedPageHash.get().hash
+  );
+  // The authenticated parent waits for durable saves before posting the draft.
+  return submitPreviewForm({
+    values,
+    managedFormId,
+    path: currentUrl.pathname + currentUrl.search,
+    signal,
+  });
+};
+
 export const __testing__ = {
+  submitManagedFormFromPreview,
   computeComponentKey,
   getPreviewCurrentUrl,
   getHtmlEmbedCanvasProps,
@@ -1068,27 +1086,7 @@ const WebstudioComponentPreviewInner = forwardRef<
       values: Parameters<typeof submitManagedForm>[0]["values"],
       signal: AbortSignal
     ): Promise<ManagedFormResponse> => {
-      if ($hasUnsavedSyncChanges.get()) {
-        return Promise.resolve({
-          success: false,
-          status: 409,
-          results: [],
-          errors: [
-            {
-              status: 409,
-              body: null,
-              message: "Save changes to test the current Preview Form.",
-            },
-          ],
-        });
-      }
-      const currentUrl = getPreviewUrl();
-      return submitPreviewForm({
-        values,
-        managedFormId: instance.id,
-        path: currentUrl.pathname + currentUrl.search,
-        signal,
-      });
+      return submitManagedFormFromPreview(instance.id, values, signal);
     };
     props.onSuccessRedirect = (destination: string) => {
       navigatePreviewFormSuccess(

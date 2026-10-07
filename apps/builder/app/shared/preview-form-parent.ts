@@ -1,3 +1,5 @@
+import { draftPersistence } from "./sync/draft-persistence";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import type { Publish } from "~/shared/pubsub";
 import { subscribe } from "~/shared/pubsub";
 import { fetch as builderFetch } from "~/shared/fetch.client";
@@ -17,6 +19,11 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
     requests.set(id, controller);
     void (async () => {
       try {
+        const { projectId } = parseBuilderUrl(window.location.href);
+        if (projectId === undefined) {
+          throw new Error("Project is not available for Preview submission.");
+        }
+        await draftPersistence.wait(projectId, { signal: controller.signal });
         const endpoint = new URL("/rest/preview-form", window.location.href);
         endpoint.searchParams.set("path", path);
         const response = await submitManagedForm({

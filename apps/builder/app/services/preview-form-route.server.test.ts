@@ -150,8 +150,9 @@ test("an unauthenticated request cannot load the project draft", async () => {
 });
 
 test("a cross-origin request cannot reach project authorization or actions", async () => {
-  const { preventCrossOriginCookie } =
-    await import("~/services/no-cross-origin-cookie");
+  const { preventCrossOriginCookie } = await import(
+    "~/services/no-cross-origin-cookie"
+  );
   vi.mocked(preventCrossOriginCookie).mockImplementationOnce(() => {
     throw new Response("Cross-origin request", { status: 403 });
   });
@@ -185,29 +186,31 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   expect(response.headers.get("cache-control")).toContain("no-store");
 });
 
-test("a Preview Form reaches the Builder action over local HTTP", async () => {
-  const appSource = new URL("../", import.meta.url).pathname;
-  const componentSource = new URL(
-    "../../../../packages/sdk-components-react/src",
-    import.meta.url
-  ).pathname;
-  const sharedBuildOptions = {
-    bundle: true,
-    write: false,
-    format: "iife" as const,
-    platform: "browser" as const,
-    target: "es2022",
-    conditions: ["webstudio", "browser"],
-    define: {
-      "process.env.NODE_ENV": '"development"',
-      "import.meta.env": '{"GITHUB_SHA":"local"}',
-    },
-  };
-  const [parentBundle, canvasBundle] = await Promise.all([
-    build({
-      ...sharedBuildOptions,
-      stdin: {
-        contents: `
+test.each([false, true])(
+  "a Preview Form reaches the Builder action over local HTTP after pending saves: %s",
+  async (delayedSave) => {
+    const appSource = new URL("../", import.meta.url).pathname;
+    const componentSource = new URL(
+      "../../../../packages/sdk-components-react/src",
+      import.meta.url
+    ).pathname;
+    const sharedBuildOptions = {
+      bundle: true,
+      write: false,
+      format: "iife" as const,
+      platform: "browser" as const,
+      target: "es2022",
+      conditions: ["webstudio", "browser"],
+      define: {
+        "process.env.NODE_ENV": '"development"',
+        "import.meta.env": '{"GITHUB_SHA":"local"}',
+      },
+    };
+    const [parentBundle, canvasBundle] = await Promise.all([
+      build({
+        ...sharedBuildOptions,
+        stdin: {
+          contents: `
           import { createElement, useEffect } from "react";
           import { createRoot } from "react-dom/client";
           import { usePublish } from "~/shared/pubsub";
@@ -215,6 +218,12 @@ test("a Preview Form reaches the Builder action over local HTTP", async () => {
           import { $authToken } from "~/shared/nano-states/misc";
           import { subscribePreviewFormRequests } from "~/shared/preview-form-parent";
 
+          import { draftPersistence } from "~/shared/sync/draft-persistence";
+          import { parseBuilderUrl } from "@webstudio-is/protocol";
+          const projectId = parseBuilderUrl(window.location.href).projectId;
+          draftPersistence.reset(projectId);
+          if (${delayedSave}) draftPersistence.begin(projectId, "draft-edit");
+          window.finishDraftSave = () => draftPersistence.complete(projectId, "draft-edit", true);
           updateCsrfToken("local-test-csrf");
           $authToken.set("local-test-auth");
           const App = () => {
@@ -224,16 +233,16 @@ test("a Preview Form reaches the Builder action over local HTTP", async () => {
           };
           createRoot(document.getElementById("root")).render(createElement(App));
         `,
-        resolveDir: appSource,
-        sourcefile: "preview-parent-entry.tsx",
-        loader: "tsx",
-      },
-      alias: { "~": appSource },
-    }),
-    build({
-      ...sharedBuildOptions,
-      stdin: {
-        contents: `
+          resolveDir: appSource,
+          sourcefile: "preview-parent-entry.tsx",
+          loader: "tsx",
+        },
+        alias: { "~": appSource },
+      }),
+      build({
+        ...sharedBuildOptions,
+        stdin: {
+          contents: `
           import { createElement } from "react";
           import { createRoot } from "react-dom/client";
           import { NativeForm } from "./native-form";
@@ -255,123 +264,178 @@ test("a Preview Form reaches the Builder action over local HTTP", async () => {
             )
           );
         `,
-        resolveDir: componentSource,
-        sourcefile: "preview-canvas-entry.tsx",
-        loader: "tsx",
-      },
-      alias: { "~": appSource },
-    }),
-  ]);
-  const getScript = (result: Awaited<ReturnType<typeof build>>) => {
-    const script = result.outputFiles?.[0]?.text;
-    if (script === undefined) {
-      throw new Error("Preview test bundle was not generated");
+          resolveDir: componentSource,
+          sourcefile: "preview-canvas-entry.tsx",
+          loader: "tsx",
+        },
+        alias: { "~": appSource },
+      }),
+    ]);
+    const getScript = (result: Awaited<ReturnType<typeof build>>) => {
+      const script = result.outputFiles?.[0]?.text;
+      if (script === undefined) {
+        throw new Error("Preview test bundle was not generated");
+      }
+      return script;
+    };
+    const parentScript = getScript(parentBundle);
+    const canvasScript = getScript(canvasBundle);
+    const send = vi.fn(async () => Response.json({ id: "sent" }));
+    if (delayedSave) {
+      vi.stubGlobal("fetch", send);
     }
-    return script;
-  };
-  const parentScript = getScript(parentBundle);
-  const canvasScript = getScript(canvasBundle);
-  const requests: string[] = [];
-  let receivedHeaders: { auth?: string; csrf?: string } | undefined;
-  let submittedFormData: FormData | undefined;
-  let routeError: unknown;
-  const server = createServer(async (request, response) => {
-    if (request.url?.startsWith("/rest/preview-form?")) {
-      try {
-        requests.push(request.method ?? "");
-        receivedHeaders = {
-          auth: String(request.headers["x-auth-token"] ?? ""),
-          csrf: String(request.headers["x-csrf-token"] ?? ""),
-        };
-        const chunks: Buffer[] = [];
-        for await (const chunk of request) {
-          chunks.push(Buffer.from(chunk));
-        }
-        const incoming = new Request(
-          `http://${request.headers.host}${request.url}`,
-          {
-            method: request.method,
-            headers: request.headers as HeadersInit,
-            body: Buffer.concat(chunks),
+    const requests: string[] = [];
+    let receivedHeaders: { auth?: string; csrf?: string } | undefined;
+    let submittedFormData: FormData | undefined;
+    let routeError: unknown;
+    const server = createServer(async (request, response) => {
+      if (request.url?.startsWith("/rest/preview-form?")) {
+        try {
+          requests.push(request.method ?? "");
+          receivedHeaders = {
+            auth: String(request.headers["x-auth-token"] ?? ""),
+            csrf: String(request.headers["x-csrf-token"] ?? ""),
+          };
+          const chunks: Buffer[] = [];
+          for await (const chunk of request) {
+            chunks.push(Buffer.from(chunk));
           }
+          const incoming = new Request(
+            `http://${request.headers.host}${request.url}`,
+            {
+              method: request.method,
+              headers: request.headers as HeadersInit,
+              body: Buffer.concat(chunks),
+            }
+          );
+          submittedFormData = await incoming.clone().formData();
+          const routeResponse = await action({ request: incoming } as never);
+          response.writeHead(routeResponse.status, {
+            "content-type":
+              routeResponse.headers.get("content-type") ?? "application/json",
+            "cache-control":
+              routeResponse.headers.get("cache-control") ?? "no-store",
+          });
+          response.end(Buffer.from(await routeResponse.arrayBuffer()));
+        } catch (error) {
+          routeError = error;
+          response.writeHead(500, { "content-type": "application/json" });
+          response.end(
+            JSON.stringify({
+              success: false,
+              status: 500,
+              results: [],
+              errors: [
+                { status: 500, body: null, message: "Local route failed" },
+              ],
+            })
+          );
+        }
+        return;
+      }
+      response.writeHead(200, { "content-type": "text/html" });
+      response.end(
+        request.url === "/canvas"
+          ? `<div id="root"></div><script>${canvasScript}</script>`
+          : `<div id="root"></div><script>${parentScript}</script>`
+      );
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve)
+    );
+    const { port } = server.address() as AddressInfo;
+    const url = `http://p-${projectId}.localhost:${port}`;
+    const { chromium } = require("playwright") as typeof import("playwright");
+    let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
+    try {
+      browser = await chromium.launch();
+      const page = await browser.newPage();
+      const pageErrors: Error[] = [];
+      page.on("pageerror", (error) => pageErrors.push(error));
+      await page.goto(url);
+      const canvas = page.frameLocator('iframe[title="Canvas"]');
+      await canvas.getByRole("button", { name: "Submit Preview" }).click();
+      if (delayedSave) {
+        await canvas.locator('form[aria-busy="true"]').waitFor();
+        expect(requests).toEqual([]);
+        expect(loadDevBuildByProjectId).not.toHaveBeenCalled();
+        // Model the database commit before the durable acknowledgment reaches Builder.
+        vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+          ...draftBuild,
+          props: [
+            { ...draftBuild.props[0], value: { destinations: ["new-email"] } },
+          ],
+          dataSources: [
+            {
+              id: "new-email",
+              type: "resource",
+              scopeInstanceId: "form",
+              resourceId: "email",
+              name: "Updated email",
+            },
+          ],
+          resources: [
+            {
+              id: "email",
+              name: "Updated email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email: { body: '"Updated draft body"' },
+            },
+          ],
+          projectSettings: { meta: { contactEmail: "updated@example.com" } },
+        } as never);
+        await page.evaluate("window.finishDraftSave()");
+      }
+      await canvas
+        .locator('form[data-state="success"], form[data-state="error"]')
+        .waitFor();
+
+      expect(requests).toEqual(["POST"]);
+      expect(receivedHeaders).toEqual({
+        auth: "local-test-auth",
+        csrf: "local-test-csrf",
+      });
+      expect(pageErrors).toEqual([]);
+      expect(routeError).toBeUndefined();
+      expect(await canvas.locator("form").getAttribute("data-state")).toBe(
+        "success"
+      );
+      expect(submittedFormData?.get("email")).toBe("ada@example.com");
+      expect(submittedFormData?.get("ws--managed-form-id")).toBe("form");
+      expect(createContext).toHaveBeenCalledOnce();
+      expect(loadDevBuildByProjectId).toHaveBeenCalledWith(
+        expect.anything(),
+        projectId
+      );
+      const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
+        .results[0].value;
+      if (delayedSave) {
+        expect(resourceFetch).not.toHaveBeenCalled();
+        expect(send).toHaveBeenCalledOnce();
+        const message = JSON.parse(
+          String(
+            (send.mock.calls[0] as unknown as [unknown, RequestInit])[1].body
+          )
         );
-        submittedFormData = await incoming.clone().formData();
-        const routeResponse = await action({ request: incoming } as never);
-        response.writeHead(routeResponse.status, {
-          "content-type":
-            routeResponse.headers.get("content-type") ?? "application/json",
-          "cache-control":
-            routeResponse.headers.get("cache-control") ?? "no-store",
-        });
-        response.end(Buffer.from(await routeResponse.arrayBuffer()));
-      } catch (error) {
-        routeError = error;
-        response.writeHead(500, { "content-type": "application/json" });
-        response.end(
-          JSON.stringify({
-            success: false,
-            status: 500,
-            results: [],
-            errors: [
-              { status: 500, body: null, message: "Local route failed" },
-            ],
-          })
+        expect(message.to).toEqual([{ address: "updated@example.com" }]);
+        expect(message.text).toContain("Updated draft body");
+      } else {
+        expect(resourceFetch).toHaveBeenCalledWith(
+          expect.stringContaining("https://example.com/contact"),
+          expect.anything()
         );
       }
-      return;
+    } finally {
+      vi.unstubAllGlobals();
+      await browser?.close();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
     }
-    response.writeHead(200, { "content-type": "text/html" });
-    response.end(
-      request.url === "/canvas"
-        ? `<div id="root"></div><script>${canvasScript}</script>`
-        : `<div id="root"></div><script>${parentScript}</script>`
-    );
-  });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const { port } = server.address() as AddressInfo;
-  const url = `http://p-${projectId}.localhost:${port}`;
-  const { chromium } = require("playwright") as typeof import("playwright");
-  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
-  try {
-    browser = await chromium.launch();
-    const page = await browser.newPage();
-    const pageErrors: Error[] = [];
-    page.on("pageerror", (error) => pageErrors.push(error));
-    await page.goto(url);
-    const canvas = page.frameLocator('iframe[title="Canvas"]');
-    await canvas.getByRole("button", { name: "Submit Preview" }).click();
-    await canvas
-      .locator('form[data-state="success"], form[data-state="error"]')
-      .waitFor();
-
-    expect(requests).toEqual(["POST"]);
-    expect(receivedHeaders).toEqual({
-      auth: "local-test-auth",
-      csrf: "local-test-csrf",
-    });
-    expect(pageErrors).toEqual([]);
-    expect(routeError).toBeUndefined();
-    expect(await canvas.locator("form").getAttribute("data-state")).toBe(
-      "success"
-    );
-    expect(submittedFormData?.get("email")).toBe("ada@example.com");
-    expect(submittedFormData?.get("ws--managed-form-id")).toBe("form");
-    expect(createContext).toHaveBeenCalledOnce();
-    expect(loadDevBuildByProjectId).toHaveBeenCalledWith(
-      expect.anything(),
-      projectId
-    );
-    const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
-      .results[0].value;
-    expect(resourceFetch).toHaveBeenCalledWith(
-      expect.stringContaining("https://example.com/contact"),
-      expect.anything()
-    );
-  } finally {
-    await browser?.close();
-    await new Promise<void>((resolve) => server.close(() => resolve()));
-  }
-}, 30_000);
+  },
+  30_000
+);
 
 test("Preview returns JSON when Remix's Response has no static json method", async () => {
   vi.mocked(createNodeProtectedResourceFetch).mockReturnValue(
@@ -556,12 +620,17 @@ test("Preview email uses the private Email Service credential and forwards uploa
       request: request(new File(["hello"], "hello.txt"), {
         "x-forwarded-for": "203.0.113.77",
         "accept-language": "en",
+        referer: `https://p-${projectId}.localhost/?authToken=local-test-share-token&mode=design`,
       }),
     } as never);
     expect(((await response.json()) as { success: boolean }).success).toBe(
       true
     );
     expect(send).toHaveBeenCalledOnce();
+    const sentBody = JSON.parse(String(send.mock.calls[0][1]?.body));
+    expect(sentBody.text).not.toContain("local-test-share-token");
+    expect(sentBody.text).not.toContain("authToken");
+    expect(sentBody.text).not.toContain("referrer");
     expect(String(send.mock.calls[0][0])).toBe(
       "https://apps.webstudio.is/v1/preview-send"
     );

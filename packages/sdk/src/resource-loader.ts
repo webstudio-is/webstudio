@@ -110,6 +110,7 @@ const toMultipartFormData = (value: object) => {
 
 export const getResourceBodyFormatError = (request: ResourceRequest) => {
   if (
+    request.control === "email" ||
     request.method === "get" ||
     request.bodyFormat === undefined ||
     request.bodyFormat === "auto"

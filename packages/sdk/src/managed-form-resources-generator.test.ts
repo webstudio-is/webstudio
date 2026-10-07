@@ -1025,7 +1025,9 @@ test("builds a submit-time graph with Form bindings and dependent Resource resul
             },
             { name: "X-Token", value: encodeDataSourceVariable("token") },
           ],
-          body: `({ fields: ${encodeDataSourceVariable("formData")}, previous: ${encodeDataSourceVariable("previous")}.data })`,
+          body: `({ fields: ${encodeDataSourceVariable(
+            "formData"
+          )}, previous: ${encodeDataSourceVariable("previous")}.data })`,
         },
       ],
     ]),
@@ -1082,7 +1084,7 @@ test("an external Resource can be selected without gaining access to Form data",
       {
         id: "external",
         type: "resource",
-        scopeInstanceId: "other",
+        scopeInstanceId: undefined,
         name: "external",
         resourceId: "send",
       },
@@ -1123,7 +1125,7 @@ test("an external Resource can be selected without gaining access to Form data",
   dataSources.set("otherParam", {
     id: "otherParam",
     type: "parameter",
-    scopeInstanceId: "other",
+    scopeInstanceId: undefined,
     name: "otherParam",
   });
   resources.set("send", {
@@ -1484,3 +1486,411 @@ test("an external dependency cannot read Form data through an internal destinati
     })("form", { system: {}, formData: {}, browserInfo: {} })
   ).toBeUndefined();
 });
+
+test.each([
+  ["form", true],
+  ["page", true],
+  [undefined, true],
+  ["sibling", false],
+  ["child", false],
+  ["unrelated", false],
+] as const)(
+  "draft and published Actions enforce scope %s",
+  async (scopeInstanceId, allowed) => {
+    const { createManagedFormDraftGraph } = await import(
+      "./managed-form-draft-graph"
+    );
+    const instances: Instances = new Map([
+      [
+        "page",
+        {
+          type: "instance",
+          id: "page",
+          component: "Body",
+          children: [
+            { type: "id", value: "form" },
+            { type: "id", value: "sibling" },
+          ],
+        },
+      ],
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "NativeForm",
+          children: [{ type: "id", value: "child" }],
+        },
+      ],
+      [
+        "sibling",
+        { type: "instance", id: "sibling", component: "Box", children: [] },
+      ],
+      [
+        "child",
+        { type: "instance", id: "child", component: "Box", children: [] },
+      ],
+    ]);
+    const dataSources: DataSources = new Map([
+      [
+        "source",
+        {
+          id: "source",
+          type: "resource",
+          name: "Action",
+          scopeInstanceId,
+          resourceId: "send",
+        },
+      ],
+    ]);
+    const resources: Resources = new Map([
+      [
+        "send",
+        {
+          id: "send",
+          name: "Send",
+          method: "post",
+          url: '"https://example.com"',
+          headers: [],
+        },
+      ],
+    ]);
+    const input = {
+      formId: "form",
+      destinationDataSourceIds: ["source"],
+      instances,
+      dataSources,
+      resources,
+      props: new Map(),
+      system: {
+        params: {},
+        search: {},
+        origin: "https://site.example",
+        pathname: "/",
+      },
+      formData: {},
+      browserInfo: {},
+      evaluateExpression: (expression: string) => JSON.parse(expression),
+    };
+    const published = getGeneratedGraph({
+      instances,
+      dataSources,
+      resources,
+      forms: [input],
+    })("form", input);
+    if (allowed) {
+      expect(createManagedFormDraftGraph(input).rootIds).toEqual(["send"]);
+      expect(published?.rootIds).toEqual(["send"]);
+    } else {
+      expect(() => createManagedFormDraftGraph(input)).toThrow(
+        "Resource destination not found in Form scope"
+      );
+      expect(published).toBeUndefined();
+    }
+  }
+);
+
+test.each(["field", "external-binding", "missing-dependency"])(
+  "draft and published visitor %s configuration fails only that action",
+  async (failure) => {
+    const { createManagedFormDraftGraph } = await import(
+      "./managed-form-draft-graph"
+    );
+    const { handleManagedFormSubmission } = await import(
+      "./managed-form-handler"
+    );
+    const instances: Instances = new Map([
+      [
+        "page",
+        {
+          type: "instance",
+          id: "page",
+          component: "Body",
+          children: [{ type: "id", value: "form" }],
+        },
+      ],
+      [
+        "form",
+        { type: "instance", id: "form", component: "NativeForm", children: [] },
+      ],
+    ]);
+    const dataSources: DataSources = new Map([
+      [
+        "http-source",
+        {
+          id: "http-source",
+          name: "http",
+          type: "resource",
+          resourceId: "http",
+          scopeInstanceId: "form",
+        },
+      ],
+      [
+        "visitor-source",
+        {
+          id: "visitor-source",
+          name: "visitor",
+          type: "resource",
+          resourceId: "visitor",
+          scopeInstanceId: failure === "external-binding" ? "page" : "form",
+        },
+      ],
+      [
+        "formData",
+        {
+          id: "formData",
+          name: "formData",
+          type: "parameter",
+          scopeInstanceId: "form",
+        },
+      ],
+      [
+        "missing",
+        {
+          id: "missing",
+          name: "missing",
+          type: "resource",
+          resourceId: "missing",
+          scopeInstanceId: "form",
+        },
+      ],
+    ]);
+    const resources: Resources = new Map([
+      [
+        "http",
+        {
+          id: "http",
+          name: "HTTP",
+          method: "post",
+          url: '"https://example.com"',
+          headers: [],
+        },
+      ],
+      [
+        "visitor",
+        {
+          id: "visitor",
+          name: "Receipt",
+          method: "post",
+          url: '""',
+          headers: [],
+          control: "email",
+          email: {
+            recipientMode: "visitor",
+            visitorEmailField: "missing-field",
+            body:
+              failure === "external-binding"
+                ? encodeDataSourceVariable("formData")
+                : failure === "missing-dependency"
+                ? encodeDataSourceVariable("missing")
+                : '""',
+          },
+        },
+      ],
+    ]);
+    const input = {
+      formId: "form",
+      destinationDataSourceIds: ["http-source", "visitor-source"],
+      instances,
+      dataSources,
+      resources,
+      props: new Map(),
+      system: {
+        params: {},
+        search: {},
+        origin: "https://site.example",
+        pathname: "/",
+      },
+      formData: {},
+      browserInfo: {},
+      evaluateExpression: (expression: string) => JSON.parse(expression),
+    };
+    const graphs = [
+      createManagedFormDraftGraph(input),
+      getGeneratedGraph({ ...input, forms: [input] })("form", input)!,
+    ];
+    for (const graph of graphs) {
+      const data = new FormData();
+      data.set("ws--managed-form-id", "form");
+      data.set("ws--managed-form-array-names", "[]");
+      data.set("ws--form-bot", Date.now().toString(16));
+      const resourceFetch = vi.fn(async () => Response.json({ ok: true }));
+      const sendEmail = vi.fn();
+      const result = await handleManagedFormSubmission({
+        request: new Request("https://site.example", {
+          method: "POST",
+          body: data,
+        }),
+        system: input.system,
+        configuration: () => ({
+          submission: { destinations: input.destinationDataSourceIds },
+          resourceIds: ["http", "visitor"],
+        }),
+        getGraph: () => graph,
+        resourceFetch,
+        createEmailSender: () => sendEmail,
+      });
+      expect(result).toMatchObject({
+        success: true,
+        results: [
+          { resourceId: "http", status: 200 },
+          { resourceId: "visitor", status: 400 },
+        ],
+        errors: [{ resourceId: "visitor", status: 400 }],
+      });
+      expect(resourceFetch).toHaveBeenCalledOnce();
+      expect(sendEmail).not.toHaveBeenCalled();
+    }
+  }
+);
+
+test.each(["http", "email", "visitor"] as const)(
+  "an ancestor %s Action alias cannot inherit Form bindings from a local alias",
+  async (kind) => {
+    const { createManagedFormDraftGraph } = await import(
+      "./managed-form-draft-graph"
+    );
+    const instances: Instances = new Map([
+      [
+        "page",
+        {
+          type: "instance",
+          id: "page",
+          component: "Body",
+          children: [{ type: "id", value: "form" }],
+        },
+      ],
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "NativeForm",
+          children: [{ type: "id", value: "input" }],
+        },
+      ],
+      [
+        "input",
+        { type: "instance", id: "input", component: "Input", children: [] },
+      ],
+    ]);
+    const props: Props = new Map([
+      [
+        "name",
+        {
+          id: "name",
+          type: "string",
+          instanceId: "input",
+          name: "name",
+          value: "email",
+        },
+      ],
+      [
+        "type",
+        {
+          id: "type",
+          type: "string",
+          instanceId: "input",
+          name: "type",
+          value: "email",
+        },
+      ],
+    ]);
+    const dataSources: DataSources = new Map([
+      [
+        "external",
+        {
+          id: "external",
+          type: "resource",
+          name: "External",
+          scopeInstanceId: "page",
+          resourceId: "send",
+        },
+      ],
+      [
+        "local",
+        {
+          id: "local",
+          type: "resource",
+          name: "Local",
+          scopeInstanceId: "form",
+          resourceId: "send",
+        },
+      ],
+      [
+        "formData",
+        {
+          id: "formData",
+          type: "parameter",
+          name: "formData",
+          scopeInstanceId: "form",
+        },
+      ],
+    ]);
+    const resources: Resources = new Map([
+      [
+        "send",
+        {
+          id: "send",
+          name: "Send",
+          method: "post",
+          url: '"https://example.com"',
+          headers: [],
+          ...(kind === "http" ? {} : { control: "email" as const }),
+          ...(kind === "visitor"
+            ? {
+                email: {
+                  recipientMode: "visitor" as const,
+                  visitorEmailField: "email",
+                },
+              }
+            : {}),
+        },
+      ],
+    ]);
+    const input = {
+      formId: "form",
+      destinationDataSourceIds: ["external"],
+      instances,
+      props,
+      dataSources,
+      resources,
+      projectMeta: { contactEmail: "owner@example.com" },
+      system: {
+        params: {},
+        search: {},
+        origin: "https://site.example",
+        pathname: "/",
+      },
+      formData: {
+        email: "visitor@example.com",
+        private: "must not be injected",
+      },
+      browserInfo: {},
+      evaluateExpression: (expression: string) => JSON.parse(expression),
+    };
+    const graphs = [
+      createManagedFormDraftGraph(input),
+      getGeneratedGraph({ ...input, forms: [input] })("form", input),
+    ];
+    for (const graph of graphs) {
+      expect(graph?.rootIds).toEqual(["send"]);
+      const resource = graph!.resources.find(
+        (resource) => resource.id === "send"
+      )!;
+      if (kind === "visitor") {
+        expect(resource.nonfatal).toBe(true);
+        expect(() => resource.createRequest(new Map())).toThrow(
+          "invalid visitor email field"
+        );
+      } else {
+        const request = resource.createRequest(new Map());
+        expect(request.body).toBeUndefined();
+        expect(resource.usesDefaultFormBody).toBeFalsy();
+        if (kind === "email") {
+          expect(request.email?.body).toBe("A new form was submitted.");
+        }
+      }
+    }
+  }
+);

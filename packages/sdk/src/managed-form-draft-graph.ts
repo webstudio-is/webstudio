@@ -1,3 +1,4 @@
+import { getManagedFormResourceRoots } from "./managed-form-graph";
 import { encodeDataVariableId, SYSTEM_VARIABLE_ID } from "./expression";
 import {
   getFormEmailFieldNames,
@@ -84,24 +85,13 @@ export const createManagedFormDraftGraph = ({
       source.name === browserInfoParameterName
   );
 
-  const rootIds: string[] = [];
-  const externalRootIds = new Set<string>();
-  for (const dataSourceId of destinationDataSourceIds) {
-    const dataSource = dataSources.get(dataSourceId);
-    if (
-      dataSource?.type !== "resource" ||
-      !resources.has(dataSource.resourceId)
-    ) {
-      throw new Error("Resource destination not found");
-    }
-    if (rootIds.includes(dataSource.resourceId)) {
-      continue;
-    }
-    rootIds.push(dataSource.resourceId);
-    if (!formTreeIds.has(dataSource.scopeInstanceId ?? "")) {
-      externalRootIds.add(dataSource.resourceId);
-    }
-  }
+  const { rootIds, externalRootIds } = getManagedFormResourceRoots({
+    formId,
+    destinationDataSourceIds,
+    instances,
+    dataSources,
+    resources,
+  });
   const resourceIds = new Set<string>();
   const dependenciesById = new Map<string, string[]>();
   const visit = (id: string) => {
@@ -117,8 +107,12 @@ export const createManagedFormDraftGraph = ({
       getResourceDependencyIds({ resource, dataSources })
     );
     dependenciesById.set(id, dependencies);
-    for (const dependency of dependencies) {
-      visit(dependency);
+    if (
+      !(rootIds.includes(id) && resource.email?.recipientMode === "visitor")
+    ) {
+      for (const dependency of dependencies) {
+        visit(dependency);
+      }
     }
   };
   for (const id of rootIds) {
@@ -147,6 +141,11 @@ export const createManagedFormDraftGraph = ({
       ).add(dataSource.resourceId);
     }
   }
+  // The selected alias owns the Action scope, even when another alias is local.
+  for (const id of externalRootIds) {
+    formBoundIds.delete(id);
+  }
+  const requestErrors = new Map<string, string>();
   for (const id of resourceIds) {
     const resource = resources.get(id)!;
     const sourceIds = getResourceDataSourceIds(resource);
@@ -165,7 +164,12 @@ export const createManagedFormDraftGraph = ({
         externallyScopedIds.has(id) ||
         externalClosureIds.has(id))
     ) {
-      throw new Error(`External Resource ${id} cannot bind Form data`);
+      const message = `External Resource ${id} cannot bind Form data`;
+      if (rootIds.includes(id) && resource.email?.recipientMode === "visitor") {
+        requestErrors.set(id, message);
+      } else {
+        throw new Error(message);
+      }
     }
   }
 
@@ -187,18 +191,13 @@ export const createManagedFormDraftGraph = ({
         `Managed Form Email Resource ${id} has invalid recipients`
       );
     }
-    if (
+    const invalidVisitorField =
       resolvedEmail?.recipientMode === "visitor" &&
       (!isFormBound ||
         !resolvedEmail.visitorEmailField ||
         !getFormEmailFieldNames(instances, props, formId).includes(
           resolvedEmail.visitorEmailField
-        ))
-    ) {
-      throw new Error(
-        `Managed Form Email Resource ${id} has invalid visitor email field`
-      );
-    }
+        ));
     const usesDefaultFormBody =
       resource.control !== "email" &&
       isRoot &&
@@ -207,6 +206,15 @@ export const createManagedFormDraftGraph = ({
     const createRequest = (
       documents: ReadonlyMap<string, unknown>
     ): ResourceRequest => {
+      const requestError = requestErrors.get(id);
+      if (requestError) {
+        throw new Error(requestError);
+      }
+      if (invalidVisitorField) {
+        throw new Error(
+          `Managed Form Email Resource ${id} has invalid visitor email field`
+        );
+      }
       const values = new Map<string, unknown>();
       values.set(encodeDataVariableId(SYSTEM_VARIABLE_ID), system);
       if (formDataSource) {
@@ -269,19 +277,19 @@ export const createManagedFormDraftGraph = ({
           resource.email?.body !== undefined
             ? (evaluate(resource.email.body) as string)
             : resolvedEmail.recipientMode !== "visitor" &&
-                isRoot &&
-                isFormBound &&
-                formDataSource
-              ? (evaluateExpression(
-                  getDefaultFormEmailBodyExpression(
-                    encodeDataVariableId(formDataSource.id),
-                    browserInfoSource &&
-                      encodeDataVariableId(browserInfoSource.id),
-                    projectMeta?.emailBody
-                  ),
-                  values
-                ) as string)
-              : (evaluate(resolvedEmail.body) as string),
+              isRoot &&
+              isFormBound &&
+              formDataSource
+            ? (evaluateExpression(
+                getDefaultFormEmailBodyExpression(
+                  encodeDataVariableId(formDataSource.id),
+                  browserInfoSource &&
+                    encodeDataVariableId(browserInfoSource.id),
+                  projectMeta?.emailBody
+                ),
+                values
+              ) as string)
+            : (evaluate(resolvedEmail.body) as string),
       };
       return {
         name: resource.name,
@@ -300,8 +308,8 @@ export const createManagedFormDraftGraph = ({
         ...(resource.body !== undefined && resource.body.length > 0
           ? { body: evaluate(resource.body) }
           : usesDefaultFormBody
-            ? { body: formData }
-            : {}),
+          ? { body: formData }
+          : {}),
         ...(email ? { email } : {}),
       };
     };

@@ -1,3 +1,4 @@
+import { draftPersistence } from "./draft-persistence";
 import { useEffect } from "react";
 import { atom } from "nanostores";
 import type { Project } from "@webstudio-is/project";
@@ -187,6 +188,7 @@ const pollQueue = async (signal: AbortSignal) => {
         }
 
         // stop synchronization and wait til user reload
+        draftPersistence.invalidate(command.projectId);
         $syncStatus.set({ status: "fatal", error });
 
         if (shouldReload === false) {
@@ -210,6 +212,7 @@ const pollQueue = async (signal: AbortSignal) => {
     const { projectId, transactions } = command;
     const completeTransactions = (success: boolean) => {
       for (const transaction of transactions) {
+        draftPersistence.complete(projectId, transaction.id, success);
         transactionCompletion.completeTransaction(transaction.id, success);
       }
     };
@@ -295,10 +298,13 @@ const pollQueue = async (signal: AbortSignal) => {
                 const matchingEntries = result.entries.filter(
                   ({ transactionId }) => transactionId === transaction.id
                 );
+                const success =
+                  matchingEntries.length > 0 &&
+                  matchingEntries.every(({ status }) => status === "accepted");
+                draftPersistence.complete(projectId, transaction.id, success);
                 transactionCompletion.completeTransaction(
                   transaction.id,
-                  matchingEntries.length > 0 &&
-                    matchingEntries.every(({ status }) => status === "accepted")
+                  success
                 );
               }
             } else {
@@ -361,6 +367,7 @@ export class ServerSyncStorage implements SyncStorage {
 
   sendTransaction(transaction: Transaction<BuilderPatchChange[]>) {
     if (transaction.object === "server") {
+      draftPersistence.begin(this.projectId, transaction.id);
       $lastTransactionId.set(transaction.id);
       $syncStatus.set({ status: "syncing" });
       commandQueue.enqueue({

@@ -814,3 +814,26 @@ test("preserves file values and only includes explicitly trusted IP", () => {
     "203.0.113.1"
   );
 });
+
+test("browser info strips referrer credentials, query secrets, and fragments", () => {
+  const request = new Request("https://example.com/action", {
+    headers: {
+      referer:
+        "https://user:password@example.com/contact?authToken=secret&email=private%40example.com#token",
+    },
+  });
+  expect(getManagedFormBrowserInfo(request)).toEqual({
+    referrer: "https://example.com/contact",
+  });
+});
+
+test.each(["not a URL", "javascript:secret", "data:text/plain,secret"])(
+  "browser info omits unsafe referrer %s",
+  (referer) => {
+    expect(
+      getManagedFormBrowserInfo(
+        new Request("https://example.com/action", { headers: { referer } })
+      )
+    ).toEqual({});
+  }
+);

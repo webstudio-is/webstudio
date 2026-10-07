@@ -8,10 +8,5 @@ export {
   getFormDataValue,
   type BrowserInfo,
 } from "./form-submission";
-export {
-  useManagedFormResult,
-  type ManagedFormActionResult,
-  type ManagedFormResult,
-} from "./managed-form-result";
 export { useFormFeedbackScroll } from "./form-feedback-scroll";
 export { submitManagedForm } from "./managed-form-client";

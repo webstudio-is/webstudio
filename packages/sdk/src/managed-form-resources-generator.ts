@@ -1,3 +1,7 @@
+import {
+  getManagedFormResourceRoots,
+  InvalidManagedFormGraph,
+} from "./managed-form-graph";
 import type { DataSources } from "./schema/data-sources";
 import type { Instances } from "./schema/instances";
 import type { Props } from "./schema/props";
@@ -23,8 +27,6 @@ import {
   getResourceDependencyIds,
 } from "./resource-dependencies";
 import { generateResourceRequestFields } from "./resources-generator";
-
-class InvalidManagedFormGraph extends Error {}
 
 /**
  * Generate requests for a managed submission separately from page-load requests.
@@ -71,26 +73,13 @@ export const generateManagedFormResources = ({
         props ?? new Map(),
         formId
       );
-      const rootIds: string[] = [];
-      const seenRootIds = new Set<string>();
-      const externalRootIds = new Set<string>();
-      for (const dataSourceId of destinationDataSourceIds) {
-        const dataSource = dataSources.get(dataSourceId);
-        if (dataSource?.type !== "resource") {
-          continue;
-        }
-        if (resources.has(dataSource.resourceId) === false) {
-          continue;
-        }
-        if (formTreeIds.has(dataSource.scopeInstanceId ?? "") === false) {
-          externalRootIds.add(dataSource.resourceId);
-        }
-        if (seenRootIds.has(dataSource.resourceId)) {
-          continue;
-        }
-        seenRootIds.add(dataSource.resourceId);
-        rootIds.push(dataSource.resourceId);
-      }
+      const { rootIds, externalRootIds } = getManagedFormResourceRoots({
+        formId,
+        destinationDataSourceIds,
+        instances,
+        dataSources,
+        resources,
+      });
 
       const graphResourceIds = new Set<string>();
       const externalClosureIds = new Set<string>();
@@ -110,8 +99,15 @@ export const generateManagedFormResources = ({
           getResourceDependencyIds({ resource, dataSources })
         );
         dependenciesById.set(resourceId, dependencies);
-        for (const dependencyId of dependencies) {
-          addResource(dependencyId);
+        if (
+          !(
+            rootIds.includes(resourceId) &&
+            resource.email?.recipientMode === "visitor"
+          )
+        ) {
+          for (const dependencyId of dependencies) {
+            addResource(dependencyId);
+          }
         }
       };
       for (const rootId of rootIds) {
@@ -141,6 +137,11 @@ export const generateManagedFormResources = ({
           ids.add(dataSource.resourceId);
         }
       }
+      // The selected alias owns the Action scope, even when another alias is local.
+      for (const id of externalRootIds) {
+        formBoundResourceIds.delete(id);
+      }
+      const requestErrors = new Map<string, string>();
       for (const resourceId of graphResourceIds) {
         const resource = resources.get(resourceId);
         if (resource === undefined) {
@@ -163,9 +164,15 @@ export const generateManagedFormResources = ({
             externalResourceIds.has(resourceId) ||
             externalClosureIds.has(resourceId))
         ) {
-          throw new InvalidManagedFormGraph(
-            `External Resource ${resourceId} cannot bind Form data`
-          );
+          const message = `External Resource ${resourceId} cannot bind Form data`;
+          if (
+            rootIds.includes(resourceId) &&
+            resource.email?.recipientMode === "visitor"
+          ) {
+            requestErrors.set(resourceId, message);
+          } else {
+            throw new InvalidManagedFormGraph(message);
+          }
         }
       }
 
@@ -199,21 +206,16 @@ export const generateManagedFormResources = ({
                 ownerName,
               })
             : undefined;
+        const invalidVisitorField =
+          resolvedEmailSettings?.recipientMode === "visitor" &&
+          (!formBoundResourceIds.has(resourceId) ||
+            !resolvedEmailSettings.visitorEmailField ||
+            !getFormEmailFieldNames(
+              instances,
+              props ?? new Map(),
+              formId
+            ).includes(resolvedEmailSettings.visitorEmailField));
         if (resolvedEmailSettings !== undefined) {
-          if (
-            resolvedEmailSettings.recipientMode === "visitor" &&
-            (formBoundResourceIds.has(resourceId) === false ||
-              !resolvedEmailSettings.visitorEmailField ||
-              !getFormEmailFieldNames(
-                instances,
-                props ?? new Map(),
-                formId
-              ).includes(resolvedEmailSettings.visitorEmailField))
-          ) {
-            throw new InvalidManagedFormGraph(
-              `Managed Form Email Resource ${resourceId} has invalid visitor email field`
-            );
-          }
           if (resolvedEmailSettings.recipients === undefined) {
             throw new InvalidManagedFormGraph(
               `Managed Form Email Resource ${resourceId} has invalid recipients`
@@ -233,7 +235,9 @@ export const generateManagedFormResources = ({
           formBoundResourceIds.has(resourceId) &&
           formDataSource
             ? getDefaultFormEmailBodyExpression(
-                `createJsonStringifyProxy(${propsName}.${formDataParameterName} as object, ${JSON.stringify(formDataStringifyOptions)})`,
+                `createJsonStringifyProxy(${propsName}.${formDataParameterName} as object, ${JSON.stringify(
+                  formDataStringifyOptions
+                )})`,
                 browserInfoSource
                   ? `createJsonStringifyProxy(${propsName}.${browserInfoParameterName} as object, { space: 2 })`
                   : undefined,
@@ -261,11 +265,24 @@ export const generateManagedFormResources = ({
             : "";
         const requestName = scope.getName(resource.id, resource.name);
         generatedRequests += `    const ${requestName} = (${documentsName}: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
+        const requestError = requestErrors.get(resourceId);
+        if (requestError) {
+          generatedRequests += `      throw new Error(${JSON.stringify(
+            requestError
+          )});\n`;
+        }
+        if (invalidVisitorField) {
+          generatedRequests += `      throw new Error(${JSON.stringify(
+            `Managed Form Email Resource ${resourceId} has invalid visitor email field`
+          )});\n`;
+        }
         for (const dataSource of requestDataSources.values()) {
           usedDataSources.set(dataSource.id, dataSource);
           if (dataSource.type === "resource") {
             const name = scope.getName(dataSource.id, dataSource.name);
-            generatedRequests += `      const ${name} = ${documentsName}.get(${JSON.stringify(dataSource.resourceId)});\n`;
+            generatedRequests += `      const ${name} = ${documentsName}.get(${JSON.stringify(
+              dataSource.resourceId
+            )});\n`;
           }
           if (
             resource.control === "email" &&
@@ -279,7 +296,9 @@ export const generateManagedFormResources = ({
               dataSource.name === formDataParameterName
                 ? formDataStringifyOptions
                 : { space: 2 };
-            generatedRequests += `      const ${name} = createJsonStringifyProxy(${propsName}.${dataSource.name} as object, ${JSON.stringify(options)});\n`;
+            generatedRequests += `      const ${name} = createJsonStringifyProxy(${propsName}.${
+              dataSource.name
+            } as object, ${JSON.stringify(options)});\n`;
           }
         }
         generatedRequests += `      return {\n${fields}${defaultFormBody}      };\n    };\n`;
@@ -289,7 +308,9 @@ export const generateManagedFormResources = ({
       for (const dataSource of usedDataSources.values()) {
         const name = scope.getName(dataSource.id, dataSource.name);
         if (dataSource.type === "variable") {
-          generatedVariables += `    const ${name} = ${JSON.stringify(dataSource.value.value)};\n`;
+          generatedVariables += `    const ${name} = ${JSON.stringify(
+            dataSource.value.value
+          )};\n`;
         }
         if (dataSource.type === "parameter") {
           if (dataSource.id === SYSTEM_VARIABLE_ID) {
@@ -326,9 +347,27 @@ export const generateManagedFormResources = ({
           formBoundResourceIds.has(resourceId) &&
           (resource.body === undefined || resource.body.length === 0);
         const emailRecipientCount = emailRecipientCounts.get(resourceId);
-        generated += `          { id: ${JSON.stringify(resourceId)}, outputName: ${JSON.stringify(scope.getName(resourceId, resource.name))}, dependencies: ${JSON.stringify(dependenciesById.get(resourceId) ?? [])}, ${emailRecipientCount === undefined ? "" : `control: "email", emailRecipientCount: ${emailRecipientCount}, `}${resource.email?.recipientMode === "visitor" ? "nonfatal: true, " : ""}${usesDefaultFormBody ? "usesDefaultFormBody: true, " : ""}${resource.bodyFormat === undefined ? "" : `bodyFormat: ${JSON.stringify(resource.bodyFormat)}, `}createRequest: ${scope.getName(resourceId, resource.name)} },\n`;
+        generated += `          { id: ${JSON.stringify(
+          resourceId
+        )}, outputName: ${JSON.stringify(
+          scope.getName(resourceId, resource.name)
+        )}, dependencies: ${JSON.stringify(
+          dependenciesById.get(resourceId) ?? []
+        )}, ${
+          emailRecipientCount === undefined
+            ? ""
+            : `control: "email", emailRecipientCount: ${emailRecipientCount}, `
+        }${
+          resource.email?.recipientMode === "visitor" ? "nonfatal: true, " : ""
+        }${usesDefaultFormBody ? "usesDefaultFormBody: true, " : ""}${
+          resource.bodyFormat === undefined
+            ? ""
+            : `bodyFormat: ${JSON.stringify(resource.bodyFormat)}, `
+        }createRequest: ${scope.getName(resourceId, resource.name)} },\n`;
       }
-      generated += `        ],\n        rootIds: ${JSON.stringify(rootIds)},\n      };\n    }\n`;
+      generated += `        ],\n        rootIds: ${JSON.stringify(
+        rootIds
+      )},\n      };\n    }\n`;
     } catch (error) {
       if (error instanceof InvalidManagedFormGraph === false) {
         throw error;

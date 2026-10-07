@@ -12,6 +12,7 @@ import {
   readFormDataWithLimit,
   validateManagedFormBodyFormats,
   validateManagedFormBot,
+  validateManagedFormDestinationDependencies,
   validateManagedFormRecipientLimit,
   type ManagedFormResponse,
 } from "./managed-form-submission";
@@ -93,6 +94,7 @@ export const handleManagedFormSubmission = async ({
     throw new Error("Form Resource graph not found");
   }
   validateManagedFormRecipientLimit(graph);
+  validateManagedFormDestinationDependencies(graph);
   const sendEmail = createEmailSender?.(formData);
   const invalidVisitorResults: Record<string, unknown> = {};
   const invalidVisitorIds = new Set<string>();
@@ -102,10 +104,12 @@ export const handleManagedFormSubmission = async ({
       if (
         graph.rootIds.includes(resource.id) &&
         resource.control === "email" &&
-        resource.nonfatal === true &&
-        resource.dependencies.length === 0
+        resource.nonfatal === true
       ) {
         try {
+          if (resource.dependencies.length > 0) {
+            throw new Error("Email Resources cannot depend on other Resources");
+          }
           const request = prepareVisitorEmailRequest(
             resource.createRequest(new Map()),
             formData,
@@ -113,18 +117,22 @@ export const handleManagedFormSubmission = async ({
           );
           return [{ ...resource, createRequest: () => request }];
         } catch (error) {
-          if (!(error instanceof VisitorEmailAddressError)) {
-            throw error;
-          }
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Visitor Email settings are invalid";
           invalidVisitorIds.add(resource.id);
           invalidVisitorResults[resource.outputName] = {
             ok: false,
             status: 400,
-            statusText: error.message,
+            statusText: message,
             data: {
               error: {
-                code: "invalid_visitor_email",
-                message: error.message,
+                code:
+                  error instanceof VisitorEmailAddressError
+                    ? "invalid_visitor_email"
+                    : "invalid_visitor_email_resource",
+                message,
               },
             },
           };

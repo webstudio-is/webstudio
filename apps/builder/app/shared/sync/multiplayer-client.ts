@@ -67,6 +67,7 @@ export const createMultiplayerSyncClient = ({
   let unsubscribePresence: (() => void) | undefined;
   const clientId = createId();
   const emitter = createMultiplayerSyncEmitter({
+    projectId,
     getAuthToken: createCollabAuthTokenLoader({
       authPermit,
       authToken,

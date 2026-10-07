@@ -1,5 +1,9 @@
-import { describe, test, expect } from "vitest";
+import { $syncStatus } from "@webstudio-is/sync-client";
+import { submitPreviewForm } from "~/shared/preview-form-bridge";
+import { describe, test, expect, vi } from "vitest";
 import { __testing__ } from "./webstudio-component";
+
+vi.mock("~/shared/preview-form-bridge", () => ({ submitPreviewForm: vi.fn() }));
 
 const { computeComponentKey, getPreviewCurrentUrl, getHtmlEmbedCanvasProps } =
   __testing__;
@@ -140,4 +144,44 @@ describe("getPreviewCurrentUrl", () => {
     expect(url.searchParams.getAll("choice")).toEqual(["a", "b"]);
     expect(url.search).toBe("?choice=a&choice=b&source=newsletter");
   });
+});
+
+test("the Canvas Form adapter forwards dirty drafts to the parent persistence barrier", async () => {
+  $syncStatus.set({ status: "syncing" });
+  let finish:
+    | ((response: Awaited<ReturnType<typeof submitPreviewForm>>) => void)
+    | undefined;
+  vi.mocked(submitPreviewForm).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  try {
+    const settled = vi.fn();
+    const signal = new AbortController().signal;
+    const result = __testing__
+      .submitManagedFormFromPreview(
+        "form",
+        { email: "visitor@example.com" },
+        signal
+      )
+      .then(settled);
+    expect(submitPreviewForm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        managedFormId: "form",
+        values: { email: "visitor@example.com" },
+        signal,
+      })
+    );
+    await Promise.resolve();
+    expect(settled).not.toHaveBeenCalled();
+    const response = { success: true, status: 200, results: [], errors: [] };
+    finish?.(response);
+    await result;
+    expect(settled).toHaveBeenCalledWith(response);
+  } finally {
+    $syncStatus.set({ status: "idle" });
+    vi.mocked(submitPreviewForm).mockReset();
+  }
 });

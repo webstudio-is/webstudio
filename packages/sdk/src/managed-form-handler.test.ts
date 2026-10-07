@@ -450,3 +450,205 @@ test.each([undefined, "invalid-address"])(
     });
   }
 );
+
+test.each([
+  "subject",
+  "expression",
+  "field",
+  "provider-validation",
+  "body-format",
+  "unconfigured",
+  "dependency",
+])(
+  "visitor Email %s failure preserves HTTP siblings and its ordered result",
+  async (failure) => {
+    const data = new FormData();
+    data.set(managedFormIdFieldName, "form");
+    data.set(managedFormArrayNamesFieldName, "[]");
+    data.set(formBotFieldName, Date.now().toString(16));
+    data.set("email", "visitor@example.com");
+    const resourceFetch = vi.fn(async (_input: RequestInfo | URL) =>
+      Response.json({ accepted: true }, { status: 201 })
+    );
+    const sendEmail = vi.fn();
+    const result = await handleManagedFormSubmission({
+      request: new Request("https://site.example", {
+        method: "POST",
+        body: data,
+      }),
+      system: {
+        params: {},
+        search: {},
+        origin: "https://site.example",
+        pathname: "/",
+      },
+      configuration: () => ({
+        submission: { destinations: ["visitor", "http"] },
+        resourceIds: ["visitor", "http"],
+      }),
+      getGraph: () => ({
+        rootIds: ["visitor", "http"],
+        resources: [
+          {
+            id: "http",
+            outputName: "http",
+            dependencies: [],
+            createRequest: () => ({
+              name: "HTTP",
+              url: "https://api.example",
+              method: "post",
+              headers: [],
+              searchParams: [],
+            }),
+          },
+          {
+            id: "visitor",
+            outputName: "visitor",
+            dependencies: failure === "dependency" ? ["lookup"] : [],
+            control: "email",
+            nonfatal: true,
+            emailRecipientCount: 1,
+            createRequest: () => {
+              if (failure === "expression") {
+                throw new Error("Invalid body expression");
+              }
+              return {
+                name: "Receipt",
+                url: "",
+                method: "post",
+                headers: [],
+                searchParams: [],
+                control: "email",
+                ...(failure === "body-format"
+                  ? {
+                      bodyFormat: "json" as const,
+                      body: "irrelevant HTTP body",
+                    }
+                  : {}),
+                email: {
+                  recipientMode: "visitor",
+                  visitorEmailField: failure === "field" ? undefined : "email",
+                  recipients: [],
+                  subject:
+                    failure === "subject" || failure === "body-format"
+                      ? "Invalid\nsubject"
+                      : "Receipt",
+                  body: "",
+                  includeAttachments: false,
+                },
+              };
+            },
+          },
+          {
+            id: "lookup",
+            outputName: "lookup",
+            dependencies: [],
+            createRequest: () => ({
+              name: "Lookup",
+              url: "https://api.example/lookup",
+              method: "get",
+              headers: [],
+              searchParams: [],
+            }),
+          },
+        ],
+      }),
+      resourceFetch,
+      createEmailSender:
+        failure === "unconfigured" ? undefined : () => sendEmail,
+      validateEmail: () => {
+        if (failure === "provider-validation") {
+          throw new Error("Email content is too large");
+        }
+      },
+    });
+    expect(result).toMatchObject({
+      success: true,
+      status: 200,
+      results: [
+        { resourceId: "visitor", status: 400 },
+        { resourceId: "http", status: 201 },
+      ],
+      errors: [{ resourceId: "visitor", status: 400 }],
+    });
+    expect(resourceFetch).toHaveBeenCalledOnce();
+    expect(resourceFetch.mock.calls[0][0]).toBe("https://api.example/");
+    expect(sendEmail).not.toHaveBeenCalled();
+  }
+);
+
+test.each([false, true])(
+  "a selected HTTP Action cannot depend on a selected visitor Email, including invalid visitor input (%s)",
+  async (invalidVisitor) => {
+    const data = new FormData();
+    data.set(managedFormIdFieldName, "form");
+    data.set(managedFormArrayNamesFieldName, "[]");
+    data.set(formBotFieldName, Date.now().toString(16));
+    data.set("email", invalidVisitor ? "invalid" : "visitor@example.com");
+    const resourceFetch = vi.fn();
+    const sendEmail = vi.fn();
+    await expect(
+      handleManagedFormSubmission({
+        request: new Request("https://site.example", {
+          method: "POST",
+          body: data,
+        }),
+        system: {
+          params: {},
+          search: {},
+          origin: "https://site.example",
+          pathname: "/",
+        },
+        configuration: () => ({
+          submission: { destinations: ["http", "visitor"] },
+          resourceIds: ["http", "visitor"],
+        }),
+        getGraph: () => ({
+          rootIds: ["http", "visitor"],
+          resources: [
+            {
+              id: "http",
+              outputName: "http",
+              dependencies: ["visitor"],
+              createRequest: () => ({
+                name: "HTTP",
+                url: "https://api.example",
+                method: "post",
+                headers: [],
+                searchParams: [],
+              }),
+            },
+            {
+              id: "visitor",
+              outputName: "visitor",
+              dependencies: [],
+              control: "email",
+              nonfatal: true,
+              emailRecipientCount: 1,
+              createRequest: () => ({
+                name: "Receipt",
+                url: "",
+                method: "post",
+                headers: [],
+                searchParams: [],
+                control: "email",
+                email: {
+                  recipientMode: "visitor",
+                  visitorEmailField: "email",
+                  recipients: [],
+                  subject: "Receipt",
+                  body: "",
+                  includeAttachments: false,
+                },
+              }),
+            },
+          ],
+        }),
+        resourceFetch,
+        createEmailSender: () => sendEmail,
+      })
+    ).rejects.toThrow("Selected Form Resources cannot depend on one another");
+    expect(resourceFetch).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
+  }
+);

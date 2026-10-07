@@ -1,4 +1,6 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { draftPersistence } from "./sync/draft-persistence";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
+import { beforeEach, afterEach, expect, test, vi } from "vitest";
 import { fetch as builderFetch } from "~/shared/fetch.client";
 import { submitPreviewForm } from "./preview-form-bridge";
 import { subscribePreviewFormRequests } from "./preview-form-parent";
@@ -21,6 +23,11 @@ vi.mock("~/shared/pubsub", () => ({
   },
 }));
 
+vi.mock("@webstudio-is/protocol", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@webstudio-is/protocol")>()),
+  parseBuilderUrl: () => ({ projectId: "project" }),
+}));
+
 vi.mock("~/shared/fetch.client", () => ({ fetch: vi.fn() }));
 
 const sendToCanvas = vi.fn(
@@ -31,7 +38,12 @@ const sendToCanvas = vi.fn(
   }
 );
 
+beforeEach(() => {
+  draftPersistence.reset(parseBuilderUrl(window.location.href).projectId);
+});
+
 afterEach(() => {
+  draftPersistence.reset();
   listeners.clear();
   vi.clearAllMocks();
   vi.useRealTimers();
@@ -88,6 +100,7 @@ test("aborting a Preview submission aborts the parent request and sends no resul
     path: "/contact",
     signal: controller.signal,
   });
+  await vi.waitFor(() => expect(builderFetch).toHaveBeenCalledOnce());
   const requestSignal = vi.mocked(builderFetch).mock.calls[0][1]?.signal;
 
   controller.abort("cancelled");
@@ -119,4 +132,22 @@ test("times out and cleans up when the Builder does not answer", async () => {
   await rejected;
   expect(canceled).toEqual([{ id: expect.any(String) }]);
   expect(listeners.get("previewFormResult")?.size).toBe(0);
+});
+
+test("failed persistence returns an error without reaching the Preview endpoint", async () => {
+  draftPersistence.begin("project", "failed-edit");
+  draftPersistence.complete("project", "failed-edit", false);
+  const unsubscribe = subscribePreviewFormRequests(sendToCanvas);
+  const result = await submitPreviewForm({
+    values: {},
+    managedFormId: "form",
+    path: "/contact",
+    signal: new AbortController().signal,
+  });
+  expect(result).toMatchObject({
+    success: false,
+    errors: [{ message: expect.stringContaining("could not be saved") }],
+  });
+  expect(builderFetch).not.toHaveBeenCalled();
+  unsubscribe();
 });
