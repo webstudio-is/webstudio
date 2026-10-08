@@ -1,4 +1,5 @@
 import { atom, onSet } from "nanostores";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { getFormDataValue } from "@webstudio-is/sdk-components-react";
 import { $project } from "./sync/data-stores";
 
@@ -7,10 +8,25 @@ export const $livePreviewFormValues = atom(
 );
 onSet($project, () => $livePreviewFormValues.set(new Map()));
 
+export const getFormOccurrenceKey = (
+  selector: readonly string[] | undefined,
+  formId: string
+) => {
+  const formIndex = selector?.indexOf(formId) ?? -1;
+  if (formIndex < 0 || selector === undefined) {
+    return undefined;
+  }
+  const occurrence = selector.slice(formIndex);
+  if (occurrence.at(-1) === ROOT_INSTANCE_ID) {
+    occurrence.pop();
+  }
+  return occurrence.join(",");
+};
+
 declare module "~/shared/pubsub" {
   interface PubsubMap {
     previewFormValues: {
-      formId: string;
+      selector: string;
       values: Record<string, unknown> | null;
     };
   }

@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+import { defaultEmailBody, defaultEmailSubject } from "@webstudio-is/sdk";
 import { capturePreviewFormExchange } from "./preview-form-inspection.server";
 
 test("Preview exchange hides credentials and unknown server values while retaining actual public data", async () => {
@@ -45,6 +46,7 @@ test("Preview exchange hides credentials and unknown server values while retaini
       },
     },
     {
+      resourceName: "Contact webhook",
       publicValues: new Set(["ada@example.com", "hello"]),
       privateValues: new Set([
         "input-password",
@@ -54,6 +56,7 @@ test("Preview exchange hides credentials and unknown server values while retaini
     }
   );
   const encoded = JSON.stringify(snapshot);
+  expect(snapshot.resourceName).toBe("Contact webhook");
   for (const secret of [
     "url-password",
     "url-token",
@@ -188,4 +191,127 @@ test.each([
   );
   expect(snapshot.request.truncated).toBe(true);
   expect(snapshot.response.truncated).toBe(true);
+});
+
+test("Email inspection preserves logical request and outcome while redacting adapter credentials", async () => {
+  const snapshot = await capturePreviewFormExchange(
+    "email-resource",
+    {
+      request: {
+        name: "Receipt",
+        control: "email",
+        method: "post",
+        url: "",
+        headers: [],
+        searchParams: [],
+        email: {
+          recipientMode: "visitor",
+          recipients: [{ address: "ada@example.com" }],
+          subject: "Receipt subject [0123456789abcdef]",
+          body: "Submitted message",
+          includeAttachments: false,
+        },
+      },
+      response: {
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: new Headers(),
+        data: {
+          error: { code: "email_rate_limited", message: "limited" },
+          echo: "server-only-token",
+        },
+      },
+    },
+    {
+      publicValues: new Set([
+        "visitor",
+        "ada@example.com",
+        "Receipt subject",
+        "Submitted message",
+        "false",
+      ]),
+      privateValues: new Set(["server-only-token"]),
+    }
+  );
+  expect(snapshot.kind).toBe("email");
+  expect(snapshot.request.headers).toEqual([]);
+  expect(snapshot.request.body).toMatchObject({
+    recipients: [{ address: "ada@example.com" }],
+    subject: "Receipt subject [0123456789abcdef]",
+    body: "Submitted message",
+  });
+  expect(snapshot.response).toMatchObject({
+    status: 429,
+    body: { error: { code: "email_rate_limited" }, echo: "[redacted]" },
+  });
+  expect(JSON.stringify(snapshot)).not.toContain("server-only-token");
+});
+
+test("a submission reference does not make a private Email subject inspectable", async () => {
+  const snapshot = await capturePreviewFormExchange(
+    "email",
+    {
+      request: {
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: "",
+        headers: [],
+        searchParams: [],
+        email: {
+          recipientMode: "project",
+          recipients: [],
+          subject: "private-derived-subject [0123456789abcdef]",
+          body: "",
+          includeAttachments: false,
+        },
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        data: { id: "sent" },
+      },
+    },
+    { publicValues: new Set(), privateValues: new Set() }
+  );
+  expect(snapshot.request.body).toMatchObject({ subject: "[redacted]" });
+});
+
+test("platform Email defaults remain inspectable without exposing credentials", async () => {
+  const snapshot = await capturePreviewFormExchange(
+    "email",
+    {
+      request: {
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: "",
+        headers: [],
+        searchParams: [],
+        email: {
+          recipientMode: "project",
+          recipients: [],
+          subject: `${defaultEmailSubject} [0123456789abcdef]`,
+          body: defaultEmailBody,
+          includeAttachments: false,
+        },
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        data: { id: "sent" },
+      },
+    },
+    {
+      publicValues: new Set([defaultEmailSubject, defaultEmailBody]),
+      privateValues: new Set(["server-only-token"]),
+    }
+  );
+  expect(snapshot.request.body).toMatchObject({
+    subject: `${defaultEmailSubject} [0123456789abcdef]`,
+    body: defaultEmailBody,
+  });
+  expect(JSON.stringify(snapshot)).not.toContain("server-only-token");
 });

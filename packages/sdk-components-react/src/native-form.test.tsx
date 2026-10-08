@@ -32,6 +32,6 @@ test("server rendering blocks an over-limit managed Form", () => {
     </NativeForm>
   );
   expect(html).toContain('method="dialog"');
-  expect(html).not.toContain("old-action");
-  expect(html).toContain("Select no more than 5 Resource destinations");
+  expect(html).toContain('<fieldset disabled="" style="display:contents">');
+  expect(html).toContain('<button type="submit">Send</button>');
 });

@@ -14,11 +14,13 @@ export const capturePreviewFormExchange = async (
   {
     publicValues,
     privateValues,
+    resourceName = resourceId,
     sensitiveFields = new Set(),
     redactAllBody = false,
   }: {
     publicValues: ReadonlySet<string>;
     privateValues: ReadonlySet<string>;
+    resourceName?: string;
     sensitiveFields?: ReadonlySet<string>;
     redactAllBody?: boolean;
   }
@@ -43,6 +45,17 @@ export const capturePreviewFormExchange = async (
     }
   };
   const request = exchange.request;
+  const visibleValues = new Set(publicValues);
+  if (!(request instanceof Request) && request.control === "email") {
+    const subject = request.email?.subject;
+    // The Form runtime appends a generated submission reference to authored subjects.
+    if (
+      subject &&
+      publicValues.has(subject.replace(/ \[[a-f0-9]{16}\]$/, ""))
+    ) {
+      visibleValues.add(subject);
+    }
+  }
   const requestHeaders =
     request instanceof Request
       ? request.headers
@@ -150,7 +163,7 @@ export const capturePreviewFormExchange = async (
           ])
       );
     }
-    if (outgoing && (redactAllBody || !publicValues.has(String(value)))) {
+    if (outgoing && (redactAllBody || !visibleValues.has(String(value)))) {
       return redacted;
     }
     return typeof value === "string" ? text(value, limit) : value;
@@ -194,6 +207,7 @@ export const capturePreviewFormExchange = async (
   }
   return {
     resourceId,
+    resourceName,
     kind: request instanceof Request ? "http" : "email",
     request: {
       method: request.method,

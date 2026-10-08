@@ -15,6 +15,9 @@ import {
   getAllPages,
   getPagePath,
   getFormEmailStringifyOptions,
+  defaultEmailBody,
+  defaultEmailConfirmationSubject,
+  defaultEmailSubject,
 } from "@webstudio-is/sdk";
 import { createManagedFormDraftGraph } from "@webstudio-is/sdk/managed-form-draft-graph";
 import {
@@ -148,6 +151,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ? source.resourceId
         : null;
     });
+    const resourceNames = new Map(
+      destinations.flatMap((id) => {
+        const source = dataSources.get(id);
+        return source?.type === "resource" && resources.has(source.resourceId)
+          ? [[source.resourceId, source.name] as const]
+          : [];
+      })
+    );
     const owner =
       project.userId === null
         ? undefined
@@ -213,6 +224,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     for (const resource of resources.values()) {
       collect(parseJsonExpression(resource.body), publicValues);
+      if (resource.control === "email") {
+        collect(parseJsonExpression(resource.email?.subject), publicValues);
+        collect(parseJsonExpression(resource.email?.body), publicValues);
+      }
+    }
+    for (const value of [
+      projectMeta?.emailSubject,
+      projectMeta?.emailBody,
+      projectMeta?.emailConfirmationSubject,
+      defaultEmailSubject,
+      defaultEmailBody,
+      defaultEmailConfirmationSubject,
+    ]) {
+      collect(value, publicValues);
     }
     const result = await handleManagedFormSubmission({
       request: formRequest,
@@ -254,6 +279,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           await capturePreviewFormExchange(resourceId, exchange, {
             publicValues,
             privateValues,
+            resourceName: resourceNames.get(resourceId) ?? resourceId,
             sensitiveFields,
             redactAllBody: privacy.stringifyAs !== undefined,
           })

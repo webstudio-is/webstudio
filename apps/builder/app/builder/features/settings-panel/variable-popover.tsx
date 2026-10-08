@@ -1,4 +1,8 @@
 import { $previewFormExchanges } from "~/shared/preview-form-inspection";
+import {
+  $livePreviewFormValues,
+  getFormOccurrenceKey,
+} from "~/shared/preview-form-values";
 import { z } from "zod";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -36,7 +40,6 @@ import {
   Select,
   SplitView,
   Switch,
-  Text,
   TextArea,
   Tooltip,
   theme,
@@ -59,9 +62,14 @@ import {
 import {
   $permissions,
   $variableValuesByInstanceSelector,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import { $resources, $instances, $props } from "~/shared/sync/data-stores";
+import {
+  getBrowserInfoPreview,
+  getFormDataPreview,
+} from "./form-context-preview";
 import {
   $selectedInstance,
   $selectedPage,
@@ -740,6 +748,10 @@ const VariablePreview = ({
     variableType === "system-resource";
   const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
+  const instances = useStore($instances);
+  const props = useStore($props);
+  const liveFormValues = useStore($livePreviewFormValues);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const variableValues = useStore($instanceVariableValues);
   const lastExchanges = useStore($previewFormExchanges);
   const inspection =
@@ -839,14 +851,37 @@ const VariablePreview = ({
       resourcePerformance = resourcePerformanceCache.get(resourceKey);
     }
   }
+  if (
+    variableType === "parameter" &&
+    variable?.type === "parameter" &&
+    instances.get(variable.scopeInstanceId ?? "")?.component === "NativeForm"
+  ) {
+    if (variable.name === formDataParameterName) {
+      computedValue =
+        liveFormValues.get(
+          getFormOccurrenceKey(
+            selectedInstanceSelector,
+            variable.scopeInstanceId!
+          ) ?? ""
+        ) ?? getFormDataPreview(instances, props, variable.scopeInstanceId!);
+    } else if (variable.name === browserInfoParameterName) {
+      computedValue = getBrowserInfoPreview();
+    }
+  }
   if (latestExchange) {
     computedValue = {
+      resourceId: latestExchange.resourceId,
+      resourceName: latestExchange.resourceName,
       ...latestExchange.response,
       ok: latestExchange.response.status < 400,
-      attempts: inspection?.attempts.map(({ response }, index) => ({
-        attempt: index + 1,
-        ...response,
-      })),
+      attempts: inspection?.attempts.map(
+        ({ resourceId, resourceName, response }, index) => ({
+          attempt: index + 1,
+          resourceId,
+          resourceName,
+          ...response,
+        })
+      ),
     };
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
@@ -861,16 +896,6 @@ const VariablePreview = ({
     onChange: () => {},
     onChangeComplete: () => {},
   };
-  if (variableType === "email-resource" && latestExchange === undefined) {
-    return (
-      <Flex justify="center" align="center" css={{ height: "100%" }}>
-        <Text color="subtle">
-          Email delivery is available in Preview and on sites published to
-          Webstudio Cloud.
-        </Text>
-      </Flex>
-    );
-  }
   const previewContent = (
     <Grid
       align="stretch"
@@ -896,7 +921,11 @@ const VariablePreview = ({
       )}
     </Grid>
   );
-  if (isResource === false && latestExchange === undefined) {
+  const inspectSubmission =
+    variableType === "resource" ||
+    variableType === "email-resource" ||
+    latestExchange !== undefined;
+  if (isResource === false && !inspectSubmission) {
     return previewContent;
   }
   const requestErrorDiagnostics = getRequestErrorDiagnostics(
@@ -915,27 +944,27 @@ const VariablePreview = ({
     );
   return (
     <RequestInspector
-      previewLabel={
-        variableType === "resource" || latestExchange ? "Response" : "Preview"
-      }
+      previewLabel={inspectSubmission ? "Response" : "Preview"}
       request={
-        variableType === "resource" || latestExchange ? (
+        inspectSubmission ? (
           <EditorContent
             {...editorProps}
             value={formatValue(
-              inspection?.attempts.map(({ request, kind }, index) => ({
-                attempt: index + 1,
-                kind,
-                ...request,
-              })) ?? null
+              inspection?.attempts.map(
+                ({ resourceId, resourceName, request, kind }, index) => ({
+                  attempt: index + 1,
+                  resourceId,
+                  resourceName,
+                  kind,
+                  ...request,
+                })
+              ) ?? null
             )}
           />
         ) : undefined
       }
       queryContainerRef={queryActive ? queryContainerRef : undefined}
-      preview={
-        variableType === "resource" || latestExchange ? previewContent : preview
-      }
+      preview={inspectSubmission ? previewContent : preview}
       queryPending={queryPending}
       previewPending={previewPending}
       onDiagnosticsOpen={
@@ -1226,6 +1255,7 @@ const VariablePopoverContent = ({
             {variable && (
               <VariableMenu
                 variable={variable}
+                size="header"
                 canDelete={
                   !isSystemVariable &&
                   variable.scopeInstanceId === selectedInstance?.id &&

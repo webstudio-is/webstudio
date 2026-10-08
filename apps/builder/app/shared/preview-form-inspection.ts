@@ -5,6 +5,7 @@ import { z } from "zod";
 const headers = z.array(z.object({ name: z.string(), value: z.string() }));
 export const previewFormExchange = z.object({
   resourceId: z.string(),
+  resourceName: z.string(),
   kind: z.enum(["http", "email"]),
   request: z.object({
     method: z.string(),

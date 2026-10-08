@@ -5,12 +5,14 @@ import { page, userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   encodeDataVariableId,
+  ROOT_INSTANCE_ID,
   resolveEmailResourceSettings,
   type DataSources,
   type Resource,
 } from "@webstudio-is/sdk";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { FloatingPanel, TooltipProvider } from "@webstudio-is/design-system";
+import { $builderMode } from "~/shared/nano-states";
 import {
   $dataSources,
   $instances,
@@ -44,10 +46,11 @@ afterEach(() => {
   $projectSettings.set(initialProjectSettings);
   $instances.set(initialInstances);
   $props.set(initialProps);
+  $builderMode.set("design");
   document.body.innerHTML = "";
 });
 
-test("Email Resource Sender override can be reset to the project default", async () => {
+test("Email Resource Sender has no redundant project-default reset button", async () => {
   $projectSettings.set({
     meta: { emailSender: "Project <project@example.com>" },
     compiler: {},
@@ -91,20 +94,130 @@ test("Email Resource Sender override can be reset to the project default", async
   expect(container.querySelector("textarea")?.value).toBe(
     "Custom <custom@example.com>"
   );
-  const reset = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent?.includes("Reset to project default")
+  expect(container.textContent).not.toContain("Reset to project default");
+  expect(
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')
+        ?.value ?? "{}"
+    ).sender
+  ).toBe("Custom <custom@example.com>");
+});
+
+test("Email Resource uses Subject and Body inputs with a separate binding editor", async () => {
+  $builderMode.set("design");
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "data-source",
+            type: "resource",
+            name: "Notify",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+
+  expect(
+    Array.from(container.querySelectorAll("label")).map(
+      (label) => label.textContent
+    )
+  ).toContain("Subject");
+  expect(
+    Array.from(container.querySelectorAll("label")).map(
+      (label) => label.textContent
+    )
+  ).toContain("Body");
+  expect(container.textContent).not.toContain("expression");
+  expect(
+    container.querySelector('input[placeholder="New form submission"]')
+  ).not.toBeNull();
+
+  const subjectBinding = container.querySelector<HTMLButtonElement>(
+    'button[data-variant="default"]'
   );
-  expect(reset).toBeDefined();
-  await act(async () => userEvent.click(reset!));
-  expect(container.querySelector("textarea")?.value).toBe(
-    "Project <project@example.com>"
+  expect(subjectBinding).not.toBeNull();
+  await act(async () => await userEvent.click(subjectBinding!));
+  expect(document.body.textContent).toContain("Expression editor");
+});
+
+test("Email Resource recipient modes and attachment radios", async () => {
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Notify",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "data-source",
+            type: "resource",
+            name: "Notify",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+
+  expect(container.textContent).not.toContain(
+    "Emails are sent through Webstudio. Replies go to this address."
+  );
+  const recipientSelect =
+    container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+  await act(async () => await userEvent.click(recipientSelect));
+  const customOption = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((option) => option.textContent === "Custom recipients")!;
+  await act(async () => await userEvent.click(customOption));
+  expect(
+    container.querySelector(
+      'textarea[placeholder="Acme <acme@example.com>, team@example.com"]'
+    )
+  ).not.toBeNull();
+
+  const attachmentOptions = container.querySelectorAll('[role="radio"]');
+  expect(attachmentOptions).toHaveLength(2);
+  await expect(
+    page.getByRole("radiogroup", { name: "Attachments" })
+  ).toBeVisible();
+  expect(container.textContent).toContain("Attach submitted files");
+  expect(container.textContent).toContain("Do not attach files");
+  await act(
+    async () => await userEvent.click(attachmentOptions[1] as HTMLElement)
   );
   expect(
     JSON.parse(
       container.querySelector<HTMLInputElement>('input[name="email-settings"]')
         ?.value ?? "{}"
-    )
-  ).not.toHaveProperty("sender");
+    ).includeAttachments
+  ).toBe(false);
 });
 
 test("external Email Resource marks an unavailable Form binding as invalid", async () => {
@@ -159,7 +272,9 @@ test("external Email Resource marks an unavailable Form binding as invalid", asy
       )
     );
   });
-  expect(container.textContent).toContain(
+  const body = container.querySelectorAll("textarea")[1]!;
+  await act(async () => await userEvent.hover(body));
+  expect(document.body.textContent).toContain(
     "This Form binding is unavailable outside its Form."
   );
 });
@@ -748,15 +863,21 @@ test("only Form-scoped Resources can bind submission values", async () => {
     variableValuesByInstanceSelector: new Map<string, Map<string, unknown>>([
       ["form", new Map([["formDataId", undefined]])],
     ]),
+    liveFormValues: new Map([
+      ["form,collection[one],root", { email: "typed@example.com" }],
+    ]),
   };
   const internal = getResourceScopeForInstance({
     ...input,
     formScopeInstanceId: "form",
+    formScopeSelector: ["form", "collection[one]", "root", ROOT_INSTANCE_ID],
   });
   expect(internal.aliases.get(encodeDataVariableId("formDataId"))).toBe(
     "formData"
   );
-  expect(internal.scope[encodeDataVariableId("formDataId")]).toEqual({});
+  expect(internal.scope[encodeDataVariableId("formDataId")]).toEqual({
+    email: "typed@example.com",
+  });
   expect(internal.aliases.get(encodeDataVariableId("browserInfoId"))).toBe(
     "browserInfo"
   );

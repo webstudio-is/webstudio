@@ -94,6 +94,13 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
     );
   };
   await act(async () => render());
+  const actionLabel = () =>
+    Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
+      (button) => button.textContent === "Action"
+    )!;
+  await act(async () => userEvent.click(actionLabel()));
+  expect(document.body.textContent).toContain("Add at least one action.");
+  await act(async () => userEvent.keyboard("{Escape}"));
   expect(
     container.querySelector('[aria-label="Native browser form"]')
   ).toBeNull();
@@ -156,6 +163,9 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
     )
   );
   expect(container.textContent).toContain("Renamed request");
+  await act(async () => userEvent.click(actionLabel()));
+  expect(document.body.textContent).not.toContain("Add at least one action.");
+  await act(async () => userEvent.keyboard("{Escape}"));
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: [{ dataSourceId: "resourceDataSource", enabled: true }],

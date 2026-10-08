@@ -1,4 +1,7 @@
-import { $livePreviewFormValues } from "~/shared/preview-form-values";
+import {
+  $livePreviewFormValues,
+  getFormOccurrenceKey,
+} from "~/shared/preview-form-values";
 import { useEffect, useRef, useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -18,7 +21,7 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import { AlertIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
-import type { DataSource } from "@webstudio-is/sdk";
+import { ROOT_INSTANCE_ID, type DataSource } from "@webstudio-is/sdk";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import {
@@ -34,7 +37,7 @@ import {
 import { formatValuePreview } from "~/builder/shared/expression-editor";
 import { VariablePopoverTrigger } from "./variable-popover";
 import { VariableContextMenu, VariableMenu } from "./variable-menu";
-import { $variableToFocus } from "./variable-navigation";
+import { $variableToFocus, showVariableAtSource } from "./variable-navigation";
 import { StyleSourceBadge } from "../style-panel/style-source";
 import {
   getFormDataPreview,
@@ -42,6 +45,7 @@ import {
 } from "./form-context-preview";
 import {
   $selectedInstance,
+  $selectedInstanceSelector,
   $selectedInstanceKeyWithRoot,
   $selectedPage,
 } from "~/shared/nano-states";
@@ -172,7 +176,7 @@ const VariablesItem = ({
   const variableToFocus = useStore($variableToFocus);
   const rowRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (isOpen && variableToFocus === variable.id) {
+    if (isOpen && variableToFocus?.id === variable.id) {
       rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
       rowRef.current?.focus({ preventScroll: true });
       $variableToFocus.set(undefined);
@@ -181,7 +185,14 @@ const VariablesItem = ({
   const instances = useStore($instances);
   const props = useStore($props);
   const liveFormValues = useStore($livePreviewFormValues);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const dataSources = useStore($dataSources);
+  const valueSourceId = variable.scopeInstanceId ?? ROOT_INSTANCE_ID;
+  const valueSource = instances.get(valueSourceId);
+  const valueSourceName =
+    valueSourceId === ROOT_INSTANCE_ID
+      ? "Global root"
+      : (valueSource?.label ?? valueSource?.component ?? "System");
   const shadowed =
     source === "local" && variable.scopeInstanceId
       ? findAvailableVariables({
@@ -204,8 +215,12 @@ const VariablesItem = ({
   ) {
     if (variable.name === "formData") {
       value =
-        liveFormValues.get(variable.scopeInstanceId!) ??
-        getFormDataPreview(instances, props, variable.scopeInstanceId!);
+        liveFormValues.get(
+          getFormOccurrenceKey(
+            selectedInstanceSelector,
+            variable.scopeInstanceId!
+          ) ?? ""
+        ) ?? getFormDataPreview(instances, props, variable.scopeInstanceId!);
     }
     if (variable.name === "browserInfo") {
       value = getBrowserInfoPreview();
@@ -261,12 +276,23 @@ const VariablesItem = ({
                         Local
                       </StyleSourceBadge>
                     )}
-                    <StyleSourceBadge source="instance" variant="small">
-                      {instances.get(variable.scopeInstanceId ?? "")?.label ??
-                        instances.get(variable.scopeInstanceId ?? "")
-                          ?.component ??
-                        "System"}
-                    </StyleSourceBadge>
+                    <button
+                      type="button"
+                      style={{
+                        border: 0,
+                        padding: 0,
+                        background: "transparent",
+                        display: "inline-flex",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        showVariableAtSource(variable.id, valueSourceId);
+                      }}
+                    >
+                      <StyleSourceBadge source="instance" variant="small">
+                        {valueSourceName}
+                      </StyleSourceBadge>
+                    </button>
                   </Flex>
                   {canDelete && (
                     <Button
@@ -371,31 +397,23 @@ export const VariablesSection = () => {
   const variableToFocus = useStore($variableToFocus);
   const availableVariables = useStore($availableVariables);
   const selectedInstance = useStore($selectedInstance);
-  const previousInstanceId = useRef(selectedInstance?.id);
+  const selectedScopeId = selectedInstance?.id ?? ROOT_INSTANCE_ID;
   const [isOpen, setIsOpen] = useOpenState(label);
   useEffect(() => {
-    if (previousInstanceId.current !== selectedInstance?.id) {
-      previousInstanceId.current = selectedInstance?.id;
-      $variableToFocus.set(undefined);
-      return;
-    }
     if (variableToFocus === undefined) {
       return;
     }
-    if (availableVariables.some(({ id }) => id === variableToFocus)) {
+    if (variableToFocus.scopeInstanceId !== selectedScopeId) {
+      return;
+    }
+    if (availableVariables.some(({ id }) => id === variableToFocus.id)) {
       if (isOpen === false) {
         setIsOpen(true);
       }
     } else {
       $variableToFocus.set(undefined);
     }
-  }, [
-    availableVariables,
-    isOpen,
-    selectedInstance?.id,
-    setIsOpen,
-    variableToFocus,
-  ]);
+  }, [availableVariables, isOpen, selectedScopeId, setIsOpen, variableToFocus]);
   return (
     <VariableContextMenu>
       <CollapsibleSectionRoot

@@ -1,3 +1,4 @@
+import { getCanvasFormVisibility } from "./form-selection-visibility";
 import { resolveManagedFormErrorSlot } from "@webstudio-is/sdk";
 import { $isPreviewMode } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
@@ -65,6 +66,7 @@ import {
   $variableValuesByInstanceSelector,
   $isDesignMode,
   $selectedInstanceRenderState,
+  $selectedInstanceSelector,
   $selectedPageHash,
 } from "~/shared/nano-states";
 import { $project, $props, $dataSources } from "~/shared/sync/data-stores";
@@ -212,6 +214,7 @@ const PreviewNativeForm = forwardRef<
   const wasPreviewMode = useRef(isPreviewMode);
   const { onStateChange, state } = props;
   const [revision, setRevision] = useState(0);
+  const formSelector = (props as Record<string, unknown>)[selectorIdAttribute];
   useLayoutEffect(() => {
     if (wasPreviewMode.current && !isPreviewMode) {
       onStateChange?.("initial");
@@ -233,7 +236,10 @@ const PreviewNativeForm = forwardRef<
         if (active) {
           publish({
             type: "previewFormValues",
-            payload: { formId, values: readPreviewFormValues(form) },
+            payload: {
+              selector: String(formSelector),
+              values: readPreviewFormValues(form),
+            },
           });
         }
       });
@@ -259,9 +265,12 @@ const PreviewNativeForm = forwardRef<
       observer.disconnect();
       form.removeEventListener("input", send);
       form.removeEventListener("change", send);
-      publish({ type: "previewFormValues", payload: { formId, values: null } });
+      publish({
+        type: "previewFormValues",
+        payload: { selector: String(formSelector), values: null },
+      });
     };
-  }, [formId, revision]);
+  }, [formId, formSelector, revision]);
   return (
     <NativeForm
       key={revision}
@@ -830,6 +839,8 @@ const WebstudioComponentCanvasInner = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
+  const selectedSelector = useStore($selectedInstanceSelector);
+  const isPreviewMode = useStore($isPreviewMode);
   const dataSources = useStore($dataSources);
   const resolvedInstance = resolveManagedFormErrorSlot(
     instance,
@@ -883,7 +894,15 @@ const WebstudioComponentCanvasInner = forwardRef<
     }
   });
 
-  if (show === false) {
+  if (
+    !getCanvasFormVisibility({
+      show,
+      isPreviewMode,
+      instanceSelector,
+      selectedSelector,
+      instances,
+    })
+  ) {
     return <></>;
   }
 

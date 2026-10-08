@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  Button,
   SmallIconButton,
   toast,
 } from "@webstudio-is/design-system";
@@ -135,25 +136,38 @@ export const VariableMenu = ({
   canDelete = false,
   onDelete,
   onOpenChange,
+  size = "small",
 }: {
   variable?: DataSource;
   canDelete?: boolean;
   onDelete?: () => void;
   onOpenChange?: (open: boolean) => void;
+  size?: "small" | "header";
 }) => {
   const [deleting, setDeleting] = useState<VariableToDelete>();
   return (
     <>
       <DropdownMenu modal onOpenChange={onOpenChange}>
         <DropdownMenuTrigger asChild>
-          <SmallIconButton
-            aria-label="Open variable menu"
-            data-variable-id={variable?.id}
-            icon={<EllipsesIcon />}
-            onClick={() => {}}
-          />
+          {size === "header" ? (
+            <Button
+              aria-label="Open variable menu"
+              data-variable-id={variable?.id}
+              prefix={<EllipsesIcon />}
+              color="ghost"
+              onClick={() => {}}
+            />
+          ) : (
+            <SmallIconButton
+              aria-label="Open variable menu"
+              data-variable-id={variable?.id}
+              icon={<EllipsesIcon />}
+              onClick={() => {}}
+            />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent
+          css={{ minWidth: 180 }}
           onCloseAutoFocus={(event) => event.preventDefault()}
         >
           <DropdownMenuItem

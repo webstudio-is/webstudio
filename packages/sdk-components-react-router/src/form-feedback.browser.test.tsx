@@ -121,7 +121,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
   }
 });
 
-test("managed Form reveals a built-in error on repeated failures", async () => {
+test("managed Form reveals authored Error Message on repeated failures", async () => {
   const action = vi.fn().mockImplementation(async () => ({
     success: false,
     status: 502,
@@ -148,14 +148,21 @@ test("managed Form reveals a built-in error on repeated failures", async () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
+    const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
       <NativeForm
         data-ws-managed-form-id="saved-managed-form"
         action={[{ dataSourceId: "first", enabled: true }]}
         state={state}
         onStateChange={setState}
+        onResultChange={(result) => setErrors(result.errors)}
       >
         <button type="submit">Send</button>
+        {state === "error" && (
+          <div role="alert" data-ws-form-feedback>
+            {errors.map(({ message }) => message).join("\n")}
+          </div>
+        )}
       </NativeForm>
     );
   };
@@ -190,12 +197,28 @@ test("managed Form reveals a built-in error on repeated failures", async () => {
 
 test("managed Form reveals a persistent configuration error", async () => {
   const action = vi.fn();
-  const view = await renderRoute(
-    <NativeForm action={[]}>
-      <button type="submit">Send</button>
-    </NativeForm>,
-    action
-  );
+  const Form = () => {
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
+    const [errors, setErrors] = useState<Array<{ message: string }>>([]);
+    return (
+      <NativeForm
+        action={[]}
+        state={state}
+        onStateChange={setState}
+        onResultChange={(result) => setErrors(result.errors)}
+      >
+        <button type="submit">Send</button>
+        {state === "error" && (
+          <div role="alert" data-ws-form-feedback>
+            {errors.map(({ message }) => message).join("\n")}
+          </div>
+        )}
+      </NativeForm>
+    );
+  };
+  const view = await renderRoute(<Form />, action);
   const scroll = vi
     .spyOn(HTMLElement.prototype, "scrollIntoView")
     .mockImplementation(() => {});
@@ -213,12 +236,12 @@ test("managed Form reveals a persistent configuration error", async () => {
       await act(async () => view.container.querySelector("button")?.click());
       await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(attempt));
       const currentAlert = view.container.querySelector('[role="alert"]');
-      expect(currentAlert?.textContent).toContain(
-        "Select at least one Resource destination"
-      );
+      expect(currentAlert?.textContent).toContain("Add at least one action");
       if (alert !== null) {
         expect(currentAlert).toBe(alert);
       }
+      expect(currentAlert?.hasAttribute("data-ws-form-feedback")).toBe(true);
+      expect(view.container.querySelector("form")?.dataset.state).toBe("error");
       alert = currentAlert;
     }
     expect(action).not.toHaveBeenCalled();

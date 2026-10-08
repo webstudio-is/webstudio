@@ -3494,7 +3494,7 @@ sitemap.map((page) => page.path);`
 
       for (const [id, error] of [
         ["unknown", "Form submission settings not found"],
-        ["empty", "Select at least one Resource destination"],
+        ["empty", "Add at least one action"],
         ["too-many", "Select no more than 5 Resource destinations"],
         ["duplicate", "Select each Resource only once"],
         ["missing", "Resource destination not found"],
@@ -3699,7 +3699,7 @@ sitemap.map((page) => page.path);`
         expect(result.status).toBe(400);
         expect(result.contentType).toContain("application/json");
         expect(result.body).toEqual(
-          getManagedFormFailure("Select at least one Resource destination")
+          getManagedFormFailure("Add at least one action")
         );
       }
     },

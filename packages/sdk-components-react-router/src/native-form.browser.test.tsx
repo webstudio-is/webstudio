@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -48,32 +49,46 @@ test("managed Form posts its server identity and shows the action error", async 
   vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) =>
     Response.json(await action({ request: new Request(input, init) }))
   );
+  const Form = () => {
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
+    const [errors, setErrors] = useState<Array<{ message: string }>>([]);
+    return (
+      <NativeForm
+        data-ws-managed-form-id="form-instance"
+        action={[{ dataSourceId: "resource-id", enabled: true }]}
+        state={state}
+        onStateChange={(state) => {
+          stateChanges.push(state);
+          setState(state);
+        }}
+        onResultChange={(result) => {
+          resultChanges.push(result);
+          setErrors(result.errors);
+        }}
+      >
+        <input name="message" defaultValue="Hello" />
+        <input name="tag" defaultValue="first" />
+        <input name="tag" defaultValue="second" />
+        <input type="checkbox" name="selected" value="chosen" defaultChecked />
+        <input type="checkbox" name="selected" value="other" />
+        <input type="checkbox" name="empty" value="unused" />
+        <input type="file" name="uploads" multiple />
+        <button type="submit">Send</button>
+        {state === "error" && (
+          <div role="alert" data-authored-error>
+            {errors.map(({ message }) => message).join("\n")}
+          </div>
+        )}
+      </NativeForm>
+    );
+  };
   const router = createMemoryRouter(
     [
       {
         path: "/",
-        element: (
-          <NativeForm
-            data-ws-managed-form-id="form-instance"
-            action={[{ dataSourceId: "resource-id", enabled: true }]}
-            onStateChange={(state) => stateChanges.push(state)}
-            onResultChange={(result) => resultChanges.push(result)}
-          >
-            <input name="message" defaultValue="Hello" />
-            <input name="tag" defaultValue="first" />
-            <input name="tag" defaultValue="second" />
-            <input
-              type="checkbox"
-              name="selected"
-              value="chosen"
-              defaultChecked
-            />
-            <input type="checkbox" name="selected" value="other" />
-            <input type="checkbox" name="empty" value="unused" />
-            <input type="file" name="uploads" multiple />
-            <button type="submit">Send</button>
-          </NativeForm>
-        ),
+        element: <Form />,
         action,
       },
     ],
@@ -121,6 +136,13 @@ test("managed Form posts its server identity and shows the action error", async 
         "Resource request failed (422)"
       )
     );
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(
+      container
+        .querySelector('[role="alert"]')
+        ?.hasAttribute("data-authored-error")
+    ).toBe(true);
+    expect(container.querySelector("form")?.dataset.state).toBe("error");
     expect(stateChanges).toEqual(["initial", "error"]);
     expect(resultChanges).toEqual([await action.mock.results[0].value]);
   } finally {

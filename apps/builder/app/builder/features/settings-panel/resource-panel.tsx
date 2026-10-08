@@ -1,4 +1,7 @@
-import { $livePreviewFormValues } from "~/shared/preview-form-values";
+import {
+  $livePreviewFormValues,
+  getFormOccurrenceKey,
+} from "~/shared/preview-form-values";
 import {
   getFormDataPreview,
   getBrowserInfoPreview,
@@ -57,7 +60,6 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
-  Button,
   Combobox,
   Flex,
   Grid,
@@ -65,6 +67,9 @@ import {
   InputField,
   Label,
   ProChip,
+  Radio,
+  RadioAndLabel,
+  RadioGroup,
   Select,
   SmallIconButton,
   Text,
@@ -535,6 +540,7 @@ export const getResourceScopeForInstance = ({
   variableValuesByInstanceSelector,
   includeResourceDataSources = false,
   formScopeInstanceId,
+  formScopeSelector,
   instances = new Map(),
   props = new Map(),
   liveFormValues = new Map(),
@@ -545,6 +551,7 @@ export const getResourceScopeForInstance = ({
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
   includeResourceDataSources?: boolean;
   formScopeInstanceId?: string;
+  formScopeSelector?: readonly string[];
   instances?: Instances;
   props?: Props;
   liveFormValues?: ReadonlyMap<string, Record<string, unknown>>;
@@ -590,8 +597,9 @@ export const getResourceScopeForInstance = ({
       const name = encodeDataVariableId(dataSource.id);
       const value =
         dataSource.name === formDataParameterName
-          ? (liveFormValues.get(formScopeInstanceId) ??
-            getFormDataPreview(instances, props, formScopeInstanceId))
+          ? (liveFormValues.get(
+              getFormOccurrenceKey(formScopeSelector, formScopeInstanceId) ?? ""
+            ) ?? getFormDataPreview(instances, props, formScopeInstanceId))
           : getBrowserInfoPreview();
       scope[name] = value;
       aliases.set(name, dataSource.name);
@@ -685,6 +693,12 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
                     ?.slice(variablePathIndex)
                     .find(({ instance }) => instance.component === "NativeForm")
                     ?.instance.id;
+            const formScopeSelector =
+              formScopeInstanceId === undefined
+                ? undefined
+                : instancePath?.find(
+                    ({ instance }) => instance.id === formScopeInstanceId
+                  )?.instanceSelector;
             const { scope, aliases, variableValues } =
               getResourceScopeForInstance({
                 page,
@@ -696,6 +710,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
                 variableValuesByInstanceSelector,
                 includeResourceDataSources: true,
                 formScopeInstanceId,
+                formScopeSelector,
                 instances,
                 props,
                 liveFormValues,
@@ -1181,6 +1196,81 @@ export const ResourceForm = forwardRef<
 });
 ResourceForm.displayName = "ResourceForm";
 
+const EmailExpressionField = ({
+  label,
+  expression,
+  placeholder,
+  scope,
+  aliases,
+  error,
+  onChange,
+  multiline = false,
+}: {
+  label: string;
+  expression: string;
+  placeholder: string;
+  scope: Record<string, unknown>;
+  aliases: Map<string, string>;
+  error?: string;
+  onChange: (expression: string) => void;
+  multiline?: boolean;
+}) => {
+  const id = useId();
+  const evaluatedValue = useAsyncValue(
+    () => evaluateExpressionWithinScope(expression, scope),
+    [expression, scope],
+    ""
+  );
+  const value = String(evaluatedValue ?? "");
+  const onChangeValue = (nextValue: string) =>
+    onChange(JSON.stringify(nextValue));
+
+  return (
+    <Row>
+      <Grid gap={1}>
+        <Label htmlFor={id}>{label}</Label>
+        <BindableExpressionControl
+          expression={expression}
+          value={value}
+          bound={isLiteralExpression(expression) === false}
+          scope={scope}
+          aliases={aliases}
+          onChangeValue={onChangeValue}
+          onChangeExpression={onChange}
+          onRemove={(evaluatedValue) =>
+            onChange(JSON.stringify(String(evaluatedValue ?? "")))
+          }
+          renderControl={({ value, readOnly, onChangeValue }) => (
+            <InputErrorsTooltip errors={error ? [error] : undefined}>
+              {multiline ? (
+                <TextArea
+                  id={id}
+                  rows={4}
+                  autoGrow
+                  disabled={readOnly}
+                  value={value}
+                  placeholder={placeholder}
+                  color={error ? "error" : undefined}
+                  onChange={onChangeValue}
+                />
+              ) : (
+                <InputField
+                  id={id}
+                  value={value}
+                  placeholder={placeholder}
+                  disabled={readOnly}
+                  color={error ? "error" : undefined}
+                  onChange={(event) => onChangeValue(event.target.value)}
+                />
+              )}
+            </InputErrorsTooltip>
+          )}
+        />
+      </Grid>
+    </Row>
+  );
+};
+
 export const EmailResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource; onChange?: () => void }
@@ -1191,6 +1281,7 @@ export const EmailResourceForm = forwardRef<
   const instances = useStore($instances);
   const props = useStore($props);
   const projectMeta = useStore($projectSettings)?.meta;
+  const attachmentId = useId();
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
@@ -1232,14 +1323,6 @@ export const EmailResourceForm = forwardRef<
   ) => {
     onChange?.();
     setSettings((previous) => ({ ...previous, [key]: value }));
-  };
-  const resetField = (key: keyof EmailResourceSettings) => {
-    onChange?.();
-    setSettings((previous) => {
-      const next = { ...previous };
-      delete next[key];
-      return next;
-    });
   };
   const senderError =
     settings.sender === undefined
@@ -1315,45 +1398,20 @@ export const EmailResourceForm = forwardRef<
       })?.result;
     },
   }));
-  const textField = (
-    key: "sender" | "subject" | "body",
-    label: string,
-    value: string,
-    placeholder: string,
-    error?: string
-  ) => (
-    <Row key={key}>
+  const senderField = (
+    <Row>
       <Grid gap={1}>
-        <Flex align="center" justify="between">
-          <Label>{label}</Label>
-          {settings[key] !== undefined && (
-            <Button type="button" color="ghost" onClick={() => resetField(key)}>
-              Reset to project default
-            </Button>
-          )}
-        </Flex>
-        <InputErrorsTooltip errors={error ? [error] : undefined}>
-          {key === "sender" ? (
-            <TextArea
-              rows={1}
-              autoGrow
-              value={value}
-              placeholder={placeholder}
-              color={error ? "error" : undefined}
-              onChange={(next) => setField(key, next)}
-            />
-          ) : (
-            <ExpressionEditor
-              scope={scope}
-              aliases={aliases}
-              value={value}
-              color={error ? "error" : undefined}
-              onChange={(next) => setField(key, next)}
-              onChangeComplete={() => {}}
-            />
-          )}
+        <Label>Sender</Label>
+        <InputErrorsTooltip errors={senderError ? [senderError] : undefined}>
+          <TextArea
+            rows={1}
+            autoGrow
+            value={settings.sender ?? projectMeta?.emailSender ?? ""}
+            placeholder="Acme <acme@example.com>"
+            color={senderError ? "error" : undefined}
+            onChange={(next) => setField("sender", next)}
+          />
         </InputErrorsTooltip>
-        {error && <Text color="destructive">{error}</Text>}
       </Grid>
     </Row>
   );
@@ -1412,7 +1470,7 @@ export const EmailResourceForm = forwardRef<
                 rows={1}
                 autoGrow
                 value={settings.recipients ?? ""}
-                placeholder="Olegs Isonen <oleg008@gmail.com>, team@example.com"
+                placeholder="Acme <acme@example.com>, team@example.com"
                 color={recipientError ? "error" : undefined}
                 onChange={(value) => setField("recipients", value)}
               />
@@ -1438,56 +1496,60 @@ export const EmailResourceForm = forwardRef<
           </Grid>
         </Row>
       )}
-      {textField(
-        "sender",
-        "Sender",
-        settings.sender ?? projectMeta?.emailSender ?? "",
-        "Olegs Isonen <oleg008@gmail.com>",
-        senderError
-      )}
-      <Row>
-        <Text color="subtle">
-          Emails are sent through Webstudio. Replies go to this address.
-        </Text>
-      </Row>
-      {textField(
-        "subject",
-        "Subject expression",
-        settings.subject ??
+      {senderField}
+      <EmailExpressionField
+        label="Subject"
+        expression={
+          settings.subject ??
           JSON.stringify(
             settings.recipientMode === "visitor"
               ? projectMeta?.emailConfirmationSubject ||
                   "We received your submission"
               : projectMeta?.emailSubject || "New form submission"
-          ),
-        '"New form submission"',
-        subjectError
-      )}
-      {textField(
-        "body",
-        "Plain-text body expression",
-        settings.body ?? defaultBody,
-        "Add text or a JavaScript expression",
-        bodyError
-      )}
+          )
+        }
+        placeholder="New form submission"
+        scope={scope}
+        aliases={aliases}
+        error={subjectError}
+        onChange={(value) => setField("subject", value)}
+      />
+      <EmailExpressionField
+        label="Body"
+        expression={settings.body ?? defaultBody}
+        placeholder=""
+        multiline
+        scope={scope}
+        aliases={aliases}
+        error={bodyError}
+        onChange={(value) => setField("body", value)}
+      />
       {settings.recipientMode !== "visitor" && (
         <Row>
           <Grid gap={1}>
-            <Label>Attachments</Label>
-            <Select<"include" | "exclude">
-              options={["include", "exclude"]}
+            <Label id={`${attachmentId}-label`}>Attachments</Label>
+            <RadioGroup
+              aria-labelledby={`${attachmentId}-label`}
               value={
                 settings.includeAttachments === false ? "exclude" : "include"
               }
-              getLabel={(value: "include" | "exclude") =>
-                value === "include"
-                  ? "Attach submitted files"
-                  : "Do not attach files"
-              }
-              onChange={(value: "include" | "exclude") =>
+              onValueChange={(value) =>
                 setField("includeAttachments", value === "include")
               }
-            />
+            >
+              <RadioAndLabel>
+                <Radio value="include" id={`${attachmentId}-include`} />
+                <Label htmlFor={`${attachmentId}-include`}>
+                  Attach submitted files
+                </Label>
+              </RadioAndLabel>
+              <RadioAndLabel>
+                <Radio value="exclude" id={`${attachmentId}-exclude`} />
+                <Label htmlFor={`${attachmentId}-exclude`}>
+                  Do not attach files
+                </Label>
+              </RadioAndLabel>
+            </RadioGroup>
           </Grid>
         </Row>
       )}

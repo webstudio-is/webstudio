@@ -279,13 +279,13 @@ describe("project settings runtime", () => {
     ).toBe("Only 1 emails are allowed.");
     expect(
       validateContactEmail(
-        '"Isonen, Olegs" <oleg008@gmail.com>, team@example.com',
+        '"Example, Alex" <acme@example.com>, team@example.com',
         2
       )
     ).toBeUndefined();
     expect(
       validateContactEmail(
-        '"Isonen, Olegs" <oleg008@gmail.com>, team@example.com, team@example.com',
+        '"Example, Alex" <acme@example.com>, team@example.com, team@example.com',
         2
       )
     ).toBe("Only 2 emails are allowed.");
@@ -297,7 +297,7 @@ describe("project settings runtime", () => {
   test("validates Sender and rejects line breaks in email subjects", () => {
     expect(() =>
       updateProjectSettings(createState(), {
-        meta: { emailSender: "Olegs Isonen <oleg008@gmail.com>" },
+        meta: { emailSender: "Acme <acme@example.com>" },
       })
     ).not.toThrow();
     expect(() =>

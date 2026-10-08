@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  cssVar,
   CssValueListArrowFocus,
   CssValueListItem,
   DropdownMenu,
@@ -17,6 +18,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import {
+  AlertIcon,
   EyeClosedIcon,
   EyeOpenIcon,
   MinusIcon,
@@ -67,8 +69,13 @@ const ActionItem = ({
       draggable
       active={active}
       hidden={!isEnabled}
-      onClick={() => {
-        if (isResource) {
+      onClick={(event) => {
+        const target = event.target;
+        if (
+          isResource &&
+          target instanceof Element &&
+          target.closest("[data-drag-handle]") === null
+        ) {
           showVariable(id);
         }
       }}
@@ -149,6 +156,17 @@ export const FormSubmissionControl = ({
     <Box>
       <Flex align="center" justify="between">
         <FieldLabel
+          description={
+            action.length === 0 ? (
+              <Flex align="center" gap="1">
+                <AlertIcon
+                  color={cssVar("--foreground-warning")}
+                  style={{ flexShrink: 0 }}
+                />
+                <Text>Add at least one action.</Text>
+              </Flex>
+            ) : undefined
+          }
           resettable={invalidSavedValue || action.length > 0}
           onReset={() => update([])}
         >

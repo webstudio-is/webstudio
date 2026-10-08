@@ -214,7 +214,9 @@ export const CssValueListItem = forwardRef(
               hidden={hidden}
               disabled={hidden === true || rest.disabled}
             >
-              <DragHandleIconStyled />
+              <DragHandleIconStyled
+                data-drag-handle={draggable ? true : undefined}
+              />
 
               <Flex shrink align="center" css={{ overflow: "hidden" }}>
                 {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}

@@ -16,12 +16,12 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
   const requests = new Map<string, AbortController>();
   const unsubscribeValues = subscribe(
     "previewFormValues",
-    ({ formId, values }) => {
+    ({ selector, values }) => {
       const next = new Map($livePreviewFormValues.get());
       if (values === null) {
-        next.delete(formId);
+        next.delete(selector);
       } else {
-        next.set(formId, values);
+        next.set(selector, values);
       }
       $livePreviewFormValues.set(next);
     }

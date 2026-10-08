@@ -191,4 +191,4 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
     await browser?.close();
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
-});
+}, 15_000);

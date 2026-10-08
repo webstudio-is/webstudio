@@ -10,6 +10,7 @@ import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-re
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { action } from "../routes/rest.preview-form";
+import type { PreviewFormExchange } from "~/shared/preview-form-inspection";
 
 vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
   authorizeProject: { hasProjectPermit: vi.fn() },
@@ -625,9 +626,32 @@ test("Preview email uses the private Email Service credential and forwards uploa
         referer: `https://p-${projectId}.localhost/?authToken=local-test-share-token&mode=design`,
       }),
     } as never);
-    expect(((await response.json()) as { success: boolean }).success).toBe(
-      true
+    const result = (await response.json()) as unknown as {
+      success: boolean;
+      previewExchanges: PreviewFormExchange[];
+    };
+    expect(result.success).toBe(true);
+    expect(result.previewExchanges).toHaveLength(1);
+    expect(result.previewExchanges[0]).toMatchObject({
+      resourceId: "webhook",
+      kind: "email",
+      request: {
+        method: "post",
+        headers: [],
+        body: { subject: expect.any(String), body: expect.any(String) },
+      },
+      response: { status: 200, headers: [], body: { id: "sent" } },
+    });
+    expect(JSON.stringify(result.previewExchanges)).not.toContain(
+      "server-only-test-token"
     );
+    expect(JSON.stringify(result.previewExchanges)).not.toContain(
+      "authorization"
+    );
+    expect(JSON.stringify(result.previewExchanges)).not.toContain(
+      "local-test-share-token"
+    );
+    expect(response.headers.get("cache-control")).toContain("no-store");
     expect(send).toHaveBeenCalledOnce();
     const sentBody = JSON.parse(String(send.mock.calls[0][1]?.body));
     expect(sentBody.text).not.toContain("local-test-share-token");
@@ -728,6 +752,7 @@ test("authenticated Preview returns bounded actual exchange metadata privately w
   expect(body.previewExchanges).toHaveLength(1);
   expect(body.previewExchanges[0]).toMatchObject({
     resourceId: "webhook",
+    resourceName: "webhook",
     request: {
       method: "POST",
       url: "https://example.com/contact",
@@ -773,3 +798,63 @@ test("a parent-scope Action with no Body sends entered Form values in the actual
     email: "ada@example.com",
   });
 });
+
+test.each(["resource", "project"])(
+  "Email Preview inspection retains user-authored %s subject and body",
+  async (source) => {
+    const subject = "Configured Email subject";
+    const body = "Configured Email body server-only-test-token";
+    vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+      ...draftBuild,
+      resources: [
+        {
+          id: "webhook",
+          name: "Email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          ...(source === "resource"
+            ? {
+                email: {
+                  subject: JSON.stringify(subject),
+                  body: JSON.stringify(body),
+                },
+              }
+            : {}),
+        },
+      ],
+      projectSettings: {
+        meta: {
+          contactEmail: "team@example.com",
+          ...(source === "project"
+            ? { emailSubject: subject, emailBody: body }
+            : {}),
+        },
+      },
+    } as never);
+    const send = vi.fn(async () => Response.json({ id: "sent" }));
+    vi.stubGlobal("fetch", send);
+    try {
+      const response = await action({ request: request() } as never);
+      const result = (await response.json()) as unknown as {
+        success: boolean;
+        previewExchanges: PreviewFormExchange[];
+      };
+      expect(result.success).toBe(true);
+      expect(result.previewExchanges[0].request.body).toMatchObject({
+        subject: expect.stringMatching(
+          /^Configured Email subject \[[a-f0-9]{16}\]$/
+        ),
+        body: "Configured Email body [redacted]",
+      });
+      expect(result.previewExchanges[0].response.body).toEqual({ id: "sent" });
+      expect(JSON.stringify(result.previewExchanges)).not.toContain(
+        "server-only-test-token"
+      );
+      expect(send).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }
+);

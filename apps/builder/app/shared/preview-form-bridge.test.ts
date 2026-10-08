@@ -160,11 +160,13 @@ test("live Preview values update Builder memory without submitting or saving", a
     publish({
       type: "previewFormValues",
       payload: {
-        formId: "form",
+        selector: "form,collection[one],root",
         values: { text: "", choice: "first", flag: [] },
       },
     });
-    expect($livePreviewFormValues.get().get("form")).toEqual({
+    expect(
+      $livePreviewFormValues.get().get("form,collection[one],root")
+    ).toEqual({
       text: "",
       choice: "first",
       flag: [],
@@ -172,21 +174,48 @@ test("live Preview values update Builder memory without submitting or saving", a
     publish({
       type: "previewFormValues",
       payload: {
-        formId: "form",
+        selector: "form,collection[one],root",
         values: { text: "typed", choice: "second", flag: ["yes"] },
       },
     });
-    expect($livePreviewFormValues.get().get("form")).toEqual({
+    expect(
+      $livePreviewFormValues.get().get("form,collection[one],root")
+    ).toEqual({
       text: "typed",
       choice: "second",
       flag: ["yes"],
     });
+    publish({
+      type: "previewFormValues",
+      payload: {
+        selector: "form,collection[two],root",
+        values: { text: "another occurrence" },
+      },
+    });
+    expect(
+      $livePreviewFormValues.get().get("form,collection[one],root")
+    ).toEqual({
+      text: "typed",
+      choice: "second",
+      flag: ["yes"],
+    });
+    expect(
+      $livePreviewFormValues.get().get("form,collection[two],root")
+    ).toEqual({ text: "another occurrence" });
     expect(builderFetch).not.toHaveBeenCalled();
     publish({
       type: "previewFormValues",
-      payload: { formId: "form", values: null },
+      payload: {
+        selector: "form,collection[one],root",
+        values: null,
+      },
     });
-    expect($livePreviewFormValues.get().has("form")).toBe(false);
+    expect($livePreviewFormValues.get().has("form,collection[one],root")).toBe(
+      false
+    );
+    expect(
+      $livePreviewFormValues.get().get("form,collection[two],root")
+    ).toEqual({ text: "another occurrence" });
   } finally {
     cleanup();
   }
@@ -199,6 +228,7 @@ test.each(["network", "draft"])(
       await import("./preview-form-inspection");
     const exchange = {
       resourceId: "previous",
+      resourceName: "Previous resource",
       kind: "http" as const,
       request: {
         method: "POST",

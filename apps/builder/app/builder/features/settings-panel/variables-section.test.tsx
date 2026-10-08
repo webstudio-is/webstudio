@@ -9,9 +9,11 @@ import {
   $selectedPageId,
   selectInstance,
 } from "~/shared/nano-states";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $pages, $props, $resources } from "~/shared/sync/data-stores";
 import { FormSubmissionControl } from "./controls/form-submission";
 import { $variableToFocus } from "./variable-navigation";
+import { showVariableAtSource } from "./variable-navigation";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { $instances, $dataSources } from "~/shared/sync/data-stores";
 import { __testing__, VariablesSection } from "./variables-section";
@@ -105,6 +107,90 @@ test("Option-click local variable label opens Delete confirmation without editin
   expect(document.body.textContent).not.toContain("Edit variable");
 });
 
+test("a variable without an instance scope is labeled as coming from Global root", async () => {
+  const { container, local } = setup();
+  const globalVariable = {
+    ...local,
+    id: "global-variable",
+    scopeInstanceId: undefined,
+    name: "Ghost URL",
+  };
+  $dataSources.set(new Map([[globalVariable.id, globalVariable]]));
+  await act(async () =>
+    root?.render(
+      <TooltipProvider delayDuration={0}>
+        <__testing__.VariablesItem
+          variable={globalVariable}
+          source="remote"
+          index={0}
+          value="https://example.com"
+          usageCount={0}
+        />
+      </TooltipProvider>
+    )
+  );
+  await act(
+    async () => await userEvent.hover(container.querySelector("label")!)
+  );
+  expect(document.body.textContent).toContain("Global root");
+  expect(document.body.textContent).not.toContain("System");
+});
+
+test("clicking a value source navigates to its instance and focuses the variable", async () => {
+  const { container } = setup();
+  $pages.set(createDefaultPages({ rootInstanceId: "parent" }));
+  $selectedPageId.set("home");
+  selectInstance(["child"]);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider delayDuration={0}>
+        <CollapsibleProvider initialOpen="Variables">
+          <button
+            type="button"
+            onClick={() => showVariableAtSource("ancestor", "parent")}
+          >
+            Go to source
+          </button>
+          <VariablesSection />
+        </CollapsibleProvider>
+      </TooltipProvider>
+    )
+  );
+  const sectionButton = container.querySelector<HTMLButtonElement>(
+    'button[data-state="open"]'
+  )!;
+  await act(async () => {
+    sectionButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  expect(sectionButton.getAttribute("data-state")).toBe("closed");
+  const sourceButton = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === "Go to source"
+  )!;
+  await act(async () => {
+    sourceButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  expect($selectedInstanceSelector.get()?.[0]).toBe("parent");
+  expect($variableToFocus.get()).toBeUndefined();
+  expect(document.activeElement?.getAttribute("aria-label")).toBe(
+    "Variable Color"
+  );
+});
+
+test("clicking a Global root source keeps the current page selected", () => {
+  $pages.set(createDefaultPages({ rootInstanceId: "parent" }));
+  $selectedPageId.set("home");
+  selectInstance(["child"]);
+
+  showVariableAtSource("global-variable", ROOT_INSTANCE_ID);
+
+  expect($selectedPageId.get()).toBe("home");
+  expect($selectedInstanceSelector.get()?.[0]).toBe(ROOT_INSTANCE_ID);
+  expect($variableToFocus.get()).toEqual({
+    id: "global-variable",
+    scopeInstanceId: ROOT_INSTANCE_ID,
+  });
+});
+
 test("name shadow warning appears for an existing shadow and renamed ancestor name", async () => {
   const { container, local } = setup();
   await act(async () =>
@@ -188,6 +274,39 @@ test("clicking an Action focuses its Resource without navigating or opening the 
       </TooltipProvider>
     )
   );
+  expect($selectedInstanceSelector.get()?.[0]).toBe("parent");
+  const row = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Variable Request"]'
+  )!;
+  const action = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Action Request"]'
+  )!;
+  await act(async () => await userEvent.hover(action));
+  await act(async () => {
+    container
+      .querySelector("[data-drag-handle]")
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  expect($variableToFocus.get()).toBeUndefined();
+  await act(
+    async () =>
+      await userEvent.click(
+        container.querySelector<HTMLButtonElement>(
+          '[aria-label="Disable action Request"]'
+        )!
+      )
+  );
+  expect($variableToFocus.get()).toBeUndefined();
+  await act(
+    async () =>
+      await userEvent.click(
+        container.querySelector<HTMLButtonElement>(
+          '[aria-label="Remove action Request"]'
+        )!
+      )
+  );
+  expect($variableToFocus.get()).toBeUndefined();
+
   await act(
     async () =>
       await userEvent.click(
@@ -196,10 +315,6 @@ test("clicking an Action focuses its Resource without navigating or opening the 
         )!
       )
   );
-  expect($selectedInstanceSelector.get()?.[0]).toBe("parent");
-  const row = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Variable Request"]'
-  )!;
   expect(row.getAttribute("data-active")).not.toBe("true");
   expect(document.activeElement).toBe(row);
   expect($variableToFocus.get()).toBeUndefined();

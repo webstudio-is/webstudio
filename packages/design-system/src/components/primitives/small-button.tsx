@@ -46,7 +46,7 @@ const focusColors = {
 };
 
 const selectedBackgrounds = {
-  normal: selectedControlBackground,
+  normal: "transparent",
   destructive: selectedControlBackground,
   contrast: "color-mix(in oklab, currentColor 22%, transparent)",
 };

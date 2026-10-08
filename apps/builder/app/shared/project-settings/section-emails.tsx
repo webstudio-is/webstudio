@@ -23,8 +23,7 @@ const fields = [
   {
     key: "emailSender",
     label: "Sender",
-    placeholder: "Olegs Isonen <oleg008@gmail.com>",
-    help: "Emails are sent through Webstudio. Replies go to this address.",
+    placeholder: "Acme <acme@example.com>",
   },
   {
     key: "emailSubject",
@@ -93,7 +92,7 @@ export const SectionEmails = () => {
             autoGrow
             value={meta.contactEmail ?? ""}
             color={contactError ? "error" : undefined}
-            placeholder="Olegs Isonen <oleg008@gmail.com>, team@example.com"
+            placeholder="Acme <acme@example.com>, team@example.com"
             onChange={(value) => save("contactEmail", value)}
           />
         </InputErrorsTooltip>

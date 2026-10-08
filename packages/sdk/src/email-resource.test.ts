@@ -10,19 +10,19 @@ describe("email addresses", () => {
   test("keeps named, quoted-comma, plain, and duplicate mailboxes", () => {
     expect(
       parseEmailMailboxes(
-        '"Isonen, Olegs" <oleg008@gmail.com>, team@example.com, team@example.com'
+        '"Example, Alex" <acme@example.com>, team@example.com, team@example.com'
       )
     ).toEqual([
-      { name: "Isonen, Olegs", address: "oleg008@gmail.com" },
+      { name: "Example, Alex", address: "acme@example.com" },
       { address: "team@example.com" },
       { address: "team@example.com" },
     ]);
-    expect(parseEmailSender("oleg008@gmail.com")).toEqual({
-      address: "oleg008@gmail.com",
+    expect(parseEmailSender("acme@example.com")).toEqual({
+      address: "acme@example.com",
     });
-    expect(parseEmailSender("Olegs Isonen <oleg008@gmail.com>")).toEqual({
-      name: "Olegs Isonen",
-      address: "oleg008@gmail.com",
+    expect(parseEmailSender("Acme <acme@example.com>")).toEqual({
+      name: "Acme",
+      address: "acme@example.com",
     });
     expect(parseEmailSender("a@example.com, b@example.com")).toBeUndefined();
   });

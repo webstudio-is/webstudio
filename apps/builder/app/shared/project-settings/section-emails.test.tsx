@@ -36,7 +36,7 @@ test("shows the free and paid address limits in Project Emails", async () => {
   act(() => root.render(<SectionEmails />));
   await act(async () =>
     page
-      .getByPlaceholder("Olegs Isonen <oleg008@gmail.com>, team@example.com")
+      .getByPlaceholder("Acme <acme@example.com>, team@example.com")
       .fill("one@example.com")
   );
   expect(
@@ -54,7 +54,7 @@ test("shows the free and paid address limits in Project Emails", async () => {
   );
   await act(async () =>
     page
-      .getByPlaceholder("Olegs Isonen <oleg008@gmail.com>, team@example.com")
+      .getByPlaceholder("Acme <acme@example.com>, team@example.com")
       .fill("one@example.com, two@example.com")
   );
   expect(
@@ -66,6 +66,9 @@ test("shows the free and paid address limits in Project Emails", async () => {
 test("visitor email body is configured on its Email Resource", () => {
   act(() => root.render(<SectionEmails />));
   expect(document.body.textContent).toContain("Visitor email subject");
+  expect(document.body.textContent).not.toContain(
+    "Emails are sent through Webstudio. Replies go to this address."
+  );
   expect(document.body.textContent).not.toContain(
     "Visitor confirmation plain-text body"
   );
