@@ -306,6 +306,74 @@ test("Variables list preview uses server browser info after Preview submission",
   expect(preview?.title).toContain("builder.example/project");
 });
 
+test.each([
+  ["formData", "Submitted field values from this Form, keyed by input name."],
+  [
+    "browserInfo",
+    "Visitor IP address, browser, language, and referrer available to this Form.",
+  ],
+  ["formState", "The current Form state: initial, success, or error."],
+  [
+    "results",
+    "Responses from selected actions, in order. Each includes the resource name, HTTP status code, and response body.",
+  ],
+  [
+    "errors",
+    "Errors from failed actions, in order. Each includes the resource name, HTTP status code, response body, and message.",
+  ],
+] as const)(
+  "shows the approved %s Form variable description",
+  async (name, description) => {
+    const { container } = setup();
+    $instances.set(
+      new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance" as const,
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ])
+    );
+    const variable =
+      name === "formData" || name === "browserInfo"
+        ? {
+            id: `form-${name}`,
+            type: "parameter" as const,
+            name,
+            scopeInstanceId: "form",
+          }
+        : {
+            id: `form-${name}`,
+            type: "variable" as const,
+            name,
+            scopeInstanceId: "form",
+            value: { type: "json" as const, value: {} },
+          };
+    $dataSources.set(new Map([[variable.id, variable]]));
+    await act(async () =>
+      root?.render(
+        <TooltipProvider delayDuration={0}>
+          <__testing__.VariablesItem
+            variable={variable}
+            source="local"
+            index={0}
+            value={undefined}
+            usageCount={0}
+          />
+        </TooltipProvider>
+      )
+    );
+    await act(
+      async () => await userEvent.hover(container.querySelector("label")!)
+    );
+    expect(document.body.textContent).toContain(description);
+  }
+);
+
 test("clicking an ancestor source label selects and focuses its defining instance", async () => {
   const { container } = setup();
   const ancestor = $dataSources.get().get("ancestor")!;

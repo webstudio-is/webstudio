@@ -154,6 +154,17 @@ const getVariableBadge = (variable: DataSource) => {
   }
 };
 
+const formVariableDescriptions: Record<string, string> = {
+  formData: "Submitted field values from this Form, keyed by input name.",
+  browserInfo:
+    "Visitor IP address, browser, language, and referrer available to this Form.",
+  formState: "The current Form state: initial, success, or error.",
+  results:
+    "Responses from selected actions, in order. Each includes the resource name, HTTP status code, and response body.",
+  errors:
+    "Errors from failed actions, in order. Each includes the resource name, HTTP status code, response body, and message.",
+};
+
 const DataVariableBadge = ({ variable }: { variable: DataSource }) => {
   const badge = getVariableBadge(variable);
   if (badge === undefined) {
@@ -229,6 +240,10 @@ const VariablesItem = ({
   const dataSources = useStore($dataSources);
   const valueSourceId = variable.scopeInstanceId ?? ROOT_INSTANCE_ID;
   const valueSource = instances.get(valueSourceId);
+  const formVariableDescription =
+    valueSource?.component === "NativeForm"
+      ? formVariableDescriptions[variable.name]
+      : undefined;
   const valueSourceName =
     valueSourceId === ROOT_INSTANCE_ID
       ? "Global root"
@@ -315,6 +330,9 @@ const VariablesItem = ({
                         ? "Resource · Dynamic"
                         : "JSON · Dynamic parameter"}
                   </Text>
+                  {formVariableDescription && (
+                    <Text>{formVariableDescription}</Text>
+                  )}
                   <Text color="moreSubtle">Value comes from</Text>
                   <Flex gap="1" wrap="wrap">
                     {source === "local" && (
