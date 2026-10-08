@@ -8,14 +8,16 @@ Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/c
 
 ## Configure actions
 
-1. Create HTTP, Email, or GraphQL Resources in **Data variables**, on the Form or an ancestor.
-2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to five visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Data variables**.
+1. Create HTTP, Email, or GraphQL Resources in **Variables**, on the Form or an ancestor.
+2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to five visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Variables**.
 3. Give each input a **Name**. Its name identifies the submitted value in `formData`.
 4. Submit the Form in Builder Preview to test the current draft, or publish and test the deployed site.
 
 The Form starts independent destinations in parallel. An empty destination list shows an error only when someone tries to submit; it does not dispatch or navigate. Every HTTP destination receives a POST request. A Resource created inside the Form can bind `formData` and the safe `browserInfo` values (visitor IP, user agent, language, and referrer). A Resource on an ancestor can be selected, but cannot bind that Form's data.
 
-By default, a Form-scoped HTTP Resource forwards all submitted fields. It sends JSON for text values and multipart data when files are included. Edit the Resource body to choose or transform fields, or set its body format if the receiving service requires one. An external Resource uses its own configured body.
+By default, a Form-scoped HTTP Resource forwards all submitted fields. It sends JSON for text values and multipart data when files are included. Edit the Resource body to choose or transform fields, or set its body format if the receiving service requires one. An HTTP Resource outside the Form uses its own configured body.
+
+For a selected Email Resource that sends to project or custom recipients, an empty Resource body and empty Project Settings owner body use automatic text containing the submitted Form fields and browser information. This default works whether the Resource is defined on the Form, an ancestor, or Global Root. A nonempty Project Settings owner body replaces the automatic text; a Resource body override takes precedence, including an explicitly empty body. To use `formData` or `browserInfo` in a Resource expression, define the Resource on the Form; Resources on an ancestor or Global Root cannot bind that Form’s data.
 
 ### Send browser information to a destination
 
@@ -33,7 +35,7 @@ On a published Webstudio Cloud site, an Email Resource sends through Webstudio's
 
 Each owner notification keeps its configured subject text and adds a short, unique reference in brackets. Two submissions with the same values, even close together, receive different references. A retry within one submission keeps the same reference. Visitor-addressed emails keep their configured subject without this suffix.
 
-To email a visitor, add another Email Resource in **Data variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Action. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. When a Form includes file inputs, submitted files are attached to the outgoing Email Resource message by default. Turn off ‘Attach submitted files’ to omit them. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
+To email a visitor, add another Email Resource in **Variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Action. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. When a Form includes file inputs, submitted files are attached to the outgoing Email Resource message by default. Turn off ‘Attach submitted files’ to omit them. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
 
 A Form can send up to **five team-recipient deliveries** across all of its Email Resources. Duplicate addresses count as separate deliveries; one visitor-addressed Email Resource is allowed in addition. The server checks this total before running any destination. Webstudio Cloud also limits email to **50 recipient deliveries per project, per Cloudflare location, in a rolling 60-second window**. A rate-limited primary Email Resource fails before delivery and makes the Form show its error state; a visitor-addressed Email Resource failure remains nonfatal. Other parallel destinations may still finish.
 
