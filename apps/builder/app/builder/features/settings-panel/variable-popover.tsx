@@ -288,7 +288,7 @@ const TypeField = ({
         </Flex>
       ),
       description:
-        "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
+        "A REST resource is a configuration for secure data fetching.",
     },
     {
       value: "graphql-resource",
