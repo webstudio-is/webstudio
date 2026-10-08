@@ -171,7 +171,7 @@ test("accepts the generated preview with the expected project marker", async () 
   ).resolves.toBeUndefined();
 });
 
-test("uses the static identity marker when page authentication blocks readiness", async () => {
+test("uses the static identity marker for iterative preview readiness", async () => {
   const fetch = vi.fn(async () =>
     Response.json({ projectId: "project", version: 5 })
   );
@@ -182,6 +182,7 @@ test("uses the static identity marker when page authentication blocks readiness"
       {
         timeoutMs: 1000,
         requiredProject: { projectId: "project", version: 5 },
+        probeIdentityOnly: true,
       },
       createDependencies({ fetch })
     )
@@ -205,6 +206,7 @@ test("waits for the exact generated session version", async () => {
       timeoutMs: 1000,
       intervalMs: 5,
       requiredProject: { projectId: "project", version: 5 },
+      probeIdentityOnly: true,
     },
     createDependencies({ fetch })
   );
@@ -222,6 +224,7 @@ test("does not compile a cold application route to confirm iterative readiness",
       "http://127.0.0.1:5173/newly-authored-route",
       {
         requiredProject: { projectId: "project", version: 5 },
+        probeIdentityOnly: true,
       },
       createDependencies({ fetch })
     )
@@ -229,6 +232,25 @@ test("does not compile a cold application route to confirm iterative readiness",
 
   expect(fetch).toHaveBeenCalledWith(
     new URL("http://127.0.0.1:5173/__webstudio/preview.json"),
+    expect.objectContaining({ method: "GET" })
+  );
+});
+
+test("checks the production route when there are no CSS assets", async () => {
+  const url = "http://127.0.0.1:5173/";
+  const fetch = vi.fn(
+    async () => new Response('<html data-ws-project="project"></html>')
+  );
+
+  await expect(
+    waitForPreviewReady(
+      url,
+      { timeoutMs: 1000, requiredProject: { projectId: "project" } },
+      createDependencies({ fetch })
+    )
+  ).resolves.toBeUndefined();
+  expect(fetch).toHaveBeenCalledWith(
+    url,
     expect.objectContaining({ method: "GET" })
   );
 });
@@ -278,6 +300,7 @@ test("reports when a regenerated session version is not served", async () => {
         timeoutMs: 1,
         intervalMs: 5,
         requiredProject: { projectId: "project", version: 5 },
+        probeIdentityOnly: true,
       },
       createDependencies({ fetch })
     )

@@ -142,18 +142,22 @@ export const waitForPreviewReady = async (
     isRunning,
     requiredAssetNames = [],
     requiredProject,
+    probeIdentityOnly = false,
   }: {
     timeoutMs?: number;
     intervalMs?: number;
     isRunning?: () => boolean;
     requiredAssetNames?: string[];
     requiredProject?: { projectId: string; version?: number };
+    probeIdentityOnly?: boolean;
   } = {},
   dependencies = defaultPreviewServerDependencies
 ) => {
   const deadline = Date.now() + timeoutMs;
   const usesIdentityProbe =
-    requiredProject !== undefined && requiredAssetNames.length === 0;
+    probeIdentityOnly &&
+    requiredProject !== undefined &&
+    requiredAssetNames.length === 0;
   let sawStaleServer = false;
   let sawUnexpectedProject = false;
   let lastProbeFailure: PreviewProbeFailure | undefined;

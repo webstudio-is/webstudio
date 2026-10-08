@@ -534,14 +534,14 @@ test("preserves readiness diagnostics when adding preview output", async () => {
   }
 });
 
-test("preview controller derives and verifies the generated project identity", async () => {
+test("production preview checks the route even without CSS assets", async () => {
   const process = createPreviewProcess();
   const buildProcess = createPreviewProcess();
   const readFile = vi.fn(async () =>
     JSON.stringify({ build: { projectId: "expected-project" } })
   );
-  const fetch = vi.fn(async () =>
-    Response.json({ projectId: "expected-project" })
+  const fetch = vi.fn(
+    async () => new Response('<html data-ws-project="expected-project"></html>')
   );
   resolveProcessExit(buildProcess);
   const controller = createPreviewController(
@@ -564,7 +564,7 @@ test("preview controller derives and verifies the generated project identity", a
     "utf8"
   );
   expect(fetch).toHaveBeenCalledWith(
-    new URL("http://127.0.0.1:5173/__webstudio/preview.json"),
+    "http://127.0.0.1:5173/",
     expect.objectContaining({ method: "GET" })
   );
 });
