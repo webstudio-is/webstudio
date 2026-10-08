@@ -107,10 +107,10 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   );
   expect(document.body.textContent).toContain("browserInfo — visitor details");
   expect(document.body.textContent).toContain(
-    "results — each Action’s response, in order"
+    "results — each action’s response, in order"
   );
   expect(document.body.textContent).toContain(
-    "errors — failed Actions and their messages"
+    "errors — failed actions and their messages"
   );
   expect(document.body.textContent).not.toContain("status —");
   expect(document.body.textContent).toContain("Add at least one action.");

@@ -330,7 +330,7 @@ const VariablesItem = ({
             )}
           </Flex>
         }
-        data-state={isMenuOpen ? "open" : undefined}
+        state={isMenuOpen ? "open" : undefined}
         suffix={<DataVariableBadge variable={variable} />}
         buttons={
           <>

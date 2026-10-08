@@ -107,6 +107,29 @@ test("Option-click local variable label opens Delete confirmation without editin
   expect(document.body.textContent).not.toContain("Edit variable");
 });
 
+test("keeps a variable highlighted while its edit dialog is open", async () => {
+  const { container, local } = setup();
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <__testing__.VariablesItem
+          variable={local}
+          source="local"
+          index={0}
+          value="red"
+          usageCount={0}
+        />
+      </TooltipProvider>
+    )
+  );
+  const row = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Variable Color"]'
+  )!;
+  await act(async () => await userEvent.click(row));
+  expect(document.body.textContent).toContain("Edit variable");
+  expect(row.getAttribute("data-state")).toBe("open");
+});
+
 test("a variable without an instance scope is labeled as coming from Global root", async () => {
   const { container, local } = setup();
   const globalVariable = {

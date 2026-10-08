@@ -175,12 +175,12 @@ export const FormSubmissionControl = ({
                 </li>
                 <li>
                   <Text>
-                    <code>results</code> — each Action’s response, in order
+                    <code>results</code> — each action’s response, in order
                   </Text>
                 </li>
                 <li>
                   <Text>
-                    <code>errors</code> — failed Actions and their messages
+                    <code>errors</code> — failed actions and their messages
                   </Text>
                 </li>
               </Box>
