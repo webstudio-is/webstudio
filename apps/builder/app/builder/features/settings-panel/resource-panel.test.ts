@@ -1193,6 +1193,9 @@ test("body controls follow the effective method for standalone GET and Form Acti
   );
   expect(methodDescriptions?.textContent).toContain("Read data from a server.");
   expect(methodDescriptions?.textContent).toContain(
+    "Send data to create or process something."
+  );
+  expect(methodDescriptions?.textContent).toContain(
     "Form submissions use POST."
   );
   expect(methodDescriptions?.textContent).toContain(

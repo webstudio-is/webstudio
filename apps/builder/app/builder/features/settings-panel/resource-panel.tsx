@@ -257,14 +257,19 @@ export const MethodField = ({
         getLabel={humanizeString}
         getDescription={(method) => (
           <Box css={{ width: "100%" }}>
-            {formDestination && method === "post"
-              ? "Form submissions use POST. This method applies elsewhere."
-              : {
-                  get: "Read data from a server.",
-                  post: "Send data to create or process something.",
-                  put: "Replace data on a server.",
-                  delete: "Delete data from a server.",
-                }[method]}
+            {[
+              {
+                get: "Read data from a server.",
+                post: "Send data to create or process something.",
+                put: "Replace data on a server.",
+                delete: "Delete data from a server.",
+              }[method],
+              formDestination && method === "post"
+                ? "Form submissions use POST. This method applies elsewhere."
+                : undefined,
+            ]
+              .filter(Boolean)
+              .join(" ")}
           </Box>
         )}
         name="method"
