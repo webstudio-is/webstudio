@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Grid,
+  Flex,
   InputErrorsTooltip,
   Label,
   ProChip,
+  ResettableLabel,
   Text,
   TextArea,
+  cssVar,
 } from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { ProjectMeta } from "@webstudio-is/sdk";
 import {
   validateContactEmail,
@@ -43,6 +47,23 @@ const fields = [
   },
 ] as const;
 
+const InfoTooltip = ({
+  label,
+  content,
+}: {
+  label: string;
+  content: string;
+}) => (
+  <ResettableLabel
+    aria-label={label}
+    color="inactive"
+    css={{ padding: 0 }}
+    content={<Text>{content}</Text>}
+  >
+    <InfoCircleIcon color={cssVar("--foreground-secondary")} aria-hidden />
+  </ResettableLabel>
+);
+
 export const SectionEmails = () => {
   const projectSettings = useStore($projectSettings);
   const { maxContactEmailsPerProject } = useStore($permissions);
@@ -77,14 +98,16 @@ export const SectionEmails = () => {
         Emails
       </Text>
       <Grid gap={1} css={sectionSpacing}>
-        <Label htmlFor="project-contact-email">
-          Recipients{" "}
-          {maxContactEmailsPerProject === 0 && <ProChip>Pro</ProChip>}
-        </Label>
-        <Text color="subtle">
-          Existing Contact email recipients are also used by legacy forms. Leave
-          empty to send new Email Resources to the project owner.
-        </Text>
+        <Flex gap={1} align="center">
+          <Label htmlFor="project-contact-email">
+            Recipients{" "}
+            {maxContactEmailsPerProject === 0 && <ProChip>Pro</ProChip>}
+          </Label>
+          <InfoTooltip
+            label="Recipients"
+            content="Existing Contact email recipients are also used by legacy forms. Leave empty to send new Email Resources to the project owner."
+          />
+        </Flex>
         <InputErrorsTooltip errors={contactError ? [contactError] : undefined}>
           <TextArea
             id="project-contact-email"
@@ -104,8 +127,12 @@ export const SectionEmails = () => {
             : validateEmailText(meta[key] ?? "", label, key === "emailBody");
         return (
           <Grid key={key} gap={1} css={sectionSpacing}>
-            <Label htmlFor={`project-${key}`}>{label}</Label>
-            {"help" in rest && <Text color="subtle">{rest.help}</Text>}
+            <Flex gap={1} align="center">
+              <Label htmlFor={`project-${key}`}>{label}</Label>
+              {"help" in rest && (
+                <InfoTooltip label={label} content={rest.help} />
+              )}
+            </Flex>
             <InputErrorsTooltip errors={error ? [error] : undefined}>
               <TextArea
                 id={`project-${key}`}

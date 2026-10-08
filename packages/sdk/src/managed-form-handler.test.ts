@@ -5,6 +5,11 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "./form-fields";
+import {
+  emailSettingsInvalidMessage,
+  resolveEmailRecipientsExpression,
+  resolveEmailSenderExpression,
+} from "./email-resource";
 
 test("the shared handler executes a Form graph from the supplied runtime configuration", async () => {
   const data = new FormData();
@@ -73,6 +78,294 @@ test("the shared handler executes a Form graph from the supplied runtime configu
     ],
     errors: [],
   });
+});
+
+test("a dynamic recipient list from a Resource output is rejected before any send", async () => {
+  const data = new FormData();
+  data.set(managedFormIdFieldName, "form");
+  data.set(managedFormArrayNamesFieldName, "[]");
+  data.set(formBotFieldName, Date.now().toString(16));
+  const request = new Request("https://site.example/contact", {
+    method: "POST",
+    body: data,
+  });
+  const resourceFetch = vi.fn(async () =>
+    Response.json({
+      recipients: Array.from(
+        { length: 6 },
+        (_, index) => `person${index}@example.com`
+      ).join(", "),
+    })
+  );
+  const sendEmail = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: {},
+  }));
+  const emailCreateRequest = vi.fn(
+    (documents: ReadonlyMap<string, unknown>) => {
+      const lookup = documents.get("lookup") as
+        | { recipients?: unknown }
+        | undefined;
+      if (typeof lookup?.recipients !== "string") {
+        throw new Error(emailSettingsInvalidMessage);
+      }
+      return {
+        name: "Notify",
+        control: "email" as const,
+        method: "post" as const,
+        url: "",
+        headers: [],
+        searchParams: [],
+        email: {
+          recipientMode: "custom" as const,
+          recipients: [{ address: lookup.recipients }],
+          subject: "Submission",
+          body: "Body",
+          includeAttachments: true,
+        },
+      };
+    }
+  );
+  const graph = {
+    rootIds: ["email"],
+    resources: [
+      {
+        id: "lookup",
+        outputName: "lookup",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Lookup",
+          method: "get" as const,
+          url: "https://api.example/recipients",
+          headers: [],
+          searchParams: [],
+        }),
+      },
+      {
+        id: "email",
+        outputName: "email",
+        dependencies: ["lookup"],
+        control: "email" as const,
+        emailRecipientCount: undefined,
+        createRequest: emailCreateRequest,
+      },
+    ],
+  };
+
+  await expect(
+    handleManagedFormSubmission({
+      request,
+      system: {
+        origin: "https://site.example",
+        pathname: "/contact",
+        params: {},
+        search: {},
+      },
+      configuration: () => ({
+        action: [{ dataSourceId: "email-source", enabled: true }],
+        resourceIds: ["email"],
+      }),
+      getGraph: () => graph,
+      createEmailSender: () => sendEmail,
+      resourceFetch,
+    })
+  ).rejects.toThrow("Invalid Email Resource recipient count");
+  expect(emailCreateRequest).not.toHaveBeenCalled();
+  expect(resourceFetch).not.toHaveBeenCalled();
+  expect(sendEmail).not.toHaveBeenCalled();
+});
+
+test.each([
+  [
+    "invalid bound Sender",
+    () => ({
+      sender: resolveEmailSenderExpression("not-an-email"),
+      recipients: resolveEmailRecipientsExpression("team@example.com"),
+    }),
+  ],
+  [
+    "invalid bound recipients",
+    () => ({
+      sender: resolveEmailSenderExpression("sender@example.com"),
+      recipients: resolveEmailRecipientsExpression(""),
+    }),
+  ],
+])("rejects %s before any Resource fetch or email send", async (_, resolve) => {
+  const data = new FormData();
+  data.set(managedFormIdFieldName, "form");
+  data.set(managedFormArrayNamesFieldName, "[]");
+  data.set(formBotFieldName, Date.now().toString(16));
+  const request = new Request("https://site.example/contact", {
+    method: "POST",
+    body: data,
+  });
+  const resourceFetch = vi.fn(async () => Response.json({ accepted: true }));
+  const sendEmail = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: {},
+  }));
+  const httpCreateRequest = vi.fn(() => ({
+    name: "Webhook",
+    method: "post" as const,
+    url: "https://api.example/submit",
+    headers: [],
+    searchParams: [],
+  }));
+  const emailCreateRequest = vi.fn(() => ({
+    name: "Notify",
+    control: "email" as const,
+    method: "post" as const,
+    url: "",
+    headers: [],
+    searchParams: [],
+    email: {
+      recipientMode: "custom" as const,
+      ...resolve(),
+      subject: "Submission",
+      body: "Body",
+      includeAttachments: true,
+    },
+  }));
+  const graph = {
+    rootIds: ["http", "email"],
+    resources: [
+      {
+        id: "http",
+        outputName: "http",
+        dependencies: [],
+        createRequest: httpCreateRequest,
+      },
+      {
+        id: "email",
+        outputName: "email",
+        dependencies: [],
+        control: "email" as const,
+        emailRecipientCount: 1,
+        createRequest: emailCreateRequest,
+      },
+    ],
+  };
+
+  await expect(
+    handleManagedFormSubmission({
+      request,
+      system: {
+        origin: "https://site.example",
+        pathname: "/contact",
+        params: {},
+        search: {},
+      },
+      configuration: () => ({
+        action: [
+          { dataSourceId: "http-source", enabled: true },
+          { dataSourceId: "email-source", enabled: true },
+        ],
+        resourceIds: ["http", "email"],
+      }),
+      getGraph: () => graph,
+      createEmailSender: () => sendEmail,
+      resourceFetch,
+    })
+  ).rejects.toThrow(emailSettingsInvalidMessage);
+  expect(httpCreateRequest).not.toHaveBeenCalled();
+  expect(resourceFetch).not.toHaveBeenCalled();
+  expect(sendEmail).not.toHaveBeenCalled();
+});
+
+test("a resolved six-mailbox bound recipient list fails before any send", async () => {
+  const data = new FormData();
+  data.set(managedFormIdFieldName, "form");
+  data.set(managedFormArrayNamesFieldName, "[]");
+  data.set(formBotFieldName, Date.now().toString(16));
+  const request = new Request("https://site.example/contact", {
+    method: "POST",
+    body: data,
+  });
+  const resourceFetch = vi.fn(async () => Response.json({ accepted: true }));
+  const sendEmail = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: {},
+  }));
+  const httpCreateRequest = vi.fn(() => ({
+    name: "Webhook",
+    method: "post" as const,
+    url: "https://api.example/submit",
+    headers: [],
+    searchParams: [],
+  }));
+  const recipientsExpression = Array.from(
+    { length: 6 },
+    (_, index) => `person${index}@example.com`
+  ).join(", ");
+  const emailCreateRequest = vi.fn(() => ({
+    name: "Notify",
+    control: "email" as const,
+    method: "post" as const,
+    url: "",
+    headers: [],
+    searchParams: [],
+    email: {
+      recipientMode: "custom" as const,
+      recipients: resolveEmailRecipientsExpression(recipientsExpression),
+      sender: resolveEmailSenderExpression("sender@example.com"),
+      subject: "Submission",
+      body: "Body",
+      includeAttachments: true,
+    },
+  }));
+  const graph = {
+    rootIds: ["http", "email"],
+    resources: [
+      {
+        id: "http",
+        outputName: "http",
+        dependencies: [],
+        createRequest: httpCreateRequest,
+      },
+      {
+        id: "email",
+        outputName: "email",
+        dependencies: [],
+        control: "email" as const,
+        emailRecipientCount: 1,
+        createRequest: emailCreateRequest,
+      },
+    ],
+  };
+
+  await expect(
+    handleManagedFormSubmission({
+      request,
+      system: {
+        origin: "https://site.example",
+        pathname: "/contact",
+        params: {},
+        search: {},
+      },
+      configuration: () => ({
+        action: [
+          { dataSourceId: "http-source", enabled: true },
+          { dataSourceId: "email-source", enabled: true },
+        ],
+        resourceIds: ["http", "email"],
+      }),
+      getGraph: () => graph,
+      createEmailSender: () => sendEmail,
+      resourceFetch,
+    })
+  ).rejects.toThrow(
+    "Select no more than 5 team email recipients per Form submission"
+  );
+  expect(emailCreateRequest).toHaveBeenCalledTimes(1);
+  expect(httpCreateRequest).not.toHaveBeenCalled();
+  expect(resourceFetch).not.toHaveBeenCalled();
+  expect(sendEmail).not.toHaveBeenCalled();
 });
 
 test("three webhooks complete when the Email Service rate-limits one destination", async () => {

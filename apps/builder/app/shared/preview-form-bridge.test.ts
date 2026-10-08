@@ -4,6 +4,7 @@ import { beforeEach, afterEach, expect, test, vi } from "vitest";
 import { fetch as builderFetch } from "~/shared/fetch.client";
 import { submitPreviewForm } from "./preview-form-bridge";
 import { subscribePreviewFormRequests } from "./preview-form-parent";
+import { $livePreviewBrowserInfo } from "./preview-form-values";
 
 const listeners = vi.hoisted(
   () => new Map<string, Set<(payload: unknown) => void>>()
@@ -44,6 +45,7 @@ beforeEach(() => {
 
 afterEach(() => {
   draftPersistence.reset();
+  $livePreviewBrowserInfo.set(new Map());
   listeners.clear();
   vi.clearAllMocks();
   vi.useRealTimers();
@@ -55,6 +57,12 @@ test("Preview sends the current FormData with files through the authenticated Bu
     status: 200,
     results: [{ resourceId: "email", status: 200, body: { sent: true } }],
     errors: [],
+    previewBrowserInfo: {
+      ip: "203.0.113.10",
+      userAgent: "Preview browser",
+      language: "en-GB",
+      referrer: "https://builder.example/project",
+    },
   };
   vi.mocked(builderFetch).mockResolvedValue(Response.json(response));
   const unsubscribe = subscribePreviewFormRequests(sendToCanvas);
@@ -66,7 +74,22 @@ test("Preview sends the current FormData with files through the authenticated Bu
     signal: new AbortController().signal,
   });
 
-  await expect(result).resolves.toEqual(response);
+  await expect(result).resolves.toEqual({
+    success: response.success,
+    status: response.status,
+    results: response.results,
+    errors: response.errors,
+  });
+  expect($livePreviewBrowserInfo.get().get("form-1")).toEqual(
+    response.previewBrowserInfo
+  );
+  const resultEvent = sendToCanvas.mock.calls
+    .map(([event]) => event)
+    .find((event) => event.type === "previewFormResult");
+  expect(
+    (resultEvent?.payload as { response?: Record<string, unknown> } | undefined)
+      ?.response
+  ).not.toHaveProperty("previewBrowserInfo");
   expect(builderFetch).toHaveBeenCalledOnce();
   const [url, init] = vi.mocked(builderFetch).mock.calls[0];
   expect(new URL(String(url)).pathname).toBe("/rest/preview-form");
@@ -82,6 +105,7 @@ test("Preview sends the current FormData with files through the authenticated Bu
   expect(formData.get("ws--managed-form-id")).toBe("form-1");
   expect(formData.get("ws--managed-form-array-names")).toBe('["attachments"]');
   unsubscribe();
+  expect($livePreviewBrowserInfo.get()).toEqual(new Map());
 });
 
 test("aborting a Preview submission aborts the parent request and sends no result", async () => {

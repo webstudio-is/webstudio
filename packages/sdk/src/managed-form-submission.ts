@@ -5,7 +5,11 @@ import {
   managedFormIdFieldName,
 } from "./form-fields";
 import { getResourceBodyFormatError, loadResources } from "./resource-loader";
-import { maxEmailSubjectLength, validateEmailSubject } from "./email-resource";
+import {
+  emailSettingsInvalidMessage,
+  maxEmailSubjectLength,
+  validateEmailSubject,
+} from "./email-resource";
 import type {
   ResourceGraphLoadOptions,
   ResourceRequestGraph,
@@ -288,13 +292,16 @@ export const validateManagedFormDestinationDependencies = (
 
 /** Reject the whole submission before any destination or dependency runs. */
 export const validateManagedFormRecipientLimit = (
-  graph: ResourceRequestGraph
+  graph: ResourceRequestGraph,
+  preparedEmailRequests: ReadonlyMap<string, ResourceRequest> = new Map()
 ) => {
   let deliveries = 0;
   let visitorDeliveries = 0;
   for (const resource of getReachableResources(graph)) {
     if (resource.control === "email") {
-      const count = resource.emailRecipientCount;
+      const count =
+        preparedEmailRequests.get(resource.id)?.email?.recipients.length ??
+        resource.emailRecipientCount;
       if (count === undefined || !Number.isSafeInteger(count) || count < 1) {
         throw new Error("Invalid Email Resource recipient count");
       }
@@ -323,7 +330,8 @@ export const validateManagedFormRecipientLimit = (
 export const validateManagedFormBodyFormats = (
   graph: ResourceRequestGraph,
   formData: FormData,
-  emailConfigured = false
+  emailConfigured = false,
+  precomputedRequests: ReadonlyMap<string, ResourceRequest> = new Map()
 ): ResourceRequestGraph => {
   if (
     emailConfigured === false &&
@@ -347,7 +355,9 @@ export const validateManagedFormBodyFormats = (
   );
   for (const resource of graph.resources) {
     if (resource.dependencies.length === 0) {
-      const request = resource.createRequest(new Map());
+      const request =
+        precomputedRequests.get(resource.id) ??
+        resource.createRequest(new Map());
       const error = getResourceBodyFormatError(request);
       if (error !== undefined) {
         throw new Error(error);
@@ -461,7 +471,7 @@ export const loadManagedFormResources = async (
         request.email.recipients.length === 0 ||
         typeof request.email.body !== "string"
       ) {
-        throw new Error("Email settings are invalid");
+        throw new Error(emailSettingsInvalidMessage);
       }
       if (
         request.email.subject.length === 0 ||

@@ -4,6 +4,11 @@ import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import type { ResourceRequest } from "@webstudio-is/sdk";
 import { afterEach, expect, test, vi } from "vitest";
+import { $instances } from "~/shared/sync/data-stores";
+import {
+  $livePreviewBrowserInfo,
+  recordPreviewBrowserInfo,
+} from "~/shared/preview-form-values";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -17,6 +22,8 @@ afterEach(() => {
   root = undefined;
   resetResources?.();
   resetResources = undefined;
+  $instances.set(new Map());
+  $livePreviewBrowserInfo.set(new Map());
   document.body.innerHTML = "";
   vi.unstubAllGlobals();
 });
@@ -97,8 +104,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
     expect(option).toBeDefined();
     await act(async () => userEvent.click(option!));
   };
-  await selectOption("String", "System resource");
-  await selectOption("Sitemap", "Current date");
+  await selectOption("String", "Current date");
 
   const loadButton = Array.from(
     dialog.querySelectorAll<HTMLButtonElement>("button")
@@ -130,11 +136,68 @@ test("loads an unsaved system resource while an unrelated page request is pendin
     );
   });
 
-  await selectOption("System resource", "GraphQL");
+  await selectOption("Current date", "GraphQL");
   expect(dialog.textContent).not.toContain("2026-09-23");
   expect(
     Array.from(dialog.querySelectorAll("button")).some(
       (button) => button.textContent === "Load data"
     )
   ).toBe(true);
+});
+
+test("Edit variable preview shows server browser info for a Form variable", async () => {
+  const { VariablePopoverTrigger } = await import("./variable-popover");
+  $instances.set(
+    new Map([
+      [
+        "form",
+        {
+          id: "form",
+          type: "instance",
+          component: "NativeForm",
+          children: [],
+        },
+      ],
+    ])
+  );
+  recordPreviewBrowserInfo("form", {
+    ip: "203.0.113.10",
+    userAgent: "Trusted Preview browser",
+    language: "en-GB",
+    referrer: "https://builder.example/project",
+  });
+
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      <TooltipProvider>
+        <div data-floating-panel-container>
+          <VariablePopoverTrigger
+            variable={{
+              id: "browser-info",
+              type: "parameter",
+              name: "browserInfo",
+              scopeInstanceId: "form",
+            }}
+          >
+            <button type="button">Edit browserInfo</button>
+          </VariablePopoverTrigger>
+        </div>
+      </TooltipProvider>
+    );
+  });
+  await act(async () => {
+    await userEvent.click(container.querySelector("button")!);
+  });
+
+  await vi.waitFor(() => {
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    expect(dialog?.textContent).toContain("203.0.113.10");
+    expect(dialog?.textContent).toContain("Trusted Preview browser");
+    expect(dialog?.textContent).toContain("en-GB");
+    expect(dialog?.textContent).toContain("https://builder.example/project");
+  });
 });

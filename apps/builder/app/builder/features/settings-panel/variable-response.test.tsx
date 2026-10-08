@@ -12,7 +12,11 @@ import {
   $resourcePreviewExchanges,
   recordPreviewFormExchanges,
 } from "~/shared/preview-form-inspection";
-import { $livePreviewFormValues } from "~/shared/preview-form-values";
+import {
+  $livePreviewFormValues,
+  $livePreviewBrowserInfo,
+  recordPreviewBrowserInfo,
+} from "~/shared/preview-form-values";
 import { __testing__ } from "./variable-popover";
 
 (
@@ -32,10 +36,11 @@ afterEach(() => {
   $selectedPageId.set(undefined);
   selectInstance(undefined);
   $livePreviewFormValues.set(new Map());
+  $livePreviewBrowserInfo.set(new Map());
   document.body.innerHTML = "";
 });
 
-test("Form data Preview shows live JSON values, including empty fields", async () => {
+test("Form context Preview shows live data and server browser info", async () => {
   $instances.set(
     new Map([
       [
@@ -82,6 +87,12 @@ test("Form data Preview shows live JSON values, including empty fields", async (
       ],
     ])
   );
+  recordPreviewBrowserInfo("form", {
+    ip: "203.0.113.10",
+    userAgent: "Preview browser",
+    language: "en-GB",
+    referrer: "https://builder.example/project",
+  });
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -115,80 +126,112 @@ test("Form data Preview shows live JSON values, including empty fields", async (
   );
   await expect.poll(() => container.textContent).toContain('"email": ""');
   expect(container.textContent).toContain('"message": "live Preview value"');
-  expect(container.textContent).toContain('"ip": ""');
-  expect(container.textContent).toContain('"referrer": ""');
-  expect(container.textContent).toContain('"userAgent":');
+  expect(container.textContent).toContain('"ip": "203.0.113.10"');
+  expect(container.textContent).toContain(
+    '"referrer": "https://builder.example/project"'
+  );
+  expect(container.textContent).toContain('"userAgent": "Preview browser"');
 });
 
-test("HTTP Response shows cached status and body without inventing an unsent request", async () => {
-  const request: ResourceRequest = {
-    name: "Request",
-    method: "get",
-    url: "https://example.com",
-    headers: [],
-    searchParams: [],
-  };
-  const key = getResourceKey(request);
-  $resourcesCache.set(
-    new Map([
-      [
-        key,
-        {
-          ok: true,
-          status: 201,
-          statusText: "Created",
-          data: { message: "created response" },
-        },
-      ],
-    ])
-  );
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  await act(async () =>
-    root?.render(
-      <TooltipProvider>
-        <__testing__.VariablePreview
-          variableType="resource"
-          variableValue={request}
-          showSavedResourceRequest={false}
-          isComputingRequest={false}
-          onLoadData={() => {}}
-          queryActive={false}
-          queryPending={false}
-          queryContainerRef={() => {}}
-        />
-      </TooltipProvider>
-    )
-  );
-  expect(
-    Array.from(
-      container.querySelectorAll('[role="tab"]'),
-      (tab) => tab.textContent
-    )
-  ).toEqual(["Response", "Diagnostics"]);
-  await expect.poll(() => container.textContent).toContain("201");
-  expect(container.textContent).toContain("Created");
-  expect(container.textContent).toContain("created response");
-  await act(async () =>
+test.each(["resource", "graphql-resource"] as const)(
+  "%s inspector shows cached response and an empty Request state without inventing an unsent request",
+  async (variableType) => {
+    const request: ResourceRequest = {
+      name: "Request",
+      method: "get",
+      url: "https://example.com",
+      headers: [],
+      searchParams: [],
+    };
+    const key = getResourceKey(request);
     $resourcesCache.set(
       new Map([
         [
           key,
           {
-            ok: false,
-            status: 422,
-            statusText: "Unprocessable Content",
-            data: { error: "rejected response body" },
+            ok: true,
+            status: 201,
+            statusText: "Created",
+            data: { message: "created response" },
           },
         ],
       ])
-    )
-  );
-  await expect.poll(() => container.textContent).toContain("422");
-  expect(container.textContent).toContain("Unprocessable Content");
-  expect(container.textContent).toContain("rejected response body");
-});
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    let loads = 0;
+    await act(async () =>
+      root?.render(
+        <TooltipProvider>
+          <__testing__.VariablePreview
+            variableType={variableType}
+            variableValue={request}
+            showSavedResourceRequest={false}
+            isComputingRequest={false}
+            onLoadData={() => {
+              loads += 1;
+            }}
+            queryActive={false}
+            queryPending={false}
+            queryContainerRef={() => {}}
+          />
+        </TooltipProvider>
+      )
+    );
+    expect(
+      Array.from(
+        container.querySelectorAll('[role="tab"]'),
+        (tab) => tab.textContent
+      )
+    ).toEqual(["Response", "Request", "Diagnostics"]);
+    await expect.poll(() => container.textContent).toContain("201");
+    expect(container.textContent).toContain("Created");
+    expect(container.textContent).toContain("created response");
+    const requestTab = Array.from(
+      container.querySelectorAll<HTMLElement>('[role="tab"]')
+    ).find((tab) => tab.textContent === "Request");
+    expect(requestTab).toBeDefined();
+    await act(async () => {
+      requestTab?.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true, button: 0 })
+      );
+      requestTab?.click();
+    });
+    expect(container.textContent).not.toContain("Load data");
+    expect(container.textContent).not.toContain("Loading...");
+    expect(container.textContent).not.toContain("null");
+    expect(container.textContent).not.toContain("example.com");
+    expect(loads).toBe(0);
+    const responseTab = Array.from(
+      container.querySelectorAll<HTMLElement>('[role="tab"]')
+    ).find((tab) => tab.textContent === "Response");
+    await act(async () => {
+      responseTab?.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true, button: 0 })
+      );
+      responseTab?.click();
+    });
+    await act(async () =>
+      $resourcesCache.set(
+        new Map([
+          [
+            key,
+            {
+              ok: false,
+              status: 422,
+              statusText: "Unprocessable Content",
+              data: { error: "rejected response body" },
+            },
+          ],
+        ])
+      )
+    );
+    await expect.poll(() => container.textContent).toContain("422");
+    expect(container.textContent).toContain("Unprocessable Content");
+    expect(container.textContent).toContain("rejected response body");
+  }
+);
 
 test("explicit Resource reload shows the captured request and response headers", async () => {
   const request: ResourceRequest = {
@@ -383,6 +426,8 @@ test.each(["http", "email"] as const)(
     await expect.poll(() => container.textContent).toContain("Retry-After");
     expect(container.textContent).toContain("Service Unavailable");
     expect(container.textContent).toContain("Created");
+    expect(container.textContent).toContain('"status": 201');
+    expect(container.textContent).toContain('"accepted": true');
     expect(container.textContent).toContain("https://example.com/final");
     await act(async () => {
       tabs[1].dispatchEvent(
@@ -462,4 +507,84 @@ test("Email inspector has submission tabs without loading or inventing an exchan
   expect(container.textContent).not.toContain("Load data");
   expect($previewFormExchanges.get().has("unsent-email")).toBe(false);
   expect(loads).toBe(0);
+});
+
+test("Email inspector shows raw HTTP response and failed delivery diagnostics separately", async () => {
+  recordPreviewFormExchanges("form", [
+    {
+      resourceId: "email-resource",
+      resourceName: "Receipt",
+      kind: "email",
+      request: {
+        method: "POST",
+        url: "https://email-service.internal/v1/send",
+        headers: [{ name: "content-type", value: "application/json" }],
+        body: { subject: "Receipt", body: "Submitted" },
+        truncated: false,
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: [{ name: "x-email-service-id", value: "request-id" }],
+        body: {
+          error: { code: "DELIVERY_FAILED", message: "Delivery rejected" },
+        },
+        truncated: false,
+      },
+      outcome: {
+        ok: false,
+        status: 502,
+        statusText: "Email service returned an invalid response",
+        body: {
+          ok: false,
+          error: { code: "EMAIL_SERVICE_ERROR" },
+        },
+        truncated: false,
+      },
+    },
+  ]);
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <__testing__.VariablePreview
+          variable={{
+            id: "email-variable",
+            type: "resource",
+            name: "Receipt",
+            resourceId: "email-resource",
+          }}
+          variableType="email-resource"
+          variableValue={undefined}
+          showSavedResourceRequest={false}
+          isComputingRequest={false}
+          onLoadData={() => {}}
+          queryActive={false}
+          queryPending={false}
+          queryContainerRef={() => {}}
+        />
+      </TooltipProvider>
+    )
+  );
+
+  expect(container.textContent).toContain('"status": 200');
+  expect(container.textContent).toContain("Delivery rejected");
+  expect(container.textContent).toContain("request-id");
+  expect(container.textContent).toContain('"ok": false');
+  const diagnostics = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find((tab) => tab.textContent === "Diagnostics");
+  await act(async () => {
+    diagnostics?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    diagnostics?.click();
+  });
+  await expect.poll(() => container.textContent).toContain("502");
+  expect(container.textContent).toContain("EMAIL_SERVICE_ERROR");
+  expect(container.textContent).toContain(
+    "Email service returned an invalid response"
+  );
 });

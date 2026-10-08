@@ -74,7 +74,8 @@ const ActionItem = ({
         if (
           isResource &&
           target instanceof Element &&
-          target.closest("[data-drag-handle]") === null
+          target.closest("[data-drag-handle]") === null &&
+          event.defaultPrevented === false
         ) {
           showVariable(id);
         }
@@ -175,6 +176,12 @@ export const FormSubmissionControl = ({
                 </li>
                 <li>
                   <Text>
+                    <code>formState</code> — current Form state: initial,
+                    success, or error.
+                  </Text>
+                </li>
+                <li>
+                  <Text>
                     <code>results</code> — each action’s response, in order
                   </Text>
                 </li>
@@ -184,7 +191,7 @@ export const FormSubmissionControl = ({
                   </Text>
                 </li>
               </Box>
-              {!action.some(({ enabled }) => enabled) && (
+              {action.length === 0 && (
                 <Flex align="center" gap="1">
                   <AlertIcon
                     color={cssVar("--foreground-warning")}

@@ -10,10 +10,10 @@ import {
   getManagedFormValues,
   loadManagedFormResources,
   readFormDataWithLimit,
+  validateManagedFormRecipientLimit,
   validateManagedFormBodyFormats,
   validateManagedFormBot,
   validateManagedFormDestinationDependencies,
-  validateManagedFormRecipientLimit,
   type ManagedFormResponse,
 } from "./managed-form-submission";
 import {
@@ -95,9 +95,7 @@ export const handleManagedFormSubmission = async ({
   if (graph === undefined || graph.rootIds.length === 0) {
     throw new Error("Form Resource graph not found");
   }
-  validateManagedFormRecipientLimit(graph);
   validateManagedFormDestinationDependencies(graph);
-  const sendEmail = createEmailSender?.(formData);
   const invalidVisitorResults: Record<string, unknown> = {};
   const invalidVisitorIds = new Set<string>();
   const visitorGraph = {
@@ -155,10 +153,21 @@ export const handleManagedFormSubmission = async ({
     }),
     rootIds: graph.rootIds.filter((id) => !invalidVisitorIds.has(id)),
   };
+  const preparedEmailRequests = new Map(
+    visitorGraph.resources
+      .filter(
+        (resource) =>
+          resource.control === "email" && resource.dependencies.length === 0
+      )
+      .map((resource) => [resource.id, resource.createRequest(new Map())])
+  );
+  validateManagedFormRecipientLimit(visitorGraph, preparedEmailRequests);
+  const sendEmail = createEmailSender?.(formData);
   const validatedGraph = validateManagedFormBodyFormats(
     visitorGraph,
     formData,
-    sendEmail !== undefined
+    sendEmail !== undefined,
+    preparedEmailRequests
   );
   const results =
     validatedGraph.rootIds.length === 0

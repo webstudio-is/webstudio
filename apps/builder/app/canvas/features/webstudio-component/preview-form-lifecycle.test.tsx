@@ -64,6 +64,47 @@ test.each([true, false])(
   }
 );
 
+test.each([true, false])(
+  "uncontrolled managed Form resets after Preview outcome %s by remounting",
+  async (success) => {
+    $builderMode.set("preview");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    const submit = vi.fn(async () => ({
+      success,
+      status: success ? 200 : 422,
+      results: [],
+      errors: success
+        ? []
+        : [{ status: 422, body: null, message: "Fixture failure" }],
+    }));
+    await act(async () =>
+      root?.render(
+        <__testing__.PreviewNativeForm
+          action={[{ dataSourceId: "request", enabled: true }]}
+          onManagedSubmit={submit}
+        >
+          <button type="submit">Send</button>
+        </__testing__.PreviewNativeForm>
+      )
+    );
+    await act(async () => container.querySelector("button")?.click());
+    await expect
+      .poll(() => container.querySelector("form")?.getAttribute("data-state"))
+      .toBe(success ? "success" : "error");
+    await act(async () => $builderMode.set("design"));
+    expect(container.querySelector("form")?.getAttribute("data-state")).toBe(
+      null
+    );
+    await act(async () => $builderMode.set("preview"));
+    expect(container.querySelector("form")?.getAttribute("data-state")).toBe(
+      null
+    );
+    expect(submit).toHaveBeenCalledTimes(1);
+  }
+);
+
 test("Preview publishes live unsent DOM values as input/change events occur", async () => {
   const values: Array<Record<string, unknown> | null> = [];
   const cleanup = subscribe("previewFormValues", (event) =>

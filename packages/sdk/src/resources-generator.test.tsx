@@ -57,6 +57,90 @@ test("does not fetch a Form-bound Resource during page load", () => {
   expect(generated).not.toContain("formData");
 });
 
+test("emits only the resolver imports required by bound Email Resources", () => {
+  const emailResource = {
+    id: "email-resource",
+    name: "Receipt",
+    control: "email" as const,
+    method: "post" as const,
+    url: '""',
+    headers: [],
+    email: {
+      recipientMode: "custom" as const,
+      recipientsExpression: encodeDataSourceVariable("recipients-value"),
+      senderExpression: encodeDataSourceVariable("sender-value"),
+    },
+  };
+  const dataSources = toMap([
+    {
+      id: "email-variable",
+      scopeInstanceId: "body",
+      type: "resource" as const,
+      name: "Receipt",
+      resourceId: "email-resource",
+    },
+    {
+      id: "recipients-value",
+      scopeInstanceId: "body",
+      type: "variable" as const,
+      name: "recipients",
+      value: { type: "string" as const, value: "team@example.com" },
+    },
+    {
+      id: "sender-value",
+      scopeInstanceId: "body",
+      type: "variable" as const,
+      name: "sender",
+      value: { type: "string" as const, value: "sender@example.com" },
+    },
+  ]);
+  const input = {
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources,
+    resources: toMap([emailResource]),
+    props: new Map(),
+  };
+
+  const generated = generateResources(input);
+  expect(generated).toContain(
+    'import { resolveEmailRecipientsExpression, resolveEmailSenderSettingsExpression } from "@webstudio-is/sdk";'
+  );
+  expect(generated).toContain("resolveEmailRecipientsExpression(");
+  expect(generated).toContain("resolveEmailSenderSettingsExpression(");
+
+  const senderOnlyGenerated = generateResources({
+    ...input,
+    resources: toMap([
+      {
+        ...emailResource,
+        email: {
+          recipientMode: "custom" as const,
+          recipients: "team@example.com",
+          senderExpression: encodeDataSourceVariable("sender-value"),
+        },
+      },
+    ]),
+  });
+  expect(senderOnlyGenerated).toContain(
+    'import { resolveEmailSenderSettingsExpression } from "@webstudio-is/sdk";'
+  );
+  expect(senderOnlyGenerated).not.toContain("resolveEmailRecipientsExpression");
+
+  const literalEmailResource = {
+    ...emailResource,
+    email: { recipientMode: "project" as const },
+  };
+  const literalGenerated = generateResources({
+    ...input,
+    resources: toMap([literalEmailResource]),
+  });
+  expect(literalGenerated).not.toContain("resolveEmailRecipientsExpression");
+  expect(literalGenerated).not.toContain(
+    "resolveEmailSenderSettingsExpression"
+  );
+});
+
 test("excludes transitive Form-only Resources and rejects Dynamic Content Block selection", () => {
   const input = {
     page: { rootInstanceId: "form" } as Page,

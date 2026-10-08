@@ -13,6 +13,8 @@ import {
 } from "./managed-form-submission";
 import {
   getDefaultFormEmailBodyExpression,
+  resolveEmailRecipientsExpression,
+  resolveEmailSenderExpression,
   resolveEmailResourceSettings,
 } from "./email-resource";
 import { getResourceDataSourceIds } from "./resource-dependencies";
@@ -110,7 +112,13 @@ export const createManagedFormDraftGraph = ({
             ownerName,
           })
         : undefined;
-    if (resolvedEmail && !resolvedEmail.recipients) {
+    const hasRecipientExpression =
+      resource.email?.recipientsExpression !== undefined;
+    if (
+      resolvedEmail &&
+      !hasRecipientExpression &&
+      resolvedEmail.recipients === undefined
+    ) {
       throw new Error(
         `Managed Form Email Resource ${id} has invalid recipients`
       );
@@ -181,12 +189,24 @@ export const createManagedFormDraftGraph = ({
       }
       const evaluate = (expression: string) =>
         evaluateExpression(expression, values);
+      const recipients =
+        resource.email?.recipientsExpression === undefined
+          ? resolvedEmail?.recipients
+          : resolveEmailRecipientsExpression(
+              evaluate(resource.email.recipientsExpression)
+            );
+      const sender =
+        resource.email?.senderExpression === undefined
+          ? resolvedEmail?.sender
+          : resolveEmailSenderExpression(
+              evaluate(resource.email.senderExpression)
+            );
       const email = resolvedEmail && {
         recipientMode: resolvedEmail.recipientMode,
         visitorEmailField: resolvedEmail.visitorEmailField,
-        recipients: resolvedEmail.recipients!,
-        sender: resolvedEmail.sender,
-        fromName: resolvedEmail.fromName,
+        recipients: recipients!,
+        sender,
+        fromName: sender?.name ?? resolvedEmail.fromName,
         includeAttachments: resolvedEmail.includeAttachments,
         subject: evaluate(resolvedEmail.subject) as string,
         body:
@@ -194,7 +214,6 @@ export const createManagedFormDraftGraph = ({
             ? (evaluate(resource.email.body) as string)
             : resolvedEmail.recipientMode !== "visitor" &&
                 isRoot &&
-                isFormBound &&
                 formDataSource
               ? (evaluateExpression(
                   getDefaultFormEmailBodyExpression(
@@ -237,8 +256,9 @@ export const createManagedFormDraftGraph = ({
       control: resource.control,
       ...(resolvedEmail
         ? {
-            emailRecipientCount:
-              resolvedEmail.recipientMode === "visitor"
+            emailRecipientCount: hasRecipientExpression
+              ? undefined
+              : resolvedEmail.recipientMode === "visitor"
                 ? 1
                 : resolvedEmail.recipients!.length,
           }

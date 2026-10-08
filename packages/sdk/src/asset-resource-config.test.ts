@@ -263,9 +263,16 @@ describe("asset query resource configuration", () => {
       isAssetsResource(createResource({ url: '"/$resources/other"' }))
     ).toBe(false);
     expect(
-      isAssetsResource(createResource({ url: ' "/$resources/assets"' }))
+      isAssetsResource(createResource({ url: '"/$resources/" + "assets"' }))
     ).toBe(false);
   });
+
+  test.each(["'/$resources/assets'", "`/$resources/assets`"])(
+    "recognizes static string URL syntax %s for Assets resources",
+    (url) => {
+      expect(isAssetsResource(createResource({ url }))).toBe(true);
+    }
+  );
 
   test("round-trips typed filters with Webstudio value expressions", () => {
     const configuration = {

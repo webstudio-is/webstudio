@@ -14,6 +14,7 @@ import {
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
+import { decodeDataSourceVariable } from "@webstudio-is/sdk";
 import {
   findAvailableVariables,
   findUsedVariables,
@@ -126,11 +127,7 @@ export const canDeleteVariable = (
   if (!variable) {
     return false;
   }
-  if (
-    ["formState", "results", "errors"].includes(variable.name) &&
-    $instances.get().get(variable.scopeInstanceId ?? "")?.component ===
-      "NativeForm"
-  ) {
+  if (isRequiredManagedFormVariable(variable)) {
     return false;
   }
   return (
@@ -138,6 +135,39 @@ export const canDeleteVariable = (
     (variable.type !== "parameter" ||
       variable.id === $selectedPage.get()?.systemDataSourceId)
   );
+};
+
+const isRequiredManagedFormVariable = (variable: DataSource) => {
+  const scopeInstanceId = variable.scopeInstanceId;
+  if (
+    scopeInstanceId === undefined ||
+    $instances.get().get(scopeInstanceId)?.component !== "NativeForm"
+  ) {
+    return false;
+  }
+
+  const requiredPropNames = new Set([
+    "state",
+    "onStateChange",
+    "onResultChange",
+  ]);
+  const dataSourceReferences = new RegExp(
+    String.raw`\$ws\$dataSource\$[\w$]+`,
+    "g"
+  );
+
+  return [...$props.get().values()].some((prop) => {
+    if (
+      prop.instanceId !== scopeInstanceId ||
+      !requiredPropNames.has(prop.name)
+    ) {
+      return false;
+    }
+    const value = JSON.stringify(prop.value);
+    return [...value.matchAll(dataSourceReferences)].some(
+      ([reference]) => decodeDataSourceVariable(reference) === variable.id
+    );
+  });
 };
 
 export const VariableMenu = ({
@@ -180,7 +210,7 @@ export const VariableMenu = ({
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          css={{ minWidth: 180 }}
+          css={{ minWidth: size === "header" ? 360 : 180 }}
           onCloseAutoFocus={(event) => event.preventDefault()}
         >
           <DropdownMenuItem

@@ -1,10 +1,13 @@
 import { transformSync } from "esbuild";
+import { transpileExpression } from "@webstudio-is/expression";
 import { expect, test, vi } from "vitest";
 import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
 import {
   getDefaultFormEmailBodyExpression,
   resetEmailResourceSetting,
+  resolveEmailRecipientsExpression,
+  resolveEmailSenderSettingsExpression,
 } from "./email-resource";
 import { generateManagedFormResources } from "./managed-form-resources-generator";
 import {
@@ -19,6 +22,18 @@ import type { ProjectMeta } from "./schema/pages";
 import type { ResourceRequestGraph } from "./resource-loader";
 import { createJsonStringifyProxy } from "./to-string";
 
+const evaluateFixtureExpression = (
+  expression: string,
+  values: ReadonlyMap<string, unknown>
+) =>
+  new Function(
+    ...values.keys(),
+    `return (${transpileExpression({ expression, executable: true })})`
+  )(...values.values());
+
+const withEmailResolverImports = (source: string) =>
+  `import { resolveEmailRecipientsExpression, resolveEmailSenderSettingsExpression } from "@webstudio-is/sdk";\n${source}`;
+
 const getGeneratedGraph = (input: {
   instances: Instances;
   dataSources: DataSources;
@@ -32,10 +47,12 @@ const getGeneratedGraph = (input: {
     destinationDataSourceIds: readonly string[];
   }[];
 }) => {
-  const source = generateManagedFormResources({
-    scope: createScope(),
-    ...input,
-  });
+  const source = withEmailResolverImports(
+    generateManagedFormResources({
+      scope: createScope(),
+      ...input,
+    })
+  );
   const { code } = transformSync(source, { loader: "ts", format: "cjs" });
   const module = { exports: {} as Record<string, unknown> };
   new Function("module", "exports", "require", code)(
@@ -44,6 +61,12 @@ const getGeneratedGraph = (input: {
     (specifier: string) => {
       if (specifier === "@webstudio-is/sdk/to-string") {
         return { createJsonStringifyProxy };
+      }
+      if (specifier === "@webstudio-is/sdk") {
+        return {
+          resolveEmailRecipientsExpression,
+          resolveEmailSenderSettingsExpression,
+        };
       }
       throw new Error(`Unexpected import ${specifier}`);
     }
@@ -537,6 +560,156 @@ test("counts project and custom Email recipients across a Form, including duplic
   expect(makeGraph("not-an-email")).toBeUndefined();
 });
 
+test("preflights bound Email recipient counts when Resources are referenced", () => {
+  const makeGraph = (
+    emailSettings: Record<string, string>,
+    formData: Record<string, unknown> = {}
+  ) => {
+    const getGraph = getGeneratedGraph({
+      instances: new Map([
+        [
+          "form",
+          {
+            type: "instance",
+            id: "form",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "email-source",
+          {
+            id: "email-source",
+            type: "resource",
+            name: "Notify",
+            resourceId: "email",
+            scopeInstanceId: "form",
+          },
+        ],
+        [
+          "lookup-source",
+          {
+            id: "lookup-source",
+            type: "resource",
+            name: "Lookup",
+            resourceId: "lookup",
+            scopeInstanceId: "form",
+          },
+        ],
+        [
+          "form-data-source",
+          {
+            id: "form-data-source",
+            type: "parameter",
+            name: "formData",
+            scopeInstanceId: "form",
+          },
+        ],
+      ]),
+      resources: new Map([
+        [
+          "email",
+          {
+            id: "email",
+            name: "Notify",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients:
+                "one@example.com, two@example.com, three@example.com, four@example.com, five@example.com, six@example.com",
+              ...emailSettings,
+            },
+          },
+        ],
+        [
+          "lookup",
+          {
+            id: "lookup",
+            name: "Lookup",
+            method: "get",
+            url: '"https://example.com/lookup"',
+            headers: [],
+          },
+        ],
+      ]),
+      forms: [{ formId: "form", destinationDataSourceIds: ["email-source"] }],
+      projectMeta: { contactEmail: "owner@example.com" },
+    });
+    return getGraph("form", { system: {}, formData, browserInfo: {} })!;
+  };
+
+  const senderBound = makeGraph({
+    senderExpression: encodeDataSourceVariable("lookup-source"),
+  });
+  const senderBoundEmail = senderBound.resources.find(
+    ({ id }) => id === "email"
+  )!;
+  expect(senderBoundEmail.dependencies).toEqual(["lookup"]);
+  expect(senderBoundEmail.emailRecipientCount).toBe(6);
+  expect(() => validateManagedFormRecipientLimit(senderBound)).toThrow(
+    "Select no more than 5 team email recipients"
+  );
+
+  const recipientsBound = makeGraph({
+    recipients: "invalid stale value",
+    recipientsExpression: encodeDataSourceVariable("lookup-source"),
+  });
+  const recipientsBoundEmail = recipientsBound.resources.find(
+    ({ id }) => id === "email"
+  )!;
+  expect(recipientsBoundEmail.dependencies).toEqual(["lookup"]);
+  expect(recipientsBoundEmail.emailRecipientCount).toBeUndefined();
+  expect(() => validateManagedFormRecipientLimit(recipientsBound)).toThrow(
+    "Invalid Email Resource recipient count"
+  );
+
+  const formDataRecipientSettings = {
+    recipients: "invalid stale value",
+    recipientsExpression: `${encodeDataSourceVariable("form-data-source")}.recipients`,
+  };
+  const formDataRecipients = makeGraph(formDataRecipientSettings, {
+    recipients: Array.from(
+      { length: 6 },
+      (_, index) => `person${index}@example.com`
+    ).join(", "),
+  });
+  const formDataRecipientsEmail = formDataRecipients.resources.find(
+    ({ id }) => id === "email"
+  )!;
+  expect(formDataRecipientsEmail.emailRecipientCount).toBeUndefined();
+  const resolvedRequest = formDataRecipientsEmail.createRequest(new Map());
+  expect(resolvedRequest.email?.recipients).toHaveLength(6);
+  expect(() =>
+    validateManagedFormRecipientLimit(
+      formDataRecipients,
+      new Map([["email", resolvedRequest]])
+    )
+  ).toThrow("Select no more than 5 team email recipients");
+
+  const withinLimitRecipients = makeGraph(formDataRecipientSettings, {
+    recipients: Array.from(
+      { length: 5 },
+      (_, index) => `person${index}@example.com`
+    ).join(", "),
+  });
+  const withinLimitEmail = withinLimitRecipients.resources.find(
+    ({ id }) => id === "email"
+  )!;
+  const withinLimitRequest = withinLimitEmail.createRequest(new Map());
+  expect(withinLimitRequest.email?.recipients).toHaveLength(5);
+  expect(() =>
+    validateManagedFormRecipientLimit(
+      withinLimitRecipients,
+      new Map([["email", withinLimitRequest]])
+    )
+  ).not.toThrow();
+});
+
 test("counts an Email dependency of a selected HTTP Resource", () => {
   const makeGraph = (recipients: string) =>
     getGeneratedGraph({
@@ -738,6 +911,303 @@ test("an edited default Email body formats Form values and preserves field acces
   expect(request?.email?.body).not.toContain("[object Object]");
   expect(request?.email?.body).not.toContain("secret");
 });
+
+test("Visitor Email keeps its empty receipt body instead of the submitted-fields default", async () => {
+  const { createManagedFormDraftGraph } =
+    await import("./managed-form-draft-graph");
+  const instances: Instances = new Map([
+    [
+      "form",
+      {
+        type: "instance",
+        id: "form",
+        component: "NativeForm",
+        children: [{ type: "id", value: "email-input" }],
+      },
+    ],
+    [
+      "email-input",
+      { type: "instance", id: "email-input", component: "Input", children: [] },
+    ],
+  ]);
+  const props: Props = new Map([
+    [
+      "email-name",
+      {
+        id: "email-name",
+        instanceId: "email-input",
+        name: "name",
+        type: "string",
+        value: "email",
+      },
+    ],
+    [
+      "email-type",
+      {
+        id: "email-type",
+        instanceId: "email-input",
+        name: "type",
+        type: "string",
+        value: "email",
+      },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "formData",
+      {
+        id: "formData",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+    ],
+    [
+      "browserInfo",
+      {
+        id: "browserInfo",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "browserInfo",
+      },
+    ],
+    [
+      "email-source",
+      {
+        id: "email-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Notify visitor",
+        resourceId: "email",
+      },
+    ],
+  ]);
+  const resources: Resources = new Map([
+    [
+      "email",
+      {
+        id: "email",
+        name: "Notify visitor",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+        email: {
+          recipientMode: "visitor",
+          visitorEmailField: "email",
+        },
+      },
+    ],
+  ]);
+  const input = {
+    formId: "form",
+    destinationDataSourceIds: ["email-source"],
+    instances,
+    dataSources,
+    resources,
+    props,
+    projectMeta: {
+      contactEmail: "team@example.com",
+      emailBody: "Project body override is not used for Visitor receipts",
+    },
+    system: {
+      params: {},
+      search: {},
+      pathname: "/",
+      origin: "https://site.example",
+    },
+    formData: { email: "visitor@example.com", message: "submitted value" },
+    browserInfo: { language: "en" },
+    evaluateExpression: evaluateFixtureExpression,
+  };
+  const draft = createManagedFormDraftGraph(input);
+  const getPublishedGraph = getGeneratedGraph({
+    ...input,
+    forms: [
+      {
+        formId: input.formId,
+        destinationDataSourceIds: input.destinationDataSourceIds,
+      },
+    ],
+  });
+  const published = getPublishedGraph(input.formId, input)!;
+
+  for (const graph of [draft, published]) {
+    const resource = graph.resources.find(({ id }) => id === "email")!;
+    const request = resource.createRequest(new Map());
+    expect(request.email?.recipientMode).toBe("visitor");
+    expect(request.email?.body).toBe("");
+    expect(request.email?.body).not.toContain("submitted value");
+    expect(request.email?.body).not.toContain("language");
+  }
+});
+
+test.each([
+  ["Form", "form"],
+  ["ancestor", "ancestor"],
+  ["global", undefined],
+] as const)(
+  "selected Email Resource at %s scope gets the submitted-fields default in draft and published graphs",
+  async (_scopeName, scopeInstanceId) => {
+    const { createManagedFormDraftGraph } =
+      await import("./managed-form-draft-graph");
+    const instances: Instances = new Map([
+      [
+        "page",
+        {
+          type: "instance",
+          id: "page",
+          component: "Body",
+          children: [{ type: "id", value: "ancestor" }],
+        },
+      ],
+      [
+        "ancestor",
+        {
+          type: "instance",
+          id: "ancestor",
+          component: "Box",
+          children: [{ type: "id", value: "form" }],
+        },
+      ],
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "NativeForm",
+          children: [],
+        },
+      ],
+    ]);
+    const dataSources: DataSources = new Map([
+      [
+        "formData",
+        {
+          id: "formData",
+          type: "parameter",
+          scopeInstanceId: "form",
+          name: "formData",
+        },
+      ],
+      [
+        "browserInfo",
+        {
+          id: "browserInfo",
+          type: "parameter",
+          scopeInstanceId: "form",
+          name: "browserInfo",
+        },
+      ],
+      [
+        "email-source",
+        {
+          id: "email-source",
+          type: "resource",
+          scopeInstanceId,
+          name: "Notify",
+          resourceId: "email",
+        },
+      ],
+    ]);
+    const resources: Resources = new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Notify",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+        },
+      ],
+    ]);
+    const projectMeta: ProjectMeta = { contactEmail: "owner@example.com" };
+    const input = {
+      formId: "form",
+      destinationDataSourceIds: ["email-source"],
+      instances,
+      dataSources,
+      resources,
+      props: new Map(),
+      projectMeta,
+      system: {
+        params: {},
+        search: {},
+        pathname: "/",
+        origin: "https://site.example",
+      },
+      formData: { name: "Ada" },
+      browserInfo: { language: "en" },
+      evaluateExpression: evaluateFixtureExpression,
+    };
+    const buildGraphs = (graphInput: typeof input) => {
+      const published = getGeneratedGraph({
+        ...graphInput,
+        forms: [
+          {
+            formId: graphInput.formId,
+            destinationDataSourceIds: graphInput.destinationDataSourceIds,
+          },
+        ],
+      })(graphInput.formId, graphInput)!;
+      const draft = createManagedFormDraftGraph(graphInput);
+      return [draft, published];
+    };
+    const graphs = buildGraphs(input);
+    for (const graph of graphs) {
+      const body = graph.resources[0].createRequest(new Map()).email?.body;
+      expect(body).toContain('"name": "Ada"');
+      expect(body).toContain('"language": "en"');
+    }
+    const projectOverrideGraphs = buildGraphs({
+      ...input,
+      projectMeta: {
+        ...input.projectMeta,
+        emailBody: "Project override",
+      },
+    });
+    for (const graph of projectOverrideGraphs) {
+      expect(graph.resources[0].createRequest(new Map()).email?.body).toBe(
+        "Project override"
+      );
+    }
+    const resourceOverrideGraphs = buildGraphs({
+      ...input,
+      projectMeta: { ...input.projectMeta, emailBody: "Project override" },
+      resources: new Map([
+        [
+          "email",
+          {
+            ...resources.get("email")!,
+            email: { body: '"Resource override"' },
+          },
+        ],
+      ]),
+    });
+    for (const graph of resourceOverrideGraphs) {
+      expect(graph.resources[0].createRequest(new Map()).email?.body).toBe(
+        "Resource override"
+      );
+    }
+    const emptyResourceOverrideGraphs = buildGraphs({
+      ...input,
+      resources: new Map([
+        [
+          "email",
+          {
+            ...resources.get("email")!,
+            email: { body: '""' },
+          },
+        ],
+      ]),
+    });
+    for (const graph of emptyResourceOverrideGraphs) {
+      expect(graph.resources[0].createRequest(new Map()).email?.body).toBe("");
+    }
+  }
+);
 
 test("automatic Email body redacts Element passwords and unknown input types", () => {
   const dataSources: DataSources = new Map([
@@ -2022,10 +2492,10 @@ test.each(["http", "email", "visitor"] as const)(
       },
       formData: {
         email: "visitor@example.com",
-        private: "must not be injected",
+        private: "submitted value",
       },
       browserInfo: {},
-      evaluateExpression: (expression: string) => JSON.parse(expression),
+      evaluateExpression: evaluateFixtureExpression,
     };
     const graphs = [
       createManagedFormDraftGraph(input),
@@ -2048,7 +2518,10 @@ test.each(["http", "email", "visitor"] as const)(
         );
         expect(Boolean(resource.usesDefaultFormBody)).toBe(kind === "http");
         if (kind === "email") {
-          expect(request.email?.body).toBe("A new form was submitted.");
+          expect(request.email?.body).toContain(
+            '"email": "visitor@example.com"'
+          );
+          expect(request.email?.body).toContain("submitted value");
         }
       }
     }

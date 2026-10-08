@@ -1,4 +1,4 @@
-import { createElement, useState } from "react";
+import { createElement, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { page, userEvent } from "@vitest/browser/context";
@@ -7,19 +7,31 @@ import {
   encodeDataVariableId,
   ROOT_INSTANCE_ID,
   resolveEmailResourceSettings,
+  type DataSource,
   type DataSources,
   type Resource,
 } from "@webstudio-is/sdk";
-import { computeExpression } from "@webstudio-is/project-build/runtime";
+import {
+  computeExpression,
+  encodeDataVariableName,
+} from "@webstudio-is/project-build/runtime";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import { FloatingPanel, TooltipProvider } from "@webstudio-is/design-system";
-import { $builderMode } from "~/shared/nano-states";
+import {
+  $builderMode,
+  $selectedPageId,
+  $variableValuesByInstanceSelector,
+  selectInstance,
+} from "~/shared/nano-states";
 import {
   $dataSources,
   $instances,
   $projectSettings,
+  $pages,
   $props,
   $resources,
 } from "~/shared/sync/data-stores";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import {
   getResourceScopeForInstance,
   EmailResourceForm,
@@ -27,18 +39,41 @@ import {
   Headers,
   ResourceForm,
   UrlField,
+  useResourceScope,
 } from "./resource-panel";
+
+const { expressionEvaluations } = vi.hoisted(() => ({
+  expressionEvaluations: vi.fn(),
+}));
+vi.mock("~/builder/shared/binding-popover", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/builder/shared/binding-popover")>();
+  return {
+    ...actual,
+    evaluateExpressionWithinScope: (
+      ...args: Parameters<typeof actual.evaluateExpressionWithinScope>
+    ) => {
+      expressionEvaluations(...args);
+      return actual.evaluateExpressionWithinScope(...args);
+    },
+  };
+});
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 let root: Root | undefined;
+const getCodeMirrorModKey = () =>
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform) ? "Meta" : "Control";
+registerContainers();
 const initialResources = $resources.get();
 const initialDataSources = $dataSources.get();
 const initialProjectSettings = $projectSettings.get();
 const initialInstances = $instances.get();
 const initialProps = $props.get();
+const initialVariableValuesByInstanceSelector =
+  $variableValuesByInstanceSelector.get();
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
@@ -47,6 +82,12 @@ afterEach(() => {
   $projectSettings.set(initialProjectSettings);
   $instances.set(initialInstances);
   $props.set(initialProps);
+  $variableValuesByInstanceSelector.set(
+    initialVariableValuesByInstanceSelector
+  );
+  $pages.set(undefined);
+  $selectedPageId.set(undefined);
+  selectInstance(undefined);
   $builderMode.set("design");
   document.body.innerHTML = "";
 });
@@ -92,9 +133,11 @@ test("Email Resource Sender has no redundant project-default reset button", asyn
       )
     );
   });
-  expect(container.querySelector("textarea")?.value).toBe(
-    "Custom <custom@example.com>"
-  );
+  expect(
+    container.querySelector<HTMLInputElement>(
+      'input[placeholder="Acme <acme@example.com>"]'
+    )?.value
+  ).toBe("Custom <custom@example.com>");
   expect(container.textContent).not.toContain("Reset to project default");
   expect(
     JSON.parse(
@@ -102,6 +145,66 @@ test("Email Resource Sender has no redundant project-default reset button", asyn
         ?.value ?? "{}"
     ).sender
   ).toBe("Custom <custom@example.com>");
+});
+
+test("changing another Email field does not reevaluate custom recipients", async () => {
+  const recipientExpression = JSON.stringify("team@example.com");
+  expressionEvaluations.mockClear();
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Notify",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            recipientMode: "custom",
+            recipients: "team@example.com",
+            sender: "Acme <acme@example.com>",
+          },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "data-source",
+            type: "resource",
+            name: "Notify",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+
+  const recipientEvaluations = () =>
+    expressionEvaluations.mock.calls.filter(
+      ([expression]) => expression === recipientExpression
+    ).length;
+  await expect.poll(recipientEvaluations).toBe(1);
+
+  const sender = container.querySelector<HTMLInputElement>(
+    'input[placeholder="Acme <acme@example.com>"]'
+  )!;
+  await act(async () =>
+    userEvent.fill(sender, "Support <support@example.com>")
+  );
+  await expect.poll(() => sender.value).toBe("Support <support@example.com>");
+  expect(recipientEvaluations()).toBe(1);
 });
 
 test("Email Resource uses Subject and Body inputs with a separate binding editor", async () => {
@@ -127,16 +230,12 @@ test("Email Resource uses Subject and Body inputs with a separate binding editor
     );
   });
 
-  expect(
-    Array.from(container.querySelectorAll("label")).map(
-      (label) => label.textContent
-    )
-  ).toContain("Subject");
-  expect(
-    Array.from(container.querySelectorAll("label")).map(
-      (label) => label.textContent
-    )
-  ).toContain("Body");
+  const labels = Array.from(container.querySelectorAll("label")).map(
+    (label) => label.textContent
+  );
+  for (const field of ["Sender", "Recipients", "Subject", "Body"]) {
+    expect(labels.filter((label) => label === field)).toHaveLength(1);
+  }
   expect(container.textContent).not.toContain("expression");
   expect(
     container.querySelector('input[placeholder="New form submission"]')
@@ -164,7 +263,7 @@ test("Email Resource uses Subject and Body inputs with a separate binding editor
     .toContain("Expression editor");
 });
 
-test("Email Resource recipient modes and attachment radios", async () => {
+test("Email Sender and Custom recipients validation is shown in tooltips", async () => {
   $resources.set(
     new Map([
       [
@@ -176,6 +275,11 @@ test("Email Resource recipient modes and attachment radios", async () => {
           method: "post",
           url: '""',
           headers: [],
+          email: {
+            sender: "not-an-email",
+            recipientMode: "custom",
+            recipients: "also-not-an-email",
+          },
         },
       ],
     ])
@@ -201,12 +305,106 @@ test("Email Resource recipient modes and attachment radios", async () => {
     );
   });
 
+  const senderInput = container.querySelector<HTMLInputElement>(
+    'input[placeholder="Acme <acme@example.com>"]'
+  )!;
+  const recipientsInput = container.querySelector<HTMLInputElement>(
+    'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+  )!;
+  expect(senderInput.value).toBe("not-an-email");
+  expect(recipientsInput.value).toBe("also-not-an-email");
+  expect(container.textContent).not.toContain(
+    "Sender must contain exactly one valid email address."
+  );
+  expect(container.textContent).not.toContain("Contact email is invalid.");
+
+  await act(async () => userEvent.hover(senderInput));
+  await expect
+    .poll(() => document.body.textContent)
+    .toContain("Sender must contain exactly one valid email address.");
+  await act(async () => userEvent.hover(recipientsInput));
+  await expect
+    .poll(() => document.body.textContent)
+    .toContain("Contact email is invalid.");
+});
+
+test("Email Resource recipient modes and attachment radios", async () => {
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Notify",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  container.style.width = "280px";
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "data-source",
+            type: "resource",
+            name: "Notify",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+
   expect(container.textContent).not.toContain(
     "Emails are sent through Webstudio. Replies go to this address."
   );
+  const defaultAttachmentOptions =
+    container.querySelectorAll<HTMLElement>('[role="radio"]');
+  expect(defaultAttachmentOptions[0]?.getAttribute("aria-checked")).toBe(
+    "true"
+  );
+  await act(
+    async () =>
+      await userEvent.click(defaultAttachmentOptions[1] as HTMLElement)
+  );
+  expect(
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')
+        ?.value ?? "{}"
+    ).includeAttachments
+  ).toBe(false);
+  await act(
+    async () =>
+      await userEvent.click(defaultAttachmentOptions[0] as HTMLElement)
+  );
+  expect(
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')
+        ?.value ?? "{}"
+    ).includeAttachments
+  ).toBe(true);
   const recipientSelect =
     container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+  await expect(
+    page.getByRole("combobox", { name: "Recipients", exact: true })
+  ).toBeVisible();
   await act(async () => await userEvent.click(recipientSelect));
+  expect(
+    document
+      .querySelector<HTMLElement>("[data-radix-popper-content-wrapper]")
+      ?.getBoundingClientRect().width
+  ).toBe(recipientSelect.getBoundingClientRect().width);
   const recipientDescriptions = document.querySelector(
     '[data-select-description="content"]'
   );
@@ -220,14 +418,22 @@ test("Email Resource recipient modes and attachment radios", async () => {
     document.querySelectorAll<HTMLElement>('[role="option"]')
   ).find((option) => option.textContent === "Custom recipients")!;
   await act(async () => await userEvent.click(customOption));
+  await expect(
+    page.getByRole("textbox", { name: "Custom recipients", exact: true })
+  ).toBeVisible();
   expect(
     container.querySelector(
-      'textarea[placeholder="Acme <acme@example.com>, team@example.com"]'
+      'input[placeholder="Acme <acme@example.com>, team@example.com"]'
     )
   ).not.toBeNull();
+  // Sender, custom Recipients, Subject, and Body all use the binding control.
+  expect(
+    container.querySelectorAll('button[data-variant="default"]')
+  ).toHaveLength(4);
 
   const attachmentOptions = container.querySelectorAll('[role="radio"]');
   expect(attachmentOptions).toHaveLength(2);
+  expect(attachmentOptions[0]?.getAttribute("aria-checked")).toBe("true");
   await expect(
     page.getByRole("radiogroup", { name: "Attachments" })
   ).toBeVisible();
@@ -243,6 +449,304 @@ test("Email Resource recipient modes and attachment radios", async () => {
     ).includeAttachments
   ).toBe(false);
 });
+
+test.each(["sender", "recipients"] as const)(
+  "Email Resource %s Form binding survives save and reopen",
+  async (field) => {
+    $builderMode.set("design");
+    $instances.set(
+      new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance",
+            component: "NativeForm",
+            children: [{ type: "id", value: "contact-input" }],
+          },
+        ],
+        [
+          "contact-input",
+          {
+            id: "contact-input",
+            type: "instance",
+            component: "Input",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "contact-name",
+          {
+            id: "contact-name",
+            instanceId: "contact-input",
+            name: "name",
+            type: "string",
+            value: "contact",
+          },
+        ],
+        [
+          "contact-type",
+          {
+            id: "contact-type",
+            instanceId: "contact-input",
+            name: "type",
+            type: "string",
+            value: "email",
+          },
+        ],
+        [
+          "contact-default-value",
+          {
+            id: "contact-default-value",
+            instanceId: "contact-input",
+            name: "defaultValue",
+            type: "string",
+            value: "contact@example.com",
+          },
+        ],
+      ])
+    );
+    $dataSources.set(
+      new Map([
+        [
+          "email-variable",
+          {
+            id: "email-variable",
+            type: "resource",
+            name: "Notify",
+            scopeInstanceId: "form",
+            resourceId: "email",
+          },
+        ],
+        [
+          "form-data",
+          {
+            id: "form-data",
+            type: "parameter",
+            name: "formData",
+            scopeInstanceId: "form",
+          },
+        ],
+        [
+          "lookup-source",
+          {
+            id: "lookup-source",
+            type: "resource",
+            name: "Lookup",
+            scopeInstanceId: "form",
+            resourceId: "lookup",
+          },
+        ],
+      ])
+    );
+    $pages.set(createDefaultPages({ rootInstanceId: "form" }));
+    $selectedPageId.set("home");
+    selectInstance(["form"]);
+    $resources.set(
+      new Map([
+        [
+          "email",
+          {
+            id: "email",
+            name: "Notify",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+          },
+        ],
+        [
+          "lookup",
+          {
+            id: "lookup",
+            name: "Lookup",
+            method: "get",
+            url: '"https://example.com"',
+            headers: [],
+          },
+        ],
+      ])
+    );
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    let save: (() => unknown) | undefined;
+    let formElement: HTMLFormElement | null = null;
+    const render = () => {
+      const Form = () => {
+        const emailFormRef = useRef<
+          | {
+              save: (
+                formData: FormData
+              ) => void | false | { dataSourceId: string };
+            }
+          | undefined
+        >(undefined);
+        save = () => emailFormRef.current?.save(new FormData(formElement!));
+        return createElement(
+          "form",
+          {
+            ref: (element: HTMLFormElement | null) => {
+              formElement = element;
+            },
+          },
+          createElement("input", {
+            type: "hidden",
+            name: "name",
+            value: "Notify",
+          }),
+          createElement(EmailResourceForm, {
+            ref: emailFormRef,
+            variable: {
+              id: "email-variable",
+              type: "resource",
+              name: "Notify",
+              scopeInstanceId: "form",
+              resourceId: "email",
+            },
+          })
+        );
+      };
+      root?.render(
+        createElement(TooltipProvider, undefined, createElement(Form))
+      );
+    };
+    await act(async () => render());
+
+    if (field === "recipients") {
+      const recipientsSelect =
+        container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+      await act(async () => userEvent.click(recipientsSelect));
+      await act(async () =>
+        page
+          .getByRole("option", { name: "Custom recipients", exact: true })
+          .click()
+      );
+    }
+
+    const fieldInput = container.querySelector<HTMLInputElement>(
+      field === "sender"
+        ? 'input[placeholder="Acme <acme@example.com>"]'
+        : 'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+    )!;
+    let bindingControl = fieldInput.parentElement;
+    while (
+      bindingControl !== null &&
+      bindingControl.querySelector('button[data-variant="default"]') === null
+    ) {
+      bindingControl = bindingControl.parentElement;
+    }
+    const bindingButton = bindingControl?.querySelector<HTMLButtonElement>(
+      'button[data-variant="default"]'
+    )!;
+    expect(bindingButton).not.toBeNull();
+    await act(async () => userEvent.hover(bindingButton));
+    await expect.poll(() => getComputedStyle(bindingButton).opacity).toBe("1");
+    await act(async () => userEvent.click(bindingButton));
+    await expect
+      .poll(() => bindingButton.getAttribute("aria-expanded"))
+      .toBe("true");
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    const expressionEditor = dialog.querySelector<HTMLElement>(".cm-content")!;
+    const formDataVariable = Array.from(
+      dialog.querySelectorAll<HTMLElement>("[data-list-item]")
+    ).find((item) => item.textContent?.startsWith("formData"))!;
+    expect(formDataVariable).not.toBeNull();
+    expect(
+      Array.from(dialog.querySelectorAll<HTMLElement>("[data-list-item]")).some(
+        (item) => item.textContent?.startsWith("Lookup")
+      )
+    ).toBe(false);
+    await act(async () => userEvent.click(expressionEditor));
+    const expression = `${encodeDataVariableName("formData")}.contact`;
+    const savedExpression = `${encodeDataVariableId("form-data")}.contact`;
+    const modKey = getCodeMirrorModKey();
+    // Replace the default quoted empty string with the Form-scoped variable.
+    await act(async () => userEvent.keyboard(`{${modKey}>}a{/${modKey}}`));
+    await act(async () => userEvent.click(formDataVariable));
+    await act(async () => userEvent.keyboard(".contact"));
+    expect(expressionEditor.textContent).toContain(expression);
+    const emailSettings = () =>
+      JSON.parse(
+        container.querySelector<HTMLInputElement>(
+          'input[name="email-settings"]'
+        )!.value
+      );
+    const expressionKey =
+      field === "sender" ? "senderExpression" : "recipientsExpression";
+    await act(async () =>
+      userEvent.keyboard(`{${modKey}>}{Enter}{/${modKey}}`)
+    );
+    await expect
+      .poll(() => emailSettings())
+      .toMatchObject({ [expressionKey]: savedExpression });
+    await act(async () =>
+      userEvent.click(
+        dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!
+      )
+    );
+    await expect
+      .poll(() => emailSettings()[expressionKey])
+      .toBe(savedExpression);
+    await expect
+      .poll(() => document.querySelector('[role="dialog"]'))
+      .toBeNull();
+
+    const literalKey = field === "sender" ? "sender" : "recipients";
+    expect(emailSettings()).toMatchObject({
+      [expressionKey]: savedExpression,
+    });
+    expect(emailSettings()).not.toHaveProperty(literalKey);
+
+    let saveResult: unknown;
+    await act(async () => {
+      saveResult = save?.();
+    });
+    expect(saveResult).toMatchObject({ resourceId: "email" });
+    expect($resources.get().get("email")?.email).toMatchObject({
+      [expressionKey]: savedExpression,
+    });
+    expect($resources.get().get("email")?.email).not.toHaveProperty(literalKey);
+
+    await act(async () => root?.unmount());
+    root = createRoot(container);
+    await act(async () => render());
+    expect(emailSettings()).toMatchObject({
+      [expressionKey]: savedExpression,
+    });
+    expect(emailSettings()).not.toHaveProperty(literalKey);
+
+    const reopenedInput = container.querySelector<HTMLInputElement>(
+      field === "sender"
+        ? 'input[placeholder="Acme <acme@example.com>"]'
+        : 'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+    )!;
+    let reopenedControl = reopenedInput.parentElement;
+    while (
+      reopenedControl !== null &&
+      reopenedControl.querySelector('button[data-variant="bound"]') === null
+    ) {
+      reopenedControl = reopenedControl.parentElement;
+    }
+    const reopenedButton = reopenedControl?.querySelector<HTMLButtonElement>(
+      'button[data-variant="bound"]'
+    )!;
+    expect(reopenedButton).not.toBeNull();
+    await act(async () => userEvent.click(reopenedButton));
+    await expect
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>('[role="dialog"] .cm-content')
+            ?.textContent
+      )
+      .toContain(expression);
+  }
+);
 
 test("external Email Resource marks an unavailable Form binding as invalid", async () => {
   $dataSources.set(
@@ -296,7 +800,7 @@ test("external Email Resource marks an unavailable Form binding as invalid", asy
       )
     );
   });
-  const body = container.querySelectorAll("textarea")[1]!;
+  const body = container.querySelector("textarea")!;
   await act(async () => await userEvent.hover(body));
   expect(document.body.textContent).toContain(
     "This Form binding is unavailable outside its Form."
@@ -391,7 +895,18 @@ test("visitor Email Resource selects a named Form email field", async () => {
   );
   expect(container.textContent).toContain("Visitor email field");
   expect(container.textContent).toContain("visitorEmail");
-  expect(container.textContent).not.toContain("Attachments");
+  expect(container.textContent).toContain("Attachments");
+  const attachmentOptions =
+    container.querySelectorAll<HTMLElement>('[role="radio"]');
+  expect(attachmentOptions).toHaveLength(2);
+  expect(attachmentOptions[0].getAttribute("aria-checked")).toBe("true");
+  await act(async () => userEvent.click(attachmentOptions[1]));
+  expect(
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')
+        ?.value ?? "{}"
+    ).includeAttachments
+  ).toBe(false);
   await act(async () =>
     userEvent.click(container.querySelector('[role="combobox"]')!)
   );
@@ -412,7 +927,8 @@ test("visitor Email Resource selects a named Form email field", async () => {
       .getByRole("option", { name: "Visitor email field", exact: true })
       .click()
   );
-  expect(container.textContent).not.toContain("Attachments");
+  expect(container.textContent).toContain("Attachments");
+  expect(attachmentOptions[1].getAttribute("aria-checked")).toBe("true");
   expect(container.textContent).not.toContain(
     "A fixed receipt with the site URL is added before the body."
   );
@@ -422,6 +938,12 @@ test("visitor Email Resource selects a named Form email field", async () => {
   const visitorField = Array.from(
     container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')
   ).at(-1);
+  await expect(
+    page.getByRole("combobox", {
+      name: "Visitor email field",
+      exact: true,
+    })
+  ).toBeVisible();
   await act(async () => userEvent.click(visitorField!));
   expect(
     document.querySelector('[data-select-description="content"]')?.textContent
@@ -455,6 +977,103 @@ test("includes resource documents when building another resource expression", ()
 
   expect(scope[encodeDataVariableId("resourceDataSource")]).toBe(document);
   expect(variableValues.get("resourceDataSource")).toBe(document);
+});
+
+test("unrelated Resource edits preserve recipient scope and aliases", async () => {
+  const variable: DataSource = {
+    type: "resource",
+    id: "email-resource-variable",
+    name: "Email",
+    scopeInstanceId: "form",
+    resourceId: "email-resource",
+  };
+  const recipient: DataSource = {
+    type: "parameter",
+    id: "recipient-variable",
+    name: "formData",
+    scopeInstanceId: "form",
+  };
+  const emailResource: Resource = {
+    id: "email-resource",
+    name: "Email",
+    control: "email",
+    method: "post",
+    url: '""',
+    headers: [],
+  };
+  const unrelatedResource: Resource = {
+    id: "unrelated-resource",
+    name: "Unrelated",
+    control: "system",
+    method: "get",
+    url: '"https://example.com"',
+    headers: [],
+  };
+  $dataSources.set(
+    new Map<string, DataSource>([
+      [variable.id, variable],
+      [recipient.id, recipient],
+    ])
+  );
+  $resources.set(
+    new Map([
+      [emailResource.id, emailResource],
+      [unrelatedResource.id, unrelatedResource],
+    ])
+  );
+  $pages.set(createDefaultPages({ rootInstanceId: "form" }));
+  $instances.set(
+    new Map([
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "NativeForm",
+          children: [],
+        },
+      ],
+    ])
+  );
+  $selectedPageId.set("home");
+  selectInstance(["form"]);
+
+  let result: ReturnType<typeof useResourceScope> | undefined;
+  let renders = 0;
+  const ScopeSubscriber = () => {
+    result = useResourceScope({ variable });
+    renders += 1;
+    return null;
+  };
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => root?.render(createElement(ScopeSubscriber)));
+
+  const initialResult = result;
+  expect(initialResult?.scope).toHaveProperty(
+    encodeDataVariableId(recipient.id)
+  );
+  expect(initialResult?.aliases.get(encodeDataVariableId(recipient.id))).toBe(
+    recipient.name
+  );
+
+  await act(async () =>
+    $resources.set(
+      new Map([
+        [emailResource.id, emailResource],
+        [
+          unrelatedResource.id,
+          { ...unrelatedResource, url: '"https://other.example"' },
+        ],
+      ])
+    )
+  );
+
+  expect(renders).toBe(1);
+  expect(result).toBe(initialResult);
+  expect(result?.scope).toBe(initialResult?.scope);
+  expect(result?.aliases).toBe(initialResult?.aliases);
 });
 
 test("notifies the preview when a resource field changes", () => {
@@ -1019,12 +1638,6 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
         ).join(" ")
       )
       .toContain(explanation);
-    await act(async () =>
-      userEvent.unhover(container.querySelector(selector)!)
-    );
-    await expect
-      .poll(() => document.querySelector('[role="tooltip"]'))
-      .toBeNull();
   }
   expect(
     container.querySelector('input[name="header-name"][value="X-Test"]')
@@ -1047,6 +1660,64 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
     container.querySelector('input[name="search-param-name"][value="q"]')
   ).toBeNull();
 });
+
+test.each([
+  [
+    "header",
+    '[aria-label="About headers"]',
+    "Headers are name-value pairs sent with the request. Use them to tell the server how to interpret the request or who is making it.",
+  ],
+  [
+    "search param",
+    '[aria-label="About search params"]',
+    "Search params are name-value pairs added to the URL after ?. Use them to send filters, search terms, or other request options.",
+  ],
+])(
+  "Resource editor describes %s in its info tooltip",
+  async (_, selector, explanation) => {
+    const resource: Resource = {
+      id: "request",
+      name: "Request",
+      method: "post",
+      url: '"https://example.com"',
+      headers: [],
+      searchParams: [],
+    };
+    $resources.set(new Map([[resource.id, resource]]));
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        createElement(TooltipProvider, {
+          delayDuration: 0,
+          children: createElement(ResourceForm, {
+            variable: {
+              type: "resource",
+              id: "request-variable",
+              name: "Request",
+              resourceId: resource.id,
+            },
+          }),
+        })
+      )
+    );
+
+    expect(container.textContent).not.toContain(explanation);
+    await act(async () => userEvent.hover(container.querySelector(selector)!));
+    await expect
+      .poll(() =>
+        Array.from(
+          document.querySelectorAll("[data-radix-popper-content-wrapper]"),
+          (tooltip) => tooltip.textContent
+        ).join(" ")
+      )
+      .toContain(explanation);
+
+    await act(async () => root?.unmount());
+    container.remove();
+  }
+);
 
 test.each([
   [JSON.stringify('{"a":1}'), "text/plain"],
@@ -1110,9 +1781,14 @@ test.each([
   }
 );
 
-test.each(["project", "visitor"] as const)(
-  "Email %s mode clears custom recipients without the redundant reset button",
-  async (mode) => {
+test.each([
+  ["project", "literal", '"custom@example.com"'],
+  ["project", "bound", '"custom" + "@example.com"'],
+  ["visitor", "literal", '"custom@example.com"'],
+  ["visitor", "bound", '"custom" + "@example.com"'],
+] as const)(
+  "Email %s mode clears %s recipients",
+  async (mode, recipientKind, recipientValue) => {
     $instances.set(
       new Map([
         [
@@ -1174,11 +1850,7 @@ test.each(["project", "visitor"] as const)(
             method: "post",
             url: '""',
             headers: [],
-            email: {
-              recipientMode: "custom",
-              recipients: "custom@example.com",
-              visitorEmailField: "contact",
-            },
+            email: { visitorEmailField: "contact" },
           },
         ],
       ])
@@ -1204,21 +1876,86 @@ test.each(["project", "visitor"] as const)(
       )
     );
     expect(container.textContent).not.toContain("Reset to project default");
-    const recipientLabels = Array.from(
-      container.querySelectorAll("label")
-    ).filter((label) => label.textContent === "Recipients");
-    expect(recipientLabels).toHaveLength(1);
-    expect(
-      recipientLabels[0].parentElement?.contains(
-        container.querySelector("textarea")
-      )
-    ).toBe(true);
-    expect(container.querySelector("textarea")?.value).toBe(
-      "custom@example.com"
-    );
     const select =
       container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
     await act(async () => await userEvent.click(select));
+    await act(async () =>
+      page
+        .getByRole("option", {
+          name: "Custom recipients",
+          exact: true,
+        })
+        .click()
+    );
+
+    const customInput = container.querySelector<HTMLInputElement>(
+      'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+    )!;
+    expect(customInput).not.toBeNull();
+    const customLabelCount = () =>
+      Array.from(container.querySelectorAll("label")).filter(
+        (label) => label.textContent === "Recipients"
+      ).length;
+    expect(customLabelCount()).toBe(1);
+    expect(
+      Array.from(container.querySelectorAll("label"))
+        .find((label) => label.textContent === "Recipients")
+        ?.parentElement?.contains(customInput)
+    ).toBe(true);
+
+    if (recipientKind === "literal") {
+      await act(async () => userEvent.fill(customInput, "custom@example.com"));
+    } else {
+      const recipientBindingButton =
+        container.querySelectorAll<HTMLButtonElement>(
+          'button[data-variant="default"]'
+        )[0];
+      await act(async () => userEvent.hover(recipientBindingButton));
+      await expect
+        .poll(() => getComputedStyle(recipientBindingButton).opacity)
+        .toBe("1");
+      await act(async () => userEvent.click(recipientBindingButton));
+      await expect
+        .poll(() => recipientBindingButton.getAttribute("aria-expanded"))
+        .toBe("true");
+      const expressionEditor = document.querySelector<HTMLElement>(
+        '[role="dialog"] .cm-content'
+      )!;
+      expect(expressionEditor).not.toBeNull();
+      const modKey = getCodeMirrorModKey();
+      await act(async () => userEvent.click(expressionEditor));
+      await act(
+        async () => await userEvent.keyboard(`{${modKey}>}a{/${modKey}}`)
+      );
+      await act(
+        async () => await userEvent.keyboard('"custom" + "@example.com"')
+      );
+      expect(expressionEditor.textContent).toContain(
+        '"custom" + "@example.com"'
+      );
+      await act(
+        async () => await userEvent.keyboard(`{${modKey}>}{Enter}{/${modKey}}`)
+      );
+      await act(async () => await userEvent.keyboard("{Escape}"));
+    }
+
+    const customSettings = JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')!
+        .value
+    );
+    if (recipientKind === "literal") {
+      expect(customSettings.recipients).toBe("custom@example.com");
+      expect(customSettings).not.toHaveProperty("recipientsExpression");
+    } else {
+      expect(customSettings).toMatchObject({
+        recipientsExpression: recipientValue,
+      });
+      expect(customSettings).not.toHaveProperty("recipients");
+    }
+
+    const modeSelect =
+      container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+    await act(async () => await userEvent.click(modeSelect));
     const option = Array.from(
       document.querySelectorAll<HTMLElement>('[role="option"]')
     ).find(
@@ -1237,7 +1974,14 @@ test.each(["project", "visitor"] as const)(
       mode === "project" ? undefined : "visitor"
     );
     expect(settings).not.toHaveProperty("recipients");
+    expect(settings).not.toHaveProperty("recipientsExpression");
     expect(settings.visitorEmailField).toBe("contact");
+    expect(customLabelCount()).toBe(1);
+    expect(
+      container.querySelector(
+        'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+      )
+    ).toBeNull();
     if (mode === "project") {
       expect(
         resolveEmailResourceSettings({
@@ -1252,9 +1996,20 @@ test.each(["project", "visitor"] as const)(
         }).recipients
       ).toMatchObject([{ address: "owner@example.com" }]);
       expect(container.textContent).toContain("Project recipients (or owner)");
+      expect(
+        container.querySelectorAll('button[role="combobox"]')
+      ).toHaveLength(1);
+      expect(
+        container.querySelector('input[placeholder="Select an email field"]')
+      ).toBeNull();
     } else {
       expect(container.textContent).toContain("Visitor email field");
       expect(container.textContent).toContain("contact");
+      const comboboxes = container.querySelectorAll<HTMLButtonElement>(
+        'button[role="combobox"]'
+      );
+      expect(comboboxes).toHaveLength(2);
+      expect(comboboxes[1].textContent).toContain("contact");
       expect(
         Array.from(container.querySelectorAll("label")).some(
           (label) => label.textContent === "Visitor email field"
@@ -1306,7 +2061,7 @@ test("Method uses the standard full-width collapsed Select and keeps description
   await act(async () => await userEvent.click(trigger));
   expect(
     document
-      .querySelector<HTMLElement>('[role="listbox"]')
+      .querySelector<HTMLElement>("[data-radix-popper-content-wrapper]")
       ?.getBoundingClientRect().width
   ).toBe(trigger.getBoundingClientRect().width);
   const post = Array.from(

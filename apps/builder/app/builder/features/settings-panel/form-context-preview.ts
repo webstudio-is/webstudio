@@ -4,6 +4,7 @@ import {
   type Props,
 } from "@webstudio-is/sdk";
 import { parseJsonExpression } from "@webstudio-is/expression";
+import type { ManagedFormBrowserInfo } from "@webstudio-is/sdk/runtime";
 
 /** Builder preview of named controls, available before a visitor submits. */
 export const getFormDataPreview = (
@@ -99,9 +100,15 @@ export const getFormDataPreview = (
   return result;
 };
 
-export const getBrowserInfoPreview = () => ({
-  ip: "",
-  userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
-  language: typeof navigator === "undefined" ? "" : navigator.language,
-  referrer: "",
+export const getBrowserInfoPreview = (
+  serverInfo?: ManagedFormBrowserInfo
+): ManagedFormBrowserInfo => ({
+  ip: serverInfo?.ip ?? "",
+  userAgent:
+    serverInfo?.userAgent ??
+    (typeof navigator === "undefined" ? "" : navigator.userAgent),
+  language:
+    serverInfo?.language ??
+    (typeof navigator === "undefined" ? "" : navigator.language),
+  referrer: serverInfo?.referrer ?? "",
 });

@@ -778,7 +778,12 @@ export const mapResourceExpressionsMutable = (
     update(resource.body, (value) => (resource.body = value));
   }
   if (resource.email) {
-    for (const key of ["subject", "body"] as const) {
+    for (const key of [
+      "senderExpression",
+      "recipientsExpression",
+      "subject",
+      "body",
+    ] as const) {
       const expression = resource.email[key];
       if (expression !== undefined) {
         update(expression, (value) => (resource.email![key] = value));
@@ -1824,6 +1829,7 @@ const addEmailResourceIssues = (
   const settings = fields.email;
   if (
     settings?.recipientMode === "custom" &&
+    settings.recipientsExpression === undefined &&
     (!settings.recipients || validateContactEmail(settings.recipients))
   ) {
     context.addIssue({
@@ -1834,6 +1840,7 @@ const addEmailResourceIssues = (
   }
   if (
     settings?.sender !== undefined &&
+    settings.senderExpression === undefined &&
     (settings.sender === "" || validateEmailSender(settings.sender))
   ) {
     context.addIssue({
@@ -2177,6 +2184,22 @@ export const listResourceExpressions = (
           expression: fields.email.subject,
         },
       ]),
+  ...(fields.email?.senderExpression === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "senderExpression"],
+          expression: fields.email.senderExpression,
+        },
+      ]),
+  ...(fields.email?.recipientsExpression === undefined
+    ? []
+    : [
+        {
+          path: [...pathPrefix, "email", "recipientsExpression"],
+          expression: fields.email.recipientsExpression,
+        },
+      ]),
   ...(fields.email?.body === undefined
     ? []
     : [
@@ -2349,6 +2372,64 @@ const validateResourceFields = (
     return throwBuilderValidationError(
       formatValidationIssueMessages(issues),
       prefixValidationIssuePaths(issues, pathPrefix)
+    );
+  }
+};
+
+const validateEmailExpressionBindings = ({
+  email,
+  scopeInstanceId,
+  instances,
+  dataSources,
+}: {
+  email: Resource["email"];
+  scopeInstanceId: Instance["id"];
+  instances: Instance[];
+  dataSources: DataSource[];
+}) => {
+  if (
+    email?.senderExpression === undefined &&
+    email?.recipientsExpression === undefined
+  ) {
+    return;
+  }
+  const instancesById = new Map(
+    instances.map((instance) => [instance.id, instance])
+  );
+  const dataSourcesById = new Map(
+    dataSources.map((dataSource) => [dataSource.id, dataSource])
+  );
+  const availableVariables = findAvailableVariables({
+    startingInstanceId: scopeInstanceId,
+    instances: instancesById,
+    dataSources: dataSourcesById,
+  });
+  const availableNames = new Set(
+    availableVariables.map(({ name }) => encodeDataVariableName(name))
+  );
+  const unsetNameById = new Map(
+    availableVariables.map(({ id, name }) => [id, name])
+  );
+  const issues = listResourceExpressions({ email }, ["resource"])
+    .filter(({ path }) =>
+      ["senderExpression", "recipientsExpression"].includes(path.at(-1) ?? "")
+    )
+    .flatMap(({ path, expression }) =>
+      getExpressionWarnings({
+        expression: unsetExpressionVariables({ expression, unsetNameById }),
+        availableVariables: availableNames,
+        path,
+      }).map(({ message }) => ({
+        code: "unavailable_email_resource_binding",
+        path,
+        message,
+        constraint: "available_variable_at_resource_scope",
+      }))
+    );
+  if (issues.length > 0) {
+    return throwBuilderValidationError(
+      formatValidationIssueMessages(issues),
+      issues
     );
   }
 };
@@ -3135,6 +3216,12 @@ export const upsertResource = (
   const resourceInput = normalizeResourceFieldsInput(input.resource);
   validateResourceFields(resourceInput, ["resource"]);
   const build = getRequiredBuildData(state);
+  validateEmailExpressionBindings({
+    email: resourceInput.email,
+    scopeInstanceId: input.scopeInstanceId,
+    instances: build.instances,
+    dataSources: build.dataSources,
+  });
   if (
     input.resourceId !== undefined &&
     findResource(build.resources, input.resourceId) === undefined

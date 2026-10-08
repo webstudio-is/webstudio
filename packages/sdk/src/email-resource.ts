@@ -2,6 +2,40 @@ import type { ProjectMeta } from "./schema/pages";
 import type { EmailResourceSettings } from "./schema/resources";
 import { parseEmailMailboxes, parseEmailSender } from "./email-addresses";
 
+export const emailSettingsInvalidMessage = "Email settings are invalid";
+
+/** Validate evaluated Email Resource bindings before any destination is sent. */
+export const resolveEmailSenderExpression = (value: unknown) => {
+  if (typeof value !== "string") {
+    throw new Error(emailSettingsInvalidMessage);
+  }
+  const sender = parseEmailSender(value);
+  if (sender === undefined) {
+    throw new Error(emailSettingsInvalidMessage);
+  }
+  return sender;
+};
+
+export const resolveEmailSenderSettingsExpression = (
+  value: unknown,
+  fallbackFromName: string | undefined
+) => {
+  const sender = resolveEmailSenderExpression(value);
+  return { sender, fromName: sender.name ?? fallbackFromName };
+};
+
+/** A custom-recipient binding resolves to the same comma-separated list as the field. */
+export const resolveEmailRecipientsExpression = (value: unknown) => {
+  if (typeof value !== "string") {
+    throw new Error(emailSettingsInvalidMessage);
+  }
+  const recipients = parseEmailMailboxes(value);
+  if (recipients === undefined || recipients.length === 0) {
+    throw new Error(emailSettingsInvalidMessage);
+  }
+  return recipients;
+};
+
 export const defaultEmailSubject = "New form submission";
 export const defaultEmailBody = "A new form was submitted.";
 export const defaultEmailConfirmationSubject = "We received your submission";
@@ -68,8 +102,7 @@ export const resolveEmailResourceSettings = ({
       (settings.recipientMode === "visitor"
         ? JSON.stringify("")
         : JSON.stringify(projectMeta.emailBody || defaultEmailBody)),
-    includeAttachments:
-      settings.includeAttachments ?? settings.recipientMode !== "visitor",
+    includeAttachments: settings.includeAttachments ?? true,
   };
 };
 

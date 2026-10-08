@@ -1,12 +1,42 @@
 import { atom, onSet } from "nanostores";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { getFormDataValue } from "@webstudio-is/sdk-components-react";
+import type { ManagedFormBrowserInfo } from "@webstudio-is/sdk/runtime";
 import { $project } from "./sync/data-stores";
 
 export const $livePreviewFormValues = atom(
   new Map<string, Record<string, unknown>>()
 );
-onSet($project, () => $livePreviewFormValues.set(new Map()));
+export const $livePreviewBrowserInfo = atom(
+  new Map<string, ManagedFormBrowserInfo>()
+);
+onSet($project, () => {
+  $livePreviewFormValues.set(new Map());
+  $livePreviewBrowserInfo.set(new Map());
+});
+
+export const recordPreviewBrowserInfo = (formId: string, value: unknown) => {
+  const next = new Map($livePreviewBrowserInfo.get());
+  if (value === undefined || typeof value !== "object" || value === null) {
+    next.delete(formId);
+  } else {
+    const record = value as Record<string, unknown>;
+    const browserInfo: ManagedFormBrowserInfo = {
+      ...(typeof record.ip === "string" ? { ip: record.ip } : {}),
+      ...(typeof record.userAgent === "string"
+        ? { userAgent: record.userAgent }
+        : {}),
+      ...(typeof record.language === "string"
+        ? { language: record.language }
+        : {}),
+      ...(typeof record.referrer === "string"
+        ? { referrer: record.referrer }
+        : {}),
+    };
+    next.set(formId, browserInfo);
+  }
+  $livePreviewBrowserInfo.set(next);
+};
 
 export const getFormOccurrenceKey = (
   selector: readonly string[] | undefined,

@@ -1,4 +1,8 @@
-import { $livePreviewFormValues } from "./preview-form-values";
+import {
+  $livePreviewBrowserInfo,
+  $livePreviewFormValues,
+  recordPreviewBrowserInfo,
+} from "./preview-form-values";
 import {
   previewFormExchanges,
   recordPreviewFormExchanges,
@@ -52,9 +56,13 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
           signal: controller.signal,
         });
         if (!controller.signal.aborted) {
-          const { previewExchanges, ...publicResponse } =
-            response as typeof response & { previewExchanges?: unknown };
+          const { previewExchanges, previewBrowserInfo, ...publicResponse } =
+            response as typeof response & {
+              previewExchanges?: unknown;
+              previewBrowserInfo?: unknown;
+            };
           const inspected = previewFormExchanges.safeParse(previewExchanges);
+          recordPreviewBrowserInfo(managedFormId, previewBrowserInfo);
           recordPreviewFormExchanges(
             managedFormId,
             inspected.success ? inspected.data : []
@@ -66,6 +74,7 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
         }
       } catch (error) {
         if (!controller.signal.aborted) {
+          recordPreviewBrowserInfo(managedFormId, undefined);
           recordPreviewFormExchanges(managedFormId, []);
           const message =
             error instanceof Error ? error.message : "Form submission failed";
@@ -95,6 +104,7 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
     unsubscribeSubmit();
     unsubscribeValues();
     $livePreviewFormValues.set(new Map());
+    $livePreviewBrowserInfo.set(new Map());
     unsubscribeCancel();
     for (const controller of requests.values()) {
       controller.abort();

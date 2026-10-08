@@ -2,6 +2,7 @@ import type { ResourceLoadOptions } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
 import { parseEmailSender } from "./email-addresses";
+import { emailSettingsInvalidMessage } from "./email-resource";
 
 type EmailService = {
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -60,7 +61,7 @@ export const prepareVisitorEmailRequest = (
       ...email,
       recipients: [{ address }],
       body: email.body ? `${preamble}\n\n${email.body}` : preamble,
-      includeAttachments: false,
+      includeAttachments: email.includeAttachments ?? true,
     },
   };
 };
@@ -70,7 +71,8 @@ export const validateCloudflareManagedFormEmail = (
   request: ResourceRequest,
   formData: FormData
 ) => {
-  if (request.email?.includeAttachments) {
+  const email = request.email;
+  if (email?.includeAttachments) {
     const encodedBytes = getEmailFiles(formData).reduce(
       (total, file) => total + 4 * Math.ceil(file.size / 3),
       0
@@ -80,6 +82,7 @@ export const validateCloudflareManagedFormEmail = (
     }
   }
 };
+
 const failure = (status: number, code: string, message: string) => ({
   ok: false,
   status,
@@ -103,7 +106,9 @@ const encodeFile = async (file: File) => {
 const createCloudflareManagedFormEmailSenderWithFetch = (
   sendRequest: EmailServiceFetch | undefined,
   formData: FormData,
-  projectId: string
+  projectId: string,
+  additionalHeaders?: HeadersInit,
+  requestUrl: string | URL = "https://email-service.internal/v1/send"
 ): ResourceLoadOptions["sendEmail"] | undefined => {
   if (sendRequest === undefined) {
     return;
@@ -121,7 +126,7 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       email.recipients.length === 0 ||
       typeof email.body !== "string"
     ) {
-      return failure(400, "EMAIL_INVALID", "Email settings are invalid");
+      return failure(400, "EMAIL_INVALID", emailSettingsInvalidMessage);
     }
     const attachments = [];
     try {
@@ -163,28 +168,50 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       if (options.signal?.aborted) {
         return failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled");
       }
+      const headers = new Headers({
+        "content-type": "application/json",
+        "x-webstudio-project-id": projectId,
+      });
+      for (const [name, value] of new Headers(additionalHeaders)) {
+        headers.set(name, value);
+      }
+      const init: RequestInit = {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          to: email.recipients,
+          subject: email.subject,
+          text: email.body,
+          ...(email.sender === undefined ? {} : { replyTo: email.sender }),
+          ...(email.fromName === undefined ? {} : { fromName: email.fromName }),
+          ...(attachments.length === 0 ? {} : { attachments }),
+        }),
+        signal: controller.signal,
+      };
+      const request = options.onEmailRequest
+        ? new Request(requestUrl, init)
+        : undefined;
+      if (request) {
+        options.onEmailRequest?.(request.clone());
+      }
       const response = await sendRequest(
-        "https://email-service.internal/v1/send",
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-webstudio-project-id": projectId,
-          },
-          body: JSON.stringify({
-            to: email.recipients,
-            subject: email.subject,
-            text: email.body,
-            ...(email.sender === undefined ? {} : { replyTo: email.sender }),
-            ...(email.fromName === undefined
-              ? {}
-              : { fromName: email.fromName }),
-            ...(attachments.length === 0 ? {} : { attachments }),
-          }),
-          signal: controller.signal,
-        }
+        request ?? requestUrl,
+        request ? undefined : init
       );
-      const data: unknown = await response.json().catch(() => undefined);
+      const responseText = await response.text().catch(() => undefined);
+      let responseData: unknown;
+      let data: unknown;
+      if (responseText !== undefined) {
+        try {
+          data = JSON.parse(responseText);
+          responseData = data;
+        } catch {
+          responseData = responseText;
+        }
+      }
+      if (options.onEmailResponse) {
+        options.onEmailResponse(response, responseData);
+      }
       if (options.signal?.aborted) {
         return failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled");
       }
@@ -282,12 +309,12 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
     throw new Error("Email Service URL must be an approved Preview endpoint");
   }
   return createCloudflareManagedFormEmailSenderWithFetch(
-    (_input, init) => {
-      const headers = new Headers(init?.headers);
-      headers.set("authorization", `Bearer ${token}`);
-      return fetcher(url, { ...init, headers, redirect: "error" });
+    (input, init) => {
+      return fetcher(input, { ...(init ?? {}), redirect: "error" });
     },
     formData,
-    projectId
+    projectId,
+    { authorization: `Bearer ${token}` },
+    url
   );
 };

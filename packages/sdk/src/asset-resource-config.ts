@@ -10,7 +10,7 @@ import {
   generateObjectExpression,
   parseExpressionObject,
   parseJsonExpression,
-  parseStringLiteralExpression,
+  parseStaticStringExpression,
 } from "@webstudio-is/expression";
 import {
   assetQueryRequest,
@@ -52,7 +52,7 @@ export const hasAssetsResourceUrl = (
   resource: Pick<Resource, "control" | "url">
 ) =>
   resource.control === "system" &&
-  parseStringLiteralExpression(resource.url) === assetsResourceUrl;
+  parseStaticStringExpression(resource.url) === assetsResourceUrl;
 
 export const isAssetsResource = (
   resource: Pick<Resource, "control" | "method" | "url">

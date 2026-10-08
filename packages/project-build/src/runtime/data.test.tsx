@@ -3490,6 +3490,160 @@ describe("resource patch helpers", () => {
     });
   });
 
+  test("persists bound Email Sender and custom recipient expressions through upsert", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.dataSources.set("sender-source", {
+      id: "sender-source",
+      name: "sender",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "sender@example.com" },
+    });
+    state.dataSources.set("recipients-source", {
+      id: "recipients-source",
+      name: "recipients",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "team@example.com" },
+    });
+    const senderExpression = encodeDataVariableId("sender-source");
+    const recipientsExpression = encodeDataVariableId("recipients-source");
+
+    const result = upsertResource(
+      state,
+      {
+        scopeInstanceId: "body",
+        resource: resourceFieldsInput.parse({
+          name: "Email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            recipientMode: "custom",
+            senderExpression,
+            recipientsExpression,
+          },
+        }),
+      },
+      {
+        createId: (() => {
+          let id = 0;
+          return () => `email-${++id}`;
+        })(),
+      }
+    );
+
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["email-1"],
+          value: expect.objectContaining({
+            control: "email",
+            email: {
+              recipientMode: "custom",
+              senderExpression,
+              recipientsExpression,
+            },
+          }),
+        },
+      ],
+    });
+  });
+
+  test.each(["senderExpression", "recipientsExpression"] as const)(
+    "rejects invalid Email %s expressions through upsert validation",
+    (field) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [],
+      });
+      const email =
+        field === "senderExpression"
+          ? {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              senderExpression: "sender +",
+            }
+          : {
+              recipientMode: "custom",
+              sender: "sender@example.com",
+              recipientsExpression: "recipients +",
+            };
+
+      const resource = {
+        name: "Email",
+        control: "email" as const,
+        method: "post" as const,
+        url: '""',
+        headers: [],
+        email,
+      } as Parameters<typeof upsertResource>[1]["resource"];
+
+      expect(() =>
+        upsertResource(
+          state,
+          { scopeInstanceId: "body", resource },
+          { createId: () => "email-id" }
+        )
+      ).toThrow(`email.${field}`);
+    }
+  );
+
+  test.each(["senderExpression", "recipientsExpression"] as const)(
+    "rejects unavailable Email %s bindings through upsert",
+    (field) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [],
+      });
+      const email =
+        field === "senderExpression"
+          ? {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              senderExpression: encodeDataVariableId("missing-sender"),
+            }
+          : {
+              recipientMode: "custom",
+              sender: "sender@example.com",
+              recipientsExpression: encodeDataVariableId("missing-recipients"),
+            };
+
+      expect(() =>
+        upsertResource(
+          state,
+          {
+            scopeInstanceId: "body",
+            resource: resourceFieldsInput.parse({
+              name: "Email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email,
+            }),
+          },
+          { createId: () => "email-id" }
+        )
+      ).toThrow(`resource.email.${field}`);
+    }
+  );
+
   test("upserts resource and preserves existing data source id", () => {
     const body: Instance = {
       type: "instance",

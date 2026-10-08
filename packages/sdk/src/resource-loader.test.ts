@@ -22,6 +22,7 @@ import {
   type ResourceRequestGraph,
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
+import { createCloudflareManagedFormEmailSender } from "./managed-form-email";
 
 test("Email Resources cannot be sent through the HTTP loader", async () => {
   const fetch = vi.fn<typeof globalThis.fetch>();
@@ -42,6 +43,192 @@ test("Email Resources cannot be sent through the HTTP loader", async () => {
   });
   expect(result).toMatchObject({ ok: false, status: 501 });
   expect(fetch).not.toHaveBeenCalled();
+});
+
+test("Email exchange inspection retains actual Email Service response headers", async () => {
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    {
+      fetch: async () =>
+        Response.json(
+          { id: "message-id" },
+          {
+            status: 202,
+            statusText: "Accepted",
+            headers: { "x-email-service-id": "message-id" },
+          }
+        ),
+    },
+    new FormData(),
+    "project-id"
+  );
+  const exchanges: Array<{
+    kind?: string;
+    status: number;
+    statusText: string;
+    header: string | null;
+  }> = [];
+
+  await loadResource(
+    vi.fn<typeof globalThis.fetch>(),
+    {
+      name: "Receipt email",
+      control: "email",
+      method: "post",
+      url: "",
+      searchParams: [],
+      headers: [],
+      email: {
+        recipientMode: "project",
+        recipients: [{ address: "team@example.com" }],
+        subject: "New submission",
+        body: "Submitted",
+        includeAttachments: false,
+      },
+    },
+    undefined,
+    {
+      sendEmail,
+      onExchange: (exchange) => {
+        exchanges.push({
+          kind: exchange.kind,
+          status: exchange.response.status,
+          statusText: exchange.response.statusText,
+          header: exchange.response.headers.get("x-email-service-id"),
+        });
+      },
+    }
+  );
+
+  expect(exchanges).toEqual([
+    {
+      kind: "email",
+      status: 202,
+      statusText: "Accepted",
+      header: "message-id",
+    },
+  ]);
+});
+
+test("Email inspection keeps raw HTTP response separate from failed delivery outcome", async () => {
+  const serviceBody = {
+    error: { code: "DELIVERY_FAILED", message: "Delivery was rejected" },
+  };
+  const providerResponse = Response.json(serviceBody, {
+    status: 200,
+    headers: { "x-email-service-id": "request-id" },
+  });
+  const readBody = vi.spyOn(providerResponse, "text");
+  const cloneResponse = vi.spyOn(providerResponse, "clone");
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    {
+      fetch: async () => providerResponse,
+    },
+    new FormData(),
+    "project-id"
+  );
+  const exchanges: Array<{
+    response: { status: number; headers: Headers; data: unknown };
+    outcome?: { ok: boolean; status: number; data: unknown };
+  }> = [];
+
+  const result = await loadResource(
+    vi.fn<typeof globalThis.fetch>(),
+    {
+      name: "Receipt email",
+      control: "email",
+      method: "post",
+      url: "",
+      searchParams: [],
+      headers: [],
+      email: {
+        recipientMode: "project",
+        recipients: [{ address: "team@example.com" }],
+        subject: "New submission",
+        body: "Submitted",
+        includeAttachments: false,
+      },
+    },
+    undefined,
+    {
+      sendEmail,
+      onExchange: (exchange) => {
+        exchanges.push(exchange);
+      },
+    }
+  );
+
+  expect(result).toMatchObject({ ok: false, status: 502 });
+  expect(exchanges).toHaveLength(1);
+  expect(exchanges[0]).toMatchObject({
+    response: {
+      status: 200,
+      data: serviceBody,
+    },
+    outcome: {
+      ok: false,
+      status: 502,
+    },
+  });
+  expect(exchanges[0]?.response.headers.get("x-email-service-id")).toBe(
+    "request-id"
+  );
+  expect(readBody).toHaveBeenCalledOnce();
+  expect(cloneResponse).not.toHaveBeenCalled();
+});
+
+test("Email inspection preserves a non-JSON HTTP 200 error body", async () => {
+  const providerResponse = new Response("upstream delivery error", {
+    status: 200,
+    headers: { "content-type": "text/plain" },
+  });
+  const readBody = vi.spyOn(providerResponse, "text");
+  const cloneResponse = vi.spyOn(providerResponse, "clone");
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    {
+      fetch: async () => providerResponse,
+    },
+    new FormData(),
+    "project-id"
+  );
+  const exchanges: Array<{
+    response: { status: number; data: unknown };
+    outcome?: { ok: boolean; status: number };
+  }> = [];
+
+  const result = await loadResource(
+    vi.fn<typeof globalThis.fetch>(),
+    {
+      name: "Receipt email",
+      control: "email",
+      method: "post",
+      url: "",
+      searchParams: [],
+      headers: [],
+      email: {
+        recipientMode: "project",
+        recipients: [{ address: "team@example.com" }],
+        subject: "New submission",
+        body: "Submitted",
+        includeAttachments: false,
+      },
+    },
+    undefined,
+    {
+      sendEmail,
+      onExchange: (exchange) => {
+        exchanges.push(exchange);
+      },
+    }
+  );
+
+  expect(result).toMatchObject({ ok: false, status: 502 });
+  expect(exchanges).toHaveLength(1);
+  expect(exchanges[0]).toMatchObject({
+    response: { status: 200, data: "upstream delivery error" },
+    outcome: { ok: false, status: 502 },
+  });
+  expect(readBody).toHaveBeenCalledOnce();
+  expect(cloneResponse).not.toHaveBeenCalled();
 });
 
 test.each(["\r", "\n", "\r\n"])(

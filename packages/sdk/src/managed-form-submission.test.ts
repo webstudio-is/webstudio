@@ -86,6 +86,91 @@ test("formats ordered final outcomes without response headers", () => {
   );
 });
 
+test("keeps parallel results and errors in Action order when completion is reversed", async () => {
+  let resolveFirst: ((response: Response) => void) | undefined;
+  let resolveSecond: ((response: Response) => void) | undefined;
+  const fetch = vi.fn((input: RequestInfo | URL) => {
+    const url = String(input);
+    return new Promise<Response>((resolve) => {
+      if (url.endsWith("/first")) {
+        resolveFirst = resolve;
+      } else {
+        resolveSecond = resolve;
+      }
+    });
+  });
+  const graph = {
+    rootIds: ["first", "second"],
+    resources: [
+      {
+        id: "first",
+        outputName: "firstOutput",
+        name: "First Resource",
+        dependencies: [],
+        createRequest: () => ({
+          name: "First Resource",
+          method: "get" as const,
+          url: "https://api.example/first",
+          headers: [],
+          searchParams: [],
+        }),
+      },
+      {
+        id: "second",
+        outputName: "secondOutput",
+        name: "Second Resource",
+        dependencies: [],
+        createRequest: () => ({
+          name: "Second Resource",
+          method: "get" as const,
+          url: "https://api.example/second",
+          headers: [],
+          searchParams: [],
+        }),
+      },
+    ],
+  };
+
+  const pending = loadManagedFormResources(fetch, graph);
+  await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+  expect(resolveFirst).toBeTypeOf("function");
+  expect(resolveSecond).toBeTypeOf("function");
+
+  // Resolve the later Action first, and make it fail while the first succeeds.
+  resolveSecond!(new Response("Second failed", { status: 422 }));
+  resolveFirst!(Response.json({ accepted: true }, { status: 201 }));
+
+  const outcomes = await pending;
+  expect(Object.keys(outcomes)).toEqual(["firstOutput", "secondOutput"]);
+  expect(getManagedFormResponse(graph, outcomes)).toEqual({
+    success: false,
+    status: 502,
+    results: [
+      {
+        resourceId: "first",
+        resourceName: "First Resource",
+        status: 201,
+        body: { accepted: true },
+      },
+      {
+        resourceId: "second",
+        resourceName: "Second Resource",
+        status: 422,
+        body: "Second failed",
+      },
+    ],
+    errors: [
+      {
+        resourceId: "second",
+        resourceName: "Second Resource",
+        status: 422,
+        body: "Second failed",
+        message: "Resource request failed (422)",
+      },
+    ],
+  });
+});
+
 test("allows five team deliveries across Email Resources and counts duplicate recipients", () => {
   const graph = {
     rootIds: ["project-email", "custom-email", "http"],
@@ -119,6 +204,48 @@ test("allows five team deliveries across Email Resources and counts duplicate re
   for (const resource of graph.resources) {
     expect(resource.createRequest).not.toHaveBeenCalled();
   }
+});
+
+test("checks the recipient count from a resolved bound list", () => {
+  const graph = {
+    rootIds: ["custom-email"],
+    resources: [
+      {
+        id: "custom-email",
+        outputName: "Custom email",
+        dependencies: [],
+        control: "email" as const,
+        // This is the authored fallback count; the evaluated binding has six.
+        emailRecipientCount: 1,
+        createRequest: vi.fn(),
+      },
+    ],
+  };
+  const preparedEmailRequests = new Map([
+    [
+      "custom-email",
+      {
+        name: "Custom email",
+        control: "email" as const,
+        method: "post" as const,
+        url: "",
+        headers: [],
+        searchParams: [],
+        email: {
+          recipientMode: "custom" as const,
+          recipients: Array.from({ length: 6 }, (_, index) => ({
+            address: `person${index}@example.com`,
+          })),
+          subject: "Submission",
+          body: "Body",
+          includeAttachments: true,
+        },
+      },
+    ],
+  ]);
+  expect(() =>
+    validateManagedFormRecipientLimit(graph, preparedEmailRequests)
+  ).toThrow("Select no more than 5 team email recipients per Form submission");
 });
 
 test("rejects six team deliveries before any HTTP or Email destination runs", () => {

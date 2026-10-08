@@ -102,11 +102,31 @@ export const generateResourceRequestFields = ({
     if (resolved.visitorEmailField !== undefined) {
       generated += `${indent}  visitorEmailField: ${JSON.stringify(resolved.visitorEmailField)},\n`;
     }
-    generated += `${indent}  recipients: ${JSON.stringify(resolved.recipients ?? [])},\n`;
-    if (resolved.sender) {
-      generated += `${indent}  sender: ${JSON.stringify(resolved.sender)},\n`;
+    if (email.recipientsExpression !== undefined) {
+      const recipients = generateExpression({
+        expression: email.recipientsExpression,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generated += `${indent}  recipients: resolveEmailRecipientsExpression(${recipients}),\n`;
+    } else {
+      generated += `${indent}  recipients: ${JSON.stringify(resolved.recipients ?? [])},\n`;
     }
-    if (resolved.fromName) {
+    if (email.senderExpression !== undefined) {
+      const sender = generateExpression({
+        expression: email.senderExpression,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generated += `${indent}  ...resolveEmailSenderSettingsExpression(${sender}, ${JSON.stringify(resolved.fromName)}),\n`;
+    } else if (resolved.sender) {
+      generated += `${indent}  sender: ${JSON.stringify(resolved.sender)},\n`;
+      if (resolved.fromName) {
+        generated += `${indent}  fromName: ${JSON.stringify(resolved.fromName)},\n`;
+      }
+    } else if (resolved.fromName) {
       generated += `${indent}  fromName: ${JSON.stringify(resolved.fromName)},\n`;
     }
     generated += `${indent}  includeAttachments: ${resolved.includeAttachments},\n`;
@@ -432,6 +452,24 @@ export const generateResources = ({
   let generated = "";
   generated += `import type { System, ResourceRequest } from "@webstudio-is/sdk";\n`;
   generated += `import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";\n`;
+  const generatedEmailResources = Array.from(resources.values()).filter(
+    (resource) => resource.control === "email"
+  );
+  const emailExpressionResolvers = [
+    ...(generatedEmailResources.some(
+      (resource) => resource.email?.recipientsExpression !== undefined
+    )
+      ? ["resolveEmailRecipientsExpression"]
+      : []),
+    ...(generatedEmailResources.some(
+      (resource) => resource.email?.senderExpression !== undefined
+    )
+      ? ["resolveEmailSenderSettingsExpression"]
+      : []),
+  ];
+  if (emailExpressionResolvers.length > 0) {
+    generated += `import { ${emailExpressionResolvers.join(", ")} } from "@webstudio-is/sdk";\n`;
+  }
   generated += `export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {\n`;
   generated += generatedVariables;
   generated += generatedRequests;

@@ -88,6 +88,30 @@ test("Preview exchange hides credentials and unknown server values while retaini
   });
 });
 
+test("an HTTP Resource targeting the Email Service URL keeps request-body redaction", async () => {
+  const snapshot = await capturePreviewFormExchange(
+    "http-resource",
+    {
+      kind: "http",
+      request: new Request("https://email-service.internal/v1/send", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "private request value" }),
+      }),
+      response: {
+        status: 403,
+        statusText: "Forbidden",
+        headers: new Headers(),
+        data: { error: "denied" },
+      },
+    },
+    { publicValues: new Set(), privateValues: new Set() }
+  );
+
+  expect(snapshot.kind).toBe("http");
+  expect(snapshot.request.body).toEqual({ message: "[redacted]" });
+});
+
 test("multipart inspection reports file metadata without upload bytes", async () => {
   const formData = new FormData();
   formData.set("email", "ada@example.com");
@@ -245,6 +269,134 @@ test("Email inspection preserves logical request and outcome while redacting ada
     body: { error: { code: "email_rate_limited" }, echo: "[redacted]" },
   });
   expect(JSON.stringify(snapshot)).not.toContain("server-only-token");
+});
+
+test("Email inspection preserves safe service response headers and redacts credentials", async () => {
+  const snapshot = await capturePreviewFormExchange(
+    "email-resource",
+    {
+      kind: "email",
+      request: {
+        name: "Receipt",
+        control: "email",
+        method: "post",
+        url: "",
+        headers: [],
+        searchParams: [],
+        email: {
+          recipientMode: "project",
+          recipients: [{ address: "team@example.com" }],
+          subject: "Receipt subject",
+          body: "Submitted message",
+          includeAttachments: false,
+        },
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({
+          "x-email-service-id": "message-id",
+          "set-cookie": "session=private-cookie",
+        }),
+        data: {
+          error: { code: "DELIVERY_FAILED", message: "Delivery rejected" },
+        },
+      },
+      outcome: {
+        ok: false,
+        status: 502,
+        statusText: "Email service returned an invalid response",
+        data: {
+          ok: false,
+          error: {
+            code: "EMAIL_SERVICE_ERROR",
+            message: "Email service returned an invalid response",
+          },
+        },
+      },
+    },
+    {
+      publicValues: new Set([
+        "team@example.com",
+        "Receipt subject",
+        "Submitted message",
+      ]),
+      privateValues: new Set(),
+    }
+  );
+
+  expect(snapshot.response.headers).toContainEqual({
+    name: "x-email-service-id",
+    value: "message-id",
+  });
+  expect(snapshot.response.headers).toContainEqual({
+    name: "set-cookie",
+    value: "[redacted]",
+  });
+  expect(snapshot.response).toMatchObject({
+    status: 200,
+    statusText: "OK",
+    body: {
+      error: { code: "DELIVERY_FAILED", message: "Delivery rejected" },
+    },
+  });
+  expect(snapshot.outcome).toMatchObject({
+    ok: false,
+    status: 502,
+    body: {
+      ok: false,
+      error: { code: "EMAIL_SERVICE_ERROR" },
+    },
+  });
+  expect(JSON.stringify(snapshot)).not.toContain("private-cookie");
+});
+
+test("Email transport inspection keeps attachment metadata but omits encoded file bytes", async () => {
+  const contentBase64 = btoa("private attachment bytes");
+  const snapshot = await capturePreviewFormExchange(
+    "email-resource",
+    {
+      kind: "email",
+      request: new Request("https://apps.webstudio.is/v1/preview-send", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          to: [{ address: "alex@example.com" }],
+          attachments: [
+            {
+              filename: "receipt.txt",
+              contentType: "text/plain",
+              contentBase64,
+            },
+          ],
+        }),
+      }),
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({ "content-type": "application/json" }),
+        data: { id: "sent" },
+      },
+    },
+    {
+      publicValues: new Set(["alex@example.com"]),
+      privateValues: new Set(),
+      allowRequestBody: true,
+    }
+  );
+
+  expect(snapshot.kind).toBe("email");
+  expect(snapshot.request.body).toEqual({
+    to: [{ address: "alex@example.com" }],
+    attachments: [
+      {
+        filename: "receipt.txt",
+        contentType: "text/plain",
+        contentBase64: "[redacted]",
+      },
+    ],
+  });
+  expect(JSON.stringify(snapshot)).not.toContain(contentBase64);
 });
 
 test("a submission reference does not make a private Email subject inspectable", async () => {

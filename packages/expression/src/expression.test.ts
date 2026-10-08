@@ -16,6 +16,7 @@ import {
   parseDirectPathExpression,
   parseStaticMemberPath,
   parseStringLiteralExpression,
+  parseStaticStringExpression,
   allowedArrayMethods,
   allowedStringMethods,
 } from "./index";
@@ -80,6 +81,19 @@ describe("string literal expressions", () => {
     ["assets", undefined],
   ])("parses %s", (source, expected) => {
     expect(parseStringLiteralExpression(source)).toBe(expected);
+  });
+});
+
+describe("static JavaScript string expressions", () => {
+  test.each([
+    ['"assets"', "assets"],
+    ["'assets'", "assets"],
+    ["`assets`", "assets"],
+    ["`assets-${name}`", undefined],
+    ["'assets' + suffix", undefined],
+    ["'assets' trailing", undefined],
+  ])("parses %s", (source, expected) => {
+    expect(parseStaticStringExpression(source)).toBe(expected);
   });
 });
 

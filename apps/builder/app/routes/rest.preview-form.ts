@@ -27,6 +27,7 @@ import {
   getSystemSearch,
   handleManagedFormSubmission,
   readFormDataWithLimit,
+  getManagedFormBrowserInfo,
   validateCloudflareManagedFormEmail,
   type ManagedFormResponse,
 } from "@webstudio-is/sdk/runtime";
@@ -76,9 +77,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     // This request comes from the Builder, whose URL can contain a build-access
-    // token. Its Referer must never become visitor browserInfo or email content.
+    // token. Keep only the sanitized origin/path from Referer; never forward its
+    // query string into Form bindings or email content.
     const formHeaders = new Headers(request.headers);
     formHeaders.delete("referer");
+    const safeReferrer = getManagedFormBrowserInfo(request).referrer;
+    if (safeReferrer) {
+      formHeaders.set("referer", safeReferrer);
+    }
     const formRequest = new Request(request, { headers: formHeaders });
     const formData = await readFormDataWithLimit(formRequest);
     const ids = formData.getAll(managedFormIdFieldName);
@@ -186,6 +192,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         { throwOnError: true }
       );
     const exchanges: PreviewFormExchange[] = [];
+    let previewBrowserInfo: Record<string, unknown> | undefined;
     const privacy = getFormEmailStringifyOptions(instances, props, formId);
     const sensitiveFields = new Set(privacy.excludeKeys ?? []);
     const privateValues = new Set<string>([
@@ -246,8 +253,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       system,
       configuration: (id) =>
         id === formId ? { action, resourceIds } : undefined,
-      getGraph: (id, values) =>
-        createManagedFormDraftGraph({
+      getGraph: (id, values) => {
+        previewBrowserInfo = values.browserInfo as Record<string, unknown>;
+        return createManagedFormDraftGraph({
           formId: id,
           destinationDataSourceIds: destinations,
           instances,
@@ -261,7 +269,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           formData: values.formData as Record<string, unknown>,
           browserInfo: values.browserInfo as Record<string, unknown>,
           evaluateExpression,
-        }),
+        });
+      },
+      trustedIp: request.headers.get("cf-connecting-ip") ?? undefined,
       createEmailSender: (data) =>
         createCloudflareManagedFormEmailSenderWithUrl(
           cloudflareManagedFormPreviewEmailServiceUrl,
@@ -282,6 +292,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             resourceName: resourceNames.get(resourceId) ?? resourceId,
             sensitiveFields,
             redactAllBody: privacy.stringifyAs !== undefined,
+            allowRequestBody: exchange.kind === "email",
           })
         );
       },
@@ -290,6 +301,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return respond({
       ...result,
       previewExchanges: exchanges,
+      previewBrowserInfo,
     } as ManagedFormResponse);
   } catch (error) {
     return respond(

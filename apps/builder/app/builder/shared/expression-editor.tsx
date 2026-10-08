@@ -569,6 +569,7 @@ export const ExpressionEditor = ({
   chromeless = false,
   autoFocus = false,
   readOnly = false,
+  showLineNumbers = false,
   value,
   onChange,
   onChangeComplete,
@@ -588,6 +589,7 @@ export const ExpressionEditor = ({
   chromeless?: boolean;
   autoFocus?: boolean;
   readOnly?: boolean;
+  showLineNumbers?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
@@ -649,13 +651,18 @@ export const ExpressionEditor = ({
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
       expressionLinter,
       linterTooltipTheme,
+      ...(showLineNumbers ? [lineNumbers()] : []),
       ...(size === "full" ? [fullSizeEditorTheme] : []),
     ],
-    [scopeWithUnsetVariables, aliasesWithUnsetVariables, size]
+    [scopeWithUnsetVariables, aliasesWithUnsetVariables, size, showLineNumbers]
   );
   const dialogExtensions = useMemo(
-    () => [...extensions, lineNumbers(), foldGutterExtension],
-    [extensions]
+    () => [
+      ...extensions,
+      ...(showLineNumbers ? [] : [lineNumbers()]),
+      foldGutterExtension,
+    ],
+    [extensions, showLineNumbers]
   );
 
   // prevent clicking on autocomplete options propagating to body

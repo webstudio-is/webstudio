@@ -27,7 +27,7 @@ import { cssVar, declareCssVar } from "../css-var";
 const selectTriggerWidth = declareCssVar("--radix-select-trigger-width");
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
-  minWidth: cssVar(selectTriggerWidth),
+  width: cssVar(selectTriggerWidth),
   '& [data-select-description$="separator"]': {
     display: "none",
   },

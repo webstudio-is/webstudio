@@ -12,6 +12,9 @@ import {
 } from "./managed-form-submission";
 import { loadResources } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
+import { generateResourceRequestFields } from "./resources-generator";
+import { emailSettingsInvalidMessage } from "./email-resource";
+import { createScope } from "./scope";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const createCloudflareManagedFormEmailSender = (
@@ -37,7 +40,10 @@ const request: ResourceRequest = {
   },
 };
 
-const visitorRequest = (body = ""): ResourceRequest => ({
+const visitorRequest = (
+  body = "",
+  includeAttachments = true
+): ResourceRequest => ({
   ...request,
   email: {
     ...request.email!,
@@ -45,7 +51,7 @@ const visitorRequest = (body = ""): ResourceRequest => ({
     visitorEmailField: "email",
     recipients: [],
     body,
-    includeAttachments: false,
+    includeAttachments,
   },
 });
 
@@ -62,7 +68,7 @@ test("visitor Email Resource uses one submitted address and prepends the site re
   expect(prepared.email).toMatchObject({
     recipients: [{ address: "visitor@example.com" }],
     body: "We received your request from https://published.example.\n\nCustom text",
-    includeAttachments: false,
+    includeAttachments: true,
   });
   expect(JSON.stringify(prepared)).not.toContain("private value");
   expect(JSON.stringify(prepared)).not.toContain("private.txt");
@@ -73,6 +79,55 @@ test("visitor Email Resource uses one submitted address and prepends the site re
       "https://published.example"
     ).email?.body
   ).toBe("We received your request from https://published.example.");
+});
+
+test("visitor Email Resource includes files by default and respects opt-out", async () => {
+  const formData = new FormData();
+  formData.append("email", "visitor@example.com");
+  formData.append(
+    "upload",
+    new File(["hello"], "hello.txt", { type: "text/plain" })
+  );
+  const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { fetch },
+    formData
+  )!;
+  const siteUrl = "https://published.example";
+  const prepared = prepareVisitorEmailRequest(
+    visitorRequest(),
+    formData,
+    siteUrl
+  );
+
+  expect(prepared.email?.includeAttachments).toBe(true);
+  validateCloudflareManagedFormEmail(prepared, formData);
+  await sendEmail(prepared, {});
+  const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+  expect(JSON.parse(init.body as string)).toMatchObject({
+    attachments: [
+      {
+        filename: "hello.txt",
+        contentType: "text/plain",
+        contentBase64: "aGVsbG8=",
+      },
+    ],
+  });
+
+  const excluded = prepareVisitorEmailRequest(
+    visitorRequest("", false),
+    formData,
+    siteUrl
+  );
+  expect(excluded.email?.includeAttachments).toBe(false);
+  await sendEmail(excluded, {});
+  const [, excludedInit] = fetch.mock.calls[1] as unknown as [
+    string,
+    RequestInit,
+  ];
+  expect(JSON.parse(excludedInit.body as string)).not.toHaveProperty(
+    "attachments"
+  );
 });
 
 test("visitor Email Resource rejects repeated, missing, and invalid addresses", () => {
@@ -128,6 +183,112 @@ test("sends the private worker envelope with files and no form internals", async
       },
     ],
   });
+});
+
+test.each([
+  ["Project", { recipientMode: "project" as const }],
+  [
+    "Custom",
+    { recipientMode: "custom" as const, recipients: "team@example.com" },
+  ],
+])(
+  "ordinary %s Email Resource includes submitted files by default in the Email Service payload",
+  async (_mode, email) => {
+    const generatedFields = generateResourceRequestFields({
+      resource: {
+        id: "email-resource",
+        name: "Team email",
+        control: "email",
+        method: "post",
+        url: '""',
+        searchParams: [],
+        headers: [],
+        email,
+      },
+      indent: "",
+      dataSources: new Map(),
+      usedDataSources: new Map(),
+      scope: createScope(),
+      projectMeta: {
+        contactEmail: "team@example.com",
+        emailSender: "sender@example.com",
+        emailSubject: "New submission",
+        emailBody: "Submitted",
+      },
+    });
+    const generatedRequest = new Function(
+      `return ({${generatedFields}})`
+    )() as ResourceRequest;
+    const formData = new FormData();
+    formData.append(
+      "upload",
+      new File(["hello"], "hello.txt", { type: "text/plain" })
+    );
+    const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+    const sendEmail = createCloudflareManagedFormEmailSender(
+      { fetch },
+      formData
+    )!;
+
+    expect(generatedRequest.email?.includeAttachments).toBe(true);
+    await sendEmail(generatedRequest, {});
+
+    const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      attachments: [
+        {
+          filename: "hello.txt",
+          contentType: "text/plain",
+          contentBase64: "aGVsbG8=",
+        },
+      ],
+    });
+  }
+);
+
+test("exposes the exact Email Service request only when inspection is enabled", async () => {
+  const formData = new FormData();
+  formData.append("email", "visitor@example.com");
+  formData.append(
+    "attachment",
+    new File(["submitted file"], "submission.txt", { type: "text/plain" })
+  );
+  const fetch = vi.fn(async (input: RequestInfo | URL) => {
+    expect(input).toBeInstanceOf(Request);
+    return Response.json({ id: "sent" });
+  });
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { fetch },
+    formData
+  )!;
+  let inspectedRequest: Request | undefined;
+
+  await sendEmail(request, {
+    onEmailRequest: (outgoing) => {
+      inspectedRequest = outgoing;
+    },
+  });
+
+  expect(inspectedRequest?.method).toBe("POST");
+  expect(inspectedRequest?.url).toBe("https://email-service.internal/v1/send");
+  expect(inspectedRequest?.headers.get("content-type")).toBe(
+    "application/json"
+  );
+  expect(await inspectedRequest?.clone().json()).toEqual({
+    to: [{ address: "team@example.com", name: "Team" }],
+    subject: "New submission",
+    text: "Text body",
+    replyTo: { address: "reply@example.com", name: "Visitor replies" },
+    fromName: "Visitor replies",
+    attachments: [
+      {
+        filename: "submission.txt",
+        contentType: "text/plain",
+        contentBase64: "c3VibWl0dGVkIGZpbGU=",
+      },
+    ],
+  });
+  expect(fetch).toHaveBeenCalledOnce();
 });
 
 test("sends Preview email to the canonical URL with server-only authorization", async () => {
@@ -326,7 +487,7 @@ test("propagates Worker rejection for mailbox or attachment policy", async () =>
   const fetch = vi.fn(async () =>
     Response.json(
       {
-        error: { code: "EMAIL_INVALID", message: "Email settings are invalid" },
+        error: { code: "EMAIL_INVALID", message: emailSettingsInvalidMessage },
       },
       { status: 400 }
     )
@@ -348,7 +509,7 @@ test("propagates Worker rejection for mailbox or attachment policy", async () =>
   expect(result).toMatchObject({
     ok: false,
     status: 400,
-    statusText: "Email settings are invalid",
+    statusText: emailSettingsInvalidMessage,
     data: { error: { code: "EMAIL_INVALID" } },
   });
   expect(fetch).toHaveBeenCalledOnce();

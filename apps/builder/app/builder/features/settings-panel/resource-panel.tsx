@@ -28,7 +28,6 @@ import {
   getFormEmailFieldNames,
   defaultEmailBody,
   getResourceCycleDataSourceIds,
-  isAssetsResource as isAssetsResourceRecord,
   isFormSubmission,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -66,7 +65,6 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
-  ProChip,
   Radio,
   RadioAndLabel,
   RadioGroup,
@@ -81,7 +79,6 @@ import {
 import { MinusIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import {
-  $permissions,
   $selectedInstance,
   $selectedInstancePathWithRoot,
   $selectedPage,
@@ -259,7 +256,7 @@ export const MethodField = ({
         options={["get", "post", "put", "delete"]}
         getLabel={humanizeString}
         getDescription={(method) => (
-          <Box css={{ width: theme.spacing[25] }}>
+          <Box css={{ width: "100%" }}>
             {formDestination && method === "post"
               ? "Form submissions use POST. This method applies elsewhere."
               : {
@@ -428,8 +425,8 @@ const ExpressionPairs = ({
           <Tooltip
             content={
               kind === "header"
-                ? "Add extra information to the request."
-                : "Add values to the URL after the question mark."
+                ? "Headers are name-value pairs sent with the request. Use them to tell the server how to interpret the request or who is making it."
+                : "Search params are name-value pairs added to the URL after ?. Use them to send filters, search terms, or other request options."
             }
           >
             <InfoCircleIcon
@@ -678,95 +675,170 @@ const getVariableInstanceKey = ({
   return getInstanceKey(instancePath[0].instanceSelector);
 };
 
+const areMapsShallowEqual = <Key, Value>(
+  left: ReadonlyMap<Key, Value> | undefined,
+  right: ReadonlyMap<Key, Value> | undefined
+) => {
+  if (left === right) {
+    return true;
+  }
+  if (left === undefined || right === undefined || left.size !== right.size) {
+    return false;
+  }
+  for (const [key, value] of left) {
+    if (
+      right.has(key) === false ||
+      Object.is(right.get(key), value) === false
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const areSetsEqual = <Value,>(
+  left: ReadonlySet<Value>,
+  right: ReadonlySet<Value>
+) => left.size === right.size && [...left].every((value) => right.has(value));
+
 export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
   return useStore(
-    useMemo(
-      () =>
-        computed(
-          [
-            $selectedPage,
-            $selectedInstancePathWithRoot,
-            $variableValuesByInstanceSelector,
-            $dataSources,
-            $resources,
-            $instances,
-            $props,
-            $livePreviewFormValues,
-          ],
-          (
+    useMemo(() => {
+      let cachedBaseInputs: readonly unknown[] | undefined;
+      let cachedBaseValues: Map<string, unknown> | undefined;
+      let cachedBaseResult:
+        | ReturnType<typeof getResourceScopeForInstance>
+        | undefined;
+      let cachedCycleDataSourceIds: Set<DataSource["id"]> | undefined;
+      let cachedResult:
+        | {
+            scope: Record<string, unknown>;
+            aliases: Map<string, string>;
+            variableValues: Map<DataSource["id"], unknown>;
+          }
+        | undefined;
+
+      return computed(
+        [
+          $selectedPage,
+          $selectedInstancePathWithRoot,
+          $variableValuesByInstanceSelector,
+          $dataSources,
+          $resources,
+          $instances,
+          $props,
+          $livePreviewFormValues,
+        ],
+        (
+          page,
+          instancePath,
+          variableValuesByInstanceSelector,
+          dataSources,
+          resources,
+          instances,
+          props,
+          liveFormValues
+        ) => {
+          const variablePathIndex =
+            variable === undefined
+              ? 0
+              : (instancePath?.findIndex(
+                  ({ instance }) => instance.id === variable.scopeInstanceId
+                ) ?? -1);
+          const formScopeInstanceId =
+            variablePathIndex < 0
+              ? undefined
+              : instancePath
+                  ?.slice(variablePathIndex)
+                  .find(({ instance }) => instance.component === "NativeForm")
+                  ?.instance.id;
+          const formScopeSelector =
+            formScopeInstanceId === undefined
+              ? undefined
+              : instancePath?.find(
+                  ({ instance }) => instance.id === formScopeInstanceId
+                )?.instanceSelector;
+          const instanceKey = getVariableInstanceKey({
+            variable,
+            instancePath,
+          });
+          const values = variableValuesByInstanceSelector.get(
+            instanceKey ?? ""
+          );
+          const currentBaseInputs = [
             page,
             instancePath,
-            variableValuesByInstanceSelector,
             dataSources,
-            resources,
             instances,
             props,
-            liveFormValues
-          ) => {
-            const variablePathIndex =
-              variable === undefined
-                ? 0
-                : (instancePath?.findIndex(
-                    ({ instance }) => instance.id === variable.scopeInstanceId
-                  ) ?? -1);
-            const formScopeInstanceId =
-              variablePathIndex < 0
-                ? undefined
-                : instancePath
-                    ?.slice(variablePathIndex)
-                    .find(({ instance }) => instance.component === "NativeForm")
-                    ?.instance.id;
-            const formScopeSelector =
-              formScopeInstanceId === undefined
-                ? undefined
-                : instancePath?.find(
-                    ({ instance }) => instance.id === formScopeInstanceId
-                  )?.instanceSelector;
-            const { scope, aliases, variableValues } =
-              getResourceScopeForInstance({
-                page,
-                instanceKey: getVariableInstanceKey({
-                  variable,
-                  instancePath,
-                }),
-                dataSources,
-                variableValuesByInstanceSelector,
-                includeResourceDataSources: true,
-                formScopeInstanceId,
-                formScopeSelector,
-                instances,
-                props,
-                liveFormValues,
-              });
-            // Prevent showing dependencies that would create a cycle.
-            const newScope = { ...scope };
-            const newAliases = new Map(aliases);
-            const newVariableValues = new Map(variableValues);
-            if (variable) {
-              const hiddenDataSourceIds =
-                variable.type === "resource"
-                  ? getResourceCycleDataSourceIds({
-                      resourceDataSource: variable,
-                      resources,
-                      dataSources,
-                    })
-                  : [variable.id];
-              for (const dataSourceId of hiddenDataSourceIds) {
-                const key = encodeDataVariableId(dataSourceId);
-                delete newScope[key];
-                newAliases.delete(key);
-                newVariableValues.delete(dataSourceId);
-              }
-            }
-            return {
-              scope: newScope,
-              aliases: newAliases,
-              variableValues: newVariableValues,
-            };
+            liveFormValues,
+          ] as const;
+          const baseInputsMatch =
+            cachedBaseInputs !== undefined &&
+            cachedBaseInputs[0] === page &&
+            cachedBaseInputs[1] === instancePath &&
+            cachedBaseInputs[2] === dataSources &&
+            cachedBaseInputs[3] === instances &&
+            cachedBaseInputs[4] === props &&
+            cachedBaseInputs[5] === liveFormValues &&
+            areMapsShallowEqual(cachedBaseValues, values);
+          if (baseInputsMatch === false) {
+            cachedBaseInputs = currentBaseInputs;
+            cachedBaseValues = values;
+            cachedBaseResult = getResourceScopeForInstance({
+              page,
+              instanceKey,
+              dataSources,
+              variableValuesByInstanceSelector,
+              includeResourceDataSources: true,
+              formScopeInstanceId,
+              formScopeSelector,
+              instances,
+              props,
+              liveFormValues,
+            });
           }
-        ),
-      [variable]
-    )
+          const cycleDataSourceIds = new Set(
+            variable === undefined
+              ? []
+              : variable.type === "resource"
+                ? getResourceCycleDataSourceIds({
+                    resourceDataSource: variable,
+                    resources,
+                    dataSources,
+                  })
+                : [variable.id]
+          );
+          if (
+            cachedResult !== undefined &&
+            baseInputsMatch &&
+            cachedCycleDataSourceIds !== undefined &&
+            areSetsEqual(cachedCycleDataSourceIds, cycleDataSourceIds)
+          ) {
+            return cachedResult;
+          }
+
+          const { scope, aliases, variableValues } = cachedBaseResult!;
+          const newScope = { ...scope };
+          const newAliases = new Map(aliases);
+          const newVariableValues = new Map(variableValues);
+          for (const dataSourceId of cycleDataSourceIds) {
+            const key = encodeDataVariableId(dataSourceId);
+            delete newScope[key];
+            newAliases.delete(key);
+            newVariableValues.delete(dataSourceId);
+          }
+          const result = {
+            scope: newScope,
+            aliases: newAliases,
+            variableValues: newVariableValues,
+          };
+          cachedCycleDataSourceIds = cycleDataSourceIds;
+          cachedResult = result;
+          return result;
+        }
+      );
+    }, [variable])
   );
 };
 
@@ -1210,6 +1282,7 @@ ResourceForm.displayName = "ResourceForm";
 
 const EmailExpressionField = ({
   label,
+  accessibleName,
   expression,
   placeholder,
   scope,
@@ -1218,7 +1291,8 @@ const EmailExpressionField = ({
   onChange,
   multiline = false,
 }: {
-  label: string;
+  label?: string;
+  accessibleName?: string;
   expression: string;
   placeholder: string;
   scope: Record<string, unknown>;
@@ -1237,49 +1311,56 @@ const EmailExpressionField = ({
   const onChangeValue = (nextValue: string) =>
     onChange(JSON.stringify(nextValue));
 
-  return (
+  const control = (
+    <BindableExpressionControl
+      expression={expression}
+      value={value}
+      bound={isLiteralExpression(expression) === false}
+      scope={scope}
+      aliases={aliases}
+      onChangeValue={onChangeValue}
+      onChangeExpression={onChange}
+      onRemove={(evaluatedValue) =>
+        onChange(JSON.stringify(String(evaluatedValue ?? "")))
+      }
+      renderControl={({ value, readOnly, onChangeValue }) => (
+        <InputErrorsTooltip errors={error ? [error] : undefined}>
+          {multiline ? (
+            <TextArea
+              id={id}
+              aria-label={accessibleName}
+              rows={4}
+              autoGrow
+              disabled={readOnly}
+              value={value}
+              placeholder={placeholder}
+              color={error ? "error" : undefined}
+              onChange={onChangeValue}
+            />
+          ) : (
+            <InputField
+              id={id}
+              aria-label={accessibleName}
+              value={value}
+              placeholder={placeholder}
+              disabled={readOnly}
+              color={error ? "error" : undefined}
+              onChange={(event) => onChangeValue(event.target.value)}
+            />
+          )}
+        </InputErrorsTooltip>
+      )}
+    />
+  );
+  return label ? (
     <Row>
       <Grid gap={1}>
         <Label htmlFor={id}>{label}</Label>
-        <BindableExpressionControl
-          expression={expression}
-          value={value}
-          bound={isLiteralExpression(expression) === false}
-          scope={scope}
-          aliases={aliases}
-          onChangeValue={onChangeValue}
-          onChangeExpression={onChange}
-          onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(String(evaluatedValue ?? "")))
-          }
-          renderControl={({ value, readOnly, onChangeValue }) => (
-            <InputErrorsTooltip errors={error ? [error] : undefined}>
-              {multiline ? (
-                <TextArea
-                  id={id}
-                  rows={4}
-                  autoGrow
-                  disabled={readOnly}
-                  value={value}
-                  placeholder={placeholder}
-                  color={error ? "error" : undefined}
-                  onChange={onChangeValue}
-                />
-              ) : (
-                <InputField
-                  id={id}
-                  value={value}
-                  placeholder={placeholder}
-                  disabled={readOnly}
-                  color={error ? "error" : undefined}
-                  onChange={(event) => onChangeValue(event.target.value)}
-                />
-              )}
-            </InputErrorsTooltip>
-          )}
-        />
+        {control}
       </Grid>
     </Row>
+  ) : (
+    control
   );
 };
 
@@ -1294,10 +1375,27 @@ export const EmailResourceForm = forwardRef<
   const props = useStore($props);
   const projectMeta = useStore($projectSettings)?.meta;
   const attachmentId = useId();
+  const recipientsLabelId = useId();
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
+  const { scope: emailIdentityScope, aliases: emailIdentityAliases } =
+    useMemo(() => {
+      const emailIdentityScope = { ...scope };
+      const emailIdentityAliases = new Map(aliases);
+      for (const [identifier] of aliases) {
+        const dataSourceId = decodeDataVariableId(identifier);
+        if (
+          dataSourceId &&
+          dataSources.get(dataSourceId)?.type === "resource"
+        ) {
+          delete emailIdentityScope[identifier];
+          emailIdentityAliases.delete(identifier);
+        }
+      }
+      return { scope: emailIdentityScope, aliases: emailIdentityAliases };
+    }, [aliases, dataSources, scope]);
   const scopeInstanceId =
     variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
   const formId = Array.from(instances.values()).find(
@@ -1336,22 +1434,6 @@ export const EmailResourceForm = forwardRef<
     onChange?.();
     setSettings((previous) => ({ ...previous, [key]: value }));
   };
-  const senderError =
-    settings.sender === undefined
-      ? undefined
-      : settings.sender === ""
-        ? "Sender is required."
-        : validateEmailSender(settings.sender);
-  const recipientError =
-    settings.recipientMode === "visitor"
-      ? !settings.visitorEmailField ||
-        !emailFields.includes(settings.visitorEmailField)
-        ? "Select one named email input in this Form."
-        : undefined
-      : settings.recipientMode !== "custom"
-        ? undefined
-        : (validateContactEmail(settings.recipients ?? "") ??
-          (settings.recipients ? undefined : "Enter at least one recipient."));
   const unavailableFormBinding = (expression: string) =>
     Array.from(getExpressionIdentifiers(expression)).some((identifier) => {
       const id = decodeDataVariableId(identifier);
@@ -1365,7 +1447,9 @@ export const EmailResourceForm = forwardRef<
     })
       ? "This Form binding is unavailable outside its Form."
       : undefined;
-  const getEmailExpressionError = (key: "subject" | "body") => {
+  const getEmailExpressionError = (
+    key: "senderExpression" | "recipientsExpression" | "subject" | "body"
+  ) => {
     const expression = settings[key];
     if (expression === undefined) {
       return;
@@ -1375,12 +1459,64 @@ export const EmailResourceForm = forwardRef<
       getResourceExpressionErrors({ email: { [key]: expression } })[0] ??
       getExpressionErrorMessages({
         expression,
-        availableVariables: new Set(aliases.keys()),
+        availableVariables: new Set(
+          (key === "senderExpression" || key === "recipientsExpression"
+            ? emailIdentityAliases
+            : aliases
+          ).keys()
+        ),
       })[0]
     );
   };
+  const senderError =
+    settings.senderExpression !== undefined
+      ? getEmailExpressionError("senderExpression")
+      : settings.sender === undefined
+        ? undefined
+        : settings.sender === ""
+          ? "Sender is required."
+          : validateEmailSender(settings.sender);
+  const recipientError =
+    settings.recipientMode === "visitor"
+      ? !settings.visitorEmailField ||
+        !emailFields.includes(settings.visitorEmailField)
+        ? "Select one named email input in this Form."
+        : undefined
+      : settings.recipientMode !== "custom"
+        ? undefined
+        : settings.recipientsExpression !== undefined
+          ? getEmailExpressionError("recipientsExpression")
+          : (validateContactEmail(settings.recipients ?? "") ??
+            (settings.recipients
+              ? undefined
+              : "Enter at least one recipient."));
   const subjectError = getEmailExpressionError("subject");
   const bodyError = getEmailExpressionError("body");
+  const setEmailExpression = (
+    expressionKey: "senderExpression" | "recipientsExpression",
+    valueKey: "sender" | "recipients",
+    expression: string
+  ) => {
+    let literalValue: string | undefined;
+    try {
+      const parsed: unknown = JSON.parse(expression);
+      if (typeof parsed === "string") {
+        literalValue = parsed;
+      }
+    } catch {
+      // Non-literal expressions are stored as bindings and validated at submit.
+    }
+    if (literalValue === undefined) {
+      setField(expressionKey, expression);
+      return;
+    }
+    onChange?.();
+    setSettings((previous) => {
+      const next = { ...previous, [valueKey]: literalValue };
+      delete next[expressionKey];
+      return next;
+    });
+  };
   useImperativeHandle(ref, () => ({
     save: (formData) => {
       if (senderError || recipientError || subjectError || bodyError) {
@@ -1411,21 +1547,20 @@ export const EmailResourceForm = forwardRef<
     },
   }));
   const senderField = (
-    <Row>
-      <Grid gap={1}>
-        <Label>Sender</Label>
-        <InputErrorsTooltip errors={senderError ? [senderError] : undefined}>
-          <TextArea
-            rows={1}
-            autoGrow
-            value={settings.sender ?? projectMeta?.emailSender ?? ""}
-            placeholder="Acme <acme@example.com>"
-            color={senderError ? "error" : undefined}
-            onChange={(next) => setField("sender", next)}
-          />
-        </InputErrorsTooltip>
-      </Grid>
-    </Row>
+    <EmailExpressionField
+      label="Sender"
+      expression={
+        settings.senderExpression ??
+        JSON.stringify(settings.sender ?? projectMeta?.emailSender ?? "")
+      }
+      placeholder="Acme <acme@example.com>"
+      scope={emailIdentityScope}
+      aliases={emailIdentityAliases}
+      error={senderError}
+      onChange={(expression) =>
+        setEmailExpression("senderExpression", "sender", expression)
+      }
+    />
   );
   return (
     <>
@@ -1438,8 +1573,9 @@ export const EmailResourceForm = forwardRef<
       />
       <Row>
         <Grid gap={1}>
-          <Label>Recipients</Label>
+          <Label id={recipientsLabelId}>Recipients</Label>
           <Select<"project" | "custom" | "visitor">
+            aria-labelledby={recipientsLabelId}
             options={
               formId === undefined
                 ? ["project", "custom"]
@@ -1467,6 +1603,7 @@ export const EmailResourceForm = forwardRef<
                   const next = { ...previous };
                   delete next.recipientMode;
                   delete next.recipients;
+                  delete next.recipientsExpression;
                   return next;
                 });
               } else if (value === "visitor") {
@@ -1474,6 +1611,7 @@ export const EmailResourceForm = forwardRef<
                 setSettings((previous) => {
                   const next = { ...previous, recipientMode: value };
                   delete next.recipients;
+                  delete next.recipientsExpression;
                   return next;
                 });
               } else {
@@ -1482,18 +1620,24 @@ export const EmailResourceForm = forwardRef<
             }}
           />
           {settings.recipientMode === "custom" && (
-            <InputErrorsTooltip
-              errors={recipientError ? [recipientError] : undefined}
-            >
-              <TextArea
-                rows={1}
-                autoGrow
-                value={settings.recipients ?? ""}
-                placeholder="Acme <acme@example.com>, team@example.com"
-                color={recipientError ? "error" : undefined}
-                onChange={(value) => setField("recipients", value)}
-              />
-            </InputErrorsTooltip>
+            <EmailExpressionField
+              accessibleName="Custom recipients"
+              expression={
+                settings.recipientsExpression ??
+                JSON.stringify(settings.recipients ?? "")
+              }
+              placeholder="Acme <acme@example.com>, team@example.com"
+              scope={emailIdentityScope}
+              aliases={emailIdentityAliases}
+              error={recipientError}
+              onChange={(expression) =>
+                setEmailExpression(
+                  "recipientsExpression",
+                  "recipients",
+                  expression
+                )
+              }
+            />
           )}
         </Grid>
       </Row>
@@ -1505,6 +1649,7 @@ export const EmailResourceForm = forwardRef<
             >
               <Select
                 fullWidth
+                aria-label="Visitor email field"
                 value={settings.visitorEmailField}
                 placeholder="Select an email field"
                 options={emailFields}
@@ -1546,35 +1691,33 @@ export const EmailResourceForm = forwardRef<
         error={bodyError}
         onChange={(value) => setField("body", value)}
       />
-      {settings.recipientMode !== "visitor" && (
-        <Row>
-          <Grid gap={1}>
-            <Label id={`${attachmentId}-label`}>Attachments</Label>
-            <RadioGroup
-              aria-labelledby={`${attachmentId}-label`}
-              value={
-                settings.includeAttachments === false ? "exclude" : "include"
-              }
-              onValueChange={(value) =>
-                setField("includeAttachments", value === "include")
-              }
-            >
-              <RadioAndLabel>
-                <Radio value="include" id={`${attachmentId}-include`} />
-                <Label htmlFor={`${attachmentId}-include`}>
-                  Attach submitted files
-                </Label>
-              </RadioAndLabel>
-              <RadioAndLabel>
-                <Radio value="exclude" id={`${attachmentId}-exclude`} />
-                <Label htmlFor={`${attachmentId}-exclude`}>
-                  Do not attach files
-                </Label>
-              </RadioAndLabel>
-            </RadioGroup>
-          </Grid>
-        </Row>
-      )}
+      <Row>
+        <Grid gap={1}>
+          <Label id={`${attachmentId}-label`}>Attachments</Label>
+          <RadioGroup
+            aria-labelledby={`${attachmentId}-label`}
+            value={
+              settings.includeAttachments === false ? "exclude" : "include"
+            }
+            onValueChange={(value) =>
+              setField("includeAttachments", value === "include")
+            }
+          >
+            <RadioAndLabel>
+              <Radio value="include" id={`${attachmentId}-include`} />
+              <Label htmlFor={`${attachmentId}-include`}>
+                Attach submitted files
+              </Label>
+            </RadioAndLabel>
+            <RadioAndLabel>
+              <Radio value="exclude" id={`${attachmentId}-exclude`} />
+              <Label htmlFor={`${attachmentId}-exclude`}>
+                Do not attach files
+              </Label>
+            </RadioAndLabel>
+          </RadioGroup>
+        </Grid>
+      </Row>
     </>
   );
 });
@@ -1582,8 +1725,12 @@ EmailResourceForm.displayName = "EmailResourceForm";
 
 type SystemResourceFormProps = {
   variable?: DataSource;
+  resourceType:
+    | "sitemap-resource"
+    | "current-date-resource"
+    | "assets-resource"
+    | "email-resource";
   onChange?: () => void;
-  onKindChange?: (kind: "system" | "email") => void;
   querySourceContainer?: Element | null;
   onQueryActiveChange?: (active: boolean) => void;
   onQueryPendingChange?: (pending: boolean) => void;
@@ -1607,64 +1754,46 @@ export const SystemResourceForm = forwardRef<
 >((props, ref) => {
   const {
     variable,
+    resourceType,
     onChange,
-    onKindChange,
     querySourceContainer,
     onQueryActiveChange,
     onQueryPendingChange,
   } = props;
   const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
-  const { allowDynamicData } = useStore($permissions);
 
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
-  const isStoredAssetQuery =
-    resource !== undefined && isAssetsResourceRecord(resource);
-
   const assetsLocalResource = {
-    label: "Assets",
     value: JSON.stringify(assetsResourceUrl),
-    description:
-      "Loads all project assets by default, with optional filters, sorting, pagination, and file content.",
   };
   const emailLocalResource = {
-    label: "Email",
     value: "email",
-    description:
-      "Send a plain-text email through Webstudio Cloud when a Form is submitted.",
   };
   const localResources = [
     {
-      label: "Sitemap",
       value: JSON.stringify(sitemapResourceUrl),
-      description: "Resource that loads the sitemap data of the current site.",
     },
     {
-      label: "Current date",
       value: JSON.stringify(currentDateResourceUrl),
-      description:
-        "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
     assetsLocalResource,
     emailLocalResource,
   ];
 
-  const [localResource, setLocalResource] = useState(() => {
-    if (resource?.control === "email") {
-      return emailLocalResource;
-    }
-    if (isStoredAssetQuery) {
-      return assetsLocalResource;
-    }
-    return (
-      localResources.find(
-        (localResource) => localResource.value === resource?.url
-      ) ?? localResources[0]
-    );
-  });
+  const selectedLocalResourceValue = {
+    "sitemap-resource": JSON.stringify(sitemapResourceUrl),
+    "current-date-resource": JSON.stringify(currentDateResourceUrl),
+    "assets-resource": JSON.stringify(assetsResourceUrl),
+    "email-resource": emailLocalResource.value,
+  }[resourceType];
+  const localResource =
+    localResources.find(
+      (localResource) => localResource.value === selectedLocalResourceValue
+    ) ?? localResources[0];
   const isEmailResource = localResource.value === emailLocalResource.value;
   const emailFormApi = useRef<undefined | PanelApi>(undefined);
   const isAssetsResource =
@@ -1713,8 +1842,6 @@ export const SystemResourceForm = forwardRef<
     },
   }));
 
-  const resourceId = useId();
-
   return (
     <>
       {!isEmailResource && (
@@ -1727,37 +1854,6 @@ export const SystemResourceForm = forwardRef<
           <input type="hidden" name="url" value={localResource.value} />
         </>
       )}
-      <Row>
-        <Grid gap={1}>
-          <Label htmlFor={resourceId}>Resource</Label>
-          <Select
-            options={localResources}
-            getLabel={(option) => (
-              <Flex direction="row" gap="2" align="center">
-                {option.label}
-                {option.value === assetsLocalResource.value &&
-                  allowDynamicData === false && <ProChip>Pro</ProChip>}
-              </Flex>
-            )}
-            getValue={(option) => option.value}
-            getDescription={(option) => {
-              return (
-                <Box css={{ width: theme.spacing[25] }}>
-                  {option?.description}
-                </Box>
-              );
-            }}
-            value={localResource}
-            onChange={(value) => {
-              onChange?.();
-              setLocalResource(value);
-              onKindChange?.(
-                value.value === emailLocalResource.value ? "email" : "system"
-              );
-            }}
-          />
-        </Grid>
-      </Row>
       {isEmailResource && (
         <EmailResourceForm
           ref={emailFormApi}

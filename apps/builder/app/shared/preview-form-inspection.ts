@@ -22,6 +22,15 @@ export const previewFormExchange = z.object({
     body: z.unknown(),
     truncated: z.boolean(),
   }),
+  outcome: z
+    .object({
+      ok: z.boolean(),
+      status: z.number(),
+      statusText: z.string(),
+      body: z.unknown(),
+      truncated: z.boolean(),
+    })
+    .optional(),
 });
 export type PreviewFormExchange = z.infer<typeof previewFormExchange>;
 export const previewFormExchanges = z.array(previewFormExchange).max(100);

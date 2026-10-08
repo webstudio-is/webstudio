@@ -4,6 +4,7 @@ import {
 } from "~/shared/preview-form-inspection";
 import {
   $livePreviewFormValues,
+  $livePreviewBrowserInfo,
   getFormOccurrenceKey,
 } from "~/shared/preview-form-values";
 import { z } from "zod";
@@ -51,12 +52,14 @@ import {
   type DataSource,
   type ResourceRequest,
   SYSTEM_VARIABLE_ID,
+  hasAssetsResourceUrl,
   resourceRequest,
 } from "@webstudio-is/sdk";
 import {
   browserInfoParameterName,
   formDataParameterName,
   isAssetsResourceRequest,
+  currentDateResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
   ExpressionEditor,
@@ -77,6 +80,7 @@ import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
 } from "~/shared/nano-states";
+import { $variableToOpen } from "./variable-navigation";
 import {
   EditorContent,
   EditorDialog,
@@ -243,7 +247,9 @@ type VariableType =
   | "resource"
   | "email-resource"
   | "graphql-resource"
-  | "system-resource";
+  | "sitemap-resource"
+  | "current-date-resource"
+  | "assets-resource";
 
 const TypeField = ({
   value,
@@ -253,6 +259,12 @@ const TypeField = ({
   onChange: (value: VariableType) => void;
 }) => {
   const { allowDynamicData } = useStore($permissions);
+  const getResourceTypeLabel = (label: string) => (
+    <Flex direction="row" gap="2" align="center">
+      {label}
+      {allowDynamicData === false && <ProChip>Pro</ProChip>}
+    </Flex>
+  );
   const optionsList: Array<{
     value: VariableType;
     disabled?: boolean;
@@ -281,36 +293,38 @@ const TypeField = ({
     },
     {
       value: "resource",
-      label: (
-        <Flex direction="row" gap="2" align="center">
-          Resource
-          {allowDynamicData === false && <ProChip>Pro</ProChip>}
-        </Flex>
-      ),
+      label: getResourceTypeLabel("Resource"),
       description:
-        "A REST resource is a configuration for secure data fetching.",
+        "A REST resource is a configuration for secure data fetching. You can safely use secrets in any field.",
     },
     {
       value: "graphql-resource",
-      label: (
-        <Flex direction="row" gap="2" align="center">
-          GraphQL
-          {allowDynamicData === false && <ProChip>Pro</ProChip>}
-        </Flex>
-      ),
+      label: getResourceTypeLabel("GraphQL"),
       description:
         "A GraphQL resource is a configuration for secure data fetching with GraphQL. You can safely use secrets in any field.",
     },
     {
-      value: "system-resource",
-      label: (
-        <Flex direction="row" gap="2" align="center">
-          System resource
-          {allowDynamicData === false && <ProChip>Pro</ProChip>}
-        </Flex>
-      ),
+      value: "sitemap-resource",
+      label: getResourceTypeLabel("Sitemap"),
+      description: "Resource that loads the sitemap data of the current site.",
+    },
+    {
+      value: "current-date-resource",
+      label: getResourceTypeLabel("Current date"),
       description:
-        "A system resource is a collection of resources specific to Webstudio.",
+        "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
+    },
+    {
+      value: "assets-resource",
+      label: getResourceTypeLabel("Assets"),
+      description:
+        "Loads all project assets by default, with optional filters, sorting, pagination, and file content.",
+    },
+    {
+      value: "email-resource",
+      label: getResourceTypeLabel("Email"),
+      description:
+        "Send a plain-text email through Webstudio Cloud when a Form is submitted.",
     },
   ];
   const options = new Map(optionsList.map((option) => [option.value, option]));
@@ -325,7 +339,7 @@ const TypeField = ({
           disabled: options.get(option)?.disabled,
         })}
         getDescription={(option) => options.get(option)?.description}
-        value={value === "email-resource" ? "system-resource" : value}
+        value={value}
         name="type"
         onChange={onChange}
       />
@@ -569,6 +583,7 @@ const JsonForm = forwardRef<
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label>Value</Label>
         <ExpressionEditor
+          showLineNumbers
           color={valueError ? "error" : undefined}
           value={value}
           onChange={onChange}
@@ -686,15 +701,13 @@ const VariablePanelForm = forwardRef<
               onChange={onResourceChange}
             />
           )}
-          {(variableType === "system-resource" ||
+          {(variableType === "sitemap-resource" ||
+            variableType === "current-date-resource" ||
+            variableType === "assets-resource" ||
             variableType === "email-resource") && (
             <SystemResourceForm
               ref={ref}
-              onKindChange={(kind) =>
-                onVariableTypeChange(
-                  kind === "email" ? "email-resource" : "system-resource"
-                )
-              }
+              resourceType={variableType}
               variable={variable}
               onChange={onResourceChange}
               querySourceContainer={querySourceContainer}
@@ -741,12 +754,15 @@ const VariablePreview = ({
   const isResource =
     variableType === "resource" ||
     variableType === "graphql-resource" ||
-    variableType === "system-resource";
+    variableType === "sitemap-resource" ||
+    variableType === "current-date-resource" ||
+    variableType === "assets-resource";
   const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
   const instances = useStore($instances);
   const props = useStore($props);
   const liveFormValues = useStore($livePreviewFormValues);
+  const liveBrowserInfo = useStore($livePreviewBrowserInfo);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const variableValues = useStore($instanceVariableValues);
   const lastExchanges = useStore($previewFormExchanges);
@@ -867,7 +883,9 @@ const VariablePreview = ({
           ) ?? ""
         ) ?? getFormDataPreview(instances, props, variable.scopeInstanceId!);
     } else if (variable.name === browserInfoParameterName) {
-      computedValue = getBrowserInfoPreview();
+      computedValue = getBrowserInfoPreview(
+        liveBrowserInfo.get(variable.scopeInstanceId ?? "")
+      );
     }
   }
   if (latestExchange) {
@@ -875,14 +893,15 @@ const VariablePreview = ({
       resourceId: latestExchange.resourceId,
       resourceName: latestExchange.resourceName,
       ...latestExchange.response,
-      ok: latestExchange.response.status < 400,
+      ok: latestExchange.outcome?.ok ?? latestExchange.response.status < 400,
       attempts: latestExchangeIsFormSubmission
         ? inspection?.attempts.map(
-            ({ resourceId, resourceName, response }, index) => ({
+            ({ resourceId, resourceName, response, outcome }, index) => ({
               attempt: index + 1,
               resourceId,
               resourceName,
               ...response,
+              ...(outcome === undefined ? {} : { outcome }),
             })
           )
         : undefined,
@@ -927,14 +946,19 @@ const VariablePreview = ({
   );
   const inspectSubmission =
     variableType === "resource" ||
+    variableType === "graphql-resource" ||
     variableType === "email-resource" ||
     latestExchange !== undefined;
+  const alwaysShowRequestTab =
+    variableType === "resource" || variableType === "graphql-resource";
   if (isResource === false && !inspectSubmission) {
     return previewContent;
   }
   const requestErrorDiagnostics = getRequestErrorDiagnostics(
     latestExchange
-      ? { ...latestExchange.response, data: latestExchange.response.body }
+      ? latestExchange.outcome
+        ? { ...latestExchange.outcome, data: latestExchange.outcome.body }
+        : { ...latestExchange.response, data: latestExchange.response.body }
       : computedValue
   );
   const diagnosticsRequestError = getRequestErrorDiagnostics(
@@ -946,31 +970,34 @@ const VariablePreview = ({
     ) : (
       <RequestErrorDiagnostics value={requestErrorDiagnostics} />
     );
+  const requestSnapshot = latestExchange
+    ? latestExchangeIsFormSubmission && inspection?.attempts.length
+      ? inspection.attempts.map(
+          ({ resourceId, resourceName, request, kind }, index) => ({
+            attempt: index + 1,
+            resourceId,
+            resourceName,
+            kind,
+            ...request,
+          })
+        )
+      : {
+          resourceId: latestExchange.resourceId,
+          resourceName: latestExchange.resourceName,
+          ...latestExchange.request,
+        }
+    : undefined;
   return (
     <RequestInspector
       previewLabel={inspectSubmission ? "Response" : "Preview"}
       request={
-        inspectSubmission && latestExchange !== undefined ? (
-          <EditorContent
-            {...editorProps}
-            value={formatValue(
-              latestExchangeIsFormSubmission && inspection?.attempts.length
-                ? inspection.attempts.map(
-                    ({ resourceId, resourceName, request, kind }, index) => ({
-                      attempt: index + 1,
-                      resourceId,
-                      resourceName,
-                      kind,
-                      ...request,
-                    })
-                  )
-                : {
-                    resourceId: latestExchange.resourceId,
-                    resourceName: latestExchange.resourceName,
-                    ...latestExchange.request,
-                  }
-            )}
-          />
+        alwaysShowRequestTab || requestSnapshot !== undefined ? (
+          requestSnapshot !== undefined ? (
+            <EditorContent
+              {...editorProps}
+              value={formatValue(requestSnapshot)}
+            />
+          ) : null
         ) : undefined
       }
       queryContainerRef={queryActive ? queryContainerRef : undefined}
@@ -1052,7 +1079,13 @@ const VariablePopoverContent = ({
     if (variable?.type === "resource") {
       const resource = resources.get(variable.resourceId);
       if (resource?.control === "system") {
-        return "system-resource";
+        if (resource.url === JSON.stringify(currentDateResourceUrl)) {
+          return "current-date-resource";
+        }
+        if (hasAssetsResourceUrl(resource)) {
+          return "assets-resource";
+        }
+        return "sitemap-resource";
       }
       if (resource?.control === "graphql") {
         return "graphql-resource";
@@ -1107,7 +1140,9 @@ const VariablePopoverContent = ({
         variableType === "resource" ||
         variableType === "email-resource" ||
         variableType === "graphql-resource" ||
-        variableType === "system-resource"
+        variableType === "sitemap-resource" ||
+        variableType === "current-date-resource" ||
+        variableType === "assets-resource"
       ) {
         return;
       }
@@ -1257,7 +1292,9 @@ const VariablePopoverContent = ({
                 onRefresh={
                   variableType === "resource" ||
                   variableType === "graphql-resource" ||
-                  variableType === "system-resource"
+                  variableType === "sitemap-resource" ||
+                  variableType === "current-date-resource" ||
+                  variableType === "assets-resource"
                     ? () => void reloadData()
                     : undefined
                 }
@@ -1265,7 +1302,9 @@ const VariablePopoverContent = ({
             )}
             {(variableType === "resource" ||
               variableType === "graphql-resource" ||
-              variableType === "system-resource") && (
+              variableType === "sitemap-resource" ||
+              variableType === "current-date-resource" ||
+              variableType === "assets-resource") && (
               <Tooltip content="Refresh resource data" side="bottom">
                 <Button
                   type="button"
@@ -1321,7 +1360,18 @@ export const VariablePopoverTrigger = ({
   onOpenChange?: (isOpen: boolean) => void;
 }) => {
   const [isOpen, setOpen] = useState(false);
+  const variableToOpen = useStore($variableToOpen);
   const formRef = useRef<HTMLFormElement>(null);
+  const variableId = variable?.id;
+
+  useEffect(() => {
+    if (variableId === undefined || variableToOpen?.id !== variableId) {
+      return;
+    }
+    setOpen(true);
+    onOpenChange?.(true);
+    $variableToOpen.set(undefined);
+  }, [onOpenChange, variableId, variableToOpen]);
 
   return (
     <FloatingPanel
@@ -1349,15 +1399,26 @@ export const VariablePopoverTrigger = ({
       }}
       title={undefined}
       content={
-        <VariablePopoverContent
-          formRef={formRef}
-          variable={variable}
-          isOpen={isOpen}
-          onClose={() => {
-            setOpen(false);
-            onOpenChange?.(false);
+        <div
+          data-variable-editor-dialog
+          style={{ display: "contents" }}
+          onPointerDown={(event) => {
+            if (event.button === 2) {
+              event.stopPropagation();
+            }
           }}
-        />
+          onContextMenu={(event) => event.stopPropagation()}
+        >
+          <VariablePopoverContent
+            formRef={formRef}
+            variable={variable}
+            isOpen={isOpen}
+            onClose={() => {
+              setOpen(false);
+              onOpenChange?.(false);
+            }}
+          />
+        </div>
       }
     >
       {children}
@@ -1378,6 +1439,7 @@ const getReloadableResourceFormData = (form: HTMLFormElement | null) => {
 export const __testing__ = {
   VariablePreview,
   NameField,
+  JsonForm,
   getReloadableResourceFormData,
   TypeField,
 };

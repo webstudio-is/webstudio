@@ -159,6 +159,8 @@ export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;
 export const assetsQuerySchemaApiUrl = `${assetsApiUrl}/query-schema.json`;
 
 export type ResourceExchange = {
+  /** The configured Resource type; never infer this from the request URL. */
+  kind?: "http" | "email";
   request: Request | ResourceRequest;
   response: {
     status: number;
@@ -167,11 +169,25 @@ export type ResourceExchange = {
     data: unknown;
     url?: string;
   };
+  /** Logical delivery result, which can differ from an Email Service HTTP response. */
+  outcome?: {
+    ok: boolean;
+    status: number;
+    statusText: string;
+    data: unknown;
+  };
 };
 
 export type ResourceLoadOptions = {
   /** Private, opt-in inspection of the same transport attempt; never replays it. */
   onExchange?: (exchange: ResourceExchange) => void | Promise<void>;
+  /** Used only when exchange inspection is enabled for an Email delivery. */
+  onEmailRequest?: (request: Request) => void;
+  /** Actual response metadata for the Email Service request, for inspection. */
+  onEmailResponse?: (
+    response: Pick<Response, "status" | "statusText" | "headers" | "url">,
+    data: unknown
+  ) => void;
   signal?: AbortSignal;
   timeoutMs?: number;
   /** Supplied only by the published site's server runtime. */
@@ -402,10 +418,41 @@ export const loadResource = async (
   if (resourceRequest.control === "email") {
     validateEmailSubject(resourceRequest.email?.subject);
     if (options.sendEmail !== undefined) {
-      const result = await options.sendEmail(resourceRequest, options);
+      let emailRequest: Request | undefined;
+      let emailResponse: ResourceExchange["response"] | undefined;
+      const sendOptions =
+        options.onExchange === undefined
+          ? options
+          : {
+              ...options,
+              onEmailRequest: (request: Request) => {
+                emailRequest = request;
+              },
+              onEmailResponse: (
+                response: Pick<
+                  Response,
+                  "status" | "statusText" | "headers" | "url"
+                >,
+                data: unknown
+              ) => {
+                emailResponse = {
+                  status: response.status,
+                  statusText: response.statusText,
+                  headers: new Headers(response.headers),
+                  data,
+                  url: response.url || undefined,
+                };
+              },
+            };
+      const result = await options.sendEmail(resourceRequest, sendOptions);
       await observe({
-        request: resourceRequest,
-        response: { ...result, headers: new Headers() },
+        kind: "email",
+        request: emailRequest ?? resourceRequest,
+        response: emailResponse ?? {
+          ...result,
+          headers: new Headers(),
+        },
+        outcome: result,
       });
       return result;
     }
@@ -604,6 +651,7 @@ export const loadResource = async (
   } finally {
     if (inspectionRequest && inspectionResponse) {
       await observe({
+        kind: "http",
         request: inspectionRequest,
         response: inspectionResponse,
       });

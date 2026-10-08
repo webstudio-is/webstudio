@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   getDefaultFormEmailBodyExpression,
+  resolveEmailRecipientsExpression,
+  resolveEmailSenderExpression,
   resetEmailResourceSetting,
   resolveEmailResourceSettings,
 } from "./email-resource";
@@ -36,6 +38,39 @@ describe("email addresses", () => {
     ]) {
       expect(parseEmailMailboxes(value)).toBeUndefined();
     }
+  });
+});
+
+describe("bound Email Resource addresses", () => {
+  test("resolves one Sender mailbox and a comma-separated recipient list", () => {
+    expect(resolveEmailSenderExpression("Acme <sender@example.com>")).toEqual({
+      name: "Acme",
+      address: "sender@example.com",
+    });
+    expect(
+      resolveEmailRecipientsExpression(
+        "First <one@example.com>, two@example.com"
+      )
+    ).toEqual([
+      { name: "First", address: "one@example.com" },
+      { address: "two@example.com" },
+    ]);
+  });
+
+  test.each([
+    ["empty", ""],
+    ["non-string", { address: "user@example.com" }],
+    ["invalid mailbox", "invalid"],
+  ])("rejects %s resolved Sender values", (_, value) => {
+    expect(() => resolveEmailSenderExpression(value)).toThrow();
+  });
+
+  test.each([
+    ["empty", ""],
+    ["non-string", ["user@example.com"]],
+    ["invalid mailbox", "invalid"],
+  ])("rejects %s resolved recipient values", (_, value) => {
+    expect(() => resolveEmailRecipientsExpression(value)).toThrow();
   });
 });
 
@@ -142,8 +177,20 @@ describe("Email Resource defaults", () => {
       recipients: [],
       subject: '"We got it"',
       body: '""',
-      includeAttachments: false,
+      includeAttachments: true,
     });
+  });
+
+  test("allows visitor Email Resource attachments to be explicitly disabled", () => {
+    expect(
+      resolveEmailResourceSettings({
+        settings: {
+          recipientMode: "visitor",
+          visitorEmailField: "email",
+          includeAttachments: false,
+        },
+      }).includeAttachments
+    ).toBe(false);
   });
 
   test("uses a translated project body as the complete literal message", () => {

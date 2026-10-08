@@ -1,5 +1,6 @@
 import {
   $livePreviewFormValues,
+  $livePreviewBrowserInfo,
   getFormOccurrenceKey,
 } from "~/shared/preview-form-values";
 import { useEffect, useRef, useState } from "react";
@@ -42,7 +43,11 @@ import {
   VariableContextMenu,
   VariableMenu,
 } from "./variable-menu";
-import { $variableToFocus, showVariableAtSource } from "./variable-navigation";
+import {
+  $variableToFocus,
+  $variableToOpen,
+  showVariableAtSource,
+} from "./variable-navigation";
 import { StyleSourceBadge } from "../style-panel/style-source";
 import {
   getFormDataPreview,
@@ -180,15 +185,46 @@ const VariablesItem = ({
   const rowRef = useRef<HTMLButtonElement>(null);
   const [isVariableDialogOpen, setIsVariableDialogOpen] = useState(false);
   useEffect(() => {
-    if (isOpen && variableToFocus?.id === variable.id) {
-      rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      rowRef.current?.focus({ preventScroll: true });
-      $variableToFocus.set(undefined);
+    if (!isOpen || variableToFocus?.id !== variable.id) {
+      return;
     }
+
+    let focusRequestId: number | undefined;
+    const scrollRequestId = requestAnimationFrame(() => {
+      const row = rowRef.current;
+      if (
+        row === null ||
+        !row.isConnected ||
+        $variableToFocus.get()?.id !== variable.id
+      ) {
+        return;
+      }
+      row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      focusRequestId = requestAnimationFrame(() => {
+        const currentRow = rowRef.current;
+        if (
+          currentRow === null ||
+          !currentRow.isConnected ||
+          $variableToFocus.get()?.id !== variable.id
+        ) {
+          return;
+        }
+        currentRow.focus({ preventScroll: true });
+        $variableToFocus.set(undefined);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(scrollRequestId);
+      if (focusRequestId !== undefined) {
+        cancelAnimationFrame(focusRequestId);
+      }
+    };
   }, [isOpen, variableToFocus, variable.id]);
   const instances = useStore($instances);
   const props = useStore($props);
   const liveFormValues = useStore($livePreviewFormValues);
+  const liveBrowserInfo = useStore($livePreviewBrowserInfo);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const dataSources = useStore($dataSources);
   const valueSourceId = variable.scopeInstanceId ?? ROOT_INSTANCE_ID;
@@ -227,7 +263,9 @@ const VariablesItem = ({
         ) ?? getFormDataPreview(instances, props, variable.scopeInstanceId!);
     }
     if (variable.name === "browserInfo") {
-      value = getBrowserInfoPreview();
+      value = getBrowserInfoPreview(
+        liveBrowserInfo.get(variable.scopeInstanceId ?? "")
+      );
     }
   }
   const canDelete = canDeleteVariable(variable, source === "local");
@@ -329,7 +367,15 @@ const VariablesItem = ({
               </Tooltip>
             )}
             {value !== undefined && (
-              <span className={variableLabelStyle.toString()}>
+              <span
+                className={variableLabelStyle.toString()}
+                title={
+                  variable.type === "parameter" &&
+                  variable.name === "browserInfo"
+                    ? JSON.stringify(value, null, 2)
+                    : undefined
+                }
+              >
                 &nbsp;
                 {formatValuePreview(value)}
               </span>
@@ -397,11 +443,25 @@ const label = "Variables";
 
 export const VariablesSection = () => {
   const variableToFocus = useStore($variableToFocus);
+  const variableToOpen = useStore($variableToOpen);
   const availableVariables = useStore($availableVariables);
   const selectedInstance = useStore($selectedInstance);
   const selectedScopeId = selectedInstance?.id ?? ROOT_INSTANCE_ID;
   const [isOpen, setIsOpen] = useOpenState(label);
   useEffect(() => {
+    if (
+      variableToOpen !== undefined &&
+      availableVariables.some(({ id }) => id === variableToOpen.id)
+    ) {
+      if (isOpen === false) {
+        setIsOpen(true);
+      }
+    } else if (
+      variableToOpen !== undefined &&
+      !availableVariables.some(({ id }) => id === variableToOpen.id)
+    ) {
+      $variableToOpen.set(undefined);
+    }
     if (variableToFocus === undefined) {
       return;
     }
@@ -414,8 +474,16 @@ export const VariablesSection = () => {
       }
     } else {
       $variableToFocus.set(undefined);
+      $variableToOpen.set(undefined);
     }
-  }, [availableVariables, isOpen, selectedScopeId, setIsOpen, variableToFocus]);
+  }, [
+    availableVariables,
+    isOpen,
+    selectedScopeId,
+    setIsOpen,
+    variableToFocus,
+    variableToOpen,
+  ]);
   return (
     <VariableContextMenu>
       <CollapsibleSectionRoot

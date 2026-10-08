@@ -19,6 +19,8 @@ export const emailResourceSettings = z.object({
   recipients: z.string().optional(),
   visitorEmailField: z.string().optional(),
   sender: z.string().optional(),
+  senderExpression: z.string().optional(),
+  recipientsExpression: z.string().optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
   includeAttachments: z.boolean().optional(),

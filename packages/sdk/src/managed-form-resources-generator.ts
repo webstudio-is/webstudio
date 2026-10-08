@@ -56,7 +56,7 @@ export const generateManagedFormResources = ({
     "$managedFormDocuments",
     "_managedFormDocuments"
   );
-  // generateResources supplies the type imports in the same server module.
+  // generateResources supplies the imports in the same server module.
   let generated = `import { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";\nexport const getManagedFormResourceGraph = (formId: string, ${propsName}: { system: System; ${formDataParameterName}: unknown; ${browserInfoParameterName}: unknown }): ResourceRequestGraph | undefined => {\n`;
   generated += `  switch (formId) {\n`;
 
@@ -112,6 +112,8 @@ export const generateManagedFormResources = ({
                 ownerName,
               })
             : undefined;
+        const hasRecipientExpression =
+          resource.email?.recipientsExpression !== undefined;
         const invalidVisitorField =
           resolvedEmailSettings?.recipientMode === "visitor" &&
           (!formBoundResourceIds.has(resourceId) ||
@@ -122,23 +124,27 @@ export const generateManagedFormResources = ({
               formId
             ).includes(resolvedEmailSettings.visitorEmailField));
         if (resolvedEmailSettings !== undefined) {
-          if (resolvedEmailSettings.recipients === undefined) {
+          if (
+            !hasRecipientExpression &&
+            resolvedEmailSettings.recipients === undefined
+          ) {
             throw new InvalidManagedFormGraph(
               `Managed Form Email Resource ${resourceId} has invalid recipients`
             );
           }
-          emailRecipientCounts.set(
-            resourceId,
-            resolvedEmailSettings.recipientMode === "visitor"
-              ? 1
-              : resolvedEmailSettings.recipients.length
-          );
+          if (!hasRecipientExpression) {
+            emailRecipientCounts.set(
+              resourceId,
+              resolvedEmailSettings.recipientMode === "visitor"
+                ? 1
+                : resolvedEmailSettings.recipients!.length
+            );
+          }
         }
         const emailBodyCode =
           resource.control === "email" &&
           resolvedEmailSettings?.recipientMode !== "visitor" &&
           rootIds.includes(resourceId) &&
-          formBoundResourceIds.has(resourceId) &&
           formDataSource
             ? getDefaultFormEmailBodyExpression(
                 `createJsonStringifyProxy(${propsName}.${formDataParameterName} as object, ${JSON.stringify(
@@ -272,10 +278,10 @@ export const generateManagedFormResources = ({
           scope.getName(resourceId, resource.name)
         )}, dependencies: ${JSON.stringify(
           dependenciesById.get(resourceId) ?? []
-        )}, ${
+        )}, ${resource.control === "email" ? 'control: "email", ' : ""}${
           emailRecipientCount === undefined
             ? ""
-            : `control: "email", emailRecipientCount: ${emailRecipientCount}, `
+            : `emailRecipientCount: ${emailRecipientCount}, `
         }${
           resource.email?.recipientMode === "visitor" ? "nonfatal: true, " : ""
         }${usesDefaultFormBody ? "usesDefaultFormBody: true, " : ""}${

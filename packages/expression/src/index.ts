@@ -492,6 +492,24 @@ export const parseStringLiteralExpression = (expression: string) => {
   }
 };
 
+/**
+ * Parse a JavaScript string literal, including single-quoted and static
+ * template literals.
+ */
+export const parseStaticStringExpression = (expression: string) => {
+  try {
+    const node = parseCompleteExpression(expression);
+    if (node.type === "Literal" && typeof node.value === "string") {
+      return node.value;
+    }
+    if (node.type === "TemplateLiteral" && node.expressions.length === 0) {
+      return node.quasis[0]?.value.cooked ?? undefined;
+    }
+  } catch {
+    // Invalid or non-static expressions are not string literals.
+  }
+};
+
 const getStaticMemberPath = (node: Expression): string[] | undefined => {
   if (node.type === "Identifier") {
     return [node.name];

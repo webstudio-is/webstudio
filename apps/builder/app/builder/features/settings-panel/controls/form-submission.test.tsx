@@ -102,16 +102,16 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   expect(document.body.textContent).toContain(
     "Sends each form submission to all selected destinations at the same time."
   );
-  expect(document.body.textContent).toContain(
-    "formData — submitted fields from this Form"
-  );
-  expect(document.body.textContent).toContain("browserInfo — visitor details");
-  expect(document.body.textContent).toContain(
-    "results — each action’s response, in order"
-  );
-  expect(document.body.textContent).toContain(
-    "errors — failed actions and their messages"
-  );
+  const variableBullets = Array.from(
+    document.body.querySelectorAll('[role="tooltip"] ul li')
+  ).map((item) => item.textContent?.trim());
+  expect(variableBullets).toEqual([
+    "formData — submitted fields from this Form",
+    "browserInfo — visitor details",
+    "formState — current Form state: initial, success, or error.",
+    "results — each action’s response, in order",
+    "errors — failed actions and their messages",
+  ]);
   expect(document.body.textContent).not.toContain("status —");
   expect(document.body.textContent).toContain("Add at least one action.");
   await act(async () => userEvent.keyboard("{Escape}"));
@@ -606,9 +606,22 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   });
 });
 
-test.each([false, true])(
-  "the approved empty-action warning follows enabled Actions: %s",
-  async (secondEnabled) => {
+test.each([
+  { actions: [], showWarning: true },
+  {
+    actions: [{ dataSourceId: "first", enabled: false }],
+    showWarning: false,
+  },
+  {
+    actions: [
+      { dataSourceId: "first", enabled: false },
+      { dataSourceId: "second", enabled: true },
+    ],
+    showWarning: false,
+  },
+])(
+  "the approved empty-action warning appears only when the list is empty",
+  async ({ actions, showWarning }) => {
     $instances.set(
       new Map([
         [
@@ -650,10 +663,6 @@ test.each([false, true])(
         ],
       ])
     );
-    const actions = [
-      { dataSourceId: "first", enabled: false },
-      { dataSourceId: "second", enabled: secondEnabled },
-    ];
     const container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -683,6 +692,6 @@ test.each([false, true])(
     await act(async () => await userEvent.click(label));
     expect(
       document.body.textContent?.includes("Add at least one action.")
-    ).toBe(!secondEnabled);
+    ).toBe(showWarning);
   }
 );

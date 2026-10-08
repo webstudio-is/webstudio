@@ -3,7 +3,14 @@ import { transpileExpression } from "@webstudio-is/expression";
 import { expect, test } from "vitest";
 import { createManagedFormDraftGraph } from "./managed-form-draft-graph";
 import { generateManagedFormResources } from "./managed-form-resources-generator";
+import { validateManagedFormRecipientLimit } from "./managed-form-submission";
+import {
+  emailSettingsInvalidMessage,
+  resolveEmailRecipientsExpression,
+  resolveEmailSenderSettingsExpression,
+} from "./email-resource";
 import { createScope } from "./scope";
+import { encodeDataSourceVariable } from "./expression";
 import { createJsonStringifyProxy } from "./to-string";
 import type { ResourceRequestGraph } from "./resource-loader";
 import type { DataSources } from "./schema/data-sources";
@@ -20,6 +27,9 @@ const evaluateFixtureExpression = (
     ...values.keys(),
     `return (${transpileExpression({ expression, executable: true })})`
   )(...values.values());
+
+const withEmailResolverImports = (source: string) =>
+  `import { resolveEmailRecipientsExpression, resolveEmailSenderSettingsExpression } from "@webstudio-is/sdk";\n${source}`;
 
 test("draft Form graph resolves HTTP and Email bindings like the published generator", () => {
   const instances: Instances = new Map([
@@ -178,20 +188,22 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
     evaluateExpression: evaluateFixtureExpression,
   };
   const draft = createManagedFormDraftGraph(input);
-  const source = generateManagedFormResources({
-    scope: createScope(),
-    instances,
-    dataSources,
-    resources,
-    props,
-    projectMeta,
-    forms: [
-      {
-        formId: "form",
-        destinationDataSourceIds: input.destinationDataSourceIds,
-      },
-    ],
-  });
+  const source = withEmailResolverImports(
+    generateManagedFormResources({
+      scope: createScope(),
+      instances,
+      dataSources,
+      resources,
+      props,
+      projectMeta,
+      forms: [
+        {
+          formId: "form",
+          destinationDataSourceIds: input.destinationDataSourceIds,
+        },
+      ],
+    })
+  );
   const { code } = transformSync(source, { loader: "ts", format: "cjs" });
   const module = { exports: {} as Record<string, unknown> };
   new Function("module", "exports", "require", code)(
@@ -200,6 +212,12 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
     (specifier: string) => {
       if (specifier === "@webstudio-is/sdk/to-string") {
         return { createJsonStringifyProxy };
+      }
+      if (specifier === "@webstudio-is/sdk") {
+        return {
+          resolveEmailRecipientsExpression,
+          resolveEmailSenderSettingsExpression,
+        };
       }
       throw new Error(`Unexpected import ${specifier}`);
     }
@@ -237,7 +255,7 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
     visitorEmailField: "email",
     recipients: [],
     body: "",
-    includeAttachments: false,
+    includeAttachments: true,
   });
   expect(
     draft.resources.find((resource) => resource.id === "email")?.nonfatal
@@ -272,6 +290,328 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
   ).toContain(
     'throw new Error("Managed Form Email Resource email has invalid visitor email field")'
   );
+});
+
+test("draft graph leaves Resource-output-bound recipient counts unknown for preflight", () => {
+  const instances: Instances = new Map([
+    [
+      "form",
+      {
+        type: "instance",
+        id: "form",
+        component: "NativeForm",
+        children: [],
+      },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "email-source",
+      {
+        id: "email-source",
+        type: "resource",
+        name: "Notify",
+        resourceId: "email",
+        scopeInstanceId: "form",
+      },
+    ],
+    [
+      "lookup-source",
+      {
+        id: "lookup-source",
+        type: "resource",
+        name: "Lookup",
+        resourceId: "lookup",
+        scopeInstanceId: "form",
+      },
+    ],
+  ]);
+  const resources: Resources = new Map([
+    [
+      "email",
+      {
+        id: "email",
+        name: "Notify",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+        email: {
+          recipientMode: "custom",
+          recipients: "fallback@example.com",
+          recipientsExpression: encodeDataSourceVariable("lookup-source"),
+        },
+      },
+    ],
+    [
+      "lookup",
+      {
+        id: "lookup",
+        name: "Lookup",
+        method: "get",
+        url: '"https://example.com/lookup"',
+        headers: [],
+      },
+    ],
+  ]);
+  const graph = createManagedFormDraftGraph({
+    formId: "form",
+    destinationDataSourceIds: ["email-source"],
+    instances,
+    dataSources,
+    resources,
+    props: new Map(),
+    projectMeta: { contactEmail: "owner@example.com" },
+    system: {
+      params: {},
+      search: {},
+      pathname: "/",
+      origin: "https://site.example",
+    },
+    formData: {},
+    browserInfo: {},
+    evaluateExpression: evaluateFixtureExpression,
+  });
+  const email = graph.resources.find(({ id }) => id === "email")!;
+  expect(email.dependencies).toEqual(["lookup"]);
+  expect(email.emailRecipientCount).toBeUndefined();
+  expect(() => validateManagedFormRecipientLimit(graph)).toThrow(
+    "Invalid Email Resource recipient count"
+  );
+});
+
+test("draft graph counts resolved formData-bound recipients instead of stale text", () => {
+  const instances: Instances = new Map([
+    [
+      "form",
+      { type: "instance", id: "form", component: "NativeForm", children: [] },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "email-source",
+      {
+        id: "email-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Email",
+        resourceId: "email",
+      },
+    ],
+    [
+      "form-data-source",
+      {
+        id: "form-data-source",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+    ],
+  ]);
+  const resources: Resources = new Map([
+    [
+      "email",
+      {
+        id: "email",
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+        email: {
+          recipientMode: "custom",
+          recipients: "invalid stale value",
+          recipientsExpression: `${encodeDataSourceVariable("form-data-source")}.recipients`,
+        },
+      },
+    ],
+  ]);
+  const formData = {
+    recipients: Array.from(
+      { length: 6 },
+      (_, index) => `person${index}@example.com`
+    ).join(", "),
+  };
+  const graph = createManagedFormDraftGraph({
+    formId: "form",
+    destinationDataSourceIds: ["email-source"],
+    instances,
+    dataSources,
+    resources,
+    props: new Map(),
+    system: {
+      params: {},
+      search: {},
+      pathname: "/",
+      origin: "https://site.example",
+    },
+    formData,
+    browserInfo: {},
+    evaluateExpression: evaluateFixtureExpression,
+  });
+  const email = graph.resources.find(({ id }) => id === "email")!;
+  expect(email.emailRecipientCount).toBeUndefined();
+  const request = email.createRequest(new Map());
+  expect(request.email?.recipients).toHaveLength(6);
+  expect(() =>
+    validateManagedFormRecipientLimit(graph, new Map([["email", request]]))
+  ).toThrow("Select no more than 5 team email recipients");
+});
+
+test("Email Sender and custom recipients bindings resolve and validate before dispatch", () => {
+  const instances: Instances = new Map([
+    [
+      "form",
+      { type: "instance", id: "form", component: "NativeForm", children: [] },
+    ],
+  ]);
+  const dataSources: DataSources = new Map([
+    [
+      "email-source",
+      {
+        id: "email-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Notify",
+        resourceId: "email",
+      },
+    ],
+    [
+      "sender-value",
+      {
+        id: "sender-value",
+        type: "variable",
+        scopeInstanceId: "form",
+        name: "senderValue",
+        value: { type: "string", value: "Acme <sender@example.com>" },
+      },
+    ],
+    [
+      "recipients-value",
+      {
+        id: "recipients-value",
+        type: "variable",
+        scopeInstanceId: "form",
+        name: "recipientsValue",
+        value: {
+          type: "string",
+          value: "one@example.com, Two <two@example.com>",
+        },
+      },
+    ],
+  ]);
+  const resources = new Map([
+    [
+      "email",
+      {
+        id: "email",
+        name: "Notify",
+        control: "email" as const,
+        method: "post" as const,
+        url: '""',
+        headers: [],
+        email: {
+          recipientMode: "custom" as const,
+          senderExpression: encodeDataSourceVariable("sender-value"),
+          recipientsExpression: encodeDataSourceVariable("recipients-value"),
+          subject: '"Subject"',
+          body: '"Body"',
+        },
+      },
+    ],
+  ]);
+  const props: Props = new Map();
+  const baseInput = {
+    formId: "form",
+    destinationDataSourceIds: ["email-source"],
+    instances,
+    dataSources,
+    resources,
+    props,
+    projectMeta: { contactEmail: "team@example.com" },
+    system: {
+      params: {},
+      search: {},
+      pathname: "/",
+      origin: "https://site.example",
+    },
+    formData: {},
+    browserInfo: {},
+    evaluateExpression: evaluateFixtureExpression,
+  };
+  const draft = createManagedFormDraftGraph(baseInput);
+  const source = withEmailResolverImports(
+    generateManagedFormResources({
+      scope: createScope(),
+      instances,
+      dataSources,
+      resources,
+      props,
+      projectMeta: baseInput.projectMeta,
+      forms: [{ formId: "form", destinationDataSourceIds: ["email-source"] }],
+    })
+  );
+  const { code } = transformSync(source, { loader: "ts", format: "cjs" });
+  const module = { exports: {} as Record<string, unknown> };
+  new Function("module", "exports", "require", code)(
+    module,
+    module.exports,
+    (specifier: string) => {
+      if (specifier === "@webstudio-is/sdk/to-string") {
+        return { createJsonStringifyProxy };
+      }
+      if (specifier === "@webstudio-is/sdk") {
+        return {
+          resolveEmailRecipientsExpression,
+          resolveEmailSenderSettingsExpression,
+        };
+      }
+      throw new Error(`Unexpected import ${specifier}`);
+    }
+  );
+  const published = (
+    module.exports.getManagedFormResourceGraph as (
+      id: string,
+      values: { system: unknown; formData: unknown; browserInfo: unknown }
+    ) => ResourceRequestGraph | undefined
+  )("form", { system: baseInput.system, formData: {}, browserInfo: {} })!;
+  for (const graph of [draft, published]) {
+    expect(graph.resources[0].createRequest(new Map()).email).toMatchObject({
+      sender: { name: "Acme", address: "sender@example.com" },
+      recipients: [
+        { address: "one@example.com" },
+        { name: "Two", address: "two@example.com" },
+      ],
+    });
+  }
+
+  for (const [sourceId, value] of [
+    ["sender-value", { type: "string", value: "" }],
+    ["sender-value", { type: "number", value: 42 }],
+    ["sender-value", { type: "string", value: "not-an-email" }],
+    [
+      "sender-value",
+      { type: "string", value: "one@example.com, two@example.com" },
+    ],
+    ["recipients-value", { type: "string", value: "" }],
+    ["recipients-value", { type: "json", value: ["one@example.com"] }],
+    ["recipients-value", { type: "string", value: "not-an-email" }],
+  ] as const) {
+    const invalidSources = new Map(dataSources);
+    const original = dataSources.get(sourceId)!;
+    invalidSources.set(sourceId, {
+      ...original,
+      type: "variable",
+      value,
+    });
+    const invalidGraph = createManagedFormDraftGraph({
+      ...baseInput,
+      dataSources: invalidSources,
+    });
+    expect(() => invalidGraph.resources[0].createRequest(new Map())).toThrow(
+      emailSettingsInvalidMessage
+    );
+  }
 });
 
 test("draft graph keeps scoped dependencies and external Resource roots in published order", () => {
@@ -376,14 +716,16 @@ test("draft graph keeps scoped dependencies and external Resource roots in publi
     evaluateExpression: evaluateFixtureExpression,
   };
   const draft = createManagedFormDraftGraph(input);
-  const source = generateManagedFormResources({
-    scope: createScope(),
-    instances,
-    dataSources,
-    resources,
-    props: input.props,
-    forms: [{ formId: "form", destinationDataSourceIds }],
-  });
+  const source = withEmailResolverImports(
+    generateManagedFormResources({
+      scope: createScope(),
+      instances,
+      dataSources,
+      resources,
+      props: input.props,
+      forms: [{ formId: "form", destinationDataSourceIds }],
+    })
+  );
   const { code } = transformSync(source, { loader: "ts", format: "cjs" });
   const module = { exports: {} as Record<string, unknown> };
   new Function("module", "exports", "require", code)(
@@ -392,6 +734,12 @@ test("draft graph keeps scoped dependencies and external Resource roots in publi
     (specifier: string) => {
       if (specifier === "@webstudio-is/sdk/to-string") {
         return { createJsonStringifyProxy };
+      }
+      if (specifier === "@webstudio-is/sdk") {
+        return {
+          resolveEmailRecipientsExpression,
+          resolveEmailSenderSettingsExpression,
+        };
       }
       throw new Error(`Unexpected import ${specifier}`);
     }

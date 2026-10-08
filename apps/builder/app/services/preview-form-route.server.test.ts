@@ -35,6 +35,18 @@ vi.mock("~/env/env.server", () => ({
 }));
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
+type EmailServiceEnvelope = {
+  to: { address: string; name?: string }[];
+  subject: string;
+  text: string;
+  replyTo?: { address: string; name?: string };
+  fromName?: string;
+  attachments?: {
+    filename: string;
+    contentType: string;
+    contentBase64: string;
+  }[];
+};
 const require = createRequire(import.meta.url);
 const request = (file?: File, headers?: HeadersInit) => {
   const url = new URL(
@@ -280,7 +292,9 @@ test.each([false, true])(
     };
     const parentScript = getScript(parentBundle);
     const canvasScript = getScript(canvasBundle);
-    const send = vi.fn(async () => Response.json({ id: "sent" }));
+    const send = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      Response.json({ id: "sent" })
+    );
     if (delayedSave) {
       vi.stubGlobal("fetch", send);
     }
@@ -418,11 +432,12 @@ test.each([false, true])(
       if (delayedSave) {
         expect(resourceFetch).not.toHaveBeenCalled();
         expect(send).toHaveBeenCalledOnce();
-        const message = JSON.parse(
-          String(
-            (send.mock.calls[0] as unknown as [unknown, RequestInit])[1].body
-          )
-        );
+        const [input, init] = send.mock.calls[0];
+        const messageRequest =
+          input instanceof Request ? input : new Request(input, init);
+        const message = (await messageRequest
+          .clone()
+          .json()) as EmailServiceEnvelope;
         expect(message.to).toEqual([{ address: "updated@example.com" }]);
         expect(message.text).toContain("Updated draft body");
       } else {
@@ -529,25 +544,56 @@ test("Preview uses changed draft Resource settings without republishing", async 
   );
 });
 
-test("Preview executes draft Resource bindings with existing expression methods", async () => {
+test("Preview binds trusted server browser info without forwarding Referer credentials", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
+    dataSources: [
+      ...draftBuild.dataSources,
+      {
+        id: "browserInfo",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "browserInfo",
+      },
+    ],
     resources: [
       {
         ...draftBuild.resources[0],
-        url: '`https://example.com/${$ws$dataSource$formData.email.split("@")[0].toUpperCase()}`',
-        body: "({ email: $ws$dataSource$formData.email.toUpperCase() })",
+        body: "({ ip: $ws$dataSource$browserInfo.ip, referrer: $ws$dataSource$browserInfo.referrer })",
       },
     ],
   } as never);
-  const response = await action({ request: request() } as never);
-  expect(await response.json()).toMatchObject({ success: true });
+  const response = await action({
+    request: request(undefined, {
+      "cf-connecting-ip": "203.0.113.77",
+      "x-forwarded-for": "192.0.2.44",
+      "user-agent": "Preview test browser",
+      "accept-language": "en-GB",
+      referer: `https://p-${projectId}.localhost/?authToken=local-test-token&mode=design#sensitive-fragment`,
+    }),
+  } as never);
+  const responseBody = (await response.json()) as unknown as {
+    success: boolean;
+    previewBrowserInfo: Record<string, unknown>;
+  };
+  expect(responseBody).toMatchObject({
+    success: true,
+    previewBrowserInfo: {
+      ip: "203.0.113.77",
+      userAgent: "Preview test browser",
+      language: "en-GB",
+      referrer: `https://p-${projectId}.localhost/`,
+    },
+  });
+  expect(JSON.stringify(responseBody)).not.toContain("local-test-token");
   const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
     .results[0].value;
   expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
-  expect((resourceFetch.mock.calls[0][0] as Request).url).toContain(
-    "https://example.com/ADA"
-  );
+  const outgoing = resourceFetch.mock.calls[0][0] as Request;
+  expect(await outgoing.json()).toEqual({
+    ip: "203.0.113.77",
+    referrer: `https://p-${projectId}.localhost/`,
+  });
 });
 
 test("draft expression failures do not execute a Resource", async () => {
@@ -601,21 +647,28 @@ test("Preview email uses the private Email Service credential and forwards uploa
         headers: [],
       },
     ],
+    projectSettings: {
+      meta: {
+        contactEmail: "team@example.com",
+        emailSender: "Site Owner <owner@example.com>",
+      },
+    },
   } as never);
-  const send = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-    expect(init?.headers).toBeInstanceOf(Headers);
-    expect((init?.headers as Headers).get("authorization")).toBe(
+  const send = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = input instanceof Request ? input : new Request(input, init);
+    expect(request.headers.get("authorization")).toBe(
       "Bearer server-only-test-token"
     );
-    expect((init?.headers as Headers).get("x-webstudio-project-id")).toBe(
-      projectId
-    );
-    const body = JSON.parse(String(init?.body));
+    expect(request.headers.get("x-webstudio-project-id")).toBe(projectId);
+    const body = (await request.clone().json()) as EmailServiceEnvelope;
     expect(body.to).toEqual([{ address: "team@example.com" }]);
     expect(body.text).toContain("ada@example.com");
     expect(body.text).not.toContain("203.0.113.77");
     expect(body.attachments).toMatchObject([{ filename: "hello.txt" }]);
-    return Response.json({ id: "sent" });
+    return Response.json(
+      { id: "sent" },
+      { headers: { "cache-control": "private, no-store" } }
+    );
   });
   vi.stubGlobal("fetch", send);
   try {
@@ -636,31 +689,56 @@ test("Preview email uses the private Email Service credential and forwards uploa
       resourceId: "webhook",
       kind: "email",
       request: {
-        method: "post",
-        headers: [],
-        body: { subject: expect.any(String), body: expect.any(String) },
+        method: "POST",
+        url: "https://apps.webstudio.is/v1/preview-send",
+        body: {
+          to: [{ address: "team@example.com" }],
+          replyTo: { address: "owner@example.com", name: "Site Owner" },
+          fromName: "Site Owner",
+          subject: expect.any(String),
+          text: expect.stringContaining("ada@example.com"),
+          attachments: [
+            {
+              filename: "hello.txt",
+              contentType: "application/octet-stream",
+              contentBase64: "[redacted]",
+            },
+          ],
+        },
       },
-      response: { status: 200, headers: [], body: { id: "sent" } },
+      response: {
+        status: 200,
+        headers: [
+          { name: "cache-control", value: "private, no-store" },
+          { name: "content-type", value: "application/json" },
+        ],
+        body: { id: "sent" },
+      },
     });
     expect(JSON.stringify(result.previewExchanges)).not.toContain(
       "server-only-test-token"
     );
-    expect(JSON.stringify(result.previewExchanges)).not.toContain(
-      "authorization"
-    );
+    expect(result.previewExchanges[0].request.headers).toContainEqual({
+      name: "authorization",
+      value: "[redacted]",
+    });
     expect(JSON.stringify(result.previewExchanges)).not.toContain(
       "local-test-share-token"
     );
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(send).toHaveBeenCalledOnce();
-    const sentBody = JSON.parse(String(send.mock.calls[0][1]?.body));
+    const [sentInput, sentInit] = send.mock.calls[0];
+    const sentRequest =
+      sentInput instanceof Request
+        ? sentInput
+        : new Request(sentInput, sentInit);
+    const sentBody = (await sentRequest.clone().json()) as EmailServiceEnvelope;
     expect(sentBody.text).not.toContain("local-test-share-token");
     expect(sentBody.text).not.toContain("authToken");
-    expect(sentBody.text).not.toContain("referrer");
-    expect(String(send.mock.calls[0][0])).toBe(
-      "https://apps.webstudio.is/v1/preview-send"
-    );
-    expect(send.mock.calls[0][1]).toMatchObject({ method: "POST" });
+    expect(sentBody.text).toContain(`https://p-${projectId}.localhost/`);
+    expect(sentBody.text).not.toContain("mode=design");
+    expect(sentRequest.url).toBe("https://apps.webstudio.is/v1/preview-send");
+    expect(sentRequest.method).toBe("POST");
   } finally {
     vi.unstubAllGlobals();
   }
@@ -843,10 +921,11 @@ test.each(["resource", "project"])(
       };
       expect(result.success).toBe(true);
       expect(result.previewExchanges[0].request.body).toMatchObject({
+        to: [{ address: "team@example.com" }],
         subject: expect.stringMatching(
           /^Configured Email subject \[[a-f0-9]{16}\]$/
         ),
-        body: "Configured Email body [redacted]",
+        text: "Configured Email body [redacted]",
       });
       expect(result.previewExchanges[0].response.body).toEqual({ id: "sent" });
       expect(JSON.stringify(result.previewExchanges)).not.toContain(

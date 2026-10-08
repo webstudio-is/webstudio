@@ -64,11 +64,15 @@ test("copying Email Resources restores parent bindings by name in the target sco
   const originalResource = Array.from(source.resources.values())[0];
   originalResource.control = "email";
   originalResource.email = {
+    senderExpression: encodeDataVariableId("0"),
+    recipientsExpression: encodeDataVariableId("0"),
     subject: encodeDataVariableId("0"),
     body: encodeDataVariableId("0"),
   };
   const fragment = extractWebstudioFragment(source, "formId");
   expect(fragment.resources[0].email).toEqual({
+    senderExpression: "Owner",
+    recipientsExpression: "Owner",
     subject: "Owner",
     body: "Owner",
   });
@@ -89,6 +93,8 @@ test("copying Email Resources restores parent bindings by name in the target sco
     projectId: "",
   });
   expect(Array.from(target.resources.values())[0].email).toEqual({
+    senderExpression: encodeDataVariableId("targetOwner"),
+    recipientsExpression: encodeDataVariableId("targetOwner"),
     subject: encodeDataVariableId("targetOwner"),
     body: encodeDataVariableId("targetOwner"),
   });
@@ -122,6 +128,8 @@ test("copying a Form remaps its local Resource destinations", () => {
     body: encodeDataVariableId("formDataVariable"),
     control: "email",
     email: {
+      senderExpression: encodeDataVariableId("formDataVariable"),
+      recipientsExpression: encodeDataVariableId("formDataVariable"),
       subject: `\`Submission \${${encodeDataVariableId("formDataVariable")}.name}\``,
       body: encodeDataVariableId("formDataVariable"),
     },
@@ -181,9 +189,17 @@ test("copying a Form remaps its local Resource destinations", () => {
       encodeDataVariableId(copiedParameter?.id ?? "")
     );
     expect(copiedResource?.email).toEqual({
+      senderExpression: encodeDataVariableId(copiedParameter?.id ?? ""),
+      recipientsExpression: encodeDataVariableId(copiedParameter?.id ?? ""),
       subject: `\`Submission \${${encodeDataVariableId(copiedParameter?.id ?? "")}?.name}\``,
       body: encodeDataVariableId(copiedParameter?.id ?? ""),
     });
+    expect(copiedResource?.email?.senderExpression).not.toBe(
+      encodeDataVariableId("formDataVariable")
+    );
+    expect(copiedResource?.email?.recipientsExpression).not.toBe(
+      encodeDataVariableId("formDataVariable")
+    );
   }
 });
 

@@ -7,14 +7,16 @@ import { $selectedInstance, selectInstance } from "~/shared/nano-states";
 export const $variableToFocus = atom<
   { id: string; scopeInstanceId: string } | undefined
 >();
+export const $variableToOpen = atom<{ id: string } | undefined>();
 
 export const showVariable = (id: string) => {
-  // Focus the existing variable in the current scope without changing the
+  // Open the existing variable in the current scope without changing the
   // selected canvas instance or navigating to where the variable was defined.
   $variableToFocus.set({
     id,
     scopeInstanceId: $selectedInstance.get()?.id ?? ROOT_INSTANCE_ID,
   });
+  $variableToOpen.set({ id });
 };
 
 export const showVariableAtSource = (id: string, scopeInstanceId: string) => {

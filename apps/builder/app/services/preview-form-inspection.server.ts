@@ -30,7 +30,7 @@ export const capturePreviewFormExchange = async (
   }
 ): Promise<PreviewFormExchange> => {
   const secrets = new Set([...privateValues].filter(Boolean));
-  const collectCredentials = (headers: Headers) => {
+  const collectCredentials = (headers: Headers, allowCustomHeaders = false) => {
     for (const [name, value] of headers) {
       if (
         sensitive.test(name) ||
@@ -52,6 +52,11 @@ export const capturePreviewFormExchange = async (
     }
   };
   const request = exchange.request;
+  const kind =
+    exchange.kind ??
+    (!(request instanceof Request) && request.control === "email"
+      ? "email"
+      : "http");
   const visibleValues = new Set(publicValues);
   if (!(request instanceof Request) && request.control === "email") {
     const subject = request.email?.subject;
@@ -69,10 +74,14 @@ export const capturePreviewFormExchange = async (
       : new Headers(
           request.headers.map(({ name, value }) => [name, String(value)])
         );
-  collectCredentials(requestHeaders);
-  collectCredentials(exchange.response.headers);
+  collectCredentials(requestHeaders, allowCustomHeaders);
+  collectCredentials(
+    exchange.response.headers,
+    allowCustomHeaders || kind === "email"
+  );
   const requestLimit = { truncated: false };
   const responseLimit = { truncated: false };
+  const outcomeLimit = { truncated: false };
   type Limit = typeof requestLimit;
   const text = (value: string, limit?: Limit) => {
     for (const secret of secrets) {
@@ -116,7 +125,11 @@ export const capturePreviewFormExchange = async (
     exchange.response.url === undefined
       ? undefined
       : url(exchange.response.url, responseLimit, request.url);
-  const safeHeaders = (headers: Headers, limit: Limit) => {
+  const safeHeaders = (
+    headers: Headers,
+    limit: Limit,
+    allowCustomHeaders = false
+  ) => {
     if ([...headers].length > 100) {
       limit.truncated = true;
     }
@@ -165,7 +178,9 @@ export const capturePreviewFormExchange = async (
           .slice(0, 100)
           .map(([name, value]) => [
             text(name, limit),
-            sensitive.test(name) || sensitiveFields.has(name)
+            sensitive.test(name) ||
+            sensitiveFields.has(name) ||
+            /contentBase64/i.test(name)
               ? redacted
               : sanitize(value, outgoing, limit, depth + 1),
           ])
@@ -220,19 +235,33 @@ export const capturePreviewFormExchange = async (
   return {
     resourceId,
     resourceName,
-    kind: request instanceof Request ? "http" : "email",
+    kind,
     request: {
       method: request.method,
       url: safeUrl,
-      headers: safeHeaders(requestHeaders, requestLimit),
+      headers: safeHeaders(requestHeaders, requestLimit, allowCustomHeaders),
       ...bounded(requestBody, true, requestLimit),
     },
     response: {
       status: exchange.response.status,
       statusText: text(exchange.response.statusText, responseLimit),
       url: finalUrl,
-      headers: safeHeaders(exchange.response.headers, responseLimit),
+      headers: safeHeaders(
+        exchange.response.headers,
+        responseLimit,
+        allowCustomHeaders || kind === "email"
+      ),
       ...bounded(exchange.response.data, false, responseLimit),
     },
+    ...(exchange.outcome === undefined
+      ? {}
+      : {
+          outcome: {
+            ok: exchange.outcome.ok,
+            status: exchange.outcome.status,
+            statusText: text(exchange.outcome.statusText, outcomeLimit),
+            ...bounded(exchange.outcome.data, false, outcomeLimit),
+          },
+        }),
   };
 };

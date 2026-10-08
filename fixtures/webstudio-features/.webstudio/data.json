@@ -3258,7 +3258,7 @@
           "instanceId": "zJkrskDJhaEk-nOSRWrGg",
           "name": "data",
           "type": "expression",
-          "value": "[\n  {\n    \"path\": \"/\",\n    \"lastModified\": \"2024-05-07\"\n  },\n  {\n    \"path\": \"/olegs-test\",\n    \"lastModified\": \"2024-05-07\"\n  }\n]"
+          "value": "[\n  {\n    \"path\": \"/\",\n    \"lastModified\": \"2024-05-07\"\n  },\n  {\n    \"path\": \"/acme-test\",\n    \"lastModified\": \"2024-05-07\"\n  }\n]"
         }
       ],
       [
