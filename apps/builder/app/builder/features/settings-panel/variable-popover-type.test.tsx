@@ -145,6 +145,27 @@ test.each([
   }
 );
 
+test("Email Resource type displays its approved description", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(<TypeField value="email-resource" onChange={vi.fn()} />)
+  );
+
+  const typeSelect =
+    container.querySelector<HTMLButtonElement>('[role="combobox"]');
+  expect(typeSelect).not.toBeNull();
+  await act(async () => await userEvent.click(typeSelect!));
+
+  const description = document.querySelector<HTMLElement>(
+    '[data-select-description="content"]'
+  );
+  expect(description?.textContent).toContain(
+    "Send a plain-text email through Webstudio Cloud when a Form is submitted."
+  );
+});
+
 test("editing a System Resource and changing its Type persists the selected category", async () => {
   const resource: Resource = {
     id: "existing-resource",
