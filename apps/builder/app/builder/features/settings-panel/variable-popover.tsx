@@ -180,9 +180,7 @@ const NameField = ({
       <Flex gap="1" align="center">
         <Label htmlFor={nameId}>Name</Label>
         {shadowed && (
-          <Tooltip
-            content={`This name shadows a variable from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Both variables are allowed.`}
-          >
+          <Tooltip content="A variable with this name already exists in a parent scope.">
             <AlertIcon color={cssVar("--foreground-warning")} />
           </Tooltip>
         )}

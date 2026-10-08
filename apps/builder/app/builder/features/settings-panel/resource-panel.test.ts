@@ -1658,8 +1658,8 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
       '[aria-label="About Cache max age"]',
       "How long to cache the response, in seconds.",
     ],
-    ['[aria-label="Add another header"]', "Add a request header."],
-    ['[aria-label="Add another search param"]', "Add a URL search parameter."],
+    ['[aria-label="Add another header"]', "Add a header to the request."],
+    ['[aria-label="Add another search param"]', "Add a parameter to the URL."],
   ]) {
     expect(container.textContent).not.toContain(explanation);
     await act(async () => userEvent.hover(container.querySelector(selector)!));

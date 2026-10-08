@@ -378,9 +378,7 @@ const VariablesItem = ({
               </Label>
             </Tooltip>
             {shadowed && (
-              <Tooltip
-                content={`This variable shadows ${shadowed.name} from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Delete the local variable to reveal it.`}
-              >
+              <Tooltip content="A variable with this name already exists in a parent scope.">
                 <AlertIcon color={cssVar("--foreground-warning")} />
               </Tooltip>
             )}

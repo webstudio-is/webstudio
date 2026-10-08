@@ -479,6 +479,8 @@ test("clicking a Global root source selects and focuses Global root on the curre
 
 test("name shadow warning appears for an existing shadow and renamed ancestor name", async () => {
   const { container, local } = setup();
+  const shadowWarningText =
+    "A variable with this name already exists in a parent scope.";
   await act(async () =>
     root?.render(
       <TooltipProvider>
@@ -486,7 +488,13 @@ test("name shadow warning appears for an existing shadow and renamed ancestor na
       </TooltipProvider>
     )
   );
-  expect(container.querySelector("svg")).not.toBeNull();
+  const nameWarning = container.querySelector("svg")!;
+  expect(nameWarning).not.toBeNull();
+  await act(async () => userEvent.hover(nameWarning));
+  await expect
+    .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
+    .toContain(shadowWarningText);
+  await act(async () => userEvent.unhover(nameWarning));
   await act(async () =>
     root?.render(
       <TooltipProvider>
@@ -522,6 +530,30 @@ test("name shadow warning appears for an existing shadow and renamed ancestor na
       (icon) => icon.getAttribute("color") === "var(--foreground-warning)"
     )
   ).toBe(true);
+  const rowWarning = container.querySelector(
+    'svg[color="var(--foreground-warning)"]'
+  )!;
+  await act(async () => userEvent.hover(rowWarning));
+  await expect
+    .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
+    .toContain(shadowWarningText);
+  await act(async () => userEvent.unhover(rowWarning));
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <__testing__.VariablesItem
+          variable={{ ...local, name: "Unique" }}
+          source="local"
+          index={0}
+          value="red"
+          usageCount={0}
+        />
+      </TooltipProvider>
+    )
+  );
+  expect(
+    container.querySelector('svg[color="var(--foreground-warning)"]')
+  ).toBeNull();
 });
 
 test("clicking an Action opens its Resource editor and highlights its Variables row", async () => {

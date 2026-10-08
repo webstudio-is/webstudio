@@ -445,8 +445,8 @@ const ExpressionPairs = ({
           disableHoverableContent={true}
           content={
             kind === "header"
-              ? "Add a request header."
-              : "Add a URL search parameter."
+              ? "Add a header to the request."
+              : "Add a parameter to the URL."
           }
         >
           <SmallIconButton
