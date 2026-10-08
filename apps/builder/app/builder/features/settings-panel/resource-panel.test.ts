@@ -192,6 +192,15 @@ test("Email Resource recipient modes and attachment radios", async () => {
   const recipientSelect =
     container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
   await act(async () => await userEvent.click(recipientSelect));
+  const recipientDescriptions = document.querySelector(
+    '[data-select-description="content"]'
+  );
+  expect(recipientDescriptions?.textContent).toContain(
+    "Send to the project's contact emails or owner."
+  );
+  expect(recipientDescriptions?.textContent).toContain(
+    "Send to the email addresses entered below."
+  );
   const customOption = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
   ).find((option) => option.textContent === "Custom recipients")!;
@@ -395,6 +404,15 @@ test("visitor Email Resource selects a named Form email field", async () => {
   expect(container.textContent).not.toContain(
     "Select one named email input in this Form."
   );
+  const visitorField = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')
+  ).at(-1);
+  await act(async () => userEvent.click(visitorField!));
+  expect(
+    document.querySelector('[data-select-description="content"]')?.textContent
+  ).toContain(
+    "Choose a Form input to use its value as the recipient email address."
+  );
 });
 
 test("includes resource documents when building another resource expression", () => {
@@ -513,8 +531,21 @@ test("body controls follow the effective method for standalone GET and Form Acti
   expect(document.body.textContent).toContain(
     "Form submissions use POST. This method applies elsewhere."
   );
+  const methodDescriptions = document.querySelector(
+    '[data-select-description="content"]'
+  );
+  expect(methodDescriptions?.textContent).toContain("Read data from a server.");
+  expect(methodDescriptions?.textContent).toContain(
+    "Form submissions use POST."
+  );
+  expect(methodDescriptions?.textContent).toContain(
+    "Replace data on a server."
+  );
+  expect(methodDescriptions?.textContent).toContain(
+    "Delete data from a server."
+  );
   await act(async () => userEvent.keyboard("{Escape}"));
-  expect(container.textContent).toContain("Request body format");
+  expect(container.textContent).toContain("Format");
   expect(container.querySelector('[name="body-format"]')).not.toBeNull();
   expect(container.querySelector('textarea[name="body"]')).not.toBeNull();
   expect(resource.method).toBe("get");
@@ -552,7 +583,7 @@ test("invalidates the preview as soon as a body edit starts", async () => {
     );
   });
 
-  expect(container.textContent).toContain("Request body format");
+  expect(container.textContent).toContain("Format");
   expect(container.textContent).not.toContain("Body content type");
   expect(
     Array.from(
@@ -560,6 +591,26 @@ test("invalidates the preview as soon as a body edit starts", async () => {
       (label) => label.textContent
     )
   ).toContain("Body");
+
+  await act(async () =>
+    userEvent.click(
+      container.querySelector<HTMLButtonElement>("[role=combobox]")!
+    )
+  );
+  const methodDescriptions = document.querySelector(
+    '[data-select-description="content"]'
+  );
+  expect(methodDescriptions?.textContent).toContain("Read data from a server.");
+  expect(methodDescriptions?.textContent).toContain(
+    "Send data to create or process something."
+  );
+  expect(methodDescriptions?.textContent).toContain(
+    "Replace data on a server."
+  );
+  expect(methodDescriptions?.textContent).toContain(
+    "Delete data from a server."
+  );
+  await act(async () => userEvent.keyboard("{Escape}"));
 
   const body = container.querySelector<HTMLElement>(".cm-content");
   expect(body).not.toBeNull();
@@ -609,37 +660,57 @@ test("shows and submits the selected HTTP body format", async () => {
       'input[name="header-name"][value="Content-Type"]'
     )
   ).toBeNull();
-  expect(container.textContent).toContain("Request body format");
-  const explanation =
-    "Applies to request bodies. Auto sends JSON or multipart when files are present.";
+  expect(container.textContent).toContain("Format");
+  const explanation = "Choose how to send the body.";
   expect(container.textContent).not.toContain(explanation);
   await act(async () =>
-    userEvent.hover(
-      container.querySelector('[aria-label="About request body format"]')!
-    )
+    userEvent.hover(container.querySelector('[aria-label="About format"]')!)
   );
   await expect
     .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
     .toContain(explanation);
   expect(
-    page
-      .getByRole("combobox", { name: "Request body format", exact: true })
-      .element().textContent
+    page.getByRole("combobox", { name: "Format", exact: true }).element()
+      .textContent
   ).toContain("multipart/form-data");
   await act(async () =>
-    page
-      .getByRole("combobox", { name: "Request body format", exact: true })
-      .click()
+    page.getByRole("combobox", { name: "Format", exact: true }).click()
   );
   expect(
     Array.from(
       document.querySelectorAll('[role="option"]'),
       (option) => option.textContent
     )
-  ).toEqual(["Auto", "application/json", "multipart/form-data"]);
-  await act(async () =>
-    page.getByRole("option", { name: "application/json", exact: true }).click()
+  ).toHaveLength(3);
+  const options = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
   );
+  expect(options.map((option) => option.textContent)).toEqual([
+    "auto",
+    "application/json",
+    "multipart/form-data",
+  ]);
+  const descriptions = document.querySelector(
+    '[data-select-description="content"]'
+  );
+  expect(descriptions?.textContent).toContain(
+    "Uses text/plain for text, application/json for other values, and multipart/form-data when files are included."
+  );
+  expect(descriptions?.textContent).toContain(
+    "Sends the body as application/json."
+  );
+  expect(descriptions?.textContent).toContain(
+    "Sends the body as multipart/form-data."
+  );
+  await act(async () => userEvent.hover(options[1]!));
+  await expect
+    .poll(() => descriptions?.lastElementChild?.textContent)
+    .toContain("Sends the body as application/json.");
+  await act(async () => userEvent.keyboard("{ArrowDown}"));
+  await expect
+    .poll(() => descriptions?.lastElementChild?.textContent)
+    .toContain("Sends the body as multipart/form-data.");
+  await act(async () => userEvent.keyboard("{ArrowUp}{Enter}"));
   expect(
     container.querySelector<HTMLInputElement>('input[name="body-format"]')
       ?.value

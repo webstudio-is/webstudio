@@ -30,6 +30,10 @@ export const previewFormExchanges = z.array(previewFormExchange).max(100);
 export const $previewFormExchanges = atom(
   new Map<string, { formId: string; attempts: PreviewFormExchange[] }>()
 );
+/** Latest explicit Resource editor reload, kept only in Builder memory. */
+export const $resourcePreviewExchanges = atom(
+  new Map<string, PreviewFormExchange>()
+);
 export const recordPreviewFormExchanges = (
   formId: string,
   exchanges: PreviewFormExchange[]
@@ -51,4 +55,7 @@ export const recordPreviewFormExchanges = (
   $previewFormExchanges.set(next);
 };
 
-onSet($project, () => $previewFormExchanges.set(new Map()));
+onSet($project, () => {
+  $previewFormExchanges.set(new Map());
+  $resourcePreviewExchanges.set(new Map());
+});

@@ -257,11 +257,21 @@ export const MethodField = ({
       <Select<Resource["method"]>
         options={["get", "post", "put", "delete"]}
         getLabel={humanizeString}
-        getDescription={() =>
-          formDestination
-            ? "Form submissions use POST. This method applies elsewhere."
-            : undefined
-        }
+        getDescription={(method) => {
+          if (formDestination && method === "post") {
+            return "Form submissions use POST. This method applies elsewhere.";
+          }
+          switch (method) {
+            case "get":
+              return "Read data from a server.";
+            case "post":
+              return "Send data to create or process something.";
+            case "put":
+              return "Replace data on a server.";
+            case "delete":
+              return "Delete data from a server.";
+          }
+        }}
         name="method"
         value={value}
         onChange={onChange}
@@ -415,7 +425,22 @@ const ExpressionPairs = ({
   return (
     <Grid gap={1}>
       <Flex justify="between" align="center">
-        <Label>{label}</Label>
+        <Flex align="center" gap={1}>
+          <Label>{label}</Label>
+          <Tooltip
+            content={
+              kind === "header"
+                ? "Add extra information to the request."
+                : "Add values to the URL after the question mark."
+            }
+          >
+            <InfoCircleIcon
+              color={cssVar("--foreground-secondary")}
+              aria-label={`About ${label.toLowerCase()}`}
+              tabIndex={0}
+            />
+          </Tooltip>
+        </Flex>
         <Tooltip
           disableHoverableContent={true}
           content={
@@ -1121,14 +1146,14 @@ export const ResourceForm = forwardRef<
           <Row>
             <Grid gap={1}>
               <Flex align="center" css={{ gap: theme.spacing[3] }}>
-                <Label htmlFor={bodyFormatId}>Request body format</Label>
+                <Label htmlFor={bodyFormatId}>Format</Label>
                 <Tooltip
-                  content="Applies to request bodies. Auto sends JSON or multipart when files are present."
+                  content="Choose how to send the body."
                   variant="wrapped"
                   disableHoverableContent={true}
                 >
                   <InfoCircleIcon
-                    aria-label="About request body format"
+                    aria-label="About format"
                     color={cssVar("--foreground-secondary")}
                     tabIndex={0}
                   />
@@ -1140,9 +1165,16 @@ export const ResourceForm = forwardRef<
                 options={["auto", "json", "multipart"]}
                 getLabel={(value: NonNullable<Resource["bodyFormat"]>) =>
                   ({
-                    auto: "Auto",
+                    auto: "auto",
                     json: "application/json",
                     multipart: "multipart/form-data",
+                  })[value]
+                }
+                getDescription={(value: NonNullable<Resource["bodyFormat"]>) =>
+                  ({
+                    auto: "Uses text/plain for text, application/json for other values, and multipart/form-data when files are included.",
+                    json: "Sends the body as application/json.",
+                    multipart: "Sends the body as multipart/form-data.",
                   })[value]
                 }
                 onChange={(value) => {
@@ -1423,6 +1455,13 @@ export const EmailResourceForm = forwardRef<
                   ? "Custom recipients"
                   : "Visitor email field"
             }
+            getDescription={(value: "project" | "custom" | "visitor") =>
+              value === "project"
+                ? "Send to the project's contact emails or owner."
+                : value === "custom"
+                  ? "Send to the email addresses entered below."
+                  : "Send to an email address entered on this Form."
+            }
             onChange={(value: "project" | "custom" | "visitor") => {
               if (value === "project") {
                 onChange?.();
@@ -1472,6 +1511,9 @@ export const EmailResourceForm = forwardRef<
                 placeholder="Select an email field"
                 options={emailFields}
                 getLabel={(name) => name}
+                getDescription={() =>
+                  "Choose a Form input to use its value as the recipient email address."
+                }
                 onChange={(name) => setField("visitorEmailField", name)}
               />
             </InputErrorsTooltip>

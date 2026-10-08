@@ -120,6 +120,103 @@ test("copy and paste on the same instance creates a unique variable and Resource
   expect(resource?.url).toBe('\"https://example.com\"');
 });
 
+test.each(["formState", "results", "errors"])(
+  "required Form variable %s cannot be deleted",
+  async (name) => {
+    const variable: DataSource = {
+      id: `form-${name}`,
+      type: "variable",
+      name,
+      scopeInstanceId: "form",
+      value: { type: "string", value: "initial" },
+    };
+    $instances.set(
+      new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $pages.set(createDefaultPages({ rootInstanceId: "form" }));
+    $selectedPageId.set("home");
+    selectInstance(["form"]);
+    $dataSources.set(new Map([[variable.id, variable]]));
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(<VariableMenu variable={variable} canDelete />)
+    );
+    await act(async () =>
+      userEvent.click(
+        container.querySelector('button[aria-label="Open variable menu"]')!
+      )
+    );
+    const deleteItem = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Delete");
+    expect(deleteItem?.getAttribute("aria-disabled")).toBe("true");
+  }
+);
+
+test("Edit variable menu offers Delete, Copy, and Refresh without Paste", async () => {
+  const variable: DataSource = {
+    id: "resource-variable",
+    type: "resource",
+    name: "Request",
+    scopeInstanceId: "scope",
+    resourceId: "request",
+  };
+  $instances.set(
+    new Map([
+      [
+        "scope",
+        { id: "scope", type: "instance", component: "Box", children: [] },
+      ],
+    ])
+  );
+  $pages.set(createDefaultPages({ rootInstanceId: "scope" }));
+  $selectedPageId.set("home");
+  selectInstance(["scope"]);
+  $dataSources.set(new Map([[variable.id, variable]]));
+  const onRefresh = vi.fn();
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <VariableMenu
+        variable={variable}
+        canDelete
+        includePaste={false}
+        onRefresh={onRefresh}
+      />
+    )
+  );
+  await act(async () =>
+    userEvent.click(
+      container.querySelector('button[aria-label="Open variable menu"]')!
+    )
+  );
+  const items = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  );
+  expect(items.map((item) => item.textContent)).toEqual([
+    "Delete",
+    "Copy",
+    "Refresh",
+  ]);
+  await act(async () => userEvent.click(items[2]!));
+  expect(onRefresh).toHaveBeenCalledOnce();
+});
+
 test("the Variables context menu offers variable actions on rows and Paste elsewhere", async () => {
   const variable: DataSource = {
     id: "variable",

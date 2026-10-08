@@ -17,18 +17,25 @@ export const capturePreviewFormExchange = async (
     resourceName = resourceId,
     sensitiveFields = new Set(),
     redactAllBody = false,
+    allowRequestBody = false,
+    allowCustomHeaders = false,
   }: {
     publicValues: ReadonlySet<string>;
     privateValues: ReadonlySet<string>;
     resourceName?: string;
     sensitiveFields?: ReadonlySet<string>;
     redactAllBody?: boolean;
+    allowRequestBody?: boolean;
+    allowCustomHeaders?: boolean;
   }
 ): Promise<PreviewFormExchange> => {
   const secrets = new Set([...privateValues].filter(Boolean));
   const collectCredentials = (headers: Headers) => {
     for (const [name, value] of headers) {
-      if (sensitive.test(name) || !publicHeader.test(name)) {
+      if (
+        sensitive.test(name) ||
+        (!allowCustomHeaders && !publicHeader.test(name))
+      ) {
         secrets.add(value);
         if (/authorization/i.test(name)) {
           secrets.add(value.replace(/^\S+\s+/, ""));
@@ -116,7 +123,8 @@ export const capturePreviewFormExchange = async (
     return [...headers].slice(0, 100).map(([name, value]) => ({
       name,
       value:
-        sensitive.test(name) || !publicHeader.test(name)
+        sensitive.test(name) ||
+        (!allowCustomHeaders && !publicHeader.test(name))
           ? redacted
           : name.toLowerCase() === "location"
             ? url(value, limit, request.url)
@@ -163,7 +171,11 @@ export const capturePreviewFormExchange = async (
           ])
       );
     }
-    if (outgoing && (redactAllBody || !visibleValues.has(String(value)))) {
+    if (
+      outgoing &&
+      (redactAllBody ||
+        (!allowRequestBody && !visibleValues.has(String(value))))
+    ) {
       return redacted;
     }
     return typeof value === "string" ? text(value, limit) : value;

@@ -13,6 +13,10 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
 import {
+  $resourcePreviewExchanges,
+  type PreviewFormExchange,
+} from "./preview-form-inspection";
+import {
   computeExpression,
   type ResolveExpressionDataSource,
 } from "@webstudio-is/project-build/runtime";
@@ -47,6 +51,7 @@ const pendingDiagnostics = new Map<string, InFlightResourceDiagnostics>();
 const knownRequests = new Map<string, ResourceRequest>();
 const pageRequestKeys = new Set<string>();
 const previewRequests = new Map<string, Set<symbol>>();
+const inspectionRequests = new Set<string>();
 const resourceVersions = new Map<string, number>();
 const inFlightBatches = new Set<InFlightResourceBatch>();
 
@@ -141,15 +146,38 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 
   try {
     const startedAt = performance.now();
-    const response = await requestFetch(restResourcesLoader(), {
-      method: "POST",
-      body: JSON.stringify(list),
-      signal: controller.signal,
-    });
+    const inspectionKey = list
+      .map(getResourceKey)
+      .find((key) => inspectionRequests.has(key));
+    const response = await requestFetch(
+      restResourcesLoader({ inspect: inspectionKey }),
+      {
+        method: "POST",
+        body: JSON.stringify(list),
+        signal: controller.signal,
+      }
+    );
     if (response.ok === false) {
       return;
     }
-    const results = new Map<string, unknown>(await response.json());
+    const payload: unknown = await response.json();
+    const isInspectionResponse =
+      typeof payload === "object" && payload !== null && "resources" in payload;
+    const results = new Map<string, unknown>(
+      (isInspectionResponse
+        ? (payload as { resources: [string, unknown][] }).resources
+        : payload) as [string, unknown][]
+    );
+    if (isInspectionResponse) {
+      const { inspection } = payload as {
+        inspection?: PreviewFormExchange;
+      };
+      if (inspection !== undefined) {
+        const next = new Map($resourcePreviewExchanges.get());
+        next.set(inspection.resourceId, inspection);
+        $resourcePreviewExchanges.set(next);
+      }
+    }
     const loaderDurationMs = performance.now() - startedAt;
     for (const [key, result] of results) {
       const request = dispatched.get(key);
@@ -176,6 +204,7 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
   } finally {
     inFlightBatches.delete(batch);
     for (const key of dispatched.keys()) {
+      inspectionRequests.delete(key);
       if (pending.get(key) === batch) {
         pending.delete(key);
       }
@@ -301,6 +330,10 @@ export const loadResourcePreview = (
   requestFetch: typeof fetch = fetch
 ) => {
   const key = getResourceKey(resource);
+  inspectionRequests.add(key);
+  const previousInspection = new Map($resourcePreviewExchanges.get());
+  previousInspection.delete(key);
+  $resourcePreviewExchanges.set(previousInspection);
   const lease = Symbol();
   const leases = previewRequests.get(key) ?? new Set<symbol>();
   leases.add(lease);
@@ -637,6 +670,8 @@ const reset = () => {
   knownRequests.clear();
   pageRequestKeys.clear();
   previewRequests.clear();
+  inspectionRequests.clear();
+  $resourcePreviewExchanges.set(new Map());
   resourceVersions.clear();
   updateCache();
   updatePending();

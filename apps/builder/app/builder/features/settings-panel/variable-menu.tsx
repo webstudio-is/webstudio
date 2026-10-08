@@ -119,11 +119,20 @@ const pasteVariable = async () => {
   }
 };
 
-const canDeleteVariable = (variable: DataSource | undefined) => {
+export const canDeleteVariable = (
+  variable: DataSource | undefined,
+  isLocal = variable?.scopeInstanceId === $selectedInstance.get()?.id
+) => {
   if (!variable) {
     return false;
   }
-  const isLocal = variable.scopeInstanceId === $selectedInstance.get()?.id;
+  if (
+    ["formState", "results", "errors"].includes(variable.name) &&
+    $instances.get().get(variable.scopeInstanceId ?? "")?.component ===
+      "NativeForm"
+  ) {
+    return false;
+  }
   return (
     isLocal &&
     (variable.type !== "parameter" ||
@@ -135,14 +144,18 @@ export const VariableMenu = ({
   variable,
   canDelete = false,
   onDelete,
+  onRefresh,
   onOpenChange,
   size = "small",
+  includePaste = true,
 }: {
   variable?: DataSource;
   canDelete?: boolean;
   onDelete?: () => void;
+  onRefresh?: () => void;
   onOpenChange?: (open: boolean) => void;
   size?: "small" | "header";
+  includePaste?: boolean;
 }) => {
   const [deleting, setDeleting] = useState<VariableToDelete>();
   return (
@@ -171,7 +184,7 @@ export const VariableMenu = ({
           onCloseAutoFocus={(event) => event.preventDefault()}
         >
           <DropdownMenuItem
-            disabled={!canDelete}
+            disabled={!canDelete || !canDeleteVariable(variable)}
             onSelect={() => {
               if (!variable) {
                 return;
@@ -192,13 +205,18 @@ export const VariableMenu = ({
           >
             Copy
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={async () => {
-              await pasteVariable();
-            }}
-          >
-            Paste
-          </DropdownMenuItem>
+          {onRefresh !== undefined && (
+            <DropdownMenuItem onSelect={onRefresh}>Refresh</DropdownMenuItem>
+          )}
+          {includePaste && (
+            <DropdownMenuItem
+              onSelect={async () => {
+                await pasteVariable();
+              }}
+            >
+              Paste
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <DeleteDataVariableDialog

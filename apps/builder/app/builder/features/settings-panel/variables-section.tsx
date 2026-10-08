@@ -37,7 +37,11 @@ import {
 } from "~/builder/shared/collapsible-section";
 import { formatValuePreview } from "~/builder/shared/expression-editor";
 import { VariablePopoverTrigger } from "./variable-popover";
-import { VariableContextMenu, VariableMenu } from "./variable-menu";
+import {
+  canDeleteVariable,
+  VariableContextMenu,
+  VariableMenu,
+} from "./variable-menu";
 import { $variableToFocus, showVariableAtSource } from "./variable-navigation";
 import { StyleSourceBadge } from "../style-panel/style-source";
 import {
@@ -48,7 +52,6 @@ import {
   $selectedInstance,
   $selectedInstanceSelector,
   $selectedInstanceKeyWithRoot,
-  $selectedPage,
 } from "~/shared/nano-states";
 import {
   findAvailableVariables,
@@ -173,7 +176,6 @@ const VariablesItem = ({
   usageCount: number;
   isOpen?: boolean;
 }) => {
-  const selectedPage = useStore($selectedPage);
   const variableToFocus = useStore($variableToFocus);
   const rowRef = useRef<HTMLButtonElement>(null);
   const [isVariableDialogOpen, setIsVariableDialogOpen] = useState(false);
@@ -228,7 +230,7 @@ const VariablesItem = ({
       value = getBrowserInfoPreview();
     }
   }
-  const canDelete = source === "local" && variable.type !== "parameter";
+  const canDelete = canDeleteVariable(variable, source === "local");
   const requestDelete = () =>
     setVariableToDelete({
       id: variable.id,
@@ -340,11 +342,7 @@ const VariablesItem = ({
           <>
             <VariableMenu
               variable={variable}
-              canDelete={
-                canDelete ||
-                (source === "local" &&
-                  variable.id === selectedPage?.systemDataSourceId)
-              }
+              canDelete={canDelete}
               onOpenChange={setIsMenuOpen}
             />
 

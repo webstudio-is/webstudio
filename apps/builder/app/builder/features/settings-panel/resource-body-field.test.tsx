@@ -22,7 +22,7 @@ const setup = () => {
   return container;
 };
 
-test("bound body content type and editor follow its value type at runtime", async () => {
+test("bound body content type follows its value type while keeping the code editor", async () => {
   const container = setup();
   const render = (scope: Record<string, unknown>) =>
     root?.render(
@@ -42,7 +42,7 @@ test("bound body content type and editor follow its value type at runtime", asyn
   await expect
     .poll(() => container.querySelector('input[name="header-value"]'))
     .not.toBeNull();
-  expect(container.querySelector(".cm-editor")).toBeNull();
+  expect(container.querySelector(".cm-editor")).not.toBeNull();
   const expression = container.querySelector<HTMLInputElement>(
     'input[name="header-value"]'
   )!.value;

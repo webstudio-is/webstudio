@@ -1,4 +1,7 @@
-import { $previewFormExchanges } from "~/shared/preview-form-inspection";
+import {
+  $previewFormExchanges,
+  $resourcePreviewExchanges,
+} from "~/shared/preview-form-inspection";
 import {
   $livePreviewFormValues,
   getFormOccurrenceKey,
@@ -20,9 +23,8 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { AlertIcon, CopyIcon, RefreshIcon } from "@webstudio-is/icons";
+import { AlertIcon, RefreshIcon } from "@webstudio-is/icons";
 import {
-  Box,
   Button,
   Combobox,
   cssVar,
@@ -73,7 +75,6 @@ import {
 } from "./form-context-preview";
 import {
   $selectedInstance,
-  $selectedPage,
   $selectedInstanceKeyWithRoot,
 } from "~/shared/nano-states";
 import {
@@ -100,7 +101,6 @@ import {
   SystemResourceForm,
   useResourceScope,
 } from "./resource-panel";
-import { generateCurl } from "./curl";
 import {
   $pendingResourceKeys,
   $resourceDiagnosticsCache,
@@ -113,7 +113,6 @@ import {
   loadResourceDiagnostics,
 } from "~/shared/resources";
 import { Row } from "./shared";
-import { VariableMenu } from "./variable-menu";
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import {
   clearSettledDiagnosticsKey,
@@ -125,6 +124,7 @@ import {
 } from "./request-error-diagnostics";
 import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 import { ResourceDiagnosticsView } from "./resource-diagnostics-view";
+import { canDeleteVariable, VariableMenu } from "./variable-menu";
 
 const NameField = ({
   variable,
@@ -299,7 +299,7 @@ const TypeField = ({
         </Flex>
       ),
       description:
-        "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
+        "A GraphQL resource is a configuration for secure data fetching with GraphQL. You can safely use secrets in any field.",
     },
     {
       value: "system-resource",
@@ -324,11 +324,7 @@ const TypeField = ({
         getItemProps={(option) => ({
           disabled: options.get(option)?.disabled,
         })}
-        getDescription={(option) => (
-          <Box css={{ width: theme.spacing[27] }}>
-            {options.get(option)?.description}
-          </Box>
-        )}
+        getDescription={(option) => options.get(option)?.description}
         value={value === "email-resource" ? "system-resource" : value}
         name="type"
         onChange={onChange}
@@ -754,11 +750,12 @@ const VariablePreview = ({
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const variableValues = useStore($instanceVariableValues);
   const lastExchanges = useStore($previewFormExchanges);
+  const resourceExchanges = useStore($resourcePreviewExchanges);
   const inspection =
     variable?.type === "resource"
       ? lastExchanges.get(variable.resourceId)
       : undefined;
-  const latestExchange = inspection?.attempts.at(-1);
+  const formExchange = inspection?.attempts.at(-1);
   const resourcesCache = useStore($resourcesCache);
   const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
   const resourceDiagnosticsErrorCache = useStore(
@@ -851,6 +848,11 @@ const VariablePreview = ({
       resourcePerformance = resourcePerformanceCache.get(resourceKey);
     }
   }
+  const latestExchange =
+    (computedResourceKey === undefined
+      ? undefined
+      : resourceExchanges.get(computedResourceKey)) ?? formExchange;
+  const latestExchangeIsFormSubmission = latestExchange === formExchange;
   if (
     variableType === "parameter" &&
     variable?.type === "parameter" &&
@@ -874,14 +876,16 @@ const VariablePreview = ({
       resourceName: latestExchange.resourceName,
       ...latestExchange.response,
       ok: latestExchange.response.status < 400,
-      attempts: inspection?.attempts.map(
-        ({ resourceId, resourceName, response }, index) => ({
-          attempt: index + 1,
-          resourceId,
-          resourceName,
-          ...response,
-        })
-      ),
+      attempts: latestExchangeIsFormSubmission
+        ? inspection?.attempts.map(
+            ({ resourceId, resourceName, response }, index) => ({
+              attempt: index + 1,
+              resourceId,
+              resourceName,
+              ...response,
+            })
+          )
+        : undefined,
     };
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
@@ -946,19 +950,25 @@ const VariablePreview = ({
     <RequestInspector
       previewLabel={inspectSubmission ? "Response" : "Preview"}
       request={
-        inspectSubmission ? (
+        inspectSubmission && latestExchange !== undefined ? (
           <EditorContent
             {...editorProps}
             value={formatValue(
-              inspection?.attempts.map(
-                ({ resourceId, resourceName, request, kind }, index) => ({
-                  attempt: index + 1,
-                  resourceId,
-                  resourceName,
-                  kind,
-                  ...request,
-                })
-              ) ?? null
+              latestExchangeIsFormSubmission && inspection?.attempts.length
+                ? inspection.attempts.map(
+                    ({ resourceId, resourceName, request, kind }, index) => ({
+                      attempt: index + 1,
+                      resourceId,
+                      resourceName,
+                      kind,
+                      ...request,
+                    })
+                  )
+                : {
+                    resourceId: latestExchange.resourceId,
+                    resourceName: latestExchange.resourceName,
+                    ...latestExchange.request,
+                  }
             )}
           />
         ) : undefined
@@ -1008,8 +1018,6 @@ const VariablePopoverContent = ({
   onClose: () => void;
 }) => {
   const panelRef = useRef<undefined | PanelApi>(undefined);
-  const selectedInstance = useStore($selectedInstance);
-  const selectedPage = useStore($selectedPage);
   const [queryActive, setQueryActive] = useState(false);
   const [queryPending, setQueryPending] = useState(false);
   const [querySourceContainer, setQuerySourceContainer] =
@@ -1157,19 +1165,6 @@ const VariablePopoverContent = ({
     }
   };
 
-  const copyAsCurl = async () => {
-    const formData = new FormData(formRef.current ?? undefined);
-    const resource = createResourceValueFromFormData({
-      id: variable?.id ?? "new",
-      formData,
-    });
-    const resourceRequest = await computeResourceRequest(
-      resource,
-      resourceScope.variableValues
-    );
-    navigator.clipboard.writeText(generateCurl(resourceRequest));
-  };
-
   return (
     <>
       <SplitView
@@ -1256,26 +1251,17 @@ const VariablePopoverContent = ({
               <VariableMenu
                 variable={variable}
                 size="header"
-                canDelete={
-                  !isSystemVariable &&
-                  variable.scopeInstanceId === selectedInstance?.id &&
-                  (variable.type !== "parameter" ||
-                    variable.id === selectedPage?.systemDataSourceId)
-                }
+                includePaste={false}
+                canDelete={!isSystemVariable && canDeleteVariable(variable)}
                 onDelete={onClose}
+                onRefresh={
+                  variableType === "resource" ||
+                  variableType === "graphql-resource" ||
+                  variableType === "system-resource"
+                    ? () => void reloadData()
+                    : undefined
+                }
               />
-            )}
-            {(variableType === "resource" ||
-              variableType === "graphql-resource") && (
-              <Tooltip content="Copy resource as cURL command" side="bottom">
-                <Button
-                  type="button"
-                  aria-label="Copy resource as cURL command"
-                  prefix={<CopyIcon />}
-                  color="ghost"
-                  onClick={copyAsCurl}
-                />
-              </Tooltip>
             )}
             {(variableType === "resource" ||
               variableType === "graphql-resource" ||

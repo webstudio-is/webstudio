@@ -9,6 +9,7 @@ import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $previewFormExchanges,
+  $resourcePreviewExchanges,
   recordPreviewFormExchanges,
 } from "~/shared/preview-form-inspection";
 import { $livePreviewFormValues } from "~/shared/preview-form-values";
@@ -24,6 +25,7 @@ afterEach(() => {
   root = undefined;
   $resourcesCache.set(previousCache);
   $previewFormExchanges.set(new Map());
+  $resourcePreviewExchanges.set(new Map());
   $instances.set(new Map());
   $dataSources.set(new Map());
   $pages.set(undefined);
@@ -118,7 +120,7 @@ test("Form data Preview shows live JSON values, including empty fields", async (
   expect(container.textContent).toContain('"userAgent":');
 });
 
-test("HTTP Response shows cached status and body, including unsuccessful responses", async () => {
+test("HTTP Response shows cached status and body without inventing an unsent request", async () => {
   const request: ResourceRequest = {
     name: "Request",
     method: "get",
@@ -164,7 +166,7 @@ test("HTTP Response shows cached status and body, including unsuccessful respons
       container.querySelectorAll('[role="tab"]'),
       (tab) => tab.textContent
     )
-  ).toEqual(["Response", "Request", "Diagnostics"]);
+  ).toEqual(["Response", "Diagnostics"]);
   await expect.poll(() => container.textContent).toContain("201");
   expect(container.textContent).toContain("Created");
   expect(container.textContent).toContain("created response");
@@ -186,6 +188,116 @@ test("HTTP Response shows cached status and body, including unsuccessful respons
   await expect.poll(() => container.textContent).toContain("422");
   expect(container.textContent).toContain("Unprocessable Content");
   expect(container.textContent).toContain("rejected response body");
+});
+
+test("explicit Resource reload shows the captured request and response headers", async () => {
+  const request: ResourceRequest = {
+    name: "Contact webhook",
+    method: "post",
+    url: "https://example.com/contacts",
+    headers: [],
+    searchParams: [],
+    body: { email: "person@example.com" },
+  };
+  const key = getResourceKey(request);
+  $previewFormExchanges.set(
+    new Map([
+      [
+        key,
+        {
+          formId: "form",
+          attempts: [
+            {
+              resourceId: key,
+              resourceName: "Contact webhook",
+              kind: "http",
+              request: {
+                method: "POST",
+                url: "https://old.example/contacts",
+                headers: [],
+                body: { email: "stale@example.com" },
+                truncated: false,
+              },
+              response: {
+                status: 200,
+                statusText: "OK",
+                headers: [],
+                body: { accepted: true },
+                truncated: false,
+              },
+            },
+          ],
+        },
+      ],
+    ])
+  );
+  $resourcePreviewExchanges.set(
+    new Map([
+      [
+        key,
+        {
+          resourceId: key,
+          resourceName: "Contact webhook",
+          kind: "http",
+          request: {
+            method: "POST",
+            url: request.url,
+            headers: [{ name: "content-type", value: "application/json" }],
+            body: { email: "person@example.com" },
+            truncated: false,
+          },
+          response: {
+            status: 201,
+            statusText: "Created",
+            url: request.url,
+            headers: [{ name: "x-request-id", value: "request-123" }],
+            body: { accepted: true },
+            truncated: false,
+          },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <__testing__.VariablePreview
+          variable={{
+            id: "contact-webhook-variable",
+            type: "resource",
+            name: "Contact webhook",
+            resourceId: key,
+          }}
+          variableType="resource"
+          variableValue={request}
+          showSavedResourceRequest={false}
+          isComputingRequest={false}
+          onLoadData={() => {}}
+          queryActive={false}
+          queryPending={false}
+          queryContainerRef={() => {}}
+        />
+      </TooltipProvider>
+    )
+  );
+  const requestTab = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find((tab) => tab.textContent === "Request");
+  expect(requestTab).not.toBeNull();
+  await act(async () => {
+    requestTab?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    requestTab?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  expect(container.textContent).toContain('"method": "POST"');
+  expect(container.textContent).toContain('"content-type"');
+  expect(container.textContent).toContain('"email": "person@example.com"');
+  expect(container.textContent).not.toContain("stale@example.com");
+  expect(container.textContent).not.toContain("old.example");
 });
 
 test.each(["http", "email"] as const)(
@@ -345,7 +457,7 @@ test("Email inspector has submission tabs without loading or inventing an exchan
       container.querySelectorAll('[role="tab"]'),
       (tab) => tab.textContent
     )
-  ).toEqual(["Response", "Request", "Diagnostics"]);
+  ).toEqual(["Response", "Diagnostics"]);
   expect(container.textContent).not.toContain("Email delivery is available");
   expect(container.textContent).not.toContain("Load data");
   expect($previewFormExchanges.get().has("unsent-email")).toBe(false);

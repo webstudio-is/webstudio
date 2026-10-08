@@ -161,6 +161,83 @@ test("records non-bindable server duration and response size", async () => {
   ]);
 });
 
+test("captures the actual request and response only for an explicitly inspected resource", async () => {
+  const resource: ResourceRequest = {
+    name: "Contact webhook",
+    method: "post",
+    url: "https://api.example/contacts?token=query-secret",
+    searchParams: [],
+    headers: [
+      { name: "content-type", value: "application/json" },
+      { name: "authorization", value: "Bearer header-secret" },
+    ],
+    body: {
+      email: "person@example.com",
+      message: "Hello",
+      password: "body-secret",
+    },
+  };
+  const otherResource: ResourceRequest = {
+    ...resource,
+    name: "Other webhook",
+    url: "https://api.example/other",
+  };
+  const request = new Request(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",
+    { method: "POST" }
+  );
+  const customFetch = vi.fn<typeof fetch>(async (_input, _init) =>
+    Response.json(
+      { accepted: true },
+      { status: 201, headers: { "x-private-result": "response-secret" } }
+    )
+  );
+  const inspectKey = getResourceKey(resource);
+
+  const output = await loadResourceRequestList(
+    {
+      request,
+      requestList: [resource, otherResource],
+      sourceOrigin: "https://source.example",
+      includeDiagnostics: false,
+      customFetch,
+      inspectResourceKey: inspectKey,
+    },
+    { executeAssetQueries: vi.fn() as never, loadResource }
+  );
+
+  expect(output).toMatchObject({
+    resources: [
+      [inspectKey, { ok: true, status: 201, data: { accepted: true } }],
+      [getResourceKey(otherResource), { ok: true, data: { accepted: true } }],
+    ],
+    inspection: {
+      resourceId: inspectKey,
+      resourceName: "Contact webhook",
+      request: {
+        method: "POST",
+        url: "https://api.example/contacts?token=%5Bredacted%5D",
+        body: {
+          email: "person@example.com",
+          message: "Hello",
+          password: "[redacted]",
+        },
+      },
+      response: {
+        status: 201,
+        headers: [
+          { name: "content-type", value: "application/json" },
+          { name: "x-private-result", value: "response-secret" },
+        ],
+        body: { accepted: true },
+      },
+    },
+  });
+  expect(JSON.stringify(output)).not.toContain("query-secret");
+  expect(JSON.stringify(output)).not.toContain("header-secret");
+  expect(JSON.stringify(output)).not.toContain("body-secret");
+});
+
 test("returns every invalid resource field as structured diagnostics", async () => {
   const request = new Request(
     "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.localhost/rest/resources-loader",

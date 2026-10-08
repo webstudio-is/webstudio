@@ -23,6 +23,7 @@ import {
   loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
+import { $resourcePreviewExchanges } from "./preview-form-inspection";
 
 const {
   getLoaderState,
@@ -95,6 +96,51 @@ test("keeps an explicitly loaded unbound resource through page-plan recalculatio
   response.respond(Response.json([[key, { data: "2026-09-23" }]]));
   await vi.waitFor(() => {
     expect($resourcesCache.get().get(key)).toEqual({ data: "2026-09-23" });
+  });
+  release();
+});
+
+test("captures the exchange returned by an explicitly inspected Resource reload", async () => {
+  const request: ResourceRequest = {
+    ...previewRequest("Contact webhook", "https://example.com/contacts"),
+    method: "post",
+    body: { email: "person@example.com" },
+  };
+  const key = getResourceKey(request);
+  const exchange = {
+    resourceId: key,
+    resourceName: request.name,
+    kind: "http" as const,
+    request: {
+      method: "POST",
+      url: request.url,
+      headers: [],
+      body: request.body,
+      truncated: false,
+    },
+    response: {
+      status: 201,
+      statusText: "Created",
+      headers: [],
+      body: { accepted: true },
+      truncated: false,
+    },
+  };
+  const requestFetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    expect(String(input)).toContain("inspect=");
+    expect(JSON.parse(String(init?.body))).toEqual([request]);
+    return Response.json({
+      resources: [[key, { data: { accepted: true } }]],
+      inspection: exchange,
+    });
+  });
+
+  const release = loadResourcePreview(request, requestFetch);
+  await vi.waitFor(() => {
+    expect($resourcePreviewExchanges.get().get(key)).toEqual(exchange);
+  });
+  expect($resourcesCache.get().get(key)).toEqual({
+    data: { accepted: true },
   });
   release();
 });

@@ -9,6 +9,8 @@ import {
 import { getZodValidationIssues } from "@webstudio-is/project-build/runtime";
 import { executeAssetQueries } from "~/shared/$resources/assets-query.server";
 import { getResourceKey } from "~/shared/resource-utils";
+import { capturePreviewFormExchange } from "~/services/preview-form-inspection.server";
+import type { PreviewFormExchange } from "~/shared/preview-form-inspection";
 
 const defaultDependencies = {
   executeAssetQueries,
@@ -42,22 +44,39 @@ const separateInternalPerformance = (value: unknown) => {
   };
 };
 
-export const loadResourceRequestList = async (
+type LoadResourceRequestListInput = {
+  request: Request;
+  requestList: readonly unknown[];
+  sourceOrigin: string;
+  includeDiagnostics: boolean;
+  customFetch: typeof fetch;
+  inspectResourceKey?: string;
+};
+type LoadedResourceList = Array<[string, unknown]>;
+type InspectedResourceList = {
+  resources: LoadedResourceList;
+  inspection?: PreviewFormExchange;
+};
+
+export function loadResourceRequestList(
+  input: LoadResourceRequestListInput & { inspectResourceKey?: undefined },
+  dependencies?: Partial<typeof defaultDependencies>
+): Promise<LoadedResourceList>;
+export function loadResourceRequestList(
+  input: LoadResourceRequestListInput & { inspectResourceKey: string },
+  dependencies?: Partial<typeof defaultDependencies>
+): Promise<InspectedResourceList>;
+export async function loadResourceRequestList(
   {
     request,
     requestList,
     sourceOrigin,
     includeDiagnostics,
     customFetch,
-  }: {
-    request: Request;
-    requestList: readonly unknown[];
-    sourceOrigin: string;
-    includeDiagnostics: boolean;
-    customFetch: typeof fetch;
-  },
+    inspectResourceKey,
+  }: LoadResourceRequestListInput,
   dependencies: Partial<typeof defaultDependencies> = {}
-) => {
+): Promise<LoadedResourceList | InspectedResourceList> {
   const resolvedDependencies = { ...defaultDependencies, ...dependencies };
   const assetProvider = includeDiagnostics
     ? undefined
@@ -73,6 +92,7 @@ export const loadResourceRequestList = async (
       });
   const providerFetch: typeof fetch = (input, init) =>
     assetProvider?.fetch(input, init) ?? customFetch(input, init);
+  let inspection: PreviewFormExchange | undefined;
   const output = requestList.map(async (item) => {
     const resource = resourceRequest.safeParse(item);
     if (resource.success === false) {
@@ -94,15 +114,35 @@ export const loadResourceRequestList = async (
       ];
     }
     const startedAt = resolvedDependencies.now();
+    const resourceKey = getResourceKey(resource.data);
     const result = await resolvedDependencies.loadResource(
       providerFetch,
       resource.data,
       sourceOrigin,
-      { signal: request.signal }
+      {
+        signal: request.signal,
+        ...(resourceKey === inspectResourceKey
+          ? {
+              onExchange: async (exchange) => {
+                inspection = await capturePreviewFormExchange(
+                  resourceKey,
+                  exchange,
+                  {
+                    resourceName: resource.data.name,
+                    publicValues: new Set(),
+                    privateValues: new Set(),
+                    allowRequestBody: true,
+                    allowCustomHeaders: true,
+                  }
+                );
+              },
+            }
+          : {}),
+      }
     );
     const separated = separateInternalPerformance(result);
     return [
-      getResourceKey(resource.data),
+      resourceKey,
       {
         ...result,
         __performance__: {
@@ -114,5 +154,8 @@ export const loadResourceRequestList = async (
     ];
   });
   await assetProvider?.flush();
-  return await Promise.all(output);
-};
+  const resources = await Promise.all(output);
+  return inspectResourceKey === undefined
+    ? (resources as LoadedResourceList)
+    : { resources: resources as LoadedResourceList, inspection };
+}
