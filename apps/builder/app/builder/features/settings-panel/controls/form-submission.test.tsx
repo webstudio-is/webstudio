@@ -102,6 +102,17 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   expect(document.body.textContent).toContain(
     "Sends each form submission to all selected destinations at the same time."
   );
+  expect(document.body.textContent).toContain(
+    "formData — submitted fields from this Form"
+  );
+  expect(document.body.textContent).toContain("browserInfo — visitor details");
+  expect(document.body.textContent).toContain(
+    "results — each Action’s response, in order"
+  );
+  expect(document.body.textContent).toContain(
+    "errors — failed Actions and their messages"
+  );
+  expect(document.body.textContent).not.toContain("status —");
   expect(document.body.textContent).toContain("Add at least one action.");
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(

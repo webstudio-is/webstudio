@@ -960,7 +960,7 @@ describe("insert webstudio component at", () => {
           ]),
         })
       ).toEqual([]);
-      for (const name of ["status", "results", "errors"]) {
+      for (const name of ["results", "errors"]) {
         expect(
           Array.from($dataSources.get().values()).some(
             (dataSource) =>
@@ -1002,7 +1002,7 @@ describe("insert webstudio component at", () => {
             $dataSourceVariables.get().get(dataSource.id),
           ])
       );
-      expect(variables.get("status")).toBe(result.status);
+      expect(variables.has("status")).toBe(false);
       expect(variables.get("results")).toBe(result.results);
       expect(variables.get("errors")).toBe(result.errors);
       for (const child of $instances.get().get(formId)?.children ?? []) {
@@ -1015,7 +1015,7 @@ describe("insert webstudio component at", () => {
           dataSources: $dataSources.get(),
         }).map(({ name }) => name);
         expect(availableNames).toEqual(
-          expect.arrayContaining(["status", "results", "errors"])
+          expect.arrayContaining(["results", "errors"])
         );
       }
       for (const name of ["formData", "browserInfo"]) {

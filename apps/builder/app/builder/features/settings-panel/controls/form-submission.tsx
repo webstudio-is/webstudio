@@ -162,6 +162,28 @@ export const FormSubmissionControl = ({
                 Sends each form submission to all selected destinations at the
                 same time.
               </Text>
+              <Box as="ul" css={{ margin: 0, paddingLeft: theme.spacing[4] }}>
+                <li>
+                  <Text>
+                    <code>formData</code> — submitted fields from this Form
+                  </Text>
+                </li>
+                <li>
+                  <Text>
+                    <code>browserInfo</code> — visitor details
+                  </Text>
+                </li>
+                <li>
+                  <Text>
+                    <code>results</code> — each Action’s response, in order
+                  </Text>
+                </li>
+                <li>
+                  <Text>
+                    <code>errors</code> — failed Actions and their messages
+                  </Text>
+                </li>
+              </Box>
               {action.length === 0 && (
                 <Flex align="center" gap="1">
                   <AlertIcon
