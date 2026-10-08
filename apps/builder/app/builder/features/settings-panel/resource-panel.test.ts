@@ -520,7 +520,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
   expect(resource.method).toBe("get");
 });
 
-test("invalidates the preview as soon as a body edit starts", () => {
+test("invalidates the preview as soon as a body edit starts", async () => {
   const resource: Resource = {
     id: "request",
     name: "Request",
@@ -561,19 +561,14 @@ test("invalidates the preview as soon as a body edit starts", () => {
     )
   ).toContain("Body");
 
-  const body = container.querySelector<HTMLTextAreaElement>(
-    "textarea:not([name])"
-  );
+  const body = container.querySelector<HTMLElement>(".cm-content");
   expect(body).not.toBeNull();
-  act(() => {
-    const setValue = Object.getOwnPropertyDescriptor(
-      HTMLTextAreaElement.prototype,
-      "value"
-    )?.set;
-    setValue?.call(body, "changed");
-    body?.dispatchEvent(new Event("input", { bubbles: true }));
-    expect(onChange).toHaveBeenCalledOnce();
+  expect(container.querySelector("textarea:not([name])")).toBeNull();
+  await act(async () => {
+    await userEvent.click(body!);
+    await userEvent.keyboard("changed");
   });
+  expect(onChange).toHaveBeenCalled();
 });
 
 test("shows and submits the selected HTTP body format", async () => {
@@ -968,15 +963,15 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
 });
 
 test.each([
-  [JSON.stringify('{"a":1}'), "text/plain", false],
-  [JSON.stringify('{"a":1}'), "text/plain", false],
-  ["{ a: 1 }", "application/json", true],
-  ["[1, 2]", "application/json", true],
-  ["42", "application/json", true],
-  ["true", "application/json", true],
+  [JSON.stringify('{"a":1}'), "text/plain"],
+  [JSON.stringify('{"a":1}'), "text/plain"],
+  ["{ a: 1 }", "application/json"],
+  ["[1, 2]", "application/json"],
+  ["42", "application/json"],
+  ["true", "application/json"],
 ] as const)(
   "infers Auto body content type and editor from %s",
-  async (body, mime, jsonEditor) => {
+  async (body, mime) => {
     $resources.set(
       new Map([
         [
@@ -1018,7 +1013,7 @@ test.each([
     await expect
       .poll(() => (header?.nextElementSibling as HTMLInputElement)?.value)
       .toBe(JSON.stringify(mime));
-    expect(container.querySelector(".cm-editor") !== null).toBe(jsonEditor);
+    expect(container.querySelector(".cm-editor")).not.toBeNull();
     await expect
       .poll(
         () =>

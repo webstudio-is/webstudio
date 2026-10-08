@@ -855,11 +855,10 @@ const BodyField = ({
     onChangeStart?.();
     onChange(newBody);
   };
-  const displayedValue =
-    effectiveBodyType === "json"
-      ? isBodyLiteral
-        ? value
-        : (JSON.stringify(evaluatedValue, null, 2) ?? "")
+  const displayedValue = isBodyLiteral
+    ? value
+    : effectiveBodyType === "json"
+      ? (JSON.stringify(evaluatedValue, null, 2) ?? "")
       : String(evaluatedValue ?? "");
 
   return (
@@ -896,11 +895,7 @@ const BodyField = ({
         bound={isBodyLiteral === false}
         scope={scope}
         aliases={aliases}
-        onChangeValue={(value) =>
-          updateBody(
-            effectiveBodyType === "json" ? value : JSON.stringify(value)
-          )
-        }
+        onChangeValue={updateBody}
         onChangeExpression={(value) => {
           updateBody(value);
           setIsBodyLiteral(isLiteralExpression(value));
@@ -911,28 +906,15 @@ const BodyField = ({
         }}
         renderControl={({ value, readOnly, onChangeValue }) => (
           <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
-            {effectiveBodyType === "json" ? (
-              // wrap with div to position error tooltip
-              <div>
-                <ExpressionEditor
-                  color={bodyError ? "error" : undefined}
-                  readOnly={readOnly}
-                  value={value}
-                  onChange={onChangeValue}
-                  onChangeComplete={() => bodyRef.current?.checkValidity()}
-                />
-              </div>
-            ) : (
-              <TextArea
-                autoGrow={true}
-                maxRows={10}
-                disabled={readOnly}
+            <div>
+              <ExpressionEditor
                 color={bodyError ? "error" : undefined}
+                readOnly={readOnly}
                 value={value}
                 onChange={onChangeValue}
-                onBlur={() => bodyRef.current?.checkValidity()}
+                onChangeComplete={() => bodyRef.current?.checkValidity()}
               />
-            )}
+            </div>
           </InputErrorsTooltip>
         )}
       />
