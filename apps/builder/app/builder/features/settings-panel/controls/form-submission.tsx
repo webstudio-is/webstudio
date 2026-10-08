@@ -157,15 +157,21 @@ export const FormSubmissionControl = ({
       <Flex align="center" justify="between">
         <FieldLabel
           description={
-            action.length === 0 ? (
-              <Flex align="center" gap="1">
-                <AlertIcon
-                  color={cssVar("--foreground-warning")}
-                  style={{ flexShrink: 0 }}
-                />
-                <Text>Add at least one action.</Text>
-              </Flex>
-            ) : undefined
+            <Flex direction="column" gap="1">
+              <Text>
+                Sends each form submission to all selected destinations at the
+                same time.
+              </Text>
+              {action.length === 0 && (
+                <Flex align="center" gap="1">
+                  <AlertIcon
+                    color={cssVar("--foreground-warning")}
+                    style={{ flexShrink: 0 }}
+                  />
+                  <Text>Add at least one action.</Text>
+                </Flex>
+              )}
+            </Flex>
           }
           resettable={invalidSavedValue || action.length > 0}
           onReset={() => update([])}

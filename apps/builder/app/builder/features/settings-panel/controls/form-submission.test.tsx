@@ -99,6 +99,9 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
       (button) => button.textContent === "Action"
     )!;
   await act(async () => userEvent.click(actionLabel()));
+  expect(document.body.textContent).toContain(
+    "Sends each form submission to all selected destinations at the same time."
+  );
   expect(document.body.textContent).toContain("Add at least one action.");
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(
@@ -164,6 +167,9 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   );
   expect(container.textContent).toContain("Renamed request");
   await act(async () => userEvent.click(actionLabel()));
+  expect(document.body.textContent).toContain(
+    "Sends each form submission to all selected destinations at the same time."
+  );
   expect(document.body.textContent).not.toContain("Add at least one action.");
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(onChange).toHaveBeenLastCalledWith({
