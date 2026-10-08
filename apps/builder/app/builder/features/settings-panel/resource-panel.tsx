@@ -257,14 +257,19 @@ export const MethodField = ({
         getLabel={humanizeString}
         getDescription={(method) => (
           <Box css={{ width: "100%" }}>
-            {formDestination && method === "post"
-              ? "Form submissions use POST. This method applies elsewhere."
-              : {
-                  get: "Read data from a server.",
-                  post: "Send data to create or process something.",
-                  put: "Replace data on a server.",
-                  delete: "Delete data from a server.",
-                }[method]}
+            {[
+              {
+                get: "Read data from a server.",
+                post: "Send data to create or process something.",
+                put: "Replace data on a server.",
+                delete: "Delete data from a server.",
+              }[method],
+              formDestination && method === "post"
+                ? "Form submissions use POST. This method applies elsewhere."
+                : undefined,
+            ]
+              .filter(Boolean)
+              .join(" ")}
           </Box>
         )}
         name="method"
@@ -1591,10 +1596,10 @@ export const EmailResourceForm = forwardRef<
             }
             getDescription={(value: "project" | "custom" | "visitor") =>
               value === "project"
-                ? "Send to the project's contact emails or owner."
+                ? "Sends to the contact emails set in Project Settings, or the project owner if none are set."
                 : value === "custom"
-                  ? "Send to the email addresses entered below."
-                  : "Send to an email address entered on this Form."
+                  ? "Sends to the email addresses entered below."
+                  : "Sends to the email address entered in the selected Form field."
             }
             onChange={(value: "project" | "custom" | "visitor") => {
               if (value === "project") {
@@ -1644,22 +1649,34 @@ export const EmailResourceForm = forwardRef<
       {settings.recipientMode === "visitor" && (
         <Row>
           <Grid gap={1}>
-            <InputErrorsTooltip
-              errors={recipientError ? [recipientError] : undefined}
-            >
-              <Select
-                fullWidth
-                aria-label="Visitor email field"
-                value={settings.visitorEmailField}
-                placeholder="Select an email field"
-                options={emailFields}
-                getLabel={(name) => name}
-                getDescription={() =>
-                  "Choose a Form input to use its value as the recipient email address."
-                }
-                onChange={(name) => setField("visitorEmailField", name)}
-              />
-            </InputErrorsTooltip>
+            <Flex align="center" gap={1}>
+              <Box css={{ flexGrow: 1, minWidth: 0 }}>
+                <InputErrorsTooltip
+                  errors={recipientError ? [recipientError] : undefined}
+                >
+                  <Select
+                    fullWidth
+                    aria-label="Visitor email field"
+                    value={settings.visitorEmailField}
+                    placeholder="Select an email field"
+                    options={emailFields}
+                    getLabel={(name) => name}
+                    onChange={(name) => setField("visitorEmailField", name)}
+                  />
+                </InputErrorsTooltip>
+              </Box>
+              <Tooltip
+                content="Adds a note with this site’s URL to help recipients identify where the message came from and discourage spam."
+                variant="wrapped"
+                disableHoverableContent={true}
+              >
+                <InfoCircleIcon
+                  aria-label="About Visitor email field"
+                  color={cssVar("--foreground-secondary")}
+                  tabIndex={0}
+                />
+              </Tooltip>
+            </Flex>
           </Grid>
         </Row>
       )}

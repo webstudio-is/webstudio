@@ -409,10 +409,10 @@ test("Email Resource recipient modes and attachment radios", async () => {
     '[data-select-description="content"]'
   );
   expect(recipientDescriptions?.textContent).toContain(
-    "Send to the project's contact emails or owner."
+    "Sends to the contact emails set in Project Settings, or the project owner if none are set."
   );
   expect(recipientDescriptions?.textContent).toContain(
-    "Send to the email addresses entered below."
+    "Sends to the email addresses entered below."
   );
   const customOption = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
@@ -895,6 +895,12 @@ test("visitor Email Resource selects a named Form email field", async () => {
   );
   expect(container.textContent).toContain("Visitor email field");
   expect(container.textContent).toContain("visitorEmail");
+  const visitorTooltipText =
+    "Adds a note with this site’s URL to help recipients identify where the message came from and discourage spam.";
+  expect(container.textContent).not.toContain(visitorTooltipText);
+  expect(
+    container.querySelector('[aria-label="About Visitor email field"]')
+  ).not.toBeNull();
   expect(container.textContent).toContain("Attachments");
   const attachmentOptions =
     container.querySelectorAll<HTMLElement>('[role="radio"]');
@@ -910,6 +916,18 @@ test("visitor Email Resource selects a named Form email field", async () => {
   await act(async () =>
     userEvent.click(container.querySelector('[role="combobox"]')!)
   );
+  const recipientModeDescriptions = document.querySelector(
+    '[data-select-description="content"]'
+  );
+  expect(recipientModeDescriptions?.textContent).toContain(
+    "Sends to the contact emails set in Project Settings, or the project owner if none are set."
+  );
+  expect(recipientModeDescriptions?.textContent).toContain(
+    "Sends to the email addresses entered below."
+  );
+  expect(recipientModeDescriptions?.textContent).toContain(
+    "Sends to the email address entered in the selected Form field."
+  );
   await act(async () =>
     page
       .getByRole("option", {
@@ -919,6 +937,9 @@ test("visitor Email Resource selects a named Form email field", async () => {
       .click()
   );
   expect(container.textContent).toContain("Attach submitted files");
+  expect(
+    container.querySelector('[aria-label="About Visitor email field"]')
+  ).toBeNull();
   await act(async () =>
     userEvent.click(container.querySelector('[role="combobox"]')!)
   );
@@ -935,6 +956,7 @@ test("visitor Email Resource selects a named Form email field", async () => {
   expect(container.textContent).not.toContain(
     "Select one named email input in this Form."
   );
+  expect(container.textContent).not.toContain(visitorTooltipText);
   const visitorField = Array.from(
     container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')
   ).at(-1);
@@ -944,12 +966,22 @@ test("visitor Email Resource selects a named Form email field", async () => {
       exact: true,
     })
   ).toBeVisible();
+  const visitorInfo = container.querySelector<SVGElement>(
+    '[aria-label="About Visitor email field"]'
+  )!;
+  await act(async () => userEvent.hover(visitorInfo));
+  await expect
+    .poll(() => document.body.textContent)
+    .toContain(visitorTooltipText);
+  await act(async () => userEvent.unhover(visitorInfo));
+  await expect
+    .poll(() => document.body.textContent)
+    .not.toContain(visitorTooltipText);
   await act(async () => userEvent.click(visitorField!));
-  expect(
-    document.querySelector('[data-select-description="content"]')?.textContent
-  ).toContain(
+  expect(document.body.textContent).not.toContain(
     "Choose a Form input to use its value as the recipient email address."
   );
+  await act(async () => userEvent.keyboard("{Escape}"));
 });
 
 test("includes resource documents when building another resource expression", () => {
@@ -1127,6 +1159,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
     );
   });
   expect(container.textContent).not.toContain("Form submissions use POST");
+  expect(container.textContent).not.toContain("Format");
   expect(container.querySelector('[name="body-format"]')).toBeNull();
   expect(container.querySelector('textarea[name="body"]')).toBeNull();
   act(() => {
@@ -2067,6 +2100,15 @@ test("Method uses the standard full-width collapsed Select and keeps description
   const post = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
   ).find((option) => option.textContent === "Post")!;
+  const descriptions = document.querySelector(
+    '[data-select-description="content"]'
+  );
+  expect(descriptions?.textContent).toContain(
+    "Send data to create or process something."
+  );
+  expect(descriptions?.textContent).toContain(
+    "Form submissions use POST. This method applies elsewhere."
+  );
   await act(async () => await userEvent.click(post));
   expect(onChange).toHaveBeenLastCalledWith("post");
   expect(trigger.textContent).toContain("Post");
