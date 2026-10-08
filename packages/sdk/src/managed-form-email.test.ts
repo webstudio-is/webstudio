@@ -325,7 +325,9 @@ test("leaves mailbox and attachment metadata policy to the Email Service", () =>
 test("propagates Worker rejection for mailbox or attachment policy", async () => {
   const fetch = vi.fn(async () =>
     Response.json(
-      { error: { code: "EMAIL_INVALID", message: "Email settings are invalid" } },
+      {
+        error: { code: "EMAIL_INVALID", message: "Email settings are invalid" },
+      },
       { status: 400 }
     )
   );
