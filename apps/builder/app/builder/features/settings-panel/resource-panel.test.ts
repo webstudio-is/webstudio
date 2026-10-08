@@ -923,7 +923,7 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
   for (const [selector, explanation] of [
     [
       '[aria-label="About Cache max age"]',
-      "How long Webstudio can cache this Resource's response, in seconds.",
+      "How long to cache the response, in seconds.",
     ],
     ['[aria-label="Add another header"]', "Add a request header."],
     ['[aria-label="Add another search param"]', "Add a URL search parameter."],

@@ -498,7 +498,7 @@ const CacheMaxAge = ({
       <Flex align="center" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor="resource-panel-max-age">Cache max age</Label>
         <Tooltip
-          content="How long Webstudio can cache this Resource's response, in seconds."
+          content="How long to cache the response, in seconds."
           variant="wrapped"
           disableHoverableContent={true}
         >
