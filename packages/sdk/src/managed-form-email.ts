@@ -1,7 +1,6 @@
 import type { ResourceLoadOptions } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
-import { maxEmailSubjectLength } from "./email-resource";
 import { parseEmailSender } from "./email-addresses";
 
 type EmailService = {
@@ -12,56 +11,11 @@ type EmailServiceFetch = (
   init?: RequestInit
 ) => Promise<Response>;
 
-const maxEmailContentBytes = 5 * 1024 * 1024;
-const maxEmailAttachments = 32;
-const maxEmailRequestBytes = 7 * 1024 * 1024;
-const mimeEnvelopeBytes = 16 * 1024;
+// Bound the extra allocation caused by Base64 before the Worker validates the
+// complete Email payload. The Worker owns attachment policy and payload limits.
+const maxEncodedAttachmentBytes = 7 * 1024 * 1024;
 export const cloudflareManagedFormPreviewEmailServiceUrl =
   "https://apps.webstudio.is/v1/preview-send";
-const emailPattern = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
-const isValidMailboxName = (name: unknown) =>
-  typeof name === "string" && name.length <= 256 && !/[\r\n]/.test(name);
-
-const isValidMailbox = (value: { address: string; name?: string }) =>
-  typeof value.address === "string" &&
-  value.address.length <= 320 &&
-  emailPattern.test(value.address) &&
-  !/[\r\n]/.test(value.address) &&
-  (value.name === undefined || isValidMailboxName(value.name));
-
-const utf8Bytes = (value: string) => new TextEncoder().encode(value).byteLength;
-
-const encodedTextUpperBound = (value: string) => {
-  const bytes = utf8Bytes(value) * 3;
-  return bytes + Math.ceil(bytes / 76) * 2;
-};
-
-const encodedBase64UpperBound = (length: number) =>
-  length + Math.ceil(length / 76) * 2;
-
-const getEncodedMimeUpperBound = (
-  email: NonNullable<ResourceRequest["email"]>,
-  files: File[]
-) => {
-  const headers = [
-    "forms@forms.webstudio.is",
-    email.subject,
-    ...email.recipients.flatMap(({ address, name }) => [address, name ?? ""]),
-    email.sender?.address ?? "",
-    email.fromName ?? "",
-  ];
-  let size = mimeEnvelopeBytes + encodedTextUpperBound(email.body);
-  for (const header of headers) {
-    size += encodedTextUpperBound(header);
-  }
-  for (const file of files) {
-    size += encodedTextUpperBound(file.name);
-    size += encodedTextUpperBound(file.type || "application/octet-stream");
-    size += encodedBase64UpperBound(4 * Math.ceil(file.size / 3));
-  }
-  return size;
-};
-
 const getEmailFiles = (formData: FormData) =>
   Array.from(formData).flatMap(([name, value]) =>
     internalFormFieldNames.has(name) === false &&
@@ -111,74 +65,21 @@ export const prepareVisitorEmailRequest = (
   };
 };
 
-/** The private Worker applies the same limits; check before any destination runs. */
+/** Bound Base64 allocation before the Email Service validates the payload. */
 export const validateCloudflareManagedFormEmail = (
   request: ResourceRequest,
   formData: FormData
 ) => {
-  const email = request.email;
-  if (
-    email === undefined ||
-    email.recipients.length === 0 ||
-    email.recipients.length > 50 ||
-    email.recipients.some((recipient) => !isValidMailbox(recipient)) ||
-    (email.sender !== undefined && !isValidMailbox(email.sender)) ||
-    (email.fromName !== undefined && !isValidMailboxName(email.fromName)) ||
-    typeof email.subject !== "string" ||
-    email.subject.length === 0 ||
-    email.subject.length > maxEmailSubjectLength ||
-    /[\r\n]/.test(email.subject) ||
-    typeof email.body !== "string"
-  ) {
-    throw new Error("Email settings are invalid");
-  }
-  const files = email.includeAttachments ? getEmailFiles(formData) : [];
-  if (files.length > maxEmailAttachments) {
-    throw new Error("Email has too many attachments");
-  }
-  for (const file of files) {
-    const contentType = file.type || "application/octet-stream";
-    if (
-      file.name.length === 0 ||
-      file.name.length > 255 ||
-      /[\r\n]/.test(file.name) ||
-      contentType.length > 255 ||
-      /[\r\n]/.test(contentType)
-    ) {
-      throw new Error("Email attachment metadata is invalid");
+  if (request.email?.includeAttachments) {
+    const encodedBytes = getEmailFiles(formData).reduce(
+      (total, file) => total + 4 * Math.ceil(file.size / 3),
+      0
+    );
+    if (encodedBytes > maxEncodedAttachmentBytes) {
+      throw new Error("Email attachments are too large to encode");
     }
   }
-  if (getEncodedMimeUpperBound(email, files) > maxEmailContentBytes) {
-    throw new Error("Email content is too large");
-  }
-  const emptyEnvelope = {
-    to: email.recipients,
-    subject: email.subject,
-    text: email.body,
-    ...(email.sender === undefined ? {} : { replyTo: email.sender }),
-    ...(email.fromName === undefined ? {} : { fromName: email.fromName }),
-    ...(files.length === 0
-      ? {}
-      : {
-          attachments: files.map((file) => ({
-            filename: file.name,
-            contentType: file.type || "application/octet-stream",
-            contentBase64: "",
-          })),
-        }),
-  };
-  const envelopeBytes = new TextEncoder().encode(
-    JSON.stringify(emptyEnvelope)
-  ).byteLength;
-  const encodedFileBytes = files.reduce(
-    (sum, file) => sum + 4 * Math.ceil(file.size / 3),
-    0
-  );
-  if (envelopeBytes + encodedFileBytes > maxEmailRequestBytes) {
-    throw new Error("Email request is too large");
-  }
 };
-
 const failure = (status: number, code: string, message: string) => ({
   ok: false,
   status,

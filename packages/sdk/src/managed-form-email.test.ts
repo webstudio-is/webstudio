@@ -301,7 +301,13 @@ test.each([undefined, null, "", "   ", 123])(
   }
 );
 
-test("rejects malformed recipient addresses during preflight", () => {
+test("leaves mailbox and attachment metadata policy to the Email Service", () => {
+  const formData = new FormData();
+  const invalidMetadata = new File(["x"], "bad\r\nname.txt");
+  Object.defineProperty(invalidMetadata, "type", {
+    value: "text/plain\r\nBcc: victim@example.com",
+  });
+  formData.append("upload", invalidMetadata);
   expect(() =>
     validateCloudflareManagedFormEmail(
       {
@@ -311,98 +317,39 @@ test("rejects malformed recipient addresses during preflight", () => {
           recipients: [{ address: "bad\r\nBcc: victim@example.com" }],
         },
       },
-      new FormData()
+      formData
     )
-  ).toThrow("Email settings are invalid");
-});
-
-test("rejects an invalid From display name during preflight", () => {
-  expect(() =>
-    validateCloudflareManagedFormEmail(
-      {
-        ...request,
-        email: {
-          ...request.email!,
-          fromName: "Owner\r\nBcc: attacker@example.com",
-        },
-      },
-      new FormData()
-    )
-  ).toThrow("Email settings are invalid");
-});
-
-test.each([
-  ["empty filename", "", "text/plain"],
-  ["long filename", "a".repeat(256), "text/plain"],
-  ["filename line break", "bad\r\nname.txt", "text/plain"],
-  ["long MIME type", "note.txt", "x".repeat(256)],
-  ["MIME line break", "note.txt", "text/plain\r\nBcc: victim@example.com"],
-])(
-  "rejects %s during Email attachment preflight",
-  (_, filename, contentType) => {
-    const file = new File(["x"], filename);
-    Object.defineProperty(file, "type", { value: contentType });
-    const formData = new FormData();
-    formData.append("upload", file);
-    expect(() => validateCloudflareManagedFormEmail(request, formData)).toThrow(
-      "Email attachment metadata is invalid"
-    );
-  }
-);
-
-test("accepts the attachment metadata length boundary", () => {
-  const file = new File(["x"], "a".repeat(255));
-  Object.defineProperty(file, "type", { value: "x".repeat(255) });
-  const formData = new FormData();
-  formData.append("upload", file);
-  expect(() =>
-    validateCloudflareManagedFormEmail(request, formData)
   ).not.toThrow();
 });
 
-test("invalid attachment metadata stops a sibling HTTP destination", async () => {
-  const formData = new FormData();
-  formData.append("upload", new File(["x"], "bad\nname.txt"));
-  const httpFetch = vi.fn(async () => Response.json({ ok: true }));
-  const emailFetch = vi.fn(async () => Response.json({ id: "sent" }));
-  const graph = validateManagedFormBodyFormats(
-    {
-      rootIds: ["http", "email"],
-      resources: [
-        {
-          id: "http",
-          outputName: "HTTP",
-          dependencies: [],
-          createRequest: () => ({
-            ...request,
-            control: undefined,
-            url: "https://example.com/submit",
-          }),
-        },
-        {
-          id: "email",
-          outputName: "Email",
-          control: "email" as const,
-          dependencies: [],
-          createRequest: () => request,
-        },
-      ],
-    },
-    formData,
-    true
+test("propagates Worker rejection for mailbox or attachment policy", async () => {
+  const fetch = vi.fn(async () =>
+    Response.json(
+      { error: { code: "EMAIL_INVALID", message: "Email settings are invalid" } },
+      { status: 400 }
+    )
   );
-  await expect(
-    loadManagedFormResources(httpFetch, graph, undefined, {
-      sendEmail: createCloudflareManagedFormEmailSender(
-        { fetch: emailFetch },
-        formData
-      ),
-      validateEmail: (resource) =>
-        validateCloudflareManagedFormEmail(resource, formData),
-    })
-  ).rejects.toThrow("Email attachment metadata is invalid");
-  expect(httpFetch).not.toHaveBeenCalled();
-  expect(emailFetch).not.toHaveBeenCalled();
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { fetch },
+    new FormData()
+  )!;
+  const result = await sendEmail(
+    {
+      ...request,
+      email: {
+        ...request.email!,
+        recipients: [{ address: "bad\r\nBcc: victim@example.com" }],
+      },
+    },
+    {}
+  );
+  expect(result).toMatchObject({
+    ok: false,
+    status: 400,
+    statusText: "Email settings are invalid",
+    data: { error: { code: "EMAIL_INVALID" } },
+  });
+  expect(fetch).toHaveBeenCalledOnce();
 });
 
 test("does not send after cancellation", async () => {
@@ -601,10 +548,9 @@ test("owner subject fits the maximum length with its reference", async () => {
 
 test("oversize Email preflight stops both Email and HTTP destinations", async () => {
   const formData = new FormData();
-  formData.append(
-    "upload",
-    new File([new Uint8Array(4 * 1024 * 1024)], "large.bin")
-  );
+  const file = new File([new Uint8Array(6 * 1024 * 1024)], "large.bin");
+  const readFile = vi.spyOn(file, "arrayBuffer");
+  formData.append("upload", file);
   const emailFetch = vi.fn(async () => Response.json({ id: "sent" }));
   const httpFetch = vi.fn(async () => Response.json({ ok: true }));
   const graph = {
@@ -641,9 +587,10 @@ test("oversize Email preflight stops both Email and HTTP destinations", async ()
       validateEmail: (resource) =>
         validateCloudflareManagedFormEmail(resource, formData),
     })
-  ).rejects.toThrow("Email content is too large");
+  ).rejects.toThrow("Email attachments are too large to encode");
   expect(httpFetch).not.toHaveBeenCalled();
   expect(emailFetch).not.toHaveBeenCalled();
+  expect(readFile).not.toHaveBeenCalled();
 });
 
 test("dependency-bound Email stops its HTTP lookup before dispatch", async () => {
