@@ -241,6 +241,24 @@ test("name shadow warning appears for an existing shadow and renamed ancestor na
   expect(input.validity.valid).toBe(true);
   await act(async () => await userEvent.fill(input, "Unique"));
   expect(container.querySelector("svg")).toBeNull();
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <__testing__.VariablesItem
+          variable={local}
+          source="local"
+          index={0}
+          value="red"
+          usageCount={0}
+        />
+      </TooltipProvider>
+    )
+  );
+  expect(
+    Array.from(container.querySelectorAll("svg")).some(
+      (icon) => icon.getAttribute("color") === "var(--foreground-warning)"
+    )
+  ).toBe(true);
 });
 
 test("clicking an Action focuses its Resource without navigating or opening the editor", async () => {

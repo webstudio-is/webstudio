@@ -196,6 +196,7 @@ export const FormSubmissionControl = ({
             </Flex>
           }
           resettable={invalidSavedValue || action.length > 0}
+          resetLabel="Reset"
           onReset={() => update([])}
         >
           Action

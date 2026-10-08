@@ -25,6 +25,7 @@ import {
   Box,
   Button,
   Combobox,
+  cssVar,
   DialogClose,
   DialogMaximize,
   DialogTitle,
@@ -178,9 +179,7 @@ const NameField = ({
           <Tooltip
             content={`This name shadows a variable from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Both variables are allowed.`}
           >
-            <span style={{ color: "#e8b400", display: "flex" }}>
-              <AlertIcon />
-            </span>
+            <AlertIcon color={cssVar("--foreground-warning")} />
           </Tooltip>
         )}
       </Flex>
@@ -1328,9 +1327,11 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
 export const VariablePopoverTrigger = ({
   variable,
   children,
+  onOpenChange,
 }: {
   variable?: DataSource;
   children: ReactNode;
+  onOpenChange?: (isOpen: boolean) => void;
 }) => {
   const [isOpen, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -1346,12 +1347,14 @@ export const VariablePopoverTrigger = ({
       onOpenChange={(newOpen) => {
         if (newOpen) {
           setOpen(true);
+          onOpenChange?.(true);
           return;
         }
         // attempt to save form on close
         if (areAllFormErrorsVisible(formRef.current)) {
           formRef.current?.requestSubmit();
           setOpen(false);
+          onOpenChange?.(false);
         } else {
           formRef.current?.checkValidity();
           // prevent closing when not all errors are shown to user
@@ -1363,7 +1366,10 @@ export const VariablePopoverTrigger = ({
           formRef={formRef}
           variable={variable}
           isOpen={isOpen}
-          onClose={() => setOpen(false)}
+          onClose={() => {
+            setOpen(false);
+            onOpenChange?.(false);
+          }}
         />
       }
     >

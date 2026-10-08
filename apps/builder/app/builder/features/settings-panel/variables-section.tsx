@@ -9,6 +9,7 @@ import {
   Button,
   Chip,
   css,
+  cssVar,
   CssValueListArrowFocus,
   CssValueListItem,
   Flex,
@@ -175,6 +176,7 @@ const VariablesItem = ({
   const selectedPage = useStore($selectedPage);
   const variableToFocus = useStore($variableToFocus);
   const rowRef = useRef<HTMLButtonElement>(null);
+  const [isVariableDialogOpen, setIsVariableDialogOpen] = useState(false);
   useEffect(() => {
     if (isOpen && variableToFocus?.id === variable.id) {
       rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -240,7 +242,11 @@ const VariablesItem = ({
     usages: number;
   }>();
   return (
-    <VariablePopoverTrigger key={variable.id} variable={variable}>
+    <VariablePopoverTrigger
+      key={variable.id}
+      variable={variable}
+      onOpenChange={setIsVariableDialogOpen}
+    >
       <CssValueListItem
         ref={rowRef}
         aria-label={`Variable ${variable.name}`}
@@ -317,9 +323,7 @@ const VariablesItem = ({
               <Tooltip
                 content={`This variable shadows ${shadowed.name} from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Delete the local variable to reveal it.`}
               >
-                <span style={{ color: "#e8b400", display: "flex" }}>
-                  <AlertIcon />
-                </span>
+                <AlertIcon color={cssVar("--foreground-warning")} />
               </Tooltip>
             )}
             {value !== undefined && (
@@ -330,7 +334,7 @@ const VariablesItem = ({
             )}
           </Flex>
         }
-        state={isMenuOpen ? "open" : undefined}
+        data-state={isMenuOpen || isVariableDialogOpen ? "open" : undefined}
         suffix={<DataVariableBadge variable={variable} />}
         buttons={
           <>

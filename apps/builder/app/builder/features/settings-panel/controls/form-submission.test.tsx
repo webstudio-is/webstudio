@@ -181,6 +181,8 @@ test("a Form starts with an empty Resource list and can select an in-scope desti
   expect(document.body.textContent).toContain(
     "Sends each form submission to all selected destinations at the same time."
   );
+  expect(document.body.textContent).toContain("Reset");
+  expect(document.body.textContent).not.toContain("Reset value");
   expect(document.body.textContent).not.toContain("Add at least one action.");
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(onChange).toHaveBeenLastCalledWith({
