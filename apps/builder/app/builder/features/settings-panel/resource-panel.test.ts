@@ -616,7 +616,7 @@ test("shows and submits the selected HTTP body format", async () => {
   ).toBeNull();
   expect(container.textContent).toContain("Request body format");
   const explanation =
-    "Applies to POST, PUT, and DELETE request bodies. Auto sends JSON or multipart when files are present.";
+    "Applies to request bodies. Auto sends JSON or multipart when files are present.";
   expect(container.textContent).not.toContain(explanation);
   await act(async () =>
     userEvent.hover(

@@ -1141,7 +1141,7 @@ export const ResourceForm = forwardRef<
               <Flex align="center" css={{ gap: theme.spacing[3] }}>
                 <Label htmlFor={bodyFormatId}>Request body format</Label>
                 <Tooltip
-                  content="Applies to POST, PUT, and DELETE request bodies. Auto sends JSON or multipart when files are present."
+                  content="Applies to request bodies. Auto sends JSON or multipart when files are present."
                   variant="wrapped"
                   disableHoverableContent={true}
                 >
