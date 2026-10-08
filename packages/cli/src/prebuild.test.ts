@@ -158,7 +158,11 @@ const linkPackagedPreviewDependencies = async () => {
 
 type Redirects = Array<{ old: string; new: string; status?: "301" | "302" }>;
 type GeneratedRouteModule = {
-  loader: (args: { request: Request }) => Response | Promise<Response>;
+  loader: (args: {
+    request: Request;
+    params?: Record<string, string | undefined>;
+    context?: Record<string, unknown>;
+  }) => Response | Promise<Response>;
 };
 
 const importGeneratedRoute = async (path: string) => {
@@ -3318,6 +3322,114 @@ sitemap.map((page) => page.path);`
           url: "https://receiver.example/chair?source=newsletter",
           selected: ["red", "blue"],
           body: { message: "Hello" },
+        },
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "passes native GET Form multi-select values to page Resources (%s)",
+    async (template) => {
+      const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
+      const siteData = createSiteData({
+        pages: [
+          {
+            id: "product",
+            name: "Product",
+            title: encodeDataSourceVariable("selected-tags"),
+            path: "/products/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "method",
+            {
+              id: "method",
+              instanceId: "root",
+              name: "method",
+              type: "string",
+              value: "get",
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          SYSTEM_VARIABLE_ID,
+          { id: SYSTEM_VARIABLE_ID, name: "system", type: "parameter" },
+        ],
+        [
+          "selected-tags",
+          {
+            id: "selected-tags",
+            name: "Selected tags",
+            type: "resource",
+            resourceId: "tag-receiver",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "tag-receiver",
+          {
+            id: "tag-receiver",
+            name: "Tag receiver",
+            method: "get",
+            url: '"https://receiver.example/tags"',
+            headers: [
+              { name: "X-Selected-Tags", value: `${system}.searchAll.tag` },
+            ],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents:
+            'export { loader } from "./app/routes/[products].$slug._index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "native-get-loader.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { loader } = await import(
+        pathToFileURL(join(tempDir, "native-get-loader.mjs")).href
+      );
+      const received: Array<{ url: string; selectedTags: string | null }> = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({
+            url: request.url,
+            selectedTags: request.headers.get("X-Selected-Tags"),
+          });
+          return Response.json({ accepted: true });
+        })
+      );
+
+      await loader({
+        request: new Request(
+          "https://example.com/products/chair?tag=red%2Cblue&tag=green"
+        ),
+        params: { slug: "chair" },
+        context: { EXCLUDE_FROM_SEARCH: false },
+      });
+
+      expect(received).toEqual([
+        {
+          url: "https://receiver.example/tags",
+          selectedTags: '["red,blue","green"]',
         },
       ]);
     }

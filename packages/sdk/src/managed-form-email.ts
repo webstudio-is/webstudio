@@ -192,7 +192,9 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
         ? new Request(requestUrl, init)
         : undefined;
       if (request) {
-        options.onEmailRequest?.(request.clone());
+        // The inspection callback consumes only the standard Request API; the
+        // Worker runtime adds Cloudflare metadata generics to its Request type.
+        options.onEmailRequest?.(request.clone() as unknown as Request);
       }
       const response = await sendRequest(
         request ?? requestUrl,

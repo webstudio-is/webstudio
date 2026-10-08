@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
+import { parseStaticStringExpression } from "@webstudio-is/expression";
 import {
   assetsResourceUrl,
   sitemapResourceUrl,
@@ -306,16 +307,18 @@ test("reopening and saving an Assets Resource with a single-quoted URL keeps its
   );
   expect(editor).not.toBeNull();
   expect(
-    editor?.querySelector<HTMLInputElement>('input[name="url"]')?.value
-  ).toBe(JSON.stringify(assetsResourceUrl));
+    parseStaticStringExpression(
+      editor?.querySelector<HTMLInputElement>('input[name="url"]')?.value ?? ""
+    )
+  ).toBe(assetsResourceUrl);
 
   const form = editor?.querySelector("form");
   expect(form).not.toBeNull();
   await act(async () => form?.requestSubmit());
 
-  expect($resources.get().get(resource.id)?.url).toBe(
-    JSON.stringify(assetsResourceUrl)
-  );
+  expect(
+    parseStaticStringExpression($resources.get().get(resource.id)?.url ?? "")
+  ).toBe(assetsResourceUrl);
   expect($resources.get().get(resource.id)?.method).toBe("post");
 });
 
