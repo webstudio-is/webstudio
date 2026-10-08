@@ -1,9 +1,58 @@
 import { describe, expect, test } from "vitest";
 import { TRPCClientError } from "@trpc/client";
 import {
+  getPublishResponseTransformDiagnostics,
   getPublishValidationErrorMessage,
   publishValidationTimeoutMessage,
 } from "./publish-error";
+
+describe("getPublishResponseTransformDiagnostics", () => {
+  test("keeps response diagnostics shape-only and allowlists headers", () => {
+    const secret = "private-response-and-auth-sentinel";
+    const response = new Response(secret, {
+      status: 502,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "x-vercel-id": "iad1::request-id",
+        authorization: secret,
+      },
+    });
+    const error = TRPCClientError.from(
+      new Error("Unable to transform response from server"),
+      {
+        meta: {
+          response,
+          responseJSON: [
+            { result: { data: secret } },
+            { error: { message: secret } },
+          ],
+        },
+      }
+    );
+
+    const diagnostics = getPublishResponseTransformDiagnostics(error);
+
+    expect(diagnostics).toEqual({
+      status: 502,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "x-vercel-id": "iad1::request-id",
+      },
+      responseJson: {
+        present: true,
+        batchSize: 2,
+        envelopes: ["result", "error"],
+      },
+    });
+    expect(JSON.stringify(diagnostics)).not.toContain(secret);
+  });
+
+  test("does not report unrelated errors", () => {
+    expect(
+      getPublishResponseTransformDiagnostics(new Error("request failed"))
+    ).toBeUndefined();
+  });
+});
 
 describe("getPublishValidationErrorMessage", () => {
   test("describes a gateway timeout in terms of the publish flow", () => {
