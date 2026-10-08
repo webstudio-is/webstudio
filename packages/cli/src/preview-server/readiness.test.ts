@@ -171,14 +171,14 @@ test("accepts the generated preview with the expected project marker", async () 
   ).resolves.toBeUndefined();
 });
 
-test("uses the static identity marker for iterative preview readiness", async () => {
+test("uses the static identity marker instead of compiling an iterative route", async () => {
   const fetch = vi.fn(async () =>
     Response.json({ projectId: "project", version: 5 })
   );
 
   await expect(
     waitForPreviewReady(
-      "http://127.0.0.1:5173/",
+      "http://127.0.0.1:5173/newly-authored-route",
       {
         timeoutMs: 1000,
         requiredProject: { projectId: "project", version: 5 },
@@ -212,28 +212,6 @@ test("waits for the exact generated session version", async () => {
   );
 
   expect(fetch).toHaveBeenCalledTimes(2);
-});
-
-test("does not compile a cold application route to confirm iterative readiness", async () => {
-  const fetch = vi.fn(async () =>
-    Response.json({ projectId: "project", version: 5 })
-  );
-
-  await expect(
-    waitForPreviewReady(
-      "http://127.0.0.1:5173/newly-authored-route",
-      {
-        requiredProject: { projectId: "project", version: 5 },
-        probeIdentityOnly: true,
-      },
-      createDependencies({ fetch })
-    )
-  ).resolves.toBeUndefined();
-
-  expect(fetch).toHaveBeenCalledWith(
-    new URL("http://127.0.0.1:5173/__webstudio/preview.json"),
-    expect.objectContaining({ method: "GET" })
-  );
 });
 
 test("checks the production route when there are no CSS assets", async () => {

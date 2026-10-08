@@ -173,17 +173,18 @@ export type BrowserStartupDiagnostic = {
 };
 
 type BrowserProcessExit = { code?: number; signal?: string };
+type BrowserDiagnosticIssue = {
+  code: string;
+  path: string[];
+  message: string;
+  constraint: string;
+};
 
 export class BrowserSessionClosedError extends Error {
   readonly code = "BROWSER_SESSION_CLOSED";
   readonly diagnostic?: BrowserStartupDiagnostic;
   processExit?: BrowserProcessExit;
-  readonly issues?: Array<{
-    code: string;
-    path: string[];
-    message: string;
-    constraint: string;
-  }>;
+  readonly issues?: BrowserDiagnosticIssue[];
 
   constructor(
     message: string,
@@ -1342,12 +1343,7 @@ export class BrowserStartupError extends Error {
   readonly code = "BROWSER_STARTUP_FAILED";
   readonly diagnostic?: BrowserStartupDiagnostic;
   readonly processExit?: BrowserProcessExit;
-  readonly issues?: Array<{
-    code: string;
-    path: string[];
-    message: string;
-    constraint: string;
-  }>;
+  readonly issues?: BrowserDiagnosticIssue[];
 
   constructor(
     message: string,
