@@ -275,19 +275,12 @@ export const action = async ({
       ? await readFormDataWithLimit(request)
       : await request.formData();
 
-    const system = isManagedFormRequest
-      ? {
-          params: getRemixParams(params ?? {}),
-          ...getSystemSearch(url.searchParams),
-          origin: url.origin,
-          pathname: url.pathname,
-        }
-      : {
-          params: {},
-          search: {},
-          origin: url.origin,
-          pathname: url.pathname,
-        };
+    const system = {
+      params: getRemixParams(params ?? {}),
+      ...getSystemSearch(url.searchParams),
+      origin: url.origin,
+      pathname: url.pathname,
+    };
 
     const managedFormIds = formData.getAll(managedFormIdFieldName);
     if (!isManagedFormRequest && managedFormIds.length > 0) {

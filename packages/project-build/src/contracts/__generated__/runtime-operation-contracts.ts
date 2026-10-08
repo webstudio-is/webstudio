@@ -8730,6 +8730,12 @@ export const runtimeOperationContractData = [
                               sender: {
                                 type: "string",
                               },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
                               subject: {
                                 type: "string",
                               },
@@ -11980,6 +11986,12 @@ export const runtimeOperationContractData = [
                                 type: "string",
                               },
                               sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
                                 type: "string",
                               },
                               subject: {
@@ -15245,6 +15257,12 @@ export const runtimeOperationContractData = [
                               sender: {
                                 type: "string",
                               },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
                               subject: {
                                 type: "string",
                               },
@@ -18495,6 +18513,12 @@ export const runtimeOperationContractData = [
                                 type: "string",
                               },
                               sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
                                 type: "string",
                               },
                               subject: {
@@ -24467,6 +24491,12 @@ export const runtimeOperationContractData = [
                                     sender: {
                                       type: "string",
                                     },
+                                    senderExpression: {
+                                      type: "string",
+                                    },
+                                    recipientsExpression: {
+                                      type: "string",
+                                    },
                                     subject: {
                                       type: "string",
                                     },
@@ -27925,6 +27955,12 @@ export const runtimeOperationContractData = [
                                       type: "string",
                                     },
                                     sender: {
+                                      type: "string",
+                                    },
+                                    senderExpression: {
+                                      type: "string",
+                                    },
+                                    recipientsExpression: {
                                       type: "string",
                                     },
                                     subject: {
@@ -41874,6 +41910,12 @@ export const runtimeOperationContractData = [
                       sender: {
                         type: "string",
                       },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
                       subject: {
                         type: "string",
                       },
@@ -42667,6 +42709,12 @@ export const runtimeOperationContractData = [
                                 type: "string",
                               },
                               sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
                                 type: "string",
                               },
                               subject: {
@@ -45998,6 +46046,12 @@ export const runtimeOperationContractData = [
                                 type: "string",
                               },
                               sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
                                 type: "string",
                               },
                               subject: {
@@ -53099,6 +53153,12 @@ export const runtimeOperationContractData = [
                       sender: {
                         type: "string",
                       },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
                       subject: {
                         type: "string",
                       },
@@ -59044,6 +59104,12 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       sender: {
+                        type: "string",
+                      },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
                         type: "string",
                       },
                       subject: {
@@ -75927,6 +75993,12 @@ export const runtimeOperationContractData = [
                 sender: {
                   type: "string",
                 },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
                 subject: {
                   type: "string",
                 },
@@ -76214,6 +76286,12 @@ export const runtimeOperationContractData = [
                   type: "string",
                 },
                 sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
                   type: "string",
                 },
                 subject: {
@@ -76606,6 +76684,12 @@ export const runtimeOperationContractData = [
                 sender: {
                   type: "string",
                 },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
                 subject: {
                   type: "string",
                 },
@@ -76839,6 +76923,12 @@ export const runtimeOperationContractData = [
                   type: "string",
                 },
                 sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
                   type: "string",
                 },
                 subject: {

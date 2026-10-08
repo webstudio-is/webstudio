@@ -45,7 +45,7 @@ xmlns:xhtml={"http://www.w3.org/TR/xhtml11/xhtml11_schema.html"}>
     "lastModified": "2024-05-07"
   },
   {
-    "path": "/olegs-test",
+    "path": "/acme-test",
     "lastModified": "2024-05-07"
   }
 ]
@@ -56,7 +56,7 @@ xmlns:xhtml={"http://www.w3.org/TR/xhtml11/xhtml11_schema.html"}>
     "lastModified": "2024-05-07"
   },
   {
-    "path": "/olegs-test",
+    "path": "/acme-test",
     "lastModified": "2024-05-07"
   }
 ]) ? Number(_key) : _key;
