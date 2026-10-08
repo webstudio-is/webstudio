@@ -1150,6 +1150,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
   });
   expect(container.textContent).not.toContain("Form submissions use POST");
   expect(container.textContent).not.toContain("Format");
+  expect(container.textContent).not.toContain("Choose how to send the body.");
   expect(container.querySelector('[name="body-format"]')).toBeNull();
   expect(container.querySelector('textarea[name="body"]')).toBeNull();
   act(() => {
@@ -1206,6 +1207,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
   );
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(container.textContent).toContain("Format");
+  expect(container.textContent).toContain("Choose how to send the body.");
   expect(container.querySelector('[name="body-format"]')).not.toBeNull();
   expect(container.querySelector('textarea[name="body"]')).not.toBeNull();
   expect(resource.method).toBe("get");
@@ -1322,17 +1324,11 @@ test("shows and submits the selected HTTP body format", async () => {
   ).toBeNull();
   expect(container.textContent).toContain("Format");
   const explanation = "Choose how to send the body.";
-  expect(container.textContent).not.toContain(explanation);
-  await act(async () =>
-    userEvent.hover(container.querySelector('[aria-label="About format"]')!)
-  );
-  await expect
-    .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
-    .toContain(explanation);
-  expect(
-    page.getByRole("combobox", { name: "Format", exact: true }).element()
-      .textContent
-  ).toContain("multipart/form-data");
+  const formatSelect = page
+    .getByRole("combobox", { name: "Format", exact: true })
+    .element();
+  expect(formatSelect.nextElementSibling?.textContent).toBe(explanation);
+  expect(formatSelect.textContent).toContain("multipart/form-data");
   await act(async () =>
     page.getByRole("combobox", { name: "Format", exact: true }).click()
   );
@@ -1354,22 +1350,22 @@ test("shows and submits the selected HTTP body format", async () => {
     '[data-select-description="content"]'
   );
   expect(descriptions?.textContent).toContain(
-    "Uses text/plain for text, application/json for other values, and multipart/form-data when files are included."
+    "Uses text/plain for text values, application/json for other values, and multipart/form-data when files are included."
   );
   expect(descriptions?.textContent).toContain(
-    "Sends the body as application/json."
+    "Sends an object or array as JSON."
   );
   expect(descriptions?.textContent).toContain(
-    "Sends the body as multipart/form-data."
+    "Sends fields as form data, including files."
   );
   await act(async () => userEvent.hover(options[1]!));
   await expect
     .poll(() => descriptions?.lastElementChild?.textContent)
-    .toContain("Sends the body as application/json.");
+    .toContain("Sends an object or array as JSON.");
   await act(async () => userEvent.keyboard("{ArrowDown}"));
   await expect
     .poll(() => descriptions?.lastElementChild?.textContent)
-    .toContain("Sends the body as multipart/form-data.");
+    .toContain("Sends fields as form data, including files.");
   await act(async () => userEvent.keyboard("{ArrowUp}{Enter}"));
   expect(
     container.querySelector<HTMLInputElement>('input[name="body-format"]')

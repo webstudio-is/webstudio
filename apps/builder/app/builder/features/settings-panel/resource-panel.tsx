@@ -1220,20 +1220,7 @@ export const ResourceForm = forwardRef<
         <>
           <Row>
             <Grid gap={1}>
-              <Flex align="center" css={{ gap: theme.spacing[3] }}>
-                <Label htmlFor={bodyFormatId}>Format</Label>
-                <Tooltip
-                  content="Choose how to send the body."
-                  variant="wrapped"
-                  disableHoverableContent={true}
-                >
-                  <InfoCircleIcon
-                    aria-label="About format"
-                    color={cssVar("--foreground-secondary")}
-                    tabIndex={0}
-                  />
-                </Tooltip>
-              </Flex>
+              <Label htmlFor={bodyFormatId}>Format</Label>
               <Select<NonNullable<Resource["bodyFormat"]>>
                 id={bodyFormatId}
                 value={bodyFormat ?? "auto"}
@@ -1247,9 +1234,9 @@ export const ResourceForm = forwardRef<
                 }
                 getDescription={(value: NonNullable<Resource["bodyFormat"]>) =>
                   ({
-                    auto: "Uses text/plain for text, application/json for other values, and multipart/form-data when files are included.",
-                    json: "Sends the body as application/json.",
-                    multipart: "Sends the body as multipart/form-data.",
+                    auto: "Uses text/plain for text values, application/json for other values, and multipart/form-data when files are included.",
+                    json: "Sends an object or array as JSON.",
+                    multipart: "Sends fields as form data, including files.",
                   })[value]
                 }
                 onChange={(value) => {
@@ -1262,6 +1249,9 @@ export const ResourceForm = forwardRef<
                   }
                 }}
               />
+              <Text variant="small" color="subtle">
+                Choose how to send the body.
+              </Text>
               <input type="hidden" name="body-format" value={bodyFormat} />
             </Grid>
           </Row>
