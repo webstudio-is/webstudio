@@ -247,13 +247,13 @@ export const RequestInspector = ({
         borderBottom: `1px solid ${cssVar("--border-default")}`,
       }}
     >
-      {request !== undefined && (
-        <PanelTabsTrigger value="request">Request</PanelTabsTrigger>
-      )}
       {queryContainerRef !== undefined && (
         <PanelTabsTrigger value="query">Query</PanelTabsTrigger>
       )}
       <PanelTabsTrigger value="preview">{previewLabel}</PanelTabsTrigger>
+      {request !== undefined && (
+        <PanelTabsTrigger value="request">Request</PanelTabsTrigger>
+      )}
       <PanelTabsTrigger value="diagnostics" onClick={onDiagnosticsOpen}>
         Diagnostics
       </PanelTabsTrigger>

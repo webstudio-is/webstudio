@@ -192,3 +192,26 @@ test("HTTP response tab names its response and loading state", async () => {
     container.querySelector('[role="status"]')?.getAttribute("aria-label")
   ).toBe("Loading response…");
 });
+
+test("shows Response before Request and opens on Response", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() =>
+    root?.render(
+      <RequestInspector
+        previewLabel="Response"
+        request={<div>Request details</div>}
+        preview={<div>Response details</div>}
+      />
+    )
+  );
+  const tabs = Array.from(container.querySelectorAll('[role="tab"]'));
+
+  expect(tabs.map(({ textContent }) => textContent)).toEqual([
+    "Response",
+    "Request",
+    "Diagnostics",
+  ]);
+  expect(tabs[0].getAttribute("data-state")).toBe("active");
+});

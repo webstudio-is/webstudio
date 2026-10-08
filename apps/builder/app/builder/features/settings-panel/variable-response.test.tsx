@@ -164,7 +164,7 @@ test("HTTP Response shows cached status and body, including unsuccessful respons
       container.querySelectorAll('[role="tab"]'),
       (tab) => tab.textContent
     )
-  ).toEqual(["Request", "Response", "Diagnostics"]);
+  ).toEqual(["Response", "Request", "Diagnostics"]);
   await expect.poll(() => container.textContent).toContain("201");
   expect(container.textContent).toContain("Created");
   expect(container.textContent).toContain("created response");
@@ -263,19 +263,20 @@ test.each(["http", "email"] as const)(
       container.querySelectorAll<HTMLElement>('[role="tab"]')
     );
     expect(tabs.map((tab) => tab.textContent)).toEqual([
-      "Request",
       "Response",
+      "Request",
       "Diagnostics",
     ]);
+    expect(tabs[0].getAttribute("data-state")).toBe("active");
     await expect.poll(() => container.textContent).toContain("Retry-After");
     expect(container.textContent).toContain("Service Unavailable");
     expect(container.textContent).toContain("Created");
     expect(container.textContent).toContain("https://example.com/final");
     await act(async () => {
-      tabs[0].dispatchEvent(
+      tabs[1].dispatchEvent(
         new MouseEvent("mousedown", { bubbles: true, button: 0 })
       );
-      tabs[0].click();
+      tabs[1].click();
     });
     await expect
       .poll(() => container.textContent)
@@ -344,7 +345,7 @@ test("Email inspector has submission tabs without loading or inventing an exchan
       container.querySelectorAll('[role="tab"]'),
       (tab) => tab.textContent
     )
-  ).toEqual(["Request", "Response", "Diagnostics"]);
+  ).toEqual(["Response", "Request", "Diagnostics"]);
   expect(container.textContent).not.toContain("Email delivery is available");
   expect(container.textContent).not.toContain("Load data");
   expect($previewFormExchanges.get().has("unsent-email")).toBe(false);
