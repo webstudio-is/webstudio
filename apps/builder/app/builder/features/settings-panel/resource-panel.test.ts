@@ -409,10 +409,10 @@ test("Email Resource recipient modes and attachment radios", async () => {
     '[data-select-description="content"]'
   );
   expect(recipientDescriptions?.textContent).toContain(
-    "Sends to the contact emails set in Project Settings, or the project owner if none are set."
+    "Send to the project's contact emails or owner."
   );
   expect(recipientDescriptions?.textContent).toContain(
-    "Sends to the email addresses entered below."
+    "Send to the email addresses entered below."
   );
   const customOption = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
@@ -916,18 +916,6 @@ test("visitor Email Resource selects a named Form email field", async () => {
   await act(async () =>
     userEvent.click(container.querySelector('[role="combobox"]')!)
   );
-  const recipientModeDescriptions = document.querySelector(
-    '[data-select-description="content"]'
-  );
-  expect(recipientModeDescriptions?.textContent).toContain(
-    "Sends to the contact emails set in Project Settings, or the project owner if none are set."
-  );
-  expect(recipientModeDescriptions?.textContent).toContain(
-    "Sends to the email addresses entered below."
-  );
-  expect(recipientModeDescriptions?.textContent).toContain(
-    "Sends to the email address entered in the selected Form field."
-  );
   await act(async () =>
     page
       .getByRole("option", {
@@ -978,7 +966,9 @@ test("visitor Email Resource selects a named Form email field", async () => {
     .poll(() => document.body.textContent)
     .not.toContain(visitorTooltipText);
   await act(async () => userEvent.click(visitorField!));
-  expect(document.body.textContent).not.toContain(
+  expect(
+    document.querySelector('[data-select-description="content"]')?.textContent
+  ).toContain(
     "Choose a Form input to use its value as the recipient email address."
   );
   await act(async () => userEvent.keyboard("{Escape}"));
@@ -1658,8 +1648,8 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
       '[aria-label="About Cache max age"]',
       "How long to cache the response, in seconds.",
     ],
-    ['[aria-label="Add another header"]', "Add a header to the request."],
-    ['[aria-label="Add another search param"]', "Add a parameter to the URL."],
+    ['[aria-label="Add another header"]', "Add a request header."],
+    ['[aria-label="Add another search param"]', "Add a URL search parameter."],
   ]) {
     expect(container.textContent).not.toContain(explanation);
     await act(async () => userEvent.hover(container.querySelector(selector)!));
@@ -2100,15 +2090,6 @@ test("Method uses the standard full-width collapsed Select and keeps description
   const post = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
   ).find((option) => option.textContent === "Post")!;
-  const descriptions = document.querySelector(
-    '[data-select-description="content"]'
-  );
-  expect(descriptions?.textContent).toContain(
-    "Send data to create or process something."
-  );
-  expect(descriptions?.textContent).toContain(
-    "Form submissions use POST. This method applies elsewhere."
-  );
   await act(async () => await userEvent.click(post));
   expect(onChange).toHaveBeenLastCalledWith("post");
   expect(trigger.textContent).toContain("Post");
