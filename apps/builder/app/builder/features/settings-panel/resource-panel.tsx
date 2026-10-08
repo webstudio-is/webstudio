@@ -255,23 +255,21 @@ export const MethodField = ({
     <Grid gap={1}>
       <Label>Method</Label>
       <Select<Resource["method"]>
+        fullWidth
         options={["get", "post", "put", "delete"]}
         getLabel={humanizeString}
-        getDescription={(method) => {
-          if (formDestination && method === "post") {
-            return "Form submissions use POST. This method applies elsewhere.";
-          }
-          switch (method) {
-            case "get":
-              return "Read data from a server.";
-            case "post":
-              return "Send data to create or process something.";
-            case "put":
-              return "Replace data on a server.";
-            case "delete":
-              return "Delete data from a server.";
-          }
-        }}
+        getDescription={(method) => (
+          <Box css={{ width: theme.spacing[25] }}>
+            {formDestination && method === "post"
+              ? "Form submissions use POST. This method applies elsewhere."
+              : {
+                  get: "Read data from a server.",
+                  post: "Send data to create or process something.",
+                  put: "Replace data on a server.",
+                  delete: "Delete data from a server.",
+                }[method]}
+          </Box>
+        )}
         name="method"
         value={value}
         onChange={onChange}

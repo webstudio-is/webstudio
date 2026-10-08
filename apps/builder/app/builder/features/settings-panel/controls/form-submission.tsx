@@ -184,7 +184,7 @@ export const FormSubmissionControl = ({
                   </Text>
                 </li>
               </Box>
-              {action.length === 0 && (
+              {!action.some(({ enabled }) => enabled) && (
                 <Flex align="center" gap="1">
                   <AlertIcon
                     color={cssVar("--foreground-warning")}

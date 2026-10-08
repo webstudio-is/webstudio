@@ -605,3 +605,84 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
     value: [],
   });
 });
+
+test.each([false, true])(
+  "the approved empty-action warning follows enabled Actions: %s",
+  async (secondEnabled) => {
+    $instances.set(
+      new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance",
+            component: "NativeForm",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $dataSources.set(
+      new Map(
+        ["first", "second"].map((id) => [
+          id,
+          {
+            id,
+            type: "resource" as const,
+            name: id,
+            scopeInstanceId: "form",
+            resourceId: "request",
+          },
+        ])
+      )
+    );
+    $resources.set(
+      new Map([
+        [
+          "request",
+          {
+            id: "request",
+            name: "Request",
+            method: "get",
+            url: '"https://example.com"',
+            headers: [],
+          },
+        ],
+      ])
+    );
+    const actions = [
+      { dataSourceId: "first", enabled: false },
+      { dataSourceId: "second", enabled: secondEnabled },
+    ];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        <TooltipProvider>
+          <FormSubmissionControl
+            instanceId="form"
+            propName="action"
+            prop={{
+              id: "action",
+              instanceId: "form",
+              name: "action",
+              type: "json",
+              value: actions,
+            }}
+            computedValue={actions}
+            meta={{ type: "json", control: "form-submission", required: false }}
+            onChange={vi.fn()}
+          />
+        </TooltipProvider>
+      )
+    );
+    const label = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Action"
+    )!;
+    await act(async () => await userEvent.click(label));
+    expect(
+      document.body.textContent?.includes("Add at least one action.")
+    ).toBe(!secondEnabled);
+  }
+);

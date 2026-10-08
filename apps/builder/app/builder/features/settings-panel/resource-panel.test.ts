@@ -1,4 +1,4 @@
-import { createElement } from "react";
+import { createElement, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { page, userEvent } from "@vitest/browser/context";
@@ -23,6 +23,7 @@ import {
 import {
   getResourceScopeForInstance,
   EmailResourceForm,
+  MethodField,
   Headers,
   ResourceForm,
   UrlField,
@@ -141,12 +142,26 @@ test("Email Resource uses Subject and Body inputs with a separate binding editor
     container.querySelector('input[placeholder="New form submission"]')
   ).not.toBeNull();
 
-  const subjectBinding = container.querySelector<HTMLButtonElement>(
-    'button[data-variant="default"]'
-  );
+  const subjectInput = container.querySelector<HTMLInputElement>(
+    'input[placeholder="New form submission"]'
+  )!;
+  const subjectLabel = Array.from(container.querySelectorAll("label")).find(
+    (label) => label.htmlFor === subjectInput.id
+  )!;
+  const subjectBinding =
+    subjectLabel.parentElement?.querySelector<HTMLButtonElement>(
+      'button[data-variant="default"]'
+    );
   expect(subjectBinding).not.toBeNull();
+  await act(async () => await userEvent.hover(subjectBinding!));
+  await expect.poll(() => getComputedStyle(subjectBinding!).opacity).toBe("1");
   await act(async () => await userEvent.click(subjectBinding!));
-  expect(document.body.textContent).toContain("Expression editor");
+  await expect
+    .poll(() => subjectBinding?.getAttribute("aria-expanded"))
+    .toBe("true");
+  await expect
+    .poll(() => document.querySelector('[role="dialog"]')?.textContent)
+    .toContain("Expression editor");
 });
 
 test("Email Resource recipient modes and attachment radios", async () => {
@@ -1257,3 +1272,51 @@ test.each(["project", "visitor"] as const)(
     ).not.toContain("custom@example.com");
   }
 );
+
+test("Method uses the standard full-width collapsed Select and keeps descriptions in its menu", async () => {
+  const container = document.createElement("div");
+  container.style.width = "320px";
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onChange = vi.fn();
+  const Harness = () => {
+    const [value, setValue] = useState<Resource["method"]>("get");
+    return createElement(MethodField, {
+      value,
+      formDestination: true,
+      onChange: (method) => {
+        setValue(method);
+        onChange(method);
+      },
+    });
+  };
+  await act(async () =>
+    root?.render(
+      createElement(TooltipProvider, undefined, createElement(Harness))
+    )
+  );
+  const trigger =
+    container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+  expect(trigger.getAttribute("data-state")).toBe("closed");
+  expect(trigger.getBoundingClientRect().width).toBe(
+    container.getBoundingClientRect().width
+  );
+  expect(container.textContent).not.toContain("Read data from a server.");
+  expect(document.querySelector('[role="listbox"]')).toBeNull();
+  await act(async () => await userEvent.click(trigger));
+  expect(
+    document
+      .querySelector<HTMLElement>('[role="listbox"]')
+      ?.getBoundingClientRect().width
+  ).toBe(trigger.getBoundingClientRect().width);
+  const post = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((option) => option.textContent === "Post")!;
+  await act(async () => await userEvent.click(post));
+  expect(onChange).toHaveBeenLastCalledWith("post");
+  expect(trigger.textContent).toContain("Post");
+  expect(trigger.getAttribute("data-state")).toBe("closed");
+  expect(trigger.getBoundingClientRect().width).toBe(
+    container.getBoundingClientRect().width
+  );
+});
