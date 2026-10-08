@@ -201,7 +201,7 @@ export const FormSubmissionControl = ({
           Action
         </FieldLabel>
         <DropdownMenu>
-          <Tooltip content="Add an in-scope HTTP, GraphQL, or Email Resource.">
+          <Tooltip content="Add a resource to submit this Form.">
             <span style={{ display: "flex" }}>
               <DropdownMenuTrigger asChild>
                 <SmallIconButton

@@ -450,7 +450,7 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
   await act(async () => await userEvent.hover(addButton));
   await expect
     .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
-    .toContain("Add an in-scope HTTP, GraphQL, or Email Resource.");
+    .toContain("Add a resource to submit this Form.");
   await act(async () => await userEvent.click(addButton));
   const items = Array.from(
     document.querySelectorAll<HTMLElement>('[role="menuitem"]')
