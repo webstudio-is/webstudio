@@ -1,10 +1,7 @@
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import {
-  isChromiumBrowser,
-  UnsupportedBrowserDialog,
-} from "./blocking-alerts";
+import { isChromiumBrowser, UnsupportedBrowserDialog } from "./blocking-alerts";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }

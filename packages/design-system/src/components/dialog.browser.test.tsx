@@ -3,12 +3,7 @@ import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
 import "../colors/colors.css";
 import { Button, LinkButton } from "./button";
-import {
-  Dialog,
-  DialogContent,
-  DialogMaximize,
-  DialogTitle,
-} from "./dialog";
+import { Dialog, DialogContent, DialogMaximize, DialogTitle } from "./dialog";
 import { useState } from "react";
 import { userEvent } from "@vitest/browser/context";
 import {
