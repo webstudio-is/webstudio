@@ -10,68 +10,6 @@ import { formatAssetFolderPath } from "~/builder/shared/asset-manager/asset-fold
 export const publishValidationTimeoutMessage =
   "Publish validation timed out. Try again to view the diagnostics.";
 
-const responseDiagnosticHeaders = [
-  "content-type",
-  "x-vercel-id",
-  "x-request-id",
-  "cf-ray",
-] as const;
-
-const getResponseEnvelopeShape = (value: unknown) => {
-  if (typeof value !== "object" || value === null) {
-    return "other";
-  }
-  if ("result" in value) {
-    return "result";
-  }
-  if ("error" in value) {
-    return "error";
-  }
-  return "other";
-};
-
-/** Return only response metadata and envelope shape, never response values. */
-export const getPublishResponseTransformDiagnostics = (error: unknown) => {
-  if (
-    !(error instanceof TRPCClientError) ||
-    error.message !== "Unable to transform response from server"
-  ) {
-    return;
-  }
-
-  const response = error.meta?.response;
-  const responseJSON = error.meta?.responseJSON;
-  const headers: Record<string, string> = {};
-  if (response instanceof Response) {
-    for (const name of responseDiagnosticHeaders) {
-      const value = response.headers.get(name);
-      if (value !== null) {
-        // Header values are diagnostic identifiers or media types. Bound
-        // their size so a malformed upstream cannot flood the console.
-        headers[name] = value.slice(0, 128);
-      }
-    }
-  }
-
-  const envelopes = Array.isArray(responseJSON)
-    ? responseJSON.slice(0, 20).map(getResponseEnvelopeShape)
-    : responseJSON === undefined
-      ? []
-      : [getResponseEnvelopeShape(responseJSON)];
-
-  return {
-    ...(response instanceof Response ? { status: response.status } : {}),
-    headers,
-    responseJson: {
-      present: responseJSON !== undefined,
-      ...(Array.isArray(responseJSON)
-        ? { batchSize: responseJSON.length }
-        : {}),
-      envelopes,
-    },
-  };
-};
-
 export const getPublishValidationErrorMessage = (
   error: unknown,
   {

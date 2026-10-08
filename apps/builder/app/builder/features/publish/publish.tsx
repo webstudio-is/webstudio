@@ -128,10 +128,7 @@ import {
   type PublishValidationState,
 } from "./publish-actions";
 import { flushExternalContentProject } from "~/shared/external-content-roots";
-import {
-  getPublishResponseTransformDiagnostics,
-  getPublishValidationErrorMessage,
-} from "./publish-error";
+import { getPublishValidationErrorMessage } from "./publish-error";
 import { runPublishAfterBestEffortChecks } from "./publish-preflight";
 
 const PrePublishAuditMessage = ({
@@ -298,13 +295,6 @@ const reportPublishValidationFailure = (
   setFindings: (findings: PublishValidationFinding[]) => void,
   publishingContinues = false
 ) => {
-  const responseDiagnostics = getPublishResponseTransformDiagnostics(error);
-  if (responseDiagnostics !== undefined) {
-    console.error(
-      "Publish validation response transform failed",
-      responseDiagnostics
-    );
-  }
   const diagnosticMessage = getPublishValidationErrorMessage(error, {
     assets: $assets.get(),
     assetFolders: $assetFolders.get(),
