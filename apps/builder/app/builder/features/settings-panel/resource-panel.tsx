@@ -441,21 +441,12 @@ const ExpressionPairs = ({
             />
           </Tooltip>
         </Flex>
-        <Tooltip
-          disableHoverableContent={true}
-          content={
-            kind === "header"
-              ? "Add a request header."
-              : "Add a URL search parameter."
-          }
-        >
-          <SmallIconButton
-            aria-label={`Add another ${kind}`}
-            icon={<PlusIcon />}
-            // Use an empty string expression as the default value.
-            onClick={() => onChange([...values, { name: "", value: `""` }])}
-          />
-        </Tooltip>
+        <SmallIconButton
+          aria-label={`Add another ${kind}`}
+          icon={<PlusIcon />}
+          // Use an empty string expression as the default value.
+          onClick={() => onChange([...values, { name: "", value: `""` }])}
+        />
       </Flex>
       <Grid gap={2}>
         {values.map((item, index) => (
@@ -1585,6 +1576,13 @@ export const EmailResourceForm = forwardRef<
                   ? "Custom recipients"
                   : "Visitor email field"
             }
+            getDescription={(value: "project" | "custom" | "visitor") =>
+              value === "project"
+                ? "Send to the addresses in Project Settings, or to the account holder if none are set."
+                : value === "custom"
+                  ? "Send to the addresses entered below."
+                  : "Choose a Form input to use as the recipient’s email address."
+            }
             onChange={(value: "project" | "custom" | "visitor") => {
               if (value === "project") {
                 onChange?.();
@@ -1653,6 +1651,7 @@ export const EmailResourceForm = forwardRef<
                 content="Adds a note with this site’s URL to help recipients identify where the message came from and discourage spam."
                 variant="wrapped"
                 disableHoverableContent={true}
+                openOnFocus
               >
                 <InfoCircleIcon
                   aria-label="About Visitor email field"

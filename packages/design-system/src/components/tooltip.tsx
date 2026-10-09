@@ -24,6 +24,7 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
     content: ReactNode;
     delayDuration?: number;
     disableHoverableContent?: boolean;
+    openOnFocus?: boolean;
     css?: CSS;
   };
 
@@ -54,6 +55,7 @@ export const Tooltip = forwardRef(
       disableHoverableContent,
       open: openProp,
       onOpenChange,
+      openOnFocus = false,
       triggerProps,
       ...props
     }: TooltipProps & {
@@ -115,9 +117,11 @@ export const Tooltip = forwardRef(
           ref={triggerRef}
           {...triggerProps}
           onFocus={(event) => {
-            // Prevent the tooltip from opening on focus
-            // The main issue is that after dialogs or selects, the tooltip button is autofocused and causes the tooltip to open
-            event.preventDefault();
+            if (!openOnFocus) {
+              // Prevent the tooltip from opening on focus
+              // The main issue is that after dialogs or selects, the tooltip button is autofocused and causes the tooltip to open
+              event.preventDefault();
+            }
           }}
           onPointerMove={(event) => {
             // The tooltip captures pointer events, which can be an issue when the tooltip trigger is also the popover trigger.

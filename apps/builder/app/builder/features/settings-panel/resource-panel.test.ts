@@ -405,9 +405,24 @@ test("Email Resource recipient modes and attachment radios", async () => {
       .querySelector<HTMLElement>("[data-radix-popper-content-wrapper]")
       ?.getBoundingClientRect().width
   ).toBe(recipientSelect.getBoundingClientRect().width);
+  const recipientDescription = () =>
+    document.querySelector<HTMLElement>('[data-select-description="content"]')
+      ?.lastElementChild?.textContent;
+  expect(recipientDescription()).toBe(
+    "Send to the addresses in Project Settings, or to the account holder if none are set."
+  );
   const customOption = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
   ).find((option) => option.textContent === "Custom recipients")!;
+  await act(async () => await userEvent.hover(customOption));
+  expect(recipientDescription()).toBe("Send to the addresses entered below.");
+  const projectOption = Array.from(
+    document.querySelectorAll<HTMLElement>('[role="option"]')
+  ).find((option) => option.textContent === "Project recipients (or owner)")!;
+  await act(async () => await userEvent.hover(projectOption));
+  expect(recipientDescription()).toBe(
+    "Send to the addresses in Project Settings, or to the account holder if none are set."
+  );
   await act(async () => await userEvent.click(customOption));
   await expect(
     page.getByRole("textbox", { name: "Custom recipients", exact: true })
@@ -886,9 +901,11 @@ test("visitor Email Resource selects a named Form email field", async () => {
   );
   expect(container.textContent).toContain("Visitor email field");
   expect(container.textContent).toContain("visitorEmail");
-  const visitorTooltipText =
+  const visitorInfoTooltipText =
     "Adds a note with this site’s URL to help recipients identify where the message came from and discourage spam.";
-  expect(container.textContent).not.toContain(visitorTooltipText);
+  const visitorOptionDescription =
+    "Choose a Form input to use as the recipient’s email address.";
+  expect(container.textContent).not.toContain(visitorInfoTooltipText);
   expect(
     container.querySelector('[aria-label="About Visitor email field"]')
   ).not.toBeNull();
@@ -927,6 +944,14 @@ test("visitor Email Resource selects a named Form email field", async () => {
       .getByRole("option", { name: "Visitor email field", exact: true })
       .click()
   );
+  await act(async () =>
+    userEvent.click(container.querySelector('[role="combobox"]')!)
+  );
+  expect(
+    document.querySelector<HTMLElement>('[data-select-description="content"]')
+      ?.lastElementChild?.textContent
+  ).toBe(visitorOptionDescription);
+  await act(async () => userEvent.keyboard("{Escape}"));
   expect(container.textContent).toContain("Attachments");
   expect(attachmentOptions[1].getAttribute("aria-checked")).toBe("true");
   expect(container.textContent).not.toContain(
@@ -935,7 +960,7 @@ test("visitor Email Resource selects a named Form email field", async () => {
   expect(container.textContent).not.toContain(
     "Select one named email input in this Form."
   );
-  expect(container.textContent).not.toContain(visitorTooltipText);
+  expect(container.textContent).not.toContain(visitorInfoTooltipText);
   const visitorField = Array.from(
     container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')
   ).at(-1);
@@ -951,11 +976,19 @@ test("visitor Email Resource selects a named Form email field", async () => {
   await act(async () => userEvent.hover(visitorInfo));
   await expect
     .poll(() => document.body.textContent)
-    .toContain(visitorTooltipText);
+    .toContain(visitorInfoTooltipText);
   await act(async () => userEvent.unhover(visitorInfo));
   await expect
     .poll(() => document.body.textContent)
-    .not.toContain(visitorTooltipText);
+    .not.toContain(visitorInfoTooltipText);
+  await act(async () => visitorInfo.focus());
+  await expect
+    .poll(() => document.body.textContent)
+    .toContain(visitorInfoTooltipText);
+  await act(async () => visitorInfo.blur());
+  await expect
+    .poll(() => document.body.textContent)
+    .not.toContain(visitorInfoTooltipText);
   await act(async () => userEvent.click(visitorField!));
   await act(async () => userEvent.keyboard("{Escape}"));
 });
@@ -1600,7 +1633,7 @@ test("only Form-scoped Resources can bind submission values", async () => {
   expect(external.scope[encodeDataVariableId("browserInfoId")]).toBeUndefined();
 });
 
-test("Resource editor explains caching and add buttons in tooltips and removes pair rows", async () => {
+test("Resource editor explains caching, keeps add buttons tooltip-free, and removes pair rows", async () => {
   const resource: Resource = {
     id: "request",
     name: "Request",
@@ -1633,8 +1666,6 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
       '[aria-label="About Cache max age"]',
       "How long to cache the response, in seconds.",
     ],
-    ['[aria-label="Add another header"]', "Add a request header."],
-    ['[aria-label="Add another search param"]', "Add a URL search parameter."],
   ]) {
     expect(container.textContent).not.toContain(explanation);
     await act(async () => userEvent.hover(container.querySelector(selector)!));
@@ -1646,6 +1677,13 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
         ).join(" ")
       )
       .toContain(explanation);
+  }
+  for (const selector of [
+    '[aria-label="Add another header"]',
+    '[aria-label="Add another search param"]',
+  ]) {
+    await act(async () => userEvent.hover(container.querySelector(selector)!));
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
   }
   expect(
     container.querySelector('input[name="header-name"][value="X-Test"]')
