@@ -8,6 +8,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { computed } from "nanostores";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   flattenBuilderComponentPanelItems,
   listBuilderComponentPanelItems,
@@ -18,6 +19,7 @@ import {
   $registeredTemplates,
 } from "~/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
+import { getComponentTemplatesForPicker } from "~/shared/component-catalog";
 import { $selectedPage } from "~/shared/nano-states";
 import {
   getInstanceLabel,
@@ -48,7 +50,10 @@ export const $componentOptions = computed(
     }
     const itemsByCategory = listBuilderComponentPanelItems({
       metas,
-      templates,
+      templates: getComponentTemplatesForPicker(
+        templates,
+        isFeatureEnabled("newFormComponent")
+      ),
       documentType: selectedPage?.meta.documentType ?? "html",
       getFallbackLabel: (component) => getInstanceLabel({ component }),
       getTemplateIcon: (_component, template, meta) =>

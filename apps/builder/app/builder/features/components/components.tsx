@@ -4,6 +4,7 @@ import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { getComponentTemplatesForPicker } from "~/shared/component-catalog";
 import {
   type BuilderComponentPanelItem,
   listBuilderComponentPanelItems,
@@ -44,9 +45,13 @@ type Meta = BuilderComponentPanelItem;
 const $metas = computed(
   [$registeredComponentMetas, $registeredTemplates, $selectedPage],
   (componentMetas, templates, selectedPage) => {
+    const pickerTemplates = getComponentTemplatesForPicker(
+      templates,
+      isFeatureEnabled("newFormComponent")
+    );
     const metasByCategory = listBuilderComponentPanelItems({
       metas: componentMetas,
-      templates,
+      templates: pickerTemplates,
       documentType: selectedPage?.meta.documentType ?? "html",
       showInternal: isFeatureEnabled("internalComponents"),
       getFallbackLabel: (component) => getInstanceLabel({ component }),
@@ -55,7 +60,7 @@ const $metas = computed(
     });
     const availableComponents = listComponentCatalogAvailableComponents({
       metas: componentMetas,
-      templates,
+      templates: pickerTemplates,
     });
     return { metasByCategory, availableComponents };
   }

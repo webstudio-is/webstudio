@@ -5,6 +5,7 @@ import { CodeText } from "@webstudio-is/sdk-components-react/components";
 import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
 import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { getComponentTemplatesForPicker } from "~/shared/component-catalog";
 import {
   $registeredComponentHooks,
   $registeredComponentMetas,
@@ -37,23 +38,36 @@ test("renders templates that import an alternate registered implementation", () 
   expect(template?.instances[0]?.component).toBe("CodeText");
 });
 
-test("the Forms section inserts only the new Form", () => {
+test("the new Form is feature gated without changing Webhook Form", () => {
   for (const library of canvasComponentLibraries) {
     registerComponentLibrary(library);
   }
 
-  const forms = listBuilderComponentPanelItems({
+  const templates = $registeredTemplates.get();
+  const hiddenForms = listBuilderComponentPanelItems({
     metas: $registeredComponentMetas.get(),
-    templates: $registeredTemplates.get(),
+    templates: getComponentTemplatesForPicker(templates, false),
     getFallbackLabel: (component) => getInstanceLabel({ component }),
     getMetaLabel: (component) => getInstanceLabel({ component }),
   })
     .get("forms")
-    ?.filter(({ label }) => label === "Form");
+    ?.filter(({ name }) => name === "form");
+
+  expect(hiddenForms).toEqual([]);
+
+  const forms = listBuilderComponentPanelItems({
+    metas: $registeredComponentMetas.get(),
+    templates: getComponentTemplatesForPicker(templates, true),
+    getFallbackLabel: (component) => getInstanceLabel({ component }),
+    getMetaLabel: (component) => getInstanceLabel({ component }),
+  })
+    .get("forms")
+    ?.filter(({ name }) => name === "form");
 
   expect(forms).toEqual([
     expect.objectContaining({
       name: "form",
+      label: "Form (new)",
       firstInstance: expect.objectContaining({ component: "NativeForm" }),
     }),
   ]);
@@ -62,6 +76,9 @@ test("the Forms section inserts only the new Form", () => {
   expect($registeredComponents.get().has("Form")).toBe(true);
   expect($registeredComponents.get().has("RemixForm")).toBe(true);
   expect($registeredComponentMetas.get().get("Form")?.deprecated).toBe(true);
+  expect($registeredComponentMetas.get().get("Form")?.label).toBe(
+    "Webhook Form"
+  );
   expect($registeredComponentMetas.get().get("RemixForm")?.deprecated).toBe(
     true
   );
