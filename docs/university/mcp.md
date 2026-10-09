@@ -495,6 +495,12 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions.
 
+### Converting a composite component to HTML
+
+`convert-instance` changes one instance and validates its entire descendant tree after that change. For a Tabs tree, changing `Tabs` to a `div` first fails because `TabsList`, `TabsTrigger`, and `TabsContent` still require their composite parents. Convert from the leaves upward instead: `TabsTrigger` to `ws:element` with tag `button`, `TabsContent` to `ws:element` with tag `div`, `TabsList` to `ws:element` with tag `div`, then `Tabs` to `ws:element` with tag `div`. Pass the complete, current `instanceSelector` for each call, starting with the target. Read the actual tree first; convert every remaining required part before its parent. Each step is a separate mutation, so this recipe is not atomic.
+
+Conversion retains instance ids, children (including editable copy), styles, and most props; it removes a legacy `tag` prop and normalizes React prop aliases when converting to `ws:element`. Review component-specific props and behavior afterward: replacing Tabs with HTML does not recreate tab selection, keyboard behavior, or accessibility semantics. If a project requires the whole tree to change in one commit, use `snapshot` to read the current build version and exact records, then a single versioned `apply-patch` transaction for the existing instance component/tag fields. Preserve all existing ids and child references, include any needed prop changes in that same transaction, and verify the final tree.
+
 ## Vision Verification Loop
 
 Vision-capable AI can use MCP to see what it is building:
