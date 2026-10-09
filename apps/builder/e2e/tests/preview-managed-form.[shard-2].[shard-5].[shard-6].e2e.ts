@@ -5,7 +5,7 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { waitForCanvasFrame } from "../flows/builder";
 import { getProjectBuilderUrl, test } from "../test";
 
-test("Preview Form posts to the authenticated Builder and displays the server result without publishing", async ({
+test("Preview Form posts to the authenticated Builder and sets error state without publishing", async ({
   page,
   context,
 }) => {
@@ -123,9 +123,8 @@ test("Preview Form posts to the authenticated Builder and displays the server re
     errors: [{ message: "Resource destination is not allowed" }],
   });
   await expect(form).toHaveAttribute("data-state", "error");
-  await expect(form.getByRole("alert")).toHaveText(
-    "Resource destination is not allowed"
-  );
+  // This fixture has no authored Error Message; Forms do not render raw errors.
+  await expect(form.getByRole("alert")).toHaveCount(0);
   expect(submissions).toHaveLength(1);
   expect(submissions[0].method()).toBe("POST");
   expect(submissions[0].postData()).toContain("preview reaches backend");

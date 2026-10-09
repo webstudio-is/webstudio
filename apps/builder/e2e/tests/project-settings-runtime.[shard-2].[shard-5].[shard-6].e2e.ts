@@ -416,12 +416,12 @@ test("Project Emails Sender and named recipients persist after reload", async ({
   await page.getByRole("option", { name: "Emails" }).click();
 
   let save = waitForChangeToBeSaved({ page });
-  await page.getByLabel("Recipients").fill(recipients);
+  await page.getByRole("textbox", { name: "Recipients" }).fill(recipients);
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 
   save = waitForChangeToBeSaved({ page });
-  await page.getByLabel("Sender").fill(sender);
+  await page.getByRole("textbox", { name: "Sender" }).fill(sender);
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 
@@ -446,8 +446,10 @@ test("Project Emails Sender and named recipients persist after reload", async ({
   await openProjectSettings({ page });
   await page.getByRole("option", { name: "Emails" }).click();
   if (
-    (await page.getByLabel("Recipients").inputValue()) !== recipients ||
-    (await page.getByLabel("Sender").inputValue()) !== sender
+    (await page.getByRole("textbox", { name: "Recipients" }).inputValue()) !==
+      recipients ||
+    (await page.getByRole("textbox", { name: "Sender" }).inputValue()) !==
+      sender
   ) {
     throw new Error("Expected Project Emails settings to survive reload.");
   }

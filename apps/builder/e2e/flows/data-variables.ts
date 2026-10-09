@@ -144,14 +144,7 @@ export const createSystemResourceVariable = async ({
 }) => {
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "System resource" });
-  if (resource !== "Sitemap") {
-    await getVariableForm(page)
-      .getByText("Resource", { exact: true })
-      .locator("xpath=following::button[1]")
-      .click();
-    await page.getByRole("option", { name: resource, exact: true }).click();
-  }
+  await selectVariableType({ page, next: resource });
   await closeVariablePanelAndWaitForSave({ page });
 };
 
