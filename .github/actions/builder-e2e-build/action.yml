@@ -26,7 +26,9 @@ runs:
     - name: Discover shards
       id: shards
       shell: bash
-      run: echo "value=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)" >> "$GITHUB_OUTPUT"
+      run: |
+        shards=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)
+        echo "value=$shards" >> "$GITHUB_OUTPUT"
 
     - name: Build Builder
       shell: bash
