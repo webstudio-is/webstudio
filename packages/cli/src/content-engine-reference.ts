@@ -150,6 +150,7 @@ const documentedLimitKeys = [
   "resultCount",
   "resultBytes",
   "candidateDocuments",
+  "documentGraphDocuments",
   "databaseBytes",
   "frontmatterBytes",
   "frontmatterDepth",
@@ -280,6 +281,10 @@ const queryLimitsTable = table({
     ["Default result count", String(contentEngineLimits.defaultResultCount)],
     ["Maximum result count", String(contentEngineLimits.resultCount)],
     ["Candidate documents", String(contentEngineLimits.candidateDocuments)],
+    [
+      "Documents in a reference graph",
+      String(contentEngineLimits.documentGraphDocuments),
+    ],
     ["Serialized query result", formatBytes(contentEngineLimits.resultBytes)],
     [
       "Published content database",
