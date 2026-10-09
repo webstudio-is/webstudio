@@ -1387,6 +1387,100 @@ describe("canConvertInstance", () => {
 });
 
 describe("convertInstance", () => {
+  test("converts a Tabs tree leaf first without losing content or props", () => {
+    const radix = "@webstudio-is/sdk-components-react-radix:";
+    const instances = new Map([
+      ["body", createInstance("body", "Body", [{ type: "id", value: "tabs" }])],
+      [
+        "tabs",
+        createInstance("tabs", `${radix}Tabs`, [
+          { type: "id", value: "list" },
+          { type: "id", value: "content" },
+        ]),
+      ],
+      [
+        "list",
+        createInstance("list", `${radix}TabsList`, [
+          { type: "id", value: "trigger" },
+        ]),
+      ],
+      [
+        "trigger",
+        createInstance("trigger", `${radix}TabsTrigger`, [
+          { type: "text", value: "Overview" },
+        ]),
+      ],
+      [
+        "content",
+        createInstance("content", `${radix}TabsContent`, [
+          { type: "text", value: "Details" },
+        ]),
+      ],
+    ]);
+    const props: Map<string, Prop> = new Map([
+      [
+        "value",
+        {
+          id: "value",
+          instanceId: "trigger",
+          name: "value",
+          type: "string",
+          value: "overview",
+        },
+      ],
+    ]);
+    const state = { instances, props };
+
+    expect(() =>
+      convertInstance(
+        state,
+        {
+          instanceSelector: ["tabs", "body"],
+          component: elementComponent,
+          tag: "div",
+        },
+        runtimeContext
+      )
+    ).toThrow("Converted tree violates content model");
+
+    for (const [instanceSelector, tag] of [
+      [["trigger", "list", "tabs", "body"], "button"],
+      [["content", "tabs", "body"], "div"],
+      [["list", "tabs", "body"], "div"],
+      [["tabs", "body"], "div"],
+    ] as const) {
+      const result = convertInstance(
+        state,
+        {
+          instanceSelector: [...instanceSelector],
+          component: elementComponent,
+          tag,
+        },
+        runtimeContext
+      );
+      applyBuilderPatchPayloadMutable(
+        (namespace) => state[namespace as keyof typeof state],
+        result.payload
+      );
+    }
+
+    expect(
+      [...instances.values()].slice(1).map(({ component }) => component)
+    ).toEqual([
+      elementComponent,
+      elementComponent,
+      elementComponent,
+      elementComponent,
+    ]);
+    expect(instances.get("trigger")?.children).toEqual([
+      { type: "text", value: "Overview" },
+    ]);
+    expect(instances.get("content")?.children).toEqual([
+      { type: "text", value: "Details" },
+    ]);
+    expect(props.get("value")?.value).toBe("overview");
+  });
+
   test("converts component and adds element tag", () => {
     const result = convertInstance(
       {
