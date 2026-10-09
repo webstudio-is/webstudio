@@ -1683,6 +1683,41 @@ test("Resource editor explains caching and add buttons in tooltips and removes p
   ).toBeNull();
 });
 
+test("HTTP Resource Body editor shows line numbers before maximizing", async () => {
+  const resource: Resource = {
+    id: "request",
+    name: "Request",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [],
+    body: '{ name: "Acme" }',
+  };
+  $resources.set(new Map([[resource.id, resource]]));
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(ResourceForm, {
+          variable: {
+            type: "resource",
+            id: "request-variable",
+            name: "Request",
+            resourceId: resource.id,
+          },
+        })
+      )
+    )
+  );
+
+  expect(container.querySelector(".cm-editor")).not.toBeNull();
+  expect(container.querySelector(".cm-lineNumbers")).not.toBeNull();
+  expect(container.querySelector('[aria-expanded="true"]')).toBeNull();
+});
+
 test.each([
   [
     "header",

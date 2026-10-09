@@ -1008,6 +1008,7 @@ const BodyField = ({
           <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
             <div>
               <ExpressionEditor
+                showLineNumbers
                 color={bodyError ? "error" : undefined}
                 readOnly={readOnly}
                 value={value}
