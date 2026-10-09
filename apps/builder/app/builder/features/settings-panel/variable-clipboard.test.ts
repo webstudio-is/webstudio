@@ -142,3 +142,60 @@ test("clipboard uses local reference keys without original variable, Resource, o
   );
   expect(pasted.resource?.body).toBe(encodeDataVariableId(pasted.variable.id));
 });
+
+test("Email sender and recipient bindings use clipboard reference keys and destination IDs", () => {
+  const config: Resource = {
+    ...resource,
+    url: '""',
+    body: undefined,
+    headers: [],
+    email: {
+      senderExpression: encodeDataVariableId(dependency.id),
+      recipientsExpression: `${encodeDataVariableId(dependency.id)}.recipients`,
+    },
+  };
+  const text = serializeVariable(
+    variable,
+    new Map([[config.id, config]]),
+    new Map([[dependency.id, dependency]])
+  );
+  expect(text).not.toContain(encodeDataVariableId(dependency.id));
+  const destination = { ...dependency, id: "destination" };
+  const pasted = deserializeVariable(
+    text,
+    "new",
+    new Map([[destination.id, destination]])
+  );
+  expect(pasted.resource?.email).toEqual({
+    senderExpression: encodeDataVariableId(destination.id),
+    recipientsExpression: `${encodeDataVariableId(destination.id)}.recipients`,
+  });
+  expect(config.email?.senderExpression).toBe(
+    encodeDataVariableId(dependency.id)
+  );
+});
+
+test.each(["senderExpression", "recipientsExpression"] as const)(
+  "Email %s resolves named bindings and rejects missing names",
+  (field) => {
+    const config: Resource = {
+      ...resource,
+      url: '""',
+      headers: [],
+      body: undefined,
+      email: { [field]: "Input" },
+    };
+    const text = serializeVariable(
+      variable,
+      new Map([[config.id, config]]),
+      new Map()
+    );
+    expect(() => deserializeVariable(text, "new", new Map())).toThrow(
+      "unresolved variables: Input"
+    );
+    expect(
+      deserializeVariable(text, "new", new Map([[dependency.id, dependency]]))
+        .resource?.email?.[field]
+    ).toBe(encodeDataVariableId(dependency.id));
+  }
+);

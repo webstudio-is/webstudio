@@ -179,6 +179,66 @@ test("inspection preserves repeated query parameters and sanitizes relative Loca
   expect(JSON.stringify(snapshot)).not.toContain("redirect-secret");
 });
 
+test.each(["response URL", "request Location", "response Location"])(
+  "inspection collects credentials from %s before rendering any field",
+  async (source) => {
+    const request = new Request(
+      "https://example.com/send?note=redirect-secret",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "redirect-secret",
+          ...(source === "request Location"
+            ? { location: "/receipt?token=redirect-secret" }
+            : {}),
+        },
+        body: JSON.stringify({ note: "redirect-secret", value: "visible" }),
+      }
+    );
+    const snapshot = await capturePreviewFormExchange(
+      "resource",
+      {
+        request,
+        response: {
+          status: 302,
+          statusText: "Found",
+          ...(source === "response URL"
+            ? { url: "https://example.com/receipt?token=redirect-secret" }
+            : {}),
+          headers: new Headers(
+            source === "response Location"
+              ? { location: "/receipt?token=redirect-secret" }
+              : {}
+          ),
+          data: { note: "redirect-secret", value: "visible" },
+        },
+      },
+      {
+        publicValues: new Set(),
+        privateValues: new Set(),
+        allowRequestBody: true,
+      }
+    );
+    expect(new URL(snapshot.request.url).searchParams.get("note")).toBe(
+      "[redacted]"
+    );
+    expect(snapshot.request.headers).toContainEqual({
+      name: "accept",
+      value: "[redacted]",
+    });
+    expect(snapshot.request.body).toEqual({
+      note: "[redacted]",
+      value: "visible",
+    });
+    expect(snapshot.response.body).toEqual({
+      note: "[redacted]",
+      value: "visible",
+    });
+    expect(JSON.stringify(snapshot)).not.toContain("redirect-secret");
+  }
+);
+
 test.each([
   "x".repeat(4097),
   Array.from({ length: 101 }, (_, index) => index),

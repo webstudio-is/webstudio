@@ -5487,9 +5487,6 @@ export const runtimeOperationContractData = [
             emailConfirmationSubject: {
               type: "string",
             },
-            emailConfirmationBody: {
-              type: "string",
-            },
             faviconAssetId: {
               type: "string",
             },
@@ -5635,16 +5632,6 @@ export const runtimeOperationContractData = [
               ],
             },
             emailConfirmationSubject: {
-              anyOf: [
-                {
-                  type: "string",
-                },
-                {
-                  type: "null",
-                },
-              ],
-            },
-            emailConfirmationBody: {
               anyOf: [
                 {
                   type: "string",

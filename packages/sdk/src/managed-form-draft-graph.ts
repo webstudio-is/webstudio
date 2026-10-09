@@ -38,6 +38,7 @@ export const createManagedFormDraftGraph = ({
   ownerEmail,
   ownerName,
   system,
+  systemDataSourceId,
   formData,
   browserInfo,
   evaluateExpression,
@@ -52,6 +53,7 @@ export const createManagedFormDraftGraph = ({
   ownerEmail?: string;
   ownerName?: string;
   system: System;
+  systemDataSourceId?: string;
   formData: Record<string, unknown>;
   browserInfo: Record<string, unknown>;
   evaluateExpression: (
@@ -173,11 +175,12 @@ export const createManagedFormDraftGraph = ({
           value = documents.get(source.resourceId);
         }
         if (source.type === "parameter") {
-          const binding = getManagedFormParameterBinding(
+          const binding = getManagedFormParameterBinding({
             source,
             formId,
-            instances
-          );
+            instances,
+            systemDataSourceId,
+          });
           value = {
             system,
             formData: resource.control === "email" ? formDataProxy : formData,

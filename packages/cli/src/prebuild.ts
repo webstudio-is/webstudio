@@ -1650,6 +1650,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       "Fragment",
       "useResource",
       "useVariableState",
+      "formatManagedFormErrors",
       "Page",
       "_props",
     ]);
@@ -1787,7 +1788,11 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           : [],
       })
     );
+    const usedRuntimeHelpers = new Set<
+      "renderText" | "formatManagedFormErrors"
+    >();
     const pageComponent = generateWebstudioComponent({
+      usedRuntimeHelpers,
       scope,
       name: "Page",
       rootInstanceId,
@@ -1839,7 +1844,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${importsString}${componentBuildSetupString}
+      ${usedRuntimeHelpers.has("formatManagedFormErrors") ? 'import { formatManagedFormErrors } from "@webstudio-is/sdk";\n' : ""}${importsString}${componentBuildSetupString}
 
       export const projectId = "${siteData.build.projectId}";
 
@@ -1941,6 +1946,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
       ${generateManagedFormResources({
         scope,
+        systemDataSourceId: page.systemDataSourceId,
         instances,
         dataSources,
         resources,

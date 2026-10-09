@@ -565,28 +565,30 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   expect(row?.querySelector("label")).toBeNull();
   expect(row?.getClientRects().length).toBeGreaterThan(0);
   expect(getComputedStyle(row!).opacity).toBe("0.2");
-  expect(row?.hasAttribute("disabled")).toBe(true);
+  expect(row?.hasAttribute("disabled")).toBe(false);
   expect(row?.parentElement?.getBoundingClientRect().left).toBeLessThan(
     container.getBoundingClientRect().left
   );
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Enable action Send request"]'
-      )
-      ?.click()
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
+  await act(async () => addButton.focus());
+  await act(async () => userEvent.tab());
+  expect(document.activeElement).toBe(row);
+  await act(async () => userEvent.keyboard("{ArrowRight}"));
+  expect(document.activeElement?.getAttribute("aria-label")).toBe(
+    "Enable action Send request"
   );
+  await act(async () => userEvent.keyboard("{Enter}"));
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: [{ dataSourceId: "send", enabled: true }],
   });
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Remove action Send request"]'
-      )
-      ?.click()
+  await act(async () => userEvent.keyboard("{ArrowRight}"));
+  expect(document.activeElement?.getAttribute("aria-label")).toBe(
+    "Remove action Send request"
   );
+  await act(async () => userEvent.keyboard("{Enter}"));
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
     value: [],

@@ -513,7 +513,6 @@ test("Preview runs the supplied submission and reports its result without the pu
       root.render(
         <NativeForm
           action={[{ dataSourceId: "email", enabled: true }]}
-          previewSubmission
           onManagedSubmit={onManagedSubmit}
           onResultChange={onResultChange}
         >

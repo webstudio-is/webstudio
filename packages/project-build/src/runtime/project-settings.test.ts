@@ -331,7 +331,6 @@ describe("project settings runtime", () => {
         emailSubject: "A submission",
         emailBody: "First line\nSecond line",
         emailConfirmationSubject: "Thank you",
-        emailConfirmationBody: "We received it.",
       },
     });
     const patches = updateProjectSettings(state, input).payload[0]?.patches;
@@ -354,6 +353,14 @@ describe("project settings runtime", () => {
         meta: { contactEmail: "not-an-email" },
       })
     ).toThrow("Contact email is invalid.");
+  });
+
+  test("rejects an unsupported project confirmation body setting", () => {
+    expect(
+      projectSettingsUpdateInput.safeParse({
+        meta: { emailConfirmationBody: "We received it." },
+      }).success
+    ).toBe(false);
   });
 
   test("validates serialized project auth config", () => {

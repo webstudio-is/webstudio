@@ -105,13 +105,3 @@ export const resolveEmailResourceSettings = ({
     includeAttachments: settings.includeAttachments ?? true,
   };
 };
-
-export const resetEmailResourceSetting = <
-  K extends keyof EmailResourceSettings,
->(
-  settings: EmailResourceSettings,
-  key: K
-): EmailResourceSettings => {
-  const { [key]: _, ...rest } = settings;
-  return rest;
-};

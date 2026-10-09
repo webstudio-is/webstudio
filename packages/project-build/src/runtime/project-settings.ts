@@ -149,7 +149,6 @@ const validateProjectMetaUpdate = (
     ["emailSubject", "Email subject"],
     ["emailBody", "Email body"],
     ["emailConfirmationSubject", "Confirmation subject"],
-    ["emailConfirmationBody", "Confirmation body"],
   ] as const) {
     const value = values[name];
     if (typeof value !== "string") {
@@ -158,11 +157,7 @@ const validateProjectMetaUpdate = (
     const error =
       name === "emailSender"
         ? validateEmailSender(value)
-        : validateEmailText(
-            value,
-            label,
-            name === "emailBody" || name === "emailConfirmationBody"
-          );
+        : validateEmailText(value, label, name === "emailBody");
     if (error) {
       return throwBuilderValidationError(error, [
         {

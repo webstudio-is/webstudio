@@ -198,6 +198,49 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   expect(response.headers.get("cache-control")).toContain("no-store");
 });
 
+test("Preview Actions resolve the matched page's legacy System binding", async () => {
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    pages: {
+      ...draftBuild.pages,
+      pages: new Map([
+        [
+          "page",
+          {
+            ...draftBuild.pages.pages.get("page")!,
+            systemDataSourceId: "pageSystem",
+          },
+        ],
+      ]),
+    },
+    dataSources: [
+      ...draftBuild.dataSources,
+      {
+        id: "pageSystem",
+        type: "parameter",
+        scopeInstanceId: "root-instance",
+        name: "system",
+      },
+    ],
+    resources: [
+      {
+        ...draftBuild.resources[0],
+        body: "({ pathname: $ws$dataSource$pageSystem.pathname, origin: $ws$dataSource$pageSystem.origin })",
+      },
+    ],
+  } as never);
+  const response = await action({ request: request() } as never);
+  expect(await response.json()).toMatchObject({ success: true });
+  const fetch = vi.mocked(createNodeProtectedResourceFetch).mock.results[0]
+    .value;
+  expect(fetch).toHaveBeenCalledOnce();
+  const outgoing = fetch.mock.calls[0][0] as Request;
+  expect(await outgoing.json()).toEqual({
+    pathname: "/contact",
+    origin: "https://site.wstd.work",
+  });
+});
+
 test.each([false, true])(
   "a Preview Form reaches the Builder action over local HTTP after pending saves: %s",
   async (delayedSave) => {

@@ -3,7 +3,6 @@ import {
   getDefaultFormEmailBodyExpression,
   resolveEmailRecipientsExpression,
   resolveEmailSenderExpression,
-  resetEmailResourceSetting,
   resolveEmailResourceSettings,
 } from "./email-resource";
 import { parseEmailMailboxes, parseEmailSender } from "./email-addresses";
@@ -82,7 +81,7 @@ describe("Email Resource defaults", () => {
     emailBody: "Project body",
   };
 
-  test("inherits project recipients and Sender, then resets each override", () => {
+  test("inherits project defaults and applies Resource overrides", () => {
     expect(
       resolveEmailResourceSettings({
         projectMeta,
@@ -117,16 +116,12 @@ describe("Email Resource defaults", () => {
       subject: '"Custom subject"',
       body: '"Resource body"',
     });
-    const reset = resetEmailResourceSetting(
-      resetEmailResourceSetting(
-        resetEmailResourceSetting(settings, "sender"),
-        "subject"
-      ),
-      "body"
-    );
     expect(
       resolveEmailResourceSettings({
-        settings: reset,
+        settings: {
+          recipientMode: settings.recipientMode,
+          recipients: settings.recipients,
+        },
         projectMeta,
         ownerEmail: "fallback@example.com",
       })

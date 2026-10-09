@@ -266,6 +266,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ownerEmail,
           ownerName: owner?.username ?? undefined,
           system: values.system,
+          systemDataSourceId: match.value.systemDataSourceId,
           formData: values.formData as Record<string, unknown>,
           browserInfo: values.browserInfo as Record<string, unknown>,
           evaluateExpression,

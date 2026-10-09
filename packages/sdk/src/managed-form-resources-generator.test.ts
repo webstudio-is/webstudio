@@ -2,10 +2,9 @@ import { transformSync } from "esbuild";
 import { transpileExpression } from "@webstudio-is/expression";
 import { expect, test, vi } from "vitest";
 import { createScope } from "./scope";
-import { encodeDataSourceVariable } from "./expression";
+import { encodeDataSourceVariable, SYSTEM_VARIABLE_ID } from "./expression";
 import {
   getDefaultFormEmailBodyExpression,
-  resetEmailResourceSetting,
   resolveEmailRecipientsExpression,
   resolveEmailSenderSettingsExpression,
 } from "./email-resource";
@@ -42,6 +41,7 @@ const getGeneratedGraph = (input: {
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
   ownerName?: string;
+  systemDataSourceId?: string;
   forms: readonly {
     formId: string;
     destinationDataSourceIds: readonly string[];
@@ -81,6 +81,7 @@ test.each([
   { name: "formData", scopeInstanceId: "other-form" },
   { name: "browserInfo", scopeInstanceId: "other-form" },
   { name: "state", scopeInstanceId: "form" },
+  { name: "system", scopeInstanceId: "page" },
 ])(
   "Preview and published graphs reject unavailable parameter $name in $scopeInstanceId",
   async (parameter) => {
@@ -120,6 +121,7 @@ test.each([
     ]);
     const input = {
       formId: "form",
+      systemDataSourceId: "page-system",
       destinationDataSourceIds: ["destination"],
       instances,
       dataSources,
@@ -142,6 +144,98 @@ test.each([
     expect(() => draft.resources[0].createRequest(new Map())).toThrow(
       "Managed Form form cannot resolve parameter unavailable"
     );
+  }
+);
+
+test.each([SYSTEM_VARIABLE_ID, "page-system"])(
+  "Preview and published graphs resolve System parameter %s",
+  async (systemId) => {
+    const { createManagedFormDraftGraph } =
+      await import("./managed-form-draft-graph");
+    const instances: Instances = new Map([
+      [
+        "page",
+        {
+          id: "page",
+          type: "instance",
+          component: "Body",
+          children: [{ type: "id", value: "form" }],
+        },
+      ],
+      [
+        "form",
+        { id: "form", type: "instance", component: "NativeForm", children: [] },
+      ],
+    ]);
+    const dataSources: DataSources = new Map([
+      [
+        "destination",
+        {
+          id: "destination",
+          type: "resource",
+          name: "Action",
+          scopeInstanceId: "form",
+          resourceId: "action",
+        },
+      ],
+      [
+        systemId,
+        {
+          id: systemId,
+          type: "parameter",
+          name: "system",
+          scopeInstanceId: "page",
+        },
+      ],
+    ]);
+    const systemVariable = encodeDataSourceVariable(systemId);
+    const resources: Resources = new Map([
+      [
+        "action",
+        {
+          id: "action",
+          name: "Action",
+          method: "post",
+          url: `${systemVariable}.origin + "/submit"`,
+          headers: [{ name: "x-page", value: `${systemVariable}.pathname` }],
+          body: systemVariable,
+        },
+      ],
+    ]);
+    const input = {
+      formId: "form",
+      destinationDataSourceIds: ["destination"],
+      systemDataSourceId: "page-system",
+      instances,
+      dataSources,
+      resources,
+      props: new Map(),
+      system: {
+        params: { slug: "contact" },
+        search: { locale: "en" },
+        origin: "https://site.example",
+        pathname: "/contact",
+      },
+      formData: {},
+      browserInfo: {},
+      evaluateExpression: evaluateFixtureExpression,
+    };
+    const draft = createManagedFormDraftGraph(input);
+    const published = getGeneratedGraph({ ...input, forms: [input] })(
+      "form",
+      input
+    )!;
+    for (const graph of [draft, published]) {
+      expect(graph.resources[0].createRequest(new Map())).toEqual({
+        name: "Action",
+        control: undefined,
+        url: "https://site.example/submit",
+        searchParams: [],
+        method: "post",
+        headers: [{ name: "x-page", value: "/contact" }],
+        body: input.system,
+      });
+    }
   }
 );
 
@@ -384,7 +478,7 @@ test.each([
   }
 );
 
-test("a translated project body survives Email Resource override and reset", () => {
+test("a translated project body is inherited unless the Email Resource overrides it", () => {
   const getBody = (resourceBody?: string) => {
     const getGraph = getGeneratedGraph({
       instances: new Map([
@@ -457,8 +551,6 @@ test("a translated project body survives Email Resource override and reset", () 
   expect(inherited).not.toContain("Browser info:");
   const override = { body: '"Mensaje del recurso"' };
   expect(getBody(override.body)).toBe("Mensaje del recurso");
-  const reset = resetEmailResourceSetting(override, "body");
-  expect(getBody(reset.body)).toBe(projectBody);
 });
 
 test("counts project and custom Email recipients across a Form, including duplicate addresses", () => {
@@ -1039,6 +1131,18 @@ test("Visitor Email keeps its empty receipt body instead of the submitted-fields
     expect(request.email?.body).toBe("");
     expect(request.email?.body).not.toContain("submitted value");
     expect(request.email?.body).not.toContain("language");
+  }
+
+  resources.get("email")!.email!.body = '"Resource receipt"';
+  const overriddenDraft = createManagedFormDraftGraph(input);
+  const overriddenPublished = getGeneratedGraph({ ...input, forms: [input] })(
+    input.formId,
+    input
+  )!;
+  for (const graph of [overriddenDraft, overriddenPublished]) {
+    expect(graph.resources[0].createRequest(new Map()).email?.body).toBe(
+      "Resource receipt"
+    );
   }
 });
 

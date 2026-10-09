@@ -1190,7 +1190,6 @@ const WebstudioComponentPreviewInner = forwardRef<
     const getPreviewUrl = () =>
       getPreviewCurrentUrl($currentSystem.get(), $selectedPageHash.get().hash);
     props["data-ws-managed-form-id"] = instance.id;
-    props.previewSubmission = true;
     props.getRedirectBaseUrl = () => getPreviewUrl().href;
     props.onManagedSubmit = (
       values: Parameters<typeof submitManagedForm>[0]["values"],

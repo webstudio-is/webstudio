@@ -68,7 +68,7 @@ const ActionItem = ({
       aria-label={`Action ${name}`}
       draggable
       active={active}
-      hidden={!isEnabled}
+      css={{ opacity: isEnabled ? undefined : 0.2 }}
       onClick={(event) => {
         const target = event.target;
         if (

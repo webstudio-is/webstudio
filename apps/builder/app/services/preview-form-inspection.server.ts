@@ -30,8 +30,25 @@ export const capturePreviewFormExchange = async (
   }
 ): Promise<PreviewFormExchange> => {
   const secrets = new Set([...privateValues].filter(Boolean));
+  const collectUrlCredentials = (value: string, base?: string) => {
+    try {
+      const parsed = new URL(value, base);
+      secrets.add(parsed.username);
+      secrets.add(parsed.password);
+      for (const [name, value] of parsed.searchParams) {
+        if (sensitive.test(name) || sensitiveFields.has(name)) {
+          secrets.add(value);
+        }
+      }
+    } catch {
+      // Invalid URLs are rendered as redacted below.
+    }
+  };
   const collectCredentials = (headers: Headers, allowCustomHeaders = false) => {
     for (const [name, value] of headers) {
+      if (name.toLowerCase() === "location") {
+        collectUrlCredentials(value, exchange.request.url);
+      }
       if (
         sensitive.test(name) ||
         (!allowCustomHeaders && !publicHeader.test(name))
@@ -74,6 +91,10 @@ export const capturePreviewFormExchange = async (
       : new Headers(
           request.headers.map(({ name, value }) => [name, String(value)])
         );
+  collectUrlCredentials(request.url);
+  if (exchange.response.url !== undefined) {
+    collectUrlCredentials(exchange.response.url, request.url);
+  }
   collectCredentials(requestHeaders, allowCustomHeaders);
   collectCredentials(
     exchange.response.headers,
@@ -98,17 +119,14 @@ export const capturePreviewFormExchange = async (
     try {
       const parsed = new URL(value, base);
       if (parsed.username) {
-        secrets.add(parsed.username);
         parsed.username = redacted;
       }
       if (parsed.password) {
-        secrets.add(parsed.password);
         parsed.password = redacted;
       }
       const search = new URLSearchParams();
       for (const [name, value] of parsed.searchParams) {
         if (sensitive.test(name) || sensitiveFields.has(name)) {
-          secrets.add(value);
           search.append(name, redacted);
         } else {
           search.append(name, text(value, limit));

@@ -4,11 +4,7 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "@webstudio-is/sdk/form-fields";
-import {
-  getManagedFormBrowserInfo,
-  internalFormFieldNames,
-  type ManagedFormBrowserInfo,
-} from "@webstudio-is/sdk/runtime";
+import { internalFormFieldNames } from "@webstudio-is/sdk/runtime";
 
 // The legacy Webhook Form rejects simple headless environments whose
 // matchMedia implementation reports inconsistent device and color settings.
@@ -125,14 +121,3 @@ export const createManagedSubmissionFormData = ({
   );
   return formData;
 };
-
-export type BrowserInfo = ManagedFormBrowserInfo;
-
-/** The caller supplies IP from a trusted platform source, never from visitor headers. */
-export const getBrowserInfo = ({
-  request,
-  trustedIp,
-}: {
-  request: Request;
-  trustedIp?: string;
-}): BrowserInfo => getManagedFormBrowserInfo(request, trustedIp);

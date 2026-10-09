@@ -13,6 +13,7 @@ import {
   getExpressionIdentifiers,
   transpileExpression,
 } from "@webstudio-is/expression";
+import { mapResourceExpressionsMutable } from "@webstudio-is/project-build/runtime";
 
 const namespace = "@webstudio/variable/v0.1";
 const payload = z.object({
@@ -58,28 +59,13 @@ export const serializeVariable = (
   const copiedResource = resource && {
     ...resource,
     id: "resource",
-    url: remap(resource.url),
-    headers: resource.headers.map((header) => ({
-      ...header,
-      value: remap(header.value),
-    })),
-    searchParams: resource.searchParams?.map((param) => ({
-      ...param,
-      value: remap(param.value),
-    })),
-    body: resource.body === undefined ? undefined : remap(resource.body),
-    email: resource.email && {
-      ...resource.email,
-      subject:
-        resource.email.subject === undefined
-          ? undefined
-          : remap(resource.email.subject),
-      body:
-        resource.email.body === undefined
-          ? undefined
-          : remap(resource.email.body),
-    },
+    headers: resource.headers.map((header) => ({ ...header })),
+    searchParams: resource.searchParams?.map((param) => ({ ...param })),
+    email: resource.email && { ...resource.email },
   };
+  if (copiedResource) {
+    mapResourceExpressionsMutable(copiedResource, remap);
+  }
   const copiedVariable = {
     ...variable,
     id: "variable",
@@ -129,18 +115,7 @@ export const deserializeVariable = (
   }
   const remappedNames = new Map<string, string>();
   if (parsed.resource) {
-    const expressions = [
-      parsed.resource.url,
-      parsed.resource.body,
-      parsed.resource.email?.subject,
-      parsed.resource.email?.body,
-      ...parsed.resource.headers.map(({ value }) => value),
-      ...(parsed.resource.searchParams ?? []).map(({ value }) => value),
-    ];
-    for (const expression of expressions) {
-      if (expression === undefined) {
-        continue;
-      }
+    mapResourceExpressionsMutable(parsed.resource, (expression) => {
       for (const identifier of getExpressionIdentifiers(expression)) {
         if (
           decodeDataVariableId(identifier) !== undefined ||
@@ -157,7 +132,7 @@ export const deserializeVariable = (
           unresolved.push(identifier);
         }
       }
-    }
+    });
   }
   if (unresolved.length) {
     throw Error(
@@ -182,34 +157,9 @@ export const deserializeVariable = (
     if (!parsed.resource) {
       throw Error("Resource configuration is missing");
     }
-    copiedResource = {
-      ...parsed.resource,
-      id: nanoid(),
-      url: remap(parsed.resource.url),
-      searchParams: parsed.resource.searchParams?.map((param) => ({
-        ...param,
-        value: remap(param.value),
-      })),
-      headers: parsed.resource.headers.map((header) => ({
-        ...header,
-        value: remap(header.value),
-      })),
-      body:
-        parsed.resource.body === undefined
-          ? undefined
-          : remap(parsed.resource.body),
-      email: parsed.resource.email && {
-        ...parsed.resource.email,
-        subject:
-          parsed.resource.email.subject === undefined
-            ? undefined
-            : remap(parsed.resource.email.subject),
-        body:
-          parsed.resource.email.body === undefined
-            ? undefined
-            : remap(parsed.resource.email.body),
-      },
-    };
+    copiedResource = parsed.resource;
+    copiedResource.id = nanoid();
+    mapResourceExpressionsMutable(copiedResource, remap);
   }
   const variable: DataSource = {
     ...parsed.variable,

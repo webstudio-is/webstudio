@@ -1,4 +1,3 @@
-import { useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
@@ -26,25 +25,6 @@ import { VariablePopoverTrigger } from "./variable-popover";
 import { SystemResourceForm } from "./resource-panel";
 
 const { JsonForm, TypeField } = __testing__;
-type TestVariableType =
-  | "parameter"
-  | "string"
-  | "number"
-  | "boolean"
-  | "json"
-  | "resource"
-  | "graphql-resource"
-  | "sitemap-resource"
-  | "current-date-resource"
-  | "assets-resource"
-  | "email-resource";
-type TestSystemResourceType = Extract<
-  TestVariableType,
-  | "sitemap-resource"
-  | "current-date-resource"
-  | "assets-resource"
-  | "email-resource"
->;
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -198,54 +178,30 @@ test("editing a System Resource and changing its Type persists the selected cate
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
-  let saveResult: unknown;
-  const Harness = () => {
-    const [type, setType] =
-      useState<TestSystemResourceType>("sitemap-resource");
-    const onTypeChange = (value: TestVariableType) => {
-      if (
-        value === "sitemap-resource" ||
-        value === "current-date-resource" ||
-        value === "assets-resource" ||
-        value === "email-resource"
-      ) {
-        setType(value);
-      }
-    };
-    const resourceFormRef = useRef<
-      | {
-          save: (formData: FormData) => void | false | { dataSourceId: string };
-        }
-      | undefined
-    >(undefined);
-    const formRef = useRef<HTMLFormElement>(null);
-    return (
-      <form ref={formRef}>
-        <input type="hidden" name="name" value="Existing resource" />
-        <TypeField value={type} onChange={onTypeChange} />
-        <SystemResourceForm
-          ref={resourceFormRef}
-          variable={variable}
-          resourceType={type}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            saveResult = resourceFormRef.current?.save(
-              new FormData(formRef.current!)
-            );
-          }}
-        >
-          Save
-        </button>
-      </form>
+  $selectedPageId.set("home");
+  selectInstance(["body"]);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <VariablePopoverTrigger variable={variable}>
+          <button type="button">Open</button>
+        </VariablePopoverTrigger>
+      </TooltipProvider>
+    )
+  );
+  await act(async () => userEvent.click(container.querySelector("button")!));
+  const editor = await vi.waitFor(() => {
+    const current = document.querySelector<HTMLElement>(
+      "[data-variable-editor-dialog]"
     );
-  };
-  await act(async () => root?.render(<Harness />));
+    expect(current).not.toBeNull();
+    return current!;
+  });
 
-  const typeSelect =
-    container.querySelector<HTMLButtonElement>('[role="combobox"]');
-  expect(typeSelect?.textContent).toContain("Sitemap");
+  const typeSelect = Array.from(
+    editor.querySelectorAll<HTMLButtonElement>('[role="combobox"]')
+  ).find((element) => element.textContent?.includes("Sitemap"));
+  expect(typeSelect).toBeDefined();
   await act(async () => userEvent.click(typeSelect!));
   await act(async () =>
     userEvent.click(
@@ -255,26 +211,19 @@ test("editing a System Resource and changing its Type persists the selected cate
     )
   );
 
-  expect(container.textContent).toContain("Recipients");
-  expect(
-    container.querySelector('input[name="url"]')?.getAttribute("value")
-  ).toBe('""');
-  await act(async () =>
-    userEvent.click(
-      Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
-        (button) => button.textContent === "Save"
-      )!
-    )
-  );
-
-  expect(saveResult).toEqual({
-    resourceId: resource.id,
-    dataSourceId: variable.id,
-  });
-  const savedFormData = new FormData(container.querySelector("form")!);
+  const form = editor.querySelector("form")!;
+  const savedFormData = new FormData(form);
   expect(savedFormData.get("method")).toBe("post");
   expect(savedFormData.get("url")).toBe('""');
   expect(savedFormData.get("email-settings")).toBeTruthy();
+  await act(async () => form.requestSubmit());
+  expect($resources.get().get(resource.id)).toMatchObject({
+    control: "email",
+    method: "post",
+    url: '""',
+    email: {},
+  });
+  expect($dataSources.get().get(variable.id)?.type).toBe("resource");
 });
 
 test("reopening and saving an Assets Resource with a single-quoted URL keeps its type", async () => {

@@ -450,6 +450,7 @@ export const generateJsxChildren = ({
   excludePlaceholders,
   publishedContentBlocks,
   contentBodyOverride,
+  usedRuntimeHelpers,
 }: {
   scope: Scope;
   metas: Map<Instance["component"], WsComponentMeta>;
@@ -465,6 +466,7 @@ export const generateJsxChildren = ({
   classesMap?: Map<string, Array<string>>;
   excludePlaceholders?: boolean;
   publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
+  usedRuntimeHelpers?: Set<"renderText" | "formatManagedFormErrors">;
   contentBodyOverride?: Readonly<{
     instanceId: Instance["id"];
     children: Instance["children"];
@@ -491,6 +493,7 @@ export const generateJsxChildren = ({
         usedDataSources,
         scope,
       });
+      usedRuntimeHelpers?.add("renderText");
       generatedChildren += `{renderText(${expression})}\n`;
       continue;
     }
@@ -505,6 +508,9 @@ export const generateJsxChildren = ({
         instances,
         dataSources
       );
+      const instanceRuntimeHelpers = usedRuntimeHelpers
+        ? new Set<"renderText" | "formatManagedFormErrors">()
+        : undefined;
       const publishedContent = publishedContentBlocks?.get(instance.id);
       let generatedInstanceChildren: string;
       if (contentBodyOverride?.instanceId === instance.id) {
@@ -522,6 +528,7 @@ export const generateJsxChildren = ({
           indexesWithinAncestors,
           excludePlaceholders,
           publishedContentBlocks,
+          usedRuntimeHelpers: instanceRuntimeHelpers,
         });
       } else if (
         instance !== authoredInstance &&
@@ -533,7 +540,9 @@ export const generateJsxChildren = ({
           usedDataSources,
           scope,
         });
-        generatedInstanceChildren = `{renderText(${errorsExpression}?.map((error: any) => error?.message).join("\\n"))}\n`;
+        instanceRuntimeHelpers?.add("renderText");
+        instanceRuntimeHelpers?.add("formatManagedFormErrors");
+        generatedInstanceChildren = `{renderText(formatManagedFormErrors(${errorsExpression}))}\n`;
       } else if (publishedContent === undefined) {
         generatedInstanceChildren = generateJsxChildren({
           classesMap,
@@ -549,6 +558,7 @@ export const generateJsxChildren = ({
           indexesWithinAncestors,
           excludePlaceholders,
           publishedContentBlocks,
+          usedRuntimeHelpers: instanceRuntimeHelpers,
           contentBodyOverride,
         });
       } else {
@@ -602,6 +612,7 @@ export const generateJsxChildren = ({
               indexesWithinAncestors,
               excludePlaceholders,
               publishedContentBlocks,
+              usedRuntimeHelpers: instanceRuntimeHelpers,
               contentBodyOverride:
                 publishedContent.bodyInstanceId === undefined
                   ? undefined
@@ -644,7 +655,7 @@ export const generateJsxChildren = ({
           })(${sourceExpression})}\n`;
         }
       }
-      generatedChildren += generateJsxElement({
+      const generatedElement = generateJsxElement({
         context: "jsx",
         scope,
         metas,
@@ -658,6 +669,12 @@ export const generateJsxChildren = ({
         classesMap,
         children: generatedInstanceChildren,
       });
+      generatedChildren += generatedElement;
+      if (generatedElement && instanceRuntimeHelpers) {
+        for (const helper of instanceRuntimeHelpers) {
+          usedRuntimeHelpers?.add(helper);
+        }
+      }
       continue;
     }
     child satisfies never;
@@ -678,6 +695,7 @@ export const generateWebstudioComponent = ({
   tagsOverrides,
   classesMap,
   publishedContentBlocks,
+  usedRuntimeHelpers,
 }: {
   scope: Scope;
   name: string;
@@ -688,6 +706,7 @@ export const generateWebstudioComponent = ({
   resources?: Resources;
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
+  usedRuntimeHelpers?: Set<"renderText" | "formatManagedFormErrors">;
   publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
   metas: Map<Instance["component"], WsComponentMeta>;
   /**
@@ -704,6 +723,9 @@ export const generateWebstudioComponent = ({
   let generatedJsx = "<></>\n";
   // instance can be missing when generate xml
   if (instance) {
+    const rootRuntimeHelpers = usedRuntimeHelpers
+      ? new Set<"renderText" | "formatManagedFormErrors">()
+      : undefined;
     generatedJsx = generateJsxElement({
       context: "expression",
       scope,
@@ -729,8 +751,14 @@ export const generateWebstudioComponent = ({
         indexesWithinAncestors,
         classesMap,
         publishedContentBlocks,
+        usedRuntimeHelpers: rootRuntimeHelpers,
       }),
     });
+    if (generatedJsx && rootRuntimeHelpers) {
+      for (const helper of rootRuntimeHelpers) {
+        usedRuntimeHelpers?.add(helper);
+      }
+    }
   }
 
   let generatedProps = "";

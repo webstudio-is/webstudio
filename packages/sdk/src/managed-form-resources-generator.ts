@@ -37,6 +37,7 @@ export const generateManagedFormResources = ({
   props,
   ownerEmail,
   ownerName,
+  systemDataSourceId,
 }: {
   scope: Scope;
   instances: Instances;
@@ -46,6 +47,7 @@ export const generateManagedFormResources = ({
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
   ownerName?: string;
+  systemDataSourceId?: string;
   forms: readonly {
     formId: string;
     destinationDataSourceIds: readonly string[];
@@ -192,11 +194,12 @@ export const generateManagedFormResources = ({
           if (dataSource.type === "parameter") {
             let binding: ReturnType<typeof getManagedFormParameterBinding>;
             try {
-              binding = getManagedFormParameterBinding(
-                dataSource,
+              binding = getManagedFormParameterBinding({
+                source: dataSource,
                 formId,
-                instances
-              );
+                instances,
+                systemDataSourceId,
+              });
             } catch (error) {
               if (!(error instanceof InvalidManagedFormGraph)) {
                 throw error;

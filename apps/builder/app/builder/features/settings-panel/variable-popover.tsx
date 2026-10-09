@@ -102,6 +102,7 @@ import {
 import { parseJsonExpression } from "@webstudio-is/expression";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
+  EmailResourceForm,
   GraphqlResourceForm,
   ResourceForm,
   SystemResourceForm,
@@ -704,10 +705,16 @@ const VariablePanelForm = forwardRef<
               onChange={onResourceChange}
             />
           )}
+          {variableType === "email-resource" && (
+            <EmailResourceForm
+              ref={ref}
+              variable={variable}
+              onChange={onResourceChange}
+            />
+          )}
           {(variableType === "sitemap-resource" ||
             variableType === "current-date-resource" ||
-            variableType === "assets-resource" ||
-            variableType === "email-resource") && (
+            variableType === "assets-resource") && (
             <SystemResourceForm
               ref={ref}
               resourceType={variableType}
@@ -1063,11 +1070,13 @@ const VariablePopoverContent = ({
   variable,
   isOpen,
   onClose,
+  onSave,
 }: {
   formRef: RefObject<HTMLFormElement>;
   variable?: DataSource;
   isOpen: boolean;
   onClose: () => void;
+  onSave: (saved: boolean) => void;
 }) => {
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const [queryActive, setQueryActive] = useState(false);
@@ -1333,6 +1342,7 @@ const VariablePopoverContent = ({
                 ) {
                   const formData = new FormData(event.currentTarget);
                   const saved = panelRef.current?.save(formData);
+                  onSave(saved !== false);
                   // close popover whenever new variable is created
                   // to prevent creating duplicated variable
                   if (variable === undefined && saved !== false) {
@@ -1465,6 +1475,7 @@ export const VariablePopoverTrigger = ({
   const [isOpen, setOpen] = useState(false);
   const variableToOpen = useStore($variableToOpen);
   const formRef = useRef<HTMLFormElement>(null);
+  const saveFailedRef = useRef(false);
   const variableId = variable?.id;
 
   useEffect(() => {
@@ -1492,7 +1503,11 @@ export const VariablePopoverTrigger = ({
         }
         // attempt to save form on close
         if (areAllFormErrorsVisible(formRef.current)) {
+          saveFailedRef.current = false;
           formRef.current?.requestSubmit();
+          if (saveFailedRef.current) {
+            return;
+          }
           setOpen(false);
           onOpenChange?.(false);
         } else {
@@ -1516,6 +1531,9 @@ export const VariablePopoverTrigger = ({
             formRef={formRef}
             variable={variable}
             isOpen={isOpen}
+            onSave={(saved) => {
+              saveFailedRef.current = !saved;
+            }}
             onClose={() => {
               setOpen(false);
               onOpenChange?.(false);

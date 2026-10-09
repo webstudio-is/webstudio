@@ -803,6 +803,66 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test.each([true, false])(
+    "imports managed Form formatting only when used (%s)",
+    async (hasErrors) => {
+      const siteData = createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "NativeForm",
+              children: hasErrors ? [{ type: "id", value: "error" }] : [],
+            },
+          ],
+          [
+            "error",
+            {
+              id: "error",
+              component: "ws:element",
+              tag: "div",
+              label: "Error Message",
+              children: [
+                {
+                  type: "text",
+                  placeholder: true,
+                  value: "Sorry, something went wrong.",
+                },
+              ],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "errors",
+          {
+            id: "errors",
+            type: "variable",
+            name: "errors",
+            scopeInstanceId: "root",
+            value: { type: "json", value: [] },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: ["react-router"] });
+      const source = await readFile("app/__generated__/_index.tsx", "utf8");
+      const result = await build({
+        stdin: { contents: source, loader: "tsx" },
+        format: "esm",
+        metafile: true,
+        tsconfigRaw: { compilerOptions: { verbatimModuleSyntax: true } },
+        write: false,
+      });
+      const imports = Object.values(result.metafile.outputs).flatMap((output) =>
+        output.imports.map(({ path }) => path)
+      );
+      expect(imports.includes("@webstudio-is/sdk")).toBe(hasErrors);
+    }
+  );
+
   test("uses the private Email binding when a TRPC token is present without an Email Service URL", async () => {
     await prebuild({
       assets: false,
@@ -992,7 +1052,6 @@ describe("prebuild", () => {
         emailSubject: "New request",
         emailBody: "Thanks for contacting us.",
         emailConfirmationSubject: "Received",
-        emailConfirmationBody: "We received your request.",
       },
     });
     await writeSiteData(siteData);

@@ -1728,8 +1728,7 @@ type SystemResourceFormProps = {
   resourceType:
     | "sitemap-resource"
     | "current-date-resource"
-    | "assets-resource"
-    | "email-resource";
+    | "assets-resource";
   onChange?: () => void;
   querySourceContainer?: Element | null;
   onQueryActiveChange?: (active: boolean) => void;
@@ -1767,37 +1766,12 @@ export const SystemResourceForm = forwardRef<
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
-  const assetsLocalResource = {
-    value: JSON.stringify(assetsResourceUrl),
-  };
-  const emailLocalResource = {
-    value: "email",
-  };
-  const localResources = [
-    {
-      value: JSON.stringify(sitemapResourceUrl),
-    },
-    {
-      value: JSON.stringify(currentDateResourceUrl),
-    },
-    assetsLocalResource,
-    emailLocalResource,
-  ];
-
-  const selectedLocalResourceValue = {
+  const localResourceUrl = {
     "sitemap-resource": JSON.stringify(sitemapResourceUrl),
     "current-date-resource": JSON.stringify(currentDateResourceUrl),
     "assets-resource": JSON.stringify(assetsResourceUrl),
-    "email-resource": emailLocalResource.value,
   }[resourceType];
-  const localResource =
-    localResources.find(
-      (localResource) => localResource.value === selectedLocalResourceValue
-    ) ?? localResources[0];
-  const isEmailResource = localResource.value === emailLocalResource.value;
-  const emailFormApi = useRef<undefined | PanelApi>(undefined);
-  const isAssetsResource =
-    localResource.value === JSON.stringify(assetsResourceUrl);
+  const isAssetsResource = resourceType === "assets-resource";
   useEffect(() => {
     onQueryActiveChange?.(isAssetsResource);
     return () => {
@@ -1807,9 +1781,6 @@ export const SystemResourceForm = forwardRef<
   }, [isAssetsResource, onQueryActiveChange, onQueryPendingChange]);
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      if (isEmailResource) {
-        return emailFormApi.current?.save(formData) ?? false;
-      }
       if (formData.get("asset-query-valid") === "false") {
         return false;
       }
@@ -1844,23 +1815,12 @@ export const SystemResourceForm = forwardRef<
 
   return (
     <>
-      {!isEmailResource && (
-        <>
-          <input
-            type="hidden"
-            name="method"
-            value={isAssetsResource ? "post" : "get"}
-          />
-          <input type="hidden" name="url" value={localResource.value} />
-        </>
-      )}
-      {isEmailResource && (
-        <EmailResourceForm
-          ref={emailFormApi}
-          variable={variable}
-          onChange={onChange}
-        />
-      )}
+      <input
+        type="hidden"
+        name="method"
+        value={isAssetsResource ? "post" : "get"}
+      />
+      <input type="hidden" name="url" value={localResourceUrl} />
       {isAssetsResource && (
         <Suspense
           fallback={

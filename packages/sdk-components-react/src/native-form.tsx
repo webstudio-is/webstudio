@@ -32,7 +32,6 @@ export const NativeForm = forwardRef<
       formData: ReturnType<typeof getFormDataValue>,
       signal: AbortSignal
     ) => void | Promise<ManagedFormResponse>;
-    previewSubmission?: boolean;
     getRedirectBaseUrl?: () => string;
     onSuccessRedirect?: (destination: string) => void;
     onSubmissionSuccess?: () => void | Promise<void>;
@@ -52,7 +51,6 @@ export const NativeForm = forwardRef<
       onStateChange,
       onResultChange,
       onManagedSubmit,
-      previewSubmission: _previewSubmission,
       getRedirectBaseUrl,
       onSuccessRedirect,
       onSubmissionSuccess,

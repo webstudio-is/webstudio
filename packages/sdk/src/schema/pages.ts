@@ -222,7 +222,6 @@ export const projectMeta = z.object({
   emailSubject: z.string().optional(),
   emailBody: z.string().optional(),
   emailConfirmationSubject: z.string().optional(),
-  emailConfirmationBody: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
   agentInstructions: z.string().optional(),

@@ -19,12 +19,18 @@ import { SYSTEM_VARIABLE_ID } from "./expression";
 export class InvalidManagedFormGraph extends Error {}
 
 /** Resolve the parameters available to both Preview and published submissions. */
-export const getManagedFormParameterBinding = (
-  source: Extract<DataSource, { type: "parameter" }>,
-  formId: string,
-  instances: Instances
-): "system" | "formData" | "browserInfo" => {
-  if (source.id === SYSTEM_VARIABLE_ID) {
+export const getManagedFormParameterBinding = ({
+  source,
+  formId,
+  instances,
+  systemDataSourceId,
+}: {
+  source: Extract<DataSource, { type: "parameter" }>;
+  formId: string;
+  instances: Instances;
+  systemDataSourceId?: string;
+}): "system" | "formData" | "browserInfo" => {
+  if (source.id === SYSTEM_VARIABLE_ID || source.id === systemDataSourceId) {
     return "system";
   }
   if (

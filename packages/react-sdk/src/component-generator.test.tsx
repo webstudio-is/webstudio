@@ -1,9 +1,14 @@
 import { API, type Snapshot } from "typescript/unstable/sync";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import stripIndent from "strip-indent";
+import { transform } from "esbuild";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { renderText } from "./context";
 import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   createScope,
+  formatManagedFormErrors,
   elementComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
@@ -2136,7 +2141,7 @@ test("overrides some element tags with provided components", () => {
   );
 });
 
-test("saved managed Form error placeholder generates dynamic messages while preserving the authored element", () => {
+test("saved managed Form errors render like Preview for malformed values while preserving the authored element", async () => {
   const slot: import("@webstudio-is/sdk").Instance = {
     type: "instance",
     id: "saved-error",
@@ -2183,9 +2188,86 @@ test("saved managed Form error placeholder generates dynamic messages while pres
     ]),
     dataSources,
   });
-  expect(generated).toContain(".map((error: any) => error?.message)");
+  const { code } = await transform(`const Page = () => (${generated});`, {
+    loader: "tsx",
+    jsxFactory: "createElement",
+  });
+  const render = new Function(
+    "createElement",
+    "renderText",
+    "formatManagedFormErrors",
+    "NativeForm",
+    "errors",
+    `${code}return Page();`
+  );
+  const values: unknown[] = [
+    { message: "Not an array" },
+    "Not an array",
+    42,
+    true,
+    [{ message: 42 }, null, {}, { message: "Rejected" }],
+    [{ message: "First" }, { message: "Second" }],
+    [],
+    undefined,
+    null,
+  ];
+  for (const errors of values) {
+    const element = render(
+      createElement,
+      renderText,
+      formatManagedFormErrors,
+      "form",
+      errors
+    );
+    expect(renderToStaticMarkup(element)).toBe(
+      renderToStaticMarkup(
+        <form>
+          <div>{formatManagedFormErrors(errors)}</div>
+        </form>
+      )
+    );
+  }
   expect(generated).toContain("<div>");
   expect(generated).not.toContain("Sorry, something went wrong.");
   expect(usedDataSources.has("saved-errors")).toBe(true);
   expect(slot.children[0].type).toBe("text");
+  const body: import("@webstudio-is/sdk").Instance = {
+    type: "instance",
+    id: "body",
+    component: "Body",
+    children: [{ type: "id", value: form.id }],
+  };
+  for (const rootInstanceId of [form.id, body.id]) {
+    const usedRuntimeHelpers = new Set<
+      "renderText" | "formatManagedFormErrors"
+    >();
+    generateWebstudioComponent({
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId,
+      parameters: [],
+      classesMap: new Map(),
+      metas: new Map(),
+      instances: new Map([
+        [body.id, body],
+        [form.id, form],
+        [slot.id, slot],
+      ]),
+      props: new Map([
+        [
+          "hidden",
+          {
+            id: "hidden",
+            instanceId: form.id,
+            name: "data-ws-show",
+            type: "boolean",
+            value: false,
+          },
+        ],
+      ]),
+      dataSources,
+      usedRuntimeHelpers,
+    });
+    expect(usedRuntimeHelpers).toEqual(new Set());
+  }
 });
