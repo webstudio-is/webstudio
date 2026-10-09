@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { isPathnamePattern, matchPathnameParams } from "@webstudio-is/sdk";
 import {
   baseComponentImportSource,
@@ -28,6 +29,9 @@ const generateVikeRoute = (pagePath: string) => {
   return route;
 };
 
+const generateVikeTextRoute = (pagePath: string) =>
+  `text-${createHash("sha256").update(pagePath).digest("hex")}`;
+
 export const createFramework = async (
   options: FrameworkOptions = {}
 ): Promise<Framework> => {
@@ -42,6 +46,14 @@ export const createFramework = async (
   );
   const htmlDataTemplate = await readFile(
     join(templatesDirectory, "html", "+data.ts"),
+    "utf8"
+  );
+  const textPageTemplate = await readFile(
+    join(templatesDirectory, "text", "+Page.tsx"),
+    "utf8"
+  );
+  const textConfigTemplate = await readFile(
+    join(templatesDirectory, "text", "+config.ts"),
     "utf8"
   );
 
@@ -94,7 +106,30 @@ export const createFramework = async (
       return entries;
     },
     xml: () => [],
-    text: () => [],
+    text: ({ pagePath }) => {
+      if (isPathnamePattern(pagePath)) {
+        return [];
+      }
+      const route = generateVikeTextRoute(pagePath);
+      return [
+        {
+          file: join("pages", route, "+Page.tsx"),
+          template: textPageTemplate,
+        },
+        {
+          file: join("pages", route, "+config.ts"),
+          template: textConfigTemplate,
+        },
+        {
+          file: join("pages", route, "+data.ts"),
+          template: htmlDataTemplate,
+        },
+        {
+          file: join("pages", route, "+route.ts"),
+          template: `export default ${JSON.stringify(pagePath)};\n`,
+        },
+      ];
+    },
     defaultSitemap: () => [],
   };
 };

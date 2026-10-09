@@ -3,7 +3,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "vite build && vike prerender",
+    "build": "vite build && vike prerender && node write-static-text-pages.mjs",
     "dev": "vite dev",
     "start": "vite preview",
     "typecheck": "tsc --noEmit"
