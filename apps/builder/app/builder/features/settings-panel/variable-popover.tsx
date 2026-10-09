@@ -52,6 +52,8 @@ import {
   type DataSource,
   type ResourceRequest,
   SYSTEM_VARIABLE_ID,
+  emailResourceSettings,
+  findTreeInstanceIds,
   hasAssetsResourceUrl,
   resourceRequest,
 } from "@webstudio-is/sdk";
@@ -70,7 +72,7 @@ import {
   $variableValuesByInstanceSelector,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
+import { $dataSources, $projectSettings } from "~/shared/sync/data-stores";
 import { $resources, $instances, $props } from "~/shared/sync/data-stores";
 import {
   getBrowserInfoPreview,
@@ -128,6 +130,7 @@ import {
 } from "./request-error-diagnostics";
 import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 import { ResourceDiagnosticsView } from "./resource-diagnostics-view";
+import { buildEmailRequestPreview } from "./email-request-preview";
 import { canDeleteVariable, VariableMenu } from "./variable-menu";
 
 const NameField = ({
@@ -736,6 +739,8 @@ const VariablePreview = ({
   showSavedResourceRequest,
   isComputingRequest,
   onLoadData,
+  onLoadEmailRequest,
+  emailRequestPreview,
   queryActive,
   queryPending,
   queryContainerRef,
@@ -746,6 +751,8 @@ const VariablePreview = ({
   showSavedResourceRequest: boolean;
   isComputingRequest: boolean;
   onLoadData: () => void;
+  onLoadEmailRequest?: () => void;
+  emailRequestPreview?: Awaited<ReturnType<typeof buildEmailRequestPreview>>;
   queryActive: boolean;
   queryPending: boolean;
   queryContainerRef: (element: HTMLDivElement | null) => void;
@@ -919,6 +926,17 @@ const VariablePreview = ({
     onChange: () => {},
     onChangeComplete: () => {},
   };
+  const loadDataButton = (
+    <Button
+      type="button"
+      disabled={previewPending}
+      onClick={
+        variableType === "email-resource" ? onLoadEmailRequest : onLoadData
+      }
+    >
+      {previewPending ? "Loading..." : "Load data"}
+    </Button>
+  );
   const previewContent = (
     <Grid
       align="stretch"
@@ -937,9 +955,7 @@ const VariablePreview = ({
           align="center"
           css={{ position: "absolute", inset: 0 }}
         >
-          <Button type="button" disabled={previewPending} onClick={onLoadData}>
-            {previewPending ? "Loading..." : "Load data"}
-          </Button>
+          {loadDataButton}
         </Flex>
       )}
     </Grid>
@@ -950,7 +966,9 @@ const VariablePreview = ({
     variableType === "email-resource" ||
     latestExchange !== undefined;
   const alwaysShowRequestTab =
-    variableType === "resource" || variableType === "graphql-resource";
+    variableType === "resource" ||
+    variableType === "graphql-resource" ||
+    variableType === "email-resource";
   if (isResource === false && !inspectSubmission) {
     return previewContent;
   }
@@ -986,7 +1004,7 @@ const VariablePreview = ({
           resourceName: latestExchange.resourceName,
           ...latestExchange.request,
         }
-    : undefined;
+    : emailRequestPreview;
   return (
     <RequestInspector
       previewLabel={inspectSubmission ? "Response" : "Preview"}
@@ -997,13 +1015,20 @@ const VariablePreview = ({
               {...editorProps}
               value={formatValue(requestSnapshot)}
             />
-          ) : null
+          ) : (
+            <Flex align="center" justify="center" css={{ height: "100%" }}>
+              {loadDataButton}
+            </Flex>
+          )
         ) : undefined
       }
       queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={inspectSubmission ? previewContent : preview}
       queryPending={queryPending}
-      previewPending={previewPending}
+      previewPending={
+        variableType === "email-resource" ? false : previewPending
+      }
+      requestPending={previewPending}
       onDiagnosticsOpen={
         computedResourceRequest !== undefined &&
         isAssetsResourceRequest(computedResourceRequest) &&
@@ -1064,6 +1089,9 @@ const VariablePopoverContent = ({
   const previewRevisionRef = useRef(0);
   const [showSavedResourceRequest, setShowSavedResourceRequest] =
     useState(true);
+  const [emailRequestPreview, setEmailRequestPreview] = useState<
+    Awaited<ReturnType<typeof buildEmailRequestPreview>> | undefined
+  >();
   const [isComputingRequest, setIsComputingRequest] = useState(false);
   const [value, setValue] = useState<unknown>(() => {
     if (variable?.type === "variable") {
@@ -1117,6 +1145,7 @@ const VariablePopoverContent = ({
 
   const onResourceChange = () => {
     cancelPreview();
+    setEmailRequestPreview(undefined);
     setShowSavedResourceRequest(false);
     setValue(undefined);
   };
@@ -1133,6 +1162,7 @@ const VariablePopoverContent = ({
 
   const updateVariableType = (variableType: VariableType) => {
     cancelPreview();
+    setEmailRequestPreview(undefined);
     setShowSavedResourceRequest(false);
     setVariableType(variableType);
     setValue((prev: unknown) => {
@@ -1164,6 +1194,77 @@ const VariablePopoverContent = ({
   };
 
   const resourceScope = useResourceScope({ variable });
+
+  const loadEmailRequestPreview = async () => {
+    cancelPreview();
+    const revision = previewRevisionRef.current;
+    setEmailRequestPreview(undefined);
+    if (formRef.current === null) {
+      return;
+    }
+    const rawSettings = new FormData(formRef.current).get("email-settings");
+    let settings: unknown;
+    try {
+      settings = JSON.parse(String(rawSettings ?? "{}"));
+    } catch {
+      return;
+    }
+    const parsedSettings = emailResourceSettings.safeParse(settings);
+    if (!parsedSettings.success) {
+      return;
+    }
+    const instances = $instances.get();
+    const props = $props.get();
+    const selected = $selectedInstanceSelector.get();
+    const formId =
+      selected?.find(
+        (instanceId) => instances.get(instanceId)?.component === "NativeForm"
+      ) ??
+      Array.from(instances.values()).find(
+        (instance) =>
+          instance.component === "NativeForm" &&
+          variable?.scopeInstanceId !== undefined &&
+          findTreeInstanceIds(instances, instance.id).has(
+            variable.scopeInstanceId
+          )
+      )?.id;
+    const formData =
+      formId === undefined
+        ? undefined
+        : ($livePreviewFormValues
+            .get()
+            .get(getFormOccurrenceKey(selected, formId) ?? "") ??
+          getFormDataPreview(instances, props, formId));
+    const browserInfo =
+      formId === undefined
+        ? undefined
+        : getBrowserInfoPreview($livePreviewBrowserInfo.get().get(formId));
+    setIsComputingRequest(true);
+    try {
+      const preview = await buildEmailRequestPreview({
+        settings: parsedSettings.data,
+        projectMeta: $projectSettings.get()?.meta,
+        scope: resourceScope.scope,
+        aliases: resourceScope.aliases,
+        formId,
+        formData,
+        browserInfo,
+        instances,
+        props,
+      });
+      if (revision === previewRevisionRef.current) {
+        setEmailRequestPreview(preview);
+      }
+    } catch {
+      if (revision === previewRevisionRef.current) {
+        console.error("Unable to build Email request preview");
+      }
+    } finally {
+      if (revision === previewRevisionRef.current) {
+        setIsComputingRequest(false);
+      }
+    }
+  };
 
   const reloadData = async () => {
     cancelPreview();
@@ -1271,6 +1372,8 @@ const VariablePopoverContent = ({
             showSavedResourceRequest={showSavedResourceRequest}
             isComputingRequest={isComputingRequest}
             onLoadData={reloadData}
+            onLoadEmailRequest={loadEmailRequestPreview}
+            emailRequestPreview={emailRequestPreview}
             queryActive={queryActive}
             queryPending={queryPending}
             queryContainerRef={queryContainerRef}

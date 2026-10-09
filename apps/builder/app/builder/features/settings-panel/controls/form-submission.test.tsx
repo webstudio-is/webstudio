@@ -42,7 +42,7 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("a Form starts with an empty Resource list and can select an in-scope destination", async () => {
+test("Action control handles an empty Resource list and can select an in-scope destination", async () => {
   $resources.set(new Map([["resource", requestResource("resource")]]));
   $instances.set(
     new Map([

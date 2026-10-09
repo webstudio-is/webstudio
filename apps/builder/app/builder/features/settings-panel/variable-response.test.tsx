@@ -134,7 +134,7 @@ test("Form context Preview shows live data and server browser info", async () =>
 });
 
 test.each(["resource", "graphql-resource"] as const)(
-  "%s inspector shows cached response and an empty Request state without inventing an unsent request",
+  "%s inspector can load the actual Request from an empty Request tab",
   async (variableType) => {
     const request: ResourceRequest = {
       name: "Request",
@@ -198,11 +198,86 @@ test.each(["resource", "graphql-resource"] as const)(
       );
       requestTab?.click();
     });
-    expect(container.textContent).not.toContain("Load data");
+    const loadButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent === "Load data");
+    expect(loadButton).toBeDefined();
     expect(container.textContent).not.toContain("Loading...");
     expect(container.textContent).not.toContain("null");
     expect(container.textContent).not.toContain("example.com");
     expect(loads).toBe(0);
+    await act(async () => loadButton?.click());
+    expect(loads).toBe(1);
+    await act(async () =>
+      root?.render(
+        <TooltipProvider>
+          <__testing__.VariablePreview
+            variableType={variableType}
+            variableValue={request}
+            showSavedResourceRequest={false}
+            isComputingRequest={true}
+            onLoadData={() => {
+              loads += 1;
+            }}
+            queryActive={false}
+            queryPending={false}
+            queryContainerRef={() => {}}
+          />
+        </TooltipProvider>
+      )
+    );
+    expect(
+      container.querySelector('[role="status"]')?.getAttribute("aria-label")
+    ).toBe("Loading request…");
+    await act(async () =>
+      $resourcePreviewExchanges.set(
+        new Map([
+          [
+            key,
+            {
+              resourceId: key,
+              resourceName: "Request",
+              kind: "http",
+              request: {
+                method: "GET",
+                url: "https://example.com/actual-request",
+                headers: [{ name: "accept", value: "application/json" }],
+                body: undefined,
+                truncated: false,
+              },
+              response: {
+                status: 201,
+                statusText: "Created",
+                headers: [],
+                body: { message: "created response" },
+                truncated: false,
+              },
+            },
+          ],
+        ])
+      )
+    );
+    await act(async () =>
+      root?.render(
+        <TooltipProvider>
+          <__testing__.VariablePreview
+            variableType={variableType}
+            variableValue={request}
+            showSavedResourceRequest={false}
+            isComputingRequest={false}
+            onLoadData={() => {
+              loads += 1;
+            }}
+            queryActive={false}
+            queryPending={false}
+            queryContainerRef={() => {}}
+          />
+        </TooltipProvider>
+      )
+    );
+    await expect.poll(() => container.textContent).toContain("actual-request");
+    expect(container.textContent).toContain('"accept"');
+    expect(container.textContent).not.toContain("Load data");
     const responseTab = Array.from(
       container.querySelectorAll<HTMLElement>('[role="tab"]')
     ).find((tab) => tab.textContent === "Response");
@@ -212,24 +287,8 @@ test.each(["resource", "graphql-resource"] as const)(
       );
       responseTab?.click();
     });
-    await act(async () =>
-      $resourcesCache.set(
-        new Map([
-          [
-            key,
-            {
-              ok: false,
-              status: 422,
-              statusText: "Unprocessable Content",
-              data: { error: "rejected response body" },
-            },
-          ],
-        ])
-      )
-    );
-    await expect.poll(() => container.textContent).toContain("422");
-    expect(container.textContent).toContain("Unprocessable Content");
-    expect(container.textContent).toContain("rejected response body");
+    await expect.poll(() => container.textContent).toContain('"status": 201');
+    expect(container.textContent).toContain("created response");
   }
 );
 
@@ -468,11 +527,12 @@ test.each(["http", "email"] as const)(
   }
 );
 
-test("Email inspector has submission tabs without loading or inventing an exchange", async () => {
+test("Email Request loads only a local preview until an actual submission exists", async () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
   let loads = 0;
+  let localLoads = 0;
   await act(async () =>
     root?.render(
       <TooltipProvider>
@@ -490,6 +550,9 @@ test("Email inspector has submission tabs without loading or inventing an exchan
           onLoadData={() => {
             loads += 1;
           }}
+          onLoadEmailRequest={() => {
+            localLoads += 1;
+          }}
           queryActive={false}
           queryPending={false}
           queryContainerRef={() => {}}
@@ -502,9 +565,56 @@ test("Email inspector has submission tabs without loading or inventing an exchan
       container.querySelectorAll('[role="tab"]'),
       (tab) => tab.textContent
     )
-  ).toEqual(["Response", "Diagnostics"]);
+  ).toEqual(["Response", "Request", "Diagnostics"]);
   expect(container.textContent).not.toContain("Email delivery is available");
-  expect(container.textContent).not.toContain("Load data");
+  const requestTab = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find((tab) => tab.textContent === "Request");
+  await act(async () => {
+    requestTab?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    requestTab?.click();
+  });
+  const loadButton = Array.from(
+    container.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Load data");
+  expect(loadButton).toBeDefined();
+  await act(async () => loadButton?.click());
+  expect(localLoads).toBe(1);
+  expect(loads).toBe(0);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <__testing__.VariablePreview
+          variable={{
+            id: "email-variable",
+            type: "resource",
+            name: "Email",
+            resourceId: "unsent-email",
+          }}
+          variableType="email-resource"
+          variableValue={undefined}
+          showSavedResourceRequest={false}
+          isComputingRequest={false}
+          onLoadData={() => {
+            loads += 1;
+          }}
+          onLoadEmailRequest={() => {
+            localLoads += 1;
+          }}
+          emailRequestPreview={{
+            preview: { to: [], subject: "Receipt", fromName: "Site Owner" },
+          }}
+          queryActive={false}
+          queryPending={false}
+          queryContainerRef={() => {}}
+        />
+      </TooltipProvider>
+    )
+  );
+  expect(container.textContent).toContain('"preview"');
+  expect(container.textContent).toContain('"subject": "Receipt"');
   expect($previewFormExchanges.get().has("unsent-email")).toBe(false);
   expect(loads).toBe(0);
 });

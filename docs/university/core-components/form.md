@@ -4,11 +4,11 @@ description: Collect form fields and submit them to HTTP or Email Resources.
 
 # Form
 
-Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/cms.md#resources). Add it from **Components > Forms**. The inserted Form includes named inputs, a submit button, and editable success and error messages.
+Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/cms.md#resources). Add it from **Components > Forms**. Each newly inserted Form includes named name, email, subject, and message fields, a submit button, editable success and error messages, and two selected Email Resources. One sends to Project Settings recipients (or the site owner); the other sends to the submitted email address. You can edit or remove either action.
 
 ## Configure actions
 
-1. Create HTTP, Email, or GraphQL Resources in **Variables**, on the Form or an ancestor.
+1. Use the two Email Resources included in a new Form, or create HTTP, Email, or GraphQL Resources in **Variables**, on the Form or an ancestor.
 2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to five visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Variables**.
 3. Give each input a **Name**. Its name identifies the submitted value in `formData`.
 4. Submit the Form in Builder Preview to test the current draft, or publish and test the deployed site.
@@ -35,7 +35,7 @@ On a published Webstudio Cloud site, an Email Resource sends through Webstudio's
 
 Each owner notification keeps its configured subject text and adds a short, unique reference in brackets. Two submissions with the same values, even close together, receive different references. A retry within one submission keeps the same reference. Visitor-addressed emails keep their configured subject without this suffix.
 
-To email a visitor, add another Email Resource in **Variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Action. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. When a Form includes file inputs, submitted files are attached to the outgoing Email Resource message by default. Turn off ‘Attach submitted files’ to omit them. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
+The Visitor Email Resource in a newly inserted Form uses its named `email` input. To configure another Form manually, add an Email Resource in **Variables**, select **Visitor** as its recipient, choose one named email input, and add that Resource to the Form's Action. The server requires exactly one valid address in the chosen field. A fixed preamble says the request came from the website and includes its URL. The Resource body starts empty; you can add plain text and bindings after the preamble. When a Form includes file inputs, submitted files are attached to the outgoing Email Resource message by default. Turn off ‘Attach submitted files’ to omit them. It runs alongside other actions; a delivery error appears in `errors` without making the overall Form submission fail. It requires Webstudio Cloud email service configuration.
 
 A Form can send up to **five team-recipient deliveries** across all of its Email Resources. Duplicate addresses count as separate deliveries; one visitor-addressed Email Resource is allowed in addition. The server checks this total before running any destination. Webstudio Cloud also limits email to **50 recipient deliveries per project, per Cloudflare location, in a rolling 60-second window**. A rate-limited primary Email Resource fails before delivery and makes the Form show its error state; a visitor-addressed Email Resource failure remains nonfatal. Other parallel destinations may still finish.
 

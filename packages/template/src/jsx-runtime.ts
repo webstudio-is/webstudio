@@ -4,6 +4,7 @@ import type { JSX as ReactJSX, ReactNode } from "react";
 import type {
   ActionValue,
   AssetValue,
+  FormSubmissionValue,
   PageValue,
   Parameter,
   PlaceholderValue,
@@ -19,6 +20,7 @@ type TemplateValue =
   | ActionValue
   | AssetValue
   | Expression
+  | FormSubmissionValue
   | PageValue
   | Parameter
   | ResourceValue

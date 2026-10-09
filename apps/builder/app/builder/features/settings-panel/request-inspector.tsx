@@ -222,6 +222,7 @@ export const RequestInspector = ({
   previewLabel = "Preview",
   queryPending = false,
   previewPending = false,
+  requestPending = false,
   diagnosticsPending = false,
   onDiagnosticsOpen,
 }: {
@@ -232,6 +233,7 @@ export const RequestInspector = ({
   previewLabel?: "Preview" | "Response";
   queryPending?: boolean;
   previewPending?: boolean;
+  requestPending?: boolean;
   diagnosticsPending?: boolean;
   onDiagnosticsOpen?: () => void;
 }) => (
@@ -261,9 +263,11 @@ export const RequestInspector = ({
     {request !== undefined && (
       <PanelTabsContent
         value="request"
+        aria-busy={requestPending}
         css={{ flex: 1, position: "relative", overflow: "hidden" }}
       >
         {request}
+        {requestPending && <RequestInspectorLoading label="Loading request…" />}
       </PanelTabsContent>
     )}
     {queryContainerRef !== undefined && (

@@ -188,3 +188,73 @@ test("Form Error Message binds all errors through its authored container", () =>
   );
   expect(message).toBeDefined();
 });
+
+test("new Form templates select project and visitor Email Resources", () => {
+  const fragment = renderCoreTemplate(coreTemplates.form);
+  const form = fragment.instances.find(
+    ({ component }) => component === "NativeForm"
+  )!;
+  const action = fragment.props.find(
+    ({ instanceId, name }) => instanceId === form.id && name === "action"
+  );
+  const emailSources = fragment.dataSources.filter(
+    (source) => source.type === "resource"
+  );
+  expect(action).toMatchObject({
+    type: "json",
+    value: emailSources.map(({ id }) => ({ dataSourceId: id, enabled: true })),
+  });
+  expect(emailSources.map(({ scopeInstanceId }) => scopeInstanceId)).toEqual([
+    form.id,
+    form.id,
+  ]);
+  const emailResources = emailSources.map((source) =>
+    fragment.resources.find(({ id }) => id === source.resourceId)
+  );
+  expect(emailResources.map((resource) => resource?.email)).toEqual([
+    { recipientMode: "project" },
+    { recipientMode: "visitor", visitorEmailField: "email" },
+  ]);
+  expect(emailResources.every((resource) => resource?.body === undefined)).toBe(
+    true
+  );
+  expect(
+    emailResources.every((resource) => resource?.email?.subject === undefined)
+  ).toBe(true);
+  const emailInput = fragment.instances.find(
+    ({ component, id }) =>
+      component === "Input" &&
+      fragment.props.some(
+        (prop) =>
+          prop.instanceId === id &&
+          prop.name === "type" &&
+          prop.value === "email"
+      )
+  )!;
+  expect(fragment.props).toContainEqual(
+    expect.objectContaining({
+      instanceId: emailInput.id,
+      name: "name",
+      value: "email",
+    })
+  );
+  const contactFields = fragment.instances
+    .filter(
+      ({ component }) => component === "Input" || component === "Textarea"
+    )
+    .map(({ id, component }) => ({
+      component,
+      name: fragment.props.find(
+        (prop) => prop.instanceId === id && prop.name === "name"
+      )?.value,
+      required: fragment.props.find(
+        (prop) => prop.instanceId === id && prop.name === "required"
+      )?.value,
+    }));
+  expect(contactFields).toEqual([
+    { component: "Input", name: "name", required: true },
+    { component: "Input", name: "email", required: true },
+    { component: "Input", name: "subject", required: true },
+    { component: "Textarea", name: "message", required: true },
+  ]);
+});

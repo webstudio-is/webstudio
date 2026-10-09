@@ -17,10 +17,12 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   ActionValue,
+  FormSubmissionValue,
   css,
   expression,
   Parameter,
   PlaceholderValue,
+  ResourceValue,
   setInstanceMeta,
   setTemplateMeta,
   type TemplateMeta,
@@ -35,6 +37,7 @@ import {
   Label,
   NativeForm,
   Paragraph,
+  Textarea,
 } from "@webstudio-is/sdk-components-react/components";
 import { componentsById } from "./components";
 
@@ -46,6 +49,18 @@ const formState = new Variable("formState", "initial");
 const formResults = new Variable("results", []);
 const formErrors = new Variable("errors", []);
 const formError = new Parameter("collectionItem");
+const projectEmail = new ResourceValue("Project recipients", {
+  control: "email",
+  email: { recipientMode: "project" },
+  url: expression`""`,
+  method: "post",
+});
+const visitorEmail = new ResourceValue("Visitor email field", {
+  control: "email",
+  email: { recipientMode: "visitor", visitorEmailField: "email" },
+  url: expression`""`,
+  method: "post",
+});
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
   ({ resolutionKey }) => resolutionKey === "element:li"
@@ -224,6 +239,7 @@ export const coreTemplates = {
     description: "Collect information and submit it to Resource destinations.",
     template: (
       <NativeForm
+        action={new FormSubmissionValue([projectEmail, visitorEmail])}
         formData={formData}
         browserInfo={browserInfo}
         state={expression`${formState}`}
@@ -249,6 +265,14 @@ export const coreTemplates = {
             <Label>
               {new PlaceholderValue("Email")}
               <Input name="email" type="email" autoComplete="email" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Subject")}
+              <Input name="subject" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Message")}
+              <Textarea name="message" required />
             </Label>
             <Button type="submit">{new PlaceholderValue("Submit")}</Button>
           </div>

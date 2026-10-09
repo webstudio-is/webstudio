@@ -32,6 +32,7 @@ import {
   coreMetas,
   elementComponent,
   encodeDataSourceVariable,
+  isFormSubmission,
 } from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
@@ -897,7 +898,7 @@ describe("insert webstudio component at", () => {
     }
   });
 
-  test("inserts the Forms tile as a native form with named controls", async () => {
+  test("inserts the Forms tile as a contact form with two Email actions", async () => {
     const previousTemplates = $registeredTemplates.get();
     $registeredTemplates.set(
       new Map([
@@ -934,7 +935,27 @@ describe("insert webstudio component at", () => {
       const formProps = Array.from($props.get().values()).filter(
         ({ instanceId }) => instanceId === formId
       );
-      expect(formProps.find(({ name }) => name === "action")).toBeUndefined();
+      const action = formProps.find(({ name }) => name === "action");
+      expect(action?.type).toBe("json");
+      if (action?.type !== "json") {
+        throw new Error("Expected configured Form actions");
+      }
+      if (!isFormSubmission(action.value)) {
+        throw new Error("Expected valid Form actions");
+      }
+      expect(action.value).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ enabled: true }),
+          expect.objectContaining({ enabled: true }),
+        ])
+      );
+      expect(action.value).toHaveLength(2);
+      expect(
+        action.value.map(
+          ({ dataSourceId }: { dataSourceId: string }) =>
+            $dataSources.get().get(dataSourceId)?.scopeInstanceId
+        )
+      ).toEqual([formId, formId]);
       expect(formProps.some(({ name }) => name === "onStateChange")).toBe(true);
       const resultProp = formProps.find(
         ({ name }) => name === "onResultChange"
@@ -1031,7 +1052,10 @@ describe("insert webstudio component at", () => {
       }
       const childIds = Array.from($instances.get().values())
         .filter(
-          ({ component }) => component === "Input" || component === "Button"
+          ({ component }) =>
+            component === "Input" ||
+            component === "Textarea" ||
+            component === "Button"
         )
         .map(({ id }) => id);
       expect(
@@ -1041,7 +1065,7 @@ describe("insert webstudio component at", () => {
               childIds.includes(instanceId) && name === "name"
           )
           .map(({ value }) => value)
-      ).toEqual(["name", "email"]);
+      ).toEqual(["name", "email", "subject", "message"]);
       expect(
         Array.from($props.get().values()).some(
           ({ instanceId, name, value }) =>
@@ -1050,6 +1074,34 @@ describe("insert webstudio component at", () => {
             value === "submit"
         )
       ).toBe(true);
+
+      expect(
+        await insertWebstudioComponentAt("form", {
+          parentSelector: ["bodyId"],
+          position: "end",
+        })
+      ).toBe(true);
+      const secondFormChild = $instances.get().get("bodyId")?.children[1];
+      const secondFormId =
+        secondFormChild?.type === "id" ? secondFormChild.value : "";
+      expect(secondFormId).not.toBe(formId);
+      const secondAction = Array.from($props.get().values()).find(
+        ({ instanceId, name }) =>
+          instanceId === secondFormId && name === "action"
+      );
+      expect(secondAction?.type).toBe("json");
+      if (secondAction?.type === "json") {
+        if (!isFormSubmission(secondAction.value)) {
+          throw new Error("Expected valid Form actions");
+        }
+        expect(secondAction.value).toHaveLength(2);
+        expect(
+          secondAction.value.map(
+            ({ dataSourceId }: { dataSourceId: string }) =>
+              $dataSources.get().get(dataSourceId)?.scopeInstanceId
+          )
+        ).toEqual([secondFormId, secondFormId]);
+      }
     } finally {
       $registeredTemplates.set(previousTemplates);
     }
