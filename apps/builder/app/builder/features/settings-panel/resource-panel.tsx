@@ -1585,13 +1585,6 @@ export const EmailResourceForm = forwardRef<
                   ? "Custom recipients"
                   : "Visitor email field"
             }
-            getDescription={(value: "project" | "custom" | "visitor") =>
-              value === "project"
-                ? "Send to the project's contact emails or owner."
-                : value === "custom"
-                  ? "Send to the email addresses entered below."
-                  : "Send to an email address entered on this Form."
-            }
             onChange={(value: "project" | "custom" | "visitor") => {
               if (value === "project") {
                 onChange?.();
@@ -1652,9 +1645,6 @@ export const EmailResourceForm = forwardRef<
                     placeholder="Select an email field"
                     options={emailFields}
                     getLabel={(name) => name}
-                    getDescription={() =>
-                      "Choose a Form input to use its value as the recipient email address."
-                    }
                     onChange={(name) => setField("visitorEmailField", name)}
                   />
                 </InputErrorsTooltip>

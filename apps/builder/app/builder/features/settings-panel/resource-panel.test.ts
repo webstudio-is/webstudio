@@ -405,15 +405,6 @@ test("Email Resource recipient modes and attachment radios", async () => {
       .querySelector<HTMLElement>("[data-radix-popper-content-wrapper]")
       ?.getBoundingClientRect().width
   ).toBe(recipientSelect.getBoundingClientRect().width);
-  const recipientDescriptions = document.querySelector(
-    '[data-select-description="content"]'
-  );
-  expect(recipientDescriptions?.textContent).toContain(
-    "Send to the project's contact emails or owner."
-  );
-  expect(recipientDescriptions?.textContent).toContain(
-    "Send to the email addresses entered below."
-  );
   const customOption = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
   ).find((option) => option.textContent === "Custom recipients")!;
@@ -966,11 +957,6 @@ test("visitor Email Resource selects a named Form email field", async () => {
     .poll(() => document.body.textContent)
     .not.toContain(visitorTooltipText);
   await act(async () => userEvent.click(visitorField!));
-  expect(
-    document.querySelector('[data-select-description="content"]')?.textContent
-  ).toContain(
-    "Choose a Form input to use its value as the recipient email address."
-  );
   await act(async () => userEvent.keyboard("{Escape}"));
 });
 
