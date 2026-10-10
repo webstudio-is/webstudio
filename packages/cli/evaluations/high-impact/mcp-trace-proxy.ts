@@ -16,6 +16,9 @@ export type BoundedMcpCall = {
   name: string;
   arguments?: {
     path?: string;
+    searchesForForm?: true;
+    inspectsFormTemplate?: true;
+    insertsFormTemplate?: true;
     viewport?: { width: number; height: number };
     viewports?: Array<{ width: number; height: number }>;
     dryRun?: true;
@@ -133,6 +136,27 @@ export const getMcpTraceRequest = (
   };
   if (isPlainRecord(params.arguments)) {
     const args: NonNullable<BoundedMcpCall["arguments"]> = {};
+    if (
+      params.name === "components.search" &&
+      typeof params.arguments.brief === "string" &&
+      params.arguments.brief.toLowerCase().includes("form")
+    ) {
+      args.searchesForForm = true;
+    }
+    if (
+      params.name === "templates.get" &&
+      (params.arguments.template === "template:form" ||
+        params.arguments.component === "template:form" ||
+        params.arguments.name === "template:form")
+    ) {
+      args.inspectsFormTemplate = true;
+    }
+    if (
+      params.name === "insert-component" &&
+      params.arguments.component === "form"
+    ) {
+      args.insertsFormTemplate = true;
+    }
     if (params.name === "verify-page-responsive") {
       const path = getBoundedRoutePath(params.arguments.path);
       if (path !== undefined) {

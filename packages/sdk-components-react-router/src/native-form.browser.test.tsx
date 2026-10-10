@@ -9,12 +9,38 @@ import {
   managedFormRequestParamName,
 } from "@webstudio-is/sdk/runtime";
 import { NativeForm } from "./native-form";
+import { RemixForm } from "./remix-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 afterEach(() => vi.unstubAllGlobals());
+
+test("external native form preserves its action and method", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => {
+      root.render(
+        <RemixForm action="https://receiver.example/search" method="get">
+          <input name="tag" />
+          <button type="submit">Search</button>
+        </RemixForm>
+      );
+    });
+    const form = container.querySelector("form");
+    expect(form).not.toBeNull();
+    expect(form?.getAttribute("action")).toBe(
+      "https://receiver.example/search"
+    );
+    expect(form?.getAttribute("method")).toBe("get");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
 
 test("managed Form posts its server identity and shows the action error", async () => {
   const submissions: FormData[] = [];

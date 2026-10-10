@@ -81,10 +81,10 @@ export const useFormFeedbackScroll = (
         (element) => isVisible(element, form) && element instanceof HTMLElement
       );
       const target =
-        visibleElements.find((element) => !beforeSubmit.current.has(element)) ??
         visibleElements.find((element) =>
           element.hasAttribute("data-ws-form-feedback")
-        );
+        ) ??
+        visibleElements.find((element) => !beforeSubmit.current.has(element));
       if (!target) {
         if (--remainingFrames > 0) {
           frame.current = requestAnimationFrame(check);
@@ -94,7 +94,7 @@ export const useFormFeedbackScroll = (
       const bounds = target.getBoundingClientRect();
       if (bounds.top < 0 || bounds.bottom > window.innerHeight) {
         target.scrollIntoView({
-          block: "nearest",
+          block: "center",
           behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
             .matches
             ? "instant"

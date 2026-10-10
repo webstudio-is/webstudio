@@ -177,7 +177,7 @@ const runFixture = async ({
 }) => {
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
-  const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.4-mini";
+  const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.6-luna";
   const requestedReasoningEffort =
     process.env.WEBSTUDIO_HIGH_IMPACT_REASONING_EFFORT;
   if (

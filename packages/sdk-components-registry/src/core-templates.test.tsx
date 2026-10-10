@@ -189,6 +189,28 @@ test("Form Error Message binds all errors through its authored container", () =>
   expect(message).toBeDefined();
 });
 
+test("Form success and error feedback are marked for automatic scrolling", () => {
+  const fragment = renderCoreTemplate(coreTemplates.form);
+  const feedback = fragment.instances.filter(
+    ({ label }) => label === "Success Message" || label === "Error Message"
+  );
+  expect(feedback).toHaveLength(2);
+  expect(
+    fragment.props.filter(
+      ({ instanceId, name }) =>
+        feedback.some(({ id }) => id === instanceId) &&
+        name === "data-ws-form-feedback"
+    )
+  ).toEqual(
+    feedback.map(({ id }) =>
+      expect.objectContaining({
+        instanceId: id,
+        name: "data-ws-form-feedback",
+      })
+    )
+  );
+});
+
 test("new Form templates select project and visitor Email Resources", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const renderedTemplate = JSON.stringify(fragment);

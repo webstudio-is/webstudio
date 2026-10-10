@@ -625,6 +625,28 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
         expect.objectContaining({ name: "action", value: tenActions }),
       ])
     );
+    const commitsBeforeRejection = commits;
+    const elevenActionUpdate = await client.callTool({
+      name: "update-props",
+      arguments: {
+        updates: [
+          {
+            instanceId: form?.id,
+            name: "action",
+            type: "json",
+            value: [
+              ...tenActions,
+              { dataSourceId: "one-too-many", enabled: true },
+            ],
+          },
+        ],
+      },
+    });
+    expect(elevenActionUpdate.isError).toBe(true);
+    expect(JSON.stringify(elevenActionUpdate)).toContain(
+      "Select no more than 10 Resource actions"
+    );
+    expect(commits).toBe(commitsBeforeRejection);
     const remainingActions = [
       { dataSourceId: httpDataSourceId, enabled: true },
       { dataSourceId: projectResource?.dataSourceId, enabled: true },

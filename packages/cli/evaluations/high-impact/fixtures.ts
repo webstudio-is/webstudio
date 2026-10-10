@@ -105,6 +105,7 @@ export type EvaluationProject = {
 export type HighImpactFixture = {
   id:
     | "authenticated-page-v1"
+    | "managed-form-authoring-v1"
     | "design-input-v1"
     | "font-assets-v1"
     | "markdown-blog-v1"
@@ -207,6 +208,17 @@ export const authenticatedPageFixture: HighImpactFixture = {
   },
 };
 
+export const managedFormAuthoringFixture: HighImpactFixture = {
+  id: "managed-form-authoring-v1",
+  objective:
+    'Create a polished /contact page for Northstar workspace with an accessible contact form. First search the component registry for Form (new), inspect the returned template, then insert it with insert-component using the form component. Do not recreate the Form manually or use insert-fragment as a substitute. If registry discovery fails, report that instead of building a substitute. Keep the template\'s named required name, email, subject, and message fields, submit button, success and error feedback, and default Resource actions connected. Add an h1 reading "Contact Northstar" and a short introductory sentence. Change the submit button label to "Send message", set the success message to "Thanks, we received your message. Our team will reply within one business day.", and set the error message to "We couldn\'t send your message. Please try again." Keep the existing form actions unchanged. Do not submit the form or trigger any Resource action. Audit the result and verify the page at desktop and mobile sizes.',
+  agent: {
+    reasoningEffort: "low",
+    guidance: { workflow: "general" },
+  },
+  project: emptyProject(),
+};
+
 export const designInputFixture: HighImpactFixture & {
   designReference: {
     desktop: Record<string, unknown>;
@@ -217,7 +229,7 @@ export const designInputFixture: HighImpactFixture & {
   objective:
     "Build an editable /summer page from the supplied desktop and mobile design reference. Preserve and reuse the existing design system, implement responsive behavior with the project's breakpoints, inspect desktop/mobile screenshots, then run a static route audit without duplicating the rendered captures.",
   agent: {
-    reasoningEffort: "high",
+    reasoningEffort: "low",
     guidance: { workflow: "design-input" },
   },
   project: {
@@ -307,7 +319,7 @@ export const markdownBlogFixture: HighImpactFixture = {
   id: "markdown-blog-v1",
   objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable, size-optimal blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, one overview Collection, and a directly bound detail Markdown Embed. Include the complete structured query in each initial resource creation; never create a default, placeholder, duplicate, preview copy, or repair replacement. Both queries must read the Markdown files directly. The overview query must be fully static and bounded, exclude drafts, sort newest first with a deterministic ID tie-breaker, select only the rendered title, slug, excerpt, publication date, and author frontmatter, and load no bodies so it can be materialized. The detail query must use only the dynamic slug, select only rendered metadata, and return one Markdown body without embedding it in the published database. The compiled database must include all articles without truncation, no embedded bodies, and only the intended materialized overview. Render the author name on both pages. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
   agent: {
-    reasoningEffort: "medium",
+    reasoningEffort: "low",
     guidance: { workflow: "markdown-blog" },
     inputs: markdownBlogAgentInputs,
   },
@@ -318,7 +330,7 @@ export const markdownReferencesDiscoveryFixture: HighImpactFixture = {
   id: "markdown-references-discovery-v1",
   objective: `Upload the supplied ${markdownBlogFixtureArticles.map(({ name }) => name).join(", ")} Markdown articles from .webstudio/assets. Build an editable blog overview at /blog and one dynamic article page at /blog/:slug. Query the Markdown files directly so draft articles are excluded, posts are ordered newest first, each post displays its frontmatter author, and only the selected Markdown body is fetched from Asset storage without being embedded in the published database. Verify the overview and /blog/aurora-trails at desktop and mobile sizes. Discover the supported workflow and data shapes from Webstudio MCP guidance.`,
   agent: {
-    reasoningEffort: "medium",
+    reasoningEffort: "low",
     guidance: { workflow: "markdown-blog" },
     inputs: markdownBlogAgentInputs,
   },
@@ -343,7 +355,7 @@ export const mdxArticleFixture: HighImpactFixture = {
   objective:
     "Use the content-block-source MCP workflow to connect the existing article.mdx Asset (article-file) to the Content Block article-block on Home. Inspect the connected source and use its actual document parameter. Before editing frontmatter, call update-text once for each of article-title, article-author, and article-reading-time with childIndex 0, mode expression, and expressionBindingMode readwrite. Bind them respectively to the direct paths document.frontmatter.title, document.frontmatter.author.name, and document.frontmatter.readingTime. Keep these designed header instances outside the MDX body and leave the existing static ‘ min read’ suffix separate. Then change only author.name to Noor Silva in the complete frontmatter map, preserving the title, readingTime, draft value, and body. Reload the connected source, inspect the saved result, and audit the page. No visual verification is requested.",
   agent: {
-    reasoningEffort: "medium",
+    reasoningEffort: "low",
     guidance: { workflow: "content-block-source" },
   },
   assetSources: { "article-file": mdxArticleSource },
@@ -417,6 +429,7 @@ export const mdxArticleFixture: HighImpactFixture = {
 
 export const highImpactFixtures = [
   authenticatedPageFixture,
+  managedFormAuthoringFixture,
   designInputFixture,
   fontAssetsFixture,
   markdownBlogFixture,

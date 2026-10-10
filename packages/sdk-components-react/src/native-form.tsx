@@ -175,7 +175,7 @@ export const NativeForm = forwardRef<
       activeRequest.current = controller;
       setPending(true);
       void submission
-        .then((response) => {
+        .then(async (response) => {
           if (
             controller.signal.aborted ||
             submittedNavigationToken !== currentNavigationToken.current ||
@@ -202,17 +202,30 @@ export const NativeForm = forwardRef<
             }
           }
           if (redirected === false) {
-            revealFeedback();
             if (response.success) {
-              // Refresh is a separate GET. Its failure must not change the
-              // completed submission result or repeat the POST.
-              try {
-                void Promise.resolve(onSubmissionSuccess?.()).catch(
-                  console.error
-                );
-              } catch (error) {
-                console.error(error);
+              if (onSubmissionSuccess) {
+                // Refresh is a separate GET. Its failure must not change the
+                // completed submission result or repeat the POST.
+                try {
+                  await onSubmissionSuccess();
+                } catch (error) {
+                  console.error(error);
+                }
+                // React Router restores the previous scroll position after
+                // revalidation settles. Let that restoration finish first.
+                await new Promise<void>((resolve) => {
+                  requestAnimationFrame(() =>
+                    requestAnimationFrame(() => resolve())
+                  );
+                });
               }
+            }
+            if (
+              !controller.signal.aborted &&
+              submittedNavigationToken === currentNavigationToken.current &&
+              submittedLocation === window.location.href
+            ) {
+              revealFeedback();
             }
           }
         })
