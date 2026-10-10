@@ -152,7 +152,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       ? getEnabledFormDestinations(action)
       : [];
     if (
-      !env.EMAIL_SERVICE_PREVIEW_TOKEN &&
+      !env.TRPC_SERVER_API_TOKEN &&
       destinations.some((id) => {
         const source = dataSources.get(id);
         return (
@@ -220,7 +220,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const sensitiveFields = new Set(privacy.excludeKeys ?? []);
     const privateValues = new Set<string>([
       env.TRPC_SERVER_API_TOKEN ?? "",
-      env.EMAIL_SERVICE_PREVIEW_TOKEN ?? "",
       request.url,
     ]);
     const publicValues = new Set<string>();
@@ -300,7 +299,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       createEmailSender: (data) =>
         createCloudflareManagedFormEmailSenderWithUrl(
           cloudflareManagedFormPreviewEmailServiceUrl,
-          env.EMAIL_SERVICE_PREVIEW_TOKEN,
+          env.TRPC_SERVER_API_TOKEN,
           data,
           projectId
         ),

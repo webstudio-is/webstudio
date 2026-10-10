@@ -31,7 +31,6 @@ vi.mock("~/env/env.server", () => ({
   default: {
     PUBLISHER_HOST: "wstd.work",
     TRPC_SERVER_API_TOKEN: "server-only-test-token",
-    EMAIL_SERVICE_PREVIEW_TOKEN: "preview-only-test-token",
   },
 }));
 
@@ -164,8 +163,9 @@ test("an unauthenticated request cannot load the project draft", async () => {
 });
 
 test("a cross-origin request cannot reach project authorization or actions", async () => {
-  const { preventCrossOriginCookie } =
-    await import("~/services/no-cross-origin-cookie");
+  const { preventCrossOriginCookie } = await import(
+    "~/services/no-cross-origin-cookie"
+  );
   vi.mocked(preventCrossOriginCookie).mockImplementationOnce(() => {
     throw new Response("Cross-origin request", { status: 403 });
   });
@@ -662,8 +662,8 @@ test("draft expression failures do not execute a Resource", async () => {
 });
 
 test("a webhook-only Form is independent of Email Service availability", async () => {
-  const token = env.EMAIL_SERVICE_PREVIEW_TOKEN;
-  env.EMAIL_SERVICE_PREVIEW_TOKEN = undefined;
+  const token = env.TRPC_SERVER_API_TOKEN;
+  env.TRPC_SERVER_API_TOKEN = undefined;
   try {
     const response = await action({ request: request() } as never);
     expect(await response.json()).toMatchObject({ success: true });
@@ -671,11 +671,11 @@ test("a webhook-only Form is independent of Email Service availability", async (
       vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
     ).toHaveBeenCalledOnce();
   } finally {
-    env.EMAIL_SERVICE_PREVIEW_TOKEN = token;
+    env.TRPC_SERVER_API_TOKEN = token;
   }
 });
 
-test("Preview email uses the private Email Service credential and forwards uploaded files", async () => {
+test("Preview email uses the server credential and forwards uploaded files", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
     dataSources: [
@@ -707,9 +707,6 @@ test("Preview email uses the private Email Service credential and forwards uploa
   const send = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = input instanceof Request ? input : new Request(input, init);
     expect(request.headers.get("authorization")).toBe(
-      "Bearer preview-only-test-token"
-    );
-    expect(request.headers.get("authorization")).not.toBe(
       "Bearer server-only-test-token"
     );
     expect(request.headers.get("x-webstudio-project-id")).toBe(projectId);
@@ -771,9 +768,6 @@ test("Preview email uses the private Email Service credential and forwards uploa
     expect(JSON.stringify(result.previewExchanges)).not.toContain(
       "server-only-test-token"
     );
-    expect(JSON.stringify(result.previewExchanges)).not.toContain(
-      "preview-only-test-token"
-    );
     expect(result.previewExchanges[0].request.headers).toContainEqual({
       name: "authorization",
       value: "[redacted]",
@@ -814,8 +808,8 @@ test("an unset Preview credential fails before any action is sent", async () => 
       },
     ],
   } as never);
-  const token = env.EMAIL_SERVICE_PREVIEW_TOKEN;
-  env.EMAIL_SERVICE_PREVIEW_TOKEN = undefined;
+  const token = env.TRPC_SERVER_API_TOKEN;
+  env.TRPC_SERVER_API_TOKEN = undefined;
   try {
     const response = await action({ request: request() } as never);
     expect(await response.json()).toMatchObject({
@@ -825,7 +819,7 @@ test("an unset Preview credential fails before any action is sent", async () => 
     expect(response.status).toBe(503);
     expect(createNodeProtectedResourceFetch).not.toHaveBeenCalled();
   } finally {
-    env.EMAIL_SERVICE_PREVIEW_TOKEN = token;
+    env.TRPC_SERVER_API_TOKEN = token;
   }
 });
 
@@ -939,7 +933,7 @@ test.each(["resource", "project"])(
   async (source) => {
     const subject = "Configured Email subject";
     const body =
-      "Configured Email body server-only-test-token preview-only-test-token";
+      "Configured Email body server-only-test-token public-example-token";
     vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
       ...draftBuild,
       resources: [
@@ -983,14 +977,11 @@ test.each(["resource", "project"])(
         subject: expect.stringMatching(
           /^Configured Email subject \[[a-f0-9]{16}\]$/
         ),
-        text: "Configured Email body [redacted] [redacted]",
+        text: "Configured Email body [redacted] public-example-token",
       });
       expect(result.previewExchanges[0].response.body).toEqual({ id: "sent" });
       expect(JSON.stringify(result.previewExchanges)).not.toContain(
         "server-only-test-token"
-      );
-      expect(JSON.stringify(result.previewExchanges)).not.toContain(
-        "preview-only-test-token"
       );
       expect(send).toHaveBeenCalledOnce();
     } finally {
