@@ -1,6 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,46 +21,6 @@ const tsxPath = fileURLToPath(import.meta.resolve("tsx"));
 const cliTsconfigPath = fileURLToPath(
   new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
 );
-
-export type CapturedEmail = {
-  to: Array<{ address: string; name?: string }>;
-  subject: string;
-  text: string;
-  replyTo?: { address: string; name?: string };
-  fromName?: string;
-  attachments?: Array<{
-    filename: string;
-    contentType: string;
-    contentBase64: string;
-  }>;
-};
-
-export const startLocalEmailReceiver = async () => {
-  const messages: CapturedEmail[] = [];
-  const server = createServer(async (request, response) => {
-    const chunks: Buffer[] = [];
-    for await (const chunk of request) {
-      chunks.push(Buffer.from(chunk));
-    }
-    messages.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-    response.writeHead(200, { "content-type": "application/json" });
-    response.end(JSON.stringify({ id: `local-email-${messages.length}` }));
-  });
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  if (address === null || typeof address === "string") {
-    throw new Error("Expected a local email receiver port");
-  }
-  return {
-    port: address.port,
-    messages,
-    close: async () =>
-      await new Promise<void>((resolve) => server.close(() => resolve())),
-  };
-};
 
 export const withMcpEmailHttpPreview = async <Result>({
   projectId,

@@ -39,13 +39,28 @@ export type CapturedEmail = {
 export const startLocalEmailReceiver = async () => {
   const messages: CapturedEmail[] = [];
   const server = createServer(async (request, response) => {
-    const chunks: Buffer[] = [];
-    for await (const chunk of request) {
-      chunks.push(Buffer.from(chunk));
+    if (request.method !== "POST" || request.url !== "/send") {
+      response.writeHead(404).end();
+      return;
     }
-    messages.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-    response.writeHead(200, { "content-type": "application/json" });
-    response.end(JSON.stringify({ id: `local-email-${messages.length}` }));
+    try {
+      const chunks: Buffer[] = [];
+      for await (const chunk of request) {
+        chunks.push(Buffer.from(chunk));
+      }
+      const body = Buffer.concat(chunks).toString("utf8");
+      if (body.length === 0) {
+        response.writeHead(400).end("Email request body is empty");
+        return;
+      }
+      messages.push(JSON.parse(body));
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ id: `local-email-${messages.length}` }));
+    } catch {
+      if (!response.destroyed) {
+        response.writeHead(400).end("Email request body is invalid");
+      }
+    }
   });
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);
