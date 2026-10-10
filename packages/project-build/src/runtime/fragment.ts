@@ -854,7 +854,7 @@ export const insertWebstudioFragmentCopy = ({
       prop.name === "action" &&
       fragmentInstances.get(prop.instanceId)?.component === "NativeForm";
     prop = clonePropForInstance({
-      prop: unwrap(prop),
+      prop: structuredClone(unwrap(prop)),
       propId: createId(),
       instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
     });
