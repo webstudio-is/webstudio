@@ -1,4 +1,9 @@
-import type { ComponentType } from "react";
+import type {
+  ForwardRefExoticComponent,
+  PropsWithoutRef,
+  RefAttributes,
+} from "react";
+import type { PanelApi } from "./shared/variable-panel-api";
 import type { VariableType } from "./shared/variable-types";
 import type { VariableEditorProps } from "./shared/editor-types";
 import { StringEditor, prepareStringValue } from "./string-editor";
@@ -14,7 +19,9 @@ import { SystemResourceEditor } from "./system-resource-editor";
 
 export const variableEditors: Record<
   VariableType,
-  ComponentType<VariableEditorProps>
+  ForwardRefExoticComponent<
+    PropsWithoutRef<VariableEditorProps> & RefAttributes<PanelApi | undefined>
+  >
 > = {
   parameter: ParameterEditor,
   string: StringEditor,

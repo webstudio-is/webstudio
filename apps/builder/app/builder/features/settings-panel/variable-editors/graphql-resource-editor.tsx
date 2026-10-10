@@ -1,7 +1,7 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import { useResourcePreviewController } from "./shared/use-resource-preview-controller";
 import type { VariableEditorProps } from "./shared/editor-types";
-import { ResourceVariablePreview } from "./shared/resource-variable-preview";
+import { FormResourcePreview } from "./form-resource-preview";
 import {
   forwardRef,
   useEffect,
@@ -237,7 +237,7 @@ export const GraphqlResourceForm = forwardRef<
             value={
               isVariablesLiteral
                 ? variables
-                : (JSON.stringify(evaluatedVariables, null, 2) ?? "")
+                : JSON.stringify(evaluatedVariables, null, 2) ?? ""
             }
             bound={isVariablesLiteral === false}
             scope={scope}
@@ -311,28 +311,31 @@ export const GraphqlResourceForm = forwardRef<
 });
 GraphqlResourceForm.displayName = "GraphqlResourceForm";
 
-export const GraphqlResourceEditor = (props: VariableEditorProps) => {
+export const GraphqlResourceEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
   const preview = useResourcePreviewController({
     variable: props.variable,
     formRef: props.formRef,
   });
   return (
-    <VariableEditorBody
+    <VariableEditorLayout
       {...props}
       titleActions={props.titleActions({
         onRefresh: () => void preview.reload(),
-        refreshPending: preview.pending,
+        refreshStatus: preview.pending ? "refreshing" : "idle",
       })}
       fields={
         <GraphqlResourceForm
-          ref={props.panelRef}
+          ref={ref}
           variable={props.variable}
           onChange={preview.onChange}
         />
       }
       preview={
-        <ResourceVariablePreview
-          {...props.previewProps}
+        <FormResourcePreview
+          variable={props.variable}
           showEmptyLoadButton
           inspectSubmission
           alwaysShowRequestTab
@@ -344,4 +347,4 @@ export const GraphqlResourceEditor = (props: VariableEditorProps) => {
       }
     />
   );
-};
+});

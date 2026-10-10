@@ -15,18 +15,16 @@ import {
   Flex,
   Grid,
   InputErrorsTooltip,
+  InfoTooltip,
   InputField,
   Label,
   Select,
   SmallIconButton,
   Text,
   TextArea,
-  Tooltip,
   theme,
-  cssVar,
 } from "@webstudio-is/design-system";
-import { MinusIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import { humanizeString } from "~/shared/string-utils";
+import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
@@ -93,16 +91,11 @@ export const UrlField = ({
         css={{ display: "flex", alignItems: "center", gap: theme.spacing[3] }}
       >
         URL
-        <Tooltip
+        <InfoTooltip
+          label="About Resource URL"
           content="You can paste a URL or cURL. cURL is a format that can be executed directly in your terminal because it contains the entire Resource configuration."
-          variant="wrapped"
           disableHoverableContent={true}
-        >
-          <InfoCircleIcon
-            color={cssVar("--foreground-secondary")}
-            tabIndex={0}
-          />
-        </Tooltip>
+        />
       </Label>
       <input type="hidden" readOnly={true} name="url" value={value} />
       <BindableExpressionControl
@@ -174,11 +167,11 @@ export const UrlField = ({
 export const MethodField = ({
   value,
   onChange,
-  formAction = false,
+  getAdditionalDescription,
 }: {
   value: Resource["method"];
   onChange: (value: Resource["method"]) => void;
-  formAction?: boolean;
+  getAdditionalDescription?: (method: Resource["method"]) => string | undefined;
 }) => {
   return (
     <Grid gap={1}>
@@ -186,7 +179,7 @@ export const MethodField = ({
       <Select<Resource["method"]>
         fullWidth
         options={["get", "post", "put", "delete"]}
-        getLabel={humanizeString}
+        getLabel={(method: Resource["method"]) => method.toUpperCase()}
         getDescription={(method) => (
           <Box css={{ width: "100%" }}>
             {[
@@ -196,9 +189,7 @@ export const MethodField = ({
                 put: "Replace data on a server.",
                 delete: "Delete data from a server.",
               }[method],
-              formAction && method === "post"
-                ? "Form submissions use POST. This method applies elsewhere."
-                : undefined,
+              getAdditionalDescription?.(method),
             ]
               .filter(Boolean)
               .join(" ")}
@@ -368,13 +359,10 @@ const ExpressionPairs = ({
       <Flex justify="between" align="center">
         <Flex align="center" gap={1}>
           <Label>{label}</Label>
-          <Tooltip content={description}>
-            <InfoCircleIcon
-              color={cssVar("--foreground-secondary")}
-              aria-label={`About ${label.toLowerCase()}`}
-              tabIndex={0}
-            />
-          </Tooltip>
+          <InfoTooltip
+            label={`About ${label.toLowerCase()}`}
+            content={description}
+          />
         </Flex>
         <SmallIconButton
           aria-label={`Add another ${itemLabel}`}
@@ -486,17 +474,11 @@ export const CacheMaxAge = ({
     <Grid gap={1}>
       <Flex align="center" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor="resource-panel-max-age">Cache max age</Label>
-        <Tooltip
+        <InfoTooltip
+          label="About Cache max age"
           content="How long to cache the response, in seconds."
-          variant="wrapped"
           disableHoverableContent={true}
-        >
-          <InfoCircleIcon
-            aria-label="About Cache max age"
-            color={cssVar("--foreground-secondary")}
-            tabIndex={0}
-          />
-        </Tooltip>
+        />
       </Flex>
       <InputField
         id="resource-panel-max-age"

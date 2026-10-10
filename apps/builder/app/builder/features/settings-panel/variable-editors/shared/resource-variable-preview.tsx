@@ -10,10 +10,9 @@ import {
 import { formatValue } from "~/builder/shared/expression-editor";
 import { EditorContent, foldGutterExtension } from "~/shared/code-editor-base";
 import {
-  $previewFormExchanges,
   $resourcePreviewExchanges,
-  getLatestPreviewExchange,
-} from "~/shared/preview-form-inspection";
+  type PreviewResourceExchange,
+} from "~/shared/preview-resource-inspection";
 import { $resources } from "~/shared/sync/data-stores";
 import {
   $pendingResourceKeys,
@@ -30,7 +29,15 @@ import {
 } from "../../request-error-diagnostics";
 import { ResourceDiagnosticsView } from "./resource-diagnostics-view";
 
-type ResourcePreviewProps = {
+export type ResourcePreviewProps = {
+  resolveInspection?: (resourceInspection?: {
+    exchange: PreviewResourceExchange;
+    revision: number;
+  }) => {
+    exchange?: PreviewResourceExchange;
+    responseAttempts?: unknown[];
+    requestAttempts?: unknown[];
+  };
   variable?: DataSource;
   variableValue: unknown;
   showEmptyLoadButton?: boolean;
@@ -55,6 +62,7 @@ type ResourcePreviewProps = {
 export const ResourceVariablePreview = ({
   variable,
   variableValue,
+  resolveInspection,
   showEmptyLoadButton = false,
   inspectSubmission: inspectSubmissionByDefault = false,
   alwaysShowRequestTab = false,
@@ -72,13 +80,7 @@ export const ResourceVariablePreview = ({
 }: ResourcePreviewProps) => {
   const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
-  const lastExchanges = useStore($previewFormExchanges);
   const resourceExchanges = useStore($resourcePreviewExchanges);
-  const inspection =
-    variable?.type === "resource"
-      ? lastExchanges.get(variable.resourceId)
-      : undefined;
-  const formExchange = inspection?.attempts.at(-1);
   const resourcesCache = useStore($resourcesCache);
   const resourceScope = useResourceScope({ variable });
   const [resolvedResourceRequest, setResolvedResourceRequest] = useState<
@@ -139,31 +141,20 @@ export const ResourceVariablePreview = ({
     computedResourceKey = resourceKey;
     computedValue = resourcesCache.get(resourceKey);
   }
-  const latestExchange = getLatestPreviewExchange({
-    formInspection: inspection,
-    resourceInspection:
-      computedResourceKey === undefined
-        ? undefined
-        : resourceExchanges.get(computedResourceKey),
-  });
-  const latestExchangeIsFormSubmission = latestExchange === formExchange;
+  const resourceInspection =
+    computedResourceKey === undefined
+      ? undefined
+      : resourceExchanges.get(computedResourceKey);
+  const resolvedInspection = resolveInspection?.(resourceInspection);
+  const latestExchange =
+    resolvedInspection?.exchange ?? resourceInspection?.exchange;
   if (latestExchange) {
     computedValue = {
       resourceId: latestExchange.resourceId,
       resourceName: latestExchange.resourceName,
       ...latestExchange.response,
       ok: latestExchange.outcome?.ok ?? latestExchange.response.status < 400,
-      attempts: latestExchangeIsFormSubmission
-        ? inspection?.attempts.map(
-            ({ resourceId, resourceName, response, outcome }, index) => ({
-              attempt: index + 1,
-              resourceId,
-              resourceName,
-              ...response,
-              ...(outcome === undefined ? {} : { outcome }),
-            })
-          )
-        : undefined,
+      attempts: resolvedInspection?.responseAttempts,
     };
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
@@ -229,21 +220,11 @@ export const ResourceVariablePreview = ({
       <RequestErrorDiagnostics value={requestErrorDiagnostics} />
     );
   const requestSnapshot = latestExchange
-    ? latestExchangeIsFormSubmission && inspection?.attempts.length
-      ? inspection.attempts.map(
-          ({ resourceId, resourceName, request, kind }, index) => ({
-            attempt: index + 1,
-            resourceId,
-            resourceName,
-            kind,
-            ...request,
-          })
-        )
-      : {
-          resourceId: latestExchange.resourceId,
-          resourceName: latestExchange.resourceName,
-          ...latestExchange.request,
-        }
+    ? resolvedInspection?.requestAttempts ?? {
+        resourceId: latestExchange.resourceId,
+        resourceName: latestExchange.resourceName,
+        ...latestExchange.request,
+      }
     : customRequestSnapshot;
   return (
     <RequestInspector

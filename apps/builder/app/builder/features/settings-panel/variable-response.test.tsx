@@ -1,3 +1,7 @@
+import {
+  $resourcePreviewExchanges,
+  recordResourcePreviewExchange,
+} from "~/shared/preview-resource-inspection";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test } from "vitest";
@@ -9,9 +13,7 @@ import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $previewFormExchanges,
-  $resourcePreviewExchanges,
   recordPreviewFormExchanges,
-  recordResourcePreviewExchange,
 } from "~/shared/preview-form-inspection";
 import {
   $livePreviewFormValues,
@@ -19,7 +21,7 @@ import {
   recordPreviewBrowserInfo,
 } from "~/shared/preview-form-values";
 import { ParameterVariablePreview } from "./variable-editors/parameter-editor";
-import { ResourceVariablePreview } from "./variable-editors/shared/resource-variable-preview";
+import { FormResourcePreview } from "./variable-editors/form-resource-preview";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -123,7 +125,7 @@ test("preview-only resources show Load data without an empty Request tab", async
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           variableValue={undefined}
           showEmptyLoadButton
           onLoadData={() => {
@@ -176,7 +178,7 @@ test("Resource inspector can load the actual Request from an empty Request tab",
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           showEmptyLoadButton
           inspectSubmission
           alwaysShowRequestTab
@@ -225,7 +227,7 @@ test("Resource inspector can load the actual Request from an empty Request tab",
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           showEmptyLoadButton
           inspectSubmission
           alwaysShowRequestTab
@@ -269,7 +271,7 @@ test("Resource inspector can load the actual Request from an empty Request tab",
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           showEmptyLoadButton
           inspectSubmission
           alwaysShowRequestTab
@@ -370,7 +372,7 @@ test("explicit Resource reload shows the captured request and response headers",
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           variable={{
             id: "contact-webhook-variable",
             type: "resource",
@@ -407,6 +409,83 @@ test("explicit Resource reload shows the captured request and response headers",
   expect(container.textContent).not.toContain("stale@example.com");
   expect(container.textContent).not.toContain("old.example");
 });
+
+test.each(["submission", "reload"] as const)(
+  "Form Resource preview prefers the latest %s exchange",
+  async (latest) => {
+    const request: ResourceRequest = {
+      name: "Contact webhook",
+      method: "post",
+      url: "https://example.com/contacts",
+      headers: [],
+      searchParams: [],
+      body: undefined,
+    };
+    const key = getResourceKey(request);
+    const exchange = {
+      resourceId: key,
+      resourceName: "Contact webhook",
+      kind: "http" as const,
+      request: {
+        method: "POST",
+        url: request.url,
+        headers: [],
+        body: null,
+        truncated: false,
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: [],
+        body: { source: "submission" },
+        truncated: false,
+      },
+    };
+    const recordSubmission = () =>
+      recordPreviewFormExchanges("form", [exchange]);
+    const recordReload = () =>
+      recordResourcePreviewExchange(key, {
+        ...exchange,
+        response: {
+          ...exchange.response,
+          status: 201,
+          body: { source: "reload" },
+        },
+      });
+    if (latest === "submission") {
+      recordReload();
+      recordSubmission();
+    } else {
+      recordSubmission();
+      recordReload();
+    }
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        <TooltipProvider>
+          <FormResourcePreview
+            variable={{
+              id: "contact-webhook-variable",
+              type: "resource",
+              name: "Contact webhook",
+              resourceId: key,
+            }}
+            variableValue={request}
+            inspectSubmission
+          />
+        </TooltipProvider>
+      )
+    );
+    await expect
+      .poll(() => container.textContent)
+      .toContain(`"source": "${latest}"`);
+    expect(container.textContent).not.toContain(
+      `"source": "${latest === "submission" ? "reload" : "submission"}"`
+    );
+  }
+);
 
 test.each(["http", "email"] as const)(
   "%s inspector shows actual submitted requests and response headers across retry attempts without loading",
@@ -458,7 +537,7 @@ test.each(["http", "email"] as const)(
     await act(async () =>
       root?.render(
         <TooltipProvider>
-          <ResourceVariablePreview
+          <FormResourcePreview
             variable={{
               id: "variable",
               type: "resource",
@@ -543,7 +622,7 @@ test("Email Request loads only a local preview until an actual submission exists
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           variable={{
             id: "email-variable",
             type: "resource",
@@ -590,7 +669,7 @@ test("Email Request loads only a local preview until an actual submission exists
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           variable={{
             id: "email-variable",
             type: "resource",
@@ -660,7 +739,7 @@ test("Email inspector shows raw HTTP response and failed delivery diagnostics se
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <ResourceVariablePreview
+        <FormResourcePreview
           variable={{
             id: "email-variable",
             type: "resource",

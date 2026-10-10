@@ -7,12 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  DotIcon,
-  InfoCircleIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@webstudio-is/icons";
+import { DotIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   PanelContent,
   Box,
@@ -33,6 +28,7 @@ import {
   Text,
   Tooltip,
   InputErrorsTooltip,
+  InfoTooltip,
   theme,
 } from "@webstudio-is/design-system";
 import { getExpressionIdentifiers } from "@webstudio-is/expression";
@@ -106,17 +102,12 @@ const BindingPanel = ({
       <Box css={{ paddingBottom: theme.spacing[5] }}>
         <PanelContent as={Flex} gap="1">
           <Text variant="labels">Variables</Text>
-          <Tooltip
-            variant="wrapped"
+          <InfoTooltip
+            label="About available variables"
             content={
               "Click on the available variables in this scope to insert them into the Expression Editor."
             }
-          >
-            <InfoCircleIcon
-              color={cssVar("--foreground-secondary")}
-              tabIndex={0}
-            />
-          </Tooltip>
+          />
         </PanelContent>
         {scopeEntries.length === 0 && (
           <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
@@ -162,8 +153,8 @@ const BindingPanel = ({
       </Box>
       <PanelContent as={Flex} gap="1">
         <Text variant="labels">Expression editor</Text>
-        <Tooltip
-          variant="wrapped"
+        <InfoTooltip
+          label="About the expression editor"
           content={
             <Text>
               Use JavaScript syntax to access variables along with comparison
@@ -173,12 +164,7 @@ const BindingPanel = ({
               <Text variant="mono">Variable.nested.value</Text>
             </Text>
           }
-        >
-          <InfoCircleIcon
-            color={cssVar("--foreground-secondary")}
-            tabIndex={0}
-          />
-        </Tooltip>
+        />
       </PanelContent>
       <PanelContent as={Box} css={{ pt: 0 }}>
         <InputErrorsTooltip

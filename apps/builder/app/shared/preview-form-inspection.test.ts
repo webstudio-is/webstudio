@@ -1,10 +1,12 @@
+import {
+  $resourcePreviewExchanges,
+  recordResourcePreviewExchange,
+} from "./preview-resource-inspection";
 import { afterEach, expect, test } from "vitest";
 import {
   $previewFormExchanges,
-  $resourcePreviewExchanges,
   getLatestPreviewExchange,
   recordPreviewFormExchanges,
-  recordResourcePreviewExchange,
   type PreviewFormExchange,
 } from "./preview-form-inspection";
 

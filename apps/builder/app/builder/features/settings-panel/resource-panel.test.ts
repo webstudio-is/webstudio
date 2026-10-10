@@ -37,7 +37,7 @@ import {
   Headers,
   UrlField,
 } from "./variable-editors/shared/resource-fields";
-import { ResourceForm } from "./variable-editors/http-resource-editor";
+import { HttpResourceForm } from "./variable-editors/http-resource-editor";
 import {
   getResourceScopeForInstance,
   useResourceScope,
@@ -48,8 +48,9 @@ const { expressionEvaluations } = vi.hoisted(() => ({
   expressionEvaluations: vi.fn(),
 }));
 vi.mock("~/builder/shared/binding-popover", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("~/builder/shared/binding-popover")>();
+  const actual = await importOriginal<
+    typeof import("~/builder/shared/binding-popover")
+  >();
   return {
     ...actual,
     evaluateExpressionWithinScope: (
@@ -1233,7 +1234,7 @@ test("notifies the preview when a resource field changes", () => {
       createElement(
         TooltipProvider,
         undefined,
-        createElement(ResourceForm, { onChange })
+        createElement(HttpResourceForm, { onChange })
       )
     );
   });
@@ -1269,7 +1270,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
       createElement(
         TooltipProvider,
         undefined,
-        createElement(ResourceForm, { variable })
+        createElement(HttpResourceForm, { variable })
       )
     );
   });
@@ -1357,7 +1358,7 @@ test("invalidates the preview as soon as a body edit starts", async () => {
       createElement(
         TooltipProvider,
         undefined,
-        createElement(ResourceForm, {
+        createElement(HttpResourceForm, {
           variable: {
             type: "resource",
             id: "request-variable",
@@ -1427,7 +1428,7 @@ test("shows and submits the selected HTTP body format", async () => {
       createElement(
         TooltipProvider,
         undefined,
-        createElement(ResourceForm, {
+        createElement(HttpResourceForm, {
           variable: {
             type: "resource",
             id: "upload-variable",
@@ -1522,7 +1523,7 @@ test("marks a text body invalid when JSON format is selected", async () => {
       createElement(
         TooltipProvider,
         undefined,
-        createElement(ResourceForm, {
+        createElement(HttpResourceForm, {
           variable: {
             type: "resource",
             id: "request-variable",
@@ -1597,7 +1598,7 @@ test("a new Resource URL stays visually untouched until edit, while save validat
         createElement(
           "div",
           undefined,
-          createElement(ResourceForm, { ref: panelRef }),
+          createElement(HttpResourceForm, { ref: panelRef }),
           createElement("button", undefined, "Outside")
         )
       )
@@ -1782,6 +1783,16 @@ test("only Form-scoped Resources can bind submission values", async () => {
     liveFormValues: new Map([
       ["form,collection[one],root", { email: "typed@example.com" }],
     ]),
+    liveBrowserInfo: new Map([
+      [
+        "form",
+        {
+          ip: "203.0.113.5",
+          language: "pt-PT",
+          referrer: "https://example.com/",
+        },
+      ],
+    ]),
   };
   const internal = getResourceScopeForInstance({
     ...input,
@@ -1797,6 +1808,11 @@ test("only Form-scoped Resources can bind submission values", async () => {
   expect(internal.aliases.get(encodeDataVariableId("browserInfoId"))).toBe(
     "browserInfo"
   );
+  expect(internal.scope[encodeDataVariableId("browserInfoId")]).toMatchObject({
+    ip: "203.0.113.5",
+    language: "pt-PT",
+    referrer: "https://example.com/",
+  });
   expect(
     await computeExpression(
       `${encodeDataVariableId("formDataId")}.email`,
@@ -1825,7 +1841,7 @@ test("Resource editor explains caching, keeps add buttons tooltip-free, and remo
     root?.render(
       createElement(TooltipProvider, {
         delayDuration: 0,
-        children: createElement(ResourceForm, {
+        children: createElement(HttpResourceForm, {
           variable: {
             type: "resource",
             id: "request-variable",
@@ -1900,7 +1916,7 @@ test("HTTP Resource Body editor shows line numbers before maximizing", async () 
       createElement(
         TooltipProvider,
         undefined,
-        createElement(ResourceForm, {
+        createElement(HttpResourceForm, {
           variable: {
             type: "resource",
             id: "request-variable",
@@ -1947,7 +1963,7 @@ test.each([
       root?.render(
         createElement(TooltipProvider, {
           delayDuration: 0,
-          children: createElement(ResourceForm, {
+          children: createElement(HttpResourceForm, {
             variable: {
               type: "resource",
               id: "request-variable",
@@ -2008,7 +2024,7 @@ test.each([
         createElement(
           TooltipProvider,
           undefined,
-          createElement(ResourceForm, {
+          createElement(HttpResourceForm, {
             variable: {
               type: "resource",
               id: "request-variable",
@@ -2294,7 +2310,6 @@ test("Method uses the standard full-width collapsed Select and keeps description
     const [value, setValue] = useState<Resource["method"]>("get");
     return createElement(MethodField, {
       value,
-      formAction: true,
       onChange: (method) => {
         setValue(method);
         onChange(method);
@@ -2308,6 +2323,7 @@ test("Method uses the standard full-width collapsed Select and keeps description
   );
   const trigger =
     container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+  expect(trigger.textContent).toContain("GET");
   expect(trigger.getAttribute("data-state")).toBe("closed");
   expect(trigger.getBoundingClientRect().width).toBe(
     container.getBoundingClientRect().width
@@ -2316,16 +2332,21 @@ test("Method uses the standard full-width collapsed Select and keeps description
   expect(document.querySelector('[role="listbox"]')).toBeNull();
   await act(async () => await userEvent.click(trigger));
   expect(
+    Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).map(
+      (option) => option.textContent
+    )
+  ).toEqual(["GET", "POST", "PUT", "DELETE"]);
+  expect(
     document
       .querySelector<HTMLElement>("[data-radix-popper-content-wrapper]")
       ?.getBoundingClientRect().width
   ).toBe(trigger.getBoundingClientRect().width);
   const post = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
-  ).find((option) => option.textContent === "Post")!;
+  ).find((option) => option.textContent === "POST")!;
   await act(async () => await userEvent.click(post));
   expect(onChange).toHaveBeenLastCalledWith("post");
-  expect(trigger.textContent).toContain("Post");
+  expect(trigger.textContent).toContain("POST");
   expect(trigger.getAttribute("data-state")).toBe("closed");
   expect(trigger.getBoundingClientRect().width).toBe(
     container.getBoundingClientRect().width

@@ -170,7 +170,12 @@ test("failed persistence returns an error without reaching the Preview endpoint"
   });
   expect(result).toMatchObject({
     success: false,
-    errors: [{ message: expect.stringContaining("could not be saved") }],
+    errors: [
+      {
+        message:
+          "Draft changes could not be saved. Reload before testing the Form.",
+      },
+    ],
   });
   expect(builderFetch).not.toHaveBeenCalled();
   unsubscribe();

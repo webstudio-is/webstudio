@@ -1,8 +1,7 @@
+import { mergeRefs } from "@react-aria/utils";
 import { getCanvasFormVisibility } from "./form-selection-visibility";
 import { resolveManagedFormErrorSlot } from "@webstudio-is/sdk";
 import { $isPreviewMode } from "~/shared/nano-states";
-import { publish } from "~/shared/pubsub";
-import { readPreviewFormValues } from "~/shared/preview-form-values";
 import { parseError } from "~/shared/error/error-parse";
 import {
   useEffect,
@@ -16,14 +15,11 @@ import {
   Fragment,
   type ReactNode,
   type JSX,
-  type ComponentProps,
-  type ElementRef,
 } from "react";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { mergeRefs } from "@react-aria/utils";
 import type {
   Instance,
   Instances,
@@ -119,12 +115,13 @@ import {
 import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-source-utils";
 import { $resourcesState } from "~/shared/resources";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
-import { NativeForm } from "@webstudio-is/sdk-components-react/components";
-import { submitPreviewForm } from "~/shared/preview-form-bridge";
-import { switchPageAndUpdateSystem } from "~/canvas/interceptor";
-import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
-import { navigatePreviewFormSuccess } from "./form-success-redirect";
+
+import {
+  PreviewNativeForm,
+  submitManagedFormFromPreview,
+  getPreviewNativeFormProps,
+} from "./preview-native-form";
+import { getPreviewCurrentUrl } from "./preview-current-url";
 
 const getHtmlEmbedCanvasProps = ({
   component,
@@ -152,123 +149,6 @@ const computeComponentKey = (props: Record<string, unknown>) => {
     (src != null ? String(src) : undefined)
   );
 };
-
-const getPreviewCurrentUrl = (
-  currentSystem: {
-    pathname: string;
-    search: Record<string, string | undefined>;
-    searchAll?: Record<string, string[]>;
-  },
-  hash: string
-) => {
-  // Preview renders inside the builder canvas route, so window.location points
-  // at the builder shell, not the page being previewed. Recreate the page URL
-  // from the selected page system data so :local-link state matches preview
-  // navigation, including query params and hash-only links.
-  const currentUrl = new URL(currentSystem.pathname, "https://webstudio.local");
-  const searchParams = new URLSearchParams();
-  if (currentSystem.searchAll !== undefined) {
-    for (const [name, values] of Object.entries(currentSystem.searchAll)) {
-      for (const value of values) {
-        searchParams.append(name, value);
-      }
-    }
-  } else {
-    for (const [name, value] of Object.entries(currentSystem.search)) {
-      if (value !== undefined) {
-        searchParams.append(name, value);
-      }
-    }
-  }
-  currentUrl.search = searchParams.toString();
-  currentUrl.hash = hash;
-  return currentUrl;
-};
-
-const submitManagedFormFromPreview = (
-  managedFormId: string,
-  values: Parameters<typeof submitManagedForm>[0]["values"],
-  signal: AbortSignal
-) => {
-  const currentUrl = getPreviewCurrentUrl(
-    $currentSystem.get(),
-    $selectedPageHash.get().hash
-  );
-  // The authenticated parent waits for durable saves before posting the draft.
-  return submitPreviewForm({
-    values,
-    managedFormId,
-    path: currentUrl.pathname + currentUrl.search,
-    signal,
-  });
-};
-
-const PreviewNativeForm = forwardRef<
-  ElementRef<typeof NativeForm>,
-  ComponentProps<typeof NativeForm>
->((props, ref) => {
-  const system = useStore($currentSystem);
-  const { hash } = useStore($selectedPageHash);
-  const formRef = useRef<HTMLFormElement>(null);
-  const onStateChangeRef = useRef(props.onStateChange);
-  onStateChangeRef.current = props.onStateChange;
-  const formSelector = (props as Record<string, unknown>)[selectorIdAttribute];
-  useEffect(() => () => onStateChangeRef.current?.("initial"), []);
-  const formId = props["data-ws-managed-form-id"];
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form || !formId) {
-      return;
-    }
-    let active = true;
-    const send = () =>
-      queueMicrotask(() => {
-        if (active) {
-          publish({
-            type: "previewFormValues",
-            payload: {
-              selector: String(formSelector),
-              values: readPreviewFormValues(form),
-            },
-          });
-        }
-      });
-    form.addEventListener("input", send);
-    form.addEventListener("change", send);
-    const observer = new MutationObserver(send);
-    observer.observe(form, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: [
-        "value",
-        "checked",
-        "selected",
-        "disabled",
-        "name",
-        "type",
-      ],
-    });
-    send();
-    return () => {
-      active = false;
-      observer.disconnect();
-      form.removeEventListener("input", send);
-      form.removeEventListener("change", send);
-      publish({
-        type: "previewFormValues",
-        payload: { selector: String(formSelector), values: null },
-      });
-    };
-  }, [formId, formSelector]);
-  return (
-    <NativeForm
-      {...props}
-      ref={mergeRefs(ref, formRef)}
-      navigationToken={getPreviewCurrentUrl(system, hash).href}
-    />
-  );
-});
 
 export const __testing__ = {
   PreviewNativeForm,
@@ -1185,24 +1065,7 @@ const WebstudioComponentPreviewInner = forwardRef<
     [selectorIdAttribute]: instanceSelector.join(","),
   };
   if (instance.component === "NativeForm") {
-    const getPreviewUrl = () =>
-      getPreviewCurrentUrl($currentSystem.get(), $selectedPageHash.get().hash);
-    props["data-ws-managed-form-id"] = instance.id;
-    props.getRedirectBaseUrl = () => getPreviewUrl().href;
-    props.onManagedSubmit = (
-      values: Parameters<typeof submitManagedForm>[0]["values"],
-      signal: AbortSignal
-    ): Promise<ManagedFormResponse> => {
-      return submitManagedFormFromPreview(instance.id, values, signal);
-    };
-    props.onSuccessRedirect = (destination: string) => {
-      navigatePreviewFormSuccess(
-        destination,
-        getPreviewUrl().href,
-        switchPageAndUpdateSystem,
-        (href) => window.location.assign(href)
-      );
-    };
+    Object.assign(props, getPreviewNativeFormProps(instance.id));
   }
   if (show === false) {
     return <></>;

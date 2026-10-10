@@ -30,9 +30,9 @@ test("failed or dropped saves stay failed even after later successful saves", as
   saves.complete("project", "one", false);
   saves.begin("project", "two");
   saves.complete("project", "two", true);
-  await expect(saves.wait("project", options())).rejects.toThrow(
-    "could not be saved"
-  );
+  await expect(saves.wait("project", options())).rejects.toMatchObject({
+    reason: "save-failed",
+  });
   saves.reset("project");
   await expect(saves.wait("project", options())).resolves.toBeUndefined();
 });
@@ -65,9 +65,11 @@ test("cancellation and timeout stop waiting without claiming persistence", async
   ).rejects.toThrow("cancel");
   controller.abort(new Error("cancel"));
   await canceled;
-  const timedOut = expect(saves.wait("project", options())).rejects.toThrow(
-    "still saving"
-  );
+  const timedOut = expect(
+    saves.wait("project", options())
+  ).rejects.toMatchObject({
+    reason: "timeout",
+  });
   await vi.advanceTimersByTimeAsync(100);
   await timedOut;
   saves.complete("project", "one", true);
@@ -80,7 +82,7 @@ test("reload invalidation is sticky and another project's reload is ignored", as
   saves.invalidate("other");
   await expect(saves.wait("project", options())).resolves.toBeUndefined();
   saves.invalidate("project");
-  await expect(saves.wait("project", options())).rejects.toThrow(
-    "synchronization changed"
-  );
+  await expect(saves.wait("project", options())).rejects.toMatchObject({
+    reason: "changed",
+  });
 });

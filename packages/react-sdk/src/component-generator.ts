@@ -22,16 +22,9 @@ import {
   descendantComponent,
   getIndexesWithinAncestors,
   elementComponent,
-  isFormSubmission,
-  resolveManagedFormErrorSlot,
 } from "@webstudio-is/sdk";
 import { transpileExpression } from "@webstudio-is/expression";
-import {
-  browserInfoParameterName,
-  formDataParameterName,
-  indexProperty,
-  tagProperty,
-} from "@webstudio-is/sdk/runtime";
+import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import { getJsxPropName } from "@webstudio-is/content-engine/jsx-attributes";
 import { isAttributeNameSafe, showAttribute } from "./props";
 import { generateCollectionIterationCode } from "./collection-utils";
@@ -47,6 +40,31 @@ export type PublishedContentBlock = Readonly<{
     resourceIds?: readonly string[];
   }>[];
 }>;
+
+export type ComponentGenerationPolicy = {
+  skipText?: (
+    child: Extract<Instance["children"][number], { type: "text" }>
+  ) => boolean;
+  resolveInstance?: (
+    instance: Instance,
+    instances: Instances,
+    dataSources: DataSources,
+    props: Props
+  ) => Instance;
+  renderResolvedExpression?: (
+    expression: string,
+    helpers?: Set<string>
+  ) => string;
+  declareDataSource?: (
+    dataSource: DataSource,
+    valueName: string,
+    instances: Instances
+  ) => string | undefined;
+  transformProps?: (
+    instance: Instance,
+    props: Map<string, Prop>
+  ) => string | undefined;
+};
 
 /**
  * (arg1) => {
@@ -177,6 +195,7 @@ export const generateJsxElement = ({
   indexesWithinAncestors,
   children,
   classesMap,
+  policy,
 }: {
   context?: "expression" | "jsx";
   scope: Scope;
@@ -193,6 +212,7 @@ export const generateJsxElement = ({
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
   classesMap?: Map<string, Array<string>>;
+  policy?: ComponentGenerationPolicy;
 }) => {
   // descendant component is used only for styling
   // and should not be rendered
@@ -238,9 +258,7 @@ export const generateJsxElement = ({
   for (const prop of props.values()) {
     if (
       prop.instanceId !== instance.id ||
-      isAttributeNameSafe(prop.name) === false ||
-      (instance.component === "NativeForm" &&
-        prop.name.toLowerCase() === "data-ws-managed-form-id")
+      isAttributeNameSafe(prop.name) === false
     ) {
       continue;
     }
@@ -251,14 +269,8 @@ export const generateJsxElement = ({
     }
     propsByGeneratedName.set(name, prop);
   }
-  const actionProp = propsByGeneratedName.get("action");
-  if (
-    instance.component === "NativeForm" &&
-    actionProp?.type === "json" &&
-    isFormSubmission(actionProp.value)
-  ) {
-    generatedProps += `\ndata-ws-managed-form-id=${JSON.stringify(instance.id)}`;
-  }
+  generatedProps +=
+    policy?.transformProps?.(instance, propsByGeneratedName) ?? "";
   const generatedPropNames = new Set([
     ...propsByGeneratedName.keys(),
     ...(classProps.size > 0 ? ["className"] : []),
@@ -447,7 +459,7 @@ export const generateJsxChildren = ({
   usedDataSources,
   indexesWithinAncestors,
   classesMap,
-  excludePlaceholders,
+  policy,
   publishedContentBlocks,
   contentBodyOverride,
   usedRuntimeHelpers,
@@ -464,9 +476,9 @@ export const generateJsxChildren = ({
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap?: Map<string, Array<string>>;
-  excludePlaceholders?: boolean;
+  policy?: ComponentGenerationPolicy;
   publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
-  usedRuntimeHelpers?: Set<"renderText" | "formatManagedFormErrors">;
+  usedRuntimeHelpers?: Set<string>;
   contentBodyOverride?: Readonly<{
     instanceId: Instance["id"];
     children: Instance["children"];
@@ -475,7 +487,7 @@ export const generateJsxChildren = ({
   let generatedChildren = "";
   for (const child of children) {
     if (child.type === "text") {
-      if (excludePlaceholders && child.placeholder === true) {
+      if (policy?.skipText?.(child)) {
         continue;
       }
       // instance text can contain newlines
@@ -503,14 +515,15 @@ export const generateJsxChildren = ({
       if (authoredInstance === undefined) {
         continue;
       }
-      const instance = resolveManagedFormErrorSlot(
-        authoredInstance,
-        instances,
-        dataSources,
-        props
-      );
+      const instance =
+        policy?.resolveInstance?.(
+          authoredInstance,
+          instances,
+          dataSources,
+          props
+        ) ?? authoredInstance;
       const instanceRuntimeHelpers = usedRuntimeHelpers
-        ? new Set<"renderText" | "formatManagedFormErrors">()
+        ? new Set<string>()
         : undefined;
       const publishedContent = publishedContentBlocks?.get(instance.id);
       let generatedInstanceChildren: string;
@@ -527,13 +540,14 @@ export const generateJsxChildren = ({
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
-          excludePlaceholders,
+          policy,
           publishedContentBlocks,
           usedRuntimeHelpers: instanceRuntimeHelpers,
         });
       } else if (
         instance !== authoredInstance &&
-        instance.children[0].type === "expression"
+        instance.children[0]?.type === "expression" &&
+        policy?.renderResolvedExpression
       ) {
         const errorsExpression = generateExpression({
           expression: instance.children[0].value,
@@ -541,9 +555,10 @@ export const generateJsxChildren = ({
           usedDataSources,
           scope,
         });
-        instanceRuntimeHelpers?.add("renderText");
-        instanceRuntimeHelpers?.add("formatManagedFormErrors");
-        generatedInstanceChildren = `{renderText(formatManagedFormErrors(${errorsExpression}))}\n`;
+        generatedInstanceChildren = policy.renderResolvedExpression(
+          errorsExpression,
+          instanceRuntimeHelpers
+        );
       } else if (publishedContent === undefined) {
         generatedInstanceChildren = generateJsxChildren({
           classesMap,
@@ -557,7 +572,7 @@ export const generateJsxChildren = ({
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
-          excludePlaceholders,
+          policy,
           publishedContentBlocks,
           usedRuntimeHelpers: instanceRuntimeHelpers,
           contentBodyOverride,
@@ -611,7 +626,7 @@ export const generateJsxChildren = ({
               dataSources,
               usedDataSources,
               indexesWithinAncestors,
-              excludePlaceholders,
+              policy,
               publishedContentBlocks,
               usedRuntimeHelpers: instanceRuntimeHelpers,
               contentBodyOverride:
@@ -625,7 +640,9 @@ export const generateJsxChildren = ({
             const withDocument =
               documentName === undefined
                 ? generated
-                : `{((${documentName}) => <Fragment>\n${generated}</Fragment>)(${JSON.stringify({ frontmatter })})}\n`;
+                : `{((${documentName}) => <Fragment>\n${generated}</Fragment>)(${JSON.stringify(
+                    { frontmatter }
+                  )})}\n`;
             return {
               assetId,
               dependencyRevision,
@@ -637,7 +654,9 @@ export const generateJsxChildren = ({
           generatedInstanceChildren = generatedCandidates
             .map(
               ({ dependencyRevision, generated }) =>
-                `<Fragment key=${JSON.stringify(dependencyRevision)}>\n${generated}</Fragment>\n`
+                `<Fragment key=${JSON.stringify(
+                  dependencyRevision
+                )}>\n${generated}</Fragment>\n`
             )
             .join("");
         } else {
@@ -648,7 +667,11 @@ export const generateJsxChildren = ({
           const branches = generatedCandidates
             .map(
               ({ assetId, dependencyRevision, generated }) =>
-                `${sourceName} === ${JSON.stringify(assetId)} ? <Fragment key=${JSON.stringify(dependencyRevision)}>\n${generated}</Fragment>`
+                `${sourceName} === ${JSON.stringify(
+                  assetId
+                )} ? <Fragment key=${JSON.stringify(
+                  dependencyRevision
+                )}>\n${generated}</Fragment>`
             )
             .join(" : ");
           generatedInstanceChildren = `{((${sourceName}) => ${
@@ -669,6 +692,7 @@ export const generateJsxChildren = ({
         indexesWithinAncestors,
         classesMap,
         children: generatedInstanceChildren,
+        policy,
       });
       generatedChildren += generatedElement;
       if (generatedElement && instanceRuntimeHelpers) {
@@ -697,6 +721,7 @@ export const generateWebstudioComponent = ({
   classesMap,
   publishedContentBlocks,
   usedRuntimeHelpers,
+  policy,
 }: {
   scope: Scope;
   name: string;
@@ -707,7 +732,8 @@ export const generateWebstudioComponent = ({
   resources?: Resources;
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
-  usedRuntimeHelpers?: Set<"renderText" | "formatManagedFormErrors">;
+  usedRuntimeHelpers?: Set<string>;
+  policy?: ComponentGenerationPolicy;
   publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
   metas: Map<Instance["component"], WsComponentMeta>;
   /**
@@ -725,7 +751,7 @@ export const generateWebstudioComponent = ({
   // instance can be missing when generate xml
   if (instance) {
     const rootRuntimeHelpers = usedRuntimeHelpers
-      ? new Set<"renderText" | "formatManagedFormErrors">()
+      ? new Set<string>()
       : undefined;
     generatedJsx = generateJsxElement({
       context: "expression",
@@ -739,6 +765,7 @@ export const generateWebstudioComponent = ({
       usedDataSources,
       indexesWithinAncestors,
       classesMap,
+      policy,
       children: generateJsxChildren({
         scope,
         metas,
@@ -753,6 +780,7 @@ export const generateWebstudioComponent = ({
         classesMap,
         publishedContentBlocks,
         usedRuntimeHelpers: rootRuntimeHelpers,
+        policy,
       }),
     });
     if (generatedJsx && rootRuntimeHelpers) {
@@ -785,18 +813,9 @@ export const generateWebstudioComponent = ({
 
   let generatedDataSources = "";
   for (const dataSource of usedDataSources.values()) {
-    if (
-      dataSource.type === "parameter" &&
-      (dataSource.name === formDataParameterName ||
-        dataSource.name === browserInfoParameterName) &&
-      instances.get(dataSource.scopeInstanceId ?? "")?.component ===
-        "NativeForm"
-    ) {
-      // Form submission values are resolved only when a managed submit runs.
-      // A page render must not read visitor data or require it as page props.
-      const valueName = scope.getName(dataSource.id, dataSource.name);
-      generatedDataSources += `const ${valueName}: any = undefined\n`;
-    }
+    const valueName = scope.getName(dataSource.id, dataSource.name);
+    generatedDataSources +=
+      policy?.declareDataSource?.(dataSource, valueName, instances) ?? "";
     if (dataSource.type === "variable") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
       const setterName = scope.getName(

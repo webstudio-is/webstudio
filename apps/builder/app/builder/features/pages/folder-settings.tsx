@@ -2,13 +2,13 @@ import { useStore } from "@nanostores/react";
 import {
   PanelContent,
   Button,
-  cssVar,
   DialogClose,
   DialogTitle,
   Flex,
   Grid,
   InputErrorsTooltip,
   InputField,
+  InfoTooltip,
   Label,
   DialogTitleActions,
   ScrollArea,
@@ -16,7 +16,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
+import { TrashIcon } from "@webstudio-is/icons";
 import { type Folder, getFolderById } from "@webstudio-is/sdk";
 import {
   folderSettingsDefaultValues,
@@ -105,15 +105,10 @@ const FormFields = ({
           <Grid gap={1}>
             <Flex align="center" css={{ gap: theme.spacing[3] }}>
               <Label htmlFor={fieldIds.slug}>Slug</Label>
-              <Tooltip
-                content={"Slug will be used as part of the path to the page"}
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  color={cssVar("--foreground-secondary")}
-                  tabIndex={0}
-                />
-              </Tooltip>
+              <InfoTooltip
+                label="About folder slug"
+                content="Slug will be used as part of the path to the page"
+              />
             </Flex>
             <InputErrorsTooltip errors={errors.slug}>
               <InputField

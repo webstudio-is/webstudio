@@ -1,4 +1,4 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import type { VariableEditorProps } from "./shared/editor-types";
 
 import { Row } from "../shared";
@@ -62,20 +62,24 @@ export const JsonVariablePreview = ({ value }: { value: unknown }) => {
   return <ValuePreviewFrame value={parseJsonExpression(String(value))} />;
 };
 
-export const JsonEditor = (props: VariableEditorProps) => (
-  <VariableEditorBody
-    {...props}
-    titleActions={props.titleActions()}
-    fields={
-      <Row>
-        <JsonForm
-          ref={props.panelRef}
-          variable={props.variable}
-          value={props.value}
-          onChange={props.onValueChange}
-        />
-      </Row>
-    }
-    preview={<JsonVariablePreview value={props.previewProps.variableValue} />}
-  />
+export const JsonEditor = forwardRef<PanelApi | undefined, VariableEditorProps>(
+  (props, ref) => {
+    return (
+      <VariableEditorLayout
+        {...props}
+        titleActions={props.titleActions()}
+        fields={
+          <Row>
+            <JsonForm
+              ref={ref}
+              variable={props.variable}
+              value={props.value}
+              onChange={props.onValueChange}
+            />
+          </Row>
+        }
+        preview={<JsonVariablePreview value={props.value} />}
+      />
+    );
+  }
 );

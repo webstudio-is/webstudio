@@ -23,6 +23,7 @@ import {
   Grid,
   IconButton,
   InputErrorsTooltip,
+  InfoTooltip,
   InputField,
   Label,
   Popover,
@@ -45,7 +46,6 @@ import {
   CopyIcon,
   DimensionsIcon,
   DownloadIcon,
-  InfoCircleIcon,
   ListViewIcon,
   PageIcon,
   RefreshCcwIcon,
@@ -595,12 +595,10 @@ const AssetSettingsContent = ({
           css={{ display: "flex", alignItems: "center", gap: 4 }}
         >
           Description
-          <Tooltip
-            variant="wrapped"
+          <InfoTooltip
+            label="About asset description"
             content="The description is used as the default “alt” text for the image."
-          >
-            <InfoCircleIcon color={cssVar("--foreground-secondary")} />
-          </Tooltip>
+          />
         </Label>
         <TextArea
           id="asset-manager-description"

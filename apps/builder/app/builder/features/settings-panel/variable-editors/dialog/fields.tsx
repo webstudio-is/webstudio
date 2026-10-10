@@ -32,7 +32,7 @@ import {
   $props,
   $resources,
 } from "~/shared/sync/data-stores";
-import type { VariableType } from "./variable-types";
+import type { VariableType } from "../shared/variable-types";
 
 export const NameField = ({
   variable,
@@ -94,7 +94,11 @@ export const NameField = ({
         <Label htmlFor={nameId}>Name</Label>
         {shadowed && (
           <Tooltip
-            content={`This name shadows a variable from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Both variables are allowed.`}
+            content={`This name shadows a variable from ${
+              instances.get(shadowed.scopeInstanceId ?? "")?.label ??
+              instances.get(shadowed.scopeInstanceId ?? "")?.component ??
+              "an ancestor"
+            }. Both variables are allowed.`}
           >
             <AlertIcon color={cssVar("--foreground-warning")} />
           </Tooltip>

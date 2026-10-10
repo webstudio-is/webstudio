@@ -57,6 +57,7 @@ export const loadEmailResource = async (
           ...options,
           onEmailRequest: (request: Request) => {
             emailRequest = request;
+            options.onEmailRequest?.(request);
           },
           onEmailResponse: (
             response: Pick<
@@ -72,6 +73,7 @@ export const loadEmailResource = async (
               data,
               url: response.url || undefined,
             };
+            options.onEmailResponse?.(response, data);
           },
         };
   const result = await options.sendEmail(resourceRequest, sendOptions);
@@ -108,16 +110,23 @@ export const loadResourcesWithEmail = (
   baseUrl?: string | URL,
   options: EmailResourceGraphLoadOptions = {}
 ) => {
-  const { sendEmail, onEmailRequest, onEmailResponse, ...graphOptions } =
-    options;
+  const {
+    sendEmail,
+    onEmailRequest,
+    onEmailResponse,
+    loadRequest,
+    ...graphOptions
+  } = options;
   return loadResources(customFetch, requests, baseUrl, {
     ...graphOptions,
     loadRequest: (fetcher, request, url, loadOptions) =>
-      loadResourceWithEmail(fetcher, request, url, {
-        ...loadOptions,
-        sendEmail,
-        onEmailRequest,
-        onEmailResponse,
-      }),
+      request.control === "email"
+        ? loadEmailResource(request, {
+            ...loadOptions,
+            sendEmail,
+            onEmailRequest,
+            onEmailResponse,
+          })
+        : (loadRequest ?? loadResource)(fetcher, request, url, loadOptions),
   });
 };

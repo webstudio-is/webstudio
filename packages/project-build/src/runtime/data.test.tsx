@@ -11,6 +11,7 @@ import {
 } from "@webstudio-is/template";
 import {
   encodeDataVariableId,
+  encodeDataSourceVariable,
   getAllPages,
   getHomePage,
   ROOT_INSTANCE_ID,
@@ -53,6 +54,8 @@ import {
   findAvailableVariables,
   findResource,
   findUnusedDataVariableIds,
+  isManagedFormParameter,
+  isRequiredManagedFormVariable,
   findUnsetVariableNames,
   findVariableUsagesByInstance,
   getDataVariableJsonExpressionErrors,
@@ -258,32 +261,73 @@ test("Form-scoped Resource bindings and destination survive edit, save, and relo
   });
 });
 
-test("Form submission parameters cannot be renamed or deleted", () => {
-  const data = renderData(
-    <Body ws:id="bodyId">
-      <NativeForm ws:id="formId" />
-    </Body>
-  );
-  data.dataSources.set("formData", {
-    type: "parameter",
-    id: "formData",
-    name: "formData",
-    scopeInstanceId: "formId",
-  });
-  const state = {
-    ...data,
-    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
-  };
-  expect(() =>
-    updateDataVariable(state, {
-      dataSourceId: "formData",
-      values: { name: "renamed" },
-    })
-  ).toThrow("Form submission variables cannot be edited");
-  expect(() => deleteDataVariable(state, { dataSourceId: "formData" })).toThrow(
-    "Form submission variables cannot be deleted"
-  );
-});
+test.each(["formData", "browserInfo"])(
+  "Form submission parameter %s cannot be renamed or deleted",
+  (name) => {
+    const data = renderData(
+      <Body ws:id="bodyId">
+        <NativeForm ws:id="formId" />
+      </Body>
+    );
+    data.dataSources.set(name, {
+      type: "parameter",
+      id: name,
+      name,
+      scopeInstanceId: "formId",
+    });
+    const state = {
+      ...data,
+      pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    };
+    expect(
+      isManagedFormParameter(data.dataSources.get(name), data.instances)
+    ).toBe(true);
+    expect(() =>
+      updateDataVariable(state, {
+        dataSourceId: name,
+        values: { name: "renamed" },
+      })
+    ).toThrow("Form submission variables cannot be edited");
+    expect(() => deleteDataVariable(state, { dataSourceId: name })).toThrow(
+      "Form submission variables cannot be deleted"
+    );
+  }
+);
+
+test.each(["state", "onStateChange", "onResultChange"])(
+  "required Form variables bound to %s cannot be deleted by a mutation",
+  (propName) => {
+    const data = renderData(
+      <Body ws:id="bodyId">
+        <NativeForm ws:id="formId" />
+      </Body>
+    );
+    const variable: DataSource = {
+      type: "variable",
+      id: "required",
+      name: "renamed form variable",
+      scopeInstanceId: "formId",
+      value: { type: "string", value: "" },
+    };
+    data.dataSources.set(variable.id, variable);
+    data.props.set("required-binding", {
+      id: "required-binding",
+      instanceId: "formId",
+      name: propName,
+      type: "expression",
+      value: encodeDataSourceVariable(variable.id),
+    });
+    const state = {
+      ...data,
+      pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    };
+    expect(isRequiredManagedFormVariable(variable, state)).toBe(true);
+    expect(() =>
+      deleteDataVariable(state, { dataSourceId: variable.id })
+    ).toThrow("Form submission variables cannot be deleted");
+    expect(state.dataSources.has(variable.id)).toBe(true);
+  }
+);
 
 test("creates Map-backed patches without mutating caller-owned data", () => {
   const before = {

@@ -6,6 +6,7 @@ import {
   useSearchFieldKeys,
   findNextListItemIndex,
   Tooltip,
+  InfoTooltip,
   Text,
   Link,
   Flex,
@@ -139,8 +140,8 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           item.type === "uploaded" ? (
             renderMenu(index)
           ) : itemProps.state === "selected" && item.description ? (
-            <Tooltip
-              variant="wrapped"
+            <InfoTooltip
+              label={`About ${item.label}`}
               content={
                 <Flex
                   direction="column"
@@ -162,12 +163,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                   <Text>{item.description}</Text>
                 </Flex>
               }
-            >
-              <InfoCircleIcon
-                tabIndex={0}
-                color={cssVar("--foreground-secondary")}
-              />
-            </Tooltip>
+            />
           ) : undefined
         }
       >

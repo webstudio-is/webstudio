@@ -27,7 +27,6 @@ import {
   generateResources,
 } from "./resources-generator";
 import { generateEmailRequestFields } from "./email-resource-generator";
-import { getExpressionDataSourceIds } from "./resource-dependencies";
 
 /** Compose page-load Resources with the inputs reserved for Form submissions. */
 export const generatePageResources = (
@@ -39,33 +38,6 @@ export const generatePageResources = (
       dataSources: options.dataSources,
       resources: options.resources,
     });
-  const selectedResourceIds = new Set(
-    options.contentBlockResourceSelections?.flatMap(({ candidates }) =>
-      candidates.flatMap(({ resourceIds }) => resourceIds)
-    ) ?? []
-  );
-  for (const resourceId of selectedResourceIds) {
-    if (submissionResourceIds.has(resourceId)) {
-      throw new Error(
-        "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
-      );
-    }
-  }
-  for (const { sourceExpression } of options.contentBlockResourceSelections ??
-    []) {
-    for (const sourceId of getExpressionDataSourceIds([sourceExpression])) {
-      const source = options.dataSources.get(sourceId);
-      if (
-        formParameterIds.has(sourceId) ||
-        (source?.type === "resource" &&
-          submissionResourceIds.has(source.resourceId))
-      ) {
-        throw new Error(
-          "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
-        );
-      }
-    }
-  }
   const emailResources = Array.from(options.resources.values()).filter(
     (resource) => resource.control === "email"
   );
@@ -88,7 +60,9 @@ export const generatePageResources = (
     additionalImports:
       emailExpressionResolvers.length === 0
         ? ""
-        : `import { ${emailExpressionResolvers.join(", ")} } from "@webstudio-is/sdk";\n`,
+        : `import { ${emailExpressionResolvers.join(
+            ", "
+          )} } from "@webstudio-is/sdk";\n`,
     generateAdditionalRequestFields: (fields) =>
       fields.resource.control === "email"
         ? generateEmailRequestFields(fields)
@@ -326,7 +300,9 @@ export const generateManagedFormResources = ({
           }
         }
         if (visitorParameterError) {
-          generatedRequests += `      throw new Error(${JSON.stringify(visitorParameterError)});\n    };\n`;
+          generatedRequests += `      throw new Error(${JSON.stringify(
+            visitorParameterError
+          )});\n    };\n`;
           continue;
         }
         generatedRequests += `      return {\n${fields}${emailFields}${defaultFormBody}      };\n    };\n`;
@@ -341,7 +317,9 @@ export const generateManagedFormResources = ({
           )};\n`;
         }
         if (dataSource.type === "parameter") {
-          generatedVariables += `    const ${name} = ${parameterCodeById.get(dataSource.id)};\n`;
+          generatedVariables += `    const ${name} = ${parameterCodeById.get(
+            dataSource.id
+          )};\n`;
         }
       }
 
@@ -361,7 +339,9 @@ export const generateManagedFormResources = ({
         const emailRecipientCount = emailRecipientCounts.get(resourceId);
         generated += `          { id: ${JSON.stringify(
           resourceId
-        )}, name: ${JSON.stringify(resource.name)}, outputName: ${JSON.stringify(
+        )}, name: ${JSON.stringify(
+          resource.name
+        )}, outputName: ${JSON.stringify(
           scope.getName(resourceId, resource.name)
         )}, dependencies: ${JSON.stringify(
           dependenciesById.get(resourceId) ?? []

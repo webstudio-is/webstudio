@@ -1,5 +1,3 @@
-import type { DataSource } from "@webstudio-is/sdk";
-
 export type VariableType =
   | "parameter"
   | "string"
@@ -12,9 +10,3 @@ export type VariableType =
   | "sitemap-resource"
   | "current-date-resource"
   | "assets-resource";
-
-export type VariablePreviewProps = {
-  variable?: DataSource;
-  variableType: VariableType;
-  variableValue: unknown;
-};

@@ -13,7 +13,7 @@ import {
   coreMetas,
   generateCss,
 } from "@webstudio-is/sdk";
-import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
+import { generateManagedFormComponent } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
 
 export type StoryTemplate = {
@@ -264,7 +264,7 @@ export const generateStories = async ({
     const usedRuntimeHelpers = new Set<
       "renderText" | "formatManagedFormErrors"
     >();
-    const component = generateWebstudioComponent({
+    const component = generateManagedFormComponent({
       usedRuntimeHelpers,
       classesMap: classes,
       scope,

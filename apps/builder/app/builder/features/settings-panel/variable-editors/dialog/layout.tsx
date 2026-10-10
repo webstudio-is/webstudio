@@ -1,4 +1,4 @@
-import type { FormEventHandler, ReactNode, RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import {
   DialogTitle,
   Flex,
@@ -7,7 +7,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 
-export const VariableEditorBody = ({
+export const VariableEditorLayout = ({
   formRef,
   onSubmit,
   disabled,
@@ -18,7 +18,7 @@ export const VariableEditorBody = ({
   titleActions,
 }: {
   formRef: RefObject<HTMLFormElement>;
-  onSubmit: FormEventHandler<HTMLFormElement>;
+  onSubmit: (formData: FormData) => void;
   disabled: boolean;
   commonFields: ReactNode;
   fields: ReactNode;
@@ -38,9 +38,13 @@ export const VariableEditorBody = ({
             ref={formRef}
             noValidate={true}
             style={{ display: "contents" }}
-            onSubmit={onSubmit}
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSubmit(new FormData(event.currentTarget));
+            }}
           >
-            <button hidden />
+            {/* Enter submits the editor through this default submit button. */}
+            <button type="submit" hidden />
             <fieldset style={{ display: "contents" }} disabled={disabled}>
               <Flex
                 direction="column"

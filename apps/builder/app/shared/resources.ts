@@ -15,8 +15,8 @@ import { restResourcesLoader } from "./router-utils";
 import {
   $resourcePreviewExchanges,
   recordResourcePreviewExchange,
-  type PreviewFormExchange,
-} from "./preview-form-inspection";
+  type PreviewResourceExchange,
+} from "./preview-resource-inspection";
 import {
   computeExpression,
   type ResolveExpressionDataSource,
@@ -175,7 +175,7 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
     );
     if (isInspectionResponse) {
       const { inspection } = payload as {
-        inspection?: PreviewFormExchange;
+        inspection?: PreviewResourceExchange;
       };
       if (
         inspection !== undefined &&

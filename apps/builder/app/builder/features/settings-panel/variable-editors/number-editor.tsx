@@ -1,4 +1,4 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import type { VariableEditorProps } from "./shared/editor-types";
 
 import { Row } from "../shared";
@@ -69,20 +69,25 @@ export const NumberVariablePreview = ({ value }: { value: unknown }) => {
   return <ValuePreviewFrame value={Number.isNaN(parsed) ? value : parsed} />;
 };
 
-export const NumberEditor = (props: VariableEditorProps) => (
-  <VariableEditorBody
-    {...props}
-    titleActions={props.titleActions()}
-    fields={
-      <Row>
-        <NumberForm
-          ref={props.panelRef}
-          variable={props.variable}
-          value={props.value}
-          onChange={props.onValueChange}
-        />
-      </Row>
-    }
-    preview={<NumberVariablePreview value={props.previewProps.variableValue} />}
-  />
-);
+export const NumberEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
+  return (
+    <VariableEditorLayout
+      {...props}
+      titleActions={props.titleActions()}
+      fields={
+        <Row>
+          <NumberForm
+            ref={ref}
+            variable={props.variable}
+            value={props.value}
+            onChange={props.onValueChange}
+          />
+        </Row>
+      }
+      preview={<NumberVariablePreview value={props.value} />}
+    />
+  );
+});

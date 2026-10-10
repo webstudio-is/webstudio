@@ -1588,7 +1588,7 @@ export const createDataVariable = (
   });
 };
 
-const isManagedFormParameter = (
+export const isManagedFormParameter = (
   dataSource: DataSource | undefined,
   instances: BuilderState["instances"]
 ) =>
@@ -1596,6 +1596,38 @@ const isManagedFormParameter = (
   (dataSource.name === formDataParameterName ||
     dataSource.name === browserInfoParameterName) &&
   instances?.get(dataSource.scopeInstanceId ?? "")?.component === "NativeForm";
+
+export const isRequiredManagedFormVariable = (
+  dataSource: DataSource | undefined,
+  state: Pick<BuilderState, "instances" | "props">
+) => {
+  const dataSourceId = dataSource?.id;
+  const scopeInstanceId = dataSource?.scopeInstanceId;
+  if (
+    dataSourceId === undefined ||
+    scopeInstanceId === undefined ||
+    state.instances?.get(scopeInstanceId)?.component !== "NativeForm"
+  ) {
+    return false;
+  }
+  const requiredPropNames = new Set([
+    "state",
+    "onStateChange",
+    "onResultChange",
+  ]);
+  const dataSourceReferences = /\$ws\$dataSource\$[\w$]+/g;
+  return [...(state.props?.values() ?? [])].some((prop) => {
+    if (
+      prop.instanceId !== scopeInstanceId ||
+      !requiredPropNames.has(prop.name)
+    ) {
+      return false;
+    }
+    return [...JSON.stringify(prop.value).matchAll(dataSourceReferences)].some(
+      ([reference]) => decodeDataSourceVariable(reference) === dataSourceId
+    );
+  });
+};
 
 export const updateDataVariable = (
   state: Pick<
@@ -1684,7 +1716,10 @@ export const deleteDataVariable = (
   input: z.infer<typeof dataVariableDeleteInput>
 ) => {
   const dataSource = state.dataSources?.get(input.dataSourceId);
-  if (isManagedFormParameter(dataSource, state.instances)) {
+  if (
+    isManagedFormParameter(dataSource, state.instances) ||
+    isRequiredManagedFormVariable(dataSource, state)
+  ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Form submission variables cannot be deleted"

@@ -244,7 +244,7 @@ test("excludes transitive Form-only Resources and rejects Dynamic Content Block 
       ],
     })
   ).toThrow(
-    "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+    "Dynamic Content Block Resources cannot depend on unavailable inputs"
   );
 });
 

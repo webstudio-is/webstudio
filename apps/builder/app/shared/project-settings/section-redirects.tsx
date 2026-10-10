@@ -12,6 +12,7 @@ import {
   Flex,
   Grid,
   InputErrorsTooltip,
+  InfoTooltip,
   Link,
   List,
   ListItem,
@@ -27,7 +28,6 @@ import {
 import {
   AlertIcon,
   ArrowRightIcon,
-  InfoCircleIcon,
   TrashIcon,
   UploadIcon,
 } from "@webstudio-is/icons";
@@ -214,8 +214,8 @@ export const SectionRedirects = () => {
       <Grid gap={3} css={sectionSpacing}>
         <Flex gap={1} align="center">
           <Text variant="titles">Redirects</Text>
-          <Tooltip
-            variant="wrapped"
+          <InfoTooltip
+            label="About redirects"
             content={
               <Flex direction="column" gap="2">
                 <Text>
@@ -231,12 +231,7 @@ export const SectionRedirects = () => {
                 </Flex>
               </Flex>
             }
-          >
-            <InfoCircleIcon
-              color={cssVar("--foreground-secondary")}
-              tabIndex={0}
-            />
-          </Tooltip>
+          />
         </Flex>
 
         <Flex gap="2" justify="between">

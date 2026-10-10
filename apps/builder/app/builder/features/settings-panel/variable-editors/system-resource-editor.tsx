@@ -10,8 +10,8 @@ import { $selectedInstance } from "~/shared/nano-states";
 import { $resources } from "~/shared/sync/data-stores";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import type { PanelApi } from "./shared/variable-panel-api";
-import { ResourceVariablePreview } from "./shared/resource-variable-preview";
-import { VariableEditorBody } from "./shared/editor-body";
+import { FormResourcePreview } from "./form-resource-preview";
+import { VariableEditorLayout } from "./dialog/layout";
 import { useResourcePreviewController } from "./shared/use-resource-preview-controller";
 import type { VariableEditorProps } from "./shared/editor-types";
 
@@ -67,8 +67,11 @@ export const SystemResourceForm = forwardRef<
 });
 SystemResourceForm.displayName = "SystemResourceForm";
 
-export const SystemResourceEditor = (props: VariableEditorProps) => {
-  const resourceType = props.previewProps.variableType;
+export const SystemResourceEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
+  const resourceType = props.variableType;
   const preview = useResourcePreviewController({
     variable: props.variable,
     formRef: props.formRef,
@@ -80,22 +83,22 @@ export const SystemResourceEditor = (props: VariableEditorProps) => {
     return null;
   }
   return (
-    <VariableEditorBody
+    <VariableEditorLayout
       {...props}
       titleActions={props.titleActions({
         onRefresh: () => void preview.reload(),
-        refreshPending: preview.pending,
+        refreshStatus: preview.pending ? "refreshing" : "idle",
       })}
       fields={
         <SystemResourceForm
-          ref={props.panelRef}
+          ref={ref}
           resourceType={resourceType}
           variable={props.variable}
         />
       }
       preview={
-        <ResourceVariablePreview
-          {...props.previewProps}
+        <FormResourcePreview
+          variable={props.variable}
           showEmptyLoadButton
           variableValue={preview.request}
           showSavedResourceRequest={preview.showSavedRequest}
@@ -105,4 +108,4 @@ export const SystemResourceEditor = (props: VariableEditorProps) => {
       }
     />
   );
-};
+});

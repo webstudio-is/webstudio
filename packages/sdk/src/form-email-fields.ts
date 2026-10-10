@@ -18,9 +18,9 @@ export const getFormEmailStringifyOptions = (
   for (const instanceId of formTreeIds) {
     const instance = instances.get(instanceId);
     const getProp = (name: string) =>
-      inputProps.find(
-        (prop) => prop.instanceId === instanceId && prop.name === name
-      );
+      inputProps
+        .filter((prop) => prop.instanceId === instanceId && prop.name === name)
+        .at(-1);
     const name = getProp("name");
     const type = getProp("type");
     const tag = getProp("tag");
@@ -71,9 +71,9 @@ export const getFormEmailFieldNames = (
   for (const instanceId of findTreeInstanceIds(instances, formId)) {
     const instance = instances.get(instanceId);
     const getField = (name: string) => {
-      const prop = Array.from(props.values()).find(
-        (prop) => prop.instanceId === instanceId && prop.name === name
-      );
+      const prop = Array.from(props.values())
+        .filter((prop) => prop.instanceId === instanceId && prop.name === name)
+        .at(-1);
       return prop?.type === "string" ? prop.value : undefined;
     };
     if (

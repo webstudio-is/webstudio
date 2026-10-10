@@ -23,7 +23,7 @@ import {
   loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
-import { $resourcePreviewExchanges } from "./preview-form-inspection";
+import { $resourcePreviewExchanges } from "./preview-resource-inspection";
 
 const {
   getLoaderState,

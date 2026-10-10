@@ -84,6 +84,7 @@ export { SearchField, useSearchFieldKeys } from "./components/search-field";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 export { Card } from "./components/card";
 export * from "./components/tooltip";
+export * from "./components/info-tooltip";
 export {
   EnhancedTooltip,
   EnhancedTooltipProvider,

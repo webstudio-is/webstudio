@@ -1,6 +1,6 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import type { VariableEditorProps } from "./shared/editor-types";
-import { ResourceVariablePreview } from "./shared/resource-variable-preview";
+import { FormResourcePreview } from "./form-resource-preview";
 import { useResourcePreviewController } from "./shared/use-resource-preview-controller";
 import {
   forwardRef,
@@ -179,7 +179,10 @@ export const AssetsResourceForm = forwardRef<
 );
 AssetsResourceForm.displayName = "AssetsResourceForm";
 
-export const AssetsResourceEditor = (props: VariableEditorProps) => {
+export const AssetsResourceEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
   const query = useAssetsQueryBridge();
   const preview = useResourcePreviewController({
     variable: props.variable,
@@ -194,15 +197,15 @@ export const AssetsResourceEditor = (props: VariableEditorProps) => {
     request === undefined ? undefined : getResourceKey(request);
 
   return (
-    <VariableEditorBody
+    <VariableEditorLayout
       {...props}
       titleActions={props.titleActions({
         onRefresh: () => void preview.reload(),
-        refreshPending: preview.pending,
+        refreshStatus: preview.pending ? "refreshing" : "idle",
       })}
       fields={
         <AssetsResourceForm
-          ref={props.panelRef}
+          ref={ref}
           variable={props.variable}
           onChange={preview.onChange}
           querySourceContainer={query.sourceContainer}
@@ -211,8 +214,8 @@ export const AssetsResourceEditor = (props: VariableEditorProps) => {
         />
       }
       preview={
-        <ResourceVariablePreview
-          {...props.previewProps}
+        <FormResourcePreview
+          variable={props.variable}
           showEmptyLoadButton
           variableValue={preview.request}
           showSavedResourceRequest={preview.showSavedRequest}
@@ -261,4 +264,4 @@ export const AssetsResourceEditor = (props: VariableEditorProps) => {
       }
     />
   );
-};
+});

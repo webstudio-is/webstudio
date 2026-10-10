@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { type FormEventHandler, type RefObject, useState, useRef } from "react";
+import { type RefObject, useState, useRef } from "react";
 import { RefreshIcon } from "@webstudio-is/icons";
 import {
   Button,
@@ -13,19 +13,17 @@ import {
   SYSTEM_VARIABLE_ID,
   hasAssetsResourceUrl,
 } from "@webstudio-is/sdk";
-import {
-  browserInfoParameterName,
-  formDataParameterName,
-  currentDateResourceUrl,
-} from "@webstudio-is/sdk/runtime";
+import { currentDateResourceUrl } from "@webstudio-is/sdk/runtime";
+import { isManagedFormParameter } from "@webstudio-is/project-build/runtime";
 import { formatValue } from "~/builder/shared/expression-editor";
 import { $resources, $instances } from "~/shared/sync/data-stores";
 import { Row } from "../../shared";
 import { canDeleteVariable, VariableMenu } from "../../variable-menu";
-import type { PanelApi } from "./variable-panel-api";
-import type { VariableType } from "./variable-types";
+import type { PanelApi } from "../shared/variable-panel-api";
+import type { VariableType } from "../shared/variable-types";
+import type { RefreshStatus } from "../shared/editor-types";
 import { prepareVariableEditorValue, variableEditors } from "../index";
-import { NameField, TypeField } from "./editor-fields";
+import { NameField, TypeField } from "./fields";
 
 export const VariableEditorDialog = ({
   formRef,
@@ -39,14 +37,10 @@ export const VariableEditorDialog = ({
   onClose: () => void;
   onSave: (saved: boolean) => void;
 }) => {
-  const panelRef = useRef<undefined | PanelApi>(undefined);
+  const editorRef = useRef<undefined | PanelApi>(undefined);
   const isSystemVariable =
     variable?.id === SYSTEM_VARIABLE_ID ||
-    (variable?.type === "parameter" &&
-      (variable.name === formDataParameterName ||
-        variable.name === browserInfoParameterName) &&
-      $instances.get().get(variable.scopeInstanceId ?? "")?.component ===
-        "NativeForm");
+    isManagedFormParameter(variable, $instances.get());
   const [value, setValue] = useState<unknown>(() => {
     if (variable?.type === "variable") {
       if (variable.value.type === "json") {
@@ -98,20 +92,18 @@ export const VariableEditorDialog = ({
     );
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
+  const handleSubmit = (formData: FormData) => {
     if (isSystemVariable) {
       return;
     }
-    const nameElement = event.currentTarget.elements.namedItem("name");
+    const nameElement = formRef.current?.elements.namedItem("name");
     // make sure only name is valid and allow to save everything else
     // to avoid loosing complex configuration when closed accidentally
     if (
       nameElement instanceof HTMLInputElement &&
       nameElement.checkValidity()
     ) {
-      const formData = new FormData(event.currentTarget);
-      const saved = panelRef.current?.save(formData);
+      const saved = editorRef.current?.save(formData);
       onSave(saved !== false);
       // close popover whenever new variable is created
       // to prevent creating duplicated variable
@@ -141,10 +133,10 @@ export const VariableEditorDialog = ({
   );
   const titleActions = ({
     onRefresh,
-    refreshPending = false,
+    refreshStatus = "idle",
   }: {
     onRefresh?: () => void;
-    refreshPending?: boolean;
+    refreshStatus?: RefreshStatus;
   } = {}) => (
     <DialogTitleActions>
       {variable && (
@@ -164,7 +156,7 @@ export const VariableEditorDialog = ({
             aria-label="Refresh resource data"
             prefix={<RefreshIcon />}
             color="ghost"
-            disabled={refreshPending}
+            disabled={refreshStatus === "refreshing"}
             onClick={onRefresh}
           />
         </Tooltip>
@@ -178,6 +170,7 @@ export const VariableEditorDialog = ({
     <>
       <Editor
         key={variableType}
+        ref={editorRef}
         variable={variable}
         formRef={formRef}
         onSubmit={handleSubmit}
@@ -185,14 +178,9 @@ export const VariableEditorDialog = ({
         commonFields={commonFields}
         title={variable ? "Edit variable" : "New variable"}
         titleActions={titleActions}
-        panelRef={panelRef}
         value={value}
         onValueChange={setValue}
-        previewProps={{
-          variable,
-          variableType,
-          variableValue: value,
-        }}
+        variableType={variableType}
       />
     </>
   );

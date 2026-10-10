@@ -1,4 +1,4 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import type { VariableEditorProps } from "./shared/editor-types";
 import { Row } from "../shared";
 import { ValuePreviewFrame } from "./shared/variable-value-preview";
@@ -59,20 +59,25 @@ export const StringForm = forwardRef<
 });
 StringForm.displayName = "StringForm";
 
-export const StringEditor = (props: VariableEditorProps) => (
-  <VariableEditorBody
-    {...props}
-    titleActions={props.titleActions()}
-    fields={
-      <Row>
-        <StringForm
-          ref={props.panelRef}
-          variable={props.variable}
-          value={props.value}
-          onChange={props.onValueChange}
-        />
-      </Row>
-    }
-    preview={<ValuePreviewFrame value={props.previewProps.variableValue} />}
-  />
-);
+export const StringEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
+  return (
+    <VariableEditorLayout
+      {...props}
+      titleActions={props.titleActions()}
+      fields={
+        <Row>
+          <StringForm
+            ref={ref}
+            variable={props.variable}
+            value={props.value}
+            onChange={props.onValueChange}
+          />
+        </Row>
+      }
+      preview={<ValuePreviewFrame value={props.value} />}
+    />
+  );
+});

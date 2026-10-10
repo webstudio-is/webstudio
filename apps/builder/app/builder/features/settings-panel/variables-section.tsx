@@ -1,8 +1,6 @@
 import {
   $livePreviewFormValues,
   $livePreviewBrowserInfo,
-  getFormOccurrenceKey,
-  toPublicPreviewValue,
 } from "~/shared/preview-form-values";
 import { useEffect, useRef, useState } from "react";
 import { computed } from "nanostores";
@@ -50,10 +48,7 @@ import {
   showVariableAtSource,
 } from "./variable-navigation";
 import { StyleSourceBadge } from "../style-panel/style-source";
-import {
-  getFormDataPreview,
-  getBrowserInfoPreview,
-} from "./form-context-preview";
+import { resolveFormParameterPreview } from "./form-context-preview";
 import {
   $selectedInstance,
   $selectedInstanceSelector,
@@ -247,7 +242,7 @@ const VariablesItem = ({
   const valueSourceName =
     valueSourceId === ROOT_INSTANCE_ID
       ? "Global root"
-      : (valueSource?.label ?? valueSource?.component ?? "System");
+      : valueSource?.label ?? valueSource?.component ?? "System";
   const shadowed =
     source === "local" && variable.scopeInstanceId
       ? findAvailableVariables({
@@ -264,32 +259,13 @@ const VariablesItem = ({
             other.name === variable.name
         )
       : undefined;
-  if (
-    variable.type === "parameter" &&
-    instances.get(variable.scopeInstanceId ?? "")?.component === "NativeForm"
-  ) {
-    if (variable.name === "formData") {
-      value =
-        liveFormValues.get(
-          getFormOccurrenceKey(
-            selectedInstanceSelector,
-            variable.scopeInstanceId!
-          ) ?? ""
-        ) ?? getFormDataPreview(variable.scopeInstanceId!);
-    }
-    if (variable.name === "browserInfo") {
-      value = getBrowserInfoPreview(
-        liveBrowserInfo.get(variable.scopeInstanceId ?? "")
-      );
-    }
-  }
-  if (
-    variable.type === "parameter" &&
-    variable.name === "formData" &&
-    instances.get(variable.scopeInstanceId ?? "")?.component === "NativeForm"
-  ) {
-    value = toPublicPreviewValue(value);
-  }
+  value =
+    resolveFormParameterPreview(variable, {
+      instances,
+      selector: selectedInstanceSelector,
+      liveFormValues,
+      liveBrowserInfo,
+    })?.value ?? value;
   const canDelete = canDeleteVariable(variable, source === "local");
   const requestDelete = () =>
     setVariableToDelete({
@@ -332,10 +308,14 @@ const VariablesItem = ({
                   <Text variant="labels">{variable.name}</Text>
                   <Text>
                     {variable.type === "variable"
-                      ? `${variable.value.type === "json" ? "JSON" : variable.value.type} · Static`
+                      ? `${
+                          variable.value.type === "json"
+                            ? "JSON"
+                            : variable.value.type
+                        } · Static`
                       : variable.type === "resource"
-                        ? "Resource · Dynamic"
-                        : "JSON · Dynamic parameter"}
+                      ? "Resource · Dynamic"
+                      : "JSON · Dynamic parameter"}
                   </Text>
                   {formVariableDescription && (
                     <Text>{formVariableDescription}</Text>
@@ -386,7 +366,11 @@ const VariablesItem = ({
             </Tooltip>
             {shadowed && (
               <Tooltip
-                content={`This variable shadows ${shadowed.name} from ${instances.get(shadowed.scopeInstanceId ?? "")?.label ?? instances.get(shadowed.scopeInstanceId ?? "")?.component ?? "an ancestor"}. Delete the local variable to reveal it.`}
+                content={`This variable shadows ${shadowed.name} from ${
+                  instances.get(shadowed.scopeInstanceId ?? "")?.label ??
+                  instances.get(shadowed.scopeInstanceId ?? "")?.component ??
+                  "an ancestor"
+                }. Delete the local variable to reveal it.`}
               >
                 <AlertIcon color={cssVar("--foreground-warning")} />
               </Tooltip>

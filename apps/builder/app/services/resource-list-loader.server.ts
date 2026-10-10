@@ -9,8 +9,8 @@ import {
 import { getZodValidationIssues } from "@webstudio-is/project-build/runtime";
 import { executeAssetQueries } from "~/shared/$resources/assets-query.server";
 import { getResourceKey } from "~/shared/resource-utils";
-import { capturePreviewFormExchange } from "~/services/preview-form-inspection.server";
-import type { PreviewFormExchange } from "~/shared/preview-form-inspection";
+import { capturePreviewResourceExchange } from "~/services/preview-resource-inspection.server";
+import type { PreviewResourceExchange } from "~/shared/preview-resource-inspection";
 
 const defaultDependencies = {
   executeAssetQueries,
@@ -55,7 +55,7 @@ type LoadResourceRequestListInput = {
 type LoadedResourceList = Array<[string, unknown]>;
 type InspectedResourceList = {
   resources: LoadedResourceList;
-  inspection?: PreviewFormExchange;
+  inspection?: PreviewResourceExchange;
 };
 
 export function loadResourceRequestList(
@@ -92,7 +92,7 @@ export async function loadResourceRequestList(
       });
   const providerFetch: typeof fetch = (input, init) =>
     assetProvider?.fetch(input, init) ?? customFetch(input, init);
-  let inspection: PreviewFormExchange | undefined;
+  let inspection: PreviewResourceExchange | undefined;
   const output = requestList.map(async (item) => {
     const resource = resourceRequest.safeParse(item);
     if (resource.success === false) {
@@ -124,7 +124,7 @@ export async function loadResourceRequestList(
         ...(resourceKey === inspectResourceKey
           ? {
               onExchange: async (exchange) => {
-                inspection = await capturePreviewFormExchange(
+                inspection = await capturePreviewResourceExchange(
                   resourceKey,
                   exchange,
                   {

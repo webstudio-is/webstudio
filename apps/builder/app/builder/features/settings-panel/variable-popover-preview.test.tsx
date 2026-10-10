@@ -9,9 +9,10 @@ const { previewLoaderCalls, emailPreviewMockState } = vi.hoisted(() => ({
   previewLoaderCalls: vi.fn(),
   emailPreviewMockState: { fail: false },
 }));
-vi.mock("./email-request-preview", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("./email-request-preview")>();
+vi.mock("./variable-editors/email-request-preview", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("./variable-editors/email-request-preview")
+  >();
   return {
     ...actual,
     buildEmailRequestPreviewFromEditor: (
@@ -44,7 +45,7 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { $livePreviewFormValues } from "~/shared/preview-form-values";
-import { $resourcePreviewExchanges } from "~/shared/preview-form-inspection";
+import { $resourcePreviewExchanges } from "~/shared/preview-resource-inspection";
 import {
   $livePreviewBrowserInfo,
   recordPreviewBrowserInfo,

@@ -16,17 +16,12 @@ import {
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import {
-  browserInfoParameterName,
-  formDataParameterName,
-} from "@webstudio-is/sdk/runtime";
-import {
-  getFormOccurrenceKey,
   $livePreviewFormValues,
-  toPublicPreviewValue,
+  $livePreviewBrowserInfo,
 } from "~/shared/preview-form-values";
 import {
-  getBrowserInfoPreview,
-  getFormDataPreview,
+  getFormParameterName,
+  resolveFormParameterPreview,
 } from "./form-context-preview";
 import {
   $selectedInstancePathWithRoot,
@@ -46,6 +41,7 @@ export const getResourceScopeForInstance = ({
   formScopeInstanceId,
   formScopeSelector,
   liveFormValues = new Map(),
+  liveBrowserInfo = new Map(),
 }: {
   page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
@@ -55,6 +51,10 @@ export const getResourceScopeForInstance = ({
   formScopeInstanceId?: string;
   formScopeSelector?: readonly string[];
   liveFormValues?: ReadonlyMap<string, Record<string, unknown>>;
+  liveBrowserInfo?: ReadonlyMap<
+    string,
+    import("@webstudio-is/sdk/runtime").ManagedFormBrowserInfo
+  >;
 }) => {
   const scope: Record<string, unknown> = {};
   const aliases = new Map<string, string>();
@@ -66,11 +66,8 @@ export const getResourceScopeForInstance = ({
     // request waterfalls/loops and complicate generated resource code.
     if (
       dataSource.type === "parameter" &&
-      !(
-        dataSource.scopeInstanceId === formScopeInstanceId &&
-        (dataSource.name === formDataParameterName ||
-          dataSource.name === browserInfoParameterName)
-      )
+      getFormParameterName(dataSource, { formId: formScopeInstanceId }) ===
+        undefined
     ) {
       hiddenDataSourceIds.add(dataSource.id);
     }
@@ -86,25 +83,19 @@ export const getResourceScopeForInstance = ({
   }
   if (formScopeInstanceId) {
     for (const dataSource of dataSources.values()) {
-      if (
-        dataSource.type !== "parameter" ||
-        dataSource.scopeInstanceId !== formScopeInstanceId ||
-        (dataSource.name !== formDataParameterName &&
-          dataSource.name !== browserInfoParameterName)
-      ) {
+      const preview = resolveFormParameterPreview(dataSource, {
+        formId: formScopeInstanceId,
+        selector: formScopeSelector,
+        liveFormValues,
+        liveBrowserInfo,
+      });
+      if (preview === undefined) {
         continue;
       }
       const name = encodeDataVariableId(dataSource.id);
-      const value =
-        dataSource.name === formDataParameterName
-          ? (liveFormValues.get(
-              getFormOccurrenceKey(formScopeSelector, formScopeInstanceId) ?? ""
-            ) ?? getFormDataPreview(formScopeInstanceId))
-          : getBrowserInfoPreview();
-      const previewValue = toPublicPreviewValue(value);
-      scope[name] = previewValue;
+      scope[name] = preview.value;
       aliases.set(name, dataSource.name);
-      variableValues.set(dataSource.id, previewValue);
+      variableValues.set(dataSource.id, preview.value);
     }
   }
   const values = variableValuesByInstanceSelector.get(instanceKey ?? "");
@@ -119,10 +110,8 @@ export const getResourceScopeForInstance = ({
       }
       if (dataSource) {
         if (
-          dataSource.type === "parameter" &&
-          dataSource.scopeInstanceId === formScopeInstanceId &&
-          (dataSource.name === formDataParameterName ||
-            dataSource.name === browserInfoParameterName)
+          getFormParameterName(dataSource, { formId: formScopeInstanceId }) !==
+          undefined
         ) {
           continue;
         }
@@ -179,6 +168,7 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
       $dataSources,
       $resources,
       $livePreviewFormValues,
+      $livePreviewBrowserInfo,
     ],
     (
       page,
@@ -186,14 +176,15 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
       variableValuesByInstanceSelector,
       dataSources,
       resources,
-      liveFormValues
+      liveFormValues,
+      liveBrowserInfo
     ) => {
       const variablePathIndex =
         variable === undefined
           ? 0
-          : (instancePath?.findIndex(
+          : instancePath?.findIndex(
               ({ instance }) => instance.id === variable.scopeInstanceId
-            ) ?? -1);
+            ) ?? -1;
       const formScopeInstanceId =
         variablePathIndex < 0
           ? undefined
@@ -217,6 +208,7 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
         instancePath,
         dataSources,
         liveFormValues,
+        liveBrowserInfo,
       ] as const;
       const baseInputsMatch =
         cachedBaseInputs !== undefined &&
@@ -224,6 +216,7 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
         cachedBaseInputs[1] === instancePath &&
         cachedBaseInputs[2] === dataSources &&
         cachedBaseInputs[3] === liveFormValues &&
+        cachedBaseInputs[4] === liveBrowserInfo &&
         areMapsShallowEqual(cachedBaseValues, values);
       if (baseInputsMatch === false) {
         cachedBaseInputs = currentBaseInputs;
@@ -237,18 +230,19 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
           formScopeInstanceId,
           formScopeSelector,
           liveFormValues,
+          liveBrowserInfo,
         });
       }
       const cycleDataSourceIds = new Set(
         variable === undefined
           ? []
           : variable.type === "resource"
-            ? getResourceCycleDataSourceIds({
-                resourceDataSource: variable,
-                resources,
-                dataSources,
-              })
-            : [variable.id]
+          ? getResourceCycleDataSourceIds({
+              resourceDataSource: variable,
+              resources,
+              dataSources,
+            })
+          : [variable.id]
       );
       if (
         cachedResult !== undefined &&

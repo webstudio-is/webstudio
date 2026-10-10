@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import {
   Grid,
   InputField,
+  InfoTooltip,
   Label,
   theme,
   Text,
@@ -10,11 +11,10 @@ import {
   Button,
   css,
   Flex,
-  Tooltip,
   IconButton,
   cssVar,
 } from "@webstudio-is/design-system";
-import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
+import { CopyIcon } from "@webstudio-is/icons";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ImageControl } from "./image-control";
@@ -103,15 +103,10 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
       <Grid gap={1} css={sectionSpacing}>
         <Flex gap={1} align="center">
           <Label htmlFor={siteNameId}>Site name</Label>
-          <Tooltip
-            variant="wrapped"
+          <InfoTooltip
+            label="About site name"
             content="Used in search results and social previews."
-          >
-            <InfoCircleIcon
-              color={cssVar("--foreground-secondary")}
-              tabIndex={0}
-            />
-          </Tooltip>
+          />
         </Flex>
         <InputField
           id={siteNameId}

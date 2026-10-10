@@ -24,15 +24,14 @@ import {
 } from "@webstudio-is/sdk";
 import { getContentModePropNamesByTag } from "@webstudio-is/project-build/runtime";
 import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
-  cssVar,
   Label as BaseLabel,
   useIsTruncated,
   Tooltip,
   Box,
   Flex,
   Grid,
+  InfoTooltip,
   Text,
   theme,
 } from "@webstudio-is/design-system";
@@ -145,17 +144,10 @@ export const Label = ({
     <Flex align="center" css={{ gap: theme.spacing[3], width: "100%" }}>
       <Box>{label}</Box>
       {readOnly && (
-        <Tooltip
-          content={
-            "The value is controlled by an expression and cannot be changed."
-          }
-          variant="wrapped"
-        >
-          <InfoCircleIcon
-            color={cssVar("--foreground-secondary")}
-            tabIndex={0}
-          />
-        </Tooltip>
+        <InfoTooltip
+          label="About expression controlled value"
+          content="The value is controlled by an expression and cannot be changed."
+        />
       )}
     </Flex>
   );

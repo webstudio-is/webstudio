@@ -217,7 +217,12 @@ test("editing a System Resource and changing its Type persists the selected cate
   expect(savedFormData.get("method")).toBe("post");
   expect(savedFormData.get("url")).toBe('""');
   expect(savedFormData.get("email-settings")).toBeTruthy();
-  await act(async () => form.requestSubmit());
+  expect(form.querySelector('button[type="submit"][hidden]')).not.toBeNull();
+  const nameInput = form.querySelector<HTMLInputElement>('input[name="name"]')!;
+  await act(async () => {
+    await userEvent.click(nameInput);
+    await userEvent.keyboard("{Enter}");
+  });
   expect($resources.get().get(resource.id)).toMatchObject({
     control: "email",
     method: "post",

@@ -1,7 +1,7 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import { useResourcePreviewController } from "./shared/use-resource-preview-controller";
 import type { VariableEditorProps } from "./shared/editor-types";
-import { ResourceVariablePreview } from "./shared/resource-variable-preview";
+import { FormResourcePreview } from "./form-resource-preview";
 import {
   forwardRef,
   useId,
@@ -35,7 +35,7 @@ import { useResourceScope } from "../resource-scope";
 import { Row } from "../shared";
 import type { PanelApi } from "./shared/variable-panel-api";
 
-export const ResourceForm = forwardRef<
+export const HttpResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource; onChange?: () => void }
 >(({ variable, onChange }, ref) => {
@@ -110,7 +110,11 @@ export const ResourceForm = forwardRef<
       <Row>
         <MethodField
           value={method}
-          formAction={formAction}
+          getAdditionalDescription={(method) =>
+            formAction && method === "post"
+              ? "Form submissions use POST. This method applies elsewhere."
+              : undefined
+          }
           onChange={(value) => {
             onChange?.();
             setMethod(value);
@@ -214,14 +218,14 @@ export const ResourceForm = forwardRef<
                     auto: "auto",
                     json: "application/json",
                     multipart: "multipart/form-data",
-                  })[value]
+                  }[value])
                 }
                 getDescription={(value: NonNullable<Resource["bodyFormat"]>) =>
                   ({
                     auto: "Uses text/plain for text values, application/json for other values, and multipart/form-data when files are included.",
                     json: "Sends an object or array as JSON.",
                     multipart: "Sends fields as form data, including files.",
-                  })[value]
+                  }[value])
                 }
                 onChange={(value) => {
                   onChange?.();
@@ -257,30 +261,33 @@ export const ResourceForm = forwardRef<
     </>
   );
 });
-ResourceForm.displayName = "ResourceForm";
+HttpResourceForm.displayName = "HttpResourceForm";
 
-export const HttpResourceEditor = (props: VariableEditorProps) => {
+export const HttpResourceEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
   const preview = useResourcePreviewController({
     variable: props.variable,
     formRef: props.formRef,
   });
   return (
-    <VariableEditorBody
+    <VariableEditorLayout
       {...props}
       titleActions={props.titleActions({
         onRefresh: () => void preview.reload(),
-        refreshPending: preview.pending,
+        refreshStatus: preview.pending ? "refreshing" : "idle",
       })}
       fields={
-        <ResourceForm
-          ref={props.panelRef}
+        <HttpResourceForm
+          ref={ref}
           variable={props.variable}
           onChange={preview.onChange}
         />
       }
       preview={
-        <ResourceVariablePreview
-          {...props.previewProps}
+        <FormResourcePreview
+          variable={props.variable}
           showEmptyLoadButton
           inspectSubmission
           alwaysShowRequestTab
@@ -292,4 +299,4 @@ export const HttpResourceEditor = (props: VariableEditorProps) => {
       }
     />
   );
-};
+});

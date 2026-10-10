@@ -23,7 +23,49 @@ import {
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { createCloudflareManagedFormEmailSender } from "./managed-form-email";
-import { loadResourceWithEmail } from "./email-resource-delivery";
+import {
+  loadResourceWithEmail,
+  loadResourcesWithEmail,
+} from "./email-resource-delivery";
+import {
+  loadResource as runtimeLoadResource,
+  loadResources as runtimeLoadResources,
+} from "./runtime";
+
+test("runtime exports the generic Resource loaders", () => {
+  expect(runtimeLoadResource).toBe(loadResource);
+  expect(runtimeLoadResources).toBe(loadResources);
+});
+
+test("Email graph adapter preserves a caller transport for other Resources", async () => {
+  const loadRequest = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: "custom transport",
+  }));
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const result = await loadResourcesWithEmail(
+    fetch,
+    new Map([
+      [
+        "http",
+        {
+          name: "HTTP",
+          method: "get" as const,
+          url: "https://example.com",
+          searchParams: [],
+          headers: [],
+        },
+      ],
+    ]),
+    undefined,
+    { loadRequest }
+  );
+  expect(loadRequest).toHaveBeenCalledOnce();
+  expect(fetch).not.toHaveBeenCalled();
+  expect(result).toMatchObject({ http: { data: "custom transport" } });
+});
 
 test("Email Resources use the feature transport without an HTTP fetch", async () => {
   const fetch = vi.fn<typeof globalThis.fetch>();
@@ -68,6 +110,8 @@ test("Email exchange inspection retains actual Email Service response headers", 
     statusText: string;
     header: string | null;
   }> = [];
+  const onEmailRequest = vi.fn();
+  const onEmailResponse = vi.fn();
 
   await loadResourceWithEmail(
     vi.fn<typeof globalThis.fetch>(),
@@ -89,6 +133,8 @@ test("Email exchange inspection retains actual Email Service response headers", 
     undefined,
     {
       sendEmail,
+      onEmailRequest,
+      onEmailResponse,
       onExchange: (exchange) => {
         exchanges.push({
           kind: exchange.kind,
@@ -108,6 +154,8 @@ test("Email exchange inspection retains actual Email Service response headers", 
       header: "message-id",
     },
   ]);
+  expect(onEmailRequest).toHaveBeenCalledOnce();
+  expect(onEmailResponse).toHaveBeenCalledOnce();
 });
 
 test("Email inspection keeps raw HTTP response separate from failed delivery outcome", async () => {

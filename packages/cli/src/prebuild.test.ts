@@ -3158,6 +3158,16 @@ sitemap.map((page) => page.path);`
         ],
         props: [
           [
+            "earlier-action",
+            {
+              id: "earlier-action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [],
+            },
+          ],
+          [
             "action",
             {
               id: "action",

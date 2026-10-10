@@ -16,7 +16,7 @@ import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import deepEqual from "fast-deep-equal";
 import {
-  generateWebstudioComponent,
+  generateManagedFormComponent,
   type PublishedContentBlock,
   type Params,
   normalizeProps,
@@ -1764,9 +1764,11 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     const managedFormSubmissions = formInstances
       .filter((instance) => instance.component === "NativeForm")
       .map((instance) => {
-        const actionProp = Array.from(props.values()).find(
-          (prop) => prop.instanceId === instance.id && prop.name === "action"
-        );
+        const actionProp = Array.from(props.values())
+          .filter(
+            (prop) => prop.instanceId === instance.id && prop.name === "action"
+          )
+          .at(-1);
         const action =
           actionProp?.type === "json" ? actionProp.value : undefined;
         const resourceIds = isFormSubmission(action)
@@ -1791,7 +1793,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     const usedRuntimeHelpers = new Set<
       "renderText" | "formatManagedFormErrors"
     >();
-    const pageComponent = generateWebstudioComponent({
+    const pageComponent = generateManagedFormComponent({
       usedRuntimeHelpers,
       scope,
       name: "Page",

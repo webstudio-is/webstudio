@@ -7,13 +7,36 @@ import {
   previewFormExchanges,
   recordPreviewFormExchanges,
 } from "./preview-form-inspection";
-import { draftPersistence } from "./sync/draft-persistence";
+import {
+  DraftPersistenceError,
+  draftPersistence,
+} from "./sync/draft-persistence";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import type { Publish } from "~/shared/pubsub";
 import { subscribe } from "~/shared/pubsub";
 import { fetch as builderFetch } from "~/shared/fetch.client";
 import { submitManagedForm } from "@webstudio-is/sdk-components-react";
 import type { PreviewFormRequest } from "./preview-form-bridge";
+
+const getPreviewFormErrorMessage = (error: unknown) => {
+  if (error instanceof DraftPersistenceError) {
+    switch (error.reason) {
+      case "changed":
+        return "Draft synchronization changed. Reload before testing the Form.";
+      case "changed-after-wait":
+        return "Draft synchronization changed. Try again.";
+      case "not-ready":
+        return "Draft synchronization is not ready. Reload before testing the Form.";
+      case "save-failed":
+        return "Draft changes could not be saved. Reload before testing the Form.";
+      case "timeout":
+        return "Draft changes are still saving. Try submitting again once saved.";
+      case "canceled":
+        return "Form submission canceled";
+    }
+  }
+  return error instanceof Error ? error.message : "Form submission failed";
+};
 
 /** Keep authenticated Preview requests in the Builder, outside the Canvas. */
 export const subscribePreviewFormRequests = (publish: Publish) => {
@@ -76,8 +99,7 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
         if (!controller.signal.aborted) {
           recordPreviewBrowserInfo(managedFormId, undefined);
           recordPreviewFormExchanges(managedFormId, []);
-          const message =
-            error instanceof Error ? error.message : "Form submission failed";
+          const message = getPreviewFormErrorMessage(error);
           publish({
             type: "previewFormResult",
             payload: {

@@ -23,7 +23,7 @@ import {
   Separator,
   Switch,
   theme,
-  Tooltip,
+  InfoTooltip,
   Collapsible,
   keyframes,
   Text,
@@ -40,7 +40,6 @@ import {
   CopyIcon,
   EllipsesIcon,
   PlusIcon,
-  InfoCircleIcon,
   UpgradeIcon,
 } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -77,17 +76,15 @@ const PermissionTooltip = ({
   title: string;
   children: ReactNode;
 }) => (
-  <Tooltip
+  <InfoTooltip
+    label={`About ${title.toLowerCase()}`}
     content={
       <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
         <Text variant="titles">{title}</Text>
         <Text>{children}</Text>
       </Flex>
     }
-    variant="wrapped"
-  >
-    <InfoCircleIcon color={cssVar("--foreground-secondary")} tabIndex={0} />
-  </Tooltip>
+  />
 );
 
 const PermissionTooltipContent = ({

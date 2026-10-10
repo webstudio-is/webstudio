@@ -144,9 +144,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const resources = new Map(
       build.resources.map((resource) => [resource.id, resource])
     );
-    const actionProp = build.props.find(
-      (prop) => prop.instanceId === formId && prop.name === "action"
-    );
+    const actionProp = build.props
+      .filter((prop) => prop.instanceId === formId && prop.name === "action")
+      .at(-1);
     const action = actionProp?.type === "json" ? actionProp.value : undefined;
     const destinations = isFormSubmission(action)
       ? getEnabledFormActions(action)

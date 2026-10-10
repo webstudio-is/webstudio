@@ -31,6 +31,10 @@ import {
   generateJsxChildren,
   generateWebstudioComponent,
 } from "./component-generator";
+import {
+  generateManagedFormComponent,
+  generateManagedFormJsxChildren,
+} from "./managed-form-component-generator";
 
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
@@ -55,7 +59,7 @@ const virtualRoot = "/component-generator-test";
 test("Form submission parameters are unavailable during page render", () => {
   const formData = new Parameter("formData");
   const browserInfo = new Parameter("browserInfo");
-  const generated = generateWebstudioComponent({
+  const generated = generateManagedFormComponent({
     classesMap: new Map(),
     scope: createScope(),
     name: "Page",
@@ -77,7 +81,7 @@ test("Form submission parameters are unavailable during page render", () => {
   expect(isValidJSX(generated)).toBe(true);
 });
 
-test("only managed Forms receive a server identity that custom props cannot override", () => {
+test("managed Forms own their server identity after custom props and action deduplication", () => {
   const data = renderData(
     <Body ws:id="body">
       <NativeForm ws:id="form" />
@@ -90,8 +94,8 @@ test("only managed Forms receive a server identity that custom props cannot over
     type: "string",
     value: "spoofed",
   });
-  const generate = () =>
-    generateWebstudioComponent({
+  const generate = (managed: boolean) =>
+    (managed ? generateManagedFormComponent : generateWebstudioComponent)({
       classesMap: new Map(),
       scope: createScope(),
       name: "Page",
@@ -101,8 +105,8 @@ test("only managed Forms receive a server identity that custom props cannot over
       ...data,
     });
 
-  const native = generate();
-  expect(native).not.toContain("data-ws-managed-form-id");
+  expect(generate(false)).toContain('data-ws-managed-form-id={"spoofed"}');
+  expect(generate(true)).not.toContain("data-ws-managed-form-id");
   data.props.set("action", {
     id: "action",
     instanceId: "form",
@@ -110,11 +114,77 @@ test("only managed Forms receive a server identity that custom props cannot over
     type: "json",
     value: [{ dataSourceId: "request", enabled: true }],
   });
-  const managed = generate();
+  const managed = generate(true);
   expect(managed.match(/data-ws-managed-form-id/g)).toHaveLength(1);
   expect(managed).toContain('data-ws-managed-form-id="form"');
   expect(managed).not.toContain("spoofed");
   expect(isValidJSX(managed)).toBe(true);
+
+  data.props.set("later-action", {
+    id: "later-action",
+    instanceId: "form",
+    name: "action",
+    type: "json",
+    value: { destinations: ["request"] },
+  });
+  expect(generate(true)).not.toContain("data-ws-managed-form-id");
+  data.props.set("final-action", {
+    id: "final-action",
+    instanceId: "form",
+    name: "action",
+    type: "json",
+    value: [{ dataSourceId: "final", enabled: true }],
+  });
+  expect(generate(true)).toContain('data-ws-managed-form-id="form"');
+});
+
+test("managed Form policy applies to a root Form and leaves other elements' props intact", () => {
+  const data = renderData(
+    <Body ws:id="body">
+      <NativeForm ws:id="form" />
+      <Box ws:id="box" />
+    </Body>
+  );
+  data.props.set("form-id", {
+    id: "form-id",
+    instanceId: "form",
+    name: "data-ws-managed-form-id",
+    type: "string",
+    value: "spoofed",
+  });
+  data.props.set("box-id", {
+    id: "box-id",
+    instanceId: "box",
+    name: "data-ws-managed-form-id",
+    type: "string",
+    value: "ordinary",
+  });
+  data.props.set("action", {
+    id: "action",
+    instanceId: "form",
+    name: "action",
+    type: "json",
+    value: [{ dataSourceId: "request", enabled: true }],
+  });
+  const generate = (rootInstanceId: string) =>
+    generateManagedFormComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId,
+      parameters: [],
+      metas: new Map(),
+      ...data,
+    });
+
+  const root = generate("form");
+  expect(root.match(/data-ws-managed-form-id/g)).toHaveLength(1);
+  expect(root).toContain('data-ws-managed-form-id="form"');
+  expect(root).not.toContain("spoofed");
+  const nested = generate("body");
+  expect(nested).toContain('data-ws-managed-form-id={"ordinary"}');
+  expect(nested).toContain('data-ws-managed-form-id="form"');
+  expect(isValidJSX(nested)).toBe(true);
 });
 const virtualConfig = `${virtualRoot}/tsconfig.json`;
 const virtualFile = `${virtualRoot}/virtual.tsx`;
@@ -469,7 +539,7 @@ test("generate jsx children with text", () => {
 
 test("exclude text placeholders", () => {
   expect(
-    generateJsxChildren({
+    generateManagedFormJsxChildren({
       scope: createScope(),
       metas: new Map(),
       children: [
@@ -596,6 +666,22 @@ test("generate jsx children with nested instances", () => {
     `)
     )
   );
+});
+
+test("a generic policy can resolve an instance to an empty element", () => {
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      metas: new Map(),
+      children: [{ type: "id", value: "box" }],
+      usedDataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      policy: {
+        resolveInstance: (instance) => ({ ...instance, children: [] }),
+      },
+      ...renderData(<Box ws:id="box">Authored text</Box>),
+    })
+  ).toEqual(validateJSX("<Box />\n"));
 });
 
 test("deduplicate base and namespaced components with same short name", () => {
@@ -2176,6 +2262,9 @@ test("saved managed Form errors render like Preview for malformed values while p
     ],
   ]);
   const usedDataSources = new Map();
+  const usedRuntimeHelpers = new Set<
+    "renderText" | "formatManagedFormErrors"
+  >();
   const resultAction: import("@webstudio-is/sdk").Prop = {
     id: "result-action",
     instanceId: form.id,
@@ -2189,9 +2278,10 @@ test("saved managed Form errors render like Preview for malformed values while p
       },
     ],
   };
-  const generated = generateJsxChildren({
+  const generated = generateManagedFormJsxChildren({
     scope: createScope(),
     usedDataSources,
+    usedRuntimeHelpers,
     indexesWithinAncestors: new Map(),
     metas: new Map(),
     props: new Map([[resultAction.id, resultAction]]),
@@ -2202,6 +2292,9 @@ test("saved managed Form errors render like Preview for malformed values while p
     ]),
     dataSources,
   });
+  expect(usedRuntimeHelpers).toEqual(
+    new Set(["renderText", "formatManagedFormErrors"])
+  );
   const { code } = await transform(`const Page = () => (${generated});`, {
     loader: "tsx",
     jsxFactory: "createElement",
@@ -2255,7 +2348,7 @@ test("saved managed Form errors render like Preview for malformed values while p
     const usedRuntimeHelpers = new Set<
       "renderText" | "formatManagedFormErrors"
     >();
-    generateWebstudioComponent({
+    generateManagedFormComponent({
       scope: createScope(),
       name: "Page",
       rootInstanceId,

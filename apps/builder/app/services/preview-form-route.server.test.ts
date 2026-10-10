@@ -198,6 +198,21 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   expect(response.headers.get("cache-control")).toContain("no-store");
 });
 
+test("Preview uses the final effective Form action when props are duplicated", async () => {
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    props: [
+      { ...draftBuild.props[0], id: "earlier-action", value: [] },
+      ...draftBuild.props,
+    ],
+  } as never);
+  const response = await action({ request: request() } as never);
+  expect(await response.json()).toMatchObject({ success: true });
+  const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
+    .results[0].value;
+  expect(resourceFetch).toHaveBeenCalledOnce();
+});
+
 test("Preview Actions resolve the matched page's legacy System binding", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,

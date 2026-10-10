@@ -1424,6 +1424,59 @@ test("automatic Email body redacts Element passwords and unknown input types", (
   expect(elementBody).toContain('"name": "Ada"');
   expect(elementBody).not.toContain("secret");
 
+  const duplicatePropsBody = getBody({
+    instance: {
+      type: "instance",
+      id: "input",
+      component: "Input",
+      children: [],
+    },
+    inputProps: new Map([
+      [
+        "old-name",
+        {
+          id: "old-name",
+          instanceId: "input",
+          name: "name",
+          type: "string",
+          value: "name",
+        },
+      ],
+      [
+        "old-type",
+        {
+          id: "old-type",
+          instanceId: "input",
+          name: "type",
+          type: "string",
+          value: "text",
+        },
+      ],
+      [
+        "final-name",
+        {
+          id: "final-name",
+          instanceId: "input",
+          name: "name",
+          type: "string",
+          value: "password",
+        },
+      ],
+      [
+        "final-type",
+        {
+          id: "final-type",
+          instanceId: "input",
+          name: "type",
+          type: "string",
+          value: "password",
+        },
+      ],
+    ]),
+  });
+  expect(duplicatePropsBody).toContain('"name": "Ada"');
+  expect(duplicatePropsBody).not.toContain("secret");
+
   const dynamicTypeBody = getBody({
     instance: {
       type: "instance",

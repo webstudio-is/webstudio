@@ -1,6 +1,6 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import type { VariableEditorProps } from "./shared/editor-types";
-import { ResourceVariablePreview } from "./shared/resource-variable-preview";
+import { FormResourcePreview } from "./form-resource-preview";
 import {
   forwardRef,
   useId,
@@ -34,6 +34,7 @@ import {
   Flex,
   Grid,
   InputErrorsTooltip,
+  InfoTooltip,
   InputField,
   Label,
   Radio,
@@ -41,10 +42,7 @@ import {
   RadioGroup,
   Select,
   TextArea,
-  Tooltip,
-  cssVar,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import { $selectedInstance } from "~/shared/nano-states";
 import {
   $dataSources,
@@ -68,7 +66,7 @@ import {
 } from "@webstudio-is/project-build/contracts";
 import { Row } from "../shared";
 import { useResourceScope } from "../resource-scope";
-import { buildEmailRequestPreviewFromEditor } from "../email-request-preview";
+import { buildEmailRequestPreviewFromEditor } from "./email-request-preview";
 import type { PanelApi } from "./shared/variable-panel-api";
 
 const EmailExpressionField = ({
@@ -457,18 +455,11 @@ export const EmailResourceForm = forwardRef<
                   />
                 </InputErrorsTooltip>
               </Box>
-              <Tooltip
+              <InfoTooltip
+                label="About Visitor email field"
                 content="Adds a note with this site’s URL to help recipients identify where the message came from and discourage spam."
-                variant="wrapped"
                 disableHoverableContent={true}
-                openOnFocus
-              >
-                <InfoCircleIcon
-                  aria-label="About Visitor email field"
-                  color={cssVar("--foreground-secondary")}
-                  tabIndex={0}
-                />
-              </Tooltip>
+              />
             </Flex>
           </Grid>
         </Row>
@@ -533,7 +524,10 @@ export const EmailResourceForm = forwardRef<
 });
 EmailResourceForm.displayName = "EmailResourceForm";
 
-export const EmailResourceEditor = (props: VariableEditorProps) => {
+export const EmailResourceEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
   const { scope, aliases } = useResourceScope({ variable: props.variable });
   const revisionRef = useRef(0);
   const [requestPreview, setRequestPreview] =
@@ -583,22 +577,22 @@ export const EmailResourceEditor = (props: VariableEditorProps) => {
   };
 
   return (
-    <VariableEditorBody
+    <VariableEditorLayout
       {...props}
       titleActions={props.titleActions({
         onRefresh: () => void loadRequest(),
-        refreshPending: pending,
+        refreshStatus: pending ? "refreshing" : "idle",
       })}
       fields={
         <EmailResourceForm
-          ref={props.panelRef}
+          ref={ref}
           variable={props.variable}
           onChange={onChange}
         />
       }
       preview={
-        <ResourceVariablePreview
-          {...props.previewProps}
+        <FormResourcePreview
+          variable={props.variable}
           variableValue={undefined}
           showSavedResourceRequest={false}
           isComputingRequest={pending}
@@ -611,4 +605,4 @@ export const EmailResourceEditor = (props: VariableEditorProps) => {
       }
     />
   );
-};
+});

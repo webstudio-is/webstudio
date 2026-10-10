@@ -10,4 +10,8 @@ export {
   generateJsxChildren,
   type PublishedContentBlock,
 } from "./component-generator";
+export {
+  generateManagedFormComponent,
+  generateManagedFormJsxChildren,
+} from "./managed-form-component-generator";
 export * from "./standard-attributes";

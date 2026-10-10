@@ -1,7 +1,5 @@
 export * from "./resource-loader";
 export {
-  loadResourceWithEmail as loadResource,
-  loadResourcesWithEmail as loadResources,
   loadResourceWithEmail,
   loadResourcesWithEmail,
 } from "./email-resource-delivery";

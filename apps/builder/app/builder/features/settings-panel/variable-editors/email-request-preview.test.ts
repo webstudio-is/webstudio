@@ -175,7 +175,9 @@ test.each(["name", "type"] as const)(
     };
     const preview = await buildEmailRequestPreview({
       settings: {
-        body: `(${identifier}.password ?? "") + (${identifier}[${JSON.stringify(internalName)}] ?? "")`,
+        body: `(${identifier}.password ?? "") + (${identifier}[${JSON.stringify(
+          internalName
+        )}] ?? "")`,
       },
       projectMeta: { contactEmail: "owner@example.com" },
       scope: { [identifier]: secretFormData },
@@ -238,7 +240,9 @@ test("Email Request preview blocks explicit access to known password and interna
   const internalName = [...internalFormFieldNames][0];
   const preview = await buildEmailRequestPreview({
     settings: {
-      body: `(${identifier}.password ?? "") + (${identifier}[${JSON.stringify(internalName)}] ?? "")`,
+      body: `(${identifier}.password ?? "") + (${identifier}[${JSON.stringify(
+        internalName
+      )}] ?? "")`,
     },
     scope: {
       [identifier]: {

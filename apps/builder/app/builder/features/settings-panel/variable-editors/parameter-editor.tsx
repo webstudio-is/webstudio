@@ -1,14 +1,10 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import type { VariableEditorProps } from "./shared/editor-types";
 import { z } from "zod";
 import { forwardRef, useImperativeHandle } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { DataSource } from "@webstudio-is/sdk";
-import {
-  browserInfoParameterName,
-  formDataParameterName,
-} from "@webstudio-is/sdk/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   $selectedInstanceKeyWithRoot,
@@ -19,13 +15,8 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   $livePreviewBrowserInfo,
   $livePreviewFormValues,
-  getFormOccurrenceKey,
-  toPublicPreviewValue,
 } from "~/shared/preview-form-values";
-import {
-  getBrowserInfoPreview,
-  getFormDataPreview,
-} from "../form-context-preview";
+import { resolveFormParameterPreview } from "../form-context-preview";
 import { useResourceScope } from "../resource-scope";
 import { ValuePreviewFrame } from "./shared/variable-value-preview";
 import type { PanelApi } from "./shared/variable-panel-api";
@@ -76,45 +67,30 @@ export const ParameterVariablePreview = ({
   let value =
     variable === undefined
       ? undefined
-      : (resourceScope.variableValues.get(variable.id) ??
-        variableValues.get(variable.id));
-  if (
-    variable?.type === "parameter" &&
-    instances.get(variable.scopeInstanceId ?? "")?.component === "NativeForm"
-  ) {
-    if (variable.name === formDataParameterName) {
-      value =
-        liveFormValues.get(
-          getFormOccurrenceKey(
-            selectedInstanceSelector,
-            variable.scopeInstanceId!
-          ) ?? ""
-        ) ?? getFormDataPreview(variable.scopeInstanceId!);
-    } else if (variable.name === browserInfoParameterName) {
-      value = getBrowserInfoPreview(
-        liveBrowserInfo.get(variable.scopeInstanceId ?? "")
-      );
-    }
+      : resourceScope.variableValues.get(variable.id) ??
+        variableValues.get(variable.id);
+  if (variable !== undefined) {
+    value =
+      resolveFormParameterPreview(variable, {
+        instances,
+        selector: selectedInstanceSelector,
+        liveFormValues,
+        liveBrowserInfo,
+      })?.value ?? value;
   }
-  return (
-    <ValuePreviewFrame
-      value={
-        variable?.type === "parameter" &&
-        variable.name === formDataParameterName &&
-        instances.get(variable.scopeInstanceId ?? "")?.component ===
-          "NativeForm"
-          ? toPublicPreviewValue(value)
-          : value
-      }
-    />
-  );
+  return <ValuePreviewFrame value={value} />;
 };
 
-export const ParameterEditor = (props: VariableEditorProps) => (
-  <VariableEditorBody
-    {...props}
-    titleActions={props.titleActions()}
-    fields={<ParameterForm ref={props.panelRef} variable={props.variable} />}
-    preview={<ParameterVariablePreview variable={props.variable} />}
-  />
-);
+export const ParameterEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
+  return (
+    <VariableEditorLayout
+      {...props}
+      titleActions={props.titleActions()}
+      fields={<ParameterForm ref={ref} variable={props.variable} />}
+      preview={<ParameterVariablePreview variable={props.variable} />}
+    />
+  );
+});

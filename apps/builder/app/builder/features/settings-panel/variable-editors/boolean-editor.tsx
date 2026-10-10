@@ -1,4 +1,4 @@
-import { VariableEditorBody } from "./shared/editor-body";
+import { VariableEditorLayout } from "./dialog/layout";
 import type { VariableEditorProps } from "./shared/editor-types";
 
 import { Row } from "../shared";
@@ -40,20 +40,25 @@ export const BooleanForm = forwardRef<
 });
 BooleanForm.displayName = "BooleanForm";
 
-export const BooleanEditor = (props: VariableEditorProps) => (
-  <VariableEditorBody
-    {...props}
-    titleActions={props.titleActions()}
-    fields={
-      <Row>
-        <BooleanForm
-          ref={props.panelRef}
-          variable={props.variable}
-          value={props.value}
-          onChange={props.onValueChange}
-        />
-      </Row>
-    }
-    preview={<ValuePreviewFrame value={props.previewProps.variableValue} />}
-  />
-);
+export const BooleanEditor = forwardRef<
+  PanelApi | undefined,
+  VariableEditorProps
+>((props, ref) => {
+  return (
+    <VariableEditorLayout
+      {...props}
+      titleActions={props.titleActions()}
+      fields={
+        <Row>
+          <BooleanForm
+            ref={ref}
+            variable={props.variable}
+            value={props.value}
+            onChange={props.onValueChange}
+          />
+        </Row>
+      }
+      preview={<ValuePreviewFrame value={props.value} />}
+    />
+  );
+});

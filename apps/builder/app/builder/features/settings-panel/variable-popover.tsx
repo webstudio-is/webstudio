@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import { FloatingPanel } from "@webstudio-is/design-system";
 import type { DataSource } from "@webstudio-is/sdk";
 import { $variableToOpen } from "./variable-navigation";
-import { VariableEditorDialog } from "./variable-editors/shared/editor-dialog";
+import { VariableEditorDialog } from "./variable-editors/dialog";
 
 const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
   if (form === null) {
@@ -114,4 +114,4 @@ export const VariablePopoverTrigger = ({
 
 VariablePopoverTrigger.displayName = "VariablePopoverTrigger";
 
-export { __testing__ } from "./variable-editors/shared/editor-dialog";
+export { __testing__ } from "./variable-editors/dialog";
