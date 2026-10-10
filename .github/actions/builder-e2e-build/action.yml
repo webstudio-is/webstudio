@@ -34,6 +34,10 @@ runs:
       shell: bash
       run: pnpm --filter @webstudio-is/builder build
 
+    - name: Build generated React Router components
+      shell: bash
+      run: pnpm --filter @webstudio-is/sdk-components-react-router build
+
     - name: Generate schema snapshot
       shell: bash
       run: pnpm --filter @webstudio-is/builder e2e:schema-cache
