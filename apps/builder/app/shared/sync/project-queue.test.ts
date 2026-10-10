@@ -455,7 +455,10 @@ describe("project-queue", () => {
       });
       const waiting = success
         ? saved.then(done)
-        : expect(saved).rejects.toThrow("could not be saved");
+        : expect(saved).rejects.toMatchObject({
+            name: "DraftPersistenceError",
+            reason: "save-failed",
+          });
       await vi.advanceTimersByTimeAsync(2000);
       expect(mockBuildPatch).toHaveBeenCalled();
       expect(done).not.toHaveBeenCalled();
@@ -469,7 +472,10 @@ describe("project-queue", () => {
           draftPersistence.wait("project", {
             signal: new AbortController().signal,
           })
-        ).rejects.toThrow("could not be saved");
+        ).rejects.toMatchObject({
+          name: "DraftPersistenceError",
+          reason: "save-failed",
+        });
       }
       draftPersistence.reset();
     }

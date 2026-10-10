@@ -93,7 +93,10 @@ describe("createMultiplayerSyncEmitter", () => {
       const result =
         status === "settled"
           ? wait.then(done)
-          : expect(wait).rejects.toThrow("could not be saved");
+          : expect(wait).rejects.toMatchObject({
+              name: "DraftPersistenceError",
+              reason: "save-failed",
+            });
       transport.callbacks.onApplied("tx-1", 1, status);
       await Promise.resolve();
       expect(done).not.toHaveBeenCalled();
@@ -104,7 +107,10 @@ describe("createMultiplayerSyncEmitter", () => {
           draftPersistence.wait("project", {
             signal: new AbortController().signal,
           })
-        ).rejects.toThrow();
+        ).rejects.toMatchObject({
+          name: "DraftPersistenceError",
+          reason: "save-failed",
+        });
       }
       emitter.close();
       draftPersistence.reset();

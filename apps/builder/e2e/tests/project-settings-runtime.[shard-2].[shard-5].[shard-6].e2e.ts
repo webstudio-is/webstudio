@@ -84,7 +84,9 @@ const saveSiteName = async ({
   siteName: string;
 }) => {
   const save = waitForChangeToBeSaved({ page });
-  await page.getByLabel("Site name").fill(siteName);
+  await page
+    .getByRole("textbox", { name: "Site name", exact: true })
+    .fill(siteName);
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
@@ -329,8 +331,10 @@ test("Project settings site name and redirects persist after reload", async ({
     await waitForCanvasText({ page, text: "Initial content" });
   });
   await openProjectSettings({ page });
-  await page.getByLabel("Site name").waitFor();
-  const persistedSiteName = await page.getByLabel("Site name").inputValue();
+  await page.getByRole("textbox", { name: "Site name", exact: true }).waitFor();
+  const persistedSiteName = await page
+    .getByRole("textbox", { name: "Site name", exact: true })
+    .inputValue();
   if (persistedSiteName !== siteName) {
     throw new Error(
       `Expected project settings site name "${siteName}", received "${persistedSiteName}".`
