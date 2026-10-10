@@ -2,10 +2,9 @@
 import { afterEach, expect, test } from "vitest";
 import { listBuilderComponentPanelItems } from "@webstudio-is/project-build/runtime";
 import { CodeText } from "@webstudio-is/sdk-components-react/components";
-import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
+import { getCanvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
 import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { getComponentTemplatesForPicker } from "~/shared/component-catalog";
 import {
   $registeredComponentHooks,
   $registeredComponentMetas,
@@ -39,14 +38,13 @@ test("renders templates that import an alternate registered implementation", () 
 });
 
 test("the new Form is feature gated without changing Webhook Form", () => {
-  for (const library of canvasComponentLibraries) {
+  for (const library of getCanvasComponentLibraries(false)) {
     registerComponentLibrary(library);
   }
 
-  const templates = $registeredTemplates.get();
   const hiddenPanelItems = listBuilderComponentPanelItems({
     metas: $registeredComponentMetas.get(),
-    templates: getComponentTemplatesForPicker(templates, false),
+    templates: $registeredTemplates.get(),
     getFallbackLabel: (component) => getInstanceLabel({ component }),
     getMetaLabel: (component) => getInstanceLabel({ component }),
   });
@@ -65,9 +63,12 @@ test("the new Form is feature gated without changing Webhook Form", () => {
     ])
   );
 
+  for (const library of getCanvasComponentLibraries(true)) {
+    registerComponentLibrary(library);
+  }
   const forms = listBuilderComponentPanelItems({
     metas: $registeredComponentMetas.get(),
-    templates: getComponentTemplatesForPicker(templates, true),
+    templates: $registeredTemplates.get(),
     getFallbackLabel: (component) => getInstanceLabel({ component }),
     getMetaLabel: (component) => getInstanceLabel({ component }),
   })

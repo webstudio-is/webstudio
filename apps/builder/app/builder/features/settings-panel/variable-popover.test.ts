@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { getReloadableAssetsResourceFormData } from "./assets-resource-panel";
+import { getReloadableAssetsResourceFormData } from "./variable-editors/assets-resource-editor";
 
 test("blocks resource loads while the visible Assets query is invalid", () => {
   const form = document.createElement("form");

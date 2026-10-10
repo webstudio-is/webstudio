@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   props: {
     action: {
       type: "json",
-      control: "form-submission",
+      control: "form-destinations",
       label: "Action",
       required: false,
       description: "Choose up to 5 Resource destinations for this Form.",

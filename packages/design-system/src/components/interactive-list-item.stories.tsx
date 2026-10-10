@@ -1,10 +1,10 @@
 import { useState, type ComponentProps, type ReactNode } from "react";
 import { styled, theme } from "../stitches.config";
 import {
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   __testing__,
-} from "./css-value-list-item";
+} from "./interactive-list-item";
 import { Label, labelColors } from "./label";
 import { SmallToggleButton } from "./small-toggle-button";
 import { EyeOpenIcon, EyeClosedIcon, MinusIcon } from "@webstudio-is/icons";
@@ -12,7 +12,7 @@ import { SmallIconButton } from "./small-icon-button";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  component: CssValueListItem,
+  component: InteractiveListItem,
   title: "CSS Value List Item",
 };
 
@@ -40,7 +40,7 @@ const ListItem = (props: {
   const [pressed, onPressedChange] = useState(false);
 
   return (
-    <CssValueListItem
+    <InteractiveListItem
       label={
         <Label disabled={props.hidden} color={props.labelColor} truncate>
           {props.label ?? "Image"}
@@ -76,7 +76,7 @@ const ListItem = (props: {
   );
 };
 
-export const CSSValueListItem = () => {
+export const InteractiveListItemExample = () => {
   return (
     <Panel>
       <StorySection title="Overflows">
@@ -100,7 +100,7 @@ export const CSSValueListItem = () => {
 
       <StorySection title="Variants">
         <StoryGrid>
-          <CssValueListArrowFocus>
+          <InteractiveListArrowFocus>
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
@@ -136,13 +136,13 @@ export const CSSValueListItem = () => {
                 focused={false}
               />
             ))}
-          </CssValueListArrowFocus>
+          </InteractiveListArrowFocus>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Active">
         <StoryGrid>
-          <CssValueListArrowFocus>
+          <InteractiveListArrowFocus>
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
@@ -178,13 +178,13 @@ export const CSSValueListItem = () => {
                 focused={false}
               />
             ))}
-          </CssValueListArrowFocus>
+          </InteractiveListArrowFocus>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="No thumbnail">
-        <CssValueListArrowFocus>
-          <CssValueListItem
+        <InteractiveListArrowFocus>
+          <InteractiveListItem
             id="no-thumb-0"
             index={0}
             label={<Label>Text only item</Label>}
@@ -198,7 +198,7 @@ export const CSSValueListItem = () => {
             }
             {...listItemAttributes}
           />
-          <CssValueListItem
+          <InteractiveListItem
             id="no-thumb-1"
             index={1}
             label={<Label>Another text item</Label>}
@@ -212,12 +212,12 @@ export const CSSValueListItem = () => {
             }
             {...listItemAttributes}
           />
-        </CssValueListArrowFocus>
+        </InteractiveListArrowFocus>
       </StorySection>
 
       <StorySection title="Disabled state">
-        <CssValueListArrowFocus>
-          <CssValueListItem
+        <InteractiveListArrowFocus>
+          <InteractiveListItem
             id="disabled-0"
             index={0}
             label={<Label>Disabled item</Label>}
@@ -226,7 +226,7 @@ export const CSSValueListItem = () => {
             disabled
             {...listItemAttributes}
           />
-          <CssValueListItem
+          <InteractiveListItem
             id="disabled-1"
             index={1}
             label={<Label>Enabled item</Label>}
@@ -234,11 +234,11 @@ export const CSSValueListItem = () => {
             hidden={false}
             {...listItemAttributes}
           />
-        </CssValueListArrowFocus>
+        </InteractiveListArrowFocus>
       </StorySection>
 
       <StorySection title="Arrow focus with drag item">
-        <CssValueListArrowFocus dragItemId="drag-1">
+        <InteractiveListArrowFocus dragItemId="drag-1">
           {labelColors.map((labelColor, index) => (
             <ListItem
               key={labelColor}
@@ -250,7 +250,7 @@ export const CSSValueListItem = () => {
               focused={false}
             />
           ))}
-        </CssValueListArrowFocus>
+        </InteractiveListArrowFocus>
       </StorySection>
     </Panel>
   );

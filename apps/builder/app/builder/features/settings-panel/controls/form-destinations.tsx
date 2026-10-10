@@ -2,8 +2,8 @@ import { useStore } from "@nanostores/react";
 import {
   Box,
   cssVar,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -62,7 +62,7 @@ const ActionItem = ({
   const isResource = variable?.type === "resource";
   const name = isResource ? variable.name : "Deleted Resource";
   return (
-    <CssValueListItem
+    <InteractiveListItem
       id={id}
       index={index}
       aria-label={`Action ${name}`}
@@ -114,11 +114,11 @@ const ActionItem = ({
   );
 };
 
-export const FormSubmissionControl = ({
+export const FormDestinationsControl = ({
   instanceId,
   prop,
   onChange,
-}: ControlProps<"form-submission">) => {
+}: ControlProps<"form-destinations">) => {
   const instances = useStore($instances);
   const dataSources = useStore($dataSources);
   const resourcesById = useStore($resources);
@@ -253,7 +253,7 @@ export const FormSubmissionControl = ({
       <Box css={{ py: theme.spacing[2] }}>
         <Flex direction="column" gap="2">
           {action.length > 0 && (
-            <CssValueListArrowFocus dragItemId={dragItemId}>
+            <InteractiveListArrowFocus dragItemId={dragItemId}>
               <Grid
                 ref={sortableRefCallback}
                 css={{
@@ -284,7 +284,7 @@ export const FormSubmissionControl = ({
                 ))}
                 {placementIndicator}
               </Grid>
-            </CssValueListArrowFocus>
+            </InteractiveListArrowFocus>
           )}
           {error && error !== emptyFormDestinationMessage && (
             <Text>{error}</Text>

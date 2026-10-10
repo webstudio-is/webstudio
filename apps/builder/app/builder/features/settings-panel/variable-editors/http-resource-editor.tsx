@@ -1,3 +1,7 @@
+import { VariableEditorBody } from "./shared/editor-body";
+import { useResourcePreviewController } from "./shared/use-resource-preview-controller";
+import type { VariableEditorProps } from "./shared/editor-types";
+import { ResourceVariablePreview } from "./shared/resource-variable-preview";
 import {
   forwardRef,
   useId,
@@ -26,10 +30,10 @@ import {
   isCacheControl,
   isContentType,
   parseHeaders,
-} from "./resource-panel";
-import { useResourceScope } from "./resource-scope";
-import { Row } from "./shared";
-import type { PanelApi } from "./variable-panel-api";
+} from "./shared/resource-fields";
+import { useResourceScope } from "../resource-scope";
+import { Row } from "../shared";
+import type { PanelApi } from "./shared/variable-panel-api";
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
@@ -254,3 +258,38 @@ export const ResourceForm = forwardRef<
   );
 });
 ResourceForm.displayName = "ResourceForm";
+
+export const HttpResourceEditor = (props: VariableEditorProps) => {
+  const preview = useResourcePreviewController({
+    variable: props.variable,
+    formRef: props.formRef,
+  });
+  return (
+    <VariableEditorBody
+      {...props}
+      titleActions={props.titleActions({
+        onRefresh: () => void preview.reload(),
+        refreshPending: preview.pending,
+      })}
+      fields={
+        <ResourceForm
+          ref={props.panelRef}
+          variable={props.variable}
+          onChange={preview.onChange}
+        />
+      }
+      preview={
+        <ResourceVariablePreview
+          {...props.previewProps}
+          showEmptyLoadButton
+          inspectSubmission
+          alwaysShowRequestTab
+          variableValue={preview.request}
+          showSavedResourceRequest={preview.showSavedRequest}
+          isComputingRequest={preview.pending}
+          onLoadData={preview.reload}
+        />
+      }
+    />
+  );
+};

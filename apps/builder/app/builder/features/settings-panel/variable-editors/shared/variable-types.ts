@@ -1,5 +1,4 @@
 import type { DataSource } from "@webstudio-is/sdk";
-import type { buildEmailRequestPreview } from "./email-request-preview";
 
 export type VariableType =
   | "parameter"
@@ -18,12 +17,4 @@ export type VariablePreviewProps = {
   variable?: DataSource;
   variableType: VariableType;
   variableValue: unknown;
-  showSavedResourceRequest: boolean;
-  isComputingRequest: boolean;
-  onLoadData: () => void;
-  onLoadEmailRequest?: () => void;
-  emailRequestPreview?: Awaited<ReturnType<typeof buildEmailRequestPreview>>;
-  queryActive: boolean;
-  queryPending: boolean;
-  queryContainerRef: (element: HTMLDivElement | null) => void;
 };

@@ -11,6 +11,7 @@ import { afterEach, describe, expect, test } from "vitest";
 import { build } from "esbuild";
 import type { ReactNode } from "react";
 import {
+  ActionValue,
   PlaceholderValue,
   Variable,
   expression,
@@ -77,6 +78,7 @@ const Box = (_props: { children?: ReactNode }) => null;
 Box.displayName = "Box";
 const NativeForm = (_props: {
   errors?: unknown;
+  onResultChange?: unknown;
   children?: ReactNode;
   "ws:show"?: boolean;
 }) => null;
@@ -131,6 +133,7 @@ describe("generateStories", () => {
         },
       });
       process.chdir(root);
+      const errorsVariable = new Variable("errors", []);
       await generateStories({
         packageName: "@webstudio-is/sdk-components-react",
         components: { Box, NativeForm },
@@ -141,7 +144,13 @@ describe("generateStories", () => {
               template: hasErrors ? (
                 <NativeForm
                   ws:show={!hidden}
-                  errors={expression`${new Variable("errors", [])}`}
+                  errors={expression`${errorsVariable}`}
+                  onResultChange={
+                    new ActionValue(
+                      ["result"],
+                      expression`${errorsVariable} = result.errors`
+                    )
+                  }
                 >
                   <ws.element ws:label="Error Message">
                     {new PlaceholderValue("Sorry, something went wrong.")}

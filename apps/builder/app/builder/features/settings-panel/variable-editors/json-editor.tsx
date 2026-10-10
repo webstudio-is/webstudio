@@ -1,12 +1,18 @@
+import { VariableEditorBody } from "./shared/editor-body";
+import type { VariableEditorProps } from "./shared/editor-types";
+
+import { Row } from "../shared";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { Flex, Label, theme } from "@webstudio-is/design-system";
 import type { DataSource } from "@webstudio-is/sdk";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
 import { validateDataVariableJsonValue } from "@webstudio-is/project-build/runtime";
-import { useValuePanelRef } from "./variable-value-save";
-import type { PanelApi } from "./variable-panel-api";
-import { ValuePreviewFrame } from "./variable-value-preview";
+import { useValuePanelRef } from "./shared/variable-value-save";
+import type { PanelApi } from "./shared/variable-panel-api";
+import { ValuePreviewFrame } from "./shared/variable-value-preview";
 import { parseJsonExpression } from "@webstudio-is/expression";
+
+export const prepareJsonValue = (previous: unknown) => previous || "{}";
 
 export const JsonForm = forwardRef<
   undefined | PanelApi,
@@ -55,3 +61,21 @@ JsonForm.displayName = "JsonForm";
 export const JsonVariablePreview = ({ value }: { value: unknown }) => {
   return <ValuePreviewFrame value={parseJsonExpression(String(value))} />;
 };
+
+export const JsonEditor = (props: VariableEditorProps) => (
+  <VariableEditorBody
+    {...props}
+    titleActions={props.titleActions()}
+    fields={
+      <Row>
+        <JsonForm
+          ref={props.panelRef}
+          variable={props.variable}
+          value={props.value}
+          onChange={props.onValueChange}
+        />
+      </Row>
+    }
+    preview={<JsonVariablePreview value={props.previewProps.variableValue} />}
+  />
+);

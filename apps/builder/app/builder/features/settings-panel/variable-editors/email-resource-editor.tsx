@@ -1,9 +1,14 @@
+import { VariableEditorBody } from "./shared/editor-body";
+import type { VariableEditorProps } from "./shared/editor-types";
+import { ResourceVariablePreview } from "./shared/resource-variable-preview";
 import {
   forwardRef,
   useId,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
+  useEffect,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -61,9 +66,10 @@ import {
   validateContactEmail,
   validateEmailSender,
 } from "@webstudio-is/project-build/contracts";
-import { Row } from "./shared";
-import { useResourceScope } from "./resource-scope";
-import type { PanelApi } from "./variable-panel-api";
+import { Row } from "../shared";
+import { useResourceScope } from "../resource-scope";
+import { buildEmailRequestPreviewFromEditor } from "../email-request-preview";
+import type { PanelApi } from "./shared/variable-panel-api";
 
 const EmailExpressionField = ({
   label,
@@ -526,3 +532,83 @@ export const EmailResourceForm = forwardRef<
   );
 });
 EmailResourceForm.displayName = "EmailResourceForm";
+
+export const EmailResourceEditor = (props: VariableEditorProps) => {
+  const { scope, aliases } = useResourceScope({ variable: props.variable });
+  const revisionRef = useRef(0);
+  const [requestPreview, setRequestPreview] =
+    useState<Awaited<ReturnType<typeof buildEmailRequestPreviewFromEditor>>>();
+  const [pending, setPending] = useState(false);
+
+  useEffect(
+    () => () => {
+      revisionRef.current += 1;
+    },
+    []
+  );
+
+  const onChange = () => {
+    revisionRef.current += 1;
+    setRequestPreview(undefined);
+    setPending(false);
+  };
+
+  const loadRequest = async () => {
+    const revision = ++revisionRef.current;
+    setRequestPreview(undefined);
+    const form = props.formRef.current;
+    if (form === null) {
+      return;
+    }
+    setPending(true);
+    try {
+      const preview = await buildEmailRequestPreviewFromEditor({
+        form,
+        variable: props.variable,
+        scope,
+        aliases,
+      });
+      if (revision === revisionRef.current) {
+        setRequestPreview(preview);
+      }
+    } catch {
+      if (revision === revisionRef.current) {
+        console.error("Unable to build Email request preview");
+      }
+    } finally {
+      if (revision === revisionRef.current) {
+        setPending(false);
+      }
+    }
+  };
+
+  return (
+    <VariableEditorBody
+      {...props}
+      titleActions={props.titleActions({
+        onRefresh: () => void loadRequest(),
+        refreshPending: pending,
+      })}
+      fields={
+        <EmailResourceForm
+          ref={props.panelRef}
+          variable={props.variable}
+          onChange={onChange}
+        />
+      }
+      preview={
+        <ResourceVariablePreview
+          {...props.previewProps}
+          variableValue={undefined}
+          showSavedResourceRequest={false}
+          isComputingRequest={pending}
+          onLoadData={() => void loadRequest()}
+          requestSnapshot={requestPreview}
+          inspectSubmission
+          alwaysShowRequestTab
+          suppressPreviewPending
+        />
+      }
+    />
+  );
+};

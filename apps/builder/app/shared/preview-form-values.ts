@@ -53,6 +53,51 @@ export const getFormOccurrenceKey = (
   return occurrence.join(",");
 };
 
+export type PreviewFileMetadata = {
+  __webstudioPreviewFile: true;
+  name: string;
+  type: string;
+  size: number;
+};
+
+export const isPreviewFileMetadata = (
+  value: unknown
+): value is PreviewFileMetadata =>
+  typeof value === "object" &&
+  value !== null &&
+  "__webstudioPreviewFile" in value &&
+  value.__webstudioPreviewFile === true &&
+  "name" in value &&
+  typeof value.name === "string" &&
+  "type" in value &&
+  typeof value.type === "string" &&
+  "size" in value &&
+  typeof value.size === "number";
+
+/** Remove the transport-only file tag before exposing preview values to expressions or UI. */
+export const toPublicPreviewValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(toPublicPreviewValue);
+  }
+  if (isPreviewFileMetadata(value)) {
+    return { name: value.name, type: value.type, size: value.size };
+  }
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    (Object.getPrototypeOf(value) === Object.prototype ||
+      Object.getPrototypeOf(value) === null)
+  ) {
+    return Object.fromEntries(
+      Object.entries(value).map(([name, entry]) => [
+        name,
+        toPublicPreviewValue(entry),
+      ])
+    );
+  }
+  return value;
+};
+
 declare module "~/shared/pubsub" {
   interface PubsubMap {
     previewFormValues: {
@@ -71,7 +116,12 @@ export const readPreviewFormValues = (form: HTMLFormElement) => {
       ? value.map(metadata)
       : typeof value === "string"
         ? value
-        : { name: value.name, type: value.type, size: value.size };
+        : ({
+            __webstudioPreviewFile: true,
+            name: value.name,
+            type: value.type,
+            size: value.size,
+          } satisfies PreviewFileMetadata);
   return Object.fromEntries(
     Object.entries(getFormDataValue(form)).map(([name, value]) => [
       name,

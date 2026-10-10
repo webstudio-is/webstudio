@@ -10,8 +10,8 @@ import {
 import { parseCssValue, propertiesData } from "@webstudio-is/css-data";
 import { EyeClosedIcon, EyeOpenIcon, MinusIcon } from "@webstudio-is/icons";
 import {
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   Flex,
   Label,
   SmallIconButton,
@@ -423,7 +423,7 @@ export const RepeatedStyle = (props: {
   }
 
   return (
-    <CssValueListArrowFocus dragItemId={dragItemId}>
+    <InteractiveListArrowFocus dragItemId={dragItemId}>
       <Flex direction="column" ref={sortableRefCallback}>
         {primaryItems.map((primaryItem, index) => {
           const id = String(index);
@@ -458,7 +458,7 @@ export const RepeatedStyle = (props: {
               titleSuffix={panelTitleSuffix}
               offset={floatingPanelOffset}
             >
-              <CssValueListItem
+              <InteractiveListItem
                 id={id}
                 draggable={readonly === false}
                 active={dragItemId === id}
@@ -497,6 +497,6 @@ export const RepeatedStyle = (props: {
         })}
         {placementIndicator}
       </Flex>
-    </CssValueListArrowFocus>
+    </InteractiveListArrowFocus>
   );
 };

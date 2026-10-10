@@ -1,3 +1,5 @@
+import { VariableEditorBody } from "./shared/editor-body";
+import type { VariableEditorProps } from "./shared/editor-types";
 import { z } from "zod";
 import { forwardRef, useImperativeHandle } from "react";
 import { computed } from "nanostores";
@@ -13,19 +15,20 @@ import {
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { $instances, $props } from "~/shared/sync/data-stores";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   $livePreviewBrowserInfo,
   $livePreviewFormValues,
   getFormOccurrenceKey,
+  toPublicPreviewValue,
 } from "~/shared/preview-form-values";
 import {
   getBrowserInfoPreview,
   getFormDataPreview,
-} from "./form-context-preview";
-import { useResourceScope } from "./resource-scope";
-import { ValuePreviewFrame } from "./variable-value-preview";
-import type { PanelApi } from "./variable-panel-api";
+} from "../form-context-preview";
+import { useResourceScope } from "../resource-scope";
+import { ValuePreviewFrame } from "./shared/variable-value-preview";
+import type { PanelApi } from "./shared/variable-panel-api";
 
 export const ParameterForm = forwardRef<
   undefined | PanelApi,
@@ -66,7 +69,6 @@ export const ParameterVariablePreview = ({
 }) => {
   const variableValues = useStore($instanceVariableValues);
   const instances = useStore($instances);
-  const props = useStore($props);
   const liveFormValues = useStore($livePreviewFormValues);
   const liveBrowserInfo = useStore($livePreviewBrowserInfo);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
@@ -87,12 +89,32 @@ export const ParameterVariablePreview = ({
             selectedInstanceSelector,
             variable.scopeInstanceId!
           ) ?? ""
-        ) ?? getFormDataPreview(instances, props, variable.scopeInstanceId!);
+        ) ?? getFormDataPreview(variable.scopeInstanceId!);
     } else if (variable.name === browserInfoParameterName) {
       value = getBrowserInfoPreview(
         liveBrowserInfo.get(variable.scopeInstanceId ?? "")
       );
     }
   }
-  return <ValuePreviewFrame value={value} />;
+  return (
+    <ValuePreviewFrame
+      value={
+        variable?.type === "parameter" &&
+        variable.name === formDataParameterName &&
+        instances.get(variable.scopeInstanceId ?? "")?.component ===
+          "NativeForm"
+          ? toPublicPreviewValue(value)
+          : value
+      }
+    />
+  );
 };
+
+export const ParameterEditor = (props: VariableEditorProps) => (
+  <VariableEditorBody
+    {...props}
+    titleActions={props.titleActions()}
+    fields={<ParameterForm ref={props.panelRef} variable={props.variable} />}
+    preview={<ParameterVariablePreview variable={props.variable} />}
+  />
+);

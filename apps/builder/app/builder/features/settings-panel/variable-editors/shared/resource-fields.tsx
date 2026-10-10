@@ -1,13 +1,5 @@
-import {
-  forwardRef,
-  useEffect,
-  useId,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
-import { useStore } from "@nanostores/react";
-import { type Resource, type DataSource } from "@webstudio-is/sdk";
+import { useEffect, useId, useRef, useState } from "react";
+import { type Resource } from "@webstudio-is/sdk";
 import {
   isLiteralExpression,
   parseStringLiteralExpression,
@@ -15,8 +7,6 @@ import {
 } from "@webstudio-is/expression";
 import {
   serializeValue,
-  sitemapResourceUrl,
-  currentDateResourceUrl,
   getResourceBodyFormatError,
 } from "@webstudio-is/sdk/runtime";
 import {
@@ -37,16 +27,11 @@ import {
 } from "@webstudio-is/design-system";
 import { MinusIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
-import { $selectedInstance } from "~/shared/nano-states";
-import { $resources } from "~/shared/sync/data-stores";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { useAsyncValue } from "~/shared/use-async-value";
-import type { PanelApi } from "./variable-panel-api";
 import {
-  createResourceFieldsFromFormData,
   validateResourceBodyExpression,
   validateResourceUrlExpression,
   type ResourceBodyInputType,
@@ -744,57 +729,5 @@ export const parseHeaders = (headers: Resource["headers"]) => {
   });
   return { headers: newHeaders, maxAge };
 };
-
-export const SystemResourceForm = forwardRef<
-  undefined | PanelApi,
-  {
-    variable?: DataSource;
-    resourceType: "sitemap-resource" | "current-date-resource";
-  }
->(({ variable, resourceType }, ref) => {
-  const resources = useStore($resources);
-  const resource =
-    variable?.type === "resource"
-      ? resources.get(variable.resourceId)
-      : undefined;
-  const localResourceUrl =
-    resourceType === "sitemap-resource"
-      ? sitemapResourceUrl
-      : currentDateResourceUrl;
-  useImperativeHandle(ref, () => ({
-    save: (formData) => {
-      const scopeInstanceId =
-        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
-      if (scopeInstanceId === undefined) {
-        return;
-      }
-      const resourceFields = createResourceFieldsFromFormData({
-        control: "system",
-        formData,
-      });
-      return executeRuntimeMutation({
-        id: "resources.upsert",
-        input: {
-          resourceId: resource?.id,
-          resource: resourceFields,
-          dataSourceId: variable?.id,
-          scopeInstanceId,
-          dataSourceName: resourceFields.name,
-        },
-      })?.result;
-    },
-  }));
-  return (
-    <>
-      <input type="hidden" name="method" value="get" />
-      <input
-        type="hidden"
-        name="url"
-        value={JSON.stringify(localResourceUrl)}
-      />
-    </>
-  );
-});
-SystemResourceForm.displayName = "SystemResourceForm";
 
 export const __testing__ = { BodyField };

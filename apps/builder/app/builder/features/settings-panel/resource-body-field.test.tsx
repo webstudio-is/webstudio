@@ -4,7 +4,7 @@ import { afterEach, expect, test } from "vitest";
 import { encodeDataVariableId } from "@webstudio-is/sdk";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { computeExpressionWithinScope } from "@webstudio-is/project-build/runtime";
-import { __testing__ } from "./resource-panel";
+import { __testing__ } from "./variable-editors/shared/resource-fields";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }

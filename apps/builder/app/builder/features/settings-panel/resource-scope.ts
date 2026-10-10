@@ -2,16 +2,18 @@ import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
+  areMapsShallowEqual,
+  areSetsEqual,
+} from "~/shared/collection-equality";
+import {
   encodeDataVariableId,
   getResourceCycleDataSourceIds,
   SYSTEM_VARIABLE_ID,
   systemParameter,
   type DataSource,
   type DataSources,
-  type Instances,
   type Page,
   type PageTemplate,
-  type Props,
 } from "@webstudio-is/sdk";
 import {
   browserInfoParameterName,
@@ -20,6 +22,7 @@ import {
 import {
   getFormOccurrenceKey,
   $livePreviewFormValues,
+  toPublicPreviewValue,
 } from "~/shared/preview-form-values";
 import {
   getBrowserInfoPreview,
@@ -31,12 +34,7 @@ import {
   $variableValuesByInstanceSelector,
   getInstanceKey,
 } from "~/shared/nano-states";
-import {
-  $dataSources,
-  $instances,
-  $props,
-  $resources,
-} from "~/shared/sync/data-stores";
+import { $dataSources, $resources } from "~/shared/sync/data-stores";
 import type { InstancePath } from "@webstudio-is/project-build/runtime";
 
 export const getResourceScopeForInstance = ({
@@ -47,8 +45,6 @@ export const getResourceScopeForInstance = ({
   includeResourceDataSources = false,
   formScopeInstanceId,
   formScopeSelector,
-  instances = new Map(),
-  props = new Map(),
   liveFormValues = new Map(),
 }: {
   page: undefined | Page | PageTemplate;
@@ -58,8 +54,6 @@ export const getResourceScopeForInstance = ({
   includeResourceDataSources?: boolean;
   formScopeInstanceId?: string;
   formScopeSelector?: readonly string[];
-  instances?: Instances;
-  props?: Props;
   liveFormValues?: ReadonlyMap<string, Record<string, unknown>>;
 }) => {
   const scope: Record<string, unknown> = {};
@@ -105,11 +99,12 @@ export const getResourceScopeForInstance = ({
         dataSource.name === formDataParameterName
           ? (liveFormValues.get(
               getFormOccurrenceKey(formScopeSelector, formScopeInstanceId) ?? ""
-            ) ?? getFormDataPreview(instances, props, formScopeInstanceId))
+            ) ?? getFormDataPreview(formScopeInstanceId))
           : getBrowserInfoPreview();
-      scope[name] = value;
+      const previewValue = toPublicPreviewValue(value);
+      scope[name] = previewValue;
       aliases.set(name, dataSource.name);
-      variableValues.set(dataSource.id, value);
+      variableValues.set(dataSource.id, previewValue);
     }
   }
   const values = variableValuesByInstanceSelector.get(instanceKey ?? "");
@@ -161,169 +156,132 @@ const getVariableInstanceKey = ({
   return getInstanceKey(instancePath[0].instanceSelector);
 };
 
-const areMapsShallowEqual = <Key, Value>(
-  left: ReadonlyMap<Key, Value> | undefined,
-  right: ReadonlyMap<Key, Value> | undefined
-) => {
-  if (left === right) {
-    return true;
-  }
-  if (left === undefined || right === undefined || left.size !== right.size) {
-    return false;
-  }
-  for (const [key, value] of left) {
-    if (
-      right.has(key) === false ||
-      Object.is(right.get(key), value) === false
-    ) {
-      return false;
+const createResourceScopeStore = (variable: DataSource | undefined) => {
+  let cachedBaseInputs: readonly unknown[] | undefined;
+  let cachedBaseValues: Map<string, unknown> | undefined;
+  let cachedBaseResult:
+    | ReturnType<typeof getResourceScopeForInstance>
+    | undefined;
+  let cachedCycleDataSourceIds: Set<DataSource["id"]> | undefined;
+  let cachedResult:
+    | {
+        scope: Record<string, unknown>;
+        aliases: Map<string, string>;
+        variableValues: Map<DataSource["id"], unknown>;
+      }
+    | undefined;
+
+  return computed(
+    [
+      $selectedPage,
+      $selectedInstancePathWithRoot,
+      $variableValuesByInstanceSelector,
+      $dataSources,
+      $resources,
+      $livePreviewFormValues,
+    ],
+    (
+      page,
+      instancePath,
+      variableValuesByInstanceSelector,
+      dataSources,
+      resources,
+      liveFormValues
+    ) => {
+      const variablePathIndex =
+        variable === undefined
+          ? 0
+          : (instancePath?.findIndex(
+              ({ instance }) => instance.id === variable.scopeInstanceId
+            ) ?? -1);
+      const formScopeInstanceId =
+        variablePathIndex < 0
+          ? undefined
+          : instancePath
+              ?.slice(variablePathIndex)
+              .find(({ instance }) => instance.component === "NativeForm")
+              ?.instance.id;
+      const formScopeSelector =
+        formScopeInstanceId === undefined
+          ? undefined
+          : instancePath?.find(
+              ({ instance }) => instance.id === formScopeInstanceId
+            )?.instanceSelector;
+      const instanceKey = getVariableInstanceKey({
+        variable,
+        instancePath,
+      });
+      const values = variableValuesByInstanceSelector.get(instanceKey ?? "");
+      const currentBaseInputs = [
+        page,
+        instancePath,
+        dataSources,
+        liveFormValues,
+      ] as const;
+      const baseInputsMatch =
+        cachedBaseInputs !== undefined &&
+        cachedBaseInputs[0] === page &&
+        cachedBaseInputs[1] === instancePath &&
+        cachedBaseInputs[2] === dataSources &&
+        cachedBaseInputs[3] === liveFormValues &&
+        areMapsShallowEqual(cachedBaseValues, values);
+      if (baseInputsMatch === false) {
+        cachedBaseInputs = currentBaseInputs;
+        cachedBaseValues = values;
+        cachedBaseResult = getResourceScopeForInstance({
+          page,
+          instanceKey,
+          dataSources,
+          variableValuesByInstanceSelector,
+          includeResourceDataSources: true,
+          formScopeInstanceId,
+          formScopeSelector,
+          liveFormValues,
+        });
+      }
+      const cycleDataSourceIds = new Set(
+        variable === undefined
+          ? []
+          : variable.type === "resource"
+            ? getResourceCycleDataSourceIds({
+                resourceDataSource: variable,
+                resources,
+                dataSources,
+              })
+            : [variable.id]
+      );
+      if (
+        cachedResult !== undefined &&
+        baseInputsMatch &&
+        cachedCycleDataSourceIds !== undefined &&
+        areSetsEqual(cachedCycleDataSourceIds, cycleDataSourceIds)
+      ) {
+        return cachedResult;
+      }
+
+      const { scope, aliases, variableValues } = cachedBaseResult!;
+      const newScope = { ...scope };
+      const newAliases = new Map(aliases);
+      const newVariableValues = new Map(variableValues);
+      for (const dataSourceId of cycleDataSourceIds) {
+        const key = encodeDataVariableId(dataSourceId);
+        delete newScope[key];
+        newAliases.delete(key);
+        newVariableValues.delete(dataSourceId);
+      }
+      const result = {
+        scope: newScope,
+        aliases: newAliases,
+        variableValues: newVariableValues,
+      };
+      cachedCycleDataSourceIds = cycleDataSourceIds;
+      cachedResult = result;
+      return result;
     }
-  }
-  return true;
+  );
 };
 
-const areSetsEqual = <Value>(
-  left: ReadonlySet<Value>,
-  right: ReadonlySet<Value>
-) => left.size === right.size && [...left].every((value) => right.has(value));
-
 export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
-  return useStore(
-    useMemo(() => {
-      let cachedBaseInputs: readonly unknown[] | undefined;
-      let cachedBaseValues: Map<string, unknown> | undefined;
-      let cachedBaseResult:
-        | ReturnType<typeof getResourceScopeForInstance>
-        | undefined;
-      let cachedCycleDataSourceIds: Set<DataSource["id"]> | undefined;
-      let cachedResult:
-        | {
-            scope: Record<string, unknown>;
-            aliases: Map<string, string>;
-            variableValues: Map<DataSource["id"], unknown>;
-          }
-        | undefined;
-
-      return computed(
-        [
-          $selectedPage,
-          $selectedInstancePathWithRoot,
-          $variableValuesByInstanceSelector,
-          $dataSources,
-          $resources,
-          $instances,
-          $props,
-          $livePreviewFormValues,
-        ],
-        (
-          page,
-          instancePath,
-          variableValuesByInstanceSelector,
-          dataSources,
-          resources,
-          instances,
-          props,
-          liveFormValues
-        ) => {
-          const variablePathIndex =
-            variable === undefined
-              ? 0
-              : (instancePath?.findIndex(
-                  ({ instance }) => instance.id === variable.scopeInstanceId
-                ) ?? -1);
-          const formScopeInstanceId =
-            variablePathIndex < 0
-              ? undefined
-              : instancePath
-                  ?.slice(variablePathIndex)
-                  .find(({ instance }) => instance.component === "NativeForm")
-                  ?.instance.id;
-          const formScopeSelector =
-            formScopeInstanceId === undefined
-              ? undefined
-              : instancePath?.find(
-                  ({ instance }) => instance.id === formScopeInstanceId
-                )?.instanceSelector;
-          const instanceKey = getVariableInstanceKey({
-            variable,
-            instancePath,
-          });
-          const values = variableValuesByInstanceSelector.get(
-            instanceKey ?? ""
-          );
-          const currentBaseInputs = [
-            page,
-            instancePath,
-            dataSources,
-            instances,
-            props,
-            liveFormValues,
-          ] as const;
-          const baseInputsMatch =
-            cachedBaseInputs !== undefined &&
-            cachedBaseInputs[0] === page &&
-            cachedBaseInputs[1] === instancePath &&
-            cachedBaseInputs[2] === dataSources &&
-            cachedBaseInputs[3] === instances &&
-            cachedBaseInputs[4] === props &&
-            cachedBaseInputs[5] === liveFormValues &&
-            areMapsShallowEqual(cachedBaseValues, values);
-          if (baseInputsMatch === false) {
-            cachedBaseInputs = currentBaseInputs;
-            cachedBaseValues = values;
-            cachedBaseResult = getResourceScopeForInstance({
-              page,
-              instanceKey,
-              dataSources,
-              variableValuesByInstanceSelector,
-              includeResourceDataSources: true,
-              formScopeInstanceId,
-              formScopeSelector,
-              instances,
-              props,
-              liveFormValues,
-            });
-          }
-          const cycleDataSourceIds = new Set(
-            variable === undefined
-              ? []
-              : variable.type === "resource"
-                ? getResourceCycleDataSourceIds({
-                    resourceDataSource: variable,
-                    resources,
-                    dataSources,
-                  })
-                : [variable.id]
-          );
-          if (
-            cachedResult !== undefined &&
-            baseInputsMatch &&
-            cachedCycleDataSourceIds !== undefined &&
-            areSetsEqual(cachedCycleDataSourceIds, cycleDataSourceIds)
-          ) {
-            return cachedResult;
-          }
-
-          const { scope, aliases, variableValues } = cachedBaseResult!;
-          const newScope = { ...scope };
-          const newAliases = new Map(aliases);
-          const newVariableValues = new Map(variableValues);
-          for (const dataSourceId of cycleDataSourceIds) {
-            const key = encodeDataVariableId(dataSourceId);
-            delete newScope[key];
-            newAliases.delete(key);
-            newVariableValues.delete(dataSourceId);
-          }
-          const result = {
-            scope: newScope,
-            aliases: newAliases,
-            variableValues: newVariableValues,
-          };
-          cachedCycleDataSourceIds = cycleDataSourceIds;
-          cachedResult = result;
-          return result;
-        }
-      );
-    }, [variable])
-  );
+  const store = useMemo(() => createResourceScopeStore(variable), [variable]);
+  return useStore(store);
 };

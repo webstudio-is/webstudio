@@ -1,3 +1,7 @@
+import { VariableEditorBody } from "./shared/editor-body";
+import type { VariableEditorProps } from "./shared/editor-types";
+
+import { Row } from "../shared";
 import { forwardRef, useEffect, useId, useRef, useState } from "react";
 import {
   Flex,
@@ -8,9 +12,12 @@ import {
 } from "@webstudio-is/design-system";
 import type { DataSource } from "@webstudio-is/sdk";
 import { validateDataVariableNumberValue } from "@webstudio-is/project-build/runtime";
-import { useValuePanelRef } from "./variable-value-save";
-import type { PanelApi } from "./variable-panel-api";
-import { ValuePreviewFrame } from "./variable-value-preview";
+import { useValuePanelRef } from "./shared/variable-value-save";
+import type { PanelApi } from "./shared/variable-panel-api";
+import { ValuePreviewFrame } from "./shared/variable-value-preview";
+
+export const prepareNumberValue = (previous: unknown) =>
+  typeof previous === "number" ? previous : "";
 
 export const NumberForm = forwardRef<
   undefined | PanelApi,
@@ -61,3 +68,21 @@ export const NumberVariablePreview = ({ value }: { value: unknown }) => {
   const parsed = Number(value);
   return <ValuePreviewFrame value={Number.isNaN(parsed) ? value : parsed} />;
 };
+
+export const NumberEditor = (props: VariableEditorProps) => (
+  <VariableEditorBody
+    {...props}
+    titleActions={props.titleActions()}
+    fields={
+      <Row>
+        <NumberForm
+          ref={props.panelRef}
+          variable={props.variable}
+          value={props.value}
+          onChange={props.onValueChange}
+        />
+      </Row>
+    }
+    preview={<NumberVariablePreview value={props.previewProps.variableValue} />}
+  />
+);

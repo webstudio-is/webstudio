@@ -62,3 +62,17 @@ export const canvasComponentLibraries = [
     templates: animationTemplates,
   },
 ] as const;
+
+/** Configure insertion templates while retaining every runtime component. */
+export const getCanvasComponentLibraries = (showNewForm: boolean) => {
+  const { form, ...otherCoreTemplates } = coreTemplates;
+  return [
+    {
+      ...canvasComponentLibraries[0],
+      templates: showNewForm
+        ? { ...otherCoreTemplates, form: { ...form, label: "Form (new)" } }
+        : otherCoreTemplates,
+    },
+    ...canvasComponentLibraries.slice(1),
+  ];
+};

@@ -21,10 +21,11 @@ import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { __testing__ } from "./variable-popover";
 import { VariablePopoverTrigger } from "./variable-popover";
+import { JsonForm } from "./variable-editors/json-editor";
 
-import { SystemResourceForm } from "./resource-panel";
+import { SystemResourceForm } from "./variable-editors/system-resource-editor";
 
-const { JsonForm, TypeField } = __testing__;
+const { TypeField } = __testing__;
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;

@@ -19,8 +19,8 @@ import {
   Button,
   cssVar,
   declareCssVar,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   DialogTitleActions,
   DialogClose,
   DialogTitle,
@@ -126,7 +126,7 @@ const BindingPanel = ({
           </Flex>
         )}
         <ScrollAreaNative css={{ maxHeight: theme.spacing[25] }}>
-          <CssValueListArrowFocus>
+          <InteractiveListArrowFocus>
             {scopeEntries.map(([identifier, value], index) => {
               const name = aliases.get(identifier);
               const label =
@@ -134,7 +134,7 @@ const BindingPanel = ({
                   ? name
                   : `${name}: ${formatValuePreview(value)}`;
               return (
-                <CssValueListItem
+                <InteractiveListItem
                   key={identifier}
                   id={identifier}
                   index={index}
@@ -157,7 +157,7 @@ const BindingPanel = ({
                 />
               );
             })}
-          </CssValueListArrowFocus>
+          </InteractiveListArrowFocus>
         </ScrollAreaNative>
       </Box>
       <PanelContent as={Flex} gap="1">

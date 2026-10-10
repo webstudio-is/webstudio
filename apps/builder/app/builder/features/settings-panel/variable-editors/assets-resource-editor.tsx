@@ -1,3 +1,7 @@
+import { VariableEditorBody } from "./shared/editor-body";
+import type { VariableEditorProps } from "./shared/editor-types";
+import { ResourceVariablePreview } from "./shared/resource-variable-preview";
+import { useResourcePreviewController } from "./shared/use-resource-preview-controller";
 import {
   forwardRef,
   lazy,
@@ -8,20 +12,33 @@ import {
   useCallback,
 } from "react";
 import { useStore } from "@nanostores/react";
-import type { DataSource } from "@webstudio-is/sdk";
-import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
+import { type DataSource, type ResourceRequest } from "@webstudio-is/sdk";
+import {
+  assetsResourceUrl,
+  isAssetsResourceRequest,
+} from "@webstudio-is/sdk/runtime";
 import { createResourceFieldsFromFormData } from "@webstudio-is/project-build/runtime";
 import { $selectedInstance } from "~/shared/nano-states";
 import { $resources } from "~/shared/sync/data-stores";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { invalidateAssets } from "~/shared/resources";
+import {
+  $resourceDiagnosticsCache,
+  $resourceDiagnosticsErrorCache,
+  $resourcePerformanceCache,
+  getResourceKey,
+  invalidateAssets,
+  loadResourceDiagnostics,
+} from "~/shared/resources";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
-import { useResourceScope } from "./resource-scope";
-import { CenteredPanelMessage } from "./shared";
-import type { PanelApi } from "./variable-panel-api";
+import { useResourceScope } from "../resource-scope";
+import { clearSettledDiagnosticsKey } from "../request-inspector";
+import { getRequestErrorDiagnostics } from "../request-error-diagnostics";
+import { ResourceDiagnosticsView } from "./shared/resource-diagnostics-view";
+import { CenteredPanelMessage } from "../shared";
+import type { PanelApi } from "./shared/variable-panel-api";
 
 const AssetQueryForm = lazy(() =>
-  import("./asset-query-form").then(({ AssetQueryForm }) => ({
+  import("../asset-query-form").then(({ AssetQueryForm }) => ({
     default: AssetQueryForm,
   }))
 );
@@ -161,3 +178,87 @@ export const AssetsResourceForm = forwardRef<
   }
 );
 AssetsResourceForm.displayName = "AssetsResourceForm";
+
+export const AssetsResourceEditor = (props: VariableEditorProps) => {
+  const query = useAssetsQueryBridge();
+  const preview = useResourcePreviewController({
+    variable: props.variable,
+    formRef: props.formRef,
+    getFormData: getReloadableAssetsResourceFormData,
+  });
+  const [pendingDiagnosticsKey, setPendingDiagnosticsKey] = useState<string>();
+  const diagnosticsCache = useStore($resourceDiagnosticsCache);
+  const diagnosticsErrorCache = useStore($resourceDiagnosticsErrorCache);
+  const performanceCache = useStore($resourcePerformanceCache);
+  const getDiagnosticsKey = (request: ResourceRequest | undefined) =>
+    request === undefined ? undefined : getResourceKey(request);
+
+  return (
+    <VariableEditorBody
+      {...props}
+      titleActions={props.titleActions({
+        onRefresh: () => void preview.reload(),
+        refreshPending: preview.pending,
+      })}
+      fields={
+        <AssetsResourceForm
+          ref={props.panelRef}
+          variable={props.variable}
+          onChange={preview.onChange}
+          querySourceContainer={query.sourceContainer}
+          onQueryActiveChange={query.onActiveChange}
+          onQueryPendingChange={query.onPendingChange}
+        />
+      }
+      preview={
+        <ResourceVariablePreview
+          {...props.previewProps}
+          showEmptyLoadButton
+          variableValue={preview.request}
+          showSavedResourceRequest={preview.showSavedRequest}
+          isComputingRequest={preview.pending}
+          onLoadData={preview.reload}
+          queryActive={query.active}
+          queryPending={query.pending}
+          queryContainerRef={query.containerRef}
+          onDiagnosticsOpen={(request) => {
+            if (!isAssetsResourceRequest(request)) {
+              return;
+            }
+            const key = getResourceKey(request);
+            if (diagnosticsCache.get(key)?.artifacts !== undefined) {
+              return;
+            }
+            setPendingDiagnosticsKey(key);
+            void loadResourceDiagnostics(request).finally(() =>
+              setPendingDiagnosticsKey((pendingKey) =>
+                clearSettledDiagnosticsKey(pendingKey, key)
+              )
+            );
+          }}
+          diagnosticsPending={(request) =>
+            pendingDiagnosticsKey !== undefined &&
+            getDiagnosticsKey(request) === pendingDiagnosticsKey
+          }
+          diagnostics={(request, requestError) => {
+            const key = getDiagnosticsKey(request);
+            return (
+              <ResourceDiagnosticsView
+                requestError={requestError}
+                diagnosticsRequestError={getRequestErrorDiagnostics(
+                  key === undefined ? undefined : diagnosticsErrorCache.get(key)
+                )}
+                diagnostics={
+                  key === undefined ? undefined : diagnosticsCache.get(key)
+                }
+                performance={
+                  key === undefined ? undefined : performanceCache.get(key)
+                }
+              />
+            );
+          }}
+        />
+      }
+    />
+  );
+};

@@ -151,7 +151,10 @@ export const generateCurl = (request: CurlRequest) => {
   for (const header of request.headers) {
     args.push(
       // escape json in headers
-      `--header "${header.name}: ${serializeValue(header.value).replaceAll('"', '\\"')}"`
+      `--header "${header.name}: ${serializeValue(header.value).replaceAll(
+        '"',
+        '\\"'
+      )}"`
     );
   }
   if (request.body) {

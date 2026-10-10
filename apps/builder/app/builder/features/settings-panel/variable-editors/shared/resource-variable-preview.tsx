@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { javascript } from "@codemirror/lang-javascript";
 import { Button, Flex, Grid } from "@webstudio-is/design-system";
-import { resourceRequest, type ResourceRequest } from "@webstudio-is/sdk";
-import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
+import {
+  resourceRequest,
+  type DataSource,
+  type ResourceRequest,
+} from "@webstudio-is/sdk";
 import { formatValue } from "~/builder/shared/expression-editor";
 import { EditorContent, foldGutterExtension } from "~/shared/code-editor-base";
 import {
@@ -14,48 +17,59 @@ import {
 import { $resources } from "~/shared/sync/data-stores";
 import {
   $pendingResourceKeys,
-  $resourceDiagnosticsCache,
-  $resourceDiagnosticsErrorCache,
-  $resourcePerformanceCache,
   $resourcesCache,
   computeResourceRequest,
   getResourceKey,
-  loadResourceDiagnostics,
 } from "~/shared/resources";
-import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
-import type { ResourcePerformance } from "~/shared/resource-diagnostics";
-import { useResourceScope } from "./resource-scope";
-import {
-  clearSettledDiagnosticsKey,
-  RequestInspector,
-} from "./request-inspector";
+import { useResourceScope } from "../../resource-scope";
+import { RequestInspector } from "../../request-inspector";
 import {
   getRequestErrorDiagnostics,
   RequestErrorDiagnostics,
-} from "./request-error-diagnostics";
+  type RequestErrorDiagnosticsValue,
+} from "../../request-error-diagnostics";
 import { ResourceDiagnosticsView } from "./resource-diagnostics-view";
-import type { VariablePreviewProps } from "./variable-types";
+
+type ResourcePreviewProps = {
+  variable?: DataSource;
+  variableValue: unknown;
+  showEmptyLoadButton?: boolean;
+  inspectSubmission?: boolean;
+  alwaysShowRequestTab?: boolean;
+  showSavedResourceRequest?: boolean;
+  isComputingRequest?: boolean;
+  onLoadData?: () => void;
+  queryActive?: boolean;
+  queryPending?: boolean;
+  queryContainerRef?: (element: HTMLDivElement | null) => void;
+  requestSnapshot?: unknown;
+  suppressPreviewPending?: boolean;
+  diagnostics?: (
+    request: ResourceRequest | undefined,
+    requestError: RequestErrorDiagnosticsValue | undefined
+  ) => ReactNode;
+  onDiagnosticsOpen?: (request: ResourceRequest) => void;
+  diagnosticsPending?: (request: ResourceRequest | undefined) => boolean;
+};
 
 export const ResourceVariablePreview = ({
   variable,
-  variableType,
   variableValue,
-  showSavedResourceRequest,
-  isComputingRequest,
+  showEmptyLoadButton = false,
+  inspectSubmission: inspectSubmissionByDefault = false,
+  alwaysShowRequestTab = false,
+  showSavedResourceRequest = false,
+  isComputingRequest = false,
   onLoadData,
-  onLoadEmailRequest,
-  emailRequestPreview,
-  queryActive,
-  queryPending,
+  queryActive = false,
+  queryPending = false,
   queryContainerRef,
-}: VariablePreviewProps) => {
-  const [pendingDiagnosticsKey, setPendingDiagnosticsKey] = useState<string>();
-  const isResource =
-    variableType === "resource" ||
-    variableType === "graphql-resource" ||
-    variableType === "sitemap-resource" ||
-    variableType === "current-date-resource" ||
-    variableType === "assets-resource";
+  requestSnapshot: customRequestSnapshot,
+  suppressPreviewPending,
+  diagnostics,
+  onDiagnosticsOpen,
+  diagnosticsPending,
+}: ResourcePreviewProps) => {
   const pendingResourceKeys = useStore($pendingResourceKeys);
   const resources = useStore($resources);
   const lastExchanges = useStore($previewFormExchanges);
@@ -66,11 +80,6 @@ export const ResourceVariablePreview = ({
       : undefined;
   const formExchange = inspection?.attempts.at(-1);
   const resourcesCache = useStore($resourcesCache);
-  const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
-  const resourceDiagnosticsErrorCache = useStore(
-    $resourceDiagnosticsErrorCache
-  );
-  const resourcePerformanceCache = useStore($resourcePerformanceCache);
   const resourceScope = useResourceScope({ variable });
   const [resolvedResourceRequest, setResolvedResourceRequest] = useState<
     ResourceRequest | undefined
@@ -81,11 +90,7 @@ export const ResourceVariablePreview = ({
       setResolvedResourceRequest(parsedResourceRequest);
       return;
     }
-    if (
-      variableType === "email-resource" ||
-      variable?.type !== "resource" ||
-      !showSavedResourceRequest
-    ) {
+    if (variable?.type !== "resource" || !showSavedResourceRequest) {
       setResolvedResourceRequest(undefined);
       return;
     }
@@ -114,7 +119,6 @@ export const ResourceVariablePreview = ({
     resources,
     resourceScope.variableValues,
     variable,
-    variableType,
     variableValue,
     showSavedResourceRequest,
   ]);
@@ -129,17 +133,11 @@ export const ResourceVariablePreview = ({
     (computedResourceRequest !== undefined &&
       pendingResourceKeys.has(getResourceKey(computedResourceRequest)));
   let computedValue: unknown;
-  let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
-  let resourcePerformance: ResourcePerformance | undefined;
-  let resourceDiagnosticsError: unknown;
   let computedResourceKey: string | undefined;
   if (computedResourceRequest) {
     const resourceKey = getResourceKey(computedResourceRequest);
     computedResourceKey = resourceKey;
     computedValue = resourcesCache.get(resourceKey);
-    resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
-    resourceDiagnosticsError = resourceDiagnosticsErrorCache.get(resourceKey);
-    resourcePerformance = resourcePerformanceCache.get(resourceKey);
   }
   const latestExchange = getLatestPreviewExchange({
     formInspection: inspection,
@@ -183,10 +181,8 @@ export const ResourceVariablePreview = ({
   const loadDataButton = (
     <Button
       type="button"
-      disabled={previewPending}
-      onClick={
-        variableType === "email-resource" ? onLoadEmailRequest : onLoadData
-      }
+      disabled={previewPending || onLoadData === undefined}
+      onClick={onLoadData}
     >
       {previewPending ? "Loading..." : "Load data"}
     </Button>
@@ -203,7 +199,7 @@ export const ResourceVariablePreview = ({
       }}
     >
       <EditorContent {...editorProps} />
-      {isResource && !computedValue && (
+      {showEmptyLoadButton && !computedValue && (
         <Flex
           justify="center"
           align="center"
@@ -215,15 +211,8 @@ export const ResourceVariablePreview = ({
     </Grid>
   );
   const inspectSubmission =
-    variableType === "resource" ||
-    variableType === "graphql-resource" ||
-    variableType === "email-resource" ||
-    latestExchange !== undefined;
-  const alwaysShowRequestTab =
-    variableType === "resource" ||
-    variableType === "graphql-resource" ||
-    variableType === "email-resource";
-  if (isResource === false && !inspectSubmission) {
+    inspectSubmissionByDefault || latestExchange !== undefined;
+  if (!showEmptyLoadButton && !inspectSubmission) {
     return previewContent;
   }
   const requestErrorDiagnostics = getRequestErrorDiagnostics(
@@ -232,9 +221,6 @@ export const ResourceVariablePreview = ({
         ? { ...latestExchange.outcome, data: latestExchange.outcome.body }
         : { ...latestExchange.response, data: latestExchange.response.body }
       : computedValue
-  );
-  const diagnosticsRequestError = getRequestErrorDiagnostics(
-    resourceDiagnosticsError
   );
   const preview =
     requestErrorDiagnostics === undefined ? (
@@ -258,7 +244,7 @@ export const ResourceVariablePreview = ({
           resourceName: latestExchange.resourceName,
           ...latestExchange.request,
         }
-    : emailRequestPreview;
+    : customRequestSnapshot;
   return (
     <RequestInspector
       previewLabel={inspectSubmission ? "Response" : "Preview"}
@@ -279,37 +265,18 @@ export const ResourceVariablePreview = ({
       queryContainerRef={queryActive ? queryContainerRef : undefined}
       preview={inspectSubmission ? previewContent : preview}
       queryPending={queryPending}
-      previewPending={
-        variableType === "email-resource" ? false : previewPending
-      }
+      previewPending={suppressPreviewPending ? false : previewPending}
       requestPending={previewPending}
       onDiagnosticsOpen={
-        computedResourceRequest !== undefined &&
-        isAssetsResourceRequest(computedResourceRequest) &&
-        resourceDiagnostics?.artifacts === undefined
-          ? () => {
-              const diagnosticsKey = getResourceKey(computedResourceRequest);
-              setPendingDiagnosticsKey(diagnosticsKey);
-              void loadResourceDiagnostics(computedResourceRequest).finally(
-                () =>
-                  setPendingDiagnosticsKey((pendingKey) =>
-                    clearSettledDiagnosticsKey(pendingKey, diagnosticsKey)
-                  )
-              );
-            }
-          : undefined
+        computedResourceRequest === undefined || onDiagnosticsOpen === undefined
+          ? undefined
+          : () => onDiagnosticsOpen(computedResourceRequest)
       }
-      diagnosticsPending={
-        computedResourceKey !== undefined &&
-        pendingDiagnosticsKey === computedResourceKey
-      }
+      diagnosticsPending={diagnosticsPending?.(computedResourceRequest)}
       diagnostics={
-        <ResourceDiagnosticsView
-          requestError={requestErrorDiagnostics}
-          diagnosticsRequestError={diagnosticsRequestError}
-          diagnostics={resourceDiagnostics}
-          performance={resourcePerformance}
-        />
+        diagnostics?.(computedResourceRequest, requestErrorDiagnostics) ?? (
+          <ResourceDiagnosticsView requestError={requestErrorDiagnostics} />
+        )
       }
     />
   );

@@ -32,13 +32,17 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { MethodField, Headers, UrlField } from "./resource-panel";
-import { ResourceForm } from "./http-resource-panel";
+import {
+  MethodField,
+  Headers,
+  UrlField,
+} from "./variable-editors/shared/resource-fields";
+import { ResourceForm } from "./variable-editors/http-resource-editor";
 import {
   getResourceScopeForInstance,
   useResourceScope,
 } from "./resource-scope";
-import { EmailResourceForm } from "./email-resource-panel";
+import { EmailResourceForm } from "./variable-editors/email-resource-editor";
 
 const { expressionEvaluations } = vi.hoisted(() => ({
   expressionEvaluations: vi.fn(),
@@ -1084,6 +1088,42 @@ test("includes resource documents when building another resource expression", ()
 
   expect(scope[encodeDataVariableId("resourceDataSource")]).toBe(document);
   expect(variableValues.get("resourceDataSource")).toBe(document);
+});
+
+test("formData resource scope hides preview file transport tags", () => {
+  const formDataSource: DataSource = {
+    type: "parameter",
+    id: "form-data",
+    name: "formData",
+    scopeInstanceId: "form",
+  };
+  const { scope, variableValues } = getResourceScopeForInstance({
+    page: undefined,
+    instanceKey: "form",
+    dataSources: new Map([[formDataSource.id, formDataSource]]),
+    variableValuesByInstanceSelector: new Map(),
+    formScopeInstanceId: "form",
+    formScopeSelector: ["form"],
+    liveFormValues: new Map([
+      [
+        "form",
+        {
+          attachment: {
+            __webstudioPreviewFile: true,
+            name: "sample.txt",
+            type: "text/plain",
+            size: 3,
+          },
+        },
+      ],
+    ]),
+  });
+
+  const expected = {
+    attachment: { name: "sample.txt", type: "text/plain", size: 3 },
+  };
+  expect(scope[encodeDataVariableId(formDataSource.id)]).toEqual(expected);
+  expect(variableValues.get(formDataSource.id)).toEqual(expected);
 });
 
 test("unrelated Resource edits preserve recipient scope and aliases", async () => {

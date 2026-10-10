@@ -62,7 +62,8 @@ import { $propValuesByInstanceSelector } from "../nano-states/props";
 import { $dataSourceVariables } from "../nano-states/variables";
 import { $selectedPageId } from "../nano-states/pages";
 import { expectSlotsShareFragment } from "../slot-test-utils";
-import { $selectedInstanceInitialPropNames } from "~/builder/features/settings-panel/shared";
+import { $selectedInstancePropsMetas } from "~/builder/features/settings-panel/shared";
+import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 
 const Body = createTemplateComponentFixture("Body");
 const Bold = createTemplateComponentFixture("Bold");
@@ -884,7 +885,8 @@ describe("insert webstudio component at", () => {
         ])
       );
       selectInstance([inputId, "bodyId"]);
-      expect(Array.from($selectedInstanceInitialPropNames.get())).toEqual(
+      expect($instanceTags.get().get(inputId)).toBe("input");
+      expect(Array.from($selectedInstancePropsMetas.get().keys())).toEqual(
         expect.arrayContaining([
           "type",
           "name",

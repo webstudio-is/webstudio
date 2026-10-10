@@ -16,6 +16,8 @@ import {
   $livePreviewFormValues,
   $livePreviewBrowserInfo,
   getFormOccurrenceKey,
+  isPreviewFileMetadata,
+  toPublicPreviewValue,
 } from "~/shared/preview-form-values";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import {
@@ -83,7 +85,7 @@ export const buildEmailRequestPreviewFromEditor = async ({
       : ($livePreviewFormValues
           .get()
           .get(getFormOccurrenceKey(selected, formId) ?? "") ??
-        getFormDataPreview(instances, props, formId));
+        getFormDataPreview(formId));
   const browserInfo =
     formId === undefined
       ? undefined
@@ -107,18 +109,15 @@ const getFileMetadata = (value: unknown): FileMetadata[] => {
     return value.flatMap(getFileMetadata);
   }
   if (typeof File !== "undefined" && value instanceof File) {
+    if (value.name === "" && value.size === 0) {
+      return [];
+    }
     return [{ name: value.name, type: value.type, size: value.size }];
   }
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    "name" in value &&
-    typeof value.name === "string" &&
-    "type" in value &&
-    typeof value.type === "string" &&
-    "size" in value &&
-    typeof value.size === "number"
-  ) {
+  if (isPreviewFileMetadata(value)) {
+    if (value.name === "" && value.size === 0) {
+      return [];
+    }
     return [{ name: value.name, type: value.type, size: value.size }];
   }
   return [];
@@ -156,7 +155,7 @@ export const buildEmailRequestPreview = async ({
   // Dynamic field names or types prevent us from identifying password fields.
   // In that case the runtime omits default Form text, so the local expression
   // preview must not expose individual field values either.
-  const visibleFormData =
+  const visibleFormDataWithFileTags =
     formData === undefined
       ? undefined
       : formDataOptions?.stringifyAs !== undefined
@@ -168,6 +167,15 @@ export const buildEmailRequestPreview = async ({
                 !formDataOptions?.excludeKeys?.includes(name)
             )
           );
+  const visibleFormData =
+    visibleFormDataWithFileTags === undefined
+      ? undefined
+      : Object.fromEntries(
+          Object.entries(visibleFormDataWithFileTags).map(([name, value]) => [
+            name,
+            toPublicPreviewValue(value),
+          ])
+        );
   const evaluationScope = { ...scope };
   for (const source of dataSources.values()) {
     if (source.type !== "parameter" || source.scopeInstanceId !== formId) {
@@ -230,8 +238,8 @@ export const buildEmailRequestPreview = async ({
             ? ""
             : `\n\nBrowser info:\n${String(createJsonStringifyProxy(browserInfo, { space: 2 }))}`);
   const attachments =
-    resolved.includeAttachments && visibleFormData !== undefined
-      ? Object.values(visibleFormData).flatMap(getFileMetadata)
+    resolved.includeAttachments && visibleFormDataWithFileTags !== undefined
+      ? Object.values(visibleFormDataWithFileTags).flatMap(getFileMetadata)
       : [];
 
   return {

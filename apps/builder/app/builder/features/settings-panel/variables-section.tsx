@@ -2,6 +2,7 @@ import {
   $livePreviewFormValues,
   $livePreviewBrowserInfo,
   getFormOccurrenceKey,
+  toPublicPreviewValue,
 } from "~/shared/preview-form-values";
 import { useEffect, useRef, useState } from "react";
 import { computed } from "nanostores";
@@ -11,8 +12,8 @@ import {
   Chip,
   css,
   cssVar,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   Flex,
   Label,
   SectionTitle,
@@ -233,7 +234,6 @@ const VariablesItem = ({
     };
   }, [isOpen, variableToFocus, variable.id]);
   const instances = useStore($instances);
-  const props = useStore($props);
   const liveFormValues = useStore($livePreviewFormValues);
   const liveBrowserInfo = useStore($livePreviewBrowserInfo);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
@@ -275,13 +275,20 @@ const VariablesItem = ({
             selectedInstanceSelector,
             variable.scopeInstanceId!
           ) ?? ""
-        ) ?? getFormDataPreview(instances, props, variable.scopeInstanceId!);
+        ) ?? getFormDataPreview(variable.scopeInstanceId!);
     }
     if (variable.name === "browserInfo") {
       value = getBrowserInfoPreview(
         liveBrowserInfo.get(variable.scopeInstanceId ?? "")
       );
     }
+  }
+  if (
+    variable.type === "parameter" &&
+    variable.name === "formData" &&
+    instances.get(variable.scopeInstanceId ?? "")?.component === "NativeForm"
+  ) {
+    value = toPublicPreviewValue(value);
   }
   const canDelete = canDeleteVariable(variable, source === "local");
   const requestDelete = () =>
@@ -302,7 +309,7 @@ const VariablesItem = ({
       variable={variable}
       onOpenChange={setIsVariableDialogOpen}
     >
-      <CssValueListItem
+      <InteractiveListItem
         ref={rowRef}
         aria-label={`Variable ${variable.name}`}
         id={variable.id}
@@ -438,7 +445,7 @@ const VariablesList = ({ isOpen }: { isOpen: boolean }) => {
   }
 
   return (
-    <CssValueListArrowFocus>
+    <InteractiveListArrowFocus>
       {/* local variables should be ordered first to not block tab to first item */}
       {availableVariables.map((variable, index) => (
         <VariablesItem
@@ -453,7 +460,7 @@ const VariablesList = ({ isOpen }: { isOpen: boolean }) => {
           isOpen={isOpen}
         />
       ))}
-    </CssValueListArrowFocus>
+    </InteractiveListArrowFocus>
   );
 };
 

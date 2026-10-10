@@ -1,3 +1,7 @@
+import { VariableEditorBody } from "./shared/editor-body";
+import type { VariableEditorProps } from "./shared/editor-types";
+import { Row } from "../shared";
+import { ValuePreviewFrame } from "./shared/variable-value-preview";
 import { forwardRef, useId } from "react";
 import { Flex, Label, TextArea, theme } from "@webstudio-is/design-system";
 import type { DataSource } from "@webstudio-is/sdk";
@@ -6,8 +10,11 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/shared/code-editor-base";
-import { useValuePanelRef } from "./variable-value-save";
-import type { PanelApi } from "./variable-panel-api";
+import { useValuePanelRef } from "./shared/variable-value-save";
+import type { PanelApi } from "./shared/variable-panel-api";
+
+export const prepareStringValue = (previous: unknown) =>
+  typeof previous === "string" ? previous : "";
 
 export const StringForm = forwardRef<
   undefined | PanelApi,
@@ -51,3 +58,21 @@ export const StringForm = forwardRef<
   );
 });
 StringForm.displayName = "StringForm";
+
+export const StringEditor = (props: VariableEditorProps) => (
+  <VariableEditorBody
+    {...props}
+    titleActions={props.titleActions()}
+    fields={
+      <Row>
+        <StringForm
+          ref={props.panelRef}
+          variable={props.variable}
+          value={props.value}
+          onChange={props.onValueChange}
+        />
+      </Row>
+    }
+    preview={<ValuePreviewFrame value={props.previewProps.variableValue} />}
+  />
+);

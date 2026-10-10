@@ -7,11 +7,7 @@ import { $builderMode, $isPreviewMode } from "~/shared/nano-states";
 import { __testing__ } from "./webstudio-component";
 import { subscribe } from "~/shared/pubsub";
 import { encodeDataVariableId, type Instance } from "@webstudio-is/sdk";
-import {
-  $dataSources,
-  $instances,
-  $props,
-} from "~/shared/sync/data-stores";
+import { $dataSources, $instances, $props } from "~/shared/sync/data-stores";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { WebstudioComponentPreview } from "./webstudio-component";
 
@@ -206,7 +202,12 @@ test.each([
       component: "NativeForm",
       children: [{ type: "id" as const, value: slot.id }],
     };
-    $instances.set(new Map([[form.id, form], [slot.id, slot]]));
+    $instances.set(
+      new Map([
+        [form.id, form],
+        [slot.id, slot],
+      ])
+    );
     $dataSources.set(
       new Map([
         [
@@ -256,10 +257,7 @@ test.each([
     await act(async () =>
       $variableValuesByInstanceSelector.set(
         new Map([
-          [
-            JSON.stringify([slot.id]),
-            new Map([["renamed-errors", errors]]),
-          ],
+          [JSON.stringify([slot.id]), new Map([["renamed-errors", errors]])],
         ])
       )
     );

@@ -1,5 +1,8 @@
 import { expect, test } from "vitest";
-import { readPreviewFormValues } from "./preview-form-values";
+import {
+  readPreviewFormValues,
+  toPublicPreviewValue,
+} from "./preview-form-values";
 
 test("live unsent values include empty inputs, select changes, and checkbox arrays", () => {
   const form = document.createElement("form");
@@ -25,4 +28,26 @@ test("live unsent values include empty inputs, select changes, and checkbox arra
     flag: ["yes"],
   });
   form.remove();
+});
+
+test("file values carry explicit preview metadata without upload bytes", () => {
+  const form = document.createElement("form");
+  const input = document.createElement("input");
+  input.type = "file";
+  input.name = "attachment";
+  const transfer = new DataTransfer();
+  transfer.items.add(new File(["abc"], "sample.txt", { type: "text/plain" }));
+  input.files = transfer.files;
+  form.appendChild(input);
+  expect(readPreviewFormValues(form)).toEqual({
+    attachment: {
+      __webstudioPreviewFile: true,
+      name: "sample.txt",
+      type: "text/plain",
+      size: 3,
+    },
+  });
+  expect(toPublicPreviewValue(readPreviewFormValues(form))).toEqual({
+    attachment: { name: "sample.txt", type: "text/plain", size: 3 },
+  });
 });

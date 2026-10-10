@@ -10,8 +10,9 @@ const { previewLoaderCalls, emailPreviewMockState } = vi.hoisted(() => ({
   emailPreviewMockState: { fail: false },
 }));
 vi.mock("./email-request-preview", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("./email-request-preview")>();
+  const actual = await importOriginal<
+    typeof import("./email-request-preview")
+  >();
   return {
     ...actual,
     buildEmailRequestPreviewFromEditor: (
@@ -189,8 +190,35 @@ test("loads an unsaved system resource while an unrelated page request is pendin
     );
   });
 
-  await selectOption("Current date", "GraphQL");
+  // Switching System Resource subtypes must discard the completed preview.
+  await selectOption("Current date", "Sitemap");
   expect(dialog.textContent).not.toContain("2026-09-23");
+  const sitemapLoadButton = Array.from(
+    dialog.querySelectorAll<HTMLButtonElement>("button")
+  ).find((button) => button.textContent === "Load data");
+  expect(sitemapLoadButton).toBeDefined();
+  await act(async () => userEvent.click(sitemapLoadButton!));
+  await vi.waitFor(() => expect(loaderCalls).toHaveLength(2));
+  const sitemapRequests = JSON.parse(
+    String(loaderCalls[1].body)
+  ) as ResourceRequest[];
+  const sitemapPreview = sitemapRequests.find(
+    (request) => request.url === "/$resources/sitemap.xml"
+  );
+  expect(sitemapPreview).toBeDefined();
+
+  // A late response for the old subtype cannot replace the new subtype's UI.
+  await selectOption("Sitemap", "Current date");
+  respond(
+    Response.json([
+      [getResourceKey(sitemapPreview!), { data: "stale sitemap response" }],
+    ])
+  );
+  await vi.waitFor(() => {
+    expect(dialog.textContent).not.toContain("stale sitemap response");
+  });
+
+  await selectOption("Current date", "GraphQL");
   expect(
     Array.from(dialog.querySelectorAll("button")).some(
       (button) => button.textContent === "Load data"

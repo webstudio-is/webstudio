@@ -31,7 +31,21 @@ test("Email Request preview uses current Form data and settings without sending"
       formData: {
         name: "Ada",
         email: "ada@example.com",
-        upload: [{ name: "sample.txt", type: "text/plain", size: 3 }],
+        upload: [
+          {
+            __webstudioPreviewFile: true,
+            name: "sample.txt",
+            type: "text/plain",
+            size: 3,
+          },
+          {
+            __webstudioPreviewFile: true,
+            name: "",
+            type: "application/octet-stream",
+            size: 0,
+          },
+        ],
+        ordinary: { name: "not-a-file", type: "text/plain", size: 7 },
         password: "hidden-password",
       },
       browserInfo: {
@@ -118,7 +132,14 @@ test("Visitor Email Request preview leaves missing addresses empty and never fab
       formId: "form",
       formData: {
         email: "",
-        upload: [{ name: "sample.txt", type: "text/plain", size: 3 }],
+        upload: [
+          {
+            __webstudioPreviewFile: true,
+            name: "sample.txt",
+            type: "text/plain",
+            size: 3,
+          },
+        ],
       },
       instances: new Map([
         [

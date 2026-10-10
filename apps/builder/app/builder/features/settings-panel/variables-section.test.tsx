@@ -12,7 +12,7 @@ import {
 import { encodeDataSourceVariable, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $pages, $props, $resources } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { FormSubmissionControl } from "./controls/form-submission";
+import { FormDestinationsControl } from "./controls/form-destinations";
 import { $variableToFocus, $variableToOpen } from "./variable-navigation";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { $instances, $dataSources } from "~/shared/sync/data-stores";
@@ -572,7 +572,7 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
     root?.render(
       <TooltipProvider>
         <CollapsibleProvider initialOpen="Variables">
-          <FormSubmissionControl
+          <FormDestinationsControl
             instanceId="child"
             prop={{
               id: "action",
@@ -586,7 +586,7 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
             computedValue={[]}
             meta={{
               type: "json",
-              control: "form-submission",
+              control: "form-destinations",
               required: false,
             }}
           />
@@ -706,7 +706,7 @@ test("an Action Resource unavailable in Variables does not open a stale dialog",
     root?.render(
       <TooltipProvider>
         <CollapsibleProvider initialOpen="Variables">
-          <FormSubmissionControl
+          <FormDestinationsControl
             instanceId="child"
             propName="action"
             prop={{
@@ -717,7 +717,11 @@ test("an Action Resource unavailable in Variables does not open a stale dialog",
               value: [{ dataSourceId: parentResource.id, enabled: true }],
             }}
             computedValue={[]}
-            meta={{ type: "json", control: "form-submission", required: false }}
+            meta={{
+              type: "json",
+              control: "form-destinations",
+              required: false,
+            }}
             onChange={() => {}}
           />
           <VariablesSection />

@@ -52,7 +52,7 @@ export * from "./components/small-icon-button";
 export * from "./components/list-position-indicator";
 export * from "./components/position-grid";
 export * from "./components/small-toggle-button";
-export * from "./components/css-value-list-item";
+export * from "./components/interactive-list-item";
 export * from "./components/nested-icon-label";
 export * from "./components/text-area";
 export * from "./components/radio";

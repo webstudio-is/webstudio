@@ -181,7 +181,7 @@ const json = z.object({
 
 const formSubmission = z.object({
   ...common,
-  control: z.literal("form-submission"),
+  control: z.literal("form-destinations"),
   type: z.literal("json"),
   defaultValue: z.unknown().optional(),
 });

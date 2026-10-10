@@ -153,7 +153,7 @@ const FakeSmallButton = styled("div", {
   height: theme.spacing[9],
 });
 
-export const CssValueListItem = forwardRef(
+export const InteractiveListItem = forwardRef(
   (
     {
       label,
@@ -258,9 +258,9 @@ export const CssValueListItem = forwardRef(
   }
 );
 
-CssValueListItem.displayName = "CssValueListItem";
+InteractiveListItem.displayName = "InteractiveListItem";
 
-export const CssValueListArrowFocus = ({
+export const InteractiveListArrowFocus = ({
   children,
   dragItemId,
 }: {
