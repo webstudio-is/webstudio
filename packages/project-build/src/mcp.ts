@@ -6033,9 +6033,7 @@ const getComponentFindInput = (
   };
 };
 
-const compactComponentSearchEntry = (
-  entry: ComponentSummaryEntry & { matchedTokens?: string[] }
-) => {
+const compactComponentSearchEntry = (entry: Record<string, unknown>) => {
   const {
     templateRequiredEdges: _templateRequiredEdges,
     templateRequiredParts: _templateRequiredParts,
@@ -6057,10 +6055,33 @@ const findComponents = async (
   const tokens = normalizedBrief
     .split(/\s+/)
     .filter((token) => token.length > 1);
+  const registryOnlyTemplates = getComponentRegistryItems()
+    .filter(
+      (item) =>
+        item.meta.source === "template" &&
+        componentMetas.has(item.meta.component) === false
+    )
+    .map((item) => {
+      const [parsedNamespace, exportName] = parseComponentName(
+        item.meta.component
+      );
+      return {
+        component: item.meta.component,
+        exportName,
+        namespace: parsedNamespace ?? "global",
+        label: item.meta.label,
+        category: item.meta.category,
+        hasTemplate: true,
+        standaloneInsertable: true,
+        insertWith: item.meta.insert.component,
+        template: item.name,
+        description: item.description,
+      };
+    });
   const components =
     tokens.length === 0
       ? []
-      : summary.components
+      : [...summary.components, ...registryOnlyTemplates]
           .map((entry) => {
             const haystack = normalize(
               [
@@ -6069,7 +6090,9 @@ const findComponents = async (
                 entry.namespace,
                 entry.label,
                 entry.category,
-                entry.contentCategory,
+                "contentCategory" in entry ? entry.contentCategory : undefined,
+                "template" in entry ? entry.template : undefined,
+                "description" in entry ? entry.description : undefined,
               ]
                 .filter(Boolean)
                 .join(" ")
@@ -6110,7 +6133,7 @@ const findComponents = async (
     offset + limit < components.length ? offset + limit : undefined;
   return {
     usage:
-      "Search results are ranked, compact, and paged. Standalone/template roots are ranked before child parts. Multi-word searches match any meaningful token. Prefer insert-fragment for authored/styled sections. Use insert-component with insertWith/component only when inserting one standalone template/component. For full template edges/text, props, states, or content model, call components.get for one component.",
+      "Search results are ranked, compact, and paged. Standalone/template roots are ranked before child parts. Multi-word searches match any meaningful token. Prefer insert-fragment for authored/styled sections. Use insert-component with insertWith/component only when inserting one standalone template/component. For component details, call components.get with component. For registry-only template results, call templates.get with the returned template id.",
     query: brief,
     count: pagedComponents.length,
     totalCount: components.length,

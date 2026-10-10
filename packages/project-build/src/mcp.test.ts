@@ -5919,6 +5919,96 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("searches registry-only templates without duplicating component templates", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const formSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "Form (new)" },
+    });
+    expect(formSearch.structuredContent.data).toEqual(
+      expect.objectContaining({
+        usage: expect.stringContaining("templates.get"),
+        components: expect.arrayContaining([
+          expect.objectContaining({
+            component: "form",
+            label: "Form (new)",
+            template: "template:form",
+            hasTemplate: true,
+            standaloneInsertable: true,
+            insertWith: "form",
+          }),
+        ]),
+      })
+    );
+    const formResults = (
+      formSearch.structuredContent.data as {
+        components: { component: string; template?: string }[];
+      }
+    ).components;
+    expect(formResults[0]?.component).toBe("form");
+    const formResult = formResults.find(
+      ({ template }) => template === "template:form"
+    );
+    expect(formResult).toBeDefined();
+    const formDetails = await adapter.callTool({
+      name: "templates.get",
+      input: { template: formResult?.template },
+    });
+    expect(formDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        name: "template:form",
+        meta: expect.objectContaining({
+          source: "template",
+          component: "form",
+        }),
+      })
+    );
+    const formIdSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "template:form" },
+    });
+    expect(formIdSearch.structuredContent.data).toEqual(
+      expect.objectContaining({
+        components: expect.arrayContaining([
+          expect.objectContaining({ template: "template:form" }),
+        ]),
+      })
+    );
+    const broadFormSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "form", limit: 25 },
+    });
+    expect(broadFormSearch.structuredContent.data).toEqual(
+      expect.objectContaining({
+        components: expect.arrayContaining([
+          expect.objectContaining({ template: "template:form" }),
+        ]),
+      })
+    );
+
+    const selectSearch = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "radix select", limit: 25 },
+    });
+    const selectComponents = (
+      selectSearch.structuredContent.data as {
+        components: { component: string }[];
+      }
+    ).components;
+    expect(
+      selectComponents.filter(
+        ({ component }) =>
+          component === "@webstudio-is/sdk-components-react-radix:Select"
+      )
+    ).toHaveLength(1);
+  });
+
   test("hides explicit hidden component metas even when templates are visible", async () => {
     const component = "test:ConcealedWidget";
     const previousMeta = componentMetas.get(component);
@@ -5963,6 +6053,10 @@ describe("project session mcp adapter", () => {
         name: "components.find",
         input: { brief: "ConcealedWidget" },
       });
+      const search = await adapter.callTool({
+        name: "components.search",
+        input: { brief: "ConcealedWidget" },
+      });
       const details = await adapter.callTool({
         name: "components.get",
         input: { component },
@@ -5976,6 +6070,12 @@ describe("project session mcp adapter", () => {
         })
       );
       expect(find.structuredContent.data).toEqual(
+        expect.objectContaining({
+          components: [],
+          count: 0,
+        })
+      );
+      expect(search.structuredContent.data).toEqual(
         expect.objectContaining({
           components: [],
           count: 0,
