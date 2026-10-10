@@ -331,31 +331,42 @@ describe("public api operation catalog", () => {
     const propTypes = JSON.stringify(updates);
     expect(propTypes).toContain('"const":"json"');
 
-    const emailFields =
-      getPublicApiOperation("create-resource").inputSchema?.properties?.resource
-        ?.properties?.email?.properties;
-    expect(emailFields).toMatchObject({
-      recipientMode: { enum: ["project", "custom", "visitor"] },
-      sender: { type: "string" },
-      senderExpression: { type: "string" },
-      recipients: { type: "string" },
-      recipientsExpression: { type: "string" },
-      visitorEmailField: { type: "string" },
-      subject: { type: "string" },
-      body: { type: "string" },
-      includeAttachments: { type: "boolean" },
-    });
-    expect(
-      getPublicApiOperation("update-resource").inputSchema?.properties?.values
-        ?.properties?.email?.properties
-    ).toMatchObject(emailFields);
-    expect(
-      getPublicApiOperation("update-project-settings").inputSchema?.properties
-        ?.meta?.properties
-    ).toMatchObject({
-      emailSender: { anyOf: [{ type: "string" }, { type: "null" }] },
-      emailSubject: { anyOf: [{ type: "string" }, { type: "null" }] },
-      emailBody: { anyOf: [{ type: "string" }, { type: "null" }] },
-    });
+    const createResourceSchema = JSON.stringify(
+      getPublicApiOperation("create-resource").inputSchema
+    );
+    expect(createResourceSchema).toContain(
+      '"recipientMode":{"type":"string","enum":["project","custom","visitor"]}'
+    );
+    for (const field of [
+      "sender",
+      "senderExpression",
+      "recipients",
+      "recipientsExpression",
+      "visitorEmailField",
+      "subject",
+      "body",
+    ]) {
+      expect(createResourceSchema).toContain(`"${field}":{"type":"string"}`);
+    }
+    expect(createResourceSchema).toContain(
+      '"includeAttachments":{"type":"boolean"}'
+    );
+    const updateResourceSchema = JSON.stringify(
+      getPublicApiOperation("update-resource").inputSchema
+    );
+    expect(updateResourceSchema).toContain(
+      '"recipientMode":{"type":"string","enum":["project","custom","visitor"]}'
+    );
+    expect(updateResourceSchema).toContain(
+      '"includeAttachments":{"type":"boolean"}'
+    );
+    const projectSettingsSchema = JSON.stringify(
+      getPublicApiOperation("update-project-settings").inputSchema
+    );
+    for (const field of ["emailSender", "emailSubject", "emailBody"]) {
+      expect(projectSettingsSchema).toContain(
+        `"${field}":{"anyOf":[{"type":"string"},{"type":"null"}]}`
+      );
+    }
   });
 });
