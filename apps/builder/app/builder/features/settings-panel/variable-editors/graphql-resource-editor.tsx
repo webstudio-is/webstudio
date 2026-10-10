@@ -237,7 +237,7 @@ export const GraphqlResourceForm = forwardRef<
             value={
               isVariablesLiteral
                 ? variables
-                : JSON.stringify(evaluatedVariables, null, 2) ?? ""
+                : (JSON.stringify(evaluatedVariables, null, 2) ?? "")
             }
             bound={isVariablesLiteral === false}
             scope={scope}

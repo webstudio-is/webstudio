@@ -48,9 +48,8 @@ const { expressionEvaluations } = vi.hoisted(() => ({
   expressionEvaluations: vi.fn(),
 }));
 vi.mock("~/builder/shared/binding-popover", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("~/builder/shared/binding-popover")
-  >();
+  const actual =
+    await importOriginal<typeof import("~/builder/shared/binding-popover")>();
   return {
     ...actual,
     evaluateExpressionWithinScope: (

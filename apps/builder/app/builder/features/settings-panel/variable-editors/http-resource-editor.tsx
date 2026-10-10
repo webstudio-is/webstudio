@@ -218,14 +218,14 @@ export const HttpResourceForm = forwardRef<
                     auto: "auto",
                     json: "application/json",
                     multipart: "multipart/form-data",
-                  }[value])
+                  })[value]
                 }
                 getDescription={(value: NonNullable<Resource["bodyFormat"]>) =>
                   ({
                     auto: "Uses text/plain for text values, application/json for other values, and multipart/form-data when files are included.",
                     json: "Sends an object or array as JSON.",
                     multipart: "Sends fields as form data, including files.",
-                  }[value])
+                  })[value]
                 }
                 onChange={(value) => {
                   onChange?.();

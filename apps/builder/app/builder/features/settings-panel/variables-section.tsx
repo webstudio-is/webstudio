@@ -242,7 +242,7 @@ const VariablesItem = ({
   const valueSourceName =
     valueSourceId === ROOT_INSTANCE_ID
       ? "Global root"
-      : valueSource?.label ?? valueSource?.component ?? "System";
+      : (valueSource?.label ?? valueSource?.component ?? "System");
   const shadowed =
     source === "local" && variable.scopeInstanceId
       ? findAvailableVariables({
@@ -314,8 +314,8 @@ const VariablesItem = ({
                             : variable.value.type
                         } · Static`
                       : variable.type === "resource"
-                      ? "Resource · Dynamic"
-                      : "JSON · Dynamic parameter"}
+                        ? "Resource · Dynamic"
+                        : "JSON · Dynamic parameter"}
                   </Text>
                   {formVariableDescription && (
                     <Text>{formVariableDescription}</Text>

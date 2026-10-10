@@ -182,9 +182,9 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
       const variablePathIndex =
         variable === undefined
           ? 0
-          : instancePath?.findIndex(
+          : (instancePath?.findIndex(
               ({ instance }) => instance.id === variable.scopeInstanceId
-            ) ?? -1;
+            ) ?? -1);
       const formScopeInstanceId =
         variablePathIndex < 0
           ? undefined
@@ -237,12 +237,12 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
         variable === undefined
           ? []
           : variable.type === "resource"
-          ? getResourceCycleDataSourceIds({
-              resourceDataSource: variable,
-              resources,
-              dataSources,
-            })
-          : [variable.id]
+            ? getResourceCycleDataSourceIds({
+                resourceDataSource: variable,
+                resources,
+                dataSources,
+              })
+            : [variable.id]
       );
       if (
         cachedResult !== undefined &&

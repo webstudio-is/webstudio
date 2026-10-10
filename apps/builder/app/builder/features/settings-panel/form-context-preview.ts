@@ -80,8 +80,8 @@ export const resolveFormParameterPreview = (
   const formId = source.scopeInstanceId!;
   const value =
     name === formDataParameterName
-      ? liveFormValues.get(getFormOccurrenceKey(selector, formId) ?? "") ??
-        getFormDataPreview(formId)
+      ? (liveFormValues.get(getFormOccurrenceKey(selector, formId) ?? "") ??
+        getFormDataPreview(formId))
       : getBrowserInfoPreview(liveBrowserInfo.get(formId));
   return { name, value: toPublicPreviewValue(value) };
 };

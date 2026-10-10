@@ -220,11 +220,11 @@ export const ResourceVariablePreview = ({
       <RequestErrorDiagnostics value={requestErrorDiagnostics} />
     );
   const requestSnapshot = latestExchange
-    ? resolvedInspection?.requestAttempts ?? {
+    ? (resolvedInspection?.requestAttempts ?? {
         resourceId: latestExchange.resourceId,
         resourceName: latestExchange.resourceName,
         ...latestExchange.request,
-      }
+      })
     : customRequestSnapshot;
   return (
     <RequestInspector

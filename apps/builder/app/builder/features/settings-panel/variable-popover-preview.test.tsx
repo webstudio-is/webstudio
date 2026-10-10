@@ -10,9 +10,10 @@ const { previewLoaderCalls, emailPreviewMockState } = vi.hoisted(() => ({
   emailPreviewMockState: { fail: false },
 }));
 vi.mock("./variable-editors/email-request-preview", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("./variable-editors/email-request-preview")
-  >();
+  const actual =
+    await importOriginal<
+      typeof import("./variable-editors/email-request-preview")
+    >();
   return {
     ...actual,
     buildEmailRequestPreviewFromEditor: (

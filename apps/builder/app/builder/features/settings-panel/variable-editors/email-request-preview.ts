@@ -82,10 +82,10 @@ export const buildEmailRequestPreviewFromEditor = async ({
   const formData =
     formId === undefined
       ? undefined
-      : $livePreviewFormValues
+      : ($livePreviewFormValues
           .get()
           .get(getFormOccurrenceKey(selected, formId) ?? "") ??
-        getFormDataPreview(formId);
+        getFormDataPreview(formId));
   const browserInfo =
     formId === undefined
       ? undefined
@@ -159,14 +159,14 @@ export const buildEmailRequestPreview = async ({
     formData === undefined
       ? undefined
       : formDataOptions?.stringifyAs !== undefined
-      ? {}
-      : Object.fromEntries(
-          Object.entries(formData).filter(
-            ([name]) =>
-              !internalFormFieldNames.has(name) &&
-              !formDataOptions?.excludeKeys?.includes(name)
-          )
-        );
+        ? {}
+        : Object.fromEntries(
+            Object.entries(formData).filter(
+              ([name]) =>
+                !internalFormFieldNames.has(name) &&
+                !formDataOptions?.excludeKeys?.includes(name)
+            )
+          );
   const visibleFormData =
     visibleFormDataWithFileTags === undefined
       ? undefined
@@ -232,15 +232,15 @@ export const buildEmailRequestPreview = async ({
     projectMeta?.emailBody
       ? await evaluateText(resolved.body)
       : visibleFormData === undefined
-      ? await evaluateText(resolved.body)
-      : `Form data:\n${String(
-          createJsonStringifyProxy(visibleFormData, formDataOptions)
-        )}` +
-        (browserInfo === undefined
-          ? ""
-          : `\n\nBrowser info:\n${String(
-              createJsonStringifyProxy(browserInfo, { space: 2 })
-            )}`);
+        ? await evaluateText(resolved.body)
+        : `Form data:\n${String(
+            createJsonStringifyProxy(visibleFormData, formDataOptions)
+          )}` +
+          (browserInfo === undefined
+            ? ""
+            : `\n\nBrowser info:\n${String(
+                createJsonStringifyProxy(browserInfo, { space: 2 })
+              )}`);
   const attachments =
     resolved.includeAttachments && visibleFormDataWithFileTags !== undefined
       ? Object.values(visibleFormDataWithFileTags).flatMap(getFileMetadata)

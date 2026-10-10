@@ -67,8 +67,8 @@ export const ParameterVariablePreview = ({
   let value =
     variable === undefined
       ? undefined
-      : resourceScope.variableValues.get(variable.id) ??
-        variableValues.get(variable.id);
+      : (resourceScope.variableValues.get(variable.id) ??
+        variableValues.get(variable.id));
   if (variable !== undefined) {
     value =
       resolveFormParameterPreview(variable, {
